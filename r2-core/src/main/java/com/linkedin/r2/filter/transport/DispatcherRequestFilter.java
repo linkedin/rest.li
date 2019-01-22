@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+
 /**
  * Filter implementation which sends requests to a {@link TransportDispatcher} for processing.
  *
@@ -69,7 +70,7 @@ public class DispatcherRequestFilter implements StreamFilter, RestFilter
     }
     catch (Exception e)
     {
-      nextFilter.onError(e, requestContext, new HashMap<String, String>());
+      nextFilter.onError(e, requestContext, new HashMap<>());
     }
   }
 
@@ -107,7 +108,7 @@ public class DispatcherRequestFilter implements StreamFilter, RestFilter
     }
     catch (Exception e)
     {
-      nextFilter.onError(e, requestContext, new HashMap<String, String>());
+      nextFilter.onError(e, requestContext, new HashMap<>());
       if (connector != null)
       {
         connector.cancel();
@@ -138,6 +139,7 @@ public class DispatcherRequestFilter implements StreamFilter, RestFilter
 
   private static class Connector extends BaseConnector
   {
+
     private final AtomicBoolean _responded;
     private final NextFilter<StreamRequest, StreamResponse> _nextFilter;
     private final RequestContext _requestContext;

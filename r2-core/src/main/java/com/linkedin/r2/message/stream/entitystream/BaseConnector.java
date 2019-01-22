@@ -54,7 +54,11 @@ public class BaseConnector implements Reader, Writer
   @Override
   public void onDone()
   {
-    _wh.done();
+    // since the this Connector may be only a reader, we may have no
+    // write handle associated with this Connector.
+    if(_wh != null) {
+      _wh.done();
+    }
   }
 
   @Override
