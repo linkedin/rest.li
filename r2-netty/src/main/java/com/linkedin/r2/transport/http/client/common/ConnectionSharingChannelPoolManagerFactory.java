@@ -16,19 +16,20 @@
 
 package com.linkedin.r2.transport.http.client.common;
 
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.callback.MultiCallback;
-import com.linkedin.common.util.None;
-import com.linkedin.r2.transport.http.client.AsyncPool;
-import com.linkedin.r2.transport.http.client.PoolStats;
-import io.netty.channel.Channel;
-import io.netty.channel.group.ChannelGroup;
-
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.MultiCallback;
+import com.linkedin.common.util.None;
+import com.linkedin.r2.transport.http.client.AsyncPool;
+import com.linkedin.r2.transport.http.client.PoolStats;
+
+import io.netty.channel.Channel;
+import io.netty.channel.group.ChannelGroup;
 
 /**
  * {@link ChannelPoolManagerFactory} class that re-uses already created {@link ChannelPoolManager} instances
@@ -85,7 +86,7 @@ public class ConnectionSharingChannelPoolManagerFactory implements ChannelPoolMa
     else
     {
       MultiCallback multiCallback = new MultiCallback(callback, channelPoolManagerMap.size());
-      channelPoolManagerMapRest.forEach((channelPoolManagerKey, channelPoolManager) -> channelPoolManager.shutdown(multiCallback,
+      channelPoolManagerMap.forEach((channelPoolManagerKey, channelPoolManager) -> channelPoolManager.shutdown(multiCallback,
         () -> {},
         () -> {},
         1000));

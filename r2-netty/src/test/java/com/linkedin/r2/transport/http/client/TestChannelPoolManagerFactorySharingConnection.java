@@ -16,6 +16,12 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -23,17 +29,12 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.testutils.server.HttpServerBuilder;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+
 import io.netty.handler.codec.http.HttpMethod;
 import org.eclipse.jetty.server.Server;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Francesco Capponi (fcapponi@linkedin.com)
@@ -57,6 +58,7 @@ public class TestChannelPoolManagerFactorySharingConnection
   public static Object[][] configsOpenedConnections()
   {
     return new Object[][]{
+      // restOverStream, protocolVersion, shareConnection
       {true, TestHttpClientFactory.HTTP_1_1, false},
       {true, TestHttpClientFactory.HTTP_2, false},
       {false, TestHttpClientFactory.HTTP_1_1, false},
