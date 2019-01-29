@@ -1,5 +1,10 @@
+26.0.6
+------
+
 26.0.5
 ------
+(RB=1517716)
+Add KSON support. KSON is a variant of JSON that serializes maps as lists, and supports optional compression of the payload using a shared symbol dictionary.
 
 26.0.4
 ------
