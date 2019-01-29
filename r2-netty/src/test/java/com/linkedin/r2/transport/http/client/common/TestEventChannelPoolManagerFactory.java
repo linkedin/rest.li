@@ -119,6 +119,7 @@ public class TestEventChannelPoolManagerFactory
 
   // ############################# Util Section #############################
 
+  @SuppressWarnings("unchecked")
   private ChannelPoolManagerFactory getChannelPoolManagerFactory()
   {
     ChannelPoolManagerFactory channelPoolManagerFactory = mock(ChannelPoolManagerFactory.class);
@@ -142,6 +143,7 @@ public class TestEventChannelPoolManagerFactory
     return channelPoolManagerFactory;
   }
 
+  @SuppressWarnings("unchecked")
   private ChannelPoolManager getChannelPoolManager()
   {
     ChannelPoolManager expectedChannelPoolManager = mock(ChannelPoolManager.class);
