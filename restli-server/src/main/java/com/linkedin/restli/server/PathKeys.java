@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -60,6 +61,15 @@ public interface PathKeys
    * @return key value as Integer
    */
   String getAsString(String key);
+
+  /**
+   * Returns unmodifiable wrapper of the map containing the path keys.
+   *
+   * @return unmodifiable map of path keys.
+   */
+  default Map<String, Object> getKeyMap() {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * Get the resource batch keys untyped.

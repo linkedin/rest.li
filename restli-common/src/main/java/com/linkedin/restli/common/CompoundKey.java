@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 
@@ -41,18 +42,18 @@ import java.util.Set;
  */
 public class CompoundKey
 {
-  private final Map<String, Object> _keys;
+  private final Map<String, ValueAndTypeInfoPair> _keys;
   private boolean _isReadOnly;
 
   public CompoundKey()
   {
-    _keys = new HashMap<String, Object>(4);
+    _keys = new HashMap<>(4);
     _isReadOnly = false;
   }
 
   private CompoundKey(CompoundKey compoundKey)
   {
-    _keys = new HashMap<String, Object>(compoundKey._keys);
+    _keys = new HashMap<>(compoundKey._keys);
   }
 
   public static final class TypeInfo
@@ -155,9 +156,29 @@ public class CompoundKey
         }
       }
       value = DataTemplateUtil.coerceOutput(value, typeInfo.getBindingType());
-      result.append(entry.getKey(), value);
+      result.append(entry.getKey(), value, typeInfo);
     }
     return result;
+  }
+
+  /**
+   * Add the key with the given name and value to the CompoundKey.
+   *
+   * Only primitive values are supported.  The {@link CompoundKey.TypeInfo} will be generated based on the value of the key.
+   *
+   * @param name name of the key
+   * @param value value of the key
+   * @return this
+   */
+  public CompoundKey append(String name, Object value)
+  {
+    if (value==null)
+    {
+      throw new IllegalArgumentException("value of CompoundKey part cannot be null");
+    }
+    TypeInfo typeInfo = new CompoundKey.TypeInfo(value.getClass(), value.getClass());
+    append(name, value, typeInfo);
+    return this;
   }
 
  /**
@@ -165,9 +186,10 @@ public class CompoundKey
    *
    * @param name name of the key
    * @param value value of the key
+   * @param typeInfo TypeInfo for the value
    * @return this
    */
-  public CompoundKey append(String name, Object value)
+  public CompoundKey append(String name, Object value, TypeInfo typeInfo)
   {
     if (_isReadOnly)
     {
@@ -181,8 +203,12 @@ public class CompoundKey
     {
       throw new IllegalArgumentException("value of CompoundKey part cannot be null");
     }
+    if (typeInfo==null)
+    {
+      throw new IllegalArgumentException("typeInfo of CompoundKey part cannot be null");
+    }
 
-    _keys.put(name, value);
+    _keys.put(name, new ValueAndTypeInfoPair(value, typeInfo));
     return this;
   }
 
@@ -194,7 +220,7 @@ public class CompoundKey
    */
   public Object getPart(String name)
   {
-    return _keys.get(name);
+    return Optional.ofNullable(_keys.get(name)).map(ValueAndTypeInfoPair::getValue).orElse(null);
   }
 
   /**
@@ -255,7 +281,7 @@ public class CompoundKey
   }
 
   /**
-   * Makes this key read only. Subsequent calls to {@link #append(String, Object)} will throw an
+   * Makes this key read only. Subsequent calls to {@link #append(String, Object, TypeInfo)} will throw an
    * {@link UnsupportedOperationException}
    */
   public void makeReadOnly()
@@ -307,28 +333,59 @@ public class CompoundKey
    * Create a DataMap representation of this CompoundKey.  If any of its fields are CustomTypes,
    * they will be coerced down to their base type before being placed into the map.
    *
-   * @param fieldTypes the fieldTypes of this {@link CompoundKey}
    * @return a {@link DataMap} representation of this {@link CompoundKey}
    * @see {@link com.linkedin.restli.internal.common.URIParamUtils#compoundKeyToDataMap(CompoundKey)}
    */
-  public DataMap toDataMap(Map<String, CompoundKey.TypeInfo> fieldTypes)
+  public DataMap toDataMap()
   {
     DataMap dataMap = new DataMap(_keys.size());
-    for (Map.Entry<String, Object> keyParts : _keys.entrySet())
+    for (Map.Entry<String, ValueAndTypeInfoPair> keyParts : _keys.entrySet())
     {
       String key = keyParts.getKey();
-      Object value = keyParts.getValue();
-      DataSchema schema = fieldTypes.get(key).getDeclared().getSchema();
-      DataSchema dereferencedSchema = schema.getDereferencedDataSchema();
-      Class<?> dereferencedClass = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedSchema.getType());
-
-      @SuppressWarnings("unchecked")
-      Object coercedInput = DataTemplateUtil.coerceInput(value,
-                                                         (Class<Object>) value.getClass(),
-                                                         dereferencedClass);
+      ValueAndTypeInfoPair valueAndTypeInfoPair = keyParts.getValue();
+      Object value = valueAndTypeInfoPair.getValue();
+      TypeInfo typeInfo = valueAndTypeInfoPair.getTypeInfo();
+      DataSchema schema = typeInfo.getDeclared().getSchema();
+      Object coercedInput = coerceValueForDataMap(value, schema);
       dataMap.put(key, coercedInput);
     }
     return dataMap;
+  }
+
+  /**
+   * Create a DataMap representation of this CompoundKey.  If any of its fields are CustomTypes,
+   * they will be coerced down to their base type before being placed into the map.
+   *
+   * @param fieldTypes the fieldTypes of this {@link CompoundKey}
+   * @return a {@link DataMap} representation of this {@link CompoundKey}
+   *
+   * @deprecated Use {@link #toDataMap()}.
+   */
+  @Deprecated
+  public DataMap toDataMap(Map<String, CompoundKey.TypeInfo> fieldTypes)
+  {
+    DataMap dataMap = new DataMap(_keys.size());
+    for (Map.Entry<String, ValueAndTypeInfoPair> keyParts : _keys.entrySet())
+    {
+      String key = keyParts.getKey();
+      ValueAndTypeInfoPair valueAndTypeInfoPair = keyParts.getValue();
+      Object value = valueAndTypeInfoPair.getValue();
+      DataSchema schema = fieldTypes.get(key).getDeclared().getSchema();
+      Object coercedInput = coerceValueForDataMap(value, schema);
+      dataMap.put(key, coercedInput);
+    }
+    return dataMap;
+  }
+
+  private Object coerceValueForDataMap(Object value, DataSchema schema) {
+    Class<?> dereferencedClass = null;
+    if (schema != null) {
+      DataSchema dereferencedSchema = schema.getDereferencedDataSchema();
+      dereferencedClass = DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(dereferencedSchema.getType());
+    }
+    @SuppressWarnings("unchecked")
+    Class<Object> valueClass = (Class<Object>) value.getClass();
+    return DataTemplateUtil.coerceInput(value, valueClass, dereferencedClass);
   }
 
   /**
@@ -362,7 +419,7 @@ public class CompoundKey
       {
         b.append(URLEncoder.encode(keyPart, RestConstants.DEFAULT_CHARSET_NAME));
         b.append(RestConstants.KEY_VALUE_DELIMITER);
-        b.append(URLEncoder.encode(DataTemplateUtil.stringify(_keys.get(keyPart)), RestConstants.DEFAULT_CHARSET_NAME));
+        b.append(URLEncoder.encode(DataTemplateUtil.stringify(getPart(keyPart)), RestConstants.DEFAULT_CHARSET_NAME));
       }
       catch (UnsupportedEncodingException e)
       {
@@ -371,5 +428,32 @@ public class CompoundKey
       delimit = true;
     }
     return b.toString();
+  }
+
+  private static class ValueAndTypeInfoPair
+  {
+    private final Object _value;
+    private final TypeInfo _typeInfo;
+
+    private ValueAndTypeInfoPair(Object value, TypeInfo typeInfo) {
+      _value = value;
+      _typeInfo = typeInfo;
+    }
+
+    Object getValue() {
+      return _value;
+    }
+
+    TypeInfo getTypeInfo() {
+      return _typeInfo;
+    }
+
+    public boolean equals(Object o)
+    {
+      return (o instanceof ValueAndTypeInfoPair) &&
+          ((ValueAndTypeInfoPair)o)._value.equals(this._value);
+
+    }
+    public int hashCode() {return _value.hashCode();}
   }
 }

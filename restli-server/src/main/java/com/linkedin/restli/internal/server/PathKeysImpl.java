@@ -77,6 +77,11 @@ public class PathKeysImpl implements MutablePathKeys
     return (String) _keyMap.get(key);
   }
 
+  @Override
+  public Map<String, Object> getKeyMap() {
+    return Collections.unmodifiableMap(_keyMap);
+  }
+
   @Deprecated
   @Override
   public Set<?> getBatchKeys()

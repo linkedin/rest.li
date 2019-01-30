@@ -1,6 +1,10 @@
-26.0.9
+26.0.10
 ------
 
+26.0.9
+------
+(RB=1546707)
+Added missing accessors for request URI components
 
 26.0.8
 ------
