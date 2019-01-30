@@ -18,6 +18,8 @@
 package com.linkedin.restli.common;
 
 
+import com.linkedin.data.DataMap;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 
@@ -38,4 +40,30 @@ public class TestCompoundKey
 
     compoundKey.append("abc", "def");
   }
+
+  @Test
+  public void testToDataMap()
+  {
+    CompoundKey compoundKey = new CompoundKey();
+    compoundKey.append("foo", "foo-value");
+    compoundKey.append("bar", 1);
+    compoundKey.append("baz", 7L);
+
+    DataMap dataMap = compoundKey.toDataMap();
+    Assert.assertEquals(dataMap.get("foo"), compoundKey.getPart("foo"));
+    Assert.assertEquals(dataMap.get("bar"), compoundKey.getPart("bar"));
+    Assert.assertEquals(dataMap.get("baz"), compoundKey.getPart("baz"));
+  }
+
+  @Test
+  public void testAppendEnum()
+  {
+    CompoundKey compoundKey = new CompoundKey().append("foo", ResourceMethod.ACTION,
+        new CompoundKey.TypeInfo(ResourceMethod.class, ResourceMethod.class));
+
+    Assert.assertEquals(compoundKey.getPart("foo"), ResourceMethod.ACTION);
+    DataMap dataMap = compoundKey.toDataMap();
+    Assert.assertEquals(dataMap.get("foo"), ResourceMethod.ACTION.toString());
+  }
+
 }

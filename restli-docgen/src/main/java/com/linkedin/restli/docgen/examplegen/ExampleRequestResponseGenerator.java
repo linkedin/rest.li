@@ -864,7 +864,7 @@ public class ExampleRequestResponseGenerator
           String key = keyPart.getKey();
           CompoundKey.TypeInfo typeInfo = keyPart.getValue();
           compoundKey.append(key, _dataGenerator.buildData(postfixBatchIdx(key, batchIdx),
-                                                          typeInfo.getBinding().getSchema()));
+                                                          typeInfo.getBinding().getSchema()), typeInfo);
         }
         return compoundKey;
       case PRIMITIVE:

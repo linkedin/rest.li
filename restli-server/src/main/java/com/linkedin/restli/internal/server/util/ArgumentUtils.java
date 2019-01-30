@@ -31,6 +31,7 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.IllegalMaskException;
 import com.linkedin.restli.internal.common.PathSegment;
@@ -264,7 +265,7 @@ public class ArgumentUtils
       if (value != null)
       {
         dataMap.remove(name);
-        compoundKey.append(name, convertSimpleValue(value, key.getDataSchema(), key.getType()));
+        compoundKey.append(name, convertSimpleValue(value, key.getDataSchema(), key.getType()), keyToTypeInfo(key));
       }
     }
     if (!dataMap.isEmpty())
@@ -280,6 +281,11 @@ public class ArgumentUtils
     }
 
     return compoundKey;
+  }
+
+  private static CompoundKey.TypeInfo keyToTypeInfo(Key key) {
+    TypeSpec<?> typeSpec = new TypeSpec<>(key.getType(), key.getDataSchema());
+    return new CompoundKey.TypeInfo(typeSpec, typeSpec);
   }
 
   /**
@@ -347,7 +353,8 @@ public class ArgumentUtils
         throw new RestLiInternalException(e);
       }
 
-      compoundKey.append(name, convertSimpleValue(decodedStringValue, currentKey.getDataSchema(), currentKey.getType()));
+      compoundKey.append(name, convertSimpleValue(decodedStringValue, currentKey.getDataSchema(),
+          currentKey.getType()), keyToTypeInfo(currentKey));
     }
     return compoundKey;
   }

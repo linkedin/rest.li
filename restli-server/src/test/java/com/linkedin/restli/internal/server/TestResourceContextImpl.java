@@ -97,6 +97,25 @@ public class TestResourceContextImpl
     context.getResponseHeaders().put(RestConstants.HEADER_ID, "foobar");
   }
 
+  @Test
+  public void testPathKeysImpl() throws RestLiSyntaxException
+  {
+    final ResourceContextImpl context = new ResourceContextImpl();
+    MutablePathKeys mutablePathKeys = context.getPathKeys();
+    mutablePathKeys.append("aKey", "aValue")
+        .append("bKey", "bValue")
+        .append("cKey", "cValue");
+
+    Assert.assertEquals(mutablePathKeys.getKeyMap().size(), 3);
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testUnmodifiablePathKeysMap() throws RestLiSyntaxException
+  {
+    final ResourceContextImpl context = new ResourceContextImpl();
+    context.getPathKeys().getKeyMap().put("should", "puke");
+  }
+
   @DataProvider
   private static Object[][] overrideMaskData()
   {
