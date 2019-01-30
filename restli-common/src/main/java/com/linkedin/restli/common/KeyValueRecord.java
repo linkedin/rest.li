@@ -140,6 +140,7 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
       throw new IllegalArgumentException("Key must be a CompoundKey!");
     }
     CompoundKey compoundKey = (CompoundKey)key;
+    @SuppressWarnings("deprecation")
     DataMap compoundKeyData = compoundKey.toDataMap(fieldTypes);
     putDirect(keyField, DataMap.class, DataMap.class, compoundKeyData, SetMode.IGNORE_NULL);
   }
