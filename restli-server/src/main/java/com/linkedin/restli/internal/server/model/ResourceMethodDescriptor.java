@@ -496,6 +496,9 @@ public class ResourceMethodDescriptor
     {
       sb.append(", ").append("finderName=").append(_finderName);
     }
+    if (_batchFinderName != null) {
+      sb.append(", ").append("batchFinderName=").append(_batchFinderName);
+    }
     if (_actionName != null)
     {
       sb.append(", ").append("actionName=").append(_actionName);

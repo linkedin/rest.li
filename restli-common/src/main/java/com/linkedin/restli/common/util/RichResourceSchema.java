@@ -22,13 +22,14 @@ import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionSchemaArray;
 import com.linkedin.restli.restspec.ActionsSetSchema;
 import com.linkedin.restli.restspec.AssociationSchema;
+import com.linkedin.restli.restspec.BatchFinderSchema;
+import com.linkedin.restli.restspec.BatchFinderSchemaArray;
 import com.linkedin.restli.restspec.CollectionSchema;
 import com.linkedin.restli.restspec.CustomAnnotationContentSchemaMap;
 import com.linkedin.restli.restspec.EntitySchema;
 import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.FinderSchemaArray;
 import com.linkedin.restli.restspec.ResourceSchema;
-import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.restspec.SimpleSchema;
@@ -73,6 +74,7 @@ public class RichResourceSchema
   private final StringArray _supports;
   private final RestMethodSchemaArray _methods;
   private final FinderSchemaArray _finders;
+  private final BatchFinderSchemaArray _batchFinders;
   private final ActionSchemaArray _actions;
   private final EntitySchema _entity;
   private final ActionSchemaArray _entityActions;
@@ -80,6 +82,7 @@ public class RichResourceSchema
 
   private final Map<String, RestMethodSchema> _methodsByName;
   private final Map<String, FinderSchema> _findersByName;
+  private final Map<String, BatchFinderSchema> _batchFindersByName;
   private final Map<String, ActionSchema> _actionsByName;
   private final Map<String, ActionSchema> _entityActionsByName;
   private final Map<String, RichResourceSchema> _subresourcesByName;
@@ -95,6 +98,7 @@ public class RichResourceSchema
       _supports = collection.getSupports();
       _methods = collection.hasMethods() ? collection.getMethods() : new RestMethodSchemaArray(0);
       _finders = collection.hasFinders() ? collection.getFinders() : new FinderSchemaArray(0);
+      _batchFinders = collection.hasBatchFinders() ? collection.getBatchFinders() : new BatchFinderSchemaArray(0);
       _actions = collection.hasActions() ? collection.getActions() : new ActionSchemaArray(0);
       _entity = collection.getEntity();
 
@@ -106,6 +110,7 @@ public class RichResourceSchema
       _supports = association.getSupports();
       _methods = association.hasMethods() ? association.getMethods() : new RestMethodSchemaArray(0);
       _finders = association.hasFinders() ? association.getFinders() : new FinderSchemaArray(0);
+      _batchFinders = association.hasBatchFinders() ? association.getBatchFinders() : new BatchFinderSchemaArray(0);
       _actions = association.hasActions() ? association.getActions() : new ActionSchemaArray(0);
       _entity = association.getEntity();
 
@@ -117,6 +122,7 @@ public class RichResourceSchema
       _supports = simple.getSupports();
       _methods = simple.hasMethods() ? simple.getMethods() : new RestMethodSchemaArray(0);
       _finders = new FinderSchemaArray(0);
+      _batchFinders = new BatchFinderSchemaArray(0);
       _actions = new ActionSchemaArray(0);
       _entity = simple.getEntity();
     }
@@ -126,7 +132,8 @@ public class RichResourceSchema
       ActionsSetSchema actionSet = resourceSchema.getActionsSet();
       _supports = new StringArray(0);
       _methods = new RestMethodSchemaArray(0);
-      _finders = new FinderSchemaArray(0);;
+      _finders = new FinderSchemaArray(0);
+      _batchFinders = new BatchFinderSchemaArray(0);
       _actions = actionSet.hasActions() ? actionSet.getActions() : new ActionSchemaArray(0);
       _entity = null;
     }
@@ -168,6 +175,12 @@ public class RichResourceSchema
     for(FinderSchema finder : _finders)
     {
       _findersByName.put(finder.getName(), finder);
+    }
+
+    _batchFindersByName = new HashMap<String, BatchFinderSchema>(_batchFinders.size());
+    for(BatchFinderSchema batchFinder : _batchFinders)
+    {
+      _batchFindersByName.put(batchFinder.getName(), batchFinder);
     }
 
     _actionsByName = new HashMap<String, ActionSchema>(_actions.size());
@@ -252,6 +265,16 @@ public class RichResourceSchema
   public FinderSchema getFinder(String name)
   {
     return _findersByName.get(name);
+  }
+
+  public BatchFinderSchemaArray getBatchFinders()
+  {
+    return _batchFinders;
+  }
+
+  public BatchFinderSchema getBatchFinder(String name)
+  {
+    return _batchFindersByName.get(name);
   }
 
   public ActionSchemaArray getActions()

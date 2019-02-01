@@ -20,6 +20,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionsSetSchema;
 import com.linkedin.restli.restspec.AssociationSchema;
+import com.linkedin.restli.restspec.BatchFinderSchema;
 import com.linkedin.restli.restspec.CollectionSchema;
 import com.linkedin.restli.restspec.EntitySchema;
 import com.linkedin.restli.restspec.FinderSchema;
@@ -113,6 +114,17 @@ public interface ResourceSchemaVisitior
   void visitFinder(VisitContext visitContext,
                    RecordTemplate parentResource,
                    FinderSchema finderSchema);
+
+  /**
+   * Callback function when the visitor visits a {@link BatchFinderSchema}.
+   *
+   * @param visitContext hierarchy of all parent resource schemas (root is the first element)
+   * @param parentResource can be any of {@link CollectionSchema}, {@link ActionsSetSchema} or {@link EntitySchema}
+   * @param batchFinderSchema batchfinder being visited
+   */
+  void visitBatchFinder(VisitContext visitContext,
+                        RecordTemplate parentResource,
+                        BatchFinderSchema batchFinderSchema);
 
   /**
    * Callback function when the visitor visits a {@link ActionSchema}.

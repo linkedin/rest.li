@@ -19,6 +19,7 @@ package com.linkedin.restli.docgen;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.docgen.examplegen.ExampleRequestResponse;
 import com.linkedin.restli.restspec.ActionSchema;
+import com.linkedin.restli.restspec.BatchFinderSchema;
 import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
 
@@ -71,6 +72,14 @@ public class ResourceMethodDocView
   public FinderSchema getFinderSchema()
   {
     return (FinderSchema) _methodSchema;
+  }
+
+  /**
+   * @return method schema converted to {@link BatchFinderSchema}
+   */
+  public BatchFinderSchema getBatchFinderSchema()
+  {
+    return (BatchFinderSchema) _methodSchema;
   }
 
   /**

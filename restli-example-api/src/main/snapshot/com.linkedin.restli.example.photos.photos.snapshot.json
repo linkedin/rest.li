@@ -1,29 +1,5 @@
 {
   "models" : [ {
-    "type" : "enum",
-    "name" : "PhotoFormats",
-    "namespace" : "com.linkedin.restli.example",
-    "doc" : "enum type for photo formats",
-    "symbols" : [ "BMP", "JPG", "PNG" ],
-    "symbolDocs" : {
-      "BMP" : "Bitmap",
-      "JPG" : "Joint Photographic Experts Group",
-      "PNG" : "Portable Network Graphics"
-    }
-  }, {
-    "type" : "record",
-    "name" : "LatLong",
-    "namespace" : "com.linkedin.restli.example",
-    "fields" : [ {
-      "name" : "latitude",
-      "type" : "float",
-      "optional" : true
-    }, {
-      "name" : "longitude",
-      "type" : "float",
-      "optional" : true
-    } ]
-  }, {
     "type" : "record",
     "name" : "EXIF",
     "namespace" : "com.linkedin.restli.example",
@@ -34,10 +10,22 @@
       "optional" : true
     }, {
       "name" : "location",
-      "type" : "LatLong",
+      "type" : {
+        "type" : "record",
+        "name" : "LatLong",
+        "fields" : [ {
+          "name" : "latitude",
+          "type" : "float",
+          "optional" : true
+        }, {
+          "name" : "longitude",
+          "type" : "float",
+          "optional" : true
+        } ]
+      },
       "optional" : true
     } ]
-  }, {
+  }, "com.linkedin.restli.example.LatLong", {
     "type" : "record",
     "name" : "Photo",
     "namespace" : "com.linkedin.restli.example",
@@ -53,13 +41,36 @@
       "type" : "string"
     }, {
       "name" : "format",
-      "type" : "PhotoFormats"
+      "type" : {
+        "type" : "enum",
+        "name" : "PhotoFormats",
+        "doc" : "enum type for photo formats",
+        "symbols" : [ "BMP", "JPG", "PNG" ],
+        "symbolDocs" : {
+          "BMP" : "Bitmap",
+          "JPG" : "Joint Photographic Experts Group",
+          "PNG" : "Portable Network Graphics"
+        }
+      }
     }, {
       "name" : "exif",
       "type" : "EXIF",
       "doc" : "Exchangeable image file format"
     } ]
-  } ],
+  }, {
+    "type" : "record",
+    "name" : "PhotoCriteria",
+    "namespace" : "com.linkedin.restli.example",
+    "doc" : "A search criteria to filter photos.",
+    "fields" : [ {
+      "name" : "title",
+      "type" : "string",
+      "doc" : "title to filter on"
+    }, {
+      "name" : "format",
+      "type" : "PhotoFormats"
+    } ]
+  }, "com.linkedin.restli.example.PhotoFormats" ],
   "schema" : {
     "name" : "photos",
     "namespace" : "com.linkedin.restli.example.photos",
@@ -97,6 +108,19 @@
           "optional" : true
         } ],
         "pagingSupported" : true
+      } ],
+      "batchFinders" : [ {
+        "name" : "searchPhotos",
+        "parameters" : [ {
+          "name" : "criteria",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.example.PhotoCriteria\" }"
+        }, {
+          "name" : "exif",
+          "type" : "com.linkedin.restli.example.EXIF",
+          "optional" : true
+        } ],
+        "pagingSupported" : true,
+        "batchParam" : "criteria"
       } ],
       "actions" : [ {
         "name" : "purge",

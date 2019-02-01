@@ -27,6 +27,8 @@ import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionSchemaArray;
 import com.linkedin.restli.restspec.ActionsSetSchema;
 import com.linkedin.restli.restspec.AssociationSchema;
+import com.linkedin.restli.restspec.BatchFinderSchema;
+import com.linkedin.restli.restspec.BatchFinderSchemaArray;
 import com.linkedin.restli.restspec.CollectionSchema;
 import com.linkedin.restli.restspec.EntitySchema;
 import com.linkedin.restli.restspec.FinderSchema;
@@ -61,8 +63,8 @@ import java.util.TreeMap;
 public class ResourceSchemaCollection
 {
   /**
-   * For each given {@link ResourceModel}, the classpath is checked for a .restspec.json 
-   * matching the name of the {@link ResourceModel},  if found it is loaded.  If a .restspec.json file 
+   * For each given {@link ResourceModel}, the classpath is checked for a .restspec.json
+   * matching the name of the {@link ResourceModel},  if found it is loaded.  If a .restspec.json file
    * is not found, one is created {@link ResourceSchemaCollection} from specified root {@link ResourceModel}.
    * All resources will be recursively traversed to discover subresources.
    * Root resources not specified are excluded.
@@ -266,6 +268,7 @@ public class ResourceSchemaCollection
 
       processRestMethods(visitor, context, collectionSchema, collectionSchema.getMethods());
       processFinders(visitor, context, collectionSchema, collectionSchema.getFinders());
+      processBatchFinders(visitor, context, collectionSchema, collectionSchema.getBatchFinders());
       processActions(visitor, context, collectionSchema, collectionSchema.getActions());
 
       processEntitySchema(visitor, context, collectionSchema.getEntity());
@@ -277,6 +280,7 @@ public class ResourceSchemaCollection
 
       processRestMethods(visitor, context, associationSchema, associationSchema.getMethods());
       processFinders(visitor, context, associationSchema, associationSchema.getFinders());
+      processBatchFinders(visitor, context, associationSchema, associationSchema.getBatchFinders());
       processActions(visitor, context, associationSchema, associationSchema.getActions());
 
       processEntitySchema(visitor, context, associationSchema.getEntity());
@@ -370,6 +374,31 @@ public class ResourceSchemaCollection
     }
   }
 
+
+  private static void processBatchFinders(ResourceSchemaVisitior visitor,
+                                          ResourceSchemaVisitior.VisitContext context,
+                                          RecordTemplate containingResourceType,
+                                          BatchFinderSchemaArray batchFinders)
+  {
+    if (batchFinders != null)
+    {
+      for (BatchFinderSchema batchFinderSchema : batchFinders)
+      {
+        visitor.visitBatchFinder(context, containingResourceType, batchFinderSchema);
+
+        if (batchFinderSchema.hasParameters())
+        {
+          for (ParameterSchema parameterSchema : batchFinderSchema.getParameters())
+          {
+            visitor.visitParameter(context,
+                containingResourceType,
+                batchFinderSchema,
+                parameterSchema);
+          }
+        }
+      }
+    }
+  }
 
   private static void processActions(ResourceSchemaVisitior visitor,
                                      ResourceSchemaVisitior.VisitContext context,

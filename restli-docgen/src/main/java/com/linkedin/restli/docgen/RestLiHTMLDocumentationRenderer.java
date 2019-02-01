@@ -30,8 +30,10 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.docgen.examplegen.ExampleRequestResponse;
 import com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator;
 import com.linkedin.restli.internal.server.RestLiInternalException;
+import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.restspec.ActionSchema;
+import com.linkedin.restli.restspec.BatchFinderSchema;
 import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
@@ -69,7 +71,8 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
   public RestLiHTMLDocumentationRenderer(URI serverNodeUri,
                                          RestLiResourceRelationship relationships,
                                          TemplatingEngine templatingEngine,
-                                         DataSchemaResolver schemaResolver)
+                                         DataSchemaResolver schemaResolver,
+                                         Map<String, ResourceModel> rootResources)
   {
     _serverNodeUri = serverNodeUri;
     _docBaseUri = UriBuilder.fromUri(serverNodeUri).path("restli").path("docs").build();
@@ -77,6 +80,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     _resourceSchemas = _relationships.getResourceSchemaCollection();
     _templatingEngine = templatingEngine;
     _schemaResolver = schemaResolver;
+    _rootResources = rootResources;
   }
 
   @Override
@@ -117,6 +121,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
 
     final List<ResourceMethodDocView> restMethods = new ArrayList<ResourceMethodDocView>();
     final List<ResourceMethodDocView> finders = new ArrayList<ResourceMethodDocView>();
+    final List<ResourceMethodDocView> batchFinders = new ArrayList<ResourceMethodDocView>();
     final List<ResourceMethodDocView> actions = new ArrayList<ResourceMethodDocView>();
 
     final MethodGatheringResourceSchemaVisitor visitor = new MethodGatheringResourceSchemaVisitor(resourceName);
@@ -134,6 +139,18 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
       {
         FinderSchema finderMethodSchema = (FinderSchema)methodSchema;
         capture = generator.finder(finderMethodSchema.getName());
+      }
+      else if (methodSchema instanceof BatchFinderSchema)
+      {
+        BatchFinderSchema batchFinderSchema = (BatchFinderSchema)methodSchema;
+        ResourceModel resourceModel = null;
+        for (ResourceModel rm : _rootResources.values()) {
+          if (rm.getName().equals(resourceName)) {
+            resourceModel = rm;
+            break;
+          }
+        }
+        capture = generator.batchFinder(batchFinderSchema.getName(), resourceModel);
       }
       else if (methodSchema instanceof ActionSchema)
       {
@@ -189,6 +206,10 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
       {
         finders.add(docView);
       }
+      else if (methodSchema instanceof BatchFinderSchema)
+      {
+        batchFinders.add(docView);
+      }
       else if (methodSchema instanceof ActionSchema)
       {
         actions.add(docView);
@@ -196,6 +217,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     }
     pageModel.put("restMethods", restMethods);
     pageModel.put("finders", finders);
+    pageModel.put("batchFinders", batchFinders);
     pageModel.put("actions", actions);
     addRelated(resourceSchema, pageModel);
 
@@ -366,6 +388,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
   private final ResourceSchemaCollection _resourceSchemas;
   private final TemplatingEngine _templatingEngine;
   private final DataSchemaResolver _schemaResolver;
+  private final Map<String, ResourceModel> _rootResources;
 
   private final Map<Object, Map<String, ResourceSchema>> _relatedResourceCache =
       new HashMap<Object, Map<String, ResourceSchema>>();

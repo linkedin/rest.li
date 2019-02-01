@@ -21,6 +21,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionsSetSchema;
 import com.linkedin.restli.restspec.AssociationSchema;
+import com.linkedin.restli.restspec.BatchFinderSchema;
 import com.linkedin.restli.restspec.CollectionSchema;
 import com.linkedin.restli.restspec.EntitySchema;
 import com.linkedin.restli.restspec.FinderSchema;
@@ -54,6 +55,15 @@ public class LoggingResourceSchemaVisitor implements ResourceSchemaVisitior
                           FinderSchema finderSchema)
   {
     _logger.info("Visiting finder: " + finderSchema.getName());
+    _logger.info("resourcePath: " + visitContext.getResourcePath());
+  }
+
+  @Override
+  public void visitBatchFinder(VisitContext visitContext,
+      RecordTemplate parentResource,
+      BatchFinderSchema batchFinderSchema)
+  {
+    _logger.info("Visiting batch finder: " + batchFinderSchema.getName());
     _logger.info("resourcePath: " + visitContext.getResourcePath());
   }
 

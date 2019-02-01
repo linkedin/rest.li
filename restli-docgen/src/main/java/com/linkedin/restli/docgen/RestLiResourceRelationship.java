@@ -31,6 +31,7 @@ import com.linkedin.data.template.StringArray;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssociationSchema;
+import com.linkedin.restli.restspec.BatchFinderSchema;
 import com.linkedin.restli.restspec.CollectionSchema;
 import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.IdentifierSchema;
@@ -233,6 +234,22 @@ public class RestLiResourceRelationship
                               FinderSchema finderSchema)
       {
         final MetadataSchema metadata = finderSchema.getMetadata();
+        if (metadata != null)
+        {
+          final NamedDataSchema metadataTypeSchema = extractSchema(metadata.getType());
+          if (metadataTypeSchema != null)
+          {
+            connectSchemaToResource(visitContext, metadataTypeSchema);
+          }
+        }
+      }
+
+      @Override
+      public void visitBatchFinder(VisitContext visitContext,
+                                  RecordTemplate parentResource,
+                                  BatchFinderSchema batchFinderSchema)
+      {
+        final MetadataSchema metadata = batchFinderSchema.getMetadata();
         if (metadata != null)
         {
           final NamedDataSchema metadataTypeSchema = extractSchema(metadata.getType());

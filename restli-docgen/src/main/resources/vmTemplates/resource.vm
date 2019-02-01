@@ -129,15 +129,6 @@
                         #else
                           $param.type
                         #end
-                        #if ($param.hasItems())
-                          &lt;
-                          #if ($relatedSchemas.containsKey($param.items))
-                            <a href="$docBaseUri/data/$param.items">$param.items</a>
-                          #else
-                            $param.items
-                          #end
-                          &gt;
-                        #end
                       </li>
                     #end
                   </ul>
@@ -162,6 +153,87 @@ $finder.prettyPrintResponseEntity
     </dl>
     #end
 
+    #if (!$batchFinders.isEmpty())
+      <h2>Batch Finders</h2>
+
+      <dl class="methods">
+        #foreach ($batchFinder in $batchFinders)
+          #set ($batchFinderSchema = $batchFinder.batchFinderSchema)
+          <dt>$batchFinderSchema.name</dt>
+          <p>$!batchFinderSchema.doc</p>
+          #if ($batchFinderSchema.assocKeys)
+            <dd style="background: #F0F0F0; border: 1px dashed black; padding: 12px;">
+              <dl>
+                <dt>AssocKeys</dt>
+                <dd style="font-family: monospace;">
+                  <ul class="nobullet">
+                    #foreach ($assocKeyName in $batchFinderSchema.assocKeys)
+                      <li>
+                        $assocKeyName: $assocKeyMap.get($assocKeyName)
+                      </li>
+                    #end
+                  </ul>
+                </dd>
+              </dl>
+            </dd>
+          #end
+          #if ($batchFinderSchema.parameters)
+            <dd style="background: #F0F0F0; border: 1px dashed black; padding: 12px;">
+              <dl>
+                #if ($batchFinderSchema.parameters.size() > 1)
+                  <dt>Parameters</dt>
+                #end
+                <dd style="font-family: monospace;">
+                  <ul class="nobullet">
+                    #foreach ($param in $batchFinderSchema.parameters)
+                      <li>
+                        #if ($param.name == $batchFinderSchema.getBatchParam())
+                          #set($batchParam = $param)
+                        #else
+                          $param.name:
+                          #if ($relatedSchemas.containsKey($param.type))
+                            <a href="$docBaseUri/data/$param.type">$param.type</a>
+                          #else
+                            $param.type
+                          #end
+                        #end
+                      </li>
+                    #end
+                  </ul>
+                </dd>
+                <dt>Batch Parameter</dt>
+                <dd style="font-family: monospace;">
+                  <ul class="nobullet">
+                    <li>
+                      $batchParam.name:
+                      #if ($relatedSchemas.containsKey($batchParam.type))
+                        <a href="$docBaseUri/data/$batchParam.type">$batchParam.type</a>
+                      #else
+                        $batchParam.type
+                      #end
+                    </li>
+                  </ul>
+                </dd>
+              </dl>
+            </dd>
+          #end
+          <dd><pre class="prettyprint">curl -v -X GET $serverNodeUri$batchFinder.capture.request.URI -H 'X-RestLi-Protocol-Version: 2.0.0' </pre></dd>
+          <dd>
+          <pre class="prettyprint">
+GET $serverNodeUri$batchFinder.capture.request.URI HTTP/1.1
+
+HTTP/1.1 $batchFinder.capture.response.status OK
+#foreach ($headerName in $batchFinder.capture.response.headers.keySet())
+$headerName: $batchFinder.capture.response.headers.get($headerName)
+#end
+
+$batchFinder.prettyPrintResponseEntity
+          </pre>
+          </dd>
+        #end
+      </dl>
+    #end
+
     #if (!$actions.isEmpty())
     <h2>Actions</h2>
 
@@ -184,15 +256,6 @@ $finder.prettyPrintResponseEntity
                           <a href="$docBaseUri/data/$param.type">$param.type</a>
                         #else
                           $param.type
-                        #end
-                        #if ($param.hasItems())
-                          &lt;
-                          #if ($relatedSchemas.containsKey($param.items))
-                            <a href="$docBaseUri/data/$param.items">$param.items</a>
-                          #else
-                            $param.items
-                          #end
-                          &gt;
                         #end
                       </li>
                     #end

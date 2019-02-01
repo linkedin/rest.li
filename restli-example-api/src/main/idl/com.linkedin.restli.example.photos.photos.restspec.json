@@ -36,6 +36,19 @@
       } ],
       "pagingSupported" : true
     } ],
+    "batchFinders" : [ {
+      "name" : "searchPhotos",
+      "parameters" : [ {
+        "name" : "criteria",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.example.PhotoCriteria\" }"
+      }, {
+        "name" : "exif",
+        "type" : "com.linkedin.restli.example.EXIF",
+        "optional" : true
+      } ],
+      "pagingSupported" : true,
+      "batchParam" : "criteria"
+    } ],
     "actions" : [ {
       "name" : "purge",
       "returns" : "int"
