@@ -24,7 +24,8 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.codec.CodecDataProviders;
-import com.linkedin.data.codec.KSONDataCodec;
+import com.linkedin.data.codec.DataCodec;
+import com.linkedin.data.codec.JacksonLICORDataCodec;
 import com.linkedin.entitystream.CollectingReader;
 import com.linkedin.entitystream.EntityStream;
 import com.linkedin.entitystream.EntityStreams;
@@ -32,29 +33,24 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
-public class TestKSONDataEncoder
+public class TestJacksonLICORDataEncoder
 {
-  private static final KSONDataCodec KSON_TEXT_CODEC = new KSONDataCodec(false);
-  private static final KSONDataCodec KSON_BINARY_CODEC = new KSONDataCodec(true);
+  private static final JacksonLICORDataCodec TEXT_CODEC = new JacksonLICORDataCodec(false);
+  private static final JacksonLICORDataCodec BINARY_CODEC = new JacksonLICORDataCodec(true);
 
-  @Test(dataProvider = "codecData", dataProviderClass = CodecDataProviders.class)
-  public void testTextEncoder(String testName, DataComplex dataComplex) throws Exception
+  @Test(dataProvider = "LICORCodecData", dataProviderClass = CodecDataProviders.class)
+  public void testTextEncoder(String testName, DataComplex dataComplex, boolean useBinary) throws Exception
 
   {
-    assertEquals(actualEncode(dataComplex, false), TestUtil.dataComplexToBytes(KSON_TEXT_CODEC, dataComplex));
-  }
-
-  @Test(dataProvider = "codecData", dataProviderClass = CodecDataProviders.class)
-  public void testBinaryEncoder(String testName, DataComplex dataComplex) throws Exception
-  {
-    assertEquals(actualEncode(dataComplex, true), TestUtil.dataComplexToBytes(KSON_BINARY_CODEC, dataComplex));
+    DataCodec codec = useBinary ? BINARY_CODEC : TEXT_CODEC;
+    assertEquals(actualEncode(dataComplex, useBinary), TestUtil.dataComplexToBytes(codec, dataComplex));
   }
 
   private byte[] actualEncode(DataComplex data, boolean encodeBinary) throws Exception
   {
-    KSONDataEncoder
-        encoder = data instanceof DataMap ? new KSONDataEncoder((DataMap) data, 3, encodeBinary)
-        : new KSONDataEncoder((DataList) data, 3, encodeBinary);
+    JacksonLICORDataEncoder
+        encoder = data instanceof DataMap ? new JacksonLICORDataEncoder((DataMap) data, 3, encodeBinary)
+        : new JacksonLICORDataEncoder((DataList) data, 3, encodeBinary);
     EntityStream<ByteString> entityStream = EntityStreams.newEntityStream(encoder);
     CollectingReader<ByteString, ?, ChunkedByteStringCollector.Result> reader =
         new CollectingReader<>(new ChunkedByteStringCollector());

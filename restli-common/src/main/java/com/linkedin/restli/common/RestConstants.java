@@ -41,8 +41,8 @@ public interface RestConstants
   String HEADER_CONTENT_TYPE = "Content-Type";
   String HEADER_CONTENT_DISPOSITION = "Content-Disposition";
   String HEADER_VALUE_APPLICATION_JSON = "application/json";
-  String HEADER_VALUE_APPLICATION_KSON_TEXT = "application/kson";
-  String HEADER_VALUE_APPLICATION_KSON_BINARY = "application/x-kson";
+  String HEADER_VALUE_APPLICATION_LICOR_TEXT = "application/licor";
+  String HEADER_VALUE_APPLICATION_LICOR_BINARY = "application/x-licor";
   String HEADER_VALUE_APPLICATION_PSON = "application/x-pson";
   String HEADER_VALUE_APPLICATION_SMILE = "application/x-smile";
   String HEADER_VALUE_MULTIPART_RELATED = "multipart/related";
@@ -53,9 +53,8 @@ public interface RestConstants
 
   // Default supported mime types.
   Set<String> SUPPORTED_MIME_TYPES = new LinkedHashSet<>(
-      Arrays.asList(
-          HEADER_VALUE_APPLICATION_KSON_TEXT,
-          HEADER_VALUE_APPLICATION_KSON_BINARY,
+      Arrays.asList(HEADER_VALUE_APPLICATION_LICOR_TEXT,
+          HEADER_VALUE_APPLICATION_LICOR_BINARY,
           HEADER_VALUE_APPLICATION_SMILE,
           HEADER_VALUE_APPLICATION_PSON,
           HEADER_VALUE_APPLICATION_JSON));

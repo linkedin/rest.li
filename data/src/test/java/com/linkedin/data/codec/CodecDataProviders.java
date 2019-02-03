@@ -7,6 +7,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.TestData;
 import com.linkedin.data.TestUtil;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -36,7 +37,28 @@ public class CodecDataProviders
   }
 
   @DataProvider
+  public static Object[][] LICORCodecData()
+  {
+    List<Object[]> list = new ArrayList<>();
+    for (Map.Entry<String, DataComplex> entry : codecDataInputs().entrySet())
+    {
+      list.add(new Object[] {entry.getKey(), entry.getValue(), true});
+      list.add(new Object[] {entry.getKey(), entry.getValue(), false});
+    }
+
+    return list.toArray(new Object[][] {});
+  }
+
+  @DataProvider
   public static Object[][] codecData()
+  {
+    return codecDataInputs().entrySet().stream()
+        .map(entry -> new Object[] {entry.getKey(), entry.getValue()})
+        .collect(Collectors.toList())
+        .toArray(new Object[][] {});
+  }
+
+  private static Map<String, DataComplex> codecDataInputs()
   {
     final Map<String, DataComplex> inputs = new TreeMap<>();
 
@@ -198,10 +220,7 @@ public class CodecDataProviders
       inputs.put("Map of variable length strings", mapOfStrings);
     }
 
-    return inputs.entrySet().stream()
-        .map(entry -> new Object[] {entry.getKey(), entry.getValue()})
-        .collect(Collectors.toList())
-        .toArray(new Object[][] {});
+    return inputs;
   }
 
   @DataProvider
@@ -230,6 +249,19 @@ public class CodecDataProviders
                 TestUtil.asMap("long", 5573478247682805760L)
             },
         };
+  }
+
+  @DataProvider
+  public static Object[][] LICORNumbersData()
+  {
+    List<Object[]> list = new ArrayList<>();
+    for (Object[] element : numbersData())
+    {
+      list.add(new Object[] {element[0], true});
+      list.add(new Object[] {element[0], false});
+    }
+
+    return list.toArray(new Object[][] {});
   }
 
   @DataProvider

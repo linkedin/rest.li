@@ -35,15 +35,16 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 
 /**
- * A codec that serializes to and deserializes from KSON encoded data. The payload is serialized as JSON or SMILE
- * depending on whether the codec is configured to use binary or not.
+ * A codec that serializes to and deserializes from LICOR (LinkedIn Compact Object Representation) encoded data, using
+ * the Jackson {@link JsonFactory} under the hood.
  *
- * <p>KSON is a tweaked version of JSON that serializes maps as lists, and has support for serializing field IDs
- * in lieu of field names using an optional symbol table.</p>
+ * <p>LICOR is a tweaked version of JSON that serializes maps as lists, and has support for serializing field IDs
+ * in lieu of field names using an optional symbol table. The payload is serialized as JSON or SMILE depending on
+ * whether the codec is configured to use binary or not.</p>
  *
  * @author kramgopa
  */
-public class KSONDataCodec extends AbstractJacksonDataCodec
+public class JacksonLICORDataCodec extends AbstractJacksonDataCodec
 {
   private static final JsonFactory TEXT_FACTORY = new JsonFactory();
   private static final JsonFactory BINARY_FACTORY = new SmileFactory();
@@ -67,12 +68,12 @@ public class KSONDataCodec extends AbstractJacksonDataCodec
     _symbolTableProvider = symbolTableProvider;
   }
 
-  public KSONDataCodec(boolean useBinary)
+  public JacksonLICORDataCodec(boolean useBinary)
   {
     this(useBinary, null);
   }
 
-  public KSONDataCodec(boolean useBinary, String symbolTableName)
+  public JacksonLICORDataCodec(boolean useBinary, String symbolTableName)
   {
     super(getFactory(useBinary));
 
@@ -92,7 +93,7 @@ public class KSONDataCodec extends AbstractJacksonDataCodec
   {
     try
     {
-      Object object = new KSONParser(jsonParser, _symbolTable).parse(true);
+      Object object = new LICORParser(jsonParser, _symbolTable).parse(true);
       if (expectType == DataMap.class && (object instanceof DataMap))
       {
         return (T)object;
@@ -116,13 +117,13 @@ public class KSONDataCodec extends AbstractJacksonDataCodec
   protected List<Object> parse(JsonParser jsonParser, StringBuilder mesg, Map<Object, DataLocation> locationMap)
       throws IOException
   {
-    throw new UnsupportedOperationException("Debug mode is not supported with KSON");
+    throw new UnsupportedOperationException("Debug mode is not supported with LICOR");
   }
 
   @Override
   protected Data.TraverseCallback createTraverseCallback(JsonGenerator generator)
   {
-    return new KSONTraverseCallback(generator, _symbolTable);
+    return new LICORTraverseCallback(generator, _symbolTable);
   }
 
   private static JsonFactory getFactory(boolean encodeBinary)
@@ -130,12 +131,12 @@ public class KSONDataCodec extends AbstractJacksonDataCodec
     return encodeBinary ? BINARY_FACTORY : TEXT_FACTORY;
   }
 
-  private static class KSONParser
+  private static class LICORParser
   {
     private final JsonParser _parser;
     private final SymbolTable _symbolTable;
 
-    KSONParser(JsonParser jsonParser, SymbolTable symbolTable)
+    LICORParser(JsonParser jsonParser, SymbolTable symbolTable)
     {
       _parser = jsonParser;
       _symbolTable = symbolTable;
@@ -244,11 +245,11 @@ public class KSONDataCodec extends AbstractJacksonDataCodec
   }
 
 
-  private static class KSONTraverseCallback extends JacksonTraverseCallback
+  private static class LICORTraverseCallback extends JacksonTraverseCallback
   {
     private final SymbolTable _symbolTable;
 
-    KSONTraverseCallback(JsonGenerator generator, SymbolTable symbolTable)
+    LICORTraverseCallback(JsonGenerator generator, SymbolTable symbolTable)
     {
       super(generator);
       _symbolTable = symbolTable;

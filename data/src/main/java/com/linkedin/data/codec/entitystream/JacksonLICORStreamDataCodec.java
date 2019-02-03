@@ -30,15 +30,16 @@ import com.linkedin.entitystream.EntityStreams;
 import java.util.concurrent.CompletionStage;
 
 /**
- * An {@link StreamDataCodec} for KSON backed by Jackson's parser and generator.
+ * An {@link StreamDataCodec} for A LICOR (LinkedIn Compact Object Representation) backed by Jackson's non-blocking
+ * parser and generator.
  *
- * <p>KSON is a tweaked version of JSON that serializes maps as lists, and has support for serializing field IDs
- * in lieu of field names using an optional symbol table. The payload is serialized as JSON or SMILE depending
- * on whether the codec is configured to use binary or not.</p>
+ * <p>LICOR is a tweaked version of JSON that serializes maps as lists, and has support for serializing field IDs
+ * in lieu of field names using an optional symbol table. The payload is serialized as JSON or SMILE depending on
+ * whether the codec is configured to use binary or not.</p>
  *
  * @author kramgopa
  */
-public class KSONStreamDataCodec implements StreamDataCodec
+public class JacksonLICORStreamDataCodec implements StreamDataCodec
 {
   private static volatile SymbolTableProvider _symbolTableProvider;
 
@@ -65,12 +66,12 @@ public class KSONStreamDataCodec implements StreamDataCodec
     _symbolTableProvider = symbolTableProvider;
   }
 
-  public KSONStreamDataCodec(int bufferSize, boolean useBinary)
+  public JacksonLICORStreamDataCodec(int bufferSize, boolean useBinary)
   {
     this(bufferSize, useBinary, null);
   }
 
-  public KSONStreamDataCodec(int bufferSize, boolean useBinary, String symbolTableName)
+  public JacksonLICORStreamDataCodec(int bufferSize, boolean useBinary, String symbolTableName)
   {
     _bufferSize = bufferSize;
     _useBinary = useBinary;
@@ -89,7 +90,7 @@ public class KSONStreamDataCodec implements StreamDataCodec
   @Override
   public CompletionStage<DataMap> decodeMap(EntityStream<ByteString> entityStream)
   {
-    KSONDataDecoder<DataMap> decoder = new KSONDataDecoder<>(_useBinary, false, _symbolTable);
+    JacksonLICORDataDecoder<DataMap> decoder = new JacksonLICORDataDecoder<>(_useBinary, false, _symbolTable);
     entityStream.setReader(decoder);
     return decoder.getResult();
   }
@@ -98,7 +99,7 @@ public class KSONStreamDataCodec implements StreamDataCodec
   @Override
   public CompletionStage<DataList> decodeList(EntityStream<ByteString> entityStream)
   {
-    KSONDataDecoder<DataList> decoder = new KSONDataDecoder<>(_useBinary, true, _symbolTable);
+    JacksonLICORDataDecoder<DataList> decoder = new JacksonLICORDataDecoder<>(_useBinary, true, _symbolTable);
     entityStream.setReader(decoder);
     return decoder.getResult();
   }
@@ -106,14 +107,14 @@ public class KSONStreamDataCodec implements StreamDataCodec
   @Override
   public EntityStream<ByteString> encodeMap(DataMap map)
   {
-    KSONDataEncoder encoder = new KSONDataEncoder(map, _bufferSize, _useBinary, _symbolTable);
+    JacksonLICORDataEncoder encoder = new JacksonLICORDataEncoder(map, _bufferSize, _useBinary, _symbolTable);
     return EntityStreams.newEntityStream(encoder);
   }
 
   @Override
   public EntityStream<ByteString> encodeList(DataList list)
   {
-    KSONDataEncoder encoder = new KSONDataEncoder(list, _bufferSize, _useBinary, _symbolTable);
+    JacksonLICORDataEncoder encoder = new JacksonLICORDataEncoder(list, _bufferSize, _useBinary, _symbolTable);
     return EntityStreams.newEntityStream(encoder);
   }
 

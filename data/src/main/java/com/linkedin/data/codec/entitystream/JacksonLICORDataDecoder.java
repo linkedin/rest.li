@@ -39,20 +39,21 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
-import static com.linkedin.data.codec.entitystream.KSONDataDecoder.Token.*;
+import static com.linkedin.data.codec.entitystream.JacksonLICORDataDecoder.Token.*;
 
 /**
- * A KSON decoder for a {@link DataComplex} object implemented as a {@link com.linkedin.entitystream.Reader} reading
- * from an {@link com.linkedin.entitystream.EntityStream} of ByteString. The implementation is backed by Jackson's
- * {@link NonBlockingByteArrayParser}. Because the raw bytes are pushed to the decoder, it keeps the partially built
- * data structure in a stack.
+ * A LICOR (LinkedIn Compact Object Representation) decoder for a {@link DataComplex} object implemented as a
+ * {@link com.linkedin.entitystream.Reader} reading from an {@link com.linkedin.entitystream.EntityStream} of
+ * ByteString. The implementation is backed by Jackson's {@link NonBlockingByteArrayParser}. Because the raw bytes are
+ * pushed to the decoder, it keeps the partially built data structure in a stack.
  *
- * <p>KSON is a tweaked version of JSON that serializes maps as lists, and has support for serializing field IDs
- * in lieu of field names using an optional symbol table.</p>
+ * <p>LICOR is a tweaked version of JSON that serializes maps as lists, and has support for serializing field IDs
+ * in lieu of field names using an optional symbol table. The payload is serialized as JSON or SMILE depending on
+ * whether the codec is configured to use binary or not.</p>
  *
  * @author kramgopa
  */
-class KSONDataDecoder<T extends DataComplex> implements DataDecoder<T>
+class JacksonLICORDataDecoder<T extends DataComplex> implements DataDecoder<T>
 {
   /**
    * Internal tokens. Each token is presented by a bit in a byte.
@@ -98,20 +99,20 @@ class KSONDataDecoder<T extends DataComplex> implements DataDecoder<T>
   private ByteString _currentChunk;
   private int _currentChunkIndex = -1;
 
-  public KSONDataDecoder(boolean decodeBinary)
+  public JacksonLICORDataDecoder(boolean decodeBinary)
   {
     this(decodeBinary, false, null);
     _expectedStartMarker = null;
   }
 
-  public KSONDataDecoder(boolean decodeBinary, boolean isDataList, SymbolTable symbolTable)
+  public JacksonLICORDataDecoder(boolean decodeBinary, boolean isDataList, SymbolTable symbolTable)
   {
-    _jsonFactory = KSONStreamDataCodec.getFactory(decodeBinary);
+    _jsonFactory = JacksonLICORStreamDataCodec.getFactory(decodeBinary);
     _completable = new CompletableFuture<>();
     _result = null;
     _stack = new ArrayDeque<>();
     _expectedTokens = START_ARRAY.bitPattern;
-    _expectedStartMarker = isDataList ? KSONStreamDataCodec.LIST_ORDINAL : KSONStreamDataCodec.MAP_ORDINAL;
+    _expectedStartMarker = isDataList ? JacksonLICORStreamDataCodec.LIST_ORDINAL : JacksonLICORStreamDataCodec.MAP_ORDINAL;
     _symbolTable = symbolTable;
   }
 
@@ -220,12 +221,12 @@ class KSONDataDecoder<T extends DataComplex> implements DataDecoder<T>
 
                   switch (marker)
                   {
-                    case KSONStreamDataCodec.LIST_ORDINAL:
+                    case JacksonLICORStreamDataCodec.LIST_ORDINAL:
                     {
                       push(new DataList(), true);
                       break;
                     }
-                    case KSONStreamDataCodec.MAP_ORDINAL:
+                    case JacksonLICORStreamDataCodec.MAP_ORDINAL:
                     {
                       push(new DataMap(), false);
                       break;
@@ -398,9 +399,9 @@ class KSONDataDecoder<T extends DataComplex> implements DataDecoder<T>
   {
     return tokens == 0
         ? "no tokens"
-        : Arrays.stream(KSONDataDecoder.Token.values())
+        : Arrays.stream(JacksonLICORDataDecoder.Token.values())
             .filter(token -> (tokens & token.bitPattern) > 0)
-            .map(KSONDataDecoder.Token::name)
+            .map(JacksonLICORDataDecoder.Token::name)
             .collect(Collectors.joining(", "));
   }
 }

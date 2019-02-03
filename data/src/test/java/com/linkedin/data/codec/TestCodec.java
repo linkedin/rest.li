@@ -16,8 +16,6 @@
 
 package com.linkedin.data.codec;
 
-import com.fasterxml.jackson.dataformat.smile.SmileFactory;
-import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
@@ -40,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
@@ -251,7 +248,7 @@ public class TestCodec
     final String sharedSymbolTableName = "SHARED";
     SymbolTable symbolTable = new InMemorySymbolTable(new ArrayList<>(symbols));
 
-    KSONDataCodec.setSymbolTableProvider(symbolTableName -> {
+    JacksonLICORDataCodec.setSymbolTableProvider(symbolTableName -> {
       if (sharedSymbolTableName.equals(symbolTableName))
       {
         return symbolTable;
@@ -259,8 +256,8 @@ public class TestCodec
 
       return null;
     });
-    codecs.add(new KSONBinaryDataCodec(sharedSymbolTableName));
-    codecs.add(new KSONTextDataCodec(sharedSymbolTableName));
+    codecs.add(new JacksonLICORBinaryDataCodec(sharedSymbolTableName));
+    codecs.add(new JacksonLICORTextDataCodec(sharedSymbolTableName));
 
     for (DataCodec codec : codecs)
     {
@@ -313,17 +310,17 @@ public class TestCodec
     }
   }
 
-  private static class KSONTextDataCodec extends KSONDataCodec
+  private static class JacksonLICORTextDataCodec extends JacksonLICORDataCodec
   {
-    KSONTextDataCodec(String symbolTableName)
+    JacksonLICORTextDataCodec(String symbolTableName)
     {
       super(false, symbolTableName);
     }
   }
 
-  private static class KSONBinaryDataCodec extends KSONDataCodec
+  private static class JacksonLICORBinaryDataCodec extends JacksonLICORDataCodec
   {
-    KSONBinaryDataCodec(String symbolTableName)
+    JacksonLICORBinaryDataCodec(String symbolTableName)
     {
       super(true, symbolTableName);
     }

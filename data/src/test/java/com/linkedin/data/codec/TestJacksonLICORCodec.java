@@ -20,19 +20,12 @@ import com.linkedin.data.DataComplex;
 import java.io.IOException;
 import org.testng.annotations.Test;
 
-public class TestKSONCodec extends TestCodec
+public class TestJacksonLICORCodec extends TestCodec
 {
-  @Test(dataProvider = "codecData", dataProviderClass = CodecDataProviders.class)
-  public void testKSONTextDataCodec(String testName, DataComplex dataComplex) throws IOException
+  @Test(dataProvider = "LICORCodecData", dataProviderClass = CodecDataProviders.class)
+  public void testLICORTextDataCodec(String testName, DataComplex dataComplex, boolean useBinary) throws IOException
   {
-    KSONDataCodec codec = new KSONDataCodec(false);
-    testDataCodec(codec, dataComplex);
-  }
-
-  @Test(dataProvider = "codecData", dataProviderClass = CodecDataProviders.class)
-  public void testKSONBinaryDataCodec(String testName, DataComplex dataComplex) throws IOException
-  {
-    KSONDataCodec codec = new KSONDataCodec(true);
+    JacksonLICORDataCodec codec = new JacksonLICORDataCodec(useBinary);
     testDataCodec(codec, dataComplex);
   }
 }

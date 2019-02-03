@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * Provides a custom codec instance based on the request headers.
  *
- * <p>This is useful for codecs like KSON that pick the symbol table to use based on the header.</p>
+ * <p>This is useful for codecs like LICOR that pick the symbol table to use based on the header.</p>
  */
 public interface HeaderBasedCodecProvider {
 

@@ -19,12 +19,12 @@ package com.linkedin.restli.common;
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.HeaderBasedCodecProvider;
 import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.codec.KSONDataCodec;
+import com.linkedin.data.codec.JacksonLICORDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.codec.JacksonSmileDataCodec;
 import com.linkedin.data.codec.entitystream.JacksonStreamDataCodec;
 import com.linkedin.data.codec.entitystream.JacksonSmileStreamDataCodec;
-import com.linkedin.data.codec.entitystream.KSONStreamDataCodec;
+import com.linkedin.data.codec.entitystream.JacksonLICORStreamDataCodec;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
 import com.linkedin.r2.filter.R2Constants;
 
@@ -45,10 +45,12 @@ public class ContentType
 {
   private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();
   private static final JacksonStreamDataCodec JACKSON_STREAM_DATA_CODEC = new JacksonStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
-  private static final KSONDataCodec KSON_TEXT_DATA_CODEC = new KSONDataCodec(false);
-  private static final KSONStreamDataCodec KSON_TEXT_STREAM_DATA_CODEC = new KSONStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, false);
-  private static final KSONDataCodec KSON_BINARY_DATA_CODEC = new KSONDataCodec(true);
-  private static final KSONStreamDataCodec KSON_BINARY_STREAM_DATA_CODEC = new KSONStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, true);
+  private static final JacksonLICORDataCodec LICOR_TEXT_DATA_CODEC = new JacksonLICORDataCodec(false);
+  private static final JacksonLICORStreamDataCodec
+      LICOR_TEXT_STREAM_DATA_CODEC = new JacksonLICORStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, false);
+  private static final JacksonLICORDataCodec LICOR_BINARY_DATA_CODEC = new JacksonLICORDataCodec(true);
+  private static final JacksonLICORStreamDataCodec
+      LICOR_BINARY_STREAM_DATA_CODEC = new JacksonLICORStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, true);
   private static final PsonDataCodec PSON_DATA_CODEC = new PsonDataCodec();
   private static final JacksonSmileDataCodec SMILE_DATA_CODEC = new JacksonSmileDataCodec();
   private static final JacksonSmileStreamDataCodec SMILE_STREAM_DATA_CODEC = new JacksonSmileStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
@@ -57,28 +59,30 @@ public class ContentType
       new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PSON, PSON_DATA_CODEC, null, null);
   public static final ContentType JSON =
       new ContentType(RestConstants.HEADER_VALUE_APPLICATION_JSON, JACKSON_DATA_CODEC, JACKSON_STREAM_DATA_CODEC, null);
-  public static final ContentType KSON_TEXT =
-      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_KSON_TEXT, KSON_TEXT_DATA_CODEC, KSON_TEXT_STREAM_DATA_CODEC, new HeaderBasedCodecProvider() {
+  public static final ContentType LICOR_TEXT =
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_LICOR_TEXT, LICOR_TEXT_DATA_CODEC,
+          LICOR_TEXT_STREAM_DATA_CODEC, new HeaderBasedCodecProvider() {
         @Override
         public DataCodec getCodec(Map<String, String> requestHeaders) {
-          return new KSONDataCodec(false, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
+          return new JacksonLICORDataCodec(false, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
         }
 
         @Override
         public StreamDataCodec getStreamCodec(Map<String, String> requestHeaders) {
-          return new KSONStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, false, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
+          return new JacksonLICORStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, false, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
         }
       });
-  public static final ContentType KSON_BINARY =
-      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_KSON_BINARY, KSON_BINARY_DATA_CODEC, KSON_BINARY_STREAM_DATA_CODEC, new HeaderBasedCodecProvider() {
+  public static final ContentType LICOR_BINARY =
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_LICOR_BINARY, LICOR_BINARY_DATA_CODEC,
+          LICOR_BINARY_STREAM_DATA_CODEC, new HeaderBasedCodecProvider() {
         @Override
         public DataCodec getCodec(Map<String, String> requestHeaders) {
-          return new KSONDataCodec(true, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
+          return new JacksonLICORDataCodec(true, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
         }
 
         @Override
         public StreamDataCodec getStreamCodec(Map<String, String> requestHeaders) {
-          return new KSONStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, true, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
+          return new JacksonLICORStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, true, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
         }
       });
   public static final ContentType SMILE =
@@ -93,8 +97,8 @@ public class ContentType
     // Include content types supported by Rest.Li by default.
     SUPPORTED_TYPES.put(PSON.getHeaderKey(), PSON);
     SUPPORTED_TYPES.put(JSON.getHeaderKey(), JSON);
-    SUPPORTED_TYPES.put(KSON_TEXT.getHeaderKey(), KSON_TEXT);
-    SUPPORTED_TYPES.put(KSON_BINARY.getHeaderKey(), KSON_BINARY);
+    SUPPORTED_TYPES.put(LICOR_TEXT.getHeaderKey(), LICOR_TEXT);
+    SUPPORTED_TYPES.put(LICOR_BINARY.getHeaderKey(), LICOR_BINARY);
     SUPPORTED_TYPES.put(SMILE.getHeaderKey(), SMILE);
   }
 

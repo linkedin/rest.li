@@ -127,13 +127,13 @@ public class TestGreetingsClientAcceptContentTypeHeader extends RestLiIntegratio
         },
         {
             new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
-                ContentType.KSON_TEXT)).build())),
-            RestConstants.HEADER_VALUE_APPLICATION_KSON_TEXT
+                ContentType.LICOR_TEXT)).build())),
+            RestConstants.HEADER_VALUE_APPLICATION_LICOR_TEXT
         },
         {
             new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
-                ContentType.KSON_BINARY)).build())),
-            RestConstants.HEADER_VALUE_APPLICATION_KSON_BINARY
+                ContentType.LICOR_BINARY)).build())),
+            RestConstants.HEADER_VALUE_APPLICATION_LICOR_BINARY
         }
     };
   }

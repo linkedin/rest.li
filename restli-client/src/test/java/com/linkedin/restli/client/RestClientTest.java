@@ -165,8 +165,8 @@ public class RestClientTest
   private enum ContentTypeOption
   {
     JSON(ContentType.JSON),
-    KSON_TEXT(ContentType.KSON_TEXT),
-    KSON_BINARY(ContentType.KSON_BINARY),
+    LICOR_TEXT(ContentType.LICOR_TEXT),
+    LICOR_BINARY(ContentType.LICOR_BINARY),
     PSON(ContentType.PSON),
     SMILE(ContentType.SMILE);
 
