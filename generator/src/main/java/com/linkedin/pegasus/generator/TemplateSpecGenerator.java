@@ -49,8 +49,8 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -70,7 +70,7 @@ public class TemplateSpecGenerator
   private static final String MAP_SUFFIX = "Map";
   private static final String[] SPECIAL_SUFFIXES = {ARRAY_SUFFIX, MAP_SUFFIX};
 
-  private final Collection<ClassTemplateSpec> _classTemplateSpecs = new HashSet<ClassTemplateSpec>();
+  private final Collection<ClassTemplateSpec> _classTemplateSpecs = new LinkedHashSet<>();
   /**
    * Map of {@link ClassTemplateSpec} to {@link DataSchemaLocation}.
    */

@@ -1,7 +1,11 @@
-26.0.16
+26.0.17
 -------
 
 
+26.0.16
+-------
+(RB=1552174)
+Use ordered collection for classTemplateSpecs field
 
 26.0.15
 -------
