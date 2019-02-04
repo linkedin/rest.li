@@ -1,14 +1,13 @@
 ---
 layout: contribute
-title: Contribute
+title: How to contribute to Rest.li
 permalink: /contribute/howto
-index: 4
+excerpt: Contributions to Rest.li are welcome!
 ---
 
-# How to contribute
+# How to contribute to Rest.li
 
-### Contributions to Rest.li are welcome!
-
+## Contributions to Rest.li are welcome!
 
 To make the process as smooth as possible, we recommend following a few guidelines:
   - Read our architecture and protocols.

@@ -2,6 +2,7 @@
 layout: guide
 title: Rest.li Filters
 permalink: /Rest_li-Filters
+excerpt: Rest.li provides a mechanism to intercept incoming requests and outgoing responses via filters. Each Rest.li filter contains methods that handle both requests and responses.
 ---
 # Rest.li Filters
 

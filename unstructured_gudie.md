@@ -1,11 +1,12 @@
 ---
 layout: guide
-title: Unstructured data use guide
+title: Unstructured data (blob) user guide
 permalink: /user_guide/unstructured_data
+excerpt: This user guide is about working with unstructured data (BLOB) in Rest.li framework.
 index: 2
 ---
 
-# Unstructured Data User Guide
+# Unstructured Data (BLOB) User Guide
 
 ## Contents
 

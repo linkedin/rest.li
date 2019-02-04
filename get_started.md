@@ -2,6 +2,7 @@
 layout: get_started
 title: Rest.li Quick Start Guide
 permalink: /get_started/quick_start
+excerpt: Rest.li Quick Start Guide. Follow the steps below to try Rest.li quickly and get a basic idea of how it works
 index: 1
 ---
 
@@ -9,7 +10,7 @@ index: 1
 
 ## Contents
 
-Follow the steps below to try Pegasus quickly and get a basic idea of how it works:
+Follow the steps below to try Rest.li quickly and get a basic idea of how it works:
 
 * [Build](#Build)
 * [Run the Examples](#run-the-examples)
@@ -18,7 +19,7 @@ Follow the steps below to try Pegasus quickly and get a basic idea of how it wor
 
 ## Build
 
-Pegasus uses [Gradle](http://www.gradle.org/) as the build system. The following points summarize some basic tasks you can do:
+Rest.li uses [Gradle](http://www.gradle.org/) as the build system. The following points summarize some basic tasks that can be run:
 
 1. Build (implies test)
 
@@ -48,7 +49,7 @@ Tasks can be executed on a per-module basis. For example, do this to only build 
 
 ## Run the Examples
 
-Pegasus comes with a set of examples to illustrate how the server and client interact. We have created Gradle tasks to run the server and client. There are 4 variants; all of them reside in [restli-example-server](https://github.com/linkedin/rest.li/tree/master/restli-example-server) and [restli-example-client](https://github.com/linkedin/rest.li/tree/master/restli-example-client) modules:
+Rest.li comes with a set of examples to illustrate how the server and client interact. Rest.Li provides gradle tasks to run the server and client. There are 4 variants; all of them reside in [restli-example-server](https://github.com/linkedin/rest.li/tree/master/restli-example-server) and [restli-example-client](https://github.com/linkedin/rest.li/tree/master/restli-example-client) modules:
 
 * Basic example server without D2 [RestLiExampleBasicServer](https://github.com/linkedin/rest.li/blob/master/restli-example-server/src/main/java/com/linkedin/restli/example/RestLiExampleBasicServer.java)
 * Example server with D2 [RestLiExampleD2Server](https://github.com/linkedin/rest.li/blob/master/restli-example-server/src/main/java/com/linkedin/restli/example/RestLiExampleD2Server.java)

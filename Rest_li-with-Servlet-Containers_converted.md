@@ -1,10 +1,11 @@
 ---
 layout: api_reference
-title: Rest.li-with-Servlet-Containers
+title: Rest.li with servlet containers
 permalink: /Rest_li-with-Servlet-Containers
+excerpt: Rest.li may be run in a variety of http frameworks. Out of the box, Rest.li supports both Netty and Servlet containers, such as Jetty.
 ---
 
-# Rest.li with Servlet Containers
+# Rest.li With Servlet Containers
 
 ## Contents
 

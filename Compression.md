@@ -1,7 +1,8 @@
 ---
 layout: guide
-title: Compression
+title: Rest.li compression
 permalink: /Compression
+excerpt: Rest.li compression
 ---
 # Rest.li Compression
 

@@ -2,6 +2,7 @@
 layout: guide
 title: Rest.li Projections
 permalink: /Projections
+excerpt: Rest.li projection
 ---
 
 # Rest.li Projections

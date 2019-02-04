@@ -1,9 +1,10 @@
 ---
 layout: api_reference
-title: Spring-Dependency-Injection
+title: Spring dependency injection with Rest.li
 permalink: /Spring-Dependency-Injection
+excerpt: Spring dependency injection can be used with Rest.li.
 ---
-# Spring Dependency Injection
+# Spring Dependency Injection With Rest.li
 
 Spring dependency injection may be used with Rest.li by using the
 [restli-spring-bridge](https://github.com/linkedin/rest.li/tree/master/restli-spring-bridge)

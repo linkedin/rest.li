@@ -2,6 +2,7 @@
 layout: guide
 title: Modeling Resources with Rest.li
 permalink: /modeling/modeling
+excerpt: This document will describe how to model a resource using Rest.li.
 index: 2
 ---
 
@@ -18,9 +19,7 @@ index: 2
   - [When All Else Fails: Non-Uniform
     Interfaces](#when-all-else-fails-non-uniform-interfaces)
 
-This document will help you model your resource using Rest.li. Before
-reading this page, you may want to get a feel for how to write and build
-code with Rest.li by reading the [Tutorial to Create a Server and Client](/rest.li/start/step_by_step).
+This document will describe how to model a resource using Rest.li. Before reading this page, you may want to get a feel for how to write and build code with Rest.li by reading the [Tutorial to Create a Server and Client](/rest.li/start/step_by_step).
 
 ## Rest.li’s Uniform Interface
 

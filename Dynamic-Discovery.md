@@ -1,10 +1,11 @@
 ---
 layout: api_reference
-title: Dynamic_Discovery
+title: Dynamic Discovery (D2)
 permalink: /Dynamic_Discovery
+excerpt: Dynamic Discovery (D2) is a layer of indirection similar to DNS for the rest.li framework.
 ---
 
-# Dynamic Discovery
+# Dynamic Discovery (D2)
 
 ## Contents
 

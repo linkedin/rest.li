@@ -1,7 +1,8 @@
 ---
 layout: guide
-title: Data-FAQ
+title: Rest.li FAQ
 permalink: /Data-FAQ
+excerpt: Rest.li FAQ
 ---
 
 # Rest.li FAQ

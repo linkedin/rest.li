@@ -1,7 +1,8 @@
 ---
 layout: guide
-title: Rest.li Avro Conversions
+title: Rest.li to Avro conversions
 permalink: /Rest_li_Avro_conversions
+excerpt: Sometimes it is necessary to convert between Avro and Rest.li formats. That is, either converting schemas or converting data. Rest.li provides ways to do this using the data-avro module.
 ---
 
 # Rest.li to Avro Conversions
