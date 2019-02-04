@@ -1,7 +1,8 @@
 ---
 layout: get_started
-title: Tutorial to Create a Rest.li Server and Client
+title: Quickstart - A Tutorial Introduction to Rest.li
 permalink: /start/step_by_step
+excerpt: Quickstart - A step by step tutorial introduction to Rest.li. Create a Rest.li Server and Client.
 index: 1
 ---
 

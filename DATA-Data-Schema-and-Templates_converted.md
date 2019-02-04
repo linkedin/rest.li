@@ -1,10 +1,11 @@
 ---
 layout: guide
-title: DATA-Data-Schema-and-Templates
+title: Rest.li Data schema and templates
 permalink: /DATA-Data-Schema-and-Templates
+excerpt: The Pegasus Data layer includes the schema definition language, how this data will be serialized for transport, how this data will be represented in memory and the generic and type-safe Java API’s for manipulating data.
 ---
 
-# Data Schema and Templates
+# Rest.li Data Schema And Templates
 
 ## Contents
 

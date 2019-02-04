@@ -1,10 +1,11 @@
 ---
 layout: guide
-title: Asynchronous-Servers-and-Clients-in-Rest.li
+title: Asynchronous Servers and Clients In Rest.li
 permalink: /Asynchronous-Servers-and-Clients-in-Rest_li
+excerpt: Rest.li is asynchronous and non-blocking under the hood. This section covers asynchronous servers and slients in Rest.li
 ---
 
-# Asynchronous Servers and Clients in Rest.li
+# Asynchronous Servers And Clients In Rest.li
 
 ## Contents
 

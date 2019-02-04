@@ -1,8 +1,9 @@
 ---
 layout: api_reference
-title: RestSpec format
+title: Rest.li restspec (IDL) format
 permalink: /spec/restspec_format
 index: 2
+excerpt: Rest.li restspec (IDL) format
 ---
 
 # Rest.li restspec format

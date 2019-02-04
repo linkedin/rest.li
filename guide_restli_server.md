@@ -1,11 +1,12 @@
 ---
 layout: guide
-title: Developer guide
+title: Rest.li server user guide
 permalink: /user_guide/restli_server
+excerpt: This document describes Rest.li support for implementing servers.
 index: 2
 ---
 
-# Rest.li Server
+# Rest.li Server User Guide
 
 ## Contents
 

@@ -1,11 +1,12 @@
 ---
 layout: api_reference
-title: API Reference
+title: Return entity in Rest.li
 permalink: /spec/return_entity
 index: 2
+excerpt: This page describes returning the entity for resource methods that are not originally intended to return the entity.
 ---
 
-# Return Entity
+# Return Entity in Rest.li
 
 ## Contents
 

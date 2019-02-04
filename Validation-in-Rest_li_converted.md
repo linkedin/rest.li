@@ -1,10 +1,11 @@
 ---
 layout: guide
-title: Validation-in-Rest.li
+title: Validation in Rest.li
 permalink: /Validation-in-Rest_li
+excerpt: Rest.li validation
 ---
 
-# Validation
+# Validation In Rest.li
 
 ## Contents
 

@@ -1,11 +1,12 @@
 ---
 layout: guide
-title: Developer guide
+title: Rest.li client user guide
 permalink: /user_guide/restli_client
+excerpt: The Rest.li client framework provides support for accessing resources defined using Rest.li. The client framework consists of a request builder and a Rest client
 index: 2
 ---
 
-# Rest.li Client Framework
+# Rest.li Client User Guide
 
 ## Contents
 

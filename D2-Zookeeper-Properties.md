@@ -1,10 +1,11 @@
 ---
 layout: api_reference
-title: D2 Zookeeper Properties
+title: D2 Zookeeper configuration properties
 permalink: /D2-Zookeeper-Properties
+excerpt: D2 Zookeeper configuration properties
 ---
 
-# D2 Configuration Properties
+# D2 Zookeeper Configuration Properties
 
 ## Contents
 

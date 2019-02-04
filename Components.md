@@ -1,19 +1,20 @@
 ---
 layout: guide
-title: Components
+title: Rest.li Components
 permalink: /Components
+excerpt: Rest.li is the top layer of a larger software stack code named 'pegasus'.  Pegasus is comprised of the following major components. Data, generator, r2, d2 and restli
 ---
 # Rest.li Components
 
 ## Contents
+
+Rest.li is the top layer of a larger software stack code named 'pegasus'.  Pegasus is comprised of the following major components:
 
 -   [data/](#data)
 -   [generator/](#generator)
 -   [r2/](#r2)
 -   [d2/](#d2)
 -   [restli-*/](#go)
-
-Rest.li is the top layer of a larger software stack code named 'pegasus'.  Pegasus is comprised of the following major components.
 
 ## data/
 

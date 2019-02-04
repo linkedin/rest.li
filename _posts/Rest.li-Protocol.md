@@ -1,3 +1,6 @@
+
+# Rest.li Protocol
+
 ## Contents
 
   - [URI Syntax](#uri-syntax)
