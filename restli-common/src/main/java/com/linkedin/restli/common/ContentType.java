@@ -124,9 +124,26 @@ public class ContentType
    */
   public static ContentType createContentType(String headerKey, DataCodec codec, StreamDataCodec streamCodec)
   {
+    return createContentType(headerKey, codec, streamCodec, null);
+  }
+
+  /**
+   * Helper method to create a custom content type and also register it as a supported type.
+   * @param headerKey Content-Type header value to associate this content type with.
+   * @param codec Codec to use for this content type.
+   * @param streamCodec A {@link StreamDataCodec} to use for this content type.
+   * @param headerBasedCodecProvider A {@link HeaderBasedCodecProvider} to use to pick codec to use based on the header.
+   *
+   * @return A ContentType representing this custom type that can be use with restli framework.
+   */
+  public static ContentType createContentType(String headerKey,
+                                              DataCodec codec,
+                                              StreamDataCodec streamCodec,
+                                              HeaderBasedCodecProvider headerBasedCodecProvider)
+  {
     assert headerKey != null : "Header key for custom content type cannot be null";
     assert codec != null : "Codec for custom content type cannot be null";
-    ContentType customType = new ContentType(headerKey, codec, streamCodec, null);
+    ContentType customType = new ContentType(headerKey, codec, streamCodec, headerBasedCodecProvider);
     SUPPORTED_TYPES.put(headerKey.toLowerCase(), customType);
     return customType;
   }
@@ -154,7 +171,10 @@ public class ContentType
   private final StreamDataCodec _streamCodec;
   private final HeaderBasedCodecProvider _headerBasedCodecProvider;
 
-  /** Constructable only through {@link ContentType#createContentType(String, DataCodec)} */
+  /**
+   * Constructable only through
+   * {@link ContentType#createContentType(String, DataCodec, StreamDataCodec, HeaderBasedCodecProvider)}
+   */
   private ContentType(String headerKey, DataCodec codec, StreamDataCodec streamCodec,
       HeaderBasedCodecProvider headerBasedCodecProvider)
   {

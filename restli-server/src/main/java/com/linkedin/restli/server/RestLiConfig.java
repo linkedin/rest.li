@@ -409,6 +409,15 @@ public class RestLiConfig
   }
 
   /**
+   * Add the given custom ContentType as a supported Content-Type for the restli server.
+   * @param contentType custom Content-Type to add.
+   */
+  public void addCustomContentType(ContentType contentType)
+  {
+    _customContentTypes.add(contentType);
+  }
+
+  /**
    * Add the given mimeType as a supported Content-Type for the restli server and register the given codec as the one to
    * use for serialization.
    * @param mimeType custom Content-Type to add.
