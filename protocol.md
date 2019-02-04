@@ -1,8 +1,9 @@
 ---
 layout: api_reference
-title: API Reference
+title: Rest.li Protocol
 permalink: /spec/protocol
 index: 2
+excerpt: Rest.li Protocol
 ---
 
 # Rest.li Protocol

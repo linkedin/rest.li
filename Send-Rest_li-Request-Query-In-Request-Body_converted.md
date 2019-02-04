@@ -1,8 +1,11 @@
 ---
 layout: guide
-title: Send-Rest.li-Request-Query-In-Request-Body
+title: Send Rest.li request query in request Body
 permalink: /Send-Rest_li-Request-Query-In-Request-Body
+excerpt: Rest.li protocol specifies what HTTP method will be used for each type of Rest.li request. However, sometimes due to security constraint or jetty buffer limitation, it may be required to customize the HTTP method used to send a particular Rest.li request to a Rest.li server.
 ---
+
+# Send Rest.li request query in request Body
 
 ## Contents
 
@@ -14,14 +17,7 @@ permalink: /Send-Rest_li-Request-Query-In-Request-Body
 
 ## Introduction
 
-[Rest.li
-protocol](Rest.li-Protocol)
-specifies what HTTP method will be used for each type of Rest.li
-request. However, sometimes due to security constraint (i.e. not wanting
-to send some sensitive information in URI) or jetty buffer limitation
-(i.e. there may pose a threshold on the longest query that can go
-through), we may want to customize the HTTP method used to send a
-particular Rest.li request to a Rest.li server.
+[Rest.li protocol](Rest.li-Protocol) specifies what HTTP method will be used for each type of Rest.li request. However, sometimes due to security constraint  (i.e. not wanting to send some sensitive information in URI) or jetty buffer limitation (i.e. there may pose a threshold on the longest query that can go through), it may be required to customize the HTTP method used to send a particular Rest.li request to a Rest.li server.
 
 ## ClientQueryTunnelFilter and ServerQueryTunnelFilter
 

@@ -2,7 +2,9 @@
 layout: api_reference
 title: Rest.li Request Response API (R2)
 permalink: /Request-Response-API-(R2)
+excerpt: R2 is the request / response API underlying Rest.li.  It includes abstractions for REST requests and responses, filter chains for customized processing, and transport abstraction. It is designed so that it can be easily customized for non-open source use cases.
 ---
+
 # Rest.li Request Response API (R2)
 
 ## Contents

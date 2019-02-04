@@ -2,6 +2,7 @@
 layout: guide
 title: Rest.li Projections in Java
 permalink: /How-to-use-projections-in-Java
+excerpt: Projections are a way for a client to request only specific fields from an object instead of the entire object. Using projections when the client needs a few fields from an object is a good way to self-document the code, reduce payload of responses, and even allow the server to relax an otherwise time consuming computation or IO operation.
 ---
 # How to Use Projections in Java
 
@@ -18,12 +19,7 @@ permalink: /How-to-use-projections-in-Java
 
 ## What Are Projections
 
-Projections are a way for a client to request only specific fields from
-an object instead of the entire object. Using projections when you only
-need a few fields from an object is a good way to self-document your
-code, reduce payload of responses, and even allow the server to relax an
-otherwise time consuming computation or IO operation. You can read more
-about projections at [Projections](Projections).
+Projections are a way for a client to request only specific fields from an object instead of the entire object. Using projections when the client needs a few fields from an object is a good way to self-document the code, reduce payload of responses, and even allow the server to relax an otherwise time consuming computation or IO operation. You can read more about projections at [Projections](Projections).
 
 ## What Can Be Projected
 

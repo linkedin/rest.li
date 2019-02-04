@@ -1,11 +1,12 @@
 ---
 layout: guide
-title: User guide
+title: Rest.li architecture user guide
 permalink: /user_guide/server_architecture
+excerpt: This document describes how to use Rest.li to build RESTful clients and servers. The first section introduces key architectural elements and provides an overview of the development process. The remainder of the document serves as a detailed reference to Rest.li features.
 index: 2
 ---
 
-# Rest.li Architecture
+# Rest.li Architecture User Guide
 
 ## Contents
 

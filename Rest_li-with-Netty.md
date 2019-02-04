@@ -1,7 +1,8 @@
 ---
 layout: api_reference
-title: Rest.li-with-Netty
+title: Rest.li with Netty
 permalink: /Rest_li-with-Netty
+excerpt: Rest.li can be run in a variety of HTTP frameworks. Out of the box, Rest.li supports both Netty and Servlet containers, such as Jetty.
 ---
 
 # Rest.li with Netty

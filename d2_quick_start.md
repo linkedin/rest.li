@@ -1,10 +1,11 @@
 ---
 layout: get_started
-title: Dynamic discovery
+title: Rest.li D2 Dynamic discovery tutorial
 permalink: /start/d2_quick_start
+excerpt:  Rest.li D2 Dynamic discovery tutorial
 index: 1
 ---
-# Dynamic Discovery Quick Start 
+# Dynamic Discovery (D2) Quick Start 
 
 ## Contents
 

@@ -2,6 +2,7 @@
 layout: get_started
 title: Building Rest.li from Source
 permalink: /setup/building
+excerpt: How to building Rest.li from Source
 index: 1
 ---
 
@@ -21,8 +22,6 @@ If you are not modifying the Rest.li source code, you don’t need to
 build Rest.li. You can simply depend on the [artifacts in the maven
 central
 repository](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.linkedin.pegasus%22)
-
-The current latest version in Maven Central is 2.2.5.
 
 For details on how to use Rest.li from its maven central artifacts, see:
 [Quickstart](/rest.li/start/step_by_step)
