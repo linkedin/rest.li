@@ -7,5 +7,3 @@ items:
     url: /rest.li/spec/protocol
   - page: Contribute
     url: /rest.li/contribute/howto
-  - page: GITHUB
-    url: http://github.com/linkedin/rest.li/
