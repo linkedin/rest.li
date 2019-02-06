@@ -3,3 +3,100 @@
 ---
 
 @import "materialize/materialize";
+
+.btn.social > :first-child,
+.btn-large.social > :first-child,
+.col.social > :first-child {
+  border-right: 1px solid rgba(0, 0, 0, 0.2);
+}
+.btn.social,
+.btn-large.social,
+.col.social {
+  padding: 0 2rem 0 0;
+}
+.btn.social i,
+.btn-large.social i,
+.col.social i {
+  padding: 0 1rem;
+  margin-right: 1rem;
+}
+.btn.social-icon,
+.btn-large.social-icon,
+.col.social-icon {
+  padding: 0;
+}
+.btn.social-icon i,
+.btn-large.social-icon i,
+.col.social-icon i {
+  padding: 0 1rem;
+  margin-right: 0;
+}
+.btn-large.social-icon {
+  padding: 0 1rem;
+}
+.col.social {
+  width: 100%;
+  text-align: left;
+}
+.col.social i.fa-fw {
+  width: 3.2rem;
+}
+.github {
+  background-color: #444444;
+  color: #fff !important;
+}
+.github i {
+  color: #fff !important;
+}
+.github:hover {
+  background-color: #5e5e5e !important;
+}
+.linkedin {
+  background-color: #007bb6;
+  color: #fff !important;
+}
+.linkedin i {
+  color: #fff !important;
+}
+.linkedin:hover {
+  background-color: #009de9 !important;
+}
+.input-field .prefix.active {
+  color: #a05368;
+}
+.results ul {
+  list-style-type: inline !important;
+  width: 800px;
+  margin: 0; padding: 0;
+}
+.results ul > li {
+  list-style-type: none !important;
+  margin:0px;
+}
+.results h1 > b {
+  color: #a05368;
+}
+.results h3 {
+  margin-bottom:0px;
+  padding-bottom: 0px;
+}
+.results p {
+  margin:0px !important;
+  padding: 0px !important;
+  font-size: 14px;
+}
+#search-input {
+  background-color:rgba(255, 255, 255, 0.1);
+  height:24px;
+  padding-left:10px;
+}
+#github-menu {
+  height:64px; 
+  margin-left:25px
+}
+.min {
+  height: 0px !important;
+}
+#search-txt {
+  font-size:1.5rem;
+}
