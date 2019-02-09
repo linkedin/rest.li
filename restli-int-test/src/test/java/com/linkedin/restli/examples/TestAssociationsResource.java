@@ -24,13 +24,17 @@ import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.BatchCollectionResponse;
+import com.linkedin.restli.common.BatchFinderCriteriaResult;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.EntityResponse;
+import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Message;
+import com.linkedin.restli.examples.greetings.api.MessageCriteria;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.AssociationsBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsRequestBuilders;
@@ -38,6 +42,7 @@ import com.linkedin.restli.examples.greetings.client.AssociationsSubBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,6 +112,28 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     {
       Assert.assertEquals(400, e.getStatus());
     }
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testBatchFinder(RootBuilderWrapper<CompoundKey, Message> builders) throws RemoteInvocationException
+  {
+    MessageCriteria m1 = new MessageCriteria().setMessage("hello").setTone(Tone.FRIENDLY);
+    MessageCriteria m2 = new MessageCriteria().setMessage("world").setTone(Tone.SINCERE);
+    Request<BatchCollectionResponse<Message>> request = builders.batchFindBy("searchMessages").assocKey("src", "KEY1")
+        .setQueryParam("criteria", Arrays.asList(m1, m2)).build();
+    ResponseFuture<BatchCollectionResponse<Message>> future = getClient().sendRequest(request);
+    BatchCollectionResponse<Message> response = future.getResponse().getEntity();
+
+    List<BatchFinderCriteriaResult<Message>> batchResult = response.getResults();
+    // on success
+    List<Message> messages= batchResult.get(0).getElements();
+    Assert.assertTrue(messages.get(0).hasTone());
+    Assert.assertTrue(messages.get(0).getTone().equals(Tone.FRIENDLY));
+
+    // on error
+    Assert.assertTrue(batchResult.get(1).isError());
+    ErrorResponse error = batchResult.get(1).getError();
+    Assert.assertEquals(error.getMessage(), "Failed to find message!");
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")

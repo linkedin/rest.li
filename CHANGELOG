@@ -1,8 +1,15 @@
+26.0.16
+-------
+
+
+
 26.0.15
 -------
+(RB=1559338)
+Add batch parameter for batchFinder in association template snapshot, to fix the incompatible issue that type cannnot be resolved
+
 (RB=1550061)
 Add HTML Documentation render for BatchFinder
-
 
 26.0.14
 -------

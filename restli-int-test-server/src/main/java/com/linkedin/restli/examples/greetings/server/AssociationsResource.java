@@ -22,19 +22,29 @@ package com.linkedin.restli.examples.greetings.server;
 
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.examples.greetings.api.Message;
+import com.linkedin.restli.examples.greetings.api.MessageCriteria;
+import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.server.BatchFinderResult;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
+import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.AssocKeyParam;
+import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.PagingContextParam;
+import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -122,5 +132,29 @@ public class AssociationsResource extends AssociationResourceTemplate<Message>
   public List<Message> assocKeyFinderOpt(@Optional @AssocKeyParam("src") String src)
   {
     return Collections.emptyList();
+  }
+
+
+  private static final Message m1 = new Message().setMessage("hello").setTone(Tone.FRIENDLY);
+  private static final Message m2 = new Message().setMessage("world").setTone(Tone.FRIENDLY);
+
+  @BatchFinder(value = "searchMessages", batchParam = "criteria")
+  public BatchFinderResult<MessageCriteria, Message, EmptyRecord> searchMessages(@AssocKeyParam("src") String src, @PagingContextParam PagingContext context,
+      @QueryParam("criteria") MessageCriteria[] criteria)
+  {
+    BatchFinderResult<MessageCriteria, Message, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
+
+    for (MessageCriteria currentCriteria: criteria) {
+      if (currentCriteria.getTone() == Tone.FRIENDLY) {
+        // on success
+        CollectionResult<Message, EmptyRecord> cr = new CollectionResult<Message, EmptyRecord>(Arrays.asList(m1, m2), 2);
+        batchFinderResult.putResult(currentCriteria, cr);
+      } else {
+        // on error: to construct error response for test
+        batchFinderResult.putError(currentCriteria, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "Failed to find message!"));
+      }
+    }
+
+    return batchFinderResult;
   }
 }

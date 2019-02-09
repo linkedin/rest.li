@@ -19,6 +19,19 @@
       },
       "doc" : "tone"
     } ]
+  }, {
+    "type" : "record",
+    "name" : "MessageCriteria",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A search criteria to filter messages.",
+    "fields" : [ {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "Message tone to filter on"
+    } ]
   }, "com.linkedin.restli.examples.greetings.api.Tone" ],
   "schema" : {
     "name" : "associations",
@@ -53,6 +66,16 @@
       }, {
         "name" : "assocKeyFinderOpt",
         "assocKeys" : [ "src" ]
+      } ],
+      "batchFinders" : [ {
+        "name" : "searchMessages",
+        "parameters" : [ {
+          "name" : "criteria",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.MessageCriteria\" }"
+        } ],
+        "assocKeys" : [ "src" ],
+        "pagingSupported" : true,
+        "batchParam" : "criteria"
       } ],
       "entity" : {
         "path" : "/associations/{associationsId}",

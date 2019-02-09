@@ -225,6 +225,13 @@ public class SnapshotGenerator
           findModels(restMethodSchema.getParameters(),restMethodSchema.getMetadata(), foundTypes, typeOrder);
         }
       }
+      if (association.hasBatchFinders())
+      {
+        for (BatchFinderSchema restMethodSchema: association.getBatchFinders())
+        {
+          findModels(restMethodSchema.getParameters(), restMethodSchema.getMetadata(), foundTypes, typeOrder);
+        }
+      }
       if (association.hasMethods())
       {
         for (RestMethodSchema restMethodSchema: association.getMethods())

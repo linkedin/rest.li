@@ -32,6 +32,16 @@
       "name" : "assocKeyFinderOpt",
       "assocKeys" : [ "src" ]
     } ],
+    "batchFinders" : [ {
+      "name" : "searchMessages",
+      "parameters" : [ {
+        "name" : "criteria",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.MessageCriteria\" }"
+      } ],
+      "assocKeys" : [ "src" ],
+      "pagingSupported" : true,
+      "batchParam" : "criteria"
+    } ],
     "entity" : {
       "path" : "/associations/{associationsId}",
       "subresources" : [ {
