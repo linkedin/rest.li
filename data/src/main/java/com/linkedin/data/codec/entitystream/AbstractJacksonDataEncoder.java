@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
+import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.entitystream.WriteHandle;
@@ -52,7 +53,8 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
   protected JsonFactory _jsonFactory;
   protected JsonGenerator _generator;
   private QueueBufferedOutputStream _out;
-  private Deque<Iterator<?>> _stack;
+  private Deque<DataComplex> _stack;
+  private Deque<Iterator<?>> _iteratorStack;
   private Deque<Object> _typeStack;
   private WriteHandle<? super ByteString> _writeHandle;
   private boolean _done;
@@ -62,6 +64,7 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
     _jsonFactory = jsonFactory;
     _out = new QueueBufferedOutputStream(bufferSize);
     _stack = new ArrayDeque<>();
+    _iteratorStack = new ArrayDeque<>();
     _typeStack = new ArrayDeque<>();
     _done = false;
   }
@@ -70,7 +73,7 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
   {
     this(jsonFactory, bufferSize);
 
-    _stack.push(dataMap.entrySet().iterator());
+    _stack.push(dataMap);
     _typeStack.push(MAP);
   }
 
@@ -78,7 +81,7 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
   {
     this(jsonFactory, bufferSize);
 
-    _stack.push(dataList.iterator());
+    _stack.push(dataList);
     _typeStack.push(LIST);
   }
 
@@ -90,14 +93,6 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
     try
     {
       _generator = _jsonFactory.createGenerator(_out);
-      if (_typeStack.peek() == MAP)
-      {
-        writeStartObject();
-      }
-      else
-      {
-        writeStartArray();
-      }
     }
     catch (IOException e)
     {
@@ -134,6 +129,56 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
   {
     char[] charArray = value.asAvroCharArray();
     _generator.writeString(charArray, 0, charArray.length);
+  }
+
+  /**
+   * Pre-process this {@link DataMap} before serializing it.
+   *
+   * <p>This can be overridden by implementations to modify the map before serializing. Implementations may also
+   * choose to directly serialize the map in whatever form they prefer, and return null to indicate that they have
+   * internally handled serialization.</p>
+   */
+  protected DataMap preProcessMap(DataMap dataMap) throws IOException
+  {
+    return dataMap;
+  }
+
+  /**
+   * Pre-process this {@link DataList} before serializing it.
+   *
+   * <p>This can be overridden by implementations to modify the map before serializing. Implementations may also
+   * choose to directly serialize the list in whatever form they prefer, and return null to indicate that they have
+   * internally handled serialization.</p>
+   */
+  protected DataList preProcessList(DataList dataList) throws IOException
+  {
+    return dataList;
+  }
+
+  /**
+   * Create an iterator that will be used by the encoder to iterate over entries of this {@link DataMap} when
+   * serializing.
+   *
+   * <p>This can be overridden by implementations to control the order in which entries are serialized. It is
+   * highly recommended to not modify the iterator or the backing map after this method has been called. Doing so
+   * may result in a {@link java.util.ConcurrentModificationException}</p>
+   */
+  protected Iterator<Map.Entry<String, Object>> createIterator(DataMap dataMap) throws IOException
+  {
+    return dataMap.entrySet().iterator();
+  }
+
+  /**
+   * Create an iterator that will be used by the encoder to iterate over elements of this {@link DataList} when
+   * serializing.
+   *
+   * <p>This can be overridden by implementations to control the order in which elements are serialized. It is
+   * highly recommended to not modify the iterator or the backing list after this method has been called. Doing so
+   * may result in a {@link java.util.ConcurrentModificationException}</p>
+   */
+  protected Iterator<Object> createIterator(DataList dataList) throws IOException
+  {
+    return dataList.iterator();
   }
 
   @Override
@@ -178,7 +223,56 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
   {
     while (!_out.isFull())
     {
-      Iterator<?> curr = _stack.peek();
+      DataComplex current = _stack.peek();
+      if (_iteratorStack.size() != _stack.size())
+      {
+        if (_typeStack.peek() == MAP)
+        {
+          DataMap dataMap = preProcessMap((DataMap) current);
+          if (dataMap != null)
+          {
+            _iteratorStack.push(createIterator(dataMap));
+            writeStartObject();
+          }
+          else
+          {
+            _stack.pop();
+            _typeStack.pop();
+
+            _done = _stack.isEmpty();
+            if (_done)
+            {
+              _generator.close();
+              break;
+            }
+          }
+        }
+        else
+        {
+          DataList dataList = preProcessList((DataList) current);
+          if (dataList != null)
+          {
+            _iteratorStack.push(createIterator(dataList));
+            writeStartArray();
+          }
+          else
+          {
+            _stack.pop();
+            _typeStack.pop();
+
+            _done = _stack.isEmpty();
+            if (_done)
+            {
+              _generator.close();
+              break;
+            }
+          }
+        }
+
+        continue;
+      }
+
+      Iterator<?> curr = _iteratorStack.peek();
 
       if (curr.hasNext())
       {
@@ -197,6 +291,7 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
       else
       {
         _stack.pop();
+        _iteratorStack.pop();
         Object type = _typeStack.pop();
 
         if (type == MAP)
@@ -235,14 +330,12 @@ abstract class AbstractJacksonDataEncoder implements DataEncoder
         _generator.writeNumber((int) value);
         break;
       case 3:
-        _stack.push(((DataMap) value).entrySet().iterator());
+        _stack.push((DataMap) value);
         _typeStack.push(MAP);
-        writeStartObject();
         break;
       case 4:
-        _stack.push(((DataList) value).iterator());
+        _stack.push((DataList) value);
         _typeStack.push(LIST);
-        writeStartArray();
         break;
       case 5:
         _generator.writeBoolean((boolean) value);

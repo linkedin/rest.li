@@ -33,7 +33,7 @@ import java.util.concurrent.CompletionStage;
  */
 public class JacksonStreamDataCodec implements StreamDataCodec
 {
-  private final int _bufferSize;
+  protected final int _bufferSize;
 
   public JacksonStreamDataCodec(int bufferSize)
   {
