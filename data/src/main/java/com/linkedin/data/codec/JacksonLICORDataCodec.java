@@ -53,7 +53,7 @@ public class JacksonLICORDataCodec extends AbstractJacksonDataCodec
 
   private static volatile SymbolTableProvider _symbolTableProvider;
 
-  private final SymbolTable _symbolTable;
+  protected final SymbolTable _symbolTable;
 
   /**
    * Set the symbol table provider. This will be used by all codec instances.
@@ -244,12 +244,11 @@ public class JacksonLICORDataCodec extends AbstractJacksonDataCodec
     }
   }
 
-
-  private static class LICORTraverseCallback extends JacksonTraverseCallback
+  public static class LICORTraverseCallback extends JacksonTraverseCallback
   {
     private final SymbolTable _symbolTable;
 
-    LICORTraverseCallback(JsonGenerator generator, SymbolTable symbolTable)
+    public LICORTraverseCallback(JsonGenerator generator, SymbolTable symbolTable)
     {
       super(generator);
       _symbolTable = symbolTable;

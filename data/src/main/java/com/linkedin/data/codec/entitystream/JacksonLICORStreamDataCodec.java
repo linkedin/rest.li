@@ -49,9 +49,9 @@ public class JacksonLICORStreamDataCodec implements StreamDataCodec
   static final byte MAP_ORDINAL = 0;
   static final byte LIST_ORDINAL = 1;
 
-  private final int _bufferSize;
-  private final boolean _useBinary;
-  private final SymbolTable _symbolTable;
+  protected final int _bufferSize;
+  protected final boolean _useBinary;
+  protected final SymbolTable _symbolTable;
 
   /**
    * Set the symbol table provider. This will be used by all codec instances.
