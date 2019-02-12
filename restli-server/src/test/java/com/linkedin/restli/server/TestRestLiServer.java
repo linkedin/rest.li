@@ -39,8 +39,10 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
+import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.FullEntityReader;
+import com.linkedin.r2.message.stream.entitystream.Observer;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -78,6 +80,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.mail.internet.ContentType;
 import javax.mail.internet.ParseException;
 
@@ -262,8 +265,8 @@ public class TestRestLiServer
 
     new RestLiServer(config, new EasyMockResourceFactory(), EasyMock.createMock(Engine.class));
 
-    assertEquals(counts[0], 17);
-    assertEquals(counts[1], 24);
+    assertEquals(counts[0], 18);
+    assertEquals(counts[1], 25);
   }
 
   private int countSubResources(ResourceDefinition definition) {
@@ -693,6 +696,30 @@ public class TestRestLiServer
 
       _server.handleRequest(streamRequest, new RequestContext(), callback);
     }
+  }
+
+  @Test
+  public void testUnstructuredDataGetWithBody() throws Exception
+  {
+    EntityStream streams = EntityStreams.newEntityStream(new ByteStringWriter(ByteString.copy(new byte[] {1,2,3,4})));
+    Observer observer = new TestObserver();
+    streams.addObserver(observer);
+
+    final StreamRequest streamRequest = new StreamRequestBuilder(new URI("/reactiveGreetingCollectionUnstructuredData/hello"))
+        .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString())
+        .build(streams);
+
+    final Callback<StreamResponse> callback = new Callback<StreamResponse>()
+    {
+      @Override
+      public void onSuccess(StreamResponse streamResponse) {}
+
+      @Override
+      public void onError(Throwable e) {}
+    };
+
+    _server.handleRequest(streamRequest, new RequestContext(), callback);
+    assertTrue(((TestObserver) observer).isDone());
   }
 
   @Test(dataProvider = "restOrStream")
@@ -2143,5 +2170,27 @@ public class TestRestLiServer
     map.put("text", "test status");
     Status status = new Status(map);
     return status;
+  }
+
+  private static class TestObserver implements Observer
+  {
+    private AtomicBoolean _isDone = new AtomicBoolean(false);
+
+    @Override
+    public void onDataAvailable(ByteString data) {}
+
+    @Override
+    public void onDone()
+    {
+      _isDone.set(true);
+    }
+
+    @Override
+    public void onError(Throwable e) {}
+
+    public boolean isDone()
+    {
+      return _isDone.get();
+    }
   }
 }

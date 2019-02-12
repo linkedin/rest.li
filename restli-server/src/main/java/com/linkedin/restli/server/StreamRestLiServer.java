@@ -11,15 +11,16 @@ import com.linkedin.r2.message.Messages;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamException;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.StreamResponseBuilder;
+import com.linkedin.r2.message.stream.entitystream.DrainReader;
 import com.linkedin.r2.message.stream.entitystream.adapter.EntityStreamAdapters;
 import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.restli.common.ContentType;
+import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.CookieUtil;
@@ -32,7 +33,6 @@ import com.linkedin.restli.internal.server.response.RestLiResponseException;
 import com.linkedin.restli.internal.server.response.ResponseUtils;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.resources.ResourceFactory;
-import com.linkedin.restli.server.util.UnstructuredDataUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -319,8 +319,16 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
       RoutingResult routingResult,
       Callback<StreamResponse> callback)
   {
-    routingResult.getContext().setRequestEntityStream(
-        EntityStreamAdapters.toGenericEntityStream(request.getEntityStream()));
+    // Drain the stream when using UnstructuredData Get or Delete
+    if (routingResult.getResourceMethod().getType().getHttpMethod().equals(HttpMethod.GET) ||
+        routingResult.getResourceMethod().getType().getHttpMethod().equals(HttpMethod.DELETE))
+    {
+      request.getEntityStream().setReader(new DrainReader());
+    }
+    else
+    {
+      routingResult.getContext().setRequestEntityStream(EntityStreamAdapters.toGenericEntityStream(request.getEntityStream()));
+    }
     handleResourceRequest(request,
         routingResult,
         null,

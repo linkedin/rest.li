@@ -49,13 +49,12 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 
 public class TestUnstructuredDataClient extends RestLiIntegrationTest
 {
+  private static final ByteString CONTENT = ByteString.copy(new byte[8092]);
   private HttpClientFactory _clientFactory;
   private TransportClientAdapter _client;
 
@@ -100,6 +99,14 @@ public class TestUnstructuredDataClient extends RestLiIntegrationTest
     };
   }
 
+  @DataProvider(name = "deleteURLs")
+  private static Object[][] deleteURLs()
+  {
+    return new Object[][] {
+        { "reactiveGreetingCollectionUnstructuredData/good" }
+    };
+  }
+
   @Test(dataProvider = "goodURLs")
   public void testClientWithGoodURLs(String resourceURL)
     throws Throwable
@@ -110,6 +117,40 @@ public class TestUnstructuredDataClient extends RestLiIntegrationTest
     RestResponse restResponse = responseFuture.get();
     assertNotNull(restResponse.getEntity());
     assertEquals(restResponse.getEntity().copyBytes(), GreetingUnstructuredDataUtils.UNSTRUCTURED_DATA_BYTES);
+  }
+
+  @Test(dataProvider = "goodURLs")
+  public void testClientGETGoodURLsWithBody(String resourceURL)
+      throws Throwable
+  {
+    URI testURI = URI.create(RestLiIntegrationTest.URI_PREFIX + resourceURL);
+    RestRequest request = new RestRequestBuilder(testURI).setEntity(CONTENT).build();
+    Future<RestResponse> responseFuture = _client.restRequest(request);
+    RestResponse restResponse = responseFuture.get();
+    assertNotNull(restResponse.getEntity());
+    assertEquals(restResponse.getEntity().copyBytes(), GreetingUnstructuredDataUtils.UNSTRUCTURED_DATA_BYTES);
+  }
+
+  @Test(dataProvider = "deleteURLs")
+  public void testClientDeleteGoodURLs(String resourceURL)
+      throws Throwable
+  {
+    URI testURI = URI.create(RestLiIntegrationTest.URI_PREFIX + resourceURL);
+    RestRequest request = new RestRequestBuilder(testURI).setMethod("DELETE").build();
+    Future<RestResponse> responseFuture = _client.restRequest(request);
+    RestResponse restResponse = responseFuture.get();
+    assertEquals(restResponse.getStatus(), 200);
+  }
+
+  @Test(dataProvider = "deleteURLs")
+  public void testClientDeleteGoodURLsWithBody(String resourceURL)
+      throws Throwable
+  {
+    URI testURI = URI.create(RestLiIntegrationTest.URI_PREFIX + resourceURL);
+    RestRequest request = new RestRequestBuilder(testURI).setMethod("DELETE").setEntity(CONTENT).build();
+    Future<RestResponse> responseFuture = _client.restRequest(request);
+    RestResponse restResponse = responseFuture.get();
+    assertEquals(restResponse.getStatus(), 200);
   }
 
   @Test(dataProvider = "exceptionURLs", expectedExceptions = ExecutionException.class)
