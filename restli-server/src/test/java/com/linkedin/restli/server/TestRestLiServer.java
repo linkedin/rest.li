@@ -18,6 +18,7 @@
 package com.linkedin.restli.server;
 
 
+import com.google.common.collect.ImmutableSet;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
@@ -1314,8 +1315,8 @@ public class TestRestLiServer
     assertEquals(3, config.getResourcePackageNamesSet().size());
     config.setResourcePackageNames("foo");
     assertEquals(1, config.getResourcePackageNamesSet().size());
-    config.setResourcePackageNames("foo,bar,baz");
-    assertEquals(3, config.getResourcePackageNamesSet().size());
+    config.setResourcePackageNames("foo, bar , baz");
+    assertEquals(ImmutableSet.of("foo", "bar", "baz"), config.getResourcePackageNamesSet());
 
     Set<String> packageSet = new HashSet<String>();
     packageSet.add("a");

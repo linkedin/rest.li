@@ -1,5 +1,7 @@
 26.0.19
 -------
+(RB=1564323)
+Trimming each packageName value in the comma separated packageName to make sure that spaces around the commas are handled.
 
 26.0.18
 -------
