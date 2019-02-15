@@ -33,7 +33,7 @@ import com.linkedin.restli.internal.client.RestResponseDecoder;
  *
  * @author Karim Vidhani
  */
-final class RestLiStreamCallbackAdapter<T> implements Callback<StreamResponse>
+public class RestLiStreamCallbackAdapter<T> implements Callback<StreamResponse>
 {
   private final Callback<Response<T>> _wrappedCallback;
   private final RestResponseDecoder<T> _decoder;
