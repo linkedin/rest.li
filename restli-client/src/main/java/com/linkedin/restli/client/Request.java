@@ -242,6 +242,14 @@ public class Request<T>
     return _requestOptions;
   }
 
+  /**
+   * @return True if the request is streaming, false otherwise.
+   */
+  public boolean isStreaming()
+  {
+    return _streamingAttachments != null || _requestOptions.getAcceptResponseAttachments();
+  }
+
   List<Object> getStreamingAttachments()
   {
     return _streamingAttachments;
