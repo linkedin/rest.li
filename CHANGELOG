@@ -1,5 +1,10 @@
+26.0.19
+-------
+
 26.0.18
 -------
+(RB=1566293)
+Make RestLiStreamCallbackAdapter non-final and public for extension in dash-cache
 
 26.0.17
 -------
