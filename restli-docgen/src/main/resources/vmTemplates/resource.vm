@@ -115,27 +115,8 @@
               </dl>
             </dd>
           #end
-          #if ($finderSchema.parameters)
-            <dd style="background: #F0F0F0; border: 1px dashed black; padding: 12px;">
-              <dl>
-                <dt>Parameters</dt>
-                <dd style="font-family: monospace;">
-                  <ul class="nobullet">
-                    #foreach ($param in $finderSchema.parameters)
-                      <li>
-                        $param.name:
-                        #if ($relatedSchemas.containsKey($param.type))
-                          <a href="$docBaseUri/data/$param.type">$param.type</a>
-                        #else
-                          $param.type
-                        #end
-                      </li>
-                    #end
-                  </ul>
-                </dd>
-              </dl>
-            </dd>
-          #end
+        #set($currentSchema = $finderSchema)
+        #parse("vmTemplates/parameters.vm")
         <dd><pre class="prettyprint">curl -v -X GET $serverNodeUri$finder.capture.request.URI</pre></dd>
         <dd>
           <pre class="prettyprint">
@@ -177,46 +158,8 @@ $finder.prettyPrintResponseEntity
               </dl>
             </dd>
           #end
-          #if ($batchFinderSchema.parameters)
-            <dd style="background: #F0F0F0; border: 1px dashed black; padding: 12px;">
-              <dl>
-                #if ($batchFinderSchema.parameters.size() > 1)
-                  <dt>Parameters</dt>
-                #end
-                <dd style="font-family: monospace;">
-                  <ul class="nobullet">
-                    #foreach ($param in $batchFinderSchema.parameters)
-                      <li>
-                        #if ($param.name == $batchFinderSchema.getBatchParam())
-                          #set($batchParam = $param)
-                        #else
-                          $param.name:
-                          #if ($relatedSchemas.containsKey($param.type))
-                            <a href="$docBaseUri/data/$param.type">$param.type</a>
-                          #else
-                            $param.type
-                          #end
-                        #end
-                      </li>
-                    #end
-                  </ul>
-                </dd>
-                <dt>Batch Parameter</dt>
-                <dd style="font-family: monospace;">
-                  <ul class="nobullet">
-                    <li>
-                      $batchParam.name:
-                      #if ($relatedSchemas.containsKey($batchParam.type))
-                        <a href="$docBaseUri/data/$batchParam.type">$batchParam.type</a>
-                      #else
-                        $batchParam.type
-                      #end
-                    </li>
-                  </ul>
-                </dd>
-              </dl>
-            </dd>
-          #end
+          #set($currentSchema = $batchFinderSchema)
+          #parse("vmTemplates/parameters.vm")
           <dd><pre class="prettyprint">curl -v -X GET $serverNodeUri$batchFinder.capture.request.URI -H 'X-RestLi-Protocol-Version: 2.0.0' </pre></dd>
           <dd>
           <pre class="prettyprint">
@@ -245,23 +188,8 @@ $batchFinder.prettyPrintResponseEntity
         #if ($actionSchema.parameters || $actionSchema.hasReturns() || $actionSchema.hasThrows())
           <dd style="background: #F0F0F0; border: 1px dashed black; padding: 12px;">
             <dl>
-              #if ($actionSchema.parameters)
-                <dt>Parameters</dt>
-                <dd style="font-family: monospace;">
-                  <ul class="nobullet">
-                    #foreach ($param in $actionSchema.parameters)
-                      <li>
-                        $param.name:
-                        #if ($relatedSchemas.containsKey($param.type))
-                          <a href="$docBaseUri/data/$param.type">$param.type</a>
-                        #else
-                          $param.type
-                        #end
-                      </li>
-                    #end
-                  </ul>
-                </dd>
-              #end
+              #set($currentSchema = $actionSchema)
+              #parse("vmTemplates/parameters.vm")
               #if ($actionSchema.hasReturns())
                 <dt>Returns</dt>
                 <dd style="font-family: monospace;">

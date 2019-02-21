@@ -20,9 +20,12 @@ package com.linkedin.restli.docgen;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.generator.SchemaSampleDataGenerator;
+import com.linkedin.data.template.GetMode;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.common.HttpStatus;
@@ -35,8 +38,10 @@ import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.BatchFinderSchema;
 import com.linkedin.restli.restspec.FinderSchema;
+import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
+import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.RoutingException;
@@ -210,6 +215,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     pageModel.put("finders", finders);
     pageModel.put("batchFinders", batchFinders);
     pageModel.put("actions", actions);
+    pageModel.put("paramItemsDataSchemaParser", new ParameterItemsDataSchemaParser());
     addRelated(resourceSchema, pageModel);
 
     _templatingEngine.render("resource.vm", pageModel, out);
@@ -407,5 +413,39 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     _restMethodDocsMapForSimpleResource.put(ResourceMethod.UPDATE.toString(), "Replaces the entity");
 
     _codec.setPrettyPrinter(new DefaultPrettyPrinter());
+  }
+
+
+  /**
+   * The following class is used by resource.vm to parse the array type parameter in each resource method and get each
+   * item in array. This is because current {@link ParameterSchema} doesn't have separate 'items' field anymore and
+   * cannot get it directly by calling getItems method.
+   */
+  public class ParameterItemsDataSchemaParser {
+    /**
+     * Pass this parser into HTML template to parse the parameter data schema and get the name of item in a parameter array.
+     *
+     * @param param the data schema of each resource method parameter
+     * @return the parameter name of each array item
+     */
+    public String getParameterItems(ParameterSchema param)
+    {
+      // for legacy schema which has an 'items' field
+      if (param.hasItems())
+      {
+        return param.getItems(GetMode.DEFAULT);
+      }
+
+      // to parse the current data schema
+      final DataSchema paramDataSchema = RestSpecCodec.textToSchema(param.getType(GetMode.DEFAULT), _schemaResolver);
+      if (paramDataSchema instanceof ArrayDataSchema)
+      {
+        return ((ArrayDataSchema) paramDataSchema).getItems().getUnionMemberKey();
+      }
+      else
+      {
+        return null;
+      }
+    }
   }
 }
