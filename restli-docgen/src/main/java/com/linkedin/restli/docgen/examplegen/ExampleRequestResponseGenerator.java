@@ -97,9 +97,7 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
-import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
-import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
-import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.response.RestLiResponse;
 import com.linkedin.restli.internal.server.response.ResponseUtils;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
@@ -167,7 +165,6 @@ public class ExampleRequestResponseGenerator
   private final RestLiResponseHandler _responseHandler = new RestLiResponseHandler();
   private final String _uriTemplate;
 
-  private AnyRecord batchFinderCriteria; // for building batchFinder request and response
 
   public ExampleRequestResponseGenerator(ResourceSchema resourceSchema,
                                          DataSchemaResolver schemaResolver)
@@ -258,7 +255,7 @@ public class ExampleRequestResponseGenerator
         buildResourceMethodDescriptorForFinder(name));
   }
 
-  public ExampleRequestResponse batchFinder(String name, ResourceModel resourceModel) {
+  public ExampleRequestResponse batchFinder(String name) {
     BatchFinderSchema batchFinderSchema = _resourceSchema.getBatchFinder(name);
     if (batchFinderSchema == null)
     {
@@ -271,9 +268,23 @@ public class ExampleRequestResponseGenerator
           _schemaResolver);
     }
 
-    return buildRequestResponse(buildBatchFinderRequest(batchFinderSchema),
-        buildBatchFinderResult(metadataSchema),
-        buildResourceMethodDescriptorForBatchFinder(name, resourceModel));
+    Request<?> request = buildBatchFinderRequest(batchFinderSchema);
+    RestRequest restRequest = buildRequest(request);
+    try
+    {
+      ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), restRequest, new RequestContext());
+      DataList criteriaParams = (DataList)context.getStructuredParameter(batchFinderSchema.getBatchParam());
+      // Since batchFinder has 2 kinds of responses. One is successful CollectionResponse. The other one is ErrorResponse.
+      // When BatchFinderResponseBuilder cannot find a search criteria, it will return an ErrorResponse.
+      // To include only one criteria in BatchFinderResult will make the response example diverse.
+      AnyRecord batchFinderCriteria = new AnyRecord((DataMap) criteriaParams.get(0));// guarantee batchFinder request and response has a same criteria
+
+      return buildRequestResponse(request, buildBatchFinderResult(metadataSchema, batchFinderCriteria), buildResourceMethodDescriptorForBatchFinder(name, batchFinderSchema.getBatchParam()));
+    }
+    catch (RestLiSyntaxException e)
+    {
+      throw new ExampleGenerationException("Internal error during example generation", e);
+    }
   }
 
   public ExampleRequestResponse action(String name, ResourceLevel resourceLevel)
@@ -585,13 +596,6 @@ public class ExampleRequestResponseGenerator
           restRequest.getHeaders(), Collections.emptySet(), context);
       method.setResourceModel(_resourceModel);
       final RoutingResult routingResult = new RoutingResult(context, method);
-      // Since BatchFinderResponseBuilder will check whether the criteria is the same in both batchFinder request and response,
-      // need to build typed batchfinder criteria argument
-      if (restRequest.getMethod() != null && method.getMethodType().equals(ResourceMethod.BATCH_FINDER)) {
-        MethodAdapterRegistry methodAdapterRegistry = new MethodAdapterRegistry(new ErrorResponseBuilder());
-        RestLiArgumentBuilder restLiArgumentBuilder = methodAdapterRegistry.getArgumentBuilder(method.getMethodType());
-        restLiArgumentBuilder.buildArguments(null, routingResult);
-      }
 
       RestLiResponseData<?> responseData = _responseHandler.buildRestLiResponseData(restRequest, routingResult, responseEntity);
       RestLiResponse restLiResponse = _responseHandler.buildPartialResponse(routingResult, responseData);
@@ -708,7 +712,7 @@ public class ExampleRequestResponseGenerator
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
-  private BatchFinderResult<RecordTemplatePlaceholder,RecordTemplatePlaceholder, RecordTemplatePlaceholder> buildBatchFinderResult(RecordDataSchema batchFinderMetadataSchema)
+  private BatchFinderResult<RecordTemplatePlaceholder,RecordTemplatePlaceholder, RecordTemplatePlaceholder> buildBatchFinderResult(RecordDataSchema batchFinderMetadataSchema, RecordTemplate batchFinderCriteria)
   {
     final List<RecordTemplatePlaceholder> results = new ArrayList<RecordTemplatePlaceholder>();
     results.add(generateEntity());
@@ -814,9 +818,24 @@ public class ExampleRequestResponseGenerator
                                                     null);
   }
 
-  private ResourceMethodDescriptor buildResourceMethodDescriptorForBatchFinder(String name, ResourceModel resourceModel)
+  private ResourceMethodDescriptor buildResourceMethodDescriptorForBatchFinder(String name, String batchParamName)
   {
-    return resourceModel.findBatchFinderMethod(name);
+    List<Parameter<?>> parameters = new ArrayList<>();
+    parameters.add(new Parameter<>(batchParamName,
+                                  String.class,
+                                  null,
+                                  true,
+                                  null,
+                                  Parameter.ParamType.QUERY,
+                                  true,
+                                  AnnotationSet.EMPTY));
+    return ResourceMethodDescriptor.createForBatchFinder(null,
+                                                          parameters,
+                                                          name,
+                                                          0,
+                                                          RecordTemplatePlaceholder.class,
+                                                          null,
+                                                          null);
   }
 
   private void addParams(RestfulRequestBuilder<?, ?, ?> builder, ResourceMethod method)
@@ -889,8 +908,6 @@ public class ExampleRequestResponseGenerator
           DataSchema dataSchema = RestSpecCodec.textToSchema(parameter.getType(), _schemaResolver);
           Object value = _dataGenerator.buildData(parameter.getName(), dataSchema);
           builder.setParam(parameter.getName(), value);
-          DataList list = (DataList)value;
-          batchFinderCriteria = new AnyRecord((DataMap)list.get(0));
         }
       }
     }

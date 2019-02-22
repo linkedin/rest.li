@@ -102,8 +102,7 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
     _htmlRenderer = new RestLiHTMLDocumentationRenderer(_config.getServerNodeUri(),
         relationships,
         new VelocityTemplatingEngine(),
-        schemaResolver,
-        _rootResources);
+        schemaResolver);
     _jsonRenderer = new RestLiJSONDocumentationRenderer(relationships);
   }
 

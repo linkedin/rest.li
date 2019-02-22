@@ -29,7 +29,6 @@ import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
-import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.response.BatchFinderResponseEnvelope.BatchFinderEntry;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.BatchFinderResult;
@@ -37,7 +36,6 @@ import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.server.annotations.BatchFinder;
 
 import java.net.HttpCookie;
 import java.net.URI;
@@ -159,8 +157,8 @@ public class BatchFinderResponseBuilder
                                                      CollectionResult<RecordTemplate,
                                                      RecordTemplate> cr)
   {
-    BatchFinder annotation = getBatchFinderAnnotation(routingResult);
-    URI criteriaURI = buildCriteriaURI(resourceContext, criteria, annotation.batchParam(), request.getURI());
+    String batchParamName = getBatchParamterName(routingResult);
+    URI criteriaURI = buildCriteriaURI(resourceContext, criteria, batchParamName, request.getURI());
 
     final CollectionMetadata paging = RestUtils.buildMetadata(criteriaURI,
                                                               resourceContext,
@@ -187,16 +185,16 @@ public class BatchFinderResponseBuilder
     return null;
   }
 
-  private BatchFinder getBatchFinderAnnotation(RoutingResult routingResult)
+  private String getBatchParamterName(RoutingResult routingResult)
   {
-    ResourceMethodDescriptor desc = routingResult.getResourceMethod();
-    return desc.getAnnotation(BatchFinder.class);
+    int batchFinderCriteriaIndex = routingResult.getResourceMethod().getBatchFinderCriteriaParamIndex();
+    return routingResult.getResourceMethod().getParameters().get(batchFinderCriteriaIndex).getName();
   }
 
   private DataList getCriteriaParameters(RoutingResult routingResult)
   {
-    BatchFinder annotation = getBatchFinderAnnotation(routingResult);
-    return (DataList) routingResult.getContext().getStructuredParameter(annotation.batchParam());
+    String batchParamName = getBatchParamterName(routingResult);
+    return(DataList)routingResult.getContext().getStructuredParameter(batchParamName);
   }
 
   private URI buildCriteriaURI(ResourceContextImpl resourceContext, RecordTemplate criteria, String queryParam, URI uri)

@@ -71,8 +71,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
   public RestLiHTMLDocumentationRenderer(URI serverNodeUri,
                                          RestLiResourceRelationship relationships,
                                          TemplatingEngine templatingEngine,
-                                         DataSchemaResolver schemaResolver,
-                                         Map<String, ResourceModel> rootResources)
+                                         DataSchemaResolver schemaResolver)
   {
     _serverNodeUri = serverNodeUri;
     _docBaseUri = UriBuilder.fromUri(serverNodeUri).path("restli").path("docs").build();
@@ -80,7 +79,6 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     _resourceSchemas = _relationships.getResourceSchemaCollection();
     _templatingEngine = templatingEngine;
     _schemaResolver = schemaResolver;
-    _rootResources = rootResources;
   }
 
   @Override
@@ -143,14 +141,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
       else if (methodSchema instanceof BatchFinderSchema)
       {
         BatchFinderSchema batchFinderSchema = (BatchFinderSchema)methodSchema;
-        ResourceModel resourceModel = null;
-        for (ResourceModel rm : _rootResources.values()) {
-          if (rm.getName().equals(resourceName)) {
-            resourceModel = rm;
-            break;
-          }
-        }
-        capture = generator.batchFinder(batchFinderSchema.getName(), resourceModel);
+        capture = generator.batchFinder(batchFinderSchema.getName());
       }
       else if (methodSchema instanceof ActionSchema)
       {
@@ -388,7 +379,6 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
   private final ResourceSchemaCollection _resourceSchemas;
   private final TemplatingEngine _templatingEngine;
   private final DataSchemaResolver _schemaResolver;
-  private final Map<String, ResourceModel> _rootResources;
 
   private final Map<Object, Map<String, ResourceSchema>> _relatedResourceCache =
       new HashMap<Object, Map<String, ResourceSchema>>();

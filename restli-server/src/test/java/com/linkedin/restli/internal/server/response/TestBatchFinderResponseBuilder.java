@@ -216,11 +216,22 @@ public class TestBatchFinderResponseBuilder
 
     EasyMock.replay(mockContext);
 
+    List<Parameter<?>> parameterList = new ArrayList<>();
+    parameterList.add(new Parameter<>(BATCH_PARAM,
+                                      String.class,
+                                      null,
+                                      false,
+                                      null,
+                                      Parameter.ParamType.QUERY,
+                                      true,
+                                      AnnotationSet.EMPTY));
     ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
     EasyMock.expect(mockDescriptor.getAnnotation(BatchFinder.class))
         .andStubReturn(getInstanceOfAnnotation(BATCH_PARAM, BATCH_PARAM));
     EasyMock.expect(mockDescriptor.getParametersWithType(Parameter.ParamType.PAGING_CONTEXT_PARAM))
         .andStubReturn(getPagingContextParam());
+    EasyMock.expect(mockDescriptor.getBatchFinderCriteriaParamIndex()).andStubReturn(0);
+    EasyMock.expect(mockDescriptor.getParameters()).andStubReturn(parameterList);
     EasyMock.replay(mockDescriptor);
 
     RoutingResult mockRoutingResult = EasyMock.createMock(RoutingResult.class);
