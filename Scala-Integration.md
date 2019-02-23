@@ -13,7 +13,7 @@ permalink: /Scala-Integration
 
 ## SBT Plugin
 
-Rest.li is fully integrated with the SBT build system through an SBT plugin.  See [Rest.li SBT Plugin](https://github.com/linkedin/rest.li-sbt-plugin).
+Rest.li is fully integrated with the SBT build system through an SBT plugin.  See [Rest.li SBT Plugin](https://github.com/linkedin/sbt-restli).
 
 ## Writing Resources in Scala
 
@@ -41,13 +41,13 @@ class SampleScalaResource extends CollectionResourceTemplate[java.lang.Long, Sam
 
 ## Scaladoc
 
-[Scaladoc](http://docs.scala-lang.org/style/scaladoc.html) is supported using a plugin.  This is currently ONLY available for scala 2.10.  To enable the plugin in Gradle, modify your build.gradle files, adding a dependency on restli-tools-scala and depending on it the module that contains your Rest.li resource Scala classes.
+[Scaladoc](http://docs.scala-lang.org/style/scaladoc.html) is supported using a plugin.  To enable the plugin in Gradle, modify your build.gradle files, adding a dependency on restli-tools-scala and depending on it the module that contains your Rest.li resource Scala classes. Find the latest version of restli-tools-scala on [Maven Central](https://search.maven.org/search?q=g:com.linkedin.sbt-restli%20AND%20a:restli-tools-scala_*).
 
 ```gradle
 project.ext.externalDependency = [
   // ...
-  'scalaLibrary_2_10': 'org.scala-lang:scala-library:2.10.3',
-  "restliToolsScala_2_10" : "com.linkedin.pegasus:restli-tools-scala_2.10:"+pegasusVersion
+  'scalaLibrary_2_12': 'org.scala-lang:scala-library:2.12.7',
+  'restliToolsScala_2_12' : 'com.linkedin.sbt-restli:restli-tools-scala_2.12:0.3.9'
 ],
 ```
 
@@ -58,7 +58,7 @@ apply plugin: 'scala'
 ext.apiProject = ...
 dependencies {
   // ...
-  compile externalDependency.scalaLibrary_2_10
-  compile externalDependency.restliToolsScala_2_10
+  compile externalDependency.scalaLibrary_2_12
+  compile externalDependency.restliToolsScala_2_12
 }
 ```
