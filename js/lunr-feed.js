@@ -21,15 +21,20 @@ var index = lunr(function () {
     {% assign count = count | plus: 1 %}
     {% endif %}
 {% endfor %}
-var store = [{% for post in site.pages %}{
-  "title": {{post.title | jsonify}},
-  "desc": {{post.excerpt | truncate: 220 | jsonify}},
-  "link": {{ post.url | jsonify }},
-  "image": {{ post.image | jsonify }},
-  "date": {{ post.date | date: '%B %-d, %Y' | jsonify }},
-  "category": {{ post.categories[0] | jsonify }},
-  "excerpt": {{ post.content | strip_html | truncatewords: 20 | jsonify }}
-}{% unless forloop.last %},{% endunless %}{% endfor %}]
+var store = [{% for post in site.pages %}
+    {% if post.name contains '.md' %}
+    {
+    "title": {{post.title | jsonify}},
+    "desc": {{post.excerpt | truncate: 220 | jsonify}},
+    "link": {{ post.url | jsonify }},
+    "image": {{ post.image | jsonify }},
+    "date": {{ post.date | date: '%B %-d, %Y' | jsonify }},
+    "category": {{ post.categories[0] | jsonify }},
+    "excerpt": {{ post.content | strip_html | truncatewords: 20 | jsonify }}
+    }
+    {% unless forloop.last %},{% endunless %}
+    {% endif %}
+  {% endfor %}]
 
 $(document).ready(function() {
   var input = document.getElementById("search-input");
