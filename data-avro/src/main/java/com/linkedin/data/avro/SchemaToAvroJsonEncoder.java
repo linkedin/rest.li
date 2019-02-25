@@ -360,11 +360,11 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
 
     boolean isTranslatedUnionMember = (Boolean.TRUE == field.getProperties().get(SchemaTranslator.TRANSLATED_UNION_MEMBER_PROPERTY));
 
-    // Set the default value only for fields that are not translated from Pegasus union members.
-    if ((defaultValueOverride != null && defaultValueOverride.getValue() != null) && !isTranslatedUnionMember)
-    {
+    Object defaultValue = (defaultValueOverride != null) ? defaultValueOverride.getValue() : null;
+
+    if (defaultValue != null || isTranslatedUnionMember) {
       _builder.writeFieldName(DEFAULT_KEY);
-      _builder.writeData(defaultValueOverride.getValue());
+      _builder.writeData(defaultValue);
     }
   }
 

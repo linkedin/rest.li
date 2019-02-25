@@ -81,7 +81,7 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
 
   /**
    * Translates the default value specified on a field. The default value translation only happens for fields whose type
-   * is a union that uses aliaes for its members. The modified default value will be for the equivalent Avro record that
+   * is a union that uses aliases for its members. The modified default value will be for the equivalent Avro record that
    * will be generated for this Union type during schema translation.
    *
    * @param field Reference to the union field whose default value is modified
