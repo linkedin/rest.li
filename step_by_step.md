@@ -840,6 +840,4 @@ creating the server and client, most of your focus will usually be on
 defining data models and implementing resource classes that provide
 and/or manipulate the data.
 
-To learn more about Rest.li, proceed to the more complex examples in the
-source code and read the [Rest.li User’s
-Guide](http://localhost:4000/rest.li/user_guide/server_architecture).
+To learn more about Rest.li, proceed to the more complex examples in the source code and read the [Rest.li User’s Guide](/rest.li/user_guide/server_architecture).
