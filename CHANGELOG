@@ -1,6 +1,10 @@
-27.0.2
+27.0.3
 ------
 
+27.0.2
+------
+(RB=1466187)
+Optimize URI parsing inefficiencies
 
 27.0.1
 ------

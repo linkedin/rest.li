@@ -19,8 +19,6 @@ package com.linkedin.restli.internal.common;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
-import com.linkedin.jersey.api.uri.UriComponent;
-
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -199,17 +197,20 @@ public class URIElementParser
     }
   }
 
-  private static Queue<Token> tokenizeElement(String element) throws PathSegment.PathSegmentSyntaxException
+  private static Queue<Token> tokenizeElement(String element)
   {
-    Queue<Token> tokens = new LinkedList<Token>();
+    Queue<Token> tokens = new LinkedList<>();
     StringBuilder currentToken = new StringBuilder();
     int currentTokenStartLoc = 0;
     int currentCharIndex = 0;
-    for (char c : element.toCharArray())
+    boolean tokenHasEncodedOctets = false;
+    final int elementLength = element.length();
+    for (int i = 0; i < elementLength; i++)
     {
-      if (isGrammarCharacter(c))
+      char c = element.charAt(i);
+      if (URIConstants.isGrammarCharacter(c))
       {
-        // special case for list start.
+        // Special case for list start
         if (c == URIConstants.OBJ_START  && currentToken.toString().equals(URIConstants.LIST_PREFIX))
         {
           tokens.add(new Token(GrammarMarker.LIST_START, currentTokenStartLoc));
@@ -217,45 +218,65 @@ public class URIElementParser
         }
         else
         {
-          // take care of any previous string token.
+          // Take care of any previous string token
           if (currentToken.length() != 0)
           {
-            tokens.add(createStringToken(currentToken.toString(), currentTokenStartLoc));
+            tokens.add(createStringToken(currentToken, currentTokenStartLoc, tokenHasEncodedOctets));
           }
           tokens.add(createGrammarToken(c, currentCharIndex));
           currentTokenStartLoc = currentCharIndex + 1;
         }
-        currentToken = new StringBuilder();
+        // Set length to 0 rather than initialize a new StringBuilder, this is an optimization
+        currentToken.setLength(0);
+        tokenHasEncodedOctets = false;
       }
       else
       {
-        currentToken.append(c);
+        // If encoded octets encountered, greedily decode consecutive octets and append to the current token
+        if (c == '%')
+        {
+          tokenHasEncodedOctets = true;
+          int numCharsConsumed = URIDecoderUtils.decodeConsecutiveOctets(currentToken, element, i);
+          i += numCharsConsumed - 1;
+          currentCharIndex += numCharsConsumed - 1;
+        }
+        else
+        {
+          currentToken.append(c);
+        }
       }
       currentCharIndex++;
     }
 
     if (currentToken.length() != 0)
     {
-      tokens.add(createStringToken(currentToken.toString(), currentTokenStartLoc));
+      tokens.add(createStringToken(currentToken, currentTokenStartLoc, tokenHasEncodedOctets));
     }
 
     return tokens;
   }
 
-  private static Token createStringToken(String strToken, int startLocation) throws PathSegment.PathSegmentSyntaxException
+  /**
+   * Creates a token object from some decoded string. It is expected that the token string was already decoded while
+   * being read. This method needs to know if the string originally contained any percent-encoded octets in order to
+   * determine if the token being created should semantically represent an empty string.
+   *
+   * @param strToken input string, should already be decoded
+   * @param startLocation starting index of this token in reference to the originally encoded URI element
+   * @param tokenHasEncodedOctets whether the string originally contained any percent-encoded octets
+   * @return token element constructed from the given string
+   */
+  private static Token createStringToken(StringBuilder strToken, int startLocation, boolean tokenHasEncodedOctets)
   {
-    return new Token(decodeString(strToken), startLocation);
-  }
-
-  private  static String decodeString(String str) throws PathSegment.PathSegmentSyntaxException
-  {
-    if (str.equals(URIConstants.EMPTY_STRING_REP))
+    if (!tokenHasEncodedOctets &&
+        strToken.length() == URIConstants.EMPTY_STRING_REP.length() &&
+        strToken.toString().equals(URIConstants.EMPTY_STRING_REP))
     {
-      return "";
+      return new Token("", startLocation);
     }
     else
     {
-      return UriComponent.decode(str, null); // todo query param to decode + as ' '?
+      return new Token(strToken.toString(), startLocation);
     }
   }
 
@@ -276,12 +297,7 @@ public class URIElementParser
     }
   }
 
-  private static boolean isGrammarCharacter(char c)
-  {
-    return URIConstants.GRAMMAR_CHARS.contains(c);
-  }
-
-  private static enum GrammarMarker
+  private enum GrammarMarker
   {
     LIST_START (URIConstants.LIST_PREFIX + URIConstants.OBJ_START),
     MAP_START (String.valueOf(URIConstants.OBJ_START)),
@@ -303,7 +319,7 @@ public class URIElementParser
     private GrammarMarker marker;
     private int startLocation;
 
-    // used only for string tokens
+    // Used only for string tokens
     public Token(String str, int startLocation)
     {
       this.value = str;
@@ -311,7 +327,7 @@ public class URIElementParser
       this.startLocation = startLocation;
     }
 
-    // used only for grammar tokens.
+    // Used only for grammar tokens
     public Token(GrammarMarker marker, int startLocation)
     {
       this.value = null;

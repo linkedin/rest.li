@@ -110,9 +110,14 @@ public class TestURIElementParser
     internalEncodedList.add(":");
     internalEncoded.put(",", internalEncodedList);
 
+    // Ensure that the URI parser interprets this literally and not as an empty string element
+    DataMap withFakeEmptyString = new DataMap();
+    withFakeEmptyString.put("notEmpty", "''");
+
     return new Object [][] {
       { "(this%20is%20a%20key:List(%2F,%3D,%26))", externalEncoded },
-      { "(%2C:List(%27,%28,%29,%3A))", internalEncoded }
+      { "(%2C:List(%27,%28,%29,%3A))", internalEncoded },
+      { "(notEmpty:%27%27)", withFakeEmptyString },
     };
   }
 
@@ -138,8 +143,8 @@ public class TestURIElementParser
     surrogatePairMap.put("stickoutTongue", "\uD83D\uDE1B"); // Emoji, but with surrogate pairs
 
     return new Object[][] {
-        {"(konnichiwa:%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%81%AF)", japaneseMap },
-        { "(smiley:%E2%98%BA)", emojiMap},
+        { "(konnichiwa:%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%81%AF)", japaneseMap },
+        { "(smiley:%E2%98%BA)", emojiMap },
         { "(stickoutTongue:%F0%9F%98%9B)",surrogatePairMap }
     };
   }

@@ -38,4 +38,20 @@ public class URIConstants
 
   public static final char[] RESERVED_CHARS = { OBJ_START, KEY_VALUE_SEP, OBJ_END, ITEM_SEP, EMPTY_STR_CHAR };
   public static final Set<Character> GRAMMAR_CHARS = new HashSet<Character>(Arrays.asList(OBJ_START, KEY_VALUE_SEP, OBJ_END, ITEM_SEP));
+
+  /**
+   * Determine if this character is a Rest.li 2.0.0 URI grammar character.
+   * This hard-coded function is an optimized alternative to checking membership in {@link #GRAMMAR_CHARS}.
+   * If the protocol syntax is ever updated, this function must be updated accordingly.
+   *
+   * @param c the URI character being tested.
+   * @return true if the character is a grammar character.
+   */
+  public static boolean isGrammarCharacter(char c)
+  {
+    return c == OBJ_START ||
+        c == OBJ_END ||
+        c == KEY_VALUE_SEP ||
+        c == ITEM_SEP;
+  }
 }
