@@ -75,7 +75,7 @@ map onto them (CREATE is a POST, UPDATE is a PUT, FIND is a GET).
     provide query parameters for the search. Find methods return a list
     of entities. (HTTP verb: GET)
 
-CREATE, GET, UPDATE and DELETE also have a corresponding batch method.
+CREATE, GET, UPDATE, DELETE and FIND also have a corresponding batch method.
 For example, BATCH\_GET is used to read multiple entities and requires
 the client to provide a list of resource identifiers. It returns a map
 from identifiers to entities.
