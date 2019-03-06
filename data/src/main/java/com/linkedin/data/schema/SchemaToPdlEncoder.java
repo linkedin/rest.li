@@ -126,7 +126,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         if (hasNamespaceOverride) {
 
           write("namespace ");
-          write(namedSchema.getNamespace());
+          write(escapeIdentifier(namedSchema.getNamespace()));
           newline();
           indent();
           _namespace = namedSchema.getNamespace();

@@ -1,0 +1,19 @@
+{
+  "type" : "record",
+  "name" : "InlineSchemaTyperef",
+  "namespace" : "com.linkedin.greetings.api",
+  "fields" : [
+    {
+      "name" : "NamespaceWithReservedKeyword",
+      "type" : {
+        "type" : "array",
+        "items" : {
+          "type" : "typeref",
+          "name" : "ItemWithNamespace",
+          "namespace" : "com.linkedin.greetings.api.typeref",
+          "ref" : "string"
+        }
+      }
+    }
+  ]
+}

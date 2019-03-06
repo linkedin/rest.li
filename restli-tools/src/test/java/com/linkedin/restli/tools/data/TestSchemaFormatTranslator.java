@@ -22,6 +22,7 @@ public class TestSchemaFormatTranslator {
     assertSameSchemas("com.linkedin.greetings.api.Greeting", sourceResolver, translatedResolver);
     assertSameSchemas("com.linkedin.greetings.api.Tone", sourceResolver, translatedResolver);
     assertSameSchemas("com.linkedin.greetings.api.ArrayTestRecord", sourceResolver, translatedResolver);
+    assertSameSchemas("com.linkedin.greetings.api.InlineSchemaTyperef", sourceResolver, translatedResolver);
   }
 
   private void assertSameSchemas(String fullname, MultiFormatDataSchemaResolver sourceResolver, MultiFormatDataSchemaResolver translatedResolver) {

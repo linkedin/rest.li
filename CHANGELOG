@@ -1,3 +1,8 @@
+27.0.4
+------
+(RB=1586326)
+Escape keywords in namespace of inline schema
+
 27.0.3
 ------
 (RB=1572130)
