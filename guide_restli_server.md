@@ -22,7 +22,7 @@ index: 2
     -  [Batch Get](#batch_get)
     -  [Get All](#get_all)
     -  [Finder](#finder)
-    -  [Batch Finder](#batch_finder)
+    -  [Batch Finder](#batch-finder)
     -  [Create](#create)
     -  [Batch Create](#batch_create)
     -  [Update](#update)
