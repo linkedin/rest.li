@@ -247,7 +247,7 @@ The return http status for the BATCH_FINDER request is still 200. An example is 
 
 ##### 2) Rest.li framework will cover the non-present criteria error
 When processing the `BatchFinderResult` in the ResponseBuilder, if a criteria is not present, either in _elements, nor in _errors,  the framework will generate a "404" error for this criteria.
-The whole http status is still 200, if there is 
+The whole http status is still 200.
 ```
 new RestLiServiceException(S_404_NOT_FOUND, "The server didn't find a representation for this criteria"));
 ```
