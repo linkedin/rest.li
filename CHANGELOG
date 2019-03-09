@@ -1,5 +1,7 @@
 27.0.5
 ------
+(RB=1590428)
+Add default NoOp implementation for TraverseCallback.
 
 27.0.4
 ------

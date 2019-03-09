@@ -233,12 +233,6 @@ public class BsonDataCodec implements DataCodec
     }
 
     @Override
-    public Iterable<Map.Entry<String,Object>> orderMap(DataMap map)
-    {
-      return map.entrySet();
-    }
-
-    @Override
     public void nullValue() throws CharacterCodingException
     {
       _buffer.put(BSON_NULL);

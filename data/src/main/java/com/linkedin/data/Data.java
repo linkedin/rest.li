@@ -151,65 +151,87 @@ public class Data
      * If the order is not significant, then this method should return
      * the result of {@link DataMap#entrySet()}.
      *
+     * This interface provides default NoOp for all operations except
+     * {@link TraverseCallback#orderMap(DataMap)}.
+     *
      * @param map provides the {@link DataMap}.
      * @return entries of the {@link DataMap} entries in the desired output order.
      */
-    Iterable<Map.Entry<String, Object>> orderMap(DataMap map);
+    default Iterable<Map.Entry<String, Object>> orderMap(DataMap map)
+    {
+      return map.entrySet();
+    }
 
     /**
      * Invoked when a null value is traversed.
      * This should not happen.
      */
-    void nullValue() throws IOException;
+    default void nullValue() throws IOException
+    {
+    }
 
     /**
      * Invoked when a boolean value is traversed.
      *
      * @param value the boolean value.
      */
-    void booleanValue(boolean value) throws IOException;
+    default void booleanValue(boolean value) throws IOException
+    {
+    }
 
     /**
      * Invoked when a integer value is traversed.
      *
      * @param value the integer value.
      */
-    void integerValue(int value) throws IOException;
+    default void integerValue(int value) throws IOException
+    {
+    }
 
     /**
      * Invoked when a long value is traversed.
      *
      * @param value the long value.
      */
-    void longValue(long value) throws IOException;
+    default void longValue(long value) throws IOException
+    {
+    }
 
     /**
      * Invoked when a float value is traversed.
      *
      * @param value the float value.
      */
-    void floatValue(float value) throws IOException;
+    default void floatValue(float value) throws IOException
+    {
+    }
 
     /**
      * Invoked when a double value is traversed.
      *
      * @param value the double value.
      */
-    void doubleValue(double value) throws IOException;
+    default void doubleValue(double value) throws IOException
+    {
+    }
 
     /**
      * Invoked when a string value is traversed.
      *
      * @param value the string value.
      */
-    void stringValue(String value) throws IOException;
+    default void stringValue(String value) throws IOException
+    {
+    }
 
     /**
      * Invoked when a {@link ByteString} value is traversed.
      *
      * @param value the string value.
      */
-    void byteStringValue(ByteString value) throws IOException;
+    default void byteStringValue(ByteString value) throws IOException
+    {
+    }
 
     /**
      * Invoked when an illegal value is traversed.
@@ -217,7 +239,9 @@ public class Data
      *
      * @param value the illegal value.
      */
-    void illegalValue(Object value) throws IOException;
+    default void illegalValue(Object value) throws IOException
+    {
+    }
 
     /**
      * Invoked when an empty {@link DataMap} is traversed.
@@ -225,14 +249,18 @@ public class Data
      * and {@link #endMap} callbacks will not
      * be invoked for an empty {@link DataMap}.
      */
-    void emptyMap() throws IOException;
+    default void emptyMap() throws IOException
+    {
+    }
 
     /**
      * Invoked when the start of {@link DataMap} is traversed.
      *
      * @param map provides the {@link DataMap}to be traversed.
      */
-    void startMap(DataMap map) throws IOException;
+    default void startMap(DataMap map) throws IOException
+    {
+    }
 
     /**
      * Invoked when the key of {@link DataMap} entry is traversed.
@@ -240,12 +268,16 @@ public class Data
      *
      * @param key of the {@link DataMap} entry.
      */
-    void key(String key) throws IOException;
+    default void key(String key) throws IOException
+    {
+    }
 
     /**
      * Invoked when the end of {@link DataMap} is traversed.
      */
-    void endMap() throws IOException;
+    default void endMap() throws IOException
+    {
+    }
 
     /**
      * Invoked when an empty list is traversed.
@@ -253,14 +285,18 @@ public class Data
      * {@link #endList} callbacks will not
      * be invoked for an empty {@link DataList}.
      */
-    void emptyList() throws IOException;
+    default void emptyList() throws IOException
+    {
+    }
 
     /**
      * Invoked when the start of a {@link DataList} is traversed.
      *
      * @param list provides the {@link DataList}to be traversed.
      */
-    void startList(DataList list) throws IOException;
+    default void startList(DataList list) throws IOException
+    {
+    }
 
     /**
      * Invoked to provide the index of the next {@link DataList} entry.
@@ -268,12 +304,16 @@ public class Data
      *
      * @param index of the next {@link DataList} entry, starts from 0.
      */
-    void index(int index) throws IOException;
+    default void index(int index) throws IOException
+    {
+    }
 
     /**
      * Invoked when the end of a {@link DataList} is traversed.
      */
-    void endList() throws IOException;
+    default void endList() throws IOException
+    {
+    }
   }
 
   /**

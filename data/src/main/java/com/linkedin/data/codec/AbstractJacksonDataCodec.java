@@ -229,12 +229,6 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     }
 
     @Override
-    public Iterable<Map.Entry<String, Object>> orderMap(DataMap map)
-    {
-      return map.entrySet();
-    }
-
-    @Override
     public void nullValue() throws IOException
     {
       _generator.writeNull();

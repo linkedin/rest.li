@@ -19,7 +19,6 @@ package com.linkedin.data;
 
 import com.linkedin.data.collections.CheckedMap;
 
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
@@ -1012,6 +1011,31 @@ public class TestData
 
     String s3 = Data.dump(null, new DataList(), "");
     assertEquals(s3, "[]\n");
+  }
+
+  @Test
+  public void testTraverseCallback() throws Exception
+  {
+    Data.TraverseCallback noOp = new Data.TraverseCallback()
+    {
+    };
+
+    Data.TraverseCallback removeNestedMap = new Data.TraverseCallback()
+    {
+      @Override
+      public void startMap(DataMap map)
+      {
+        map.remove("map1_1");
+        map.remove("map1_2");
+      }
+    };
+
+    DataMap referenceDataMapCopy = referenceDataMap1.copy();
+    Data.traverse(referenceDataMapCopy, noOp);
+    assertEquals(referenceDataMapCopy, referenceDataMap1);
+    Data.traverse(referenceDataMapCopy, removeNestedMap);
+    assertFalse(referenceDataMapCopy.containsKey("map1_1"));
+    assertFalse(referenceDataMapCopy.containsKey("map1_2"));
   }
 
   @Test
