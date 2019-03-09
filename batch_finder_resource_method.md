@@ -61,7 +61,7 @@ The type of this query parameter is a List.
 
 Eg.
 
-    curl "d2://userSearchResults?bq=findUsers&batchCriteria=List((firstName:pauline, age:12),(lastName:iglou))" -X GET
+    curl "http://localhost:8080/userSearchResults?bq=findUsers&batchCriteria=List((firstName:pauline, age:12),(lastName:iglou))" -X GET
 
 The other query parameters will be applied as common filters across all batch requests.
 
@@ -72,14 +72,14 @@ Here is an example batch request with two individual finders using the following
 
 Eg.
 
-    curl "d2://userSearchResults?bq=findUsers&batchCriteria=List((firstName:pauline),(lastName:iglou))&age=21" -X GET
+    curl "http://localhost:8080/userSearchResults?bq=findUsers&batchCriteria=List((firstName:pauline),(lastName:iglou))&age=21" -X GET
 
 #### Pagination support
 ##### 1) Common pagination for all search criteria  
 The developer can pass additional parameters to specify a common pagination. It will be more efficient than adding a pagination context inside each criteria object.  
 Eg.
 
-    curl "d2://userSearchResults?q=findUsers&batchCriteria=List((firstName:pauline, age:12),(lastName:iglou))&firstName=max&start=10&count=10" -X GET
+    curl "http://localhost:8080/userSearchResults?q=findUsers&batchCriteria=List((firstName:pauline, age:12),(lastName:iglou))&firstName=max&start=10&count=10" -X GET
 
 The "start" and "count" params will be automatically mapped to a `PagingContext` object that will be passed to the resource method. 
 ```java
