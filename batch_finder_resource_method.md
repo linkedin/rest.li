@@ -12,19 +12,19 @@ excerpt: This documentation describes how restli framework support batch of sear
 -   [Overview](#overview)
 -   [Protocol](#protocol)
     -   [Request](#request)
-        -   [URI](#uri)
-        -   [Java Request Builders](#java-request-builders)
     -   [Response](#response)
-        -   [Reponse Body](#batchcollectionresponse)
-        -   [Error Handling](#error-handling)
+-   [Client](#client)
+    -   [Java Request Builders](#java-request-builders)    
 -   [Resource API](#resource-api)
     -   [Method Annotation and Parameters](#method-annotation-and-parameters)
     -   [Criteria Filter](#criteria-filter)
     -   [BatchFinderResult](#batchfinderresult)
--   [Future consideration](#future-consideration) 
+    -   [Error Handling](#error-handling)
+-   [FAQ](#faq) 
     
 ## Overview   
-The BATCH_FINDER allows combining multiple requests to one FINDER within a Rest.li resource into a single call. 
+The BATCH_FINDER resource method accepts a list of filters set. 
+Instead of callings multiple finders with different filter values, we call 1 BATCH_FINDER method with a list of filters.
 
 For example, a client might want to call the same FINDER with different search criteria.
 Combining multiple individual requests into a single batch request can save the application significant network latency.
@@ -59,9 +59,16 @@ At least, 2 query parameters will have to be set for a batch finder:
 For example, with @BatchFinder(value="findUsers", batchParam="batchCriteria"), the batch query parameter name is "batchCriteria". 
 The type of this query parameter is a List.
 
-Eg.
+Different data type has different representation in Rest.li protocol 1.0 and 2.0. See more details in [Rest.li Protocol](/rest.li/spec/protocol).
 
-    curl "http://localhost:8080/userSearchResults?bq=findUsers&batchCriteria=List((firstName:pauline, age:12),(lastName:iglou))" -X GET
+Eg.
+In Rest.li protocol 1.0
+
+    curl "http://localhost:8080/userSearchResults?bq=findUsers&batchCriteria[0].firstName=pauline&batchCriteria[0].age=12&batchCriteria[1].lastName=iglou" --globoff
+
+In Rest.li protocol 2.0
+
+    curl --header "X-RestLi-Protocol-Version: 2.0.0" "http://localhost:10546/userSearchResults?q=findUsers&batchCriteria=List((firstName:pauline, age:12),(lastName:iglou))"
 
 The other query parameters will be applied as common filters across all batch requests.
 
@@ -79,7 +86,7 @@ Eg.
 The developer can pass additional parameters to specify a common pagination. It will be more efficient than adding a pagination context inside each criteria object.  
 Eg.
 
-    curl "http://localhost:8080/userSearchResults?q=findUsers&batchCriteria=List((firstName:pauline, age:12),(lastName:iglou))&firstName=max&start=10&count=10" -X GET
+    curl "http://localhost:8080/userSearchResults?q=findUsers&batchCriteria=List((firstName:pauline, age:12),(lastName:iglou))&firstName=max&start=10&count=10" -X GET  --header "X-RestLi-Protocol-Version: 2.0.0"
 
 The "start" and "count" params will be automatically mapped to a `PagingContext` object that will be passed to the resource method. 
 ```java
@@ -93,7 +100,72 @@ If the developer wants to apply a custom pagination for each search criteria, th
 **Caution:** Rest.li doesn't validate how the developer models the pagination in the Search criteria RecordTemple. For consistency purpose, we recommend to use a `PagingContext`.  
 It's the developer responsibility to apply the right pagination (common or custom) based on its need in the resource method implementation.
 
-#### Java Request Builders
+
+
+### Response
+#### BatchCollectionResponse
+A list of `BatchFinderCriteriaResult` are returned in a `BatchCollectionResponse` wrapper. 
+It is used for returning an ordered, variable-length, navigable collection of resources for BATCH_FINDER.
+This means, `BatchFinderCriteriaResult` objects are expected to be returned in the same order and position as the respective input search criteria.
+
+For each batchFinder search criteria, it will either return a successful `CollectionResponse` which contains a list of entities Or 
+an `ErrorResponse` in failing case. Such 2 kinds cases are wrapped into `BatchFinderCriteriaResult` corresponding to 
+each search criteria.
+
+`BatchFinderCriteriaResult` fields:
+
+- (optional) "elements" : JSON serialized list of entity types (in success case)
+- (optional) "metadata":
+- (optional) "paging" : JSON serialized CollectionMetadata object
+- (optional) "error" : it's an ErrorResponse which fail to get a list of entities to corresponding search criteria(in failure)
+- "isError" : which indicates whether the result is a successful case or not
+
+E.g.
+    
+    GET http://localhost:7279/photos?bq=searchPhotos&criteria=List((format:JPG,title:bar),(format:PNG,title:bar))&exif=() HTTP/1.1
+    HTTP/1.1 200 OK Content-Type: application/jsonX-RestLi-Protocol-Version: 2.0.0
+    
+    {
+      "elements" : [ {
+        "elements" : [ { // in success case: return a list of entities
+          "urn" : "foo",
+          "format" : "JPG",
+          "id" : 9,
+          "title" : "baz",
+          "exif" : { }
+        }, {
+          "urn" : "foo",
+          "format" : "JPG",
+          "id" : 10,
+          "title" : "bar",
+          "exif" : { }
+        } ],
+        "paging" : {
+          "total" : 2,
+          "count" : 10,
+          "start" : 0,
+          "links" : [ 
+          {           
+            "href": "/PhotoResource?PhotoCriteria=List((urn:foo, format:JPG))&start=1&count=1&bq=searchPhotos",
+            "type": "application/json",
+            "rel": "next"
+          ]
+        }
+      }, { // in failure : return an ErrorResponse
+        "isError" : true,
+        "elements" : [ ],
+        "error" : {
+          "exceptionClass" : "com.linkedin.restli.server.RestLiServiceException",
+          "stackTrace" : "com.linkedin.restli.server.RestLiServiceException [HTTP Status:404]: The server didn't find a representation for this criteria\n\tat......",
+          "message" : "The server didn't find a representation for this criteria",
+          "status" : 404
+        }
+      } ]
+    }
+    
+    
+## Client
+### Java Request Builders
 The client framework includes a code-generation tool that reads the IDL(see [Restspec IDL](/rest.li/user_guide/restli_client#restspec-idl) for details) and generates type-safe Java binding for each resource and its supported methods.
 The bindings are represented as RequestBuilder classes.  
 For each resource described in an IDL file, a corresponding builder factory will be generated.
@@ -179,90 +251,9 @@ Here is an example to show how to use request builder to build BATCH_FINDER requ
   }
 ```
 
-### Response
-#### BatchCollectionResponse
-A list of `BatchFinderCriteriaResult` are returned in a `BatchCollectionResponse` wrapper. 
-It is used for returning an ordered, variable-length, navigable collection of resources for BATCH_FINDER.
-This means, `BatchFinderCriteriaResult` objects are expected to be returned in the same order and position as the respective input search criteria.
-
-For each batchFinder search criteria, it will either return a successful `CollectionResponse` which contains a list of entities Or 
-an `ErrorResponse` in failing case. Such 2 kinds cases are wrapped into `BatchFinderCriteriaResult` corresponding to 
-each search criteria.
-
-`BatchFinderCriteriaResult` fields:
-
-- (optional) "elements" : JSON serialized list of entity types (in success case)
-- (optional) "metadata":
-- (optional) "paging" : JSON serialized CollectionMetadata object
-- (optional) "error" : it's an ErrorResponse which fail to get a list of entities to corresponding search criteria(in failure)
-- "isError" : which indicates whether the result is a successful case or not
-
-E.g.
-
-    HTTP/1.1 200 OK Content-Type: application/jsonX-RestLi-Protocol-Version: 2.0.0
-    {
-      "elements" : [ {
-        "elements" : [ { // in success case: return a list of entities
-          "urn" : "foo",
-          "format" : "JPG",
-          "id" : 9,
-          "title" : "baz",
-          "exif" : { }
-        }, {
-          "urn" : "foo",
-          "format" : "JPG",
-          "id" : 10,
-          "title" : "bar",
-          "exif" : { }
-        } ],
-        "paging" : {
-          "total" : 2,
-          "count" : 10,
-          "start" : 0,
-          "links" : [ 
-          {           
-            "href": "/PhotoResource?PhotoCriteria=List((urn:foo, format:JPG))&start=1&count=1&bq=searchPhotos",
-            "type": "application/json",
-            "rel": "next"
-          ]
-        }
-      }, { // in failure : return an ErrorResponse
-        "isError" : true,
-        "elements" : [ ],
-        "error" : {
-          "exceptionClass" : "com.linkedin.restli.server.RestLiServiceException",
-          "stackTrace" : "com.linkedin.restli.server.RestLiServiceException [HTTP Status:404]: The server didn't find a representation for this criteria\n\tat com.linkedin.restli.internal.server.response.BatchFinderResponseBuilder.buildRestLiResponseData(BatchFinderResponseBuilder.java:127)\n\tat com.linkedin.restli.internal.server.response.RestLiResponseHandler.buildRestLiResponseData(RestLiResponseHandler.java:232)\n\tat com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator.buildResponse(ExampleRequestResponseGenerator.java:600)\n\tat com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator.buildRequestResponse(ExampleRequestResponseGenerator.java:528)\n\tat com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator.batchFinder(ExampleRequestResponseGenerator.java:282)\n\tat com.linkedin.restli.docgen.RestLiHTMLDocumentationRenderer.renderResource(RestLiHTMLDocumentationRenderer.java:144)\n\tat com.linkedin.restli.docgen.DefaultDocumentationRequestHandler.processDocumentationRequest(DefaultDocumentationRequestHandler.java:190)\n\tat com.linkedin.restli.docgen.DefaultDocumentationRequestHandler.handleRequest(DefaultDocumentationRequestHandler.java:87)\n\tat com.linkedin.restli.server.RestRestLiServer.doHandleRequest(RestRestLiServer.java:115)\n\tat com.linkedin.restli.server.RestRestLiServer.handleRequest(RestRestLiServer.java:95)\n\tat com.linkedin.restli.server.RestLiServer.handleRequest(RestLiServer.java:130)\n\tat com.linkedin.restli.server.DelegatingTransportDispatcher.handleRestRequest(DelegatingTransportDispatcher.java:70)\n\tat com.linkedin.r2.filter.transport.DispatcherRequestFilter.onRestRequest(DispatcherRequestFilter.java:67)\n\tat com.linkedin.r2.filter.TimedRestFilter.onRestRequest(TimedRestFilter.java:61)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:146)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:132)\n\tat com.linkedin.r2.filter.FilterChainIterator.onRequest(FilterChainIterator.java:62)\n\tat com.linkedin.r2.filter.TimedNextFilter.onRequest(TimedNextFilter.java:55)\n\tat com.linkedin.r2.filter.transport.ServerQueryTunnelFilter.onRestRequest(ServerQueryTunnelFilter.java:58)\n\tat com.linkedin.r2.filter.TimedRestFilter.onRestRequest(TimedRestFilter.java:61)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:146)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:132)\n\tat com.linkedin.r2.filter.FilterChainIterator.onRequest(FilterChainIterator.java:62)\n\tat com.linkedin.r2.filter.TimedNextFilter.onRequest(TimedNextFilter.java:55)\n\tat com.linkedin.r2.filter.message.rest.RestFilter.onRestRequest(RestFilter.java:50)\n\tat com.linkedin.r2.filter.TimedRestFilter.onRestRequest(TimedRestFilter.java:61)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:146)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:132)\n\tat com.linkedin.r2.filter.FilterChainIterator.onRequest(FilterChainIterator.java:62)\n\tat com.linkedin.r2.filter.FilterChainImpl.onRestRequest(FilterChainImpl.java:96)\n\tat com.linkedin.r2.filter.transport.FilterChainDispatcher.handleRestRequest(FilterChainDispatcher.java:70)\n\tat com.linkedin.r2.transport.http.server.HttpDispatcher.handleRequest(HttpDispatcher.java:95)\n\tat com.linkedin.r2.transport.http.server.AbstractR2Servlet.service(AbstractR2Servlet.java:105)\n\tat javax.servlet.http.HttpServlet.service(HttpServlet.java:790)\n\tat org.eclipse.jetty.servlet.ServletHolder.handle(ServletHolder.java:848)\n\tat org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:584)\n\tat org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:224)\n\tat org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1180)\n\tat org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:512)\n\tat org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:185)\n\tat org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1112)\n\tat org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:141)\n\tat org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:134)\n\tat org.eclipse.jetty.server.Server.handle(Server.java:534)\n\tat org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:333)\n\tat org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:251)\n\tat org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:283)\n\tat org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:108)\n\tat org.eclipse.jetty.io.SelectChannelEndPoint$2.run(SelectChannelEndPoint.java:93)\n\tat org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.executeProduceConsume(ExecuteProduceConsume.java:303)\n\tat org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.produceConsume(ExecuteProduceConsume.java:148)\n\tat org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.run(ExecuteProduceConsume.java:136)\n\tat org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:671)\n\tat org.eclipse.jetty.util.thread.QueuedThreadPool$2.run(QueuedThreadPool.java:589)\n\tat java.lang.Thread.run(Thread.java:745)\n",
-          "message" : "The server didn't find a representation for this criteria",
-          "status" : 404
-        }
-      } ]
-    }
-
-#### Error Handling
-##### 1) Custom error per search criteria
-For each input criteria, the developer is responsible to update either the "_elements" or the "_errors" map in `BatchFinderResult`.
-If the developers set a customized error which is wrapped into a `RestLiServiceException` for one search criteria,
-Rest.li framework will not treat it as a failure for the whole BATCH_FINDER request, but just the failure for that specific criteria.
-The return http status for the BATCH_FINDER request is still 200. An example is below [Resource API](/rest.li/batch_finder_resource_method#resource-api).
-
-##### 2) Rest.li framework will cover the non-present criteria error
-When processing the `BatchFinderResult` in the ResponseBuilder, if a criteria is not present, either in _elements, nor in _errors,  the framework will generate a "404" error for this criteria.
-The whole http status is still 200.
-```
-new RestLiServiceException(S_404_NOT_FOUND, "The server didn't find a representation for this criteria"));
-```
-
-##### 3) return nulls
-In some situation, the return results may contain null value. Resource methods should never explicitly return null. 
-If the Rest.li framework detects this, it will return an HTTP 500 back to the client with a message indicating ‘Unexpected null encountered’. 
-See more details in [Returning Nulls](/rest.li/user_guide/restli_server#returning-nulls).
-
-Here are some possible cases:
-- `BatchFinderResult` is null.
-- Element is null in the returned list of entities in the successful case.
-- For one criteria, the whole list of entities is null.
 
 ## Resource API
+BATCH_FINDER is supported on Collection and Association Resources only(See more details about [Collection Resource](/rest.li/spec/protocol#collection-resources) and [Association Resource](/rest.li/spec/protocol#association-resources)).
 Resources may provide zero or more BATCH_FINDER resource methods. Each BATCH_FINDER method must be annotated with the @`BatchFinder` annotation.
 
 Pagination default to start=0 and count=10. Clients may set both of these parameters to any desired value.
@@ -272,29 +263,32 @@ The @`BatchFinder` annotation takes 2 required parameter:
 - `batchParam` : which indicates the name of the batch criteria parameter, each BATCH_FINDER method must have and can only have one batch parameter
 
 For example: 
-```
+```java
   @BatchFinder(value = "searchGreetings", batchParam = "criteria")
-  public BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> searchGreetings(@PagingContextParam PagingContext context,
+  public Task<BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord>> searchGreetings(@PagingContextParam PagingContext context,
                                                                 @QueryParam("criteria") GreetingCriteria[] criteria,
                                                                 @QueryParam("message") String message)
   {
-    BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
+    return Task.blocking("searchGreetings", () -> {
+        BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
+    
+        for (GreetingCriteria currentCriteria: criteria) {
+          if (currentCriteria.getId() == 1L) {
+            // on success
+            CollectionResult<Greeting, EmptyRecord> c1 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g1), 1);
+            batchFinderResult.putResult(currentCriteria, c1);
+          } else if (currentCriteria.getId() == 2L) {
+            CollectionResult<Greeting, EmptyRecord> c2 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g2), 1);
+            batchFinderResult.putResult(currentCriteria, c2);
+          } else if (currentCriteria.getId() == 100L){
+            // on error: to construct error response for test
+            batchFinderResult.putError(currentCriteria, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "Fail to find Greeting!"));
+          }
+        }
+    
+        return batchFinderResult;
+    }, _executor);
 
-    for (GreetingCriteria currentCriteria: criteria) {
-      if (currentCriteria.getId() == 1L) {
-        // on success
-        CollectionResult<Greeting, EmptyRecord> c1 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g1), 1);
-        batchFinderResult.putResult(currentCriteria, c1);
-      } else if (currentCriteria.getId() == 2L) {
-        CollectionResult<Greeting, EmptyRecord> c2 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g2), 1);
-        batchFinderResult.putResult(currentCriteria, c2);
-      } else if (currentCriteria.getId() == 100L){
-        // on error: to construct error response for test
-        batchFinderResult.putError(currentCriteria, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "Fail to find Greeting!"));
-      }
-    }
-
-    return batchFinderResult;
   }
 ```
 Every parameter of a BATCH_FINDER method must be annotated with one of:
@@ -401,18 +395,33 @@ public class BatchFinderResult<QK,V extends RecordTemplate,MD extends RecordTemp
 }
 ```
 
-## Future consideration
-### Support primitive type(not ready)
-We can have a simple use case where we want to filter each individual query on the same attribute but with different values.
+### Error Handling
+#### 1) Custom error per search criteria
+For each input criteria, the developer is responsible to update either the "_elements" or the "_errors" map in `BatchFinderResult`.
+If the developers set a customized error which is wrapped into a `RestLiServiceException` for one search criteria,
+Rest.li framework will not treat it as a failure for the whole BATCH_FINDER request, but just the failure for that specific criteria.
+The return http status for the BATCH_FINDER request is still 200. An example is below [Resource API](/rest.li/batch_finder_resource_method#resource-api).
 
-For this use case, the developer can use an array of primitive type.
-It will avoid him to create another schema just to be able to filter on 1 attribute.  
-
-In this example, each individual request will be filtered on the first name.
-```java
-@BatchFinder(name="findUsers", batchParam="criteria")
-public BatchFinderResult<SearchCriteria, User, EmptyRecord> findUsers(@PagingContextParam PagingContext context, @QueryParam("criteria") string[] firstNames) throws InternalException
-{
-    ...
-}
+#### 2) Rest.li framework will cover the non-present criteria error
+When processing the `BatchFinderResult` in the ResponseBuilder, if a criteria is not present, either in _elements, nor in _errors,  the framework will generate a "404" error for this criteria.
+The whole http status is still 200.
 ```
+new RestLiServiceException(S_404_NOT_FOUND, "The server didn't find a representation for this criteria"));
+```
+
+#### 3) return nulls
+In some situation, the return results may contain null value. Resource methods should never explicitly return null. 
+If the Rest.li framework detects this, it will return an HTTP 500 back to the client with a message indicating ‘Unexpected null encountered’. 
+See more details in [Returning Nulls](/rest.li/user_guide/restli_server#returning-nulls).
+
+Here are some possible cases:
+- `BatchFinderResult` is null.
+- Element is null in the returned list of entities in the successful case.
+- For one criteria, the whole list of entities is null.
+
+## FAQ
+#### Does Batch_Finder support primitive type like String, Integer as a batch criteria filter?
+No. 
+We currently don’t support primitive data type as batch criteria, even `Enum` type.
+That criteria must be a type which extends from `RecordTemplate` which is actually a record.
+The reason is that using a record will be easier to support any evolution .i.e. adding additional criteria to the same batch finder method.
