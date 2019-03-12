@@ -981,12 +981,13 @@ or complex data type, e.g.:
 ### Batch Collection Response
 A list of `BatchFinderCriteriaResult` are returned in a `BatchCollectionResponse` wrapper. 
 It is used for returning an ordered, variable-length, navigable collection of resources for BATCH_FINDER.
+This means, `BatchFinderCriteriaResult` objects are expected to be returned in the same order and position as the respective input search criteria.
 
 For each batchFinder search criteria, it will either return a successful `CollectionResponse` which contains a list of entities Or 
 an `ErrorResponse` in failing case. Such 2 kinds cases are wrapped into `BatchFinderCriteriaResult` corresponding to 
 each search criteria.
 
-BatchFinderCriteriaResult fields:
+`BatchFinderCriteriaResult` fields:
 
 - (optional) "elements" : JSON serialized list of entity types (in success case)
 - (optional) "metadata":
@@ -995,11 +996,13 @@ BatchFinderCriteriaResult fields:
 - "isError" : which indicates whether the result is a successful case or not
 
 E.g.
-
+    
+    GET http://localhost:7279/photos?bq=searchPhotos&criteria=List((format:JPG,title:bar),(format:PNG,title:bar))&exif=() HTTP/1.1
     HTTP/1.1 200 OK Content-Type: application/jsonX-RestLi-Protocol-Version: 2.0.0
+    
     {
       "elements" : [ {
-        "elements" : [ {
+        "elements" : [ { // in success case: return a list of entities
           "urn" : "foo",
           "format" : "JPG",
           "id" : 9,
@@ -1016,14 +1019,19 @@ E.g.
           "total" : 2,
           "count" : 10,
           "start" : 0,
-          "links" : [ ]
+          "links" : [ 
+          {           
+            "href": "/PhotoResource?PhotoCriteria=List((urn:foo, format:JPG))&start=1&count=1&bq=searchPhotos",
+            "type": "application/json",
+            "rel": "next"
+          ]
         }
-      }, {
+      }, { // in failure : return an ErrorResponse
         "isError" : true,
         "elements" : [ ],
         "error" : {
           "exceptionClass" : "com.linkedin.restli.server.RestLiServiceException",
-          "stackTrace" : "com.linkedin.restli.server.RestLiServiceException [HTTP Status:404]: The server didn't find a representation for this criteria\n\tat com.linkedin.restli.internal.server.response.BatchFinderResponseBuilder.buildRestLiResponseData(BatchFinderResponseBuilder.java:127)\n\tat com.linkedin.restli.internal.server.response.RestLiResponseHandler.buildRestLiResponseData(RestLiResponseHandler.java:232)\n\tat com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator.buildResponse(ExampleRequestResponseGenerator.java:600)\n\tat com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator.buildRequestResponse(ExampleRequestResponseGenerator.java:528)\n\tat com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator.batchFinder(ExampleRequestResponseGenerator.java:282)\n\tat com.linkedin.restli.docgen.RestLiHTMLDocumentationRenderer.renderResource(RestLiHTMLDocumentationRenderer.java:144)\n\tat com.linkedin.restli.docgen.DefaultDocumentationRequestHandler.processDocumentationRequest(DefaultDocumentationRequestHandler.java:190)\n\tat com.linkedin.restli.docgen.DefaultDocumentationRequestHandler.handleRequest(DefaultDocumentationRequestHandler.java:87)\n\tat com.linkedin.restli.server.RestRestLiServer.doHandleRequest(RestRestLiServer.java:115)\n\tat com.linkedin.restli.server.RestRestLiServer.handleRequest(RestRestLiServer.java:95)\n\tat com.linkedin.restli.server.RestLiServer.handleRequest(RestLiServer.java:130)\n\tat com.linkedin.restli.server.DelegatingTransportDispatcher.handleRestRequest(DelegatingTransportDispatcher.java:70)\n\tat com.linkedin.r2.filter.transport.DispatcherRequestFilter.onRestRequest(DispatcherRequestFilter.java:67)\n\tat com.linkedin.r2.filter.TimedRestFilter.onRestRequest(TimedRestFilter.java:61)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:146)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:132)\n\tat com.linkedin.r2.filter.FilterChainIterator.onRequest(FilterChainIterator.java:62)\n\tat com.linkedin.r2.filter.TimedNextFilter.onRequest(TimedNextFilter.java:55)\n\tat com.linkedin.r2.filter.transport.ServerQueryTunnelFilter.onRestRequest(ServerQueryTunnelFilter.java:58)\n\tat com.linkedin.r2.filter.TimedRestFilter.onRestRequest(TimedRestFilter.java:61)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:146)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:132)\n\tat com.linkedin.r2.filter.FilterChainIterator.onRequest(FilterChainIterator.java:62)\n\tat com.linkedin.r2.filter.TimedNextFilter.onRequest(TimedNextFilter.java:55)\n\tat com.linkedin.r2.filter.message.rest.RestFilter.onRestRequest(RestFilter.java:50)\n\tat com.linkedin.r2.filter.TimedRestFilter.onRestRequest(TimedRestFilter.java:61)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:146)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:132)\n\tat com.linkedin.r2.filter.FilterChainIterator.onRequest(FilterChainIterator.java:62)\n\tat com.linkedin.r2.filter.FilterChainImpl.onRestRequest(FilterChainImpl.java:96)\n\tat com.linkedin.r2.filter.transport.FilterChainDispatcher.handleRestRequest(FilterChainDispatcher.java:70)\n\tat com.linkedin.r2.transport.http.server.HttpDispatcher.handleRequest(HttpDispatcher.java:95)\n\tat com.linkedin.r2.transport.http.server.AbstractR2Servlet.service(AbstractR2Servlet.java:105)\n\tat javax.servlet.http.HttpServlet.service(HttpServlet.java:790)\n\tat org.eclipse.jetty.servlet.ServletHolder.handle(ServletHolder.java:848)\n\tat org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:584)\n\tat org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:224)\n\tat org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1180)\n\tat org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:512)\n\tat org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:185)\n\tat org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1112)\n\tat org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:141)\n\tat org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:134)\n\tat org.eclipse.jetty.server.Server.handle(Server.java:534)\n\tat org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:333)\n\tat org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:251)\n\tat org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:283)\n\tat org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:108)\n\tat org.eclipse.jetty.io.SelectChannelEndPoint$2.run(SelectChannelEndPoint.java:93)\n\tat org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.executeProduceConsume(ExecuteProduceConsume.java:303)\n\tat org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.produceConsume(ExecuteProduceConsume.java:148)\n\tat org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.run(ExecuteProduceConsume.java:136)\n\tat org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:671)\n\tat org.eclipse.jetty.util.thread.QueuedThreadPool$2.run(QueuedThreadPool.java:589)\n\tat java.lang.Thread.run(Thread.java:745)\n",
+          "stackTrace" : "com.linkedin.restli.server.RestLiServiceException [HTTP Status:404]: The server didn't find a representation for this criteria\n\tat......",
           "message" : "The server didn't find a representation for this criteria",
           "status" : 404
         }
