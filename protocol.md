@@ -451,16 +451,64 @@ The URI templates below assume variables with types as follows:
 | Collection, Association, ActionSet | {resource}?q={finder} | /accounts?q=keywordSearch | GET    | invokes the specified finder |
 
 ## Batch Finders
-
+### Batch Finder URIs
 The URI templates below assume variables with types as follows:
 
-    batch_finder : simple string identifying a batch_finder
- 
-### Batch Finder URIs
+    batch_finder : simple string identifying a batch_finder method name
+    resource : simple string identifying a resource 
+    search_criteria : simple string identifying the criteria filter name
 
 | Resource                           | URI Template          | Example                   | Method | Semantics                    |
 | ---------------------------------- | --------------------- | ------------------------- | ------ | ---------------------------- |
-| Collection, Association            | {resource}?bq={batch_finder} | /accounts?bq=keywordSearch | GET    | invokes the specified batch_finder |
+| Collection, Association            | {resource}?bq={batch_finder}&{search_criteria}=| /PhotoResource?bq=searchPhotos&photoCriteria=List((id:1, format:JPG),(id:2, format:BMP)) | GET    | invokes the specified batch_finder |
+
+At least, 2 query parameters will have to be set for a batch finder:
+
+- The "bq" query parameter is reserved for passing the batch finder method name
+- A second query parameter will be used to pass a set of different search criteria. The name of this query parameter is set in the [BatchFinder method annotation](/rest.li/batch_finder_resource_method#method-annotation-and-parameters).
+For example, with @BatchFinder(value="findUsers", batchParam="batchCriteria"), the batch query parameter name is "batchCriteria". 
+The type of this query parameter is a List.
+
+Different data type has different representation in Rest.li protocol 1.0 and 2.0. See more details in [Rest.li Protocol](/rest.li/spec/protocol).
+
+Eg.
+In Rest.li protocol 1.0
+
+    curl "http://localhost:8080/userSearchResults?bq=findUsers&batchCriteria[0].firstName=pauline&batchCriteria[0].age=12&batchCriteria[1].lastName=iglou" --globoff
+
+In Rest.li protocol 2.0
+
+    curl --header "X-RestLi-Protocol-Version: 2.0.0" "http://localhost:10546/userSearchResults?q=findUsers&batchCriteria=List((firstName:pauline, age:12),(lastName:iglou))"
+
+The other query parameters will be applied as common filters across all batch requests.
+
+Here is an example batch request with two individual finders using the following criteria:
+
+- filter by first name and age
+- filter by last name and age
+
+Eg.
+
+    curl "http://localhost:8080/userSearchResults?bq=findUsers&batchCriteria=List((firstName:pauline),(lastName:iglou))&age=21" -X GET
+
+### Pagination support
+#### 1) Common pagination for all search criteria  
+The developer can pass additional parameters to specify a common pagination. It will be more efficient than adding a pagination context inside each criteria object.  
+Eg.
+
+    curl "http://localhost:8080/userSearchResults?q=findUsers&batchCriteria=List((firstName:pauline, age:12),(lastName:iglou))&firstName=max&start=10&count=10" -X GET  --header "X-RestLi-Protocol-Version: 2.0.0"
+
+The "start" and "count" params will be automatically mapped to a `PagingContext` object that will be passed to the resource method. 
+```java
+public BatchFinderResult<SearchCriteria, User, EmptyRecord> findUsers(@PagingContextParam PagingContext context, 
+                                                                      @QueryParam("batchCriteria") SearchCriteria[] criteria, 
+                                                                      @QueryParam("firstName") String firstName)
+```
+
+#### 2) Custom pagination per criteria object 
+If the developer wants to apply a custom pagination for each search criteria, the pagination information can be passed into the the search criteria object itself.  
+**Caution:** Rest.li doesn't validate how the developer models the pagination in the Search criteria RecordTemple. For consistency purpose, we recommend to use a `PagingContext`.  
+It's the developer responsibility to apply the right pagination (common or custom) based on its need in the resource method implementation.
 
 ## Actions
 
