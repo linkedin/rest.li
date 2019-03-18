@@ -2,6 +2,9 @@
   "type" : "record",
   "name" : "InlineSchemaTyperef",
   "namespace" : "com.linkedin.greetings.api",
+  "include" : [
+    "com.linkedin.common.GreetingCommon"
+  ],
   "fields" : [
     {
       "name" : "NamespaceWithReservedKeyword",
@@ -14,6 +17,10 @@
           "ref" : "string"
         }
       }
+    },
+    {
+      "name" : "IncludeType",
+      "type" : "com.linkedin.common.GreetingCommon"
     }
   ]
 }

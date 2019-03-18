@@ -285,7 +285,7 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
     _builder.writeStartArray();
     for (NamedDataSchema includedSchema : recordDataSchema.getInclude())
     {
-      encode(includedSchema);
+      encode(includedSchema, recordDataSchema.isIncludeDeclaredInline(includedSchema));
     }
     _builder.writeEndArray();
   }

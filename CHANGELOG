@@ -1,3 +1,8 @@
+27.0.6
+------
+(RB=1594513)
+check if originally declared inline in encoding include to JSON under PRESERVE mode
+
 27.0.5
 ------
 (RB=1590428)

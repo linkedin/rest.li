@@ -63,12 +63,12 @@ public class SchemaFormatTranslator {
         System.exit(0);
       }
 
-      String sourceFormat = cl.getOptionValue('s', SchemaParser.FILETYPE);
-      String destFormat = cl.getOptionValue('d', PdlSchemaParser.FILETYPE);
+      String sourceFormat = cl.getOptionValue('s', SchemaParser.FILETYPE).trim();
+      String destFormat = cl.getOptionValue('d', PdlSchemaParser.FILETYPE).trim();
 
       String[] cliArgs = cl.getArgs();
       if (cliArgs.length != 3) {
-        _log.error("Missing arguments, expected 3 ([resourcePath] [sourceRoot] [destinationPath]), got " + cliArgs.length);
+        _log.error("Missing arguments, expected 3 ([resolverPath] [sourceRoot] [destinationPath]), got " + cliArgs.length);
         help();
         System.exit(1);
       }

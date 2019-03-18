@@ -1,0 +1,14 @@
+{
+  "type" : "record",
+  "name" : "IncludeSchema",
+  "namespace" : "com.linkedin.greetings.api",
+  "include" : [
+    "com.linkedin.common.GreetingCommon"
+  ],
+  "fields" : [
+    {
+      "name" : "IncludeCommonType",
+      "type" : "com.linkedin.common.GreetingCommon"
+    }
+  ]
+}
