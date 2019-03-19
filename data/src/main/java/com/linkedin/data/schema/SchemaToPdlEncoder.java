@@ -544,7 +544,14 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       if (value instanceof DataMap)
       {
         // Favor @x.y.z = "value" property encoding style over @x = { "y": { "z": "value" } }
-        writeProperties(pathParts, (DataMap) value);
+        DataMap dm = (DataMap) value;
+        if (!dm.isEmpty()) {
+          // encode non-empty value property like @x.y.z = "value"
+          writeProperties(pathParts, dm);
+        } else if (!pathParts.isEmpty()) {
+          // encode empty value property like @x.y = {}
+          writeProperty(pathParts, dm);
+        }
       }
       else if (Boolean.TRUE.equals(value))
       {

@@ -1,10 +1,14 @@
 27.0.6
 ------
-(RB=1594513)
-check if originally declared inline in encoding include to JSON under PRESERVE mode
 
 27.0.5
 ------
+(RB=1595492)
+Properly encoding empty datamap property value in PDL, and fix PDL nested properties parsing bug
+
+(RB=1594513)
+Check if originally declared inline in encoding include to JSON under PRESERVE mode
+
 (RB=1590428)
 Add default NoOp implementation for TraverseCallback.
 

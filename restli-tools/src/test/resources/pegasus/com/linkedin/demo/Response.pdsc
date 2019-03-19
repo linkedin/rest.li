@@ -1,0 +1,33 @@
+{
+  "type":"record",
+  "name":"Response",
+  "namespace":"com.linkedin.demo",
+  "doc":"Response template of demo service",
+  "include":[
+    "com.linkedin.demo.ResponseCommon",
+    "com.linkedin.common.GreetingCommon"
+  ],
+  "fields":[
+    {
+      "name":"changeCount",
+      "type":"int",
+      "default":0,
+      "optional":true
+    },
+    {
+      "name":"hidden",
+      "type":"boolean",
+      "doc": "Field internal to ISB. Deprecated in favor of contentCertificationToken as the same functionality is moved to UCF.",
+      "default":false,
+      "optional":true,
+      "deprecated": true
+    },
+    {
+      "name":"body",
+      "type":"string",
+      "doc":"response content body",
+      "optional":true,
+      "derived":true
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "type": "record",
+  "name": "FieldValidate",
+  "namespace": "com.linkedin.property",
+  "fields": [
+    {
+      "name": "one",
+      "type": "string",
+      "validate": {
+        "notnull": true
+      }
+    },
+    {
+      "name": "two",
+      "type": "long",
+      "validate": {
+        "emptyMap": {}
+      }
+    },
+    {
+      "name": "three",
+      "type": "long",
+      "validate": {
+        "emptyArray": []
+      }
+    },
+    {
+      "name": "four",
+      "type": "string",
+      "validate": {
+        "sections": [ "a", "b", "c" ]
+      }
+    },
+    {
+      "name": "five",
+      "type": "string",
+      "validate": {
+        "keyValueMap": {
+          "one": 1,
+          "two": 2
+        }
+      }
+    }
+  ]
+}

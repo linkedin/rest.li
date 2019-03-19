@@ -5,6 +5,7 @@ import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.Objects;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
@@ -16,22 +17,39 @@ public class TestSchemaFormatTranslator {
   private static final String EXTERNAL_RESOURCES = String.join(FS, "src", "test", "resources", "external");
   private static final String RESOLVER_DIR = SOURCE_ROOT + File.pathSeparator + EXTERNAL_RESOURCES;
 
-  @Test
-  public void testTranslatePdscToPdl() throws Exception {
+  @DataProvider
+  public Object[][] fullClassName() {
+    final String greetingsAPI = "com.linkedin.greetings.api";
+    final String property = "com.linkedin.property";
+    final String demo = "com.linkedin.demo";
+    return new Object[][] {
+        { greetingsAPI, "Greeting" },
+        { greetingsAPI, "Tone" },
+        { greetingsAPI, "ArrayTestRecord" },
+        { greetingsAPI, "InlineSchemaTyperef" },
+        { greetingsAPI, "IncludeSchema" },
+        { property, "FieldValidate" },
+        { property, "NestedValidate" },
+        { property, "IncludeValidate" },
+        { demo, "Request" },
+        { demo, "RequestCommon" },
+        { demo, "Response" },
+        { demo, "ResponseCommon" }
+    };
+  }
+
+  @Test(dataProvider = "fullClassName")
+  public void testTranslatePdscToPdl(String packageName, String className) throws Exception {
     String temp = Files.createTempDirectory("restli").toFile().getAbsolutePath();
     SchemaFormatTranslator.main(new String[]{RESOLVER_DIR, SOURCE_ROOT, temp});
     MultiFormatDataSchemaResolver sourceResolver = MultiFormatDataSchemaResolver.withBuiltinFormats(RESOLVER_DIR);
     MultiFormatDataSchemaResolver translatedResolver =
         MultiFormatDataSchemaResolver.withBuiltinFormats(temp + File.pathSeparator + EXTERNAL_RESOURCES);
-    assertSameSchemas("com.linkedin.greetings.api.Greeting", sourceResolver, translatedResolver);
-    assertSameSchemas("com.linkedin.greetings.api.Tone", sourceResolver, translatedResolver);
-    assertSameSchemas("com.linkedin.greetings.api.ArrayTestRecord", sourceResolver, translatedResolver);
-    assertSameSchemas("com.linkedin.greetings.api.InlineSchemaTyperef", sourceResolver, translatedResolver);
-    assertSameSchemas("com.linkedin.greetings.api.IncludeSchema", sourceResolver, translatedResolver);
+    assertSameSchemas(packageName + "." + className, sourceResolver, translatedResolver);
   }
 
-  @Test
-  public void testTranslatePdscFromTranslatedPdl() throws Exception {
+  @Test(dataProvider = "fullClassName")
+  public void testTranslatePdscFromConvertedPdlInSchema(String packageName, String className) throws Exception {
     // pdsc to pdl
     String pdlTemp = Files.createTempDirectory("restli").toFile().getAbsolutePath();
     SchemaFormatTranslator.main(new String[]{RESOLVER_DIR, SOURCE_ROOT, pdlTemp});
@@ -45,8 +63,7 @@ public class TestSchemaFormatTranslator {
     MultiFormatDataSchemaResolver sourceResolver = MultiFormatDataSchemaResolver.withBuiltinFormats(RESOLVER_DIR);
     MultiFormatDataSchemaResolver translatedResolver =
         MultiFormatDataSchemaResolver.withBuiltinFormats(pdscTemp + File.pathSeparator + EXTERNAL_RESOURCES);
-    assertSameSchemas("com.linkedin.greetings.api.InlineSchemaTyperef", sourceResolver, translatedResolver);
-    assertSameSchemas("com.linkedin.greetings.api.IncludeSchema", sourceResolver, translatedResolver);
+    assertSameSchemas(packageName + "." + className, sourceResolver, translatedResolver);
   }
 
   private void assertSameSchemas(String fullname, MultiFormatDataSchemaResolver sourceResolver,

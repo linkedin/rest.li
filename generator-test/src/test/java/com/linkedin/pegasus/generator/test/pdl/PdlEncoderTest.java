@@ -3,8 +3,6 @@ package com.linkedin.pegasus.generator.test.pdl;
 import com.linkedin.data.schema.AbstractSchemaParser;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaToPdlEncoder;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;

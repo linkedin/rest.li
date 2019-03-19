@@ -1,0 +1,27 @@
+{
+  "type":"record",
+  "name":"RequestCommon",
+  "namespace":"com.linkedin.demo",
+  "doc":"Common fields shared between the requests",
+  "include":[
+    "com.linkedin.common.ChangeTimeStamps"
+  ],
+  "fields":[
+    {
+      "name":"requestAuthKey",
+      "type":"string",
+      "doc":"Secret key generated with the request to perform the generation and verification of access tokens"
+    },
+    {
+      "name":"createdAt",
+      "type":"com.linkedin.common.ChangeTimeStamps",
+      "doc":"Timestamps for request creation"
+    },
+    {
+      "name":"updatedAt",
+      "type":"com.linkedin.common.ChangeTimeStamps",
+      "doc":"Timestamps for request update",
+      "optional":true
+    }
+  ]
+}

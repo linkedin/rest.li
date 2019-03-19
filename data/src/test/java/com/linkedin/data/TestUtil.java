@@ -17,12 +17,13 @@
 package com.linkedin.data;
 
 import com.linkedin.data.codec.DataCodec;
-import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.PegasusSchemaParser;
 
+import com.linkedin.data.schema.grammar.PdlSchemaParser;
+import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -146,6 +147,24 @@ public class TestUtil
   static public DataSchema dataSchemaFromString(String s) throws IOException
   {
     PegasusSchemaParser parser = schemaParserFromString(s);
+    if (parser.hasError())
+    {
+      out.println("ERROR: " + parser.errorMessage());
+      return null;
+    }
+    return parser.topLevelDataSchemas().get(parser.topLevelDataSchemas().size() - 1);
+  }
+
+  public static PdlSchemaParser pdlSchemaParserFromString(String s) throws UnsupportedEncodingException
+  {
+    PdlSchemaParser parser = new PdlSchemaParser(new DefaultDataSchemaResolver());
+    parser.parse(inputStreamFromString(s));
+    return parser;
+  }
+
+  public static DataSchema dataSchemaFromPdlString(String s) throws IOException
+  {
+    PdlSchemaParser parser = pdlSchemaParserFromString(s);
     if (parser.hasError())
     {
       out.println("ERROR: " + parser.errorMessage());

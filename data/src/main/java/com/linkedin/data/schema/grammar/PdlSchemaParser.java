@@ -740,9 +740,9 @@ public class PdlSchemaParser extends AbstractSchemaParser
       String pathPart = iter.next();
       if (iter.hasNext())
       {
-        if (existingProperties.containsKey(pathPart))
+        if (current.containsKey(pathPart))
         {
-          Object val = existingProperties.get(pathPart);
+          Object val = current.get(pathPart);
           if (!(val instanceof DataMap))
           {
             throw new ParseException(

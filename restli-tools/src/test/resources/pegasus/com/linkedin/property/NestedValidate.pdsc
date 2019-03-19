@@ -1,0 +1,33 @@
+{
+  "type": "record",
+  "name": "NestedValidate",
+  "namespace": "com.linkedin.property",
+  "fields": [
+    {
+      "name":"id",
+      "type":"long",
+      "validate": {
+        "required": {
+          "constraint": {
+            "oneOf": [1, 2, 3],
+            "positive": {}
+          }
+        }
+      }
+    }
+  ],
+  "validate": {
+    "one": {
+      "field": "profileAuthKey",
+      "enable": true,
+      "two": {
+        "arrayOne": [],
+        "arrayTwo": [1, 2, 3, 4],
+        "three": {
+          "first" : "abc",
+          "second": "def"
+        }
+      }
+    }
+  }
+}

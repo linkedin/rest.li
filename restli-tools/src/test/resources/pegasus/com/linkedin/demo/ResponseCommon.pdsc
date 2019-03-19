@@ -1,0 +1,22 @@
+{
+  "type":"record",
+  "name":"ResponseCommon",
+  "namespace":"com.linkedin.demo",
+  "doc":"Common fields shared between the responses",
+  "include":[
+    "com.linkedin.common.ChangeTimeStamps"
+  ],
+  "fields":[
+    {
+      "name":"createdAt",
+      "type":"com.linkedin.common.ChangeTimeStamps",
+      "doc":"Timestamps for request creation"
+    },
+    {
+      "name":"updatedAt",
+      "type":"com.linkedin.common.ChangeTimeStamps",
+      "doc":"Timestamps for request update",
+      "optional":true
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "type":"record",
+  "name":"Request",
+  "namespace":"com.linkedin.demo",
+  "doc":"API Request template of demo service",
+  "include":[
+    "RequestCommon"
+  ],
+  "fields":[
+    {
+      "name":"id",
+      "type":"long",
+      "doc":"System-assigned ID for a request",
+      "validate": {
+        "positive": {}
+      }
+    }
+  ],
+  "version":3,
+  "validate":{
+    "intraSectionOrderConsistency": {
+      "sectionsWithoutRequiredOrder": [
+        "section-a",
+        "section-b"
+      ],
+      "sections": [
+        "section-c",
+        "section-d",
+        "section-b",
+        "section-e",
+        "section-a",
+        "section-f",
+        "section-g"
+      ]
+    },
+    "sectionsOrderValidator": {
+      "sectionsOrderField": "sectionOrder",
+      "sectionsField": "section-a"
+    },
+    "required": {
+      "field": "requestAuthKey"
+    }
+  }
+}

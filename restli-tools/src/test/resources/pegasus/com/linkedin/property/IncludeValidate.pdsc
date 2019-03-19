@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "IncludeValidate",
+  "namespace": "com.linkedin.property",
+  "include": [
+    "FieldValidate"
+  ],
+  "fields": [
+    {
+      "name": "includeOne",
+      "type": "string",
+      "validate": {
+        "notnull": true
+      }
+    }
+  ]
+}
