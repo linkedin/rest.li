@@ -786,6 +786,7 @@ Valid types for query parameters are:
 -   `long` / `Long`
 -   `float` / `Float`
 -   `double` / `Double`
+-   `ByteString`
 -   A Pegasus Enum (any enum defined in a `.pdsc` schema)
 -   Custom types (see the bottom of this section)
 -   Record template types (any subclass of `RecordTemplate` generated
