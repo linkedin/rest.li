@@ -43,6 +43,8 @@ import java.util.Collections;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.stream.IntStream;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -55,8 +57,18 @@ public class TestNettyRequestAdapter
 {
   private static final String ANY_URI = "http://localhost:8080/foo/bar?q=baz";
   private static final String ANY_ENTITY = "\"name\": \"value\"";
-  private static final String ANY_COOKIE = "anyCookie";
+  private static final String ANY_COOKIE = "anyCookie=anyCookieValue";
+  private static final String INVALID_COOKIE = "invalidCookie";
   private static final String ANY_HEADER = "anyHeader";
+  private static final List<String> ANY_COOKIES = new ArrayList<>(
+                                                                  Arrays.asList("Cookie111=111",
+                                                                      "Cookie11=11",
+                                                                      "Cookie1=1",
+                                                                      "MultipleCookie1=MC1;MultipleCookie2=MC2",
+                                                                      "invalidCookie")
+                                                                  );
+  private static final String ENCODED_COOKIES_HEADER_VALUE = "Cookie111=111;Cookie11=11;Cookie1=1;MultipleCookie1=MC1;MultipleCookie2=MC2;invalidCookie";
+
 
   @Test
   public void testRestToNettyRequest() throws Exception
@@ -79,13 +91,25 @@ public class TestNettyRequestAdapter
   }
 
   @Test
+  public void testRestToNettyRequestWithMultipleCookies() throws Exception
+  {
+    RestRequestBuilder restRequestBuilder = new RestRequestBuilder(new URI(ANY_URI));
+
+    restRequestBuilder.setCookies(ANY_COOKIES);
+
+    RestRequest restRequest = restRequestBuilder.build();
+    HttpRequest nettyRequest = NettyRequestAdapter.toNettyRequest(restRequest);
+    Assert.assertEquals(nettyRequest.headers().get("Cookie"), ENCODED_COOKIES_HEADER_VALUE);
+  }
+
+  @Test
   public void testStreamToNettyRequest() throws Exception
   {
     StreamRequestBuilder streamRequestBuilder = new StreamRequestBuilder(new URI(ANY_URI));
     streamRequestBuilder.setMethod("POST");
     streamRequestBuilder.setHeader("Content-Length", Integer.toString(ANY_ENTITY.length()));
     streamRequestBuilder.setHeader("Content-Type", "application/json");
-    streamRequestBuilder.setCookies(Collections.singletonList("anyCookie"));
+    streamRequestBuilder.setCookies(Collections.singletonList(ANY_COOKIE));
     StreamRequest streamRequest = streamRequestBuilder.build(
         EntityStreams.newEntityStream(new ByteStringWriter(ByteString.copy(ANY_ENTITY.getBytes()))));
 
@@ -96,6 +120,20 @@ public class TestNettyRequestAdapter
     Assert.assertNull(nettyRequest.headers().get("Content-Length"));
     Assert.assertEquals(nettyRequest.headers().get("Content-Type"), "application/json");
     Assert.assertEquals(nettyRequest.headers().get("Cookie"), ANY_COOKIE);
+  }
+
+  @Test
+  public void testStreamToNettyRequestWithMultipleCookies() throws Exception
+  {
+    StreamRequestBuilder streamRequestBuilder = new StreamRequestBuilder(new URI(ANY_URI));
+
+    streamRequestBuilder.setCookies(ANY_COOKIES);
+
+    StreamRequest streamRequest = streamRequestBuilder.build(
+        EntityStreams.newEntityStream(new ByteStringWriter(ByteString.copy(ANY_ENTITY.getBytes()))));
+
+    HttpRequest nettyRequest = NettyRequestAdapter.toNettyRequest(streamRequest);
+    Assert.assertEquals(nettyRequest.headers().get("Cookie"), ENCODED_COOKIES_HEADER_VALUE);
   }
 
   @Test

@@ -25,6 +25,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.http.common.HttpConstants;
+import com.linkedin.r2.transport.http.util.CookieUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -116,7 +117,7 @@ public class TestRAPClientCodec
     Assert.assertEquals(nettyRequest.method(), HttpMethod.valueOf(request.getMethod()));
     Assert.assertEquals(nettyRequest.content().toString(CHARSET), request.getEntity().asString(CHARSET));
     Assert.assertEquals(nettyRequest.headers().get(HttpHeaderNames.HOST), HOST);
-    assertList(nettyRequest.headers().getAll(HttpConstants.REQUEST_COOKIE_HEADER_NAME), request.getCookies());
+    Assert.assertEquals(nettyRequest.headers().get(HttpConstants.REQUEST_COOKIE_HEADER_NAME), CookieUtil.clientEncode(request.getCookies()));
 
     for (String name : request.getHeaders().keySet())
     {

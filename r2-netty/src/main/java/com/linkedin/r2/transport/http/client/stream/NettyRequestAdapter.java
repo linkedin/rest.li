@@ -20,6 +20,7 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.transport.http.common.HttpConstants;
+import com.linkedin.r2.transport.http.util.CookieUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
@@ -29,7 +30,6 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpVersion;
-
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.HttpConversionUtil;
@@ -38,8 +38,6 @@ import java.net.URI;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.Map;
-
-import static io.netty.util.AsciiString.EMPTY_STRING;
 
 
 /**
@@ -79,7 +77,14 @@ public class NettyRequestAdapter
       nettyRequest.headers().set(entry.getKey(), entry.getValue());
     }
     nettyRequest.headers().set(HttpHeaderNames.HOST, url.getAuthority());
-    nettyRequest.headers().set(HttpConstants.REQUEST_COOKIE_HEADER_NAME, request.getCookies());
+    // RFC 6265
+    //   When the user agent generates an HTTP/1.1 request, the user agent MUST
+    //   NOT attach more than one Cookie header field.
+    String encodedCookieHeaderValues = CookieUtil.clientEncode(request.getCookies());
+    if(encodedCookieHeaderValues != null)
+    {
+      nettyRequest.headers().set(HttpConstants.REQUEST_COOKIE_HEADER_NAME, encodedCookieHeaderValues);
+    }
 
     return nettyRequest;
   }
@@ -118,7 +123,14 @@ public class NettyRequestAdapter
       nettyRequest.headers().set(entry.getKey(), entry.getValue());
     }
     nettyRequest.headers().set(HttpHeaderNames.HOST, url.getAuthority());
-    nettyRequest.headers().set(HttpConstants.REQUEST_COOKIE_HEADER_NAME, request.getCookies());
+    // RFC 6265
+    //   When the user agent generates an HTTP/1.1 request, the user agent MUST
+    //   NOT attach more than one Cookie header field.
+    String encodedCookieHeaderValues = CookieUtil.clientEncode(request.getCookies());
+    if(encodedCookieHeaderValues != null)
+    {
+      nettyRequest.headers().set(HttpConstants.REQUEST_COOKIE_HEADER_NAME, encodedCookieHeaderValues);
+    }
 
     return nettyRequest;
   }
