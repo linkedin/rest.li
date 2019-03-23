@@ -54,7 +54,24 @@
             #end
           </tbody>
         </table>
-      </dt>
+      #elseif ($dataModel.symbols)
+        <dt>Symbols</dt>
+        <table>
+          <thead>
+          <tr>
+            <th class="nobg">Name</th>
+            <th scope="col">Doc</th>
+          </tr>
+          </thead>
+          <tbody>
+            #foreach ($symbol in $dataModel.symbols)
+              <tr>
+                <th scope="row">$symbol</th>
+                <td>#if ($dataModel.symbolDocs.containsKey($symbol)) $dataModel.symbolDocs.get($symbol) #end</td>
+              </tr>
+            #end
+          </tbody>
+        </table>
       #end
     </dl>
 

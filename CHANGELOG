@@ -1,5 +1,7 @@
 27.0.6
 ------
+(RB=1606595)
+Update docgen to include the symbols for Enum types.
 
 27.0.5
 ------
