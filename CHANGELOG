@@ -1,5 +1,11 @@
+27.0.7
+------
+
 27.0.6
 ------
+(RB=1604462)
+Update R2 REST Client to send RFC 6265 compliant cookie headers during HTTP/1.1 requests
+
 (RB=1606595)
 Update docgen to include the symbols for Enum types.
 
