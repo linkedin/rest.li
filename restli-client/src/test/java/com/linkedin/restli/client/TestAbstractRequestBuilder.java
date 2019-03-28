@@ -335,6 +335,18 @@ public class TestAbstractRequestBuilder
     Assert.assertEquals(builder.getParam("a"), Arrays.asList("b1", "b2"));
   }
 
+  @Test
+  public void testRemoveParam()
+  {
+    final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
+
+    builder.addParam("a", "b");
+    Assert.assertEquals(builder.getParam("a"), Arrays.asList("b"));
+
+    builder.removeParam("a");
+    Assert.assertFalse(builder.hasParam("a"));
+  }
+
   @DataProvider(name = "testQueryParam")
   public static Object[][] testQueryParamDataProvider()
   {

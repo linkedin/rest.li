@@ -205,6 +205,13 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     return this;
   }
 
+  public AbstractRequestBuilder<K, V, R> removeParam(String key)
+  {
+    _queryParams.remove(key);
+    _queryParamClasses.remove(key);
+    return this;
+  }
+
   public AbstractRequestBuilder<K, V, R> addReqParam(String key, Object value)
   {
     ArgumentUtil.notNull(value, "value");
