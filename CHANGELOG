@@ -1,5 +1,10 @@
+27.0.8
+------
+
 27.0.7
 ------
+(RB=1611904)
+Added remove query param support in AbstractRequestBuilder
 
 27.0.6
 ------
