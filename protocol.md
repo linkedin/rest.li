@@ -496,7 +496,7 @@ Here is an example batch request with two individual finders using the following
 
 Eg.
 
-    curl "http://localhost:8080/userSearchResults?bq=findUsers&batchCriteria=List((firstName:pauline),(lastName:iglou))&age=21" -X GET
+    curl "http://localhost:8080/userSearchResults?bq=findUsers&batchCriteria=List((firstName:pauline),(lastName:iglou))&age=21" -X GET --header "X-RestLi-Protocol-Version: 2.0.0"
 
 ### Pagination support
 #### 1) Common pagination for all search criteria  

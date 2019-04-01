@@ -16,8 +16,8 @@ excerpt: This documentation describes how restli framework support batch of sear
 -   [Client](#client)
     -   [Java Request Builders](#java-request-builders)    
 -   [Resource API](#resource-api)
-    -   [Method Annotation and Parameters](#method-annotation-and-parameters)
     -   [Criteria Filter](#criteria-filter)
+    -   [Method Annotation and Parameters](#method-annotation-and-parameters)
     -   [BatchFinderResult](#batchfinderresult)
     -   [Error Handling](#error-handling)
 -   [FAQ](#faq) 
@@ -140,81 +140,6 @@ BATCH_FINDER is supported on Collection and Association Resources only(See more 
 Resources may provide zero or more BATCH_FINDER resource methods. Each BATCH_FINDER method must be annotated with the @`BatchFinder` annotation.
 
 Pagination default to start=0 and count=10. Clients may set both of these parameters to any desired value.
-### Method Annotation and Parameters
-The @`BatchFinder` annotation takes 2 required parameter:
-- `value` : which indicates the BATCH_FINDER method name
-- `batchParam` : which indicates the name of the batch criteria parameter, each BATCH_FINDER method must have and can only have one batch parameter
-
-For example: 
-```java
-  @BatchFinder(value = "searchGreetings", batchParam = "criteria")
-  public Task<BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord>> searchGreetings(@PagingContextParam PagingContext context,
-                                                                @QueryParam("criteria") GreetingCriteria[] criteria,
-                                                                @QueryParam("message") String message)
-  {
-    return Task.blocking("searchGreetings", () -> {
-        BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
-    
-        for (GreetingCriteria currentCriteria: criteria) {
-          if (currentCriteria.getId() == 1L) {
-            // on success
-            CollectionResult<Greeting, EmptyRecord> c1 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g1), 1);
-            batchFinderResult.putResult(currentCriteria, c1);
-          } else if (currentCriteria.getId() == 2L) {
-            CollectionResult<Greeting, EmptyRecord> c2 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g2), 1);
-            batchFinderResult.putResult(currentCriteria, c2);
-          } else if (currentCriteria.getId() == 100L){
-            // on error: to construct error response for test
-            batchFinderResult.putError(currentCriteria, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "Fail to find Greeting!"));
-          }
-        }
-    
-        return batchFinderResult;
-    }, _executor);
-
-  }
-```
-Every parameter of a BATCH_FINDER method must be annotated with one of:
-
--   @`Context` - indicates that the parameter provides framework context
-    to the method. Currently all @`Context` parameters must be of type
-    `PagingContext`.
--   @`QueryParam` - indicates that the value of the parameter is
-    obtained from a request query parameter. The value of the annotation
-    indicates the name of the query parameter. Duplicate names are not
-    allowed for the same BATCH_FINDER method.
-    For the batch parameter, the name must match the name in the method annotation.
--   @`AssocKey` - indicates that the value of the parameter is a partial
-    association key, obtained from the request. The value of the
-    annotation indicates the name of the association key, which must
-    match the name of an @`Key` provided in the `assocKeys` field of the
-    @`RestLiAssociation` annotation.
-
-Parameters marked with @`QueryParam` and @`AssocKey`
-may also be annotated with @`Optional`, which indicates that the
-parameter is not required. *caution*: the batch parameter can not be optional.
-The @`Optional` annotation may specify a String value, indicating the default value to be used if the parameter
-is not provided in the request. If the method parameter is of primitive
-type, a default value must be specified in the @`Optional` annotation.
-
-Valid types for regular query parameters are:
-
--   `String`
--   `boolean` / `Boolean`
--   `int` / `Integer`
--   `long` / `Long`
--   `float` / `Float`
--   `double` / `Double`
--   A Pegasus Enum (any enum defined in a `.pdsc` schema)
--   Custom types (see the bottom of this section)
--   Record template types (any subclass of `RecordTemplate` generated
-    from a `.pdsc` schema)
--   Arrays of one of the types above, e.g. `String[]`, `long[]`, ...
-
-Valid type for batch criteria parameter:
-
-- Can only be Arrays of Record template type, if have to use some other data types like Pegasus Enum, etc as the array item,
- need to wrap it into a Record Template (`.pdsc` schema)
  
 ### Criteria Filter
 To implement a batch finder, the resource owner has to define a `RecordTemplate` to define a criteria filter parameter.
@@ -258,6 +183,85 @@ The resource owner need to define their own search criteria `.pdsc` file.
 }
 ```
  
+### Method Annotation and Parameters
+The @`BatchFinder` annotation takes 2 required parameter:
+- `value` : which indicates the BATCH_FINDER method name
+- `batchParam` : which indicates the name of the batch criteria parameter, each BATCH_FINDER method must have and can only have one batch parameter
+
+For example: 
+```java
+// eg. The curl call for this resource method is like:
+// curl -v -X GET http://localhost:8080/greetings?bq=searchGreetings&criteria=List((id:1,tone:SINCERE),(id:2,tone:FRIENDLY))&message=hello -H 'X-RestLi-Protocol-Version: 2.0.0' 
+
+@BatchFinder(value = "searchGreetings", batchParam = "criteria")
+public Task<BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord>> searchGreetings(@PagingContextParam PagingContext context,
+                                                             @QueryParam("criteria") GreetingCriteria[] criteria,
+                                                             @QueryParam("message") String message)
+{
+ return Task.blocking("searchGreetings", () -> {
+     BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
+ 
+     for (GreetingCriteria currentCriteria: criteria) {
+       if (currentCriteria.getId() == 1L) {
+         // on success
+         CollectionResult<Greeting, EmptyRecord> c1 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g1), 1);
+         batchFinderResult.putResult(currentCriteria, c1);
+       } else if (currentCriteria.getId() == 2L) {
+         CollectionResult<Greeting, EmptyRecord> c2 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g2), 1);
+         batchFinderResult.putResult(currentCriteria, c2);
+       } else if (currentCriteria.getId() == 100L){
+         // on error: to construct error response for test
+         batchFinderResult.putError(currentCriteria, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "Fail to find Greeting!"));
+       }
+     }
+ 
+     return batchFinderResult;
+ }, _executor);
+
+}
+```
+Every parameter of a BATCH_FINDER method must be annotated with one of:
+
+-   @`Context` - indicates that the parameter provides framework context
+   to the method. Currently all @`Context` parameters must be of type
+   `PagingContext`.
+-   @`QueryParam` - indicates that the value of the parameter is
+   obtained from a request query parameter. The value of the annotation
+   indicates the name of the query parameter. Duplicate names are not
+   allowed for the same BATCH_FINDER method.
+   For the batch parameter, the name must match the name in the method annotation.
+-   @`AssocKey` - indicates that the value of the parameter is a partial
+   association key, obtained from the request. The value of the
+   annotation indicates the name of the association key, which must
+   match the name of an @`Key` provided in the `assocKeys` field of the
+   @`RestLiAssociation` annotation.
+
+Parameters marked with @`QueryParam` and @`AssocKey`
+may also be annotated with @`Optional`, which indicates that the
+parameter is not required. *caution*: the batch parameter can not be optional.
+The @`Optional` annotation may specify a String value, indicating the default value to be used if the parameter
+is not provided in the request. If the method parameter is of primitive
+type, a default value must be specified in the @`Optional` annotation.
+
+Valid types for regular query parameters are:
+
+-   `String`
+-   `boolean` / `Boolean`
+-   `int` / `Integer`
+-   `long` / `Long`
+-   `float` / `Float`
+-   `double` / `Double`
+-   A Pegasus Enum (any enum defined in a `.pdsc` schema)
+-   Custom types (see the bottom of this section)
+-   Record template types (any subclass of `RecordTemplate` generated
+   from a `.pdsc` schema)
+-   Arrays of one of the types above, e.g. `String[]`, `long[]`, ...
+
+Valid type for batch criteria parameter:
+
+- Can only be Arrays of Record template type, if have to use some other data types like Pegasus Enum, etc as the array item,
+need to wrap it into a Record Template (`.pdsc` schema)
+  
 ### BatchFinderResult
 BATCH_Finder methods must return `BatchFinderResult<QK extends RecordTemplate, V extends RecordTemplate, MD extends RecordTemplate>`:
 
