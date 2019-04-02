@@ -1,5 +1,10 @@
+27.0.9
+------
+
 27.0.8
 ------
+(RB=1617105)
+Add request option to override projections to wildcard
 
 27.0.7
 ------
