@@ -25,8 +25,6 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.internal.client.QueryParamsUtil;
-import com.linkedin.restli.internal.common.AllProtocolVersions;
-import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.net.URI;
@@ -97,7 +95,8 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
   {
     DataMap params = QueryParamsUtil.convertToDataMap(_request.getQueryParamsObjects(),
                                                       _request.getQueryParamClasses(),
-                                                      _version);
+                                                      _version,
+                                                      _request.getRequestOptions().getForceWildCardProjections());
     URIParamUtils.addSortedParams(b, params, _version);
   }
 

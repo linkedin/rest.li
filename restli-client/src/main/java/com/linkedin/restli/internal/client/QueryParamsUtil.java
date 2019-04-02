@@ -30,7 +30,6 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.URIParamUtils;
-
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,19 +45,28 @@ import java.util.stream.Collectors;
  */
 public class QueryParamsUtil
 {
+  static final DataMap WILDCARD_PROJECTION_MASK =
+      MaskCreator.createPositiveMask(new PathSpec(PathSpec.WILDCARD)).getDataMap();
+  static {
+    WILDCARD_PROJECTION_MASK.makeReadOnly();
+  }
+
   public static DataMap convertToDataMap(Map<String, Object> queryParams)
   {
-    return convertToDataMap(queryParams, Collections.<String, Class<?>>emptyMap(), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion());
+    return convertToDataMap(queryParams, Collections.<String, Class<?>>emptyMap(), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), false);
   }
 
   /**
    * Converts a String -> Object based representation of query params into a {@link DataMap}
-   * @param queryParams
-   * @param queryParamClasses
-   * @param version
-   * @return
    */
-  public static DataMap convertToDataMap(Map<String, Object> queryParams, Map<String, Class<?>> queryParamClasses, ProtocolVersion version)
+  public static DataMap convertToDataMap(Map<String, Object> queryParams, Map<String, Class<?>> queryParamClasses,
+      ProtocolVersion version)
+  {
+    return convertToDataMap(queryParams, queryParamClasses, version, false);
+  }
+
+  public static DataMap convertToDataMap(Map<String, Object> queryParams, Map<String, Class<?>> queryParamClasses,
+      ProtocolVersion version, boolean forceWildCardProjections)
   {
     DataMap result = new DataMap(queryParams.size());
     for (Map.Entry<String, Object> entry: queryParams.entrySet())
@@ -68,9 +76,13 @@ public class QueryParamsUtil
 
       if (RestConstants.PROJECTION_PARAMETERS.contains(key))
       {
-        @SuppressWarnings("unchecked")
-        Set<PathSpec> pathSpecs = (Set<PathSpec>)value;
-        result.put(key, MaskCreator.createPositiveMask(pathSpecs).getDataMap());
+        if (forceWildCardProjections) {
+          result.put(key, WILDCARD_PROJECTION_MASK);
+        } else {
+          @SuppressWarnings("unchecked")
+          Set<PathSpec> pathSpecs = (Set<PathSpec>)value;
+          result.put(key, MaskCreator.createPositiveMask(pathSpecs).getDataMap());
+        }
       }
       else
       {

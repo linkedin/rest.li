@@ -37,15 +37,16 @@ public class RestliRequestOptions
   private final ContentType _contentType;
   private final List<ContentType> _acceptTypes;
   private final boolean _acceptResponseAttachments;
+  private boolean _forceWildCardProjections;
 
   public static final RestliRequestOptions DEFAULT_OPTIONS
-      = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, null, null, false);
+      = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, null, null, false, false);
 
   public static final RestliRequestOptions FORCE_USE_NEXT_OPTION =
-      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_NEXT, null, null, null, null, false);
+      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_NEXT, null, null, null, null, false, false);
 
   public static final RestliRequestOptions FORCE_USE_PREV_OPTION =
-      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_PREVIOUS, null, null, null, null, false);
+      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_PREVIOUS, null, null, null, null, false, false);
 
   public static final RestliRequestOptions DEFAULT_MULTIPLEXER_OPTIONS = new RestliRequestOptions(
       ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
@@ -53,6 +54,7 @@ public class RestliRequestOptions
       null,
       ContentType.JSON,
       Collections.singletonList(ContentType.JSON),
+      false,
       false);
 
   /**
@@ -68,13 +70,16 @@ public class RestliRequestOptions
    *                                  in responses from servers. Otherwise this should not be set. Note that setting
    *                                  this allows servers to send back potentially large blobs of data which clients
    *                                  are responsible for consuming.
+   * @param forceWildCardProjections  If set to true, then any projection fields set in the request query params
+   *                                  are ignored and forcibly set to wildcard projection.
    */
   RestliRequestOptions(ProtocolVersionOption protocolVersionOption,
                        CompressionOption requestCompressionOverride,
                        CompressionOption responseCompressionOverride,
                        ContentType contentType,
                        List<ContentType> acceptTypes,
-                       boolean acceptResponseAttachments)
+                       boolean acceptResponseAttachments,
+                       boolean forceWildCardProjections)
   {
     _protocolVersionOption =
         (protocolVersionOption == null) ? ProtocolVersionOption.USE_LATEST_IF_AVAILABLE : protocolVersionOption;
@@ -83,6 +88,7 @@ public class RestliRequestOptions
     _contentType = contentType;
     _acceptTypes = acceptTypes;
     _acceptResponseAttachments = acceptResponseAttachments;
+    _forceWildCardProjections = forceWildCardProjections;
   }
 
   public ProtocolVersionOption getProtocolVersionOption()
@@ -113,6 +119,16 @@ public class RestliRequestOptions
   public boolean getAcceptResponseAttachments()
   {
     return _acceptResponseAttachments;
+  }
+
+  public boolean getForceWildCardProjections()
+  {
+    return _forceWildCardProjections;
+  }
+
+  public void setForceWildCardProjections(boolean shouldForce)
+  {
+    _forceWildCardProjections = shouldForce;
   }
 
   @Override
@@ -153,6 +169,10 @@ public class RestliRequestOptions
     {
       return false;
     }
+    if (_forceWildCardProjections != that._forceWildCardProjections)
+    {
+      return false;
+    }
 
     return true;
   }
@@ -166,6 +186,7 @@ public class RestliRequestOptions
     result = 31 * result + (_contentType != null ? _contentType.hashCode() : 0);
     result = 31 * result + (_acceptTypes != null ? _acceptTypes.hashCode() : 0);
     result = 31 * result + (_acceptResponseAttachments ? 1 : 0);
+    result = 31 * result + (_forceWildCardProjections ? 1 : 0);
     return result;
   }
 
@@ -179,6 +200,7 @@ public class RestliRequestOptions
         ", _contentType=" + _contentType +
         ", _acceptTypes=" + _acceptTypes +
         ", _acceptResponseAttachments=" + _acceptResponseAttachments +
+        ", _forceWildCardProjections=" + _forceWildCardProjections +
         '}';
   }
 }

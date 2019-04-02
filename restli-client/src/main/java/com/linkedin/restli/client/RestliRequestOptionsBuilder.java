@@ -38,6 +38,7 @@ public class RestliRequestOptionsBuilder
   private List<ContentType> _acceptTypes;
   private CompressionOption _responseCompressionOverride;
   private boolean _acceptResponseAttachments = false;
+  private boolean _forceWildCardProjections = false;
 
   public RestliRequestOptionsBuilder()
   {
@@ -51,6 +52,7 @@ public class RestliRequestOptionsBuilder
     setContentType(restliRequestOptions.getContentType());
     setAcceptTypes(restliRequestOptions.getAcceptTypes());
     setAcceptResponseAttachments(restliRequestOptions.getAcceptResponseAttachments());
+    setForceWildCardProjections(restliRequestOptions.getForceWildCardProjections());
   }
 
   public RestliRequestOptionsBuilder setProtocolVersionOption(ProtocolVersionOption protocolVersionOption)
@@ -127,7 +129,8 @@ public class RestliRequestOptionsBuilder
   public RestliRequestOptions build()
   {
     return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride, _responseCompressionOverride,
-        _contentType, _acceptTypes != null ? Collections.unmodifiableList(_acceptTypes) : null, _acceptResponseAttachments);
+        _contentType, _acceptTypes != null ? Collections.unmodifiableList(_acceptTypes) : null, _acceptResponseAttachments,
+        _forceWildCardProjections);
   }
 
   public ProtocolVersionOption getProtocolVersionOption()
@@ -158,5 +161,15 @@ public class RestliRequestOptionsBuilder
   public boolean isAcceptResponseAttachments()
   {
     return _acceptResponseAttachments;
+  }
+
+  public boolean getForceWildCardProjections()
+  {
+    return _forceWildCardProjections;
+  }
+
+  public void setForceWildCardProjections(boolean shouldForce)
+  {
+    _forceWildCardProjections = shouldForce;
   }
 }
