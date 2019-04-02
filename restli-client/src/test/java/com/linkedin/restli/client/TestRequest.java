@@ -57,7 +57,7 @@ public class TestRequest
         "com.linkedin.restli.client.GetRequest{_method=get, _baseUriTemplate=abc, _methodName=null, "
             + "_requestOptions=RestliRequestOptions{_protocolVersionOption=USE_LATEST_IF_AVAILABLE, "
             + "_requestCompressionOverride=null, _responseCompressionOverride=null, _contentType=null, "
-            + "_acceptTypes=null, _acceptResponseAttachments=false}}");
+            + "_acceptTypes=null, _acceptResponseAttachments=false, _forceWildCardProjections=false}}");
   }
 
   @Test
