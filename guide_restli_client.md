@@ -317,6 +317,7 @@ a method to set each of them, of the form:
 ```java
     public <BuilderType> <assocKeyName>Key(<AssocKeyType> value);
 ```
+See more details about the BATCH_FINDER java request builder [here](/rest.li/batch_finder_resource_method#java-request-builders).
 
 ### CREATE Request Builder
 
