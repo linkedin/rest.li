@@ -893,49 +893,16 @@ Query parameters:
 #### BATCH FINDER
 The BATCH_FINDER resource method accepts a list of filters set. Instead of callings multiple finders with different filter values, we call 1 BATCH_FINDER method with a list of filters.
 
-For example, a client might want to call the same FINDER with different search criteria.
-Combining multiple individual requests into a single batch request can save the application significant network latency.
-Also, the server can execute searches more efficiently if they are combined as a single query.
-
-BATCH FINDER should not have any visible side effects.
-For example, it should be safe to call whenever the client wishes.
-However, this is not something enforced by the framework, and it is up to the application developer that there are no side effects.
-
 Resources may provide zero or more BATCH_FINDER resource methods. Each BATCH_FINDER method must be annotated with the @`BatchFinder` annotation.
-
-Pagination default to start=0 and count=10. Clients may set both of these parameters to any desired value.
-
-The @`BatchFinder` annotation takes 2 required parameter:
-- `value` : which indicates the BATCH_FINDER method name
-- `batchParam` : which indicates the name of the batch criteria parameter, each BATCH_FINDER method must have and can only have one batch parameter
-
-See more details about the method annotations here.[BatchFinder Method Annotation and Parameters](/rest.li/batch_finder_resource_method#method-annotation-and-parameters)
+And this method must return a `BatchFinderResult`.
 For example: 
 ```
-  @BatchFinder(value = "searchGreetings", batchParam = "criteria")
-  public BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> searchGreetings(@PagingContextParam PagingContext context,
+ @BatchFinder(value = "searchGreetings", batchParam = "criteria")
+ public BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> searchGreetings(@PagingContextParam PagingContext context,
                                                                 @QueryParam("criteria") GreetingCriteria[] criteria,
                                                                 @QueryParam("message") String message)
-  {
-    BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
-
-    for (GreetingCriteria currentCriteria: criteria) {
-      if (currentCriteria.getId() == 1L) {
-        // on success
-        CollectionResult<Greeting, EmptyRecord> c1 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g1), 1);
-        batchFinderResult.putResult(currentCriteria, c1);
-      } else if (currentCriteria.getId() == 2L) {
-        CollectionResult<Greeting, EmptyRecord> c2 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g2), 1);
-        batchFinderResult.putResult(currentCriteria, c2);
-      } else if (currentCriteria.getId() == 100L){
-        // on error: to construct error response for test
-        batchFinderResult.putError(currentCriteria, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND, "Fail to find Greeting!"));
-      }
-    }
-
-    return batchFinderResult;
-  }
 ```
+See more details about the method annotations here.[BatchFinder Method Annotation and Parameters](/rest.li/batch_finder_resource_method#method-annotation-and-parameters)
 
 
 
