@@ -147,21 +147,7 @@ The batch finder method will have to accept a array of this criteria filter.
 
 Example:
 
-The "GreetingCriteria" class represent a criteria filter to filter by "id" or by "tone".
-This class is auto-generated from the pdsc. 
-```java
-public class GreetingCriteria extends RecordTemplate
-{
-
-    private final static GreetingCriteria.Fields _fields = new GreetingCriteria.Fields();
-    private final static RecordDataSchema SCHEMA = ((RecordDataSchema) DataTemplateUtil.parseSchema("{\"type\":\"record\",\"name\":\"GreetingCriteria\",\"namespace\":\"com.linkedin.restli.examples.greetings.api\",\"doc\":\"A search criteria to filter greetings.\",\"fields\":[{\"name\":\"id\",\"type\":\"long\",\"doc\":\"Greeting ID to filter on\"},{\"name\":\"tone\",\"type\":{\"type\":\"enum\",\"name\":\"Tone\",\"symbols\":[\"FRIENDLY\",\"SINCERE\",\"INSULTING\"]},\"doc\":\"Greeting tone to filter on\"}]}"));
-    private final static RecordDataSchema.Field FIELD_Id = SCHEMA.getField("id");
-    private final static RecordDataSchema.Field FIELD_Tone = SCHEMA.getField("tone");
-    ...
-}
-```
-
-The resource owner need to define their own search criteria `.pdsc` file.
+The resource owner need to define their own search criteria `GreetingCriteria.pdsc` file.
 ```
 {
  "type" : "record",
@@ -182,6 +168,22 @@ The resource owner need to define their own search criteria `.pdsc` file.
  ]
 }
 ```
+
+The "GreetingCriteria" class represent a criteria filter to filter by "id" or by "tone".
+This java class is auto-generated from the pdsc. 
+```java
+public class GreetingCriteria extends RecordTemplate
+{
+
+    private final static GreetingCriteria.Fields _fields = new GreetingCriteria.Fields();
+    private final static RecordDataSchema SCHEMA = ((RecordDataSchema) DataTemplateUtil.parseSchema("{\"type\":\"record\",\"name\":\"GreetingCriteria\",\"namespace\":\"com.linkedin.restli.examples.greetings.api\",\"doc\":\"A search criteria to filter greetings.\",\"fields\":[{\"name\":\"id\",\"type\":\"long\",\"doc\":\"Greeting ID to filter on\"},{\"name\":\"tone\",\"type\":{\"type\":\"enum\",\"name\":\"Tone\",\"symbols\":[\"FRIENDLY\",\"SINCERE\",\"INSULTING\"]},\"doc\":\"Greeting tone to filter on\"}]}"));
+    private final static RecordDataSchema.Field FIELD_Id = SCHEMA.getField("id");
+    private final static RecordDataSchema.Field FIELD_Tone = SCHEMA.getField("tone");
+    ...
+}
+```
+
+
  
 ### Method Annotation and Parameters
 The @`BatchFinder` annotation takes 2 required parameter:

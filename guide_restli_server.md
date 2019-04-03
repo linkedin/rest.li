@@ -891,7 +891,7 @@ Query parameters:
 <a id="BATCHFINDER"></a>
 
 #### BATCH FINDER
-The BATCH_FINDER allows combining multiple requests to one FINDER within a Rest.li resource into a single call. 
+The BATCH_FINDER resource method accepts a list of filters set. Instead of callings multiple finders with different filter values, we call 1 BATCH_FINDER method with a list of filters.
 
 For example, a client might want to call the same FINDER with different search criteria.
 Combining multiple individual requests into a single batch request can save the application significant network latency.
@@ -901,11 +901,6 @@ BATCH FINDER should not have any visible side effects.
 For example, it should be safe to call whenever the client wishes.
 However, this is not something enforced by the framework, and it is up to the application developer that there are no side effects.
 
-It is important to note that:
-- the operations may execute on the server out of order
-- the response objects are expected to be returned in the same order and position as the respective input search criteria.
-- The BATCH_FINDER will require implementing a resource method to handle a BATCH_FINDER requests. It won't behave like a multiplexer that will call automatically existing finders
-
 Resources may provide zero or more BATCH_FINDER resource methods. Each BATCH_FINDER method must be annotated with the @`BatchFinder` annotation.
 
 Pagination default to start=0 and count=10. Clients may set both of these parameters to any desired value.
@@ -914,6 +909,7 @@ The @`BatchFinder` annotation takes 2 required parameter:
 - `value` : which indicates the BATCH_FINDER method name
 - `batchParam` : which indicates the name of the batch criteria parameter, each BATCH_FINDER method must have and can only have one batch parameter
 
+See more details about the method annotations here.[BatchFinder Method Annotation and Parameters](/rest.li/batch_finder_resource_method#method-annotation-and-parameters)
 For example: 
 ```
   @BatchFinder(value = "searchGreetings", batchParam = "criteria")
@@ -941,65 +937,6 @@ For example:
   }
 ```
 
-BATCH_Finder methods must return `BatchFinderResult<QK extends RecordTemplate, V extends RecordTemplate, MD extends RecordTemplate>`:
-
-- `QK` : The type of the BATCH_FINDER criteria filter
-- `V` :  The type of the resource, aka, the entity type
-- `MD` : The type of the meta data, if do not need metadata, just set it `EmptyRecord`
-
-For each search criteria in the BatchFinderRequest, it can get either a successful reponse
-which is a `CollectionResult`(a list of entities), Or an error/failure which maybe represented by
-a `RestLiServiceException`, which will be wrapped into an `ErrorResponse` later when building BatchFinderResponse
-to return to client.
-```
-public class BatchFinderResult<QK,V extends RecordTemplate,MD extends RecordTemplate>
-{
-   private final Map<QK,CollectionResult<V,R>> _elements;
-   private final Map<QK,RestLiServiceException> _errors;
-   ...
-}
-```
-Every parameter of a BATCH_FINDER method must be annotated with one of:
-
--   @`Context` - indicates that the parameter provides framework context
-    to the method. Currently all @`Context` parameters must be of type
-    `PagingContext`.
--   @`QueryParam` - indicates that the value of the parameter is
-    obtained from a request query parameter. The value of the annotation
-    indicates the name of the query parameter. Duplicate names are not
-    allowed for the same BATCH_FINDER method.
-    For the batch parameter, the name must match the name in the method annotation.
--   @`AssocKey` - indicates that the value of the parameter is a partial
-    association key, obtained from the request. The value of the
-    annotation indicates the name of the association key, which must
-    match the name of an @`Key` provided in the `assocKeys` field of the
-    @`RestLiAssociation` annotation.
-
-Parameters marked with @`QueryParam` and @`AssocKey`
-may also be annotated with @`Optional`, which indicates that the
-parameter is not required. *caution*: the batch parameter can not be optional.
-The @`Optional` annotation may specify a String value, indicating the default value to be used if the parameter
-is not provided in the request. If the method parameter is of primitive
-type, a default value must be specified in the @`Optional` annotation.
-
-Valid types for regular query parameters are:
-
--   `String`
--   `boolean` / `Boolean`
--   `int` / `Integer`
--   `long` / `Long`
--   `float` / `Float`
--   `double` / `Double`
--   A Pegasus Enum (any enum defined in a `.pdsc` schema)
--   Custom types (see the bottom of this section)
--   Record template types (any subclass of `RecordTemplate` generated
-    from a `.pdsc` schema)
--   Arrays of one of the types above, e.g. `String[]`, `long[]`, ...
-
-Valid type for batch criteria parameter:
-
-- Can only be Arrays of Record template type, if have to use some other data types like Pegasus Enum, etc as the array item,
- need to wrap it into a Record Template (`.pdsc` schema)
 
 
 <a id="CREATE"></a>
