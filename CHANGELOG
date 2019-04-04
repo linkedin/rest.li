@@ -1,5 +1,7 @@
 27.0.11
 -------
+(RB=1619439)
+Allow ' in the line style comment in PDL.
 
 27.0.10
 -------

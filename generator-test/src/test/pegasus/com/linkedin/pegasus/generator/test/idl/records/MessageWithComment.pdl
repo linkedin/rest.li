@@ -1,0 +1,10 @@
+namespace com.linkedin.pegasus.generator.test.idl.records
+
+record MessageWithComment {
+  /*
+    This is the title of the message with ' inside
+  */
+  title: optional string
+  // This is the message's body
+  body: optional string
+}

@@ -202,7 +202,7 @@ NULL_LITERAL: 'null';
 
 SCHEMADOC_COMMENT: '/**' .*? '*/';
 BLOCK_COMMENT: '/*' .*? '*/' -> skip;
-LINE_COMMENT: '//' ~['\r\n']* -> skip;
+LINE_COMMENT: '//' ~[\r\n]* -> skip;
 
 NUMBER_LITERAL: '-'? ('0' | [1-9] [0-9]*) ( '.' [0-9]+)? ([eE][+-]?[0-9]+)?;
 
