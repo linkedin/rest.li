@@ -37,7 +37,7 @@ public class RestliRequestOptions
   private final ContentType _contentType;
   private final List<ContentType> _acceptTypes;
   private final boolean _acceptResponseAttachments;
-  private boolean _forceWildCardProjections;
+  private final boolean _forceWildCardProjections;
 
   public static final RestliRequestOptions DEFAULT_OPTIONS
       = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, null, null, false, false);
@@ -124,11 +124,6 @@ public class RestliRequestOptions
   public boolean getForceWildCardProjections()
   {
     return _forceWildCardProjections;
-  }
-
-  public void setForceWildCardProjections(boolean shouldForce)
-  {
-    _forceWildCardProjections = shouldForce;
   }
 
   @Override

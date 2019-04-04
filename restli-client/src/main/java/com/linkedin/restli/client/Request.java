@@ -61,8 +61,8 @@ public class Request<T>
   private final String                      _methodName; // needed to identify finders and actions. null for everything else
   private final String                      _baseUriTemplate;
   private final Map<String, Object>         _pathKeys;
-  private final RestliRequestOptions        _requestOptions;
   private final List<Object>                _streamingAttachments; //Usually null since streaming is rare. Creating an empty List is wasteful.
+  private RestliRequestOptions              _requestOptions;
 
   Request(ResourceMethod method,
           RecordTemplate inputRecord,
@@ -240,6 +240,11 @@ public class Request<T>
   public RestliRequestOptions getRequestOptions()
   {
     return _requestOptions;
+  }
+
+  public void setRequestOptions(RestliRequestOptions requestOptions)
+  {
+    _requestOptions = (requestOptions == null) ? RestliRequestOptions.DEFAULT_OPTIONS : requestOptions;
   }
 
   /**
