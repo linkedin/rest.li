@@ -1,5 +1,7 @@
 27.0.9
 ------
+(RB=1619727)
+Make request options settable on the request. Remove the ability to set force wildcard projections on the requestOptions object since doing so may inadvertently cause shared final constant requestOptions objects to be modified, leading toside effects
 
 27.0.8
 ------
