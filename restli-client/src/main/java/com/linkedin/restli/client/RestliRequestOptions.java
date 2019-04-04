@@ -42,6 +42,10 @@ public class RestliRequestOptions
   public static final RestliRequestOptions DEFAULT_OPTIONS
       = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, null, null, false, false);
 
+  public static final RestliRequestOptions DEFAULT_OPTIONS_FORCE_WILDCARD_PROJECTIONS
+      = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, null, null, false, true);
+
+
   public static final RestliRequestOptions FORCE_USE_NEXT_OPTION =
       new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_NEXT, null, null, null, null, false, false);
 

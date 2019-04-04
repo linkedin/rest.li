@@ -28,10 +28,8 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
 import com.linkedin.restli.internal.common.URIParamUtils;
-
 import java.net.HttpCookie;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -242,9 +240,28 @@ public class Request<T>
     return _requestOptions;
   }
 
-  public void setRequestOptions(RestliRequestOptions requestOptions)
+  public void setForceWildCardProjections(boolean forceWildCardProjections)
   {
-    _requestOptions = (requestOptions == null) ? RestliRequestOptions.DEFAULT_OPTIONS : requestOptions;
+    RestliRequestOptions existingRequestOptions =
+        (_requestOptions == null) ? RestliRequestOptions.DEFAULT_OPTIONS : _requestOptions;
+
+    // If the desired value is same as existing, this is a no-op.
+    if (existingRequestOptions.getForceWildCardProjections() == forceWildCardProjections)
+    {
+      return;
+    }
+
+    // Most requests are of type DEFAULT_OPTIONS, to save some garbage special case this.
+    if (existingRequestOptions.equals(RestliRequestOptions.DEFAULT_OPTIONS) && forceWildCardProjections)
+    {
+      _requestOptions = RestliRequestOptions.DEFAULT_OPTIONS_FORCE_WILDCARD_PROJECTIONS;
+    }
+    else
+    {
+      _requestOptions = new RestliRequestOptionsBuilder(existingRequestOptions)
+          .setForceWildCardProjections(forceWildCardProjections)
+          .build();
+    }
   }
 
   /**

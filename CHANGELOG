@@ -1,3 +1,11 @@
+27.0.11
+-------
+
+27.0.10
+-------
+(RB=1620347)
+Restrict API in request to only allow forcing wildcard projections
+
 27.0.9
 ------
 (RB=1619727)

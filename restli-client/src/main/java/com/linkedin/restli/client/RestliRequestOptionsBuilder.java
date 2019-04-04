@@ -126,6 +126,12 @@ public class RestliRequestOptionsBuilder
     return this;
   }
 
+  public RestliRequestOptionsBuilder setForceWildCardProjections(boolean shouldForce)
+  {
+    _forceWildCardProjections = shouldForce;
+    return this;
+  }
+
   public RestliRequestOptions build()
   {
     return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride, _responseCompressionOverride,
@@ -166,10 +172,5 @@ public class RestliRequestOptionsBuilder
   public boolean getForceWildCardProjections()
   {
     return _forceWildCardProjections;
-  }
-
-  public void setForceWildCardProjections(boolean shouldForce)
-  {
-    _forceWildCardProjections = shouldForce;
   }
 }

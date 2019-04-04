@@ -192,7 +192,8 @@ public class TestRequest
   }
 
   @Test(dataProvider = "toRequestFieldsData")
-  public void testRequestMetadataFieldsEqual(List<PathSpec> pathSpecs1, List<PathSpec> pathSpecs2, Map<String,String> param1,  Map<String,String> param2, boolean expect) {
+  public void testRequestMetadataFieldsEqual(List<PathSpec> pathSpecs1, List<PathSpec> pathSpecs2, Map<String,String> param1,  Map<String,String> param2, boolean expect)
+  {
     GetRequestBuilder<Long, TestRecord> builder1 = generateDummyRequestBuilder();
     GetRequestBuilder<Long, TestRecord> builder2 = generateDummyRequestBuilder();
 
@@ -213,7 +214,8 @@ public class TestRequest
   }
 
   @Test(dataProvider = "toRequestFieldsData")
-  public void testRequestPagingFieldsEqual(List<PathSpec> pathSpecs1, List<PathSpec> pathSpecs2, Map<String,String> param1,  Map<String,String> param2, boolean expect) {
+  public void testRequestPagingFieldsEqual(List<PathSpec> pathSpecs1, List<PathSpec> pathSpecs2, Map<String,String> param1,  Map<String,String> param2, boolean expect)
+  {
     GetRequestBuilder<Long, TestRecord> builder1 = generateDummyRequestBuilder();
     GetRequestBuilder<Long, TestRecord> builder2 = generateDummyRequestBuilder();
 
@@ -231,6 +233,27 @@ public class TestRequest
     builder2.addPagingFields(pathSpecs2.toArray(new PathSpec[pathSpecs2.size()]));
 
     assertEquals(builder1.build().equals(builder2.build()), expect);
+  }
+
+  @Test(dataProvider = "forceWildCardProjections")
+  public void testSetForceWildCardProjections(GetRequestBuilder<Long, TestRecord> builder, boolean shouldForce)
+  {
+    GetRequest<TestRecord> getRequest = builder.build();
+    getRequest.setForceWildCardProjections(shouldForce);
+    assertEquals(getRequest.getRequestOptions().getForceWildCardProjections(), shouldForce);
+  }
+
+  @DataProvider
+  public Object[][] forceWildCardProjections()
+  {
+    return new Object[][]{
+        {generateDummyRequestBuilder().setRequestOptions(RestliRequestOptions.DEFAULT_OPTIONS), false},
+        {generateDummyRequestBuilder().setRequestOptions(RestliRequestOptions.DEFAULT_OPTIONS), true},
+        {generateDummyRequestBuilder().setRequestOptions(RestliRequestOptions.DEFAULT_OPTIONS_FORCE_WILDCARD_PROJECTIONS), false},
+        {generateDummyRequestBuilder().setRequestOptions(RestliRequestOptions.DEFAULT_OPTIONS_FORCE_WILDCARD_PROJECTIONS), true},
+        {generateDummyRequestBuilder().setRequestOptions(RestliRequestOptions.FORCE_USE_NEXT_OPTION), false},
+        {generateDummyRequestBuilder().setRequestOptions(RestliRequestOptions.FORCE_USE_NEXT_OPTION), true}
+    };
   }
 
   private GetRequestBuilder<Long, TestRecord> generateDummyRequestBuilder ()
