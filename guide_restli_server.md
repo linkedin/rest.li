@@ -902,7 +902,7 @@ For example:
                                                                 @QueryParam("criteria") GreetingCriteria[] criteria,
                                                                 @QueryParam("message") String message)
 ```
-See more details about the method annotations here.[BatchFinder Method Annotation and Parameters](/rest.li/batch_finder_resource_method#method-annotation-and-parameters)
+See more details about BATCH_FINDER resource method api here.[BatchFinder Resource API](/rest.li/batch_finder_resource_method#resource-api)
 
 
 
