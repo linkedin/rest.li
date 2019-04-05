@@ -30,6 +30,7 @@ can project:
   - Each of the RecordTemplate objects in the values returned in a map
     by a BATCH_GET
   - Each of the RecordTemplate objects in a list returned by a FINDER
+  - Each of the RecordTemplate objects in each CollectionResult returned by a BATCH_FINDER
 
 For resource methods returning CollectionResult, the Metadata and Paging
 that is sent back to the client may also be projected.
@@ -108,7 +109,7 @@ For example:
 public Greeting get(Long key)  
 {  
 MaskTree mask = context.getProjectionMask();  
-if (mask \!= null)  
+if (mask != null)  
 {  
 // client has requested a projection of the entity  
 getContext().setProjectionMode(ProjectionMode.MANUAL); // since we’re
@@ -130,71 +131,70 @@ else
 and in the case of CollectionResult, you could do the following as well:
 
 ```java  
-`Finder("myFinder")
+@Finder("myFinder")
 public CollectionResult<SomeEntity, SomeCustomEntity>
 myFinderResourceMethod(
-final `PagingContextParam PagingContext ctx,  
-final `ProjectionParam MaskTree entityObjectProjection,
-final `MetadataProjectionParam MaskTree metadataProjection,  
+final @PagingContextParam PagingContext ctx,  
+final @ProjectionParam MaskTree entityObjectProjection,
+final @MetadataProjectionParam MaskTree metadataProjection,  
 final @PagingProjectionParam MaskTree pagingProjection)  
 {
 
-final List<SomeEntity> responseList = new ArrayList\<\>();  
-if (entityObjectProjection \!= null)  
+final List<SomeEntity> responseList = new ArrayList<>();  
+if (entityObjectProjection != null)  
 {  
-// client has requested a projection of the entity  
-getContext().setProjectionMode(ProjectionMode.MANUAL); // since we’re
-manually applying the projection  
-// manually examine the projection and apply it entity before
-returning  
-// here we can take advantage of the information the projection provides
-to only load the data the  
-// client requested  
-responseList.addAll(fetchFiltereredEntities());  
+  // client has requested a projection of the entity  
+  getContext().setProjectionMode(ProjectionMode.MANUAL); // since we’re
+  manually applying the projection  
+  // manually examine the projection and apply it entity before
+  returning  
+  // here we can take advantage of the information the projection provides
+  to only load the data the  
+  // client requested  
+  responseList.addAll(fetchFiltereredEntities());  
 }  
 else  
 {  
-// client is requesting the full entities  
-// construct the full entities  
-responseList.addAll(fetchEntities());  
+  // client is requesting the full entities  
+  // construct the full entities  
+  responseList.addAll(fetchEntities());  
 }
 
 final SomeCustomEntity customEntity;  
-if (metadataProjection \!= null)  
+if (metadataProjection != null)  
 {  
-// client has requested a projection of the custom metadata  
-getContext().setMetadataProjectionMode(ProjectionMode.MANUAL); // since
-we’re manually applying the meta data projection  
-// manually examine the projection and apply it entity before
-returning  
-// here we can take advantage of the information the projection provides
-to only load the data the  
-// client requested  
-customEntity = fetchSomeFilteredCustomEntity();  
+  // client has requested a projection of the custom metadata  
+  getContext().setMetadataProjectionMode(ProjectionMode.MANUAL); // since
+  we’re manually applying the meta data projection  
+  // manually examine the projection and apply it entity before
+  returning  
+  // here we can take advantage of the information the projection provides
+  to only load the data the  
+  // client requested  
+  customEntity = fetchSomeFilteredCustomEntity();  
 }  
 else  
 {  
-// client is requesting the full metadata entity  
-// construct and return the full metadata  
-customEntity = fetchSomeCustomEntity();  
+  // client is requesting the full metadata entity  
+  // construct and return the full metadata  
+  customEntity = fetchSomeCustomEntity();  
 }
 
 final Integer total;  
-if (pagingProjection \!= null)  
+if (pagingProjection != null)  
 {  
-// client has requested a projection of the paging information  
-// since the rest.li framework will always automatically project paging,
-we can still selectively calculate the total based on the path spec  
-if
-(pagingProjections.getOperations.get(CollectionMetadata.fields().total())
-== MaskOperation.POSITIVE_MASK_OP)  
-{  
-total = calculateTimeConsumingTotal();  
-}  
+  // client has requested a projection of the paging information  
+  // since the rest.li framework will always automatically project paging,
+  we can still selectively calculate the total based on the path spec  
+  if(pagingProjections.getOperations.get(CollectionMetadata.fields().total())
+  == MaskOperation.POSITIVE_MASK_OP)  
+  {  
+    total = calculateTimeConsumingTotal();  
+  }  
 }  
 else  
 {  
-total = null;  
+  total = null;  
 }
 
 return new CollectionResult(responseList, total, customEntity);  
@@ -224,8 +224,7 @@ to help construct the appropriate pathspec to pass to the builder’s
 `.fields(...)` method call. E.g.
 
 ```java  
-new
-ExampleBuilders(options).get().id(id).fields(RootRecord.fields().message().id()).build()  
+new ExampleBuilders(options).get().id(id).fields(RootRecord.fields().message().id()).build()  
 ```
 
 Applies projection on a GET request to a resource where the “message”
@@ -257,8 +256,8 @@ Or, if you are using free-form resources, you can get the same
 `MaskTree` by having it injected in, for example:
 
 ```java  
-`RestMethod.Get
-public Greeting get(Long key, `ProjectionParam MaskTree projection) {  
+@RestMethod.Get
+public Greeting get(Long key, @ProjectionParam MaskTree projection) {  
 // …  
 }  
 ```

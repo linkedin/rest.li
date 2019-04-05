@@ -19,6 +19,7 @@ excerpt: Rest.li Protocol
   - [Simple Resources](#simple-resources)
   - [Association Resources](#association-resources)
   - [Finders](#finders)
+  - [BatchFinders](#batch-finders)
   - [Actions](#actions)
   - [URI Modifiers](#uri-modifiers)
   - [Response Status Codes](#response-status-codes)
@@ -40,9 +41,6 @@ Spec](http://tools.ietf.org/html/draft-gregorio-uritemplate-07).
 ## Online Documentation
 
 Rest.li provides [online documentation](/rest.li/user_guide/restli_server#online-documentation)
-for any loaded resource. The documentation shows example request and
-response for the resource methods, finders, and actions. Use it to
-document the Rest.li protocols.
 
 ## Content Types
 
@@ -210,7 +208,6 @@ notation. Details can be found in the [Association
 keys](#association-keys)
 and [complex
 keys](#complex-types-as-keys-in-protocol-20)
-sections.
 
 ## Collection Resources
 
@@ -220,6 +217,7 @@ The URI templates below assume variables with types as follows:
     entity_id : simple string
     ids : list
     finder : simple string
+    batch_finder : simple string
     params : associative array
 
 ### Collection URIs
@@ -234,6 +232,8 @@ The URI templates below assume variables with types as follows:
 |Collection|/{collection}|/statuses|GET|GET_ALL - returns all entities in the collection
 |Collection|/{collection}?q={finder}|/statuses?q=search|GET|FINDER - returns a list containing entities satisfying the query
 |Collection|/{collection}?q={finder}{&amp;params*}|/statuses?q=search&amp;keywords=linkedin|GET|FINDER - returns a list containing entities satisfying the query
+|Collection|/{collection}?bq={batch_finder}|/statuses?bq=search|GET|BATCH_FINDER - returns a list containing entities satisfying the query
+|Collection|/{collection}?bq={batch_finder}{&amp;params*}|/statuses?bq=search&amp;criteria=List((id:1, title:bar),(id:2, title:foo))|GET|BATCH_FINDER - returns a list containing entities satisfying the query
 |Collection|/{collection}?action={action}|/statuses?action=purge|POST|ACTION - some operation, rest.li does not specify any standard behavior
 
 
@@ -267,6 +267,7 @@ The URI templates below assume variables with types as follows:
     assockey : simple string conforming to the assockey syntax described below
     assockeys : list of strings conforming to the assockey syntax
     finder : simple string
+    batch_finder : simple string
     params : associative array
 
 ### Association Keys
@@ -431,6 +432,10 @@ In protocol 2.0 the request would be:
 |Association|/{association}?q={finder}{&amp;params*}|/follows?q=followers&amp;userID=1|GET|FINDER - returns a list containing entities satisfying the query
 |Association|/{association}/{+assockey}|Protocol 1.0 - /follows/followerID=1?q=other<br />Protocol 2.0 - /follows/(followerID:1)?q=other|GET|FINDER - returns a list containing the entities satisfying the query
 |Association|/{association}/{+assockey}?q={finder}{&amp;params*}|Protocol 1.0 - /follows/followerID=1?q=other&amp;someParam=value<br />Protocol 2.0 - /follows/(followerID:1)?q=other&amp;someParam=value|GET|FINDER - returns a list containing the entities satisfying the query
+|Association|/{association}?bq={batch_finder}|/statuses?bq=search|GET|BATCH_FINDER - returns a list containing entities satisfying the query
+|Association|/{association}?bq={batch_finder}{&amp;params*}|/statuses?bq=search&amp;criteria=List((id:1, title:bar),(id:2, title:foo))|GET|BATCH_FINDER - returns a list containing entities satisfying the query
+|Association|/{association}/{+assockey}|Protocol 1.0 - /follows/followerID=1?bq=other<br />Protocol 2.0 - /follows/(followerID:1)?bq=other|GET|BATCH_FINDER - returns a list containing the entities satisfying the query
+|Association|/{association}/{+assockey}?bq={batch_finder}{&amp;params*}|Protocol 2.0 - /follows/(followerID:1)?q=other&amp;someParam=List((id:1, title:bar),(id:2, title:foo))|GET|BATCH_FINDER - returns a list containing the entities satisfying the query
 |Association|/{association}?action={action}|/follows?action=purge|POST|ACTION - some operation, Rest.li does not specify any standard behavior
 
 ## Finders
@@ -444,6 +449,18 @@ The URI templates below assume variables with types as follows:
 | Resource                           | URI Template          | Example                   | Method | Semantics                    |
 | ---------------------------------- | --------------------- | ------------------------- | ------ | ---------------------------- |
 | Collection, Association, ActionSet | {resource}?q={finder} | /accounts?q=keywordSearch | GET    | invokes the specified finder |
+
+## Batch Finders
+
+The URI templates below assume variables with types as follows:
+
+    batch_finder : simple string identifying a batch_finder
+ 
+### Batch Finder URIs
+
+| Resource                           | URI Template          | Example                   | Method | Semantics                    |
+| ---------------------------------- | --------------------- | ------------------------- | ------ | ---------------------------- |
+| Collection, Association            | {resource}?bq={batch_finder} | /accounts?bq=keywordSearch | GET    | invokes the specified batch_finder |
 
 ## Actions
 
@@ -462,6 +479,7 @@ The URI templates below assume variables with types as follows:
 The URI templates below assume variables with types as follows:
 
     finder_uri : simple string ...
+    batch_finder_uri : simple string
     base_uri : simple string generated via one of the uri templates above
     start : simple string
     count : simple string
@@ -471,8 +489,8 @@ The URI templates below assume variables with types as follows:
 
 | Feature       | Base URI Type         | URI Template                  | Example                                                                                                               |
 | ------------- | --------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Paging        | Finder                | {+finder\_uri}{\&start,count} | /statuses?q=search\&start=0\&count=10                                                                                 |
-| Projection    | Get, BatchGet, Finder | {+base\_uri}{\&fields}        | Protocol 1 - /groups?q=emailDomain\&fields=locale,state Protocol 2 - /groups?q=emailDomain\&fields=List(locale,state) |
+| Paging        | Finder, BatchFinder   | {+finder\_uri}{\&start,count} </br> {+batch_finder\_uri}{\&start,count}| /statuses?q=search\&start=0\&count=10 </br> /statuses?bq=search\&start=0\&count=10                                                                                |
+| Projection    | Get, BatchGet, Finder, BatchFinder | {+base\_uri}{\&fields}        | Protocol 1 - /groups?q=emailDomain\&fields=locale,state Protocol 2 - /groups?q=emailDomain\&fields=List(locale,state) |
 | Schema Return | Any                   | {+base\_uri}\&metaDesc        |                                                                                                                       |
 | Links         | Any                   | {+base\_uri}\&metaLinks       |                                                                                                                       |
 
@@ -502,7 +520,7 @@ Error
 | Response             | X-RestLi-Id               | indicates the id assigned by the server to a new entity created in a collection.                                                                                                                        | set on response messages resulting from a successful POST request to create an entity. The header value is set to the entity id, represented as a string. **Only used in protocol 2.0** |
 | Response             | Location                  | indicates the URI of a new entity created in a collection.                                                                                                                                              | Location is set on response messages resulting from a successful POST request to create an entity. The header value is set to a URI referencing the newly created entity                |
 | Response             | Content-Type              |                                                                                                                                                                                                         | The Content-Type is always set to “application/json”                                                                                                                                    |
-| Request              | X-RestLi-Method           | Set whenever content is POSTed. Can be “GET\_ALL”, “GET”, “BATCH\_GET”, “CREATE”, “BATCH\_CREATE”, “UPDATE”, “PARTIAL\_UPDATE”, “DELETE”, “BATCH\_DELETE”, “ACTION”, “FINDER”, “BATCH\_PARTIAL\_UPDATE” | Is only required for “BATCH\_CREATE”, “BATCH\_PARTIAL\_UPDATE”, all other method types can be inferred by a RestLi server from the URI string and HTTP Method.                          |
+| Request              | X-RestLi-Method           | Set whenever content is POSTed. Can be “GET\_ALL”, “GET”, “BATCH\_GET”, “CREATE”, “BATCH\_CREATE”, “UPDATE”, “PARTIAL\_UPDATE”, “DELETE”, “BATCH\_DELETE”, “ACTION”, “FINDER”, "BATCH_FINDER", “BATCH\_PARTIAL\_UPDATE” | Is only required for “BATCH\_CREATE”, “BATCH\_PARTIAL\_UPDATE”, all other method types can be inferred by a RestLi server from the URI string and HTTP Method.                          |
 | Request and Response | X-RestLi-Protocol-Version | Version of the Rest.li protocol used to generate the request or response. Example value: “2.0.0”                                                                                                        | The version that we get back in the response is dictated by the version sent in the request. They will always be the same.                                                              |
 
 ## Request Message Body
@@ -953,6 +971,57 @@ or complex data type, e.g.:
       }
     }
     
+### Batch Collection Response
+A list of `BatchFinderCriteriaResult` are returned in a `BatchCollectionResponse` wrapper. 
+It is used for returning an ordered, variable-length, navigable collection of resources for BATCH_FINDER.
+
+For each batchFinder search criteria, it will either return a successful `CollectionResponse` which contains a list of entities Or 
+an `ErrorResponse` in failing case. Such 2 kinds cases are wrapped into `BatchFinderCriteriaResult` corresponding to 
+each search criteria.
+
+BatchFinderCriteriaResult fields:
+
+- (optional) "elements" : JSON serialized list of entity types (in success case)
+- (optional) "metadata":
+- (optional) "paging" : JSON serialized CollectionMetadata object
+- (optional) "error" : it's an ErrorResponse which fail to get a list of entities to corresponding search criteria(in failure)
+- "isError" : which indicates whether the result is a successful case or not
+
+E.g.
+
+    HTTP/1.1 200 OK Content-Type: application/jsonX-RestLi-Protocol-Version: 2.0.0
+    {
+      "elements" : [ {
+        "elements" : [ {
+          "urn" : "foo",
+          "format" : "JPG",
+          "id" : 9,
+          "title" : "baz",
+          "exif" : { }
+        }, {
+          "urn" : "foo",
+          "format" : "JPG",
+          "id" : 10,
+          "title" : "bar",
+          "exif" : { }
+        } ],
+        "paging" : {
+          "total" : 2,
+          "count" : 10,
+          "start" : 0,
+          "links" : [ ]
+        }
+      }, {
+        "isError" : true,
+        "elements" : [ ],
+        "error" : {
+          "exceptionClass" : "com.linkedin.restli.server.RestLiServiceException",
+          "stackTrace" : "com.linkedin.restli.server.RestLiServiceException [HTTP Status:404]: The server didn't find a representation for this criteria\n\tat com.linkedin.restli.internal.server.response.BatchFinderResponseBuilder.buildRestLiResponseData(BatchFinderResponseBuilder.java:127)\n\tat com.linkedin.restli.internal.server.response.RestLiResponseHandler.buildRestLiResponseData(RestLiResponseHandler.java:232)\n\tat com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator.buildResponse(ExampleRequestResponseGenerator.java:600)\n\tat com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator.buildRequestResponse(ExampleRequestResponseGenerator.java:528)\n\tat com.linkedin.restli.docgen.examplegen.ExampleRequestResponseGenerator.batchFinder(ExampleRequestResponseGenerator.java:282)\n\tat com.linkedin.restli.docgen.RestLiHTMLDocumentationRenderer.renderResource(RestLiHTMLDocumentationRenderer.java:144)\n\tat com.linkedin.restli.docgen.DefaultDocumentationRequestHandler.processDocumentationRequest(DefaultDocumentationRequestHandler.java:190)\n\tat com.linkedin.restli.docgen.DefaultDocumentationRequestHandler.handleRequest(DefaultDocumentationRequestHandler.java:87)\n\tat com.linkedin.restli.server.RestRestLiServer.doHandleRequest(RestRestLiServer.java:115)\n\tat com.linkedin.restli.server.RestRestLiServer.handleRequest(RestRestLiServer.java:95)\n\tat com.linkedin.restli.server.RestLiServer.handleRequest(RestLiServer.java:130)\n\tat com.linkedin.restli.server.DelegatingTransportDispatcher.handleRestRequest(DelegatingTransportDispatcher.java:70)\n\tat com.linkedin.r2.filter.transport.DispatcherRequestFilter.onRestRequest(DispatcherRequestFilter.java:67)\n\tat com.linkedin.r2.filter.TimedRestFilter.onRestRequest(TimedRestFilter.java:61)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:146)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:132)\n\tat com.linkedin.r2.filter.FilterChainIterator.onRequest(FilterChainIterator.java:62)\n\tat com.linkedin.r2.filter.TimedNextFilter.onRequest(TimedNextFilter.java:55)\n\tat com.linkedin.r2.filter.transport.ServerQueryTunnelFilter.onRestRequest(ServerQueryTunnelFilter.java:58)\n\tat com.linkedin.r2.filter.TimedRestFilter.onRestRequest(TimedRestFilter.java:61)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:146)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:132)\n\tat com.linkedin.r2.filter.FilterChainIterator.onRequest(FilterChainIterator.java:62)\n\tat com.linkedin.r2.filter.TimedNextFilter.onRequest(TimedNextFilter.java:55)\n\tat com.linkedin.r2.filter.message.rest.RestFilter.onRestRequest(RestFilter.java:50)\n\tat com.linkedin.r2.filter.TimedRestFilter.onRestRequest(TimedRestFilter.java:61)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:146)\n\tat com.linkedin.r2.filter.FilterChainIterator$FilterChainRestIterator.doOnRequest(FilterChainIterator.java:132)\n\tat com.linkedin.r2.filter.FilterChainIterator.onRequest(FilterChainIterator.java:62)\n\tat com.linkedin.r2.filter.FilterChainImpl.onRestRequest(FilterChainImpl.java:96)\n\tat com.linkedin.r2.filter.transport.FilterChainDispatcher.handleRestRequest(FilterChainDispatcher.java:70)\n\tat com.linkedin.r2.transport.http.server.HttpDispatcher.handleRequest(HttpDispatcher.java:95)\n\tat com.linkedin.r2.transport.http.server.AbstractR2Servlet.service(AbstractR2Servlet.java:105)\n\tat javax.servlet.http.HttpServlet.service(HttpServlet.java:790)\n\tat org.eclipse.jetty.servlet.ServletHolder.handle(ServletHolder.java:848)\n\tat org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:584)\n\tat org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:224)\n\tat org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1180)\n\tat org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:512)\n\tat org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:185)\n\tat org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1112)\n\tat org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:141)\n\tat org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:134)\n\tat org.eclipse.jetty.server.Server.handle(Server.java:534)\n\tat org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:333)\n\tat org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:251)\n\tat org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:283)\n\tat org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:108)\n\tat org.eclipse.jetty.io.SelectChannelEndPoint$2.run(SelectChannelEndPoint.java:93)\n\tat org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.executeProduceConsume(ExecuteProduceConsume.java:303)\n\tat org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.produceConsume(ExecuteProduceConsume.java:148)\n\tat org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.run(ExecuteProduceConsume.java:136)\n\tat org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:671)\n\tat org.eclipse.jetty.util.thread.QueuedThreadPool$2.run(QueuedThreadPool.java:589)\n\tat java.lang.Thread.run(Thread.java:745)\n",
+          "message" : "The server didn't find a representation for this criteria",
+          "status" : 404
+        }
+      } ]
+    }
 
 ## Complex Types
 
@@ -1014,7 +1083,7 @@ The `Params` of a `ComplexResourceKey` are always prefixed with
 
 The serialized form of a complex key uses the [Rest.li 2.0 protocol
 object
-notation](#restli-protocol-20-object-representation)
+notation](/rest.li/spec/protocol#restli-protocol-20-object-representation)
 . For example, given the complex data:
 
 

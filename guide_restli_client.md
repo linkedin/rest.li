@@ -77,12 +77,11 @@ for the dependency must be set to <code>restClient</code>:
 build.gradle:
 ```groovy
 ...
-﻿dependencies {
+dependencies {
 // for a local project:
 compile project(path: ':example-api', configuration: 'restClient')
 // for a versioned artifact:
-compile group: 'org.somegroup', name: 'example-api', version: '1.0',
-configuration: 'restClient'\
+compile group: 'org.somegroup', name: 'example-api', version: '1.0', configuration: 'restClient'
 }
 ...
 ```
@@ -102,8 +101,7 @@ build.gradle:
     // for a local project:
     compile project(path: ':example-api', configuration: 'dataTemplate')
     // for a versioned artifact:
-    compile group: 'org.somegroup', name: 'example-api', version: '1.0',
-    configuration: 'dataTemplate'\
+    compile group: 'org.somegroup', name: 'example-api', version: '1.0', configuration: 'dataTemplate'
 }
 ...
 ```
@@ -148,7 +146,8 @@ Standard CRUD methods are named `create()`, `get()`, `update()`,
 `partialUpdate()`, `delete()`, and `batchGet()`. Action methods use the
 name of the action, prefixed by "action", `action<ActionName>()`. Finder
 methods use the name of the finder, prefixed by "findBy",
-`findBy<FinderName>()`.
+`findBy<FinderName>()`. BatchFinder methods use the name of the batchFinder, 
+prefixed by "batchFindBy", `batchFindBy<BatchFinderName>()`.
 
 An example for a resource named "Greetings" is shown below. Here is the
 builder factory for Rest.li < 1.24.4:
@@ -169,6 +168,7 @@ public class GreetingsBuilders {
     public GreetingsBatchDeleteBuilder batchDelete()
     public GreetingsDoSomeActionBuilder actionSomeAction()
     public GreetingsFindBySearchBuilder findBySearch()
+    public GreetingsBatchFindBySomeSearchCriteriaBuilder batchFindBySomeSearchCriteria()
 }
 ```
 
@@ -190,6 +190,7 @@ public class GreetingsRequestBuilders extends BuilderBase {
     public GreetingsBatchDeleteRequestBuilder batchDelete()
     public GreetingsDoSomeActionRequestBuilder actionSomeAction()
     public GreetingsFindBySearchRequestBuilder findBySearch()
+    public GreetingsBatchFindBySomeSearchCriteriaRequestBuilder batchFindBySomeSearchCriteria()
 }
 ```
 
@@ -281,6 +282,37 @@ query parameters, of the form:
 The value **must** be non-null.
 
 If the finder specifies `AssocKey` parameters, the builder will contain
+a method to set each of them, of the form:
+```java
+    public <BuilderType> <assocKeyName>Key(<AssocKeyType> value);
+```
+
+### BATCH FINDER Request Builder
+
+In Rest.li < 1.24.4, the generated BATCH_FINDER request builder for a
+resource is named `<Resource>BatchFindBy<BatchFinderName>Builder`, while in
+Rest.li >= 1.24.4 it is named
+`<Resource>BatchFindBy<BatchFinderName>RequestBuilder`. Both builders support the
+full interface of the built-in `BatchFindRequestBuilder`.
+
+If the resource class is a child resource, the generated builder will
+include a type-safe path-key binding method for each of the resource's
+ancestors (recursively following parent resources). Each binding method
+is declared as:
+```java
+    public <BuilderType> <pathKeyName>Key(<KeyType> key);
+```
+
+The generated builder will contain a method to set each of the batchFinder's
+query parameters, of the form:
+```java
+    public <BuilderType> <paramName>Param(<ParamType> value);
+```
+
+The value **must** be non-null. For the batch query parameter, it also uses the form above
+like the other regular parameters.
+
+If the batchFinder specifies `AssocKey` parameters, the builder will contain
 a method to set each of them, of the form:
 ```java
     public <BuilderType> <assocKeyName>Key(<AssocKeyType> value);
@@ -646,6 +678,7 @@ RequestBuilder type.
 | BatchDelete        | -      |     | -   |      | -        | -        |          | -       |          |        |       |        |              |
 | BatchPartialUpdate | -      |     |     |      | -        | -        |          | -       |          |        |       | -      | -\*\*        |
 | BatchUpdate        | -      |     |     |      | -        | -        |          | -       |          |        |       | -      |              |
+| BatchFinder        | -      |     |     | -    | -        | -        | -        | -       | -        | -      |       |        |              |
 
 \* It is not supported, if the method is defined on a simple resource.
 
@@ -681,6 +714,11 @@ At a high level, the restspec contains the following information:
     -   name
     -   parameter names, types, and optionality
     -   response metadata type (if applicable)
+-   description of each BATCH_FINDER, including
+    -   name
+    -   parameter names, types, and optionality
+    -   batch parameter name
+    -   response metadata type (if applicable)
 -   description of each ACTION, including
     -   name
     -   parameter names, types, and optionality
@@ -690,9 +728,6 @@ At a high level, the restspec contains the following information:
     described above
 
 Additional details on the Restspec format may be found in the [design documents](/rest.li/spec/restspec_format).
-The Restspec format is formally described by the .pdsc schema files in
-"com.linkedin.restli.restspec.* " distributed in the restli-common
-module.
 
 <a id="IDLGeneratorTool"></a>
 
@@ -916,8 +951,7 @@ understand the next version of the protocol.
 Use the latest version of the Rest.li protocol to encode requests,
 regardless of the version running on the server.
 **CAUTION**: this can cause requests to fail if the server does not
-understand the latest\
-version of the protocol. "Latest version" is defined as
+understand the latest version of the protocol. "Latest version" is defined as
 `com.linkedin.restli.internal.common.AllProtocolVersions.LATEST_PROTOCOL_VERSION`.
 
 #### USE_LATEST_IF_AVAILABLE
@@ -1063,11 +1097,11 @@ particular, the server resource does not have to be asynchronous.
 
 ```java
 ParSeqRestClient client = new ParSeqRestClient(plain rest client);
-// send some requests in parallel\
+// send some requests in parallel
 Task<Response<?>> task1 = client.createTask(request1);
 Task<Response<?>> task2 = client.createTask(request2);
 Task<Response<?>> combineResults = ...;
-// after we get our parallel requests, combine them\
+// after we get our parallel requests, combine them
 engine.run(Tasks.seq(Tasks.par(task1, task2), combineResults))
 ```
 Users of `createTask` are required to instantiate their own ParSeq

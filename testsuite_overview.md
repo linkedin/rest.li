@@ -225,6 +225,7 @@ the correct values. We compare the response's status and error message with the 
 | get | x | x | x | |
 | batch-get | x |  | x | |
 | finder | x | | x | |
+| batch-finder | o | | o | |
 | create | x | | | |
 | create&nbsp;with&nbsp;returned&nbsp;entity | x | | | |
 | batch-create | x | | | |
