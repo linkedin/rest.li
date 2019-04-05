@@ -161,7 +161,7 @@ To acknowledge a backwards compatible interface change use:
 
     gradle build -Prest.model.compatibility=backwards
 
-For additional details on compatibility checking, see [Resource Compatibility Checking](https://maximelamure.github.io/rest.li/modeling/compatibiltiy_check).
+For additional details on compatibility checking, see [Resource Compatibility Checking](/rest.li/modeling/compatibility_check).
 
 ## Publishing Maven Artifacts
 

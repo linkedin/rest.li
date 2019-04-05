@@ -256,7 +256,7 @@ ERROR :: /stringA :: length of “Lorem ipsum dolor sit amet” is out of range 
 ERROR :: /stringB :: field is required but not found and has no default value
 ```
 
-[Rest.li Filters - Configuration](Rest.li-Filters#configuring-filters) explains how to install the filter.
+[Rest.li Filters](Rest_li-Filters) explains how to install the filter.
 
 ### Request validation during resource handling
 
@@ -374,9 +374,8 @@ Otherwise the data and the schema information is enough. [Data to Schema
 Validation](DATA-Data-Schema-and-Templates#data-to-schema-validation)
 explains how to validate data using the `ValidateDataAgainstSchema`
 class. If it is used with `DataSchemaAnnotationValidator`, it will
-consider the first two types of rules out of three listed in [Specifying
-Validation
-Rules](Validation-in-Rest.li#specifying-validation-rules).
+consider the first two types of rules out of three listed in
+[Specifying Validation Rules](#specifying-validation-rules).
 
 For example:  
 ```java
