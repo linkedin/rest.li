@@ -728,7 +728,11 @@ At a high level, the restspec contains the following information:
 -   a description of each subresource, containing the information
     described above
 
-Additional details on the Restspec format may be found in the [design documents](/rest.li/spec/restspec_format).
+Additional details on the Restspec format may be found in the [design
+documents](/rest.li/spec/restspec_format).
+The Restspec format is formally described by the .pdsc schema files in
+"com.linkedin.restli.restspec.* " distributed in the restli-common
+module.
 
 <a id="IDLGeneratorTool"></a>
 

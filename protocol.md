@@ -40,7 +40,11 @@ Spec](http://tools.ietf.org/html/draft-gregorio-uritemplate-07).
 
 ## Online Documentation
 
-Rest.li provides [online documentation](/rest.li/user_guide/restli_server#online-documentation)
+Rest.li provides [online
+documentation](/rest.li/user_guide/restli_server#online-documentation)
+for any loaded resource. The documentation shows example request and
+response for the resource methods, finders, batchFinders and actions. Use it to
+document the Rest.li protocols.
 
 ## Content Types
 
