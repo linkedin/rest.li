@@ -20,7 +20,7 @@ toc:
       - page: Modeling Resources
         url: /rest.li/modeling/modeling
       - page: Snapshots and Resource Compatibility Checking
-        url: /rest.li/modeling/compatibiltiy_check
+        url: /rest.li/modeling/compatibility_check
   - title: Main concepts
     subfolderitems:
       - page: Filters

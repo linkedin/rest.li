@@ -9,12 +9,12 @@ excerpt: Dynamic Discovery (D2) is a layer of indirection similar to DNS for the
 
 ## Contents
 
-* [What is D2](Dynamic-Discovery#what-is-d2)
-* [Terminology](Dynamic-Discovery#terminology)
-* [D2 and Zookeeper](Dynamic-Discovery#d2-and-zookeeper)
-* [D2 Load Balancer](Dynamic-Discovery#d2-load-balancer)
-* [Stores](Dynamic-Discovery#stores)
-* [Operations](Dynamic-Discovery#operations)
+* [What is D2](#what-is-d2)
+* [Terminology](#terminology)
+* [D2 and Zookeeper](#d2-and-zookeeper)
+* [D2 Load Balancer](#d2-load-balancer)
+* [Stores](#stores)
+* [Operations](#operations)
 
 ## What is D2
 

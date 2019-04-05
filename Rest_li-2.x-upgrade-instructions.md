@@ -6,14 +6,14 @@ permalink: /Rest_li-2_x-upgrade-instructions
 
 ## Contents
 
-* [Introduction](Rest.li-2.x-upgrade-instructions#introduction)
-* [Source Code Changes](Rest.li-2.x-upgrade-instructions#source-code-changes)
-* [Protocol Changes](Rest.li-2.x-upgrade-instructions#protocol-changes)
-* [Upgrade and Deployment Ordering](Rest.li-2.x-upgrade-instructions#upgrade-and-deployment-ordering)
+* [Introduction](#introduction)
+* [Source Code Changes](#source-code-changes)
+* [Protocol Changes](#protocol-changes)
+* [Upgrade and Deployment Ordering](#upgrade-and-deployment-ordering)
 
 ## Introduction
 
-Rest.li 2.0 introduces a new backwards incompatible URI format, as well as removes several APIs that have been marked as deprecated for quite some time. You can find details about these changes on our [user guide](Rest.li-User-Guide) as well as our [protocol documentation](Rest.li-Protocol). This page documents the steps needed to upgrade from a 1.x release to a 2.x release.
+Rest.li 2.0 introduces a new backwards incompatible URI format, as well as removes several APIs that have been marked as deprecated for quite some time. You can find details about these changes on our [user guide](user_guide/server_architecture) as well as our [protocol documentation](spec/protocol). This page documents the steps needed to upgrade from a 1.x release to a 2.x release.
 
 Having issues with any of the steps listed below? Please [create an issue](https://github.com/linkedin/rest.li/issues) and someone from the Rest.li team will help you.
 
@@ -32,7 +32,7 @@ Take these steps to make your source code compatible with Rest.li 2.x:
 
 For the most part the protocol changes are taken care off under the hood by Rest.li. As an application developer, you don't have to worry about the Rest.li 2.0 protocol changes.
 
-However, if you are hard coding URLs, HTTP request/response bodies, or HTTP request/response headers in your code you will have to update these to the Rest.li 2.0 protocol format. Details of the protocol can be found on [this page](Rest.li-Protocol).
+However, if you are hard coding URLs, HTTP request/response bodies, or HTTP request/response headers in your code you will have to update these to the Rest.li 2.0 protocol format. Details of the protocol can be found on [this page](spec/protocol).
 
 ## Upgrade and Deployment Ordering
 

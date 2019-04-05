@@ -13,10 +13,8 @@ excerpt: Rest.li Protocol
   - [URI Syntax](#uri-syntax)
   - [Online Documentation](#online-documentation)
   - [Content Types](#content-types)
-  - [Rest.li Protocol 2.0 Object and List/Array
-    Representation](#restli-protocol-20-object-and-listarray-representation)
-  - [Complex types, complex keys, and compound keys in the Rest.li 2.0
-    Protocol](#complex-types-complex-keys-and-compound-keys-in-the-restli-20-protocol)
+  - [Rest.li Protocol 2.0 Object and List/Array Representation](#restli-protocol-20-object-and-listarray-representation)
+  - [Complex types, complex keys, and compound keys in the Rest.li 2.0 Protocol](#complex-types-complex-keys-and-compound-keys-in-the-restli-20-protocol)
   - [Collection Resources](#collection-resources)
   - [Simple Resources](#simple-resources)
   - [Association Resources](#association-resources)
@@ -69,10 +67,10 @@ Consider the following functions:
     `v`
   - if `v` is a map then `encoded(v)` = the URL encoding for a map as
     described in the [Rest.li 2.0 protocol object URL
-    representation](Rest.li-Protocol#url-representation)
+    representation](#url-representation)
   - if `v` is an array then `encoded(v)` = the URL encoding for an array
     as described in the [Rest.li 2.0 protocol array URL
-    representation](Rest.li-Protocol#url-representation-1)
+    representation](#url-representation-1)
 
 `reducedEncoded(v)` is defined as follows -
 
@@ -81,11 +79,11 @@ Consider the following functions:
   - if `v` is a map then `reducedEncoded(v)` = the HTTP body/header
     encoding for a map as described in the [Rest.li 2.0 protocol object
     HTTP body and headers
-    representation](Rest.li-Protocol#http-body-and-headers-representation)
+    representation](#http-body-and-headers-representation)
   - if `v` is an array then `reducedEncoded(v)` = the HTTP body/header
     encoding for an array as described in the [Rest.li 2.0 protocol
     array HTTP body and headers
-    representation](Rest.li-Protocol#http-body-and-headers-representation-1)
+    representation](#http-body-and-headers-representation-1)
 
 `encoded` and `reducedEncoded` will be used in the sections below.
 
@@ -94,7 +92,7 @@ Consider the following functions:
 Rest.li objects defined using Pegasus Data Schema (PDSC) is serialized
 as JSON representation for transportation over the wire. For detailed
 transport serialization, please see [How Data is Serialized for
-Transport](DATA-Data-Schema-and-Templates#how-data-is-serialized-for-transport).
+Transport](/rest.li/DATA-Data-Schema-and-Templates#how-data-is-serialized-for-transport).
 
 ### Rest.li Protocol 2.0 Object Representation
 
@@ -115,10 +113,10 @@ An object can be present as values for the following headers -
 
   - <code>Location</code> - if present here we simply use the
     [Rest.li 2.0 protocol object URL
-    representation](Rest.li-Protocol#url-representation)
+    representation](#url-representation)
   - <code>X-RestLi-Id</code> or <code>X-LinkedIn-Id</code> - we use the
     [Rest.li 2.0 protocol object HTTP body and headers
-    representation](Rest.li-Protocol#http-body-and-headers-representation)
+    representation](#http-body-and-headers-representation)
 
 ##### Body representation
 
@@ -143,10 +141,10 @@ An array can be present as values for the following headers -
 
   - <code>Location</code> - if present here we simply use the
     [Rest.li 2.0 protocol array URL
-    representation](Rest.li-Protocol#url-representation-1)
+    representation](#url-representation-1)
   - <code>X-RestLi-Id</code> or <code>X-LinkedIn-Id</code> - we use the
     [Rest.li 2.0 protocol array HTTP body and headers
-    representation](Rest.li-Protocol#http-body-and-headers-representation-1)
+    representation](#http-body-and-headers-representation-1)
 
 ##### Body representation
 
@@ -209,9 +207,9 @@ a collection of key-value pairs. Because of this similarity in structure
 we decided to represent both using the Rest.li 2.0 object notation. Any
 list present as a value in the complex key uses the Rest.li 2.0 list
 notation. Details can be found in the [Association
-keys](Rest.li-Protocol#association-keys)
+keys](#association-keys)
 and [complex
-keys](Rest.li-Protocol#complex-types-as-keys-in-protocol-20)
+keys](#complex-types-as-keys-in-protocol-20)
 sections.
 
 ## Collection Resources
@@ -1016,7 +1014,7 @@ The `Params` of a `ComplexResourceKey` are always prefixed with
 
 The serialized form of a complex key uses the [Rest.li 2.0 protocol
 object
-notation](Rest.li-Protocol#restli-protocol-20-object-representation)
+notation](#restli-protocol-20-object-representation)
 . For example, given the complex data:
 
 
@@ -1113,7 +1111,7 @@ position, but the paths for the keys in the JSON body are not.
 
 If used in batch requests, each key in the batch is represented as an
 element in the <code>ids</code> array using the [protocol 2.0 array
-notation](Rest.li-Protocol#restli-20-protocol-array-notation)
+notation](#restli-20-protocol-array-notation)
 .
 
 For example,
@@ -1156,7 +1154,7 @@ the “entities” part of the body:
     
 
 As long as the [protocol 2.0 array
-notation](Rest.li-Protocol#restli-20-protocol-array-notation)
+notation](#restli-20-protocol-array-notation)
 is being adhered to no addional escaping is required for complex keys in
 a batch request.
 
