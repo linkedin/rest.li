@@ -62,7 +62,7 @@ com.linkedin.data.avro.DataTranslator(dataMap, dataSchema, avroSchema);
 
 Rest.li will generate avro schemas for all your pegasus schemas (.pdsc files) automatically if the build is configured to enable this.
 
-See [Gradle generateAvroSchema Task](Gradle-build-integration#wiki-generateavroschema) for details on how to enable.
+See [Gradle generateAvroSchema Task](setup/gradle#generateavroschema) for details on how to enable.
 
 ## FAQ
 ### How do I get the RecordDataSchema of a particular Record type?

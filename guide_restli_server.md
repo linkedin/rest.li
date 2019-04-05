@@ -197,7 +197,7 @@ the resource is intended to implement. Briefly, here are the options:
 The @`RestLiCollection` annotation is applied to classes to mark them as
 providing a Rest.li collection resource. Collection resources model a
 collection of entities, where each entity is referenced by a key. See
-[Collection Resource Pattern](/rest.li/modeling/modeling/#collection) for more details.
+[Collection Resource Pattern](/rest.li/modeling/modeling#collection) for more details.
 
 
 
@@ -440,8 +440,8 @@ The @`RestLiAssociation` annotation is applied to classes to mark them
 as providing a Rest.li association resource. Association resources model
 a collection of relationships between entities. Each relationship is
 referenced by the keys of the entities it relates and may define
-attributes on the relation itself. See [Association Resource
-Pattern](Modeling-Resources-with-Rest.li#wiki-Association)
+attributes on the relation itself. See
+[Association Resource Pattern](/rest.li/modeling/modeling#association)
 for more details.
 
 For Example:

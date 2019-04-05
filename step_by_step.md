@@ -184,8 +184,7 @@ responds to GET requests.
 The basic steps you will follow to create a Rest.li server are:
 
 1.  Define data schema. Rest.li uses an Avro-like format known as
-    [Pegasus Data
-    Schema](DATA-Data-Schema-and-Templates) to
+    [Pegasus Data Schema](/rest.li/DATA-Data-Schema-and-Templates) to
     define the resource data.
 
 2. Generate language bindings. Rest.li will generate java class
@@ -238,8 +237,8 @@ it in a path corresponding to your namespace, under
 `Fortune.pdsc` defines a record named Fortune, with an associated
 namespace. The record has one field, a string whose name is `fortune`.
 Fields as well as the record itself can have optional documentation
-strings. This is, of course, a very simple schema. See [Data Schema and
-Templates](DATA-Data-Schema-and-Templates) for
+strings. This is, of course, a very simple schema. See
+[Data Schema and Templates](/rest.li/DATA-Data-Schema-and-Templates) for
 details on the syntax and more complex examples.
 
 ### Step 2. Generate Java Bindings
@@ -394,9 +393,8 @@ that can respond to a GET request by returning data according to the
 model. The only thing remaining is to configure a HTTP framework to call
 our application logic. We will use Netty, an excellent framework that
 works great with Rest.li to build fully async services. For details on
-how to configure Rest.li with other servlet containers see [Rest.li with
-Servlet
-Containers](Rest.li-with-Servlet-Containers).
+how to configure Rest.li with other servlet containers see
+[Rest.li with Servlet Containers](/rest.li/Rest_li-with-Servlet-Containers).
 
 Rest.li also includes a Request Response layer (R2) that provides a
 transport abstraction and other services.

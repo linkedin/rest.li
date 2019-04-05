@@ -447,8 +447,7 @@ ones.
     parameter and that’s beyond the scope of this example. 
 
 The rest of the config values should be pretty obvious. For the list of
-all configuration please see [D2 Zookeeper
-Properties](D2-Zookeeper-Properties)
+all configuration please see [D2 Zookeeper Properties](/rest.li/D2-Zookeeper-Properties).
 
 Then we modify the config’s build.gradle to add our java dependencies.
 

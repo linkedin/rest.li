@@ -308,7 +308,7 @@ We want to make our Rest.li requests in parallel. To do this we use the `Tasks.p
 
 #### Using Promises
 
-`ParSeqRestClient` also has a `Promise` based API. It is very similar to the `Callback` based approach of sending a request. The main difference is that instead of passing in a `Callback` to the `sendRequest` call we attach a `PromiseListener` that is invoked asynchronously when we get a result from the server. Here is the [Callback example](Asynchronous-Servers-and-Clients-in-Rest.li#using-callbacks-1) implemented using the `Promise` API - 
+`ParSeqRestClient` also has a `Promise` based API. It is very similar to the `Callback` based approach of sending a request. The main difference is that instead of passing in a `Callback` to the `sendRequest` call we attach a `PromiseListener` that is invoked asynchronously when we get a result from the server. Here is the [Callback example](#using-callbacks-1) implemented using the `Promise` API:
 
 ```java
 Request<Greeting> getRequest = BUILDERS.get().id(1L).build();

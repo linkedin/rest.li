@@ -17,7 +17,7 @@ excerpt: Rest.li protocol specifies what HTTP method will be used for each type 
 
 ## Introduction
 
-[Rest.li protocol](Rest.li-Protocol) specifies what HTTP method will be used for each type of Rest.li request. However, sometimes due to security constraint  (i.e. not wanting to send some sensitive information in URI) or jetty buffer limitation (i.e. there may pose a threshold on the longest query that can go through), it may be required to customize the HTTP method used to send a particular Rest.li request to a Rest.li server.
+The [Rest.li protocol](spec/protocol) specifies what HTTP method will be used for each type of Rest.li request. However, sometimes due to security constraint  (i.e. not wanting to send some sensitive information in URI) or jetty buffer limitation (i.e. there may pose a threshold on the longest query that can go through), it may be required to customize the HTTP method used to send a particular Rest.li request to a Rest.li server.
 
 ## ClientQueryTunnelFilter and ServerQueryTunnelFilter
 
