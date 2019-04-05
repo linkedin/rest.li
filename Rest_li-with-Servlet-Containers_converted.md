@@ -17,7 +17,7 @@ excerpt: Rest.li may be run in a variety of http frameworks. Out of the box, Res
 ## Introduction
 
 Rest.li may be run in a variety of http frameworks. Out of the box,
-Rest.li supports both [Netty](Rest.li-with-Netty) and Servlet
+Rest.li supports both [Netty](Rest_li-with-Netty) and Servlet
 containers, such as Jetty.
 
 This describes how to run Rest.li on a servlet container by building a
