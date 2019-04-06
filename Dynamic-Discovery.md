@@ -35,7 +35,7 @@ excerpt: Dynamic Discovery (D2) is a layer of indirection similar to DNS for the
 </p>
 <p>
     If you just need a quick working tutorial for D2 please refer to
-    <a href='D2-Quickstart-Tutorial'>Dynamic Discovery Quickstart</a>
+    <a href='/rest.li/start/d2_quick_start'>Dynamic Discovery Quickstart</a>
 </p>
 
 ## Terminology
