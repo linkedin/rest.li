@@ -19,6 +19,7 @@ excerpt: Rest.li Protocol
   - [Simple Resources](#simple-resources)
   - [Association Resources](#association-resources)
   - [Finders](#finders)
+  - [BatchFinders](#batch-finders)
   - [Actions](#actions)
   - [URI Modifiers](#uri-modifiers)
   - [Response Status Codes](#response-status-codes)
@@ -39,9 +40,10 @@ Spec](http://tools.ietf.org/html/draft-gregorio-uritemplate-07).
 
 ## Online Documentation
 
-Rest.li provides [online documentation](/rest.li/user_guide/restli_server#online-documentation)
+Rest.li provides [online
+documentation](/rest.li/user_guide/restli_server#online-documentation)
 for any loaded resource. The documentation shows example request and
-response for the resource methods, finders, and actions. Use it to
+response for the resource methods, finders, batchFinders and actions. Use it to
 document the Rest.li protocols.
 
 ## Content Types
@@ -210,7 +212,6 @@ notation. Details can be found in the [Association
 keys](#association-keys)
 and [complex
 keys](#complex-types-as-keys-in-protocol-20)
-sections.
 
 ## Collection Resources
 
@@ -220,6 +221,7 @@ The URI templates below assume variables with types as follows:
     entity_id : simple string
     ids : list
     finder : simple string
+    batch_finder : simple string
     params : associative array
 
 ### Collection URIs
@@ -234,6 +236,8 @@ The URI templates below assume variables with types as follows:
 |Collection|/{collection}|/statuses|GET|GET_ALL - returns all entities in the collection
 |Collection|/{collection}?q={finder}|/statuses?q=search|GET|FINDER - returns a list containing entities satisfying the query
 |Collection|/{collection}?q={finder}{&amp;params*}|/statuses?q=search&amp;keywords=linkedin|GET|FINDER - returns a list containing entities satisfying the query
+|Collection|/{collection}?bq={batch_finder}|/statuses?bq=search|GET|BATCH_FINDER - returns a list containing entities satisfying the query
+|Collection|/{collection}?bq={batch_finder}{&amp;params*}|/statuses?bq=search&amp;criteria=List((id:1, title:bar),(id:2, title:foo))|GET|BATCH_FINDER - returns a list containing entities satisfying the query
 |Collection|/{collection}?action={action}|/statuses?action=purge|POST|ACTION - some operation, rest.li does not specify any standard behavior
 
 
@@ -267,6 +271,7 @@ The URI templates below assume variables with types as follows:
     assockey : simple string conforming to the assockey syntax described below
     assockeys : list of strings conforming to the assockey syntax
     finder : simple string
+    batch_finder : simple string
     params : associative array
 
 ### Association Keys
@@ -431,6 +436,10 @@ In protocol 2.0 the request would be:
 |Association|/{association}?q={finder}{&amp;params*}|/follows?q=followers&amp;userID=1|GET|FINDER - returns a list containing entities satisfying the query
 |Association|/{association}/{+assockey}|Protocol 1.0 - /follows/followerID=1?q=other<br />Protocol 2.0 - /follows/(followerID:1)?q=other|GET|FINDER - returns a list containing the entities satisfying the query
 |Association|/{association}/{+assockey}?q={finder}{&amp;params*}|Protocol 1.0 - /follows/followerID=1?q=other&amp;someParam=value<br />Protocol 2.0 - /follows/(followerID:1)?q=other&amp;someParam=value|GET|FINDER - returns a list containing the entities satisfying the query
+|Association|/{association}?bq={batch_finder}|/statuses?bq=search|GET|BATCH_FINDER - returns a list containing entities satisfying the query
+|Association|/{association}?bq={batch_finder}{&amp;params*}|/statuses?bq=search&amp;criteria=List((id:1, title:bar),(id:2, title:foo))|GET|BATCH_FINDER - returns a list containing entities satisfying the query
+|Association|/{association}/{+assockey}|Protocol 1.0 - /follows/followerID=1?bq=other<br />Protocol 2.0 - /follows/(followerID:1)?bq=other|GET|BATCH_FINDER - returns a list containing the entities satisfying the query
+|Association|/{association}/{+assockey}?bq={batch_finder}{&amp;params*}|Protocol 2.0 - /follows/(followerID:1)?q=other&amp;someParam=List((id:1, title:bar),(id:2, title:foo))|GET|BATCH_FINDER - returns a list containing the entities satisfying the query
 |Association|/{association}?action={action}|/follows?action=purge|POST|ACTION - some operation, Rest.li does not specify any standard behavior
 
 ## Finders
@@ -444,6 +453,66 @@ The URI templates below assume variables with types as follows:
 | Resource                           | URI Template          | Example                   | Method | Semantics                    |
 | ---------------------------------- | --------------------- | ------------------------- | ------ | ---------------------------- |
 | Collection, Association, ActionSet | {resource}?q={finder} | /accounts?q=keywordSearch | GET    | invokes the specified finder |
+
+## Batch Finders
+### Batch Finder URIs
+The URI templates below assume variables with types as follows:
+
+    batch_finder : simple string identifying a batch_finder method name
+    resource : simple string identifying a resource 
+    search_criteria : simple string identifying the criteria filter name
+
+| Resource                           | URI Template          | Example                   | Method | Semantics                    |
+| ---------------------------------- | --------------------- | ------------------------- | ------ | ---------------------------- |
+| Collection, Association            | {resource}?bq={batch_finder}&{search_criteria}=| /PhotoResource?bq=searchPhotos&photoCriteria=List((id:1, format:JPG),(id:2, format:BMP)) | GET    | invokes the specified batch_finder |
+
+At least, 2 query parameters will have to be set for a batch finder:
+
+- The "bq" query parameter is reserved for passing the batch finder method name
+- A second query parameter will be used to pass a set of different search criteria. The name of this query parameter is set in the [BatchFinder method annotation](/rest.li/batch_finder_resource_method#method-annotation-and-parameters).
+For example, with @BatchFinder(value="findUsers", batchParam="batchCriteria"), the batch query parameter name is "batchCriteria". 
+The type of this query parameter is a List.
+
+Different data type has different representation in Rest.li protocol 1.0 and 2.0. See more details in [Rest.li Protocol](/rest.li/spec/protocol).
+
+Eg.
+In Rest.li protocol 1.0
+
+    curl "http://localhost:8080/userSearchResults?bq=findUsers&batchCriteria[0].firstName=pauline&batchCriteria[0].age=12&batchCriteria[1].lastName=iglou" --globoff
+
+In Rest.li protocol 2.0
+
+    curl --header "X-RestLi-Protocol-Version: 2.0.0" "http://localhost:10546/userSearchResults?q=findUsers&batchCriteria=List((firstName:pauline, age:12),(lastName:iglou))"
+
+The other query parameters will be applied as common filters across all batch requests.
+
+Here is an example batch request with two individual finders using the following criteria:
+
+- filter by first name and age
+- filter by last name and age
+
+Eg.
+
+    curl "http://localhost:8080/userSearchResults?bq=findUsers&batchCriteria=List((firstName:pauline),(lastName:iglou))&age=21" -X GET --header "X-RestLi-Protocol-Version: 2.0.0"
+
+### Pagination support
+#### 1) Common pagination for all search criteria  
+The developer can pass additional parameters to specify a common pagination. It will be more efficient than adding a pagination context inside each criteria object.  
+Eg.
+
+    curl "http://localhost:8080/userSearchResults?q=findUsers&batchCriteria=List((firstName:pauline, age:12),(lastName:iglou))&firstName=max&start=10&count=10" -X GET  --header "X-RestLi-Protocol-Version: 2.0.0"
+
+The "start" and "count" params will be automatically mapped to a `PagingContext` object that will be passed to the resource method. 
+```java
+public BatchFinderResult<SearchCriteria, User, EmptyRecord> findUsers(@PagingContextParam PagingContext context, 
+                                                                      @QueryParam("batchCriteria") SearchCriteria[] criteria, 
+                                                                      @QueryParam("firstName") String firstName)
+```
+
+#### 2) Custom pagination per criteria object 
+If the developer wants to apply a custom pagination for each search criteria, the pagination information can be passed into the the search criteria object itself.  
+**Caution:** Rest.li doesn't validate how the developer models the pagination in the Search criteria RecordTemple. For consistency purpose, we recommend to use a `PagingContext`.  
+It's the developer responsibility to apply the right pagination (common or custom) based on its need in the resource method implementation.
 
 ## Actions
 
@@ -462,6 +531,7 @@ The URI templates below assume variables with types as follows:
 The URI templates below assume variables with types as follows:
 
     finder_uri : simple string ...
+    batch_finder_uri : simple string
     base_uri : simple string generated via one of the uri templates above
     start : simple string
     count : simple string
@@ -471,8 +541,8 @@ The URI templates below assume variables with types as follows:
 
 | Feature       | Base URI Type         | URI Template                  | Example                                                                                                               |
 | ------------- | --------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Paging        | Finder                | {+finder\_uri}{\&start,count} | /statuses?q=search\&start=0\&count=10                                                                                 |
-| Projection    | Get, BatchGet, Finder | {+base\_uri}{\&fields}        | Protocol 1 - /groups?q=emailDomain\&fields=locale,state Protocol 2 - /groups?q=emailDomain\&fields=List(locale,state) |
+| Paging        | Finder, BatchFinder   | {+finder\_uri}{\&start,count} </br> {+batch_finder\_uri}{\&start,count}| /statuses?q=search\&start=0\&count=10 </br> /statuses?bq=search\&start=0\&count=10                                                                                |
+| Projection    | Get, BatchGet, Finder, BatchFinder | {+base\_uri}{\&fields}        | Protocol 1 - /groups?q=emailDomain\&fields=locale,state Protocol 2 - /groups?q=emailDomain\&fields=List(locale,state) |
 | Schema Return | Any                   | {+base\_uri}\&metaDesc        |                                                                                                                       |
 | Links         | Any                   | {+base\_uri}\&metaLinks       |                                                                                                                       |
 
@@ -502,7 +572,7 @@ Error
 | Response             | X-RestLi-Id               | indicates the id assigned by the server to a new entity created in a collection.                                                                                                                        | set on response messages resulting from a successful POST request to create an entity. The header value is set to the entity id, represented as a string. **Only used in protocol 2.0** |
 | Response             | Location                  | indicates the URI of a new entity created in a collection.                                                                                                                                              | Location is set on response messages resulting from a successful POST request to create an entity. The header value is set to a URI referencing the newly created entity                |
 | Response             | Content-Type              |                                                                                                                                                                                                         | The Content-Type is always set to “application/json”                                                                                                                                    |
-| Request              | X-RestLi-Method           | Set whenever content is POSTed. Can be “GET\_ALL”, “GET”, “BATCH\_GET”, “CREATE”, “BATCH\_CREATE”, “UPDATE”, “PARTIAL\_UPDATE”, “DELETE”, “BATCH\_DELETE”, “ACTION”, “FINDER”, “BATCH\_PARTIAL\_UPDATE” | Is only required for “BATCH\_CREATE”, “BATCH\_PARTIAL\_UPDATE”, all other method types can be inferred by a RestLi server from the URI string and HTTP Method.                          |
+| Request              | X-RestLi-Method           | Set whenever content is POSTed. Can be “GET\_ALL”, “GET”, “BATCH\_GET”, “CREATE”, “BATCH\_CREATE”, “UPDATE”, “PARTIAL\_UPDATE”, “DELETE”, “BATCH\_DELETE”, “ACTION”, “FINDER”, "BATCH_FINDER", “BATCH\_PARTIAL\_UPDATE” | Is only required for “BATCH\_CREATE”, “BATCH\_PARTIAL\_UPDATE”, all other method types can be inferred by a RestLi server from the URI string and HTTP Method.                          |
 | Request and Response | X-RestLi-Protocol-Version | Version of the Rest.li protocol used to generate the request or response. Example value: “2.0.0”                                                                                                        | The version that we get back in the response is dictated by the version sent in the request. They will always be the same.                                                              |
 
 ## Request Message Body
@@ -953,6 +1023,65 @@ or complex data type, e.g.:
       }
     }
     
+### Batch Collection Response
+A list of `BatchFinderCriteriaResult` are returned in a `BatchCollectionResponse` wrapper. 
+It is used for returning an ordered, variable-length, navigable collection of resources for BATCH_FINDER.
+This means, `BatchFinderCriteriaResult` objects are expected to be returned in the same order and position as the respective input search criteria.
+
+For each batchFinder search criteria, it will either return a successful `CollectionResponse` which contains a list of entities Or 
+an `ErrorResponse` in failing case. Such 2 kinds cases are wrapped into `BatchFinderCriteriaResult` corresponding to 
+each search criteria.
+
+`BatchFinderCriteriaResult` fields:
+
+- (optional) "elements" : JSON serialized list of entity types (in success case)
+- (optional) "metadata":
+- (optional) "paging" : JSON serialized CollectionMetadata object
+- (optional) "error" : it's an ErrorResponse which fail to get a list of entities to corresponding search criteria(in failure)
+- "isError" : which indicates whether the result is a successful case or not
+
+E.g.
+    
+    GET http://localhost:7279/photos?bq=searchPhotos&criteria=List((format:JPG,title:bar),(format:PNG,title:bar))&exif=() HTTP/1.1
+    HTTP/1.1 200 OK Content-Type: application/jsonX-RestLi-Protocol-Version: 2.0.0
+    
+    {
+      "elements" : [ {
+        "elements" : [ { // in success case: return a list of entities
+          "urn" : "foo",
+          "format" : "JPG",
+          "id" : 9,
+          "title" : "baz",
+          "exif" : { }
+        }, {
+          "urn" : "foo",
+          "format" : "JPG",
+          "id" : 10,
+          "title" : "bar",
+          "exif" : { }
+        } ],
+        "paging" : {
+          "total" : 2,
+          "count" : 10,
+          "start" : 0,
+          "links" : [ 
+          {           
+            "href": "/PhotoResource?PhotoCriteria=List((urn:foo, format:JPG))&start=1&count=1&bq=searchPhotos",
+            "type": "application/json",
+            "rel": "next"
+          ]
+        }
+      }, { // in failure : return an ErrorResponse
+        "isError" : true,
+        "elements" : [ ],
+        "error" : {
+          "exceptionClass" : "com.linkedin.restli.server.RestLiServiceException",
+          "stackTrace" : "com.linkedin.restli.server.RestLiServiceException [HTTP Status:404]: The server didn't find a representation for this criteria\n\tat......",
+          "message" : "The server didn't find a representation for this criteria",
+          "status" : 404
+        }
+      } ]
+    }
 
 ## Complex Types
 
@@ -1014,7 +1143,7 @@ The `Params` of a `ComplexResourceKey` are always prefixed with
 
 The serialized form of a complex key uses the [Rest.li 2.0 protocol
 object
-notation](#restli-protocol-20-object-representation)
+notation](/rest.li/spec/protocol#restli-protocol-20-object-representation)
 . For example, given the complex data:
 
 

@@ -142,6 +142,7 @@ The type of response envelope is based on the Rest.li resource method. For examp
 | `BATCH_UPDATE`         | `BatchUpdateResponseEnvelope`        |
 | `BATCH_DELETE`         | `BatchDeleteResponseEnvelope`        |
 | `BATCH_CREATE`         | `BatchCreateResponseEnvelope`        |
+| `BATCH_FINDER`         | `BatchFinderResponseEnvelope`        |
 | `GET_ALL`              | `GetAllResponseEnvelope`             |
 | `FINDER`               | `FinderResponseEnvelope`             |
 | `UPDATE`               | `UpdateResponseEnvelope`             |
@@ -158,6 +159,7 @@ For example, `GetResponseEnvelope`, `ActionResponseEnvelope`, and `CreateRespons
 | `SINGLE_ENTITY`     | `RecordResponseEnvelope`                                                             | `GetResponseEnvelope`, `CreateResponseEnvelope`, `ActionResponseEnvelope` |
 | `CREATE_COLLECTION` | N/A - only one envelope falls under this response type, <br> so no need for parent   | `BatchCreateResponseEnvelope` |
 | `GET_COLLECTION`    | `CollectionResponseEnvelope`                                                         | `GetAllResponseEnvelope`, `FinderResponseEnvelope` |
+| `BATCH_COLLECTION`  | N/A - only one envelope falls under this response type, <br> so no need for parent   | `BatchFinderResponseEnvelope` |
 | `BATCH_ENTITIES`    | `BatchResponseEnvelope`                                                              | `BatchGetResponseEnvelope`, `BatchUpdateResponseEnvelope`, `BatchPartialUpdateResponseEnvelope`, `BatchDeleteResponseEnvelope` |
 | `STATUS_ONLY`       | `EmptyResponseEnvelope`                                                              | `PartialUpdateResponseEnvelope`, `UpdateResponseEnvelope`, `DeleteResponseEnvelope`, `OptionsResponseEnvelope` |
 
