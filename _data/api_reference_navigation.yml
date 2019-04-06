@@ -19,6 +19,10 @@ toc:
     subfolderitems:
       - page: Return Entity
         url: /rest.li/spec/return_entity
+  - title: Rest.li Resource Method
+    subfolderitems:
+      - page: Batch Finder
+        url: /rest.li/batch_finder_resource_method
   - title: R2D2
     subfolderitems:
       - page: Dynamic Discovery
@@ -36,7 +40,7 @@ toc:
       - page: Servlet containers
         url: /rest.li/Rest_li-with-Servlet-Containers
   - title: Dependency injection
-    subfolderitems:    
+    subfolderitems:
       - page: Spring dependency injection
         url: /rest.li/Spring-Dependency-Injection
       - page: Guice dependency injection

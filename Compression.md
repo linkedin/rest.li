@@ -13,7 +13,7 @@ excerpt: Rest.li compression
 
 ## Supported Algorithms
 
-The list of supported algorithms are posted here https://github.com/linkedin/rest.li/blob/master/r2/src/main/java/com/linkedin/r2/filter/compression/EncodingType.java.
+The list of supported algorithms are posted here [EncodingType](https://github.com/linkedin/rest.li/blob/master/r2-filter-compression/src/main/java/com/linkedin/r2/filter/compression/EncodingType.java).
 
 _**Note**: There is no hand-shake protocol between the server and the client to make sure that the server supports a particular compression algorithm. If the client sends a request compressed using an algorithm that the server is not configured with, then the client request will fail as the server will not be able to decompress it._
 
@@ -21,7 +21,7 @@ _**Note**: There is no hand-shake protocol between the server and the client to 
 
 ### Server Configuration
 
-To see how the server must be configured, see https://github.com/linkedin/rest.li/blob/master/examples/guice-server/server/src/main/java/com/example/fortune/inject/FortunesGuiceServletConfig.java.
+To see how the server must be configured, see [FortunesGuiceServletConfig](https://github.com/linkedin/rest.li/blob/master/examples/guice-server/server/src/main/java/com/example/fortune/inject/FortunesGuiceServletConfig.java).
 
 In particular:
 ```java
@@ -41,7 +41,7 @@ When we say that a server supports a particular algorithm for compression, it me
 
 ### Client Configuration
 
-To see how the client must be configured, see https://github.com/linkedin/rest.li/blob/master/examples/guice-server/client/src/main/java/com/example/fortune/RestLiFortunesClient.java.
+To see how the client must be configured, see [RestLiFortunesClient](https://github.com/linkedin/rest.li/blob/master/examples/guice-server/client/src/main/java/com/example/fortune/RestLiFortunesClient.java).
 
 In particular:
 

@@ -22,6 +22,7 @@ index: 2
     -  [Batch Get](#batch_get)
     -  [Get All](#get_all)
     -  [Finder](#finder)
+    -  [Batch Finder](#batch-finder)
     -  [Create](#create)
     -  [Batch Create](#batch_create)
     -  [Update](#update)
@@ -118,16 +119,16 @@ and provides a GET endpoint by overriding the standard signature of the
 `get()` method of the base class:
 
 ```
-/*
+/**
  * A collection of fortunes, keyed by random number.
- **/
-RestLiCollection(name = "fortunes", namespace = "com.example.fortune")
+ */
+@RestLiCollection(name = "fortunes", namespace = "com.example.fortune")
 public class FortunesResource extends CollectionResourceTemplate<Long, Fortune>
 {
   /**
    * Gets a fortune for a random number.
    */
-    Override
+    @Override
     public Fortune get(Long key)
     {
     // retrieve data and return a Fortune object ...
@@ -179,7 +180,7 @@ Rest.li APIs.
 
 Resource annotations are used to mark and register a class as providing
 as Rest.li resource. One of a number of annotations may be used,
-depending on the [Interface Pattern](/rest.li/modeling/modeling)
+depending on the [Interface Pattern](/rest.li/modeling/modeling#collection)
 the resource is intended to implement. Briefly, here are the options:
 
 <a id="wiki-ResourceTypes"></a>
@@ -242,10 +243,8 @@ For convenience, collection resources may extend
 Example:
 
 ```
-@RestLiCollection(name = "fortunes", namespace = "com.example.fortune",
-keyName = "fortuneId")
-public class FortunesResource extends CollectionResourceTemplate<Long,
-Fortune>
+@RestLiCollection(name = "fortunes", namespace = "com.example.fortune", keyName = "fortuneId")
+public class FortunesResource extends CollectionResourceTemplate<Long, Fortune>
 {
 ...
 }
@@ -261,21 +260,21 @@ For example, a sub-resource of the fortunes resource would have a URI
 path of the form:
 
 ```
-/fortunes/{fortuneId}/subresource\
+/fortunes/{fortuneId}/subresource
 ```
 
 Parent resource keys can be accessed by sub-resources, as shown in the
 following example:
 
 ```
-RestLiCollection(name = "subresource", namespace = "com.example.fortune", parent = FortunesResource.class)
+@RestLiCollection(name = "subresource", namespace = "com.example.fortune", parent = FortunesResource.class)
 public class SubResource extends CollectionResourceTemplate<Long, SubResourceEntity>
 {
-RestMethod.Get
-public Greeting get(Long key, @Keys PathKeys keys) {
-    Long parentId = keys.getAsLong("fortuneId");
-    ...
-}
+  @RestMethod.Get
+  public Greeting get(Long key, @Keys PathKeys keys) {
+      Long parentId = keys.getAsLong("fortuneId");
+      ...
+  }
 ...
 }
 ```
@@ -292,8 +291,7 @@ public SubResourceEntity get(Long subresourceKey)
 }
 ```
 
-For details on how to make requests to sub-resources from a client, see
-<a href="#wiki-calling-sub-resources">Calling Sub-resources</a>
+For details on how to make requests to sub-resources from a client, see [Calling Sub-resources](/rest.li/user_guide/restli_client#calling-sub-resources)
 
 #### @RestLiCollection with Complex Key
 
@@ -323,8 +321,7 @@ Example:
 
 ```
 @RestLiCollection(name = "widgets", namespace = "com.example.widgets")
-public class WidgetResource implements extends
-ComplexKeyResourceTemplate<WidgetKey, EmptyRecord, Widget>
+public class WidgetResource extends ComplexKeyResourceTemplate<WidgetKey, EmptyRecord, Widget>
 {
     public Widget get(ComplexResourceKey<WidgetKey, EmptyRecord> ck)
     {
@@ -359,7 +356,8 @@ where `WidgetKey.pdsc` is defined by the schema:
       "fields": [
         {"name": "number", "type": "string"},
         {
-          "name": "thing", "type": {
+          "name": "thing", 
+          "type": {
             "type": "record",
             "name": "Thing",
             "fields": [
@@ -375,14 +373,14 @@ where `WidgetKey.pdsc` is defined by the schema:
 Example request:
 
     
-    curl "http://<hostname:port>/widgets/number=1&thing.make=adruino&thing.model=uno
+    curl "http://<hostname:port>/widgets/number=1&thing.make=adruino&thing.model=uno"
     
 
 If params are added, they are represented in the URL under the
 "$params" prefix like this:
 
     
-    curl "http://<hostname:port>/widgets/number=1&thing.make=adruino&thing.model=uno&$params.version=1
+    curl "http://<hostname:port>/widgets/number=1&thing.make=adruino&thing.model=uno&$params.version=1"
     
 
 The implementation of complex key collection is identical to the regular
@@ -425,10 +423,8 @@ rather than directly implementing the `SimpleResource` interface.
 Examples:
 
 ```
-@RestLiSimpleResource(name = "todaysPromotedProduct", namespace =
-"com.example.product")
-public class TodaysPromotedProductResource extends
-SimpleResourceTemplate<Product>
+@RestLiSimpleResource(name = "todaysPromotedProduct", namespace = "com.example.product")
+public class TodaysPromotedProductResource extends SimpleResourceTemplate<Product>
 {
     ...
 }
@@ -442,23 +438,22 @@ a collection of relationships between entities. Each relationship is
 referenced by the keys of the entities it relates and may define
 attributes on the relation itself. See
 [Association Resource Pattern](/rest.li/modeling/modeling#association)
-for more details.
 
 For Example:
 
 ```
-RestLiAssociation(name = "memberships", namespace = "com.example",
+@RestLiAssociation(name = "memberships", namespace = "com.example",
   assocKeys = {
-    Key(name = "memberId", type = Long.class), Key(name = "groupId", type = Long.class)
+    @Key(name = "memberId", type = Long.class), 
+    @Key(name = "groupId", type = Long.class)
   }
 )
 public class MembershipsAssociation extends AssociationResourceTemplate<Membership>
 {
-    Override
+    @Override
     public Membership get(CompoundKey key)
     {
-        return lookup(key.getPartAsLong("memberId",
-        key.getPartAsLong("groupId"));
+        return lookup(key.getPartAsLong("memberId", key.getPartAsLong("groupId"));
     }
 }
 ```
@@ -507,12 +502,11 @@ actions.
 For example:
 
 ```
-@RestLiActions(name = "simpleActions",
-namespace = "com.example")
+@RestLiActions(name = "simpleActions", namespace = "com.example")
 public class SimpleActionsResource {
 
-    Action(name="echo")
-    public String echo(ActionParam("input") String input)
+    @Action(name="echo")
+    public String echo(@ActionParam("input") String input)
     {
         return input;
     }
@@ -548,6 +542,8 @@ type, as described in the table below:
   | --------------------------|------------|---------|-------------|-------------| 
   | FINDER                    | x          |         |  x          |             |
   | --------------------------|------------|---------|-------------|-------------| 
+  | BATCH_FINDER              | x          |         |  x          |             |
+  | --------------------------|------------|---------|-------------|-------------| 
   | CREATE / BATCH_CREATE     | x          |         |             |             |
   | --------------------------|------------|---------|-------------|-------------| 
   | UPDATE / PARTIAL_UPDATE   | x          |  x      | x           |             |
@@ -579,12 +575,12 @@ following method signatures.
 
 For collection and association resources:
 ```
-    public V get(K key);
+public V get(K key);
 ```
 
 For simple resources:
 ```
-    public V get();
+public V get();
 ```
 
 Get methods can also be annotated if not overriding a base class method.
@@ -605,9 +601,8 @@ public GetResult<V> getWithStatus();
 An annotated get method may also have arbitrary query params added:
 
 ```
-RestMethod.Get
-public GetResult<V> get(K key, `QueryParam("viewerId") String
-viewerId);
+@RestMethod.Get
+public GetResult<V> get(K key, @QueryParam("viewerId") String viewerId);
 ```
 
 The return type `GetResult<V>` allows users to set an arbitrary HTTP
@@ -628,7 +623,7 @@ to the application developer that there are no side effects.
 Resources providing the BATCH_GET resource method must override the
 following method signature:
 ```
-    public Map<K, V> batchGet(Set<K> ids);
+public Map<K, V> batchGet(Set<K> ids);
 ```
 
 @`RestMethod.BatchGet` may be used to indicate a batch get method
@@ -641,23 +636,21 @@ Example of a batch get:
 ```
 public BatchResult<Long, Greeting> batchGet(Set<Long> ids)
 {
-    Map<Long, Greeting> batch = new HashMap<Long, Greeting>();
-    Map<Long, RestLiServiceException> errors = new HashMap<Long,
-    RestLiServiceException>();
-    for (long id : ids)
+  Map<Long, Greeting> batch = new HashMap<Long, Greeting>();
+  Map<Long, RestLiServiceException> errors = new HashMap<Long, RestLiServiceException>();
+  for (long id : ids)
+  {
+    Greeting g = _db.get(id);
+    if (g != null)
     {
-        Greeting g = _db.get(id);
-        if (g != null)
-        {
-            batch.put(id, g);
-        }
-        else
-        {
-            errors.put(id, new
-            RestLiServiceException(HttpStatus.S_404_NOT_FOUND));
-        }
+        batch.put(id, g);
     }
-    return new BatchResult<Long, Greeting>(batch, errors);
+    else
+    {
+        errors.put(id, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND));
+    }
+  }
+  return new BatchResult<Long, Greeting>(batch, errors);
 }
 ```
 
@@ -665,7 +658,7 @@ Clients should make requests to a batch resource using `buildKV()` (not
 `build()`, it is deprecated), for example:
 
 ```
-    new FortunesBuilders().batchGet().ids(...).buildKV();
+new FortunesBuilders().batchGet().ids(...).buildKV();
 ```
 
 <a id="GET_ALL"></a>
@@ -676,7 +669,7 @@ When a GET is requested on a collection or association resource with no
 key provided (for example, /myResource), the GET_ALL resource method is
 invoked, if present. The GET_ALL resource method retrieves all entities
 for the collection and supports the same pagination facilities as a
-finder.
+FINDER.
 
 ```
 public List<V> getAll(@Context PagingContext pagingContext);
@@ -691,18 +684,16 @@ do not override getAll. Instead, create a new method with the
 than a list, for example:
 
 ```
-RestMethod.GetAll
-public CollectionResult<Widgets, WidgetsMetadata> getAllWidgets(`Context
-PagingContext pagingContext)
+@RestMethod.GetAll
+public CollectionResult<Widgets, WidgetsMetadata> getAllWidgets(@Context PagingContext pagingContext)
 {
     // ...
-    return new CollectionResult<Widgets, WidgetsMetadata>(pageOfWidgets,
-    total, metadata);
+    return new CollectionResult<Widgets, WidgetsMetadata>(pageOfWidgets, total, metadata);
 }
 ```
 
 When returning a CollectionResult from GetAll, the behavior is identical
-to a finder. See the finder documentation below for additional details
+to a FINDER. See the FINDER documentation below for additional details
 about CollectionResult.
 
 <a id="FINDER"></a>
@@ -729,16 +720,16 @@ For example:
 ```
 /*
 You can access this FINDER method via
-/resources/order?q=findOrder&buyerType=1&buyerId=309&orderId=1208210101\
+/resources/order?q=findOrder&buyerType=1&buyerId=309&orderId=1208210101
 */
-RestLiCollection(name="order",keyName="orderId")
+@RestLiCollection(name="order",keyName="orderId")
 public class OrderResource extends CollectionResourceTemplate<Integer,Order>
 {
-    Finder("findOrder")
-    public List<Order> findOrder(Context PagingContext context,
-                                 QueryParam("buyerId") Integer buyerId,
-                                 QueryParam("buyerType") Integer buyerType,
-                                 QueryParam("orderId") Integer orderId)
+    @Finder("findOrder")
+    public List<Order> findOrder(@Context PagingContext context,
+                                 @QueryParam("buyerId") Integer buyerId,
+                                 @QueryParam("buyerType") Integer buyerType,
+                                 @QueryParam("orderId") Integer orderId)
                                 throws InternalException
     {
     ...
@@ -794,14 +785,14 @@ Valid types for query parameters are:
 -   Arrays of one of the types above, e.g. `String[]`, `long[]`, ...
 
 ```
-Finder("simpleFinder")
+@Finder("simpleFinder")
 public List<V> simpleFind(`Context PagingContext context);
 
-Finder("complexFinder")
-public CollectionResult<V, MyMetaData> complexFinder(Context(defaultStart
-= 10, defaultCount = 100) PagingContext context,AssocKey("key1") Long key,
-                          QueryParam("param1") String requiredParam,
-                          QueryParam("param2") Optional String optionalParam);
+@Finder("complexFinder")
+public CollectionResult<V, MyMetaData> complexFinder(@Context(defaultStart= 10, defaultCount = 100) PagingContext context,
+                                                     @AssocKey("key1") Long key,
+                                                     @QueryParam("param1") String requiredParam,
+                                                     @QueryParam("param2") @Optional String optionalParam);
 ```
 
 <a id="TyperefSchema"></a>
@@ -876,19 +867,18 @@ Keys, query parameters, or action parameters.
 Keys:
 
 ```
-@RestLiCollection(name="entities",
-namespace = "com.example",
-keyTyperefClass = CustomObjectRef.class)
-public class EntitiesResource extends CollectionResourceTemplate<Urn,
-CustomObject>
+@RestLiCollection(name="entities", 
+                  namespace = "com.example",
+                  keyTyperefClass = CustomObjectRef.class)
+public class EntitiesResource extends CollectionResourceTemplate<CustomObject, Urn>
 ```
 
 Compound keys:
 
 ```
-RestLiAssociation(name="entities", namespace="com.example",
-                                   assocKeys={`Key(name="o",
-    type=CustomObject.class, typeref=CustomObjectRef.class)})
+@RestLiAssociation(name="entities", 
+                   namespace="com.example",
+                   assocKeys={@Key(name="o", type=CustomObject.class, typeref=CustomObjectRef.class)})
 ```
 
 Query parameters:
@@ -896,9 +886,25 @@ Query parameters:
 ```
 @QueryParam(value="o", typeref=CustomObjectRef.class) CustomObject o
 
-@QueryParam(value="oArray", typeref=CustomObjectRef.class)
-CustomObject[] oArray
+@QueryParam(value="oArray", typeref=CustomObjectRef.class) CustomObject[] oArray
 ```
+<a id="BATCHFINDER"></a>
+
+#### BATCH FINDER
+The BATCH_FINDER resource method accepts a list of filters set. Instead of callings multiple finders with different filter values, we call 1 BATCH_FINDER method with a list of filters.
+
+Resources may provide zero or more BATCH_FINDER resource methods. Each BATCH_FINDER method must be annotated with the @`BatchFinder` annotation.
+And this method must return a `BatchFinderResult`.
+For example: 
+```
+ @BatchFinder(value = "searchGreetings", batchParam = "criteria")
+ public BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> searchGreetings(@PagingContextParam PagingContext context,
+                                                                @QueryParam("criteria") GreetingCriteria[] criteria,
+                                                                @QueryParam("message") String message)
+```
+See more details about BATCH_FINDER resource method api here.[BatchFinder Resource API](/rest.li/batch_finder_resource_method#resource-api)
+
+
 
 <a id="CREATE"></a>
 
@@ -992,8 +998,7 @@ Example of a batch create:
 ```
 public BatchCreateResult<Long, Greeting> batchCreate(BatchCreateRequest<Long, Greeting> entities)
 {
-    List<CreateResponse> responses = new
-    ArrayList<CreateResponse>(entities.getInput().size());
+    List<CreateResponse> responses = new ArrayList<CreateResponse>(entities.getInput().size());
 
     for (Greeting g : entities.getInput())
     {
@@ -1014,17 +1019,14 @@ Error details can be returned in any CreateResponse by providing a
 RestLiServiceException, for example:
 
 ```
-public BatchCreateResult<Long, Greeting>
-batchCreate(BatchCreateRequest<Long, Greeting> entities) 
+public BatchCreateResult<Long, Greeting> batchCreate(BatchCreateRequest<Long, Greeting> entities) 
 {
-    List<CreateResponse> responses = new
-    ArrayList<CreateResponse>(entities.getInput().size());
+    List<CreateResponse> responses = new ArrayList<CreateResponse>(entities.getInput().size());
 
     ...
     if (...)
     {
-        RestLiServiceException exception = new
-        RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE, "...");
+        RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE, "...");
         exception.setServiceErrorCode(...);
         exception.setErrorDetails(...);
         responses.add(new CreateResponse(exception));
@@ -1055,8 +1057,7 @@ public BatchCreateKVResult<Long, Greeting> batchCreate(BatchCreateRequest<Long, 
     List<CreateKVResponse<Long, Greeting>> responses = new ArrayList<CreateKVResponse<Long, Greeting>>(entities.getInput().size());
     for (Greeting greeting : entities.getInput())
     {
-        responses.add(create(greeting)); // Create function should return
-        CreateKVResponse\
+        responses.add(create(greeting)); // Create function should return CreateKVResponse
     }
     return BatchCreateKVResult<Long, Greeting>(responses);
 }
@@ -1089,12 +1090,12 @@ following method signatures.
 
 For collection and association resources:
 ```
-    public UpdateResponse update(K key, V entity);
+public UpdateResponse update(K key, V entity);
 ```
 
 For simple resources:
 ```
-    public UpdateResponse update(V entity);
+public UpdateResponse update(V entity);
 ```
 
 The returned `UpdateResponse` object indicates the HTTP status code to
@@ -1120,8 +1121,7 @@ the entities to be created.
 Resources providing the BATCH_UPDATE resource method must override the
 following method signature:
 ```
-    public BatchUpdateResult<K, V> batchUpdate(BatchUpdateRequest<K, V>
-entities);
+public BatchUpdateResult<K, V> batchUpdate(BatchUpdateRequest<K, V> entities);
 ```
 
 `BatchUpdateRequest` contains a map of entity key to entity value.
@@ -1137,15 +1137,13 @@ instead of overriding the batchUpdate method of a base class.
 Example of a batch update:
 
 ```
-public BatchUpdateResult<Long, Greeting>
-batchUpdate(BatchUpdateRequest<Long, Greeting> entities)
+public BatchUpdateResult<Long, Greeting> batchUpdate(BatchUpdateRequest<Long, Greeting> entities)
 {
-    Map<Long, UpdateResponse> responseMap = new HashMap<Long,
-    UpdateResponse>();
+    Map<Long, UpdateResponse> responseMap = new HashMap<Long, UpdateResponse>();
     for (Map.Entry<Long, Greeting> entry : entities.getData().entrySet())
     {
-    responseMap.put(entry.getKey(), update(entry.getKey(),
-    entry.getValue()));
+      responseMap.put(entry.getKey(), update(entry.getKey(),
+      entry.getValue()));
     }
     return new BatchUpdateResult<Long, Greeting>(responseMap);
 }
@@ -1155,7 +1153,7 @@ public UpdateResponse update(Long key, Greeting entity)
     Greeting g = _db.get(key);
     if (g == null)
     {
-    return new UpdateResponse(HttpStatus.S_404_NOT_FOUND);
+      return new UpdateResponse(HttpStatus.S_404_NOT_FOUND);
     }
 
     _db.put(key, entity);
@@ -1196,8 +1194,8 @@ public UpdateResponse update(String key, PatchRequest<YourResource> patch)
     }
     try
     {
-        PatchApplier.applyPatch(resource, patch); // Apply the patch.\
-        // Be sure to save the resource if necessary\
+        PatchApplier.applyPatch(resource, patch); // Apply the patch.
+        // Be sure to save the resource if necessary
     }
     catch (DataProcessingException e)
     {
@@ -1212,9 +1210,7 @@ Pegasus Data format. The Rest.li client classes provide support for
 constructing patch requests, but here is an example update request using
 curl:
 
-    <code>
     curl -X POST localhost:/fortunes/1 -d '{"patch": {"$set": {"fortune": "you will strike it rich!"}}}'
-    </code>
 
 @`RestMethod.PartialUpdate` may be used to indicate a partial update
 method instead of overriding the partialUpdate method of a base class.
@@ -1263,12 +1259,12 @@ patchRequest)
         if(patch.containsKey("address") && patch.size() >= 1)
         {
             DataMap address = patch.getDataMap("address");
-            if(address.containsKey(\"\$set\") && address.size()  1)
+            if(address.containsKey("$set") && address.size()  1)
             {
-                DataMap set = address.getDataMap("\$set");
+                DataMap set = address.getDataMap("$set");
                 if(address.containsKey("street") && address.size()  1)
                 {
-                    String street = address.getString(\"street\");
+                    String street = address.getString("street");
                     selectivePartialUpdateApplied = true;
                     // update only the street, since its the only thing this patch requests to change
                 }
@@ -1277,7 +1273,7 @@ patchRequest)
         if(selectivePartialUpdateApplied  false)
         {
             // no selective update available, update the whole record with
-            PatchApplier and return the result\
+            PatchApplier and return the result
         }
     }
     catch (DataProcessingException e)
@@ -1367,8 +1363,7 @@ general, it is not guaranteed to be idempotent.
 Resources providing the BATCH_PARTIAL_UPDATE resource method must
 override the following method signature:
 ```
-public BatchUpdateResult<K, V> batchUpdate(BatchPatchRequest<K, V>
-patches);
+public BatchUpdateResult<K, V> batchUpdate(BatchPatchRequest<K, V> patches);
 ```
 
 The `BatchPatchRequest` input contains a map of entity key to
@@ -1486,12 +1481,12 @@ following method signatures.
 
 For collection and association resources:
 ```
-    public UpdateResponse delete(K key);
+public UpdateResponse delete(K key);
 ```
 
 For simple resources:
 ```
-    public UpdateResponse delete();
+public UpdateResponse delete();
 ```
 
 The returned `UpdateResponse` object indicates the HTTP status code to
@@ -1510,8 +1505,7 @@ their keys. BATCH_DELETE has side effects but is idempotent.
 Resources providing the BATCH_DELETE resource method must override the
 following method signature:
 ```
-public BatchUpdateResult<K, V> batchDelete(BatchDeleteRequest<K, V>
-ids);
+public BatchUpdateResult<K, V> batchDelete(BatchDeleteRequest<K, V> ids);
 ```
 
 The `BatchDeleteRequest` input contains the list of keys to be deleted.
@@ -1529,11 +1523,9 @@ instead of overriding the batchDelete method of a base class.
 Example of a batch delete:
 
 ```
-public BatchUpdateResult<Long, Greeting>
-batchDelete(BatchDeleteRequest<Long, Greeting> deleteRequest)
+public BatchUpdateResult<Long, Greeting> batchDelete(BatchDeleteRequest<Long, Greeting> deleteRequest)
 {
-    Map<Long, UpdateResponse> responseMap = new HashMap<Long,
-    UpdateResponse>();
+    Map<Long, UpdateResponse> responseMap = new HashMap<Long, UpdateResponse>();
     for (Long id : deleteRequest.getKeys())
     {
         responseMap.put(id, delete(id));
@@ -1545,8 +1537,7 @@ public UpdateResponse delete(Long key)
 {
     boolean removed = _db.remove(key) != null;
 
-    return new UpdateResponse(removed ? HttpStatus.S_204_NO_CONTENT :
-    HttpStatus.S_404_NOT_FOUND);
+    return new UpdateResponse(removed ? HttpStatus.S_204_NO_CONTENT : HttpStatus.S_404_NOT_FOUND);
 }
 ```
 
@@ -1626,10 +1617,10 @@ public void doAction();
 
 A more complex example, illustrating multiple parameters:
 ```
-Action(name="sendTestAnnouncement",resourceLevel= ResourceLevel.ENTITY)
-public void sendTestAnnouncement(`ActionParam("subject") String
-subject, ActionParam("message") String message, ActionParam("emailAddress") String
-emailAddress)
+@Action(name="sendTestAnnouncement",resourceLevel= ResourceLevel.ENTITY)
+public void sendTestAnnouncement(@ActionParam("subject") String subject, 
+                                 @ActionParam("message") String message, 
+                                 @ActionParam("emailAddress") String emailAddress)
 ```
 
 <a id="ActionParamVQueryParam"></a>
@@ -1711,24 +1702,20 @@ for details).
 
 `CollectionResourceTemplate` provides a convenient base class for
 collection resources. `CollectionResourceTemplate` defines methods for
-all of the CRUD operations. Subclasses may also implement FINDER and
+all of the CRUD operations. Subclasses may also implement FINDER, BATCH_FINDER and
 ACTION methods by annotating as described above.
 
 ```
 public CreateResponse create(V entity);
-    public BatchCreateResult<K, V> batchCreate(BatchCreateRequest<K, V>
-    entities);
+    public BatchCreateResult<K, V> batchCreate(BatchCreateRequest<K, V> entities);
     public V get(K key);
-    public Map<K, V> batchGet(Set<K> ids);
+    public Map<K, V>batchGet(Set<K> ids);
     public UpdateResponse update(K key, V entity);
-    public BatchUpdateResult<K, V> batchUpdate(BatchUpdateRequest<K, V>
-    entities);
+    public BatchUpdateResult<K, V> batchUpdate(BatchUpdateRequest<K, V> entities);
     public UpdateResponse update(K key, PatchRequest<V> patch);
-    public BatchUpdateResult<K, V> batchUpdate(BatchPatchRequest<K, V>
-    patches);
+    public BatchUpdateResult<K, V> batchUpdate(BatchPatchRequest<K, V> patches);
     public UpdateResponse delete(K key);
-    public BatchUpdateResult<K, V> batchDelete(BatchDeleteRequest<K, V>
-    ids);
+    public BatchUpdateResult<K, V> batchDelete(BatchDeleteRequest<K, V> ids);
 ```
 
 #### SimpleResourceTemplate
@@ -1750,24 +1737,20 @@ public UpdateResponse delete();
 association resources. `AssociationResourceTemplate` defines methods for
 all of the CRUD operations except CREATE. Association resources should
 implement CREATE by providing up-sert semantics on UPDATE. Subclasses
-may also implement FINDER and ACTION methods by annotating as described
+may also implement FINDER, BATCH_FINDER and ACTION methods by annotating as described
 above.
 
 ```
 public CreateResponse create(V entity);
-    public BatchCreateResult<CompoundKey, V>
-    batchCreate(BatchCreateRequest<CompoundKey, V> entities);
+    public BatchCreateResult<CompoundKey, V>batchCreate(BatchCreateRequest<CompoundKey, V> entities);
     public V get(CompoundKey key);
     public Map<CompoundKey, V> batchGet(Set<CompoundKey> ids);
     public UpdateResponse update(CompoundKey key, V entity);
-    public BatchUpdateResult<CompoundKey, V>
-    batchUpdate(BatchUpdateRequest<CompoundKey, V> entities);
+    public BatchUpdateResult<CompoundKey, V>batchUpdate(BatchUpdateRequest<CompoundKey, V> entities);
     public UpdateResponse update(CompoundKey key, PatchRequest<V> patch);
-    public BatchUpdateResult<CompoundKey, V>
-    batchUpdate(BatchPatchRequest<CompoundKey, V> patches);
+    public BatchUpdateResult<CompoundKey, V> batchUpdate(BatchPatchRequest<CompoundKey, V> patches);
     public UpdateResponse delete(CompoundKey key);
-    public BatchUpdateResult<CompoundKey, V>
-    batchDelete(BatchDeleteRequest<CompoundKey, V> ids);
+    public BatchUpdateResult<CompoundKey, V> batchDelete(BatchDeleteRequest<CompoundKey, V> ids);
 ```
 
 <a id="wiki-FreeFormResources"></a>
@@ -1790,22 +1773,19 @@ association resources where the `SingleObjectResource` interface is the
 marker interface for simple resources.
 
 ```
-public class FreeFormCollectionResource implements KeyValueResource<K,
-V>
+public class FreeFormCollectionResource implements KeyValueResource<K, V>
 {
     @RestMethod.Create
     public CreateResponse myCreate(V entity);
 
     @RestMethod.BatchCreate
-    public BatchCreateResult<K, V> myBatchCreate(BatchCreateRequest<K,
-    V> entities);
+    public BatchCreateResult<K, V> myBatchCreate(BatchCreateRequest<K, V> entities);
 
     @RestMethod.Get
     public V myGet(K key);
 
     @RestMethod.GetAll
-    public CollectionResult<V, M> myGetAll(`Context PagingContext
-    pagingContex);
+    public CollectionResult<V, M> myGetAll(@Context PagingContext pagingContex);
 
     @RestMethod.BatchGet
     public Map<K, V> myBatchGet(Set<K> ids);
@@ -1814,22 +1794,19 @@ V>
     public UpdateResponse myUpdate(K key, V entity);
 
     @RestMethod.BatchUpdate
-    public BatchUpdateResult<K, V> myBatchUpdate(BatchUpdateRequest<K,
-    V> entities);
+    public BatchUpdateResult<K, V> myBatchUpdate(BatchUpdateRequest<K, V> entities);
 
     @RestMethod.PartialUpdate
     public UpdateResponse myUpdate(K key, PatchRequest<V> patch);
 
     @RestMethod.BatchPartialUpdate
-    public BatchUpdateResult<K, V> myBatchUpdate(BatchPatchRequest<K, V>
-    patches);
+    public BatchUpdateResult<K, V> myBatchUpdate(BatchPatchRequest<K, V> patches);
 
     @RestMethod.Delete
     public UpdateResponse myDelete(K key);
 
     @RestMethod.BatchDelete
-    public BatchUpdateResult<K, V> myBatchDelete(BatchDeleteRequest<K,
-    V> ids);
+    public BatchUpdateResult<K, V> myBatchDelete(BatchDeleteRequest<K, V> ids);
 }
 ```
 
@@ -1855,14 +1832,14 @@ shown above.
 
 ```
 @RestMethod.Get
-public V myGet(K key, `QueryParam("myParam") String myParam);
+public V myGet(K key, @QueryParam("myParam") String myParam);
 
 @RestMethod.Get
 public GetResult<V> getWithStatus(K key);
 ```
 
 Note that each resource may only provide one implementation of each CRUD
-method (for exampoe, it is invalid to annotate two different methods with
+method (for example, it is invalid to annotate two different methods with
 @`RestMethod.Get`).
 
 ### Things to Remember about Free-Form Resources
@@ -1960,14 +1937,18 @@ public BatchResult<K, V> batchGet((Set<K> ids)
 
 The same logic applies to BATCH_UPDATE, BATCH_PARTIAL_UPDATE, and BATCH_DELETE.
 
+For BATCH_FINDER method, it may return errors for individual criteria as part of a `BatchFinderResult` object.
+Each error is represented as a RestLiServiceException object when it cannot find a corresponding
+response for that search criteria Or the developer can put the customized RestLiServiceException into the BatchFinderResult . 
+In this case, the overall status will still be an HTTP 200.
+
 ### Handling Errors on the Client
 
 When making requests using `RestClient`, a `ResponseFuture` is always
 returned, as shown in this example:
 
 ```
-    ResponseFuture<Greeting> future = restClient.sendRequest(new
-    GreetingsBuilders.get().id(1L));
+ResponseFuture<Greeting> future = restClient.sendRequest(new GreetingsBuilders.get().id(1L));
 ```
 
 This future might contain an error response. When calling
@@ -1979,16 +1960,15 @@ as shown in this example:
 ```
 try
 {
-    Greeting greeting = restClient.sendRequest(new
-    GreetingsBuilders.get().id(1L)).getResponseEntity();
+    Greeting greeting = restClient.sendRequest(new GreetingsBuilders.get().id(1L)).getResponseEntity();
     // handle successful response
 }
 catch (RestLiResponseException e)
 {
     if(e.getStatus() == 400) {
-        // handle 400\
+        // handle 400
     } else {
-        // ... handle other status codes or rethrow\
+        // ... handle other status codes or rethrow
     }
 }
 ```
@@ -2000,20 +1980,19 @@ throw `RestLiResponseException` even if the response contains a 400 or
 
 ```java
 
-Response<Greeting> response = restClient.sendRequest(new
-GreetingsBuilders.get().id(1L),
-ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS).getResponse();
+Response<Greeting> response = restClient.sendRequest(new GreetingsBuilders.get().id(1L),
+                                                     ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS).getResponse();
 if(response.getStatus() == 200)
 {
   // handle successful response
 }
 else if (response.getStatus() == 404)
 {
-// handle 404\
+// handle 404
 }
 else
 {
-// ... handle other status codes or rethrow\
+// ... handle other status codes or rethrow
 }
 ```
 
@@ -2039,7 +2018,7 @@ The error response format configured to return only a subset of these
 parts using RestLiConfig, as shown in this example:
 
 ```
-    restliConfig.setErrorResponseFormat(ErrorResponseFormat.MESSAGE_AND_DETAILS);
+restliConfig.setErrorResponseFormat(ErrorResponseFormat.MESSAGE_AND_DETAILS);
 ```
 
 When Rest.li server application code throws an exception, if the
@@ -2051,8 +2030,7 @@ application code" in the error response. This default error message may
 be customized via RestLiConfig as well, as shown in this example:
 
 ```
-    restliConfig.setInternalErrorMessage("Internal error, please try again
-later.");
+restliConfig.setInternalErrorMessage("Internal error, please try again later.");
 ```
 
 <a id="wiki-Projections"></a>
@@ -2199,27 +2177,27 @@ Rest.li allows resources to return results asynchronously through a
 `Callback`. For example, a getter can be declared in any of the
 following ways:
 ```
-@RestMethod.Get\
+@RestMethod.Get
 public Promise<Greeting> get(Long key)
 {
-    // return a promise (e.g. SettablePromise) and set it asynchronously\
+    // return a promise (e.g. SettablePromise) and set it asynchronously
 }
 ```
 
 ```
-@RestMethod.Get\
+@RestMethod.Get
 public Task<Greeting> get(Long key)
 {
-    // set up some ParSeq tasks and return the final Task\
+    // set up some ParSeq tasks and return the final Task
     return Tasks.seq(Tasks.par(...), ...);
 }
 ```
 
 ```
 @RestMethod.Get
-public void get(Long key, `CallbackParam Callback<Greeting> callback)
+public void get(Long key, @CallbackParam Callback<Greeting> callback)
 {
-    // use the callback asynchronously\
+    // use the callback asynchronously
 }
 ```
 
