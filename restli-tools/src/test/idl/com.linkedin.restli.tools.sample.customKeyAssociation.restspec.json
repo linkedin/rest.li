@@ -1,0 +1,30 @@
+{
+  "name" : "customKeyAssociation",
+  "namespace" : "com.linkedin.restli.tools.sample",
+  "path" : "/customKeyAssociation",
+  "schema" : "com.linkedin.restli.tools.sample.override.SimpleGreeting",
+  "doc" : "Sample association resource with a custom key.\n\ngenerated from: com.linkedin.restli.tools.sample.CustomKeyAssociationResource",
+  "association" : {
+    "identifier" : "customKeyAssociationId",
+    "assocKeys" : [ {
+      "name" : "dateId",
+      "type" : "string"
+    }, {
+      "name" : "longId",
+      "type" : "com.linkedin.restli.tools.sample.CustomLongRef"
+    } ],
+    "supports" : [ "batch_update", "get" ],
+    "methods" : [ {
+      "method" : "get"
+    }, {
+      "method" : "batch_update"
+    } ],
+    "finders" : [ {
+      "name" : "longId",
+      "assocKeys" : [ "longId" ]
+    } ],
+    "entity" : {
+      "path" : "/customKeyAssociation/{customKeyAssociationId}"
+    }
+  }
+}

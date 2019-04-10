@@ -657,6 +657,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     ResourceSchemaArray subresources = null;
     ActionSchemaArray resourceActions = null;
     ActionSchemaArray entityActions = null;
+    final JFieldVar resourceSpecField = facadeClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, _resourceSpecClass, "_resourceSpec");
 
     if (resource.getCollection() != null)
     {
@@ -703,7 +704,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       resourceActions = association.getActions();
       entityActions = association.getEntity().getActions();
 
-      assocKeyTypeInfos = generateAssociationKey(facadeClass, association);
+      assocKeyTypeInfos = generateAssociationKey(facadeClass, association, resourceSpecField);
 
       final String keyName = getAssociationKey(resource, association);
       pathKeyTypes.put(keyName, keyClass);
@@ -741,7 +742,6 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
     generateOptions(facadeClass, baseUriGetter, requestOptionsGetter);
 
-    final JFieldVar resourceSpecField = facadeClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, _resourceSpecClass, "_resourceSpec");
     if (resourceSchemaClass == CollectionSchema.class ||
         resourceSchemaClass == AssociationSchema.class ||
         resourceSchemaClass == SimpleSchema.class)
@@ -1624,7 +1624,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     }
   }
 
-  private Map<String, AssocKeyTypeInfo> generateAssociationKey(JDefinedClass facadeClass, AssociationSchema associationSchema)
+  private Map<String, AssocKeyTypeInfo> generateAssociationKey(JDefinedClass facadeClass, AssociationSchema associationSchema,
+      JFieldVar resoureSpecField)
       throws JClassAlreadyExistsException
   {
     final JDefinedClass typesafeKeyClass = facadeClass._class(JMod.PUBLIC | JMod.STATIC, "Key");
@@ -1638,7 +1639,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
       final JMethod typesafeSetter = typesafeKeyClass.method(JMod.PUBLIC, typesafeKeyClass, "set" + RestLiToolsUtils.nameCapsCase(name));
       final JVar setterParam = typesafeSetter.param(clazz, name);
-      typesafeSetter.body().add(JExpr.invoke("append").arg(JExpr.lit(name)).arg(setterParam));
+      final JInvocation typeInfoParam = resoureSpecField.invoke("getKeyParts").invoke("get").arg(JExpr.lit(name));
+      typesafeSetter.body().add(JExpr.invoke("append").arg(JExpr.lit(name)).arg(setterParam).arg(typeInfoParam));
       typesafeSetter.body()._return(JExpr._this());
 
       final JMethod typesafeGetter = typesafeKeyClass.method(JMod.PUBLIC, clazz, "get" + RestLiToolsUtils.nameCapsCase(name));

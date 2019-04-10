@@ -107,7 +107,8 @@ public class TestRestLiSnapshotExporter
                 "twitter-accounts.snapshot.json",
                 "twitter-trending.snapshot.json" } },
             { "sample", new String[] { "com.linkedin.restli.tools.sample" }, new String[] {
-                "sample-com.linkedin.restli.tools.sample.greetings.snapshot.json" } },
+                "sample-com.linkedin.restli.tools.sample.greetings.snapshot.json",
+                "sample-com.linkedin.restli.tools.sample.customKeyAssociation.snapshot.json"} },
             { "returnEntity", new String[] { "com.linkedin.restli.tools.returnentity" }, new String[] {
                 "returnEntity-annotation.snapshot.json"} }
         };

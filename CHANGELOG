@@ -1,5 +1,7 @@
 27.0.15
 -------
+(RB=1630415)
+Include TypeInfo when adding compound key parts.
 
 27.0.14
 -------

@@ -80,7 +80,8 @@ public class TestRestLiResourceModelExporter
                 "twitter-accounts.restspec.json",
                 "twitter-trending.restspec.json" } },
             { null, new String[] { "com.linkedin.restli.tools.sample" }, IDL_DIR, new String[] {
-                "com.linkedin.restli.tools.sample.greetings.restspec.json" } },
+                "com.linkedin.restli.tools.sample.greetings.restspec.json",
+                "com.linkedin.restli.tools.sample.customKeyAssociation.restspec.json"} },
             { "returnEntity", new String[] { "com.linkedin.restli.tools.returnentity" }, IDLS_DIR, new String[] {
                 "returnEntity-annotation.restspec.json"} }
         };

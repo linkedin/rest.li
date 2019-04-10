@@ -395,11 +395,7 @@ public class DataTemplateUtil
 
         return schema;
       }
-      catch (IllegalAccessException e)
-      {
-        throw new TemplateRuntimeException("Error accessing schema field in class: " + type.getName(), e);
-      }
-      catch (NoSuchFieldException e)
+      catch (IllegalAccessException | NoSuchFieldException e)
       {
         throw new TemplateRuntimeException("Error accessing schema field in class: " + type.getName(), e);
       }
