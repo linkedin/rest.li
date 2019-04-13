@@ -1,6 +1,10 @@
-27.0.13
+27.0.14
 -------
 
+27.0.13
+-------
+(RB=1630629)
+Nuke option to force wildcard, and instead add in an option to pass in a custom projection mask param to mask tree data map serializer
 
 27.0.12
 -------

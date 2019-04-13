@@ -1126,7 +1126,7 @@ public class TestRestClientRequestBuilder
     RestliRequestOptions requestOptions = RestliRequestOptions.DEFAULT_OPTIONS;
     if (!acceptContentTypePerClient)
     {
-      requestOptions = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, contentType, acceptTypes, false, false);
+      requestOptions = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, contentType, acceptTypes, false, null);
     }
 
     setCommonExpectations(mockRequest, method, mockResponseDecoder, requestOptions);
@@ -1183,7 +1183,7 @@ public class TestRestClientRequestBuilder
     @SuppressWarnings({"rawtypes"})
     RestResponseDecoder mockResponseDecoder = EasyMock.createMock(RestResponseDecoder.class);
 
-    RestliRequestOptions requestOptions = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, contentType, acceptTypes, false, false);
+    RestliRequestOptions requestOptions = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, contentType, acceptTypes, false, null);
 
     setCommonExpectations(mockRequest, method, mockResponseDecoder, requestOptions);
 
@@ -1253,7 +1253,7 @@ public class TestRestClientRequestBuilder
     //If there is a desire to receive response attachments, then we must use request options.
     if (!acceptContentTypePerClient || acceptResponseAttachments)
     {
-      requestOptions = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, contentType, acceptTypes, acceptResponseAttachments, false);
+      requestOptions = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, contentType, acceptTypes, acceptResponseAttachments, null);
     }
 
     setCommonExpectations(mockRequest, method, mockResponseDecoder, requestOptions);

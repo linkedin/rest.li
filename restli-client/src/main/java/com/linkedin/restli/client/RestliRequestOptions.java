@@ -37,20 +37,16 @@ public class RestliRequestOptions
   private final ContentType _contentType;
   private final List<ContentType> _acceptTypes;
   private final boolean _acceptResponseAttachments;
-  private final boolean _forceWildCardProjections;
+  private final ProjectionDataMapSerializer _projectionDataMapSerializer;
 
   public static final RestliRequestOptions DEFAULT_OPTIONS
-      = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, null, null, false, false);
-
-  public static final RestliRequestOptions DEFAULT_OPTIONS_FORCE_WILDCARD_PROJECTIONS
-      = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, null, null, false, true);
-
+      = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, null, null, false, null);
 
   public static final RestliRequestOptions FORCE_USE_NEXT_OPTION =
-      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_NEXT, null, null, null, null, false, false);
+      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_NEXT, null, null, null, null, false, null);
 
   public static final RestliRequestOptions FORCE_USE_PREV_OPTION =
-      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_PREVIOUS, null, null, null, null, false, false);
+      new RestliRequestOptions(ProtocolVersionOption.FORCE_USE_PREVIOUS, null, null, null, null, false, null);
 
   public static final RestliRequestOptions DEFAULT_MULTIPLEXER_OPTIONS = new RestliRequestOptions(
       ProtocolVersionOption.USE_LATEST_IF_AVAILABLE,
@@ -59,7 +55,7 @@ public class RestliRequestOptions
       ContentType.JSON,
       Collections.singletonList(ContentType.JSON),
       false,
-      false);
+      null);
 
   /**
    * Content type and accept types (if not null) passed in this constructor will take precedence over the corresponding configuration set
@@ -74,16 +70,15 @@ public class RestliRequestOptions
    *                                  in responses from servers. Otherwise this should not be set. Note that setting
    *                                  this allows servers to send back potentially large blobs of data which clients
    *                                  are responsible for consuming.
-   * @param forceWildCardProjections  If set to true, then any projection fields set in the request query params
-   *                                  are ignored and forcibly set to wildcard projection.
+   * @param projectionDataMapSerializer Serializer to convert projection params to a mask tree datamap.
    */
   RestliRequestOptions(ProtocolVersionOption protocolVersionOption,
-                       CompressionOption requestCompressionOverride,
-                       CompressionOption responseCompressionOverride,
-                       ContentType contentType,
-                       List<ContentType> acceptTypes,
-                       boolean acceptResponseAttachments,
-                       boolean forceWildCardProjections)
+      CompressionOption requestCompressionOverride,
+      CompressionOption responseCompressionOverride,
+      ContentType contentType,
+      List<ContentType> acceptTypes,
+      boolean acceptResponseAttachments,
+      ProjectionDataMapSerializer projectionDataMapSerializer)
   {
     _protocolVersionOption =
         (protocolVersionOption == null) ? ProtocolVersionOption.USE_LATEST_IF_AVAILABLE : protocolVersionOption;
@@ -92,7 +87,8 @@ public class RestliRequestOptions
     _contentType = contentType;
     _acceptTypes = acceptTypes;
     _acceptResponseAttachments = acceptResponseAttachments;
-    _forceWildCardProjections = forceWildCardProjections;
+    _projectionDataMapSerializer =
+        (projectionDataMapSerializer == null) ? RestLiProjectionDataMapSerializer.DEFAULT_SERIALIZER : projectionDataMapSerializer;
   }
 
   public ProtocolVersionOption getProtocolVersionOption()
@@ -125,9 +121,8 @@ public class RestliRequestOptions
     return _acceptResponseAttachments;
   }
 
-  public boolean getForceWildCardProjections()
-  {
-    return _forceWildCardProjections;
+  public ProjectionDataMapSerializer getProjectionDataMapSerializer() {
+    return _projectionDataMapSerializer;
   }
 
   @Override
@@ -168,7 +163,7 @@ public class RestliRequestOptions
     {
       return false;
     }
-    if (_forceWildCardProjections != that._forceWildCardProjections)
+    if (!_projectionDataMapSerializer.equals(that._projectionDataMapSerializer))
     {
       return false;
     }
@@ -185,7 +180,7 @@ public class RestliRequestOptions
     result = 31 * result + (_contentType != null ? _contentType.hashCode() : 0);
     result = 31 * result + (_acceptTypes != null ? _acceptTypes.hashCode() : 0);
     result = 31 * result + (_acceptResponseAttachments ? 1 : 0);
-    result = 31 * result + (_forceWildCardProjections ? 1 : 0);
+    result = 31 * result + _projectionDataMapSerializer.hashCode();
     return result;
   }
 
@@ -199,7 +194,6 @@ public class RestliRequestOptions
         ", _contentType=" + _contentType +
         ", _acceptTypes=" + _acceptTypes +
         ", _acceptResponseAttachments=" + _acceptResponseAttachments +
-        ", _forceWildCardProjections=" + _forceWildCardProjections +
         '}';
   }
 }

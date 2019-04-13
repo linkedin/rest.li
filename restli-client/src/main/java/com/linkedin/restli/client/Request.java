@@ -240,28 +240,20 @@ public class Request<T>
     return _requestOptions;
   }
 
-  public void setForceWildCardProjections(boolean forceWildCardProjections)
+  public void setProjectionDataMapSerializer(ProjectionDataMapSerializer projectionDataMapSerializer)
   {
     RestliRequestOptions existingRequestOptions =
         (_requestOptions == null) ? RestliRequestOptions.DEFAULT_OPTIONS : _requestOptions;
 
     // If the desired value is same as existing, this is a no-op.
-    if (existingRequestOptions.getForceWildCardProjections() == forceWildCardProjections)
+    if (existingRequestOptions.getProjectionDataMapSerializer().equals(projectionDataMapSerializer))
     {
       return;
     }
 
-    // Most requests are of type DEFAULT_OPTIONS, to save some garbage special case this.
-    if (existingRequestOptions.equals(RestliRequestOptions.DEFAULT_OPTIONS) && forceWildCardProjections)
-    {
-      _requestOptions = RestliRequestOptions.DEFAULT_OPTIONS_FORCE_WILDCARD_PROJECTIONS;
-    }
-    else
-    {
-      _requestOptions = new RestliRequestOptionsBuilder(existingRequestOptions)
-          .setForceWildCardProjections(forceWildCardProjections)
-          .build();
-    }
+    _requestOptions = new RestliRequestOptionsBuilder(existingRequestOptions)
+        .setProjectionDataMapSerializer(projectionDataMapSerializer)
+        .build();
   }
 
   /**

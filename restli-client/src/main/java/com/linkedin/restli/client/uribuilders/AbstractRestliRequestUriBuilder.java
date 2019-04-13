@@ -96,7 +96,7 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
     DataMap params = QueryParamsUtil.convertToDataMap(_request.getQueryParamsObjects(),
                                                       _request.getQueryParamClasses(),
                                                       _version,
-                                                      _request.getRequestOptions().getForceWildCardProjections());
+                                                      _request.getRequestOptions().getProjectionDataMapSerializer());
     URIParamUtils.addSortedParams(b, params, _version);
   }
 

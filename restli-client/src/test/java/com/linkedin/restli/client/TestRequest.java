@@ -17,6 +17,7 @@
 package com.linkedin.restli.client;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.restli.client.test.TestRecord;
@@ -57,7 +58,7 @@ public class TestRequest
         "com.linkedin.restli.client.GetRequest{_method=get, _baseUriTemplate=abc, _methodName=null, "
             + "_requestOptions=RestliRequestOptions{_protocolVersionOption=USE_LATEST_IF_AVAILABLE, "
             + "_requestCompressionOverride=null, _responseCompressionOverride=null, _contentType=null, "
-            + "_acceptTypes=null, _acceptResponseAttachments=false, _forceWildCardProjections=false}}");
+            + "_acceptTypes=null, _acceptResponseAttachments=false}}");
   }
 
   @Test
@@ -235,25 +236,13 @@ public class TestRequest
     assertEquals(builder1.build().equals(builder2.build()), expect);
   }
 
-  @Test(dataProvider = "forceWildCardProjections")
-  public void testSetForceWildCardProjections(GetRequestBuilder<Long, TestRecord> builder, boolean shouldForce)
+  @Test
+  public void testSetProjectionDataMapSerializer()
   {
-    GetRequest<TestRecord> getRequest = builder.build();
-    getRequest.setForceWildCardProjections(shouldForce);
-    assertEquals(getRequest.getRequestOptions().getForceWildCardProjections(), shouldForce);
-  }
-
-  @DataProvider
-  public Object[][] forceWildCardProjections()
-  {
-    return new Object[][]{
-        {generateDummyRequestBuilder().setRequestOptions(RestliRequestOptions.DEFAULT_OPTIONS), false},
-        {generateDummyRequestBuilder().setRequestOptions(RestliRequestOptions.DEFAULT_OPTIONS), true},
-        {generateDummyRequestBuilder().setRequestOptions(RestliRequestOptions.DEFAULT_OPTIONS_FORCE_WILDCARD_PROJECTIONS), false},
-        {generateDummyRequestBuilder().setRequestOptions(RestliRequestOptions.DEFAULT_OPTIONS_FORCE_WILDCARD_PROJECTIONS), true},
-        {generateDummyRequestBuilder().setRequestOptions(RestliRequestOptions.FORCE_USE_NEXT_OPTION), false},
-        {generateDummyRequestBuilder().setRequestOptions(RestliRequestOptions.FORCE_USE_NEXT_OPTION), true}
-    };
+    ProjectionDataMapSerializer customSerializer = (paramName, pathSpecs) -> new DataMap();
+    GetRequest<TestRecord> getRequest = generateDummyRequestBuilder().build();
+    getRequest.setProjectionDataMapSerializer(customSerializer);
+    assertEquals(getRequest.getRequestOptions().getProjectionDataMapSerializer(), customSerializer);
   }
 
   private GetRequestBuilder<Long, TestRecord> generateDummyRequestBuilder ()

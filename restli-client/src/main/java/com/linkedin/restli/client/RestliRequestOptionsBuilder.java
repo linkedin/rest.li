@@ -38,7 +38,7 @@ public class RestliRequestOptionsBuilder
   private List<ContentType> _acceptTypes;
   private CompressionOption _responseCompressionOverride;
   private boolean _acceptResponseAttachments = false;
-  private boolean _forceWildCardProjections = false;
+  private ProjectionDataMapSerializer _projectionDataMapSerializer;
 
   public RestliRequestOptionsBuilder()
   {
@@ -52,7 +52,7 @@ public class RestliRequestOptionsBuilder
     setContentType(restliRequestOptions.getContentType());
     setAcceptTypes(restliRequestOptions.getAcceptTypes());
     setAcceptResponseAttachments(restliRequestOptions.getAcceptResponseAttachments());
-    setForceWildCardProjections(restliRequestOptions.getForceWildCardProjections());
+    setProjectionDataMapSerializer(restliRequestOptions.getProjectionDataMapSerializer());
   }
 
   public RestliRequestOptionsBuilder setProtocolVersionOption(ProtocolVersionOption protocolVersionOption)
@@ -126,9 +126,9 @@ public class RestliRequestOptionsBuilder
     return this;
   }
 
-  public RestliRequestOptionsBuilder setForceWildCardProjections(boolean shouldForce)
+  public RestliRequestOptionsBuilder setProjectionDataMapSerializer(ProjectionDataMapSerializer serializer)
   {
-    _forceWildCardProjections = shouldForce;
+    _projectionDataMapSerializer = serializer;
     return this;
   }
 
@@ -136,7 +136,7 @@ public class RestliRequestOptionsBuilder
   {
     return new RestliRequestOptions(_protocolVersionOption, _requestCompressionOverride, _responseCompressionOverride,
         _contentType, _acceptTypes != null ? Collections.unmodifiableList(_acceptTypes) : null, _acceptResponseAttachments,
-        _forceWildCardProjections);
+        _projectionDataMapSerializer != null ? _projectionDataMapSerializer : RestLiProjectionDataMapSerializer.DEFAULT_SERIALIZER);
   }
 
   public ProtocolVersionOption getProtocolVersionOption()
@@ -169,8 +169,8 @@ public class RestliRequestOptionsBuilder
     return _acceptResponseAttachments;
   }
 
-  public boolean getForceWildCardProjections()
+  public ProjectionDataMapSerializer getProjectionDataMapSerializer()
   {
-    return _forceWildCardProjections;
+    return _projectionDataMapSerializer;
   }
 }

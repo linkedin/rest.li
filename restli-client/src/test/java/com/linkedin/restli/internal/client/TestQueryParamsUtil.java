@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -90,8 +89,8 @@ public class TestQueryParamsUtil
     QueryParamsUtil.convertToDataMap(queryParams);
   }
 
-  @Test(dataProvider="forceWildCardProjections")
-  public void testForceWildCardProjections(boolean forceWildCardProjections) {
+  @Test
+  public void testCustomProjectionDataMapSerializer() {
     Map<String, Object> queryParams = new HashMap<>();
     Set<PathSpec> specSet = new HashSet<>();
     specSet.add(new PathSpec("random"));
@@ -101,23 +100,16 @@ public class TestQueryParamsUtil
 
     DataMap dataMap =
         QueryParamsUtil.convertToDataMap(queryParams, Collections.emptyMap(),
-            AllProtocolVersions.LATEST_PROTOCOL_VERSION, forceWildCardProjections);
+            AllProtocolVersions.LATEST_PROTOCOL_VERSION, (paramName, pathSpecs) -> {
+              DataMap dataMap1 = new DataMap();
+              dataMap1.put("random", 2);
+              return dataMap1;
+            });
 
-    if (forceWildCardProjections) {
-      Assert.assertEquals(dataMap.getDataMap(RestConstants.FIELDS_PARAM), QueryParamsUtil.WILDCARD_PROJECTION_MASK);
-      Assert.assertEquals(dataMap.getDataMap(RestConstants.PAGING_FIELDS_PARAM), QueryParamsUtil.WILDCARD_PROJECTION_MASK);
-      Assert.assertEquals(dataMap.getDataMap(RestConstants.METADATA_FIELDS_PARAM), QueryParamsUtil.WILDCARD_PROJECTION_MASK);
-    } else {
-      DataMap expectedMap = new DataMap();
-      expectedMap.put("random", 1);
-      Assert.assertEquals(dataMap.getDataMap(RestConstants.FIELDS_PARAM), expectedMap);
-      Assert.assertEquals(dataMap.getDataMap(RestConstants.PAGING_FIELDS_PARAM), expectedMap);
-      Assert.assertEquals(dataMap.getDataMap(RestConstants.METADATA_FIELDS_PARAM), expectedMap);
-    }
-  }
-
-  @DataProvider
-  public Object[][] forceWildCardProjections() {
-    return new Object[][]{{Boolean.TRUE}, {Boolean.FALSE}};
+    DataMap expectedMap = new DataMap();
+    expectedMap.put("random", 2);
+    Assert.assertEquals(dataMap.getDataMap(RestConstants.FIELDS_PARAM), expectedMap);
+    Assert.assertEquals(dataMap.getDataMap(RestConstants.PAGING_FIELDS_PARAM), expectedMap);
+    Assert.assertEquals(dataMap.getDataMap(RestConstants.METADATA_FIELDS_PARAM), expectedMap);
   }
 }

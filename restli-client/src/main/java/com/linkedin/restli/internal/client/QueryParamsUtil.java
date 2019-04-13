@@ -23,7 +23,8 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.transform.filter.request.MaskCreator;
+import com.linkedin.restli.client.ProjectionDataMapSerializer;
+import com.linkedin.restli.client.RestLiProjectionDataMapSerializer;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -45,15 +46,11 @@ import java.util.stream.Collectors;
  */
 public class QueryParamsUtil
 {
-  static final DataMap WILDCARD_PROJECTION_MASK =
-      MaskCreator.createPositiveMask(new PathSpec(PathSpec.WILDCARD)).getDataMap();
-  static {
-    WILDCARD_PROJECTION_MASK.makeReadOnly();
-  }
-
   public static DataMap convertToDataMap(Map<String, Object> queryParams)
   {
-    return convertToDataMap(queryParams, Collections.<String, Class<?>>emptyMap(), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), false);
+    return convertToDataMap(queryParams, Collections.<String, Class<?>>emptyMap(),
+        AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
+        RestLiProjectionDataMapSerializer.DEFAULT_SERIALIZER);
   }
 
   /**
@@ -62,11 +59,11 @@ public class QueryParamsUtil
   public static DataMap convertToDataMap(Map<String, Object> queryParams, Map<String, Class<?>> queryParamClasses,
       ProtocolVersion version)
   {
-    return convertToDataMap(queryParams, queryParamClasses, version, false);
+    return convertToDataMap(queryParams, queryParamClasses, version, RestLiProjectionDataMapSerializer.DEFAULT_SERIALIZER);
   }
 
   public static DataMap convertToDataMap(Map<String, Object> queryParams, Map<String, Class<?>> queryParamClasses,
-      ProtocolVersion version, boolean forceWildCardProjections)
+      ProtocolVersion version, ProjectionDataMapSerializer projectionDataMapSerializer)
   {
     DataMap result = new DataMap(queryParams.size());
     for (Map.Entry<String, Object> entry: queryParams.entrySet())
@@ -76,13 +73,9 @@ public class QueryParamsUtil
 
       if (RestConstants.PROJECTION_PARAMETERS.contains(key))
       {
-        if (forceWildCardProjections) {
-          result.put(key, WILDCARD_PROJECTION_MASK);
-        } else {
-          @SuppressWarnings("unchecked")
-          Set<PathSpec> pathSpecs = (Set<PathSpec>)value;
-          result.put(key, MaskCreator.createPositiveMask(pathSpecs).getDataMap());
-        }
+        @SuppressWarnings("unchecked")
+        Set<PathSpec> pathSpecs = (Set<PathSpec>)value;
+        result.put(key, projectionDataMapSerializer.toDataMap(key, pathSpecs));
       }
       else
       {
