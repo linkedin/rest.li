@@ -75,7 +75,11 @@ public class QueryParamsUtil
       {
         @SuppressWarnings("unchecked")
         Set<PathSpec> pathSpecs = (Set<PathSpec>)value;
-        result.put(key, projectionDataMapSerializer.toDataMap(key, pathSpecs));
+        DataMap serializedDataMap = projectionDataMapSerializer.toDataMap(key, pathSpecs);
+        if (serializedDataMap != null)
+        {
+          result.put(key, serializedDataMap);
+        }
       }
       else
       {

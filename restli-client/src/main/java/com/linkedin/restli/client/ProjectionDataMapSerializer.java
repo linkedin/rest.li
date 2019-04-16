@@ -18,7 +18,8 @@ public interface ProjectionDataMapSerializer
    * @param paramName The name of the projection query param to serialize.
    * @param pathSpecs The set of path specs to serialize.
    *
-   * @return The serialized data map.
+   * @return The serialized data map. If this returns null, this param is skipped when constructing
+   * the R2 request.
    */
   DataMap toDataMap(String paramName, Set<PathSpec> pathSpecs);
 }

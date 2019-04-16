@@ -1,5 +1,10 @@
+27.0.15
+-------
+
 27.0.14
 -------
+(RB=1633001)
+Guard against implementations of ProjectionDataMapSerializer returning null
 
 27.0.13
 -------

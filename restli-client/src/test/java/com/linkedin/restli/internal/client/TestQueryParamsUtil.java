@@ -42,7 +42,8 @@ import org.testng.annotations.Test;
 public class TestQueryParamsUtil
 {
   @Test
-  public void testConvertToDataMap() {
+  public void testConvertToDataMap()
+  {
     Map<String, Object> queryParams = new HashMap<>();
 
     Map<String, Object> hashMapParam = new HashMap<>();
@@ -78,7 +79,8 @@ public class TestQueryParamsUtil
 
   @Test (expectedExceptions = IllegalArgumentException.class,
       expectedExceptionsMessageRegExp = "Map key '1' is not of type String")
-  public void testNonStringKeyToDataMap() {
+  public void testNonStringKeyToDataMap()
+  {
     Map<String, Object> queryParams = new HashMap<>();
 
     Map<Object, Object> hashMapParam = new HashMap<>();
@@ -90,7 +92,8 @@ public class TestQueryParamsUtil
   }
 
   @Test
-  public void testCustomProjectionDataMapSerializer() {
+  public void testCustomProjectionDataMapSerializer()
+  {
     Map<String, Object> queryParams = new HashMap<>();
     Set<PathSpec> specSet = new HashSet<>();
     specSet.add(new PathSpec("random"));
@@ -111,5 +114,23 @@ public class TestQueryParamsUtil
     Assert.assertEquals(dataMap.getDataMap(RestConstants.FIELDS_PARAM), expectedMap);
     Assert.assertEquals(dataMap.getDataMap(RestConstants.PAGING_FIELDS_PARAM), expectedMap);
     Assert.assertEquals(dataMap.getDataMap(RestConstants.METADATA_FIELDS_PARAM), expectedMap);
+  }
+
+  @Test
+  public void testCustomProjectionDataMapSerializerReturningNull()
+  {
+    Map<String, Object> queryParams = new HashMap<>();
+    Set<PathSpec> specSet = new HashSet<>();
+    specSet.add(new PathSpec("random"));
+    queryParams.put(RestConstants.FIELDS_PARAM, specSet);
+    queryParams.put(RestConstants.PAGING_FIELDS_PARAM, specSet);
+    queryParams.put(RestConstants.METADATA_FIELDS_PARAM, specSet);
+
+    DataMap dataMap =
+        QueryParamsUtil.convertToDataMap(queryParams, Collections.emptyMap(),
+            AllProtocolVersions.LATEST_PROTOCOL_VERSION, (paramName, pathSpecs) -> null);
+    Assert.assertNull(dataMap.getDataMap(RestConstants.FIELDS_PARAM));
+    Assert.assertNull(dataMap.getDataMap(RestConstants.PAGING_FIELDS_PARAM));
+    Assert.assertNull(dataMap.getDataMap(RestConstants.METADATA_FIELDS_PARAM));
   }
 }
