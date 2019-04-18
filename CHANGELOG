@@ -1,3 +1,8 @@
+27.0.16
+-------
+(RB=1641262)
+Migrate Pegasus tests from Groovy to Java.
+
 27.0.15
 -------
 (RB=1630415)
