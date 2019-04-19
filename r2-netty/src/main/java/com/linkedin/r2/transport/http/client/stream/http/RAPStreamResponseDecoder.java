@@ -25,7 +25,7 @@ import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.r2.message.stream.entitystream.Writer;
-import com.linkedin.r2.transport.http.common.HttpConstants;
+import com.linkedin.r2.netty.handler.http.HttpMessageDecoders;
 import com.linkedin.r2.util.Timeout;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
@@ -45,16 +45,14 @@ import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.AttributeKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.ClosedChannelException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This Decoder decodes chunked Netty responses into StreamResponse.
@@ -62,7 +60,7 @@ import java.util.concurrent.TimeoutException;
  * @author Zhenkai Zhu
  */
 
-/* package private */ class RAPStreamResponseDecoder extends SimpleChannelInboundHandler<HttpObject>
+class RAPStreamResponseDecoder extends SimpleChannelInboundHandler<HttpObject>
 {
   private static final Logger LOG = LoggerFactory.getLogger(RAPStreamResponseDecoder.class);
 
@@ -129,22 +127,9 @@ import java.util.concurrent.TimeoutException;
           BUFFER_HIGH_WATER_MARK, BUFFER_LOW_WATER_MARK, timeout);
       EntityStream entityStream = EntityStreams.newEntityStream(writer);
       _chunkedMessageWriter = writer;
-      StreamResponseBuilder builder = new StreamResponseBuilder();
-      builder.setStatus(m.status().code());
 
-      for (Map.Entry<String, String> e : m.headers())
-      {
-        String key = e.getKey();
-        String value = e.getValue();
-        if (key.equalsIgnoreCase(HttpConstants.RESPONSE_COOKIE_HEADER_NAME))
-        {
-          builder.addCookie(value);
-        }
-        else
-        {
-          builder.unsafeAddHeaderValue(key, value);
-        }
-      }
+      // Refactored duplicate code to new code pipeline.
+      StreamResponseBuilder builder = HttpMessageDecoders.ResponseDecoder.buildStreamResponse(m);
 
       ctx.fireChannelRead(builder.build(entityStream));
     }
@@ -224,7 +209,7 @@ import java.util.concurrent.TimeoutException;
     private final int _lowWaterMark;
     private WriteHandle _wh;
     private boolean _lastChunkReceived;
-    private int _totalBytesWritten;
+    private long _totalBytesWritten;
     private int _bufferedBytes;
     private final List<ByteString> _buffer;
     private final Timeout<None> _timeout;

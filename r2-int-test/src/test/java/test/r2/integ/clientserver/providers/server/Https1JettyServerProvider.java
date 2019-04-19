@@ -19,6 +19,8 @@ package test.r2.integ.clientserver.providers.server;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.transport.common.Server;
+import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
+import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import test.r2.integ.clientserver.providers.common.SslContextUtil;
 
 public class Https1JettyServerProvider implements ServerProvider
@@ -41,6 +43,32 @@ public class Https1JettyServerProvider implements ServerProvider
       filters,
       _serverROS
     );
+  }
+
+
+  @Override
+  public Server createServer(FilterChain filters, int sslPort, TransportDispatcher transportDispatcher)
+  {
+    return Bootstrap.createHttpsServer(
+        SslContextUtil.getHttpPortFromHttps(sslPort),
+        sslPort,
+        SslContextUtil.KEY_STORE,
+        SslContextUtil.KEY_STORE_PASSWORD,
+        filters,
+        _serverROS,
+        transportDispatcher
+    );
+  }
+
+  @Override
+  public Server createServer(ServerCreationContext context)
+  {
+    int sslPort = context.getPort();
+    int httpPort = SslContextUtil.getHttpPortFromHttps(sslPort);
+    return new HttpServerFactory(context.getFilterChain()).createHttpsServer(httpPort, sslPort, SslContextUtil.KEY_STORE,
+        SslContextUtil.KEY_STORE_PASSWORD, context.getContextPath(),
+        context.getThreadPoolSize(), context.getTransportDispatcher(), HttpServerFactory.DEFAULT_SERVLET_TYPE,
+        context.getServerTimeout(), _serverROS);
   }
 
   @Override

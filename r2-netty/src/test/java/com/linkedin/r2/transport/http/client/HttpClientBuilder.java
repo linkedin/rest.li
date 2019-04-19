@@ -24,11 +24,10 @@ import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
 import io.netty.channel.nio.NioEventLoopGroup;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 
 
 /**
@@ -40,6 +39,8 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class HttpClientBuilder
 {
+  private final boolean SSL_SESSION_RESUMPTION_ENABLED = true;
+  private final boolean NEW_PIPELINE_ENABLED = false;
 
   private final ChannelPoolManagerKeyBuilder _channelPoolManagerKeyBuilder;
   private final ChannelPoolManagerFactory _channelPoolManagerFactory;
@@ -57,7 +58,8 @@ public class HttpClientBuilder
     _scheduler = scheduler;
     _channelPoolManagerKeyBuilder = new ChannelPoolManagerKeyBuilder();
     _sslChannelPoolManagerKeyBuilder = new ChannelPoolManagerKeyBuilder();
-    _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler, true);
+    _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler,
+        SSL_SESSION_RESUMPTION_ENABLED, NEW_PIPELINE_ENABLED);
   }
 
   public HttpClientBuilder setCallbackExecutors(ExecutorService callbackExecutors)

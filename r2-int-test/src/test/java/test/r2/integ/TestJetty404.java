@@ -122,5 +122,4 @@ public class TestJetty404
       _server.waitForStop();
     }
   }
-
 }

@@ -37,13 +37,18 @@ public class Https1NettyServerProvider implements ServerProvider
   public Server createServer(FilterChain filters, int port) throws Exception
   {
     final TransportDispatcher dispatcher = getTransportDispatcher();
+    return createServer(filters, port, dispatcher);
+  }
 
+  @Override
+  public Server createServer(FilterChain filters, int port, TransportDispatcher dispatcher) throws Exception
+  {
     Server httpServer = new Http1NettyServerProvider().createServer(filters, SslContextUtil.getHttpPortFromHttps(port));
     Server httpsServer = new HttpNettyServerBuilder()
-      .port(port)
-      .filters(filters)
-      .transportDispatcher(dispatcher)
-      .sslContext(SslContextUtil.getContext()).build();
+        .port(port)
+        .filters(filters)
+        .transportDispatcher(dispatcher)
+        .sslContext(SslContextUtil.getContext()).build();
 
     // start both an http and https server
     return new Server()
@@ -69,6 +74,12 @@ public class Https1NettyServerProvider implements ServerProvider
         httpsServer.waitForStop();
       }
     };
+  }
+
+  @Override
+  public Server createServer(ServerCreationContext context) throws Exception
+  {
+    return createServer(context.getFilterChain(), context.getPort(), context.getTransportDispatcher());
   }
 
   protected TransportDispatcher getTransportDispatcher()

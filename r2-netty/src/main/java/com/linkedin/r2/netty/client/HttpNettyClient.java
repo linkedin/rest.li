@@ -1,0 +1,472 @@
+/*
+   Copyright (c) 2019 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+package com.linkedin.r2.netty.client;
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.MultiCallback;
+import com.linkedin.common.util.None;
+import com.linkedin.r2.filter.R2Constants;
+import com.linkedin.r2.message.Messages;
+import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.timing.TimingContextUtil;
+import com.linkedin.r2.message.timing.TimingImportance;
+import com.linkedin.r2.message.timing.TimingKey;
+import com.linkedin.r2.netty.callback.StreamExecutionCallback;
+import com.linkedin.r2.netty.common.NettyChannelAttributes;
+import com.linkedin.r2.netty.common.NettyClientState;
+import com.linkedin.r2.netty.common.ShutdownTimeoutException;
+import com.linkedin.r2.netty.common.UnknownSchemeException;
+import com.linkedin.r2.netty.handler.common.SslHandshakeTimingHandler;
+import com.linkedin.r2.transport.common.WireAttributeHelper;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+import com.linkedin.r2.transport.http.client.AsyncPool;
+import com.linkedin.r2.transport.http.client.InvokedOnceTransportCallback;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
+import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
+import com.linkedin.r2.transport.http.common.HttpBridge;
+import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
+import com.linkedin.r2.util.Cancellable;
+import com.linkedin.r2.util.RequestTimeoutUtil;
+import com.linkedin.r2.util.Timeout;
+import com.linkedin.util.ArgumentUtil;
+import com.linkedin.util.clock.Clock;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.pool.ChannelPool;
+import io.netty.handler.codec.http.HttpScheme;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Netty implementation of {@link TransportClient}
+ * @author Sean Sheng
+ * @author Nizar Mankulangara
+ */
+public class HttpNettyClient implements TransportClient
+{
+  private static final Logger LOG = LoggerFactory.getLogger(HttpNettyClient.class);
+  private static final TimingKey TIMING_KEY = TimingKey.registerNewKey("dns_resolution_new", TimingImportance.LOW);
+  private static final String HTTP_SCHEME = HttpScheme.HTTP.toString();
+  private static final String HTTPS_SCHEME = HttpScheme.HTTPS.toString();
+  private static final int HTTP_DEFAULT_PORT = 80;
+  private static final int HTTPS_DEFAULT_PORT = 443;
+
+  private final NioEventLoopGroup _eventLoopGroup;
+  private final ScheduledExecutorService _scheduler;
+  private final ExecutorService _callbackExecutor;
+  private final ChannelPoolManager _channelPoolManager;
+  private final ChannelPoolManager _sslChannelPoolManager;
+  private final HttpProtocolVersion _protocolVersion;
+  private final long _requestTimeout;
+  private final long _shutdownTimeout;
+  private final AtomicReference<NettyClientState> _state;
+
+  /**
+   * Creates a new instance of {@link HttpNettyClient}.
+   *
+   * @param eventLoopGroup Non-blocking event loop group implementation for selectors and channels
+   * @param callbackExecutor Executor service for executing user callbacks. The executor must be provided
+   *                         because user callbacks can potentially be blocking. If executed with the
+   *                         event loop group, threads might be blocked and cause channels to hang.
+   * @param channelPoolManager Channel pool manager for non-SSL channels
+   * @param sslChannelPoolManager Channel pool manager for SSL channels
+   * @param protocolVersion HTTP version the client uses to send requests and receive responses
+   * @param clock Clock to get current time
+   * @param requestTimeout Time in milliseconds before an error response is returned in the callback
+   *                       with a {@link TimeoutException}
+   * @param shutdownTimeout Client shutdown timeout
+   */
+  public HttpNettyClient(
+      NioEventLoopGroup eventLoopGroup,
+      ScheduledExecutorService scheduler,
+      ExecutorService callbackExecutor,
+      ChannelPoolManager channelPoolManager,
+      ChannelPoolManager sslChannelPoolManager,
+      HttpProtocolVersion protocolVersion,
+      Clock clock,
+      long requestTimeout,
+      long shutdownTimeout)
+  {
+    ArgumentUtil.notNull(eventLoopGroup, "eventLoopGroup");
+    ArgumentUtil.notNull(scheduler, "scheduler");
+    ArgumentUtil.notNull(callbackExecutor, "callbackExecutor");
+    ArgumentUtil.notNull(channelPoolManager, "channelPoolManager");
+    ArgumentUtil.notNull(sslChannelPoolManager, "sslChannelPoolManager");
+    ArgumentUtil.notNull(clock, "clock");
+    ArgumentUtil.checkArgument(requestTimeout >= 0, "requestTimeout");
+    ArgumentUtil.checkArgument(shutdownTimeout >= 0, "shutdownTimeout");
+
+    _eventLoopGroup = eventLoopGroup;
+    _scheduler = scheduler;
+    _callbackExecutor = callbackExecutor;
+    _channelPoolManager = channelPoolManager;
+    _sslChannelPoolManager = sslChannelPoolManager;
+    _protocolVersion = protocolVersion;
+    _requestTimeout = requestTimeout;
+    _shutdownTimeout = shutdownTimeout;
+
+    _state = new AtomicReference<>(NettyClientState.RUNNING);
+  }
+
+  /**
+   * Keeps track of the callbacks attached to the user's requests and in case of shutdown, it fires them
+   * with a Timeout Exception
+   */
+  private final Set<TransportCallback<StreamResponse>> _userCallbacks = ConcurrentHashMap.newKeySet();
+
+  @Override
+  public void restRequest(RestRequest request,
+      RequestContext requestContext,
+      Map<String, String> wireAttrs,
+      TransportCallback<RestResponse> callback)
+  {
+    sendRequest(Messages.toStreamRequest(request), requestContext, wireAttrs, Messages.toStreamTransportCallback(callback));
+  }
+
+  @Override
+  public void streamRequest(StreamRequest request,
+      RequestContext requestContext,
+      Map<String, String> wireAttrs,
+      TransportCallback<StreamResponse> callback)
+  {
+    sendRequest(request, requestContext, wireAttrs, callback);
+  }
+
+  @Override
+  public void shutdown(Callback<None> callback)
+  {
+    LOG.info("Shutdown requested");
+    if (_state.compareAndSet(NettyClientState.RUNNING, NettyClientState.SHUTTING_DOWN))
+    {
+      LOG.info("Shutting down");
+      MultiCallback poolShutdown = new MultiCallback(
+          new Callback<None>()
+          {
+            private void releaseCallbacks()
+            {
+              _userCallbacks.forEach(transportCallback -> transportCallback.onResponse(
+                  TransportResponseImpl.error(new TimeoutException("Operation did not complete before shutdown"))));
+            }
+
+            @Override
+            public void onError(Throwable e)
+            {
+              releaseCallbacks();
+              callback.onError(e);
+            }
+
+            @Override
+            public void onSuccess(None result)
+            {
+              releaseCallbacks();
+              callback.onSuccess(result);
+            }
+          }, 2);
+
+      _channelPoolManager.shutdown(poolShutdown,
+          () -> _state.set(NettyClientState.REQUESTS_STOPPING),
+          () -> _state.set(NettyClientState.SHUTDOWN),
+          _shutdownTimeout);
+      _sslChannelPoolManager.shutdown(poolShutdown,
+          () -> _state.set(NettyClientState.REQUESTS_STOPPING),
+          () -> _state.set(NettyClientState.SHUTDOWN),
+          _shutdownTimeout);
+    }
+    else
+    {
+      callback.onError(new IllegalStateException("Shutdown has already been requested."));
+    }
+  }
+
+  /**
+   * Sends the request to the {@link ChannelPipeline}.
+   */
+  private void sendRequest(StreamRequest request,
+      RequestContext requestContext,
+      Map<String, String> wireAttrs,
+      TransportCallback<StreamResponse> callback)
+  {
+    final TransportCallback<StreamResponse> decoratedCallback = decorateUserCallback(request, callback);
+
+    final NettyClientState state = _state.get();
+    if (state != NettyClientState.RUNNING)
+    {
+      decoratedCallback.onResponse(TransportResponseImpl.error(new IllegalStateException("Client is not running")));
+      return;
+    }
+
+    final long resolvedRequestTimeout = resolveRequestTimeout(requestContext, _requestTimeout);
+
+    // Timeout ensures the request callback is always invoked and is cancelled before the
+    // responsibility of invoking the callback is handed over to the pipeline.
+    final Timeout<None> timeout = new Timeout<>(_scheduler, resolvedRequestTimeout, TimeUnit.MILLISECONDS, None.none());
+    timeout.addTimeoutTask(() -> decoratedCallback.onResponse(TransportResponseImpl.error(
+        new TimeoutException("Exceeded request timeout of " + resolvedRequestTimeout + "ms"))));
+
+    // resolve address
+    final SocketAddress address;
+    try
+    {
+      TimingContextUtil.markTiming(requestContext, TIMING_KEY);
+      address = resolveAddress(request, requestContext);
+      TimingContextUtil.markTiming(requestContext, TIMING_KEY);
+    }
+    catch (Exception e)
+    {
+      decoratedCallback.onResponse(TransportResponseImpl.error(e));
+      return;
+    }
+
+    // Serialize wire attributes
+    final StreamRequest requestWithWireAttrHeaders = request.builder()
+        .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
+        .build(request.getEntityStream());
+
+    // Gets channel pool
+    final AsyncPool<Channel> pool;
+    try
+    {
+      pool = getChannelPoolManagerPerRequest(requestWithWireAttrHeaders).getPoolForAddress(address);
+    }
+    catch (IllegalStateException e)
+    {
+      decoratedCallback.onResponse(TransportResponseImpl.error(e));
+      return;
+    }
+
+    // Saves protocol version in request context
+    requestContext.putLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION, _protocolVersion);
+
+    final Cancellable pendingGet = pool.get(new ChannelPoolGetCallback(
+        pool, requestWithWireAttrHeaders, requestContext, decoratedCallback, timeout, resolvedRequestTimeout));
+
+    if (pendingGet != null)
+    {
+      timeout.addTimeoutTask(pendingGet::cancel);
+    }
+  }
+
+  /**
+   * Implementation of {@link Callback} for getting a {@link Channel} from the {@link ChannelPool}.
+   */
+  private class ChannelPoolGetCallback implements Callback<Channel>
+  {
+    private final AsyncPool<Channel> _pool;
+    private final Request _request;
+    private final RequestContext _requestContext;
+    private final TransportCallback<StreamResponse> _callback;
+    private final Timeout<None> _timeout;
+    private final long _resolvedRequestTimeout;
+
+    ChannelPoolGetCallback(
+        AsyncPool<Channel> pool,
+        Request request,
+        RequestContext requestContext,
+        TransportCallback<StreamResponse> callback,
+        Timeout<None> timeout,
+        long resolvedRequestTimeout)
+    {
+      _pool = pool;
+      _request = request;
+      _requestContext = requestContext;
+      _callback = callback;
+      _timeout = timeout;
+      _resolvedRequestTimeout = resolvedRequestTimeout;
+    }
+
+    @Override
+    public void onSuccess(final Channel channel)
+    {
+      // Cancels previous timeout and takes over the responsibility of invoking the request callback
+      _timeout.getItem();
+
+      // Sets channel attributes relevant to the request
+      channel.attr(NettyChannelAttributes.CHANNEL_POOL).set(_pool);
+
+      TransportCallback<StreamResponse> sslTimingCallback = SslHandshakeTimingHandler.getSslTimingCallback(channel, _requestContext, _callback);
+
+      channel.attr(NettyChannelAttributes.RESPONSE_CALLBACK).set(sslTimingCallback);
+
+      // Set the session validator requested by the user
+      final SslSessionValidator sslSessionValidator = (SslSessionValidator) _requestContext.getLocalAttr(R2Constants.REQUESTED_SSL_SESSION_VALIDATOR);
+      channel.attr(NettyChannelAttributes.SSL_SESSION_VALIDATOR).set(sslSessionValidator);
+
+      final NettyClientState state = _state.get();
+      if (state == NettyClientState.REQUESTS_STOPPING || state == NettyClientState.SHUTDOWN)
+      {
+        // Channel is created but the client is either shutting down or already shutdown. We need to
+        // invoke request callback we haven't already and return channel back to the channel pool. By
+        // firing an exception to the channel pipeline we can rely on the handlers to perform these
+        // tasks upon catching the exception.
+        channel.pipeline().fireExceptionCaught(new ShutdownTimeoutException("Operation did not complete before shutdown"));
+        return;
+      }
+
+      // Schedules a timeout exception to be fired after specified request timeout
+      final ScheduledFuture<ChannelPipeline> timeoutFuture = _scheduler.schedule(
+          () -> channel.pipeline().fireExceptionCaught(
+              new TimeoutException("Exceeded request timeout of " + _resolvedRequestTimeout + "ms")),
+          _resolvedRequestTimeout,
+          TimeUnit.MILLISECONDS);
+      channel.attr(NettyChannelAttributes.TIMEOUT_FUTURE).set(timeoutFuture);
+
+      // Here we want the exception in outbound operations to be passed back through pipeline so that
+      // the user callback would be invoked with the exception and the channel can be put back into the pool
+      channel.writeAndFlush(_request).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+    }
+
+    @Override
+    public void onError(Throwable e)
+    {
+      _callback.onResponse(TransportResponseImpl.error(e));
+    }
+  }
+
+  /**
+   * Decorates user callback with the follow properties.
+   * <p><ul>
+   * <li> Callback can be invoked at most once
+   * <li> Callback is executed on the callback executor
+   * <li> Callback is added to the user callback set and removed upon execution
+   * <li> Callback is not sensitive to response status code, see {@link HttpBridge} #streamToHttpCallback
+   * </ul><p>
+   */
+  private TransportCallback<StreamResponse> decorateUserCallback(StreamRequest request, TransportCallback<StreamResponse> callback)
+  {
+    final TransportCallback<StreamResponse> httpCallback = HttpBridge.streamToHttpCallback(callback, request);
+    final TransportCallback<StreamResponse> executionCallback = getExecutionCallback(httpCallback);
+    final TransportCallback<StreamResponse> shutdownAwareCallback = getShutdownAwareCallback(executionCallback);
+    return shutdownAwareCallback;
+  }
+
+  /**
+   * Given a callback, returns the wrapped callback that will be executed on a custom executor
+   */
+  private TransportCallback<StreamResponse> getExecutionCallback(TransportCallback<StreamResponse> callback)
+  {
+    return new StreamExecutionCallback(_callbackExecutor, callback);
+  }
+
+  /**
+   * Register the callback in a structure that allows to fire the callback in case of shutdown
+   */
+  private TransportCallback<StreamResponse> getShutdownAwareCallback(TransportCallback<StreamResponse> callback)
+  {
+    // Used InvokedOnceTransportCallback to avoid to trigger onResponse twice, in case of concurrent shutdown and firing
+    // the callback from the normal flow
+    final TransportCallback<StreamResponse> onceTransportCallback = new InvokedOnceTransportCallback<>(callback);
+    _userCallbacks.add(onceTransportCallback);
+    return response ->
+    {
+      _userCallbacks.remove(onceTransportCallback);
+      onceTransportCallback.onResponse(response);
+    };
+  }
+
+  private ChannelPoolManager getChannelPoolManagerPerRequest(Request request)
+  {
+    return isSslRequest(request) ? _sslChannelPoolManager : _channelPoolManager;
+  }
+
+  private static boolean isSslRequest(Request request)
+  {
+    return HTTPS_SCHEME.equals(request.getURI().getScheme());
+  }
+
+  /**
+   * Resolves the request timeout based on the client configured timeout, request timeout, and preemptive
+   * request timeout rate.
+   *
+   * @param context Request context
+   * @param requestTimeout client configured timeout
+   * @return Resolve request timeout
+   */
+  public static long resolveRequestTimeout(RequestContext context, long requestTimeout)
+  {
+    long resolvedRequestTimeout = requestTimeout;
+    Number requestTimeoutRaw = (Number) context.getLocalAttr(R2Constants.REQUEST_TIMEOUT);
+    if (requestTimeoutRaw != null)
+    {
+      resolvedRequestTimeout = requestTimeoutRaw.longValue();
+    }
+
+    Double preemptiveTimeoutRate = (Double) context.getLocalAttr(R2Constants.PREEMPTIVE_TIMEOUT_RATE);
+    if (preemptiveTimeoutRate != null)
+    {
+      resolvedRequestTimeout = RequestTimeoutUtil.applyPreemptiveTimeoutRate(resolvedRequestTimeout, preemptiveTimeoutRate);
+    }
+
+    return resolvedRequestTimeout;
+  }
+
+  /**
+   * Resolves the IP Address from the URI host
+   *
+   * @param request Request object
+   * @param requestContext Request's context
+   * @return SocketAddress resolved from the URI host
+   */
+  public static SocketAddress resolveAddress(Request request, RequestContext requestContext)
+      throws UnknownHostException, UnknownSchemeException
+  {
+    final URI uri = request.getURI();
+    final String scheme = uri.getScheme();
+
+    if (!HTTP_SCHEME.equalsIgnoreCase(scheme) && !HTTPS_SCHEME.equalsIgnoreCase(scheme))
+    {
+      throw new UnknownSchemeException("Unknown scheme: " + scheme + " (only http/https is supported)");
+    }
+
+    final String host = uri.getHost();
+    int port = uri.getPort();
+    if (port == -1)
+    {
+      port = HTTP_SCHEME.equalsIgnoreCase(scheme) ? HTTP_DEFAULT_PORT : HTTPS_DEFAULT_PORT;
+    }
+
+    // TODO investigate DNS resolution and timing
+    final InetAddress inetAddress = InetAddress.getByName(host);
+    final SocketAddress address = new InetSocketAddress(inetAddress, port);
+    requestContext.putLocalAttr(R2Constants.REMOTE_SERVER_ADDR, inetAddress.getHostAddress());
+    requestContext.putLocalAttr(R2Constants.REMOTE_SERVER_PORT, port);
+
+    return address;
+  }
+}

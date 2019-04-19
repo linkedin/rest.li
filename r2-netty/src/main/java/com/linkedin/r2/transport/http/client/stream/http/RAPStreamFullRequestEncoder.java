@@ -17,7 +17,7 @@
 package com.linkedin.r2.transport.http.client.stream.http;
 
 import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.transport.http.client.stream.NettyRequestAdapter;
+import com.linkedin.r2.netty.common.NettyRequestAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * This encoder encodes RestRequest to Netty's HttpRequest.
  *
- * @auther Zhenkai Zhu
+ * @author Zhenkai Zhu
  */
 
 class RAPStreamFullRequestEncoder extends MessageToMessageEncoder<RestRequest>

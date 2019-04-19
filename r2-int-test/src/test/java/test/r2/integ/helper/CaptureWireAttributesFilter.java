@@ -37,6 +37,7 @@ public class CaptureWireAttributesFilter implements RestFilter, StreamFilter
 {
   private volatile Map<String, String> _request;
   private volatile Map<String, String> _response;
+  private volatile RequestContext _requestContext;
 
   public Map<String, String> getResponse()
   {
@@ -48,11 +49,17 @@ public class CaptureWireAttributesFilter implements RestFilter, StreamFilter
     return _request;
   }
 
+  public RequestContext getRequestContext()
+  {
+    return  _requestContext;
+  }
+
   @Override
   public void onRestRequest(RestRequest req, RequestContext requestContext, Map<String, String> wireAttrs,
                         NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _request = new HashMap<String, String>(wireAttrs);
+    _requestContext = requestContext;
     nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
@@ -61,6 +68,7 @@ public class CaptureWireAttributesFilter implements RestFilter, StreamFilter
                          NextFilter<RestRequest, RestResponse> nextFilter)
   {
     _response = new HashMap<String, String>(wireAttrs);
+    _requestContext = requestContext;
     nextFilter.onResponse(res, requestContext, wireAttrs);
   }
 
@@ -68,6 +76,7 @@ public class CaptureWireAttributesFilter implements RestFilter, StreamFilter
   public void onRestError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
                       NextFilter<RestRequest, RestResponse> nextFilter)
   {
+    _requestContext = requestContext;
     _response = new HashMap<String, String>(wireAttrs);
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
@@ -78,6 +87,7 @@ public class CaptureWireAttributesFilter implements RestFilter, StreamFilter
                               Map<String, String> wireAttrs,
                               NextFilter<StreamRequest, StreamResponse> nextFilter)
   {
+    _requestContext = requestContext;
     _request = new HashMap<String, String>(wireAttrs);
     nextFilter.onRequest(req, requestContext, wireAttrs);
   }
@@ -88,6 +98,7 @@ public class CaptureWireAttributesFilter implements RestFilter, StreamFilter
                                Map<String, String> wireAttrs,
                                NextFilter<StreamRequest, StreamResponse> nextFilter)
   {
+    _requestContext = requestContext;
     _response = new HashMap<String, String>(wireAttrs);
     nextFilter.onResponse(res, requestContext, wireAttrs);
   }
@@ -98,6 +109,7 @@ public class CaptureWireAttributesFilter implements RestFilter, StreamFilter
                             Map<String, String> wireAttrs,
                             NextFilter<StreamRequest, StreamResponse> nextFilter)
   {
+    _requestContext = requestContext;
     _response = new HashMap<String, String>(wireAttrs);
     nextFilter.onError(ex, requestContext, wireAttrs);
   }

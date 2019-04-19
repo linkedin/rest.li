@@ -21,8 +21,6 @@
 package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.common.stats.LongStats;
-import com.linkedin.common.stats.LongTracking;
 import com.linkedin.r2.RetriableRequestException;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolLifecycleStats;
@@ -32,12 +30,10 @@ import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.util.AttributeKey;
-
 import java.net.ConnectException;
 import java.net.SocketAddress;
 import org.slf4j.Logger;

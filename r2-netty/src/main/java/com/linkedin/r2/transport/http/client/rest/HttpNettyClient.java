@@ -24,22 +24,22 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.netty.common.NettyChannelAttributes;
+import com.linkedin.r2.netty.common.NettyClientState;
+import com.linkedin.r2.netty.handler.common.SslHandshakeTimingHandler;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.AbstractJmxManager;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import com.linkedin.r2.transport.http.client.common.AbstractNettyClient;
-import com.linkedin.r2.transport.http.client.common.CertificateHandler;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ErrorChannelFutureListener;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
-import com.linkedin.r2.transport.http.client.stream.SslHandshakeTimingHandler;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import java.net.SocketAddress;
@@ -57,7 +57,6 @@ import org.slf4j.LoggerFactory;
 
 public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestResponse>
 {
-  static final Logger LOG = LoggerFactory.getLogger(HttpNettyClient.class);
   private final ExecutorService _callbackExecutors;
 
   /**
@@ -154,10 +153,10 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
 
         // Set the session validator requested by the user
         SslSessionValidator sslSessionValidator = (SslSessionValidator) requestContext.getLocalAttr(R2Constants.REQUESTED_SSL_SESSION_VALIDATOR);
-        channel.attr(CertificateHandler.REQUESTED_SSL_SESSION_VALIDATOR).set(sslSessionValidator);
+        channel.attr(NettyChannelAttributes.SSL_SESSION_VALIDATOR).set(sslSessionValidator);
 
-        final State state = _state.get();
-        if (state == State.REQUESTS_STOPPING || state == State.SHUTDOWN)
+        final NettyClientState state = _state.get();
+        if (state == NettyClientState.REQUESTS_STOPPING || state == NettyClientState.SHUTDOWN)
         {
           // In this case, we acquired a channel from the pool as request processing is halting.
           // The shutdown task might not timeout this callback, since it may already have scanned

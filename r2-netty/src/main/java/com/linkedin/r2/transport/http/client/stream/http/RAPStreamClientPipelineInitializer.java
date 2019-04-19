@@ -16,7 +16,7 @@
 
 package com.linkedin.r2.transport.http.client.stream.http;
 
-import com.linkedin.r2.transport.http.client.common.SessionResumptionSslHandler;
+import com.linkedin.r2.netty.handler.common.SessionResumptionSslHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;

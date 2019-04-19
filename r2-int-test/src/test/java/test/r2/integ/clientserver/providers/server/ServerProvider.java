@@ -18,6 +18,8 @@ package test.r2.integ.clientserver.providers.server;
 
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.transport.common.Server;
+import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
+
 
 /**
  * Interface to create a type of server
@@ -25,6 +27,10 @@ import com.linkedin.r2.transport.common.Server;
 public interface ServerProvider
 {
   Server createServer(FilterChain filters, int port) throws Exception;
+
+  Server createServer(FilterChain filters, int port, TransportDispatcher transportDispatcher) throws Exception;
+
+  Server createServer(ServerCreationContext context) throws Exception;
 
   default boolean isSsl()
   {

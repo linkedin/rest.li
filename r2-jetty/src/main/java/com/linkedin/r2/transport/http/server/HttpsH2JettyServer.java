@@ -16,10 +16,12 @@
 
 package com.linkedin.r2.transport.http.server;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.http.HttpCompliance;
 import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http2.HTTP2Cipher;
+import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -98,12 +100,18 @@ public class HttpsH2JettyServer extends HttpJettyServer
     SslConnectionFactory ssl = new SslConnectionFactory(sslContextFactory, alpn.getProtocol());
 
     // Connector supporting HTTP/2, http1.1 and negotiation protocols
-    ServerConnector http2Connector =
+    ServerConnector h2Connector =
       new ServerConnector(server, ssl, alpn, h2, new HttpConnectionFactory(https_config, HttpCompliance.RFC2616));
-    http2Connector.setPort(_sslPort);
-    server.addConnector(http2Connector);
+    h2Connector.setPort(_sslPort);
+    server.addConnector(h2Connector);
 
+    HttpConfiguration configuration = new HttpConfiguration();
+    ServerConnector h2cConnector = new ServerConnector(
+        server,
+        new HttpConnectionFactory(configuration, HttpCompliance.RFC2616),
+        new HTTP2CServerConnectionFactory(configuration));
+    h2cConnector.setPort(_port);
 
-    return new ServerConnector[]{http2Connector};
+    return new ServerConnector[]{h2Connector, h2cConnector};
   }
 }

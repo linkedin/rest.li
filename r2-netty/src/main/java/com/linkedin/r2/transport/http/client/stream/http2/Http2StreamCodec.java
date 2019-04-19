@@ -14,10 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.r2.transport.http.client.stream.http2;
 
 import com.linkedin.data.ByteString;
@@ -28,13 +24,12 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
+import com.linkedin.r2.netty.common.NettyRequestAdapter;
 import com.linkedin.r2.transport.common.bridge.common.RequestWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.AsyncPoolHandle;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
-import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
-import com.linkedin.r2.transport.http.client.stream.NettyRequestAdapter;
 import com.linkedin.r2.transport.http.client.stream.OrderedEntityStreamReader;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -174,7 +169,7 @@ class Http2StreamCodec extends Http2ConnectionHandler
   }
 
   @Override
-  protected void onStreamError(ChannelHandlerContext ctx, Throwable cause, Http2Exception.StreamException streamException)
+  protected void onStreamError(ChannelHandlerContext ctx, boolean outbound, Throwable cause, Http2Exception.StreamException streamException)
   {
     final int streamId = streamException.streamId();
 
@@ -189,12 +184,12 @@ class Http2StreamCodec extends Http2ConnectionHandler
     }
     finally
     {
-      super.onStreamError(ctx, cause, streamException);
+      super.onStreamError(ctx, outbound, cause, streamException);
     }
   }
 
   @Override
-  protected void onConnectionError(ChannelHandlerContext ctx, Throwable cause, Http2Exception connectionError)
+  protected void onConnectionError(ChannelHandlerContext ctx, boolean outbound, Throwable cause, Http2Exception connectionError)
   {
     // Logs the full exception here
     final String message = String.format(
@@ -216,7 +211,7 @@ class Http2StreamCodec extends Http2ConnectionHandler
     }
     finally
     {
-      super.onConnectionError(ctx, cause, connectionError);
+      super.onConnectionError(ctx, outbound, cause, connectionError);
     }
   }
 

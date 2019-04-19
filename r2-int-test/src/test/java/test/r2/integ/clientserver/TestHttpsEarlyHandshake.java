@@ -18,12 +18,12 @@ package test.r2.integ.clientserver;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.r2.netty.common.SslHandlerUtil;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
-import com.linkedin.r2.transport.http.util.SslHandlerUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslHandler;
@@ -50,6 +50,7 @@ import test.r2.integ.clientserver.providers.server.ServerProvider;
  */
 public class TestHttpsEarlyHandshake extends AbstractEchoServiceTest
 {
+  private static boolean SSL_SESSION_RESUMPTION_ENABLED = true;
 
   @Factory(dataProvider = "allHttps", dataProviderClass = ClientServerConfiguration.class)
   public TestHttpsEarlyHandshake(ClientProvider clientProvider, ServerProvider serverProvider, int port)
@@ -64,7 +65,7 @@ public class TestHttpsEarlyHandshake extends AbstractEchoServiceTest
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     ChannelPoolManagerFactoryImpl channelPoolManagerFactory =
-        new ChannelPoolManagerFactoryImpl(eventLoopGroup, scheduler, true);
+        new ChannelPoolManagerFactoryImpl(eventLoopGroup, scheduler, SSL_SESSION_RESUMPTION_ENABLED, _clientProvider.getUsePipelineV2());
     SSLContext context = SslContextUtil.getContext();
 
     ChannelPoolManagerKey key = new ChannelPoolManagerKeyBuilder()

@@ -19,15 +19,25 @@ package test.r2.integ.clientserver.providers.server;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.transport.common.Server;
+import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
+import com.linkedin.r2.transport.http.server.HttpJettyServer;
+import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import test.r2.integ.clientserver.providers.common.SslContextUtil;
 
 public class Https2JettyServerProvider implements ServerProvider
 {
   private final boolean _serverROS;
+  private final HttpJettyServer.ServletType _servletType;
+
+  public Https2JettyServerProvider(HttpJettyServer.ServletType servletType, boolean serverROS)
+  {
+    _servletType = servletType;
+    _serverROS = serverROS;
+  }
 
   public Https2JettyServerProvider(boolean serverROS)
   {
-    _serverROS = serverROS;
+    this(HttpServerFactory.DEFAULT_SERVLET_TYPE, serverROS);
   }
 
   @Override
@@ -41,6 +51,31 @@ public class Https2JettyServerProvider implements ServerProvider
       filters,
       _serverROS
     );
+  }
+
+  @Override
+  public Server createServer(FilterChain filters, int sslPort, TransportDispatcher dispatcher)
+  {
+    return Bootstrap.createHttpsH2cServer(
+        SslContextUtil.getHttpPortFromHttps(sslPort),
+        sslPort,
+        SslContextUtil.KEY_STORE,
+        SslContextUtil.KEY_STORE_PASSWORD,
+        filters,
+        _serverROS,
+        dispatcher
+    );
+  }
+
+  @Override
+  public Server createServer(ServerCreationContext context)
+  {
+    int sslPort = context.getPort();
+    int httpPort = SslContextUtil.getHttpPortFromHttps(sslPort);
+    return new HttpServerFactory(context.getFilterChain()).createHttpsH2cServer(httpPort, sslPort, SslContextUtil.KEY_STORE,
+        SslContextUtil.KEY_STORE_PASSWORD, context.getContextPath(),
+        context.getThreadPoolSize(), context.getTransportDispatcher(), _servletType,
+        context.getServerTimeout(), _serverROS);
   }
 
   @Override

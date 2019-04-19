@@ -20,12 +20,11 @@
 
 package com.linkedin.r2.transport.http.client.rest;
 
-
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.r2.netty.common.NettyRequestAdapter;
 import com.linkedin.r2.transport.http.common.HttpConstants;
-import com.linkedin.r2.transport.http.util.CookieUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
@@ -40,7 +39,6 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
-
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -88,19 +86,7 @@ class RAPClientCodec extends ChannelDuplexHandler
       ByteBuf content = Unpooled.wrappedBuffer(entity.asByteBuffer());
       FullHttpRequest nettyRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, nettyMethod, path, content);
 
-      for (Map.Entry<String, String> e : request.getHeaders().entrySet())
-      {
-        nettyRequest.headers().set(e.getKey(), e.getValue());
-      }
-      nettyRequest.headers().set(HttpHeaderNames.HOST, url.getAuthority());
-      // RFC 6265
-      //   When the user agent generates an HTTP/1.1 request, the user agent MUST
-      //   NOT attach more than one Cookie header field.
-      String encodedCookieHeaderValues = CookieUtil.clientEncode(request.getCookies());
-      if (encodedCookieHeaderValues != null)
-      {
-        nettyRequest.headers().set(HttpConstants.REQUEST_COOKIE_HEADER_NAME, encodedCookieHeaderValues);
-      }
+      NettyRequestAdapter.setHttpHeadersAndCookies(request, url, nettyRequest);
 
       nettyRequest.headers().set(HttpHeaderNames.CONTENT_LENGTH, entity.length());
 

@@ -41,6 +41,7 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
@@ -53,6 +54,7 @@ import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.r2.util.NamedThreadFactory;
+import com.linkedin.util.clock.SystemClock;
 import io.netty.channel.nio.NioEventLoopGroup;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,6 +94,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Chris Pettitt
  * @author Steven Ihde
+ * @author Nizar Mankulangara
  * @version $Revision$
  */
 public class HttpClientFactory implements TransportClientFactory
@@ -162,6 +165,7 @@ public class HttpClientFactory implements TransportClientFactory
   private final boolean                    _shutdownFactory;
   private final boolean                    _shutdownExecutor;
   private final boolean                    _shutdownCallbackExecutor;
+  private final boolean                    _usePipelineV2;
   private final FilterChain                _filters;
   private final Executor                   _compressionExecutor;
 
@@ -171,6 +175,8 @@ public class HttpClientFactory implements TransportClientFactory
 
   /** Default request compression config (used when a config for a service isn't specified in {@link #_requestCompressionConfigs}) */
   private final CompressionConfig          _defaultRequestCompressionConfig;
+  /** List of ExecutorServices created in the builder that needs to be shutdown*/
+  private final List<ExecutorService> _executorsToShutDown;
   /** Request compression config for each http service. */
   private final Map<String, CompressionConfig> _requestCompressionConfigs;
   /** Response compression config for each http service. */
@@ -543,7 +549,7 @@ public class HttpClientFactory implements TransportClientFactory
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
       jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
-      compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry, true);
+      compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry, true, false);
   }
 
   private HttpClientFactory(FilterChain filters,
@@ -561,7 +567,33 @@ public class HttpClientFactory implements TransportClientFactory
                             HttpProtocolVersion defaultHttpVersion,
                             boolean shareConnection,
                             EventProviderRegistry eventProviderRegistry,
-                            boolean enableSSLSessionResumption)
+                            boolean enableSSLSessionResumption,
+                            boolean usePipelineV2)
+  {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
+        jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
+        compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry, enableSSLSessionResumption,
+        usePipelineV2, null);
+  }
+
+  private HttpClientFactory(FilterChain filters,
+                            NioEventLoopGroup eventLoopGroup,
+                            boolean shutdownFactory,
+                            ScheduledExecutorService executor,
+                            boolean shutdownExecutor,
+                            ExecutorService callbackExecutorGroup,
+                            boolean shutdownCallbackExecutor,
+                            AbstractJmxManager jmxManager,
+                            final int requestCompressionThresholdDefault,
+                            final Map<String, CompressionConfig> requestCompressionConfigs,
+                            final Map<String, CompressionConfig> responseCompressionConfigs,
+                            Executor compressionExecutor,
+                            HttpProtocolVersion defaultHttpVersion,
+                            boolean shareConnection,
+                            EventProviderRegistry eventProviderRegistry,
+                            boolean enableSSLSessionResumption,
+                            boolean usePipelineV2,
+                            List<ExecutorService> executorsToShutDown)
   {
     _filters = filters;
     _eventLoopGroup = eventLoopGroup;
@@ -570,8 +602,10 @@ public class HttpClientFactory implements TransportClientFactory
     _shutdownExecutor = shutdownExecutor;
     _callbackExecutorGroup = callbackExecutorGroup;
     _shutdownCallbackExecutor = shutdownCallbackExecutor;
+    _usePipelineV2 = usePipelineV2;
     _jmxManager = jmxManager;
     _defaultRequestCompressionConfig = new CompressionConfig(requestCompressionThresholdDefault);
+    _executorsToShutDown = executorsToShutDown;
     if (requestCompressionConfigs == null)
     {
       throw new IllegalArgumentException("requestCompressionConfigs should not be null.");
@@ -585,7 +619,8 @@ public class HttpClientFactory implements TransportClientFactory
     _compressionExecutor = compressionExecutor;
     _useClientCompression = _compressionExecutor != null;
     _defaultHttpVersion = defaultHttpVersion;
-    _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _executor, enableSSLSessionResumption);
+    _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(
+        _eventLoopGroup, _executor, enableSSLSessionResumption,_usePipelineV2);
 
     if (eventProviderRegistry != null)
     {
@@ -610,6 +645,7 @@ public class HttpClientFactory implements TransportClientFactory
     private boolean                    _shareConnection = false;
     private FilterChain                _filters = FilterChains.empty();
     private boolean                    _useClientCompression = true;
+    private boolean _usePipelineV2 = false;
     private Executor                   _customCompressionExecutor = null;
     private AbstractJmxManager         _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
 
@@ -759,26 +795,56 @@ public class HttpClientFactory implements TransportClientFactory
       return this;
     }
 
+    public Builder setUsePipelineV2(boolean usePipelineV2)
+    {
+      _usePipelineV2 = usePipelineV2;
+      return this;
+    }
+
     public HttpClientFactory build()
     {
-      NioEventLoopGroup eventLoopGroup = _eventLoopGroup != null ? _eventLoopGroup
-          : new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop"));
-      ScheduledExecutorService scheduledExecutorService = _executor != null ? _executor
-          : Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler"));
+      List<ExecutorService> executorsToShutDown = new ArrayList<>();
 
-      Executor compressionExecutor = null;
-      if (_useClientCompression)
+      NioEventLoopGroup eventLoopGroup = _eventLoopGroup;
+      if (eventLoopGroup == null)
       {
-        compressionExecutor = _customCompressionExecutor != null ? _customCompressionExecutor : Executors.newCachedThreadPool();
+        eventLoopGroup = new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop"));
+      }
+
+      ScheduledExecutorService scheduledExecutorService = _executor;
+      if (scheduledExecutorService == null)
+      {
+        LOG.warn("No scheduled executor is provided to HttpClientFactory, using it's own scheduled executor.");
+        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler"));
+        executorsToShutDown.add(scheduledExecutorService);
+      }
+
+      ExecutorService callbackExecutorGroup = _callbackExecutorGroup;
+      if (callbackExecutorGroup == null)
+      {
+        // Not passing the call back executor will have IC implications.
+        LOG.warn("No callback executor is provided to HttpClientFactory, using it's own call back executor.");
+        callbackExecutorGroup = Executors.newFixedThreadPool(1);
+        executorsToShutDown.add(callbackExecutorGroup);
+      }
+
+      Executor compressionExecutor = _customCompressionExecutor;
+      if (_useClientCompression && compressionExecutor == null)
+      {
+        LOG.warn("No Compression executor is provided to HttpClientFactory, using it's own compression executor.");
+        ExecutorService customCompressionExecutor = Executors.newCachedThreadPool();
+        compressionExecutor = customCompressionExecutor;
+        executorsToShutDown.add(customCompressionExecutor);
       }
 
       EventProviderRegistry eventProviderRegistry =  _eventProviderRegistry
           == null ? new EventProviderRegistry() : _eventProviderRegistry;
 
       return new HttpClientFactory(_filters, eventLoopGroup, _shutdownFactory, scheduledExecutorService,
-        _shutdownExecutor, _callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
+        _shutdownExecutor, callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
         _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
-        compressionExecutor, _defaultHttpVersion, _shareConnection, eventProviderRegistry, _enableSSLSessionResumption);
+        compressionExecutor, _defaultHttpVersion, _shareConnection, eventProviderRegistry, _enableSSLSessionResumption,
+          _usePipelineV2, executorsToShutDown);
     }
 
   }
@@ -1195,26 +1261,47 @@ public class HttpClientFactory implements TransportClientFactory
     HttpProtocolVersion httpProtocolVersion =
       chooseNewOverDefault(getHttpProtocolVersion(properties, HTTP_PROTOCOL_VERSION), _defaultHttpVersion);
 
-    TransportClient streamClient;
-    switch (httpProtocolVersion)
+    if (_usePipelineV2)
     {
+      ChannelPoolManager channelPoolManager;
+      ChannelPoolManager sslChannelPoolManager;
+
+      switch (httpProtocolVersion) {
+        case HTTP_1_1:
+          channelPoolManager = _channelPoolManagerFactory.buildStream(key);
+          sslChannelPoolManager = _channelPoolManagerFactory.buildStream(sslKey);
+          break;
+        case HTTP_2:
+          channelPoolManager = _channelPoolManagerFactory.buildHttp2Stream(key);
+          sslChannelPoolManager = _channelPoolManagerFactory.buildHttp2Stream(sslKey);
+          break;
+        default:
+          throw new IllegalArgumentException("Unrecognized HTTP protocol version " + httpProtocolVersion);
+      }
+
+      return new com.linkedin.r2.netty.client.HttpNettyClient(_eventLoopGroup, _executor, _callbackExecutorGroup,
+          channelPoolManager, sslChannelPoolManager, httpProtocolVersion, SystemClock.instance(), requestTimeout, shutdownTimeout);
+    }
+
+    TransportClient streamClient;
+    switch (httpProtocolVersion) {
       case HTTP_1_1:
         streamClient = new HttpNettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-          _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildStream(key),
-          _channelPoolManagerFactory.buildStream(sslKey));
+            _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildStream(key),
+            _channelPoolManagerFactory.buildStream(sslKey));
         break;
       case HTTP_2:
         streamClient = new Http2NettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-          _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildHttp2Stream(key),
-          _channelPoolManagerFactory.buildHttp2Stream(sslKey));
+            _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildHttp2Stream(key),
+            _channelPoolManagerFactory.buildHttp2Stream(sslKey));
         break;
       default:
         throw new IllegalArgumentException("Unrecognized HTTP protocol version " + httpProtocolVersion);
     }
 
-    HttpNettyClient legacyClient = new HttpNettyClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-      _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildRest(key),
-      _channelPoolManagerFactory.buildRest(sslKey));
+    HttpNettyClient legacyClient =
+        new HttpNettyClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout, _callbackExecutorGroup,
+            _jmxManager, _channelPoolManagerFactory.buildRest(key), _channelPoolManagerFactory.buildRest(sslKey));
 
     return new MixedClient(legacyClient, streamClient);
   }
@@ -1336,6 +1423,14 @@ public class HttpClientFactory implements TransportClientFactory
           LOG.info("Shutdown callback executor");
           _callbackExecutorGroup.shutdown();
           _callbackExecutorGroup.shutdownNow();
+        }
+
+        if (_executorsToShutDown != null)
+        {
+          for (ExecutorService executorService : _executorsToShutDown)
+          {
+            executorService.shutdown();
+          }
         }
 
         final Callback<None> callback;

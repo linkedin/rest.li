@@ -16,7 +16,6 @@
 
 package com.linkedin.r2.sample;
 
-
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.sample.echo.EchoServiceImpl;
@@ -34,6 +33,7 @@ import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.Map;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 
@@ -60,18 +60,44 @@ public class Bootstrap
     return createHttpServer(port, filters, R2Constants.DEFAULT_REST_OVER_STREAM);
   }
 
+
+  public static Server createHttpServer(int port, FilterChain filters, boolean restOverStream,
+      TransportDispatcher dispatcher)
+  {
+    return createHttpServer(new HttpServerFactory(filters), port, restOverStream, dispatcher);
+  }
+
+
+  public static Server createHttpServer(HttpServerFactory serverFactory, int port,
+      boolean restOverStream,TransportDispatcher dispatcher)
+  {
+    if (dispatcher == null)
+    {
+      dispatcher = createDispatcher();
+    }
+
+    return serverFactory.createServer(port, dispatcher, restOverStream);
+  }
+
   public static Server createHttpServer(int port, FilterChain filters, boolean restOverStream)
   {
-    return new HttpServerFactory(filters)
-        .createServer(port, createDispatcher(), restOverStream);
+    return createHttpServer(port, filters, restOverStream, createDispatcher());
   }
 
   // ############# HTTP2 Clear Section #############
 
   public static Server createH2cServer(int port, FilterChain filters, boolean restOverStream)
   {
+    return createH2cServer(port, filters, restOverStream, createDispatcher());
+  }
+
+  public static Server createH2cServer(int port, FilterChain filters, boolean restOverStream, TransportDispatcher dispatcher)
+  {
+    if(dispatcher == null)
+      dispatcher = createDispatcher();
+
     return new HttpServerFactory(filters)
-        .createH2cServer(port, createDispatcher(), restOverStream);
+        .createH2cServer(port, dispatcher, restOverStream);
   }
 
   // ############# HTTPS 1.1 Section #############
@@ -93,19 +119,42 @@ public class Bootstrap
         HttpServerFactory.DEFAULT_SERVLET_TYPE, restOverStream);
   }
 
-  public static Server createHttpsServer(int httpPort, int sslPort, String keyStore, String keyStorePassword, FilterChain filters, boolean restOverStream)
+  public static Server createHttpsServer(int httpPort, int sslPort, String keyStore, String keyStorePassword,
+      FilterChain filters, boolean restOverStream)
   {
+    return createHttpsServer(httpPort, sslPort, keyStore, keyStorePassword, filters, restOverStream, createDispatcher());
+  }
+
+  public static Server createHttpsServer(int httpPort, int sslPort, String keyStore, String keyStorePassword,
+      FilterChain filters, boolean restOverStream, TransportDispatcher dispatcher)
+  {
+    if (dispatcher == null)
+    {
+      dispatcher = createDispatcher();
+    }
+
     return new HttpServerFactory(filters)
-      .createHttpsServer(httpPort, sslPort, keyStore, keyStorePassword, createDispatcher(),
+      .createHttpsServer(httpPort, sslPort, keyStore, keyStorePassword, dispatcher,
         HttpServerFactory.DEFAULT_SERVLET_TYPE, restOverStream);
   }
 
   // ############# HTTPS 2 Section #############
 
-  public static Server createHttpsH2cServer(int httpPort, int sslPort, String keyStore, String keyStorePassword, FilterChain filters, boolean restOverStream)
+  public static Server createHttpsH2cServer(int httpPort, int sslPort, String keyStore, String keyStorePassword,
+      FilterChain filters, boolean restOverStream)
   {
+    return createHttpsH2cServer(httpPort, sslPort, keyStore, keyStorePassword, filters, restOverStream, createDispatcher());
+  }
+
+  public static Server createHttpsH2cServer(int httpPort, int sslPort, String keyStore, String keyStorePassword,
+      FilterChain filters, boolean restOverStream, TransportDispatcher transportDispatcher)
+  {
+    if (transportDispatcher == null)
+    {
+      transportDispatcher = createDispatcher();
+    }
     return new HttpServerFactory(filters)
-      .createHttpsH2cServer(httpPort, sslPort, keyStore, keyStorePassword, createDispatcher(),
+      .createHttpsH2cServer(httpPort, sslPort, keyStore, keyStorePassword, transportDispatcher,
         HttpServerFactory.DEFAULT_SERVLET_TYPE, restOverStream);
   }
 
@@ -113,35 +162,65 @@ public class Bootstrap
 
   // ############# HTTP1.1 Clear Section #############
 
-  public static Client createHttpClient(FilterChain filters, boolean restOverStream)
+  public static Client createHttpClient(FilterChain filters, boolean restOverStream, boolean usePipelineV2)
   {
-    HashMap<String, String> properties = new HashMap<>();
+    return createHttpClient(filters, restOverStream, usePipelineV2, null);
+  }
+
+  public static Client createHttpClient(FilterChain filters, boolean restOverStream, boolean usePipelineV2, Map<String, Object> clientProperties)
+  {
+    HashMap<String, Object> properties = new HashMap<>();
     properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1.name());
     properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
+
+    merge(properties, clientProperties);
+
     final TransportClient client = new HttpClientFactory.Builder()
         .setFilterChain(filters)
+        .setUsePipelineV2(usePipelineV2)
         .build()
         .getClient(properties);
     return new TransportClientAdapter(client, restOverStream);
   }
 
+  private static void merge(HashMap<String, Object> defaultValues, Map<String, Object> override)
+  {
+    if (override != null && defaultValues!=null)
+    {
+       for(Map.Entry<String, Object> keyValue : override.entrySet())
+       {
+          defaultValues.put(keyValue.getKey(), keyValue.getValue());
+       }
+    }
+  }
+
   public static Client createHttpClient(FilterChain filters)
   {
-    return createHttpClient(filters, R2Constants.DEFAULT_REST_OVER_STREAM);
+    return createHttpClient(filters, R2Constants.DEFAULT_REST_OVER_STREAM, false);
   }
 
 
   // ############# HTTPS 1.1 Section #############
 
-  public static Client createHttpsClient(FilterChain filters, boolean restOverStream, SSLContext sslContext, SSLParameters sslParameters)
+  public static Client createHttpsClient(FilterChain filters, boolean restOverStream, SSLContext sslContext, SSLParameters sslParameters, boolean usePipelineV2)
+  {
+    return createHttpsClient(filters, restOverStream, sslContext, sslParameters, usePipelineV2, null);
+  }
+
+  public static Client createHttpsClient(FilterChain filters, boolean restOverStream, SSLContext sslContext,
+      SSLParameters sslParameters, boolean usePipelineV2, Map<String, Object> clientProperties)
   {
     HashMap<String, Object> properties = new HashMap<>();
     properties.put(HttpClientFactory.HTTP_SSL_CONTEXT, sslContext);
     properties.put(HttpClientFactory.HTTP_SSL_PARAMS, sslParameters);
     properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1.name());
     properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
+
+    merge(properties, clientProperties);
+
     final TransportClient client = new HttpClientFactory.Builder()
         .setFilterChain(filters)
+        .setUsePipelineV2(usePipelineV2)
         .build()
         .getClient(properties);
     return new TransportClientAdapter(client, restOverStream);
@@ -149,13 +228,22 @@ public class Bootstrap
 
   // ############# HTTP2 Clear Section #############
 
-  public static Client createHttp2Client(FilterChain filters, boolean restOverStream)
+  public static Client createHttp2Client(FilterChain filters, boolean restOverStream, boolean usePipelineV2)
   {
-    HashMap<String, String> properties = new HashMap<>();
+    return createHttp2Client(filters, restOverStream, usePipelineV2, null);
+  }
+
+  public static Client createHttp2Client(FilterChain filters, boolean restOverStream, boolean usePipelineV2, Map<String, Object> clientProperties)
+  {
+    HashMap<String, Object> properties = new HashMap<>();
     properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2.name());
     properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
+
+    merge(properties, clientProperties);
+
     final TransportClient client = new HttpClientFactory.Builder()
         .setFilterChain(filters)
+        .setUsePipelineV2(usePipelineV2)
         .build()
         .getClient(properties);
     return new TransportClientAdapter(client, restOverStream);
@@ -163,14 +251,27 @@ public class Bootstrap
 
   // ############# HTTPS 2 Section #############
 
-  public static Client createHttps2Client(FilterChain filters, boolean restOverStream, SSLContext sslContext, SSLParameters sslParameters)
+  public static Client createHttps2Client(FilterChain filters, boolean restOverStream, SSLContext sslContext,
+      SSLParameters sslParameters, boolean usePipelineV2)
+  {
+    return createHttps2Client(filters, restOverStream, sslContext,
+        sslParameters, usePipelineV2, null);
+  }
+
+
+  public static Client createHttps2Client(FilterChain filters, boolean restOverStream, SSLContext sslContext,
+      SSLParameters sslParameters, boolean usePipelineV2, Map<String, Object> clientProperties)
   {
     HashMap<String, Object> properties = new HashMap<>();
     properties.put(HttpClientFactory.HTTP_SSL_CONTEXT, sslContext);
     properties.put(HttpClientFactory.HTTP_SSL_PARAMS, sslParameters);
     properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2.name());
+
+    merge(properties, clientProperties);
+
     final TransportClient client = new HttpClientFactory.Builder()
       .setFilterChain(filters)
+      .setUsePipelineV2(usePipelineV2)
       .build()
       .getClient(properties);
     return new TransportClientAdapter(client, restOverStream);
@@ -181,7 +282,14 @@ public class Bootstrap
   public static URI createURI(int port, URI relativeURI, boolean isSsl)
   {
     String scheme = isSsl ? "https" : "http";
-    return URI.create(scheme + "://localhost:" + port + relativeURI);
+    String url = scheme + "://localhost:" + port;
+
+    if (relativeURI != null)
+    {
+      url += relativeURI;
+    }
+
+    return URI.create(url);
   }
 
 

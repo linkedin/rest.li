@@ -17,7 +17,7 @@
 package com.linkedin.r2.transport.http.server;
 
 import com.linkedin.r2.message.rest.RestRequest;
-import com.linkedin.r2.transport.http.util.SslHandlerUtil;
+import com.linkedin.r2.netty.common.SslHandlerUtil;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -28,8 +28,6 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.EventExecutorGroup;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class HttpNettyServerPipelineInitializer extends ChannelInitializer<NioSocketChannel>

@@ -25,6 +25,18 @@ public class H2cJettyServer extends HttpJettyServer
     super(port, contextPath, threadPoolSize, dispatcher, restOverStream);
   }
 
+  public H2cJettyServer(
+      int port,
+      String contextPath,
+      int threadPoolSize,
+      HttpDispatcher dispatcher,
+      ServletType servletType,
+      int asyncTimeout,
+      boolean restOverStream)
+  {
+    super(port, contextPath, threadPoolSize, dispatcher, servletType, asyncTimeout, restOverStream);
+  }
+
   @Override
   protected Connector[] getConnectors(Server server)
   {

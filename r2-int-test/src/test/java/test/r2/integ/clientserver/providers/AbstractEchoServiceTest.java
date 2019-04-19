@@ -14,26 +14,21 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package test.r2.integ.clientserver.providers;
 
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.message.stream.StreamFilterAdapters;
 import com.linkedin.r2.sample.Bootstrap;
+import com.linkedin.r2.sample.echo.EchoServiceImpl;
+import com.linkedin.r2.sample.echo.OnExceptionEchoService;
+import com.linkedin.r2.sample.echo.ThrowingEchoService;
 import com.linkedin.r2.sample.echo.rest.RestEchoClient;
+import com.linkedin.r2.sample.echo.rest.RestEchoServer;
 import com.linkedin.r2.transport.common.Client;
-import com.linkedin.r2.transport.common.Server;
+import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
+import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import java.net.URI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import test.r2.integ.clientserver.providers.client.ClientProvider;
 import test.r2.integ.clientserver.providers.server.ServerProvider;
 import test.r2.integ.helper.CaptureWireAttributesFilter;
@@ -42,73 +37,33 @@ import test.r2.integ.helper.SendWireAttributeFilter;
 
 /**
  * @author Steven Ihde
+ * @author Nizar Mankulangara
  * @version $Revision: $
  */
-public abstract class AbstractEchoServiceTest
+public abstract class AbstractEchoServiceTest extends AbstractServiceTest
 {
-  protected static final Logger LOG = LoggerFactory.getLogger(AbstractEchoServiceTest.class);
-
-  private final String _toServerKey = "to-server";
-  private final String _toServerValue = "this value goes to the server";
-
-  private final String _toClientKey = "to-client";
-  private final String _toClientValue = "this value goes to the client";
-
-  protected final static String ECHO_MSG = "This is a simple echo message";
-  protected final ClientProvider _clientProvider;
-  protected final ServerProvider _serverProvider;
-  protected final int _port;
-
-  protected Client _client;
-  protected Server _server;
-
   protected CaptureWireAttributesFilter _serverCaptureFilter;
   protected CaptureWireAttributesFilter _clientCaptureFilter;
   protected LogEntityLengthFilter _serverLengthFilter;
   protected LogEntityLengthFilter _clientLengthFilter;
 
+  private static final URI ECHO_URI = URI.create("/echo");
+  private static final URI ON_EXCEPTION_ECHO_URI = URI.create("/on-exception-echo");
+  private static final URI THROWING_ECHO_URI = URI.create("/throwing-echo");
+
+  protected final String _toServerKey = "to-server";
+  protected final String _toServerValue = "this value goes to the server";
+
+  protected final String _toClientKey = "to-client";
+  protected final String _toClientValue = "this value goes to the client";
+
   public AbstractEchoServiceTest(ClientProvider clientProvider, ServerProvider serverProvider, int port)
   {
-    _clientProvider = clientProvider;
-    _serverProvider = serverProvider;
-    _port = port;
+    super(clientProvider, serverProvider, port);
   }
 
-  @BeforeClass
-  protected void setUp() throws Exception
-  {
-
-    _client = createClient();
-    _server = createServer();
-    _server.start();
-  }
-
-  @AfterClass
-  protected void tearDown() throws Exception
-  {
-    tearDown(_client, _server);
-  }
-
-  protected void tearDown(Client client, Server server) throws Exception
-  {
-    final FutureCallback<None> callback = new FutureCallback<>();
-    client.shutdown(callback);
-
-    try
-    {
-      callback.get();
-    }
-    finally
-    {
-      if (server != null)
-      {
-        server.stop();
-        server.waitForStop();
-      }
-    }
-  }
-
-  protected FilterChain getClientFilters()
+  @Override
+  protected FilterChain getClientFilterChain()
   {
     _clientCaptureFilter = new CaptureWireAttributesFilter();
     _clientLengthFilter = new LogEntityLengthFilter();
@@ -124,7 +79,8 @@ public abstract class AbstractEchoServiceTest
       .addLast(clientWireFilter);
   }
 
-  protected FilterChain getServerFilters()
+  @Override
+  protected FilterChain getServerFilterChain()
   {
     _serverCaptureFilter = new CaptureWireAttributesFilter();
     _serverLengthFilter = new LogEntityLengthFilter();
@@ -142,19 +98,16 @@ public abstract class AbstractEchoServiceTest
 
   public RestEchoClient getEchoClient(Client client, URI relativeUri)
   {
-    System.out.println("Testing " + _clientProvider + " with " + _serverProvider + " on port " + _port);
     return new RestEchoClient(Bootstrap.createURI(_port, relativeUri, _serverProvider.isSsl()), client);
   }
 
-  protected Client createClient() throws Exception
+  @Override
+  protected TransportDispatcher getTransportDispatcher()
   {
-    System.out.println("Testing " + _clientProvider + " with " + _serverProvider + " on port " + _port);
-    return _clientProvider.createClient(getClientFilters());
+    return new TransportDispatcherBuilder()
+        .addRestHandler(ECHO_URI, new RestEchoServer(new EchoServiceImpl()))
+        .addRestHandler(ON_EXCEPTION_ECHO_URI, new RestEchoServer(new OnExceptionEchoService()))
+        .addRestHandler(THROWING_ECHO_URI, new RestEchoServer(new ThrowingEchoService()))
+        .build();
   }
-
-  protected Server createServer() throws Exception
-  {
-    return _serverProvider.createServer(getServerFilters(), _port);
-  }
-
 }

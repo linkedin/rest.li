@@ -37,23 +37,19 @@ import test.r2.integ.clientserver.providers.ClientServerConfiguration;
 import test.r2.integ.clientserver.providers.client.ClientProvider;
 import test.r2.integ.clientserver.providers.server.ServerProvider;
 
+
 /**
  * @author Steven Ihde
  * @version $Revision: $
  */
 public class TestGeneralEchoServiceTest extends AbstractEchoServiceTest
 {
-  private final String _toServerKey = "to-server";
-  private final String _toServerValue = "this value goes to the server";
-
-  private final String _toClientKey = "to-client";
-  private final String _toClientValue = "this value goes to the client";
-
   @Factory(dataProvider = "allCombinations", dataProviderClass = ClientServerConfiguration.class)
   public TestGeneralEchoServiceTest(ClientProvider clientProvider, ServerProvider serverProvider, int port)
   {
     super(clientProvider, serverProvider, port);
   }
+
 
   @Test
   public void testEcho() throws Exception
@@ -70,7 +66,6 @@ public class TestGeneralEchoServiceTest extends AbstractEchoServiceTest
     Assert.assertEquals(_clientLengthFilter.getResponseEntityLength(), msg.length());
     Assert.assertEquals(_serverLengthFilter.getRequestEntityLength(), msg.length());
     Assert.assertEquals(_serverLengthFilter.getResponseEntityLength(), msg.length());
-
   }
 
   @Test
@@ -209,5 +204,4 @@ public class TestGeneralEchoServiceTest extends AbstractEchoServiceTest
     Assert.assertEquals(_clientCaptureFilter.getResponse().get(_toClientKey), _toClientValue);
     Assert.assertNull(_clientCaptureFilter.getResponse().get(_toServerKey));
   }
-
 }

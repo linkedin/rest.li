@@ -18,15 +18,16 @@ package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.r2.netty.client.http.HttpChannelPoolFactory;
+import com.linkedin.r2.netty.client.http2.Http2ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamChannelPoolFactory;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.ScheduledExecutorService;
 
 
 /**
@@ -39,21 +40,35 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
 {
   private static final Logger LOG = LoggerFactory.getLogger(ChannelPoolManagerFactoryImpl.class);
 
+  /**
+   * Maximum initial HTTP/1.1 line length (e.g. "GET / HTTP/1.0" or "HTTP/1.0 200 OK"),
+   *  It can be made configurable if right requirement presents.
+   *  If the length of the initial line exceeds this value, a TooLongFrameException will be raised.
+   *  Since Http do not define a standard limit on this and different servers support different values for the
+   *  initial header line,  we are using 4096 default value as most of the servers support 4096 and above
+   */
+  private static final int MAX_INITIAL_LINE_LENGTH = 4096;
+
   private final NioEventLoopGroup _eventLoopGroup;
   private final ScheduledExecutorService _scheduler;
   private final boolean _enableSSLSessionResumption;
+  private final boolean _usePipelineV2;
 
   /**
    * @param eventLoopGroup The NioEventLoopGroup; it is the caller's responsibility to
    *                       shut it down
    * @param scheduler      An executor; it is the caller's responsibility to shut it down
-   * @param enableSSLSessionResumption
+   * @param usePipelineV2 build channel pool manager for the new Netty pipeline.
+   * @param enableSSLSessionResumption Enable reuse of Ssl Session.
+   * @param usePipelineV2 Use unified new code.
    */
-  public ChannelPoolManagerFactoryImpl(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler, boolean enableSSLSessionResumption)
+  public ChannelPoolManagerFactoryImpl(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
+      boolean enableSSLSessionResumption, boolean usePipelineV2)
   {
     _eventLoopGroup = eventLoopGroup;
     _scheduler = scheduler;
     _enableSSLSessionResumption = enableSSLSessionResumption;
+    _usePipelineV2 = usePipelineV2;
   }
 
   @Override
@@ -96,52 +111,102 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
   public ChannelPoolManager buildStream(ChannelPoolManagerKey channelPoolManagerKey)
   {
     DefaultChannelGroup channelGroup = new DefaultChannelGroup("R2 client channels", _eventLoopGroup.next());
-
+    ChannelPoolFactory channelPoolFactory;
+    if (_usePipelineV2)
+    {
+      channelPoolFactory = new HttpChannelPoolFactory(
+          _scheduler,
+          _eventLoopGroup,
+          channelGroup,
+          channelPoolManagerKey.getStrategy(),
+          channelPoolManagerKey.getSslContext(),
+          channelPoolManagerKey.getSslParameters(),
+          channelPoolManagerKey.getMaxPoolSize(),
+          channelPoolManagerKey.getMinPoolSize(),
+          channelPoolManagerKey.getPoolWaiterSize(),
+          MAX_INITIAL_LINE_LENGTH,
+          channelPoolManagerKey.getMaxHeaderSize(),
+          channelPoolManagerKey.getMaxChunkSize(),
+          channelPoolManagerKey.getMaxConcurrentConnectionInitializations(),
+          channelPoolManagerKey.getIdleTimeout(),
+          channelPoolManagerKey.getMaxResponseSize(),
+          channelPoolManagerKey.isTcpNoDelay(),
+          _enableSSLSessionResumption);
+    }
+    else
+    {
+      channelPoolFactory = new HttpNettyStreamChannelPoolFactory(
+          channelPoolManagerKey.getMaxPoolSize(),
+          channelPoolManagerKey.getIdleTimeout(),
+          channelPoolManagerKey.getPoolWaiterSize(),
+          channelPoolManagerKey.getStrategy(),
+          channelPoolManagerKey.getMinPoolSize(),
+          channelPoolManagerKey.isTcpNoDelay(),
+          _scheduler,
+          channelPoolManagerKey.getMaxConcurrentConnectionInitializations(),
+          channelPoolManagerKey.getSslContext(),
+          channelPoolManagerKey.getSslParameters(),
+          channelPoolManagerKey.getMaxHeaderSize(),
+          channelPoolManagerKey.getMaxChunkSize(),
+          channelPoolManagerKey.getMaxResponseSize(),
+          _enableSSLSessionResumption,
+          _eventLoopGroup,
+          channelGroup);
+    }
     return new ChannelPoolManagerImpl(
-      new HttpNettyStreamChannelPoolFactory(
-        channelPoolManagerKey.getMaxPoolSize(),
-        channelPoolManagerKey.getIdleTimeout(),
-        channelPoolManagerKey.getPoolWaiterSize(),
-        channelPoolManagerKey.getStrategy(),
-        channelPoolManagerKey.getMinPoolSize(),
-        channelPoolManagerKey.isTcpNoDelay(),
-        _scheduler,
-        channelPoolManagerKey.getMaxConcurrentConnectionInitializations(),
-        channelPoolManagerKey.getSslContext(),
-        channelPoolManagerKey.getSslParameters(),
-        channelPoolManagerKey.getMaxHeaderSize(),
-        channelPoolManagerKey.getMaxChunkSize(),
-        channelPoolManagerKey.getMaxResponseSize(),
-        _enableSSLSessionResumption,
-        _eventLoopGroup,
-        channelGroup
-      ),
-      channelPoolManagerKey.getName() + "-Stream",
-      channelGroup,
-      _scheduler);
+        channelPoolFactory,
+        channelPoolManagerKey.getName() + "-Stream",
+        channelGroup,
+        _scheduler);
   }
 
   @Override
   public ChannelPoolManager buildHttp2Stream(ChannelPoolManagerKey channelPoolManagerKey)
   {
     DefaultChannelGroup channelGroup = new DefaultChannelGroup("R2 client channels", _eventLoopGroup.next());
+    ChannelPoolFactory channelPoolFactory;
+
+    if (_usePipelineV2)
+    {
+      channelPoolFactory = new Http2ChannelPoolFactory(
+          _scheduler,
+          _eventLoopGroup,
+          channelGroup,
+          channelPoolManagerKey.getStrategy(),
+          channelPoolManagerKey.getSslContext(),
+          channelPoolManagerKey.getSslParameters(),
+          channelPoolManagerKey.getMaxPoolSize(),
+          channelPoolManagerKey.getMinPoolSize(),
+          channelPoolManagerKey.getPoolWaiterSize(),
+          MAX_INITIAL_LINE_LENGTH,
+          channelPoolManagerKey.getMaxHeaderSize(),
+          channelPoolManagerKey.getMaxChunkSize(),
+          channelPoolManagerKey.getIdleTimeout(),
+          channelPoolManagerKey.getMaxResponseSize(),
+          channelPoolManagerKey.isTcpNoDelay(),
+          _enableSSLSessionResumption);
+    }
+    else
+    {
+      channelPoolFactory = new Http2NettyStreamChannelPoolFactory(
+          channelPoolManagerKey.getIdleTimeout(),
+          channelPoolManagerKey.getPoolWaiterSize(),
+          channelPoolManagerKey.getMinPoolSize(),
+          channelPoolManagerKey.isTcpNoDelay(),
+          _scheduler,
+          channelPoolManagerKey.getSslContext(),
+          channelPoolManagerKey.getSslParameters(),
+          channelPoolManagerKey.getGracefulShutdownTimeout(),
+          channelPoolManagerKey.getMaxHeaderSize(),
+          channelPoolManagerKey.getMaxChunkSize(),
+          channelPoolManagerKey.getMaxResponseSize(),
+          _enableSSLSessionResumption,
+          _eventLoopGroup,
+          channelGroup);
+    }
 
     return new ChannelPoolManagerImpl(
-      new Http2NettyStreamChannelPoolFactory(
-        channelPoolManagerKey.getIdleTimeout(),
-        channelPoolManagerKey.getPoolWaiterSize(),
-        channelPoolManagerKey.getMinPoolSize(),
-        channelPoolManagerKey.isTcpNoDelay(),
-        _scheduler,
-        channelPoolManagerKey.getSslContext(),
-        channelPoolManagerKey.getSslParameters(),
-        channelPoolManagerKey.getGracefulShutdownTimeout(),
-        channelPoolManagerKey.getMaxHeaderSize(),
-        channelPoolManagerKey.getMaxChunkSize(),
-        channelPoolManagerKey.getMaxResponseSize(),
-        _enableSSLSessionResumption,
-        _eventLoopGroup,
-        channelGroup),
+      channelPoolFactory,
       channelPoolManagerKey.getName() + "-HTTP/2-Stream",
       channelGroup,
       _scheduler);

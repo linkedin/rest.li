@@ -34,7 +34,6 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.restli.client.RestClient;
-
 import com.linkedin.restli.client.util.RestLiClientConfig;
 import com.linkedin.restli.server.filter.Filter;
 import java.io.IOException;
@@ -130,7 +129,7 @@ public class RestLiIntegrationTest
 
   private void initClient(String uriPrefix)
   {
-    _clientFactory = new HttpClientFactory.Builder().build();
+    _clientFactory = new HttpClientFactory.Builder().setUsePipelineV2(true).build();
     _transportClients = new ArrayList<Client>();
     Map<String, String> transportProperties = Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
     Client client = newTransportClient(transportProperties);

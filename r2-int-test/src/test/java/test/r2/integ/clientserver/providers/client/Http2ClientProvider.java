@@ -19,26 +19,47 @@ package test.r2.integ.clientserver.providers.client;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.transport.common.Client;
+import java.util.Map;
+
 
 public class Http2ClientProvider implements ClientProvider
 {
 
   private final boolean _clientROS;
+  private boolean _usePipelineV2;
 
   public Http2ClientProvider(boolean clientROS)
   {
+    this(clientROS, false);
+  }
+
+  public Http2ClientProvider(boolean clientROS, boolean usePipelineV2)
+  {
     _clientROS = clientROS;
+    _usePipelineV2 = usePipelineV2;
   }
 
   @Override
   public Client createClient(FilterChain filters)
   {
-    return Bootstrap.createHttp2Client(filters, _clientROS);
+    return Bootstrap.createHttp2Client(filters, _clientROS, _usePipelineV2);
+  }
+
+  @Override
+  public Client createClient(FilterChain filters, Map<String, Object> clientProperties)
+  {
+    return Bootstrap.createHttp2Client(filters, _clientROS, _usePipelineV2, clientProperties);
+  }
+
+  @Override
+  public boolean getUsePipelineV2()
+  {
+    return _usePipelineV2;
   }
 
   @Override
   public String toString()
   {
-    return "[" + getClass().getName() + ", stream=" + _clientROS + "]";
+    return "[" + getClass().getName() + ", stream=" + _clientROS +", _usePipelineV2=" + _usePipelineV2 + "]";
   }
 }

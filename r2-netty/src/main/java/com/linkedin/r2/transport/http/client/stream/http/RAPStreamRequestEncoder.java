@@ -21,8 +21,7 @@ import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
-
-import com.linkedin.r2.transport.http.client.stream.NettyRequestAdapter;
+import com.linkedin.r2.netty.common.NettyRequestAdapter;
 import com.linkedin.r2.transport.http.client.stream.OrderedEntityStreamReader;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
@@ -40,7 +39,7 @@ import io.netty.handler.codec.http.LastHttpContent;
  *
  * @author Zhenkai Zhu
  */
-/** package private */class RAPStreamRequestEncoder extends ChannelDuplexHandler
+class RAPStreamRequestEncoder extends ChannelDuplexHandler
 {
   private static final int MAX_BUFFERED_CHUNKS = 10;
   // this threshold is to mitigate the effect of the inter-play of Nagle's algorithm & Delayed ACK

@@ -14,12 +14,7 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.r2.transport.http.client.stream.http;
-
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
@@ -27,23 +22,23 @@ import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.netty.common.NettyChannelAttributes;
+import com.linkedin.r2.netty.common.NettyClientState;
+import com.linkedin.r2.netty.handler.common.SslHandshakeTimingHandler;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.AbstractJmxManager;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
-import com.linkedin.r2.transport.http.client.common.CertificateHandler;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ErrorChannelFutureListener;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
-import com.linkedin.r2.transport.http.client.stream.SslHandshakeTimingHandler;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.r2.util.Timeout;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.nio.NioEventLoopGroup;
 import java.net.SocketAddress;
 import java.util.Map;
@@ -58,7 +53,7 @@ import java.util.concurrent.TimeoutException;
  * @author Zhenkai Zhu
  */
 
-/* package private */public class HttpNettyStreamClient extends AbstractNettyStreamClient
+public class HttpNettyStreamClient extends AbstractNettyStreamClient
 {
 
   /**
@@ -173,10 +168,10 @@ import java.util.concurrent.TimeoutException;
 
       // Set the session validator requested by the user
       SslSessionValidator sslSessionValidator = (SslSessionValidator) _requestContext.getLocalAttr(R2Constants.REQUESTED_SSL_SESSION_VALIDATOR);
-      channel.attr(CertificateHandler.REQUESTED_SSL_SESSION_VALIDATOR).set(sslSessionValidator);
+      channel.attr(NettyChannelAttributes.SSL_SESSION_VALIDATOR).set(sslSessionValidator);
 
-      State state = _state.get();
-      if (state == HttpNettyStreamClient.State.REQUESTS_STOPPING || state == HttpNettyStreamClient.State.SHUTDOWN)
+      NettyClientState state = _state.get();
+      if (state == NettyClientState.REQUESTS_STOPPING || state == NettyClientState.SHUTDOWN)
       {
         // In this case, we acquired a channel from the pool as request processing is halting.
         // The shutdown task might not timeout this callback, since it may already have scanned

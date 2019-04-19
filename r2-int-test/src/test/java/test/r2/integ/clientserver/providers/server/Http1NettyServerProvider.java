@@ -37,6 +37,19 @@ public class Http1NettyServerProvider implements ServerProvider
     return new HttpNettyServerBuilder().filters(filters).port(port).transportDispatcher(dispatcher).build();
   }
 
+  @Override
+  public Server createServer(FilterChain filters, int port, TransportDispatcher dispatcher) throws Exception
+  {
+    return new HttpNettyServerBuilder().filters(filters).port(port).transportDispatcher(dispatcher).build();
+  }
+
+  @Override
+  public Server createServer(ServerCreationContext context)
+  {
+    return new HttpNettyServerBuilder().filters(context.getFilterChain()).port(context.getPort()).
+        transportDispatcher(context.getTransportDispatcher()).build();
+  }
+
   protected TransportDispatcher getTransportDispatcher()
   {
     return new TransportDispatcherBuilder()

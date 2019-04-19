@@ -35,6 +35,8 @@ import org.eclipse.jetty.server.Server;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -43,8 +45,19 @@ import org.testng.annotations.Test;
 @SuppressWarnings("rawtypes")
 public class TestEarlyUpgrade
 {
+  private final boolean SSL_SESSION_RESUMPTION_ENABLED = true;
+
   private NioEventLoopGroup _eventLoopGroup;
   private ScheduledExecutorService _scheduler;
+  private final boolean _newPipelineEnabled;
+
+
+  @Factory(dataProvider = "pipelines")
+  public TestEarlyUpgrade(boolean newPipelineEnabled)
+  {
+    _newPipelineEnabled = newPipelineEnabled;
+  }
+
 
   @BeforeClass
   public void doBeforeClass()
@@ -67,7 +80,8 @@ public class TestEarlyUpgrade
   public void testEarlyUpgrade() throws Exception
   {
     ChannelPoolManagerFactoryImpl channelPoolManagerFactory =
-        new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler, true);
+        new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler,
+            SSL_SESSION_RESUMPTION_ENABLED, _newPipelineEnabled);
 
     ChannelPoolManagerKey key = new ChannelPoolManagerKeyBuilder()
       // min pool set to one in such a way a connection is opened before the request
@@ -102,5 +116,12 @@ public class TestEarlyUpgrade
 
     channelPoolManager.shutdown(futureCallback, () -> {}, () -> {}, 5);
     futureCallback.get(5, TimeUnit.SECONDS);
+  }
+
+  @DataProvider
+  public static Object[][] pipelines()
+  {
+    Object[][] pipelineCombinations = {{true},{false}};
+    return pipelineCombinations;
   }
 }

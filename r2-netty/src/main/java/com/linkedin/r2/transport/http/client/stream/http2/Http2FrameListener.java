@@ -14,10 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.r2.transport.http.client.stream.http2;
 
 import com.linkedin.data.ByteString;
@@ -29,15 +25,14 @@ import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.r2.message.stream.entitystream.Writer;
+import com.linkedin.r2.netty.handler.http2.Http2MessageDecoders;
 import com.linkedin.r2.transport.common.bridge.common.ResponseWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
-import com.linkedin.r2.transport.http.common.HttpConstants;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.TooLongFrameException;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2Error;
@@ -47,15 +42,13 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2LifecycleManager;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -120,37 +113,8 @@ class Http2FrameListener extends Http2EventAdapter
       return;
     }
 
-    final StreamResponseBuilder builder = new StreamResponseBuilder();
-    // Process HTTP/2 pseudo headers
-    if (headers.status() != null)
-    {
-      builder.setStatus(Integer.parseInt(headers.status().toString()));
-    }
-    if (headers.authority() != null)
-    {
-      builder.addHeaderValue(HttpHeaderNames.HOST.toString(), headers.authority().toString());
-    }
-
-    // Process other HTTP headers
-    for (Map.Entry<CharSequence, CharSequence> header : headers)
-    {
-      if (Http2Headers.PseudoHeaderName.isPseudoHeader(header.getKey()))
-      {
-        // Do no set HTTP/2 pseudo headers to response
-        continue;
-      }
-
-      final String key = header.getKey().toString();
-      final String value = header.getValue().toString();
-      if (key.equalsIgnoreCase(HttpConstants.RESPONSE_COOKIE_HEADER_NAME))
-      {
-        builder.addCookie(value);
-      }
-      else
-      {
-        builder.unsafeAddHeaderValue(key, value);
-      }
-    }
+    // Refactored duplicate code to new code pipeline.
+    final StreamResponseBuilder builder = Http2MessageDecoders.ResponseDecoder.buildStreamResponse(headers);
 
     // Gets async pool handle from stream properties
     TimeoutAsyncPoolHandle<?> timeoutHandle =
@@ -158,7 +122,7 @@ class Http2FrameListener extends Http2EventAdapter
 
     if (timeoutHandle == null)
     {
-      _lifecycleManager.onError(ctx, Http2Exception.connectionError(Http2Error.PROTOCOL_ERROR,
+      _lifecycleManager.onError(ctx, false, Http2Exception.connectionError(Http2Error.PROTOCOL_ERROR,
           "No channel pool handle is associated with this stream", streamId));
       return;
     }
@@ -177,7 +141,7 @@ class Http2FrameListener extends Http2EventAdapter
       final TimeoutBufferedWriter writer = new TimeoutBufferedWriter(ctx, streamId, _maxContentLength, timeoutHandle);
       if (_connection.stream(streamId).setProperty(_writerKey, writer) != null)
       {
-        _lifecycleManager.onError(ctx, Http2Exception.connectionError(Http2Error.PROTOCOL_ERROR,
+        _lifecycleManager.onError(ctx, false, Http2Exception.connectionError(Http2Error.PROTOCOL_ERROR,
             "Another writer has already been associated with current stream ID", streamId));
         return;
       }
@@ -279,7 +243,7 @@ class Http2FrameListener extends Http2EventAdapter
     private final TimeoutAsyncPoolHandle<?> _timeoutPoolHandle;
     private WriteHandle _wh;
     private boolean _lastChunkReceived;
-    private int _totalBytesWritten;
+    private long _totalBytesWritten;
     private final Queue<ByteString> _buffer;
     private volatile Throwable _failureBeforeInit;
 

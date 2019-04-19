@@ -14,10 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.r2.transport.http.client.stream.http2;
 
 import io.netty.channel.Channel;
@@ -172,7 +168,8 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
         ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
         ApplicationProtocolNames.HTTP_2,
         ApplicationProtocolNames.HTTP_1_1),
-      _sslParameters.getNeedClientAuth() ? ClientAuth.REQUIRE : ClientAuth.OPTIONAL);
+      _sslParameters.getNeedClientAuth() ? ClientAuth.REQUIRE : ClientAuth.OPTIONAL,
+        null, false); // protocols is currently passed as null. But this will be eventually filled in.
 
     Http2StreamCodec http2Codec = new Http2StreamCodecBuilder()
       .connection(connection)

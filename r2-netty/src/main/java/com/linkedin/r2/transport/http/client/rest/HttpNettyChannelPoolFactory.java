@@ -17,13 +17,13 @@
 package com.linkedin.r2.transport.http.client.rest;
 
 import com.linkedin.common.stats.NoopLongTracker;
+import com.linkedin.r2.netty.common.SslHandlerUtil;
+import com.linkedin.r2.netty.handler.common.SessionResumptionSslHandler;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.r2.transport.http.client.ExponentialBackOffRateLimiter;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolLifecycle;
-import com.linkedin.r2.transport.http.client.common.SessionResumptionSslHandler;
-import com.linkedin.r2.transport.http.util.SslHandlerUtil;
 import com.linkedin.util.clock.SystemClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;

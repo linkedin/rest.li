@@ -24,7 +24,7 @@ import com.linkedin.r2.transport.common.bridge.common.RequestWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
-import com.linkedin.r2.transport.http.client.common.SessionResumptionSslHandler;
+import com.linkedin.r2.netty.handler.common.SessionResumptionSslHandler;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelFuture;

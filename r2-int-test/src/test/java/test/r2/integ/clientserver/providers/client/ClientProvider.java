@@ -17,7 +17,11 @@
 package test.r2.integ.clientserver.providers.client;
 
 import com.linkedin.r2.filter.FilterChain;
+import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.transport.common.Client;
+import java.net.URI;
+import java.util.Map;
+
 
 /**
  * Interface to create a type of client
@@ -25,4 +29,16 @@ import com.linkedin.r2.transport.common.Client;
 public interface ClientProvider
 {
   Client createClient(FilterChain filters) throws Exception;
+
+  default Client createClient(FilterChain filters, Map<String, Object> clientProperties) throws Exception
+  {
+    return createClient(filters);
+  }
+
+  default URI createHttpURI(int port, URI relativeURI)
+  {
+    return Bootstrap.createHttpURI(port, relativeURI);
+  }
+
+  boolean getUsePipelineV2();
 }

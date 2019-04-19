@@ -29,8 +29,6 @@ public final class SslContextUtil
   public static final String KEY_STORE = SslContextUtil.class.getClassLoader().getResource("keystore").getPath();
   public static final String KEY_STORE_PASSWORD = "password";
 
-  private static final String ENDPOINT_IDENTIFICATION_ALGORITHM = "HTTPS";
-
   private static final String[] CIPHER_SUITE = {"TLS_RSA_WITH_AES_128_CBC_SHA256"};
   private static final String[] PROTOCOLS = {"TLSv1.2"};
 
@@ -59,7 +57,6 @@ public final class SslContextUtil
   public static SSLParameters getSSLParameters()
   {
     SSLParameters sslParameters = new SSLParameters();
-    sslParameters.setEndpointIdentificationAlgorithm(ENDPOINT_IDENTIFICATION_ALGORITHM);
     sslParameters.setCipherSuites(CIPHER_SUITE);
     sslParameters.setProtocols(PROTOCOLS);
     return sslParameters;

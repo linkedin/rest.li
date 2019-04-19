@@ -19,20 +19,45 @@ package test.r2.integ.clientserver.providers.server;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.transport.common.Server;
+import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
+import com.linkedin.r2.transport.http.server.HttpJettyServer;
+import com.linkedin.r2.transport.http.server.HttpServerFactory;
+
 
 public class Http2JettyServerProvider implements ServerProvider
 {
+  private final HttpJettyServer.ServletType _servletType;
   private final boolean _serverROS;
+
+  public Http2JettyServerProvider(HttpJettyServer.ServletType servletType, boolean serverROS)
+  {
+    _servletType = servletType;
+    _serverROS = serverROS;
+  }
 
   public Http2JettyServerProvider(boolean serverROS)
   {
-    _serverROS = serverROS;
+    this(HttpServerFactory.DEFAULT_SERVLET_TYPE, serverROS);
   }
 
   @Override
   public Server createServer(FilterChain filters, int port)
   {
     return Bootstrap.createH2cServer(port, filters, _serverROS);
+  }
+
+  @Override
+  public Server createServer(FilterChain filters, int port, TransportDispatcher dispatcher)
+  {
+    return Bootstrap.createH2cServer(port, filters, _serverROS, dispatcher);
+  }
+
+  @Override
+  public Server createServer(ServerCreationContext context)
+  {
+    return new HttpServerFactory(context.getFilterChain()).createH2cServer(context.getPort(), context.getContextPath(),
+        context.getThreadPoolSize(), context.getTransportDispatcher(), _servletType,
+        context.getServerTimeout(), _serverROS);
   }
 
   @Override

@@ -19,13 +19,24 @@ package test.r2.integ.clientserver.providers.server;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.transport.common.Server;
+import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
+import com.linkedin.r2.transport.http.server.HttpJettyServer;
+import com.linkedin.r2.transport.http.server.HttpServerFactory;
+
 
 public class Http1JettyServerProvider implements ServerProvider
 {
   private final boolean _serverROS;
+  private final HttpJettyServer.ServletType _servletType;
 
   public Http1JettyServerProvider(boolean serverROS)
   {
+    this(HttpServerFactory.DEFAULT_SERVLET_TYPE, serverROS);
+  }
+
+  public Http1JettyServerProvider(HttpJettyServer.ServletType servletType, boolean serverROS)
+  {
+    _servletType = servletType;
     _serverROS = serverROS;
   }
 
@@ -33,6 +44,20 @@ public class Http1JettyServerProvider implements ServerProvider
   public Server createServer(FilterChain filters, int port)
   {
     return Bootstrap.createHttpServer(port, filters, _serverROS);
+  }
+
+  @Override
+  public Server createServer(FilterChain filters, int port, TransportDispatcher dispatcher)
+  {
+    return Bootstrap.createHttpServer(port, filters, _serverROS, dispatcher);
+  }
+
+  @Override
+  public Server createServer(ServerCreationContext context)
+  {
+    return new HttpServerFactory(context.getFilterChain()).createServer(context.getPort(), context.getContextPath(),
+        context.getThreadPoolSize(), context.getTransportDispatcher(), _servletType,
+        context.getServerTimeout(), _serverROS);
   }
 
   @Override
