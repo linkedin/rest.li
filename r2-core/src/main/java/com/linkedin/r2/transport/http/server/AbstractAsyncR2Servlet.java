@@ -60,7 +60,7 @@ public abstract class AbstractAsyncR2Servlet extends AbstractR2Servlet
   public void service(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException,
                                                                                                  IOException
   {
-    RequestContext requestContext = readRequestContext(req);
+    RequestContext requestContext = ServletHelper.readRequestContext(req);
 
     RestRequest restRequest;
 

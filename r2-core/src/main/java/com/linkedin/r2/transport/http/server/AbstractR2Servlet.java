@@ -18,8 +18,21 @@
 package com.linkedin.r2.transport.http.server;
 
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import com.linkedin.data.ByteString;
-import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -31,22 +44,9 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.common.HttpConstants;
-import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -74,7 +74,7 @@ public abstract class AbstractR2Servlet extends HttpServlet
   protected void service(final HttpServletRequest req, final HttpServletResponse resp)
           throws ServletException, IOException
   {
-    RequestContext requestContext = readRequestContext(req);
+    RequestContext requestContext = ServletHelper.readRequestContext(req);
 
     RestRequest restRequest;
 
@@ -227,39 +227,6 @@ public abstract class AbstractR2Servlet extends HttpServlet
 
     }
     return rb.build();
-  }
-
-  /**
-   * Read HTTP-specific properties from the servlet request into the request context. We'll read
-   * properties that many clients might be interested in, such as the caller's IP address.
-   * @param req The HTTP servlet request
-   * @return The request context
-   */
-  protected RequestContext readRequestContext(HttpServletRequest req)
-  {
-    RequestContext context = new RequestContext();
-    context.putLocalAttr(R2Constants.REMOTE_ADDR, req.getRemoteAddr());
-    context.putLocalAttr(R2Constants.REMOTE_PORT, req.getRemotePort());
-
-    HttpProtocolVersion protocol = HttpProtocolVersion.parse(req.getProtocol());
-    context.putLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION, protocol);
-
-    if (req.isSecure())
-    {
-      // attribute name documented in ServletRequest API:
-      // http://docs.oracle.com/javaee/6/api/javax/servlet/ServletRequest.html#getAttribute%28java.lang.String%29
-      Object[] certs = (Object[]) req.getAttribute("javax.servlet.request.X509Certificate");
-      if (certs != null && certs.length > 0)
-      {
-        context.putLocalAttr(R2Constants.CLIENT_CERT, certs[0]);
-      }
-      context.putLocalAttr(R2Constants.IS_SECURE, true);
-    }
-    else
-    {
-      context.putLocalAttr(R2Constants.IS_SECURE, false);
-    }
-    return context;
   }
 
   /**

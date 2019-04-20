@@ -18,12 +18,12 @@ package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionNotTrustedException;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.AttributeKey;
-
 
 /**
  * In the case the user requires the Server verification, we extract the
@@ -37,8 +37,7 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
 
   public static final String PIPELINE_CERTIFICATE_HANDLER = "CertificateHandler";
 
-  public static final AttributeKey<SslSessionValidator> REQUESTED_SSL_SESSION_VALIDATOR
-      = AttributeKey.valueOf("requestedSslSessionValidator");
+  public static final AttributeKey<SslSessionValidator> REQUESTED_SSL_SESSION_VALIDATOR = AttributeKey.valueOf("requestedSslSessionValidator");
 
   public CertificateHandler(SslHandler sslHandler)
   {
@@ -47,14 +46,21 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
   }
 
   @Override
-  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception
+  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)
   {
     _sslHandler.handshakeFuture().addListener(future -> {
+      // if the sslHandler (before this one), wasn't able to complete handshake, there is no reason to run the
+      // SSLValidation, nor send anything on the channel
+      if (!future.isSuccess())
+      {
+        return;
+      }
+
       SslSessionValidator sslSessionValidator = ctx.channel().attr(REQUESTED_SSL_SESSION_VALIDATOR).getAndSet(null);
 
       // If cert is empty, the check is disabled and not needed by the user, therefore don't check.
       // Also if sslSessionValidator is the same as the previous one we cached, skipping the check.
-      if (future.isSuccess() && sslSessionValidator != null && !sslSessionValidator.equals(_cachedSessionValidator))
+      if (sslSessionValidator != null && !sslSessionValidator.equals(_cachedSessionValidator))
       {
         _cachedSessionValidator = sslSessionValidator;
         try
@@ -72,7 +78,7 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
   }
 
   @Override
-  public void flush(ChannelHandlerContext ctx) throws Exception
+  public void flush(ChannelHandlerContext ctx)
   {
     _sslHandler.handshakeFuture().addListener(future -> ctx.flush());
   }

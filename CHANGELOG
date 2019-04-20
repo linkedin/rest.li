@@ -1,5 +1,12 @@
+27.0.17
+-------
+
 27.0.16
 -------
+(RB=1639026)
+Fixing error in CertificateHandler which was sending the message even if the handshake was failing, hiding the real SSL error
+Adding cipher suite information to the server side's context
+
 (RB=1642129)
 Update ErrorResponse schema for error standardization
 

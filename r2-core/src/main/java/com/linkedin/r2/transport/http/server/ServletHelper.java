@@ -16,10 +16,20 @@
 
 package com.linkedin.r2.transport.http.server;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Enumeration;
+import java.util.Map;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.filter.R2Constants;
-import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Messages;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestStatus;
 import com.linkedin.r2.message.stream.StreamException;
@@ -33,17 +43,9 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Enumeration;
-import java.util.Map;
 
 /**
  * This class holds the static helper methods for reading request headers, writing response headers, etc.
@@ -53,6 +55,9 @@ import java.util.Map;
 /* package private */class ServletHelper
 {
   private static final Logger LOG = LoggerFactory.getLogger(ServletHelper.class.getName());
+
+  private static final String JAVAX_SERVLET_REQUEST_CIPHER_SUITE_ATTR = "javax.servlet.request.cipher_suite";
+  private static final String JAVAX_SERVLET_REQUEST_X509CERTIFICATE_ATTR = "javax.servlet.request.X509Certificate";
 
   private ServletHelper() {}
 
@@ -173,12 +178,13 @@ import java.util.Map;
     {
       // attribute name documented in ServletRequest API:
       // http://docs.oracle.com/javaee/6/api/javax/servlet/ServletRequest.html#getAttribute%28java.lang.String%29
-      Object[] certs = (Object[]) req.getAttribute("javax.servlet.request.X509Certificate");
+      Object[] certs = (Object[]) req.getAttribute(JAVAX_SERVLET_REQUEST_X509CERTIFICATE_ATTR);
       if (certs != null && certs.length > 0)
       {
         context.putLocalAttr(R2Constants.CLIENT_CERT, certs[0]);
       }
       context.putLocalAttr(R2Constants.IS_SECURE, true);
+      context.putLocalAttr(R2Constants.CIPHER_SUITE, req.getAttribute(JAVAX_SERVLET_REQUEST_CIPHER_SUITE_ATTR));
     }
     else
     {
