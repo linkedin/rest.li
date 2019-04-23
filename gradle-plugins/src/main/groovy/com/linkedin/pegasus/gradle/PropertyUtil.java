@@ -1,6 +1,5 @@
 package com.linkedin.pegasus.gradle;
 
-
 import org.gradle.api.Project;
 
 import static com.linkedin.pegasus.gradle.PegasusPlugin.SNAPSHOT_COMPAT_REQUIREMENT;

@@ -906,7 +906,7 @@ class PegasusPlugin implements Plugin<Project>
 
   // Compute the directory name that will contain a type generated code of an input source set.
   // e.g. genType may be 'DataTemplate' or 'Rest'
-  private static String getGeneratedDirPath(Project project, SourceSet sourceSet, String genType)
+  public static String getGeneratedDirPath(Project project, SourceSet sourceSet, String genType)
   {
     final String override = getOverridePath(project, sourceSet, 'overrideGeneratedDir')
     final String sourceSetName = getGeneratedSourceSetName(sourceSet, genType)
