@@ -126,6 +126,7 @@ public class ParSeqRestClientTest
   /**
    * Request that should fail, using promise
    */
+  @SuppressWarnings("deprecation")
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
   public void testRestLiResponseExceptionPromise(ProtocolVersionOption versionOption,
                                                  ProtocolVersion protocolVersion,
@@ -155,6 +156,7 @@ public class ParSeqRestClientTest
   /**
    * Request that should fail, using task
    */
+  @SuppressWarnings("deprecation")
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocolVersions")
   public void testRestLiResponseExceptionTask(ProtocolVersionOption versionOption,
                                               ProtocolVersion protocolVersion,
@@ -205,6 +207,7 @@ public class ParSeqRestClientTest
   /**
    * @return a mock ParSeqRestClient that gives an error
    */
+  @SuppressWarnings("deprecation")
   private ParSeqRestClient mockClient(final String errKey,
                                       final String errValue,
                                       final String errMsg,

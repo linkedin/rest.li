@@ -1,5 +1,8 @@
 27.0.16
 -------
+(RB=1642129)
+Update ErrorResponse schema for error standardization
+
 (RB=1641262)
 Migrate Pegasus tests from Groovy to Java.
 

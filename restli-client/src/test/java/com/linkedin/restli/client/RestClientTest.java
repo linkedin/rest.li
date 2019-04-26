@@ -70,6 +70,7 @@ public class RestClientTest
     DEFAULT_REQUEST_CONTEXT.putLocalAttr("__attr1", "1");
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testEmptyErrorResponse()
   {
@@ -312,6 +313,7 @@ public class RestClientTest
     return result;
   }
 
+  @SuppressWarnings("deprecation")
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "sendRequestAndGetResponseOptions")
   public void testRestLiResponseFuture(SendRequestOption sendRequestOption,
                                        GetResponseOption getResponseOption,
@@ -349,6 +351,7 @@ public class RestClientTest
     Assert.assertEquals(ERR_MSG, e.getMessage());
   }
 
+  @SuppressWarnings("deprecation")
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "sendRequestAndGetResponseOptions")
   public void testRestLiResponseExceptionFuture(SendRequestOption sendRequestOption,
                                                 GetResponseOption getResponseOption,
@@ -390,6 +393,7 @@ public class RestClientTest
     }
   }
 
+  @SuppressWarnings("deprecation")
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "sendRequestAndNoThrowGetResponseOptions")
   public void testRestLiResponseExceptionFutureNoThrow(SendRequestOption sendRequestOption,
                                                        GetResponseOption getResponseOption,
@@ -429,6 +433,7 @@ public class RestClientTest
 
   }
 
+  @SuppressWarnings("deprecation")
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "sendRequestOptions")
   public void testRestLiResponseExceptionCallback(SendRequestOption option,
                                                   TimeoutOption timeoutOption,
@@ -778,6 +783,7 @@ public class RestClientTest
     }
   }
 
+  @SuppressWarnings("deprecation")
   private RestClient mockClient(String errKey,
                                 String errValue,
                                 String errMsg,

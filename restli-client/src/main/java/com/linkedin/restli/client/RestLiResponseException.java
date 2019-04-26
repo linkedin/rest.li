@@ -82,11 +82,13 @@ public class RestLiResponseException extends RestException
     return _status;
   }
 
+  @Deprecated
   public boolean hasServiceErrorCode()
   {
     return _errorResponse.hasServiceErrorCode();
   }
 
+  @Deprecated
   public int getServiceErrorCode()
   {
     return _errorResponse.getServiceErrorCode(GetMode.NULL);
@@ -145,6 +147,7 @@ public class RestLiResponseException extends RestException
     return HeaderUtil.getErrorResponseHeaderValue(response.getHeaders());
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public String toString()
   {
@@ -159,6 +162,7 @@ public class RestLiResponseException extends RestException
     {
       builder.append(", serviceErrorMessage: ").append(getServiceErrorMessage());
     }
+    // TODO: remove this and add logic for "code" field (task: Client side error handling changes)
     if (hasServiceErrorCode())
     {
       builder.append(", serviceErrorCode: ").append(getServiceErrorCode());

@@ -7,32 +7,57 @@
     {
       "name": "status",
       "type": "int",
-      "optional": true,
-      "doc": "The HTTP status code"
+      "doc": "The HTTP status code.",
+      "optional": true
     },
     {
       "name": "serviceErrorCode",
       "type": "int",
+      "doc": "A service-specific error code.",
       "optional": true,
-      "doc": "An service-specific error code (documented in prose)"
+      "deprecated": "Deprecated - use the code field instead."
+    },
+    {
+      "name": "code",
+      "type": "string",
+      "doc": "The canonical error code, e.g. for '400 Bad Request' it can be 'INPUT_VALIDATION_FAILED'. Only predefined codes should be used.",
+      "optional": true
     },
     {
       "name": "message",
       "type": "string",
-      "optional": true,
-      "doc": "A human-readable explanation of the error"
+      "doc": "A human-readable explanation of the error.",
+      "optional": true
+    },
+    {
+      "name": "docUrl",
+      "type": "string",
+      "doc": "URL to a page that describes this particular error in more detail.",
+      "optional": true
+    },
+    {
+      "name": "requestId",
+      "type": "string",
+      "doc": "The unique identifier that would identify this error. For example, it can be used to identify requests in the service's logs.",
+      "optional": true
     },
     {
       "name": "exceptionClass",
       "type": "string",
-      "optional": true,
-      "doc": "The FQCN of the exception thrown by the server (included the case of a server fault)"
+      "doc": "The FQCN of the exception thrown by the server.",
+      "optional": true
     },
     {
       "name": "stackTrace",
       "type": "string",
-      "optional": true,
-      "doc": "The full (??) stack trace (included the case of a server fault)"
+      "doc": "The full stack trace of the exception thrown by the server.",
+      "optional": true
+    },
+    {
+      "name": "errorDetailType",
+      "type": "string",
+      "doc": "The type of the error detail model, e.g. com.example.api.BadRequest. Clients can use this field to identify the actual error detail schema.",
+      "optional": true
     },
     {
       "name": "errorDetails",
@@ -42,6 +67,7 @@
         "name": "ErrorDetails",
         "fields": []
       },
+      "doc": "This field should be used for communicating extra error details to clients.",
       "optional": true
     }
   ]

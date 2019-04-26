@@ -64,6 +64,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     super.shutdown();
   }
 
+  @SuppressWarnings("deprecation")
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public void testException(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
@@ -120,6 +121,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     Assert.assertTrue(exception.getServiceErrorStackTrace().contains("at com.linkedin.restli.examples.greetings.server.ExceptionsResource.get("));
   }
 
+  @SuppressWarnings("deprecation")
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public void testCreateError(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws Exception
   {
@@ -181,6 +183,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
                       "stacktrace mismatch:" + exception.getStackTrace());
   }
 
+  @SuppressWarnings("deprecation")
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   public void testBatchCreateErrors(RestliRequestOptions requestOptions) throws Exception
   {
@@ -219,6 +222,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
                       "stacktrace mismatch:" + error.getStackTrace());
   }
 
+  @SuppressWarnings("deprecation")
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   public void testBatchCreateIdErrors(RestliRequestOptions requestOptions) throws Exception
   {

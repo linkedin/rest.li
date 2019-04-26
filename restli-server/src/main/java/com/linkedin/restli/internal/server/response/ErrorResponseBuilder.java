@@ -74,6 +74,7 @@ public final class ErrorResponseBuilder
     return buildErrorResponse(result, result.hasOverridingErrorResponseFormat() ? result.getOverridingFormat() : _errorResponseFormat);
   }
 
+  @SuppressWarnings("deprecation")
   private ErrorResponse buildErrorResponse(RestLiServiceException result, ErrorResponseFormat errorResponseFormat)
   {
     ErrorResponse er = new ErrorResponse();
@@ -86,6 +87,7 @@ public final class ErrorResponseBuilder
     {
       er.setMessage(result.getMessage());
     }
+    // TODO: remove this and add logic for "code" field (task: Server side resource integration)
     if (errorResponseFormat.showServiceErrorCode() && result.hasServiceErrorCode())
     {
       er.setServiceErrorCode(result.getServiceErrorCode());

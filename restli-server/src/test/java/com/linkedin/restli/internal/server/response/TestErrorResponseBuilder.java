@@ -91,6 +91,7 @@ public class TestErrorResponseBuilder
     return mockDescriptor;
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testExceptionClass()
   {
@@ -108,6 +109,7 @@ public class TestErrorResponseBuilder
     Assert.assertFalse(errorResponse.hasStackTrace());
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testOverride()
   {
