@@ -18,6 +18,7 @@ package com.linkedin.restli.internal.server.util;
 
 
 import com.linkedin.data.ByteString;
+import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -36,6 +37,8 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.DataMapConverter;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.server.RoutingException;
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.activation.MimeTypeParseException;
@@ -408,4 +411,45 @@ public class DataMapUtils
     }
   }
 
+  /**
+   * Remove {@link Data#NULL} from the input DataMap.
+   * @param dataMap input data map which may contain {@link Data#NULL} values.
+   */
+  public static void removeNulls(DataMap dataMap) {
+    try
+    {
+      Data.traverse(dataMap, new NullRemover());
+    }
+    catch (IOException ioe)
+    {
+      throw new RuntimeException(ioe);
+    }
+  }
+
+  /**
+   * Data TraverseCallback to remove Data.NULL from data map.
+   */
+  static class NullRemover implements Data.TraverseCallback
+  {
+    @Override
+    public void startMap(DataMap dataMap)
+    {
+      // DataMap.values() and DataMap.entrySet() are Unmodifiable collections and hence,
+      // we need to add to a list to delete
+      List<String> emptyKeys = new ArrayList<>();
+      dataMap.forEach((key, value) -> {
+        if (value == Data.NULL)
+        {
+          emptyKeys.add(key);
+        }
+      });
+      emptyKeys.forEach(dataMap::remove);
+    }
+
+    @Override
+    public void startList(DataList dataList)
+    {
+      dataList.removeIf(value -> value.equals(Data.NULL));
+    }
+  }
 }

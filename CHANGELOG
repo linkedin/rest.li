@@ -1,5 +1,10 @@
+27.0.19
+-------
+
 27.0.18
 -------
+(RB=1647191)
+Add removeNulls utility in DataMapUtils.
 
 27.0.17
 -------
