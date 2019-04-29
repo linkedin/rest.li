@@ -3,6 +3,9 @@
 (RB=1648826)
 Fix ChangedFileReportTask property annotations.
 
+(RB=1648828)
+Migrate CheckIdlTask from Groovy to Java.
+
 27.0.18
 -------
 (RB=1647191)
