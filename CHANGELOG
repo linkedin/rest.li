@@ -27,6 +27,9 @@ Migrate GenerateRestModelTask from Groovy to Java.
 (RB=1648841)
 Migrate PublishRestModelTask from Groovy to Java.
 
+(RB=1648856)
+Migrate TranslateSchemasTask from Groovy to Java.
+
 27.0.18
 -------
 (RB=1647191)
