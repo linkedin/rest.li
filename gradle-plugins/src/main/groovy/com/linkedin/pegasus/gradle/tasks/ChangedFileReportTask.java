@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.incremental.IncrementalTaskInputs;
@@ -15,22 +16,17 @@ import org.gradle.api.tasks.incremental.IncrementalTaskInputs;
 
 public class ChangedFileReportTask extends DefaultTask
 {
-  @InputFiles
-  @SkipWhenEmpty
-  FileCollection idlFiles = getProject().files();
+  private final Collection<String> _needCheckinFiles = new ArrayList<>();
 
-  @InputFiles
-  @SkipWhenEmpty
-  FileCollection snapshotFiles = getProject().files();
-
-  Collection<String> needCheckinFiles = new ArrayList<>();
+  private FileCollection _idlFiles = getProject().files();
+  private FileCollection _snapshotFiles = getProject().files();
 
   @TaskAction
   public void checkFilesForChanges(IncrementalTaskInputs inputs)
   {
     getLogger().lifecycle("Checking idl and snapshot files for changes...");
-    getLogger().info("idlFiles: " + idlFiles.getAsPath());
-    getLogger().info("snapshotFiles: " + snapshotFiles.getAsPath());
+    getLogger().info("idlFiles: " + _idlFiles.getAsPath());
+    getLogger().info("snapshotFiles: " + _snapshotFiles.getAsPath());
 
     Set<String> filesRemoved = new HashSet<>();
     Set<String> filesAdded = new HashSet<>();
@@ -60,7 +56,7 @@ public class ChangedFileReportTask extends DefaultTask
       if (!filesRemoved.isEmpty())
       {
         String files = joinByComma(filesRemoved);
-        needCheckinFiles.add(files);
+        _needCheckinFiles.add(files);
         getLogger().lifecycle(
             "The following files have been removed, be sure to remove them from source control: {}", files);
       }
@@ -68,14 +64,14 @@ public class ChangedFileReportTask extends DefaultTask
       if (!filesAdded.isEmpty())
       {
         String files = joinByComma(filesAdded);
-        needCheckinFiles.add(files);
+        _needCheckinFiles.add(files);
         getLogger().lifecycle("The following files have been added, be sure to add them to source control: {}", files);
       }
 
       if (!filesChanged.isEmpty())
       {
         String files = joinByComma(filesChanged);
-        needCheckinFiles.add(files);
+        _needCheckinFiles.add(files);
         getLogger().lifecycle(
             "The following files have been changed, be sure to commit the changes to source control: {}", files);
       }
@@ -87,28 +83,33 @@ public class ChangedFileReportTask extends DefaultTask
     return files.stream().collect(Collectors.joining(", "));
   }
 
+  @InputFiles
+  @SkipWhenEmpty
   public FileCollection getSnapshotFiles()
   {
-    return snapshotFiles;
+    return _snapshotFiles;
   }
 
   public void setSnapshotFiles(FileCollection snapshotFiles)
   {
-    this.snapshotFiles = snapshotFiles;
+    _snapshotFiles = snapshotFiles;
   }
 
+  @InputFiles
+  @SkipWhenEmpty
   public FileCollection getIdlFiles()
   {
-    return idlFiles;
+    return _idlFiles;
   }
 
   public void setIdlFiles(FileCollection idlFiles)
   {
-    this.idlFiles = idlFiles;
+    _idlFiles = idlFiles;
   }
 
+  @Internal
   public Collection<String> getNeedCheckinFiles()
   {
-    return needCheckinFiles;
+    return _needCheckinFiles;
   }
 }

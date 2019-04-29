@@ -1,5 +1,7 @@
 27.0.19
 -------
+(RB=1648826)
+Fix ChangedFileReportTask property annotations.
 
 27.0.18
 -------
