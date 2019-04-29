@@ -1,0 +1,311 @@
+package com.linkedin.pegasus.gradle.tasks;
+
+import com.linkedin.pegasus.gradle.PegasusOptions;
+import com.linkedin.pegasus.gradle.PegasusPlugin;
+import com.linkedin.pegasus.gradle.SharedFileUtils;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.CacheableTask;
+import org.gradle.api.tasks.Classpath;
+import org.gradle.api.tasks.InputDirectory;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
+import org.gradle.api.tasks.SkipWhenEmpty;
+import org.gradle.api.tasks.TaskAction;
+
+
+/**
+ * This task will generate the rest client source files.
+ *
+ * As pre-requisite of this task,, add these lines to your build.gradle:
+ * <pre>
+ * apply plugin: 'li-pegasus2'
+ * </pre>
+ *
+ * Optionally, you can specify certain resource classes to be generated idl
+ * <pre>
+ * pegasus.<sourceSet>.clientOptions.addClientItem('<restModelFilePath>', '<defaultPackage>', <keepDataTemplates>)
+ * </pre>
+ * keepDataTemplates is a boolean that isn't used right now, but might be implemented in the future.
+ */
+@CacheableTask
+public class GenerateRestClientTask extends DefaultTask
+{
+  private File _inputDir;
+  private FileCollection _resolverPath;
+  private FileCollection _runtimeClasspath;
+  private FileCollection _codegenClasspath;
+  private File _destinationDir;
+  private boolean _restli2FormatSuppressed;
+  private boolean _restli1BuildersDeprecated = true;
+
+  @TaskAction
+  public void generate()
+  {
+    PegasusOptions.ClientOptions pegasusClientOptions = new PegasusOptions.ClientOptions();
+
+    // idl input could include rest model jar files
+    for (File input : getProject().files(_inputDir))
+    {
+      if (input.isDirectory())
+      {
+        for (File f : SharedFileUtils.getSuffixedFiles(getProject(), input, PegasusPlugin.IDL_FILE_SUFFIX))
+        {
+          if (!pegasusClientOptions.hasRestModelFileName(f.getName()))
+          {
+            pegasusClientOptions.addClientItem(f.getName(), "", false);
+            getProject().getLogger().lifecycle("Add interface file: {}", f.getPath());
+          }
+        }
+      }
+    }
+
+    if (pegasusClientOptions.getClientItems().isEmpty())
+    {
+      return;
+    }
+
+    getProject().getLogger().info("Generating REST client builders ...");
+
+    String resolverPathStr = _resolverPath.getAsPath();
+    _destinationDir.mkdirs();
+
+    Map<String, List<String>> version1Files = new HashMap<>();
+    Map<String, List<String>> version2Files = new HashMap<>();
+
+    getProject().getLogger().lifecycle("Destination directory: {}", _destinationDir);
+
+    for (PegasusOptions.ClientItem clientItem : pegasusClientOptions.getClientItems())
+    {
+      getProject().getLogger().lifecycle("Generating rest client source files for: {}",
+          clientItem.restModelFileName);
+
+      String defaultPackage;
+      if (clientItem.defaultPackage.equals("") && getProject().hasProperty("idlDefaultPackage"))
+      {
+        defaultPackage = (String) getProject().property("idlDefaultPackage");
+      }
+      else
+      {
+        defaultPackage = clientItem.defaultPackage;
+      }
+
+
+      String restModelFilePath = _inputDir.toString() + File.separatorChar + clientItem.restModelFileName;
+
+      version1Files.computeIfAbsent(defaultPackage, key -> new ArrayList<>())
+          .add(restModelFilePath);
+
+      if (!_restli2FormatSuppressed)
+      {
+        version2Files.computeIfAbsent(defaultPackage, key -> new ArrayList<>())
+            .add(restModelFilePath);
+      }
+    }
+
+    String deprecatedVersion = _restli1BuildersDeprecated ? "2.0.0" : null;
+
+    version1Files.forEach((defaultPackage, files) ->
+      getProject().javaexec(javaExecSpec ->
+      {
+        javaExecSpec.setClasspath(_runtimeClasspath.plus(_codegenClasspath));
+        javaExecSpec.setMain("com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator");
+        javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr); //RestRequestBuilderGenerator.run(resolverPath)
+        javaExecSpec.jvmArgs("-Dgenerator.default.package=" + defaultPackage); //RestRequestBuilderGenerator.run(defaultPackage)
+        javaExecSpec.jvmArgs("-Dgenerator.generate.imported=false"); //RestRequestBuilderGenerator.run(generateImported)
+        javaExecSpec.jvmArgs("-Dgenerator.rest.generate.datatemplates=false"); //RestRequestBuilderGenerator.run(generateDataTemplates)
+        javaExecSpec.jvmArgs("-Dgenerator.rest.generate.version=1.0.0"); //RestRequestBuilderGenerator.run(version)
+        javaExecSpec.jvmArgs("-Dgenerator.rest.generate.deprecated.version=" + deprecatedVersion); //RestRequestBuilderGenerator.run(deprecatedByVersion)
+        javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
+        javaExecSpec.args(_destinationDir.getAbsolutePath());
+        javaExecSpec.args(files);
+      }).assertNormalExitValue()
+    );
+
+    version2Files.forEach((defaultPackage, files) ->
+      getProject().javaexec(javaExecSpec ->
+      {
+        javaExecSpec.setClasspath(_runtimeClasspath.plus(_codegenClasspath));
+        javaExecSpec.setMain("com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator");
+        javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr); //RestRequestBuilderGenerator.run(resolverPath)
+        javaExecSpec.jvmArgs("-Dgenerator.default.package=" + defaultPackage); //RestRequestBuilderGenerator.run(defaultPackage)
+        javaExecSpec.jvmArgs("-Dgenerator.generate.imported=false"); //RestRequestBuilderGenerator.run(generateImported)
+        javaExecSpec.jvmArgs("-Dgenerator.rest.generate.datatemplates=false"); //RestRequestBuilderGenerator.run(generateDataTemplates)
+        javaExecSpec.jvmArgs("-Dgenerator.rest.generate.version=2.0.0"); //RestRequestBuilderGenerator.run(version)
+        javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
+        javaExecSpec.args(_destinationDir.getAbsolutePath());
+        javaExecSpec.args(files);
+      }).assertNormalExitValue()
+    );
+  }
+
+  @InputDirectory
+  @SkipWhenEmpty
+  @PathSensitive(PathSensitivity.RELATIVE)
+  public File getInputDir()
+  {
+    return _inputDir;
+  }
+
+  public void setInputDir(File inputDir)
+  {
+    _inputDir = inputDir;
+  }
+
+  @Classpath
+  public FileCollection getResolverPath()
+  {
+    return _resolverPath;
+  }
+
+  public void setResolverPath(FileCollection resolverPath)
+  {
+    _resolverPath = resolverPath;
+  }
+
+  @Classpath
+  public FileCollection getRuntimeClasspath()
+  {
+    return _runtimeClasspath;
+  }
+
+  public void setRuntimeClasspath(FileCollection runtimeClasspath)
+  {
+    _runtimeClasspath = runtimeClasspath;
+  }
+
+  @Classpath
+  public FileCollection getCodegenClasspath()
+  {
+    return _codegenClasspath;
+  }
+
+  public void setCodegenClasspath(FileCollection codegenClasspath)
+  {
+    _codegenClasspath = codegenClasspath;
+  }
+
+  @OutputDirectory
+  public File getDestinationDir()
+  {
+    return _destinationDir;
+  }
+
+  public void setDestinationDir(File destinationDir)
+  {
+    _destinationDir = destinationDir;
+  }
+
+  /**
+   * This method is kept for backwards compatibility.
+   * <p>
+   * A Groovy property with this name was exposed, which leads to this lengthy
+   * getter name. In Java, boolean fields are named without the "is" prefix.
+   *
+   * @deprecated use {@link #isRestli2FormatSuppressed()} instead
+   */
+  @Deprecated
+  public boolean getIsRestli2FormatSuppressed()
+  {
+    return isRestli2FormatSuppressed();
+  }
+
+  /**
+   * This method is kept for backwards compatibility.
+   * <p>
+   * A Groovy property with this name was exposed, which leads to this lengthy
+   * getter name. In Java, boolean fields are named without the "is" prefix.
+   *
+   * @deprecated use {@link #isRestli2FormatSuppressed()} instead
+   */
+  @Deprecated
+  public boolean isIsRestli2FormatSuppressed()
+  {
+    return isRestli2FormatSuppressed();
+  }
+
+  @Internal
+  public boolean isRestli2FormatSuppressed()
+  {
+    return _restli2FormatSuppressed;
+  }
+
+  /**
+   * This method is kept for backwards compatibility.
+   * <p>
+   * A Groovy property with this name was exposed, which leads to this lengthy
+   * setter name. In Java, boolean fields are named without the "is" prefix.
+   *
+   * @deprecated use {@link #setRestli2FormatSuppressed(boolean)} instead
+   */
+  @Deprecated
+  public void setIsRestli2FormatSuppressed(boolean restli2FormatSuppressed)
+  {
+    setRestli2FormatSuppressed(restli2FormatSuppressed);
+  }
+
+  public void setRestli2FormatSuppressed(boolean restli2FormatSuppressed)
+  {
+    _restli2FormatSuppressed = restli2FormatSuppressed;
+  }
+
+  /**
+   * This method is kept for backwards compatibility.
+   * <p>
+   * A Groovy property with this name was exposed, which leads to this lengthy
+   * getter name. In Java, boolean fields are named without the "is" prefix.
+   *
+   * @deprecated use {@link #isRestli1BuildersDeprecated()} instead
+   */
+  @Deprecated
+  public boolean get_isRestli1BuildersDeprecated()
+  {
+    return isRestli1BuildersDeprecated();
+  }
+
+  /**
+   * This method is kept for backwards compatibility.
+   * <p>
+   * A Groovy property with this name was exposed, which leads to this lengthy
+   * getter name. In Java, boolean fields are named without the "is" prefix.
+   *
+   * @deprecated use {@link #isRestli1BuildersDeprecated()} instead
+   */
+  @Deprecated
+  public boolean is_isRestli1BuildersDeprecated()
+  {
+    return isRestli1BuildersDeprecated();
+  }
+
+  @Internal
+  public boolean isRestli1BuildersDeprecated()
+  {
+    return _restli1BuildersDeprecated;
+  }
+
+  /**
+   * This method is kept for backwards compatibility.
+   * <p>
+   * A Groovy property with this name was exposed, which leads to this lengthy
+   * setter name. In Java, boolean fields are named without the "is" prefix.
+   *
+   * @deprecated use {@link #setRestli1BuildersDeprecated(boolean)} instead
+   */
+  @Deprecated
+  public void set_isRestli1BuildersDeprecated(boolean restli1BuildersDeprecated)
+  {
+    setRestli1BuildersDeprecated(restli1BuildersDeprecated);
+  }
+
+  public void setRestli1BuildersDeprecated(boolean restli1BuildersDeprecated)
+  {
+    _restli1BuildersDeprecated = restli1BuildersDeprecated;
+  }
+}
