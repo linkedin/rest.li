@@ -21,6 +21,9 @@ Migrate GenerateDataTemplateTask from Groovy to Java.
 (RB=1648838)
 Migrate GenerateRestClientTask from Groovy to Java.
 
+(RB=1648840)
+Migrate GenerateRestModelTask from Groovy to Java.
+
 27.0.18
 -------
 (RB=1647191)
