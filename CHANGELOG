@@ -12,6 +12,9 @@ Migrate CheckRestModel task from Groovy to Java.
 (RB=1648833)
 Migrate CheckSnapshotTask from Groovy to Java.
 
+(RB=1648834)
+Migrate GenerateAvroSchemaTask from Groovy to Java.
+
 27.0.18
 -------
 (RB=1647191)
