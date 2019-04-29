@@ -15,6 +15,9 @@ Migrate CheckSnapshotTask from Groovy to Java.
 (RB=1648834)
 Migrate GenerateAvroSchemaTask from Groovy to Java.
 
+(RB=1648835)
+Migrate GenerateDataTemplateTask from Groovy to Java.
+
 27.0.18
 -------
 (RB=1647191)
