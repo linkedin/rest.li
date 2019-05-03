@@ -281,13 +281,15 @@ public class JacksonLICORDataCodec extends AbstractJacksonDataCodec
 
     @Override
     public void emptyList() throws IOException {
-      startList(null);
+      _generator.writeStartArray();
+      _generator.writeNumber(LIST_ORDINAL);
       endList();
     }
 
     @Override
     public void emptyMap() throws IOException {
-      startMap(null);
+      _generator.writeStartArray();
+      _generator.writeNumber(MAP_ORDINAL);
       endMap();
     }
 

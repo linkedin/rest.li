@@ -1,5 +1,10 @@
+27.0.18
+-------
+
 27.0.17
 -------
+(RB=1653521)
+Don't invoke startMap and startList with null values since the normalization code in pemberly-api is overriding these methods and craps out with NPE on encountering a null parameter
 
 27.0.16
 -------
