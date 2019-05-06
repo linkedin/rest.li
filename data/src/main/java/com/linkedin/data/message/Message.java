@@ -17,6 +17,7 @@
 package com.linkedin.data.message;
 
 import com.linkedin.data.element.DataElement;
+import com.linkedin.data.template.RecordTemplate;
 import java.io.IOException;
 import java.util.Formatter;
 
@@ -31,23 +32,33 @@ public class Message
 {
   public static final String MESSAGE_FIELD_SEPARATOR = " :: ";
 
+  private static final String ERROR = "ERROR";
+  private static final String INFO = "INFO";
+  private static final String DETAILS = "DETAILS";
+
   private final Object[] _path;
   private final boolean _error;
   private final String _format;
   private final Object[] _args;
+  private final RecordTemplate _errorDetails;
 
   public Message(Object[] path, String format, Object... args)
   {
     this(path, true, format, args);
-
   }
 
   public Message(Object[] path, boolean error, String format, Object... args)
+  {
+    this(path, null, error, format, args);
+  }
+
+  public Message(Object[] path, RecordTemplate errorDetails, boolean error, String format, Object... args)
   {
     _path = path;
     _error = error;
     _format = format;
     _args = args;
+    _errorDetails = errorDetails;
   }
 
   public Object[] getPath()
@@ -68,6 +79,11 @@ public class Message
   public boolean isError()
   {
     return _error;
+  }
+
+  public RecordTemplate getErrorDetails()
+  {
+    return _errorDetails;
   }
 
   /**
@@ -111,6 +127,8 @@ public class Message
     formatPath(formatter);
     formatSeparator(formatter, fieldSeparator);
     formatArgs(formatter);
+    formatErrorDetails(formatter);
+
     return formatter;
   }
 
@@ -129,7 +147,7 @@ public class Message
 
   protected void formatError(Formatter formatter)
   {
-    formatter.format(isError() ? "ERROR" : "INFO");
+    formatter.format(isError() ? ERROR : INFO);
   }
 
   protected void formatPath(Formatter formatter)
@@ -152,6 +170,28 @@ public class Message
   protected void formatArgs(Formatter formatter)
   {
     formatter.format(_format, _args);
+  }
+
+  protected void formatErrorDetails(Formatter formatter)
+  {
+    if (_errorDetails == null)
+    {
+      return;
+    }
+
+    Appendable appendable = formatter.out();
+
+    try
+    {
+      appendable.append(MESSAGE_FIELD_SEPARATOR);
+      appendable.append(DETAILS);
+      appendable.append(MESSAGE_FIELD_SEPARATOR);
+      appendable.append(_errorDetails.toString());
+    }
+    catch (IOException e)
+    {
+      throw new IllegalStateException(e);
+    }
   }
 
   /**

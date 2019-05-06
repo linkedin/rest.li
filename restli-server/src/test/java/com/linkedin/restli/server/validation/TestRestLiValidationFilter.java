@@ -27,6 +27,7 @@ import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.UpdateEntityStatus;
+import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.filter.FilterResourceModelImpl;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.RestLiAnnotationReader;
@@ -34,15 +35,19 @@ import com.linkedin.restli.internal.server.response.ActionResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchCreateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchPartialUpdateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchResponseEnvelope;
+import com.linkedin.restli.internal.server.response.BatchUpdateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.CreateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.GetResponseEnvelope;
 import com.linkedin.restli.internal.server.response.PartialUpdateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.ResponseDataBuilderUtil;
 import com.linkedin.restli.internal.server.response.RestLiResponseEnvelope;
+import com.linkedin.restli.internal.server.response.UpdateResponseEnvelope;
+import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.RestLiRequestDataImpl;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.TestRecord;
+import com.linkedin.restli.server.TestRecordWithValidation;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
@@ -147,6 +152,88 @@ public class TestRestLiValidationFilter
       else
       {
         Assert.fail("An unexpected exception was thrown on request in the validation filter.", e);
+      }
+    }
+
+    validationFilter.onResponse(filterRequestContext, filterResponseContext);
+  }
+
+  @DataProvider(name = "validateWithPdscValidation")
+  public Object[][] validateWithPdscValidation()
+  {
+    String validValue = "aaaaa";
+    String invalidValue = "aaaaaaaaaaaaaaaa";
+    RestLiResponseData<CreateResponseEnvelope> createResponseData = ResponseDataBuilderUtil.buildCreateResponseData(HttpStatus.S_201_CREATED, new IdResponse<>(123L));
+    RestLiResponseData<UpdateResponseEnvelope> updateResponseData = ResponseDataBuilderUtil.buildUpdateResponseData(HttpStatus.S_200_OK);
+
+    RestLiResponseData<BatchCreateResponseEnvelope> batchCreateResponseData = ResponseDataBuilderUtil.buildBatchCreateResponseData(HttpStatus.S_200_OK,
+        Collections.singletonList(new BatchCreateResponseEnvelope.CollectionCreateResponseItem(
+            new CreateIdEntityStatus<>(HttpStatus.S_201_CREATED.getCode(), 1L, makeTestRecord(), null, new ProtocolVersion(2, 0, 0)))));
+
+    RestLiResponseData<BatchUpdateResponseEnvelope> batchUpdateResponseData = ResponseDataBuilderUtil.buildBatchUpdateResponseData(HttpStatus.S_200_OK, Collections.emptyMap());
+
+    return new Object[][]
+        {
+            // Resource model
+            // Resource method
+            // RestLi request data
+            // RestLi response data
+            // Expect error?
+            { RestLiAnnotationReader.processResource(CollectionResource.class), CREATE,
+                new RestLiRequestDataImpl.Builder().entity(makeTestRecordWithValidation(invalidValue)).build(), null, true },
+            { RestLiAnnotationReader.processResource(CollectionResource.class), CREATE,
+                new RestLiRequestDataImpl.Builder().entity(makeTestRecordWithValidation(validValue)).build(), createResponseData, false },
+            { RestLiAnnotationReader.processResource(CollectionResource.class), UPDATE,
+                new RestLiRequestDataImpl.Builder().entity(makeTestRecordWithValidation(invalidValue)).build(), null, true },
+            { RestLiAnnotationReader.processResource(CollectionResource.class), UPDATE,
+                new RestLiRequestDataImpl.Builder().entity(makeTestRecordWithValidation(validValue)).build(), updateResponseData, false },
+            { RestLiAnnotationReader.processResource(CollectionResource.class), BATCH_CREATE,
+                new RestLiRequestDataImpl.Builder().batchEntities(Collections.singleton(makeTestRecordWithValidation(invalidValue))).build(), null, true },
+            { RestLiAnnotationReader.processResource(CollectionResource.class), BATCH_CREATE,
+                new RestLiRequestDataImpl.Builder().batchEntities(Collections.singleton(makeTestRecordWithValidation(validValue))).build(), batchCreateResponseData, false },
+            { RestLiAnnotationReader.processResource(CollectionResource.class), BATCH_UPDATE,
+                new RestLiRequestDataImpl.Builder().batchKeyEntityMap(Collections.singletonMap("Key", makeTestRecordWithValidation(invalidValue))).build(), null, true },
+            { RestLiAnnotationReader.processResource(CollectionResource.class), BATCH_UPDATE,
+                new RestLiRequestDataImpl.Builder().batchKeyEntityMap(Collections.singletonMap("Key", makeTestRecordWithValidation(validValue))).build(), batchUpdateResponseData, false }
+        };
+  }
+
+  /**
+   * Ensures that the validation filter correctly validates input entity given a variety of resource types,
+   * resource methods and RestLi request data.
+   */
+  @Test(dataProvider = "validateWithPdscValidation")
+  @SuppressWarnings({"unchecked"})
+  public void testEntityValidateOnRequest(ResourceModel resourceModel, ResourceMethod resourceMethod,
+      RestLiRequestData restLiRequestData, RestLiResponseData<RestLiResponseEnvelope> responseData, boolean expectError)
+  {
+    when(filterRequestContext.getRequestData()).thenReturn(restLiRequestData);
+    when(filterRequestContext.getMethodType()).thenReturn(resourceMethod);
+    when(filterRequestContext.getFilterResourceModel()).thenReturn(new FilterResourceModelImpl(resourceModel));
+    when(filterRequestContext.getRestliProtocolVersion()).thenReturn(AllProtocolVersions.LATEST_PROTOCOL_VERSION);
+    when(filterResponseContext.getResponseData()).thenReturn((RestLiResponseData) responseData);
+
+    RestLiValidationFilter validationFilter = new RestLiValidationFilter(Collections.emptyList(), new MockValidationErrorHandler());
+
+    try
+    {
+      validationFilter.onRequest(filterRequestContext);
+
+      if (expectError)
+      {
+        Assert.fail("Expected an error to be thrown on request in the validation filter, but none was thrown.");
+      }
+    }
+    catch (RestLiServiceException ex)
+    {
+      if (expectError)
+      {
+        Assert.assertEquals(ex.getStatus(), HttpStatus.S_422_UNPROCESSABLE_ENTITY);
+        return;
+      }
+      else
+      {
+        Assert.fail("An unexpected exception was thrown on request in the validation filter.", ex);
       }
     }
 
@@ -313,6 +400,11 @@ public class TestRestLiValidationFilter
   private TestRecord makeTestRecord()
   {
     return new TestRecord().setIntField(123).setLongField(456L).setFloatField(7.89F).setDoubleField(1.2345);
+  }
+
+  private TestRecordWithValidation makeTestRecordWithValidation(String value)
+  {
+    return new TestRecordWithValidation().setStringField(value);
   }
 
   private TestRecord makeInvalidTestRecord()

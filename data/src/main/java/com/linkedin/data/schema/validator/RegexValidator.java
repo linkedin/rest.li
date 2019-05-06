@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  */
 public class RegexValidator extends AbstractValidator
 {
-  public static final String REGEX = "regex";
+  private static final String REGEX = "regex";
 
   private final String _regex;
   private final Pattern _pattern;

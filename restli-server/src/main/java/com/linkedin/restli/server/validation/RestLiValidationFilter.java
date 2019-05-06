@@ -16,8 +16,8 @@
 
 package com.linkedin.restli.server.validation;
 
+import com.linkedin.data.message.Message;
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
@@ -26,12 +26,14 @@ import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.common.util.ProjectionMaskApplier;
 import com.linkedin.restli.common.util.ProjectionMaskApplier.InvalidProjectionException;
 import com.linkedin.restli.common.validation.RestLiDataSchemaDataValidator;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
+import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.response.BatchCreateResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchFinderResponseEnvelope;
 import com.linkedin.restli.internal.server.response.BatchGetResponseEnvelope;
@@ -51,6 +53,7 @@ import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.server.util.UnstructuredDataUtil;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -71,14 +74,39 @@ public class RestLiValidationFilter implements Filter
 
   private final Collection<String> _nonSchemaFieldsToAllowInProjectionMask;
 
+  // ValidationErrorHandler interface allows applications to customize the service error code,
+  // error message and error details.
+  private final ValidationErrorHandler _validationErrorHandler;
+
   public RestLiValidationFilter()
   {
     this(Collections.emptyList());
   }
 
+  /**
+   * Constructs {@link RestLiValidationFilter}
+   *
+   * @param nonSchemaFieldsToAllowInProjectionMask field names to allow in the projection mask
+   *                                               even if the field is not present in the schema.
+   */
   public RestLiValidationFilter(Collection<String> nonSchemaFieldsToAllowInProjectionMask)
   {
+    this(nonSchemaFieldsToAllowInProjectionMask, null);
+  }
+
+  /**
+   * Constructs {@link RestLiValidationFilter}
+   *
+   * @param nonSchemaFieldsToAllowInProjectionMask field names to allow in the projection mask
+   *                                               even if the field is not present in the schema.
+   * @param errorHandler {@link ValidationErrorHandler} interface allows applications to customize the service error code,
+   *                                                   error message and error details.
+   */
+  public RestLiValidationFilter(Collection<String> nonSchemaFieldsToAllowInProjectionMask,
+      ValidationErrorHandler errorHandler)
+  {
     _nonSchemaFieldsToAllowInProjectionMask = nonSchemaFieldsToAllowInProjectionMask;
+    _validationErrorHandler = errorHandler;
   }
 
   @Override
@@ -97,7 +125,8 @@ public class RestLiValidationFilter implements Filter
           // Schema from the record template itself should not be used.
           DataSchema originalSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
 
-          DataSchema validatingSchema = ProjectionMaskApplier.buildSchemaByProjection(originalSchema, projectionMask.getDataMap(), _nonSchemaFieldsToAllowInProjectionMask);
+          DataSchema validatingSchema = ProjectionMaskApplier.buildSchemaByProjection(originalSchema,
+              projectionMask.getDataMap(), _nonSchemaFieldsToAllowInProjectionMask);
 
           // Put validating schema in scratchpad for use in onResponse
           requestContext.getFilterScratchpad().put(VALIDATING_SCHEMA_KEY, validatingSchema);
@@ -121,67 +150,120 @@ public class RestLiValidationFilter implements Filter
 
     ResourceMethod method = requestContext.getMethodType();
     RestLiDataValidator validator = new RestLiDataValidator(resourceClass.getAnnotations(),
-        requestContext.getFilterResourceModel().getValueClass(),
-        method);
+        requestContext.getFilterResourceModel().getValueClass(), method);
     RestLiRequestData requestData = requestContext.getRequestData();
 
-    if (method == ResourceMethod.CREATE || method == ResourceMethod.UPDATE)
+    ValidationResult result;
+
+    switch (method)
     {
-      ValidationResult result = validator.validateInput(requestData.getEntity());
-      if (!result.isValid())
-      {
-        throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString());
-      }
-    }
-    else if (method == ResourceMethod.PARTIAL_UPDATE)
-    {
-      ValidationResult result = validator.validateInput((PatchRequest<?>) requestData.getEntity());
-      if (!result.isValid())
-      {
-        throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString());
-      }
-    }
-    else if (method == ResourceMethod.BATCH_CREATE)
-    {
-      StringBuilder sb = new StringBuilder();
-      for (RecordTemplate entity : requestData.getBatchEntities())
-      {
-        ValidationResult result = validator.validateInput(entity);
+      case CREATE:
+      case UPDATE:
+        result = validator.validateInput(requestData.getEntity());
         if (!result.isValid())
         {
-          sb.append(result.getMessages().toString());
+          throw constructRestLiServiceException(result.getMessages(), result.getMessages().toString());
         }
-      }
-      if (sb.length() > 0)
-      {
-        throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, sb.toString());
-      }
-    }
-    else if (method == ResourceMethod.BATCH_UPDATE || method == ResourceMethod.BATCH_PARTIAL_UPDATE)
-    {
-      StringBuilder sb = new StringBuilder();
-      for (Map.Entry<?, ? extends RecordTemplate> entry : requestData.getBatchKeyEntityMap().entrySet())
-      {
-        ValidationResult result;
-        if (method == ResourceMethod.BATCH_UPDATE)
-        {
-          result = validator.validateInput(entry.getValue());
-        }
-        else
-        {
-          result = validator.validateInput((PatchRequest<?>) entry.getValue());
-        }
+        break;
+      case PARTIAL_UPDATE:
+        result = validator.validateInput((PatchRequest<?>) requestData.getEntity());
         if (!result.isValid())
         {
-          sb.append("Key: ").append(entry.getKey()).append(", ").append(result.getMessages().toString());
+          throw constructRestLiServiceException(result.getMessages(), result.getMessages().toString());
         }
-      }
-      if (sb.length() > 0)
-      {
-        throw new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, sb.toString());
-      }
+        break;
+      case BATCH_CREATE:
+        StringBuilder errorMessage = new StringBuilder();
+        Map<String, Collection<Message>> messages = new HashMap<>();
+        int index = 0;
+        for (RecordTemplate entity : requestData.getBatchEntities())
+        {
+          result = validator.validateInput(entity);
+          if (!result.isValid())
+          {
+            errorMessage.append("Index: ").append(index).append(", ").append(result.getMessages().toString());
+            messages.put(String.valueOf(index), result.getMessages());
+          }
+
+          ++index;
+        }
+
+        if (errorMessage.length() > 0)
+        {
+          throw constructRestLiServiceException(messages, errorMessage.toString());
+        }
+        break;
+      case BATCH_UPDATE:
+      case BATCH_PARTIAL_UPDATE:
+        ProtocolVersion protocolVersion = requestContext.getRestliProtocolVersion();
+        StringBuilder stringBuilder = new StringBuilder();
+        Map<String, Collection<Message>> errorMessages = new HashMap<>();
+        for (Map.Entry<?, ? extends RecordTemplate> entry : requestData.getBatchKeyEntityMap().entrySet())
+        {
+          if (method == ResourceMethod.BATCH_UPDATE) {
+            result = validator.validateInput(entry.getValue());
+          }
+          else
+          {
+            result = validator.validateInput((PatchRequest<?>) entry.getValue());
+          }
+
+          if (!result.isValid())
+          {
+            stringBuilder.append("Key: ").append(entry.getKey()).append(", ").append(result.getMessages().toString());
+            errorMessages.put(URIParamUtils.encodeKeyForBody(entry.getKey(), false, protocolVersion), result.getMessages());
+          }
+        }
+
+        if (stringBuilder.length() > 0)
+        {
+          throw constructRestLiServiceException(errorMessages, stringBuilder.toString());
+        }
+        break;
+      default:
+        break;
     }
+
     return CompletableFuture.completedFuture(null);
+  }
+
+  /**
+   * Constructs {@link RestLiServiceException} based on given {@link Message}s and given error message.
+   *
+   * @param messages collection of {@link Message}s which contain error details.
+   * @param message error message.
+   * @return {@link RestLiServiceException}, which represents a service failure.
+   */
+  private RestLiServiceException constructRestLiServiceException(final Collection<Message> messages, final String message)
+  {
+    RestLiServiceException restLiServiceException = new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, message);
+
+    if (_validationErrorHandler != null)
+    {
+      _validationErrorHandler.updateErrorDetails(restLiServiceException, messages);
+    }
+
+    return restLiServiceException;
+  }
+
+  /**
+   * Constructs {@link RestLiServiceException} based on given {@link Message}s and given error message.
+   * @apiNote Should be used for batch operations.
+   *
+   * @param messages Map of {@link Message}s. Each entry in the map corresponds to one entity in the batch request input.
+   * @param message error message.
+   * @return {@link RestLiServiceException}, which represents a service failure.
+   */
+  private RestLiServiceException constructRestLiServiceException(final Map<String, Collection<Message>> messages, final String message)
+  {
+    RestLiServiceException restLiServiceException = new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, message);
+
+    if (_validationErrorHandler != null)
+    {
+      _validationErrorHandler.updateErrorDetails(restLiServiceException, messages);
+    }
+
+    return restLiServiceException;
   }
 
   @SuppressWarnings("unchecked")
@@ -198,7 +280,7 @@ public class RestLiValidationFilter implements Filter
     if (shouldValidateOnResponse(requestContext))
     {
       // Get validating schema if it was already built in onRequest
-      DataSchema validatingSchema =  (DataSchema) requestContext.getFilterScratchpad().get(VALIDATING_SCHEMA_KEY);
+      DataSchema validatingSchema = (DataSchema) requestContext.getFilterScratchpad().get(VALIDATING_SCHEMA_KEY);
 
       // Otherwise, build validating schema from original schema
       if (validatingSchema == null)
@@ -217,8 +299,8 @@ public class RestLiValidationFilter implements Filter
 
       Class<?> resourceClass = requestContext.getFilterResourceModel().getResourceClass();
       ResourceMethod method = requestContext.getMethodType();
-      RestLiDataSchemaDataValidator
-          validator = new RestLiDataSchemaDataValidator(resourceClass.getAnnotations(), method, validatingSchema);
+      RestLiDataValidator validator = new RestLiDataSchemaDataValidator(resourceClass.getAnnotations(),
+          method, validatingSchema);
 
       switch (method)
       {

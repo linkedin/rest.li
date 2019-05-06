@@ -1,5 +1,11 @@
+27.1.2
+------
+
 27.1.1
 ------
+(RB=1648329)
+Added ValidationErrorHandler interface.
+
 (RB=1641341)
 Migrate Pegasus utilities from Groovy to Java.
 

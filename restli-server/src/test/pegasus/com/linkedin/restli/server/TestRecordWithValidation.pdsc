@@ -1,0 +1,18 @@
+{
+  "type" : "record",
+  "name" : "TestRecordWithValidation",
+  "namespace" : "com.linkedin.restli.server",
+  "fields" : [
+    {
+      "name" : "stringField",
+      "type" : "string",
+      "validate":
+      {
+        "com.linkedin.data.schema.validator.StrlenValidator":
+        {
+          "max": 10
+        }
+      }
+    }
+  ]
+}

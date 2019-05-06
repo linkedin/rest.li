@@ -26,8 +26,8 @@ import com.linkedin.data.message.Message;
  */
 public class StrlenValidator extends AbstractValidator
 {
-  public static final String MIN = "min";
-  public static final String MAX = "max";
+  private static final String MIN = "min";
+  private static final String MAX = "max";
 
   private final int _min;
   private final int _max;

@@ -26,7 +26,7 @@ import java.util.Formatter;
  */
 public class CompatibilityMessage extends Message
 {
-  public static enum Impact
+  public enum Impact
   {
     /**
      * New reader is incompatible with old writer.
@@ -56,7 +56,7 @@ public class CompatibilityMessage extends Message
 
     private final boolean _error;
 
-    private Impact(boolean error)
+    Impact(boolean error)
     {
       _error = error;
     }
@@ -67,13 +67,15 @@ public class CompatibilityMessage extends Message
     }
   }
 
+  private final Impact _impact;
+
   public CompatibilityMessage(Object[] path, Impact impact, String format, Object... args)
   {
     super(path, impact.isError(), format, args);
     _impact = impact;
   }
 
-  protected CompatibilityMessage(CompatibilityMessage message, boolean error)
+  private CompatibilityMessage(CompatibilityMessage message, boolean error)
   {
     super(message.getPath(), error, message.getFormat(), message.getArgs());
     _impact = message.getImpact();
@@ -106,13 +108,13 @@ public class CompatibilityMessage extends Message
     formatPath(formatter);
     formatSeparator(formatter, fieldSeparator);
     formatArgs(formatter);
+    formatErrorDetails(formatter);
+
     return formatter;
   }
 
-  protected void formatCompatibilityType(Formatter formatter)
+  private void formatCompatibilityType(Formatter formatter)
   {
     formatter.format(_impact.toString());
   }
-
-  private final Impact _impact;
 }
