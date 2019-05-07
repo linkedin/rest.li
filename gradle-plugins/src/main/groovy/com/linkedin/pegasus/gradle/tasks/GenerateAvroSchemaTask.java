@@ -73,29 +73,30 @@ public class GenerateAvroSchemaTask extends DefaultTask
       avroTranslateOptionalDefault = null;
     }
 
-    if (avroTranslateOptionalDefault != null)
+    String overrideNamespace;
+    if (getProject().hasProperty("generator.avro.namespace.override"))
     {
-      getProject().javaexec(javaExecSpec ->
-      {
-        javaExecSpec.setMain("com.linkedin.data.avro.generator.AvroSchemaGenerator");
-        javaExecSpec.setClasspath(_codegenClasspath);
-        javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr);
-        javaExecSpec.jvmArgs("-Dgenerator.avro.optional.default=" + avroTranslateOptionalDefault);
-        javaExecSpec.args(_destinationDir.getPath());
-        javaExecSpec.args(inputDataSchemaFilenames);
-      });
+      overrideNamespace = (String) getProject().property("generator.avro.namespace.override");
     }
     else
     {
-      getProject().javaexec(javaExecSpec ->
-      {
-        javaExecSpec.setMain("com.linkedin.data.avro.generator.AvroSchemaGenerator");
-        javaExecSpec.setClasspath(_codegenClasspath);
-        javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr);
-        javaExecSpec.args(_destinationDir.getPath());
-        javaExecSpec.args(inputDataSchemaFilenames);
-      });
+      overrideNamespace = null;
     }
+
+    getProject().javaexec(javaExecSpec ->
+    {
+      javaExecSpec.setMain("com.linkedin.data.avro.generator.AvroSchemaGenerator");
+      javaExecSpec.setClasspath(_codegenClasspath);
+      javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr);
+      if (avroTranslateOptionalDefault != null) {
+        javaExecSpec.jvmArgs("-Dgenerator.avro.optional.default=" + avroTranslateOptionalDefault);
+      }
+      if (overrideNamespace != null) {
+        javaExecSpec.jvmArgs("-Dgenerator.avro.namespace.override=" + overrideNamespace);
+      }
+      javaExecSpec.args(_destinationDir.getPath());
+      javaExecSpec.args(inputDataSchemaFilenames);
+    });
   }
 
   /**

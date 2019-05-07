@@ -1,5 +1,11 @@
+27.1.3
+------
+
+
 27.1.2
 ------
+(RB=1656690)
+Update GenerateAvroSchemaTask to allow overriding namespaces in the generated Avro files.
 
 27.1.1
 ------
