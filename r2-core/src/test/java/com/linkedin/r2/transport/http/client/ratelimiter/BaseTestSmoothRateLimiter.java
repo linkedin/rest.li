@@ -14,66 +14,87 @@
    limitations under the License.
 */
 
-package com.linkedin.r2.transport.http.client;
+package com.linkedin.r2.transport.http.client.ratelimiter;
 
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.util.None;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SettableClock;
-import com.linkedin.util.clock.SystemClock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.IntStream;
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
+import com.linkedin.r2.transport.http.client.AsyncRateLimiter;
+import com.linkedin.test.util.ClockedExecutor;
+import com.linkedin.util.clock.Clock;
+import com.linkedin.util.clock.SettableClock;
+import com.linkedin.util.clock.SystemClock;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertSame;
+import static org.testng.Assert.assertTrue;
 
 
-public class TestSmoothRateLimiter
+public abstract class BaseTestSmoothRateLimiter
 {
-  private static final int TEST_TIMEOUT = 1000;
+  protected static final int TEST_TIMEOUT = 3000;
   private static final int TEST_TIMEOUT_LONG = 10000;
-  private static final int MAX_BUFFERED_CALLBACKS = 1024;
-  private static final int ONE_PERMIT_PER_PERIOD = 1;
-  private static final long ONE_SECOND_PERIOD = TimeUnit.SECONDS.toMillis(1);
+  protected static final int MAX_BUFFERED_CALLBACKS = 1024;
+  protected static final double ONE_PERMIT_PER_PERIOD = 1;
+  protected static final long ONE_SECOND_PERIOD = TimeUnit.SECONDS.toMillis(1);
   private static final long ONE_MILLISECOND_PERIOD = TimeUnit.MILLISECONDS.toMillis(1);
-  private static final int UNLIMITED_BURST = Integer.MAX_VALUE;
-  private static final int UNLIMITED_PERMITS = Integer.MAX_VALUE;
+  protected static final int UNLIMITED_BURST = Integer.MAX_VALUE;
+  private static final double UNLIMITED_PERMITS = Integer.MAX_VALUE;
   private static final int CONCURRENT_THREADS = 32;
   private static final int CONCURRENT_SUBMITS = 1024;
 
-  private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor();
-  private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
-  private static final Clock CLOCK = SystemClock.instance();
-  private static final Queue<Callback<None>> QUEUE = new ConcurrentLinkedDeque<>();
+  protected ScheduledExecutorService _scheduledExecutorService;
+  protected ExecutorService _executor;
+  protected final Clock _clock = SystemClock.instance();
+  protected Queue<Callback<None>> _queue;
+
+  @BeforeClass
+  public void doBeforeClass()
+  {
+    _scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    _executor = Executors.newCachedThreadPool();
+  }
 
   @AfterClass
   public void doAfterClass()
   {
-    SCHEDULER.shutdown();
-    EXECUTOR.shutdown();
+    _scheduledExecutorService.shutdown();
+    _executor.shutdown();
+  }
+
+  @BeforeMethod
+  public void doBeforeMethod()
+  {
+    _queue = new ConcurrentLinkedQueue<>();
   }
 
   @Test(timeOut = TEST_TIMEOUT)
   public void testSubmitWithinPermits() throws Exception
   {
-    SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
-        SCHEDULER, EXECUTOR, CLOCK, QUEUE, MAX_BUFFERED_CALLBACKS,
-        ONE_PERMIT_PER_PERIOD, ONE_SECOND_PERIOD, UNLIMITED_BURST);
+    AsyncRateLimiter rateLimiter = getRateLimiter(_scheduledExecutorService, _executor, _clock);
+
+    rateLimiter.setRate(ONE_PERMIT_PER_PERIOD, ONE_SECOND_PERIOD, UNLIMITED_BURST);
 
     FutureCallback<None> callback = new FutureCallback<>();
     rateLimiter.submit(callback);
@@ -82,34 +103,12 @@ public class TestSmoothRateLimiter
   }
 
   @Test(timeOut = TEST_TIMEOUT)
-  public void testUnlimitedBurstRate() throws Exception
-  {
-    SmoothRateLimiter.Rate rate = new SmoothRateLimiter.Rate(3, 1000, UNLIMITED_BURST);
-    assertEquals(rate.getEvents(), 3);
-    assertEquals(rate.getPeriod(), 1000);
-  }
-
-  @Test(timeOut = TEST_TIMEOUT)
-  public void testLowBurstRate() throws Exception
-  {
-    SmoothRateLimiter.Rate rate = new SmoothRateLimiter.Rate(3, 1000, 1);
-    assertEquals(rate.getEvents(), 1);
-    assertEquals(rate.getPeriod(), 333);
-  }
-
-  @Test(timeOut = TEST_TIMEOUT, expectedExceptions = IllegalArgumentException.class)
-  public void testUnsatisfiableBurstRate() throws Exception
-  {
-    new SmoothRateLimiter.Rate(50, 10, 1);
-  }
-
-  @Test(timeOut = TEST_TIMEOUT)
   public void testMultiSubmitWithinPermits() throws Exception
   {
     SettableClock clock = new SettableClock();
-    SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
-        SCHEDULER, EXECUTOR, clock, QUEUE, MAX_BUFFERED_CALLBACKS,
-        128, ONE_SECOND_PERIOD, UNLIMITED_BURST);
+    AsyncRateLimiter rateLimiter = getRateLimiter(_scheduledExecutorService, _executor, clock);
+
+    rateLimiter.setRate(128d, ONE_SECOND_PERIOD, UNLIMITED_BURST);
 
     List<FutureCallback<None>> callbacks = new ArrayList<>();
     for (int i = 0; i < 128; i++)
@@ -129,9 +128,9 @@ public class TestSmoothRateLimiter
   public void testSubmitExceedsPermits() throws Exception
   {
     SettableClock clock = new SettableClock();
-    SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
-        SCHEDULER, EXECUTOR, clock, QUEUE, MAX_BUFFERED_CALLBACKS,
-        ONE_PERMIT_PER_PERIOD, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
+    AsyncRateLimiter rateLimiter = getRateLimiter(_scheduledExecutorService, _executor, clock);
+
+    rateLimiter.setRate(ONE_PERMIT_PER_PERIOD, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
 
     List<FutureCallback<None>> callbacks = new ArrayList<>();
     IntStream.range(0, 5).forEach(i -> {
@@ -166,24 +165,13 @@ public class TestSmoothRateLimiter
     IntStream.range(0, 5).forEach(i -> assertTrue(callbacks.get(i).isDone()));
   }
 
-  @Test(timeOut = TEST_TIMEOUT, expectedExceptions = RejectedExecutionException.class)
-  public void testSubmitExceedsMaxBuffered()
-  {
-    SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
-        SCHEDULER, EXECUTOR, CLOCK, QUEUE, 0,
-        ONE_PERMIT_PER_PERIOD, ONE_SECOND_PERIOD, UNLIMITED_BURST);
-
-    FutureCallback<None> callback = new FutureCallback<>();
-    rateLimiter.submit(callback);
-  }
-
   @Test(timeOut = TEST_TIMEOUT)
   public void testSetRate() throws Exception
   {
-    SettableClock clock = new SettableClock();
-    SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
-        SCHEDULER, EXECUTOR, clock, QUEUE, MAX_BUFFERED_CALLBACKS,
-        ONE_PERMIT_PER_PERIOD, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
+    ClockedExecutor clockedExecutor = new ClockedExecutor();
+    AsyncRateLimiter rateLimiter = getRateLimiter(clockedExecutor, clockedExecutor, clockedExecutor);
+
+    rateLimiter.setRate(ONE_PERMIT_PER_PERIOD, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
 
     List<FutureCallback<None>> callbacks = new ArrayList<>();
     IntStream.range(0, 5).forEach(i -> {
@@ -191,33 +179,37 @@ public class TestSmoothRateLimiter
       rateLimiter.submit(callback);
       callbacks.add(callback);
     });
+    // trigger task to run them until current time
+    clockedExecutor.runFor(0);
 
     // We have one permit to begin with so the first task should run immediate and left with four pending
     callbacks.get(0).get();
     IntStream.range(0, 1).forEach(i -> assertTrue(callbacks.get(i).isDone()));
-    IntStream.range(1, 5).forEach(i -> assertFalse(callbacks.get(i).isDone()));
+    IntStream.range(1, 5).forEach(i -> assertFalse(callbacks.get(i).isDone(), i + " should not have been executed"));
+
+    clockedExecutor.runFor(ONE_MILLISECOND_PERIOD);
 
     // We set the permit rate to two per period and increment the clock by one millisecond. We expect two
     // more callbacks to be invoked at the next permit issuance
-    rateLimiter.setRate(2, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
-    clock.addDuration(ONE_MILLISECOND_PERIOD);
+    rateLimiter.setRate(2d, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
+    clockedExecutor.runFor(0);
     callbacks.get(1).get();
     callbacks.get(2).get();
     IntStream.range(0, 3).forEach(i -> assertTrue(callbacks.get(i).isDone()));
-    IntStream.range(3, 5).forEach(i -> assertFalse(callbacks.get(i).isDone()));
+    IntStream.range(3, 5).forEach(i -> assertFalse(callbacks.get(i).isDone(), i + " should not have been executed"));
 
     // We set the permit rate back to one per period and increment the clock by one millisecond. We expect
     // only one more callbacks to be invoked at the next permit issuance
-    rateLimiter.setRate(1, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
-    clock.addDuration(ONE_MILLISECOND_PERIOD);
+    rateLimiter.setRate(1d, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
+    clockedExecutor.runFor(ONE_MILLISECOND_PERIOD);
     callbacks.get(3).get();
     IntStream.range(0, 4).forEach(i -> assertTrue(callbacks.get(i).isDone()));
-    IntStream.range(4, 5).forEach(i -> assertFalse(callbacks.get(i).isDone()));
+    IntStream.range(4, 5).forEach(i -> assertFalse(callbacks.get(i).isDone(), i + " should not have been executed"));
 
     // We set the permit rate to two per period again and increment the clock by one millisecond. We expect
     // only one more callbacks to be invoked at the next permit issuance because only one is left
-    rateLimiter.setRate(2, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
-    clock.addDuration(ONE_MILLISECOND_PERIOD);
+    rateLimiter.setRate(2d, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
+    clockedExecutor.runFor(ONE_MILLISECOND_PERIOD);
     callbacks.get(4).get();
     IntStream.range(0, 5).forEach(i -> assertTrue(callbacks.get(i).isDone()));
   }
@@ -226,9 +218,8 @@ public class TestSmoothRateLimiter
   public void testCancelAll() throws Exception
   {
     SettableClock clock = new SettableClock();
-    SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
-        SCHEDULER, EXECUTOR, clock, QUEUE, MAX_BUFFERED_CALLBACKS,
-        ONE_PERMIT_PER_PERIOD, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
+    AsyncRateLimiter rateLimiter = getRateLimiter(_scheduledExecutorService, _executor, clock);
+    rateLimiter.setRate(ONE_PERMIT_PER_PERIOD, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
 
     List<FutureCallback<None>> callbacks = new ArrayList<>();
     IntStream.range(0, 5).forEach(i -> {
@@ -264,9 +255,9 @@ public class TestSmoothRateLimiter
   @Test(timeOut = TEST_TIMEOUT)
   public void testCancelAllTwice()
   {
-    SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
-        SCHEDULER, EXECUTOR, CLOCK, QUEUE, MAX_BUFFERED_CALLBACKS,
-        ONE_PERMIT_PER_PERIOD, ONE_SECOND_PERIOD, UNLIMITED_BURST);
+    AsyncRateLimiter rateLimiter = getRateLimiter(_scheduledExecutorService, _executor, _clock);
+    rateLimiter.setRate(ONE_PERMIT_PER_PERIOD, ONE_SECOND_PERIOD, UNLIMITED_BURST);
+
     rateLimiter.cancelAll(new Throwable());
     rateLimiter.cancelAll(new Throwable());
   }
@@ -275,24 +266,27 @@ public class TestSmoothRateLimiter
   public void testConcurrentSubmits() throws Exception
   {
     Executor executor = Executors.newFixedThreadPool(CONCURRENT_THREADS);
-    SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
-        SCHEDULER, EXECUTOR, CLOCK, QUEUE, MAX_BUFFERED_CALLBACKS,
-        UNLIMITED_PERMITS, ONE_SECOND_PERIOD, UNLIMITED_BURST);
+    AsyncRateLimiter rateLimiter = getRateLimiter(_scheduledExecutorService, this._executor, _clock);
+    rateLimiter.setRate(UNLIMITED_PERMITS, ONE_SECOND_PERIOD, UNLIMITED_BURST);
 
     CountDownLatch countDownLatch = new CountDownLatch(CONCURRENT_SUBMITS);
     LongAdder successCount = new LongAdder();
     LongAdder failureCount = new LongAdder();
-    for (int i = 0; i < CONCURRENT_SUBMITS; i++) {
+    for (int i = 0; i < CONCURRENT_SUBMITS; i++)
+    {
       executor.execute(() ->
-        rateLimiter.submit(new Callback<None>() {
+        rateLimiter.submit(new Callback<None>()
+        {
           @Override
-          public void onError(Throwable e) {
+          public void onError(Throwable e)
+          {
             failureCount.increment();
             countDownLatch.countDown();
           }
 
           @Override
-          public void onSuccess(None result) {
+          public void onSuccess(None result)
+          {
             successCount.increment();
             countDownLatch.countDown();
           }
@@ -304,4 +298,38 @@ public class TestSmoothRateLimiter
     Assert.assertEquals(successCount.longValue(), CONCURRENT_SUBMITS);
     Assert.assertEquals(failureCount.longValue(), 0L);
   }
+
+  @Test(timeOut = TEST_TIMEOUT)
+  public void testSetRateInstantaneous()
+  {
+    ClockedExecutor clockedExecutor = new ClockedExecutor();
+    AsyncRateLimiter rateLimiter = getRateLimiter(clockedExecutor, clockedExecutor, clockedExecutor);
+
+    List<FutureCallback<None>> callbacks = new ArrayList<>();
+    IntStream.range(0, 10).forEachOrdered(i -> {
+      FutureCallback<None> callback = new FutureCallback<>();
+      rateLimiter.submit(callback);
+      callbacks.add(callback);
+    });
+
+    // the last set should take immediately effect, and therefore at ms 0, we should have 3 permits available
+    rateLimiter.setRate(0d, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
+    rateLimiter.setRate(1d, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
+    rateLimiter.setRate(2d, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
+    rateLimiter.setRate(3d, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
+
+    // trigger task to run them until current time
+    clockedExecutor.runFor(0);
+
+    // We have one permit to begin with so the first task should run immediate and left with four pending
+    IntStream.range(0, 3).forEach(i -> assertTrue(callbacks.get(i).isDone(), i + " should have been executed " + callbacks.get(i)));
+    IntStream.range(3, 10).forEach(i -> assertFalse(callbacks.get(i).isDone(), i + " should not have been executed"));
+
+    clockedExecutor.runFor(ONE_MILLISECOND_PERIOD);
+    IntStream.range(3, 6).forEach(i -> assertTrue(callbacks.get(i).isDone(), i + " should have been executed " + callbacks.get(i)));
+    IntStream.range(6, 10).forEach(i -> assertFalse(callbacks.get(i).isDone(), i + " should not have been executed"));
+  }
+
+  protected abstract AsyncRateLimiter getRateLimiter(ScheduledExecutorService executorService, ExecutorService executor, Clock clock);
+
 }

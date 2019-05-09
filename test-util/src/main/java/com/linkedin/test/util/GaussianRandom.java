@@ -26,13 +26,13 @@ public class GaussianRandom
   private static final Random RANDOM = new Random();
 
   /**
-   * Generates a random long that is centered at {@code delay} with the given {@code range}. The
+   * Generates a random long that is centered at {@code delay} with the given {@code stddev}. The
    * result is guaranteed to be non-negative.
    *
    * @return random long
    */
-  public static long delay(final double delay, final double range)
+  public static long delay(final double delay, final double stddev)
   {
-    return (long) Math.abs((RANDOM.nextGaussian() * range) + delay);
+    return (long) Math.abs((RANDOM.nextGaussian() * stddev) + delay);
   }
 }

@@ -16,10 +16,6 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.util.None;
-import com.linkedin.util.ArgumentUtil;
-import com.linkedin.util.clock.Clock;
 import java.util.Queue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
@@ -27,6 +23,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.r2.transport.http.client.ratelimiter.Rate;
+import com.linkedin.util.ArgumentUtil;
+import com.linkedin.util.clock.Clock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +40,7 @@ import org.slf4j.LoggerFactory;
  * callbacks exceeds to the maximum allowed by the implementation.
  *
  * @author Sean Sheng
+ * @author Francesco Capponi (fcapponi@linkedin.com)
  */
 public class SmoothRateLimiter implements AsyncRateLimiter
 {
@@ -44,7 +48,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
 
   private final Executor _executor;
   private final ScheduledExecutorService _scheduler;
-  private final AtomicReference<Rate> _rate;
+  private volatile Rate _rate = Rate.ZERO_VALUE;
   private final EventLoop _eventLoop;
   private final int _maxBuffered;
   private final Queue<Callback<None>> _pendingCallbacks;
@@ -54,34 +58,46 @@ public class SmoothRateLimiter implements AsyncRateLimiter
 
   /**
    * Constructs a new instance of {@link SmoothRateLimiter}.
+   * The default rate is 0, no requests will be processed until the rate is changed
    *
-   * @param scheduler Scheduler used to execute the internal non-blocking event loop
-   * @param executor Executes the tasks for invoking #onSuccess and #onError (only during #callAll)
-   * @param clock Clock implementation that supports getting the current time accurate to milliseconds
+   * @param scheduler        Scheduler used to execute the internal non-blocking event loop. MUST be single-threaded
+   * @param executor         Executes the tasks for invoking #onSuccess and #onError (only during #callAll)
+   * @param clock            Clock implementation that supports getting the current time accurate to milliseconds
    * @param pendingCallbacks THREAD SAFE and NON-BLOCKING implementation of callback queue
-   * @param maxBuffered Maximum number of tasks kept in the queue before execution
-   * @param permitsPerPeriod Number of permits to run tasks per period of time
-   * @param periodMilliseconds Period of time in milliseconds used to calculate {@code permitsPerPeriod}
-   * @param burst Maximum number of permits can be issued at a time, see {@link Rate}
+   * @param maxBuffered      Maximum number of tasks kept in the queue before execution
    */
   public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock,
-      Queue<Callback<None>> pendingCallbacks,  int maxBuffered, int permitsPerPeriod, long periodMilliseconds, int burst)
+                           Queue<Callback<None>> pendingCallbacks, int maxBuffered)
   {
     ArgumentUtil.ensureNotNull(scheduler, "scheduler");
     ArgumentUtil.ensureNotNull(executor, "executor");
     ArgumentUtil.ensureNotNull(clock, "clock");
     ArgumentUtil.checkArgument(maxBuffered >= 0, "maxBuffered");
-    ArgumentUtil.checkArgument(permitsPerPeriod > 0, "permitsPerPeriod");
-    ArgumentUtil.checkArgument(periodMilliseconds > 0, "periodMilliseconds");
-    ArgumentUtil.checkArgument(burst > 0, "burst");
 
     _scheduler = scheduler;
     _executor = executor;
     _pendingCallbacks = pendingCallbacks;
     _maxBuffered = maxBuffered;
 
-    _rate = new AtomicReference<>(new Rate(permitsPerPeriod, periodMilliseconds, burst));
     _eventLoop = new EventLoop(clock);
+  }
+
+  /**
+   * @param permitsPerPeriod   Number of permits to run tasks per period of time
+   * @param periodMilliseconds Period of time in milliseconds used to calculate {@code permitsPerPeriod}
+   * @param burst              Maximum number of permits can be issued at a time, see {@link Rate}
+   * @deprecated use SmoothRateLimiter + setRate
+   */
+  @Deprecated
+  public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock,
+                           Queue<Callback<None>> pendingCallbacks, int maxBuffered, int permitsPerPeriod, long periodMilliseconds, int burst)
+  {
+    this(scheduler, executor, clock, pendingCallbacks, maxBuffered);
+
+    ArgumentUtil.checkArgument(permitsPerPeriod >= 0, "permitsPerPeriod");
+    ArgumentUtil.checkArgument(periodMilliseconds > 0, "periodMilliseconds");
+    ArgumentUtil.checkArgument(burst > 0, "burst");
+    setRate((double) permitsPerPeriod, periodMilliseconds, burst);
   }
 
   @Override
@@ -97,18 +113,25 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     _pendingCallbacks.offer(callback);
     if (_pendingCount.getAndIncrement() == 0)
     {
-      _scheduler.execute(_eventLoop::loop);
+    _scheduler.execute(_eventLoop::loop);
     }
   }
 
   @Override
-  public void setRate(int permitsPerPeriod, long period, int burst)
+  public Rate getRate()
   {
-    ArgumentUtil.checkArgument(permitsPerPeriod > 0, "permitsPerPeriod");
-    ArgumentUtil.checkArgument(period > 0, "period");
+    return _rate;
+  }
+
+  @Override
+  public void setRate(double permitsPerPeriod, long periodMilliseconds, int burst)
+  {
+    ArgumentUtil.checkArgument(permitsPerPeriod >= 0, "permitsPerPeriod");
+    ArgumentUtil.checkArgument(periodMilliseconds > 0, "periodMilliseconds");
     ArgumentUtil.checkArgument(burst > 0, "burst");
 
-    _rate.set(new Rate(permitsPerPeriod, period, burst));
+    _rate = new Rate(permitsPerPeriod, periodMilliseconds, burst);
+    _scheduler.execute(_eventLoop::updateWithNewRate);
   }
 
   @Override
@@ -125,64 +148,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     }
 
     // Sets unlimited permits issuance because we do not rate limit invocations of #onError
-    _rate.set(Rate.MAX_VALUE);
-  }
-
-  /**
-   * An immutable implementation of rate as number of events per period of time in milliseconds.
-   * In addition, a {@code burst} parameter is used to indicate the maximum number of permits can
-   * be issued at a time. To satisfy the burst requirement, {@code period} might adjusted if
-   * necessary. The minimal period is one millisecond. If the specified events per period cannot
-   * satisfy the burst, an {@link IllegalArgumentException} will be thrown.
-   */
-  static class Rate
-  {
-    static final Rate MAX_VALUE = new Rate(Integer.MAX_VALUE, 1, Integer.MAX_VALUE);
-
-    private final int _events;
-    private final long _period;
-
-    /**
-     * Constructs a new instance of Rate.
-     * @param events Number of events per period.
-     * @param period Time period length in milliseconds.
-     * @param burst Maximum number of events allowed simultaneously.
-     */
-    Rate(int events, long period, int burst)
-    {
-      if (burst < events)
-      {
-        long newPeriod = Math.round(period * burst / (events * 1.0D));
-        if (newPeriod == 0)
-        {
-          String message = String.format(
-              "Configured rate of %d events per %d ms cannot satisfy the requirement of %d burst events at a time",
-              events, period, burst);
-          throw new IllegalArgumentException(message);
-        }
-
-        _events = burst;
-        _period = newPeriod;
-      }
-      else
-      {
-        _events = events;
-        _period = period;
-      }
-    }
-
-    int getEvents() {
-      return _events;
-    }
-
-    /**
-     * Gets period in Milliseconds.
-     * @return Period in milliseconds.
-     */
-    long getPeriod()
-    {
-      return _period;
-    }
+    setRate(Rate.MAX_VALUE.getEventsRaw(), Rate.MAX_VALUE.getPeriod(), Rate.MAX_VALUE.getEvents());
   }
 
   /**
@@ -190,7 +156,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
    * on available permits. If permits are exhausted, the event loop will reschedule itself to run
    * at the next permit issuance time. If the callback queue is exhausted, the event loop will exit
    * and need to be restarted externally.
-   *
+   * <p>
    * Event loop is meant to be run in a single-threaded setting.
    */
   private class EventLoop
@@ -198,29 +164,52 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     private final Clock _clock;
 
     private long _permitTime;
-    private int _permitCount;
+    private int _permitAvailableCount;
+    private int _permitsInTimeFrame;
+    private long _nextScheduled;
 
     EventLoop(Clock clock)
     {
       _clock = clock;
       _permitTime = _clock.currentTimeMillis();
-      _permitCount = _rate.get().getEvents();
+      Rate rate = _rate;
+      _permitAvailableCount = rate.getEvents();
+      _permitsInTimeFrame = rate.getEvents();
+    }
+
+    private void updateWithNewRate()
+    {
+      Rate rate = _rate;
+
+      // if we already used some permits in the current period, we want to use just the possible remaining ones
+      // before entering the next period
+      _permitAvailableCount = Math.max(rate.getEvents() - (_permitsInTimeFrame - _permitAvailableCount), 0);
+      _permitsInTimeFrame = rate.getEvents();
+
+      loop();
     }
 
     public void loop()
     {
       // Checks if permits should be refreshed
       long now = _clock.currentTimeMillis();
-      Rate rate = _rate.get();
+      Rate rate = _rate;
       if (now - _permitTime >= rate.getPeriod())
       {
         _permitTime = now;
-        _permitCount = rate.getEvents();
+        _permitAvailableCount = rate.getEvents();
+        _permitsInTimeFrame = rate.getEvents();
       }
 
-      if (_permitCount > 0)
+      // if all the tasks have been previously consumed, there is no need for continuing the loop
+      if (_pendingCount.get() == 0)
       {
-        _permitCount--;
+        return;
+      }
+
+      if (_permitAvailableCount > 0)
+      {
+        _permitAvailableCount--;
         Callback<None> callback = null;
         try
         {
@@ -253,13 +242,21 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       {
         try
         {
-          _scheduler.schedule(this::loop, Math.max(0, _permitTime + rate.getPeriod() - _clock.currentTimeMillis()),
+          // avoids executing too many duplicate tasks
+          long nextRunRelativeTime = Math.max(0, _permitTime + rate.getPeriod() - _clock.currentTimeMillis());
+          long nextRunAbsolute = _clock.currentTimeMillis() + nextRunRelativeTime;
+          if (_nextScheduled > nextRunAbsolute || _nextScheduled <= _clock.currentTimeMillis())
+          {
+            _nextScheduled = nextRunAbsolute;
+
+            _scheduler.schedule(this::loop, nextRunRelativeTime,
               TimeUnit.MILLISECONDS);
+          }
         }
         catch (Throwable throwable)
         {
           LOG.error("An unrecoverable exception occurred while scheduling the event loop causing the rate limiter"
-              + "to stop processing submitted tasks.", throwable);
+            + "to stop processing submitted tasks.", throwable);
         }
       }
     }
