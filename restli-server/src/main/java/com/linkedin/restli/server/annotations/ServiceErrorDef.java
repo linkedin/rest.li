@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2019 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -16,23 +16,27 @@
 
 package com.linkedin.restli.server.annotations;
 
-import com.linkedin.data.template.TyperefInfo;
-
+import com.linkedin.restli.server.errors.ServiceError;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+
 /**
-* @author Josh Walker
-* @version $Revision: $
-*/
+ * Defines the set of acceptable service errors for some resource class.
+ *
+ * @author Karthik Balasubramanian
+ * @author Gevorg Kurghinyan
+ * @author Evan Williams
+ */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.PARAMETER)
-public @interface QueryParam
+@Target({ElementType.TYPE})
+public @interface ServiceErrorDef
 {
-  /** name */
-  String value();
-  /** typeref */
-  Class<? extends TyperefInfo> typeref() default RestAnnotations.NULL_TYPEREF_INFO.class;
+  /**
+   * The enum implementing {@link ServiceError} which describes the set of acceptable service errors.
+   * Service error codes are mapped to these service errors using the {@link ServiceError#code()} method.
+   */
+  Class<? extends Enum<? extends ServiceError>> value();
 }

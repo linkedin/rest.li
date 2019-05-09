@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
+ * Builds a REST API model by reading the annotations on a Rest.li resource class.
  *
  * @author dellamag
  */

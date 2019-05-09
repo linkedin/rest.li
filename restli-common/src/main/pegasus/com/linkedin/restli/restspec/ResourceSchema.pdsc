@@ -2,6 +2,7 @@
   "type" : "record",
   "name" : "ResourceSchema",
   "namespace" : "com.linkedin.restli.restspec",
+  "doc": "Schema representing a Rest.li resource.",
   "include" : [ "CustomAnnotationSchema" ],
   "fields" : [
     {

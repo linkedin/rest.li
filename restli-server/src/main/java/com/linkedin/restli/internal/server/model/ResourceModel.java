@@ -16,29 +16,33 @@
 
 package com.linkedin.restli.internal.server.model;
 
-
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceDefinition;
 import com.linkedin.restli.server.ResourceLevel;
+import com.linkedin.restli.server.annotations.ServiceErrors;
+import com.linkedin.restli.server.errors.ServiceError;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.util.UnstructuredDataUtil;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
+
 /**
+ * Representation of a Rest.li resource.
  *
  * @author dellamag
  */
@@ -61,7 +65,7 @@ public class ResourceModel implements ResourceDefinition
   private final Class<? extends RecordTemplate> _keyKeyClass;
   private final Class<? extends RecordTemplate> _keyParamsClass;
 
-  //alternative key
+  // Alternative key
   private Map<String, AlternativeKey<?, ?>>     _alternativeKeys;
 
   private final Map<String, Class<?>>           _keyClasses;
@@ -72,6 +76,9 @@ public class ResourceModel implements ResourceDefinition
   private final Map<String, ResourceModel>      _pathSubResourceMap;
 
   private DataMap                               _customAnnotations;
+
+  // Resource-level service error definitions
+  private List<ServiceError>                    _serviceErrors;
 
   /**
    * Constructor.
@@ -114,7 +121,7 @@ public class ResourceModel implements ResourceDefinition
     _namespace = namespace;
     _root = (parentResourceClass == null);
     _parentResourceClass = parentResourceClass;
-    _resourceMethodDescriptors = new ArrayList<ResourceMethodDescriptor>(5);
+    _resourceMethodDescriptors = new ArrayList<>(5);
     _primaryKey = primaryKey;
     _resourceType = resourceType;
     _pathSubResourceMap = new HashMap<String, ResourceModel>();
@@ -537,5 +544,36 @@ public class ResourceModel implements ResourceDefinition
   public DataMap getCustomAnnotationData()
   {
     return _customAnnotations;
+  }
+
+  /**
+   * Gets an immutable view of the expected service errors for this resource, or null if errors aren't defined.
+   * @return {@link List<ServiceError>}
+   */
+  public List<ServiceError> getServiceErrors()
+  {
+    return _serviceErrors == null ? null : Collections.unmodifiableList(_serviceErrors);
+  }
+
+  /**
+   * Sets the list of expected service errors for this resource.
+   * Note that a null list and an empty list are semantically different (see {@link ServiceErrors}).
+   * @param serviceErrors {@link List<ServiceError>}
+   */
+  public void setServiceErrors(final Collection<ServiceError> serviceErrors)
+  {
+    _serviceErrors = serviceErrors == null ? null : new ArrayList<>(serviceErrors);
+  }
+
+  /**
+   * Returns <code>true</code> if this resource or any of its resource methods define a set of expected service errors.
+   * This should correspond with whether the original resource class or any of its methods were annotated with a
+   * {@link ServiceErrors} annotation.
+   */
+  public boolean isAnyServiceErrorListDefined()
+  {
+    return _serviceErrors != null || _resourceMethodDescriptors.stream()
+        .map(ResourceMethodDescriptor::getServiceErrors)
+        .anyMatch(Objects::nonNull);
   }
 }

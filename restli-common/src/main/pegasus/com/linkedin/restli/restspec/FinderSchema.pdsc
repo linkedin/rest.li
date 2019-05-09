@@ -2,7 +2,8 @@
   "type" : "record",
   "name" : "FinderSchema",
   "namespace" : "com.linkedin.restli.restspec",
-  "include" : [ "CustomAnnotationSchema" ],
+  "doc": "Schema representing a finder resource method.",
+  "include" : [ "CustomAnnotationSchema", "ServiceErrorsSchema" ],
   "fields" : [
     {
       "name" : "name",

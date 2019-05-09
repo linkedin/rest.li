@@ -95,9 +95,12 @@ import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestLiTemplate;
 import com.linkedin.restli.server.annotations.RestMethod;
+import com.linkedin.restli.server.annotations.ServiceErrorDef;
+import com.linkedin.restli.server.annotations.ServiceErrors;
 import com.linkedin.restli.server.annotations.UnstructuredDataReactiveReaderParam;
 import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.annotations.ValidatorParam;
+import com.linkedin.restli.server.errors.ServiceError;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTask;
@@ -107,7 +110,6 @@ import com.linkedin.restli.server.resources.unstructuredData.KeyUnstructuredData
 import com.linkedin.restli.server.resources.unstructuredData.SingleUnstructuredDataResource;
 import com.linkedin.util.CustomTypeUtil;
 import java.lang.annotation.Annotation;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -121,14 +123,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.restli.internal.server.model.ResourceModelEncoder.DEPRECATED_ANNOTATION_NAME;
+import static com.linkedin.restli.internal.server.model.ResourceModelEncoder.*;
 
 
 /**
+ * Collection of static helper methods used to read a Rest.li resource class and produce a {@link ResourceModel}.
  *
  * @author dellamag
  */
@@ -155,7 +160,7 @@ public final class RestLiAnnotationReader
   }
 
   /**
-   * Processes an annotated resource class, producing a ResourceModel.
+   * Processes an annotated resource class, producing a {@link ResourceModel}.
    *
    * @param resourceClass annotated resource class
    * @return {@link ResourceModel} for the provided resource class
@@ -166,7 +171,7 @@ public final class RestLiAnnotationReader
   }
 
   /**
-   * Processes an annotated resource class, producing a ResourceModel.
+   * Processes an annotated resource class, producing a {@link ResourceModel}.
    *
    * @param resourceClass annotated resource class
    * @return {@link ResourceModel} for the provided resource class
@@ -187,6 +192,8 @@ public final class RestLiAnnotationReader
     }
 
     addAlternativeKeys(model, resourceClass);
+    addServiceErrors(model, resourceClass);
+    validateServiceErrors(model, resourceClass);
 
     DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(resourceClass.getAnnotations());
     addDeprecatedAnnotation(annotationsMap, resourceClass);
@@ -1503,13 +1510,13 @@ public final class RestLiAnnotationReader
     checkIfKeyIsValid(paramName, paramType, model);
 
     Parameter<?> param = new Parameter<>(paramName,
-        paramType,
-        null,
-        annotations.get(Optional.class) != null,
-        null, // default mask is null.
-        Parameter.ParamType.PATH_KEY_PARAM,
-        false,
-        annotations);
+                                        paramType,
+                                        null,
+                                        annotations.get(Optional.class) != null,
+                                        null, // default mask is null.
+                                        Parameter.ParamType.PATH_KEY_PARAM,
+                                        false,
+                                        annotations);
 
     return param;
   }
@@ -1664,15 +1671,14 @@ public final class RestLiAnnotationReader
     try
     {
       @SuppressWarnings({"unchecked", "rawtypes"})
-      Parameter<?> param =
-          new Parameter(assocKeyParamValue,
-                        paramType,
-                        getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
-                        optional != null,
-                        getDefaultValueData(optional),
-                        parameter,
-                        true,
-                        annotations);
+      Parameter<?> param = new Parameter(assocKeyParamValue,
+                                        paramType,
+                                        getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
+                                        optional != null,
+                                        getDefaultValueData(optional),
+                                        parameter,
+                                        true,
+                                        annotations);
       return param;
     }
     catch (TemplateRuntimeException e)
@@ -1698,15 +1704,14 @@ public final class RestLiAnnotationReader
     Class<? extends TyperefInfo> typerefInfoClass = actionParam.typeref();
     try
     {
-      Parameter param =
-          new Parameter(paramName,
-                        paramType,
-                        getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
-                        optional != null,
-                        getDefaultValueData(optional),
-                        Parameter.ParamType.POST,
-                        true,
-                        annotations);
+      Parameter param = new Parameter(paramName,
+                                      paramType,
+                                      getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
+                                      optional != null,
+                                      getDefaultValueData(optional),
+                                      Parameter.ParamType.POST,
+                                      true,
+                                      annotations);
       return param;
     }
     catch (TemplateRuntimeException e)
@@ -1793,15 +1798,14 @@ public final class RestLiAnnotationReader
     try
     {
       @SuppressWarnings({"unchecked", "rawtypes"})
-      Parameter<?> param =
-          new Parameter(queryParam.value(),
-                        paramType,
-                        getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
-                        optional != null,
-                        getDefaultValueData(optional),
-                        Parameter.ParamType.QUERY,
-                        true,
-                        annotations);
+      Parameter<?> param = new Parameter(paramName,
+                                        paramType,
+                                        getDataSchema(paramType, getSchemaFromTyperefInfo(typerefInfoClass)),
+                                        optional != null,
+                                        getDefaultValueData(optional),
+                                        Parameter.ParamType.QUERY,
+                                        true,
+                                        annotations);
       return param;
     }
     catch (TemplateRuntimeException e)
@@ -2083,22 +2087,22 @@ public final class RestLiAnnotationReader
             method.getName()));
       }
 
-      List<Parameter<?>> queryParameters =
-          getParameters(model, method, ResourceMethod.FINDER);
+      List<Parameter<?>> queryParameters = getParameters(model, method, ResourceMethod.FINDER);
 
       Class<? extends RecordTemplate> metadataType = getCustomCollectionMetadata(method, DEFAULT_METADATA_PARAMETER_INDEX);
 
       DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations());
       addDeprecatedAnnotation(annotationsMap, method);
 
-      ResourceMethodDescriptor finderMethodDescriptor =
-          ResourceMethodDescriptor.createForFinder(method,
-                                                   queryParameters,
-                                                   queryType,
-                                                   metadataType,
-                                                   getInterfaceType(method),
-                                                   annotationsMap);
+      ResourceMethodDescriptor finderMethodDescriptor = ResourceMethodDescriptor.createForFinder(method,
+                                                                                                 queryParameters,
+                                                                                                 queryType,
+                                                                                                 metadataType,
+                                                                                                 getInterfaceType(method),
+                                                                                                 annotationsMap);
+
       validateFinderMethod(finderMethodDescriptor, model);
+      addServiceErrors(finderMethodDescriptor, method);
 
       model.addResourceMethodDescriptor(finderMethodDescriptor);
     }
@@ -2130,15 +2134,17 @@ public final class RestLiAnnotationReader
       addDeprecatedAnnotation(annotationsMap, method);
 
       Integer criteriaIndex = getCriteriaParametersIndex(finderAnno,queryParameters);
-      ResourceMethodDescriptor batchFinderMethodDescriptor =
-          ResourceMethodDescriptor.createForBatchFinder(method,
-                                                        queryParameters,
-                                                        queryType,
-                                                        criteriaIndex,
-                                                        metadataType,
-                                                        getInterfaceType(method),
-                                                        annotationsMap);
+      ResourceMethodDescriptor batchFinderMethodDescriptor = ResourceMethodDescriptor.createForBatchFinder(method,
+                                                                                                          queryParameters,
+                                                                                                          queryType,
+                                                                                                          criteriaIndex,
+                                                                                                          metadataType,
+                                                                                                          getInterfaceType(method),
+                                                                                                          annotationsMap);
+
       validateBatchFinderMethod(batchFinderMethodDescriptor, model);
+      addServiceErrors(batchFinderMethodDescriptor, method);
+
       model.addResourceMethodDescriptor(batchFinderMethodDescriptor);
     }
   }
@@ -2198,12 +2204,17 @@ public final class RestLiAnnotationReader
       addDeprecatedAnnotation(annotationsMap, method);
 
       List<Parameter<?>> parameters = getParameters(model, method, resourceMethod);
-      model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForRestful(resourceMethod,
-                                                                                  method,
-                                                                                  parameters,
-                                                                                  null,
-                                                                                  getInterfaceType(method),
-                                                                                  annotationsMap));
+
+      ResourceMethodDescriptor resourceMethodDescriptor = ResourceMethodDescriptor.createForRestful(resourceMethod,
+                                                                                                    method,
+                                                                                                    parameters,
+                                                                                                    null,
+                                                                                                    getInterfaceType(method),
+                                                                                                    annotationsMap);
+
+      addServiceErrors(resourceMethodDescriptor, method);
+
+      model.addResourceMethodDescriptor(resourceMethodDescriptor);
     }
   }
 
@@ -2281,12 +2292,16 @@ public final class RestLiAnnotationReader
         addDeprecatedAnnotation(annotationsMap, method);
 
         List<Parameter<?>> parameters = getParameters(model, method, resourceMethod);
-        model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForRestful(resourceMethod,
-                                                                                    method,
-                                                                                    parameters,
-                                                                                    metadataType,
-                                                                                    getInterfaceType(method),
-                                                                                    annotationsMap));
+        ResourceMethodDescriptor resourceMethodDescriptor = ResourceMethodDescriptor.createForRestful(resourceMethod,
+                                                                                                      method,
+                                                                                                      parameters,
+                                                                                                      metadataType,
+                                                                                                      getInterfaceType(method),
+                                                                                                      annotationsMap);
+
+        addServiceErrors(resourceMethodDescriptor, method);
+
+        model.addResourceMethodDescriptor(resourceMethodDescriptor);
       }
     }
   }
@@ -2347,16 +2362,19 @@ public final class RestLiAnnotationReader
     DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations());
     addDeprecatedAnnotation(annotationsMap, method);
 
-    model.addResourceMethodDescriptor(ResourceMethodDescriptor.createForAction(method,
-                                                                               parameters,
-                                                                               actionName,
-                                                                               getActionResourceLevel(actionAnno, model),
-                                                                               returnFieldDef,
-                                                                               actionReturnRecordDataSchema,
-                                                                               recordDataSchema,
-                                                                               getInterfaceType(method),
-                                                                               annotationsMap));
+    ResourceMethodDescriptor resourceMethodDescriptor = ResourceMethodDescriptor.createForAction(method,
+                                                                                                parameters,
+                                                                                                actionName,
+                                                                                                getActionResourceLevel(actionAnno, model),
+                                                                                                returnFieldDef,
+                                                                                                actionReturnRecordDataSchema,
+                                                                                                recordDataSchema,
+                                                                                                getInterfaceType(method),
+                                                                                                annotationsMap);
 
+    addServiceErrors(resourceMethodDescriptor, method);
+
+    model.addResourceMethodDescriptor(resourceMethodDescriptor);
   }
 
   private static TyperefDataSchema getActionTyperefDataSchema(ResourceModel model, Action actionAnno, String actionName)
@@ -2787,6 +2805,150 @@ public final class RestLiAnnotationReader
         return method.getGenericReturnType();
       default:
         throw new AssertionError();
+    }
+  }
+
+  /**
+   * Reads annotations on a given resource class in order to build service errors, which are then added to
+   * a given resource model.
+   *
+   * @param resourceModel resource model to add service errors to
+   * @param resourceClass class annotated with service errors
+   */
+  @SuppressWarnings("Duplicates")
+  private static void addServiceErrors(final ResourceModel resourceModel, final Class<?> resourceClass)
+  {
+    final ServiceErrorDef serviceErrorDefAnnotation = resourceClass.getAnnotation(ServiceErrorDef.class);
+    final ServiceErrors serviceErrorsAnnotation = resourceClass.getAnnotation(ServiceErrors.class);
+
+    if (serviceErrorsAnnotation == null)
+    {
+      return;
+    }
+
+    if (serviceErrorDefAnnotation == null)
+    {
+      throw new ResourceConfigException(String.format("Resource '%s' is missing a @%s annotation",
+          resourceClass.getName(), ServiceErrorDef.class.getSimpleName()));
+    }
+
+    final List<ServiceError> serviceErrors = buildServiceErrors(serviceErrorDefAnnotation, serviceErrorsAnnotation, resourceClass);
+
+    // TODO: [service-error-parameters] Validate that there are no parameters specified for any of these service errors
+
+    resourceModel.setServiceErrors(serviceErrors);
+  }
+
+  /**
+   * Reads annotations on a given method in order to build service errors, which are then added to
+   * a given resource method descriptor.
+   *
+   * @param resourceMethodDescriptor resource method descriptor to add service errors to
+   * @param method method annotated with service errors
+   */
+  @SuppressWarnings("Duplicates")
+  private static void addServiceErrors(final ResourceMethodDescriptor resourceMethodDescriptor, final Method method)
+  {
+    final Class<?> resourceClass = method.getDeclaringClass();
+    final ServiceErrorDef serviceErrorDefAnnotation = resourceClass.getAnnotation(ServiceErrorDef.class);
+    final ServiceErrors serviceErrorsAnnotation = method.getAnnotation(ServiceErrors.class);
+
+    if (serviceErrorsAnnotation == null)
+    {
+      return;
+    }
+
+    if (serviceErrorDefAnnotation == null)
+    {
+      throw new ResourceConfigException(String.format("Resource '%s' is missing a @%s annotation",
+              resourceClass.getName(), ServiceErrorDef.class.getSimpleName()));
+    }
+
+    final List<ServiceError> serviceErrors = buildServiceErrors(serviceErrorDefAnnotation, serviceErrorsAnnotation, resourceClass);
+
+    // TODO: [service-error-parameters] Form a set of parameter names which exist on this method
+
+    // TODO: [service-error-parameters] Validate that all parameter names are valid
+
+    resourceMethodDescriptor.setServiceErrors(serviceErrors);
+  }
+
+  /**
+   * Given a {@link ServiceErrorDef} annotation and a {@link ServiceErrors} annotation, builds a list of
+   * service errors by mapping the service error codes against the service errors defined in the definition
+   * annotation. Also requires the resource class purely for exception messages.
+   *
+   * @param serviceErrorDefAnnotation service error definition annotation
+   * @param serviceErrorsAnnotation service error codes annotation
+   * @param resourceClass resource class
+   * @return {@link List<ServiceError>}
+   */
+  private static List<ServiceError> buildServiceErrors(final ServiceErrorDef serviceErrorDefAnnotation,
+      final ServiceErrors serviceErrorsAnnotation, final Class<?> resourceClass)
+  {
+    // Create a mapping of all valid codes to their respective service errors
+    // TODO: If this class is ever refactored into a better OO solution, only build this once per resource
+    Map<String, ServiceError> serviceErrorCodeMapping = Arrays.stream(serviceErrorDefAnnotation.value().getEnumConstants())
+        .map((Enum<? extends ServiceError> e) -> (ServiceError) e )
+        .collect(Collectors.toMap(
+            ServiceError::code,
+            Function.identity()
+        ));
+
+    // Build service errors from specified codes using this mapping
+    final String[] serviceErrorCodes = serviceErrorsAnnotation.value();
+    final Set<String> existingServiceErrorCodes = new HashSet<>();
+    final List<ServiceError> serviceErrors = new ArrayList<>(serviceErrorCodes.length);
+    for (String serviceErrorCode : serviceErrorCodes)
+    {
+      // Check for duplicate service error codes
+      if (existingServiceErrorCodes.contains(serviceErrorCode))
+      {
+        throw new ResourceConfigException(
+            String.format("Duplicate service error code '%s' used in resource '%s'",
+                serviceErrorCode, resourceClass.getName()));
+      }
+
+      // Attempt to map this code to its corresponding service error
+      if (serviceErrorCodeMapping.containsKey(serviceErrorCode))
+      {
+        final ServiceError serviceError = serviceErrorCodeMapping.get(serviceErrorCode);
+
+        // TODO: [service-error-parameters] Ensure that there are no duplicate parameter names
+
+        serviceErrors.add(serviceError);
+      }
+      else
+      {
+        throw new ResourceConfigException(
+            String.format("Unknown service error code '%s' used in resource '%s'",
+                serviceErrorCode, resourceClass.getName()));
+      }
+
+      // Mark this code as seen to prevent duplicates
+      existingServiceErrorCodes.add(serviceErrorCode);
+    }
+
+    return serviceErrors;
+  }
+
+  /**
+   * Does extra validation of the generated service errors for a resource. This method should only be called
+   * after all the resource-level and method-level service errors have been added to the resource model.
+   *
+   * @param resourceModel resource model to validate
+   * @param resourceClass class represented by the resource model
+   */
+  private static void validateServiceErrors(final ResourceModel resourceModel, final Class<?> resourceClass)
+  {
+    final ServiceErrorDef serviceErrorDefAnnotation = resourceClass.getAnnotation(ServiceErrorDef.class);
+
+    // Log a warning if the resource uses an unnecessary service error definition annotation
+    if (serviceErrorDefAnnotation != null && !resourceModel.isAnyServiceErrorListDefined()) {
+      log.warn(String.format("Resource '%1$s' uses an unnecessary @%2$s annotation, as no corresponding @%3$s "
+            + "annotations were found on the class or any of its methods. Either the @%2$s annotation should be "
+            + "removed or a @%3$s annotation should be added.",
+          resourceClass.getName(), ServiceErrorDef.class.getSimpleName(), ServiceErrors.class.getSimpleName()));
     }
   }
 }

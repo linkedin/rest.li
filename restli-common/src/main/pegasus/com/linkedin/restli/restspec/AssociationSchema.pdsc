@@ -2,6 +2,8 @@
   "type" : "record",
   "name" : "AssociationSchema",
   "namespace" : "com.linkedin.restli.restspec",
+  "doc": "Schema representing an association resource.",
+  "include" : [ "ServiceErrorsSchema" ],
   "fields" : [
     {
       "name" : "identifier",

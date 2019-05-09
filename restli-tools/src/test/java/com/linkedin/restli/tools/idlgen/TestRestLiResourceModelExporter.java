@@ -83,7 +83,12 @@ public class TestRestLiResourceModelExporter
                 "com.linkedin.restli.tools.sample.greetings.restspec.json",
                 "com.linkedin.restli.tools.sample.customKeyAssociation.restspec.json"} },
             { "returnEntity", new String[] { "com.linkedin.restli.tools.returnentity" }, IDLS_DIR, new String[] {
-                "returnEntity-annotation.restspec.json"} }
+                "returnEntity-annotation.restspec.json"} },
+            { "serviceErrors", new String[] { "com.linkedin.restli.tools.errors" }, IDLS_DIR, new String[] {
+                "serviceErrors-collection.restspec.json",
+                "serviceErrors-simple.restspec.json",
+                "serviceErrors-association.restspec.json",
+                "serviceErrors-actions.restspec.json" } }
         };
   }
 

@@ -2,6 +2,8 @@
   "type" : "record",
   "name" : "ActionsSetSchema",
   "namespace" : "com.linkedin.restli.restspec",
+  "doc": "Schema representing an actions set resource.",
+  "include" : [ "ServiceErrorsSchema" ],
   "fields" : [
     {
       "name" : "actions",

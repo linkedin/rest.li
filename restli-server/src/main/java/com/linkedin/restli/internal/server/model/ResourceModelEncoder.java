@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.internal.server.model;
 
-
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.JacksonDataCodec;
@@ -31,6 +30,7 @@ import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.HasTyperefInfo;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.restli.common.ActionResponse;
@@ -62,22 +62,26 @@ import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
+import com.linkedin.restli.restspec.ServiceErrorSchema;
+import com.linkedin.restli.restspec.ServiceErrorSchemaArray;
+import com.linkedin.restli.restspec.ServiceErrorsSchema;
 import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.BatchFinder;
+import com.linkedin.restli.server.errors.ServiceError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.apache.commons.io.IOUtils;
 
 
@@ -500,6 +504,7 @@ public class ResourceModelEncoder
     // Finders, BatchFinders and Actions
     appendCollections(collectionSchema, collectionModel);
     appendEntityToCollectionSchema(collectionSchema, collectionModel);
+    appendServiceErrors(collectionSchema, collectionModel.getServiceErrors());
 
     switch(collectionModel.getResourceType())
     {
@@ -524,6 +529,9 @@ public class ResourceModelEncoder
     {
       actionsNode.setActions(actions);
     }
+
+    appendServiceErrors(actionsNode, resourceModel.getServiceErrors());
+
     resourceSchema.setActionsSet(actionsNode);
   }
 
@@ -543,6 +551,7 @@ public class ResourceModelEncoder
     }
 
     appendEntityToSimpleSchema(simpleSchema, resourceModel);
+    appendServiceErrors(simpleSchema, resourceModel.getServiceErrors());
 
     resourceSchema.setSimple(simpleSchema);
   }
@@ -723,6 +732,9 @@ public class ResourceModelEncoder
     {
       action.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
     }
+
+    appendServiceErrors(action, resourceMethodDescriptor.getServiceErrors());
+
     return action;
   }
 
@@ -871,9 +883,13 @@ public class ResourceModelEncoder
       finder.setAnnotations(new CustomAnnotationContentSchemaMap(customAnnotation));
     }
 
-    if (resourceMethodDescriptor.isPagingSupported()) {
+    if (resourceMethodDescriptor.isPagingSupported())
+    {
       finder.setPagingSupported(true);
     }
+
+    appendServiceErrors(finder, resourceMethodDescriptor.getServiceErrors());
+
     return finder;
   }
 
@@ -913,6 +929,8 @@ public class ResourceModelEncoder
     if (resourceMethodDescriptor.isPagingSupported()) {
       batchFinder.setPagingSupported(true);
     }
+
+    appendServiceErrors(batchFinder, resourceMethodDescriptor.getServiceErrors());
 
     BatchFinder batchFinderAnnotation = resourceMethodDescriptor.getMethod().getAnnotation(BatchFinder.class);
     batchFinder.setBatchParam(batchFinderAnnotation.batchParam());
@@ -1068,6 +1086,8 @@ public class ResourceModelEncoder
         }
       }
 
+      appendServiceErrors(restMethod, descriptor.getServiceErrors());
+
       restMethods.add(restMethod);
     }
 
@@ -1156,5 +1176,62 @@ public class ResourceModelEncoder
     }
 
     collectionNode.setIdentifier(identifierSchema);
+  }
+
+  /**
+   * Given a resource schema or resource method schema, adds the specified service errors.
+   *
+   * @param schema specific resource schema or a specific resource method schema
+   * @param serviceErrors list of service errors to add to this schema
+   */
+  private void appendServiceErrors(final RecordTemplate schema, final List<ServiceError> serviceErrors)
+  {
+    if (serviceErrors == null)
+    {
+      return;
+    }
+
+    // Wrap the underlying data map in the shared schema interface
+    ServiceErrorsSchema serviceErrorsSchema = new ServiceErrorsSchema(schema.data());
+
+    // Build the service error schema array
+    ServiceErrorSchemaArray serviceErrorSchemas = buildServiceErrors(serviceErrors);
+
+    serviceErrorsSchema.setServiceErrors(serviceErrorSchemas);
+  }
+
+  /**
+   * Given a list of service errors, returns a service error schema array record.
+   *
+   * @param serviceErrors list of service errors to build, assumed to be non-null and non-empty
+   * @return service error schema array
+   */
+  private ServiceErrorSchemaArray buildServiceErrors(final List<ServiceError> serviceErrors)
+  {
+    final ServiceErrorSchemaArray serviceErrorSchemaArray = new ServiceErrorSchemaArray();
+
+    // For each service error, build a service error schema and append it to the service error schema array
+    for (ServiceError serviceError : serviceErrors)
+    {
+      ServiceErrorSchema serviceErrorSchema = new ServiceErrorSchema()
+          .setStatus(serviceError.httpStatus())
+          .setCode(serviceError.code());
+
+      final String message = serviceError.message();
+      if (message != null)
+      {
+          serviceErrorSchema.setMessage(message);
+      }
+
+      final Class<?> errorDetailType = serviceError.errorDetailType();
+      if (errorDetailType != null)
+      {
+        serviceErrorSchema.setErrorDetailType(errorDetailType.getCanonicalName());
+      }
+
+      serviceErrorSchemaArray.add(serviceErrorSchema);
+    }
+
+    return serviceErrorSchemaArray;
   }
 }

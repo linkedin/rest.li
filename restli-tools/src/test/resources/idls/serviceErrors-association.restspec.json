@@ -1,0 +1,32 @@
+{
+  "name" : "association",
+  "path" : "/association",
+  "schema" : "com.linkedin.restli.tools.errors.DummyRecord",
+  "doc" : "Association resource to test IDL generation with defined service errors.\n This resource also tests that an empty list of service errors can be defined.\n\ngenerated from: com.linkedin.restli.tools.errors.ServiceErrorAssociationResource",
+  "association" : {
+    "serviceErrors" : [ ],
+    "identifier" : "associationId",
+    "assocKeys" : [ {
+      "name" : "keyA",
+      "type" : "long"
+    }, {
+      "name" : "keyB",
+      "type" : "long"
+    } ],
+    "supports" : [ "get_all" ],
+    "methods" : [ {
+      "serviceErrors" : [ {
+        "status" : 400,
+        "code" : "METHOD_LEVEL_ERROR",
+        "message" : "And this is such a method-level error",
+        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+      } ],
+      "method" : "get_all",
+      "doc" : "Ensures that template CRUD methods can specify a method-level service error.",
+      "pagingSupported" : true
+    } ],
+    "entity" : {
+      "path" : "/association/{associationId}"
+    }
+  }
+}

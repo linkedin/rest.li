@@ -1,0 +1,14 @@
+{
+  "type" : "record",
+  "name" : "ServiceErrorsSchema",
+  "namespace" : "com.linkedin.restli.restspec",
+  "doc" : "Extension schema allowing resource and method schemas to define service errors.",
+  "fields" : [
+    {
+      "name" : "serviceErrors",
+      "doc" : "Service errors for this resource or resource method.",
+      "type" : { "type" : "array", "items" : "ServiceErrorSchema" },
+      "optional" : true
+    }
+  ]
+}

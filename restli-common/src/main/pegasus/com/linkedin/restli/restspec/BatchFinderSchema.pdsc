@@ -2,11 +2,12 @@
   "type" : "record",
   "name" : "BatchFinderSchema",
   "namespace" : "com.linkedin.restli.restspec",
+  "doc": "Schema representing a batch finder resource method.",
   "include" : [ "FinderSchema" ],
   "fields" : [
     {
       "name" : "batchParam",
-      "doc" : "Indicates the paramater name that contains the criteria list",
+      "doc" : "Indicates the parameter name that contains the criteria list",
       "type" : "string"
     }
   ]

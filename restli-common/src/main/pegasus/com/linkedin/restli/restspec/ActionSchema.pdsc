@@ -2,7 +2,8 @@
   "type" : "record",
   "name" : "ActionSchema",
   "namespace" : "com.linkedin.restli.restspec",
-  "include" : [ "CustomAnnotationSchema" ],
+  "doc": "Schema representing an action resource method.",
+  "include" : [ "CustomAnnotationSchema", "ServiceErrorsSchema" ],
   "fields" : [
     {
       "name" : "name",

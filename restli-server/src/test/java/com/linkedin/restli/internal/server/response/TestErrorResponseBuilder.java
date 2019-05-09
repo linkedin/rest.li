@@ -51,8 +51,8 @@ public class TestErrorResponseBuilder
   {
     return new Object[][]
         {
-            {AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
-            {AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()}
+            { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion() },
+            { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion() }
         };
   }
 
@@ -60,7 +60,7 @@ public class TestErrorResponseBuilder
   public void testBuilder(ProtocolVersion protocolVersion)
   {
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
-    Map<String, String> expectedHeaders = new HashMap<String, String>(headers);
+    Map<String, String> expectedHeaders = new HashMap<>(headers);
     expectedHeaders.put(HeaderUtil.getErrorResponseHeaderName(protocolVersion), RestConstants.HEADER_VALUE_ERROR);
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor();
@@ -72,13 +72,13 @@ public class TestErrorResponseBuilder
 
     ErrorResponseBuilder errorResponseBuilder = new ErrorResponseBuilder();
     RestLiResponseData<?> responseData = errorResponseBuilder.buildRestLiResponseData(routingResult,
-                                                                                   serviceException,
-                                                                                   headers,
-                                                                                   Collections.emptyList());
+                                                                                      serviceException,
+                                                                                      headers,
+                                                                                      Collections.emptyList());
     RestLiResponse restResponse = errorResponseBuilder.buildResponse(responseData);
 
     EasyMock.verify(mockDescriptor);
-    ErrorResponse errorResponse = (ErrorResponse)restResponse.getEntity();
+    ErrorResponse errorResponse = (ErrorResponse) restResponse.getEntity();
     Assert.assertEquals(errorResponse.getStatus(), new Integer(500));
     Assert.assertTrue(errorResponse.getMessage().contains(runtimeException.getMessage()));
   }

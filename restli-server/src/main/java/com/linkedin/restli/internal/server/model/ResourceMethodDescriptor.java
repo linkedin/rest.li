@@ -22,14 +22,18 @@ import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.server.ResourceLevel;
-
+import com.linkedin.restli.server.annotations.ServiceErrors;
+import com.linkedin.restli.server.errors.ServiceError;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 /**
+ * Representation of a Rest.li resource method.
+ *
  * @author dellamag
  */
 public class ResourceMethodDescriptor
@@ -50,7 +54,7 @@ public class ResourceMethodDescriptor
   // The input parameter index that represents the batch criteria in the resource method.
   private final Integer                                 _batchFinderCriteriaIndex;
   private final Class<? extends RecordTemplate>         _collectionCustomMetadataType;
-  // only applies to actions
+  // Only applies to actions
   private final String                                  _actionName;
   private final ResourceLevel                           _actionResourceLevel;
   private final FieldDef<?>                             _actionReturnFieldDef;
@@ -58,6 +62,8 @@ public class ResourceMethodDescriptor
   private final RecordDataSchema                        _requestDataSchema;
   private final InterfaceType                           _interfaceType;
   private final DataMap                                 _customAnnotations;
+  // Method-level service error definitions
+  private List<ServiceError>                            _serviceErrors;
 
   /**
    * Finder resource method descriptor factory.
@@ -484,6 +490,25 @@ public class ResourceMethodDescriptor
   {
     return _parameters.stream().anyMatch(param -> param.getParamType().equals(
         Parameter.ParamType.PAGING_CONTEXT_PARAM));
+  }
+
+  /**
+   * Gets an immutable view of the expected service errors for this resource method, or null if errors aren't defined.
+   * @return {@link List<ServiceError>}
+   */
+  public List<ServiceError> getServiceErrors()
+  {
+    return _serviceErrors == null ? null : Collections.unmodifiableList(_serviceErrors);
+  }
+
+  /**
+   * Sets the list of expected service errors for this resource method.
+   * Note that a null list and an empty list are semantically different (see {@link ServiceErrors}).
+   * @param serviceErrors {@link List<ServiceError>}
+   */
+  public void setServiceErrors(final Collection<ServiceError> serviceErrors)
+  {
+    _serviceErrors = serviceErrors == null ? null : new ArrayList<>(serviceErrors);
   }
 
   @Override

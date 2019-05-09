@@ -1,0 +1,51 @@
+{
+  "name" : "actions",
+  "path" : "/actions",
+  "doc" : "Actions resource to test IDL generation with defined service errors.\n This resource also tests that multiple resource-level service errors can be defined.\n\ngenerated from: com.linkedin.restli.tools.errors.ServiceErrorActionsResource",
+  "actionsSet" : {
+    "serviceErrors" : [ {
+      "status" : 400,
+      "code" : "RESOURCE_LEVEL_ERROR",
+      "message" : "Wow, this is such a resource-level error",
+      "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+    }, {
+      "status" : 403,
+      "code" : "YET_ANOTHER_RESOURCE_LEVEL_ERROR",
+      "message" : "Wow, yet another one!",
+      "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+    } ],
+    "actions" : [ {
+      "serviceErrors" : [ {
+        "status" : 400,
+        "code" : "METHOD_LEVEL_ERROR",
+        "message" : "And this is such a method-level error",
+        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+      } ],
+      "name" : "doAction",
+      "doc" : "Ensures that action methods can specify a method-level service error.",
+      "returns" : "int"
+    }, {
+      "name" : "iWillNeverFail",
+      "doc" : "This is included as a finder method with no method-level service errors.",
+      "parameters" : [ {
+        "name" : "who",
+        "type" : "string"
+      } ],
+      "returns" : "int"
+    }, {
+      "serviceErrors" : [ {
+        "status" : 400,
+        "code" : "NO_DETAIL_TYPE_ERROR",
+        "message" : "The error detail type... where is it?"
+      } ],
+      "name" : "missingErrorDetailType",
+      "doc" : "Ensures that service errors without error detail types can be used.",
+      "returns" : "string"
+    }, {
+      "serviceErrors" : [ ],
+      "name" : "noErrorsDefined",
+      "doc" : "Ensures that an empty list of service errors can be used at the method-level.",
+      "returns" : "string"
+    } ]
+  }
+}

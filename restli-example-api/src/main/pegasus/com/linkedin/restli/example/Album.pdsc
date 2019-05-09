@@ -2,7 +2,7 @@
   "type": "record",
   "name": "Album",
   "namespace": "com.linkedin.restli.example",
-  "doc": "An album for rest.li",
+  "doc": "An album for Rest.li",
   "fields": [
     {
       "name": "id",

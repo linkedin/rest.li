@@ -1,6 +1,10 @@
-27.1.3
+27.1.4
 ------
 
+27.1.3
+------
+(RB=1650555)
+Add support for defining service errors, document service errors in the IDL
 
 27.1.2
 ------
