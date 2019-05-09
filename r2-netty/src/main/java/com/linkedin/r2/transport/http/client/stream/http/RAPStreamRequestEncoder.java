@@ -23,6 +23,7 @@ import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
 
 import com.linkedin.r2.transport.http.client.stream.NettyRequestAdapter;
+import com.linkedin.util.clock.SystemClock;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
@@ -33,6 +34,9 @@ import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.util.Attribute;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This encoder encodes StreamRequest to Netty's HttpRequest.
@@ -41,6 +45,9 @@ import io.netty.handler.codec.http.LastHttpContent;
  */
 /** package private */class RAPStreamRequestEncoder extends ChannelDuplexHandler
 {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RAPStreamRequestEncoder.class);
+
   private static final int MAX_BUFFERED_CHUNKS = 10;
   // this threshold is to mitigate the effect of the inter-play of Nagle's algorithm & Delayed ACK
   // when sending requests with small entity
@@ -50,6 +57,8 @@ import io.netty.handler.codec.http.LastHttpContent;
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception
   {
+    LOG.info("write data at RAPSStreamRequestEncoder :" + ctx.channel().remoteAddress());
+
     if (msg instanceof StreamRequest)
     {
       StreamRequest request = (StreamRequest) msg;
@@ -100,6 +109,7 @@ import io.netty.handler.codec.http.LastHttpContent;
       _ctx = ctx;
       _notFlushedBytes = 0;
       _notFlushedChunks = 0;
+
     }
 
     public void onInit(ReadHandle rh)
@@ -109,6 +119,9 @@ import io.netty.handler.codec.http.LastHttpContent;
 
     public void onDataAvailable(final ByteString data)
     {
+
+      LOG.info("onDataAvailable RAPStreamRequestEncoder.BufferedReader.onDataAvailable for request :" + _ctx.channel().remoteAddress());
+
       HttpContent content = new DefaultHttpContent(Unpooled.wrappedBuffer(data.asByteBuffer()));
       _ctx.write(content).addListener(new ChannelFutureListener()
       {
@@ -133,18 +146,23 @@ import io.netty.handler.codec.http.LastHttpContent;
 
     public void onDone()
     {
+      LOG.info("onDataAvailable RAPStreamRequestEncoder.BufferedReader.onDone for request :" + _ctx.channel().remoteAddress());
+
       _currentReader = null;
       _ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
     }
 
     public void onError(Throwable e)
     {
+      LOG.info("onDataAvailable RAPStreamRequestEncoder.BufferedReader.onDone for onError :" + _ctx.channel().remoteAddress());
       _currentReader = null;
       _ctx.fireExceptionCaught(e);
     }
 
     private void flush()
     {
+      LOG.info("onDataAvailable RAPStreamRequestEncoder.BufferedReader.onDone for flush :" + _ctx.channel().remoteAddress());
+
       _readHandle.request(_maxBufferedChunks);
     }
   }
