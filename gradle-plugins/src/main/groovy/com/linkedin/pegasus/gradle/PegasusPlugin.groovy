@@ -1369,6 +1369,16 @@ class PegasusPlugin implements Plugin<Project>
     final Task compileTask = project.tasks[targetSourceSet.compileJavaTaskName]
     compileTask.dependsOn(generateDataTemplatesTask)
 
+    // we need to delete the build directory before staging files for translation/code generation, in case there were
+    // left over files from a previous execution. This is not a problem if the input for translation/code generation
+    // hasn't changed at all, because gradle will just realize the buildDir can be rebuilt from cache.
+    Task destroyStaleFiles = project.task(sourceSet.name + "DestroyStaleFiles") {
+      inputs.dir publishableSchemasBuildDir
+      doLast {
+        project.delete publishableSchemasBuildDir
+      }
+    }
+
     // Copy all PDSC files directly over for publication
     Task preparePdscSchemasForPublishTask = project.task(
         sourceSet.name + 'CopyPdscSchemas',
@@ -1378,6 +1388,7 @@ class PegasusPlugin implements Plugin<Project>
       }
       into publishableSchemasBuildDir
     }
+    preparePdscSchemasForPublishTask.dependsOn(destroyStaleFiles)
 
     Collection<Task> dataTemplateJarDepends = new ArrayList<Task>()
     dataTemplateJarDepends.addAll(compileTask, preparePdscSchemasForPublishTask)
@@ -1396,6 +1407,7 @@ class PegasusPlugin implements Plugin<Project>
         sourceFormat = SchemaFileType.PDL
         destinationFormat = SchemaFileType.PDSC
       }
+      preparePdlSchemasForPublishTask.dependsOn(destroyStaleFiles)
       dataTemplateJarDepends.add(preparePdlSchemasForPublishTask)
     }
 
