@@ -46,10 +46,6 @@ class ChannelPoolStreamHandler extends ChannelInboundHandlerAdapter
 {
   public static final AttributeKey<AsyncPool<Channel>> CHANNEL_POOL_ATTR_KEY
       = AttributeKey.valueOf("ChannelPool");
-
-  public static final AttributeKey<String> CHANNEL_REQUEST_URL
-      = AttributeKey.valueOf("RequestUrl");
-
   /* package private */ static final Object CHANNEL_RELEASE_SIGNAL = new Object();
   /* package private */ static final Object CHANNEL_DESTROY_SIGNAL = new Object();
 

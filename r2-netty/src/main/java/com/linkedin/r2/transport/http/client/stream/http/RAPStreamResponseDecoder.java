@@ -44,7 +44,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
-import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,8 +87,6 @@ import java.util.concurrent.TimeoutException;
   @Override
   protected void channelRead0(final ChannelHandlerContext ctx, HttpObject msg) throws Exception
   {
-    LOG.info("RAPStreamResponseDecoder.channelRead0 :" + ctx.channel().remoteAddress());
-
     if (msg instanceof HttpResponse)
     {
       HttpResponse m = (HttpResponse) msg;
@@ -103,8 +100,6 @@ import java.util.concurrent.TimeoutException;
           public void operationComplete(ChannelFuture future)
               throws Exception
           {
-            LOG.info("channelRead0 operationComplete :" + ctx.channel().remoteAddress() +" future.isSuccess()="+ future.isSuccess());
-
             if (!future.isSuccess())
             {
               ctx.fireExceptionCaught(future.cause());
@@ -114,7 +109,6 @@ import java.util.concurrent.TimeoutException;
       }
       if (!m.decoderResult().isSuccess())
       {
-        LOG.info("channelRead0 operationComplete :" + ctx.channel().remoteAddress() +" decodeResult not successful");
         ctx.fireExceptionCaught(m.decoderResult().cause());
         return;
       }
@@ -127,7 +121,7 @@ import java.util.concurrent.TimeoutException;
       Timeout<None> timeout = ctx.channel().attr(TIMEOUT_ATTR_KEY).getAndSet(null);
       if (timeout == null)
       {
-        LOG.debug("dropped a response after channel inactive or exception had happened. Request URIl="+ctx.channel().remoteAddress());
+        LOG.debug("dropped a response after channel inactive or exception had happened.");
         return;
       }
 

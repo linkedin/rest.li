@@ -20,20 +20,15 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import com.linkedin.r2.message.Request;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.util.Timeout;
 import com.linkedin.r2.util.TimeoutExecutor;
 
-import com.linkedin.util.clock.SystemClock;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
  * A TransportCallback wrapper with associated timeout.  If the TimeoutTransportCallback's
@@ -47,34 +42,7 @@ import org.slf4j.LoggerFactory;
 
 public class TimeoutTransportCallback<T> implements TransportCallback<T>, TimeoutExecutor
 {
-
-  private static final Logger LOG = LoggerFactory.getLogger(TimeoutTransportCallback.class);
-
   private final Timeout<TransportCallback<T>> _timeout;
-
-
-  public TimeoutTransportCallback(ScheduledExecutorService scheduler,
-      long timeout,
-      TimeUnit timeoutUnit,
-      final TransportCallback<T> callback,
-      final String timeoutMessage,
-      final Request request)
-  {
-    _timeout = new Timeout<TransportCallback<T>>(scheduler, timeout, timeoutUnit, callback);
-    _timeout.addTimeoutTask(new Runnable()
-    {
-      @Override
-      public void run()
-      {
-        callback.onResponse(TransportResponseImpl.<T>error(new TimeoutException(timeoutMessage)));
-        if(null!=request)
-        {
-          LOG.info("Request timedout for request :"+ request.getURI()
-              +",\nTime:"+ SystemClock.instance().currentTimeMillis());
-        }
-      }
-    });
-  }
 
   /**
    * Construct a new instance using the specified parameters.
@@ -92,7 +60,15 @@ public class TimeoutTransportCallback<T> implements TransportCallback<T>, Timeou
                                   final TransportCallback<T> callback,
                                   final String timeoutMessage)
   {
-   this(scheduler, timeout, timeoutUnit, callback, timeoutMessage, null);
+    _timeout = new Timeout<TransportCallback<T>>(scheduler, timeout, timeoutUnit, callback);
+    _timeout.addTimeoutTask(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        callback.onResponse(TransportResponseImpl.<T>error(new TimeoutException(timeoutMessage)));
+      }
+    });
   }
 
   @Override

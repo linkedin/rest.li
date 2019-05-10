@@ -42,7 +42,6 @@ import com.linkedin.r2.transport.http.client.stream.SslHandshakeTimingHandler;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.r2.util.Timeout;
-import com.linkedin.util.clock.SystemClock;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -52,9 +51,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
  * @author Steven Ihde
@@ -64,8 +60,6 @@ import org.slf4j.LoggerFactory;
 
 /* package private */public class HttpNettyStreamClient extends AbstractNettyStreamClient
 {
-
-  private static final Logger LOG = LoggerFactory.getLogger(HttpNettyStreamClient.class);
 
   /**
    * Creates a new HttpNettyStreamClient
@@ -122,11 +116,7 @@ import org.slf4j.LoggerFactory;
 
     requestContext.putLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1);
 
-
     Callback<Channel> getCallback = new ChannelPoolGetCallback(pool, request, requestContext, callback, requestTimeout);
-
-    LOG.info("Getting Channel pool for request :"+ request.getURI());
-
     final Cancellable pendingGet = pool.get(getCallback);
     if (pendingGet != null)
     {
@@ -154,11 +144,6 @@ import org.slf4j.LoggerFactory;
     @Override
     public void onSuccess(final Channel channel)
     {
-
-      LOG.info("Successfully acquired channel for request :"+ _request.getURI());
-
-      channel.attr(ChannelPoolStreamHandler.CHANNEL_REQUEST_URL).set(_request.getURI().toString());
-
       // This handler ensures the channel is returned to the pool at the end of the
       // Netty pipeline.
       channel.attr(ChannelPoolStreamHandler.CHANNEL_POOL_ATTR_KEY).set(_pool);
@@ -221,7 +206,6 @@ import org.slf4j.LoggerFactory;
     @Override
     public void onError(Throwable e)
     {
-      LOG.info("Failed to acquire channel for request :"+ _request.getURI());
       _callback.onResponse(TransportResponseImpl.error(e));
     }
   }
