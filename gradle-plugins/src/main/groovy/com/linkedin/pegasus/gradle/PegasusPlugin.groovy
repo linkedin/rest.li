@@ -1373,9 +1373,11 @@ class PegasusPlugin implements Plugin<Project>
     // left over files from a previous execution. This is not a problem if the input for translation/code generation
     // hasn't changed at all, because gradle will just realize the buildDir can be rebuilt from cache.
     Task destroyStaleFiles = project.task(sourceSet.name + "DestroyStaleFiles") {
-      inputs.dir publishableSchemasBuildDir
-      doLast {
-        project.delete publishableSchemasBuildDir
+      if (publishableSchemasBuildDir.exists()) {
+        inputs.dir publishableSchemasBuildDir
+        doLast {
+          project.delete publishableSchemasBuildDir
+        }
       }
     }
 
