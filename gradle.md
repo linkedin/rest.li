@@ -392,13 +392,17 @@ This is provided for reference only.  A understanding of these classes is not re
 Generate Avro avsc files from Pegasus Data Model schemas (.pdsc files):
 
     java [-Dgenerator.resolver.path=<dataSchemaRelativePath>] \
+      [-Dgenerator.avro.optional.default=<optionalDefault>] \
+      [-Dgenerator.avro.namespace.override=<overrideNamespace>] \
       -cp <CLASSPATH> com.linkedin.data.avro.generator.AvroSchemaGenerator \
       <outputDir> [<inputFileOrDir> ...]
 
-* dataSchemaRelativePath - Path to .pdsc files. (e.g.,  /src/main/pegasus).
+* dataSchemaRelativePath - Path to `.pdsc` files. (e.g., `/src/main/pegasus`).
+* optionalDefault - Specifies how an optional field with a default value should be translated (see [Converting Rest.li to Avro](/rest.li/Rest_li_Avro_conversions#converting-restli-to-avro)).
+* overrideNamespace - If `true`, each translated `.avsc` file will have its namespace prepended with `"avro."` (see [Converting Rest.li to Avro](/rest.li/Rest_li_Avro_conversions#converting-restli-to-avro)).
 * CLASSPATH - `com.linkedin.pegasus:data:[CURRENT_VERSION]` AND `com.linkedin.pegasus:data-avro:[CURRENT_VERSION]` artifacts and all their dependencies.
-* outputDir - output directory for generated avsc files
-* inputFileOrDir - file name of a Pegasus data schema file, a directory containing Pegasus data schema files, or a fully qualified schema name
+* outputDir - output directory for generated `.avsc` files.
+* inputFileOrDir - file name of a Pegasus data schema file, a directory containing Pegasus data schema files, or a fully qualified schema name.
 
 Build integration: for builds requiring avro schemas, assembly (creation of jar) should depend on this task
 
