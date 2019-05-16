@@ -33,7 +33,11 @@ com.linkedin.data.avro.SchemaTranslator.dataToAvroSchema(dataSchema);
 com.linkedin.data.avro.SchemaTranslator.dataToAvroSchema(dataSchema, translationOptions);
 ```
 
-`DataToAvroSchemaTranslationOptions` has three parts: the translation mode `OptionalDefaultMode`, the JSON style `JsonBuilder.Pretty`, and the schema embedding mode `EmbedSchemaMode`.
+`DataToAvroSchemaTranslationOptions` has four parts:
+* The translation mode `OptionalDefaultMode`
+* The JSON style `JsonBuilder.Pretty`
+* The schema embedding mode `EmbedSchemaMode`
+* The namespace override flag `overrideNamespace`
 
 `OptionalDefaultMode` determines how defaults are translated into Rest.li format.  Since Avro requires that a union's default value always be of the same type as the first member type of the union, if a type is not consistently initialized with a single default type, translations may encounter problems.  By default this value is set to `TRANSLATE_DEFAULT`, but if your translations are encountering issues around default values, you may wish to set this to `TRANSLATE_TO_NULL`, which will cause all optional fields with a default value to have their default value set to null in the Avro translation.
 
@@ -41,6 +45,8 @@ com.linkedin.data.avro.SchemaTranslator.dataToAvroSchema(dataSchema, translation
 
 `EmbedSchemaMode` determines whether or not to embed the original Rest.li schema into the resulting Avro schema.  This can speed translation back (or make a translation back more accurate) to Rest.li format with the correct settings passed to the `avroToDataSchema` method. By default, this is set to `NONE`.
 
+`overrideNamespace` is a boolean flag indicating whether the namespaces of the translated Avro schemas should be overridden. If this flag is set to `true`, then the namespace of each translated Avro schema will be prepended with a special prefix,
+`"avro."` (e.g. `com.x.y` becomes `avro.com.x.y`). This is helpful in cases where PDSC schemas and their Avro counterparts are included in the same project, potentially causing namespace/package conflicts.
 
 ## Converting Data
 The key class for converting data is the `DataTranslator` class.
