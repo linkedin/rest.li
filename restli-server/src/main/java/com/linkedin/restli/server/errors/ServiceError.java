@@ -17,7 +17,6 @@
 package com.linkedin.restli.server.errors;
 
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.restli.common.ErrorDetails;
 
 
 /**

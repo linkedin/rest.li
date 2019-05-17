@@ -115,6 +115,9 @@ public class TestErrorResponseBuilder
   {
     RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_200_OK, "Some message", new IllegalStateException("Some other message"));
     exception.setServiceErrorCode(123);
+    exception.setCode("INVALID_SOMETHING");
+    exception.setDocUrl("www.documentation.com");
+    exception.setRequestId("id123");
     exception.setErrorDetails(new DataMap());
     ErrorResponseBuilder builder = new ErrorResponseBuilder(ErrorResponseFormat.FULL);
 
@@ -123,8 +126,11 @@ public class TestErrorResponseBuilder
     Assert.assertTrue(errorResponse.hasExceptionClass());
     Assert.assertTrue(errorResponse.hasStatus());
     Assert.assertTrue(errorResponse.hasMessage());
+    Assert.assertTrue(errorResponse.hasCode());
     Assert.assertTrue(errorResponse.hasServiceErrorCode());
     Assert.assertTrue(errorResponse.hasStackTrace());
+    Assert.assertTrue(errorResponse.hasDocUrl());
+    Assert.assertTrue(errorResponse.hasRequestId());
 
     exception.setOverridingFormat(ErrorResponseFormat.MESSAGE_AND_SERVICECODE);
     errorResponse = builder.buildErrorResponse(exception);
@@ -132,7 +138,10 @@ public class TestErrorResponseBuilder
     Assert.assertFalse(errorResponse.hasExceptionClass());
     Assert.assertTrue(errorResponse.hasStatus());
     Assert.assertTrue(errorResponse.hasMessage());
+    Assert.assertTrue(errorResponse.hasCode());
     Assert.assertTrue(errorResponse.hasServiceErrorCode());
     Assert.assertFalse(errorResponse.hasStackTrace());
+    Assert.assertFalse(errorResponse.hasDocUrl());
+    Assert.assertFalse(errorResponse.hasRequestId());
   }
 }

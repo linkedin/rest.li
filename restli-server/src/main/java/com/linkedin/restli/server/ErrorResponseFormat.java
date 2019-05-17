@@ -35,15 +35,17 @@ public class ErrorResponseFormat
   /**
    * Only the error message and explicitly provided error details or service error code are included in responses and headers.
    */
-  public static final ErrorResponseFormat MESSAGE_AND_DETAILS = new ErrorResponseFormat(EnumSet.of(ErrorResponsePart.MESSAGE, ErrorResponsePart.DETAILS, ErrorResponsePart.HEADERS));
+  public static final ErrorResponseFormat MESSAGE_AND_DETAILS = new ErrorResponseFormat(EnumSet.of(ErrorResponsePart.MESSAGE,
+                                                                                        ErrorResponsePart.DETAILS,
+                                                                                        ErrorResponsePart.HEADERS));
 
   /**
    * Only the status code, error message, service error code, and headers.
    */
   public static final ErrorResponseFormat MESSAGE_AND_SERVICECODE = new ErrorResponseFormat(EnumSet.of(ErrorResponsePart.STATUS_CODE_IN_BODY,
-                                                                                            ErrorResponsePart.MESSAGE,
-                                                                                            ErrorResponsePart.SERVICE_ERROR_CODE,
-                                                                                            ErrorResponsePart.HEADERS));
+                                                                                    ErrorResponsePart.MESSAGE,
+                                                                                    ErrorResponsePart.SERVICE_ERROR_CODE,
+                                                                                    ErrorResponsePart.HEADERS));
 
   /**
    * Only the status code, error message, service error code, exception class, and headers.
@@ -69,11 +71,13 @@ public class ErrorResponseFormat
   {
     HEADERS,
     STATUS_CODE_IN_BODY,
-    STACKTRACE,
-    EXCEPTION_CLASS,
     MESSAGE,
-    SERVICE_ERROR_CODE,
-    DETAILS
+    DOC_URL,
+    REQUEST_ID,
+    EXCEPTION_CLASS,
+    STACKTRACE,
+    DETAILS,
+    SERVICE_ERROR_CODE
   }
 
   private final EnumSet<ErrorResponsePart> _errorPartsToShow;
@@ -103,9 +107,19 @@ public class ErrorResponseFormat
     return _errorPartsToShow.contains(ErrorResponsePart.STATUS_CODE_IN_BODY);
   }
 
-  public boolean showStacktrace()
+  public boolean showMessage()
   {
-    return _errorPartsToShow.contains(ErrorResponsePart.STACKTRACE);
+    return _errorPartsToShow.contains(ErrorResponsePart.MESSAGE);
+  }
+
+  public boolean showDocUrl()
+  {
+    return _errorPartsToShow.contains(ErrorResponsePart.DOC_URL);
+  }
+
+  public boolean showRequestId()
+  {
+    return _errorPartsToShow.contains(ErrorResponsePart.REQUEST_ID);
   }
 
   public boolean showExceptionClass()
@@ -113,18 +127,18 @@ public class ErrorResponseFormat
     return _errorPartsToShow.contains(ErrorResponsePart.EXCEPTION_CLASS);
   }
 
-  public boolean showMessage()
+  public boolean showStacktrace()
   {
-    return _errorPartsToShow.contains(ErrorResponsePart.MESSAGE);
-  }
-
-  public boolean showServiceErrorCode()
-  {
-    return _errorPartsToShow.contains(ErrorResponsePart.SERVICE_ERROR_CODE);
+    return _errorPartsToShow.contains(ErrorResponsePart.STACKTRACE);
   }
 
   public boolean showDetails()
   {
     return _errorPartsToShow.contains(ErrorResponsePart.DETAILS);
+  }
+
+  public boolean showServiceErrorCode()
+  {
+    return _errorPartsToShow.contains(ErrorResponsePart.SERVICE_ERROR_CODE);
   }
 }

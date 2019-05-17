@@ -779,7 +779,7 @@ public class TestRestLiCallback
     assertNull(appResponseData.getResponseEnvelope().getRecord());
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "deprecation"})
   @Test
   public void testOnErrorWithFiltersNotHandlingAppEx() throws Exception
   {

@@ -12,11 +12,12 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
- */
+*/
 
 package com.linkedin.restli.internal.server.response;
 
-
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -78,23 +79,38 @@ public final class ErrorResponseBuilder
   private ErrorResponse buildErrorResponse(RestLiServiceException result, ErrorResponseFormat errorResponseFormat)
   {
     ErrorResponse er = new ErrorResponse();
+
     if (errorResponseFormat.showStatusCodeInBody())
     {
       er.setStatus(result.getStatus().getCode());
+    }
+
+    if (errorResponseFormat.showServiceErrorCode())
+    {
+      if (result.hasCode())
+      {
+        er.setCode(result.getCode());
+      }
+      // TODO: eventually only add "code" and not "serviceErrorCode"
+      if (result.hasServiceErrorCode())
+      {
+        er.setServiceErrorCode(result.getServiceErrorCode());
+      }
     }
 
     if (errorResponseFormat.showMessage() && result.getMessage() != null)
     {
       er.setMessage(result.getMessage());
     }
-    // TODO: remove this and add logic for "code" field (task: Server side resource integration)
-    if (errorResponseFormat.showServiceErrorCode() && result.hasServiceErrorCode())
+
+    if (errorResponseFormat.showDocUrl() && result.hasDocUrl())
     {
-      er.setServiceErrorCode(result.getServiceErrorCode());
+      er.setDocUrl(result.getDocUrl());
     }
-    if (errorResponseFormat.showDetails() && result.hasErrorDetails())
+
+    if (errorResponseFormat.showRequestId() && result.hasRequestId())
     {
-      er.setErrorDetails(new ErrorDetails(result.getErrorDetails()));
+      er.setRequestId(result.getRequestId());
     }
 
     if (errorResponseFormat.showStacktrace())
@@ -103,13 +119,21 @@ public final class ErrorResponseBuilder
       PrintWriter pw = new PrintWriter(sw);
       result.printStackTrace(pw);
       er.setStackTrace(sw.toString());
+    }
 
+    if (errorResponseFormat.showStacktrace() || errorResponseFormat.showExceptionClass())
+    {
       er.setExceptionClass(result.getClass().getName());
     }
 
-    if (errorResponseFormat.showExceptionClass())
+    if (errorResponseFormat.showDetails() && result.hasErrorDetails())
     {
-      er.setExceptionClass(result.getClass().getName());
+      er.setErrorDetails(new ErrorDetails(result.getErrorDetails()));
+      final String errorDetailType = result.getErrorDetailType();
+      if (errorDetailType != null)
+      {
+        er.setErrorDetailType(errorDetailType);
+      }
     }
 
     return er;

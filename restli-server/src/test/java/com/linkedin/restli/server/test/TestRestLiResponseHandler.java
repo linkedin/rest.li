@@ -740,6 +740,7 @@ public class TestRestLiResponseHandler
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicData")
+  @SuppressWarnings("deprecation")
   void testBuildRestException(AcceptTypeData acceptTypeData,
       ProtocolVersion protocolVersion,
       String errorResponseHeaderName) throws Exception
@@ -770,6 +771,7 @@ public class TestRestLiResponseHandler
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "basicData")
+  @SuppressWarnings("deprecation")
   void testBuildResponseWithExceptionObject(AcceptTypeData acceptTypeData,
                       ProtocolVersion protocolVersion,
                       String errorResponseHeaderName) throws Exception

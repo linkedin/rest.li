@@ -46,6 +46,7 @@ import java.util.List;
 public class ExceptionsResource extends CollectionResourceTemplate<Long, Greeting>
 {
   @Override
+  @SuppressWarnings("deprecation")
   public Greeting get(Long key)
   {
     try
@@ -67,6 +68,7 @@ public class ExceptionsResource extends CollectionResourceTemplate<Long, Greetin
    * with 201 created for all other requests.
    */
   @RestMethod.Create
+  @SuppressWarnings("deprecation")
   public CreateResponse create(Greeting g)
   {
     if(g.hasTone() && g.getTone() == Tone.INSULTING)

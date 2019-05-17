@@ -116,7 +116,7 @@ public class TestBatchFinderResponseBuilder
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "testData")
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "deprecation"})
   public void testItemsOrder(List<Criteria> criteria, RestRequest request, Object results,
       ProtocolVersion protocolVersion, String label)
   {
@@ -309,6 +309,7 @@ public class TestBatchFinderResponseBuilder
     return results;
   }
 
+  @SuppressWarnings("deprecation")
   private static BatchFinderResult<Foo, Foo, Foo> generateResultsWithErrors(List<Criteria> criteria)
   {
     BatchFinderResult<Foo, Foo, Foo> results = new BatchFinderResult<Foo, Foo, Foo>();
