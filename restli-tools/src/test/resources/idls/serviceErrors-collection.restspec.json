@@ -39,6 +39,72 @@
       "method" : "get_all",
       "doc" : "This is included as an annotation-specified CRUD method with no service errors."
     } ],
+    "finders" : [ {
+      "serviceErrors" : [ {
+        "status" : 422,
+        "code" : "DOUBLE_PARAMETER_ERROR",
+        "message" : "Method-level parameter error for 2 parameters",
+        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails",
+        "parameters" : [ "param1", "param2" ]
+      } ],
+      "name" : "altF4",
+      "doc" : "This ensures that a method-level service error can specify multiple parameters.\n It also ensures that service error parameter names are matched against the\n {@link QueryParam} annotation rather than the actual method arguments.",
+      "parameters" : [ {
+        "name" : "param1",
+        "type" : "string"
+      }, {
+        "name" : "param2",
+        "type" : "string"
+      } ]
+    }, {
+      "serviceErrors" : [ {
+        "status" : 400,
+        "code" : "METHOD_LEVEL_ERROR",
+        "message" : "And this is such a method-level error",
+        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+      }, {
+        "status" : 422,
+        "code" : "PARAMETER_ERROR",
+        "message" : "This looks like a method-level parameter error",
+        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails",
+        "parameters" : [ "param" ]
+      }, {
+        "status" : 422,
+        "code" : "DOUBLE_PARAMETER_ERROR",
+        "message" : "Method-level parameter error for 2 parameters",
+        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails",
+        "parameters" : [ "param1", "param2" ]
+      } ],
+      "name" : "ctrlAltDelete",
+      "doc" : "This ensures that two method-level service errors specifying parameters can be used in conjunction\n with a method-level service error with no parameters.",
+      "parameters" : [ {
+        "name" : "param",
+        "type" : "string"
+      }, {
+        "name" : "param1",
+        "type" : "string"
+      }, {
+        "name" : "param2",
+        "type" : "string"
+      } ]
+    }, {
+      "serviceErrors" : [ {
+        "status" : 422,
+        "code" : "PARAMETER_ERROR",
+        "message" : "This looks like a method-level parameter error",
+        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails",
+        "parameters" : [ "param" ]
+      } ],
+      "name" : "ctrlF",
+      "doc" : "This ensures that a method-level service error can specify one parameter.\n It also ensures that a subset of parameters can be specified.",
+      "parameters" : [ {
+        "name" : "param",
+        "type" : "string"
+      }, {
+        "name" : "ignoreMe",
+        "type" : "int"
+      } ]
+    } ],
     "actions" : [ {
       "name" : "errorProneAction",
       "doc" : "This is included as an action method with no service errors.",

@@ -21,6 +21,7 @@ import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.ParamError;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
@@ -91,5 +92,42 @@ public class ServiceErrorCollectionResource extends CollectionResourceTemplate<L
   public String errorProneAction()
   {
     return "Protect from errors: [on] off";
+  }
+
+  /**
+   * This ensures that a method-level service error can specify one parameter.
+   * It also ensures that a subset of parameters can be specified.
+   */
+  @Finder(value = "ctrlF")
+  @ParamError(code = PARAMETER_ERROR, parameterNames = { "param" })
+  public List<DummyRecord> finder(@QueryParam("param") String param, @QueryParam("ignoreMe") Integer ignoreMe)
+  {
+    return new ArrayList<>();
+  }
+
+  /**
+   * This ensures that a method-level service error can specify multiple parameters.
+   * It also ensures that service error parameter names are matched against the
+   * {@link QueryParam} annotation rather than the actual method arguments.
+   */
+  @Finder(value = "altF4")
+  @ParamError(code = DOUBLE_PARAMETER_ERROR, parameterNames = { "param1", "param2" })
+  public List<DummyRecord> finder2(@QueryParam("param1") String akaParamA, @QueryParam("param2") String akaParamB)
+  {
+    return new ArrayList<>();
+  }
+
+  /**
+   * This ensures that two method-level service errors specifying parameters can be used in conjunction
+   * with a method-level service error with no parameters.
+   */
+  @Finder(value = "ctrlAltDelete")
+  @ServiceErrors({ METHOD_LEVEL_ERROR })
+  @ParamError(code = PARAMETER_ERROR, parameterNames = { "param" })
+  @ParamError(code = DOUBLE_PARAMETER_ERROR, parameterNames = { "param1", "param2" })
+  public List<DummyRecord> finder3(@QueryParam("param") String param, @QueryParam("param1") String param1,
+      @QueryParam("param2") String param2)
+  {
+    return new ArrayList<>();
   }
 }

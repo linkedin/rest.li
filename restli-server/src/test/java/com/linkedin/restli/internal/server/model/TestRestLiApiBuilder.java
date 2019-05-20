@@ -125,7 +125,14 @@ public class TestRestLiApiBuilder
         {
             { UnknownServiceErrorCodeResource.class, "Unknown service error code 'MADE_UP_ERROR'" },
             { DuplicateServiceErrorCodesResource.class, "Duplicate service error code 'ERROR_A'" },
-            { MissingServiceErrorDefResource.class, "is missing a @ServiceErrorDef annotation" }
+            { MissingServiceErrorDefResource.class, "is missing a @ServiceErrorDef annotation" },
+            { UnknownServiceErrorParameterResource.class, "Nonexistent parameter 'spacestamp' specified for method-level service error" },
+            { EmptyServiceErrorParametersResource.class, "specifies no parameter names for service error code 'ERROR_A'" },
+            { DuplicateServiceErrorParametersResource.class, "Duplicate parameter specified for service error code 'ERROR_A'" },
+            { DuplicateServiceErrorParamErrorCodesResource.class, "Redundant @ParamError annotations for service error code 'ERROR_A'" },
+            { RedundantServiceErrorCodeWithParameterResource.class, "Service error code 'ERROR_A' redundantly specified in both @ServiceErrors and @ParamError annotations" },
+            { InvalidSuccessStatusesResource.class, "Invalid success status '419' specified" },
+            { EmptySuccessStatusesResource.class, "specifies no success statuses" }
         };
   }
 

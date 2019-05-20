@@ -3,7 +3,7 @@
   "name" : "ActionSchema",
   "namespace" : "com.linkedin.restli.restspec",
   "doc": "Schema representing an action resource method.",
-  "include" : [ "CustomAnnotationSchema", "ServiceErrorsSchema" ],
+  "include" : [ "CustomAnnotationSchema", "ServiceErrorsSchema", "SuccessStatusesSchema" ],
   "fields" : [
     {
       "name" : "name",

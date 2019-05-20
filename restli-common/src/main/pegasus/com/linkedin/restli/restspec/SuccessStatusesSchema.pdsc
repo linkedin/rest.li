@@ -1,0 +1,14 @@
+{
+  "type" : "record",
+  "name" : "SuccessStatusesSchema",
+  "namespace" : "com.linkedin.restli.restspec",
+  "doc" : "Extension schema allowing method schemas to define success statuses.",
+  "fields" : [
+    {
+      "name" : "success",
+      "doc" : "Success statuses for this resource method.",
+      "type" : { "type" : "array", "items" : "int" },
+      "optional" : true
+    }
+  ]
+}

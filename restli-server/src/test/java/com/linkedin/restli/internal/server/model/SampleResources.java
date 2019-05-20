@@ -39,6 +39,7 @@ import com.linkedin.restli.server.annotations.MetadataProjectionParam;
 import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.PagingProjectionParam;
 import com.linkedin.restli.server.annotations.ParSeqContextParam;
+import com.linkedin.restli.server.annotations.ParamError;
 import com.linkedin.restli.server.annotations.PathKeyParam;
 import com.linkedin.restli.server.annotations.PathKeysParam;
 import com.linkedin.restli.server.annotations.ProjectionParam;
@@ -52,6 +53,7 @@ import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.annotations.ServiceErrorDef;
 import com.linkedin.restli.server.annotations.ServiceErrors;
+import com.linkedin.restli.server.annotations.SuccessResponse;
 import com.linkedin.restli.server.annotations.UnstructuredDataReactiveReaderParam;
 import com.linkedin.restli.server.errors.ServiceError;
 import com.linkedin.restli.server.resources.AssociationResourceAsyncTemplate;
@@ -176,6 +178,92 @@ public class SampleResources
   @RestLiCollection(name = "missingServiceErrorDef")
   @ServiceErrors(SampleServiceError.Codes.ERROR_A)
   class MissingServiceErrorDefResource implements KeyValueResource<Long, EmptyRecord> {}
+
+  @RestLiCollection(name = "unknownServiceErrorParameter")
+  @ServiceErrorDef(SampleServiceError.class)
+  class UnknownServiceErrorParameterResource implements KeyValueResource<Long, EmptyRecord>
+  {
+    @Finder(value = "query")
+    @ParamError(code = SampleServiceError.Codes.ERROR_A, parameterNames = { "spacestamp" })
+    public List<EmptyRecord> query(@QueryParam("timestamp") String timestamp)
+    {
+      return new ArrayList<>();
+    }
+  }
+
+  @RestLiCollection(name = "emptyServiceErrorParameters")
+  @ServiceErrorDef(SampleServiceError.class)
+  class EmptyServiceErrorParametersResource implements KeyValueResource<Long, EmptyRecord>
+  {
+    @Finder(value = "query")
+    @ParamError(code = SampleServiceError.Codes.ERROR_A, parameterNames = {})
+    public List<EmptyRecord> query(@QueryParam("timestamp") String timestamp)
+    {
+      return new ArrayList<>();
+    }
+  }
+
+  @RestLiCollection(name = "duplicateServiceErrorParameters")
+  @ServiceErrorDef(SampleServiceError.class)
+  class DuplicateServiceErrorParametersResource implements KeyValueResource<Long, EmptyRecord>
+  {
+    @Finder(value = "query")
+    @ParamError(code = SampleServiceError.Codes.ERROR_A, parameterNames = { "param", "param" })
+    public List<EmptyRecord> query(@QueryParam("param") Integer param)
+    {
+      return new ArrayList<>();
+    }
+  }
+
+  @RestLiCollection(name = "duplicateServiceErrorParamErrorCodes")
+  @ServiceErrorDef(SampleServiceError.class)
+  class DuplicateServiceErrorParamErrorCodesResource implements KeyValueResource<Long, EmptyRecord>
+  {
+    @Finder(value = "query")
+    @ParamError(code = SampleServiceError.Codes.ERROR_A, parameterNames = { "param" })
+    @ParamError(code = SampleServiceError.Codes.ERROR_A, parameterNames = { "param2" })
+    public List<EmptyRecord> query(@QueryParam("param") Integer param, @QueryParam("param2") String param2)
+    {
+      return new ArrayList<>();
+    }
+  }
+
+  @RestLiCollection(name = "redundantServiceErrorCodeWithParameter")
+  @ServiceErrorDef(SampleServiceError.class)
+  class RedundantServiceErrorCodeWithParameterResource implements KeyValueResource<Long, EmptyRecord>
+  {
+    @Finder(value = "query")
+    @ServiceErrors({ SampleServiceError.Codes.ERROR_A })
+    @ParamError(code = SampleServiceError.Codes.ERROR_A, parameterNames = { "param" })
+    public List<EmptyRecord> query(@QueryParam("param") Integer param)
+    {
+      return new ArrayList<>();
+    }
+  }
+
+  @RestLiCollection(name = "invalidSuccessStatusesResource")
+  @ServiceErrorDef(SampleServiceError.class)
+  class InvalidSuccessStatusesResource implements KeyValueResource<Long, EmptyRecord>
+  {
+    @RestMethod.Get
+    @SuccessResponse(statuses = { 200, 419 })
+    public EmptyRecord get(Long id)
+    {
+      return new EmptyRecord();
+    }
+  }
+
+  @RestLiCollection(name = "emptySuccessStatusesResource")
+  @ServiceErrorDef(SampleServiceError.class)
+  class EmptySuccessStatusesResource implements KeyValueResource<Long, EmptyRecord>
+  {
+    @RestMethod.Get
+    @SuccessResponse(statuses = {})
+    public EmptyRecord get(Long id)
+    {
+      return new EmptyRecord();
+    }
+  }
 
   /**
    * The following resources are used by {@link TestRestLiParameterAnnotations}.

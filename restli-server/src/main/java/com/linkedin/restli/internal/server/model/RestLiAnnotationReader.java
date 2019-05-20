@@ -82,6 +82,7 @@ import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.PagingProjectionParam;
 import com.linkedin.restli.server.annotations.ParSeqContextParam;
+import com.linkedin.restli.server.annotations.ParamError;
 import com.linkedin.restli.server.annotations.PathKeyParam;
 import com.linkedin.restli.server.annotations.PathKeysParam;
 import com.linkedin.restli.server.annotations.ProjectionParam;
@@ -97,10 +98,12 @@ import com.linkedin.restli.server.annotations.RestLiTemplate;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.annotations.ServiceErrorDef;
 import com.linkedin.restli.server.annotations.ServiceErrors;
+import com.linkedin.restli.server.annotations.SuccessResponse;
 import com.linkedin.restli.server.annotations.UnstructuredDataReactiveReaderParam;
 import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.annotations.ValidatorParam;
 import com.linkedin.restli.server.errors.ServiceError;
+import com.linkedin.restli.server.errors.ParametersServiceError;
 import com.linkedin.restli.server.resources.ComplexKeyResource;
 import com.linkedin.restli.server.resources.ComplexKeyResourceAsync;
 import com.linkedin.restli.server.resources.ComplexKeyResourceTask;
@@ -120,6 +123,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -2103,6 +2107,7 @@ public final class RestLiAnnotationReader
 
       validateFinderMethod(finderMethodDescriptor, model);
       addServiceErrors(finderMethodDescriptor, method);
+      addSuccessStatuses(finderMethodDescriptor, method);
 
       model.addResourceMethodDescriptor(finderMethodDescriptor);
     }
@@ -2144,6 +2149,7 @@ public final class RestLiAnnotationReader
 
       validateBatchFinderMethod(batchFinderMethodDescriptor, model);
       addServiceErrors(batchFinderMethodDescriptor, method);
+      addSuccessStatuses(batchFinderMethodDescriptor, method);
 
       model.addResourceMethodDescriptor(batchFinderMethodDescriptor);
     }
@@ -2213,6 +2219,7 @@ public final class RestLiAnnotationReader
                                                                                                     annotationsMap);
 
       addServiceErrors(resourceMethodDescriptor, method);
+      addSuccessStatuses(resourceMethodDescriptor, method);
 
       model.addResourceMethodDescriptor(resourceMethodDescriptor);
     }
@@ -2300,6 +2307,7 @@ public final class RestLiAnnotationReader
                                                                                                       annotationsMap);
 
         addServiceErrors(resourceMethodDescriptor, method);
+        addSuccessStatuses(resourceMethodDescriptor, method);
 
         model.addResourceMethodDescriptor(resourceMethodDescriptor);
       }
@@ -2373,6 +2381,7 @@ public final class RestLiAnnotationReader
                                                                                                 annotationsMap);
 
     addServiceErrors(resourceMethodDescriptor, method);
+    addSuccessStatuses(resourceMethodDescriptor, method);
 
     model.addResourceMethodDescriptor(resourceMethodDescriptor);
   }
@@ -2815,26 +2824,21 @@ public final class RestLiAnnotationReader
    * @param resourceModel resource model to add service errors to
    * @param resourceClass class annotated with service errors
    */
-  @SuppressWarnings("Duplicates")
   private static void addServiceErrors(final ResourceModel resourceModel, final Class<?> resourceClass)
   {
     final ServiceErrorDef serviceErrorDefAnnotation = resourceClass.getAnnotation(ServiceErrorDef.class);
     final ServiceErrors serviceErrorsAnnotation = resourceClass.getAnnotation(ServiceErrors.class);
 
-    if (serviceErrorsAnnotation == null)
+    final List<ServiceError> serviceErrors = buildServiceErrors(serviceErrorDefAnnotation,
+                                                                    serviceErrorsAnnotation,
+                                                                    null,
+                                                                    resourceClass,
+                                                                    null);
+
+    if (serviceErrors == null)
     {
       return;
     }
-
-    if (serviceErrorDefAnnotation == null)
-    {
-      throw new ResourceConfigException(String.format("Resource '%s' is missing a @%s annotation",
-          resourceClass.getName(), ServiceErrorDef.class.getSimpleName()));
-    }
-
-    final List<ServiceError> serviceErrors = buildServiceErrors(serviceErrorDefAnnotation, serviceErrorsAnnotation, resourceClass);
-
-    // TODO: [service-error-parameters] Validate that there are no parameters specified for any of these service errors
 
     resourceModel.setServiceErrors(serviceErrors);
   }
@@ -2846,67 +2850,155 @@ public final class RestLiAnnotationReader
    * @param resourceMethodDescriptor resource method descriptor to add service errors to
    * @param method method annotated with service errors
    */
-  @SuppressWarnings("Duplicates")
   private static void addServiceErrors(final ResourceMethodDescriptor resourceMethodDescriptor, final Method method)
   {
     final Class<?> resourceClass = method.getDeclaringClass();
     final ServiceErrorDef serviceErrorDefAnnotation = resourceClass.getAnnotation(ServiceErrorDef.class);
     final ServiceErrors serviceErrorsAnnotation = method.getAnnotation(ServiceErrors.class);
+    final ParamError[] paramErrorAnnotations = method.getAnnotationsByType(ParamError.class);
 
-    if (serviceErrorsAnnotation == null)
+    final List<ServiceError> serviceErrors = buildServiceErrors(serviceErrorDefAnnotation,
+                                                                    serviceErrorsAnnotation,
+                                                                    paramErrorAnnotations,
+                                                                    resourceClass,
+                                                                    method);
+    if (serviceErrors == null)
     {
       return;
     }
 
-    if (serviceErrorDefAnnotation == null)
+    // Form a set of parameter names which exist on this method
+    final Set<String> acceptableParameterNames = resourceMethodDescriptor.getParameters()
+        .stream()
+        .map(Parameter::getName)
+        .collect(Collectors.toSet());
+
+    // Validate that all parameter names are valid
+    for (ServiceError serviceError : serviceErrors)
     {
-      throw new ResourceConfigException(String.format("Resource '%s' is missing a @%s annotation",
-              resourceClass.getName(), ServiceErrorDef.class.getSimpleName()));
+      if (serviceError instanceof ParametersServiceError)
+      {
+        final String[] parameterNames = ((ParametersServiceError) serviceError).parameterNames();
+        if (parameterNames != null)
+        {
+          for (String parameterName : parameterNames)
+          {
+            if (!acceptableParameterNames.contains(parameterName))
+            {
+              throw new ResourceConfigException(
+                  String.format("Nonexistent parameter '%s' specified for method-level service error '%s' in %s (valid parameters: %s)",
+                      parameterName,
+                      serviceError.code(),
+                      buildExceptionLocationString(resourceClass, method),
+                      acceptableParameterNames.toString()));
+            }
+          }
+        }
+      }
     }
-
-    final List<ServiceError> serviceErrors = buildServiceErrors(serviceErrorDefAnnotation, serviceErrorsAnnotation, resourceClass);
-
-    // TODO: [service-error-parameters] Form a set of parameter names which exist on this method
-
-    // TODO: [service-error-parameters] Validate that all parameter names are valid
 
     resourceMethodDescriptor.setServiceErrors(serviceErrors);
   }
 
   /**
-   * Given a {@link ServiceErrorDef} annotation and a {@link ServiceErrors} annotation, builds a list of
-   * service errors by mapping the service error codes against the service errors defined in the definition
-   * annotation. Also requires the resource class purely for exception messages.
+   * Given a {@link ServiceErrorDef} annotation, a {@link ServiceErrors} annotation, and an array of {@link ParamError}
+   * annotations, builds a list of service errors by mapping the service error codes in {@link ServiceErrors} and
+   * {@link ParamError} against the service errors defined in {@link ServiceErrorDef}. Also, the {@link ParamError}
+   * annotations are used to add parameter names. Uses the resource class and method purely for constructing
+   * exception messages.
    *
    * @param serviceErrorDefAnnotation service error definition annotation
-   * @param serviceErrorsAnnotation service error codes annotation
+   * @param serviceErrorsAnnotation service error codes annotation, may be null
+   * @param paramErrorAnnotations parameter error annotations, may be null
    * @param resourceClass resource class
-   * @return {@link List<ServiceError>}
+   * @param method method, should be null if building resource-level service errors
+   * @return list of service errors
    */
   private static List<ServiceError> buildServiceErrors(final ServiceErrorDef serviceErrorDefAnnotation,
-      final ServiceErrors serviceErrorsAnnotation, final Class<?> resourceClass)
+      final ServiceErrors serviceErrorsAnnotation, final ParamError[] paramErrorAnnotations, final Class<?> resourceClass,
+      final Method method)
   {
+    if (serviceErrorsAnnotation == null && (paramErrorAnnotations == null || paramErrorAnnotations.length == 0))
+    {
+      return null;
+    }
+
+    if (serviceErrorDefAnnotation == null)
+    {
+      throw new ResourceConfigException(
+          String.format("Resource '%s' is missing a @%s annotation",
+              resourceClass.getName(),
+              ServiceErrorDef.class.getSimpleName()));
+    }
+
     // Create a mapping of all valid codes to their respective service errors
     // TODO: If this class is ever refactored into a better OO solution, only build this once per resource
-    Map<String, ServiceError> serviceErrorCodeMapping = Arrays.stream(serviceErrorDefAnnotation.value().getEnumConstants())
+    final Map<String, ServiceError> serviceErrorCodeMapping = Arrays.stream(serviceErrorDefAnnotation.value().getEnumConstants())
         .map((Enum<? extends ServiceError> e) -> (ServiceError) e )
         .collect(Collectors.toMap(
             ServiceError::code,
             Function.identity()
         ));
 
+    // Build a list to collect all service error codes specified for this resource/method
+    final List<String> serviceErrorCodes = new ArrayList<>();
+    if (serviceErrorsAnnotation != null)
+    {
+      serviceErrorCodes.addAll(Arrays.asList(serviceErrorsAnnotation.value()));
+    }
+
+    // Create a mapping of service error codes to their parameters (order must be maintained for consistent IDLs)
+    final LinkedHashMap<String, String[]> paramsMapping = buildServiceErrorParameters(paramErrorAnnotations,
+                                                                                      resourceClass,
+                                                                                      method);
+
+    // Validate the codes and add any new codes to the master code list
+    for (String serviceErrorCode : paramsMapping.keySet())
+    {
+      // Check for codes redundantly specified in the service errors annotation
+      if (serviceErrorCodes.contains(serviceErrorCode))
+      {
+        throw new ResourceConfigException(
+            String.format("Service error code '%s' redundantly specified in both @%s and @%s annotations on %s",
+                serviceErrorCode,
+                ServiceErrors.class.getSimpleName(),
+                ParamError.class.getSimpleName(),
+                buildExceptionLocationString(resourceClass, method)));
+      }
+      // Add new service error code
+      serviceErrorCodes.add(serviceErrorCode);
+    }
+
     // Build service errors from specified codes using this mapping
-    final String[] serviceErrorCodes = serviceErrorsAnnotation.value();
+    return buildServiceErrors(serviceErrorCodes, serviceErrorCodeMapping, paramsMapping, resourceClass, method);
+  }
+
+  /**
+   * Builds a list of {@link ServiceError} objects given a list of codes, a mapping from code to service error, and a
+   * mapping from code to parameter names. Also uses the resource class and method to construct an exception message.
+   *
+   * @param serviceErrorCodes list of service error codes indicating which service errors to build
+   * @param serviceErrorCodeMapping mapping from service error code to service error
+   * @param paramsMapping mapping from service error codes to array of parameter names
+   * @param resourceClass resource class
+   * @param method resource method
+   * @return list of service errors
+   */
+  private static List<ServiceError> buildServiceErrors(final List<String> serviceErrorCodes,
+      final Map<String, ServiceError> serviceErrorCodeMapping, final Map<String, String[]> paramsMapping,
+      final Class<?> resourceClass, final Method method)
+  {
     final Set<String> existingServiceErrorCodes = new HashSet<>();
-    final List<ServiceError> serviceErrors = new ArrayList<>(serviceErrorCodes.length);
+    final List<ServiceError> serviceErrors = new ArrayList<>(serviceErrorCodes.size());
     for (String serviceErrorCode : serviceErrorCodes)
     {
       // Check for duplicate service error codes
       if (existingServiceErrorCodes.contains(serviceErrorCode))
       {
         throw new ResourceConfigException(
-            String.format("Duplicate service error code '%s' used in resource '%s'",
-                serviceErrorCode, resourceClass.getName()));
+            String.format("Duplicate service error code '%s' used in %s",
+                serviceErrorCode,
+                buildExceptionLocationString(resourceClass, method)));
       }
 
       // Attempt to map this code to its corresponding service error
@@ -2914,15 +3006,18 @@ public final class RestLiAnnotationReader
       {
         final ServiceError serviceError = serviceErrorCodeMapping.get(serviceErrorCode);
 
-        // TODO: [service-error-parameters] Ensure that there are no duplicate parameter names
+        // Determine if this is a method-level service error with parameters associated with it
+        final String[] parameterNames = paramsMapping.get(serviceErrorCode);
 
-        serviceErrors.add(serviceError);
+        // Depending on if there are service errors, either add it directly or wrap it with the parameter names
+        serviceErrors.add(parameterNames == null ? serviceError : new ParametersServiceError(serviceError, parameterNames));
       }
       else
       {
         throw new ResourceConfigException(
-            String.format("Unknown service error code '%s' used in resource '%s'",
-                serviceErrorCode, resourceClass.getName()));
+            String.format("Unknown service error code '%s' used in %s",
+                serviceErrorCode,
+                buildExceptionLocationString(resourceClass, method)));
       }
 
       // Mark this code as seen to prevent duplicates
@@ -2930,6 +3025,64 @@ public final class RestLiAnnotationReader
     }
 
     return serviceErrors;
+  }
+
+  /**
+   * Given an array of {@link ParamError} annotations, build a mapping from service error code to parameter names.
+   * Uses the resource class and method to construct exception messages.
+   *
+   * @param paramErrorAnnotations parameter error annotations
+   * @param resourceClass resource class
+   * @param method resource method
+   * @return mapping from service error code to parameter names
+   */
+  private static LinkedHashMap<String, String[]> buildServiceErrorParameters(final ParamError[] paramErrorAnnotations,
+      final Class<?> resourceClass, final Method method)
+  {
+    // Create a mapping of service error codes to their parameters (if any)
+    final LinkedHashMap<String, String[]> paramsMapping = new LinkedHashMap<>();
+    if (paramErrorAnnotations != null)
+    {
+      for (ParamError paramErrorAnnotation : paramErrorAnnotations)
+      {
+        final String serviceErrorCode = paramErrorAnnotation.code();
+
+        // Check for redundant parameter error annotations
+        if (paramsMapping.containsKey(serviceErrorCode))
+        {
+          throw new ResourceConfigException(
+              String.format("Redundant @%s annotations for service error code '%s' used in %s",
+                  ParamError.class.getSimpleName(),
+                  serviceErrorCode,
+                  buildExceptionLocationString(resourceClass, method)));
+        }
+
+        final String[] parameterNames = paramErrorAnnotation.parameterNames();
+
+        // Ensure the parameter names array is non-empty
+        if (parameterNames.length == 0)
+        {
+          throw new ResourceConfigException(
+              String.format("@%s annotation on %s specifies no parameter names for service error code '%s'",
+                  ParamError.class.getSimpleName(),
+                  buildExceptionLocationString(resourceClass, method),
+                  serviceErrorCode));
+        }
+
+        // Ensure that there are no duplicate parameter names
+        if (parameterNames.length != new HashSet<>(Arrays.asList(parameterNames)).size())
+        {
+          throw new ResourceConfigException(
+              String.format("Duplicate parameter specified for service error code '%s' in %s",
+                  serviceErrorCode,
+                  buildExceptionLocationString(resourceClass, method)));
+        }
+
+        paramsMapping.put(serviceErrorCode, paramErrorAnnotation.parameterNames());
+      }
+    }
+
+    return paramsMapping;
   }
 
   /**
@@ -2946,9 +3099,75 @@ public final class RestLiAnnotationReader
     // Log a warning if the resource uses an unnecessary service error definition annotation
     if (serviceErrorDefAnnotation != null && !resourceModel.isAnyServiceErrorListDefined()) {
       log.warn(String.format("Resource '%1$s' uses an unnecessary @%2$s annotation, as no corresponding @%3$s "
-            + "annotations were found on the class or any of its methods. Either the @%2$s annotation should be "
-            + "removed or a @%3$s annotation should be added.",
-          resourceClass.getName(), ServiceErrorDef.class.getSimpleName(), ServiceErrors.class.getSimpleName()));
+            + "or @%4$s annotations were found on the class or any of its methods. Either the @%2$s annotation should be "
+            + "removed or a @%3$s or @%4$s annotation should be added.",
+          resourceClass.getName(),
+          ServiceErrorDef.class.getSimpleName(),
+          ServiceErrors.class.getSimpleName(),
+          ParamError.class.getSimpleName()));
     }
+  }
+
+  /**
+   * Reads annotations on a given resource method in order to build success statuses, which are then added to
+   * a given resource method descriptor.
+   *
+   * @param resourceMethodDescriptor resource method descriptor to add success statuses to
+   * @param method method possibly annotated with a success annotation
+   */
+  private static void addSuccessStatuses(final ResourceMethodDescriptor resourceMethodDescriptor, final Method method)
+  {
+    final Class<?> resourceClass = method.getDeclaringClass();
+    final SuccessResponse successResponseAnnotation = method.getAnnotation(SuccessResponse.class);
+
+    if (successResponseAnnotation == null)
+    {
+      return;
+    }
+
+    // Build success status list from the annotation
+    final List<Integer> successStatuses = Arrays.stream(successResponseAnnotation.statuses())
+        .boxed()
+        .collect(Collectors.toList());
+
+    if (successStatuses.isEmpty())
+    {
+      throw new ResourceConfigException(
+          String.format("@%s annotation on %s specifies no success statuses",
+              SuccessResponse.class.getSimpleName(),
+              buildExceptionLocationString(resourceClass, method)));
+    }
+
+    // Validate the success statuses
+    for (Integer successStatus : successStatuses)
+    {
+      if (successStatus < 200 || successStatus >= 400)
+      {
+        throw new ResourceConfigException(
+            String.format("Invalid success status '%s' specified in %s",
+                successStatus,
+                buildExceptionLocationString(resourceClass, method)));
+      }
+    }
+
+    resourceMethodDescriptor.setSuccessStatuses(successStatuses);
+  }
+
+  /**
+   * Generates a human-readable phrase describing an exception's origin in a resource class,
+   * whether it be at the resource level or at the level of a particular method.
+   *
+   * @param resourceClass resource class
+   * @param method method (may be null)
+   * @return human-readable string
+   */
+  private static String buildExceptionLocationString(Class<?> resourceClass, Method method)
+  {
+    if (method == null)
+    {
+      return String.format("resource '%s'", resourceClass.getName());
+    }
+
+    return String.format("method '%s' of resource '%s'", method.getName(), resourceClass.getName());
   }
 }

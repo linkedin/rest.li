@@ -5,6 +5,12 @@
   "schema" : "com.linkedin.restli.example.AlbumEntry",
   "doc" : "Many-many association between photos and albums.\n\n <pre>\n   new AlbumEntryBuilders().findBySearch()\n     .albumIdParam(5)\n     .photoIdParam(100)\n     .build();\n </pre>\n\ngenerated from: com.linkedin.restli.example.impl.AlbumEntryResource",
   "association" : {
+    "serviceErrors" : [ {
+      "status" : 422,
+      "code" : "BAD_REQUEST",
+      "message" : "Input failed validation",
+      "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+    } ],
     "identifier" : "albumEntryId",
     "assocKeys" : [ {
       "name" : "albumId",
@@ -15,30 +21,45 @@
     } ],
     "supports" : [ "batch_get", "delete", "get", "update" ],
     "methods" : [ {
+      "success" : [ 200 ],
       "method" : "get",
       "doc" : "Retrieve the photo's album entry"
     }, {
+      "success" : [ 204 ],
       "method" : "update",
       "doc" : "Add the specified photo to the specified album.\n If a matching pair of IDs already exists, this changes the add date."
     }, {
+      "success" : [ 204 ],
       "method" : "delete",
       "doc" : "Remove the specified photo from the specified album"
     }, {
       "method" : "batch_get"
     } ],
     "finders" : [ {
+      "serviceErrors" : [ {
+        "status" : 403,
+        "code" : "INVALID_PERMISSIONS",
+        "message" : "User does not have valid permissions",
+        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+      }, {
+        "status" : 422,
+        "code" : "INVALID_ALBUM_ID",
+        "message" : "Album id cannot be less than 0",
+        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails",
+        "parameters" : [ "albumId" ]
+      } ],
       "name" : "search",
       "doc" : "Find all entries matching the given album and photo IDs. <code>null</code> is treated\n as a wildcard.",
       "parameters" : [ {
         "name" : "albumId",
         "type" : "long",
         "optional" : true,
-        "doc" : "provides the id to match for albums to match,  if not provided, it is treated as a wildcard"
+        "doc" : "provides the id to match for albums to match, if not provided, it is treated as a wildcard"
       }, {
         "name" : "photoId",
         "type" : "long",
         "optional" : true,
-        "doc" : "provides the id to match for photos to match,  if not provided, it is treated as a wildcard"
+        "doc" : "provides the id to match for photos to match, if not provided, it is treated as a wildcard"
       } ]
     } ],
     "actions" : [ {

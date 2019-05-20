@@ -17,13 +17,16 @@
 package com.linkedin.restli.tools.errors;
 
 import com.linkedin.restli.server.PagingContext;
+import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.PagingContextParam;
+import com.linkedin.restli.server.annotations.ParamError;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.ServiceErrorDef;
 import com.linkedin.restli.server.annotations.ServiceErrors;
+import com.linkedin.restli.server.annotations.SuccessResponse;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyRecord;
 import com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyServiceError;
@@ -57,5 +60,25 @@ public class ServiceErrorAssociationResource extends AssociationResourceTemplate
   public List<DummyRecord> getAll(@PagingContextParam PagingContext pagingContext)
   {
     return new ArrayList<>();
+  }
+
+  /**
+   * Ensures that a method-level service error can specify a parameter.
+   */
+  @Finder(value = "ctrlF")
+  @ParamError(code = PARAMETER_ERROR, parameterNames = { "param" })
+  public List<DummyRecord> finder(@QueryParam("param") String param)
+  {
+    return new ArrayList<>();
+  }
+
+  /**
+   * Ensures that multiple success statuses can be specified.
+   */
+  @Action(name = "hasSuccessStatuses")
+  @SuccessResponse(statuses = { 200, 201, 204 })
+  public String hasSuccessStatuses()
+  {
+    return "I wish I were as successful as this method";
   }
 }

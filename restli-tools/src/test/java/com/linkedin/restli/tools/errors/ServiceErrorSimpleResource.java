@@ -23,6 +23,7 @@ import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.annotations.ServiceErrorDef;
 import com.linkedin.restli.server.annotations.ServiceErrors;
+import com.linkedin.restli.server.annotations.SuccessResponse;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
 import com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyRecord;
 import com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyServiceError;
@@ -50,11 +51,12 @@ public class ServiceErrorSimpleResource extends SimpleResourceTemplate<DummyReco
   }
 
   /**
-   * This ensures that template CRUD methods can specify a method-level service error.
-   * Also uses an error code with a unique error detail type.
+   * This ensures that template CRUD methods can specify a method-level service error in conjunction with
+   * success statuses. Also uses an error code with a unique error detail type.
    */
   @Override
   @ServiceErrors(ILLEGAL_ACTION)
+  @SuccessResponse(statuses = { 204 })
   public UpdateResponse update(DummyRecord dummyRecord)
   {
     return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);

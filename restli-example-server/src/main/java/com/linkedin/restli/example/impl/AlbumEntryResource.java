@@ -27,10 +27,13 @@ import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.Optional;
+import com.linkedin.restli.server.annotations.ParamError;
+import com.linkedin.restli.server.annotations.ParamErrors;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.ServiceErrorDef;
 import com.linkedin.restli.server.annotations.ServiceErrors;
+import com.linkedin.restli.server.annotations.SuccessResponse;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,6 +82,7 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
    * Retrieve the photo's album entry
    */
   @Override
+  @SuccessResponse(statuses = { 200 })
   public AlbumEntry get(CompoundKey key)
   {
     return _db.getData().get(key);
@@ -98,6 +102,7 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
    * If a matching pair of IDs already exists, this changes the add date.
    */
   @Override
+  @SuccessResponse(statuses = { 204 })
   public UpdateResponse update(CompoundKey key, AlbumEntry entity)
   {
     long photoId = (Long) key.getPart("photoId");
@@ -127,6 +132,7 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
    * Remove the specified photo from the specified album
    */
   @Override
+  @SuccessResponse(statuses = { 204 })
   public UpdateResponse delete(CompoundKey key)
   {
     final boolean isRemoved = (_db.getData().remove(key) != null);
@@ -207,12 +213,13 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
    * Find all entries matching the given album and photo IDs. <code>null</code> is treated
    * as a wildcard.
    *
-   * @param albumId provides the id to match for albums to match,  if not provided, it is treated as a wildcard
-   * @param photoId provides the id to match for photos to match,  if not provided, it is treated as a wildcard
+   * @param albumId provides the id to match for albums to match, if not provided, it is treated as a wildcard
+   * @param photoId provides the id to match for photos to match, if not provided, it is treated as a wildcard
    * @return a list of {@link AlbumEntry} matching the  given parameters
    */
   @Finder("search")
-  @ServiceErrors({ INVALID_PERMISSIONS, INVALID_ALBUM_ID })
+  @ServiceErrors(INVALID_PERMISSIONS)
+  @ParamError(code = INVALID_ALBUM_ID, parameterNames = { "albumId" })
   public List<AlbumEntry> search(@Optional @QueryParam("albumId") Long albumId,
                                  @Optional @QueryParam("photoId") Long photoId)
   {

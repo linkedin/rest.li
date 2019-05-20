@@ -57,6 +57,8 @@ public class ServiceErrorTestDataModels
   {
     RESOURCE_LEVEL_ERROR(400, "Wow, this is such a resource-level error", ErrorDetails.class),
     METHOD_LEVEL_ERROR(400, "And this is such a method-level error", ErrorDetails.class),
+    PARAMETER_ERROR(422, "This looks like a method-level parameter error", ErrorDetails.class),
+    DOUBLE_PARAMETER_ERROR(422, "Method-level parameter error for 2 parameters", ErrorDetails.class),
     YET_ANOTHER_RESOURCE_LEVEL_ERROR(403, "Wow, yet another one!", ErrorDetails.class),
     YET_ANOTHER_METHOD_LEVEL_ERROR(403, "I can't believe there's another one", ErrorDetails.class),
     ILLEGAL_ACTION(451, "You can't do that, you're going to Rest.li prison", DummyRecord.class),
@@ -74,6 +76,8 @@ public class ServiceErrorTestDataModels
     {
       String RESOURCE_LEVEL_ERROR = "RESOURCE_LEVEL_ERROR";
       String METHOD_LEVEL_ERROR = "METHOD_LEVEL_ERROR";
+      String PARAMETER_ERROR = "PARAMETER_ERROR";
+      String DOUBLE_PARAMETER_ERROR = "DOUBLE_PARAMETER_ERROR";
       String YET_ANOTHER_RESOURCE_LEVEL_ERROR = "YET_ANOTHER_RESOURCE_LEVEL_ERROR";
       String YET_ANOTHER_METHOD_LEVEL_ERROR = "YET_ANOTHER_METHOD_LEVEL_ERROR";
       String ILLEGAL_ACTION = "ILLEGAL_ACTION";

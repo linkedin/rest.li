@@ -3,7 +3,7 @@
   "name" : "RestMethodSchema",
   "namespace" : "com.linkedin.restli.restspec",
   "doc": "Schema representing a basic REST resource method.",
-  "include" : [ "CustomAnnotationSchema", "ServiceErrorsSchema" ],
+  "include" : [ "CustomAnnotationSchema", "ServiceErrorsSchema", "SuccessStatusesSchema" ],
   "fields" : [
     {
       "name" : "method",

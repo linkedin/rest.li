@@ -30,6 +30,7 @@ import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.HasTyperefInfo;
+import com.linkedin.data.template.IntegerArray;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.TyperefInfo;
@@ -66,11 +67,13 @@ import com.linkedin.restli.restspec.ServiceErrorSchema;
 import com.linkedin.restli.restspec.ServiceErrorSchemaArray;
 import com.linkedin.restli.restspec.ServiceErrorsSchema;
 import com.linkedin.restli.restspec.SimpleSchema;
+import com.linkedin.restli.restspec.SuccessStatusesSchema;
 import com.linkedin.restli.server.AlternativeKey;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.errors.ServiceError;
+import com.linkedin.restli.server.errors.ParametersServiceError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -734,6 +737,7 @@ public class ResourceModelEncoder
     }
 
     appendServiceErrors(action, resourceMethodDescriptor.getServiceErrors());
+    appendSuccessStatuses(action, resourceMethodDescriptor.getSuccessStatuses());
 
     return action;
   }
@@ -889,6 +893,7 @@ public class ResourceModelEncoder
     }
 
     appendServiceErrors(finder, resourceMethodDescriptor.getServiceErrors());
+    appendSuccessStatuses(finder, resourceMethodDescriptor.getSuccessStatuses());
 
     return finder;
   }
@@ -931,6 +936,7 @@ public class ResourceModelEncoder
     }
 
     appendServiceErrors(batchFinder, resourceMethodDescriptor.getServiceErrors());
+    appendSuccessStatuses(batchFinder, resourceMethodDescriptor.getSuccessStatuses());
 
     BatchFinder batchFinderAnnotation = resourceMethodDescriptor.getMethod().getAnnotation(BatchFinder.class);
     batchFinder.setBatchParam(batchFinderAnnotation.batchParam());
@@ -1087,6 +1093,7 @@ public class ResourceModelEncoder
       }
 
       appendServiceErrors(restMethod, descriptor.getServiceErrors());
+      appendSuccessStatuses(restMethod, descriptor.getSuccessStatuses());
 
       restMethods.add(restMethod);
     }
@@ -1229,9 +1236,37 @@ public class ResourceModelEncoder
         serviceErrorSchema.setErrorDetailType(errorDetailType.getCanonicalName());
       }
 
+      if (serviceError instanceof ParametersServiceError)
+      {
+        final String[] parameterNames = ((ParametersServiceError) serviceError).parameterNames();
+        if (parameterNames != null && parameterNames.length != 0)
+        {
+          serviceErrorSchema.setParameters(new StringArray(Arrays.asList(parameterNames)));
+        }
+      }
+
       serviceErrorSchemaArray.add(serviceErrorSchema);
     }
 
     return serviceErrorSchemaArray;
+  }
+
+  /**
+   * Given a resource method schema, adds the specified success status codes.
+   *
+   * @param schema specific resource method schema
+   * @param successStatuses list of success status codes to add to this schema
+   */
+  private void appendSuccessStatuses(final RecordTemplate schema, final List<Integer> successStatuses)
+  {
+    if (successStatuses == null || successStatuses.isEmpty())
+    {
+      return;
+    }
+
+    // Wrap the underlying data map in the shared schema interface
+    SuccessStatusesSchema successStatusesSchema = new SuccessStatusesSchema(schema.data());
+
+    successStatusesSchema.setSuccess(new IntegerArray(successStatuses));
   }
 }

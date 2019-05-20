@@ -25,6 +25,27 @@
       "doc" : "Ensures that template CRUD methods can specify a method-level service error.",
       "pagingSupported" : true
     } ],
+    "finders" : [ {
+      "serviceErrors" : [ {
+        "status" : 422,
+        "code" : "PARAMETER_ERROR",
+        "message" : "This looks like a method-level parameter error",
+        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails",
+        "parameters" : [ "param" ]
+      } ],
+      "name" : "ctrlF",
+      "doc" : "Ensures that a method-level service error can specify a parameter.",
+      "parameters" : [ {
+        "name" : "param",
+        "type" : "string"
+      } ]
+    } ],
+    "actions" : [ {
+      "success" : [ 200, 201, 204 ],
+      "name" : "hasSuccessStatuses",
+      "doc" : "Ensures that multiple success statuses can be specified.",
+      "returns" : "string"
+    } ],
     "entity" : {
       "path" : "/association/{associationId}"
     }

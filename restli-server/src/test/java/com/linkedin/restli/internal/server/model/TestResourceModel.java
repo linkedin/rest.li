@@ -122,7 +122,14 @@ public class TestResourceModel
                                                           "com.linkedin.restli.internal.server.model");
 
     // Add resource-level service errors
-    resourceModel.setServiceErrors(resourceLevelServiceErrors == null ? null : Arrays.asList(resourceLevelServiceErrors));
+    if (resourceLevelServiceErrors == null)
+    {
+      resourceModel.setServiceErrors(null);
+    }
+    else
+    {
+      resourceModel.setServiceErrors(Arrays.asList(resourceLevelServiceErrors));
+    }
 
     // Add mock resource method descriptors
     for (ResourceMethodDescriptor resourceMethodDescriptor : resourceMethodDescriptors)

@@ -64,6 +64,7 @@ public class ResourceMethodDescriptor
   private final DataMap                                 _customAnnotations;
   // Method-level service error definitions
   private List<ServiceError>                            _serviceErrors;
+  private List<Integer>                                 _successStatuses;
 
   /**
    * Finder resource method descriptor factory.
@@ -509,6 +510,24 @@ public class ResourceMethodDescriptor
   public void setServiceErrors(final Collection<ServiceError> serviceErrors)
   {
     _serviceErrors = serviceErrors == null ? null : new ArrayList<>(serviceErrors);
+  }
+
+  /**
+   * Gets an immutable view of the expected success Http status codes for this resource method, or null if none are defined.
+   * @return {@link List<Integer>} list of expected success Http status codes
+   */
+  public List<Integer> getSuccessStatuses()
+  {
+    return _successStatuses == null ? null : Collections.unmodifiableList(_successStatuses);
+  }
+
+  /**
+   * Sets the list of expected success Http status codes for this resource method.
+   * @param successStatuses {@link List<Integer>}
+   */
+  public void setSuccessStatuses(final Collection<Integer> successStatuses)
+  {
+    _successStatuses = successStatuses == null ? null : new ArrayList<>(successStatuses);
   }
 
   @Override

@@ -1,5 +1,8 @@
 27.1.4
 ------
+(RB=1664597)
+Add support for method parameter service errors and success status codes
+
 (RB=1660528)
 Server integration for service error standardization
 

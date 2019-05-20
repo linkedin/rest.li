@@ -27,8 +27,9 @@
         "message" : "You can't do that, you're going to Rest.li prison",
         "errorDetailType" : "com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyRecord"
       } ],
+      "success" : [ 204 ],
       "method" : "update",
-      "doc" : "This ensures that template CRUD methods can specify a method-level service error.\n Also uses an error code with a unique error detail type."
+      "doc" : "This ensures that template CRUD methods can specify a method-level service error in conjunction with\n success statuses. Also uses an error code with a unique error detail type."
     } ],
     "actions" : [ {
       "serviceErrors" : [ {
