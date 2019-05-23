@@ -18,6 +18,9 @@ package com.linkedin.restli.server.filter;
 
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.server.errors.ServiceError;
+import java.util.List;
+
 
 /**
  * This interface provides information regarding the resource implementation.
@@ -76,4 +79,11 @@ public interface FilterResourceModel
    *         parent resource.
    */
   FilterResourceModel getParentResourceModel();
+
+  /**
+   * Gets an immutable view of the expected service errors for the resource, or null if errors aren't defined.
+   *
+   * @return {@link List < ServiceError >}
+   */
+  List<ServiceError> getServiceErrors();
 }

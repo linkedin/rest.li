@@ -27,9 +27,11 @@ import com.linkedin.restli.server.CustomRequestContext;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiRequestData;
+import com.linkedin.restli.server.errors.ServiceError;
 
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -164,6 +166,13 @@ public interface FilterRequestContext extends CustomRequestContext
    * @return Type of operation that's being invoked on the resource.
    */
   ResourceMethod getMethodType();
+
+  /**
+   * Gets an immutable view of the expected service errors for the resource method, or null if errors aren't defined.
+   *
+   * @return {@link List<ServiceError>} defined for the resource method
+   */
+  List<ServiceError> getMethodServiceErrors();
 
   /**
    * Get custom annotations defined on the resource.

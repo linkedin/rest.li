@@ -29,12 +29,14 @@ import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.annotations.ReturnEntity;
+import com.linkedin.restli.server.errors.ServiceError;
 import com.linkedin.restli.server.filter.FilterResourceModel;
 
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -76,7 +78,8 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
     _requestData = requestData;
     _scratchPad = new HashMap<>();
     _resourceModel = new FilterResourceModelImpl(resourceMethod.getResourceModel());
-    _collectionCustomTypeSchema = resourceMethod.getCollectionCustomMetadataType() == null ? null : (RecordDataSchema) DataTemplateUtil.getSchema(resourceMethod.getCollectionCustomMetadataType());
+    _collectionCustomTypeSchema = resourceMethod.getCollectionCustomMetadataType() == null
+        ? null : (RecordDataSchema) DataTemplateUtil.getSchema(resourceMethod.getCollectionCustomMetadataType());
   }
 
   @Override
@@ -143,6 +146,11 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   public ResourceMethod getMethodType()
   {
     return _resourceMethod.getMethodType();
+  }
+
+  @Override
+  public List<ServiceError> getMethodServiceErrors() {
+    return _resourceMethod.getServiceErrors();
   }
 
   @Override

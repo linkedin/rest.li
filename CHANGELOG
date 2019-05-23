@@ -1,5 +1,8 @@
 27.1.4
 ------
+(RB=1667220)
+Added ErrorResponseValidationFilter for error response validation
+
 (RB=1664597)
 Add support for method parameter service errors and success status codes
 

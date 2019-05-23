@@ -16,11 +16,12 @@
 
 package com.linkedin.restli.internal.server.filter;
 
-
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.restspec.ResourceEntityType;
+import com.linkedin.restli.server.errors.ServiceError;
 import com.linkedin.restli.server.filter.FilterResourceModel;
+import java.util.List;
 
 
 /**
@@ -84,5 +85,11 @@ public class FilterResourceModelImpl implements FilterResourceModel
   public String getKeyName()
   {
     return _resourceModel.getKeyName();
+  }
+
+  @Override
+  public List<ServiceError> getServiceErrors()
+  {
+    return _resourceModel.getServiceErrors();
   }
 }

@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.internal.server.filter;
 
-
 import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestContext;
@@ -29,13 +28,16 @@ import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.ProjectionMode;
+import com.linkedin.restli.server.TestServiceError;
+import com.linkedin.restli.server.errors.ServiceError;
 import com.linkedin.restli.server.filter.FilterRequestContext;
-
+import com.linkedin.restli.server.filter.FilterResourceModel;
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -49,7 +51,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.assertSame;
 
 
 public class TestFilterRequestContextInternalImpl
@@ -60,17 +62,19 @@ public class TestFilterRequestContextInternalImpl
   private ResourceMethodDescriptor resourceMethod;
   @Mock
   private ResourceModel resourceModel;
+  @Mock
+  private FilterResourceModel filterResourceModel;
 
   @BeforeTest
-  protected void setUp() throws Exception
+  protected void setUp()
   {
     MockitoAnnotations.initMocks(this);
   }
 
   @AfterMethod
-  protected void resetSharedMocks() throws Exception
+  protected void resetSharedMocks()
   {
-    Mockito.reset(context, resourceMethod, resourceModel);
+    Mockito.reset(context, resourceMethod, resourceModel, filterResourceModel);
   }
 
   @Test
@@ -100,14 +104,19 @@ public class TestFilterRequestContextInternalImpl
     final String finderName = UUID.randomUUID().toString();
     final String actionName = UUID.randomUUID().toString();
 
+    final List<ServiceError> methodServiceErrors = Collections.singletonList(TestServiceError.METHOD_LEVEL_ERROR);
+    final List<ServiceError> resourceServiceErrors = Collections.singletonList(TestServiceError.RESOURCE_LEVEL_ERROR);
+
     when(resourceModel.getName()).thenReturn(resourceName);
     when(resourceModel.getNamespace()).thenReturn(resourceNamespace);
+    when(filterResourceModel.getServiceErrors()).thenReturn(resourceServiceErrors);
     when(resourceMethod.getResourceModel()).thenReturn(resourceModel);
     when(resourceMethod.getMethodType()).thenReturn(methodType);
     when(resourceMethod.getFinderName()).thenReturn(finderName);
     when(resourceMethod.getActionName()).thenReturn(actionName);
     when(resourceMethod.getCustomAnnotationData()).thenReturn(customAnnotations);
     when(resourceMethod.getMethod()).thenReturn(null);
+    when(resourceMethod.getServiceErrors()).thenReturn(methodServiceErrors);
 
     when(context.getProjectionMode()).thenReturn(projectionMode);
     when(context.getProjectionMask()).thenReturn(maskTree);
@@ -143,6 +152,7 @@ public class TestFilterRequestContextInternalImpl
     assertEquals(filterContext.getFinderName(), finderName);
     assertEquals(filterContext.getRequestContextLocalAttrs(), localAttrs);
     assertNull(filterContext.getMethod());
+    assertEquals(filterContext.getMethodServiceErrors(), methodServiceErrors);
     filterContext.getRequestHeaders().put("header2", "value2");
     assertEquals(requestHeaders.get("header2"), "value2");
 
@@ -154,6 +164,7 @@ public class TestFilterRequestContextInternalImpl
     verify(resourceMethod).getFinderName();
     verify(resourceMethod).getActionName();
     verify(resourceMethod).getMethod();
+    verify(resourceMethod).getServiceErrors();
     verify(context).getProjectionMode();
     verify(context).setProjectionMask(maskTree);
     verify(context).getProjectionMask();
@@ -172,17 +183,17 @@ public class TestFilterRequestContextInternalImpl
   }
 
   @Test
-  public void testFilterScratchpad() throws Exception
+  public void testFilterScratchpad()
   {
     FilterRequestContext filterContext = new FilterRequestContextInternalImpl(context, resourceMethod, null);
     Object spValue = new Object();
     String spKey = UUID.randomUUID().toString();
     filterContext.getFilterScratchpad().put(spKey, spValue);
-    assertTrue(filterContext.getFilterScratchpad().get(spKey) == spValue);
+    assertSame(filterContext.getFilterScratchpad().get(spKey), spValue);
   }
 
   @Test
-  public void testCustomContextData() throws Exception
+  public void testCustomContextData()
   {
     FilterRequestContext filterContext = new FilterRequestContextInternalImpl(context, resourceMethod, null);
     filterContext.putCustomContextData("foo", "bar");
