@@ -58,11 +58,21 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
         Object defaultData = field.getDefault();
         if (defaultData != null)
         {
+          if (_options.getDefaultFieldTranslationMode() ==
+              PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE)
+          {
+            //If defaultField translationMode is "DO_NOT_TRANSLATE"
+            // set override to NULL as well
+            _defaultValueOverrides.put(field, FieldOverride.NULL_DEFAULT_VALUE);
+          }
+          else
+          {
           path.add(field.getName());
           _newDefaultSchema = null;
           Object newDefault = translateField(pathList(path), defaultData, field);
           _defaultValueOverrides.put(field, new FieldOverride(_newDefaultSchema, newDefault));
           path.remove(path.size() - 1);
+          }
         }
         else if (field.getOptional())
         {

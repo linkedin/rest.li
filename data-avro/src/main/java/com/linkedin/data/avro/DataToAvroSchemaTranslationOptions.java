@@ -78,6 +78,19 @@ public class DataToAvroSchemaTranslationOptions
   /**
    * Constructor.
    *
+   * Sets Pegasus default field translation mode
+   *
+   * @param defaultFieldTranslationMode
+   */
+  public DataToAvroSchemaTranslationOptions(PegasusToAvroDefaultFieldTranslationMode defaultFieldTranslationMode)
+  {
+    this(DEFAULT_OPTIONAL_DEFAULT_MODE, DEFAULT_PRETTY, DEFAULT_EMBED_SCHEMA_MODE);
+    this.setDefaultFieldTranslationMode(defaultFieldTranslationMode);
+  }
+
+  /**
+   * Constructor.
+   *
    * @param optionalDefaultMode specifies the optional default mode.
    * @param pretty specifies the pretty mode.
    */
@@ -120,6 +133,20 @@ public class DataToAvroSchemaTranslationOptions
   public DataToAvroSchemaTranslationOptions setOptionalDefaultMode(OptionalDefaultMode mode)
   {
     _optionalDefaultMode = mode;
+    return this;
+  }
+
+  /**
+   * Set default field translation mode.
+   * The _defaultFieldTranslationMode is by default PegasusToAvroDefaultFieldTranslationMode.TRANSLATE
+   *
+   * By default, the schema translator will translate Pegasus default field to Avro default field
+   * User can change it through this setter method so the schema translator will translate Pegasus default field to Avro optional field with no default value specified.
+   * @param defaultFieldTranslationMode
+   * @return {@code this}
+   */
+  public DataToAvroSchemaTranslationOptions setDefaultFieldTranslationMode(PegasusToAvroDefaultFieldTranslationMode defaultFieldTranslationMode) {
+    _defaultFieldTranslationMode = defaultFieldTranslationMode;
     return this;
   }
 
@@ -180,6 +207,15 @@ public class DataToAvroSchemaTranslationOptions
   }
 
   /**
+   * Return the translation mode for Default field
+   * @return translation mode for default field
+   */
+  public PegasusToAvroDefaultFieldTranslationMode getDefaultFieldTranslationMode()
+  {
+    return _defaultFieldTranslationMode;
+  }
+
+  /**
    * Set the embed schema mode.
    */
   public DataToAvroSchemaTranslationOptions setEmbedSchemaMode(EmbedSchemaMode embedSchemaMode)
@@ -199,5 +235,7 @@ public class DataToAvroSchemaTranslationOptions
   private OptionalDefaultMode _optionalDefaultMode;
   private JsonBuilder.Pretty  _pretty;
   private EmbedSchemaMode _embedSchemaMode;
+  private PegasusToAvroDefaultFieldTranslationMode _defaultFieldTranslationMode =
+      PegasusToAvroDefaultFieldTranslationMode.TRANSLATE;
   private boolean _overrideNamespace = false;
 }

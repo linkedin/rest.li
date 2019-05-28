@@ -1,5 +1,7 @@
 27.3.6
 ------
+(RB=1681705)
+Add options to translate Pegasus Default fields to Avro Optioanl fields in SchemaTranslator, DataTranslator*
 
 27.3.5
 ------

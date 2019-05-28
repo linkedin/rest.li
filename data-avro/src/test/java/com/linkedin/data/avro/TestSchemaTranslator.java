@@ -29,8 +29,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
+import java.util.List;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
@@ -1556,6 +1558,86 @@ public class TestSchemaTranslator
           assertEquals(embeddedSchema, schema.getDereferencedDataSchema());
         }
       }
+    }
+  }
+
+  @DataProvider
+  public Object[][] pegasusDefaultToAvroOptionalSchemaTranslationProvider() {
+    return new String[][] {
+        {
+            // union type with default
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+        },
+        {
+            // enum type with default
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END,  \"default\" : \"APPLE\" } ] }",
+            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",{\"type\":\"enum\",\"name\":\"fruits\",\"symbols\":[\"APPLE\",\"ORANGE\"]}],\"default\":null}]}"
+        },
+        {
+            // required and has default
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+        },
+        {
+            // required, optional is false
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : false } ] }",
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
+        },
+        {
+            // required, optional is false and has default
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42, \"optional\" : false } ] }",
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+        }
+    };
+  }
+
+
+  @Test(dataProvider = "pegasusDefaultToAvroOptionalSchemaTranslationProvider",
+        description = "Test schemaTranslator for default fields to optional fields translation, in different schema translation modes")
+  public void testPegasusDefaultToAvroOptionalSchemaTranslation(String... testSchemaTextAndExpected) throws IOException
+  {
+
+    String schemaText = null;
+    String expectedAvroSchema = null;
+    DataMap resultAvroDataMap = null;
+    DataMap expectedAvroDataMap = null;
+    schemaText = testSchemaTextAndExpected[0];
+    expectedAvroSchema = testSchemaTextAndExpected[1];
+    List<String> schemaTextForTesting = null;
+
+    if (schemaText.contains("##T_START")) {
+      String noTyperefSchemaText = schemaText.replace("##T_START", "").replace("##T_END", "");
+      String typerefSchemaText = schemaText
+          .replace("##T_START", "{ \"type\" : \"typeref\", \"name\" : \"Ref\", \"ref\" : ")
+          .replace("##T_END", "}");
+      schemaTextForTesting = Arrays.asList(noTyperefSchemaText, typerefSchemaText);
+    }
+    else {
+      schemaTextForTesting = Arrays.asList(schemaText);
+    }
+
+    for (String schemaStringText: schemaTextForTesting) {
+      DataSchema schema = TestUtil.dataSchemaFromString(schemaStringText);
+      String avroTextFromSchema = null;
+      avroTextFromSchema = SchemaTranslator.dataToAvroSchemaJson(
+          schema,
+          new DataToAvroSchemaTranslationOptions(PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE)
+      );
+      resultAvroDataMap = TestUtil.dataMapFromString(avroTextFromSchema);
+      expectedAvroDataMap = TestUtil.dataMapFromString(expectedAvroSchema);
+      assertEquals(resultAvroDataMap, expectedAvroDataMap);
+
+      // Test avro Schema
+      Schema avroSchema = Schema.parse(avroTextFromSchema);
+
+      // Test validation parsing
+      SchemaParser parser = new SchemaParser();
+      ValidationOptions options = new ValidationOptions();
+      options.setAvroUnionMode(true);
+      parser.setValidationOptions(options);
+      parser.parse(avroTextFromSchema);
+      assertFalse(parser.hasError(), parser.errorMessage());
     }
   }
 

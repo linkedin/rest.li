@@ -1152,6 +1152,139 @@ public class TestDataTranslator
     }
   }
 
+  @DataProvider
+  public Object[][] defaultToAvroOptionalTranslationProvider() {
+    // This test simulates the case where the DataMap for update is empty
+    // Each object array contains four element,
+    // 1. first element is the schema Text,
+    // 2. second element is the String representation of the data map
+    // 3. third element is the dataTranslationMode for the default field and
+    // 4. fourth element is is the expected AvroJsonString after translation
+    // The test will test whether the Avro map generated from expected AvroJsonString is as expected from the program
+    return new Object[][] {
+         {
+             // required int with default value
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
+             "{}",
+             PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+             "{\"bar\":{\"int\":42}}",
+         },
+         {
+             // required Union of [int string] with default value
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
+             "{}",
+             PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+             "{\"bar\":{\"int\":42}}",
+         },
+         {
+           // required int with default value
+           "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
+           "{}",
+             PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+             "{\"bar\":null}", //read as optional from Avro
+         },
+         {
+             // required Union of [int string]
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
+             "{}",
+             PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+             "{\"bar\":null}", //read as optional from Avro
+         },
+        {
+            // required enum with default value
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"enumRequired\", \"type\" : ##T_START { \"name\" : \"Fruits\", \"type\" : \"enum\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"default\": \"APPLE\" } ] }",
+            "{}",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"enumRequired\":null}"
+        },
+    };
+  }
+
+
+  @Test(dataProvider = "defaultToAvroOptionalTranslationProvider",
+        description = "generic record to data map should not care about the specific list implementation")
+  public void testPegasusDefaultToAvroOptionalTranslation(Object... testSchemaTextAndDataMap) throws IOException
+  {
+    // Test if the pegasus default field has been correctly translated
+    // i.e. if value present, translate it
+    //      if no value present, don't translate it
+
+    //Create pegasus schema text
+    String schemaText;
+    String dataMapString;
+    String expectedAvroJsonString;
+    PegasusToAvroDefaultFieldTranslationMode dataTranslationMode = null;
+
+    schemaText = (String) testSchemaTextAndDataMap[0];
+    dataMapString = (String) testSchemaTextAndDataMap[1];
+    dataTranslationMode = (PegasusToAvroDefaultFieldTranslationMode) testSchemaTextAndDataMap[2];
+    expectedAvroJsonString = (String) testSchemaTextAndDataMap[3];
+
+    List<String> schemaTextForTesting = null;
+
+    if (schemaText.contains("##T_START"))
+    {
+      String noTyperefSchemaText = schemaText.replace("##T_START", "").replace("##T_END", "");
+      String typerefSchemaText =
+          schemaText.replace("##T_START", "{ \"type\" : \"typeref\", \"name\" : \"Ref\", \"ref\" : ")
+              .replace("##T_END", "}");
+      schemaTextForTesting = Arrays.asList(noTyperefSchemaText, typerefSchemaText);
+    } else
+    {
+      schemaTextForTesting = Arrays.asList(schemaText);
+    }
+
+    for (String pegasusSchemaText: schemaTextForTesting) {
+      //Create pegasus schema
+      RecordDataSchema recordDataSchema = (RecordDataSchema) TestUtil.dataSchemaFromString(pegasusSchemaText);
+      //Translate to Avro Schema so can create the GenericRecord data holder
+      Schema avroSchema = SchemaTranslator.dataToAvroSchema(recordDataSchema,
+          new DataToAvroSchemaTranslationOptions(PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE));
+
+      //Have a DataMap from pegasus schema
+      DataMap dataMap = TestUtil.dataMapFromString(dataMapString);
+
+      //Create option, pass into data translator
+      DataMapToAvroRecordTranslationOptions options =
+          new DataMapToAvroRecordTranslationOptionsBuilder().defaultFieldDataTranslationMode(dataTranslationMode)
+              .build();
+      //Translate to generic record
+      GenericRecord avroRecord = DataTranslator.dataMapToGenericRecord(dataMap, recordDataSchema, avroSchema, options);
+
+      String avroJson = AvroUtil.jsonFromGenericRecord(avroRecord);
+      //Test generic record json doesn't have the value, should be {"bar":null}
+
+      // avroJson compare
+      assertEquals(avroJson, expectedAvroJsonString);
+
+      // validation result test
+      DataMap dataMapResult = DataTranslator.genericRecordToDataMap(avroRecord, recordDataSchema, avroSchema);
+      ValidationResult vr = ValidateDataAgainstSchema.validate(dataMapResult,
+          recordDataSchema,
+          new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, // Not filling back Default value
+              CoercionMode.NORMAL));
+      DataMap fixedInputDataMap = (DataMap) vr.getFixed();
+      assertTrue(vr.isValid());
+      assertEquals(dataMapResult, fixedInputDataMap);
+
+      // serialize avroRecord to binary and back
+      byte[] avroBytes = AvroUtil.bytesFromGenericRecord(avroRecord);
+      GenericRecord avroRecordFromBytes = AvroUtil.genericRecordFromBytes(avroBytes, avroRecord.getSchema());
+      byte[] avroBytesAgain = AvroUtil.bytesFromGenericRecord(avroRecordFromBytes);
+      assertEquals(avroBytes, avroBytesAgain);
+
+      // check result of roundtrip binary serialization
+      DataMap dataMapFromBinaryResult = DataTranslator.genericRecordToDataMap(avroRecordFromBytes, recordDataSchema, avroSchema);
+      vr = ValidateDataAgainstSchema.validate(dataMapFromBinaryResult,
+          recordDataSchema,
+          new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, // Not filling back Default value
+              CoercionMode.NORMAL));
+      fixedInputDataMap = (DataMap) vr.getFixed();
+      assertTrue(vr.isValid());
+      assertEquals(dataMapResult, fixedInputDataMap);
+    }
+  }
+
   @Test
   public void testAvroSchemaMissingFields() throws IOException
   {

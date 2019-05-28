@@ -74,22 +74,28 @@ public class DataTranslator implements DataTranslatorContext
   }
 
   /**
-   * Convert the given {@link DataMap} conforming to the provided {@link RecordDataSchema}
-   * to a {@link GenericRecord} with the provided Avro {@link Schema}.
    *
-   * <p>
-   * The provided Avro {@link Schema} should be generated from a record schema that
-   * is compatible with the provided {@link RecordDataSchema} using {@link SchemaTranslator}.
-   * If this is not the case, then data translation is likely to fail.
+   * Convert the given {@link DataMap} conforming to the provided {@link RecordDataSchema} to a {@link GenericRecord}.
    *
+   * provide a parameter to pass in an DataMapToAvroRecordTranslationOptions option object
    * @param map provides the {@link DataMap} to translate.
    * @param dataSchema provides the {@link RecordDataSchema} for the {@link DataMap}.
-   * @param avroSchema the Avro {@link Schema} for the resulting {@link GenericRecord}.
-   * @param options the DataMapToAvroRecordTranslationOptions {@link DataMapToAvroRecordTranslationOptions}
+   * @param options additional options for DataMap to Avro Generic record translation
    * @return a translated {@link GenericRecord}.
-   * @throws DataTranslationException if there are errors that prevent translation.
+   * @throws DataTranslationException
    */
-  public static GenericRecord dataMapToGenericRecord(DataMap map, RecordDataSchema dataSchema, Schema avroSchema, DataMapToAvroRecordTranslationOptions options) throws DataTranslationException
+
+  public static GenericRecord dataMapToGenericRecord(DataMap map, RecordDataSchema dataSchema,
+                                                     DataMapToAvroRecordTranslationOptions options)
+      throws DataTranslationException
+  {
+    Schema avroSchema = SchemaTranslator.dataToAvroSchema(dataSchema);
+    return dataMapToGenericRecord(map, dataSchema, avroSchema, options);
+  }
+
+  public static GenericRecord dataMapToGenericRecord(DataMap map, RecordDataSchema dataSchema, Schema avroSchema,
+                                                     DataMapToAvroRecordTranslationOptions options)
+      throws DataTranslationException
   {
     DataMapToGenericRecordTranslator translator = new DataMapToGenericRecordTranslator(options);
     try
@@ -97,8 +103,7 @@ public class DataTranslator implements DataTranslatorContext
       GenericRecord avroRecord = (GenericRecord) translator.translate(map, dataSchema, avroSchema);
       translator.checkMessageListForErrorsAndThrowDataTranslationException();
       return avroRecord;
-    }
-    catch (RuntimeException e)
+    } catch (RuntimeException e)
     {
       throw translator.dataTranslationException(e);
     }
@@ -604,7 +609,10 @@ public class DataTranslator implements DataTranslatorContext
             Schema fieldAvroSchema = avroField.schema();
             Object fieldValue = map.get(fieldName);
             boolean isOptional = field.getOptional();
-            if (isOptional)
+            if (isOptional  || (
+                _dataTranslationOptions != null &&
+                ((DataMapToAvroRecordTranslationOptions) _dataTranslationOptions). getDefaultFieldDataTranslationMode()
+                    == PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE))
             {
               if (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION)
               {

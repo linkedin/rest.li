@@ -214,7 +214,6 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   @Override
   protected void encodeFieldType(RecordDataSchema.Field field) throws IOException
   {
-    boolean optional = field.getOptional();
     DataSchema fieldSchema = field.getType();
     UnionDataSchema unionDataSchema =
       (fieldSchema.getDereferencedType() == DataSchema.Type.UNION ?
@@ -222,13 +221,22 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
         null);
     _builder.writeFieldName(TYPE_KEY);
 
+    Object defaultValue = field.getDefault();
+    boolean optional = field.getOptional() ||
+        //If chose to translate default to optional field AND ALSO has defaultValue
+        ((defaultValue !=null)
+            && _options.getDefaultFieldTranslationMode() == PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE);
     if (!optional && unionDataSchema == null)
     {
       encode(fieldSchema);
     }
     else
     {
-      // special handling for unions
+      // This branch handles
+      // optional fields,
+      // or default field needs to be translated as optional
+      // or union fields(includes special handling for unions (BOTH optional or default)
+
       // output will be an union if the field is optional or its type is a union
 
       // whether to add null to translated union,
@@ -239,9 +247,9 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
       // members of the union (excluding null introduced by optional)
       List<DataSchema> resultMemberTypes;
 
-      Object defaultValue = field.getDefault();
       if (optional)
       {
+        // handle optional field // or if want to translate "required field with default" to Optional field
         boolean isTranslatedUnionMember = (Boolean.TRUE == field.getProperties().get(SchemaTranslator.TRANSLATED_UNION_MEMBER_PROPERTY));
         if (unionDataSchema == null)
         {
@@ -249,9 +257,10 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
           resultMemberTypes = new ArrayList<DataSchema>(1);
           resultMemberTypes.add(fieldSchema);
           defaultValueSchema = (
-            defaultValue != null && (isTranslatedUnionMember || _options.getOptionalDefaultMode() == OptionalDefaultMode.TRANSLATE_DEFAULT) ?
-              fieldSchema :
-              DataSchemaConstants.NULL_DATA_SCHEMA);
+            defaultValue != null
+              && _options.getDefaultFieldTranslationMode() == PegasusToAvroDefaultFieldTranslationMode.TRANSLATE
+              && (isTranslatedUnionMember || _options.getOptionalDefaultMode() == OptionalDefaultMode.TRANSLATE_DEFAULT) ?
+                fieldSchema : DataSchemaConstants.NULL_DATA_SCHEMA);
         }
         else
         {
@@ -260,9 +269,11 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
               .map(UnionDataSchema.Member::getType)
               .collect(Collectors.toList());
           defaultValueSchema = (
-            defaultValue != null && _options.getOptionalDefaultMode() == OptionalDefaultMode.TRANSLATE_DEFAULT ?
-              unionValueDataSchema(unionDataSchema, defaultValue) :
-              DataSchemaConstants.NULL_DATA_SCHEMA);
+            defaultValue != null
+                && _options.getDefaultFieldTranslationMode() == PegasusToAvroDefaultFieldTranslationMode.TRANSLATE
+                && _options.getOptionalDefaultMode() == OptionalDefaultMode.TRANSLATE_DEFAULT ?
+                unionValueDataSchema(unionDataSchema, defaultValue) :
+                DataSchemaConstants.NULL_DATA_SCHEMA);
         }
         assert((_options.getOptionalDefaultMode() != OptionalDefaultMode.TRANSLATE_TO_NULL) ||
               (isTranslatedUnionMember || _options.getOptionalDefaultMode() == OptionalDefaultMode.TRANSLATE_DEFAULT) ||
@@ -270,7 +281,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
       }
       else
       {
-        // must be union
+        // must be required union, AND didn't choose to be translated as optional
         addNullMemberType = false;
         resultMemberTypes = unionDataSchema.getMembers().stream()
             .map(UnionDataSchema.Member::getType)
@@ -283,7 +294,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
       _builder.writeStartArray();
       // this variable keeps track of whether null member type has been emitted
       boolean emittedNull = false;
-      // if field has a default, defaultValueSchema != null, always encode it 1st
+      // if field has a default, defaultValueSchema != null, always encode it 1st, this includes NULL_DATA_SCHEMA
       if (defaultValueSchema != null)
       {
         emittedNull |= (defaultValueSchema.getDereferencedType() == DataSchema.Type.NULL);
