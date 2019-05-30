@@ -19,6 +19,17 @@
       "method" : "batch_create",
       "doc" : "For a batch create request, responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests."
     } ],
+    "actions" : [ {
+      "name" : "errorResponseFormatMessageAndDetails"
+    }, {
+      "name" : "errorResponseFormatMessageAndServiceCode"
+    }, {
+      "name" : "errorResponseFormatMessageAndServiceCodeAndExceptionClass"
+    }, {
+      "name" : "errorResponseFormatMessageOnly"
+    }, {
+      "name" : "errorResponseFormatMinimal"
+    } ],
     "entity" : {
       "path" : "/exceptions/{exceptionsId}"
     }

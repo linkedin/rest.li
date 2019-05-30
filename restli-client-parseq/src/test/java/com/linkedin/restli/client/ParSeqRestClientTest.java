@@ -24,7 +24,6 @@ import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
-import com.linkedin.restli.client.config.RequestConfigProvider;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorDetails;
@@ -40,7 +39,6 @@ import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -137,8 +135,12 @@ public class ParSeqRestClientTest
     final String ERR_MSG = "whoops2";
     final int HTTP_CODE = 400;
     final int APP_CODE = 666;
+    final String CODE = "INVALID_INPUT";
+    final String DOC_URL = "https://example.com/errors/invalid-input";
+    final String REQUEST_ID = "abc123";
 
-    final ParSeqRestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
+    final ParSeqRestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, CODE, DOC_URL,
+        REQUEST_ID, protocolVersion, errorResponseHeaderName);
     final Request<EmptyRecord> req = mockRequest(EmptyRecord.class, versionOption);
 
     final Promise<Response<EmptyRecord>> promise = client.sendRequest(req);
@@ -151,6 +153,12 @@ public class ParSeqRestClientTest
     Assert.assertEquals(ERR_VALUE, e.getErrorDetails().get(ERR_KEY));
     Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
     Assert.assertEquals(ERR_MSG, e.getServiceErrorMessage());
+    Assert.assertEquals(CODE, e.getCode());
+    Assert.assertEquals(DOC_URL, e.getDocUrl());
+    Assert.assertEquals(REQUEST_ID, e.getRequestId());
+    Assert.assertEquals(ErrorDetails.class.getCanonicalName(), e.getErrorDetailType());
+    Assert.assertNotNull(e.getErrorDetailsRecord());
+    Assert.assertTrue(e.getErrorDetailsRecord() instanceof ErrorDetails);
   }
 
   /**
@@ -167,8 +175,12 @@ public class ParSeqRestClientTest
     final String ERR_MSG = "whoops2";
     final int HTTP_CODE = 400;
     final int APP_CODE = 666;
+    final String CODE = "INVALID_INPUT";
+    final String DOC_URL = "https://example.com/errors/invalid-input";
+    final String REQUEST_ID = "abc123";
 
-    final ParSeqRestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
+    final ParSeqRestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, CODE, DOC_URL,
+        REQUEST_ID, protocolVersion, errorResponseHeaderName);
     final Request<EmptyRecord> req = mockRequest(EmptyRecord.class, versionOption);
 
     final Task<Response<EmptyRecord>> task = client.createTask(req);
@@ -185,6 +197,12 @@ public class ParSeqRestClientTest
     Assert.assertEquals(ERR_VALUE, e.getErrorDetails().get(ERR_KEY));
     Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
     Assert.assertEquals(ERR_MSG, e.getServiceErrorMessage());
+    Assert.assertEquals(CODE, e.getCode());
+    Assert.assertEquals(DOC_URL, e.getDocUrl());
+    Assert.assertEquals(REQUEST_ID, e.getRequestId());
+    Assert.assertEquals(ErrorDetails.class.getCanonicalName(), e.getErrorDetailType());
+    Assert.assertNotNull(e.getErrorDetailsRecord());
+    Assert.assertTrue(e.getErrorDetailsRecord() instanceof ErrorDetails);
   }
 
   /**
@@ -213,6 +231,9 @@ public class ParSeqRestClientTest
                                       final String errMsg,
                                       final int httpCode,
                                       final int appCode,
+                                      String code,
+                                      String docUrl,
+                                      String requestId,
                                       final ProtocolVersion protocolVersion,
                                       final String errorResponseHeaderName)
   {
@@ -221,9 +242,13 @@ public class ParSeqRestClientTest
     final DataMap errMap = new DataMap();
     errMap.put(errKey, errValue);
     er.setErrorDetails(new ErrorDetails(errMap));
+    er.setErrorDetailType(ErrorDetails.class.getCanonicalName());
     er.setStatus(httpCode);
     er.setMessage(errMsg);
     er.setServiceErrorCode(appCode);
+    er.setCode(code);
+    er.setDocUrl(docUrl);
+    er.setRequestId(requestId);
 
     final byte[] mapBytes;
     try

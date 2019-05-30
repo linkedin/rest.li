@@ -3,6 +3,9 @@
 
 27.1.4
 ------
+(RB=1676246)
+Client integration for service error standardization
+
 (RB=1683486)
 Added Service Unavailable Http Status Code 503 to RestStatus Class
 

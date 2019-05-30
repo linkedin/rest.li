@@ -79,10 +79,15 @@ public class RestClientTest
 
     Assert.assertNull(e.getServiceErrorMessage());
     Assert.assertNull(e.getErrorDetails());
+    Assert.assertNull(e.getErrorDetailsRecord());
     Assert.assertNull(e.getErrorSource());
     Assert.assertFalse(e.hasServiceErrorCode());
     Assert.assertNull(e.getServiceErrorStackTrace());
     Assert.assertNull(e.getServiceExceptionClass());
+    Assert.assertNull(e.getCode());
+    Assert.assertNull(e.getDocUrl());
+    Assert.assertNull(e.getRequestId());
+    Assert.assertNull(e.getErrorDetailType());
   }
 
   @Test
@@ -330,8 +335,12 @@ public class RestClientTest
     final String ERR_MSG = "whoops2";
     final int HTTP_CODE = 200;
     final int APP_CODE = 666;
+    final String CODE = "INVALID_INPUT";
+    final String DOC_URL = "https://example.com/errors/invalid-input";
+    final String REQUEST_ID = "abc123";
 
-    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
+    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, CODE, DOC_URL, REQUEST_ID,
+        protocolVersion, errorResponseHeaderName);
     Request<ErrorResponse> request = mockRequest(ErrorResponse.class, versionOption, contentType);
     RequestBuilder<Request<ErrorResponse>> requestBuilder = mockRequestBuilder(request);
 
@@ -349,6 +358,10 @@ public class RestClientTest
     Assert.assertEquals(ERR_VALUE, e.getErrorDetails().data().getString(ERR_KEY));
     Assert.assertEquals(APP_CODE, e.getServiceErrorCode().intValue());
     Assert.assertEquals(ERR_MSG, e.getMessage());
+    Assert.assertEquals(CODE, e.getCode());
+    Assert.assertEquals(DOC_URL, e.getDocUrl());
+    Assert.assertEquals(REQUEST_ID, e.getRequestId());
+    Assert.assertEquals(ErrorDetails.class.getCanonicalName(), e.getErrorDetailType());
   }
 
   @SuppressWarnings("deprecation")
@@ -367,8 +380,12 @@ public class RestClientTest
     final String ERR_MSG = "whoops2";
     final int HTTP_CODE = 400;
     final int APP_CODE = 666;
+    final String CODE = "INVALID_INPUT";
+    final String DOC_URL = "https://example.com/errors/invalid-input";
+    final String REQUEST_ID = "abc123";
 
-    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
+    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, CODE, DOC_URL, REQUEST_ID,
+        protocolVersion, errorResponseHeaderName);
     Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption, contentType);
     RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
@@ -389,7 +406,12 @@ public class RestClientTest
       Assert.assertEquals(ERR_VALUE, e.getErrorDetails().get(ERR_KEY));
       Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
       Assert.assertEquals(ERR_MSG, e.getServiceErrorMessage());
-
+      Assert.assertEquals(CODE, e.getCode());
+      Assert.assertEquals(DOC_URL, e.getDocUrl());
+      Assert.assertEquals(REQUEST_ID, e.getRequestId());
+      Assert.assertEquals(ErrorDetails.class.getCanonicalName(), e.getErrorDetailType());
+      Assert.assertNotNull(e.getErrorDetailsRecord());
+      Assert.assertTrue(e.getErrorDetailsRecord() instanceof ErrorDetails);
     }
   }
 
@@ -409,9 +431,12 @@ public class RestClientTest
     final String ERR_MSG = "whoops2";
     final int HTTP_CODE = 400;
     final int APP_CODE = 666;
+    final String CODE = "INVALID_INPUT";
+    final String DOC_URL = "https://example.com/errors/invalid-input";
+    final String REQUEST_ID = "abc123";
 
-    RestClient client =
-        mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
+    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, CODE, DOC_URL, REQUEST_ID,
+            protocolVersion, errorResponseHeaderName);
     Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption, contentType);
     RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
@@ -430,7 +455,12 @@ public class RestClientTest
     Assert.assertEquals(ERR_VALUE, e.getErrorDetails().get(ERR_KEY));
     Assert.assertEquals(APP_CODE, e.getServiceErrorCode());
     Assert.assertEquals(ERR_MSG, e.getServiceErrorMessage());
-
+    Assert.assertEquals(CODE, e.getCode());
+    Assert.assertEquals(DOC_URL, e.getDocUrl());
+    Assert.assertEquals(REQUEST_ID, e.getRequestId());
+    Assert.assertEquals(ErrorDetails.class.getCanonicalName(), e.getErrorDetailType());
+    Assert.assertNotNull(e.getErrorDetailsRecord());
+    Assert.assertTrue(e.getErrorDetailsRecord() instanceof ErrorDetails);
   }
 
   @SuppressWarnings("deprecation")
@@ -448,8 +478,12 @@ public class RestClientTest
     final String ERR_MSG = "whoops2";
     final int HTTP_CODE = 400;
     final int APP_CODE = 666;
+    final String CODE = "INVALID_INPUT";
+    final String DOC_URL = "https://example.com/errors/invalid-input";
+    final String REQUEST_ID = "abc123";
 
-    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, protocolVersion, errorResponseHeaderName);
+    RestClient client = mockClient(ERR_KEY, ERR_VALUE, ERR_MSG, HTTP_CODE, APP_CODE, CODE, DOC_URL, REQUEST_ID,
+        protocolVersion, errorResponseHeaderName);
     Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption, contentType);
     RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
@@ -473,6 +507,12 @@ public class RestClientTest
       Assert.assertEquals(ERR_VALUE, rlre.getErrorDetails().get(ERR_KEY));
       Assert.assertEquals(APP_CODE, rlre.getServiceErrorCode());
       Assert.assertEquals(ERR_MSG, rlre.getServiceErrorMessage());
+      Assert.assertEquals(CODE, rlre.getCode());
+      Assert.assertEquals(DOC_URL, rlre.getDocUrl());
+      Assert.assertEquals(REQUEST_ID, rlre.getRequestId());
+      Assert.assertEquals(ErrorDetails.class.getCanonicalName(), rlre.getErrorDetailType());
+      Assert.assertNotNull(rlre.getErrorDetailsRecord());
+      Assert.assertTrue(rlre.getErrorDetailsRecord() instanceof ErrorDetails);
 
       // Old
 
@@ -522,8 +562,8 @@ public class RestClientTest
       RemoteInvocationException rlre = (RemoteInvocationException)cause;
       Assert.assertTrue(rlre.getMessage().startsWith("Received error " + HTTP_CODE + " from server"));
       Throwable rlCause = rlre.getCause();
-      Assert.assertTrue(rlCause instanceof RestException, "Excepted RestException not " + rlCause.getClass().getName());
-      RestException rle = (RestException)rlCause;
+      Assert.assertTrue(rlCause instanceof RestException, "Expected RestException not " + rlCause.getClass().getName());
+      RestException rle = (RestException) rlCause;
       Assert.assertEquals(ERR_MSG, rle.getResponse().getEntity().asString("UTF-8"));
       Assert.assertEquals(HTTP_CODE, rle.getResponse().getStatus());
     }
@@ -789,6 +829,9 @@ public class RestClientTest
                                 String errMsg,
                                 int httpCode,
                                 int appCode,
+                                String code,
+                                String docUrl,
+                                String requestId,
                                 ProtocolVersion protocolVersion,
                                 String errorResponseHeaderName)
   {
@@ -797,9 +840,13 @@ public class RestClientTest
     DataMap errMap = new DataMap();
     errMap.put(errKey, errValue);
     er.setErrorDetails(new ErrorDetails(errMap));
+    er.setErrorDetailType(ErrorDetails.class.getCanonicalName());
     er.setStatus(httpCode);
     er.setMessage(errMsg);
     er.setServiceErrorCode(appCode);
+    er.setCode(code);
+    er.setDocUrl(docUrl);
+    er.setRequestId(requestId);
 
     byte[] mapBytes;
     try

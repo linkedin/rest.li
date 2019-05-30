@@ -21,7 +21,10 @@
 package com.linkedin.restli.client;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.GetMode;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
@@ -82,16 +85,14 @@ public class RestLiResponseException extends RestException
     return _status;
   }
 
-  @Deprecated
-  public boolean hasServiceErrorCode()
+  public boolean hasCode()
   {
-    return _errorResponse.hasServiceErrorCode();
+    return _errorResponse.hasCode();
   }
 
-  @Deprecated
-  public int getServiceErrorCode()
+  public String getCode()
   {
-    return _errorResponse.getServiceErrorCode(GetMode.NULL);
+    return _errorResponse.getCode(GetMode.NULL);
   }
 
   public boolean hasServiceErrorMessage()
@@ -104,14 +105,24 @@ public class RestLiResponseException extends RestException
     return _errorResponse.getMessage(GetMode.NULL);
   }
 
-  public boolean hasServiceErrorStackTrace()
+  public boolean hasDocUrl()
   {
-    return _errorResponse.hasStackTrace();
+    return _errorResponse.hasDocUrl();
   }
 
-  public String getServiceErrorStackTrace()
+  public String getDocUrl()
   {
-    return _errorResponse.getStackTrace(GetMode.NULL);
+    return _errorResponse.getDocUrl(GetMode.NULL);
+  }
+
+  public boolean hasRequestId()
+  {
+    return _errorResponse.hasRequestId();
+  }
+
+  public String getRequestId()
+  {
+    return _errorResponse.getRequestId(GetMode.NULL);
   }
 
   public boolean hasServiceExceptionClass()
@@ -124,11 +135,32 @@ public class RestLiResponseException extends RestException
     return _errorResponse.getExceptionClass(GetMode.NULL);
   }
 
+  public boolean hasServiceErrorStackTrace()
+  {
+    return _errorResponse.hasStackTrace();
+  }
+
+  public String getServiceErrorStackTrace()
+  {
+    return _errorResponse.getStackTrace(GetMode.NULL);
+  }
+
+  public boolean hasErrorDetailType()
+  {
+    return _errorResponse.hasErrorDetailType();
+  }
+
+  public String getErrorDetailType()
+  {
+    return _errorResponse.getErrorDetailType(GetMode.NULL);
+  }
+
   public boolean hasErrorDetails()
   {
     return _errorResponse.hasErrorDetails();
   }
 
+  @SuppressWarnings("ConstantConditions")
   public DataMap getErrorDetails()
   {
     if (hasErrorDetails())
@@ -141,12 +173,63 @@ public class RestLiResponseException extends RestException
     }
   }
 
+  /**
+   * Gets the error details as a typed record based on the error detail type. {@code null} will be returned if
+   * there are no error details, if there is no error detail type, or if no class is found that corresponds with
+   * the error detail type.
+   *
+   * @param <T> the error detail type specified in the {@link ErrorResponse}
+   * @return the error details as a typed record, or null
+   */
+  @SuppressWarnings({"unchecked", "ConstantConditions"})
+  public <T extends RecordTemplate> T getErrorDetailsRecord()
+  {
+    if (_errorResponse.hasErrorDetails() && _errorResponse.hasErrorDetailType())
+    {
+      String type = _errorResponse.getErrorDetailType();
+      try
+      {
+        Class<?> typeClass = Class.forName(type);
+        if (RecordTemplate.class.isAssignableFrom(typeClass))
+        {
+          Class<? extends RecordTemplate> recordType = typeClass.asSubclass(RecordTemplate.class);
+          RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.getSchema(typeClass);
+          return (T) DataTemplateUtil.wrap(_errorResponse.getErrorDetails().data(), schema, recordType);
+        }
+      }
+      catch (ClassNotFoundException e)
+      {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  @Deprecated
+  public boolean hasServiceErrorCode()
+  {
+    return _errorResponse.hasServiceErrorCode();
+  }
+
+  @Deprecated
+  public int getServiceErrorCode()
+  {
+    return _errorResponse.getServiceErrorCode(GetMode.NULL);
+  }
+
   public String getErrorSource()
   {
     RestResponse response = getResponse();
     return HeaderUtil.getErrorResponseHeaderValue(response.getHeaders());
   }
 
+  /**
+   * Generates a string representation of this exception.
+   *
+   * e.g. RestLiResponseException: Response status 400, serviceErrorMessage: Illegal content type "application/xml",
+   *      serviceErrorCode: 999, code: INVALID_INPUT, docUrl: https://example.com/errors/invalid-input, requestId: abc123
+   * @return string representation
+   */
   @SuppressWarnings("deprecation")
   @Override
   public String toString()
@@ -162,18 +245,29 @@ public class RestLiResponseException extends RestException
     {
       builder.append(", serviceErrorMessage: ").append(getServiceErrorMessage());
     }
-    // TODO: remove this and add logic for "code" field (task: Client side error handling changes)
+
+    // TODO: remove this eventually once this field is no longer supported
     if (hasServiceErrorCode())
     {
       builder.append(", serviceErrorCode: ").append(getServiceErrorCode());
     }
 
-    // TODO: decide whether to include serviceErrorDetails and serverStackTrace.
+    if (hasCode())
+    {
+      builder.append(", code: ").append(getCode());
+    }
+
+    if (hasDocUrl())
+    {
+      builder.append(", docUrl: ").append(getDocUrl());
+    }
+
+    if (hasRequestId())
+    {
+      builder.append(", requestId: ").append(getRequestId());
+    }
 
     return builder.toString();
-
-    // E.g.:
-    // RestLiResponseException: Response status 400, serviceErrorMessage: Illegal content type "application/xml", serviceErrorCode: 999
   }
 
   public Response<?> getDecodedResponse()

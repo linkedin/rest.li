@@ -28,7 +28,9 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
@@ -43,10 +45,10 @@ import java.util.List;
 
 @RestLiCollection(name = "exceptions",
                   namespace = "com.linkedin.restli.examples.greetings.client")
+@SuppressWarnings("deprecation")
 public class ExceptionsResource extends CollectionResourceTemplate<Long, Greeting>
 {
   @Override
-  @SuppressWarnings("deprecation")
   public Greeting get(Long key)
   {
     try
@@ -58,7 +60,11 @@ public class ExceptionsResource extends CollectionResourceTemplate<Long, Greetin
       Greeting details = new Greeting().setMessage("Hello, Sorry for the mess");
 
       throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, "error processing request", e)
-              .setServiceErrorCode(42).setErrorDetails(details.data());
+          .setServiceErrorCode(42)
+          .setCode("PROCESSING_ERROR")
+          .setDocUrl("https://example.com/errors/processing-error")
+          .setRequestId("xyz123")
+          .setErrorDetails(details);
     }
     return null;
   }
@@ -68,7 +74,6 @@ public class ExceptionsResource extends CollectionResourceTemplate<Long, Greetin
    * with 201 created for all other requests.
    */
   @RestMethod.Create
-  @SuppressWarnings("deprecation")
   public CreateResponse create(Greeting g)
   {
     if(g.hasTone() && g.getTone() == Tone.INSULTING)
@@ -108,5 +113,51 @@ public class ExceptionsResource extends CollectionResourceTemplate<Long, Greetin
       }
     }
     return new BatchCreateResult<Long, Greeting>(responses);
+  }
+
+  @Action(name = "errorResponseFormatMinimal")
+  public Void errorResponseFormatMinimal()
+  {
+    throw makeNewDummyException(ErrorResponseFormat.MINIMAL);
+  }
+
+  @Action(name = "errorResponseFormatMessageOnly")
+  public Void errorResponseFormatMessageOnly()
+  {
+    throw makeNewDummyException(ErrorResponseFormat.MESSAGE_ONLY);
+  }
+
+  @Action(name = "errorResponseFormatMessageAndServiceCode")
+  public Void errorResponseFormatMessageAndServiceCode()
+  {
+    throw makeNewDummyException(ErrorResponseFormat.MESSAGE_AND_SERVICECODE);
+  }
+
+  @Action(name = "errorResponseFormatMessageAndServiceCodeAndExceptionClass")
+  public Void errorResponseFormatMessageAndServiceCodeAndExceptionClass()
+  {
+    throw makeNewDummyException(ErrorResponseFormat.MESSAGE_AND_SERVICECODE_AND_EXCEPTIONCLASS);
+  }
+
+  @Action(name = "errorResponseFormatMessageAndDetails")
+  public Void errorResponseFormatMessageAndDetails()
+  {
+    throw makeNewDummyException(ErrorResponseFormat.MESSAGE_AND_DETAILS);
+  }
+
+  private static RestLiServiceException makeNewDummyException(ErrorResponseFormat errorResponseFormat)
+  {
+    Greeting details = new Greeting().setMessage("Apologies for the mean words");
+    RestLiServiceException restLiServiceException = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+        "This is an exception, you dummy!",
+        new IllegalArgumentException("Hello, my name is Cause Exception"))
+        .setServiceErrorCode(2147)
+        .setCode("DUMMY_EXCEPTION")
+        .setDocUrl("https://example.com/errors/dummy-exception")
+        .setRequestId("dum616")
+        .setErrorDetails(details);
+    restLiServiceException.setOverridingFormat(errorResponseFormat);
+
+    return restLiServiceException;
   }
 }
