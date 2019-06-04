@@ -18,6 +18,9 @@ package com.linkedin.restli.server.validation;
 
 import com.linkedin.data.message.Message;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.restli.server.errors.MockBadRequest;
+import com.linkedin.restli.server.errors.MockInputError;
+import com.linkedin.restli.server.errors.MockInputErrorArray;
 import java.util.Collection;
 import java.util.Map;
 
@@ -29,13 +32,48 @@ import java.util.Map;
  * @author Gevorg Kurghinyan
  */
 public class MockValidationErrorHandler implements ValidationErrorHandler {
+  private static final String ERROR_CODE = "BAD_REQUEST";
+
   @Override
-  public void updateErrorDetails(RestLiServiceException exception, Collection<Message> messages) {
-    // TODO - update when RestLiServiceException supports the new RecordTemplate type error details.
+  public void updateErrorDetails(RestLiServiceException exception, Collection<Message> messages)
+  {
+    MockBadRequest badRequest = new MockBadRequest();
+    MockInputErrorArray inputErrors = new MockInputErrorArray();
+
+    for (Message message : messages)
+    {
+      if (message.isError() && message.getErrorDetails() instanceof MockInputError)
+      {
+        inputErrors.add((MockInputError) message.getErrorDetails());
+      }
+    }
+
+    badRequest.setInputErrors(inputErrors);
+    exception.setErrorDetails(badRequest);
+    exception.setCode(ERROR_CODE);
   }
 
   @Override
-  public void updateErrorDetails(RestLiServiceException exception, Map<String, Collection<Message>> messages) {
-    // TODO - update when RestLiServiceException supports the new RecordTemplate type error details.
+  public void updateErrorDetails(RestLiServiceException exception, Map<String, Collection<Message>> messages)
+  {
+    MockBadRequest badRequest = new MockBadRequest();
+    MockInputErrorArray inputErrors = new MockInputErrorArray();
+
+    for (Map.Entry<String, Collection<Message>> entry : messages.entrySet())
+    {
+      for (Message message : entry.getValue())
+      {
+        if (message.isError() && message.getErrorDetails() instanceof MockInputError)
+        {
+          MockInputError inputError = (MockInputError) message.getErrorDetails();
+          inputError.setKey(entry.getKey());
+          inputErrors.add(inputError);
+        }
+      }
+    }
+
+    badRequest.setInputErrors(inputErrors);
+    exception.setErrorDetails(badRequest);
+    exception.setCode(ERROR_CODE);
   }
 }

@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "MockBadRequest",
+  "namespace": "com.linkedin.restli.server.errors",
+  "doc": "Describes input validation failures in a client request.",
+  "fields": [
+    {
+      "name": "inputErrors",
+      "type": {
+        "type": "array",
+        "items": "MockInputError"
+      },
+      "doc" : "Describes input validation failures.",
+      "default": []
+    }
+  ]
+}

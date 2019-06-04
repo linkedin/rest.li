@@ -53,6 +53,7 @@ import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
+import com.linkedin.restli.server.errors.MockBadRequest;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
@@ -229,6 +230,13 @@ public class TestRestLiValidationFilter
       if (expectError)
       {
         Assert.assertEquals(ex.getStatus(), HttpStatus.S_422_UNPROCESSABLE_ENTITY);
+        Assert.assertEquals(ex.getCode(), "BAD_REQUEST");
+
+        if (ex.getErrorDetailsRecord() != null)
+        {
+          Assert.assertEquals(ex.getErrorDetailsRecord().getClass(), MockBadRequest.class);
+        }
+
         return;
       }
       else

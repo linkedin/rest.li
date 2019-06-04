@@ -3,6 +3,9 @@
 
 27.1.6
 ------
+(RB=1687176)
+Updated MockValidationErrorHandler to create BadRequest response
+
 (RB=1675664)
 Add the ability to specify the TimingImportance of a TimingKey to TimingContextUtil.
 
