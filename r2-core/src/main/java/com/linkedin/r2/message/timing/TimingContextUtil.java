@@ -56,7 +56,7 @@ public class TimingContextUtil
 
   /**
    * Mark a timing event and record it to the request context.
-   * If it's the first time this {@link TimingKey} appears, a new timing records will be created. Current time
+   * If it's the first time this {@link TimingKey} appears, a new timing record will be created. Current time
    * will be used as the starting time of this record.
    * If it's the second time, the existing timing records will be updated with the duration, the amount of time
    * between current time and its starting time.
@@ -83,18 +83,18 @@ public class TimingContextUtil
    * Warning will be issued if this timing key already exists.
    * @param requestContext Timing records will be saved to this request context
    * @param timingKey Timing records will be identified by this key
-   * @param duration Duration of timing record to be added
+   * @param durationNano Duration of timing record to be added in nanoseconds.
    */
-  public static void markTiming(RequestContext requestContext, TimingKey timingKey, long duration)
+  public static void markTiming(RequestContext requestContext, TimingKey timingKey, long durationNano)
   {
     Map<TimingKey, TimingContext> timings = getTimingsMap(requestContext);
     if (!timings.containsKey(timingKey))
     {
-      timings.put(timingKey, new TimingContext(timingKey, duration));
+      timings.put(timingKey, new TimingContext(timingKey, durationNano));
     }
     else
     {
-      LOG.warn("This timing key already exists");
+      LOG.warn("Could not mark timing for a key that already exists: " + timingKey.getName());
     }
   }
 
@@ -148,7 +148,7 @@ public class TimingContextUtil
       }
       else
       {
-        LOG.debug("Trying to complete an already completed timing with key " + _timingKey.getName() + ". This call will have no effects.");
+        LOG.warn("Trying to complete an already completed timing with key " + _timingKey.getName() + ". This call will have no effect.");
       }
     }
   }

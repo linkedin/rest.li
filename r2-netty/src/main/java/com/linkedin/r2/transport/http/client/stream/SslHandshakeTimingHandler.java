@@ -19,6 +19,8 @@ package com.linkedin.r2.transport.http.client.stream;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.message.timing.TimingKey;
+import com.linkedin.r2.message.timing.TimingImportance;
+import com.linkedin.r2.message.timing.TimingNameConstants;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import io.netty.channel.Channel;
@@ -44,7 +46,7 @@ public class SslHandshakeTimingHandler extends ChannelOutboundHandlerAdapter
 
   public static final AttributeKey<Long> SSL_HANDSHAKE_START_TIME = AttributeKey.valueOf("sslHandshakeStartTime");
 
-  public static final TimingKey TIMING_KEY = TimingKey.registerNewKey("ssl_handshake");
+  public static final TimingKey TIMING_KEY = TimingKey.registerNewKey(TimingNameConstants.SSL_HANDSHAKE, TimingImportance.LOW);
 
   private final Future<Channel> _handshakeFuture;
 

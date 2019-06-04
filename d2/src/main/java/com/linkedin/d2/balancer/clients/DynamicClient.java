@@ -35,6 +35,8 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.timing.TimingImportance;
+import com.linkedin.r2.message.timing.TimingNameConstants;
 import com.linkedin.r2.transport.common.AbstractClient;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
@@ -56,7 +58,7 @@ public class DynamicClient extends AbstractClient implements D2Client
 {
   private static final Logger _log = LoggerFactory.getLogger(DynamicClient.class);
 
-  private static final TimingKey TIMING_KEY = TimingKey.registerNewKey("d2-total");
+  private static final TimingKey TIMING_KEY = TimingKey.registerNewKey(TimingNameConstants.D2_TOTAL, TimingImportance.MEDIUM);
 
   private final LoadBalancer  _balancer;
   private final Facilities    _facilities;

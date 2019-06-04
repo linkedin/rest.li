@@ -22,6 +22,7 @@ import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.message.timing.TimingKey;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.timing.TimingImportance;
 import java.util.Map;
 
 
@@ -41,15 +42,25 @@ import java.util.Map;
   private final TimingKey _onResponseTimingKey;
   private final TimingKey _onErrorTimingKey;
 
+  /**
+   * Registers {@link TimingKey}s for {@link com.linkedin.r2.message.timing.TimingNameConstants#TIMED_REST_FILTER}.
+   *
+   * @param restFilter Rest filter to decorate
+   */
   public TimedRestFilter(RestFilter restFilter)
   {
     _restFilter = restFilter;
+
     String filterClassName = restFilter.getClass().getSimpleName();
     String timingKeyPrefix = filterClassName + "-";
     String timingKeyPostfix = ":" + hashCode();
-    _onRequestTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_REQUEST_SUFFIX + timingKeyPostfix, _restFilter.getClass().getSimpleName());
-    _onResponseTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_RESPONSE_SUFFIX + timingKeyPostfix, _restFilter.getClass().getSimpleName());
-    _onErrorTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_ERROR_SUFFIX + timingKeyPostfix, _restFilter.getClass().getSimpleName());
+
+    _onRequestTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_REQUEST_SUFFIX + timingKeyPostfix,
+        _restFilter.getClass().getSimpleName(), TimingImportance.LOW);
+    _onResponseTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_RESPONSE_SUFFIX + timingKeyPostfix,
+        _restFilter.getClass().getSimpleName(), TimingImportance.LOW);
+    _onErrorTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_ERROR_SUFFIX + timingKeyPostfix,
+        _restFilter.getClass().getSimpleName(), TimingImportance.LOW);
   }
 
   @Override

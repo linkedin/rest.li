@@ -1,6 +1,10 @@
-27.1.6
+27.1.7
 ------
 
+27.1.6
+------
+(RB=1675664)
+Add the ability to specify the TimingImportance of a TimingKey to TimingContextUtil.
 
 27.1.5
 ------

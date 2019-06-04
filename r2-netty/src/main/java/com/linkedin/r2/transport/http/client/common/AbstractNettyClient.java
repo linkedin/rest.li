@@ -18,6 +18,8 @@ package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.MultiCallback;
+import com.linkedin.r2.message.timing.TimingImportance;
+import com.linkedin.r2.message.timing.TimingNameConstants;
 import com.linkedin.r2.util.RequestTimeoutUtil;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.R2Constants;
@@ -73,7 +75,7 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
   private static final Logger LOG = LoggerFactory.getLogger(AbstractNettyClient.class);
   private static final int HTTP_DEFAULT_PORT = 80;
   private static final int HTTPS_DEFAULT_PORT = 443;
-  private static final TimingKey TIMING_KEY = TimingKey.registerNewKey("dns_resolution");
+  private static final TimingKey TIMING_KEY = TimingKey.registerNewKey(TimingNameConstants.DNS_RESOLUTION, TimingImportance.LOW);
 
   private final ChannelPoolManager _channelPoolManager;
   private final ChannelPoolManager _sslChannelPoolManager;

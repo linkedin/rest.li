@@ -27,6 +27,7 @@ import com.linkedin.r2.message.RequestContext;
  *
  * @author Xialin Zhu
  * @see TimingContextUtil
+ * @see TimingNameConstants
  */
 public class TimingKey
 {
@@ -34,15 +35,18 @@ public class TimingKey
 
   private final String _name;
   private final String _type;
+  private final TimingImportance _timingImportance;
 
   /**
    * @param name Name of the key
    * @param type String that defines the type of the key
+   * @param timingImportance {@link TimingImportance} of the key
    */
-  private TimingKey(String name, String type)
+  private TimingKey(String name, String type, TimingImportance timingImportance)
   {
     _name = name;
     _type = type;
+    _timingImportance = timingImportance;
   }
 
   public String getName()
@@ -55,6 +59,11 @@ public class TimingKey
     return _type;
   }
 
+  public TimingImportance getTimingImportance()
+  {
+    return _timingImportance;
+  }
+
   private static TimingKey registerNewKey(TimingKey timingKey)
   {
     if (_pool.putIfAbsent(timingKey.getName(), timingKey) != null)
@@ -65,25 +74,54 @@ public class TimingKey
   }
 
   /**
-   * Register a new timing key for future use.
+   * Register a new timing key for future use with default {@link TimingImportance#LOW}.
    *
-   * @param uniqueNameAndType Name of the key (should be unique)
+   * @param uniqueNameAndType Name of the key (should be unique and defined in {@link TimingNameConstants})
    * @return A new timing key
+   * @deprecated Use {{@link #registerNewKey(String, TimingImportance)}} instead.
    */
+  @Deprecated
   public static TimingKey registerNewKey(String uniqueNameAndType)
   {
-    return registerNewKey(new TimingKey(uniqueNameAndType, uniqueNameAndType));
+    return registerNewKey(new TimingKey(uniqueNameAndType, uniqueNameAndType, TimingImportance.LOW));
+  }
+
+  /**
+   * Register a new timing key for future use with default {@link TimingImportance#LOW}.
+   *
+   * @param uniqueName Name of the key (should be unique and defined in {@link TimingNameConstants})
+   * @param type       String that defines the type of the key
+   * @return A new timing key
+   * @deprecated Use {{@link #registerNewKey(String, String, TimingImportance)}} instead.
+   */
+  @Deprecated
+  public static TimingKey registerNewKey(String uniqueName, String type)
+  {
+    return registerNewKey(new TimingKey(uniqueName, type, TimingImportance.LOW));
   }
 
   /**
    * Register a new timing key for future use.
    *
-   * @param uniqueName Name of the key (should be unique)
-   * @param type       String that defines the type of the key
+   * @param uniqueNameAndType Name of the key (should be unique and defined in {@link TimingNameConstants})
+   * @param timingImportance {@link TimingImportance} of the key
    * @return A new timing key
    */
-  public static TimingKey registerNewKey(String uniqueName, String type)
+  public static TimingKey registerNewKey(String uniqueNameAndType, TimingImportance timingImportance)
   {
-    return registerNewKey(new TimingKey(uniqueName, type));
+    return registerNewKey(new TimingKey(uniqueNameAndType, uniqueNameAndType, timingImportance));
+  }
+
+  /**
+   * Register a new timing key for future use.
+   *
+   * @param uniqueName Name of the key (should be unique and defined in {@link TimingNameConstants})
+   * @param type       String that defines the type of the key
+   * @param timingImportance {@link TimingImportance} of the key
+   * @return A new timing key
+   */
+  public static TimingKey registerNewKey(String uniqueName, String type, TimingImportance timingImportance)
+  {
+    return registerNewKey(new TimingKey(uniqueName, type, timingImportance));
   }
 }
