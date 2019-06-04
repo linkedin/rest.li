@@ -1,5 +1,9 @@
 27.3.2
 ------
+(RB=1709437)
+Improvements to the streaming library.
+  - Simplify the logic in ByteStringWriter
+  - Make CompositeWriter threadsafe.
 
 27.3.1
 ------

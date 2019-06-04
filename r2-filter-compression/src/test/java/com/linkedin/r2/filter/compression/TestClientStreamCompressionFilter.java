@@ -32,6 +32,7 @@ import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.FullEntityReader;
+import com.linkedin.r2.message.stream.entitystream.Reader;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 
 import java.io.ByteArrayInputStream;
@@ -73,16 +74,19 @@ public class TestClientStreamCompressionFilter
     private String _headerName;
     private int _entityLength = 0;
     private EntityStream _entityStream;
+    private final Reader _entityReader;
 
-    public HeaderCaptureFilter(String headerName, boolean shouldBePresent)
+    public HeaderCaptureFilter(String headerName, boolean shouldBePresent, Reader entityReader)
     {
       _shouldBePresent = shouldBePresent;
       _headerName = headerName;
+      _entityReader = entityReader;
+
     }
 
-    public HeaderCaptureFilter(String headerName, boolean shouldBePresent, int entityLength)
+    public HeaderCaptureFilter(String headerName, boolean shouldBePresent, int entityLength, Reader entityReader)
     {
-      this(headerName, shouldBePresent);
+      this(headerName, shouldBePresent, entityReader);
       _entityLength = entityLength;
     }
 
@@ -101,6 +105,10 @@ public class TestClientStreamCompressionFilter
       if (_entityLength > 0)
       {
         _entityStream = streamRequest.getEntityStream();
+        if (_entityReader != null)
+        {
+          _entityStream.setReader(_entityReader);
+        }
       }
     }
 
@@ -164,7 +172,7 @@ public class TestClientStreamCompressionFilter
       context.putLocalAttr(R2Constants.OPERATION, operation);
 
       clientCompressionFilter.onStreamRequest(streamRequest, context, Collections.<String, String>emptyMap(),
-          new HeaderCaptureFilter(HttpConstants.ACCEPT_ENCODING, headerShouldBePresent));
+          new HeaderCaptureFilter(HttpConstants.ACCEPT_ENCODING, headerShouldBePresent,null));
     }
   }
 
@@ -235,15 +243,14 @@ public class TestClientStreamCompressionFilter
     context.putLocalAttr(R2Constants.REQUEST_COMPRESSION_OVERRIDE, requestCompressionOverride);
     int entityLength = headerShouldBePresent ? compressed : original;
 
-    HeaderCaptureFilter captureFilter =
-        new HeaderCaptureFilter(HttpConstants.CONTENT_ENCODING, headerShouldBePresent, entityLength);
-    clientCompressionFilter.onStreamRequest(streamRequest, context, Collections.<String, String>emptyMap(),
-        captureFilter);
-
     FutureCallback<ByteString> callback = new FutureCallback<ByteString>();
     FullEntityReader reader = new FullEntityReader(callback);
-    captureFilter.getEntityStream().setReader(reader);
 
+    HeaderCaptureFilter captureFilter =
+        new HeaderCaptureFilter(HttpConstants.CONTENT_ENCODING, headerShouldBePresent, entityLength, reader);
+
+    clientCompressionFilter.onStreamRequest(streamRequest, context, Collections.<String, String>emptyMap(),
+        captureFilter);
 
     ByteString entityRead = callback.get(10, TimeUnit.SECONDS);
     Assert.assertEquals(entityRead.length(), entityLength);
@@ -282,6 +289,6 @@ public class TestClientStreamCompressionFilter
     int entityLength = headerShouldBePresent ? compressed : original;
 
     clientCompressionFilter.onStreamRequest(streamRequest, context, Collections.<String, String>emptyMap(),
-                                            new HeaderCaptureFilter(HttpConstants.ACCEPT_ENCODING, true));
+                                            new HeaderCaptureFilter(HttpConstants.ACCEPT_ENCODING, true, null));
   }
 }

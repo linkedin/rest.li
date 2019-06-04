@@ -199,7 +199,6 @@ public final class MultiPartMIMEInputStream implements MultiPartMIMEDataSourceWr
                 {
                   _writeHandle.write(inputStreamReader._result);
                 }
-                _writeHandle.done();
                 //Close the stream since we won't be invoked again
                 try
                 {
@@ -211,6 +210,7 @@ public final class MultiPartMIMEInputStream implements MultiPartMIMEDataSourceWr
                   //An exception thrown when we try to close the InputStream should not really
                   //make its way down as an error...
                 }
+                _writeHandle.done();
                 //Break here, even though there may be more writes on the writeHandle.
                 //We cannot continue writing if our data source has finished.
                 break;

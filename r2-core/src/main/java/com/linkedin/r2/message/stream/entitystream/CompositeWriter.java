@@ -4,22 +4,29 @@ import com.linkedin.data.ByteString;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 
 /**
+ * A writer composed of multiple writers. Each individual writer will be used to write to the stream in the order they
+ * are provided.
+ *
  * @author Ang Xu
+ * @author Karthik Balasubramanian
  */
 public class CompositeWriter implements Writer
 {
-  private Iterator<EntityStream> _entityStreams;
+  private final Iterator<EntityStream> _entityStreams;
 
   private WriteHandle _wh;
 
-  private int _outstanding;
-  private boolean _aborted = false;
+  private volatile int _outstanding;
+  private volatile boolean _aborted = false;
 
-  private ReadHandle _currentRh;
-  private ReaderImpl _reader = new ReaderImpl();
+  private volatile ReadHandle _currentRh;
+  private final ReaderImpl _reader = new ReaderImpl();
+  private final Object _lock = new Object();
 
   public CompositeWriter(Writer... writers)
   {
@@ -47,8 +54,17 @@ public class CompositeWriter implements Writer
   @Override
   public void onWritePossible()
   {
-    _outstanding = _wh.remaining();
-    _currentRh.request(_outstanding);
+    // Entry point when the stream notifies more data can be written. This can be invoked when one of the input writers
+    // is executing in a separate threadpool.
+    int newOutstanding = _wh.remaining();
+    synchronized (_lock)
+    {
+      _outstanding = newOutstanding;
+    }
+    if (newOutstanding > 0)
+    {
+      _currentRh.request(newOutstanding);
+    }
   }
 
   @Override
@@ -61,10 +77,17 @@ public class CompositeWriter implements Writer
 
   private void readNextStream()
   {
-    if (_entityStreams.hasNext())
+    EntityStream nextStream = null;
+    synchronized (_lock)
     {
-      EntityStream stream = _entityStreams.next();
-      stream.setReader(_reader);
+      if (_entityStreams.hasNext())
+      {
+        nextStream = _entityStreams.next();
+      }
+    }
+    if (nextStream != null)
+    {
+      nextStream.setReader(_reader);
     }
     else
     {
@@ -74,11 +97,15 @@ public class CompositeWriter implements Writer
 
   private void cancelAll()
   {
-    while (_entityStreams.hasNext())
+    List<EntityStream> pendingStreams = new LinkedList<>();
+    synchronized (_lock)
     {
-      EntityStream stream = _entityStreams.next();
-      stream.setReader(new CancelingReader());
+      while (_entityStreams.hasNext())
+      {
+        pendingStreams.add(_entityStreams.next());
+      }
     }
+    pendingStreams.forEach(stream -> stream.setReader(new CancelingReader()));
   }
 
   private class ReaderImpl implements Reader
@@ -87,24 +114,36 @@ public class CompositeWriter implements Writer
     public void onInit(ReadHandle rh)
     {
       _currentRh = rh;
-      if (_outstanding > 0)
+      int outstanding = _outstanding;
+      if (outstanding > 0)
       {
-        _currentRh.request(_outstanding);
+        _currentRh.request(outstanding);
       }
     }
 
     @Override
     public void onDataAvailable(ByteString data)
     {
+      // Entry point from individual writers when they have data to write.
+      // This can be invoked only by the current writer, but can be invoked in parallel to notifications from the
+      // stream this composite writer is writing to.
       if (!_aborted)
       {
         _wh.write(data);
-        _outstanding--;
-        int diff = _wh.remaining() - _outstanding;
+        int diff;
+        int newOutstanding = _wh.remaining();
+        synchronized (_lock)
+        {
+          _outstanding--;
+          diff = newOutstanding - _outstanding;
+          if (diff > 0)
+          {
+            _outstanding = newOutstanding;
+          }
+        }
         if (diff > 0)
         {
           _currentRh.request(diff);
-          _outstanding += diff;
         }
       }
     }

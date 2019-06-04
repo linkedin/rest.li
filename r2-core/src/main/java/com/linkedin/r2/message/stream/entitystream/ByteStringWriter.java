@@ -30,16 +30,16 @@ public class ByteStringWriter implements Writer
   @Override
   public void onWritePossible()
   {
-    while(_wh.remaining() > 0)
+    if(_wh.remaining() > 0)
     {
       if (_done.compareAndSet(false, true))
       {
         _wh.write(_content);
+        _wh.done();
       }
       else
       {
         _wh.done();
-        break;
       }
     }
   }
