@@ -501,6 +501,9 @@ class PegasusPlugin implements Plugin<Project>
   public static final String PDL_FILE_SUFFIX = '.pdl'
   // gradle property to opt in for PDL, by default it is disabled.
   private static final String PDL_ENABLE = 'enablePDL'
+  // gradle property to opt in for destroying stale files from the build directory,
+  // by default it is disabled, because it triggers hot-reload (even if it results in a no-op)
+  private static final String DESTROY_STALE_FILES_ENABLE = 'enableDestroyStaleFiles'
   public static final Collection<String> DATA_TEMPLATE_FILE_SUFFIXES = new ArrayList<String>()
 
   public static final String IDL_FILE_SUFFIX = '.restspec.json'
@@ -1373,10 +1376,12 @@ class PegasusPlugin implements Plugin<Project>
     // left over files from a previous execution. This is not a problem if the input for translation/code generation
     // hasn't changed at all, because gradle will just realize the buildDir can be rebuilt from cache.
     Task destroyStaleFiles = project.task(sourceSet.name + "DestroyStaleFiles") {
-      if (publishableSchemasBuildDir.exists()) {
-        inputs.dir publishableSchemasBuildDir
-        doLast {
-          project.delete publishableSchemasBuildDir
+      if (isPropertyTrue(project, DESTROY_STALE_FILES_ENABLE)) {
+        if (publishableSchemasBuildDir.exists()) {
+          inputs.dir publishableSchemasBuildDir
+          doLast {
+            project.delete publishableSchemasBuildDir
+          }
         }
       }
     }
