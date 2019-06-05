@@ -132,7 +132,7 @@ public class ErrorResponseValidationFilter implements Filter
 
         // If http status code is not defined for the resource,
         // convert given throwable to 500_INTERNAL_SERVER_ERROR exception.
-        if (definedServiceError.httpStatus() != restLiServiceException.getStatus().getCode())
+        if (definedServiceError.httpStatus() != restLiServiceException.getStatus())
         {
           return completeExceptionallyWithHttp500(future, restLiServiceException);
         }

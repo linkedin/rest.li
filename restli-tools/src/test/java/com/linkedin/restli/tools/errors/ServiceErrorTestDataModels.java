@@ -21,6 +21,7 @@ import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ErrorDetails;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.server.errors.ServiceError;
 
 
@@ -55,17 +56,17 @@ public class ServiceErrorTestDataModels
    */
   public enum DummyServiceError implements ServiceError
   {
-    RESOURCE_LEVEL_ERROR(400, "Wow, this is such a resource-level error", ErrorDetails.class),
-    METHOD_LEVEL_ERROR(400, "And this is such a method-level error", ErrorDetails.class),
-    PARAMETER_ERROR(422, "This looks like a method-level parameter error", ErrorDetails.class),
-    DOUBLE_PARAMETER_ERROR(422, "Method-level parameter error for 2 parameters", ErrorDetails.class),
-    YET_ANOTHER_RESOURCE_LEVEL_ERROR(403, "Wow, yet another one!", ErrorDetails.class),
-    YET_ANOTHER_METHOD_LEVEL_ERROR(403, "I can't believe there's another one", ErrorDetails.class),
-    ILLEGAL_ACTION(451, "You can't do that, you're going to Rest.li prison", DummyRecord.class),
-    NO_MESSAGE_ERROR(400, null, ErrorDetails.class),
-    NO_DETAIL_TYPE_ERROR(400, "The error detail type... where is it?", null);
+    RESOURCE_LEVEL_ERROR(HttpStatus.S_400_BAD_REQUEST, "Wow, this is such a resource-level error", ErrorDetails.class),
+    METHOD_LEVEL_ERROR(HttpStatus.S_400_BAD_REQUEST, "And this is such a method-level error", ErrorDetails.class),
+    PARAMETER_ERROR(HttpStatus.S_422_UNPROCESSABLE_ENTITY, "This looks like a method-level parameter error", ErrorDetails.class),
+    DOUBLE_PARAMETER_ERROR(HttpStatus.S_422_UNPROCESSABLE_ENTITY, "Method-level parameter error for 2 parameters", ErrorDetails.class),
+    YET_ANOTHER_RESOURCE_LEVEL_ERROR(HttpStatus.S_403_FORBIDDEN, "Wow, yet another one!", ErrorDetails.class),
+    YET_ANOTHER_METHOD_LEVEL_ERROR(HttpStatus.S_403_FORBIDDEN, "I can't believe there's another one", ErrorDetails.class),
+    ILLEGAL_ACTION(HttpStatus.S_451_UNAVAILABLE_FOR_LEGAL_REASONS, "You can't do that, you're going to Rest.li prison", DummyRecord.class),
+    NO_MESSAGE_ERROR(HttpStatus.S_400_BAD_REQUEST, null, ErrorDetails.class),
+    NO_DETAIL_TYPE_ERROR(HttpStatus.S_400_BAD_REQUEST, "The error detail type... where is it?", null);
 
-    DummyServiceError(int status, String message, Class<? extends RecordTemplate> errorDetailType)
+    DummyServiceError(HttpStatus status, String message, Class<? extends RecordTemplate> errorDetailType)
     {
       _status = status;
       _message = message;
@@ -85,12 +86,12 @@ public class ServiceErrorTestDataModels
       String NO_DETAIL_TYPE_ERROR = "NO_DETAIL_TYPE_ERROR";
     }
 
-    private final int _status;
+    private final HttpStatus _status;
     private final String _message;
     private final Class<? extends RecordTemplate> _errorDetailType;
 
     @Override
-    public int httpStatus()
+    public HttpStatus httpStatus()
     {
       return _status;
     }

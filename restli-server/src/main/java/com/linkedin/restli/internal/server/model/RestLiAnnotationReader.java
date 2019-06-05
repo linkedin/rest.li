@@ -40,6 +40,7 @@ import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
@@ -3126,8 +3127,7 @@ public final class RestLiAnnotationReader
     }
 
     // Build success status list from the annotation
-    final List<Integer> successStatuses = Arrays.stream(successResponseAnnotation.statuses())
-        .boxed()
+    final List<HttpStatus> successStatuses = Arrays.stream(successResponseAnnotation.statuses())
         .collect(Collectors.toList());
 
     if (successStatuses.isEmpty())
@@ -3139,9 +3139,9 @@ public final class RestLiAnnotationReader
     }
 
     // Validate the success statuses
-    for (Integer successStatus : successStatuses)
+    for (HttpStatus successStatus : successStatuses)
     {
-      if (successStatus < 200 || successStatus >= 400)
+      if (successStatus.getCode() < 200 || successStatus.getCode() >= 400)
       {
         throw new ResourceConfigException(
             String.format("Invalid success status '%s' specified in %s",

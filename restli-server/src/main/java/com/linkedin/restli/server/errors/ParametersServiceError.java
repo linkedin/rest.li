@@ -17,6 +17,7 @@
 package com.linkedin.restli.server.errors;
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.server.annotations.ParamError;
 import java.util.Arrays;
 import javax.annotation.Nonnull;
@@ -31,7 +32,7 @@ import javax.annotation.Nonnull;
  */
 public final class ParametersServiceError implements ServiceError
 {
-  private int _httpStatus;
+  private HttpStatus _httpStatus;
   private String _code;
   private String _message;
   private Class<? extends RecordTemplate> _errorDetailType;
@@ -47,7 +48,7 @@ public final class ParametersServiceError implements ServiceError
   }
 
   @Override
-  public int httpStatus()
+  public HttpStatus httpStatus()
   {
     return _httpStatus;
   }

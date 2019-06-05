@@ -82,7 +82,7 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
    * Retrieve the photo's album entry
    */
   @Override
-  @SuccessResponse(statuses = { 200 })
+  @SuccessResponse(statuses = { HttpStatus.S_200_OK })
   public AlbumEntry get(CompoundKey key)
   {
     return _db.getData().get(key);
@@ -102,7 +102,7 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
    * If a matching pair of IDs already exists, this changes the add date.
    */
   @Override
-  @SuccessResponse(statuses = { 204 })
+  @SuccessResponse(statuses = { HttpStatus.S_204_NO_CONTENT })
   public UpdateResponse update(CompoundKey key, AlbumEntry entity)
   {
     long photoId = (Long) key.getPart("photoId");
@@ -132,7 +132,7 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
    * Remove the specified photo from the specified album
    */
   @Override
-  @SuccessResponse(statuses = { 204 })
+  @SuccessResponse(statuses = { HttpStatus.S_204_NO_CONTENT })
   public UpdateResponse delete(CompoundKey key)
   {
     final boolean isRemoved = (_db.getData().remove(key) != null);

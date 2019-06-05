@@ -18,6 +18,7 @@ package com.linkedin.restli.example.impl;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ErrorDetails;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.server.errors.ServiceError;
 
 
@@ -30,13 +31,13 @@ import com.linkedin.restli.server.errors.ServiceError;
 public enum AlbumServiceError implements ServiceError
 {
   // Service Level error
-  BAD_REQUEST(422, "Input failed validation", ErrorDetails.class),
+  BAD_REQUEST(HttpStatus.S_422_UNPROCESSABLE_ENTITY, "Input failed validation", ErrorDetails.class),
   // Method level error
-  INVALID_PERMISSIONS(403, "User does not have valid permissions", ErrorDetails.class),
+  INVALID_PERMISSIONS(HttpStatus.S_403_FORBIDDEN, "User does not have valid permissions", ErrorDetails.class),
   // Parameter error
-  INVALID_ALBUM_ID(422, "Album id cannot be less than 0", ErrorDetails.class);
+  INVALID_ALBUM_ID(HttpStatus.S_422_UNPROCESSABLE_ENTITY, "Album id cannot be less than 0", ErrorDetails.class);
 
-  AlbumServiceError(int status, String message, Class<? extends RecordTemplate> errorDetailType)
+  AlbumServiceError(HttpStatus status, String message, Class<? extends RecordTemplate> errorDetailType)
   {
     _status = status;
     _message = message;
@@ -50,12 +51,12 @@ public enum AlbumServiceError implements ServiceError
     String INVALID_ALBUM_ID = "INVALID_ALBUM_ID";
   }
 
-  private final int _status;
+  private final HttpStatus _status;
   private final String _message;
   private final Class<? extends RecordTemplate> _errorDetailType;
 
   @Override
-  public int httpStatus()
+  public HttpStatus httpStatus()
   {
     return _status;
   }

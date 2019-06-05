@@ -20,6 +20,7 @@ package com.linkedin.restli.server;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorDetails;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.server.errors.ServiceError;
 
 
@@ -31,22 +32,22 @@ import com.linkedin.restli.server.errors.ServiceError;
  */
 public enum TestServiceError implements ServiceError
 {
-  RESOURCE_LEVEL_ERROR(400, "resource-level error"),
-  METHOD_LEVEL_ERROR(400, "method-level error"),
-  RESOURCE_LEVEL_ERROR_WITH_ERROR_DETAILS(400, "resource-level error with error details", EmptyRecord.class),
-  METHOD_LEVEL_ERROR_WITH_ERROR_DETAILS(400, "method-level error with error details", EmptyRecord.class),
-  ERROR_NOT_DEFINED_ON_RESOURCE_AND_METHOD(400, "service error");
+  RESOURCE_LEVEL_ERROR(HttpStatus.S_400_BAD_REQUEST, "resource-level error"),
+  METHOD_LEVEL_ERROR(HttpStatus.S_400_BAD_REQUEST, "method-level error"),
+  RESOURCE_LEVEL_ERROR_WITH_ERROR_DETAILS(HttpStatus.S_400_BAD_REQUEST, "resource-level error with error details", EmptyRecord.class),
+  METHOD_LEVEL_ERROR_WITH_ERROR_DETAILS(HttpStatus.S_400_BAD_REQUEST, "method-level error with error details", EmptyRecord.class),
+  ERROR_NOT_DEFINED_ON_RESOURCE_AND_METHOD(HttpStatus.S_400_BAD_REQUEST, "service error");
 
-  private final int _status;
+  private final HttpStatus _status;
   private final String _message;
   private final Class<? extends RecordTemplate> _errorDetailType;
 
-  TestServiceError(int status, String message)
+  TestServiceError(HttpStatus status, String message)
   {
     this(status, message, ErrorDetails.class);
   }
 
-  TestServiceError(int status, String message, Class<? extends RecordTemplate> errorDetailType)
+  TestServiceError(HttpStatus status, String message, Class<? extends RecordTemplate> errorDetailType)
   {
     _status = status;
     _message = message;
@@ -54,7 +55,7 @@ public enum TestServiceError implements ServiceError
   }
 
   @Override
-  public int httpStatus()
+  public HttpStatus httpStatus()
   {
     return _status;
   }

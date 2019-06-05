@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server.annotations;
 
+import com.linkedin.restli.common.HttpStatus;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -43,5 +44,5 @@ public @interface SuccessResponse
   /**
    * List of successful status codes.
    */
-  int[] statuses();
+  HttpStatus[] statuses();
 }

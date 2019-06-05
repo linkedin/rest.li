@@ -20,6 +20,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
@@ -99,9 +100,9 @@ public class SampleResources
     }
 
     @Override
-    public int httpStatus()
+    public HttpStatus httpStatus()
     {
-      return 400;
+      return HttpStatus.S_400_BAD_REQUEST;
     }
 
     @Override
@@ -116,29 +117,28 @@ public class SampleResources
    */
 
   @RestLiCollection(name = "foo")
-  public static class FooResource1 extends CollectionResourceTemplate<Long, EmptyRecord> {}
+  static class FooResource1 extends CollectionResourceTemplate<Long, EmptyRecord> {}
 
   @RestLiCollection(name = "foo")
-  public static class FooResource2 extends CollectionResourceTemplate<Long, EmptyRecord> {}
+  static class FooResource2 extends CollectionResourceTemplate<Long, EmptyRecord> {}
 
   @RestLiSimpleResource(name = "foo")
-  public static class FooResource3 extends SimpleResourceTemplate<EmptyRecord> {}
+  static class FooResource3 extends SimpleResourceTemplate<EmptyRecord> {}
 
   @RestLiActions(name = "foo")
-  public static class FooResource4 {}
+  static class FooResource4 {}
 
   @RestLiCollection(name = "bar")
-  public static class BarResource extends CollectionResourceTemplate<Long, EmptyRecord> {}
+  static class BarResource extends CollectionResourceTemplate<Long, EmptyRecord> {}
 
   @RestLiCollection(name = "FOO")
-  public static class FOOResource extends CollectionResourceTemplate<Long, EmptyRecord> {}
+  static class FOOResource extends CollectionResourceTemplate<Long, EmptyRecord> {}
 
   @RestLiCollection(
     name = "TestResource",
     namespace = "com.linkedin.restli.internal.server.model",
     parent = ParentResource.class
   )
-
   class TestResource extends CollectionResourceTemplate<String, EmptyRecord>
   {
     @Action(name = "testResourceAction")
@@ -246,7 +246,7 @@ public class SampleResources
   class InvalidSuccessStatusesResource implements KeyValueResource<Long, EmptyRecord>
   {
     @RestMethod.Get
-    @SuccessResponse(statuses = { 200, 419 })
+    @SuccessResponse(statuses = { HttpStatus.S_200_OK, HttpStatus.S_500_INTERNAL_SERVER_ERROR })
     public EmptyRecord get(Long id)
     {
       return new EmptyRecord();

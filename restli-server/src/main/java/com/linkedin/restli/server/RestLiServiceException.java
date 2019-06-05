@@ -106,7 +106,7 @@ public class RestLiServiceException extends RuntimeException
    */
   public RestLiServiceException(final ServiceError serviceError, final Throwable cause)
   {
-    this(HttpStatus.fromCode(serviceError.httpStatus()), serviceError.message(), cause);
+    this(serviceError.httpStatus(), serviceError.message(), cause);
     _code = serviceError.code();
   }
 

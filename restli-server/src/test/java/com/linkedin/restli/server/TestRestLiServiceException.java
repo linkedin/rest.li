@@ -44,7 +44,7 @@ public class TestRestLiServiceException
     Assert.assertFalse(restLiServiceException.hasDocUrl());
     Assert.assertFalse(restLiServiceException.hasRequestId());
 
-    Assert.assertEquals(restLiServiceException.getStatus().getCode(), TestServiceError.METHOD_LEVEL_ERROR.httpStatus());
+    Assert.assertEquals(restLiServiceException.getStatus(), TestServiceError.METHOD_LEVEL_ERROR.httpStatus());
     Assert.assertEquals(restLiServiceException.getCode(), TestServiceError.METHOD_LEVEL_ERROR.code());
     Assert.assertEquals(restLiServiceException.getMessage(), TestServiceError.METHOD_LEVEL_ERROR.message());
     Assert.assertEquals(restLiServiceException.getErrorDetailsRecord(), new EmptyRecord());

@@ -56,7 +56,7 @@ public class ServiceErrorSimpleResource extends SimpleResourceTemplate<DummyReco
    */
   @Override
   @ServiceErrors(ILLEGAL_ACTION)
-  @SuccessResponse(statuses = { 204 })
+  @SuccessResponse(statuses = { HttpStatus.S_204_NO_CONTENT })
   public UpdateResponse update(DummyRecord dummyRecord)
   {
     return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);

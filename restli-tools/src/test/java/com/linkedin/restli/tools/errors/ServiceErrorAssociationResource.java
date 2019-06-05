@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.tools.errors;
 
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.Finder;
@@ -76,7 +77,7 @@ public class ServiceErrorAssociationResource extends AssociationResourceTemplate
    * Ensures that multiple success statuses can be specified.
    */
   @Action(name = "hasSuccessStatuses")
-  @SuccessResponse(statuses = { 200, 201, 204 })
+  @SuccessResponse(statuses = { HttpStatus.S_200_OK, HttpStatus.S_201_CREATED, HttpStatus.S_204_NO_CONTENT })
   public String hasSuccessStatuses()
   {
     return "I wish I were as successful as this method";

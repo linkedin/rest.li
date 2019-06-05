@@ -36,6 +36,7 @@ import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiInternalException;
@@ -85,6 +86,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 
 
@@ -718,14 +720,14 @@ public class ResourceModelEncoder
     Class<?> returnType = resourceMethodDescriptor.getActionReturnType();
     if (returnType != Void.TYPE)
     {
-      String returnTypeString =
-          buildDataSchemaType(returnType,
-                              resourceMethodDescriptor.getActionReturnRecordDataSchema().getField(ActionResponse.VALUE_NAME).getType());
+      String returnTypeString = buildDataSchemaType(returnType,
+          resourceMethodDescriptor.getActionReturnRecordDataSchema().getField(ActionResponse.VALUE_NAME).getType());
       action.setReturns(returnTypeString);
     }
 
     final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
     String deprecatedDoc = _docsProvider.getMethodDeprecatedTag(resourceMethodDescriptor.getMethod());
+
     if(deprecatedDoc != null)
     {
       customAnnotation.put(DEPRECATED_ANNOTATION_NAME, deprecateDocToAnnotationMap(deprecatedDoc));
@@ -1157,10 +1159,7 @@ public class ResourceModelEncoder
 
     Collections.sort(supportsStrings);
 
-    for (String s : supportsStrings)
-    {
-      supportsArray.add(s);
-    }
+    supportsArray.addAll(supportsStrings);
   }
 
   private void appendIdentifierNode(final CollectionSchema collectionNode,
@@ -1221,7 +1220,7 @@ public class ResourceModelEncoder
     for (ServiceError serviceError : serviceErrors)
     {
       ServiceErrorSchema serviceErrorSchema = new ServiceErrorSchema()
-          .setStatus(serviceError.httpStatus())
+          .setStatus(serviceError.httpStatus().getCode())
           .setCode(serviceError.code());
 
       final String message = serviceError.message();
@@ -1257,7 +1256,7 @@ public class ResourceModelEncoder
    * @param schema specific resource method schema
    * @param successStatuses list of success status codes to add to this schema
    */
-  private void appendSuccessStatuses(final RecordTemplate schema, final List<Integer> successStatuses)
+  private void appendSuccessStatuses(final RecordTemplate schema, final List<HttpStatus> successStatuses)
   {
     if (successStatuses == null || successStatuses.isEmpty())
     {
@@ -1267,6 +1266,8 @@ public class ResourceModelEncoder
     // Wrap the underlying data map in the shared schema interface
     SuccessStatusesSchema successStatusesSchema = new SuccessStatusesSchema(schema.data());
 
-    successStatusesSchema.setSuccess(new IntegerArray(successStatuses));
+    List<Integer> statuses = successStatuses.stream().map(HttpStatus::getCode).collect(Collectors.toList());
+
+    successStatusesSchema.setSuccess(new IntegerArray(statuses));
   }
 }

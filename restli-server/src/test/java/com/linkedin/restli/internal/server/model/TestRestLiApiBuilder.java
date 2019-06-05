@@ -131,7 +131,7 @@ public class TestRestLiApiBuilder
             { DuplicateServiceErrorParametersResource.class, "Duplicate parameter specified for service error code 'ERROR_A'" },
             { DuplicateServiceErrorParamErrorCodesResource.class, "Redundant @ParamError annotations for service error code 'ERROR_A'" },
             { RedundantServiceErrorCodeWithParameterResource.class, "Service error code 'ERROR_A' redundantly specified in both @ServiceErrors and @ParamError annotations" },
-            { InvalidSuccessStatusesResource.class, "Invalid success status '419' specified" },
+            { InvalidSuccessStatusesResource.class, "Invalid success status 'S_500_INTERNAL_SERVER_ERROR' specified" },
             { EmptySuccessStatusesResource.class, "specifies no success statuses" }
         };
   }
@@ -159,5 +159,3 @@ public class TestRestLiApiBuilder
     }
   }
 }
-
-

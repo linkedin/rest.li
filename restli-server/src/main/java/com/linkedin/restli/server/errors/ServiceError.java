@@ -17,6 +17,7 @@
 package com.linkedin.restli.server.errors;
 
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.HttpStatus;
 
 
 /**
@@ -33,9 +34,9 @@ public interface ServiceError
   /**
    * The HTTP status code.
    *
-   * e.g. 400
+   * e.g. S_400_BAD_REQUEST
    */
-  int httpStatus();
+  HttpStatus httpStatus();
 
   /**
    * The canonical error code associated with this service error. The Rest.li framework will validate any service error
