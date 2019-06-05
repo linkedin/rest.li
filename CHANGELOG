@@ -1,5 +1,10 @@
+27.1.8
+------
+
 27.1.7
 ------
+(RB=1690826)
+Set TimingContext#complete log from warn to debug.
 
 27.1.6
 ------
