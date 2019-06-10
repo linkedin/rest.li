@@ -308,13 +308,13 @@ public class RestLiValidationFilter implements Filter
           validateSingleResponse(validator, ((GetResponseEnvelope) responseData.getResponseEnvelope()).getRecord());
           break;
         case CREATE:
-          if (requestContext.isReturnEntityMethod())
+          if (requestContext.isReturnEntityMethod() && requestContext.isReturnEntityRequested())
           {
             validateSingleResponse(validator, ((CreateResponseEnvelope) responseData.getResponseEnvelope()).getRecord());
           }
           break;
         case PARTIAL_UPDATE:
-          if (requestContext.isReturnEntityMethod())
+          if (requestContext.isReturnEntityMethod() && requestContext.isReturnEntityRequested())
           {
             validateSingleResponse(validator, ((PartialUpdateResponseEnvelope) responseData.getResponseEnvelope()).getRecord());
           }
@@ -332,13 +332,13 @@ public class RestLiValidationFilter implements Filter
           validateBatchResponse(validator, ((BatchGetResponseEnvelope) responseData.getResponseEnvelope()).getBatchResponseMap());
           break;
         case BATCH_CREATE:
-          if (requestContext.isReturnEntityMethod())
+          if (requestContext.isReturnEntityMethod() && requestContext.isReturnEntityRequested())
           {
             validateCreateCollectionResponse(validator, ((BatchCreateResponseEnvelope) responseData.getResponseEnvelope()).getCreateResponses());
           }
           break;
         case BATCH_PARTIAL_UPDATE:
-          if (requestContext.isReturnEntityMethod())
+          if (requestContext.isReturnEntityMethod() && requestContext.isReturnEntityRequested())
           {
             validateBatchResponse(validator, ((BatchPartialUpdateResponseEnvelope) responseData.getResponseEnvelope()).getBatchResponseMap());
           }

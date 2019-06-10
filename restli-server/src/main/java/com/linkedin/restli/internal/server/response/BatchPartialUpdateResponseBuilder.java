@@ -66,7 +66,7 @@ public class BatchPartialUpdateResponseBuilder extends BatchResponseBuilder<Rest
   @Override
   protected UpdateStatus buildUpdateStatus(ResourceContext resourceContext, UpdateResponse updateResponse)
   {
-    if (updateResponse instanceof UpdateEntityResponse && resourceContext.shouldReturnEntity())
+    if (updateResponse instanceof UpdateEntityResponse && resourceContext.isReturnEntityRequested())
     {
       final RecordTemplate entity = ((UpdateEntityResponse<?>) updateResponse).getEntity();
 

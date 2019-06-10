@@ -344,31 +344,36 @@ public class TestRestLiValidationFilter
 
   /**
    * Ensures that validation appropriately occurs on response for "return entity" methods, and that validation does not
-   * occur on response for methods that are not "return entity" methods.
+   * occur on response for methods that are not "return entity" methods. Also ensures that validation doesn't occur if
+   * the client is requesting that the entity <b>not</b> be returned.
    */
   @Test(dataProvider = "returnEntityValidateOnResponseData")
   @SuppressWarnings({"unchecked", "rawtypes"})
-  public void testReturnEntityValidateOnResponse(ResourceMethod resourceMethod, RestLiResponseData responseData, boolean isReturnEntityMethod)
+  public void testReturnEntityValidateOnResponse(ResourceMethod resourceMethod, RestLiResponseData responseData,
+      boolean isReturnEntityMethod, boolean isReturnEntityRequested)
   {
     when(filterRequestContext.getMethodType()).thenReturn(resourceMethod);
     when(filterRequestContext.isReturnEntityMethod()).thenReturn(isReturnEntityMethod);
+    when(filterRequestContext.isReturnEntityRequested()).thenReturn(isReturnEntityRequested);
     when(filterResponseContext.getResponseData()).thenReturn(responseData);
 
     RestLiValidationFilter validationFilter = new RestLiValidationFilter();
+
+    final boolean expectValidateEntity = isReturnEntityMethod && isReturnEntityRequested;
 
     try
     {
       // Check if validation occurred by catching exceptions for invalid entities
       validationFilter.onResponse(filterRequestContext, filterResponseContext);
 
-      if (isReturnEntityMethod)
+      if (expectValidateEntity)
       {
         Assert.fail("Expected validation to occur and cause an exception, but no exception was encountered.");
       }
     }
     catch (RestLiServiceException e)
     {
-      if (!isReturnEntityMethod)
+      if (!expectValidateEntity)
       {
         Assert.fail("Expected validation to be skipped without exceptions, but encountered exception: " + e.getMessage());
       }
@@ -390,18 +395,35 @@ public class TestRestLiValidationFilter
         Collections.singletonMap(1L, new BatchResponseEnvelope.BatchResponseEntry(HttpStatus.S_200_OK,
             new UpdateEntityStatus<>(HttpStatus.S_200_OK.getCode(), makeInvalidTestRecord()))));
 
-    // The last argument indicates whether the resource method is a "return entity" method,
-    // but is also used to determine if validation is expected on response.
+    /*
+     * {
+     *  resourceMethod,         = resource method
+     *  responseData,           = mock RestLiResponseData
+     *  isReturnEntityMethod,   = whether the resource method is a "return entity" method
+     *  isReturnEntityRequested = whether the client is requesting the returned entity using the "$returnEntity" parameter
+     * }
+     *
+     * The third and fourth arguments are used to determine if validation is expected on response, which follows the
+     * logic in RestLiValidationFilter.
+     */
     return new Object[][]
         {
-            { CREATE, createResponseData, true },
-            { CREATE, createResponseData, false },
-            { PARTIAL_UPDATE, partialUpdateResponseData, true },
-            { PARTIAL_UPDATE, partialUpdateResponseData, false },
-            { BATCH_CREATE, batchCreateResponseData, true },
-            { BATCH_CREATE, batchCreateResponseData, false },
-            { BATCH_PARTIAL_UPDATE, batchPartialUpdateResponseData, true },
-            { BATCH_PARTIAL_UPDATE, batchPartialUpdateResponseData, false }
+            { CREATE, createResponseData, true, true },
+            { CREATE, createResponseData, true, false },
+            { CREATE, createResponseData, false, true },
+            { CREATE, createResponseData, false, false },
+            { PARTIAL_UPDATE, partialUpdateResponseData, true, true },
+            { PARTIAL_UPDATE, partialUpdateResponseData, true, false },
+            { PARTIAL_UPDATE, partialUpdateResponseData, false, true },
+            { PARTIAL_UPDATE, partialUpdateResponseData, false, false },
+            { BATCH_CREATE, batchCreateResponseData, true, true },
+            { BATCH_CREATE, batchCreateResponseData, true, false },
+            { BATCH_CREATE, batchCreateResponseData, false, true },
+            { BATCH_CREATE, batchCreateResponseData, false, false },
+            { BATCH_PARTIAL_UPDATE, batchPartialUpdateResponseData, true, true },
+            { BATCH_PARTIAL_UPDATE, batchPartialUpdateResponseData, true, false },
+            { BATCH_PARTIAL_UPDATE, batchPartialUpdateResponseData, false, true },
+            { BATCH_PARTIAL_UPDATE, batchPartialUpdateResponseData, false, false }
         };
   }
 

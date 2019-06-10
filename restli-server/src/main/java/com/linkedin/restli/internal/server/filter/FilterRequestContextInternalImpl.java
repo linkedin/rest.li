@@ -273,4 +273,10 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   {
     return _resourceMethod.getCustomAnnotationData().containsKey(ReturnEntity.NAME);
   }
+
+  @Override
+  public boolean isReturnEntityRequested()
+  {
+    return _context.isReturnEntityRequested();
+  }
 }

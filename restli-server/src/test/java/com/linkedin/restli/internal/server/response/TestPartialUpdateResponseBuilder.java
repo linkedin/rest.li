@@ -55,16 +55,16 @@ public class TestPartialUpdateResponseBuilder
    *
    * @param response UpdateResponse object to use as an input to the response builder.
    * @param expectedResponseType expected {@link ResponseType}.
-   * @param shouldReturnEntity semantic value of the "return entity" query parameter.
+   * @param isReturnEntityRequested semantic value of the "return entity" query parameter.
    * @param expectedRecord expected record in response data.
    */
   @Test(dataProvider = "responseData")
-  public void testBuilder(UpdateResponse response, ResponseType expectedResponseType, boolean shouldReturnEntity, RecordTemplate expectedRecord)
+  public void testBuilder(UpdateResponse response, ResponseType expectedResponseType, boolean isReturnEntityRequested, RecordTemplate expectedRecord)
   {
     HttpStatus status = response.getStatus();
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
-    RoutingResult routingResult = getMockRoutingResult(shouldReturnEntity, null);
+    RoutingResult routingResult = getMockRoutingResult(isReturnEntityRequested, null);
 
     PartialUpdateResponseBuilder partialUpdateResponseBuilder = new PartialUpdateResponseBuilder();
     RestLiResponseData<PartialUpdateResponseEnvelope> responseData = partialUpdateResponseBuilder.buildRestLiResponseData(null,
@@ -165,12 +165,12 @@ public class TestPartialUpdateResponseBuilder
     Assert.assertEquals(returnedRecord.data().get("intField"), 2147, "Expected response record intField to match original.");
   }
 
-  private static RoutingResult getMockRoutingResult(boolean shouldReturnEntity, MaskTree projectionMask)
+  private static RoutingResult getMockRoutingResult(boolean isReturnEntityRequested, MaskTree projectionMask)
   {
     ServerResourceContext mockServerResourceContext = mock(ServerResourceContext.class);
     when(mockServerResourceContext.getProjectionMode()).thenReturn(ProjectionMode.AUTOMATIC);
     when(mockServerResourceContext.getProjectionMask()).thenReturn(projectionMask);
-    when(mockServerResourceContext.shouldReturnEntity()).thenReturn(shouldReturnEntity);
+    when(mockServerResourceContext.isReturnEntityRequested()).thenReturn(isReturnEntityRequested);
     ResourceMethodDescriptor mockResourceMethodDescriptor = mock(ResourceMethodDescriptor.class);
     return new RoutingResult(mockServerResourceContext, mockResourceMethodDescriptor);
   }

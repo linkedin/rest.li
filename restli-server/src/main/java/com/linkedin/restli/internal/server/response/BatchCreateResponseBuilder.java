@@ -111,7 +111,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
 
     final ResourceContext resourceContext = routingResult.getContext();
 
-    if (result instanceof BatchCreateKVResult && resourceContext.shouldReturnEntity())
+    if (result instanceof BatchCreateKVResult && resourceContext.isReturnEntityRequested())
     {
       BatchCreateKVResult<?, ?> list = (BatchCreateKVResult<?, ?>) result;
       if (list.getResults() == null)

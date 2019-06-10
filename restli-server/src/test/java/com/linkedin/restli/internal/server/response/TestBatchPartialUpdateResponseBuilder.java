@@ -60,16 +60,16 @@ public class TestBatchPartialUpdateResponseBuilder
    * parameter.
    *
    * @param result result object to use as input to this builder.
-   * @param shouldReturnEntity semantic value of the "return entity" query parameter.
+   * @param isReturnEntityRequested semantic value of the "return entity" query parameter.
    * @param expectedRecords expected records in response data, if any.
    */
   @Test(dataProvider = "responseData")
   @SuppressWarnings("unchecked")
-  public void testBuilder(BatchUpdateResult<Long, TestRecord> result, boolean shouldReturnEntity, Map<?, RecordTemplate> expectedRecords)
+  public void testBuilder(BatchUpdateResult<Long, TestRecord> result, boolean isReturnEntityRequested, Map<?, RecordTemplate> expectedRecords)
   {
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
-    RoutingResult routingResult = getMockRoutingResult(shouldReturnEntity, null);
+    RoutingResult routingResult = getMockRoutingResult(isReturnEntityRequested, null);
 
     BatchPartialUpdateResponseBuilder batchPartialUpdateResponseBuilder = new BatchPartialUpdateResponseBuilder(new ErrorResponseBuilder());
     RestLiResponseData<BatchPartialUpdateResponseEnvelope> responseData = batchPartialUpdateResponseBuilder.buildRestLiResponseData(null,
@@ -105,7 +105,7 @@ public class TestBatchPartialUpdateResponseBuilder
       if (updateStatus instanceof UpdateEntityStatus)
       {
         UpdateEntityStatus<TestRecord> updateEntityStatus = (UpdateEntityStatus<TestRecord>) updateStatus;
-        Assert.assertEquals(updateEntityStatus.hasEntity(), shouldReturnEntity);
+        Assert.assertEquals(updateEntityStatus.hasEntity(), isReturnEntityRequested);
 
         // If no entity is to be returned, then these should both be null
         RecordTemplate record = updateEntityStatus.getEntity();
@@ -203,12 +203,12 @@ public class TestBatchPartialUpdateResponseBuilder
     Assert.assertEquals((int) returnedRecord.data().get("intField"), 2147, "Expected response record intField to match original.");
   }
 
-  private static RoutingResult getMockRoutingResult(boolean shouldReturnEntity, MaskTree projectionMask)
+  private static RoutingResult getMockRoutingResult(boolean isReturnEntityRequested, MaskTree projectionMask)
   {
     ServerResourceContext mockServerResourceContext = mock(ServerResourceContext.class);
     when(mockServerResourceContext.getProjectionMode()).thenReturn(ProjectionMode.AUTOMATIC);
     when(mockServerResourceContext.getProjectionMask()).thenReturn(projectionMask);
-    when(mockServerResourceContext.shouldReturnEntity()).thenReturn(shouldReturnEntity);
+    when(mockServerResourceContext.isReturnEntityRequested()).thenReturn(isReturnEntityRequested);
     when(mockServerResourceContext.getRestliProtocolVersion()).thenReturn(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion());
     ResourceMethodDescriptor mockResourceMethodDescriptor = mock(ResourceMethodDescriptor.class);
     return new RoutingResult(mockServerResourceContext, mockResourceMethodDescriptor);

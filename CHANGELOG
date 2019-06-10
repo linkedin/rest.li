@@ -1,16 +1,27 @@
-27.1.8
+27.2.1
 ------
+
+27.2.0
+------
+(RB=1691149)
+Fix $returnEntity response validation bug
+
+(RB=1690521)
+Adding switch for destroyStaleFiles
+
+(RB=1690295)
+In ServiceError interface integer http status code has been changed to HttStatus type
 
 27.1.7
 ------
 (RB=1690826)
 Set TimingContext#complete log from warn to debug.
 
-27.1.6
-------
 (RB=1687176)
 Updated MockValidationErrorHandler to create BadRequest response
 
+27.1.6
+------
 (RB=1675664)
 Add the ability to specify the TimingImportance of a TimingKey to TimingContextUtil.
 
@@ -44,6 +55,9 @@ Migrate PegasusPlugin from Groovy to Java.
 
 (RB=1660568)
 Fix stale build directory for dataTemplates
+
+(RB=1660464)
+Add logging for troubleshooting channel pool
 
 27.1.3
 ------

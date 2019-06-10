@@ -205,12 +205,19 @@ public interface ResourceContext extends CustomRequestContext
   RestLiResponseAttachments getResponseAttachments();
 
   /**
+   * @deprecated Use {@link #isReturnEntityRequested()} instead.
+   * @return whether the request specifies that the resource should return an entity
+   */
+  @Deprecated
+  boolean shouldReturnEntity();
+
+  /**
    * Returns whether or not the client is requesting that the entity (or entities) be returned. Reads the appropriate
    * query parameter to determine this information, defaults to true if the query parameter isn't present, and throws
-   * an exception if the parameter's value is not a boolean value. Keep in mind that the value of this method is ignored
-   * if the resource method at hand doesn't have a "return entity" method signature.
+   * an exception if the parameter's value is not a boolean value. Keep in mind that the value of this method is
+   * inconsequential if the resource method at hand doesn't have a "return entity" method signature.
    *
    * @return whether the request specifies that the resource should return an entity
    */
-  boolean shouldReturnEntity();
+  boolean isReturnEntityRequested();
 }

@@ -29,6 +29,11 @@
     } ]
   }, "com.linkedin.restli.examples.greetings.api.Tone" ],
   "schema" : {
+    "annotations" : {
+      "readOnly" : {
+        "value" : [ "id" ]
+      }
+    },
     "name" : "createGreeting",
     "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/createGreeting",

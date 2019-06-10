@@ -69,7 +69,7 @@ import java.util.TreeMap;
  */
 public class ResourceContextImpl implements ServerResourceContext
 {
-  // Capacity base on guessumption that custom data count in most cases is either zero or one
+  // Capacity based on guessumption that custom data count in most cases is either zero or one
   private static final int INITIAL_CUSTOM_REQUEST_CONTEXT_CAPACITY = 1;
 
   // Timing key to track the duration of Rest.li 2.0.0 URI parsing
@@ -600,8 +600,18 @@ public class ResourceContextImpl implements ServerResourceContext
     return _responseStreamingAttachments;
   }
 
+  /**
+   * @deprecated Use {@link #isReturnEntityRequested()} instead.
+   */
+  @Deprecated
   @Override
   public boolean shouldReturnEntity()
+  {
+    return isReturnEntityRequested();
+  }
+
+  @Override
+  public boolean isReturnEntityRequested()
   {
     String returnEntityValue = getParameter(RestConstants.RETURN_ENTITY_PARAM);
     if (returnEntityValue == null)

@@ -17,8 +17,8 @@
 package com.linkedin.restli.examples.greetings.server;
 
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.validation.ReadOnly;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.server.CreateKVResponse;
 import com.linkedin.restli.server.BatchCreateKVResult;
 import com.linkedin.restli.server.BatchCreateRequest;
@@ -41,6 +41,7 @@ import java.util.List;
     namespace = "com.linkedin.restli.examples.greetings.client",
     keyName = "key"
 )
+@ReadOnly("id")
 public class CreateGreetingResource implements KeyValueResource<Long, Greeting>
 {
   @ReturnEntity
@@ -49,27 +50,27 @@ public class CreateGreetingResource implements KeyValueResource<Long, Greeting>
   {
     Long id = 1L;
     entity.setId(id);
-    return new CreateKVResponse<Long, Greeting>(entity.getId(), entity);
+    return new CreateKVResponse<>(entity.getId(), entity);
   }
 
   @ReturnEntity
   @RestMethod.BatchCreate
   public BatchCreateKVResult<Long, Greeting> batchCreate(BatchCreateRequest<Long, Greeting> entities)
   {
-    List<CreateKVResponse<Long, Greeting>> responses = new ArrayList<CreateKVResponse<Long, Greeting>>(entities.getInput().size());
+    List<CreateKVResponse<Long, Greeting>> responses = new ArrayList<>(entities.getInput().size());
     // Maximum number of batch create entity is 3 in this resource. If more than 3 elements are detected, a 400 HTTP exception will be encoded
     int quota = 3;
     for (Greeting greeting : entities.getInput())
     {
       if (quota-- <= 0)
       {
-        responses.add(new CreateKVResponse<Long, Greeting>(new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "exceed quota")));
+        responses.add(new CreateKVResponse<>(new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, "exceed quota")));
       }
       else
       {
         responses.add(create(greeting));
       }
     }
-    return new BatchCreateKVResult<Long, Greeting>(responses);
+    return new BatchCreateKVResult<>(responses);
   }
 }

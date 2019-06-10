@@ -75,7 +75,7 @@ public class PartialUpdateResponseBuilder implements RestLiResponseBuilder<RestL
 
     RecordTemplate entityResponse = null;
     // Add patched entity to the response if result is an UpdateEntityResponse and the client is asking for the entity
-    if (result instanceof UpdateEntityResponse && resourceContext.shouldReturnEntity())
+    if (result instanceof UpdateEntityResponse && resourceContext.isReturnEntityRequested())
     {
       UpdateEntityResponse<?> updateEntityResponse = (UpdateEntityResponse<?>) updateResponse;
       if (updateEntityResponse.hasEntity())

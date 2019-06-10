@@ -31,9 +31,12 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingRequestBuilders;
+import com.linkedin.restli.examples.greetings.server.PartialUpdateGreetingResource;
 import com.linkedin.restli.internal.common.DataMapConverter;
+import com.linkedin.restli.server.validation.RestLiValidationFilter;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import javax.activation.MimeTypeParseException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -46,6 +49,8 @@ import org.testng.annotations.Test;
  * Integration tests that ensure {@link ResourceMethod#PARTIAL_UPDATE} methods can return the patched entity.
  * Also effectively tests the request builder and decoding logic for this scenario.
  *
+ * These integration tests send requests to {@link PartialUpdateGreetingResource}.
+ *
  * @author Evan Williams
  */
 public class TestReturnEntityWithPartialUpdate extends RestLiIntegrationTest
@@ -53,7 +58,7 @@ public class TestReturnEntityWithPartialUpdate extends RestLiIntegrationTest
   @BeforeClass
   public void initClass() throws Exception
   {
-    super.init();
+    super.init(Collections.singletonList(new RestLiValidationFilter()));
   }
 
   @AfterClass
@@ -142,9 +147,9 @@ public class TestReturnEntityWithPartialUpdate extends RestLiIntegrationTest
 
     return new Object[][]
         {
-            { new PatchRequest<Greeting>(), oldGreeting },
+            { PatchRequest.createFromEmptyPatchDocument(), oldGreeting },
             { patch,                        newGreeting },
-            { new PatchRequest<Greeting>(), newGreeting },
+            { PatchRequest.createFromEmptyPatchDocument(), newGreeting },
             { revertPatch,                  oldGreeting }
         };
   }
@@ -158,7 +163,7 @@ public class TestReturnEntityWithPartialUpdate extends RestLiIntegrationTest
   {
     PartialUpdateEntityRequest<Greeting> request = new PartialUpdateGreetingRequestBuilders().partialUpdateAndGet()
         .id(2147L)
-        .input(new PatchRequest<>())
+        .input(PatchRequest.createFromEmptyPatchDocument())
         .build();
 
     try
@@ -187,7 +192,7 @@ public class TestReturnEntityWithPartialUpdate extends RestLiIntegrationTest
 
     PartialUpdateEntityRequestBuilder<Long, Greeting> requestBuilder = new PartialUpdateGreetingRequestBuilders().partialUpdateAndGet()
         .id(expectedId)
-        .input(new PatchRequest<>());
+        .input(PatchRequest.createFromEmptyPatchDocument());
     if (returnEntity != null)
     {
       requestBuilder.returnEntity(returnEntity);
@@ -239,7 +244,7 @@ public class TestReturnEntityWithPartialUpdate extends RestLiIntegrationTest
     final String invalidParamValue = "NOTaBoolean";
     PartialUpdateEntityRequest<Greeting> request = new PartialUpdateGreetingRequestBuilders().partialUpdateAndGet()
         .id(expectedId)
-        .input(new PatchRequest<>())
+        .input(PatchRequest.createFromEmptyPatchDocument())
         .setParam(RestConstants.RETURN_ENTITY_PARAM, invalidParamValue)
         .build();
 

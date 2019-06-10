@@ -34,9 +34,12 @@ import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingRequestBuilders;
+import com.linkedin.restli.examples.greetings.server.PartialUpdateGreetingResource;
 import com.linkedin.restli.internal.common.DataMapConverter;
+import com.linkedin.restli.server.validation.RestLiValidationFilter;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.activation.MimeTypeParseException;
@@ -51,6 +54,8 @@ import org.testng.annotations.Test;
  * Integration tests that ensure {@link ResourceMethod#BATCH_PARTIAL_UPDATE} methods can return the patched entities.
  * Also effectively tests the request builder and decoding logic for this scenario.
  *
+ * These integration tests send requests to {@link PartialUpdateGreetingResource}.
+ *
  * @author Evan Williams
  */
 public class TestReturnEntityWithBatchPartialUpdate extends RestLiIntegrationTest
@@ -58,7 +63,7 @@ public class TestReturnEntityWithBatchPartialUpdate extends RestLiIntegrationTes
   @BeforeClass
   public void initClass() throws Exception
   {
-    super.init();
+    super.init(Collections.singletonList(new RestLiValidationFilter()));
   }
 
   @AfterClass
@@ -178,8 +183,8 @@ public class TestReturnEntityWithBatchPartialUpdate extends RestLiIntegrationTes
     revertPatches.put(id2, makeGreetingMessagePatch("Message 2"));
 
     Map<Long, PatchRequest<Greeting>> emptyPatches = new HashMap<>();
-    emptyPatches.put(id1, new PatchRequest<>());
-    emptyPatches.put(id2, new PatchRequest<>());
+    emptyPatches.put(id1, PatchRequest.createFromEmptyPatchDocument());
+    emptyPatches.put(id2, PatchRequest.createFromEmptyPatchDocument());
 
     Map<Long, Greeting> oldGreetings = new HashMap<>();
     oldGreetings.put(id1, new Greeting()
@@ -240,8 +245,8 @@ public class TestReturnEntityWithBatchPartialUpdate extends RestLiIntegrationTes
   public void testBatchPartialUpdateErrorMap() throws RemoteInvocationException
   {
     Map<Long, PatchRequest<Greeting>> patches = new HashMap<>();
-    patches.put(2147L, new PatchRequest<>());
-    patches.put(2148L, new PatchRequest<>());
+    patches.put(2147L, PatchRequest.createFromEmptyPatchDocument());
+    patches.put(2148L, PatchRequest.createFromEmptyPatchDocument());
 
     BatchPartialUpdateEntityRequest<Long, Greeting> request = new PartialUpdateGreetingRequestBuilders().batchPartialUpdateAndGet()
         .inputs(patches)
@@ -291,8 +296,8 @@ public class TestReturnEntityWithBatchPartialUpdate extends RestLiIntegrationTes
     final long expectedId2 = 9L;
 
     Map<Long, PatchRequest<Greeting>> patches = new HashMap<>();
-    patches.put(expectedId1, new PatchRequest<>());
-    patches.put(expectedId2, new PatchRequest<>());
+    patches.put(expectedId1, PatchRequest.createFromEmptyPatchDocument());
+    patches.put(expectedId2, PatchRequest.createFromEmptyPatchDocument());
 
     Map<Long, Greeting> expectedGreetings = new HashMap<>();
     expectedGreetings.put(expectedId1, new Greeting().setId(expectedId1).setMessage("Message " + expectedId1).setTone(Tone.FRIENDLY));
@@ -368,7 +373,7 @@ public class TestReturnEntityWithBatchPartialUpdate extends RestLiIntegrationTes
 
     final String invalidParamValue = "NOTaBoolean";
     BatchPartialUpdateEntityRequest<Long, Greeting> request = new PartialUpdateGreetingRequestBuilders().batchPartialUpdateAndGet()
-        .input(expectedId, new PatchRequest<>())
+        .input(expectedId, PatchRequest.createFromEmptyPatchDocument())
         .setParam(RestConstants.RETURN_ENTITY_PARAM, invalidParamValue)
         .build();
 

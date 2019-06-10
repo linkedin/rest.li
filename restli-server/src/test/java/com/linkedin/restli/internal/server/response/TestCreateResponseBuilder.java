@@ -183,10 +183,10 @@ public class TestCreateResponseBuilder
   }
 
   @Test(dataProvider = "returnEntityData")
-  public void testReturnEntityInBuildRestLiResponseData(CreateResponse createResponse, boolean shouldReturnEntity, boolean expectEntityReturned) throws URISyntaxException
+  public void testReturnEntityInBuildRestLiResponseData(CreateResponse createResponse, boolean isReturnEntityRequested, boolean expectEntityReturned) throws URISyntaxException
   {
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
-    EasyMock.expect(mockContext.shouldReturnEntity()).andReturn(shouldReturnEntity);
+    EasyMock.expect(mockContext.isReturnEntityRequested()).andReturn(isReturnEntityRequested);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(null);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.replay(mockContext);
@@ -221,7 +221,7 @@ public class TestCreateResponseBuilder
   public void testReturnEntityException() throws URISyntaxException
   {
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
-    EasyMock.expect(mockContext.shouldReturnEntity()).andReturn(true);
+    EasyMock.expect(mockContext.isReturnEntityRequested()).andReturn(true);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(null);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.replay(mockContext);
@@ -253,7 +253,7 @@ public class TestCreateResponseBuilder
     maskTree.addOperation(new PathSpec("fruitsField"), MaskOperation.POSITIVE_MASK_OP);
 
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
-    EasyMock.expect(mockContext.shouldReturnEntity()).andReturn(true);
+    EasyMock.expect(mockContext.isReturnEntityRequested()).andReturn(true);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.replay(mockContext);

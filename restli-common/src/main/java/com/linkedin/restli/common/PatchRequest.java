@@ -75,6 +75,17 @@ public class PatchRequest<T> extends RecordTemplate
   }
 
   /**
+   * Initialize and return an empty PatchRequest.
+   *
+   * @param <T> the type of the object that the patchRequest will patch
+   * @return an empty PatchRequest
+   */
+  public static <T> PatchRequest<T> createFromEmptyPatchDocument()
+  {
+    return createFromPatchDocument(new DataMap());
+  }
+
+  /**
    * @return the patch document
    */
   public DataMap getPatchDocument()

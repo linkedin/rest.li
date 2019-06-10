@@ -232,7 +232,7 @@ public class TestResourceContextImpl
 
     try
     {
-      final boolean returnEntity = context.shouldReturnEntity();
+      final boolean returnEntity = context.isReturnEntityRequested();
 
       if (expectException)
       {

@@ -105,7 +105,7 @@ public class CreateResponseBuilder implements RestLiResponseBuilder<RestLiRespon
     final ResourceContext resourceContext = routingResult.getContext();
 
     RecordTemplate idResponse;
-    if (createResponse instanceof CreateKVResponse && resourceContext.shouldReturnEntity())
+    if (createResponse instanceof CreateKVResponse && resourceContext.isReturnEntityRequested())
     {
       RecordTemplate entity = ((CreateKVResponse<?, ?>) createResponse).getEntity();
 

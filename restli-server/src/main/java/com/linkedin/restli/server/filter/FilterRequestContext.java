@@ -246,4 +246,14 @@ public interface FilterRequestContext extends CustomRequestContext
    * @return true if the method being queried is a "return entity" method.
    */
   boolean isReturnEntityMethod();
+
+  /**
+   * Returns whether or not the client is requesting that the entity (or entities) be returned. Reads the appropriate
+   * query parameter to determine this information, defaults to true if the query parameter isn't present, and throws
+   * an exception if the parameter's value is not a boolean value. Keep in mind that the value of this method should be
+   * inconsequential if the resource method at hand doesn't have a "return entity" method signature.
+   *
+   * @return whether the request specifies that the resource should return an entity
+   */
+  boolean isReturnEntityRequested();
 }

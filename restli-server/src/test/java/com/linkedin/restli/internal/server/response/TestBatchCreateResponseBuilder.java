@@ -268,11 +268,11 @@ public class TestBatchCreateResponseBuilder
 
   @Test(dataProvider = "returnEntityData")
   @SuppressWarnings({"Duplicates", "unchecked"})
-  public void testReturnEntityInBuildRestLiResponseData(Object batchCreateResult, List<CreateResponse> createResponses, boolean shouldReturnEntity, boolean expectEntityReturned) throws URISyntaxException
+  public void testReturnEntityInBuildRestLiResponseData(Object batchCreateResult, List<CreateResponse> createResponses, boolean isReturnEntityRequested, boolean expectEntityReturned) throws URISyntaxException
   {
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(false).atLeastOnce();
-    EasyMock.expect(mockContext.shouldReturnEntity()).andReturn(shouldReturnEntity);
+    EasyMock.expect(mockContext.isReturnEntityRequested()).andReturn(isReturnEntityRequested);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(null);
     EasyMock.replay(mockContext);
@@ -318,7 +318,7 @@ public class TestBatchCreateResponseBuilder
 
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockContext.hasParameter(RestConstants.ALT_KEY_PARAM)).andReturn(false).atLeastOnce();
-    EasyMock.expect(mockContext.shouldReturnEntity()).andReturn(true);
+    EasyMock.expect(mockContext.isReturnEntityRequested()).andReturn(true);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
     EasyMock.replay(mockContext);
@@ -393,7 +393,7 @@ public class TestBatchCreateResponseBuilder
     }
 
     // not testing the diversity of options here.
-    EasyMock.expect(mockContext.shouldReturnEntity()).andReturn(true);
+    EasyMock.expect(mockContext.isReturnEntityRequested()).andReturn(true);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.getDefault()).atLeastOnce();
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(null).atLeastOnce();
     Map<String, String> protocolVersionOnlyHeaders = Collections.singletonMap(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion().toString());
