@@ -1,0 +1,7 @@
+{
+  "type" : "record",
+  "name" : "DummyRecord",
+  "namespace" : "com.linkedin.restli.tools",
+  "doc" : "A dummy record to be used by restli-tools tests.",
+  "fields" : []
+}

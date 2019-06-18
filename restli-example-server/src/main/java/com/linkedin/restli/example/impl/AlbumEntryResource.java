@@ -28,7 +28,6 @@ import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.ParamError;
-import com.linkedin.restli.server.annotations.ParamErrors;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.ServiceErrorDef;

@@ -19,9 +19,6 @@ package com.linkedin.data.schema.compatibility;
 
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.compatibility.CompatibilityChecker;
-import com.linkedin.data.schema.compatibility.CompatibilityOptions;
-import com.linkedin.data.schema.compatibility.CompatibilityResult;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +32,12 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
+
+/**
+ * Tests for {@link CompatibilityChecker}.
+ *
+ * TODO: Refactor this test to employ a data provider-based approach. Also consider moving static data to resource files.
+ */
 public class TestCompatibilityChecker
 {
   private boolean _debug = false;
@@ -900,6 +903,43 @@ public class TestCompatibilityChecker
         false,
         "INFO :: VALUES_MAY_BE_TRUNCATED_OR_OVERFLOW :: /(\\S+) :: numeric type promoted from float to \\1"
       },
+    };
+
+    testCompatibility(inputs);
+  }
+
+  /**
+   * Ensures that validation rules are properly validated when either removed or added.
+   */
+  @Test
+  public void testValidationRules() throws IOException
+  {
+    Object[][] inputs = {
+        // Test removing a validation rule
+        {
+            "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"id\", \"type\" : \"long\", \"validate\" : { \"v1\": {} } } ] }",
+            "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"id\", \"type\" : \"long\" } ] }",
+            _dataAndSchema,
+            true,
+            "ERROR :: BREAKS_OLD_READER :: /a.b.Record :: removed old validation rule \"v1\""
+        },
+        // Test adding a new validation rule
+        {
+            "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"id\", \"type\" : \"long\" } ] }",
+            "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"id\", \"type\" : \"long\", \"validate\" : { \"v2\": {} } } ] }",
+            _dataAndSchema,
+            true,
+            "ERROR :: BREAKS_NEW_READER :: /a.b.Record :: added new validation rule \"v2\""
+        },
+        // Test adding and removing a validation rule
+        {
+            "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"id\", \"type\" : \"long\", \"validate\" : { \"v1\": {} } } ] }",
+            "{ \"name\" : \"a.b.Record\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"id\", \"type\" : \"long\", \"validate\" : { \"v2\": {} } } ] }",
+            _dataAndSchema,
+            true,
+            "ERROR :: BREAKS_OLD_READER :: /a.b.Record :: removed old validation rule \"v1\"",
+            "ERROR :: BREAKS_NEW_READER :: /a.b.Record :: added new validation rule \"v2\""
+        }
     };
 
     testCompatibility(inputs);

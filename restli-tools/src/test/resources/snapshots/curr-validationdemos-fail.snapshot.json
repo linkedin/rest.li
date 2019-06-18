@@ -5,7 +5,7 @@
     "namespace" : "com.linkedin.restli.examples.greetings.api",
     "fields" : [ {
       "name" : "foo1",
-      "type" : "int"
+      "type" : "string"
     }, {
       "name" : "foo2",
       "type" : "int",

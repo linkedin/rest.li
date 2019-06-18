@@ -40,6 +40,7 @@ import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
@@ -3006,6 +3007,18 @@ public final class RestLiAnnotationReader
       if (serviceErrorCodeMapping.containsKey(serviceErrorCode))
       {
         final ServiceError serviceError = serviceErrorCodeMapping.get(serviceErrorCode);
+
+        // Validate that this service error doesn't use the ErrorDetails type
+        final Class<? extends RecordTemplate> errorDetailType = serviceError.errorDetailType();
+        if (errorDetailType != null && errorDetailType.equals(ErrorDetails.class))
+        {
+          throw new ResourceConfigException(
+              String.format("Class '%s' is not meant to be used as an error detail type, please use a more specific "
+                  + "model or remove from service error '%s' in %s",
+                  errorDetailType.getCanonicalName(),
+                  serviceErrorCode,
+                  buildExceptionLocationString(resourceClass, method)));
+        }
 
         // Determine if this is a method-level service error with parameters associated with it
         final String[] parameterNames = paramsMapping.get(serviceErrorCode);

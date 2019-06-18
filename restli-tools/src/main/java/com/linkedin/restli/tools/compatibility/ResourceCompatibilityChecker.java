@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.tools.compatibility;
 
-
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.message.Message;
@@ -58,23 +57,26 @@ import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.restspec.RestSpecAnnotation;
-import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
+import com.linkedin.restli.restspec.ServiceErrorSchema;
+import com.linkedin.restli.restspec.ServiceErrorSchemaArray;
+import com.linkedin.restli.restspec.ServiceErrorsSchema;
+import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.tools.idlcheck.CompatibilityInfo;
 import com.linkedin.restli.tools.idlcheck.CompatibilityLevel;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+
 
 /**
  * @author Moira Tagle
  * @version $Revision: $
  */
-
 public class ResourceCompatibilityChecker
 {
   private final ResourceSchema _prevSchema;
@@ -85,9 +87,12 @@ public class ResourceCompatibilityChecker
 
   private boolean _checked;
   private CompatibilityInfoMap _infoMap = new CompatibilityInfoMap();
-  private Stack<Object> _infoPath = new Stack<Object>();
+  private Stack<Object> _infoPath = new Stack<>();
 
-  private Set<String> _namedSchemasChecked = new HashSet<String>();
+  // Keep track of resources in the IDL tree to provide resource context at any node
+  private Stack<TreeResourceContext> _resourceContexts = new Stack<>();
+
+  private Set<String> _namedSchemasChecked = new HashSet<>();
 
   private static final CompatibilityOptions defaultOptions =
     new CompatibilityOptions().setMode(CompatibilityOptions.Mode.SCHEMA).setAllowPromotions(false);
@@ -108,14 +113,20 @@ public class ResourceCompatibilityChecker
 
   public boolean check(CompatibilityLevel level)
   {
-    if (!_checked) runCheck();
+    if (!_checked)
+    {
+      runCheck();
+    }
     return _infoMap.isCompatible(level);
 
   }
 
   public void check()
   {
-    if (!_checked) runCheck();
+    if (!_checked)
+    {
+      runCheck();
+    }
   }
 
   public CompatibilityInfoMap getInfoMap()
@@ -652,6 +663,8 @@ public class ResourceCompatibilityChecker
 
   private void checkResourceSchema(ResourceSchema prevRec, ResourceSchema currRec)
   {
+    _resourceContexts.push(new TreeResourceContext());
+
     checkEqualSingleValue(prevRec.schema().getField("name"),
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
@@ -693,10 +706,15 @@ public class ResourceCompatibilityChecker
     checkComplexField(prevRec.schema().getField("simple"), prevRec.getSimple(), currRec.getSimple());
 
     checkComplexField(prevRec.schema().getField("actionsSet"), prevRec.getActionsSet(), currRec.getActionsSet());
+
+    _resourceContexts.pop();
   }
 
   private void checkCollectionSchema(CollectionSchema prevRec, CollectionSchema currRec)
   {
+    // Load resource-level service errors into the current context
+    _resourceContexts.peek().loadResourceLevelServiceErrors(prevRec, currRec);
+
     checkComplexField(prevRec.schema().getField("identifier"),
                       prevRec.getIdentifier(GetMode.DEFAULT),
                       currRec.getIdentifier(GetMode.DEFAULT));
@@ -776,6 +794,10 @@ public class ResourceCompatibilityChecker
         currRec.getAssocKeys(GetMode.DEFAULT),
         prevRec.schema().getField("assocKey"),
         prevRec.schema().getField("assocKeys"));
+
+    checkMethodServiceErrors(prevRec.schema().getField("serviceErrors"),
+        prevRec.getServiceErrors(GetMode.DEFAULT),
+        currRec.getServiceErrors(GetMode.DEFAULT));
   }
 
   private void checkBatchFinderSchema(BatchFinderSchema prevRec, BatchFinderSchema currRec)
@@ -811,6 +833,10 @@ public class ResourceCompatibilityChecker
         currRec.getAssocKeys(GetMode.DEFAULT),
         prevRec.schema().getField("assocKey"),
         prevRec.schema().getField("assocKeys"));
+
+    checkMethodServiceErrors(prevRec.schema().getField("serviceErrors"),
+        prevRec.getServiceErrors(GetMode.DEFAULT),
+        currRec.getServiceErrors(GetMode.DEFAULT));
   }
 
   private void checkFindersAssocKey(String prevAssocKey,
@@ -853,6 +879,9 @@ public class ResourceCompatibilityChecker
 
   private void checkSimpleSchema(SimpleSchema prevRec, SimpleSchema currRec)
   {
+    // Load resource-level service errors into the current context
+    _resourceContexts.peek().loadResourceLevelServiceErrors(prevRec, currRec);
+
     checkArrayContainment(prevRec.schema().getField("supports"),
                           currRec.getSupports(GetMode.DEFAULT),
                           prevRec.getSupports(GetMode.DEFAULT));
@@ -972,6 +1001,10 @@ public class ResourceCompatibilityChecker
     checkArrayContainment(prevRec.schema().getField("throws"),
                           prevRec.getThrows(GetMode.DEFAULT),
                           currRec.getThrows(GetMode.DEFAULT));
+
+    checkMethodServiceErrors(prevRec.schema().getField("serviceErrors"),
+        prevRec.getServiceErrors(GetMode.DEFAULT),
+        currRec.getServiceErrors(GetMode.DEFAULT));
   }
 
   private void checkRestLiDataAnnotations(RecordDataSchema.Field field, CustomAnnotationContentSchemaMap prevMap, CustomAnnotationContentSchemaMap currMap,
@@ -1084,6 +1117,9 @@ public class ResourceCompatibilityChecker
 
   private void checkAssociationSchema(AssociationSchema prevRec, AssociationSchema currRec)
   {
+    // Load resource-level service errors into the current context
+    _resourceContexts.peek().loadResourceLevelServiceErrors(prevRec, currRec);
+
     checkEqualSingleValue(prevRec.schema().getField("identifier"),
                           prevRec.getIdentifier(GetMode.DEFAULT),
                           currRec.getIdentifier(GetMode.DEFAULT));
@@ -1138,6 +1174,9 @@ public class ResourceCompatibilityChecker
 
   private void checkActionsSetSchema(ActionsSetSchema prevRec, ActionsSetSchema currRec)
   {
+    // Load resource-level service errors into the current context
+    _resourceContexts.peek().loadResourceLevelServiceErrors(prevRec, currRec);
+
     checkComplexArrayField(prevRec.schema().getField("actions"),
                            "name",
                            prevRec.getActions(GetMode.DEFAULT),
@@ -1166,6 +1205,154 @@ public class ResourceCompatibilityChecker
 
     checkPagingSupport(prevRec.isPagingSupported(GetMode.DEFAULT),
         currRec.isPagingSupported(GetMode.DEFAULT));
+
+    checkMethodServiceErrors(prevRec.schema().getField("serviceErrors"),
+        prevRec.getServiceErrors(GetMode.DEFAULT),
+        currRec.getServiceErrors(GetMode.DEFAULT));
+  }
+
+  /**
+   * Checks the compatibility of method-level service errors. All service error compatibility logic is checked
+   * semantically at the method level, so this method takes the union of the resource-level errors (from the context)
+   * and the method-level errors to compute the compatibility.
+   *
+   * @param prevMethodServiceErrors previous method-level service errors
+   * @param currMethodServiceErrors current method-level service errors
+   */
+  private void checkMethodServiceErrors(RecordDataSchema.Field field, ServiceErrorSchemaArray prevMethodServiceErrors,
+      ServiceErrorSchemaArray currMethodServiceErrors)
+  {
+    assert field != null;
+
+    _infoPath.push(field.getName());
+
+    // Compute the union of resource and method service errors separately for previous and current
+    TreeResourceContext state = _resourceContexts.peek();
+    Map<String, ServiceErrorSchema> prevServiceErrorUnion = getServiceErrorUnion(state._prevResourceLevelErrors, prevMethodServiceErrors);
+    Map<String, ServiceErrorSchema> currServiceErrorUnion = getServiceErrorUnion(state._currResourceLevelErrors, currMethodServiceErrors);
+
+    // Compute the union of resource and method service errors for both previous and current together
+    Set<String> serviceErrorCodeUnion = new HashSet<>();
+    serviceErrorCodeUnion.addAll(prevServiceErrorUnion.keySet());
+    serviceErrorCodeUnion.addAll(currServiceErrorUnion.keySet());
+
+    // Compute the intersection and both complementary subsets of previous and current service error codes
+    Set<String> serviceErrorCodeIntersection = new HashSet<>();
+    Set<String> removedServiceErrorCodes = new HashSet<>();
+    Set<String> newServiceErrorCodes = new HashSet<>();
+
+    for (String code : serviceErrorCodeUnion)
+    {
+      if (prevServiceErrorUnion.containsKey(code) && currServiceErrorUnion.containsKey(code))
+      {
+        serviceErrorCodeIntersection.add(code);
+      }
+      else if (prevServiceErrorUnion.containsKey(code))
+      {
+        removedServiceErrorCodes.add(code);
+      }
+      else
+      {
+        newServiceErrorCodes.add(code);
+      }
+    }
+
+    // Check to ensure that retained service errors are compatible
+    for (String code : serviceErrorCodeIntersection)
+    {
+      ServiceErrorSchema prevServiceErrorSchema = prevServiceErrorUnion.get(code);
+      ServiceErrorSchema currServiceErrorSchema = currServiceErrorUnion.get(code);
+
+      _infoPath.push(code);
+      checkServiceErrorSchema(prevServiceErrorSchema, currServiceErrorSchema);
+      _infoPath.pop();
+    }
+
+    // Add info about removed service errors
+    for (String code : removedServiceErrorCodes)
+    {
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.SERVICE_ERROR_REMOVED, _infoPath, code);
+    }
+
+    // Add info about new service errors
+    for (String code : newServiceErrorCodes)
+    {
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.SERVICE_ERROR_ADDED, _infoPath, code);
+    }
+
+    _infoPath.pop();
+  }
+
+  /**
+   * Checks the compatibility of one individual service error that exists in both the previous and the current IDL.
+   *
+   * @param prevRec previous record
+   * @param currRec current record
+   */
+  private void checkServiceErrorSchema(ServiceErrorSchema prevRec, ServiceErrorSchema currRec)
+  {
+    // Check the status field
+    checkEqualSingleValue(prevRec.schema().getField("status"),
+        prevRec.getStatus(GetMode.DEFAULT),
+        currRec.getStatus(GetMode.DEFAULT));
+
+    // Check the errorDetailType field
+    final boolean errorDetailTypeCompatible = checkEqualSingleValue(prevRec.schema().getField("errorDetailType"),
+        prevRec.getErrorDetailType(GetMode.DEFAULT),
+        currRec.getErrorDetailType(GetMode.DEFAULT));
+
+    // If the errorDetailType field is the same, verify that the model itself is compatible
+    if (errorDetailTypeCompatible)
+    {
+      checkType(prevRec.schema().getField("errorDetailType"),
+          prevRec.getErrorDetailType(GetMode.DEFAULT),
+          currRec.getErrorDetailType(GetMode.DEFAULT),
+          true);
+    }
+
+    // Check the message field
+    checkEqualSingleValue(prevRec.schema().getField("message"),
+        prevRec.getMessage(GetMode.DEFAULT),
+        currRec.getMessage(GetMode.DEFAULT));
+  }
+
+  /**
+   * Computes the union of multiple collections of service errors as a mapping from service error code to service error.
+   *
+   * @param serviceErrorSchemaCollections array of service error schema collections
+   * @return union of all service errors keyed by code
+   */
+  @SafeVarargs
+  private static Map<String, ServiceErrorSchema> getServiceErrorUnion(Collection<ServiceErrorSchema> ... serviceErrorSchemaCollections)
+  {
+    Map<String, ServiceErrorSchema> serviceErrorUnion = new HashMap<>();
+
+    if (serviceErrorSchemaCollections != null)
+    {
+      for (Collection<ServiceErrorSchema> serviceErrorSchemaCollection : serviceErrorSchemaCollections)
+      {
+        if (serviceErrorSchemaCollection == null)
+        {
+          continue;
+        }
+
+        for (ServiceErrorSchema serviceErrorSchema : serviceErrorSchemaCollection)
+        {
+          final String code = serviceErrorSchema.getCode();
+          if (serviceErrorUnion.containsKey(code))
+          {
+            // Service errors that overlap shouldn't be unequal
+            assert serviceErrorSchema.equals(serviceErrorUnion.get(code));
+          }
+          else
+            {
+            serviceErrorUnion.put(code, serviceErrorSchema);
+          }
+        }
+      }
+    }
+
+    return serviceErrorUnion;
   }
 
   /**
@@ -1176,4 +1363,24 @@ public class ResourceCompatibilityChecker
     return (isOptional == null ? defaultValue != null : isOptional);
   }
 
+  /**
+   * Class which provides context about the current resource in the compatibility checker tree.
+   */
+  private class TreeResourceContext
+  {
+    // Resource-level errors for this resource
+    private Collection<ServiceErrorSchema> _prevResourceLevelErrors, _currResourceLevelErrors;
+
+    /**
+     * Loads resource-level service errors into the current context.
+     *
+     * @param previousRecord previous record containing a "serviceErrors" field
+     * @param currentRecord current record containing a "serviceErrors" field
+     */
+    private void loadResourceLevelServiceErrors(RecordTemplate previousRecord, RecordTemplate currentRecord)
+    {
+      _prevResourceLevelErrors = new ServiceErrorsSchema(previousRecord.data()).getServiceErrors(GetMode.DEFAULT);
+      _currResourceLevelErrors = new ServiceErrorsSchema(currentRecord.data()).getServiceErrors(GetMode.DEFAULT);
+    }
+  }
 }

@@ -9,7 +9,7 @@
       "status" : 422,
       "code" : "BAD_REQUEST",
       "message" : "Input failed validation",
-      "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+      "errorDetailType" : "com.linkedin.restli.example.AlbumError"
     } ],
     "identifier" : "albumEntryId",
     "assocKeys" : [ {
@@ -40,12 +40,12 @@
         "status" : 403,
         "code" : "INVALID_PERMISSIONS",
         "message" : "User does not have valid permissions",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+        "errorDetailType" : "com.linkedin.restli.example.AlbumError"
       }, {
         "status" : 422,
         "code" : "INVALID_ALBUM_ID",
         "message" : "Album id cannot be less than 0",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails",
+        "errorDetailType" : "com.linkedin.restli.example.AlbumError",
         "parameters" : [ "albumId" ]
       } ],
       "name" : "search",

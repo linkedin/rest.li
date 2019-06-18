@@ -25,10 +25,9 @@ import com.linkedin.restli.server.annotations.ServiceErrorDef;
 import com.linkedin.restli.server.annotations.ServiceErrors;
 import com.linkedin.restli.server.annotations.SuccessResponse;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
-import com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyRecord;
-import com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyServiceError;
+import com.linkedin.restli.tools.DummyRecord;
 
-import static com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyServiceError.Codes.*;
+import static com.linkedin.restli.tools.errors.DummyServiceError.Codes.*;
 
 /**
  * Simple resource to test IDL generation with defined service errors.

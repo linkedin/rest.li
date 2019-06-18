@@ -1,0 +1,25 @@
+{
+  "type" : "record",
+  "name" : "DummyErrorDetails",
+  "namespace" : "com.linkedin.restli.tools",
+  "doc" : "A dummy error detail format to be used by restli-tools tests.",
+  "fields" : [
+    {
+      "name" : "messages",
+      "type" : {
+        "type" : "array",
+        "items" : {
+          "type" : "record",
+          "name" : "DummyErrorDetailMessage",
+          "doc" : "Individual dummy error detail message.",
+          "fields" : [
+            {
+              "name" : "message",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

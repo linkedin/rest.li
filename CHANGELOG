@@ -1,5 +1,10 @@
-27.2.1
+27.3.1
 ------
+
+27.3.0
+------
+(RB=1694693)
+Check compatibility of IDL service errors and schema field validators
 
 27.2.0
 ------

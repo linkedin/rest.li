@@ -156,9 +156,9 @@ public class ParSeqRestClientTest
     Assert.assertEquals(CODE, e.getCode());
     Assert.assertEquals(DOC_URL, e.getDocUrl());
     Assert.assertEquals(REQUEST_ID, e.getRequestId());
-    Assert.assertEquals(ErrorDetails.class.getCanonicalName(), e.getErrorDetailType());
+    Assert.assertEquals(EmptyRecord.class.getCanonicalName(), e.getErrorDetailType());
     Assert.assertNotNull(e.getErrorDetailsRecord());
-    Assert.assertTrue(e.getErrorDetailsRecord() instanceof ErrorDetails);
+    Assert.assertTrue(e.getErrorDetailsRecord() instanceof EmptyRecord);
   }
 
   /**
@@ -200,9 +200,9 @@ public class ParSeqRestClientTest
     Assert.assertEquals(CODE, e.getCode());
     Assert.assertEquals(DOC_URL, e.getDocUrl());
     Assert.assertEquals(REQUEST_ID, e.getRequestId());
-    Assert.assertEquals(ErrorDetails.class.getCanonicalName(), e.getErrorDetailType());
+    Assert.assertEquals(EmptyRecord.class.getCanonicalName(), e.getErrorDetailType());
     Assert.assertNotNull(e.getErrorDetailsRecord());
-    Assert.assertTrue(e.getErrorDetailsRecord() instanceof ErrorDetails);
+    Assert.assertTrue(e.getErrorDetailsRecord() instanceof EmptyRecord);
   }
 
   /**
@@ -242,7 +242,7 @@ public class ParSeqRestClientTest
     final DataMap errMap = new DataMap();
     errMap.put(errKey, errValue);
     er.setErrorDetails(new ErrorDetails(errMap));
-    er.setErrorDetailType(ErrorDetails.class.getCanonicalName());
+    er.setErrorDetailType(EmptyRecord.class.getCanonicalName());
     er.setStatus(httpCode);
     er.setMessage(errMsg);
     er.setServiceErrorCode(appCode);

@@ -33,7 +33,6 @@ import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
@@ -196,7 +195,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     Assert.assertFalse(exception.hasCode());
     Assert.assertFalse(exception.hasDocUrl());
     Assert.assertFalse(exception.hasRequestId());
-    Assert.assertEquals(exception.getErrorDetailType(), ErrorDetails.class.getCanonicalName());
+    Assert.assertEquals(exception.getErrorDetailType(), EmptyRecord.class.getCanonicalName());
   }
 
   @SuppressWarnings("deprecation")
@@ -239,7 +238,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     Assert.assertFalse(error.hasCode());
     Assert.assertFalse(error.hasDocUrl());
     Assert.assertFalse(error.hasRequestId());
-    Assert.assertEquals(error.getErrorDetailType(), ErrorDetails.class.getCanonicalName());
+    Assert.assertEquals(error.getErrorDetailType(), EmptyRecord.class.getCanonicalName());
   }
 
   @SuppressWarnings("deprecation")
@@ -282,7 +281,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     Assert.assertFalse(error.hasCode());
     Assert.assertFalse(error.hasDocUrl());
     Assert.assertFalse(error.hasRequestId());
-    Assert.assertEquals(error.getErrorDetailType(), ErrorDetails.class.getCanonicalName());
+    Assert.assertEquals(error.getErrorDetailType(), EmptyRecord.class.getCanonicalName());
   }
 
   /**

@@ -18,7 +18,6 @@ package com.linkedin.restli.server.validation;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.TestServiceError;
@@ -78,8 +77,8 @@ public class TestErrorResponseValidationFilter
               // error code is defined through @ServiceErrors annotation on resource level.
               Collections.singletonList(TestServiceError.RESOURCE_LEVEL_ERROR),
               Collections.singletonList(TestServiceError.METHOD_LEVEL_ERROR),
-              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, new ErrorDetails(),
-              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, new ErrorDetails()
+              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, null,
+              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, null
             },
             {
               // error code is defined through @ServiceErrors annotation on resource level with error details.
@@ -100,22 +99,22 @@ public class TestErrorResponseValidationFilter
               // and on method level no service error code has been defined.
               Collections.singletonList(TestServiceError.RESOURCE_LEVEL_ERROR),
               Collections.emptyList(),
-              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, new ErrorDetails(),
-              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, new ErrorDetails()
+              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, null,
+              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, null
             },
             {
               // error code is defined through @ServiceErrors annotation on method level
               // and on resource level no service error code has been defined.
               Collections.emptyList(),
               Collections.singletonList(TestServiceError.METHOD_LEVEL_ERROR),
-              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.METHOD_LEVEL_ERROR, new ErrorDetails(),
-              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.METHOD_LEVEL_ERROR, new ErrorDetails()
+              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.METHOD_LEVEL_ERROR, null,
+              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.METHOD_LEVEL_ERROR, null
             },
             {
-              // service error code hasn't been defined neither on resource level nor on method level.
+              // service error code has been defined on neither resource level nor method level.
               Collections.emptyList(),
               Collections.emptyList(),
-              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, new ErrorDetails(),
+              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, null,
               HttpStatus.S_500_INTERNAL_SERVER_ERROR, null, null
             },
             {
@@ -130,14 +129,14 @@ public class TestErrorResponseValidationFilter
               // and error response has an error details
               null,
               null,
-              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, new ErrorDetails(),
+              HttpStatus.S_400_BAD_REQUEST, TestServiceError.Codes.RESOURCE_LEVEL_ERROR_WITH_ERROR_DETAILS, new EmptyRecord(),
               HttpStatus.S_500_INTERNAL_SERVER_ERROR, null, null
             },
             {
               // Http status code in error response doesn't match with defined service error code.
               Collections.singletonList(TestServiceError.RESOURCE_LEVEL_ERROR),
               Collections.singletonList(TestServiceError.METHOD_LEVEL_ERROR),
-              HttpStatus.S_401_UNAUTHORIZED, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, new ErrorDetails(),
+              HttpStatus.S_401_UNAUTHORIZED, TestServiceError.Codes.RESOURCE_LEVEL_ERROR, null,
               HttpStatus.S_500_INTERNAL_SERVER_ERROR, null, null
             },
             {

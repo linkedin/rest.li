@@ -28,12 +28,11 @@ import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.annotations.ServiceErrorDef;
 import com.linkedin.restli.server.annotations.ServiceErrors;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
-import com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyRecord;
-import com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyServiceError;
+import com.linkedin.restli.tools.DummyRecord;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyServiceError.Codes.*;
+import static com.linkedin.restli.tools.errors.DummyServiceError.Codes.*;
 
 
 /**

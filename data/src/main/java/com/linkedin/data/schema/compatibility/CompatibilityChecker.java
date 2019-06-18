@@ -16,7 +16,7 @@
 
 package com.linkedin.data.schema.compatibility;
 
-
+import com.linkedin.data.DataMap;
 import com.linkedin.data.message.MessageList;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
@@ -29,11 +29,13 @@ import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -329,6 +331,8 @@ public class CompatibilityChecker
       }
       else
       {
+        checkFieldValidators(olderField, newerField);
+
         FieldModifier olderFieldModifier = toFieldModifier(olderField);
 
         commonFields.add(newerField);
@@ -611,6 +615,38 @@ public class CompatibilityChecker
     {
       appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_AND_OLD_READERS,
                     "name changed from %s to %s", older.getFullName(), newer.getFullName());
+    }
+  }
+
+  /**
+   * Checks the compatibility of the validation rules specified on some field.
+   *
+   * @param older older schema field
+   * @param newer newer schema field
+   */
+  private void checkFieldValidators(RecordDataSchema.Field older, RecordDataSchema.Field newer)
+  {
+    final DataMap olderValidators = (DataMap) older.getProperties().getOrDefault(DataSchemaAnnotationValidator.VALIDATE, new DataMap());
+    final DataMap newerValidators = (DataMap) newer.getProperties().getOrDefault(DataSchemaAnnotationValidator.VALIDATE, new DataMap());
+
+    // Compute the union of the previous validation rules and the current validation rules
+    final Set<String> validatorKeysUnion = new HashSet<>();
+    validatorKeysUnion.addAll(olderValidators.keySet());
+    validatorKeysUnion.addAll(newerValidators.keySet());
+
+    // Check the compatibility of each validation rule
+    for (String key : validatorKeysUnion)
+    {
+      if (!olderValidators.containsKey(key) && newerValidators.containsKey(key))
+      {
+        // Added validation rule, thus old writer may write data that a new reader doesn't expect
+        appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_READER, "added new validation rule \"%s\"", key);
+      }
+      else if (olderValidators.containsKey(key) && !newerValidators.containsKey(key))
+      {
+        // Removed validation rule, thus new writer may write data that an old reader doesn't expect
+        appendMessage(CompatibilityMessage.Impact.BREAKS_OLD_READER, "removed old validation rule \"%s\"", key);
+      }
     }
   }
 

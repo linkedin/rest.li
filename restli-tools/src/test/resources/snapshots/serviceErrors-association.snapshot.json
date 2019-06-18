@@ -1,0 +1,83 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "DummyErrorDetailMessage",
+    "namespace" : "com.linkedin.restli.tools",
+    "doc" : "Individual dummy error detail message.",
+    "fields" : [ {
+      "name" : "message",
+      "type" : "string"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "DummyErrorDetails",
+    "namespace" : "com.linkedin.restli.tools",
+    "doc" : "A dummy error detail format to be used by restli-tools tests.",
+    "fields" : [ {
+      "name" : "messages",
+      "type" : {
+        "type" : "array",
+        "items" : "DummyErrorDetailMessage"
+      }
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "DummyRecord",
+    "namespace" : "com.linkedin.restli.tools",
+    "doc" : "A dummy record to be used by restli-tools tests.",
+    "fields" : [ ]
+  } ],
+  "schema" : {
+    "name" : "association",
+    "path" : "/association",
+    "schema" : "com.linkedin.restli.tools.DummyRecord",
+    "doc" : "Association resource to test IDL generation with defined service errors.\n This resource also tests that an empty list of service errors can be defined.\n\ngenerated from: com.linkedin.restli.tools.errors.ServiceErrorAssociationResource",
+    "association" : {
+      "serviceErrors" : [ ],
+      "identifier" : "associationId",
+      "assocKeys" : [ {
+        "name" : "keyA",
+        "type" : "long"
+      }, {
+        "name" : "keyB",
+        "type" : "long"
+      } ],
+      "supports" : [ "get_all" ],
+      "methods" : [ {
+        "serviceErrors" : [ {
+          "status" : 400,
+          "code" : "METHOD_LEVEL_ERROR",
+          "message" : "And this is such a method-level error",
+          "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
+        } ],
+        "method" : "get_all",
+        "doc" : "Ensures that template CRUD methods can specify a method-level service error.",
+        "pagingSupported" : true
+      } ],
+      "finders" : [ {
+        "serviceErrors" : [ {
+          "status" : 422,
+          "code" : "PARAMETER_ERROR",
+          "message" : "This looks like a method-level parameter error",
+          "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails",
+          "parameters" : [ "param" ]
+        } ],
+        "name" : "ctrlF",
+        "doc" : "Ensures that a method-level service error can specify a parameter.",
+        "parameters" : [ {
+          "name" : "param",
+          "type" : "string"
+        } ]
+      } ],
+      "actions" : [ {
+        "success" : [ 200, 201, 204 ],
+        "name" : "hasSuccessStatuses",
+        "doc" : "Ensures that multiple success statuses can be specified.",
+        "returns" : "string"
+      } ],
+      "entity" : {
+        "path" : "/association/{associationId}"
+      }
+    }
+  }
+}

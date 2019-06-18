@@ -22,6 +22,7 @@ package com.linkedin.restli.examples.greetings.server;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
@@ -82,7 +83,7 @@ public class ExceptionsResource extends CollectionResourceTemplate<Long, Greetin
                                                                           "I will not tolerate your insolence!");
       DataMap details = new DataMap();
       details.put("reason", "insultingGreeting");
-      notAcceptableException.setErrorDetails(details);
+      notAcceptableException.setErrorDetails(new EmptyRecord(details));
       notAcceptableException.setServiceErrorCode(999);
       throw notAcceptableException;
     }

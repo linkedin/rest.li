@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "AlbumError",
+  "namespace": "com.linkedin.restli.example",
+  "doc": "An example error detail model",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    }
+  ]
+}

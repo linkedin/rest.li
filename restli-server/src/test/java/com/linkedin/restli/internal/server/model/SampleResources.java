@@ -17,9 +17,11 @@
 package com.linkedin.restli.internal.server.model;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.server.BatchDeleteRequest;
@@ -83,7 +85,7 @@ import java.util.Set;
  *
  * @author Evan Williams
  */
-public class SampleResources
+class SampleResources
 {
   /**
    * Sample service errors defined for these resources to use.
@@ -91,12 +93,26 @@ public class SampleResources
   enum SampleServiceError implements ServiceError
   {
     ERROR_A,
-    ERROR_B;
+    ERROR_B,
+    FORBIDDEN_ERROR_DETAIL_TYPE(ErrorDetails.class);
+
+    private Class<? extends RecordTemplate> _errorDetailType;
+
+    SampleServiceError()
+    {
+      this(null);
+    }
+
+    SampleServiceError(Class<? extends RecordTemplate> errorDetailType)
+    {
+      _errorDetailType = errorDetailType;
+    }
 
     interface Codes
     {
       String ERROR_A = "ERROR_A";
       String ERROR_B = "ERROR_B";
+      String FORBIDDEN_ERROR_DETAIL_TYPE = "FORBIDDEN_ERROR_DETAIL_TYPE";
     }
 
     @Override
@@ -109,6 +125,12 @@ public class SampleResources
     public String code()
     {
       return name();
+    }
+
+    @Override
+    public Class<? extends RecordTemplate> errorDetailType()
+    {
+      return _errorDetailType;
     }
   }
 
@@ -178,6 +200,11 @@ public class SampleResources
   @RestLiCollection(name = "missingServiceErrorDef")
   @ServiceErrors(SampleServiceError.Codes.ERROR_A)
   class MissingServiceErrorDefResource implements KeyValueResource<Long, EmptyRecord> {}
+
+  @RestLiCollection(name = "forbiddenErrorDetailType")
+  @ServiceErrorDef(SampleServiceError.class)
+  @ServiceErrors(SampleServiceError.Codes.FORBIDDEN_ERROR_DETAIL_TYPE)
+  class ForbiddenErrorDetailTypeResource implements KeyValueResource<Long, EmptyRecord> {}
 
   @RestLiCollection(name = "unknownServiceErrorParameter")
   @ServiceErrorDef(SampleServiceError.class)

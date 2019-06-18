@@ -1,14 +1,15 @@
 {
   "models" : [ {
     "type" : "record",
-    "name" : "ReturnMe",
-    "namespace" : "com.linkedin.restli.tools.returnentity",
+    "name" : "DummyRecord",
+    "namespace" : "com.linkedin.restli.tools",
+    "doc" : "A dummy record to be used by restli-tools tests.",
     "fields" : [ ]
   } ],
   "schema" : {
     "name" : "annotation",
     "path" : "/annotation",
-    "schema" : "com.linkedin.restli.tools.returnentity.ReturnMe",
+    "schema" : "com.linkedin.restli.tools.DummyRecord",
     "doc" : "Simple resource to test IDL generation with \"return entity\" methods using annotations as indicators.\n\ngenerated from: com.linkedin.restli.tools.returnentity.AnnotationResource",
     "collection" : {
       "identifier" : {

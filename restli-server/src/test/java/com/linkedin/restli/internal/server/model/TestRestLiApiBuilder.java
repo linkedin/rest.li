@@ -126,6 +126,7 @@ public class TestRestLiApiBuilder
             { UnknownServiceErrorCodeResource.class, "Unknown service error code 'MADE_UP_ERROR'" },
             { DuplicateServiceErrorCodesResource.class, "Duplicate service error code 'ERROR_A'" },
             { MissingServiceErrorDefResource.class, "is missing a @ServiceErrorDef annotation" },
+            { ForbiddenErrorDetailTypeResource.class, "Class 'com.linkedin.restli.common.ErrorDetails' is not meant to be used as an error detail type" },
             { UnknownServiceErrorParameterResource.class, "Nonexistent parameter 'spacestamp' specified for method-level service error" },
             { EmptyServiceErrorParametersResource.class, "specifies no parameter names for service error code 'ERROR_A'" },
             { DuplicateServiceErrorParametersResource.class, "Duplicate parameter specified for service error code 'ERROR_A'" },

@@ -44,7 +44,7 @@ public enum TestServiceError implements ServiceError
 
   TestServiceError(HttpStatus status, String message)
   {
-    this(status, message, ErrorDetails.class);
+    this(status, message, null);
   }
 
   TestServiceError(HttpStatus status, String message, Class<? extends RecordTemplate> errorDetailType)

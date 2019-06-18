@@ -63,7 +63,9 @@ public class CompatibilityInfo
     VALUE_DIFFERENT(Level.COMPATIBLE, "Previous value \"%s\" is changed to \"%s\""),
     TYPE_INFO(Level.COMPATIBLE, "%s"), // data type related information or warning, reported by com.linkedin.data.schema.compatibility.CompatibilityChecker
     PAGING_ADDED(Level.COMPATIBLE, "Method added paging support"),
-    PAGING_REMOVED(Level.INCOMPATIBLE, "Method removed paging support");
+    PAGING_REMOVED(Level.INCOMPATIBLE, "Method removed paging support"),
+    SERVICE_ERROR_ADDED(Level.INCOMPATIBLE, "Service error \"%s\" now applies"),
+    SERVICE_ERROR_REMOVED(Level.COMPATIBLE, "Service error \"%s\" no longer applies");
 
     public String getDescription(Object[] parameters)
     {

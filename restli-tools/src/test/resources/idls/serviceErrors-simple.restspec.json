@@ -1,14 +1,14 @@
 {
   "name" : "simple",
   "path" : "/simple",
-  "schema" : "com.linkedin.restli.tools.errors.DummyRecord",
+  "schema" : "com.linkedin.restli.tools.DummyRecord",
   "doc" : "Simple resource to test IDL generation with defined service errors.\n\ngenerated from: com.linkedin.restli.tools.errors.ServiceErrorSimpleResource",
   "simple" : {
     "serviceErrors" : [ {
       "status" : 400,
       "code" : "RESOURCE_LEVEL_ERROR",
       "message" : "Wow, this is such a resource-level error",
-      "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+      "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
     } ],
     "supports" : [ "get", "update" ],
     "methods" : [ {
@@ -16,7 +16,7 @@
         "status" : 400,
         "code" : "METHOD_LEVEL_ERROR",
         "message" : "And this is such a method-level error",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
       } ],
       "method" : "get",
       "doc" : "This ensures that annotation-specified CRUD methods can specify a method-level service error."
@@ -25,7 +25,7 @@
         "status" : 451,
         "code" : "ILLEGAL_ACTION",
         "message" : "You can't do that, you're going to Rest.li prison",
-        "errorDetailType" : "com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyRecord"
+        "errorDetailType" : "com.linkedin.restli.tools.DummyRecord"
       } ],
       "success" : [ 204 ],
       "method" : "update",
@@ -36,11 +36,11 @@
         "status" : 400,
         "code" : "METHOD_LEVEL_ERROR",
         "message" : "And this is such a method-level error",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
       }, {
         "status" : 400,
         "code" : "NO_MESSAGE_ERROR",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
       } ],
       "name" : "doAction",
       "doc" : "Ensures that action methods can specify a method-level service error.\n Also ensures that service errors without messages can be used.",

@@ -1,0 +1,84 @@
+{
+  "name" : "simple",
+  "path" : "/simple",
+  "schema" : "com.linkedin.restli.tools.DummyRecord",
+  "doc" : "A resource to test service error compatibility",
+  "simple" : {
+    "serviceErrors" : [ {
+      "status" : 400,
+      "code" : "RESOURCE_LEVEL_ERROR",
+      "message" : "Wow, this is such a resource-level error",
+      "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
+    }, {
+      "status" : 403,
+      "code" : "YET_ANOTHER_RESOURCE_LEVEL_ERROR",
+      "message" : "Wow, yet another one!",
+      "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
+    } ],
+    "supports" : [ "get", "update" ],
+    "methods" : [ {
+      "serviceErrors" : [ {
+        "status" : 419,
+        "code" : "METHOD_LEVEL_ERROR",
+        "message" : "And this is such a method-level oops I edited the message",
+        "errorDetailType" : "com.linkedin.restli.tools.DummyRecord"
+      } ],
+      "method" : "get"
+    }, {
+      "serviceErrors" : [ {
+        "status" : 400,
+        "code" : "METHOD_LEVEL_ERROR",
+        "message" : "And this is such a method-level error",
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
+      } ],
+      "success" : [ 204 ],
+      "method" : "update"
+    } ],
+    "actions" : [ {
+      "serviceErrors" : [ {
+        "status" : 400,
+        "code" : "METHOD_LEVEL_ERROR",
+        "message" : "And this is such a method-level error",
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
+      } ],
+      "name" : "doAction",
+      "returns" : "int"
+    } ],
+    "entity" : {
+      "path" : "/simple",
+      "subresources" : [ {
+        "name" : "subSimple",
+        "path" : "/simple/subSimple",
+        "doc" : "A sub-resource to test hierarchical service error compatibility",
+        "actionsSet" : {
+          "serviceErrors" : [ {
+            "status" : 403,
+            "code" : "SUB_RESOURCE_ERROR",
+            "message" : "Here's one for the sub-resource",
+            "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
+          } ],
+          "actions" : [ {
+            "serviceErrors" : [ {
+              "status" : 419,
+              "code" : "SUB_RESOURCE_METHOD_ERROR",
+              "message" : "And this sub-resource method has an error too...",
+              "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
+            } ],
+            "name": "doSubAction",
+            "returns": "long"
+          } ]
+        }
+      }, {
+        "name" : "subSimple2",
+        "path" : "/simple/subSimple2",
+        "doc" : "Just another sub-resource, shouldn't interfere with checking the other sub-resource",
+        "actionsSet" : {
+          "actions" : [ {
+            "name": "doSubAction2",
+            "returns": "long"
+          } ]
+        }
+      } ]
+    }
+  }
+}

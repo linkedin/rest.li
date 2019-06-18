@@ -1,0 +1,66 @@
+{
+  "name" : "simple",
+  "path" : "/simple",
+  "schema" : "com.linkedin.restli.tools.DummyRecord",
+  "doc" : "A resource to test service error compatibility",
+  "simple" : {
+    "serviceErrors" : [ {
+      "status" : 400,
+      "code" : "RESOURCE_LEVEL_ERROR",
+      "message" : "Wow, this is such a resource-level error",
+      "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
+    } ],
+    "supports" : [ "get", "update" ],
+    "methods" : [ {
+      "serviceErrors" : [ {
+        "status" : 400,
+        "code" : "METHOD_LEVEL_ERROR",
+        "message" : "And this is such a method-level error",
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
+      }, {
+        "status" : 451,
+        "code" : "ILLEGAL_ACTION",
+        "message" : "You can't do that, you're going to Rest.li prison",
+        "errorDetailType" : "com.linkedin.restli.tools.DummyRecord"
+      } ],
+      "method" : "get"
+    }, {
+      "success" : [ 204 ],
+      "method" : "update"
+    } ],
+    "actions" : [ {
+      "serviceErrors" : [ {
+        "status" : 451,
+        "code" : "ILLEGAL_ACTION",
+        "message" : "You can't do that, you're going to Rest.li prison",
+        "errorDetailType" : "com.linkedin.restli.tools.DummyRecord"
+      } ],
+      "name" : "doAction",
+      "returns" : "int"
+    } ],
+    "entity" : {
+      "path" : "/simple",
+      "subresources" : [ {
+        "name" : "subSimple",
+        "path" : "/simple/subSimple",
+        "doc" : "A sub-resource to test hierarchical service error compatibility",
+        "actionsSet" : {
+          "actions" : [ {
+            "name": "doSubAction",
+            "returns": "long"
+          } ]
+        }
+      }, {
+        "name" : "subSimple2",
+        "path" : "/simple/subSimple2",
+        "doc" : "Just another sub-resource, shouldn't interfere with checking the other sub-resource",
+        "actionsSet" : {
+          "actions" : [ {
+            "name": "doSubAction2",
+            "returns": "long"
+          } ]
+        }
+      } ]
+    }
+  }
+}

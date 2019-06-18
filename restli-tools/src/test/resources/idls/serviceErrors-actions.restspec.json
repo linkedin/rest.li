@@ -7,19 +7,19 @@
       "status" : 400,
       "code" : "RESOURCE_LEVEL_ERROR",
       "message" : "Wow, this is such a resource-level error",
-      "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+      "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
     }, {
       "status" : 403,
       "code" : "YET_ANOTHER_RESOURCE_LEVEL_ERROR",
       "message" : "Wow, yet another one!",
-      "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+      "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
     } ],
     "actions" : [ {
       "serviceErrors" : [ {
         "status" : 400,
         "code" : "METHOD_LEVEL_ERROR",
         "message" : "And this is such a method-level error",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
       } ],
       "name" : "doAction",
       "doc" : "Ensures that action methods can specify a method-level service error.",

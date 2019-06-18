@@ -1,7 +1,7 @@
 {
   "name" : "collection",
   "path" : "/collection",
-  "schema" : "com.linkedin.restli.tools.errors.DummyRecord",
+  "schema" : "com.linkedin.restli.tools.DummyRecord",
   "doc" : "Collection resource to test IDL generation with defined service errors.\n This resource also tests that service errors can be defined only at the method level.\n\ngenerated from: com.linkedin.restli.tools.errors.ServiceErrorCollectionResource",
   "collection" : {
     "identifier" : {
@@ -14,12 +14,12 @@
         "status" : 400,
         "code" : "METHOD_LEVEL_ERROR",
         "message" : "And this is such a method-level error",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
       }, {
         "status" : 403,
         "code" : "YET_ANOTHER_METHOD_LEVEL_ERROR",
         "message" : "I can't believe there's another one",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
       } ],
       "method" : "create",
       "doc" : "This ensures that annotation-specified CRUD methods can specify method-level service errors.\n It also ensures that multiple method-level service errors can be specified."
@@ -28,7 +28,7 @@
         "status" : 400,
         "code" : "METHOD_LEVEL_ERROR",
         "message" : "And this is such a method-level error",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
       } ],
       "method" : "get",
       "doc" : "This ensures that template CRUD methods can specify a method-level service error."
@@ -44,7 +44,7 @@
         "status" : 422,
         "code" : "DOUBLE_PARAMETER_ERROR",
         "message" : "Method-level parameter error for 2 parameters",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails",
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails",
         "parameters" : [ "param1", "param2" ]
       } ],
       "name" : "altF4",
@@ -61,18 +61,18 @@
         "status" : 400,
         "code" : "METHOD_LEVEL_ERROR",
         "message" : "And this is such a method-level error",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
       }, {
         "status" : 422,
         "code" : "PARAMETER_ERROR",
         "message" : "This looks like a method-level parameter error",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails",
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails",
         "parameters" : [ "param" ]
       }, {
         "status" : 422,
         "code" : "DOUBLE_PARAMETER_ERROR",
         "message" : "Method-level parameter error for 2 parameters",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails",
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails",
         "parameters" : [ "param1", "param2" ]
       } ],
       "name" : "ctrlAltDelete",
@@ -92,7 +92,7 @@
         "status" : 422,
         "code" : "PARAMETER_ERROR",
         "message" : "This looks like a method-level parameter error",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails",
+        "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails",
         "parameters" : [ "param" ]
       } ],
       "name" : "ctrlF",

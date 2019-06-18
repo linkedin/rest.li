@@ -1,7 +1,7 @@
 {
   "name" : "annotation",
   "path" : "/annotation",
-  "schema" : "com.linkedin.restli.tools.returnentity.ReturnMe",
+  "schema" : "com.linkedin.restli.tools.DummyRecord",
   "doc" : "Simple resource to test IDL generation with \"return entity\" methods using annotations as indicators.\n\ngenerated from: com.linkedin.restli.tools.returnentity.AnnotationResource",
   "collection" : {
     "identifier" : {

@@ -29,12 +29,11 @@ import com.linkedin.restli.server.annotations.ServiceErrorDef;
 import com.linkedin.restli.server.annotations.ServiceErrors;
 import com.linkedin.restli.server.annotations.SuccessResponse;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
-import com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyRecord;
-import com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyServiceError;
+import com.linkedin.restli.tools.DummyRecord;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.linkedin.restli.tools.errors.ServiceErrorTestDataModels.DummyServiceError.Codes.*;
+import static com.linkedin.restli.tools.errors.DummyServiceError.Codes.*;
 
 /**
  * Association resource to test IDL generation with defined service errors.

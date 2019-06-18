@@ -110,7 +110,12 @@ public class TestRestLiSnapshotExporter
                 "sample-com.linkedin.restli.tools.sample.greetings.snapshot.json",
                 "sample-com.linkedin.restli.tools.sample.customKeyAssociation.snapshot.json"} },
             { "returnEntity", new String[] { "com.linkedin.restli.tools.returnentity" }, new String[] {
-                "returnEntity-annotation.snapshot.json"} }
+                "returnEntity-annotation.snapshot.json"} },
+            { "serviceErrors", new String[] { "com.linkedin.restli.tools.errors" }, new String[] {
+                "serviceErrors-collection.snapshot.json",
+                "serviceErrors-simple.snapshot.json",
+                "serviceErrors-association.snapshot.json",
+                "serviceErrors-actions.snapshot.json" } }
         };
   }
 

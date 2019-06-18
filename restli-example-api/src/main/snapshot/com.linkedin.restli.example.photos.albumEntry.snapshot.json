@@ -3,7 +3,7 @@
     "type" : "record",
     "name" : "AlbumEntry",
     "namespace" : "com.linkedin.restli.example",
-    "doc" : "An album for rest.li",
+    "doc" : "An album for Rest.li",
     "fields" : [ {
       "name" : "albumId",
       "type" : "long"
@@ -14,6 +14,15 @@
       "name" : "addTime",
       "type" : "long",
       "doc" : "When the photo was added to the album"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "AlbumError",
+    "namespace" : "com.linkedin.restli.example",
+    "doc" : "An example error detail model",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
     } ]
   } ],
   "schema" : {
@@ -27,7 +36,7 @@
         "status" : 422,
         "code" : "BAD_REQUEST",
         "message" : "Input failed validation",
-        "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+        "errorDetailType" : "com.linkedin.restli.example.AlbumError"
       } ],
       "identifier" : "albumEntryId",
       "assocKeys" : [ {
@@ -58,12 +67,12 @@
           "status" : 403,
           "code" : "INVALID_PERMISSIONS",
           "message" : "User does not have valid permissions",
-          "errorDetailType" : "com.linkedin.restli.common.ErrorDetails"
+          "errorDetailType" : "com.linkedin.restli.example.AlbumError"
         }, {
           "status" : 422,
           "code" : "INVALID_ALBUM_ID",
           "message" : "Album id cannot be less than 0",
-          "errorDetailType" : "com.linkedin.restli.common.ErrorDetails",
+          "errorDetailType" : "com.linkedin.restli.example.AlbumError",
           "parameters" : [ "albumId" ]
         } ],
         "name" : "search",

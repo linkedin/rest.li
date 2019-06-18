@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.tools.returnentity;
 
-
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.internal.client.response.BatchEntityResponse;
 import com.linkedin.restli.server.BatchCreateKVResult;
@@ -27,7 +26,7 @@ import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.annotations.ReturnEntity;
 import com.linkedin.restli.server.resources.KeyValueResource;
-import com.linkedin.restli.tools.returnentity.ReturnEntityTestDataModels.ReturnMe;
+import com.linkedin.restli.tools.DummyRecord;
 
 
 /**
@@ -36,32 +35,32 @@ import com.linkedin.restli.tools.returnentity.ReturnEntityTestDataModels.ReturnM
  * @author Evan Williams
  */
 @RestLiCollection(name = "annotation")
-public class AnnotationResource implements KeyValueResource<Long, ReturnMe>
+public class AnnotationResource implements KeyValueResource<Long, DummyRecord>
 {
   @RestMethod.Create
   @ReturnEntity
-  public CreateKVResponse<Long, ReturnMe> create()
+  public CreateKVResponse<Long, DummyRecord> create()
   {
     return null;
   }
 
   @RestMethod.BatchCreate
   @ReturnEntity
-  public BatchCreateKVResult<Long, ReturnMe> batchCreate()
+  public BatchCreateKVResult<Long, DummyRecord> batchCreate()
   {
     return null;
   }
 
   @RestMethod.PartialUpdate
   @ReturnEntity
-  public UpdateEntityResponse<ReturnMe> update(Long id, PatchRequest<ReturnMe> patch)
+  public UpdateEntityResponse<DummyRecord> update(Long id, PatchRequest<DummyRecord> patch)
   {
     return null;
   }
 
   @RestMethod.BatchPartialUpdate
   @ReturnEntity
-  public BatchEntityResponse<Long, ReturnMe> update(BatchPatchRequest<Long, ReturnMe> patches)
+  public BatchEntityResponse<Long, DummyRecord> update(BatchPatchRequest<Long, DummyRecord> patches)
   {
     return null;
   }
