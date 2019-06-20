@@ -1,9 +1,15 @@
+27.3.3
+------
+
 27.3.2
 ------
 (RB=1709437)
 Improvements to the streaming library.
   - Simplify the logic in ByteStringWriter
   - Make CompositeWriter threadsafe.
+
+(RB=1708609)
+Guarantee the order of EntityStream callbacks in Netty Outbound Layer (downstream calls)
 
 27.3.1
 ------

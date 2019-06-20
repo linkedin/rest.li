@@ -35,6 +35,7 @@ import com.linkedin.r2.transport.http.client.AsyncPoolHandle;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import com.linkedin.r2.transport.http.client.stream.NettyRequestAdapter;
+import com.linkedin.r2.transport.http.client.stream.OrderedEntityStreamReader;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -92,7 +93,8 @@ class Http2StreamCodec extends Http2ConnectionHandler
     {
       final StreamRequest streamRequest = (StreamRequest) request;
       final Http2Headers http2Headers = NettyRequestAdapter.toHttp2Headers(streamRequest);
-      final BufferedReader reader = new BufferedReader(ctx, encoder, streamId, ((RequestWithCallback) msg).handle());
+      final BufferedReader bufferedReader = new BufferedReader(ctx, encoder, streamId, ((RequestWithCallback) msg).handle());
+      final OrderedEntityStreamReader reader = new OrderedEntityStreamReader(ctx, bufferedReader);
       streamRequest.getEntityStream().setReader(reader);
       LOG.debug("Sent HTTP/2 HEADERS frame, stream={}, end={}, headers={}, padding={}bytes",
           new Object[] { streamId, NOT_END_STREAM, http2Headers.size(), NO_PADDING});
@@ -100,7 +102,7 @@ class Http2StreamCodec extends Http2ConnectionHandler
       headersFuture.addListener(future -> {
         if (future.isSuccess())
         {
-          reader.request();
+          reader.request(BufferedReader.MAX_BUFFERED_CHUNKS);
         }
       });
     }
@@ -313,11 +315,6 @@ class Http2StreamCodec extends Http2ConnectionHandler
 
       // Releases the handle to put the channel back to the pool
       _poolHandle.release();
-    }
-
-    private void request()
-    {
-      _readHandle.request(MAX_BUFFERED_CHUNKS);
     }
   }
 }

@@ -83,7 +83,7 @@ public class ClientServerConfiguration
   }
 
   // ############ utils ############
-  static int PORT = 5921;
+  static int PORT = 10001;
 
   static Object[][] combinations(List<ClientProvider> clientProviders, List<ServerProvider> serverProviders)
   {

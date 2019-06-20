@@ -23,6 +23,7 @@ import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
 
 import com.linkedin.r2.transport.http.client.stream.NettyRequestAdapter;
+import com.linkedin.r2.transport.http.client.stream.OrderedEntityStreamReader;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
@@ -45,7 +46,7 @@ import io.netty.handler.codec.http.LastHttpContent;
   // this threshold is to mitigate the effect of the inter-play of Nagle's algorithm & Delayed ACK
   // when sending requests with small entity
   private static final int FLUSH_THRESHOLD = R2Constants.DEFAULT_DATA_CHUNK_SIZE;
-  private volatile BufferedReader _currentReader;
+  private volatile OrderedEntityStreamReader _currentReader;
 
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception
@@ -55,7 +56,7 @@ import io.netty.handler.codec.http.LastHttpContent;
       StreamRequest request = (StreamRequest) msg;
       HttpRequest nettyRequest = NettyRequestAdapter.toNettyRequest(request);
       ctx.write(nettyRequest, promise);
-      _currentReader = new BufferedReader(ctx, MAX_BUFFERED_CHUNKS, FLUSH_THRESHOLD);
+      _currentReader = new OrderedEntityStreamReader(ctx, new BufferedReader(ctx, MAX_BUFFERED_CHUNKS, FLUSH_THRESHOLD));
       request.getEntityStream().setReader(_currentReader);
     }
     else
@@ -71,7 +72,7 @@ import io.netty.handler.codec.http.LastHttpContent;
   {
     if (_currentReader != null)
     {
-      _currentReader.flush();
+      _currentReader.request(MAX_BUFFERED_CHUNKS);
     }
     else
     {
@@ -141,11 +142,6 @@ import io.netty.handler.codec.http.LastHttpContent;
     {
       _currentReader = null;
       _ctx.fireExceptionCaught(e);
-    }
-
-    private void flush()
-    {
-      _readHandle.request(_maxBufferedChunks);
     }
   }
 }
