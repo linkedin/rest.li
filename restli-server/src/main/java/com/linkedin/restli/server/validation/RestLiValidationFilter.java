@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server.validation;
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.message.Message;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.validation.ValidationResult;
@@ -125,8 +126,8 @@ public class RestLiValidationFilter implements Filter
           // Schema from the record template itself should not be used.
           DataSchema originalSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
 
-          DataSchema validatingSchema = ProjectionMaskApplier.buildSchemaByProjection(originalSchema,
-              projectionMask.getDataMap(), _nonSchemaFieldsToAllowInProjectionMask);
+          DataSchema validatingSchema = constructValidatingSchema(originalSchema, projectionMask.getDataMap(),
+              _nonSchemaFieldsToAllowInProjectionMask);
 
           // Put validating schema in scratchpad for use in onResponse
           requestContext.getFilterScratchpad().put(VALIDATING_SCHEMA_KEY, validatingSchema);
@@ -347,6 +348,13 @@ public class RestLiValidationFilter implements Filter
     }
 
     return CompletableFuture.completedFuture(null);
+  }
+
+  protected DataSchema constructValidatingSchema(DataSchema originalSchema,
+      DataMap projectionMask,
+      Collection<String> nonSchemaFieldsToAllowInProjectionMask)
+  {
+    return ProjectionMaskApplier.buildSchemaByProjection(originalSchema, projectionMask, nonSchemaFieldsToAllowInProjectionMask);
   }
 
   private void validateSingleResponse(RestLiDataValidator validator, RecordTemplate entity)
