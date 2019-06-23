@@ -18,6 +18,7 @@ package com.linkedin.data.codec;
 
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.dataformat.smile.SmileFactory;
+import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
@@ -47,7 +48,8 @@ import com.fasterxml.jackson.core.JsonParser;
 public class JacksonLICORDataCodec extends AbstractJacksonDataCodec
 {
   private static final JsonFactory TEXT_FACTORY = new JsonFactory();
-  private static final JsonFactory BINARY_FACTORY = new SmileFactory();
+  private static final JsonFactory BINARY_FACTORY =
+      new SmileFactory().enable(SmileGenerator.Feature.CHECK_SHARED_STRING_VALUES);
   private static final byte MAP_ORDINAL = 0;
   private static final byte LIST_ORDINAL = 1;
 

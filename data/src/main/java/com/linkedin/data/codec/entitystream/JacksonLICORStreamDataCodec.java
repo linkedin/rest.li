@@ -19,6 +19,7 @@ package com.linkedin.data.codec.entitystream;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.dataformat.smile.SmileFactory;
+import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -44,7 +45,8 @@ public class JacksonLICORStreamDataCodec implements StreamDataCodec
   private static volatile SymbolTableProvider _symbolTableProvider;
 
   private static final JsonFactory TEXT_FACTORY = new JsonFactory();
-  private static final JsonFactory BINARY_FACTORY = new SmileFactory();
+  private static final JsonFactory BINARY_FACTORY =
+      new SmileFactory().enable(SmileGenerator.Feature.CHECK_SHARED_STRING_VALUES);
 
   static final byte MAP_ORDINAL = 0;
   static final byte LIST_ORDINAL = 1;
