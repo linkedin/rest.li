@@ -1,5 +1,13 @@
+27.3.2
+------
+
 27.3.1
 ------
+(RB=1711993)
+Provide an extension point for constructing the validating schema
+
+(RB=1691783)
+Enable string sharing when generating LICOR binary
 
 27.3.0
 ------
