@@ -1051,7 +1051,7 @@ public class RestClient implements Client {
         }
         // for mapped keys, we will send scattered requests
         List<RequestInfo> scatteredRequests =
-            strategy.scatterRequest(request, requestContext, mappingResults.getMappedKeys());
+            strategy.scatterRequest(request, requestContext, mappingResults);
         // we are using counter instead of CountDownLatch to avoid blocking this thread in CountDownLatch.await
         final AtomicInteger reqCount = new AtomicInteger(scatteredRequests.size());
         final Map<RequestInfo, Response<T>> successResponses = new ConcurrentHashMap<>();

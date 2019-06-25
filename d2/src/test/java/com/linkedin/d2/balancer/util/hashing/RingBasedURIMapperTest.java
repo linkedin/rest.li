@@ -94,12 +94,19 @@ public class RingBasedURIMapperTest
 
     URIMappingResult<Integer> results = mapper.mapUris(requests);
     Map<URI, Set<Integer>> mapping = results.getMappedKeys();
+    Map<URI, Integer> hostToPartitionId= results.getHostPartitionInfo();
 
     // No unmapped keys
     Assert.assertTrue(results.getUnmappedKeys().isEmpty());
 
     // Without sticky routing, one host should be returned for each partition
     Assert.assertEquals(10, mapping.size());
+    Assert.assertEquals(10, hostToPartitionId.size());
+    for (Map.Entry<URI, Integer> entry : hostToPartitionId.entrySet())
+    {
+      // partition ids are correctly assigned for each URI
+      Assert.assertTrue(entry.getKey().toString().contains(String.valueOf(entry.getValue())));
+    }
 
     Set<Integer> mappedKeys = mapping.values().stream().reduce(new HashSet<>(), (e1, e2) -> {
       e1.addAll(e2);
@@ -146,6 +153,10 @@ public class RingBasedURIMapperTest
       URI uri = ring.get(hashFunction.hash(new URIRequest(request.getRequestUri())));
       Assert.assertTrue(mapping.keySet().contains(uri));
     }
+
+    // Only one partition
+    Assert.assertEquals(1, new HashSet<>(results1.getHostPartitionInfo().values()).size());
+    Assert.assertEquals(1, new HashSet<>(results2.getHostPartitionInfo().values()).size());
   }
 
   @Test
@@ -164,9 +175,11 @@ public class RingBasedURIMapperTest
     URIMappingResult<Integer> results = mapper.mapUris(requests);
     Map<URI, Set<Integer>> mapping = results.getMappedKeys();
     Map<Integer, Set<Integer>> unmappedKeys = results.getUnmappedKeys();
+    Map<URI, Integer> hostToPartition = results.getHostPartitionInfo();
 
     Assert.assertTrue(unmappedKeys.isEmpty());
     Assert.assertEquals(100, mapping.size());
+    Assert.assertEquals(100, hostToPartition.size());
   }
 
   @Test
@@ -186,9 +199,11 @@ public class RingBasedURIMapperTest
     URIMappingResult<Integer> results = mapper.mapUris(requests);
     Map<URI, Set<Integer>> mapping = results.getMappedKeys();
     Map<Integer, Set<Integer>> unmappedKeys = results.getUnmappedKeys();
+    Map<URI, Integer> hostToPartitionId= results.getHostPartitionInfo();
 
     Assert.assertTrue(unmappedKeys.isEmpty());
     Assert.assertEquals(1, mapping.size());
+    Assert.assertEquals(1, hostToPartitionId.size());
     Assert.assertEquals(1000, mapping.values().iterator().next().size());
   }
 

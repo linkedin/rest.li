@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
@@ -94,7 +93,7 @@ public class RingBasedUriMapper implements URIMapper
   {
     if (requestUriKeyPairs == null || requestUriKeyPairs.isEmpty())
     {
-      return new URIMappingResult<>(Collections.emptyMap(), Collections.emptyMap());
+      return new URIMappingResult<>(Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
     }
 
     // API assumes that all requests will be made to the same service, just use the first request to get the service name and act as sample uri
@@ -113,9 +112,10 @@ public class RingBasedUriMapper implements URIMapper
         distributeToPartitions(requestUriKeyPairs, accessor, unmapped);
 
     // Pass Two
-    Map<URI, Set<KEY>> keySetToHost = distributeToHosts(requestsByPartition, rings, hashFunction, unmapped);
+    Map<URI, Integer> hostToParitionId = new HashMap<>();
+    Map<URI, Set<KEY>> hostToKeySet = distributeToHosts(requestsByPartition, rings, hashFunction, hostToParitionId, unmapped);
 
-    return new URIMappingResult<KEY>(keySetToHost, unmapped);
+    return new URIMappingResult<KEY>(hostToKeySet, unmapped, hostToParitionId);
   }
 
   /**
@@ -192,12 +192,16 @@ public class RingBasedUriMapper implements URIMapper
     return Collections.singletonMap(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, requestUriKeyPairs);
   }
 
-  private <KEY> Map<URI, Set<KEY>> distributeToHosts(Map<Integer, List<URIKeyPair<KEY>>> requestsByParititonId,
-      Map<Integer, Ring<URI>> rings, HashFunction<Request> hashFunction, Map<Integer, Set<KEY>> unmapped)
+  private <KEY> Map<URI, Set<KEY>> distributeToHosts(
+      Map<Integer, List<URIKeyPair<KEY>>> requestsByParititonId,
+      Map<Integer, Ring<URI>> rings,
+      HashFunction<Request> hashFunction,
+      Map<URI, Integer> hostToPartitionId,
+      Map<Integer, Set<KEY>> unmapped)
   {
     if (hashFunction instanceof RandomHash)
     {
-      return distributeToHostNonSticky(requestsByParititonId, rings, unmapped);
+      return distributeToHostNonSticky(requestsByParititonId, rings, hostToPartitionId, unmapped);
     }
 
     Map<URI, Set<KEY>> hostToKeySet = new HashMap<>();
@@ -212,6 +216,7 @@ public class RingBasedUriMapper implements URIMapper
         if (resolvedHost == null)
         {
           // under custom use case, key will be null, in which case we will just return a map from partition id to empty set
+          // Users should be able to understand what partitions do not have available hosts by examining the keys in "unmapped"
           Set<KEY> unmappedKeys = convertURIKeyPairListToKeySet(entry.getValue());
           unmapped.computeIfAbsent(entry.getKey(), k -> new HashSet<>()).addAll(unmappedKeys);
           break;
@@ -219,6 +224,7 @@ public class RingBasedUriMapper implements URIMapper
         else
         {
           // under custom use case, key will be null, in which case we will just return a map from uri to empty set
+          hostToPartitionId.putIfAbsent(resolvedHost, entry.getKey());
           Set<KEY> newSet = hostToKeySet.computeIfAbsent(resolvedHost, host -> new HashSet<>());
           if (request.getKey() != null)
           {
@@ -236,7 +242,7 @@ public class RingBasedUriMapper implements URIMapper
    * keys to those partitions will be merged into one set.
    */
   private <KEY> Map<URI, Set<KEY>> distributeToHostNonSticky(Map<Integer, List<URIKeyPair<KEY>>> requestsByParititonId,
-      Map<Integer, Ring<URI>> rings, Map<Integer, Set<KEY>> unmapped)
+      Map<Integer, Ring<URI>> rings, Map<URI, Integer> hostToPartitionId, Map<Integer, Set<KEY>> unmapped)
   {
     Map<URI, Set<KEY>> hostToKeySet = new HashMap<>();
     for (Map.Entry<Integer, List<URIKeyPair<KEY>>> entry : requestsByParititonId.entrySet())
@@ -250,6 +256,7 @@ public class RingBasedUriMapper implements URIMapper
       }
       else
       {
+        hostToPartitionId.putIfAbsent(resolvedHost, entry.getKey());
         hostToKeySet.computeIfAbsent(resolvedHost, host -> new HashSet<>()).addAll(allKeys);
       }
     }

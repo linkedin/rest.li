@@ -410,10 +410,28 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
     }));
   }
 
-  @SuppressWarnings({"rawtypes", "unchecked"})
+  /**
+   * @deprecated Use {@link DefaultScatterGatherStrategy#scatterRequest(com.linkedin.restli.client.Request, com.linkedin.r2.message.RequestContext, com.linkedin.d2.balancer.util.URIMappingResult)}
+   * This method is deprecated and replaced by a more expressive version
+   */
+  @Deprecated
   @Override
   public <K, T> List<RequestInfo> scatterRequest(Request<T> request, RequestContext requestContext,
                                                  Map<URI, Set<K>> mappedKeys)
+  {
+    return defaultScatterRequestImpl(request, requestContext, mappedKeys);
+  }
+
+  @Override
+  public <K, T> List<RequestInfo> scatterRequest(Request<T> request, RequestContext requestContext,
+      URIMappingResult<K> mappingResult)
+  {
+    return defaultScatterRequestImpl(request, requestContext, mappingResult.getMappedKeys());
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private <K, T> List<RequestInfo> defaultScatterRequestImpl(Request<T> request, RequestContext requestContext,
+      Map<URI, Set<K>> mappedKeys)
   {
     if (!isSupportedScatterGatherRequest(request))
     {
@@ -424,24 +442,24 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
     {
       // for any non-BATCH request, we just fan out the same request. Custom strategy needs to override
       // this if this does not satisfy its logic.
-      Request scatteredRequest = request;
+      Request<T> scatteredRequest = request;
       if (entry.getValue() != null && !entry.getValue().isEmpty())
       {
         // we only scatter batched requests when D2 host mapping result contains keys, empty key indicates
         // custom partition id specified in ScatterGatherStrategy.getUris method.
         if (request instanceof BatchGetRequest ||
-                request instanceof BatchGetKVRequest ||
-                request instanceof BatchGetEntityRequest ||
-                request instanceof BatchDeleteRequest)
+            request instanceof BatchGetKVRequest ||
+            request instanceof BatchGetEntityRequest ||
+            request instanceof BatchDeleteRequest)
         {
           scatteredRequest = buildScatterBatchRequestByKeys((BatchRequest) request, entry.getValue(), null);
         }
         else if (request instanceof BatchUpdateRequest ||
-                request instanceof BatchPartialUpdateRequest ||
-                request instanceof BatchPartialUpdateEntityRequest )
+            request instanceof BatchPartialUpdateRequest ||
+            request instanceof BatchPartialUpdateEntityRequest )
         {
           scatteredRequest = buildScatterBatchRequestByKeys((BatchRequest) request, null,
-                  keyMapToInput((BatchRequest) request, entry.getValue()));
+              keyMapToInput((BatchRequest) request, entry.getValue()));
         }
       }
       return new RequestInfo(scatteredRequest, createRequestContextWithTargetHint(requestContext, entry.getKey()));

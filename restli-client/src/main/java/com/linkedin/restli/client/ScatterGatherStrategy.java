@@ -76,14 +76,32 @@ public interface ScatterGatherStrategy
    * Disassemble a request to individual request per key or other custom partition ids, given d2 routing information.
    * Returns a map of {@link Request}, one per host to be sent to. Keys routed to this host will be
    * included in this request by setting target host hint.
+   *
+   * @deprecated use {@link ScatterGatherStrategy#scatterRequest(com.linkedin.restli.client.Request, com.linkedin.r2.message.RequestContext, com.linkedin.d2.balancer.util.URIMappingResult)}
+   *
    * @param request The request to be disassembled
    * @param mappingKeys mapping between target host and mapped batch keys. An empty set in the entry value
    *                    indicates the case where custom partition ids are specified in {@link URIKeyPair}.
    * @param <K> batch request key type.
    */
+  @Deprecated
   <K, T> List<RequestInfo> scatterRequest(Request<T> request, RequestContext requestContext,
                                           Map<URI, Set<K>> mappingKeys);
 
+
+
+  /**
+   * Disassemble a request to individual request per key or other custom partition ids, given d2 routing information.
+   * Returns a map of {@link Request}, one per host to be sent to. Keys routed to this host will be
+   * included in this request by setting target host hint.
+   *
+   * @param request The request to be disassembled
+   * @param mappingResult result container that contains mapping between target host and mapped batch keys.
+   *                      An empty set in the entry value indicates the case where custom partition ids are specified in {@link URIKeyPair}.
+   * @param <K> batch request key type.
+   */
+  <K, T> List<RequestInfo> scatterRequest(Request<T> request, RequestContext requestContext,
+      URIMappingResult<K> mappingResult);
 
   /**
    * Merge all responses from scattered requests and unmapped keys into a final response, and invoke callback based

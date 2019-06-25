@@ -1,5 +1,10 @@
+27.3.4
+------
+
 27.3.3
 ------
+(RB=1714212)
+Modify scatter gather API to allow more flexibility in custom use case
 
 27.3.2
 ------

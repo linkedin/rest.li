@@ -37,11 +37,14 @@ public class URIMappingResult<KEY>
   private final Map<URI, Set<KEY>> _mappedKeys;
   // mapping from partition ids to all keys that are failed to be mapped in that partition
   private final Map<Integer, Set<KEY>> _unmappedKeys;
+  // mapping from host to the partition it belongs
+  private final Map<URI, Integer> _hostToPartitionId;
 
-  public URIMappingResult(Map<URI, Set<KEY>> mappingResults, Map<Integer, Set<KEY>> unmappedKeys)
+  public URIMappingResult(Map<URI, Set<KEY>> mappingResults, Map<Integer, Set<KEY>> unmappedKeys, Map<URI, Integer> hostToPartitionId)
   {
     _mappedKeys = Collections.unmodifiableMap(mappingResults);
     _unmappedKeys = Collections.unmodifiableMap(unmappedKeys);
+    _hostToPartitionId = Collections.unmodifiableMap(hostToPartitionId);
   }
 
   public Map<URI, Set<KEY>> getMappedKeys()
@@ -53,6 +56,8 @@ public class URIMappingResult<KEY>
   {
     return _unmappedKeys;
   }
+
+  public Map<URI, Integer> getHostPartitionInfo() { return _hostToPartitionId; }
 
   @Override
   public boolean equals(Object o)

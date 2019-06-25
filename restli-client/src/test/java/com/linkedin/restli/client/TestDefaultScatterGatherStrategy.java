@@ -23,6 +23,7 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.URIMapper;
 import com.linkedin.d2.balancer.util.URIKeyPair;
 import com.linkedin.d2.balancer.util.URIMappingResult;
+import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.data.DataMap;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.client.response.BatchKVResponse;
@@ -87,6 +88,8 @@ public class TestDefaultScatterGatherStrategy
   private static List<URIKeyPair<Long>> _batchToUris;
   private static Map<URI, Set<Long>> _mappedKeys;
   private static Map<Integer, Set<Long>> _unmappedKeys;
+  private static Map<URI, Integer> _hostToPartitionId;
+  private static URIMappingResult<Long> _mappingResult;
   private static URI _host1URI;
   private static URI _host2URI;
 
@@ -118,6 +121,10 @@ public class TestDefaultScatterGatherStrategy
     _mappedKeys.put(_host1URI, new HashSet<>(Arrays.asList(1L, 2L)));
     _mappedKeys.put(_host2URI, new HashSet<>(Arrays.asList(3L)));
     _unmappedKeys = Collections.singletonMap(0, Collections.singleton(4L));
+    _hostToPartitionId = new HashMap<>();
+    _hostToPartitionId.put(_host1URI, DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+    _hostToPartitionId.put(_host2URI, DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+    _mappingResult = new URIMappingResult<>(_mappedKeys, _unmappedKeys, _hostToPartitionId);
   }
 
   @DataProvider
@@ -182,7 +189,7 @@ public class TestDefaultScatterGatherStrategy
   {
     Request<?> request = mock(Request.class);
     when(request.getMethod()).thenReturn(ResourceMethod.BATCH_CREATE);
-    _sgStrategy.scatterRequest(request, new RequestContext(), Collections.emptyMap());
+    _sgStrategy.scatterRequest(request, new RequestContext(), new URIMappingResult<Long>(Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap()));
   }
 
   @Test(dataProvider="illegalRequestMethodProvider", expectedExceptions = {UnsupportedOperationException.class})
@@ -227,7 +234,7 @@ public class TestDefaultScatterGatherStrategy
   @Test
   public void testMapUris() throws ServiceUnavailableException
   {
-    URIMappingResult<Long> expectedMappingResult = new URIMappingResult<>(_mappedKeys, _unmappedKeys);
+    URIMappingResult<Long> expectedMappingResult = new URIMappingResult<>(_mappedKeys, _unmappedKeys, _hostToPartitionId);
     when(_uriMapper.mapUris(_batchToUris)).thenReturn(expectedMappingResult);
     URIMappingResult<Long> mappingResult = _sgStrategy.mapUris(_batchToUris);
     Assert.assertEquals(mappingResult, expectedMappingResult);
@@ -263,7 +270,7 @@ public class TestDefaultScatterGatherStrategy
                                  URI secondHost)
   {
     RequestContext requestContext = new RequestContext();
-    List<RequestInfo> scatteredRequests = _sgStrategy.scatterRequest(request, requestContext, _mappedKeys);
+    List<RequestInfo> scatteredRequests = _sgStrategy.scatterRequest(request, requestContext, _mappingResult);
     Assert.assertNotNull(scatteredRequests);
     Assert.assertEquals(scatteredRequests.size(), 2);
     for (RequestInfo req : scatteredRequests)
