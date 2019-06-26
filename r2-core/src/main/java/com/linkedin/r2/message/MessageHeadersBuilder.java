@@ -102,6 +102,13 @@ public interface MessageHeadersBuilder<B extends MessageHeadersBuilder<B>>
   B clearHeaders();
 
   /**
+   * Remove a specific headers from this message.
+   *
+   * @return this builder
+   */
+  B removeHeader(String header);
+
+  /**
    * Remove all cookies from this message.
    *
    * @return this builder

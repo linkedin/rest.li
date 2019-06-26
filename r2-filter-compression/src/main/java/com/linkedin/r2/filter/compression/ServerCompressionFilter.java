@@ -191,6 +191,7 @@ public class ServerCompressionFilter implements RestFilter
             if (compressed.length < res.getEntity().length())
             {
               RestResponseBuilder resCompress = res.builder();
+              resCompress.removeHeader(HttpConstants.CONTENT_LENGTH);
               resCompress.addHeaderValue(HttpConstants.CONTENT_ENCODING, compressor.getContentEncodingName());
               resCompress.setEntity(compressed);
               res = resCompress.build();

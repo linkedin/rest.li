@@ -119,6 +119,14 @@ public abstract class BaseMessageBuilder<B extends BaseMessageBuilder<B>>
   }
 
   @Override
+  public B removeHeader(String name)
+  {
+    validateFieldName(name);
+    _headers.remove(name);
+    return thisBuilder();
+  }
+
+  @Override
   public B clearCookies()
   {
     _cookies.clear();
