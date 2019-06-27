@@ -41,7 +41,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericFixed;
 import org.apache.avro.generic.GenericRecord;
@@ -55,6 +54,8 @@ import org.apache.avro.util.Utf8;
  */
 public class DataTranslator implements DataTranslatorContext
 {
+  protected DataTranslationOptions _dataTranslationOptions;
+
   /**
    * Convert the given {@link DataMap} conforming to the provided {@link RecordDataSchema} to a {@link GenericRecord}.
    *
@@ -69,7 +70,38 @@ public class DataTranslator implements DataTranslatorContext
   public static GenericRecord dataMapToGenericRecord(DataMap map, RecordDataSchema dataSchema) throws DataTranslationException
   {
     Schema avroSchema = SchemaTranslator.dataToAvroSchema(dataSchema);
-    return dataMapToGenericRecord(map, dataSchema, avroSchema);
+    return dataMapToGenericRecord(map, dataSchema, avroSchema, null);
+  }
+
+  /**
+   * Convert the given {@link DataMap} conforming to the provided {@link RecordDataSchema}
+   * to a {@link GenericRecord} with the provided Avro {@link Schema}.
+   *
+   * <p>
+   * The provided Avro {@link Schema} should be generated from a record schema that
+   * is compatible with the provided {@link RecordDataSchema} using {@link SchemaTranslator}.
+   * If this is not the case, then data translation is likely to fail.
+   *
+   * @param map provides the {@link DataMap} to translate.
+   * @param dataSchema provides the {@link RecordDataSchema} for the {@link DataMap}.
+   * @param avroSchema the Avro {@link Schema} for the resulting {@link GenericRecord}.
+   * @param options the DataMapToAvroRecordTranslationOptions {@link DataMapToAvroRecordTranslationOptions}
+   * @return a translated {@link GenericRecord}.
+   * @throws DataTranslationException if there are errors that prevent translation.
+   */
+  public static GenericRecord dataMapToGenericRecord(DataMap map, RecordDataSchema dataSchema, Schema avroSchema, DataMapToAvroRecordTranslationOptions options) throws DataTranslationException
+  {
+    DataMapToGenericRecordTranslator translator = new DataMapToGenericRecordTranslator(options);
+    try
+    {
+      GenericRecord avroRecord = (GenericRecord) translator.translate(map, dataSchema, avroSchema);
+      translator.checkMessageListForErrorsAndThrowDataTranslationException();
+      return avroRecord;
+    }
+    catch (RuntimeException e)
+    {
+      throw translator.dataTranslationException(e);
+    }
   }
 
   /**
@@ -89,17 +121,7 @@ public class DataTranslator implements DataTranslatorContext
    */
   public static GenericRecord dataMapToGenericRecord(DataMap map, RecordDataSchema dataSchema, Schema avroSchema) throws DataTranslationException
   {
-    DataMapToGenericRecordTranslator translator = new DataMapToGenericRecordTranslator();
-    try
-    {
-      GenericRecord avroRecord = (GenericRecord) translator.translate(map, dataSchema, avroSchema);
-      translator.checkMessageListForErrorsAndThrowDataTranslationException();
-      return avroRecord;
-    }
-    catch (RuntimeException e)
-    {
-      throw translator.dataTranslationException(e);
-    }
+    return dataMapToGenericRecord(map, dataSchema, avroSchema, null);
   }
 
   /**
@@ -113,7 +135,22 @@ public class DataTranslator implements DataTranslatorContext
    */
   public static DataMap genericRecordToDataMap(GenericRecord record, RecordDataSchema dataSchema, Schema avroSchema) throws DataTranslationException
   {
-    AvroGenericToDataTranslator translator = new AvroGenericToDataTranslator();
+    return genericRecordToDataMap(record, dataSchema, avroSchema,null);
+  }
+
+  /**
+   * Translate the {@link GenericRecord} to a {@link DataMap}.
+   *
+   * @param record provides the {@link GenericRecord} to translate.
+   * @param dataSchema provides the {@link RecordDataSchema} to translate to.
+   * @param avroSchema provides the Avro {@link Schema} corresponding to the provided {@link RecordDataSchema}.
+   * @param options the AvroRecordToDataMapTranslationOptions {@link AvroRecordToDataMapTranslationOptions}
+   * @return a translated {@link DataMap}.
+   * @throws DataTranslationException if there are errors that prevent translation.
+   */
+  public static DataMap genericRecordToDataMap(GenericRecord record, RecordDataSchema dataSchema, Schema avroSchema, AvroRecordToDataMapTranslationOptions options) throws DataTranslationException
+  {
+    AvroGenericToDataTranslator translator = new AvroGenericToDataTranslator(options);
     try
     {
       DataMap dataMap = (DataMap) translator.translate(record, dataSchema, avroSchema);
@@ -149,6 +186,11 @@ public class DataTranslator implements DataTranslatorContext
   {
   }
 
+  protected DataTranslator(DataTranslationOptions options)
+  {
+    _dataTranslationOptions = options;
+  }
+
   @Override
   public void appendMessage(String format, Object... args)
   {
@@ -179,6 +221,10 @@ public class DataTranslator implements DataTranslatorContext
   private static class AvroGenericToDataTranslator extends DataTranslator
   {
     private final static Object BAD_RESULT = CustomDataTranslator.DATA_BAD_RESULT;
+    private AvroGenericToDataTranslator(DataTranslationOptions options)
+    {
+      super(options);
+    }
 
     private Object translate(Object value, DataSchema dataSchema, Schema avroSchema)
     {
@@ -371,7 +417,7 @@ public class DataTranslator implements DataTranslatorContext
         case ENUM:
         case FIXED:
         case RECORD:
-          key = memberAvroSchema.getFullName();
+          key = getUnionMemberKey(memberAvroSchema);
           break;
         default:
           key = memberAvroSchema.getType().toString().toLowerCase();
@@ -436,6 +482,10 @@ public class DataTranslator implements DataTranslatorContext
   {
     private static final Object BAD_RESULT = CustomDataTranslator.AVRO_BAD_RESULT;
     private final AvroAdapter _avroAdapter = AvroAdapterFinder.getAvroAdapter();
+    private DataMapToGenericRecordTranslator(DataTranslationOptions options)
+    {
+      super(options);
+    }
 
     private Object translate(Object value, DataSchema dataSchema, Schema avroSchema)
     {
@@ -746,7 +796,7 @@ public class DataTranslator implements DataTranslatorContext
         case ENUM:
         case FIXED:
         case RECORD:
-          name = member.getFullName();
+          name = getUnionMemberKey(member);
           break;
         default:
           name = member.getType().toString().toLowerCase();
@@ -756,6 +806,28 @@ public class DataTranslator implements DataTranslatorContext
     }
     appendMessage("cannot find %1$s in union %2$s", key, avroSchema);
     return null;
+  }
+
+  /**
+   * This method helps to find the right union member key for Avro Schema,
+   * when the data translation happens between schemas with overridden namespaces.
+   * Users pass the Avro - Pegasus namespaceOverrideMapping in DataTranslationOptions,
+   * from the map, data translator is able to match the overridden Avro namespace to the correlated Pegasus namespace.
+   *
+   * @param schema Avro Schema
+   * @return the union member key string
+   */
+  protected String getUnionMemberKey(Schema schema)
+  {
+    if (_dataTranslationOptions != null && _dataTranslationOptions.getAvroToDataSchemaNamespaceMapping() != null)
+    {
+      Map<String, String> namespaceOverrideMapping = _dataTranslationOptions.getAvroToDataSchemaNamespaceMapping();
+      if (namespaceOverrideMapping.containsKey(schema.getNamespace()))
+      {
+        return schema.getFullName().replaceFirst(schema.getNamespace(), namespaceOverrideMapping.get(schema.getNamespace()));
+      }
+    }
+    return schema.getFullName();
   }
 
   private static byte[] translateBytes(Object value)

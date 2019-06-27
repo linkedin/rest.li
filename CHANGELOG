@@ -1,5 +1,10 @@
+27.3.6
+------
+
 27.3.5
 ------
+(RB=1716974)
+Fix for Avro to Pegasus data translation union member key namespace override bug
 
 27.3.4
 ------

@@ -40,6 +40,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -1275,6 +1276,104 @@ public class TestDataTranslator
     DataMap toTest = DataTranslator.genericRecordToDataMap(record, pegasusSchema, avroShema);
 
     assertEquals(safeCast(toTest.get(arrayField), List.class), arrayFieldValue);
+  }
+
+  /**
+   * This test is for testing data translates correctly from Avro to Pegasus and Pegasus to Avro
+   * in namespaces mismatching case (e.g. overridden namespace) for schemas with option fields use case.
+   *
+   * To enable the namespaces overridden support, we introduce a new Object - DataTranslationOptions to DataTranslator
+   * and add a field - namespaceOverrideMapping, which enables customers to pass the Avro - Pegasus overridden namespaces map,
+   * when the namespace for one of these schemas is overridden.
+   * So that DataTranslator is able to find the corresponding schema between Avro and Pegasus.
+   */
+  @Test
+  public void testNamespaceOverrideWithOptionalField() throws IOException
+  {
+    String schemaText = "{\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"namespace\" : \"a.b.c\",\n" +
+        "  \"fields\" : [\n" +
+        "    { \"name\" : \"a\", \"type\" : { \"type\" : \"record\", \"name\" : \"FooFoo\", \"fields\" : [ { \"name\" : \"b\", \"type\" : \"int\" } ] }, \"optional\": true }\n" +
+        "  ]\n" +
+        "}\n";
+
+    RecordDataSchema recordDataSchema = (RecordDataSchema) TestUtil.dataSchemaFromString(schemaText);
+
+    String avroSchemaText = "{\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"namespace\" : \"avro.a.b.c\",\n" +
+        "  \"fields\" : [\n" +
+        "    { \"name\" : \"a\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"FooFoo\", \"fields\" : [ { \"name\" : \"b\", \"type\" : \"int\" } ] } ] }\n" +
+        "  ]\n" +
+        "}\n";
+
+    Schema avroSchema = Schema.parse(avroSchemaText);
+
+    GenericRecord avroRecord = AvroUtil.genericRecordFromJson(TestAvroUtil.namespaceProcessor("{ \"a\" : { \"##NS(avro.a.b.c.)FooFoo\": { \"b\" : 1 } } }"), avroSchema);
+
+    // Test Avro-to-Pegasus
+    AvroRecordToDataMapTranslationOptions avroRecordToDataMapTranslationOptions = new AvroRecordToDataMapTranslationOptions();
+    avroRecordToDataMapTranslationOptions.setAvroToDataSchemaNamespaceMapping(Collections.singletonMap("avro.a.b.c", "a.b.c"));
+    DataMap pegasusDataMap = DataTranslator.genericRecordToDataMap(avroRecord, recordDataSchema, avroSchema, avroRecordToDataMapTranslationOptions);
+    Assert.assertEquals(pegasusDataMap.getDataMap("a").get("b"), 1);
+
+    // Test Pegasus-to-Avro
+    DataMapToAvroRecordTranslationOptions dataMapToAvroRecordTranslationOptions = new DataMapToAvroRecordTranslationOptions();
+    dataMapToAvroRecordTranslationOptions.setAvroToDataSchemaNamespaceMapping(Collections.singletonMap("avro.a.b.c", "a.b.c"));
+    GenericRecord reconvertedAvroRecord = DataTranslator.dataMapToGenericRecord(pegasusDataMap, recordDataSchema, avroSchema, dataMapToAvroRecordTranslationOptions);
+    Assert.assertEquals(((GenericRecord) reconvertedAvroRecord.get("a")).get("b"), 1);
+  }
+
+  /**
+   * This test is for testing data translates correctly from Avro to Pegasus and Pegasus to Avro
+   * in namespaces mismatching case (e.g. overridden namespace) for schemas with unions use case.
+   *
+   * To enable the namespaces overridden support, we introduce a new Object - DataTranslationOptions to DataTranslator
+   * and add a field - namespaceOverrideMapping, which enables customers to pass the Avro - Pegasus overridden namespaces map,
+   * when the namespace for one of these schemas is overridden.
+   * So that DataTranslator is able to find the corresponding schema between Avro and Pegasus.
+   */
+  @Test
+  public void testNamespaceOverrideWithUnion() throws IOException
+  {
+    String schemaText = "{\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"namespace\" : \"a.b.c\",\n" +
+        "  \"fields\" : [\n" +
+        "    { \"name\" : \"a\", \"type\" : [ \"int\", { \"type\" : \"record\", \"name\" : \"FooFoo\", \"fields\" : [ { \"name\" : \"b\", \"type\" : \"int\" } ] } ] }\n" +
+        "  ]\n" +
+        "}\n";
+
+    RecordDataSchema recordDataSchema = (RecordDataSchema) TestUtil.dataSchemaFromString(schemaText);
+
+    String avroSchemaText = "{\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"namespace\" : \"avro.a.b.c\",\n" +
+        "  \"fields\" : [\n" +
+        "    { \"name\" : \"a\", \"type\" : [ \"int\", { \"type\" : \"record\", \"name\" : \"FooFoo\", \"fields\" : [ { \"name\" : \"b\", \"type\" : \"int\" } ] } ] }\n" +
+        "  ]\n" +
+        "}\n";
+
+    Schema avroSchema = Schema.parse(avroSchemaText);
+
+    GenericRecord avroRecord = AvroUtil.genericRecordFromJson(TestAvroUtil.namespaceProcessor("{ \"a\" : { \"##NS(avro.a.b.c.)FooFoo\": { \"b\" : 1 } } }"), avroSchema);
+
+    // Test Avro-to-Pegasus
+    AvroRecordToDataMapTranslationOptions avroRecordToDataMapTranslationOptions = new AvroRecordToDataMapTranslationOptions();
+    avroRecordToDataMapTranslationOptions.setAvroToDataSchemaNamespaceMapping(Collections.singletonMap("avro.a.b.c", "a.b.c"));
+    DataMap pegasusDataMap = DataTranslator.genericRecordToDataMap(avroRecord, recordDataSchema, avroSchema, avroRecordToDataMapTranslationOptions);
+    Assert.assertEquals(pegasusDataMap.getDataMap("a").getDataMap("a.b.c.FooFoo").get("b"), 1);
+
+    // Test Pegasus-to-Avro
+    DataMapToAvroRecordTranslationOptions dataMapToAvroRecordTranslationOptions = new DataMapToAvroRecordTranslationOptions();
+    dataMapToAvroRecordTranslationOptions.setAvroToDataSchemaNamespaceMapping(Collections.singletonMap("avro.a.b.c", "a.b.c"));
+    GenericRecord reconvertedAvroRecord = DataTranslator.dataMapToGenericRecord(pegasusDataMap, recordDataSchema, avroSchema, dataMapToAvroRecordTranslationOptions);
+    Assert.assertEquals(((GenericRecord) reconvertedAvroRecord.get("a")).get("b"), 1);
   }
 }
 
