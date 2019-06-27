@@ -1,0 +1,12 @@
+#if ($currentSchema.assocKeys)
+  <dt>AssocKeys</dt>
+  <dd style="font-family: monospace;">
+    <ul class="nobullet">
+      #foreach ($assocKeyName in $currentSchema.assocKeys)
+        <li>
+          $assocKeyName: $assocKeyMap.get($assocKeyName)
+        </li>
+      #end
+    </ul>
+  </dd>
+#end

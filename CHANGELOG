@@ -1,20 +1,20 @@
-27.3.4
-------
-
 27.3.3
 ------
+(RB=1710419)
+Generate documentation for service errors and success statuses
+
 (RB=1714212)
 Modify scatter gather API to allow more flexibility in custom use case
 
 27.3.2
 ------
+(RB=1708609)
+Guarantee the order of EntityStream callbacks in Netty Outbound Layer (downstream calls)
+
 (RB=1709437)
 Improvements to the streaming library.
   - Simplify the logic in ByteStringWriter
   - Make CompositeWriter threadsafe.
-
-(RB=1708609)
-Guarantee the order of EntityStream callbacks in Netty Outbound Layer (downstream calls)
 
 27.3.1
 ------

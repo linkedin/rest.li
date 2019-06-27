@@ -1,0 +1,35 @@
+<div class="dropdown">
+  <span class="dropdown-btn">$serviceError.code ($serviceError.status)</span>
+  <div class="dropdown-content">
+    <table>
+      <tbody>
+        <tr>
+          <th scope="row">Code</th>
+          <td style="font-family: monospace">$serviceError.code</td>
+        </tr>
+        <tr>
+          <th scope="row">HTTP Status</th>
+          <td style="font-family: monospace">$serviceError.status</td>
+        </tr>
+        #if ($serviceError.message)
+          <tr>
+            <th scope="row">Message</th>
+            <td>$serviceError.message</td>
+          </tr>
+        #end
+        #if ($serviceError.errorDetailType)
+          <tr>
+            <th scope="row">Error Detail Type</th>
+            <td><a href="$docBaseUri/data/$serviceError.errorDetailType">$serviceError.errorDetailType</a></td>
+          </tr>
+        #end
+        #if ($serviceError.parameters && !$serviceError.parameters.isEmpty())
+          <tr>
+            <th scope="row">Parameters</th>
+            <td style="font-family: monospace">$util.join(", ", $serviceError.parameters)</td>
+          </tr>
+        #end
+      </tbody>
+    </table>
+  </div>
+</div>

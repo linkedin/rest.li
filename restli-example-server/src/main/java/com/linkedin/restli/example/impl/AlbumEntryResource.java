@@ -82,6 +82,8 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
    */
   @Override
   @SuccessResponse(statuses = { HttpStatus.S_200_OK })
+  @ServiceErrors(ILLEGAL_ALBUM)
+  @ParamError(code = INVALID_ID, parameterNames = { "albumEntryId" })
   public AlbumEntry get(CompoundKey key)
   {
     return _db.getData().get(key);
@@ -102,6 +104,8 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
    */
   @Override
   @SuccessResponse(statuses = { HttpStatus.S_204_NO_CONTENT })
+  @ServiceErrors(INVALID_PERMISSIONS)
+  @ParamError(code = INVALID_ID, parameterNames = { "albumEntryId" })
   public UpdateResponse update(CompoundKey key, AlbumEntry entity)
   {
     long photoId = (Long) key.getPart("photoId");
@@ -131,7 +135,9 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
    * Remove the specified photo from the specified album
    */
   @Override
-  @SuccessResponse(statuses = { HttpStatus.S_204_NO_CONTENT })
+  @SuccessResponse(statuses = { HttpStatus.S_204_NO_CONTENT, HttpStatus.S_200_OK })
+  @ServiceErrors(INVALID_PERMISSIONS)
+  @ParamError(code = INVALID_ID, parameterNames = { "albumEntryId" })
   public UpdateResponse delete(CompoundKey key)
   {
     final boolean isRemoved = (_db.getData().remove(key) != null);
@@ -202,6 +208,8 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
    *
    */
   @Action(name = "purge", resourceLevel = ResourceLevel.COLLECTION)
+  @ServiceErrors(INVALID_PERMISSIONS)
+  @ParamError(code = INVALID_ID, parameterNames = { "albumId", "photoId" })
   public int purge(@Optional @ActionParam("albumId") Long albumId,
                    @Optional @ActionParam("photoId") Long photoId)
   {
@@ -217,8 +225,9 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
    * @return a list of {@link AlbumEntry} matching the  given parameters
    */
   @Finder("search")
-  @ServiceErrors(INVALID_PERMISSIONS)
-  @ParamError(code = INVALID_ALBUM_ID, parameterNames = { "albumId" })
+  @SuccessResponse(statuses = { HttpStatus.S_200_OK })
+  @ParamError(code = INVALID_ID, parameterNames = { "albumId", "photoId" })
+  @ParamError(code = UNSEARCHABLE_ALBUM_ID, parameterNames = { "albumId" })
   public List<AlbumEntry> search(@Optional @QueryParam("albumId") Long albumId,
                                  @Optional @QueryParam("photoId") Long photoId)
   {

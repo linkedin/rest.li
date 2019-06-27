@@ -35,8 +35,10 @@ public enum AlbumServiceError implements ServiceError
   BAD_REQUEST(HttpStatus.S_422_UNPROCESSABLE_ENTITY, "Input failed validation", AlbumError.class),
   // Method level error
   INVALID_PERMISSIONS(HttpStatus.S_403_FORBIDDEN, "User does not have valid permissions", AlbumError.class),
+  ILLEGAL_ALBUM(HttpStatus.S_451_UNAVAILABLE_FOR_LEGAL_REASONS, "This album is unavailable in your country", AlbumError.class),
   // Parameter error
-  INVALID_ALBUM_ID(HttpStatus.S_422_UNPROCESSABLE_ENTITY, "Album id cannot be less than 0", AlbumError.class);
+  INVALID_ID(HttpStatus.S_422_UNPROCESSABLE_ENTITY, "Id cannot be less than 0", AlbumError.class),
+  UNSEARCHABLE_ALBUM_ID(HttpStatus.S_422_UNPROCESSABLE_ENTITY, "Search cannot be performed on this album id", AlbumError.class);
 
   AlbumServiceError(HttpStatus status, String message, Class<? extends RecordTemplate> errorDetailType)
   {
@@ -49,7 +51,9 @@ public enum AlbumServiceError implements ServiceError
   {
     String BAD_REQUEST = "BAD_REQUEST";
     String INVALID_PERMISSIONS = "INVALID_PERMISSIONS";
-    String INVALID_ALBUM_ID = "INVALID_ALBUM_ID";
+    String ILLEGAL_ALBUM = "ILLEGAL_ALBUM";
+    String INVALID_ID = "INVALID_ID";
+    String UNSEARCHABLE_ALBUM_ID = "UNSEARCHABLE_ALBUM_ID";
   }
 
   private final HttpStatus _status;

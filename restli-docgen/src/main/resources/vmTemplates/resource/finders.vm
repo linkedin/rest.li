@@ -1,0 +1,37 @@
+<h2>Finders</h2>
+
+<dl class="methods">
+    #foreach ($finder in $finders)
+      #set ($finderSchema = $finder.finderSchema)
+      <dt>$finderSchema.name</dt>
+      <p>$!finderSchema.doc</p>
+        #if ($finderSchema.assocKeys || $finderSchema.parameters || $finderSchema.serviceErrors)
+          <dd class="method-info-box">
+            <dl>
+              #set($currentSchema = $finderSchema)
+              ## Association Keys
+              #parse("vmTemplates/resource/method/assocKeys.vm")
+              ## Parameters
+              #parse("vmTemplates/resource/method/parameters.vm")
+              ## Success responses
+              #parse("vmTemplates/resource/method/successStatuses.vm")
+              ## Service errors
+              #parse("vmTemplates/resource/method/serviceErrors.vm")
+            </dl>
+          </dd>
+        #end
+      <dd><pre class="prettyprint">curl -v -X GET $serverNodeUri$finder.capture.request.URI</pre></dd>
+      <dd>
+          <pre class="prettyprint">
+GET $serverNodeUri$finder.capture.request.URI HTTP/1.1
+
+HTTP/1.1 $finder.capture.response.status OK
+#foreach ($headerName in $finder.capture.response.headers.keySet())
+$headerName: $finder.capture.response.headers.get($headerName)
+#end
+
+$finder.prettyPrintResponseEntity
+          </pre>
+      </dd>
+    #end
+</dl>

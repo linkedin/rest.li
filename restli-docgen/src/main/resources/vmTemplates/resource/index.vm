@@ -1,0 +1,105 @@
+<html>
+<head>
+  <title>Resource::$resource.name</title>
+  <style type="text/css">
+    #include("vmTemplates/_doc.css")
+  </style>
+  <script type="application/javascript">
+    #include("vmTemplates/_prettify.js")
+  </script>
+</head>
+<body onload="prettyPrint()">
+  <div id="container">
+
+  #parse("vmTemplates/_nav.vm")
+
+  <div id="body">
+    <h1>
+      $resourceFullName Resource
+    </h1>
+
+    <dl>
+      #if ($resource.doc)
+        <p>
+          <dt>Documentation</dt>
+          <dd>$resource.doc</dd>
+        </p>
+      #end
+
+      <dt>Resource Type</dt>
+      <dd>$resourceType</dd>
+      #if ($resourceType == "collection")
+        <dt>Key</dt>
+        #set ($identifier = $resource.collection.identifier)
+        #if ($identifier.params)
+          #set ($identifierType = "<a href=$docBaseUri/data/$identifier.type>$identifier.type</a>")
+          #set ($identifierParams = "<dd><span style='font-family: monospace'>Parameter schema: <a href=$docBaseUri/data/$identifier.params>$identifier.params</a></span></dd>")
+        #else
+          #set ($identifierType = $identifier.type)
+          #set ($identifierParams = "")
+        #end
+        <dd><span style="font-family: monospace">$identifier.name: $identifierType</span></dd>
+        $identifierParams
+      #elseif ($resourceType == "association")
+        #set ($assocKeyMap = {})
+        <dt>Keys</dt>
+        #foreach ($assocKey in $resource.association.assocKeys)
+          <dd><span style="font-family: monospace">$assocKey.name: $assocKey.type</span></dd>
+          #set ($discard = $assocKeyMap.put($assocKey.name, $assocKey.type))
+        #end
+      #end
+      #if ($resource.hasSchema())
+        <dt>Item Type</dt>
+        <dd><a href="$docBaseUri/data/$resource.schema">$resource.schema</a></dd>
+      #end
+      #if ($subResources)
+        <dt>Subresources</dt>
+        #foreach ($subResource in $subResources)
+          <dd>
+            <a href="$resourceName.$subResource.name">$resourceName.$subResource.name</a>
+          </dd>
+        #end
+      #end
+      #if (!$relatedSchemas.isEmpty())
+        <dt>Related Data Schemas</dt>
+        #foreach ($recordDataSchema in $relatedSchemas)
+          <dd><a href="$docBaseUri/data/$recordDataSchema.fullName">$recordDataSchema.fullName</a></dd>
+        #end
+      #end
+      ## Resource-Level Service Errors
+      #if ($resourceLevelServiceErrors && !$resourceLevelServiceErrors.isEmpty())
+        <dt>Resource-Level Service Errors</dt>
+        #foreach ($serviceError in $resourceLevelServiceErrors)
+          <dd>
+            #parse("vmTemplates/resource/serviceErrorDropDown.vm")
+          </dd>
+        #end
+      #end
+    </dl>
+
+    #if (!$restMethods.isEmpty())
+      #parse("vmTemplates/resource/restMethods.vm")
+    #end
+
+    #if (!$finders.isEmpty())
+      #parse("vmTemplates/resource/finders.vm")
+    #end
+
+    #if (!$batchFinders.isEmpty())
+      #parse("vmTemplates/resource/batchFinders.vm")
+    #end
+
+    #if (!$actions.isEmpty())
+      #parse("vmTemplates/resource/actions.vm")
+    #end
+
+    #if (!$serviceErrors.isEmpty())
+      #parse("vmTemplates/resource/serviceErrorReference.vm")
+    #end
+  </div>
+
+  #include("vmTemplates/_footer.html")
+
+  </div>
+</body>
+</html>

@@ -39,9 +39,16 @@ ul.nobullet {
 dt {
   font-weight: bold;
 }
+
 dd {
   background:none no-repeat left top;
   padding-left: 20px;
+}
+
+dd.method-info-box {
+  background: #F0F0F0;
+  border: 1px dashed black;
+  padding: 12px;
 }
 
 dl.methods dd {
@@ -150,4 +157,36 @@ pre.prettyprint {
   border            : 1px dashed #999999;
   line-height       : 14px;
   clear:both;
+}
+
+/* Drop-down menu styling */
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  min-width: 250px;
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  font: 12pt  "Lucida Grande", "Lucida Sans Unicode", "Trebuchet MS", monospace;
+  border: 1px dashed black;
+}
+
+.dropdown span.dropdown-btn {
+  cursor: pointer;
+  color: #3A4856;
+  text-decoration: none;
+  border-bottom: 1px solid #C6C8CB;
+}
+
+.dropdown span.dropdown-btn:hover {
+  color: #000;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
 }

@@ -1,0 +1,48 @@
+<h2>REST Methods</h2>
+
+<table>
+  <thead>
+  <tr>
+    ## Method, Example Path, and Doc column headers
+    <th class="nobg">Method</th>
+    <th scope="col">Example Path</th>
+    <th scope="col">Doc</th>
+    ## Success status column header
+    #if ($restMethodsHaveSuccessStatuses)
+      <th scope="col">Success Statuses</th>
+    #end
+    ## Service error column header
+    #if ($restMethodsHaveServiceErrors)
+      <th scope="col">Service Errors</th>
+    #end
+  </tr>
+  </thead>
+  <tbody>
+      #foreach ($methodDocView in $restMethods)
+      <tr>
+        ## Method, Example Path, and Doc columns
+        <th scope="row">$methodDocView.restMethodSchema.method</th>
+        <td style="font-family: monospace">#if ($methodDocView.capture) $serverNodeUri$methodDocView.capture.request.URI #end</td>
+        <td>$!methodDocView.doc</td>
+        ## Success status column
+        #if ($restMethodsHaveSuccessStatuses)
+          <td style="font-family: monospace">
+            #if ($methodDocView.restMethodSchema.success)
+              $util.join(", ", $methodDocView.restMethodSchema.success)
+            #end
+          </td>
+        #end
+        ## Service error column
+        #if ($restMethodsHaveServiceErrors)
+          <td style="font-family: monospace">
+            #if ($methodDocView.restMethodSchema.serviceErrors)
+              #foreach ($serviceError in $methodDocView.restMethodSchema.serviceErrors)
+                #parse("vmTemplates/resource/serviceErrorDropDown.vm")
+              #end
+            #end
+          </td>
+        #end
+      </tr>
+      #end
+  </tbody>
+</table>

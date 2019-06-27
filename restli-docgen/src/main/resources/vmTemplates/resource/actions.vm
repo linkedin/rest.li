@@ -1,0 +1,69 @@
+<h2>Actions</h2>
+
+<dl class="methods">
+#foreach ($action in $actions)
+  #set ($actionSchema = $action.actionSchema)
+  <dt>$actionSchema.name</dt>
+  <p>$!actionSchema.doc</p>
+    #if ($actionSchema.parameters || $actionSchema.hasReturns() || $actionSchema.hasThrows() || $actionSchema.serviceErrors)
+      <dd class="method-info-box">
+        <dl>
+          #set($currentSchema = $actionSchema)
+          ## Parameters
+          #parse("vmTemplates/resource/method/parameters.vm")
+          ## Returns
+          #if ($actionSchema.hasReturns())
+            <dt>Returns</dt>
+            <dd style="font-family: monospace;">
+              #if ($relatedSchemas.containsKey($actionSchema.returns))
+                <a href="$docBaseUri/data/$actionSchema.returns">$actionSchema.returns</a>
+              #else
+                $actionSchema.returns
+              #end
+            </dd>
+          #end
+          ## Throws (deprecated)
+          #if ($actionSchema.hasThrows())
+            <dt>Exceptions</dt>
+            <dd style="font-family: monospace;">
+              #foreach ($error in $actionSchema.throws)
+                <a href="$docBaseUri/data/$error">$error</a>
+              #end
+            </dd>
+          #end
+          ## Success responses
+          #parse("vmTemplates/resource/method/successStatuses.vm")
+          ## Service errors
+          #parse("vmTemplates/resource/method/serviceErrors.vm")
+        </dl>
+      </dd>
+    #end
+    #if ($action.capture)
+      <dd>
+        <pre class="prettyprint">
+#*      *#curl -v -X POST $serverNodeUri$action.capture.request.URI #if ($action.prettyPrintRequestEntity)-d @request_body #end
+          #if ($action.prettyPrintRequestEntity)
+
+
+#*        *#request_body file:
+#*        *#$action.prettyPrintRequestEntity
+          #end
+        </pre>
+      </dd>
+      <dd>
+      <pre class="prettyprint">
+#*    *#GET $serverNodeUri$action.capture.request.URI HTTP/1.1
+
+#*    *#HTTP/1.1 $action.capture.response.status OK
+#*    *##foreach ($headerName in $action.capture.response.headers.keySet())
+#*      *#$headerName: $action.capture.response.headers.get($headerName)
+#*    *##end
+#*    *##if ($action.prettyPrintResponseEntity)
+
+#*      *#$action.prettyPrintResponseEntity
+#*    *##end
+      </pre>
+      </dd>
+    #end
+  #end
+</dl>

@@ -1,0 +1,24 @@
+<h2 title="All service errors defined in this resource. To see parameter info, check the service errors per-method." style="cursor: help;">
+  Service Error Reference
+</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th class="nobg">Code</th>
+      <th scope="col">HTTP Status</th>
+      <th scope="col">Message</th>
+      <th scope="col">Error Detail Type</th>
+    </tr>
+  </thead>
+  <tbody>
+    #foreach ($serviceError in $serviceErrors)
+      <tr>
+        <th scope="row" style="font-family: monospace">$serviceError.code</th>
+        <td style="font-family: monospace">$serviceError.status</td>
+        <td>$serviceError.message</td>
+        <td><a href="$docBaseUri/data/$serviceError.errorDetailType">$serviceError.errorDetailType</a></td>
+      </tr>
+    #end
+  </tbody>
+</table>

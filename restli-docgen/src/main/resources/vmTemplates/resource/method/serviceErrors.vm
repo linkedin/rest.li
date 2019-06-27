@@ -1,0 +1,12 @@
+#if ($currentSchema.serviceErrors)
+  <dt>Service Errors</dt>
+  <dd style="font-family: monospace;">
+    <ul class="nobullet">
+      #foreach ($serviceError in $currentSchema.serviceErrors)
+        <li>
+          #parse("vmTemplates/resource/serviceErrorDropDown.vm")
+        </li>
+      #end
+    </ul>
+  </dd>
+#end

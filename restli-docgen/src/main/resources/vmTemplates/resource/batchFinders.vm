@@ -1,0 +1,37 @@
+<h2>Batch Finders</h2>
+
+<dl class="methods">
+  #foreach ($batchFinder in $batchFinders)
+    #set ($batchFinderSchema = $batchFinder.batchFinderSchema)
+    <dt>$batchFinderSchema.name</dt>
+    <p>$!batchFinderSchema.doc</p>
+      #if ($batchFinderSchema.assocKeys || $batchFinderSchema.parameters || $batchFinderSchema.serviceErrors)
+        <dd class="method-info-box">
+          <dl>
+            #set($currentSchema = $batchFinderSchema)
+            ## Association Keys
+            #parse("vmTemplates/resource/method/assocKeys.vm")
+            ## Parameters
+            #parse("vmTemplates/resource/method/parameters.vm")
+            ## Success responses
+            #parse("vmTemplates/resource/method/successStatuses.vm")
+            ## Service errors
+            #parse("vmTemplates/resource/method/serviceErrors.vm")
+          </dl>
+        </dd>
+      #end
+    <dd><pre class="prettyprint">curl -v -X GET $serverNodeUri$batchFinder.capture.request.URI -H 'X-RestLi-Protocol-Version: 2.0.0' </pre></dd>
+    <dd>
+      <pre class="prettyprint">
+GET $serverNodeUri$batchFinder.capture.request.URI HTTP/1.1
+
+HTTP/1.1 $batchFinder.capture.response.status OK
+#foreach ($headerName in $batchFinder.capture.response.headers.keySet())
+$headerName: $batchFinder.capture.response.headers.get($headerName)
+#end
+
+$batchFinder.prettyPrintResponseEntity
+      </pre>
+    </dd>
+  #end
+</dl>

@@ -1,0 +1,53 @@
+#if ($currentSchema.parameters)
+  #if(($currentSchema.hasBatchParam() && $currentSchema.parameters.size() > 1) || (!$currentSchema.hasBatchParam() && $currentSchema.hasParameters()))
+    <dt>Parameters</dt>
+  #end
+
+  <dd style="font-family: monospace;">
+    <ul class="nobullet">
+      #foreach ($param in $currentSchema.parameters)
+        <li>
+          #if ($param.name == $currentSchema.getBatchParam())
+            #set($batchParam = $param)
+          #else
+            $param.name:
+            #if ($relatedSchemas.containsKey($param.type)) ## parameter is a defined dataschema
+              <a href="$docBaseUri/data/$param.type">$param.type</a>
+            #elseif ($util.getParameterItems($param)) ## parameter is an array
+              ## Need to set this paramItems inside this scope, since velocity cannot assign "null" to varible which already has a value
+              #set ($paramItems = $util.getParameterItems($param))
+              Array[
+              #if ($relatedSchemas.containsKey($paramItems))
+                <a href="$docBaseUri/data/$paramItems">$paramItems</a>
+              #else
+                  $paramItems
+              #end
+              ]
+            #else
+              $param.type
+            #end
+          #end
+        </li>
+      #end
+    </ul>
+  </dd>
+  ## if it's a batchFinder Schema, show the batch parameter
+  #if($currentSchema.getBatchParam())
+    <dt>Batch Parameter</dt>
+    <dd style="font-family: monospace;">
+      <ul class="nobullet">
+        <li>
+          $batchParam.name:
+          #set ($batchParamItems = $util.getParameterItems($batchParam))
+          Array[
+          #if ($relatedSchemas.containsKey($batchParamItems))
+            <a href="$docBaseUri/data/$batchParamItems">$batchParamItems</a>
+          #else
+            $paramItems
+          #end
+          ]
+        </li>
+      </ul>
+    </dd>
+  #end
+#end

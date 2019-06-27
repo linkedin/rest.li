@@ -48,21 +48,22 @@
       } ],
       "supports" : [ "batch_get", "delete", "get", "update" ],
       "methods" : [ {
+        "serviceErrors" : [ {
+          "status" : 451,
+          "code" : "ILLEGAL_ALBUM",
+          "message" : "This album is unavailable in your country",
+          "errorDetailType" : "com.linkedin.restli.example.AlbumError"
+        }, {
+          "status" : 422,
+          "code" : "INVALID_ID",
+          "message" : "Id cannot be less than 0",
+          "errorDetailType" : "com.linkedin.restli.example.AlbumError",
+          "parameters" : [ "albumEntryId" ]
+        } ],
         "success" : [ 200 ],
         "method" : "get",
         "doc" : "Retrieve the photo's album entry"
       }, {
-        "success" : [ 204 ],
-        "method" : "update",
-        "doc" : "Add the specified photo to the specified album.\n If a matching pair of IDs already exists, this changes the add date."
-      }, {
-        "success" : [ 204 ],
-        "method" : "delete",
-        "doc" : "Remove the specified photo from the specified album"
-      }, {
-        "method" : "batch_get"
-      } ],
-      "finders" : [ {
         "serviceErrors" : [ {
           "status" : 403,
           "code" : "INVALID_PERMISSIONS",
@@ -70,11 +71,48 @@
           "errorDetailType" : "com.linkedin.restli.example.AlbumError"
         }, {
           "status" : 422,
-          "code" : "INVALID_ALBUM_ID",
-          "message" : "Album id cannot be less than 0",
+          "code" : "INVALID_ID",
+          "message" : "Id cannot be less than 0",
+          "errorDetailType" : "com.linkedin.restli.example.AlbumError",
+          "parameters" : [ "albumEntryId" ]
+        } ],
+        "success" : [ 204 ],
+        "method" : "update",
+        "doc" : "Add the specified photo to the specified album.\n If a matching pair of IDs already exists, this changes the add date."
+      }, {
+        "serviceErrors" : [ {
+          "status" : 403,
+          "code" : "INVALID_PERMISSIONS",
+          "message" : "User does not have valid permissions",
+          "errorDetailType" : "com.linkedin.restli.example.AlbumError"
+        }, {
+          "status" : 422,
+          "code" : "INVALID_ID",
+          "message" : "Id cannot be less than 0",
+          "errorDetailType" : "com.linkedin.restli.example.AlbumError",
+          "parameters" : [ "albumEntryId" ]
+        } ],
+        "success" : [ 204, 200 ],
+        "method" : "delete",
+        "doc" : "Remove the specified photo from the specified album"
+      }, {
+        "method" : "batch_get"
+      } ],
+      "finders" : [ {
+        "serviceErrors" : [ {
+          "status" : 422,
+          "code" : "INVALID_ID",
+          "message" : "Id cannot be less than 0",
+          "errorDetailType" : "com.linkedin.restli.example.AlbumError",
+          "parameters" : [ "albumId", "photoId" ]
+        }, {
+          "status" : 422,
+          "code" : "UNSEARCHABLE_ALBUM_ID",
+          "message" : "Search cannot be performed on this album id",
           "errorDetailType" : "com.linkedin.restli.example.AlbumError",
           "parameters" : [ "albumId" ]
         } ],
+        "success" : [ 200 ],
         "name" : "search",
         "doc" : "Find all entries matching the given album and photo IDs. <code>null</code> is treated\n as a wildcard.",
         "parameters" : [ {
@@ -90,6 +128,18 @@
         } ]
       } ],
       "actions" : [ {
+        "serviceErrors" : [ {
+          "status" : 403,
+          "code" : "INVALID_PERMISSIONS",
+          "message" : "User does not have valid permissions",
+          "errorDetailType" : "com.linkedin.restli.example.AlbumError"
+        }, {
+          "status" : 422,
+          "code" : "INVALID_ID",
+          "message" : "Id cannot be less than 0",
+          "errorDetailType" : "com.linkedin.restli.example.AlbumError",
+          "parameters" : [ "albumId", "photoId" ]
+        } ],
         "name" : "purge",
         "doc" : "Delete all entries in the db with matching album/photo IDs. If either albumId or photoId\n params are not supplied they are treated as a wildcard.",
         "parameters" : [ {

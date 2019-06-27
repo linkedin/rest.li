@@ -29,6 +29,7 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.restli.restspec.ActionSchema;
+import com.linkedin.restli.restspec.ActionsSetSchema;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.AssociationSchema;
 import com.linkedin.restli.restspec.BatchFinderSchema;
@@ -38,10 +39,13 @@ import com.linkedin.restli.restspec.IdentifierSchema;
 import com.linkedin.restli.restspec.MetadataSchema;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ResourceSchema;
+import com.linkedin.restli.restspec.RestMethodSchema;
+import com.linkedin.restli.restspec.ServiceErrorSchema;
+import com.linkedin.restli.restspec.ServiceErrorsSchema;
+import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.server.ResourceLevel;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -162,6 +166,8 @@ public class RestLiResourceRelationship
       public void visitCollectionResource(VisitContext visitContext,
                                           CollectionSchema collectionSchema)
       {
+        connectErrorDetailTypeToResource(visitContext, collectionSchema);
+
         final IdentifierSchema id = collectionSchema.getIdentifier();
 
         final NamedDataSchema typeSchema = extractSchema(id.getType());
@@ -185,6 +191,8 @@ public class RestLiResourceRelationship
       public void visitAssociationResource(VisitContext visitContext,
                                            AssociationSchema associationSchema)
       {
+        connectErrorDetailTypeToResource(visitContext, associationSchema);
+
         for (AssocKeySchema key : associationSchema.getAssocKeys())
         {
           final NamedDataSchema keyTypeSchema = extractSchema(key.getType());
@@ -193,6 +201,20 @@ public class RestLiResourceRelationship
             connectSchemaToResource(visitContext, keyTypeSchema);
           }
         }
+      }
+
+      @Override
+      public void visitSimpleResource(VisitContext visitContext,
+                                      SimpleSchema simpleSchema)
+      {
+        connectErrorDetailTypeToResource(visitContext, simpleSchema);
+      }
+
+      @Override
+      public void visitActionSetResource(VisitContext visitContext,
+                                         ActionsSetSchema actionSetSchema)
+      {
+        connectErrorDetailTypeToResource(visitContext, actionSetSchema);
       }
 
       @Override
@@ -229,10 +251,20 @@ public class RestLiResourceRelationship
       }
 
       @Override
+      public void visitRestMethod(VisitContext visitContext,
+                                  RecordTemplate parentResource,
+                                  RestMethodSchema restMethodSchema)
+      {
+        connectErrorDetailTypeToResource(visitContext, restMethodSchema);
+      }
+
+      @Override
       public void visitFinder(VisitContext visitContext,
                               RecordTemplate parentResource,
                               FinderSchema finderSchema)
       {
+        connectErrorDetailTypeToResource(visitContext, finderSchema);
+
         final MetadataSchema metadata = finderSchema.getMetadata();
         if (metadata != null)
         {
@@ -249,6 +281,8 @@ public class RestLiResourceRelationship
                                   RecordTemplate parentResource,
                                   BatchFinderSchema batchFinderSchema)
       {
+        connectErrorDetailTypeToResource(visitContext, batchFinderSchema);
+
         final MetadataSchema metadata = batchFinderSchema.getMetadata();
         if (metadata != null)
         {
@@ -266,6 +300,8 @@ public class RestLiResourceRelationship
                               ResourceLevel resourceLevel,
                               ActionSchema actionSchema)
       {
+        connectErrorDetailTypeToResource(visitContext, actionSchema);
+
         final String returns = actionSchema.getReturns();
         if (returns != null)
         {
@@ -329,24 +365,45 @@ public class RestLiResourceRelationship
         _dataModels.put(schema.getFullName(), schema);
 
         final DataSchemaTraverse traveler = new DataSchemaTraverse();
-        traveler.traverse(schema, new DataSchemaTraverse.Callback()
-        {
-          @Override
-          public void callback(List<String> path, DataSchema nestedSchema)
+        traveler.traverse(schema, (path, nestedSchema) -> {
+          if (nestedSchema instanceof RecordDataSchema && nestedSchema != schema)
           {
-            if (nestedSchema instanceof RecordDataSchema && nestedSchema != schema)
-            {
-              final RecordDataSchema nestedRecordSchema = (RecordDataSchema) nestedSchema;
-              _dataModels.put(nestedRecordSchema.getFullName(), nestedRecordSchema);
-              final Node<RecordDataSchema> node = _relationships.get(nestedRecordSchema);
-              schemaNode.addAdjacentNode(node);
-            }
+            final RecordDataSchema nestedRecordSchema = (RecordDataSchema) nestedSchema;
+            _dataModels.put(nestedRecordSchema.getFullName(), nestedRecordSchema);
+            final Node<RecordDataSchema> node = _relationships.get(nestedRecordSchema);
+            schemaNode.addAdjacentNode(node);
           }
         });
 
         final Node<ResourceSchema> resourceNode = _relationships.get(visitContext.getParentSchema());
         resourceNode.addAdjacentNode(schemaNode);
         schemaNode.addAdjacentNode(resourceNode);
+      }
+
+      /**
+       * Given a record which includes {@link ServiceErrorsSchema}, scans for service errors and connects the error
+       * detail type field (if any) to the resource.
+       *
+       * @param visitContext visit context
+       * @param record record which includes {@link ServiceErrorsSchema}
+       */
+      private void connectErrorDetailTypeToResource(VisitContext visitContext, RecordTemplate record)
+      {
+        final ServiceErrorsSchema serviceErrorsSchema = new ServiceErrorsSchema(record.data());
+        if (serviceErrorsSchema.getServiceErrors() != null)
+        {
+          for (ServiceErrorSchema serviceErrorSchema : serviceErrorsSchema.getServiceErrors())
+          {
+            if (serviceErrorSchema.hasErrorDetailType())
+            {
+              final NamedDataSchema errorDetailTypeSchema = extractSchema(serviceErrorSchema.getErrorDetailType());
+              if (errorDetailTypeSchema != null)
+              {
+                connectSchemaToResource(visitContext, errorDetailTypeSchema);
+              }
+            }
+          }
+        }
       }
     };
 
@@ -356,6 +413,6 @@ public class RestLiResourceRelationship
   private final ResourceSchemaCollection _resourceSchemas;
   private final DataSchemaResolver _schemaResolver;
   private final PegasusSchemaParser _schemaParser;
-  private final SortedMap<String, NamedDataSchema> _dataModels = new TreeMap<String, NamedDataSchema>();
+  private final SortedMap<String, NamedDataSchema> _dataModels = new TreeMap<>();
   private final Graph _relationships = new Graph();
 }

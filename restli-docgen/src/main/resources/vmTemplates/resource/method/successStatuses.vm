@@ -1,0 +1,12 @@
+#if ($currentSchema.success)
+  <dt>Success Statuses</dt>
+  <dd style="font-family: monospace;">
+    <ul class="nobullet">
+      #foreach ($status in $currentSchema.success)
+        <li>
+          $status
+        </li>
+      #end
+    </ul>
+  </dd>
+#end
