@@ -2,6 +2,8 @@
 ------
 (RB=1681705)
 Add options to translate Pegasus Default fields to Avro Optioanl fields in SchemaTranslator, DataTranslator*
+(RB=1718513)
+Fix incorrect end of stream bug in MultipartMIMEInputStream
 
 27.3.5
 ------

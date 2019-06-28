@@ -129,6 +129,27 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
     }
   }
 
+  //Simulates an input stream that returns less bytes than requested even when the stream is not finished
+  private static class LessByteArrayInputStream extends StrictByteArrayInputStream
+  {
+    private int _offset = 0;
+    private final int[] _lessAmounts;
+
+    private LessByteArrayInputStream(final byte[] bytes, final int[] lessAmounts)
+    {
+      super(bytes);
+      _lessAmounts = lessAmounts;
+    }
+
+    @Override
+    public int read(byte[] b) throws IOException
+    {
+      int currentOffset = _offset;
+      _offset %= _lessAmounts.length;
+      return super.read(b, 0, _lessAmounts[currentOffset]);
+    }
+  }
+
   //Simulates an input stream that times out after a specified number of reads.
   private static class TimeoutByteArrayInputStream extends StrictByteArrayInputStream
   {
@@ -208,10 +229,11 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
 
     return new Object[][]
         {
-          //One onWritePossible() providing one write on the writeHandle which results in 1 expected write
-          {smallInputData, new StrictByteArrayInputStream(smallInputData), 1, 1},
-          //One OnWritePossible() providing three writes on the writeHandle, which results in 3 expected writes
-          {largeInputData, new StrictByteArrayInputStream(largeInputData), 3, 3},
+          //One onWritePossible() providing two write on the writeHandle which results in 1 expected write
+          {smallInputData, new StrictByteArrayInputStream(smallInputData), 2, 1},
+          //One OnWritePossible() providing four writes on the writeHandle, which results in 3 expected writes
+          //One extra write on remaining() is needed to know the end of stream.
+          {largeInputData, new StrictByteArrayInputStream(largeInputData), 4, 3},
 
           //Also verify that extra writes handles available do no harm:
           {smallInputData, new StrictByteArrayInputStream(smallInputData), 3, 1},
@@ -275,7 +297,8 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
 
     //Mock verifies:
     verify(writeHandle, times(expectedTotalWrites)).write(isA(ByteString.class));
-    verify(writeHandle, times(expectedTotalWrites)).remaining();
+    //One extra remaining() call for knowing the stream has ended.
+    verify(writeHandle, times(expectedTotalWrites + 1)).remaining();
     verify(writeHandle, never()).error(isA(Throwable.class));
     verify(writeHandle, times(1)).done();
     verifyNoMoreInteractions(writeHandle);
@@ -299,21 +322,22 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
 
     return new Object[][]
         {
-          //Represents 3 invocations of onWritePossible(), each providing 1 write on the write handle.
-          //We expect a total of 3 writes based on our chunk size.
-          //We also expect 5 invocations of writeHandle.remaining(). This is because the first two
+          //Represents 4 invocations of onWritePossible(), each providing 1 write on the write handle.
+          //We expect a total of 3 writes based on our chunk size. The last invocation is to know we
+          //reached the end of input.
+          //We also expect 7 invocations of writeHandle.remaining(). This is because the first three
           //onWritePossibles() will lead to writeHandle.remaining() being called twice (returning 1,0)
           //and the last onWritePossible() will lead to writeHandle.remaining() being called once (returning 1)
           //at which point the data is finished.
-          {largeInputData, new StrictByteArrayInputStream(largeInputData), 3, 1, 3, 5},
+          {largeInputData, new StrictByteArrayInputStream(largeInputData), 4, 1, 3, 7},
 
           //Represents 2 invocation of onWritePossible, each providing 2 writes on the write handle.
           //We expect a total of 3 writes based on our chunk size.
-          //We also expect 4 invocation of writeHandle.remaining(). This is because the first onWritePossible()
+          //We also expect 5 invocation of writeHandle.remaining(). This is because the first onWritePossible()
           //will lead to writeHandle.remaining() being called thrice (returning 2,1,0) and the second
-          //onWritePossible() will lead to writeHandle.remaining() being called once (returning 2)
+          //onWritePossible() will lead to writeHandle.remaining() being called twice (returning 2,1)
           //at which point the data is finished.
-          {largeInputData, new StrictByteArrayInputStream(largeInputData), 2, 2, 3, 4},
+          {largeInputData, new StrictByteArrayInputStream(largeInputData), 2, 2, 3, 5},
         };
   }
 
@@ -639,18 +663,15 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
   //different bytesRead values inside of the input stream reader task. Essentially we are testing:
   //
   //if (bytesRead == -1) {
-  //    1. N==-1. This signifies the stream is complete in the case that we coincidentally read to completion on the
-  //    last read from the InputStream.
-  //} else if (bytesRead == _writeChunkSize) {
-  //    2. N==Capacity. This signifies the most common case which is that we read as many bytes as we originally desired.
+  //    This signifies the stream is complete
   //} else {
-  //    3. Capacity > N >= 0. This signifies that the input stream is wrapping up and we just got the last few bytes.
-  //
+  //   This signifies that the input stream is still reading (not done).
+  //}
   @DataProvider(name = "differentDataSourceSizes")
   public Object[][] differentDataSourceSizes() throws Exception
   {
     //The data source is evenly divisible by the number of chunks. This should handle case 1 and it should
-    //also handle case 2.
+    //also handle case 2 where N == Capacity.
     final StringBuilder multipleEvenlyDivisibleChunksBuilder = new StringBuilder();
     for (int i = 0; i < TEST_CHUNK_SIZE * 3; i++)
     {
@@ -658,7 +679,7 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
     }
     final byte[] multipleEvenlyDivisibleChunks = multipleEvenlyDivisibleChunksBuilder.toString().getBytes();
 
-    //Less then one chunk of data. This should handle case 3.
+    //Less then one chunk of data. This should handle case 2 (N < Capacity).
     final StringBuilder lessThenOneChunkBuilder = new StringBuilder();
     for (int i = 0; i < TEST_CHUNK_SIZE - 2; i++)
     {
@@ -673,12 +694,18 @@ public class TestMIMEInputStream extends AbstractMIMEUnitTest
             //The first three writes on the write handles write each chunk and the 4th is needed to realize
             //we just reached the end (-1 returned).
             {multipleEvenlyDivisibleChunks, new StrictByteArrayInputStream(multipleEvenlyDivisibleChunks), 4, 4, 3},
-            //One OnWritePossible() providing 1 write on the writeHandle, which results in 1 expected write.
-            {lessThenOneChunk, new StrictByteArrayInputStream(lessThenOneChunk), 1, 1, 1},
+            //One OnWritePossible() providing 2 write on the writeHandle, which results in 1 expected write.
+            //First write is to write the data and the second write remaining is needed to know the stream has
+            //reached the end.
+            {lessThenOneChunk, new StrictByteArrayInputStream(lessThenOneChunk), 2, 2, 1},
 
             //Also verify that extra writes handles available do no harm:
             {multipleEvenlyDivisibleChunks, new StrictByteArrayInputStream(multipleEvenlyDivisibleChunks), 10, 4, 3},
-            {lessThenOneChunk, new StrictByteArrayInputStream(lessThenOneChunk), 10, 1, 1}
+            {lessThenOneChunk, new StrictByteArrayInputStream(lessThenOneChunk), 10, 2, 1},
+
+            //Verify that reading will continue even if the requested amount of bytes are not read
+            {multipleEvenlyDivisibleChunks, new LessByteArrayInputStream(multipleEvenlyDivisibleChunks,
+                (new int[] {3, 2, 1, 0})), 10, 5, 4}
         };
   }
 
