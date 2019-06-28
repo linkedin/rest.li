@@ -1,5 +1,10 @@
+27.3.5
+------
+
 27.3.4
 ------
+(RB=1718616)
+Expose requestcontext as well when constructing the validation schema
 
 27.3.3
 ------

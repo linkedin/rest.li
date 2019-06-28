@@ -126,8 +126,8 @@ public class RestLiValidationFilter implements Filter
           // Schema from the record template itself should not be used.
           DataSchema originalSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
 
-          DataSchema validatingSchema = constructValidatingSchema(originalSchema, projectionMask.getDataMap(),
-              _nonSchemaFieldsToAllowInProjectionMask);
+          DataSchema validatingSchema = constructValidatingSchema(requestContext, originalSchema,
+              projectionMask.getDataMap(), _nonSchemaFieldsToAllowInProjectionMask);
 
           // Put validating schema in scratchpad for use in onResponse
           requestContext.getFilterScratchpad().put(VALIDATING_SCHEMA_KEY, validatingSchema);
@@ -350,7 +350,8 @@ public class RestLiValidationFilter implements Filter
     return CompletableFuture.completedFuture(null);
   }
 
-  protected DataSchema constructValidatingSchema(DataSchema originalSchema,
+  protected DataSchema constructValidatingSchema(FilterRequestContext requestContext,
+      DataSchema originalSchema,
       DataMap projectionMask,
       Collection<String> nonSchemaFieldsToAllowInProjectionMask)
   {
