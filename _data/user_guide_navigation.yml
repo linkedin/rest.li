@@ -61,6 +61,8 @@ toc:
         url: /rest.li/testsuite_how_to
       - page: Test Suite - Add New Language
         url: /rest.li/howto_add_new_language
+      - page: Configure Service Errors in Java
+        url: /rest.li/user_guide/service_errors_java
   - title: FAQ
     subfolderitems:    
       - page: Rest.li - FAQ
