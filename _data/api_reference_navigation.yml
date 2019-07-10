@@ -17,6 +17,8 @@ toc:
         url: /rest.li/Rest_li-2_0-response-API
   - title: Rest.li Server
     subfolderitems:
+      - page: Service Errors
+        url: /rest.li/spec/service_errors
       - page: Return Entity
         url: /rest.li/spec/return_entity
   - title: Rest.li Resource Method
