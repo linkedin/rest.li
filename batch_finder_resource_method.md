@@ -40,16 +40,21 @@ It is important to note that:
 - The BATCH_FINDER will require implementing a resource method to handle a BATCH_FINDER requests. It won't behave like a multiplexer that will call automatically existing finders
 
 ## Protocol
+
 ### Request
+
 See more details here [BatchFinderUri](/rest.li/spec/protocol#batch-finders).
 
 ### Response
+
 See more details here [BatchCollectionResponse](/rest.li/spec/protocol#batch-collection-response).
     
     
 ## Client
+
 ### Java Request Builders
-The client framework includes a code-generation tool that reads the IDL(see [Restspec IDL](/rest.li/user_guide/restli_client#restspec-idl) for details) and generates type-safe Java binding for each resource and its supported methods.
+
+The client framework includes a code-generation tool that reads the IDL (see [Restspec IDL](/rest.li/user_guide/restli_client#restspec-idl) for details) and generates type-safe Java binding for each resource and its supported methods.
 The bindings are represented as RequestBuilder classes.  
 For each resource described in an IDL file, a corresponding builder factory will be generated.
 The factory contains a factory method for each resource method supported by the resource. 
@@ -57,6 +62,7 @@ The factory method returns a request builder object with type-safe bindings for 
 More details in [Resource Builder Factory](/rest.li/user_guide/restli_client#resource-builder-factory).
 
 For example:
+
 ```java
 // Request builders factory class
 // which provides all the specific request builders to corresponding resource method in defined resource class
@@ -71,8 +77,11 @@ public class GreetingsRequestBuilders extends BuilderBase {
     public GreetingsBatchFindBySearchGreetingsRequestBuilder batchFindBySearchGreetings() 
 }
 ```
+
 The request builders factory class provides a method to generate the corresponding BATCH_FINDER request builder.
-More details about generated class and method declaration in [BATCH FINDER Request Builder](/rest.li/user_guide/restli_client#batch-finder-request-builder).
+More details about generated class and method declaration in
+[BATCH FINDER Request Builder](/rest.li/user_guide/restli_client#batch-finder-request-builder).
+
 ```java
 @Generated(value = "com.linkedin.pegasus.generator.JavaCodeUtil", comments = "Rest.li Request Builder")
 public class BatchfindersBatchFindBySearchGreetingsBuilder
@@ -103,7 +112,9 @@ public class BatchfindersBatchFindBySearchGreetingsBuilder
     }
 }
 ```
+
 Here is an example to show how to use request builder to build BATCH_FINDER request.
+
 ```java
   @Test
   public void testUsingResourceBuilder() throws RemoteInvocationException {
@@ -134,10 +145,12 @@ Here is an example to show how to use request builder to build BATCH_FINDER requ
   }
 ```
 
-
 ## Resource API
-BATCH_FINDER is supported on Collection and Association Resources only(See more details about [Collection Resource](/rest.li/spec/protocol#collection-resources) and [Association Resource](/rest.li/spec/protocol#association-resources)).
-Resources may provide zero or more BATCH_FINDER resource methods. Each BATCH_FINDER method must be annotated with the @`BatchFinder` annotation.
+BATCH_FINDER is supported on Collection and Association Resources only(See more details about
+[Collection Resource](/rest.li/spec/protocol#collection-resources) and
+[Association Resource](/rest.li/spec/protocol#association-resources)).
+Resources may provide zero or more BATCH_FINDER resource methods. Each BATCH_FINDER method must
+be annotated with the `@BatchFinder` annotation.
 
 Pagination default to start=0 and count=10. Clients may set both of these parameters to any desired value.
  
@@ -148,7 +161,8 @@ The batch finder method will have to accept a array of this criteria filter.
 Example:
 
 The resource owner need to define their own search criteria `GreetingCriteria.pdsc` file.
-```
+
+```json
 {
  "type" : "record",
  "name" : "GreetingCriteria",
@@ -170,7 +184,8 @@ The resource owner need to define their own search criteria `GreetingCriteria.pd
 ```
 
 The "GreetingCriteria" class represent a criteria filter to filter by "id" or by "tone".
-This java class is auto-generated from the pdsc. 
+This java class is auto-generated from the pdsc.
+
 ```java
 public class GreetingCriteria extends RecordTemplate
 {
@@ -182,15 +197,15 @@ public class GreetingCriteria extends RecordTemplate
     ...
 }
 ```
-
-
  
 ### Method Annotation and Parameters
-The @`BatchFinder` annotation takes 2 required parameter:
+
+The `@BatchFinder` annotation takes 2 required parameter:
 - `value` : which indicates the BATCH_FINDER method name
 - `batchParam` : which indicates the name of the batch criteria parameter, each BATCH_FINDER method must have and can only have one batch parameter
 
 For example: 
+
 ```java
 // eg. The curl call for this resource method is like:
 // curl -v -X GET http://localhost:8080/greetings?bq=searchGreetings&criteria=List((id:1,tone:SINCERE),(id:2,tone:FRIENDLY))&message=hello -H 'X-RestLi-Protocol-Version: 2.0.0' 
@@ -222,28 +237,29 @@ public Task<BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord>> searchGr
 
 }
 ```
+
 Every parameter of a BATCH_FINDER method must be annotated with one of:
 
--   @`Context` - indicates that the parameter provides framework context
-   to the method. Currently all @`Context` parameters must be of type
+-   `@Context` - indicates that the parameter provides framework context
+   to the method. Currently all `@Context` parameters must be of type
    `PagingContext`.
--   @`QueryParam` - indicates that the value of the parameter is
+-   `@QueryParam` - indicates that the value of the parameter is
    obtained from a request query parameter. The value of the annotation
    indicates the name of the query parameter. Duplicate names are not
    allowed for the same BATCH_FINDER method.
    For the batch parameter, the name must match the name in the method annotation.
--   @`AssocKey` - indicates that the value of the parameter is a partial
+-   `@AssocKey` - indicates that the value of the parameter is a partial
    association key, obtained from the request. The value of the
    annotation indicates the name of the association key, which must
-   match the name of an @`Key` provided in the `assocKeys` field of the
-   @`RestLiAssociation` annotation.
+   match the name of an `@Key` provided in the `assocKeys` field of the
+   `@RestLiAssociation` annotation.
 
-Parameters marked with @`QueryParam` and @`AssocKey`
-may also be annotated with @`Optional`, which indicates that the
+Parameters marked with `@QueryParam` and `@AssocKey`
+may also be annotated with `@Optional`, which indicates that the
 parameter is not required. *caution*: the batch parameter can not be optional.
-The @`Optional` annotation may specify a String value, indicating the default value to be used if the parameter
+The `@Optional` annotation may specify a String value, indicating the default value to be used if the parameter
 is not provided in the request. If the method parameter is of primitive
-type, a default value must be specified in the @`Optional` annotation.
+type, a default value must be specified in the `@Optional` annotation.
 
 Valid types for regular query parameters are:
 
@@ -265,6 +281,7 @@ Valid type for batch criteria parameter:
 need to wrap it into a Record Template (`.pdsc` schema)
   
 ### BatchFinderResult
+
 BATCH_Finder methods must return `BatchFinderResult<QK extends RecordTemplate, V extends RecordTemplate, MD extends RecordTemplate>`:
 
 - `QK` : The type of the BATCH_FINDER criteria filter
@@ -275,7 +292,8 @@ For each search criteria in the BatchFinderRequest, it can get either a successf
 which is a `CollectionResult`(a list of entities), Or an error/failure which maybe represented by
 a `RestLiServiceException`, which will be wrapped into an `ErrorResponse` later when building BatchFinderResponse
 to return to client.
-```
+
+```java
 public class BatchFinderResult<QK,V extends RecordTemplate,MD extends RecordTemplate>
 {
    private final Map<QK,CollectionResult<V,R>> _elements;
@@ -285,23 +303,30 @@ public class BatchFinderResult<QK,V extends RecordTemplate,MD extends RecordTemp
 ```
 
 ### Error Handling
+
 #### 1) Custom error per search criteria
+
 For each input criteria, the developer is responsible to update either the "_elements" or the "_errors" map in `BatchFinderResult`.
 If the developers set a customized error which is wrapped into a `RestLiServiceException` for one search criteria,
 Rest.li framework will not treat it as a failure for the whole BATCH_FINDER request, but just the failure for that specific criteria.
-The return http status for the BATCH_FINDER request is still 200. An example is below [Resource API](/rest.li/batch_finder_resource_method#resource-api).
+The return http status for the BATCH_FINDER request is still 200. An example is below
+[Resource API](/rest.li/batch_finder_resource_method#resource-api).
 
 #### 2) Rest.li framework will cover the non-present criteria error
-When processing the `BatchFinderResult` in the ResponseBuilder, if a criteria is not present, either in _elements, nor in _errors,  the framework will generate a "404" error for this criteria.
+
+When processing the `BatchFinderResult` in the ResponseBuilder, if a criteria is not present, either in _elements, nor in _errors, 
+the framework will generate a "404" error for this criteria.
 The whole http status is still 200.
-```
+
+```java
 new RestLiServiceException(S_404_NOT_FOUND, "The server didn't find a representation for this criteria"));
 ```
 
-#### 3) return nulls
+#### 3) Return nulls
+
 In some situation, the return results may contain null value. Resource methods should never explicitly return null. 
-If the Rest.li framework detects this, it will return an HTTP 500 back to the client with a message indicating ‘Unexpected null encountered’. 
-See more details in [Returning Nulls](/rest.li/user_guide/restli_server#returning-nulls).
+If the Rest.li framework detects this, it will return an HTTP 500 back to the client with a message indicating
+‘Unexpected null encountered’. See more details in [Returning Nulls](/rest.li/user_guide/restli_server#returning-nulls).
 
 Here are some possible cases:
 - `BatchFinderResult` is null.
@@ -309,7 +334,9 @@ Here are some possible cases:
 - For one criteria, the whole list of entities is null.
 
 ## FAQ
+
 #### Does Batch_Finder support primitive type like String, Integer as a batch criteria filter?
+
 No. 
 We currently don’t support primitive data type as batch criteria, even `Enum` type.
 That criteria must be a type which extends from `RecordTemplate` which is actually a record.
