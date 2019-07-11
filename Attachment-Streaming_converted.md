@@ -17,14 +17,12 @@ team before using it.**
   - [PDSC Modeling](#pdsc-modeling)
   - [Creating Attachments](#creating-attachments)
   - [Reading Attachments](#reading-attachments)
-  - [Chaining (Proxying) Attachments Across
-    Services](#chaining-proxying-attachments-across-services)
+  - [Chaining (Proxying) Attachments Across Services](#chaining-proxying-attachments-across-services)
   - [Client Streaming APIs](#client-streaming-apis)
   - [Server Streaming APIs](#server-streaming-apis)
   - [Good Programming Practice](#good-programming-practice)
   - [Additional Developer Notes](#additional-developer-notes)
-  - [Attachment Streaming without
-    Rest.li](#attachment-streaming-without-restli)
+  - [Attachment Streaming without Rest.li](#attachment-streaming-without-restli)
   - [Future Enhancements](#future-enhancements)
 
 ## Goals
@@ -89,35 +87,37 @@ number of reasons:
     adoption by external consumers and platforms.
 
 In order to satisfy these requirements, Rest.li makes use of
-```multipart/mime``` as the streaming wire format. Therefore
+`multipart/mime` as the streaming wire format. Therefore
 Rest.li attachment streaming’s implementation is build upon the formal
 adoption of the [RFC.](https://tools.ietf.org/html/rfc2046)
 
-Within ```multipart/mime``` there are several ```mime```
+Within `multipart/mime` there are several `mime`
 subtypes that can be chosen. Rest.li attachment streaming uses
-```multipart/related``` as the value for the
-```Content-Type``` header since the JSON/PSON payload will be the
+`multipart/related` as the value for the
+`Content-Type` header since the JSON/PSON payload will be the
 first part in the mime envelope. A more detailed explanation as to the
-justification of ```multipart/related``` is explained
+justification of `multipart/related` is explained
 [here.](https://en.wikipedia.org/wiki/MIME#Related)
 
 ### Sample Traditional Rest.li Wire Format
 
 For reference, here are examples of sample regular Rest.li payloads.
 
-```
+```http
 POST /widgets?action=purge HTTP/1.1
 Content-Type: application/json
+
 {
   "reason": "spam",
   "purgedByAdminId": 1
 }
 ```
 
-```
+```http
 POST /widgets?ids=List(1,2) HTTP/1.1
 Content-Type: application/json
 X-RestLi-Method: BATCH_PARTIAL_UPDATE
+
 {
   "entities": {
     "1": {"patch": { "$set": { "name":"Sam"}}},
@@ -135,61 +135,62 @@ However for clients sending requests with attachments present or for
 servers responding with attachments, the wire protocol will change.
 
 If attachments are present in either a request or a response, the
-content type becomes ```multipart/related```. If a client can
+content type becomes `multipart/related`. If a client can
 handle attachments back from a server, then an accept type of
-```multipart/related``` is also added to the ```Accept```
+`multipart/related` is also added to the `Accept`
 header.
 
 For example:
 
-    
-    PUT /widgets?ids=List(1,2,3)   
-    HTTP/1.1 X-RestLi-Method: BATCH_UPDATE
-    Content-Type: multipart/related; boundary=--km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB
-    Accept: multipart/related; application/json
-    --km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB
-    Content-Type: application/json
-    {
-        "entities": {
-            "1": {
-                "widgetName": "Trebuchet",
-                "myVideo": "cid:725c0319-b1f1-4b9c-b618-7ee9468870f0"
-            },
-            "2": {
-                "widgetName": "Gear",
-                "myVideo": "cid:a4d4133b-0546-4f7b-8104-ffdd644168c6"
-            }
-            "3": {
-                "widgetName": "Slider",
-                "myVideo": "cid:725c0319-b1f1-4b9c-b618-7ee9468870f0"
-            }
-        }
+```http
+PUT /widgets?ids=List(1,2,3) HTTP/1.1
+X-RestLi-Method: BATCH_UPDATE
+Content-Type: multipart/related; boundary=--km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB
+Accept: multipart/related; application/json
+
+--km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB
+Content-Type: application/json
+{
+  "entities": {
+    "1": {
+      "widgetName": "Trebuchet",
+      "myVideo": "cid:725c0319-b1f1-4b9c-b618-7ee9468870f0"
+    },
+    "2": {
+      "widgetName": "Gear",
+      "myVideo": "cid:a4d4133b-0546-4f7b-8104-ffdd644168c6"
     }
-    --km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB
-    Content-ID: <725c0319-b1f1-4b9c-b618-7ee9468870f0>
-    binary data…..
-    --km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB
-    Content-ID: <a4d4133b-0546-4f7b-8104-ffdd644168c6>
-    binary data…..
-    --km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB--
-    
+    "3": {
+      "widgetName": "Slider",
+      "myVideo": "cid:725c0319-b1f1-4b9c-b618-7ee9468870f0"
+    }
+  }
+}
+--km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB
+Content-ID: <725c0319-b1f1-4b9c-b618-7ee9468870f0>
+binary data...
+--km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB
+Content-ID: <a4d4133b-0546-4f7b-8104-ffdd644168c6>
+binary data...
+--km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB--
+```
 
 Note that the regular Rest.li payload becomes the first part in a
-```multipart/related``` envelope. Each attachment then becomes
+`multipart/related` envelope. Each attachment then becomes
 its own subsequent part separated by the multipart boundary. Since each
 part in a multipart envelope can have its own headers, the
-```Content-Type``` header from the regular payload now appears as
+`Content-Type` header from the regular payload now appears as
 a header in the first part. Both JSON and PSON are supported as valid
-```Content-Types``` for the first part.
+`Content-Types` for the first part.
 
 Each part after the regular Rest.li payload represents a blob of data
 attached to the request or response. Each attachment part has a
-```Content-ID``` header which uniquely identifies that attachment
+`Content-ID` header which uniquely identifies that attachment
 in the payload. References to this unique identifier should then be
 placed as fields in the JSON (RecordTemplate backing) payload as
 pointers to the blobs in the attachments. In this particular example we
-have two attachments. ```Trebuchet``` and ```Slider```
-both point to the same attachment while ```Gear``` points to the
+have two attachments. `Trebuchet` and `Slider`
+both point to the same attachment while `Gear` points to the
 other attachment.
 
 ## PDSC Modeling
@@ -201,30 +202,32 @@ processing of a streaming request or response.
 
 Our recommendation is that anytime you have a field in a PDSC
 referencing an attachment, that a key value pair of
-```"attachment":true``` is present. This should further be
+`"attachment":true` is present. This should further be
 expanded to include documentation mentioning that this field represents
 a pointer to an attachment. Once again it is important to note that the
 purpose of these fields is simply to convey that an attachment could be
 present.
 
+```json
+{
+  "type" : "record",
+  "name" : "Greeting",
+  "namespace" : "com.linkedin.greetings.api",
+  "doc" : "A greeting",
+  "fields" : [
     {
-      "type" : "record",
-      "name" : "Greeting",
-      "namespace" : "com.linkedin.greetings.api",
-      "doc" : "A greeting",
-      "fields" : [
-        {
-          "name" : "id",
-          "type" : "long"
-        },
-        {
-          "name" : "content",
-          "type" : "string",
-          "attachment" : true,
-          "doc" : "Type 1 UUID representing a video attachment" 
-        }
-       ]
+      "name" : "id",
+      "type" : "long"
+    },
+    {
+      "name" : "content",
+      "type" : "string",
+      "attachment" : true,
+      "doc" : "Type 1 UUID representing a video attachment" 
     }
+   ]
+}
+```
 
 
 In terms of the actual data supplied at runtime we suggest using Type 1
@@ -243,120 +246,125 @@ different machines/services which may lead to an identifier collision.
 In order to create an attachment, developers must implement the
 following interface(s):
 
-    /**
-     * Represents a custom data source that can serve as an attachment.
-     */
-    public interface RestLiAttachmentDataSourceWriter extends Writer
-    {
-      /**
-       * Denotes a unique identifier for this attachment. It is recommended to choose 
-       * identifiers with a high degree of uniqueness, such as Type 1 UUIDs. 
-       * For most use cases there should be a corresponding String field in a PDSC
-       * to indicate affiliation.
-       *
-       * @return the {@link java.lang.String} representing this attachment.
-       */
-      public String getAttachmentID();
-    }
+```java
+/**
+ * Represents a custom data source that can serve as an attachment.
+ */
+public interface RestLiAttachmentDataSourceWriter extends Writer
+{
+  /**
+   * Denotes a unique identifier for this attachment. It is recommended to choose 
+   * identifiers with a high degree of uniqueness, such as Type 1 UUIDs. 
+   * For most use cases there should be a corresponding String field in a PDSC
+   * to indicate affiliation.
+   *
+   * @return the {@link java.lang.String} representing this attachment.
+   */
+  public String getAttachmentID();
+}
+```
 
-You’ll notice this extends ```Writer``` which is defined as the
+You’ll notice this extends `Writer` which is defined as the
 following:
 
-    /**
-     * Writer is the producer of data for an EntityStream.
-     */
-    public interface Writer
-    {
-      /**
-       * This is called when a Reader is set for the EntityStream.
-       *
-       * @param wh the handle to write data to the EntityStream.
-       */
-      void onInit(final WriteHandle wh);
-    
-      /**
-       * Invoked when it it possible to write data.
-       *
-       * This method will be invoked the first time as soon as data can be written to the WriteHandle.
-       * Subsequent invocations will only occur if a call to {@link WriteHandle#remaining()} has returned 0
-       * and it has since become possible to write data.
-       */
-      void onWritePossible();
-    
-      /**
-       * Invoked when the entity stream is aborted.
-       * Usually writer could do clean up to release any resource it has acquired.
-       *
-       * @param e the throwable that caused the entity stream to abort
-       */
-      void onAbort(Throwable e);
-    }
+```java
+/**
+ * Writer is the producer of data for an EntityStream.
+ */
+public interface Writer
+{
+  /**
+   * This is called when a Reader is set for the EntityStream.
+   *
+   * @param wh the handle to write data to the EntityStream.
+   */
+  void onInit(final WriteHandle wh);
 
+  /**
+   * Invoked when it it possible to write data.
+   *
+   * This method will be invoked the first time as soon as data can be written to the WriteHandle.
+   * Subsequent invocations will only occur if a call to {@link WriteHandle#remaining()} has returned 0
+   * and it has since become possible to write data.
+   */
+  void onWritePossible();
 
-The ```Writer``` class leverages an interface called
-```WriteHandle``` which is defined as follows:
+  /**
+   * Invoked when the entity stream is aborted.
+   * Usually writer could do clean up to release any resource it has acquired.
+   *
+   * @param e the throwable that caused the entity stream to abort
+   */
+  void onAbort(Throwable e);
+}
+```
 
-    /**
-     * This is the handle to write data to an EntityStream.
-     */
-    public interface WriteHandle
-    {
-      /**
-       * This writes data into the EntityStream. This call may have no effect if the stream has been aborted
-       * @param data the data chunk to be written
-       * @throws java.lang.IllegalStateException if remaining capacity is 0, or done() or error() has been called
-       * @throws java.lang.IllegalStateException if called after done() or error() has been called
-       */
-      void write(final ByteString data);
-    
-      /**
-       * Signals that Writer has finished writing.
-       * This call has no effect if the stream has been aborted or done() or error() has been called
-       */
-      void done();
-    
-      /**
-       * Signals that the Writer has encountered an error.
-       * This call has no effect if the stream has been aborted or done() or error() has been called
-       * @param throwable the cause of the error.
-       */
-      void error(final Throwable throwable);
-    
-      /**
-       * Returns the remaining capacity in number of data chunks. Always returns 0 if the stream is aborted or 
-       * finished with done() or error()
-       *
-       * @return the remaining capacity in number of data chunks
-       */
-      int remaining();
-    }
+The `Writer` class leverages an interface called
+`WriteHandle` which is defined as follows:
+
+```java
+/**
+ * This is the handle to write data to an EntityStream.
+ */
+public interface WriteHandle
+{
+  /**
+   * This writes data into the EntityStream. This call may have no effect if the stream has been aborted
+   * @param data the data chunk to be written
+   * @throws java.lang.IllegalStateException if remaining capacity is 0, or done() or error() has been called
+   * @throws java.lang.IllegalStateException if called after done() or error() has been called
+   */
+  void write(final ByteString data);
+
+  /**
+   * Signals that Writer has finished writing.
+   * This call has no effect if the stream has been aborted or done() or error() has been called
+   */
+  void done();
+
+  /**
+   * Signals that the Writer has encountered an error.
+   * This call has no effect if the stream has been aborted or done() or error() has been called
+   * @param throwable the cause of the error.
+   */
+  void error(final Throwable throwable);
+
+  /**
+   * Returns the remaining capacity in number of data chunks. Always returns 0 if the stream is aborted or 
+   * finished with done() or error()
+   *
+   * @return the remaining capacity in number of data chunks
+   */
+  int remaining();
+}
+```
 
 These are the essential interfaces to keep in mind when defining an
 attachment as they represent how your custom data source will be asked
 to produce both the metadata as well as the raw bytes for your
 attachment.
 
-When it is time for a ```RestLiAttachmentDataSourceWriter``` to
+When it is time for a `RestLiAttachmentDataSourceWriter` to
 produce data, it will first be invoked on
-```RestLiAttachmentDataSourceWriter\#getAttachmentID()```.
+`RestLiAttachmentDataSourceWriter\#getAttachmentID()`.
 Implementations should return a unique identifier that should be the
-same identifier placed in the strongly typed ```RecordTemplate```
+same identifier placed in the strongly typed `RecordTemplate`
 payload as described earlier.
 
 Next, the attachment will be invoked on
-```onInit(WriteHandle)```. The provided ```WriteHandle```
+`onInit(WriteHandle)`. The provided `WriteHandle`
 is the object that will be used to perform the actual writing of bytes
 later, so implementations should save a reference to it.
 
 Subsequently, at some point in time in the future, the attachment will
-be invoked on ```Writer\#onWritePossible()```. It is at this
+be invoked on `Writer\#onWritePossible()`. It is at this
 point that implementations should write raw bytes on
-```WriteHandle\#write(ByteString)```. The amount of times that
+`WriteHandle\#write(ByteString)`. The amount of times that
 the writer may write will be based on what is returned from
-```WriteHandle\#remaining()```. Once the number of writes
+`WriteHandle\#remaining()`. Once the number of writes
 remaining has been honored, then again at some time in the future, the
 attachment will be invoked again on
-```Writer\#onWritePossible()```. Then the attachment simply
+`Writer\#onWritePossible()`. Then the attachment simply
 repeats the logic above. The Javadoc is clear about this behavior for
 developers to follow.
 
@@ -364,111 +372,117 @@ The size of the chunk written is up to the developer but keep in mind
 that the larger the chunks written, the more memory that may be used by
 the application at any given time. Furthermore, in order to minimize
 copies, developers should use
-```ByteString\#unsafeWrap(byte\[\])``` to wrap byte arrays that
+`ByteString\#unsafeWrap(byte\[\])` to wrap byte arrays that
 need to be written out.
 
 ## Reading Attachments
 
 Reading attachments is a multi-step callback driven process which allows
 developers to asynchronously walk through each attachment. It begins
-with a top level ```RestLiAttachmentReader``` and a
-```SingleRestLiAttachmentReader``` for each individual attachment
+with a top level `RestLiAttachmentReader` and a
+`SingleRestLiAttachmentReader` for each individual attachment
 encountered. This applies whether a client is reading a server’s
 response attachments or a server reading a client’s incoming request
 attachments.
 
 There are two callbacks involved, one for the
-```RestLiAttachmentReader``` and one for the
-```SingleRestLiAttachmentReader```. The relevant interfaces are
+`RestLiAttachmentReader` and one for the
+`SingleRestLiAttachmentReader`. The relevant interfaces are
 as follows:
 
-    /**
-     * Used to register with {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader} to asynchronously
-     * drive through the reading of multiple attachments.
-     */
-    public interface RestLiAttachmentReaderCallback
-    {
-      /**
-       * Invoked (at some time in the future) upon a registration with a {@link RestLiAttachmentReader}.
-       * Also invoked when previous attachments are finished and new attachments are available.
-       *
-       * @param singleRestLiAttachmentReader the {@link RestLiAttachmentReader.SingleRestLiAttachmentReader}
-       *                                     which can be used to walk through this attachment.
-       */
-      public void onNewAttachment(RestLiAttachmentReader.SingleRestLiAttachmentReader singleRestLiAttachmentReader);
-    
-      /**
-       * Invoked when this reader is finished which means all attachments have been consumed.
-       */
-      public void onFinished();
-    
-      /**
-       * Invoked as a result of calling {@link RestLiAttachmentReader#drainAllAttachments()}.
-       * This will be invoked at some time in the future when all the attachments in this reader have been drained.
-       */
-      public void onDrainComplete();
-    
-      /**
-       * Invoked when there was an error reading attachments.
-       *
-       * @param throwable the Throwable that caused this to happen.
-       */
-      public void onStreamError(Throwable throwable);
-    }
+```java
+/**
+ * Used to register with {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader}
+ * to asynchronously drive through the reading of multiple attachments.
+ */
+public interface RestLiAttachmentReaderCallback
+{
+  /**
+   * Invoked (at some time in the future) upon a registration with a {@link RestLiAttachmentReader}.
+   * Also invoked when previous attachments are finished and new attachments are available.
+   *
+   * @param singleRestLiAttachmentReader the {@link RestLiAttachmentReader.SingleRestLiAttachmentReader}
+   *                                     which can be used to walk through this attachment.
+   */
+  public void onNewAttachment(RestLiAttachmentReader.SingleRestLiAttachmentReader singleRestLiAttachmentReader);
 
+  /**
+   * Invoked when this reader is finished which means all attachments have been consumed.
+   */
+  public void onFinished();
 
-    /**
-     * Used to register with {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader}
-     * to asynchronously drive through the reading of a single attachment.
-     */
-    public interface SingleRestLiAttachmentReaderCallback
-    {
-      /**
-       * Invoked when data is available to be read on the attachment.
-       *
-       * @param attachmentData the {@link com.linkedin.data.ByteString} representing the current window of attachment data.
-       */
-      public void onAttachmentDataAvailable(ByteString attachmentData);
-    
-      /**
-       * Invoked when the current attachment is finished being read.
-       */
-      public void onFinished();
-    
-      /**
-       * Invoked when the current attachment is finished being drained.
-       */
-      public void onDrainComplete();
-    
-      /**
-       * Invoked when there was an error reading the attachments.
-       *
-       * @param throwable the Throwable that caused this to happen.
-       */
-      public void onAttachmentError(Throwable throwable);
-    }
+  /**
+   * Invoked as a result of calling {@link RestLiAttachmentReader#drainAllAttachments()}.
+   * This will be invoked at some time in the future when all the attachments in this
+   * reader have been drained.
+   */
+  public void onDrainComplete();
+
+  /**
+   * Invoked when there was an error reading attachments.
+   *
+   * @param throwable the Throwable that caused this to happen.
+   */
+  public void onStreamError(Throwable throwable);
+}
+```
+
+```java
+/**
+ * Used to register with
+ * {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader}
+ * to asynchronously drive through the reading of a single attachment.
+ */
+public interface SingleRestLiAttachmentReaderCallback
+{
+  /**
+   * Invoked when data is available to be read on the attachment.
+   *
+   * @param attachmentData the {@link com.linkedin.data.ByteString} representing the current
+   *                       window of attachment data.
+   */
+  public void onAttachmentDataAvailable(ByteString attachmentData);
+
+  /**
+   * Invoked when the current attachment is finished being read.
+   */
+  public void onFinished();
+
+  /**
+   * Invoked when the current attachment is finished being drained.
+   */
+  public void onDrainComplete();
+
+  /**
+   * Invoked when there was an error reading the attachments.
+   *
+   * @param throwable the Throwable that caused this to happen.
+   */
+  public void onAttachmentError(Throwable throwable);
+}
+```
 
 The process begins by registering a callback of type
-```RestLiAttachmentReaderCallback``` as shown above with the
-provided ```RestLiAttachmentReader```. At some point in time in
-the future, the ```RestLiAttachmentReaderCallback``` will be
+`RestLiAttachmentReaderCallback` as shown above with the
+provided `RestLiAttachmentReader`. At some point in time in
+the future, the `RestLiAttachmentReaderCallback` will be
 invoked on
-```RestLiAttachmentReaderCallback\#onNewAttachment(SingleRestLiAttachmentReader)```.
-This ```SingleRestLiAttachmentReader``` is what is used to
+`RestLiAttachmentReaderCallback\#onNewAttachment(SingleRestLiAttachmentReader)`.
+This `SingleRestLiAttachmentReader` is what is used to
 traverse through each individual attachment.
 
 The process then continues for each attachment as developers must
-register a ```SingleRestLiAttachmentReaderCallback``` with the
-provided ```SingleRestLiAttachmentReader```. Once registered, the
-```SingleRestLiAttachmentReader``` can then be told to produce
+register a `SingleRestLiAttachmentReaderCallback` with the
+provided `SingleRestLiAttachmentReader`. Once registered, the
+`SingleRestLiAttachmentReader` can then be told to produce
 attachment data via
-```SingleRestLiAttachmentReader\#requestAttachmentData()```. Once
+`SingleRestLiAttachmentReader\#requestAttachmentData()`. Once
 this is invoked, at some point in time in the future, the
-```SingleRestLiAttachmentReaderCallback``` will be invoked on
-```SingleRestLiAttachmentReaderCallback\#onAttachmentDataAvailable(ByteString)```
+`SingleRestLiAttachmentReaderCallback` will be invoked on
+`SingleRestLiAttachmentReaderCallback\#onAttachmentDataAvailable(ByteString)`
 representing the data for the reader to consume. Once the attachment
 data is consumed, another call may be made to
-```SingleRestLiAttachmentReader\#requestAttachmentData()```
+`SingleRestLiAttachmentReader\#requestAttachmentData()`
 thereby driving through all the data in that attachment.
 
 Refer to the Javadocs provided for each class to obtain technical
@@ -508,70 +522,70 @@ The generated request builders have been augmented to allow developers
 to append attachments to outgoing requests. These APIs are:
 
 1\.
-```appendSingleAttachment(RestLiAttachmentDataSourceWriter)``` to
+`appendSingleAttachment(RestLiAttachmentDataSourceWriter)` to
 append a single attachment or to proxy an incoming
-```SingleRestLiAttachmentReader``` further downstream.  
-2\. ```appendMultipleAttachments(RestLiDataSourceIterator)``` to
+`SingleRestLiAttachmentReader` further downstream.  
+2\. `appendMultipleAttachments(RestLiDataSourceIterator)` to
 append multiple attachments (as defined by the
-```RestLiDataSourceIterator``` interface) or to proxy an incoming
-```RestLiAttachmentReader``` further downstream.
+`RestLiDataSourceIterator` interface) or to proxy an incoming
+`RestLiAttachmentReader` further downstream.
 
 Here is sample code on the client side on what attachment creation would
 look like when constructing a request:
 
 
-    ...
-    final byte[] clientSuppliedBytes = "ClientSupplied".getBytes();
-    final GreetingWriter greetingAttachment = new GreetingWriter(ByteString.copy(clientSuppliedBytes));
-    final StreamingGreetingsCreateBuilder createBuilder = new StreamingGreetingsBuilders().create();
-    createBuilder.appendSingleAttachment(greetingAttachment);
-    final Greeting greeting = new Greeting().setMessage("A greeting with an attachment");
-    final Request<EmptyRecord> createRequest = createBuilder.input(greeting).build();
-    try
-    {
-      final Response<EmptyRecord> createResponse = getClient().sendRequest(createRequest).getResponse();
-      Assert.assertEquals(createResponse.getStatus(), 201);
-    }
-    catch (final RestLiResponseException responseException)
-    {
-      Assert.fail("We should not reach here!", responseException);
-    }
-    ...
+```java
+final byte[] clientSuppliedBytes = "ClientSupplied".getBytes();
+final GreetingWriter greetingAttachment = new GreetingWriter(ByteString.copy(clientSuppliedBytes));
+final StreamingGreetingsCreateBuilder createBuilder = new StreamingGreetingsBuilders().create();
+createBuilder.appendSingleAttachment(greetingAttachment);
+final Greeting greeting = new Greeting().setMessage("A greeting with an attachment");
+final Request<EmptyRecord> createRequest = createBuilder.input(greeting).build();
+try
+{
+  final Response<EmptyRecord> createResponse = getClient().sendRequest(createRequest).getResponse();
+  Assert.assertEquals(createResponse.getStatus(), 201);
+}
+catch (final RestLiResponseException responseException)
+{
+  Assert.fail("We should not reach here!", responseException);
+}
+```
 
-The implementation of ```GreetingWriter``` has not been provided
+The implementation of `GreetingWriter` has not been provided
 but it is a trivial implementation of
-```RestLiAttachmentDataSourceWriter```.
+`RestLiAttachmentDataSourceWriter`.
 
 ### Accessing Response Attachments on the Client
 
 By default the server will not send response attachments back unless a
 client specifies it can handle them. To explicitly allow response
 attachments to come back, developers will need to use
-```RestLiRequestOptions``` as follows when constructing the
+`RestLiRequestOptions` as follows when constructing the
 request builders:
 
-    ...
-    final RestliRequestOptions defaultOptions =
-            new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE)
-                .setAcceptResponseAttachments(true)
-                .build();
-    final StreamingGreetingsBuilders builders = new StreamingGreetingsBuilders(defaultOptions);
-    ...
+```java
+final RestliRequestOptions defaultOptions = new RestliRequestOptionsBuilder()
+  .setProtocolVersionOption(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE)
+  .setAcceptResponseAttachments(true)
+  .build();
+final StreamingGreetingsBuilders builders = new StreamingGreetingsBuilders(defaultOptions);
+```
 
 Without specifying this explicitly, a server will not be able to send
 any attachments back. This is because by default the
-```Accept-Type``` header will not include
-```multipart/related``` as a valid accept type for the client to
+`Accept-Type` header will not include
+`multipart/related` as a valid accept type for the client to
 handle.
 
 Subsequently, in order for the client to access any response attachments
-from the server, the ```Response``` object has been augmented
-with two new APIs, ```Response\#hasAttachments()``` and
-```Response\#getAttachmentReader()```.
+from the server, the `Response` object has been augmented
+with two new APIs, `Response\#hasAttachments()` and
+`Response\#getAttachmentReader()`.
 
 Clients should first see if the response has any attachments, and if so,
-call ```getAttachmentReader()``` to return the
-```RestLiAttachmentReader``` to walk through all the attachment
+call `getAttachmentReader()` to return the
+`RestLiAttachmentReader` to walk through all the attachment
 data.
 
 ## Server Streaming APIs
@@ -582,85 +596,91 @@ Even before assigning response attachments, the resource method should
 first check to see if the client can handle any response attachments.
 This is done via:
 
-
-    if (getContext().responseAttachmentsSupported())
-    {
-       //Client can handle response attachments
-    }
+```java
+if (getContext().responseAttachmentsSupported())
+{
+   //Client can handle response attachments
+}
+```
 
 Since the server does not have response builders or any opposite
 equivalent of the client side, resource methods must assign response
-attachments using an instance of ```RestLiResponseAttachments```.
-The APIs exposed by ```RestLiResponseAttachments``` are very
+attachments using an instance of `RestLiResponseAttachments`.
+The APIs exposed by `RestLiResponseAttachments` are very
 similar to the client side request builders:
 
-    ...
-    /**
-         * Append a {@link com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter} to be placed as an attachment.
-         *
-         * @param dataSource the data source to be added.
-         * @return the builder to continue building.
-         */
-        public Builder appendSingleAttachment(final RestLiAttachmentDataSourceWriter dataSource)
-        {
-          AttachmentUtils.appendSingleAttachmentToBuilder(_responseAttachmentsBuilder, dataSource);
-          return this;
-        }
-    
-        /**
-         * Append a {@link com.linkedin.restli.common.attachments.RestLiDataSourceIterator} to be used as a data source
-         * within the newly constructed attachment list. All the individual attachments produced from the
-         * {@link com.linkedin.restli.common.attachments.RestLiDataSourceIterator} will be chained and placed as attachments in the new
-         * attachment list.
-         *
-         * @param dataSourceIterator
-         * @return the builder to continue building.
-         */
-        public Builder appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
-        {
-          AttachmentUtils.appendMultipleAttachmentsToBuilder(_responseAttachmentsBuilder, dataSourceIterator);
-          return this;
-        }
-    ...
+```java
+/**
+ * Append a {@link com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter}
+ * to be placed as an attachment.
+ *
+ * @param dataSource the data source to be added.
+ * @return the builder to continue building.
+ */
+public Builder appendSingleAttachment(final RestLiAttachmentDataSourceWriter dataSource)
+{
+  AttachmentUtils.appendSingleAttachmentToBuilder(_responseAttachmentsBuilder, dataSource);
+  return this;
+}
 
-Once this is created, the ```RestLiResponseAttachments``` can be
+/**
+ * Append a {@link com.linkedin.restli.common.attachments.RestLiDataSourceIterator} to be used
+ * as a data source within the newly constructed attachment list. All the individual attachments
+ * produced from the {@link com.linkedin.restli.common.attachments.RestLiDataSourceIterator}
+ * will be chained and placed as attachments in the new attachment list.
+ *
+ * @param dataSourceIterator
+ * @return the builder to continue building.
+ */
+public Builder appendMultipleAttachments(final RestLiDataSourceIterator dataSourceIterator)
+{
+  AttachmentUtils.appendMultipleAttachmentsToBuilder(_responseAttachmentsBuilder, dataSourceIterator);
+  return this;
+}
+```
+
+Once this is created, the `RestLiResponseAttachments` can be
 assigned to the response via
-```ResourceContext\#setResponseAttachments```.
+`ResourceContext\#setResponseAttachments`.
 
 Here is a complete example on how a server might respond with
 attachments:
 
-    if (getContext().responseAttachmentsSupported())
-    {
-       final GreetingWriter greetingWriter = new GreetingWriter(ByteString.copy(greetingBytes));
-       final RestLiResponseAttachments streamingAttachments =
-                  new RestLiResponseAttachments.Builder().appendSingleAttachment(greetingWriter).build();
-          getContext().setResponseAttachments(streamingAttachments);
-          callback.onSuccess(new Greeting().setMessage("Your greeting has an attachment since you were kind and "
-                  + "decided you wanted to read it!").setId(key));
-    }
+```java
+if (getContext().responseAttachmentsSupported())
+{
+    final GreetingWriter greetingWriter = new GreetingWriter(ByteString.copy(greetingBytes));
+    final RestLiResponseAttachments streamingAttachments = new RestLiResponseAttachments.Builder()
+      .appendSingleAttachment(greetingWriter)
+      .build();
+    getContext().setResponseAttachments(streamingAttachments);
+    callback.onSuccess(new Greeting().setMessage("Your greeting has an attachment since you were kind and "
+      + "decided you wanted to read it!").setId(key));
+}
+```
 
-Once again, the implementation of ```GreetingWriter``` has not
+Once again, the implementation of `GreetingWriter` has not
 been provided but it is a trivial implementation of
-```RestLiAttachmentDataSourceWriter```.
+`RestLiAttachmentDataSourceWriter`.
 
 ### Accepting Request Attachments on the Server
 
 A resource method expresses that it can accept request attachments by
-declaring ```RestLiAttachmentReader``` as a parameter in it’s
+declaring `RestLiAttachmentReader` as a parameter in it’s
 method signature. This parameter must be accompanied by the presence of
-a new annotation: ```RestLiAttachmentsParam```. Note that only
+a new annotation: `RestLiAttachmentsParam`. Note that only
 one parameter of this type can be declared and the
-```RestLiAttachmentsParam``` cannot be used with any other
+`RestLiAttachmentsParam` cannot be used with any other
 parameter type.
 
 Here is an example of what a method signature may look like:
 
+```java
+public void create(Greeting greeting, @CallbackParam Callback<CreateResponse> callback,
+                   @RestLiAttachmentsParam RestLiAttachmentReader attachmentReader)
+```
 
-    public void create(Greeting greeting, @CallbackParam Callback<CreateResponse> callback,
-                       @RestLiAttachmentsParam RestLiAttachmentReader attachmentReader)
-
-If the provided ```RestLiAttachmentReader``` is not null, the
+If the provided `RestLiAttachmentReader` is not null, the
 resource method may walk through it absorbing attachment data as
 described earlier above.
 
@@ -671,7 +691,7 @@ via the parameter declaration shown above. Therefore:
 is no problem and this is completely normal.  
 2\. If resource method asks for them and client does not send them, the
 resource method will see null for the
-```RestLiAttachmentReader```.  
+`RestLiAttachmentReader`.  
 3\. If resource method does not ask for them and client sends them, a
 bad request is sent back and the attachments are drained by the Rest.li
 framework.  
@@ -706,9 +726,9 @@ writing their services:
 
 ## Additional Developer Notes
 
-  - There is an ```InputStream``` wrapper available that can
-    allow a user specified Java ```InputStream``` to function as
-    a data source for a ```RestLiAttachmentDataSourceWriter```.
+  - There is an `InputStream` wrapper available that can
+    allow a user specified Java `InputStream` to function as
+    a data source for a `RestLiAttachmentDataSourceWriter`.
     Although its use is discouraged since it is an async wrapper around
     a synchronous library.
   - For clients issuing requests, only HTTP PUT or POST methods are
@@ -740,7 +760,7 @@ multipart/mime layer. This layer allows application developers to:
   - Read multipart/mime responses (client) and requests (server) that
     conform to the RFC
 
-Please see source, tests and examples in the ```multipart-mime```
+Please see source, tests and examples in the `multipart-mime`
 module for more details.
 
 ## Future Enhancements
@@ -752,7 +772,7 @@ experience. We have plans for:
   - Streaming support for Rest.li filters - Allow the filters to view
     windows of bytes as attachments flow in an out of the server
   - IDL integration + request builders - Elevating the
-    ```RestLiAttachmentReader``` parameter on the server side to
+    `RestLiAttachmentReader` parameter on the server side to
     the IDL and providing a request builder specifically targeted for
     this parameter. This would require the compat checker to detect any
     backward incompatible changes as well.

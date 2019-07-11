@@ -89,70 +89,73 @@ The `settings.gradle` file just includes the sub-projects:
 
 ##### file: example-standalone-app/settings.gradle
 
-    include 'api'
-    include 'server'
-    include 'client'
+```gradle
+include 'api'
+include 'server'
+include 'client'
+```
 
 The file `build.gradle` should contain:
 
 ##### file: example-standalone-app/build.gradle
 
-    buildscript {
-      repositories {
-        mavenLocal()
-        mavenCentral()
-      }
-      dependencies {
-        classpath 'com.linkedin.pegasus:gradle-plugins:11.0.17'
-      }
-    }
-    
-    task wrapper(type: Wrapper) {
-      gradleVersion = '4.1'
-    }
-    
-    final pegasusVersion = '11.0.17'
-    ext.spec = [
-      'product' : [
-        'pegasus' : [
-          'data' : 'com.linkedin.pegasus:data:' + pegasusVersion,
-          'generator' : 'com.linkedin.pegasus:generator:' + pegasusVersion,
-          'r2Netty' : 'com.linkedin.pegasus:r2-netty:' + pegasusVersion,
-          'restliCommon' : 'com.linkedin.pegasus:restli-common:' + pegasusVersion,
-          'restliClient' : 'com.linkedin.pegasus:restli-client:' + pegasusVersion,
-          'restliServer' : 'com.linkedin.pegasus:restli-server:' + pegasusVersion,
-          'restliTools' : 'com.linkedin.pegasus:restli-tools:' + pegasusVersion,
-          'gradlePlugins' : 'com.linkedin.pegasus:gradle-plugins:' + pegasusVersion,
-          'restliNettyStandalone' : 'com.linkedin.pegasus:restli-netty-standalone:' + pegasusVersion,
-          'restliServerStandalone' : 'com.linkedin.pegasus:restli-server-standalone:' + pegasusVersion
-        ]
-      ]
+```gradle
+buildscript {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'com.linkedin.pegasus:gradle-plugins:11.0.17'
+  }
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '4.1'
+}
+
+final pegasusVersion = '11.0.17'
+ext.spec = [
+  'product' : [
+    'pegasus' : [
+      'data' : 'com.linkedin.pegasus:data:' + pegasusVersion,
+      'generator' : 'com.linkedin.pegasus:generator:' + pegasusVersion,
+      'r2Netty' : 'com.linkedin.pegasus:r2-netty:' + pegasusVersion,
+      'restliCommon' : 'com.linkedin.pegasus:restli-common:' + pegasusVersion,
+      'restliClient' : 'com.linkedin.pegasus:restli-client:' + pegasusVersion,
+      'restliServer' : 'com.linkedin.pegasus:restli-server:' + pegasusVersion,
+      'restliTools' : 'com.linkedin.pegasus:restli-tools:' + pegasusVersion,
+      'gradlePlugins' : 'com.linkedin.pegasus:gradle-plugins:' + pegasusVersion,
+      'restliNettyStandalone' : 'com.linkedin.pegasus:restli-netty-standalone:' + pegasusVersion,
+      'restliServerStandalone' : 'com.linkedin.pegasus:restli-server-standalone:' + pegasusVersion
     ]
-    
-    allprojects {
-      apply plugin: 'idea'
-      apply plugin: 'eclipse'
-    }
-    
-    subprojects {
-      apply plugin: 'maven'
-    
-      afterEvaluate {
-        // add the standard pegasus dependencies wherever the plugin is used
-        if (project.plugins.hasPlugin('pegasus')) {
-          dependencies {
-            dataTemplateCompile spec.product.pegasus.data
-            restClientCompile spec.product.pegasus.restliClient
-          }
-        }
-      }
-    
-      repositories {
-        mavenLocal()
-        mavenCentral()
+  ]
+]
+
+allprojects {
+  apply plugin: 'idea'
+  apply plugin: 'eclipse'
+}
+
+subprojects {
+  apply plugin: 'maven'
+
+  afterEvaluate {
+    // add the standard pegasus dependencies wherever the plugin is used
+    if (project.plugins.hasPlugin('pegasus')) {
+      dependencies {
+        dataTemplateCompile spec.product.pegasus.data
+        restClientCompile spec.product.pegasus.restliClient
       }
     }
-    
+  }
+
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+}
+```
 
 This gradle build file pulls all required jars from a global Maven
 repository. It also loads some plugins that facilitate the build process
@@ -219,20 +222,21 @@ it in a path corresponding to your namespace, under
 
 ##### file: example-standalone-app/api/src/main/pegasus/com/example/fortune/Fortune.pdsc
 
+```json
+{
+  "type": "record",
+  "name": "Fortune",
+  "namespace": "com.example.fortune",
+  "doc": "Generate a fortune cookie",
+  "fields": [
     {
-      "type": "record",
-      "name": "Fortune",
-      "namespace": "com.example.fortune",
-      "doc": "Generate a fortune cookie",
-      "fields": [
-        {
-          "name": "fortune",
-          "type": "string",
-          "doc": "The Fortune cookie string"
-        }
-      ]
+      "name": "fortune",
+      "type": "string",
+      "doc": "The Fortune cookie string"
     }
-    
+  ]
+}
+``` 
 
 `Fortune.pdsc` defines a record named Fortune, with an associated
 namespace. The record has one field, a string whose name is `fortune`.
@@ -251,7 +255,9 @@ that looks like this:
 
 ##### file: example-standalone-app/api/build.gradle
 
-    apply plugin: 'pegasus'
+```gradle
+apply plugin: 'pegasus'
+```
 
 With `Fortune.pdsc` and `build.gradle` files in place, you can generate
 a java binding for the data model. This java version is what will
@@ -299,20 +305,21 @@ modified.
 
 ##### file: example-standalone-app/api/src/mainGeneratedDataTemplate/java/com/example/fortune/Fortune.java
 
-    @Generated(...)
-    public class Fortune extends RecordTemplate {
-      public String getFortune() {
-        return getFortune(GetMode.STRICT);
-      }
-    
-      public Fortune setFortune(String value) {
-        putDirect(FIELD_Fortune, String.class, String.class, value, SetMode.DISALLOW_NULL);
-        return this;
-      }
-    
-      // ... other methods
-    }
-    
+```java
+@Generated(...)
+public class Fortune extends RecordTemplate {
+  public String getFortune() {
+    return getFortune(GetMode.STRICT);
+  }
+
+  public Fortune setFortune(String value) {
+    putDirect(FIELD_Fortune, String.class, String.class, value, SetMode.DISALLOW_NULL);
+    return this;
+  }
+
+  // ... other methods
+}
+```    
 
 ### Step 3. Implement Rest.li Server Resource
 
@@ -327,41 +334,42 @@ according to your package path under
 
 ##### file: example-standalone-app/server/src/main/java/com/example/fortune/impl/FortunesResource.java
 
-    package com.example.fortune.impl;
-    
-    import com.linkedin.restli.server.annotations.RestLiCollection;
-    import com.linkedin.restli.server.resources.CollectionResourceTemplate;
-    import com.example.fortune.Fortune;
-    import java.util.HashMap;
-    import java.util.Map;
-    
-    /**
-     * Simple Rest.li Resource that serves up a fortune cookie.
-     */
-    @RestLiCollection(name = "fortunes", namespace = "com.example.fortune")
-    public class FortunesResource extends CollectionResourceTemplate<Long, Fortune> {
-    
-      // In-memory store for the fortunes
-      static Map<Long, String> fortunes = new HashMap<Long, String>();
-      static {
-        fortunes.put(1L, "Today is your lucky day.");
-        fortunes.put(2L, "There's no time like the present.");
-        fortunes.put(3L, "Don't worry, be happy.");
-      }
-    
-      @Override
-      public Fortune get(Long key) {
-        // Retrieve the requested fortune
-        String fortune = fortunes.get(key);
-        if (fortune == null) {
-          fortune = "Your luck has run out. No fortune for id = " + key;
-        }
-    
-        // return an object that represents the fortune cookie
-        return new Fortune().setFortune(fortune);
-      }
+```java
+package com.example.fortune.impl;
+
+import com.linkedin.restli.server.annotations.RestLiCollection;
+import com.linkedin.restli.server.resources.CollectionResourceTemplate;
+import com.example.fortune.Fortune;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Simple Rest.li Resource that serves up a fortune cookie.
+ */
+@RestLiCollection(name = "fortunes", namespace = "com.example.fortune")
+public class FortunesResource extends CollectionResourceTemplate<Long, Fortune> {
+
+  // In-memory store for the fortunes
+  static Map<Long, String> fortunes = new HashMap<Long, String>();
+  static {
+    fortunes.put(1L, "Today is your lucky day.");
+    fortunes.put(2L, "There's no time like the present.");
+    fortunes.put(3L, "Don't worry, be happy.");
+  }
+
+  @Override
+  public Fortune get(Long key) {
+    // Retrieve the requested fortune
+    String fortune = fortunes.get(key);
+    if (fortune == null) {
+      fortune = "Your luck has run out. No fortune for id = " + key;
     }
-    
+
+    // return an object that represents the fortune cookie
+    return new Fortune().setFortune(fortune);
+  }
+}
+```    
 
 FortunesResource extends a Rest.li class, `CollectionResourceTemplate`
 and, for this simple example, overrides a single method, `get`, which
@@ -410,29 +418,32 @@ To compile and run the server, we need a `build.gradle` file in the
 
 ##### file: example-standalone-app/server/build.gradle
 
-    apply plugin: 'pegasus'
-    
-    ext.apiProject = project(':api')
-    
-    dependencies {
-      compile project(path: ':api', configuration: 'dataTemplate')
-      compile spec.product.pegasus.restliServer
-      compile spec.product.pegasus.restliNettyStandalone
-    }
-    
-    task startFortunesServer(type: JavaExec) {
-      main = 'com.linkedin.restli.server.NettyStandaloneLauncher'
-      args = ['-port', '8080', '-packages', 'com.example.fortune.impl']
-      classpath = sourceSets.main.runtimeClasspath
-      standardInput = System.in
-    }
-    
+```gradle
+apply plugin: 'pegasus'
+
+ext.apiProject = project(':api')
+
+dependencies {
+  compile project(path: ':api', configuration: 'dataTemplate')
+  compile spec.product.pegasus.restliServer
+  compile spec.product.pegasus.restliNettyStandalone
+}
+
+task startFortunesServer(type: JavaExec) {
+  main = 'com.linkedin.restli.server.NettyStandaloneLauncher'
+  args = ['-port', '8080', '-packages', 'com.example.fortune.impl']
+  classpath = sourceSets.main.runtimeClasspath
+  standardInput = System.in
+}
+```
 
 Next, create a `gradle.properties` file containing the following line:
 
 ##### file: example-standalone-app/server/gradle.properties
 
-    rest.model.compatibility=ignore
+```gradle
+rest.model.compatibility=ignore
+```
 
 This disables some [compatibility checks](/rest.li/setup/gradle#compatibility) on the generated files. You will need these checks in a real project but to keep this example simple we are disabling these checks.
 
@@ -533,27 +544,28 @@ strings.
 
 ##### file: example-standalone-app/server/src/mainGeneratedRest/idl/com.example.fortune.fortunes.restspec.json
 
-    {
-      "name" : "fortune",
-      "namespace" : "com.example.fortune",
-      "path" : "/fortunes",
-      "schema" : "com.linkedin.restli.example.Fortune",
-      "doc" : "Simple Rest.li Resource that serves up a fortune cookie.\n\ngenerated from: com.example.fortune.impl.FortunesResource",
-      "collection" : {
-        "identifier" : {
-          "name" : "fortuneId",
-          "type" : "long"
-        },
-        "supports" : [ "get" ],
-        "methods" : [ {
-          "method" : "get"
-        } ],
-        "entity" : {
-          "path" : "/fortunes/{fortuneId}"
-        }
-      }
+```json
+{
+  "name" : "fortune",
+  "namespace" : "com.example.fortune",
+  "path" : "/fortunes",
+  "schema" : "com.linkedin.restli.example.Fortune",
+  "doc" : "Simple Rest.li Resource that serves up a fortune cookie.\n\ngenerated from: com.example.fortune.impl.FortunesResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "fortuneId",
+      "type" : "long"
+    },
+    "supports" : [ "get" ],
+    "methods" : [ {
+      "method" : "get"
+    } ],
+    "entity" : {
+      "path" : "/fortunes/{fortuneId}"
     }
-    
+  }
+}
+``` 
 
 This file represents the contract between the server and the client.
 Accordingly, the build also copied the IDL to the `api` module, where it
@@ -617,18 +629,19 @@ provides tools to generate these classes. Let’s start by creating a
 
 ##### file: examples-standalone-app/client/build.gradle
 
-    apply plugin: 'java'
-    
-    dependencies {
-      compile project(path: ':api', configuration: 'restClient')
-      compile spec.product.pegasus.r2Netty
-    }
-    
-    task startFortunesClient(type: JavaExec) {
-      main = 'com.example.fortune.RestLiFortunesClient'
-      classpath = sourceSets.main.runtimeClasspath
-    }
-    
+```gradle
+apply plugin: 'java'
+
+dependencies {
+  compile project(path: ':api', configuration: 'restClient')
+  compile spec.product.pegasus.r2Netty
+}
+
+task startFortunesClient(type: JavaExec) {
+  main = 'com.example.fortune.RestLiFortunesClient'
+  classpath = sourceSets.main.runtimeClasspath
+}
+```
 
 To generate the interface classes used by the client, change to the
 `client/` directory and type the command:
@@ -668,20 +681,22 @@ factory, and then call its `get()` method to create a
 `FortunesGetRequestBuilder` instance lets you supply the information
 that needs to be passed in the request and builds a `Request` object:
 
-    FortunesRequestBuilders fortunesBuilders = new FortunesRequestBuilders();
-    FortunesGetRequestBuilder getBuilder = fortunesBuilders.get();
-    Request<Fortune> getRequest = getBuilder.id(fortuneId).build();
-    
+```java
+FortunesRequestBuilders fortunesBuilders = new FortunesRequestBuilders();
+FortunesGetRequestBuilder getBuilder = fortunesBuilders.get();
+Request<Fortune> getRequest = getBuilder.id(fortuneId).build();
+```
 
 The process of sending a request from a client basically consists of
 creating a `RestClient` object and invoking its `sendRequest()` method
 to send the request to the
     server:
 
-    RestClient restClient = new RestClient(r2Client, "http://localhost:8080/");
-    ResponseFuture<Fortune> getFuture = restClient.sendRequest(getRequest);
-    Response<Fortune> response = getFuture.getResponse();
-    
+```java
+RestClient restClient = new RestClient(r2Client, "http://localhost:8080/");
+ResponseFuture<Fortune> getFuture = restClient.sendRequest(getRequest);
+Response<Fortune> response = getFuture.getResponse();
+```
 
 `RestClient.sendRequest()` returns a `Future`, which can be used to wait
 on and retrieve the response from the server. Note that the response is
@@ -689,9 +704,10 @@ type-safe, and parametrized as type Fortune, so we can use the `Fortune`
 interface to retrieve the results, like
     this:
 
-    String message = response.getEntity().getFortune();
-    long id = response.getEntity().getId();
-    
+```java
+String message = response.getEntity().getFortune();
+long id = response.getEntity().getId();
+```
 
 Here is a completed `RestLiFortunesClient` class, which uses the R2
 library to create the transport mechanisms. For this example, the client
@@ -702,58 +718,59 @@ structure.
 
 ##### file: example-standalone-app/client/src/main/java/com/example/fortune/RestLiFortunesClient.java
 
-    package com.example.fortune;
-    
-    import com.linkedin.common.callback.FutureCallback;
-    import com.linkedin.common.util.None;
-    import com.linkedin.r2.transport.common.Client;
-    import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-    import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
-    import com.linkedin.r2.transport.http.client.HttpClientFactory;
-    import com.linkedin.restli.client.Request;
-    import com.linkedin.restli.client.Response;
-    import com.linkedin.restli.client.ResponseFuture;
-    import com.linkedin.restli.client.RestClient;
-    import com.example.fortune.FortunesRequestBuilders;
-    import java.util.Collections;
-    
-    public class RestLiFortunesClient {
-      /**
-       * This stand-alone app demos the client-side Rest.li API.
-       * To see the demo, run the server, then start the client
-       */
-      public static void main(String[] args) throws Exception {
-    
-        // Create an HttpClient and wrap it in an abstraction layer
-        final HttpClientFactory http = new HttpClientFactory();
-        final Client r2Client = new TransportClientAdapter(
-            http.getClient(Collections.<String, String>emptyMap()));
-    
-        // Create a RestClient to talk to localhost:8080
-        RestClient restClient = new RestClient(r2Client, "http://localhost:8080/");
-    
-        // Generate a random ID for a fortune cookie, in the range 0 - 5
-        long fortuneId = (long) (Math.random() * 5);
-    
-        // Construct a request for the specified fortune
-        FortunesGetRequestBuilder getBuilder = fortuneBuilders.get();
-        Request<Fortune> getRequest = getBuilder.id(fortuneId).build();
-    
-        // Send the request and wait for a response
-        final ResponseFuture<Fortune> getFuture = restClient.sendRequest(getRequest);
-        final Response<Fortune> response = getFuture.getResponse();
-    
-        // Print the response
-        System.out.println(response.getEntity().getFortune());
-    
-        // Shutdown
-        restClient.shutdown(new FutureCallback<None>());
-        http.shutdown(new FutureCallback<None>());
-      }
-    
-      private static final FortunesRequestBuilders fortuneBuilders = new FortunesRequestBuilders();
-    }
-    
+```java
+package com.example.fortune;
+
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.util.None;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.Request;
+import com.linkedin.restli.client.Response;
+import com.linkedin.restli.client.ResponseFuture;
+import com.linkedin.restli.client.RestClient;
+import com.example.fortune.FortunesRequestBuilders;
+import java.util.Collections;
+
+public class RestLiFortunesClient {
+  /**
+   * This stand-alone app demos the client-side Rest.li API.
+   * To see the demo, run the server, then start the client
+   */
+  public static void main(String[] args) throws Exception {
+
+    // Create an HttpClient and wrap it in an abstraction layer
+    final HttpClientFactory http = new HttpClientFactory();
+    final Client r2Client = new TransportClientAdapter(
+        http.getClient(Collections.<String, String>emptyMap()));
+
+    // Create a RestClient to talk to localhost:8080
+    RestClient restClient = new RestClient(r2Client, "http://localhost:8080/");
+
+    // Generate a random ID for a fortune cookie, in the range 0 - 5
+    long fortuneId = (long) (Math.random() * 5);
+
+    // Construct a request for the specified fortune
+    FortunesGetRequestBuilder getBuilder = fortuneBuilders.get();
+    Request<Fortune> getRequest = getBuilder.id(fortuneId).build();
+
+    // Send the request and wait for a response
+    final ResponseFuture<Fortune> getFuture = restClient.sendRequest(getRequest);
+    final Response<Fortune> response = getFuture.getResponse();
+
+    // Print the response
+    System.out.println(response.getEntity().getFortune());
+
+    // Shutdown
+    restClient.shutdown(new FutureCallback<None>());
+    http.shutdown(new FutureCallback<None>());
+  }
+
+  private static final FortunesRequestBuilders fortuneBuilders = new FortunesRequestBuilders();
+}
+```
 
 ### Step 3. Build and Run the Client
 

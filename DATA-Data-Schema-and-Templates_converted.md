@@ -117,178 +117,178 @@ The following are a few example schemas and their file names.
 
 com/linkedin/pegasus/generator/examples/Foo.pdsc
 
-  ```
-  {
-    "type" : "record",
-    "name" : "Foo",
-    "namespace" : "com.linkedin.pegasus.generator.examples",
-    "doc" : "A foo record",
-    "fields" : [
-      { "name" : "intField",       "type" : "int" },
-      { "name" : "longField",      "type" : "long" },
-      { "name" : "floatField",     "type" : "float" },
-      { "name" : "doubleField",    "type" : "double" },
-      { "name" : "bytesField",     "type" : "bytes" },
-      { "name" : "stringField",    "type" : "string" },
-      { "name" : "fruitsField",    "type" : "Fruits" },
-      { "name" : "intArrayField",  "type" : { "type" : "array", "items" : "int" } },
-      { "name" : "stringMapField", "type" : { "type" : "map", "values" : "string" } },
-      {
-        "name" : "unionField",
-        "type" : [
-          "int",
-          "string",
-          "Fruits",
-          "Foo",
-          { "type" : "array", "items" : "string" },
-          { "type" : "map", "values" : "long" },
-          "null"
-        ]
-      }
-    ]
-  }
-  ```
+```json
+{
+  "type" : "record",
+  "name" : "Foo",
+  "namespace" : "com.linkedin.pegasus.generator.examples",
+  "doc" : "A foo record",
+  "fields" : [
+    { "name" : "intField",       "type" : "int" },
+    { "name" : "longField",      "type" : "long" },
+    { "name" : "floatField",     "type" : "float" },
+    { "name" : "doubleField",    "type" : "double" },
+    { "name" : "bytesField",     "type" : "bytes" },
+    { "name" : "stringField",    "type" : "string" },
+    { "name" : "fruitsField",    "type" : "Fruits" },
+    { "name" : "intArrayField",  "type" : { "type" : "array", "items" : "int" } },
+    { "name" : "stringMapField", "type" : { "type" : "map", "values" : "string" } },
+    {
+      "name" : "unionField",
+      "type" : [
+        "int",
+        "string",
+        "Fruits",
+        "Foo",
+        { "type" : "array", "items" : "string" },
+        { "type" : "map", "values" : "long" },
+        "null"
+      ]
+    }
+  ]
+}
+```
 
 com/linkedin/pegasus/generator/examples/FooWithNamespaceOverride.pdsc
 (please see Java Binding section to see how this “package” affects
 generated java class.)
 
-  ```
-  {
-    "type" : "record",
-    "name" : "FooWithNamespaceOverride",
-    "namespace" : "com.linkedin.pegasus.generator.examples",
-    "package" : "com.linkedin.pegasus.generator.examples.record",
-    "doc" : "A foo record",
-    "fields" : [
-      { "name" : "intField",       "type" : "int" },
-      { "name" : "longField",      "type" : "long" },
-      { "name" : "floatField",     "type" : "float" },
-      { "name" : "doubleField",    "type" : "double" },
-      { "name" : "bytesField",     "type" : "bytes" },
-      { "name" : "stringField",    "type" : "string" },
-      { "name" : "fruitsField",    "type" : "Fruits" },
-      { "name" : "intArrayField",  "type" : { "type" : "array", "items" : "int" } },
-      { "name" : "stringMapField", "type" : { "type" : "map", "values" : "string" } },
-      {
-        "name" : "unionField",
-        "type" : [
-          "int",
-          "string",
-          "Fruits",
-          "Foo",
-          { "type" : "array", "items" : "string" },
-          { "type" : "map", "values" : "long" },
-          "null"
-        ]
-      }
-    ]
-  }
-  ```
+```json
+{
+  "type" : "record",
+  "name" : "FooWithNamespaceOverride",
+  "namespace" : "com.linkedin.pegasus.generator.examples",
+  "package" : "com.linkedin.pegasus.generator.examples.record",
+  "doc" : "A foo record",
+  "fields" : [
+    { "name" : "intField",       "type" : "int" },
+    { "name" : "longField",      "type" : "long" },
+    { "name" : "floatField",     "type" : "float" },
+    { "name" : "doubleField",    "type" : "double" },
+    { "name" : "bytesField",     "type" : "bytes" },
+    { "name" : "stringField",    "type" : "string" },
+    { "name" : "fruitsField",    "type" : "Fruits" },
+    { "name" : "intArrayField",  "type" : { "type" : "array", "items" : "int" } },
+    { "name" : "stringMapField", "type" : { "type" : "map", "values" : "string" } },
+    {
+      "name" : "unionField",
+      "type" : [
+        "int",
+        "string",
+        "Fruits",
+        "Foo",
+        { "type" : "array", "items" : "string" },
+        { "type" : "map", "values" : "long" },
+        "null"
+      ]
+    }
+  ]
+}
+```
 
 com/linkedin/pegasus/generator/examples/Fruits.pdsc
 
-  ```
-  {
-    "type" : "enum",
-    "name" : "Fruits",
-    "namespace" : "com.linkedin.pegasus.generator.examples",
-    "doc" : "A fruit",
-    "symbols" : [ "APPLE", "BANANA", "ORANGE", "PINEAPPLE" ],
-    "symbolDocs" : { "APPLE":"A red, yellow or green fruit.", "BANANA":"A yellow fruit.", "ORANGE":"An orange fruit.", "PINEAPPLE":"A yellow fruit."} 
-  }
-  ```
+```json
+{
+  "type" : "enum",
+  "name" : "Fruits",
+  "namespace" : "com.linkedin.pegasus.generator.examples",
+  "doc" : "A fruit",
+  "symbols" : [ "APPLE", "BANANA", "ORANGE", "PINEAPPLE" ],
+  "symbolDocs" : { "APPLE":"A red, yellow or green fruit.", "BANANA":"A yellow fruit.", "ORANGE":"An orange fruit.", "PINEAPPLE":"A yellow fruit."} 
+}
+```
 
 com/linkedin/pegasus/generator/examples/MD5.pdsc
 
-  ```
-  {
-    "type" : "fixed",
-    "name" : "MD5",
-    "namespace" : "com.linkedin.pegasus.generator.examples",
-    "doc" : "MD5",
-    "size" : 16
-  }
-  ```
+```json
+{
+  "type" : "fixed",
+  "name" : "MD5",
+  "namespace" : "com.linkedin.pegasus.generator.examples",
+  "doc" : "MD5",
+  "size" : 16
+}
+```
 
 com/linkedin/pegasus/generator/examples/StringList.pdsc
 
-  ```
-  {
-    "type" : "record",
-    "name" : "StringList",
-    "namespace" : "com.linkedin.pegasus.generator.examples",
-    "doc" : "A list of strings",
-    "fields" : [
-      { "name" : "element", "type" : "string" },
-      { "name" : "next"   , "type" : "StringList", "optional" : true }
-    ]
-  
-  }
-  ```
+```json
+{
+  "type" : "record",
+  "name" : "StringList",
+  "namespace" : "com.linkedin.pegasus.generator.examples",
+  "doc" : "A list of strings",
+  "fields" : [
+    { "name" : "element", "type" : "string" },
+    { "name" : "next"   , "type" : "StringList", "optional" : true }
+  ]
+
+}
+```
 
 com/linkedin/pegasus/generator/examples/InlinedExample.pdsc
 
-  ```
-  {
-    "type": "record",
-    "name": "InlinedExample",
-    "namespace": "com.linkedin.pegasus.generator.examples",
-    "doc": "Example on how you can declare an enum and a record inside another record",
-    "fields": [
-      {
-        "name": "myEnumField",
-        "type": {
-        "type" : "enum",
-        "name" : "EnumDeclarationInTheSameFile",
-        "symbols" : ["FOO", "BAR", "BAZ"]
+```json
+{
+  "type": "record",
+  "name": "InlinedExample",
+  "namespace": "com.linkedin.pegasus.generator.examples",
+  "doc": "Example on how you can declare an enum and a record inside another record",
+  "fields": [
+    {
+      "name": "myEnumField",
+      "type": {
+      "type" : "enum",
+      "name" : "EnumDeclarationInTheSameFile",
+      "symbols" : ["FOO", "BAR", "BAZ"]
+      },
+      "doc": "This is how we inline enum declaration without creating a new pdsc file",
+      "symbolDocs": {"FOO":"It's a foo!", "HASH":"It's a bar!", "NONE":"It's a baz!"}
+    },
+    {
+      "name": "stringField",
+      "type": "string",
+      "doc": "A regular string"
+    },
+    {
+      "name": "intField",
+      "type": "int",
+      "doc": "A regular int"
+    },
+    {
+      "name": "UnionFieldWithInlineRecordAndEnum",
+      "doc": "In this example we will declare a record and an enum inside a union",
+      "type": [
+        {
+          "type" : "record",
+          "name" : "myRecord",
+          "fields": [
+            {
+              "name": "foo1",
+              "type": "int",
+              "doc": "random int field"
+            },
+            {
+              "name": "foo2",
+              "type": "int",
+              "doc": "random int field"
+            }
+          ]
         },
-        "doc": "This is how we inline enum declaration without creating a new pdsc file",
-        "symbolDocs": {"FOO":"It's a foo!", "HASH":"It's a bar!", "NONE":"It's a baz!"}
-      },
-      {
-        "name": "stringField",
-        "type": "string",
-        "doc": "A regular string"
-      },
-      {
-        "name": "intField",
-        "type": "int",
-        "doc": "A regular int"
-      },
-      {
-        "name": "UnionFieldWithInlineRecordAndEnum",
-        "doc": "In this example we will declare a record and an enum inside a union",
-        "type": [
-          {
-            "type" : "record",
-            "name" : "myRecord",
-            "fields": [
-              {
-                "name": "foo1",
-                "type": "int",
-                "doc": "random int field"
-              },
-              {
-                "name": "foo2",
-                "type": "int",
-                "doc": "random int field"
-              }
-            ]
-          },
-          {
-            "name": "anotherEnum",
-            "type" : "enum",
-            "symbols" : ["FOOFOO", "BARBAR"],
-            "doc": "Random enum",
-            "symbolDocs": {"FOOFOO":"description about FOOFOO", "BARBAR":"description about BARBAR"}
-          }
-        ],
-        "optional": true
-      }
-    ]
-  }
-  ```
+        {
+          "name": "anotherEnum",
+          "type" : "enum",
+          "symbols" : ["FOOFOO", "BARBAR"],
+          "doc": "Random enum",
+          "symbolDocs": {"FOOFOO":"description about FOOFOO", "BARBAR":"description about BARBAR"}
+        }
+      ],
+      "optional": true
+    }
+  ]
+}
+```
 
 ### Typeref
 
@@ -334,26 +334,25 @@ Here are a few examples:
 
 Differentiate URN from string
 
-  ```
-  {
-    "type" : "typeref",
-    "name" : "URN",
-    "ref"  : "string",
-    "doc"  : "A URN, the format is defined by RFC 2141"
-  }
-  ```
+```json
+{
+  "type" : "typeref",
+  "name" : "URN",
+  "ref"  : "string",
+  "doc"  : "A URN, the format is defined by RFC 2141"
+}
+```
 
 Differentiate time from long
 
-  ```
-  {
-    "type" : "typeref",
-    "name" : "time",
-    "ref"  : "long",
-    "doc"  : "Time in milliseconds since Jan 1, 1970 UTC"
-  }
-  ```
-
+```json
+{
+  "type" : "typeref",
+  "name" : "time",
+  "ref"  : "long",
+  "doc"  : "Time in milliseconds since Jan 1, 1970 UTC"
+}
+```
   
 Typerefs (by default) do not alter the serialization format or in-memory
 representation.
@@ -383,36 +382,36 @@ whether the default value or null should be returned when an absent
 optional field is accessed. The has field accessor may also be used to
 determine if an optional field is present.
 
-  ```
-  {
-    "type" : "record",
-    "name" : "Optional",
-    "namespace" : "com.linkedin.pegasus.generator.examples",
-    "fields" :
-    [
-      {
-        "name"     : "foo",
-        "type"     : "string",
-        "optional" : true
-      }
-    ]
-  }
-  ```
+```json
+{
+  "type" : "record",
+  "name" : "Optional",
+  "namespace" : "com.linkedin.pegasus.generator.examples",
+  "fields" :
+  [
+    {
+      "name" : "foo",
+      "type" : "string",
+      "optional" : true
+    }
+  ]
+}
+```
 
 Optional field present
 
-  ```
-  {
-    "foo" : "abcd"
-  }
-  ```
+```json
+{
+  "foo" : "abcd"
+}
+```
 
 Optional field absent
 
-  ```
-  {
-  }
-  ```
+```json
+{
+}
+```
 
 See [GetMode](#GetMode) for more detailed information on how the code
 generated data stubs access optional/default fields.
@@ -430,36 +429,36 @@ present in the underlying in-memory data structure and serialized data.
 Absence of a value is represented by a null value. Presence of a value
 is represented by a value in the union of the value’s type.
 
-  ```
-  {
-    "type" : "record",
-    "name" : "OptionalWithUnion",
-    "namespace" : "com.linkedin.pegasus.generator.examples",
-    "fields" :
-    [
-      {
-        "name"    : "foo",
-        "type"    : ["string", "null"]
-      }
-    ]
-  }
-  ```
+```json
+{
+  "type" : "record",
+  "name" : "OptionalWithUnion",
+  "namespace" : "com.linkedin.pegasus.generator.examples",
+  "fields" :
+  [
+    {
+      "name" : "foo",
+      "type" : ["string", "null"]
+    }
+  ]
+}
+```
 
 optional field present
 
-  ```
-  {
-    "foo" : { "string" : "abcd" }
-  }
-  ```
+```json
+{
+  "foo" : { "string" : "abcd" }
+}
+```
 
 optional field absent
 
-  ```
-  {
-    "foo" : null
-  }
-  ```
+```json
+{
+  "foo" : null
+}
+```
 
 Note Avro uses the union approach because Avro serialization is
 optimized to not include a field identifier in the serialized data.
@@ -472,26 +471,26 @@ defined as a Union type with the expected value types as its members.
 Here is an example of a record field defined an a union with `string`
 and `array` as its members.
 
-  ```
-  {
-    "type" : "record",
-    "name" : "RecordWithUnion",
-    "namespace" : "com.linkedin.pegasus.examples",
-    "fields" :
-    [
-      {
-        "name" : "result",
-        "type" : [
-          "string",
-          {
-            "type" : "array",
-            "items" : "Result"
-          }
-        ]
-      }
-    ]
-  }
-  ```
+```json
+{
+  "type" : "record",
+  "name" : "RecordWithUnion",
+  "namespace" : "com.linkedin.pegasus.examples",
+  "fields" :
+  [
+    {
+      "name" : "result",
+      "type" : [
+        "string",
+        {
+          "type" : "array",
+          "items" : "Result"
+        }
+      ]
+    }
+  ]
+}
+```
 
 #### Union With Members Of The Same Type
 
@@ -513,39 +512,39 @@ discriminator unlike the member type name on the standard unions
 In the example below, the union definition has a `string` and two
 `array` members with unique aliases for each of them.
 
-  ```
-  {
-    "type" : "record",
-    "name" : "RecordWithAliasedUnion",
-    "namespace" : "com.linkedin.pegasus.examples",
-    "fields" :
-    [
-      {
-        "name" : "result",
-        "type" : [
-          {
-            "type" : "string",
-            "alias" : "message"
+```json
+{
+  "type" : "record",
+  "name" : "RecordWithAliasedUnion",
+  "namespace" : "com.linkedin.pegasus.examples",
+  "fields" :
+  [
+    {
+      "name" : "result",
+      "type" : [
+        {
+          "type" : "string",
+          "alias" : "message"
+        },
+        {
+          "type": {
+            "type" : "array",
+            "items" : "Result"
           },
-          {
-            "type": {
-              "type" : "array",
-              "items" : "Result"
-            },
-            "alias" : "successResults"
+          "alias" : "successResults"
+        },
+        {
+          "type": {
+            "type" : "array",
+            "items" : "Result"
           },
-          {
-            "type": {
-              "type" : "array",
-              "items" : "Result"
-            },
-            "alias" : "failureResults"
-          }
-        ]
-      }
-    ]
-  }
-  ```
+          "alias" : "failureResults"
+        }
+      ]
+    }
+  ]
+}
+```
 
 There are few constraints that must be taken in consideration while
 specifying aliases for union members,
@@ -574,27 +573,27 @@ doesn’t fail even if the field is absent. However, in this case, [data
 validation](#data-to-schema-validation) may fail if
 [RequiredMode](#requiredmode) is set to `MUST_BE_PRESENT`.
 
-  ```
-  {
-    "type" : "record",
-    "name" : "Default",
-    "namespace" : "com.linkedin.pegasus.generator.examples",
-    "fields" :
-    [
-      {
-        "name"     : "mandatoryWithDefault",
-        "type"     : "string",
-        "default"  : "this is the default string"
-      },
-      {
-        "name"     : "optionalWithDefault",
-        "type"     : "string",
-        "optional" : true,
-        "default"  : "this is the default string"
-      }
-    ]
-  }
-  ```
+```json
+{
+  "type" : "record",
+  "name" : "Default",
+  "namespace" : "com.linkedin.pegasus.generator.examples",
+  "fields" :
+  [
+    {
+      "name" : "mandatoryWithDefault",
+      "type" : "string",
+      "default" : "this is the default string"
+    },
+    {
+      "name" : "optionalWithDefault",
+      "type" : "string",
+      "optional" : true,
+      "default" : "this is the default string"
+    }
+  ]
+}
+```
 
 See [GetMode](#GetMode) for more detailed information on how the code
 generated data stubs access optional/default fields.
@@ -605,57 +604,57 @@ An Avro default value for a union type does not include the member
 discriminator and the type of the default value must be the first member
 type in the list of member types.
 
-  ```
-  {
-    ...
-    "fields" :
-    [
-      {
-        "name"     : "foo",
-        "type"     : [ "int", "string" ],
-        "default"  : 42
-      }
-    ]
-  }
-  ```
+```js
+{
+  ...
+  "fields" :
+  [
+    {
+      "name" : "foo",
+      "type" : [ "int", "string" ],
+      "default"  : 42
+    }
+  ]
+}
+```
 
 A Pegasus default value for a union type must include the member
 discriminator. This allows the same typeref’ed union to have default
 values of different member types.
 
-  ```
-  {
-    ...
-    "fields" :
-    [
-      {
-        "name"     : "foo",
-        "type"     : [ "int", "string" ]
-        "default"  : { "int" : 42 }
-      }
-    ]
-  }
-  ```
+```js
+{
+  ...
+  "fields" :
+  [
+    {
+      "name" : "foo",
+      "type" : [ "int", "string" ]
+      "default" : { "int" : 42 }
+    }
+  ]
+}
+```
 
 For unions with aliased members, the specified alias is used as member
 discriminator instead of the type name.
 
-  ```
-  {
-    ...
-    "fields" :
-    [
-      {
-        "name"     : "foo",
-        "type"     : [
-          { "type" : "int", "alias" : "count" },
-          { "type" : "string", "alias" : "message" }
-        ],
-        "default"  : { "count" : 42 }
-      }
-    ]
-  }
-  ```
+```js
+{
+  ...
+  "fields" :
+  [
+    {
+      "name" : "foo",
+      "type" : [
+        { "type" : "int", "alias" : "count" },
+        { "type" : "string", "alias" : "message" }
+      ],
+      "default" : { "count" : 42 }
+    }
+  ]
+}
+```
 
 Note the Avro syntax optimizes the most common union with null pattern
 that is used to represent optional fields to be less verbose. However,
@@ -680,31 +679,31 @@ The value of the “include” attribute should be a list of records or
 typerefs of records. It is an error to specify non-record types in this
 list.
 
-  ```
-  {
-    "doc"  : "Bar includes fields of Foo, Bar will have fields f1 from itself and b1 from Bar",
-    "type" : "record",
-    "name" : "Bar",
-    "include" : [ "Foo" ],
-    "fields" : [
-      {
-        "name"     : "b1",
-        "type"     : "string",
-      }
-    ]
-  }
-  
-  {
-    "type" : "record",
-    "name" : "Foo",
-    "fields" : [
-      {
-        "name"     : "f1",
-        "type"     : "string",
-      }
-    ]
-  }
-  ```
+```json
+{
+  "doc"  : "Bar includes fields of Foo, Bar will have fields f1 from itself and b1 from Bar",
+  "type" : "record",
+  "name" : "Bar",
+  "include" : [ "Foo" ],
+  "fields" : [
+    {
+      "name" : "b1",
+      "type" : "string",
+    }
+  ]
+}
+
+{
+  "type" : "record",
+  "name" : "Foo",
+  "fields" : [
+    {
+      "name" : "f1",
+      "type" : "string",
+    }
+  ]
+}
+```
 
 ### Deprecation
 
@@ -721,37 +720,37 @@ deprecated.
 To deprecate a named schema, add `deprecated` property to its
 declaration.
 
-  ```
-  {
-    "type" : "record",
-    "name" : "Deprecated",
-    "namespace" : "com.linkedin.pegasus.generator.test",
-    "deprecated": "Use Foo instead.",
-    "fields" : [
-      ...
-    ]
-  }
-  ```
+```json
+{
+  "type" : "record",
+  "name" : "Deprecated",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "deprecated": "Use Foo instead.",
+  "fields" : [
+    ...
+  ]
+}
+```
 
 #### Record Field
 
 To deprecate a record field, add `deprecated` property to its
 declaration.
 
-  ```
-  {
-    "type" : "record",
-    "name" : "Foo",
-    "namespace" : "com.linkedin.pegasus.generator.test",
-    "fields" : [
-      {
-        "name" : "deprecatedInt",
-        "type" : "int",
-        "deprecated": "Reason for int deprecation."
-      }
-    ]
-  }
-  ```
+```json
+{
+  "type" : "record",
+  "name" : "Foo",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "fields" : [
+    {
+      "name" : "deprecatedInt",
+      "type" : "int",
+      "deprecated": "Reason for int deprecation."
+    }
+  ]
+}
+```
 
 #### Enum Symbol
 
@@ -759,17 +758,17 @@ To deprecate an enum symbol, add `deprecatedSymbols` property to the
 enum declaration. The value of the property is a map from the symbol
 name to a string description.
 
-  ```
-  {
-    "name" : "Planet",
-    "namespace" : "com.linkedin.pegasus.generator.test",
-    "type" : "enum",
-    "symbols" : [ "MERCURY", "VENUS", "EARTH", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO" ],
-    "deprecatedSymbols": {
-      "PLUTO": "Reclassified as dwarf planet."
-    }
+```json
+{
+  "name" : "Planet",
+  "namespace" : "com.linkedin.pegasus.generator.test",
+  "type" : "enum",
+  "symbols" : [ "MERCURY", "VENUS", "EARTH", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO" ],
+  "deprecatedSymbols": {
+    "PLUTO": "Reclassified as dwarf planet."
   }
-  ```
+}
+```
 
 <a name="HowDataisSerializedforTransport"></a>
 
@@ -887,24 +886,28 @@ the dereferenced type. E.g. for union
 
 the JSON encoding for the typeref member should look like
 
-```{ “string” : “Correct key” }```
+```
+{ “string” : “Correct key” }
+```
 
 NOT
 
-```{ “a.b.c.d.Foo” : “Wrong key” }```
+```
+{ “a.b.c.d.Foo” : “Wrong key” }
+```
 
 Similarly, for a union with aliased members the key for the members will
 be its corresponding alias. For example,
 
-  ```
-  {
-    "name" : "unionField",
-    "type" : [
-      { "type" : "int", "alias" : "count" },
-      { "type" : { "type" : "typeref", "name" : "a.b.c.d.Foo", "ref"  : "string" }, "alias" : "foo" }
-    ]
-  }
-  ```
+```json
+{
+  "name" : "unionField",
+  "type" : [
+    { "type" : "int", "alias" : "count" },
+    { "type" : { "type" : "typeref", "name" : "a.b.c.d.Foo", "ref"  : "string" }, "alias" : "foo" }
+  ]
+}
+```
 
 the JSON encoding for the typeref member should look like
 
@@ -917,40 +920,37 @@ between data and JSON using `JacksonDataCodec`.
 
 To serialize from a DataMap to JSON:
 
-  ```java
-  DataMap dataMap = new DataMap();
-  dataMap.put("message", "Hi!");
-  byte[] jsonBytes = DataMapUtils.mapToBytes(dataMap);
-  String json = new String(jsonBytes, "UTF-8");
+```java
+DataMap dataMap = new DataMap();
+dataMap.put("message", "Hi!");
+byte[] jsonBytes = DataMapUtils.mapToBytes(dataMap);
+String json = new String(jsonBytes, "UTF-8");
 
-  ```
+```
 
 To serialize from a RecordTemplate instance to JSON:
 
-  ```java
-  Greeting greeting = new Greeting().setMessage("Hi!"); // Where Greeting is class extending RecordTemplate
-  byte[] jsonBytes = DataMapUtils.dataTemplateToBytes(greeting, true);
-  String json = new String(jsonBytes, "UTF-8");
-
-  ```
+```java
+Greeting greeting = new Greeting().setMessage("Hi!"); // Where Greeting is class extending RecordTemplate
+byte[] jsonBytes = DataMapUtils.dataTemplateToBytes(greeting, true);
+String json = new String(jsonBytes, "UTF-8");
+```
 
 ##### How to Deserialize JSON to Data
 
 To deserialize from JSON to a DataMap:
 
-  ```java
-  InputStream in = IOUtils.toInputStream("{'message':'Hi!'}");
-  DataMap dataMap = DataMapUtils.readMap(in);
-
-  ```
+```java
+InputStream in = IOUtils.toInputStream("{'message':'Hi!'}");
+DataMap dataMap = DataMapUtils.readMap(in);
+```
 
 To deserialize from JSON to a RecordTemplate:
 
-  ```java
-  InputStream in = IOUtils.toInputStream("{'message':'Hi!'}");
-  Greeting deserialized = DataMapUtils.read(in, Greeting.class); // Where Greeting is class extending RecordTemplate
-
-  ```
+```java
+InputStream in = IOUtils.toInputStream("{'message':'Hi!'}");
+Greeting deserialized = DataMapUtils.read(in, Greeting.class); // Where Greeting is class extending RecordTemplate
+```
 
 ##### How to Serialize Data to PSON
 
@@ -961,10 +961,10 @@ transmit byte strings directly.
 PSON serialization/deserialization works similar to JSON (as described
 above) but uses these two methods:
 
-  ```
-  DataMapUtils.readMapPson()
-  DataMapUtils.mapToPsonBytes()
-  ```
+```java
+DataMapUtils.readMapPson()
+DataMapUtils.mapToPsonBytes()
+```
 
 ## How Data is Represented in Memory
 
@@ -1159,15 +1159,15 @@ independently configuration options:
 
 Example Usage:
 
-  ```java  
-  ValidationResult validationResult =
-  ValidateDataAgainstSchema.validate(dataTemplate, dataTemplate.schema(),
-  new ValidationOptions());  
-  if (!validationResult.isValid())  
-  {  
+```java  
+ValidationResult validationResult =
+ValidateDataAgainstSchema.validate(dataTemplate, dataTemplate.schema(),
+new ValidationOptions());  
+if (!validationResult.isValid())  
+{  
   // do something  
-  }  
-  ```
+}  
+```
 
 #### RequiredMode
 
@@ -1653,51 +1653,50 @@ that has not been updated with the new enum schema.
 Enums also supports a symbolDocs attribute to provide documentation for
 each enum symbol. E.g.
 
-  ```
-  ...
-    "symbols" : [ "APPLE", "BANANA", ... ],
-    "symbolDocs" : { "APPLE":"A red, yellow or green fruit.", "BANANA":"A yellow fruit.", ... } 
-  ...
+```js
+...
+"symbols" : [ "APPLE", "BANANA", ... ],
+"symbolDocs" : { "APPLE":"A red, yellow or green fruit.", "BANANA":"A yellow fruit.", ... } 
+...
 
-  ```
-    
+```
 
-  ```java
-  package com.linkedin.pegasus.generator.examples;
-  
-  ...
+```java
+package com.linkedin.pegasus.generator.examples;
+
+...
+/**
+* A fruit
+*
+*/
+public enum Fruits {
+
   /**
-  * A fruit
-  *
-  */
-  public enum Fruits {
-  
-      /**
-       * A red, yellow or green fruit.
-       * 
-       */
-      APPLE,
-  
-      /**
-       * A yellow fruit.
-       * 
-       */
-      BANANA,
-  
-      /**
-       * An orange fruit.
-       * 
-       */
-      ORANGE,
-  
-      /**
-       * A yellow fruit.
-       * 
-       */
-      PINEAPPLE,
-      $UNKNOWN;
-  }
-  ```
+   * A red, yellow or green fruit.
+   * 
+   */
+  APPLE,
+
+  /**
+   * A yellow fruit.
+   * 
+   */
+  BANANA,
+
+  /**
+   * An orange fruit.
+   * 
+   */
+  ORANGE,
+
+  /**
+   * A yellow fruit.
+   * 
+   */
+  PINEAPPLE,
+  $UNKNOWN;
+}
+```
 
 **Note:** Due to the addition of doclint in JDK8, anything under the
 `symbolDocs` attribute must be W3C HTML 4.01 compliant. This is because
@@ -1877,88 +1876,88 @@ The available SetModes are:
 
 <!-- end list -->
 
-  ```java
-  package com.linkedin.pegasus.generator.examples;
-  
-  ...
-  
-  public class Foo extends RecordTemplate
-  {
-      public Foo() ...
-      public Foo(DataMap data) ...
-      ...
-  
-      // intField - field of int type
-      public boolean hasIntField() ...
-      public void removeIntField() ...
-      public Integer getIntField(GetMode mode) ...
-      public Integer getIntField() { return getIntField(GetMode.STRICT); }
-      public Foo setIntField(int value) { ... ; return this; }
-      public Foo setIntField(Integer value, SetMode mode { ... ; return this; }
-      ...
-  
-      // bytesField - field of bytes, Java binding for bytes is ByteString
-      public boolean hasBytesField() ...
-      public void removeBytesField() ...
-      public ByteString getBytesField(GetMode mode) { return getBytesField(GetMode.STRICT); }
-      public ByteString getBytesField() ...
-      public Foo setBytesField(ByteString value) { ... ; return this; }
-      public Foo setBytesField(ByteString value, SetMode mode) { ... ; return this; }
-      ...
-  
-      // fruitsField - field of enum
-      public boolean hasFruitsField() ...
-      public void removeFruitsField() ...
-      public Fruits getFruitsField(GetMode mode) ...
-      public Fruits getFruitsField() { return getFruitsField(GetMode.STRICT); }
-      public Foo setFruitsField(Fruits value) { ... ; return this; }
-      public Foo setFruitsField(Fruits value, SetMode mode) { ... ; return this; }
-      ...
-  
-      // intArrayField - field of { "type" : "array", "items" : "int" }
-      public boolean hasIntArrayField() ...
-      public void removeIntArrayField() ...
-      public IntegerArray getIntArrayField(GetMode mode) ...
-      public IntegerArray getIntArrayField() { return getIntArrayField(GetMode.STRICT); }
-      public Foo setIntArrayField(IntegerArray value) { ... ; return this; }
-      public Foo setIntArrayField(IntegerArray value, SetMode mode) { ... ; return this; }
-  
-      // stringMapField - field of { "type" : "map", "values" : "string" }
-      public boolean hasStringMapField() ...
-      public void removeStringMapField() ...
-      public StringMap getStringMapField(GetMode mode) ...
-      public StringMap getStringMapField() { return getIntStringMapField(GetMode.STRICT); }
-      public Foo setStringMapField(StringMap value) { ... ; return this; }
-      public Foo setStringMapField(StringMap value, SetMode mode) { ... ; return this; }
-      ...
-  
-      // unionField - field of union
-      public boolean hasUnionField() ...
-      public void removeUnionField() ...
-      public Foo.UnionField getUnionField(GetMode mode) ...
-      public Foo.UnionField getUnionField() { return getUnionField(GetMode.STRICT); }
-      public Foo setUnionField(Foo.UnionField value) { ... ; return this; }
-      public Foo setUnionField(Foo.UnionField value, SetMode mode) { ... ; return this; }
-  
-      // get fields
-      public static Foo.Fields fields() {
-          ...;
-      }
-  
-      public static class Fields
-          extends PathSpec
-      {
-          ...
-          public PathSpec intField() { ... }
-          public PathSpec longField() { ... }
-          public PathSpec bytesField() { ... }
-          public PathSpec fruitsField() { ... }
-          public PathSpec intArrayField() { ... }
-          public PathSpec stringMapField() { ... }
-          public Foo.UnionField.Fields unionField() { ... }
-      }
-  }
-  ```
+```java
+package com.linkedin.pegasus.generator.examples;
+
+...
+
+public class Foo extends RecordTemplate
+{
+    public Foo() ...
+    public Foo(DataMap data) ...
+    ...
+
+    // intField - field of int type
+    public boolean hasIntField() ...
+    public void removeIntField() ...
+    public Integer getIntField(GetMode mode) ...
+    public Integer getIntField() { return getIntField(GetMode.STRICT); }
+    public Foo setIntField(int value) { ... ; return this; }
+    public Foo setIntField(Integer value, SetMode mode { ... ; return this; }
+    ...
+
+    // bytesField - field of bytes, Java binding for bytes is ByteString
+    public boolean hasBytesField() ...
+    public void removeBytesField() ...
+    public ByteString getBytesField(GetMode mode) { return getBytesField(GetMode.STRICT); }
+    public ByteString getBytesField() ...
+    public Foo setBytesField(ByteString value) { ... ; return this; }
+    public Foo setBytesField(ByteString value, SetMode mode) { ... ; return this; }
+    ...
+
+    // fruitsField - field of enum
+    public boolean hasFruitsField() ...
+    public void removeFruitsField() ...
+    public Fruits getFruitsField(GetMode mode) ...
+    public Fruits getFruitsField() { return getFruitsField(GetMode.STRICT); }
+    public Foo setFruitsField(Fruits value) { ... ; return this; }
+    public Foo setFruitsField(Fruits value, SetMode mode) { ... ; return this; }
+    ...
+
+    // intArrayField - field of { "type" : "array", "items" : "int" }
+    public boolean hasIntArrayField() ...
+    public void removeIntArrayField() ...
+    public IntegerArray getIntArrayField(GetMode mode) ...
+    public IntegerArray getIntArrayField() { return getIntArrayField(GetMode.STRICT); }
+    public Foo setIntArrayField(IntegerArray value) { ... ; return this; }
+    public Foo setIntArrayField(IntegerArray value, SetMode mode) { ... ; return this; }
+
+    // stringMapField - field of { "type" : "map", "values" : "string" }
+    public boolean hasStringMapField() ...
+    public void removeStringMapField() ...
+    public StringMap getStringMapField(GetMode mode) ...
+    public StringMap getStringMapField() { return getIntStringMapField(GetMode.STRICT); }
+    public Foo setStringMapField(StringMap value) { ... ; return this; }
+    public Foo setStringMapField(StringMap value, SetMode mode) { ... ; return this; }
+    ...
+
+    // unionField - field of union
+    public boolean hasUnionField() ...
+    public void removeUnionField() ...
+    public Foo.UnionField getUnionField(GetMode mode) ...
+    public Foo.UnionField getUnionField() { return getUnionField(GetMode.STRICT); }
+    public Foo setUnionField(Foo.UnionField value) { ... ; return this; }
+    public Foo setUnionField(Foo.UnionField value, SetMode mode) { ... ; return this; }
+
+    // get fields
+    public static Foo.Fields fields() {
+        ...;
+    }
+
+    public static class Fields
+        extends PathSpec
+    {
+        ...
+        public PathSpec intField() { ... }
+        public PathSpec longField() { ... }
+        public PathSpec bytesField() { ... }
+        public PathSpec fruitsField() { ... }
+        public PathSpec intArrayField() { ... }
+        public PathSpec stringMapField() { ... }
+        public Foo.UnionField.Fields unionField() { ... }
+    }
+}
+```
 
 ### Error Type
 
@@ -2002,98 +2001,98 @@ capitalized.
 Here is an example generated class for a union who’s members are not
 aliased.
 
-  ```java
-  package com.linkedin.pegasus.examples;
-  
+```java
+package com.linkedin.pegasus.examples;
+
+...
+public class Foo extends RecordTemplate
+{
   ...
-  public class Foo extends RecordTemplate
+  public final static class UnionField extends UnionTemplate
   {
-      ...
-      public final static class UnionField extends UnionTemplate
-      {
-          public UnionField() ...
-          public UnionField(Object data) ...
-  
-          // int value
-          public boolean isInt() ...
-          public Integer getInt() ...
-          public void setInt(Integer value) ...
-  
-          // string value
-          public boolean isString() ...
-          public String getString() ...
-          public void setString(String value) ...
-  
-          // com.linkedin.pegasus.generator.examples.Fruits enum value
-          public boolean isFruits() ...
-          public Fruits getFruits() ...
-          public void setFruits(Fruits value) ...
-  
-          // com.linkedin.pegasus.generator.examples.Foo record value
-          public boolean isFoo() ...
-          public Foo getFoo() ...
-          public void setFoo(Foo value) ...
-  
-          // array value ({ "type" : "array", "items" : "string" })
-          public boolean isArray() ...
-          public StringArray getArray() ...
-          public void setArray(StringArray value) ...
-  
-          // map value ({ "type" : "map", "values" : "long" })
-          public boolean isMap() ...
-          public LongMap getMap() ...
-          public void setMap(LongMap value) ...
-      }
-  
-      public static class Fields extends PathSpec
-      {
-          ...
-          public Foo.Fields Foo() { ... }
-      }
+    public UnionField() ...
+    public UnionField(Object data) ...
+
+    // int value
+    public boolean isInt() ...
+    public Integer getInt() ...
+    public void setInt(Integer value) ...
+
+    // string value
+    public boolean isString() ...
+    public String getString() ...
+    public void setString(String value) ...
+
+    // com.linkedin.pegasus.generator.examples.Fruits enum value
+    public boolean isFruits() ...
+    public Fruits getFruits() ...
+    public void setFruits(Fruits value) ...
+
+    // com.linkedin.pegasus.generator.examples.Foo record value
+    public boolean isFoo() ...
+    public Foo getFoo() ...
+    public void setFoo(Foo value) ...
+
+    // array value ({ "type" : "array", "items" : "string" })
+    public boolean isArray() ...
+    public StringArray getArray() ...
+    public void setArray(StringArray value) ...
+
+    // map value ({ "type" : "map", "values" : "long" })
+    public boolean isMap() ...
+    public LongMap getMap() ...
+    public void setMap(LongMap value) ...
   }
-  ```
+
+  public static class Fields extends PathSpec
+  {
+    ...
+    public Foo.Fields Foo() { ... }
+  }
+}
+```
 
 For a union who’s members are aliased, the generated methods will use
 the alias instead of the member’s type name like illustrated below.
 
-  ```java
-  package com.linkedin.pegasus.examples;
-  
+```java
+package com.linkedin.pegasus.examples;
+
+...
+public class Foo extends RecordTemplate
+{
   ...
-  public class Foo extends RecordTemplate
+  public final static class UnionField extends UnionTemplate
   {
-      ...
-      public final static class UnionField extends UnionTemplate
-      {
-          public UnionField() ...
-          public UnionField(Object data) ...
-  
-          // int with alias ({ "type" : "int", "alias" : "count" })
-          public UnionField createWithCount(Integer value) ...
-          public boolean isCount() ...
-          public Integer getCount() ...
-          public void setCount(Integer value) ...
-  
-          // string with alias ({ "type" : "string", "alias" : "message" })
-          public UnionField createWithMessage(String value) ...
-          public boolean isMessage() ...
-          public String getMessage() ...
-          public void setMessage(String value) ...
-  
-          // another string with alias ({ "type" : "string", "alias" : "greeting" })
-          public UnionField createWithGreeting(String value) ...
-          public boolean isGreeting() ...
-          public String getGreeting() ...
-          public void setGreeting(String value) ...
-      }
-  
-      public static class Fields extends PathSpec
-      {
-          ...
-          public Foo.Fields Foo() { ... }
-      }
+    public UnionField() ...
+    public UnionField(Object data) ...
+
+    // int with alias ({ "type" : "int", "alias" : "count" })
+    public UnionField createWithCount(Integer value) ...
+    public boolean isCount() ...
+    public Integer getCount() ...
+    public void setCount(Integer value) ...
+
+    // string with alias ({ "type" : "string", "alias" : "message" })
+    public UnionField createWithMessage(String value) ...
+    public boolean isMessage() ...
+    public String getMessage() ...
+    public void setMessage(String value) ...
+
+    // another string with alias ({ "type" : "string", "alias" : "greeting" })
+    public UnionField createWithGreeting(String value) ...
+    public boolean isGreeting() ...
+    public String getGreeting() ...
+    public void setGreeting(String value) ...
   }
-  ```
+
+  public static class Fields extends PathSpec
+  {
+    ...
+    public Foo.Fields Foo() { ... }
+  }
+}
+```
 
 ### Custom Java Class Binding for Primitive Types
 
@@ -2134,87 +2133,87 @@ A custom class must meet the following requirements:
 
 <!-- end list -->
 
-  ```
-  {
-    "type" : "typeref",
-    "name" : "CustomPoint",
-    "ref"  : "string",
-    "java" : {
-      "class" : "CustomPoint"
-    }
+```json
+{
+  "type" : "typeref",
+  "name" : "CustomPoint",
+  "ref"  : "string",
+  "java" : {
+    "class" : "CustomPoint"
   }
-  ```
+}
+```
 
-  ```java
-  //
-  // The custom class
-  // It has to be immutable.
-  //
-  public class CustomPoint
+```java
+//
+// The custom class
+// It has to be immutable.
+//
+public class CustomPoint
+{
+  private int _x;
+  private int _y;
+
+  public CustomPoint(String s)
   {
-    private int _x;
-    private int _y;
-  
-    public CustomPoint(String s)
+    String parts[] = s.split(",");
+    _x = Integer.parseInt(parts"0":0);
+    _y = Integer.parseInt(parts"1":1);
+  }
+
+  public CustomPoint(int x, int y)
+  {
+    _x = x;
+    _y = y;
+  }
+
+  public int getX()
+  {
+    return _x;
+  }
+
+  public int getY()
+  {
+    return _y;
+  }
+
+  // Implement equals, hashCode, toString, ...
+
+  //
+  // The custom class's DirectCoercer.
+  //
+  public static class CustomPointCoercer implements DirectCoercer<CustomPoint>
+  {
+    @Override
+    public Object coerceInput(CustomPoint object)
+      throws ClassCastException
     {
-      String parts[] = s.split(",");
-      _x = Integer.parseInt(parts"0":0);
-      _y = Integer.parseInt(parts"1":1);
+      return object.toString();
     }
-  
-    public CustomPoint(int x, int y)
+
+    @Override
+    public CustomPoint coerceOutput(Object object)
+      throws TemplateOutputCastException
     {
-      _x = x;
-      _y = y;
-    }
-  
-    public int getX()
-    {
-      return _x;
-    }
-  
-    public int getY()
-    {
-      return _y;
-    }
-  
-    // Implement equals, hashCode, toString, ...
-  
-    //
-    // The custom class's DirectCoercer.
-    //
-    public static class CustomPointCoercer implements DirectCoercer<CustomPoint>
-    {
-      @Override
-      public Object coerceInput(CustomPoint object)
-        throws ClassCastException
+      if (object instanceof String == false)
       {
-        return object.toString();
+        throw new TemplateOutputCastException("Output " + object + 
+                                              " is not a string, and cannot be coerced to " + 
+                                              CustomPoint.class.getName());
       }
-  
-      @Override
-      public CustomPoint coerceOutput(Object object)
-        throws TemplateOutputCastException
-      {
-        if (object instanceof String == false)
-        {
-          throw new TemplateOutputCastException("Output " + object + 
-                                                " is not a string, and cannot be coerced to " + 
-                                                CustomPoint.class.getName());
-        }
-        return new CustomPoint((String) object);
-      }
-    }
-  
-    //
-    // Automatically register Java custom class and its coercer.
-    //
-    static
-    {
-      Custom.registerCoercer(CustomPoint.class, new CustomPointCoercer());
+      return new CustomPoint((String) object);
     }
   }
-  ```
+
+  //
+  // Automatically register Java custom class and its coercer.
+  //
+  static
+  {
+    Custom.registerCoercer(CustomPoint.class, new CustomPointCoercer());
+  }
+}
+```
 
 ### Fields class
 
@@ -2315,9 +2314,9 @@ A `dataTemplate.gradle` script is available in the `build_script/`
 directory of pegasus. To use it, add the script to your project, then
 add this to your `build.gradle` file:
 
-  ```
-  apply from: "${buildScriptDirPath}/dataTemplate.gradle"
-  ```
+```
+apply from: "${buildScriptDirPath}/dataTemplate.gradle"
+```
 
 and put the `.pdsc` files in a directory structure of the form:
 ‘src/\\\<sourceset\\\>/pegasus’, where typically it would be
@@ -2344,7 +2343,7 @@ pegasus \`data-avro-<avro_version>\` adapter module in your classpath.
 For example, if you are using avro 1.6, you must add a dependency on the
 pegasus \`data-avro-1_6\` module:
 
-```  
+```java
 com.linkedin.pegasus:data-avro-1_6:<current-version>  
 ```
 
@@ -2356,16 +2355,14 @@ Schema translation is implemented by the
 
 For example, to convert from a avro schema, do:
 
-```  
-DataSchema pegasusDataSchema =
-SchemaTranslator.avroToDataSchema(avroSchema, options);  
+```java
+DataSchema pegasusDataSchema = SchemaTranslator.avroToDataSchema(avroSchema, options);  
 ```
 
 And to convert to an avro schema, do:
 
-```  
-Schema avroSchema = SchemaTranslator.dataToAvroSchema(pegasusDataSchema,
-options);  
+```java
+Schema avroSchema = SchemaTranslator.dataToAvroSchema(pegasusDataSchema, options);  
 ```
 
 ### Translating Data to and from Avro
@@ -2378,17 +2375,15 @@ both schemas are available, data can be converted.
 
 For example, to convert avro data, do:
 
-```  
+```java
 DataTranslator.dataMapToGenericRecord(data, pegasusDataSchema,
 avroSchema); // for dataMaps  
 // OR  
-GenericRecord avroRecord =
-DataTranslator.dataMapToGenericRecord(recordTemplate.data(),
-recordTemplate(), avroSchema); // for record templates  
+GenericRecord avroRecord = DataTranslator.dataMapToGenericRecord(recordTemplate.data(), recordTemplate(), avroSchema); // for record templates  
 ```
 
-And to convert from avro data, do:  
-```  
-DataMap pegasusData = genericRecordToDataMap(avroRecord,
-pegasusDataSchema, avroSchema);  
+And to convert from avro data, do:
+
+```  java
+DataMap pegasusData = genericRecordToDataMap(avroRecord, pegasusDataSchema, avroSchema);  
 ```

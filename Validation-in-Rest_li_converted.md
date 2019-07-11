@@ -73,7 +73,7 @@ For example, to use “strlen” to validate a string between 1 and 20 chars
 long, we add it to the “validate” map of the field in the schema, for
 example:
 
-```
+```json
 {
   "name": "Fortune",
   "namespace": "com.example",
@@ -166,7 +166,7 @@ Rest.li validation annotations are specified on top of the resource. For
 example,  
 ```java  
 @RestLiCollection(name = "photos", namespace = "com.linkedin.restli.example.photos")
-@ReadOnly(“urn”)  
+@ReadOnly("urn")  
 @CreateOnly({"/id", "/EXIF"})
 public class PhotoResource extends CollectionResourceTemplate<Long, Photo>
 {
@@ -181,7 +181,8 @@ Note that the first / character can be either specified or omitted. You
 can check the correct path for a field by getting its PathSpec and
 calling toString(). For example, if the ValidationDemo record contains
 an array field like this:
-```
+
+```json
 {
   "name": "ArrayWithInlineRecord",
   "type": {
@@ -204,6 +205,7 @@ an array field like this:
   "optional": true
 }
 ```
+
 `ValidationDemo.fields().ArrayWithInlineRecord().items().bar1().toString()`
 will return `/ArrayWithInlineRecord/*/bar1`.
 
@@ -307,7 +309,8 @@ class shows how to use the validator for each resource method type.
 
 Similar to request validation, the Rest.li data validator needs to be
 declared as a method parameter.  
-For example:  
+For example:
+
 ```java
 @RestMethod.BatchGet
 public Map<Integer, Fortune> batchGet(Set<Integer> ids, @ValidatorParam RestLiDataValidator validator)
@@ -377,7 +380,8 @@ class. If it is used with `DataSchemaAnnotationValidator`, it will
 consider the first two types of rules out of three listed in
 [Specifying Validation Rules](#specifying-validation-rules).
 
-For example:  
+For example:
+
 ```java
 // Send the request to the server and get the response
 final Photo photo = restClient.sendRequest(request).getResponse().getEntity();
