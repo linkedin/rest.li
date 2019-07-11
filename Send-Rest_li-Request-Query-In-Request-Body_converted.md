@@ -66,10 +66,12 @@ like this `http://localhost?ids=List(1,2,3)`, the transformed POST
 request is x-www-form-urlencoded with query params stored in the body,
 as follows:
 
-    ```
-       curl -X POST -H "X-HTTP-Method-Override: GET" -H "Content-Type: application/x-www-form-urlencoded" 
-                   --data $'ids=1,2,3' http://localhost 
-    ```
+```bash
+curl -X POST http://localhost \
+  -H "X-HTTP-Method-Override: GET" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data $'ids=1,2,3' 
+```
 
   
 Basically,
@@ -104,12 +106,13 @@ request will be of Content-Type of multipart/mixed with 2 sections:
 
 It will look as follows:
 
-    ```
-        curl -X POST -H "X-HTTP-Method-Override: PUT" -H "Content-Type: multipart/mixed; boundary=xyz" 
-           --data $'--xyz\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nids=List(1,2,3)\r\n--xyz\r\n 
-                  Content-Type: application/json\r\n\r\n{"foo":"bar"}\r\n--xyz--' 
-                  http://localhost 
-    ```
+```bash
+curl -X POST http://localhost \
+  -H "X-HTTP-Method-Override: PUT" \
+  -H "Content-Type: multipart/mixed; boundary=xyz" \
+  --data $'--xyz\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nids=List(1,2,3)\r\n--xyz\r\n 
+         Content-Type: application/json\r\n\r\n{"foo":"bar"}\r\n--xyz--' 
+```
 
   
 Here,

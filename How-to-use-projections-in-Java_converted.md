@@ -269,16 +269,16 @@ Note that the use of these annotations is mandatory if you specify
 
 If there were projections, you can check the status of each field.
 
-```  
+```java
 MaskOperation mask = projections.getOperations.get(pathSpec);
 
 if (mask == MaskOperation.POSITIVE_MASK_OP)  
 {  
-// field is requested.  
+  // field is requested.  
 }  
 else  
 {  
-// field is not requested  
+  // field is not requested  
 }
 
 MaskOperation totalMask =
@@ -286,11 +286,11 @@ pagingProjections.getOperations.get(CollectionMetadata.fields().total());
 
 if (totalMask == MaskOperation.POSITIVE_MASK_OP)  
 {  
-// the total field in pagination is requested.  
+  // the total field in pagination is requested.  
 }  
 else  
 {  
-// total is not requested  
+  // total is not requested  
 }  
 ```
 
