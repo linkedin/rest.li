@@ -17,6 +17,8 @@
 package com.linkedin.r2.disruptor;
 
 import com.linkedin.util.ArgumentUtil;
+import com.linkedin.util.clock.Clock;
+import com.linkedin.util.clock.SystemClock;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -78,14 +80,16 @@ public class DisruptFilter implements StreamFilter, RestFilter
    */
   private final int _requestTimeout;
 
-  public DisruptFilter(ScheduledExecutorService scheduler, ExecutorService executor, int requestTimeout)
-  {
+  private final Clock _clock;
+
+  public DisruptFilter(ScheduledExecutorService scheduler, ExecutorService executor, int requestTimeout) {
     ArgumentUtil.notNull(scheduler, "scheduler");
     ArgumentUtil.notNull(executor, "executor");
 
     _scheduler = scheduler;
     _executor = executor;
     _requestTimeout = requestTimeout;
+    _clock = SystemClock.instance();
   }
 
   @Override
@@ -94,7 +98,16 @@ public class DisruptFilter implements StreamFilter, RestFilter
       Map<String, String> wireAttrs,
       NextFilter<StreamRequest, StreamResponse> nextFilter)
   {
-    doDisrupt(req, requestContext, wireAttrs, nextFilter);
+    disruptRequest(req, requestContext, wireAttrs, nextFilter);
+  }
+
+  @Override
+  public void onStreamResponse(StreamResponse res,
+      RequestContext requestContext,
+      Map<String, String> wireAttrs,
+      NextFilter<StreamRequest, StreamResponse> nextFilter)
+  {
+    disruptResponse(res, requestContext, wireAttrs, nextFilter);
   }
 
   @Override
@@ -103,10 +116,19 @@ public class DisruptFilter implements StreamFilter, RestFilter
       Map<String, String> wireAttrs,
       NextFilter<RestRequest, RestResponse> nextFilter)
   {
-    doDisrupt(req, requestContext, wireAttrs, nextFilter);
+    disruptRequest(req, requestContext, wireAttrs, nextFilter);
   }
 
-  private <REQ extends Request, RES extends Response> void doDisrupt(
+  @Override
+  public void onRestResponse(RestResponse res,
+      RequestContext requestContext,
+      Map<String, String> wireAttrs,
+      NextFilter<RestRequest, RestResponse> nextFilter)
+  {
+    disruptResponse(res, requestContext, wireAttrs, nextFilter);
+  }
+
+  private <REQ extends Request, RES extends Response> void disruptRequest(
       REQ req,
       RequestContext requestContext,
       Map<String, String> wireAttrs,
@@ -153,14 +175,70 @@ public class DisruptFilter implements StreamFilter, RestFilter
             }
           }, _requestTimeout, TimeUnit.MILLISECONDS);
           break;
+        case MINIMUM_DELAY:
+          requestContext.getLocalAttrs().put(DisruptContext.DISRUPT_REQUEST_START_TIME_KEY, _clock.currentTimeMillis());
+          nextFilter.onRequest(req, requestContext, wireAttrs);
+          break;
         default:
-          LOG.warn("Unrecognized disrupt mode {}", context.mode());
+          LOG.debug("Skipping disrupt mode {} for request.", context.mode());
           nextFilter.onRequest(req, requestContext, wireAttrs);
           break;
       }
     } catch (RejectedExecutionException e) {
       LOG.warn("Unable to perform {} disrupt", context.mode(), e);
       nextFilter.onRequest(req, requestContext, wireAttrs);
+    }
+  }
+
+  private <REQ extends Request, RES extends Response> void disruptResponse(
+      RES res,
+      RequestContext requestContext,
+      Map<String, String> wireAttrs,
+      NextFilter<REQ, RES> nextFilter)
+  {
+    final DisruptContext context = (DisruptContext) requestContext.getLocalAttr(DisruptContext.DISRUPT_CONTEXT_KEY);
+    if (context == null)
+    {
+      nextFilter.onResponse(res, requestContext, wireAttrs);
+      return;
+    }
+
+    try {
+      switch (context.mode()) {
+        case MINIMUM_DELAY:
+          final Long startTime = (Long) requestContext.getLocalAttr(DisruptContext.DISRUPT_REQUEST_START_TIME_KEY);
+          if (startTime == null) {
+            LOG.error("Failed to get request start time. Unable to apply {}.", context.mode());
+            nextFilter.onResponse(res, requestContext, wireAttrs);
+            break;
+          }
+
+          DisruptContexts.MinimumDelayDisruptContext minimumDelayContext =
+              (DisruptContexts.MinimumDelayDisruptContext) context;
+
+          long totalDelay = _clock.currentTimeMillis() - startTime;
+          if (totalDelay > minimumDelayContext.delay()) {
+            LOG.debug("Total delay of {}ms is more than requested delay of {}ms. Skipping disruption.", totalDelay,
+                minimumDelayContext.delay());
+            nextFilter.onResponse(res, requestContext, wireAttrs);
+            break;
+          }
+          _scheduler.schedule(() -> {
+            try {
+              _executor.execute(() -> nextFilter.onResponse(res, requestContext, wireAttrs));
+            } catch (RejectedExecutionException e) {
+              LOG.error("Unable to continue filter chain execution after {} disrupt.", context.mode(), e);
+            }
+          }, minimumDelayContext.delay() - totalDelay, TimeUnit.MILLISECONDS);
+          break;
+        default:
+          LOG.debug("Skipping disrupt mode {} for response.", context.mode());
+          nextFilter.onResponse(res, requestContext, wireAttrs);
+          break;
+      }
+    } catch (RejectedExecutionException e) {
+      LOG.warn("Unable to perform {} disrupt", context.mode(), e);
+      nextFilter.onResponse(res, requestContext, wireAttrs);
     }
   }
 }

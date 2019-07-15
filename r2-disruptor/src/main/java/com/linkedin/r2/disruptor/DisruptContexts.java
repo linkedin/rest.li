@@ -37,6 +37,15 @@ public class DisruptContexts
     return new DelayDisruptContext(delay);
   }
 
+  public static DisruptContext minimumDelay(long delay)
+  {
+    if (delay < 0)
+    {
+      throw new IllegalArgumentException("Delay cannot be smaller than 0");
+    }
+    return new MinimumDelayDisruptContext(delay);
+  }
+
   public static DisruptContext timeout()
   {
     return new TimeoutDisruptContext();
@@ -64,6 +73,30 @@ public class DisruptContexts
     }
 
     public DelayDisruptContext(DisruptMode mode, long delay)
+    {
+      super(mode);
+      _delay = delay;
+    }
+
+    public long delay()
+    {
+      return _delay;
+    }
+  }
+
+  /**
+   * Disrupts the request by adding a certain amount of delay if the total latency is less than the specified delay.
+   */
+  static class MinimumDelayDisruptContext extends DisruptContext
+  {
+    private final long _delay;
+
+    public MinimumDelayDisruptContext(long delay)
+    {
+      this(DisruptMode.MINIMUM_DELAY, delay);
+    }
+
+    public MinimumDelayDisruptContext(DisruptMode mode, long delay)
     {
       super(mode);
       _delay = delay;

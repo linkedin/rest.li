@@ -16,6 +16,8 @@
 
 package com.linkedin.r2.disruptor;
 
+import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
@@ -60,6 +62,7 @@ public class TestDisruptFilter
 
   private static final int REQUEST_TIMEOUT = 0;
   private static final long REQUEST_LATENCY = 0;
+  private static final long MINIMUM_LATENCY = 200;
 
   private final ScheduledExecutorService _scheduler = new ScheduledThreadPoolExecutor(SCHEDULER_THREADS);
   private final ExecutorService _executor = Executors.newFixedThreadPool(EXECUTOR_THREADS);
@@ -143,6 +146,125 @@ public class TestDisruptFilter
         Collections.emptyMap(), next);
     Assert.assertTrue(latch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS), "Missing NextFilter invocation");
     Assert.assertTrue(success.get(), "Unexpected method invocation");
+  }
+
+  @Test
+  public void testMinimumDelayRealDelayLessThanSpecified() throws Exception {
+    final RequestContext requestContext = new RequestContext();
+    requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.minimumDelay(MINIMUM_LATENCY));
+
+    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT);
+    final CountDownLatch latch = new CountDownLatch(2);
+    final AtomicBoolean onRequestSuccess = new AtomicBoolean(false);
+    final AtomicBoolean onResponseSuccess = new AtomicBoolean(false);
+    final NextFilter<RestRequest, RestResponse> next = new NextFilter<RestRequest, RestResponse>() {
+      @Override
+      public void onRequest(RestRequest restRequest, RequestContext requestContext, Map<String, String> wireAttrs) {
+        onRequestSuccess.set(true);
+        latch.countDown();
+      }
+
+      @Override
+      public void onResponse(RestResponse restResponse, RequestContext requestContext, Map<String, String> wireAttrs) {
+        onResponseSuccess.set(true);
+        latch.countDown();
+      }
+
+      @Override
+      public void onError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs) {
+        Assert.fail("onError should not be called.");
+      }
+    };
+
+    long start = SystemClock.instance().currentTimeMillis();
+    filter.onRestRequest(new RestRequestBuilder(new URI(URI)).build(), requestContext, Collections.emptyMap(), next);
+    filter.onRestResponse(new RestResponseBuilder().build(), requestContext, Collections.emptyMap(), next);
+    Assert.assertTrue(latch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS), "Missing NextFilter invocation");
+    Assert.assertTrue(SystemClock.instance().currentTimeMillis() - start >= MINIMUM_LATENCY,
+        "total elapsed time should be longer than the specified minimum delay.");
+    Assert.assertTrue(onRequestSuccess.get(), "Unexpected method invocation");
+    Assert.assertTrue(onResponseSuccess.get(), "Unexpected method invocation");
+  }
+
+  @Test
+  public void testMinimumDelayRealDelayMoreThanSpecified() throws Exception {
+    final RequestContext requestContext = new RequestContext();
+    requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.minimumDelay(MINIMUM_LATENCY));
+
+    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT);
+    final CountDownLatch latch = new CountDownLatch(2);
+    final AtomicBoolean onRequestSuccess = new AtomicBoolean(false);
+    final AtomicBoolean onResponseSuccess = new AtomicBoolean(false);
+    final NextFilter<RestRequest, RestResponse> next = new NextFilter<RestRequest, RestResponse>() {
+      @Override
+      public void onRequest(RestRequest restRequest, RequestContext requestContext, Map<String, String> wireAttrs) {
+        onRequestSuccess.set(true);
+        latch.countDown();
+      }
+
+      @Override
+      public void onResponse(RestResponse restResponse, RequestContext requestContext, Map<String, String> wireAttrs) {
+        onResponseSuccess.set(true);
+        latch.countDown();
+      }
+
+      @Override
+      public void onError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs) {
+        Assert.fail("onError should not be called.");
+      }
+    };
+
+    long processingDelay = MINIMUM_LATENCY + 50;
+    long start = SystemClock.instance().currentTimeMillis();
+    filter.onRestRequest(new RestRequestBuilder(new URI(URI)).build(), requestContext, Collections.emptyMap(), next);
+    Thread.sleep(processingDelay);
+    filter.onRestResponse(new RestResponseBuilder().build(), requestContext, Collections.emptyMap(), next);
+    Assert.assertTrue(latch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS), "Missing NextFilter invocation");
+    long elapsed = SystemClock.instance().currentTimeMillis() - start;
+    Assert.assertTrue(elapsed >= processingDelay);
+    Assert.assertTrue(elapsed <= processingDelay + MINIMUM_LATENCY,
+        "Delay should not be added if elapsed time is already longer than specified minimum delay.");
+    Assert.assertTrue(onRequestSuccess.get(), "Unexpected method invocation");
+    Assert.assertTrue(onResponseSuccess.get(), "Unexpected method invocation");
+  }
+
+  @Test
+  public void testMinimumDelayNoRequestStartTime() throws Exception {
+    final RequestContext requestContext = new RequestContext();
+    requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.minimumDelay(MINIMUM_LATENCY));
+
+    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT);
+    final CountDownLatch latch = new CountDownLatch(2);
+    final AtomicBoolean onRequestSuccess = new AtomicBoolean(false);
+    final AtomicBoolean onResponseSuccess = new AtomicBoolean(false);
+    final NextFilter<RestRequest, RestResponse> next = new NextFilter<RestRequest, RestResponse>() {
+      @Override
+      public void onRequest(RestRequest restRequest, RequestContext requestContext, Map<String, String> wireAttrs) {
+        onRequestSuccess.set(true);
+        latch.countDown();
+      }
+
+      @Override
+      public void onResponse(RestResponse restResponse, RequestContext requestContext, Map<String, String> wireAttrs) {
+        onResponseSuccess.set(true);
+        latch.countDown();
+      }
+
+      @Override
+      public void onError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs) {
+        Assert.fail("onError should not be called.");
+      }
+    };
+
+    long start = SystemClock.instance().currentTimeMillis();
+    filter.onRestRequest(new RestRequestBuilder(new URI(URI)).build(), requestContext, Collections.emptyMap(), next);
+    requestContext.getLocalAttrs().remove(DisruptContext.DISRUPT_REQUEST_START_TIME_KEY);
+    filter.onRestResponse(new RestResponseBuilder().build(), requestContext, Collections.emptyMap(), next);
+    Assert.assertTrue(latch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS), "Missing NextFilter invocation");
+    Assert.assertTrue(SystemClock.instance().currentTimeMillis() - start < MINIMUM_LATENCY,
+        "Delay should not be added if request start time is not logged");
+    Assert.assertTrue(onRequestSuccess.get(), "Unexpected method invocation");
+    Assert.assertTrue(onResponseSuccess.get(), "Unexpected method invocation");
   }
 
   @Test
