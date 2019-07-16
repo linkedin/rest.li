@@ -39,11 +39,6 @@ public abstract class DisruptContext
    */
   public static final String DISRUPT_CONTEXT_KEY = "R2_DISRUPT_CONTEXT";
 
-  /**
-   * Key used to access the R2 disrupt request start time field in {@link RequestContext}
-   */
-  public static final String DISRUPT_REQUEST_START_TIME_KEY = "R2_DISRUPT_REQUEST_START";
-
   private final DisruptMode _mode;
 
   public DisruptContext(DisruptMode mode)
