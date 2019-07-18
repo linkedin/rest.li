@@ -16,6 +16,14 @@
 
 package com.linkedin.d2.balancer.servers;
 
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
@@ -25,13 +33,8 @@ import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,14 +90,13 @@ public class
       @Override
       public void onSuccess(None none)
       {
-        Map<URI, Map<Integer, PartitionData>> partitionDesc =
-            new HashMap<URI, Map<Integer, PartitionData>>();
+        Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
         partitionDesc.put(uri, partitionDataMap);
 
         Map<URI, Map<String, Object>> myUriSpecificProperties;
         if (uriSpecificProperties != null && !uriSpecificProperties.isEmpty())
         {
-          myUriSpecificProperties = new HashMap<URI, Map<String, Object>>();
+          myUriSpecificProperties = new HashMap<>();
           myUriSpecificProperties.put(uri, uriSpecificProperties);
         }
         else
@@ -129,6 +131,13 @@ public class
       @Override
       public void onError(Throwable e)
       {
+        // if the node has already been deleted, we don't care and we can just put the new one
+        if (e instanceof KeeperException.NoNodeException)
+        {
+          onSuccess(None.none());
+          return;
+        }
+        info(_log, _store + " failed to mark up for cluster: " + clusterName + ", uri: " + uri);
         callback.onError(e);
       }
     };
@@ -158,6 +167,7 @@ public class
       @Override
       public void onError(Throwable e)
       {
+        info(_log, _store + " failed to get current status on ZK for cluster: " + clusterName + ", uri: " + uri);
         callback.onError(e);
       }
     };
@@ -191,7 +201,7 @@ public class
         {
           warn(_log, _store, " marked down for cluster ", clusterName, "with uri: ", uri);
           Map<URI, Map<Integer, PartitionData>> partitionData = new HashMap<URI, Map<Integer, PartitionData>>(2);
-          partitionData.put(uri, Collections.<Integer, PartitionData>emptyMap());
+          partitionData.put(uri, Collections.emptyMap());
           _store.removePartial(clusterName, new UriProperties(clusterName, partitionData), callback);
         }
 
@@ -235,10 +245,10 @@ public class
         else if (!uriProperties.Uris().contains(uri))
         {
           warn(_log,
-              "changeWeight called on a uri that doesn't exist in cluster ",
-              clusterName,
-              ": ",
-              uri);
+               "changeWeight called on a uri that doesn't exist in cluster ",
+               clusterName,
+               ": ",
+               uri);
           callback.onError(new ServiceUnavailableException(String.format("cluster: %s, uri: %s", clusterName, uri), "Uri does not exist in cluster."));
         }
         else
@@ -313,4 +323,5 @@ public class
       _store.get(clusterName, callback);
     }
   }
+
 }

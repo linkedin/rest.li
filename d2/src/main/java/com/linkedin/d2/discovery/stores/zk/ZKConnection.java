@@ -20,10 +20,6 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.callback.Callbacks;
-import com.linkedin.common.util.None;
-import com.linkedin.d2.discovery.PropertySerializer;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
@@ -35,6 +31,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.Callbacks;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.discovery.PropertySerializer;
+
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -320,7 +322,7 @@ public class ZKConnection
         }
         else
         {
-          throw new TimeoutException("timeout expired without state being reached");
+          throw new TimeoutException("timeout expired without state being reached, current state: " + _currentState.name());
         }
       }
     }

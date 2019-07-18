@@ -20,6 +20,10 @@
 
 package com.linkedin.d2.balancer.servers;
 
+import java.util.Collections;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.CallbackAdapter;
 import com.linkedin.common.callback.Callbacks;
@@ -31,15 +35,9 @@ import com.linkedin.d2.discovery.stores.zk.ZKConnectionBuilder;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
-import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * Manages a ZooKeeper connection and one or more Announcers.  Upon being started, tells the
@@ -157,6 +155,10 @@ public class ZooKeeperConnectionManager
   public void shutdown(final Callback<None> callback)
   {
     _managerStarted = false;
+    for (ZooKeeperAnnouncer server : _servers)
+    {
+      server.shutdown();
+    }
     Callback<None> zkCloseCallback = new CallbackAdapter<None,None>(callback)
     {
       @Override
@@ -258,7 +260,7 @@ public class ZooKeeperConnectionManager
         }
         case SESSION_EXPIRED:
         {
-          _store.shutdown(Callbacks.<None>empty());
+          _store.shutdown(Callbacks.empty());
           _storeStarted = false;
           break;
         }
@@ -272,7 +274,7 @@ public class ZooKeeperConnectionManager
           {
             for (ZooKeeperAnnouncer server : _servers)
             {
-              server.retry(Callbacks.<None>empty());
+              server.retry(Callbacks.empty());
             }
           }
           break;
@@ -336,7 +338,6 @@ public class ZooKeeperConnectionManager
             {
               LOG.info("Started an announcer");
               multiCallback.onSuccess(result);
-              server.retry(Callbacks.<None>empty());
             }
           });
         }

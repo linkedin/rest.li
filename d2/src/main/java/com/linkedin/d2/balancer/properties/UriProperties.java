@@ -141,7 +141,7 @@ public class UriProperties
   public String toString()
   {
     return "UriProperties [_clusterName=" + _clusterName + ", _urisBySchemeAndPartition="
-        + _urisBySchemeAndPartition + "_partitions=" + _partitionDesc + ", _uriSpecificProperties=" + _uriSpecificProperties + "]";
+        + _urisBySchemeAndPartition + ", _partitions=" + _partitionDesc + ", _uriSpecificProperties=" + _uriSpecificProperties + "]";
   }
 
   @Override

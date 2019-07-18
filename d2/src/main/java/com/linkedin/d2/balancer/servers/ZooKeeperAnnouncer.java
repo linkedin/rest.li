@@ -20,6 +20,14 @@
 
 package com.linkedin.d2.balancer.servers;
 
+import java.net.URI;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CancellationException;
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
@@ -28,38 +36,39 @@ import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.util.ArgumentUtil;
 
-import java.net.URI;
-import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CancellationException;
+import javax.annotation.Nullable;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * ZooKeeperAnnouncer combines a ZooKeeperServer with a configured "desired state", and
  * allows the server to be brought up/down in that state.  The desired state can also
  * be manipulated, for example to allow for administrative manipulation.
  * @author Steven Ihde
- * @version $Revision: $
+ * @author Francesco Capponi (fcapponi@linkedin.com)
  */
 
 public class ZooKeeperAnnouncer
 {
   private final ZooKeeperServer _server;
   private static final Logger _log = LoggerFactory.getLogger(ZooKeeperAnnouncer.class);
-  private String _cluster;
-  private URI _uri;
-  private Map<Integer, PartitionData> _partitionDataMap;
-  private Map<String, Object> _uriSpecificProperties;
+  private volatile String _cluster;
+  private volatile URI _uri;
+  private volatile Map<Integer, PartitionData> _partitionDataMap;
+  private volatile Map<String, Object> _uriSpecificProperties;
 
+  /**
+   * Field that indicates if the user requested the server to be up or down. If it is requested to be up,
+   * it will try to bring up the server again on ZK if the connection goes down, or a new store is set
+   */
   private boolean _isUp;
   private final Deque<Callback<None>> _pendingMarkDown;
   private final Deque<Callback<None>> _pendingMarkUp;
+
+  private Runnable _nextOperation;
+  private boolean _isRunningMarkUpOrMarkDown;
+  private volatile boolean _shuttingDown;
 
   public ZooKeeperAnnouncer(ZooKeeperServer server)
   {
@@ -71,8 +80,8 @@ public class ZooKeeperAnnouncer
     _server = server;
     // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
     _isUp = initialIsUp;
-    _pendingMarkDown = new ArrayDeque<Callback<None>>();
-    _pendingMarkUp = new ArrayDeque<Callback<None>>();
+    _pendingMarkDown = new ArrayDeque<>();
+    _pendingMarkUp = new ArrayDeque<>();
   }
 
   /**
@@ -90,6 +99,11 @@ public class ZooKeeperAnnouncer
       callback.onSuccess(None.none());
     }
     // No need to manually markDown since we are getting a brand new session
+  }
+
+  public synchronized void shutdown()
+  {
+    _shuttingDown = true;
   }
 
   /**
@@ -118,11 +132,6 @@ public class ZooKeeperAnnouncer
     // will not go away if we were marked up.
   }
 
-  public void setStore(ZooKeeperEphemeralStore<UriProperties> store)
-  {
-    _server.setStore(store);
-  }
-
   public void reset(final Callback<None> callback)
   {
     markDown(new Callback<None>()
@@ -143,7 +152,13 @@ public class ZooKeeperAnnouncer
 
   public synchronized void markUp(final Callback<None> callback)
   {
+    _pendingMarkUp.add(callback);
     _isUp = true;
+    runNowOrEnqueue(() -> doMarkUp(callback));
+  }
+
+  private synchronized void doMarkUp(Callback<None> callback)
+  {
     _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, new Callback<None>()
     {
       @Override
@@ -151,15 +166,18 @@ public class ZooKeeperAnnouncer
       {
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
-          synchronized (ZooKeeperAnnouncer.this)
-          {
-            _pendingMarkUp.add(callback);
-          }
-          _log.warn("failed to mark up uri {} due to {}.", _uri, e.getClass().getSimpleName());
+          _log.debug("failed to mark up uri {} due to {}.", _uri, e.getClass().getSimpleName());
+          // Setting to null because if that connection dies, when don't want to continue making operations before
+          // the connection is up again.
+          // When the connection will be up again, the ZKAnnouncer will be restarted and it will read the _isUp
+          // value and start markingUp again if necessary
+          _nextOperation = null;
+          _isRunningMarkUpOrMarkDown = false;
         }
         else
         {
           callback.onError(e);
+          runNextMarkUpOrMarkDown();
         }
       }
 
@@ -167,42 +185,58 @@ public class ZooKeeperAnnouncer
       public void onSuccess(None result)
       {
         _log.info("markUp for uri = {} succeeded.", _uri);
-        callback.onSuccess(result);
         // Note that the pending callbacks we see at this point are
         // from the requests that are filed before us because zookeeper
         // guarantees the ordering of callback being invoked.
         synchronized (ZooKeeperAnnouncer.this)
         {
-          // drain _pendingMarkDown with CancellationException.
-          drain(_pendingMarkDown, new CancellationException("Cancelled because a more recent markUp request succeeded."));
           // drain _pendingMarkUp with successful result.
+
+          // TODO: in case multiple markup are lined up, and after the success of the current markup there could be
+          // another markup with a change. We should not want to drain all of the pendingMarkUp because in case of
+          // failure of the next markup (which would bare the data changes) with an non-connection related exception,
+          // the user will never be notified of the failure.
+          // We are currently not aware of such non-connection related exception, but it is a case that could require
+          // attention in the future.
           drain(_pendingMarkUp, null);
+
+          if (_isUp)
+          {
+            // drain _pendingMarkDown with CancellationException.
+            drain(_pendingMarkDown, new CancellationException("Cancelled markDown because a more recent markUp request succeeded."));
+          }
         }
+        runNextMarkUpOrMarkDown();
       }
     });
     _log.info("overrideMarkUp is called for uri = " + _uri);
-
   }
 
   public synchronized void markDown(final Callback<None> callback)
   {
+    _pendingMarkDown.add(callback);
     _isUp = false;
+    runNowOrEnqueue(() -> doMarkDown(callback));
+  }
+
+  private synchronized void doMarkDown(Callback<None> callback)
+  {
     _server.markDown(_cluster, _uri, new Callback<None>()
     {
       @Override
       public void onError(Throwable e)
       {
+
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
-          synchronized (ZooKeeperAnnouncer.this)
-          {
-            _pendingMarkDown.add(callback);
-          }
           _log.warn("failed to mark down uri {} due to {}.", _uri, e.getClass().getSimpleName());
+          _nextOperation = null;
+          _isRunningMarkUpOrMarkDown = false;
         }
         else
         {
           callback.onError(e);
+          runNextMarkUpOrMarkDown();
         }
       }
 
@@ -210,23 +244,56 @@ public class ZooKeeperAnnouncer
       public void onSuccess(None result)
       {
         _log.info("markDown for uri = {} succeeded.", _uri);
-        callback.onSuccess(result);
         // Note that the pending callbacks we see at this point are
         // from the requests that are filed before us because zookeeper
         // guarantees the ordering of callback being invoked.
         synchronized (ZooKeeperAnnouncer.this)
         {
-          // drain _pendingMarkUp with CancellationException.
-          drain(_pendingMarkUp, new CancellationException("Cancelled because a more recent markDown request succeeded."));
           // drain _pendingMarkDown with successful result.
           drain(_pendingMarkDown, null);
+
+          if (!_isUp)
+          {
+            // drain _pendingMarkUp with CancellationException.
+            drain(_pendingMarkUp, new CancellationException("Cancelled markUp because a more recent markDown request succeeded."));
+          }
         }
+        runNextMarkUpOrMarkDown();
       }
     });
     _log.info("overrideMarkDown is called for uri = " + _uri );
   }
 
-  private void drain(Deque<Callback<None>> callbacks, Throwable t)
+  // ################################## Concurrency Util Section ##################################
+
+  private synchronized void runNowOrEnqueue(Runnable requestedOperation)
+  {
+    if (_shuttingDown)
+    {
+      return;
+    }
+    if (_isRunningMarkUpOrMarkDown)
+    {
+      // we are still running markup at least once so if weight or other config changed, we are making sure to pick it up
+      _nextOperation = requestedOperation;
+      return;
+    }
+    _isRunningMarkUpOrMarkDown = true;
+    requestedOperation.run();
+  }
+
+  private synchronized void runNextMarkUpOrMarkDown()
+  {
+    Runnable operation = _nextOperation;
+    _nextOperation = null;
+    _isRunningMarkUpOrMarkDown = false;
+    if (operation != null)
+    {
+      operation.run();
+    }
+  }
+
+  private void drain(Deque<Callback<None>> callbacks, @Nullable Throwable t)
   {
     for (;!callbacks.isEmpty();)
     {
@@ -246,6 +313,13 @@ public class ZooKeeperAnnouncer
         _log.error("Unexpected throwable from markUp/markDown callback.", throwable);
       }
     }
+  }
+
+  // ################################## Properties Section ##################################
+
+  public void setStore(ZooKeeperEphemeralStore<UriProperties> store)
+  {
+    _server.setStore(store);
   }
 
   public synchronized void changeWeight(final Callback<None> callback, boolean doNotSlowStart)
@@ -331,7 +405,7 @@ public class ZooKeeperAnnouncer
 
   public void setWeight(double weight)
   {
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(1);
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<>(1);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
     _partitionDataMap = Collections.unmodifiableMap(partitionDataMap);
   }
@@ -339,7 +413,7 @@ public class ZooKeeperAnnouncer
   public void setPartitionData(Map<Integer, PartitionData> partitionData)
   {
     _partitionDataMap =
-        Collections.unmodifiableMap(new HashMap<Integer, PartitionData>(partitionData));
+        Collections.unmodifiableMap(new HashMap<>(partitionData));
   }
 
   public Map<Integer, PartitionData> getPartitionData()

@@ -1,47 +1,65 @@
 package com.linkedin.d2.balancer.servers;
 
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.util.None;
-import com.linkedin.d2.balancer.properties.PartitionData;
-import com.linkedin.d2.balancer.properties.UriProperties;
-import com.linkedin.d2.balancer.properties.UriPropertiesJsonSerializer;
-import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
-import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
-import com.linkedin.d2.discovery.stores.PropertyStoreException;
-import com.linkedin.d2.discovery.stores.zk.ZKConnection;
-import com.linkedin.d2.discovery.stores.zk.ZKServer;
-import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import junit.framework.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.callback.MultiCallback;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.UriProperties;
+import com.linkedin.d2.balancer.properties.UriPropertiesJsonSerializer;
+import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
+import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
+import com.linkedin.d2.discovery.stores.zk.ZKConnection;
+import com.linkedin.d2.discovery.stores.zk.ZKConnectionBuilder;
+import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
+import com.linkedin.d2.discovery.stores.zk.ZKServer;
+import com.linkedin.d2.discovery.stores.zk.ZKTestUtil;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
+import com.linkedin.test.util.AssertionMethods;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
+import junit.framework.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 
 /**
+ * @author Francesco Capponi (fcapponi@linkedin.com)
  * @author Ang Xu
  */
 public class ZookeeperConnectionManagerTest
 {
+  private static final Logger LOG = LoggerFactory.getLogger(ZookeeperConnectionManagerTest.class);
+
   public static final int PORT = 11811;
 
   protected ZKServer _zkServer;
+  private String _uri;
+  private String _cluster;
+  private int testId = 0;
+  private static final double WEIGHT = 0.5d;
 
   @BeforeMethod
   public void setUp() throws InterruptedException
   {
+    LOG.info("Starting ZK");
     try
     {
       _zkServer = new ZKServer(PORT);
@@ -51,178 +69,128 @@ public class ZookeeperConnectionManagerTest
     {
       fail("unable to instantiate real zk server on port " + PORT);
     }
+
+    testId++;
+    _uri = "http://cluster-" + testId + "/test";
+    _cluster = "cluster-" + testId;
   }
 
   @AfterMethod
   public void tearDown() throws IOException
   {
+    LOG.info("Stopping ZK");
     _zkServer.shutdown();
   }
 
   @Test
   public void testMarkUp()
-      throws IOException, ExecutionException, InterruptedException, PropertyStoreException
+    throws Exception
   {
-    final String uri = "http://cluster-1/test";
-    final String cluster = "cluster-1";
-    final double weight = 0.5d;
+    ZooKeeperAnnouncer announcer = getZooKeeperAnnouncer(_cluster, _uri, WEIGHT);
 
-    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer());
-    announcer.setCluster(cluster);
-    announcer.setUri(uri);
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
-    partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
-    announcer.setPartitionData(partitionWeight);
-
-    ZooKeeperConnectionManager manager = createManager(announcer);
-
-    FutureCallback<None> managerStartCallback = new FutureCallback<None>();
-    manager.start(managerStartCallback);
-    managerStartCallback.get();
+    ZooKeeperConnectionManager manager = createManager(true, announcer);
 
     ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
-    UriProperties properties = store.get(cluster);
+    UriProperties properties = store.get(_cluster);
     assertNotNull(properties);
-    assertEquals(
-        properties.getPartitionDataMap(URI.create(uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(),
-        weight);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
     assertEquals(properties.Uris().size(), 1);
+
+    shutdownManager(manager);
   }
 
   @Test
   public void testDelayMarkUp()
-          throws IOException, ExecutionException, InterruptedException, PropertyStoreException
+    throws Exception
   {
-    final String uri = "http://cluster-1/test";
-    final String cluster = "cluster-1";
-    final double weight = 0.5d;
-
     ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer(), false);
-    announcer.setCluster(cluster);
-    announcer.setUri(uri);
+    announcer.setCluster(_cluster);
+    announcer.setUri(_uri);
     Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
-    partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
+    partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(ZookeeperConnectionManagerTest.WEIGHT));
     announcer.setPartitionData(partitionWeight);
 
-    ZooKeeperConnectionManager manager = createManager(announcer);
-
-    FutureCallback<None> managerStartCallback = new FutureCallback<None>();
-    manager.start(managerStartCallback);
-    managerStartCallback.get();
+    ZooKeeperConnectionManager manager = createManager(true, announcer);
 
     ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
-    UriProperties properties = store.get(cluster);
+    UriProperties properties = store.get(_cluster);
     assertNull(properties);
 
     FutureCallback<None> markUpCallback = new FutureCallback<None>();
     announcer.markUp(markUpCallback);
     markUpCallback.get();
 
-    UriProperties propertiesAfterMarkUp = store.get(cluster);
+    UriProperties propertiesAfterMarkUp = store.get(_cluster);
     assertNotNull(propertiesAfterMarkUp);
-    assertEquals(
-            propertiesAfterMarkUp.getPartitionDataMap(URI.create(uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(),
-            weight);
+    assertEquals(propertiesAfterMarkUp.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(),
+                 ZookeeperConnectionManagerTest.WEIGHT);
     assertEquals(propertiesAfterMarkUp.Uris().size(), 1);
+
+    shutdownManager(manager);
   }
 
   @Test
   public void testMarkUpAndMarkDown()
-      throws IOException, ExecutionException, InterruptedException, PropertyStoreException
+    throws Exception
   {
-    final String uri = "http://cluster-2/test";
-    final String cluster = "cluster-2";
-    final double weight = 0.5d;
+    ZooKeeperAnnouncer announcer = getZooKeeperAnnouncer(_cluster, _uri, WEIGHT);
 
-    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer());
-    announcer.setCluster(cluster);
-    announcer.setUri(uri);
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
-    partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
-    announcer.setPartitionData(partitionWeight);
-
-    ZooKeeperConnectionManager manager = createManager(announcer);
-    FutureCallback<None> managerStartCallback = new FutureCallback<None>();
-    manager.start(managerStartCallback);
-    managerStartCallback.get();
+    ZooKeeperConnectionManager manager = createManager(true, announcer);
 
     ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
-    UriProperties properties = store.get(cluster);
+    UriProperties properties = store.get(_cluster);
     assertNotNull(properties);
-    assertEquals(
-        properties.getPartitionDataMap(URI.create(uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(),
-        weight);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
     assertEquals(properties.Uris().size(), 1);
 
     FutureCallback<None> markDownCallback = new FutureCallback<None>();
     announcer.markDown(markDownCallback);
     markDownCallback.get();
 
-    properties = store.get(cluster);
+    properties = store.get(_cluster);
     assertNotNull(properties);
     assertEquals(properties.Uris().size(), 0);
+
+    shutdownManager(manager);
   }
 
   @Test
   public void testMarkUpDuringDisconnection()
-      throws ExecutionException, InterruptedException, IOException, PropertyStoreException
+    throws Exception
   {
-    final String uri = "http://cluster-3/test";
-    final String cluster = "cluster-3";
-    final double weight = 0.5d;
+    ZooKeeperAnnouncer announcer = getZooKeeperAnnouncer(_cluster, _uri, WEIGHT);
 
-    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer());
-    announcer.setCluster(cluster);
-    announcer.setUri(uri);
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
-    partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
-    announcer.setPartitionData(partitionWeight);
-
-    ZooKeeperConnectionManager manager = createManager(announcer);
+    ZooKeeperConnectionManager manager = createManager(false, announcer);
 
     _zkServer.shutdown(false);
 
-    FutureCallback<None> managerStartCallback = new FutureCallback<None>();
+    FutureCallback<None> managerStartCallback = new FutureCallback<>();
     manager.start(managerStartCallback);
 
     _zkServer.restart();
     managerStartCallback.get();
 
     ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
-    UriProperties properties = store.get(cluster);
+    UriProperties properties = store.get(_cluster);
     assertNotNull(properties);
-    assertEquals(
-        properties.getPartitionDataMap(URI.create(uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(),
-        weight);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
     assertEquals(properties.Uris().size(), 1);
+
+    shutdownManager(manager);
   }
 
   @Test
   public void testMarkDownDuringDisconnection()
-      throws IOException, ExecutionException, InterruptedException, PropertyStoreException
+    throws Exception
   {
-    final String uri = "http://cluster-4/test";
-    final String cluster = "cluster-4";
-    final double weight = 0.5d;
+    ZooKeeperAnnouncer announcer = getZooKeeperAnnouncer(_cluster, _uri, WEIGHT);
 
-    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer());
-    announcer.setCluster(cluster);
-    announcer.setUri(uri);
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
-    partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
-    announcer.setPartitionData(partitionWeight);
-
-    ZooKeeperConnectionManager manager = createManager(announcer);
-    FutureCallback<None> managerStartCallback = new FutureCallback<None>();
-    manager.start(managerStartCallback);
-    managerStartCallback.get();
+    ZooKeeperConnectionManager manager = createManager(true, announcer);
 
     ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
-    UriProperties properties = store.get(cluster);
+    UriProperties properties = store.get(_cluster);
     assertNotNull(properties);
-    assertEquals(
-        properties.getPartitionDataMap(URI.create(uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(),
-        weight);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
     assertEquals(properties.Uris().size(), 1);
 
     _zkServer.shutdown(false);
@@ -236,37 +204,25 @@ public class ZookeeperConnectionManagerTest
     _zkServer.restart();
     markDownCallback.get();
 
-    properties = store.get(cluster);
+    properties = store.get(_cluster);
     assertNotNull(properties);
     assertEquals(properties.Uris().size(), 0);
+
+    shutdownManager(manager);
   }
 
   @Test
   public void testMarkDownAndUpDuringDisconnection()
-      throws IOException, ExecutionException, InterruptedException, PropertyStoreException, TimeoutException
+    throws Exception
   {
-    final String uri = "http://cluster-5/test";
-    final String cluster = "cluster-5";
-    final double weight = 0.5d;
+    ZooKeeperAnnouncer announcer = getZooKeeperAnnouncer(_cluster, _uri, WEIGHT);
 
-    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer());
-    announcer.setCluster(cluster);
-    announcer.setUri(uri);
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
-    partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
-    announcer.setPartitionData(partitionWeight);
-
-    ZooKeeperConnectionManager manager = createManager(announcer);
-    FutureCallback<None> managerStartCallback = new FutureCallback<None>();
-    manager.start(managerStartCallback);
-    managerStartCallback.get();
+    ZooKeeperConnectionManager manager = createManager(true, announcer);
 
     ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
-    UriProperties properties = store.get(cluster);
+    UriProperties properties = store.get(_cluster);
     assertNotNull(properties);
-    assertEquals(
-        properties.getPartitionDataMap(URI.create(uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(),
-        weight);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
     assertEquals(properties.Uris().size(), 1);
 
     _zkServer.shutdown(false);
@@ -291,44 +247,279 @@ public class ZookeeperConnectionManagerTest
       Assert.assertTrue(e.getCause() instanceof CancellationException);
     }
 
-    properties = store.get(cluster);
+    properties = store.get(_cluster);
     assertNotNull(properties);
-    assertEquals(
-        properties.getPartitionDataMap(URI.create(uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(),
-        weight);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
     assertEquals(properties.Uris().size(), 1);
+
+    shutdownManager(manager);
   }
 
-  private ZooKeeperConnectionManager createManager(ZooKeeperAnnouncer... announcers)
+  @Test(invocationCount = 10, timeOut = 10000)
+  public void testMarkUpDuringSessionExpiration()
+    throws Exception
   {
-    return new ZooKeeperConnectionManager("localhost:" + PORT, 5000, "/d2",
-        new ZooKeeperConnectionManager.ZKStoreFactory<UriProperties, ZooKeeperEphemeralStore<UriProperties>>()
-        {
-          @Override
-          public ZooKeeperEphemeralStore<UriProperties> createStore(ZKConnection connection, String path)
-          {
-            return new ZooKeeperEphemeralStore<UriProperties>(connection,
-                new UriPropertiesJsonSerializer(),
-                new UriPropertiesMerger(),
-                path);
-          }
-        }, announcers);
+    // set up
+    final double newWeight = 1.5d;
+
+    ZooKeeperAnnouncer announcer = getZooKeeperAnnouncer(_cluster, _uri, WEIGHT);
+
+    ZKPersistentConnection zkPersistentConnection = getZkPersistentConnection();
+    ZooKeeperConnectionManager manager = createManager(true, zkPersistentConnection, announcer);
+
+    // the new WEIGHT will be picked up only if the connection is re-established
+    announcer.setWeight(newWeight);
+
+    // expiring the connection
+    long oldSessionId = zkPersistentConnection.getZooKeeper().getSessionId();
+    ZKTestUtil.expireSession("localhost:" + PORT, zkPersistentConnection.getZooKeeper(), 10, TimeUnit.SECONDS);
+    // making sure that a new connection has been established.
+    ZKTestUtil.waitForNewSessionEstablished(oldSessionId, zkPersistentConnection, 10, TimeUnit.SECONDS);
+
+    // validation
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+
+    AssertionMethods.assertWithTimeout(1000, () -> {
+      UriProperties properties = store.get(_cluster);
+      assertNotNull(properties);
+      if (properties.getPartitionDataMap(URI.create(_uri)) == null)
+      {
+        Assert.fail("Supposed to have the uri present in ZK");
+      }
+      assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), newWeight);
+      assertEquals(properties.Uris().size(), 1);
+    });
+
+    shutdownManager(manager);
   }
 
-  private ZooKeeperEphemeralStore<UriProperties> createAndStartUriStore()
-      throws IOException, ExecutionException, InterruptedException
+  @Test(invocationCount = 10, timeOut = 10000)
+  public void testMarkUpDuringSessionExpirationManyCallbacks()
+    throws Exception
+  {
+    ZooKeeperAnnouncer announcer = getZooKeeperAnnouncer(_cluster, _uri, WEIGHT);
+
+    ZKPersistentConnection zkPersistentConnection = getZkPersistentConnection();
+    ZooKeeperConnectionManager manager = createManager(true, zkPersistentConnection, announcer);
+
+    // set up many concurrent callbacks
+    FutureCallback<None> allMarkupsSucceed = new FutureCallback<>();
+    int count = 1000;
+    Callback<None> markUpAllServersCallback = new MultiCallback(allMarkupsSucceed, 2 * count);
+
+    ExecutorService executorService = Executors.newScheduledThreadPool(100);
+    for (int i = 0; i < count; i++)
+    {
+      executorService.execute(() -> {
+        manager.markDownAllServers(new IgnoreCancelledCallback(markUpAllServersCallback));
+        manager.markUpAllServers(new IgnoreCancelledCallback(markUpAllServersCallback));
+      });
+    }
+
+    // expiring the connection
+    long oldSessionId = zkPersistentConnection.getZooKeeper().getSessionId();
+    ZKTestUtil.expireSession("localhost:" + PORT, zkPersistentConnection.getZooKeeper(), 10, TimeUnit.SECONDS);
+    ZKTestUtil.waitForNewSessionEstablished(oldSessionId, zkPersistentConnection, 10, TimeUnit.SECONDS);
+
+    try
+    {
+      allMarkupsSucceed.get(1, TimeUnit.MILLISECONDS);
+      Assert.fail(
+        "All the callbacks were resolved before expiring the connection, which means it won't test that callbacks are invoked even after session expiration");
+    }
+    catch (Throwable e)
+    {
+      // expected
+    }
+    allMarkupsSucceed.get();
+
+    // making sure that a new connection has been established. There should be no need to wait, because at least one markup should have been run on
+    // the new connection, which means that by this part of code it should already have been established
+    ZKTestUtil.waitForNewSessionEstablished(oldSessionId, zkPersistentConnection, 0, TimeUnit.SECONDS);
+
+    // data validation
+    dataValidation(_uri, _cluster, WEIGHT);
+
+    shutdownManager(manager);
+    executorService.shutdown();
+  }
+
+  @Test(invocationCount = 10, timeOut = 10000)
+  public void testMarkUpAndDownMultipleTimesFinalDown()
+    throws Exception
+  {
+    ZooKeeperAnnouncer announcer = getZooKeeperAnnouncer(_cluster, _uri, WEIGHT);
+    ZooKeeperConnectionManager manager = createManager(true, announcer);
+
+    // set up many concurrent callbacks
+    FutureCallback<None> allMarkupsDownsSucceed = new FutureCallback<>();
+    int count = 1;
+    Callback<None> markUpAllServersCallback = new MultiCallback(allMarkupsDownsSucceed, count * 2);
+
+    ExecutorService executorService = Executors.newScheduledThreadPool(100);
+    for (int i = 0; i < count; i++)
+    {
+      executorService.execute(() -> {
+        manager.markUpAllServers(new IgnoreCancelledCallback(markUpAllServersCallback));
+        manager.markDownAllServers(new IgnoreCancelledCallback(markUpAllServersCallback));
+      });
+    }
+    allMarkupsDownsSucceed.get();
+
+    // data validation
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+    AssertionMethods.assertWithTimeout(1000, () -> {
+      UriProperties properties = store.get(_cluster);
+      assertNotNull(properties);
+      assertNull(properties.getPartitionDataMap(URI.create(_uri)), _uri);
+    });
+
+    shutdownManager(manager);
+    executorService.shutdown();
+  }
+
+  @Test(invocationCount = 10, timeOut = 10000)
+  public void testMarkUpAndDownMultipleTimesFinalUp()
+    throws Exception
+  {
+    ZooKeeperAnnouncer announcer = getZooKeeperAnnouncer(_cluster, _uri, WEIGHT);
+    ZooKeeperConnectionManager manager = createManager(true, announcer);
+
+    FutureCallback<None> managerStartCallback = new FutureCallback<None>();
+    manager.start(managerStartCallback);
+    managerStartCallback.get(10, TimeUnit.SECONDS);
+
+    // set up many concurrent callbacks
+    FutureCallback<None> allMarkupsDownsSucceed = new FutureCallback<>();
+    int count = 1000;
+    Callback<None> markUpAllServersCallback = new MultiCallback(allMarkupsDownsSucceed, count * 2);
+
+    ExecutorService executorService = Executors.newScheduledThreadPool(100);
+    for (int i = 0; i < count; i++)
+    {
+      executorService.execute(() -> {
+        manager.markDownAllServers(new IgnoreCancelledCallback(markUpAllServersCallback));
+        manager.markUpAllServers(new IgnoreCancelledCallback(markUpAllServersCallback));
+      });
+    }
+    allMarkupsDownsSucceed.get();
+
+    // data validation
+    dataValidation(_uri, _cluster, WEIGHT);
+
+    shutdownManager(manager);
+    executorService.shutdown();
+  }
+
+  // ################################# Tooling section #################################
+
+  private static class IgnoreCancelledCallback implements Callback<None>
+  {
+    private final Callback<None> _callback;
+
+    IgnoreCancelledCallback(Callback<None> callback)
+    {
+      _callback = callback;
+    }
+
+    @Override
+    public void onError(Throwable e)
+    {
+      if (e instanceof CancellationException || e.getCause() instanceof CancellationException || (e.getCause().getCause() != null && e.getCause()
+        .getCause() instanceof CancellationException))
+      {
+        _callback.onSuccess(None.none());
+      }
+      else
+      {
+        _callback.onError(e);
+      }
+    }
+
+    @Override
+    public void onSuccess(None result)
+    {
+      _callback.onSuccess(result);
+    }
+  }
+
+  private static void dataValidation(String uri, String cluster, double weight)
+    throws Exception
+  {
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+
+    AssertionMethods.assertWithTimeout(1000, () -> {
+      UriProperties properties = store.get(cluster);
+      assertNotNull(properties);
+      if (properties.getPartitionDataMap(URI.create(uri)) == null)
+      {
+        Assert.fail();
+      }
+      assertEquals(properties.getPartitionDataMap(URI.create(uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), weight);
+      assertEquals(properties.Uris().size(), 1);
+    });
+  }
+
+  private static void shutdownManager(ZooKeeperConnectionManager manager)
+    throws InterruptedException, ExecutionException
+  {
+    FutureCallback<None> noneCallback = new FutureCallback<>();
+    manager.shutdown(noneCallback);
+    noneCallback.get();
+  }
+
+  private static ZKPersistentConnection getZkPersistentConnection()
+  {
+    return new ZKPersistentConnection(new ZKConnectionBuilder("localhost:" + PORT).setTimeout(5000));
+  }
+
+  private static ZooKeeperConnectionManager createManager(boolean startManager, ZKPersistentConnection zkPersistentConnection,
+                                                          ZooKeeperAnnouncer... announcers)
+    throws ExecutionException, InterruptedException, TimeoutException
+  {
+    ZooKeeperConnectionManager zooKeeperConnectionManager = new ZooKeeperConnectionManager(zkPersistentConnection, "/d2",
+                                                                                           (connection, path) -> new ZooKeeperEphemeralStore<>(
+                                                                                             connection, new UriPropertiesJsonSerializer(),
+                                                                                             new UriPropertiesMerger(), path), announcers);
+    if (startManager)
+    {
+      FutureCallback<None> managerStartCallback = new FutureCallback<>();
+      zooKeeperConnectionManager.start(managerStartCallback);
+      managerStartCallback.get(10, TimeUnit.SECONDS);
+    }
+    return zooKeeperConnectionManager;
+  }
+
+  private static ZooKeeperConnectionManager createManager(boolean startManager, ZooKeeperAnnouncer... announcer)
+    throws ExecutionException, InterruptedException, TimeoutException
+  {
+    ZKPersistentConnection zkPersistentConnection = getZkPersistentConnection();
+
+    return createManager(startManager, zkPersistentConnection, announcer);
+  }
+
+  private static ZooKeeperEphemeralStore<UriProperties> createAndStartUriStore()
+    throws IOException, ExecutionException, InterruptedException
   {
     ZKConnection zkClient = new ZKConnection("localhost:" + PORT, 5000);
     zkClient.start();
 
     ZooKeeperEphemeralStore<UriProperties> store =
-        new ZooKeeperEphemeralStore<UriProperties>(zkClient,
-            new UriPropertiesJsonSerializer(),
-            new UriPropertiesMerger(),
-            "/d2/uris");
-    FutureCallback<None> callback = new FutureCallback<None>();
+      new ZooKeeperEphemeralStore<>(zkClient, new UriPropertiesJsonSerializer(), new UriPropertiesMerger(), "/d2/uris");
+    FutureCallback<None> callback = new FutureCallback<>();
     store.start(callback);
     callback.get();
     return store;
+  }
+
+  private static ZooKeeperAnnouncer getZooKeeperAnnouncer(String cluster, String uri, double weight)
+  {
+    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer());
+    announcer.setCluster(cluster);
+    announcer.setUri(uri);
+    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
+    partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
+    announcer.setPartitionData(partitionWeight);
+    return announcer;
   }
 }

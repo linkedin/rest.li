@@ -1,6 +1,11 @@
 27.4.1
 -------
 
+(RB=1732683)
+Adding guarantee that last operation (markUp/Down) will always win
+Making more tolerant if a node is not found while deleting (since the goal is to delete it)
+Giving the guarantee that markUp/Down will be called the minimum set of time to make collapse multiple markUp/markDown requests which would be idempotent
+
 27.4.0
 -------
 (RB=1637831)

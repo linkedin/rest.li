@@ -2,10 +2,11 @@
 <Configuration status="WARN">
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
-      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %c{1} [%p] %m%n"/>
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %p [%t] [%c(1)] %m%n"/>
     </Console>
   </Appenders>
   <Loggers>
+    <!--  Modify this level if you want to see the errors in console log while testing  -->
     <Root level="fatal">
       <AppenderRef ref="Console"/>
     </Root>
