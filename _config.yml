@@ -11,4 +11,5 @@ toc:
 
 # Enables syntax highlighting
 highlighter:
-  rogue
+  rouge
+
