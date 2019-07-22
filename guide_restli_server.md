@@ -2046,8 +2046,8 @@ By default, Rest.li returns an extensive HTTP error response that
 includes:
 
 -   HTTP Status Code (manditory)
--   X-LinkedIn-Error-Response header (this will be renamed to
-    X-RestLi-Error-Response shortly)
+-   `X-LinkedIn-Error-Response` header (this will be renamed to
+    `X-RestLi-Error-Response` shortly)
 -   A response body containing:
     -   A full stack trace
     -   A service error code (optional)
@@ -2067,10 +2067,13 @@ the HTTP response. However if any other Java exception is thrown,
 Rest.li automatically provides a default error message of "Error in
 application code" in the error response. This default error message may
 be customized via RestLiConfig as well, as shown in this example:
-java
-```
+
+```java
 restLiConfig.setInternalErrorMessage("Internal error, please try again later.");
 ```
+
+See [this page](/rest.li/spec/service_errors#error-responses) for more information on
+error responses in Rest.li.
 
 <a id="wiki-Projections"></a>
 
