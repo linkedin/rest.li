@@ -1,5 +1,10 @@
+27.3.8
+------
+
 27.3.7
 ------
+(RB=1716092)
+Remove content length http header if present for ServerCompressionFilter
 
 27.3.6
 ------
