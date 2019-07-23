@@ -1,3 +1,6 @@
+27.3.9
+------
+
 27.3.8
 ------
 (RB=1735682)
@@ -5,6 +8,9 @@ Make project properties cacheable for GenerateAvroSchemaTask
 
 (RB=1648868)
 Migrate PegasusPlugin from Groovy to Java.
+
+(RB=1736316)
+Move migrated plugin code to use the Java plugin.
 
 27.3.7
 ------

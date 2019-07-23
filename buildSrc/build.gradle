@@ -1,5 +1,5 @@
 // add gradle-plugins to the source of buildSrc
 // this allows buildSrc to use the up-to-date pegasus plugin code without duplication
-project.sourceSets.main.groovy {
-  srcDir '../gradle-plugins/src/main/groovy'
+project.sourceSets.main.java {
+  srcDir '../gradle-plugins/src/main/java'
 }
