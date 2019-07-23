@@ -1,5 +1,7 @@
 27.3.8
 ------
+(RB=1735682)
+Make project properties cacheable for GenerateAvroSchemaTask
 
 27.3.7
 ------
@@ -10,6 +12,7 @@ Remove content length http header if present for ServerCompressionFilter
 ------
 (RB=1681705)
 Add options to translate Pegasus Default fields to Avro Optioanl fields in SchemaTranslator, DataTranslator*
+
 (RB=1718513)
 Fix incorrect end of stream bug in MultipartMIMEInputStream
 

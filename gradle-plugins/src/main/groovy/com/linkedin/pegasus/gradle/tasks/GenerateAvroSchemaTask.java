@@ -10,7 +10,9 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
@@ -40,6 +42,16 @@ public class GenerateAvroSchemaTask extends DefaultTask
   private FileCollection _codegenClasspath;
   private File _destinationDir;
 
+  // Project properties
+  private String _translateOptionalDefault;
+  private String _overrideNamespace;
+
+  public GenerateAvroSchemaTask()
+  {
+    _translateOptionalDefault = initializeProjectProperty("generator.avro.optional.default");
+    _overrideNamespace = initializeProjectProperty("generator.avro.namespace.override");
+  }
+
   @TaskAction
   public void generate()
   {
@@ -63,36 +75,16 @@ public class GenerateAvroSchemaTask extends DefaultTask
 
     String resolverPathStr = _resolverPath.plus(getProject().files(_inputDir)).getAsPath();
 
-    String avroTranslateOptionalDefault;
-    if (getProject().hasProperty("generator.avro.optional.default"))
-    {
-      avroTranslateOptionalDefault = (String) getProject().property("generator.avro.optional.default");
-    }
-    else
-    {
-      avroTranslateOptionalDefault = null;
-    }
-
-    String overrideNamespace;
-    if (getProject().hasProperty("generator.avro.namespace.override"))
-    {
-      overrideNamespace = (String) getProject().property("generator.avro.namespace.override");
-    }
-    else
-    {
-      overrideNamespace = null;
-    }
-
     getProject().javaexec(javaExecSpec ->
     {
       javaExecSpec.setMain("com.linkedin.data.avro.generator.AvroSchemaGenerator");
       javaExecSpec.setClasspath(_codegenClasspath);
       javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr);
-      if (avroTranslateOptionalDefault != null) {
-        javaExecSpec.jvmArgs("-Dgenerator.avro.optional.default=" + avroTranslateOptionalDefault);
+      if (_translateOptionalDefault != null) {
+        javaExecSpec.jvmArgs("-Dgenerator.avro.optional.default=" + _translateOptionalDefault);
       }
-      if (overrideNamespace != null) {
-        javaExecSpec.jvmArgs("-Dgenerator.avro.namespace.override=" + overrideNamespace);
+      if (_overrideNamespace != null) {
+        javaExecSpec.jvmArgs("-Dgenerator.avro.namespace.override=" + _overrideNamespace);
       }
       javaExecSpec.args(_destinationDir.getPath());
       javaExecSpec.args(inputDataSchemaFilenames);
@@ -152,5 +144,37 @@ public class GenerateAvroSchemaTask extends DefaultTask
   public void setDestinationDir(File destinationDir)
   {
     _destinationDir = destinationDir;
+  }
+
+  /**
+   * Value of project property "generator.avro.optional.default"
+   */
+  @Input
+  @Optional
+  public String getTranslateOptionalDefault()
+  {
+    return _translateOptionalDefault;
+  }
+
+  /**
+   * Value of project property "generator.avro.namespace.override"
+   */
+  @Input
+  @Optional
+  public String getOverrideNamespace()
+  {
+    return _overrideNamespace;
+  }
+
+  private String initializeProjectProperty(String name)
+  {
+    if (getProject().hasProperty(name))
+    {
+      return (String) getProject().property(name);
+    }
+    else
+    {
+      return null;
+    }
   }
 }
