@@ -55,6 +55,8 @@ import com.linkedin.restli.internal.common.AttachmentUtils;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.server.response.RestLiResponse;
+import com.linkedin.restli.internal.server.response.RestLiResponseException;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.internal.testutils.RestLiTestAttachmentDataSource;
 import com.linkedin.restli.server.filter.Filter;
@@ -721,6 +723,93 @@ public class TestRestLiServer
 
     _server.handleRequest(streamRequest, new RequestContext(), callback);
     assertTrue(((TestObserver) observer).isDone());
+  }
+
+  @Test(dataProvider = "restOrStream")
+  public void testHandleRequestWithRestLiResponseSuccess(final RestOrStream restOrStream) throws Exception
+  {
+    Status status = new Status();
+    status.data().put("test", "this is a test");
+
+    final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
+    EasyMock.expect(statusResource.get(eq(1L))).andReturn(status).once();
+    replay(statusResource);
+
+    Callback<RestLiResponse> restLiResponseCallback = new Callback<RestLiResponse>()
+    {
+      @Override
+      public void onSuccess(RestLiResponse restLiResponse)
+      {
+        assertEquals(restLiResponse.getDataMap(), status.data());
+        EasyMock.verify(statusResource);
+        EasyMock.reset(statusResource);
+      }
+
+      @Override
+      public void onError(Throwable e)
+      {
+        fail("We should not get an error here. The server should have returned a 200!");
+      }
+    };
+
+    if (restOrStream == RestOrStream.REST)
+    {
+      RestRequest request = new RestRequestBuilder(new URI("/statuses/1"))
+          .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString()).build();
+
+      _server.handleRequestWithRestLiResponse(request, new RequestContext(), restLiResponseCallback);
+    }
+    else
+    {
+      StreamRequest streamRequest = new StreamRequestBuilder(new URI("/statuses/1"))
+          .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString())
+          .build(EntityStreams.emptyStream());
+
+      _server.handleRequestWithRestLiResponse(streamRequest, new RequestContext(), restLiResponseCallback);
+    }
+  }
+
+  @Test(dataProvider = "restOrStream")
+  public void testHandleRequestWithRestLiResponseError(final RestOrStream restOrStream) throws Exception
+  {
+    final StatusCollectionResource statusResource = getMockResource(StatusCollectionResource.class);
+    EasyMock.expect(statusResource.get(eq(1L))).andReturn(null).once();
+    replay(statusResource);
+
+    Callback<RestLiResponse> restLiResponseCallback = new Callback<RestLiResponse>()
+    {
+      @Override
+      public void onSuccess(RestLiResponse restLiResponse)
+      {
+        fail("We should not get a success here. The server should have returned a 404!");
+      }
+
+      @Override
+      public void onError(Throwable e)
+      {
+        RestLiResponseException restLiResponseException = (RestLiResponseException) e;
+        assertEquals(restLiResponseException.getRestLiResponse().getStatus(), HttpStatus.S_404_NOT_FOUND,
+            "We should get a 404 back here!");
+        EasyMock.verify(statusResource);
+        EasyMock.reset(statusResource);
+      }
+    };
+
+    if (restOrStream == RestOrStream.REST)
+    {
+      RestRequest request = new RestRequestBuilder(new URI("/statuses/1"))
+          .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString()).build();
+
+      _server.handleRequestWithRestLiResponse(request, new RequestContext(), restLiResponseCallback);
+    }
+    else
+    {
+      StreamRequest streamRequest = new StreamRequestBuilder(new URI("/statuses/1"))
+          .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString())
+          .build(EntityStreams.emptyStream());
+
+      _server.handleRequestWithRestLiResponse(streamRequest, new RequestContext(), restLiResponseCallback);
+    }
   }
 
   @Test(dataProvider = "restOrStream")

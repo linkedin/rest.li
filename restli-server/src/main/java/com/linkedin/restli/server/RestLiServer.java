@@ -33,6 +33,7 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
+import com.linkedin.restli.internal.server.response.RestLiResponse;
 import com.linkedin.restli.internal.server.util.MIMEParse;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 import com.linkedin.restli.server.resources.ResourceFactory;
@@ -53,7 +54,8 @@ import javax.mail.internet.ParseException;
  *
  * @author Xiao Ma
  */
-public class RestLiServer implements RestRequestHandler, StreamRequestHandler
+public class RestLiServer implements RestRequestHandler, RestToRestLiRequestHandler,
+                                     StreamRequestHandler, StreamToRestLiRequestHandler
 {
   private static final Logger LOGGER = LoggerFactory.getLogger(RestLiServer.class);
 
@@ -132,12 +134,27 @@ public class RestLiServer implements RestRequestHandler, StreamRequestHandler
   }
 
   @Override
+  public void handleRequestWithRestLiResponse(RestRequest request, RequestContext requestContext, Callback<RestLiResponse> callback)
+  {
+    if (!isMultipart(request, callback))
+    {
+      _restRestLiServer.handleRequestWithRestLiResponse(request, requestContext, callback);
+    }
+  }
+
+  @Override
   public void handleRequest(StreamRequest request, RequestContext requestContext, Callback<StreamResponse> callback)
   {
     _streamRestLiServer.handleRequest(request, requestContext, callback);
   }
 
-  private boolean isMultipart(final Request request, final Callback<RestResponse> callback)
+  @Override
+  public void handleRequestWithRestLiResponse(StreamRequest request, RequestContext requestContext, Callback<RestLiResponse> callback)
+  {
+    _streamRestLiServer.handleRequestWithRestLiResponse(request, requestContext, callback);
+  }
+
+  private boolean isMultipart(final Request request, final Callback<?> callback)
   {
     final Map<String, String> requestHeaders = request.getHeaders();
     try

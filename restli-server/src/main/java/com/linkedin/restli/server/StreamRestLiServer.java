@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.activation.MimeTypeParseException;
 
 
@@ -50,7 +52,7 @@ import javax.activation.MimeTypeParseException;
  * @author Zhenkai Zhu
  * @author Xiao Ma
  */
-class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandler
+class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandler, StreamToRestLiRequestHandler
 {
   private static final Logger log = LoggerFactory.getLogger(StreamRestLiServer.class);
   final RestRestLiServer _fallback;
@@ -85,10 +87,30 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
     {
       doHandleStreamRequest(request, requestContext, callback);
     }
-    catch (Exception e)
+    catch (Throwable t)
     {
-      log.error("Uncaught exception", e);
-      callback.onError(e);
+      log.error("Uncaught exception", t);
+      callback.onError(t);
+    }
+  }
+
+  @Override
+  public void handleRequestWithRestLiResponse(StreamRequest request, RequestContext requestContext,
+      Callback<RestLiResponse> callback)
+  {
+    try
+    {
+      if (_fallback.getNonResourceRequestHandlers().stream().anyMatch(handler -> handler.shouldHandle(request)))
+      {
+        throw new RuntimeException("Non-resource endpoints don't support RestLiResponse");
+      }
+
+      handleResourceRequestWithRestLiResponse(request, requestContext, callback);
+    }
+    catch (Throwable t)
+    {
+      log.error("Uncaught exception", t);
+      callback.onError(t);
     }
   }
 
@@ -120,9 +142,9 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
     {
       routingResult = getRoutingResult(request, requestContext);
     }
-    catch (Exception e)
+    catch (Throwable t)
     {
-      callback.onError(buildPreRoutingStreamException(e, request));
+      callback.onError(buildPreRoutingStreamException(t, request));
       return;
     }
 
@@ -136,6 +158,32 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
     }
   }
 
+  protected void handleResourceRequestWithRestLiResponse(StreamRequest request,
+      RequestContext requestContext,
+      Callback<RestLiResponse> callback)
+  {
+    RoutingResult routingResult;
+    try
+    {
+      routingResult = getRoutingResult(request, requestContext);
+    }
+    catch (Throwable t)
+    {
+      callback.onError(buildPreRoutingStreamException(t, request));
+      return;
+    }
+
+    if (routingResult.getResourceMethod().getResourceModel().getResourceEntityType() == ResourceEntityType.STRUCTURED_DATA)
+    {
+      handleStructuredDataResourceRequestWithRestLiResponse(request, routingResult, callback);
+    }
+    else
+    {
+      handleUnstructuredDataResourceRequestWithRestLiResponse(request, routingResult, callback);
+    }
+  }
+
+
   StreamException buildPreRoutingStreamException(Throwable throwable, StreamRequest request)
   {
     RestLiResponseException restLiException = buildPreRoutingError(throwable, request);
@@ -145,6 +193,30 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
   private void handleStructuredDataResourceRequest(StreamRequest request,
       RoutingResult routingResult,
       Callback<StreamResponse> callback)
+  {
+    handleStructuredDataResourceRequest(request, routingResult, callback,
+        respContentType -> toRestLiResponseCallback(callback, routingResult, respContentType),
+        restRequest -> _fallback.handleResourceRequest(restRequest,
+            routingResult,
+            toRestResponseCallback(callback, routingResult.getContext())));
+  }
+
+  private void handleStructuredDataResourceRequestWithRestLiResponse(StreamRequest request,
+      RoutingResult routingResult,
+      Callback<RestLiResponse> callback)
+  {
+    handleStructuredDataResourceRequest(request, routingResult, callback,
+        respContentType -> callback,
+        restRequest -> _fallback.handleResourceRequestWithRestLiResponse(restRequest,
+            routingResult,
+            callback));
+  }
+
+  private void handleStructuredDataResourceRequest(StreamRequest request,
+      RoutingResult routingResult,
+      Callback<?> callback,
+      Function<ContentType, Callback<RestLiResponse>> restLiResponseCallbackConstructor,
+      Consumer<RestRequest> fallbackRequestProcessor)
   {
     ContentType reqContentType, respContentType;
     try
@@ -179,7 +251,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
                 handleResourceRequest(request,
                     routingResult,
                     dataMap,
-                    toRestLiResponseCallback(callback, routingResult, respContentType));
+                    restLiResponseCallbackConstructor.apply(respContentType));
               }
               catch (Throwable throwable)
               {
@@ -210,8 +282,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
             {
               try
               {
-                _fallback.handleResourceRequest(restRequest, routingResult,
-                    toRestResponseCallback(callback, routingResult.getContext()));
+                fallbackRequestProcessor.accept(restRequest);
               }
               catch (Throwable throwable)
               {
@@ -319,6 +390,14 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
       RoutingResult routingResult,
       Callback<StreamResponse> callback)
   {
+    handleUnstructuredDataResourceRequestWithRestLiResponse(request, routingResult,
+        new UnstructuredDataStreamToRestLiResponseCallbackAdapter(callback, routingResult.getContext()));
+  }
+
+  private void handleUnstructuredDataResourceRequestWithRestLiResponse(StreamRequest request,
+      RoutingResult routingResult,
+      Callback<RestLiResponse> callback)
+  {
     // Drain the stream when using UnstructuredData Get or Delete
     if (routingResult.getResourceMethod().getType().getHttpMethod().equals(HttpMethod.GET) ||
         routingResult.getResourceMethod().getType().getHttpMethod().equals(HttpMethod.DELETE))
@@ -332,7 +411,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
     handleResourceRequest(request,
         routingResult,
         null,
-        new UnstructuredDataStreamToRestLiResponseCallbackAdapter(callback, routingResult.getContext()));
+        callback);
   }
 
   private static class UnstructuredDataStreamToRestLiResponseCallbackAdapter extends CallbackAdapter<StreamResponse, RestLiResponse>

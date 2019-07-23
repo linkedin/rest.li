@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * @author Nick Dellamaggiore
  * @author Xiao Ma
  */
-class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler
+class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, RestToRestLiRequestHandler
 {
   private static final Logger log = LoggerFactory.getLogger(RestRestLiServer.class);
 
@@ -94,10 +94,30 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler
     {
       doHandleRequest(request, requestContext, callback);
     }
-    catch (Exception e)
+    catch (Throwable t)
     {
-      log.error("Uncaught exception", e);
-      callback.onError(e);
+      log.error("Uncaught exception", t);
+      callback.onError(t);
+    }
+  }
+
+  @Override
+  public void handleRequestWithRestLiResponse(final RestRequest request, final RequestContext requestContext,
+      final Callback<RestLiResponse> callback)
+  {
+    try
+    {
+      if (_nonResourceRequestHandlers.stream().anyMatch(handler -> handler.shouldHandle(request)))
+      {
+        throw new RuntimeException("Non-resource endpoints don't support RestLiResponse");
+      }
+
+      handleResourceRequestWithRestLiResponse(request, requestContext, callback);
+    }
+    catch (Throwable t)
+    {
+      log.error("Uncaught exception", t);
+      callback.onError(t);
     }
   }
 
@@ -127,13 +147,30 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler
     {
       routingResult = getRoutingResult(request, requestContext);
     }
-    catch (Exception e)
+    catch (Throwable t)
     {
-      callback.onError(buildPreRoutingRestException(e, request));
+      callback.onError(buildPreRoutingRestException(t, request));
       return;
     }
 
     handleResourceRequest(request, routingResult, callback);
+  }
+
+  private void handleResourceRequestWithRestLiResponse(RestRequest request, RequestContext requestContext,
+      Callback<RestLiResponse> callback)
+  {
+    RoutingResult routingResult;
+    try
+    {
+      routingResult = getRoutingResult(request, requestContext);
+    }
+    catch (Throwable t)
+    {
+      callback.onError(buildPreRoutingRestException(t, request));
+      return;
+    }
+
+    handleResourceRequestWithRestLiResponse(request, routingResult, callback);
   }
 
   private RestException buildPreRoutingRestException(Throwable throwable, RestRequest request)
@@ -145,6 +182,12 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler
   protected void handleResourceRequest(RestRequest request,
       RoutingResult routingResult,
       Callback<RestResponse> callback)
+  {
+    handleResourceRequestWithRestLiResponse(request, routingResult, new RestLiToRestResponseCallbackAdapter(callback, routingResult));
+  }
+
+  protected void handleResourceRequestWithRestLiResponse(RestRequest request, RoutingResult routingResult,
+      Callback<RestLiResponse> callback)
   {
     DataMap entityDataMap = null;
     if (request.getEntity() != null && request.getEntity().length() > 0)
@@ -167,7 +210,7 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler
     handleResourceRequest(request,
         routingResult,
         entityDataMap,
-        new RestLiToRestResponseCallbackAdapter(callback, routingResult));
+        callback);
   }
 
   static class RestLiToRestResponseCallbackAdapter extends CallbackAdapter<RestResponse, RestLiResponse>
