@@ -1,5 +1,10 @@
+27.3.13
+-------
+
 27.3.12
 -------
+(RB=1738401)
+Support special floating point values - NaN, NEGATIVE_INFINITY, POSITIVE_INFINITY in rest.li
 
 27.3.11
 -------

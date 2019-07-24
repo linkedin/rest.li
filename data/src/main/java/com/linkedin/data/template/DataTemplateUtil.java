@@ -464,10 +464,43 @@ public class DataTemplateUtil
       {
         return coerce(object);
       }
+      else if (object instanceof String && isStringAllowed())
+      {
+        return coerceString((String) object);
+      }
       else
       {
-        throw new TemplateOutputCastException("Output " + object + " has type " + object.getClass().getName() + ", but expected type is " + Number.class.getName());
+        throw new TemplateOutputCastException("Output " + object + " has type " + object.getClass().getName() + ", but expected type is " + _targetClass.getName());
       }
+    }
+
+    /**
+     * Indicates if this coercer accepts String values.
+     * @return false, as default value.
+     */
+    protected boolean isStringAllowed()
+    {
+      return false;
+    }
+
+    /**
+     * Checks if the input string is non-numeric string : NaN, Infinity or -Infinity.
+     * @param object, input string.
+     * @return true, if the input string is non-numeric string.
+     */
+    protected Boolean isNonNumericFloat(String object)
+    {
+      return object.equals(String.valueOf(Float.NaN)) || object.equals(String.valueOf(Float.POSITIVE_INFINITY)) || object.equals(String.valueOf(Float.NEGATIVE_INFINITY));
+    }
+
+    protected TemplateOutputCastException generateExceptionForInvalidString(String object)
+    {
+      return new TemplateOutputCastException("Cannot coerce String value : " + object +  " to type : " + _targetClass.getName());
+    }
+
+    protected T coerceString(String object)
+    {
+      throw new UnsupportedOperationException("Only supported for floating-point number coercers");
     }
 
     protected abstract T coerce(Object object);
@@ -594,6 +627,25 @@ public class DataTemplateUtil
     {
       return ((Number) object).floatValue();
     }
+
+    @Override
+    protected Float coerceString(String object)
+    {
+      if(isNonNumericFloat(object))
+      {
+        return Float.valueOf(object);
+      }
+      else
+      {
+        throw generateExceptionForInvalidString(object);
+      }
+    }
+
+    @Override
+    protected boolean isStringAllowed()
+    {
+      return true;
+    }
   }
 
   private static class DoubleCoercer extends NumberCoercer<Double>
@@ -607,6 +659,25 @@ public class DataTemplateUtil
     protected Double coerce(Object object)
     {
       return ((Number) object).doubleValue();
+    }
+
+    @Override
+    protected Double coerceString(String object)
+    {
+      if(isNonNumericFloat(object))
+      {
+        return Double.valueOf(object);
+      }
+      else
+      {
+        throw generateExceptionForInvalidString(object);
+      }
+    }
+
+    @Override
+    protected boolean isStringAllowed()
+    {
+      return true;
     }
   }
 

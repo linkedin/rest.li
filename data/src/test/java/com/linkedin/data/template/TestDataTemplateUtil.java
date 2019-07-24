@@ -34,6 +34,10 @@ import static org.testng.Assert.fail;
 
 public class TestDataTemplateUtil
 {
+  private static final String NAN = "NaN";
+  private static final String POSITIVE_INFINITY = "Infinity";
+  private static final String NEGATIVE_INFINITY = "-Infinity";
+
   public static class FieldInfo
   {
     private final RecordDataSchema.Field _field;
@@ -157,5 +161,83 @@ public class TestDataTemplateUtil
     {
       assertEquals(e.getMessage(), "Output string has type java.lang.String, but does not have a registered coercer and cannot be coerced to type java.lang.Character");
     }
+    try
+    {
+      assertTrue(DataTemplateUtil.hasCoercer(Float.class));
+      DataTemplateUtil.coerceOutput("random string", Float.class);
+      fail("Expected Exception");
+    }
+    catch (TemplateOutputCastException e)
+    {
+      assertEquals(e.getMessage(), "Cannot coerce String value : random string to type : java.lang.Float");
+    }
+    try
+    {
+      assertTrue(DataTemplateUtil.hasCoercer(Integer.class));
+      DataTemplateUtil.coerceOutput(NAN, Integer.class);
+      fail("Expected Exception");
+    }
+    catch (TemplateOutputCastException e)
+    {
+      assertEquals(e.getMessage(), "Output NaN has type java.lang.String, but expected type is java.lang.Integer");
+    }
+    try
+    {
+      assertTrue(DataTemplateUtil.hasCoercer(Integer.class));
+      DataTemplateUtil.coerceOutput(false, Integer.class);
+      fail("Expected Exception");
+    }
+    catch (TemplateOutputCastException e)
+    {
+      assertEquals(e.getMessage(), "Output false has type java.lang.Boolean, but expected type is java.lang.Integer");
+    }
+  }
+
+  @Test
+  public static void testCoerceOutputNumericNumberCases()
+  {
+    // Double case
+    Object object1 = DataTemplateUtil.coerceOutput(1.2, Double.class);
+    assertEquals(object1, 1.2);
+
+    // Float case
+    Object object2 = DataTemplateUtil.coerceOutput(1.2f, Float.class);
+    assertEquals(object2, 1.2f);
+
+    // Integer case
+    Object object3 = DataTemplateUtil.coerceOutput(1, Integer.class);
+    assertEquals(object3, 1);
+
+    // Long case
+    Object object4 = DataTemplateUtil.coerceOutput(1l, Long.class);
+    assertEquals(object4, 1l);
+  }
+
+  @Test
+  public static void testCoerceOutputNonNumericNumberCases()
+  {
+    // Convert Specific Floating point string - NaN to Double
+    Object object1 = DataTemplateUtil.coerceOutput(NAN, Double.class);
+    assertEquals(object1, Double.NaN);
+
+    // Convert Specific Floating point string - POSITIVE_INFINITY to Double
+    Object object2 = DataTemplateUtil.coerceOutput(POSITIVE_INFINITY, Double.class);
+    assertEquals(object2, Double.POSITIVE_INFINITY);
+
+    // Convert Specific Floating point string - NEGATIVE_INFINITY to Double
+    Object object3 = DataTemplateUtil.coerceOutput(NEGATIVE_INFINITY, Double.class);
+    assertEquals(object3, Double.NEGATIVE_INFINITY);
+
+    // Convert Specific Floating point string - NaN to Float
+    Object object4 = DataTemplateUtil.coerceOutput(NAN, Float.class);
+    assertEquals(object4, Float.NaN);
+
+    // Convert Specific Floating point string - POSITIVE_INFINITY to Float
+    Object object5 = DataTemplateUtil.coerceOutput(POSITIVE_INFINITY, Float.class);
+    assertEquals(object5, Float.POSITIVE_INFINITY);
+
+    // Convert Specific Floating point string - NEGATIVE_INFINITY to Float
+    Object object6 = DataTemplateUtil.coerceOutput(NEGATIVE_INFINITY, Float.class);
+    assertEquals(object6, Float.NEGATIVE_INFINITY);
   }
 }
