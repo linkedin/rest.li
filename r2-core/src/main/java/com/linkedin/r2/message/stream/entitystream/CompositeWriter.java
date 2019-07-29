@@ -131,10 +131,10 @@ public class CompositeWriter implements Writer
       {
         _wh.write(data);
         int diff;
-        int newOutstanding = _wh.remaining();
         synchronized (_lock)
         {
           _outstanding--;
+          int newOutstanding = _wh.remaining();
           diff = newOutstanding - _outstanding;
           if (diff > 0)
           {

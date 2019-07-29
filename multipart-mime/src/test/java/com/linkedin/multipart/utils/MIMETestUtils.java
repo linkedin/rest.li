@@ -102,6 +102,9 @@ public final class MIMETestUtils
   public static final MIMEDataPart BODY_3;
   public static final MIMEDataPart BODY_4;
   public static final MIMEDataPart BODY_5;
+  public static final MIMEDataPart BODY_6;
+
+  public static final int BODY_6_SIZE = 15000000;
 
   //Disable instantiation
   private MIMETestUtils()
@@ -187,6 +190,8 @@ public final class MIMETestUtils
     final byte[] localInputStreamBytes = "local input stream".getBytes();
     final Map<String, String> localInputStreamHeaders = Collections.unmodifiableMap(Collections.singletonMap("local1", "local2"));
     BODY_5 = new MIMEDataPart(ByteString.copy(localInputStreamBytes), localInputStreamHeaders);
+
+    BODY_6 = new MIMEDataPart(ByteString.copy(new byte[BODY_6_SIZE]), Collections.emptyMap());
   }
 
   //Now create the javax data sources:

@@ -23,6 +23,8 @@ import com.linkedin.multipart.utils.MIMEDataPart;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.entitystream.FullEntityReader;
 
+import com.linkedin.r2.message.stream.entitystream.ReadHandle;
+import com.linkedin.r2.message.stream.entitystream.Reader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,8 +38,13 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.activation.DataSource;
 import javax.mail.BodyPart;
 import javax.mail.Header;
@@ -48,6 +55,8 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import static com.linkedin.multipart.utils.MIMETestUtils.*;
 
 
 /**
@@ -406,6 +415,85 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
       {
         Assert.fail("Failed to read in request multipart mime body");
       }
+    }
+  }
+
+  @Test
+  public void testMimeWriterWithLargePayload() throws InterruptedException, ExecutionException {
+    long size = 0l;
+
+    List<MultiPartMIMEDataSourceWriter> list = new ArrayList<>();
+    for (int i = 0 ; i < 20; i++) {
+      final MultiPartMIMEInputStream bodyADataSource =
+          new MultiPartMIMEInputStream.Builder(new ByteArrayInputStream(BODY_6.getPartData().copyBytes()),
+              _scheduledExecutorService, BODY_6.getPartHeaders()).build();
+      list.add(bodyADataSource);
+    }
+    final MultiPartMIMEWriter writer = new MultiPartMIMEWriter.Builder().appendDataSources(list).build();
+
+    EntityStreamReader reader = new EntityStreamReader();
+    writer.getEntityStream().setReader(reader);
+    CompletableFuture<Optional<ByteString>> future;
+    do {
+      future = reader.readNextChunk();
+      if (future.get().isPresent()) {
+        size += future.get().get().length();
+      }
+    } while (future.get().isPresent());
+    Assert.assertTrue(size > 20L * BODY_6_SIZE);
+  }
+
+  // mimic the reader behavior in Play
+  private static class EntityStreamReader implements Reader {
+    private final AtomicBoolean _done = new AtomicBoolean(false);
+    private ReadHandle _rh;
+    private ConcurrentLinkedQueue<CompletableFuture<Optional<ByteString>>> _completableFutures =
+        new ConcurrentLinkedQueue<>();
+
+    @Override
+    public void onInit(ReadHandle rh) {
+      _rh = rh;
+    }
+
+    @Override
+    public void onDataAvailable(com.linkedin.data.ByteString data) {
+      if (!data.isEmpty()) {
+        _completableFutures.remove()
+            .complete(Optional.of(data));
+      } else {
+        _rh.request(1);
+      }
+    }
+
+    @Override
+    public synchronized void onDone() {
+      _done.set(true);
+      // When stream is done, notify all remaining promises
+      _completableFutures.forEach(completableFuture -> {
+        if (!completableFuture.isDone()) {
+          completableFuture.complete(Optional.empty());
+        }
+      });
+      _completableFutures.clear();
+    }
+
+    @Override
+    public synchronized void onError(Throwable e) {
+      // When stream is wrong, notify all remaining promises
+      _completableFutures.forEach(completableFuture -> completableFuture.completeExceptionally(e));
+      _completableFutures.clear();
+    }
+
+    public CompletableFuture<Optional<ByteString>> readNextChunk() {
+      CompletableFuture<Optional<ByteString>> completableFuture = new CompletableFuture<>();
+      _completableFutures.add(completableFuture);
+      if (_done.get()) {
+        completableFuture.complete(Optional.empty());
+      } else {
+        _rh.request(1);
+
+      }
+      return completableFuture;
     }
   }
 }
