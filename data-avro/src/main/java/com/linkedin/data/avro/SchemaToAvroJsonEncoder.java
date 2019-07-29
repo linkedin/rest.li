@@ -26,6 +26,7 @@ import com.linkedin.data.schema.Named;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
+import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 
 import java.io.IOException;
@@ -36,7 +37,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.linkedin.data.avro.SchemaTranslator.AVRO_PREFIX;
 import static com.linkedin.data.schema.DataSchemaConstants.DEFAULT_KEY;
@@ -145,7 +148,9 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   }
 
   private static final Set<String> RESERVED_DATA_PROPERTIES =
-    new HashSet<String>(Arrays.asList(SchemaTranslator.SCHEMA_PROPERTY,
+    new HashSet<String>(Arrays.asList(
+        SchemaTranslator.AVRO_PREFIX,
+        SchemaTranslator.SCHEMA_PROPERTY,
         SchemaTranslator.OPTIONAL_DEFAULT_MODE_PROPERTY,
         SchemaTranslator.TRANSLATED_UNION_MEMBER_PROPERTY));
 
@@ -391,12 +396,48 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
     // do nothing.
   }
 
+  /**
+   * Override for RecordSchema field's properties encoding in Avro
+   *   (1) contains special handling for TypeRef property propagation and
+   *   (2) filtered out reserved data properties keyword
+   *
+   * @param field RecordDataSchema's field
+   * @throws IOException
+   */
+  @SuppressWarnings("unchecked")
   @Override
   protected void encodeFieldProperties(RecordDataSchema.Field field) throws IOException
   {
-    final Map<String, ?> filteredMap = field.getProperties().entrySet().stream()
+    Stream<Map.Entry<String, Object>> toBeFiltered = field.getProperties().entrySet().stream();
+
+    // If a record field's type is a TypeRef, will need to propagate TypeRef's properties to current record field
+    //   and merge with record field's properties.
+    if (field.getType().getType() == DataSchema.Type.TYPEREF)
+    {
+      toBeFiltered = Stream.concat(toBeFiltered,
+          ((TyperefDataSchema) field.getType()).getMergedTyperefProperties().entrySet().stream());
+    }
+    // Property merge rule:
+    // For property content inherited from TypeRef that appears to be have same property name as the record field:
+    //    if the two property contents are Map type, they will be merged at this level,
+    //    otherwise Typeref field property content will be overridden by record field property's content.
+    BinaryOperator<Object> propertyMergeLogic = (originalPropertyContent, inheritedPropertyContent) -> {
+      if (originalPropertyContent instanceof Map && inheritedPropertyContent instanceof Map)
+      {
+        Map<String, Object> mergedMap = new DataMap((Map<String, Object>) originalPropertyContent);
+        ((Map<String, Object>) inheritedPropertyContent).forEach(mergedMap::putIfAbsent);
+        return mergedMap;
+      }
+      else
+      {
+        return originalPropertyContent;
+      }
+    };
+
+    final Map<String, ?> filteredMap = toBeFiltered
         .filter(entry -> !RESERVED_DATA_PROPERTIES.contains(entry.getKey()))
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, propertyMergeLogic));
+
     _builder.writeProperties(filteredMap);
   }
 

@@ -21,17 +21,15 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
-import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.PegasusSchemaParser;
+import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-
 import java.util.List;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
@@ -1405,6 +1403,231 @@ public class TestSchemaTranslator
                   "}",
               allModes,
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
+              null,
+              null,
+              null
+          },
+          {
+              // Test Annotations for Fixed case
+              "{ \"type\" : \"record\", " +
+                  "\"name\" : \"Foo\", " +
+                  "\"namespace\" : \"com.x.y.z\", " +
+                  "\"fields\" : [ {\"name\" : \"FixedField\", " +
+                  "                \"type\" : { \"type\" : \"fixed\", " +
+                  "                             \"name\" : \"Fixed16\", " +
+                  "                             \"namespace\" : \"com.linkedin.restli.examples.typeref.api\", " +
+                  "                              \"size\" : 16, " +
+                  "\"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"STRING\"}] } }] }",
+              allModes,
+              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"FixedField\", \"type\" : { \"type\" : \"fixed\", \"name\" : \"Fixed16\", \"namespace\" : \"com.linkedin.restli.examples.typeref.api\", \"size\" : 16, \"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } } ] }",
+              null,
+              null,
+              null
+          },
+           {
+              // Test Annotations for TypeRef: one layer TypeRef case
+              "{ \"type\" : \"record\", " +
+                  "\"name\" : \"Foo\", " +
+                  "\"namespace\" : \"com.x.y.z\", " +
+                  "\"fields\" : [ {" +
+                  "\"name\" : \"typedefField\", " +
+                  "\"type\" : { \"type\" : \"typeref\", " +
+                  "             \"name\" : \"refereeTypeName\", " +
+                  "             \"ref\"  : \"string\", " +
+                  "             \"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"STRING\"}] } }] }",
+              allModes,
+               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefField\", \"type\" : \"string\", \"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }",
+              null,
+              null,
+              null
+          },
+          {
+              // Test Annotations for TypeRef : two layer nested TypeRef both have compliance annotation and outer layer should override
+              "{\"type\" : " +
+                  "\"record\", " +
+                  "\"name\" : \"Foo\", " +
+                  "\"namespace\" : \"com.x.y.z\", " +
+                  "\"fields\" : [{\"name\" : " +
+                  "               \"typedefField\", " +
+                  "               \"type\" : {\"type\" : \"typeref\", " +
+                  "                           \"name\" : \"refereeTypeName\", " +
+                  "                           \"ref\"  : {\"type\" : \"typeref\", " +
+                  "                                       \"name\" : \"nestedrefereeTypeName\", " +
+                  "                                       \"ref\"  : \"int\", " +
+                  "               \"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"INTEGER\"}] }, " +
+                  "\"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"STRING\"}] } }] }",
+              allModes,
+              "{ \"type\" : \"record\", " +
+                  "\"name\" : \"Foo\", " +
+                  "\"namespace\" : \"com.x.y.z\", " +
+                  "\"fields\" : [ { " +
+                  "\"name\" : \"typedefField\", " +
+                  "\"type\" : \"int\", " +
+                  "\"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }",
+              null,
+              null,
+              null
+          },
+
+          {
+              // Test Annotations for TypeRef : two layer nested TypeRef only second layer has compliance annotation
+              "{ \"type\" : " +
+                  "\"record\", " +
+                  "\"name\" : " +
+                  "\"Foo\", " +
+                  "\"namespace\" : " +
+                  "\"com.x.y.z\", " +
+                  "\"fields\" : [ {\"name\" : " +
+                  "               \"typedefField\", " +
+                  "               \"type\" : { \"type\" : " +
+                  "                            \"typeref\", " +
+                  "                            \"name\" : " +
+                  "                            \"refereeTypeName\", " +
+                  "                            \"ref\"  : { \"type\" : " +
+                  "                                         \"typeref\", " +
+                  "                                         \"name\" : " +
+                  "                                         \"nestedrefereeTypeName\", " +
+                  "                                         \"ref\"  : \"int\", " +
+                  "\"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"INTEGER\"}] } } }] }",
+              allModes,
+              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefField\", \"type\" : \"int\", \"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"INTEGER\" } ] } ] }",
+              null,
+              null,
+              null
+          },
+          {
+              // Test Annotations for TypeRef : three layer typerefs
+              "{\"type\" : \"record\", " +
+                  "\"name\" : \"Foo\", " +
+                  "\"namespace\" : \"com.x.y.z\", " +
+                  "\"fields\" : [{\"name\" : \"typedefField\", " +
+                  "               \"type\" : {\"type\" : \"typeref\", " +
+                  "                           \"name\" : \"L1\", " +
+                  "                           \"ref\"  : {\"type\" : \"typeref\", " +
+                  "                                       \"name\" : \"L2\", " +
+                  "                                       \"ref\"  :  {\"type\" : " +
+                  "                                                    \"typeref\", " +
+                  "                                                    \"name\" : \"L3\", " +
+                  "                                                     \"ref\"  : \"boolean\", " +
+                  "\"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"boolean\"}] } } } }] }",
+              allModes,
+              "{ \"type\" : \"record\", " +
+                  "\"name\" : \"Foo\", " +
+                  "\"namespace\" : \"com.x.y.z\", " +
+                  "\"fields\" : [ " + "{ " +
+                  "\"name\" : \"typedefField\", " +
+                  "\"type\" : \"boolean\", " + "" +
+                  "\"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"boolean\" } ] } ] }",
+              null,
+              null,
+              null
+          },
+          {
+              // Test Annotations for TypeRef : one layer typeref, with field level has same property and has override and merged
+              "{\n" +
+                  "  \"type\" : \"record\",\n" +
+                  "  \"name\" : \"Foo\",\n" +
+                  "  \"namespace\" : \"com.x.y.z\",\n" +
+                  "  \"fields\" : [\n" +
+                  "    {\"name\" : \"typedefMapField\",\n" +
+                  "      \"type\" :{\n" +
+                  "                    \"type\" : \"typeref\",\n" +
+                  "                    \"name\" : \"refToMap\", \"ref\" :{\n" +
+                  "                      \"type\" : \"map\",\n" +
+                  "                      \"values\":\"string\"\n" +
+                  "                    },\n" +
+                  "                    \"compliance\" : {\"/*\":[{\"dataType\":\"MEMBER_ID\"}], " +
+                  "                                     \"keysymbol\":[{\"dataType\":\"MEMBER_ID\"}]}\n" +
+                  "                },\n" +
+                  "      \"compliance\" : {\"keysymbol\":[{\"dataType\":\"MEMBER_NAME\"}]}\n" +
+                  "    }\n" +
+                  "  ]\n" +
+                  "}",
+              allModes,
+              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"compliance\" : { \"keysymbol\" : [ { \"dataType\" : \"MEMBER_NAME\" } ], \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
+              null,
+              null,
+              null
+          },
+          {
+              // Test Annotations for TypeRef : one layer typeref, with field level has same property as Typeref and merged
+              "{\n" +
+                  "  \"type\" : \"record\",\n" +
+                  "  \"name\" : \"Foo\",\n" +
+                  "  \"namespace\" : \"com.x.y.z\",\n" +
+                  "  \"fields\" : [\n" +
+                  "    {\"name\" : \"typedefMapField\",\n" +
+                  "      \"type\" :{\n" +
+                  "                    \"type\" : \"typeref\",\n" +
+                  "                    \"name\" : \"refToMap\", \"ref\" :{\n" +
+                  "                      \"type\" : \"map\",\n" +
+                  "                      \"values\":\"string\"\n" +
+                  "                    },\n" +
+                  "                    \"compliance\" : {\"/*\":[{\"dataType\":\"MEMBER_ID\"}]}\n" +
+                  "                },\n" +
+                  "      \"compliance\" : {\"keysymbol\":[{\"dataType\":\"MEMBER_NAME\"}]}\n" +
+                  "    }\n" +
+                  "  ]\n" +
+                  "}",
+              allModes,
+              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"compliance\" : { \"keysymbol\" : [ { \"dataType\" : \"MEMBER_NAME\" } ], \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
+              null,
+              null,
+              null
+          },
+          {
+              // Test Annotations for TypeRef : one layer typeref, with field level has same property's override and not merged
+              "{\n" +
+                  "  \"type\" : \"record\",\n" +
+                  "  \"name\" : \"Foo\",\n" +
+                  "  \"namespace\" : \"com.x.y.z\",\n" +
+                  "  \"fields\" : [\n" +
+                  "    {\"name\" : \"typedefMapField\",\n" +
+                  "      \"type\" :{\n" +
+                  "                    \"type\" : \"typeref\",\n" +
+                  "                    \"name\" : \"refToMap\", \"ref\" :{\n" +
+                  "                      \"type\" : \"map\",\n" +
+                  "                      \"values\":\"string\"\n" +
+                  "                    },\n" +
+                  "                    \"compliance\" : {\"/*\":[{\"dataType\":\"MEMBER_ID\"}]}\n" +
+                  "                },\n" +
+                  "      \"compliance\" : \"None\"\n" +
+                  "    }\n" +
+                  "  ]\n" +
+                  "}",
+              allModes,
+              "{ \"type\" : \"record\", " +
+                  "\"name\" : \"Foo\", " +
+                  "\"namespace\" : \"com.x.y.z\", " +
+                  "\"fields\" : [ { \"name\" : \"typedefMapField\", " +
+                  "\"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, " +
+                  "\"compliance\" : \"None\" } ] }",
+              null,
+              null,
+              null
+          },
+          {
+              // Test Annotations for TypeRef : one layer typeref, and properties merged
+              "{\n" +
+                  "  \"type\" : \"record\",\n" +
+                  "  \"name\" : \"Foo\",\n" +
+                  "  \"namespace\" : \"com.x.y.z\",\n" +
+                  "  \"fields\" : [\n" +
+                  "    {\"name\" : \"typedefMapField\",\n" +
+                  "      \"type\" :{\n" +
+                  "                    \"type\" : \"typeref\",\n" +
+                  "                    \"name\" : \"refToMap\", \"ref\" :{\n" +
+                  "                      \"type\" : \"map\",\n" +
+                  "                      \"values\":\"string\"\n" +
+                  "                    },\n" +
+                  "                    \"compliance\" : {\"/*\":[{\"dataType\":\"MEMBER_ID\"}]}\n" +
+                  "                },\n" +
+                  "      \"otherannotation\" : \"None\"\n" +
+                  "    }\n" +
+                  "  ]\n" +
+                  "}",
+              allModes,
+              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"otherannotation\" : \"None\", \"compliance\" : { \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
               null,
               null,
               null
