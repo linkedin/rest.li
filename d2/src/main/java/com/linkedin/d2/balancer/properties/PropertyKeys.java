@@ -91,6 +91,7 @@ public class PropertyKeys
   public static final String HTTP_LB_CONSISTENT_HASH_ALGORITHM = "http.loadBalancer.consistentHashAlgorithm";
   public static final String HTTP_LB_CONSISTENT_HASH_NUM_PROBES = "http.loadBalancer.consistentHashNumProbes";
   public static final String HTTP_LB_CONSISTENT_HASH_POINTS_PER_HOST = "http.loadBalancer.consistentHashPointsPerHost";
+  public static final String HTTP_LB_CONSISTENT_HASH_BOUNDED_LOAD_BALANCE_FACTOR = "http.loadBalancer.consistentHashBoundedLoadBalanceFactor";
   public static final String HTTP_LB_QUARANTINE_MAX_PERCENT = "http.loadBalancer.quarantine.maxPercent";
   public static final String HTTP_LB_QUARANTINE_EXECUTOR_SERVICE = "http.loadBalancer.quarantine.executorService";
   public static final String HTTP_LB_QUARANTINE_METHOD = "http.loadBalancer.quarantine.method";

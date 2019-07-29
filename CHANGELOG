@@ -1,5 +1,11 @@
+27.3.12
+------
+
+
 27.3.11
 ------
+(RB=1703809)
+Add bounded-load consistent hashing algorithm implementation
 
 27.3.10
 ------

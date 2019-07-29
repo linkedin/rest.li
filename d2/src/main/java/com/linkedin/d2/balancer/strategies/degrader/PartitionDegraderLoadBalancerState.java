@@ -18,10 +18,10 @@ package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.util.degrader.CallTracker;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -135,10 +135,17 @@ public class PartitionDegraderLoadBalancerState
   {
     _clusterGenerationId = clusterGenerationId;
     _ringFactory = ringFactory;
-    _ring = ringFactory.createRing(pointsMap);
     _pointsMap = (pointsMap != null) ?
         Collections.unmodifiableMap(new HashMap<URI,Integer>(pointsMap)) :
         Collections.<URI,Integer>emptyMap();
+
+    Map<URI, CallTracker> callTrackerMap = (trackerClients != null) ?
+        Collections.unmodifiableMap(
+            trackerClients.stream()
+                .collect(Collectors.toMap(TrackerClient::getUri, TrackerClient::getCallTracker))) :
+        Collections.<URI, CallTracker>emptyMap();
+
+    _ring = ringFactory.createRing(pointsMap, callTrackerMap);
     _strategy = strategy;
     _currentOverrideDropRate = currentOverrideDropRate;
     _currentAvgClusterLatency = currentAvgClusterLatency;
