@@ -4,6 +4,7 @@ import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.util.clock.SettableClock;
+import com.linkedin.util.degrader.CallTracker;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +55,7 @@ public class DegraderLoadBalancerStateTest
   private static final String CONSISTENT_HASH_ALGORITHM = null;
   private static final int NUM_PROBES = 21;
   private static final int POINTS_PER_HOST = 1;
+  private static final double BOUNDED_LOAD_BALANCING_FACTOR = 1.25;
   private static final String PATH = null;
   private static final double QUARANTINE_MAX_PERCENT = 0.1D;
   private static final ScheduledExecutorService EXECUTOR_SERVICE = null;
@@ -100,7 +102,7 @@ public class DegraderLoadBalancerStateTest
         HASH_RING_POINT_CLEAN_UP_RATE,
         CONSISTENT_HASH_ALGORITHM,
         NUM_PROBES,
-        POINTS_PER_HOST,
+        POINTS_PER_HOST, BOUNDED_LOAD_BALANCING_FACTOR,
         PATH,
         QUARANTINE_MAX_PERCENT,
         EXECUTOR_SERVICE,

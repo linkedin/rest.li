@@ -151,6 +151,12 @@
       "optional": true
     },
     {
+      "name": "boundedLoadBalancingFactor",
+      "type": "double",
+      "doc": "The balancing factor that enables the bounded-load feature, which is a decorator of consistent hashing algorithms. No single server is allowed to have a load more than this factor times the average load among all servers. A value of -1 disables the feature. Otherwise, it is a factor greater than 1. Defaults to -1.",
+      "default": -1.0
+    },
+    {
       "name": "quarantineCfg",
       "type": {
         "name": "quarantineInfo",

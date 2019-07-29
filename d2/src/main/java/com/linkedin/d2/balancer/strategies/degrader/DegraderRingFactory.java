@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.util.degrader.CallTracker;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,8 @@ public class DegraderRingFactory<T> implements RingFactory<T>
 
   public DegraderRingFactory(DegraderLoadBalancerStrategyConfig config)
   {
+    RingFactory<T> factory;
+
     String consistentHashAlgorithm = config.getConsistentHashAlgorithm();
     if (consistentHashAlgorithm == null)
     {
@@ -45,43 +48,54 @@ public class DegraderRingFactory<T> implements RingFactory<T>
       if (isAffinityRoutingEnabled(config))
       {
         _log.info("URI Regex hash is specified, use multiProbe algorithm for consistent hashing");
-        _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
+        factory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
       }
       else
       {
         _log.info("DistributionBased algorithm is used for consistent hashing");
-        _ringFactory = new DistributionNonDiscreteRingFactory<>();
+        factory = new DistributionNonDiscreteRingFactory<>();
       }
     }
     else if (consistentHashAlgorithm.equalsIgnoreCase(POINT_BASED_CONSISTENT_HASH))
     {
-      _ringFactory = new PointBasedConsistentHashRingFactory<>(config);
+      factory = new PointBasedConsistentHashRingFactory<>(config);
     }
     else if (MULTI_PROBE_CONSISTENT_HASH.equalsIgnoreCase(consistentHashAlgorithm))
     {
-      _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
+      factory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
     }
     else if (DISTRIBUTION_NON_HASH.equalsIgnoreCase(consistentHashAlgorithm)) {
       if (isAffinityRoutingEnabled((config)))
       {
         _log.warn("URI Regex hash is specified but distribution based ring is picked, falling back to multiProbe ring");
-        _ringFactory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
+        factory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
       }
       else
       {
-        _ringFactory = new DistributionNonDiscreteRingFactory<>();
+        factory = new DistributionNonDiscreteRingFactory<>();
       }
     }
     else
     {
       _log.warn("Unknown consistent hash algorithm {}, falling back to multiprobe hash ring with default settings", consistentHashAlgorithm);
-      _ringFactory = new MPConsistentHashRingFactory<>(MPConsistentHashRing.DEFAULT_NUM_PROBES, MPConsistentHashRing.DEFAULT_POINTS_PER_HOST);
+      factory = new MPConsistentHashRingFactory<>(MPConsistentHashRing.DEFAULT_NUM_PROBES, MPConsistentHashRing.DEFAULT_POINTS_PER_HOST);
     }
+
+    if (config.getBoundedLoadBalancingFactor() > 1) {
+      factory = new BoundedLoadConsistentHashRingFactory<>(factory, config.getBoundedLoadBalancingFactor());
+    }
+
+    _ringFactory = factory;
   }
 
   @Override
-  public Ring<T> createRing(Map<T, Integer> points) {
-    return _ringFactory.createRing(points);
+  public Ring<T> createRing(Map<T, Integer> pointsMap) {
+    return _ringFactory.createRing(pointsMap);
+  }
+
+  @Override
+  public Ring<T> createRing(Map<T, Integer> pointsMap, Map<T, CallTracker> callTrackerMap) {
+    return _ringFactory.createRing(pointsMap, callTrackerMap);
   }
 
   private boolean isAffinityRoutingEnabled(DegraderLoadBalancerStrategyConfig config) {

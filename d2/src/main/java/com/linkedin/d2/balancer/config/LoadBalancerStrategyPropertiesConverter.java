@@ -150,6 +150,10 @@ public class LoadBalancerStrategyPropertiesConverter
     {
       map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_POINTS_PER_HOST, config.getNumberOfPointsPerHost().toString());
     }
+    if (config.hasBoundedLoadBalancingFactor())
+    {
+      map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_BOUNDED_LOAD_BALANCING_FACTOR, config.getBoundedLoadBalancingFactor().toString());
+    }
     if (config.hasQuarantineCfg())
     {
       quarantineInfo quarantineInfo = config.getQuarantineCfg();
@@ -289,6 +293,10 @@ public class LoadBalancerStrategyPropertiesConverter
     if (properties.containsKey(PropertyKeys.HTTP_LB_CONSISTENT_HASH_POINTS_PER_HOST))
     {
       config.setNumberOfPointsPerHost(coerce(properties.get(PropertyKeys.HTTP_LB_CONSISTENT_HASH_POINTS_PER_HOST), Integer.class));
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_LB_CONSISTENT_HASH_BOUNDED_LOAD_BALANCING_FACTOR))
+    {
+      config.setBoundedLoadBalancingFactor(coerce(properties.get(PropertyKeys.HTTP_LB_CONSISTENT_HASH_BOUNDED_LOAD_BALANCING_FACTOR), Double.class));
     }
     if (properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT) ||
         properties.containsKey(PropertyKeys.HTTP_LB_QUARANTINE_METHOD))

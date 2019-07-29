@@ -76,6 +76,8 @@ public class DegraderLoadBalancerStrategyConfig
   private final int _numProbes;
   private final int _pointsPerHost;
 
+  private final double _boundedLoadBalancingFactor;
+
   // The servicePath that is used to construct the URI for quarantine probing
   private final String _servicePath;
 
@@ -119,6 +121,8 @@ public class DegraderLoadBalancerStrategyConfig
   public static final int DEFAULT_NUM_PROBES = MPConsistentHashRing.DEFAULT_NUM_PROBES;
   public static final int DEFAULT_POINTS_PER_HOST = MPConsistentHashRing.DEFAULT_POINTS_PER_HOST;
 
+  public static final double DEFAULT_BOUNDED_LOAD_BALANCING_FACTOR = -1;
+
   public static final double DEFAULT_QUARANTINE_MAXPERCENT = 0.0;  // 0 means disable quarantine
   public static final long DEFAULT_QUARANTINE_REENTRY_TIME = 30000;  // Milliseconds
   public static final int DEFAULT_QUARANTINE_CHECKNUM = 5;
@@ -141,7 +145,7 @@ public class DegraderLoadBalancerStrategyConfig
          DEFAULT_CLUSTER_MIN_CALL_COUNT_HIGH_WATER_MARK,
          DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
          DEFAULT_HASHRING_POINT_CLEANUP_RATE, "pointBased",
-         DEFAULT_NUM_PROBES, DEFAULT_POINTS_PER_HOST, null,
+         DEFAULT_NUM_PROBES, DEFAULT_POINTS_PER_HOST, DEFAULT_BOUNDED_LOAD_BALANCING_FACTOR, null,
          DEFAULT_QUARANTINE_MAXPERCENT,
          null, null, DEFAULT_QUARANTINE_METHOD, null, DegraderImpl.DEFAULT_LOW_LATENCY,
          null, DEFAULT_LOW_EVENT_EMITTING_INTERVAL, DEFAULT_HIGH_EVENT_EMITTING_INTERVAL, DEFAULT_CLUSTER_NAME);
@@ -167,6 +171,7 @@ public class DegraderLoadBalancerStrategyConfig
          config.getConsistentHashAlgorithm(),
          config.getNumProbes(),
          config.getPointsPerHost(),
+         config.getBoundedLoadBalancingFactor(),
          config.getServicePath(),
          config.getQuarantineMaxPercent(),
          config.getExecutorService(),
@@ -198,6 +203,7 @@ public class DegraderLoadBalancerStrategyConfig
                                             String consistentHashAlgorithm,
                                             int numProbes,
                                             int pointsPerHost,
+                                            double boundedLoadBalancingFactor,
                                             String path,
                                             double quarantineMaxPercent,
                                             ScheduledExecutorService executorService,
@@ -228,6 +234,7 @@ public class DegraderLoadBalancerStrategyConfig
     _consistentHashAlgorithm = consistentHashAlgorithm;
     _numProbes = numProbes;
     _pointsPerHost = pointsPerHost;
+    _boundedLoadBalancingFactor = boundedLoadBalancingFactor;
     _servicePath = path;
     _quarantineMaxPercent = quarantineMaxPercent;
     _executorService = executorService;
@@ -326,6 +333,9 @@ public class DegraderLoadBalancerStrategyConfig
     Integer pointsPerHost =
         MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_CONSISTENT_HASH_POINTS_PER_HOST, DEFAULT_POINTS_PER_HOST);
 
+    Double boundedLoadBalancingFactor = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_CONSISTENT_HASH_BOUNDED_LOAD_BALANCING_FACTOR,
+        DEFAULT_BOUNDED_LOAD_BALANCING_FACTOR, Double.class);
+
     String servicePath = MapUtil.getWithDefault(map, PropertyKeys.PATH, null, String.class);
 
     Double quarantineMaxPercent = MapUtil.getWithDefault(map, PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT,
@@ -386,7 +396,7 @@ public class DegraderLoadBalancerStrategyConfig
         clock, initialRecoveryLevel, ringRampFactor, highWaterMark, lowWaterMark,
         globalStepUp, globalStepDown, minClusterCallCountHighWaterMark,
         minClusterCallCountLowWaterMark, hashRingPointCleanUpRate,
-        consistentHashAlgorithm, numProbes, pointsPerHost,
+        consistentHashAlgorithm, numProbes, pointsPerHost, boundedLoadBalancingFactor,
         servicePath, quarantineMaxPercent,
         overrideExecutorService != null ? overrideExecutorService : executorService,
         healthCheckOperations, healthCheckMethod, healthCheckPath, quarantineLatency,
@@ -489,6 +499,11 @@ public class DegraderLoadBalancerStrategyConfig
     return _pointsPerHost;
   }
 
+  public double getBoundedLoadBalancingFactor()
+  {
+    return _boundedLoadBalancingFactor;
+  }
+
   public String getServicePath()
   {
     return _servicePath;
@@ -550,6 +565,7 @@ public class DegraderLoadBalancerStrategyConfig
     return "DegraderLoadBalancerStrategyConfig [_highWaterMark=" + _highWaterMark
             + ", _lowWaterMark=" + _lowWaterMark + ", _initialRecoveryLevel=" + _initialRecoveryLevel
             + ", _ringRampFactor=" + _ringRampFactor + ", _globalStepUp=" + _globalStepUp
-            + ", _globalStepDown=" + _globalStepDown + ", _pointsPerWeight=" + _pointsPerWeight + "]";
+            + ", _globalStepDown=" + _globalStepDown + ", _pointsPerWeight=" + _pointsPerWeight
+            + ", _boundedLoadBalancingFactor=" + _boundedLoadBalancingFactor + "]";
   }
 }
