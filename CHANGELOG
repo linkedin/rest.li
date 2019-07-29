@@ -1,14 +1,16 @@
 27.3.12
-------
-
+-------
 
 27.3.11
-------
+-------
 (RB=1703809)
 Add bounded-load consistent hashing algorithm implementation
 
+(RB=1743222)
+Read Avro project properties at execution time.
+
 27.3.10
-------
+-------
 (RB=1739048)
 Attachment streaming bug: java.lang.IllegalStateException: Attempt to write when remaining is 0
 

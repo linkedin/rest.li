@@ -42,16 +42,6 @@ public class GenerateAvroSchemaTask extends DefaultTask
   private FileCollection _codegenClasspath;
   private File _destinationDir;
 
-  // Project properties
-  private String _translateOptionalDefault;
-  private String _overrideNamespace;
-
-  public GenerateAvroSchemaTask()
-  {
-    _translateOptionalDefault = initializeProjectProperty("generator.avro.optional.default");
-    _overrideNamespace = initializeProjectProperty("generator.avro.namespace.override");
-  }
-
   @TaskAction
   public void generate()
   {
@@ -80,12 +70,17 @@ public class GenerateAvroSchemaTask extends DefaultTask
       javaExecSpec.setMain("com.linkedin.data.avro.generator.AvroSchemaGenerator");
       javaExecSpec.setClasspath(_codegenClasspath);
       javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr);
-      if (_translateOptionalDefault != null) {
-        javaExecSpec.jvmArgs("-Dgenerator.avro.optional.default=" + _translateOptionalDefault);
+
+      String translateOptionalDefault = getTranslateOptionalDefault();
+      if (translateOptionalDefault != null) {
+        javaExecSpec.jvmArgs("-Dgenerator.avro.optional.default=" + translateOptionalDefault);
       }
-      if (_overrideNamespace != null) {
-        javaExecSpec.jvmArgs("-Dgenerator.avro.namespace.override=" + _overrideNamespace);
+
+      String overrideNamespace = getOverrideNamespace();
+      if (overrideNamespace != null) {
+        javaExecSpec.jvmArgs("-Dgenerator.avro.namespace.override=" + overrideNamespace);
       }
+
       javaExecSpec.args(_destinationDir.getPath());
       javaExecSpec.args(inputDataSchemaFilenames);
     });
@@ -153,7 +148,7 @@ public class GenerateAvroSchemaTask extends DefaultTask
   @Optional
   public String getTranslateOptionalDefault()
   {
-    return _translateOptionalDefault;
+    return getProjectProperty("generator.avro.optional.default");
   }
 
   /**
@@ -163,10 +158,10 @@ public class GenerateAvroSchemaTask extends DefaultTask
   @Optional
   public String getOverrideNamespace()
   {
-    return _overrideNamespace;
+    return getProjectProperty("generator.avro.namespace.override");
   }
 
-  private String initializeProjectProperty(String name)
+  private String getProjectProperty(String name)
   {
     if (getProject().hasProperty(name))
     {
