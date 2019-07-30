@@ -9,6 +9,9 @@ Add bounded-load consistent hashing algorithm implementation
 (RB=1743222)
 Read Avro project properties at execution time.
 
+(RB=1703809)
+(Revert pending DMRC review) Add bounded-load consistent hashing algorithm implementation
+
 27.3.10
 -------
 (RB=1739048)

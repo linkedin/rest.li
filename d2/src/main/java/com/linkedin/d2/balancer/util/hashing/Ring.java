@@ -20,26 +20,16 @@ import java.util.Iterator;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-
 /**
  * @implNote The implementation of this interface should not override equal and hashCode
  */
 public interface Ring<T>
 {
-  /**
-   * Pick an object in the ring given a specified key
-   *
-   * @param key   The value used to pick an object from the hash ring
-   * @return An object in the ring
-   */
   @Nullable
   T get(int key);
 
   /**
-   * Get an iterator of the objects in the ring given a specified key
-   *
    * @param key parameter might specify the starting point of the map on the ring or just be ignored
-   * @return  An iterator of the objects in the ring
    */
   @Nonnull
   Iterator<T> getIterator(int key);

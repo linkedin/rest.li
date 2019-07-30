@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.strategies.degrader;
 
-import com.linkedin.util.degrader.CallTracker;
 import java.util.Map;
 
 import com.linkedin.d2.balancer.util.hashing.Ring;
@@ -28,18 +27,5 @@ import com.linkedin.d2.balancer.util.hashing.Ring;
  */
 public interface RingFactory<T> {
 
-  Ring<T> createRing(Map<T, Integer> pointsMap);
-
-  /**
-   * Creates a hash ring with the given points and {@link CallTracker} for each object.
-   *
-   * @param pointsMap       A map between object to store in the ring and its points. The more points
-   *                        one has, the higher its weight is.
-   * @param callTrackerMap  A map between object to store in the ring and its {@link CallTracker}. The ring might
-   *                        need call tracking information to pick the desired object
-   * @return  a {@link Ring}
-   */
-  default Ring<T> createRing(Map<T, Integer> pointsMap, Map<T, CallTracker> callTrackerMap) {
-    return createRing(pointsMap);
-  }
+  Ring<T> createRing(Map<T, Integer> points);
 }

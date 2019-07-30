@@ -151,12 +151,6 @@
       "optional": true
     },
     {
-      "name": "boundedLoadBalanceFactor",
-      "type": "double",
-      "doc": "The balancing factor for bounded-load consistent hashing. It is always greater than 1, meaning no server will be allowed to have a load more than a factor of the average. The higher the number, the more consistent and less balanced the hash ring. Set it to -1 to disable bounded-load feature, and set it to >= 1 to enable bounded load feature. Defaults to -1.",
-      "optional": true
-    },
-    {
       "name": "quarantineCfg",
       "type": {
         "name": "quarantineInfo",

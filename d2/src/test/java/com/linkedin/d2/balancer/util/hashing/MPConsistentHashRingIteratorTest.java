@@ -29,13 +29,11 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 
-public class MPConsistentHashRingIteratorTest
-{
+public class MPConsistentHashRingIteratorTest {
 
   private final Random _random = new Random();
 
-  private static Map<URI, Integer> buildPointsMap(int numHosts, int numPointsPerHost)
-  {
+  private static Map<URI, Integer> buildPointsMap(int numHosts, int numPointsPerHost) {
     return IntStream.range(0, numHosts)
         .boxed()
         .collect(Collectors.toMap(key -> URI.create(String.format("app-%04d.linkedin.com", key)),
@@ -43,8 +41,7 @@ public class MPConsistentHashRingIteratorTest
   }
 
   @Test
-  public void testFirstItem()
-  {
+  public void testFirstItem() {
     Ring<URI> ring = new MPConsistentHashRing<URI>(buildPointsMap(100, 100), 21, 10);
     int key = _random.nextInt();
     Iterator<URI> iter = ring.getIterator(key);
@@ -53,16 +50,14 @@ public class MPConsistentHashRingIteratorTest
   }
 
   @Test
-  public void testOtherItems()
-  {
+  public void testOtherItems() {
     Map<URI, Integer> pointsMap = buildPointsMap(100, 100);
     Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
     int key = _random.nextInt();
     Iterator<URI> iter = ring.getIterator(key);
     int iterations = 0;
     Set<URI> iterResults = new HashSet<>();
-    while (iter.hasNext())
-    {
+    while (iter.hasNext()) {
       iterResults.add(iter.next());
       iterations++;
     }
@@ -70,15 +65,13 @@ public class MPConsistentHashRingIteratorTest
     //test iteration should equal to number of hosts so no duplicates
     Assert.assertTrue(iterations == 100);
 
-    for (URI uri : pointsMap.keySet())
-    {
+    for (URI uri : pointsMap.keySet()) {
       Assert.assertTrue(iterResults.contains(uri));
     }
   }
 
   @Test
-  public void testAgainstOldIterator()
-  {
+  public void testAgainstOldIterator() {
     Map<URI, Integer> pointsMap = buildPointsMap(100, 100);
     Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
     int key = _random.nextInt();
@@ -92,8 +85,7 @@ public class MPConsistentHashRingIteratorTest
   @Test
   /**
    * same host names and points should produce two iterators that generate the same host ordering.
-   */ public void testStickyOrdering()
-  {
+   */ public void testStickyOrdering() {
     Map<URI, Integer> pointsMap = buildPointsMap(100, 100);
     int key = 123456;
 
@@ -103,8 +95,7 @@ public class MPConsistentHashRingIteratorTest
     Ring<URI> secondRing = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
     Iterator<URI> secondIter = secondRing.getIterator(key);
 
-    while (firstIter.hasNext() || secondIter.hasNext())
-    {
+    while (firstIter.hasNext() || secondIter.hasNext()) {
       Assert.assertTrue(firstIter.next() == secondIter.next());
     }
   }
@@ -112,19 +103,16 @@ public class MPConsistentHashRingIteratorTest
   @Test
   /**
    * The number of iteration allowed should be equal to the number of hosts no matter how many points on the ring
-   */ public void testNoDeadloop()
-  {
+   */ public void testNoDeadloop() {
     int repeat = 20;
-    for (int i = 0; i < repeat; i++)
-    {
+    for (int i = 0; i < repeat; i++) {
       int numHosts = Math.abs(_random.nextInt()) % 100;
       Map<URI, Integer> pointsMap = buildPointsMap(numHosts, 100);
       Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
 
       Iterator<URI> iter = ring.getIterator(_random.nextInt());
       int iteration = 0;
-      while (iter.hasNext())
-      {
+      while (iter.hasNext()) {
         iter.next();
         iteration++;
       }
@@ -133,8 +121,7 @@ public class MPConsistentHashRingIteratorTest
   }
 
   @Test(enabled = false)
-  public void testNewIterPerformance()
-  {
+  public void testNewIterPerformance() {
     int repeat = 10;
     Map<URI, Integer> pointsMap = buildPointsMap(4, 100);
     Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
@@ -142,12 +129,10 @@ public class MPConsistentHashRingIteratorTest
     long end = 0;
 
     start = System.currentTimeMillis();
-    for (int i = 0; i < repeat; i++)
-    {
+    for (int i = 0; i < repeat; i++) {
       int key = _random.nextInt();
       Iterator<URI> iter = ((MPConsistentHashRing<URI>) ring).getOrderedIterator(key);
-      while (iter.hasNext())
-      {
+      while (iter.hasNext()) {
         iter.next();
       }
     }
@@ -156,12 +141,10 @@ public class MPConsistentHashRingIteratorTest
     long elapsedOld = end - start;
 
     start = System.currentTimeMillis();
-    for (int i = 0; i < repeat; i++)
-    {
+    for (int i = 0; i < repeat; i++) {
       int key = _random.nextInt();
       Iterator<URI> iter = ring.getIterator(key);
-      while (iter.hasNext())
-      {
+      while (iter.hasNext()) {
         iter.next();
       }
     }

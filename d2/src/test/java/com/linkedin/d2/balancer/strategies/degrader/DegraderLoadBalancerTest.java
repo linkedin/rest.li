@@ -45,7 +45,6 @@ import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SettableClock;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.CallCompletion;
-import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import com.linkedin.util.degrader.ErrorType;
@@ -412,7 +411,6 @@ public class DegraderLoadBalancerTest
               config.getConsistentHashAlgorithm(),
               config.getNumProbes(),
               config.getPointsPerHost(),
-              config.getBoundedLoadBalanceFactor(),
               config.getServicePath(),
               config.getQuarantineMaxPercent(),
               config.getExecutorService(),
@@ -1775,9 +1773,7 @@ public class DegraderLoadBalancerTest
                     DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE, null,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_NUM_PROBES,
-                    DegraderLoadBalancerStrategyConfig.DEFAULT_POINTS_PER_HOST,
-                    DegraderLoadBalancerStrategyConfig.DEFAULT_BOUNDED_LOAD_BALANCE_FACTOR,
-                    null,
+                    DegraderLoadBalancerStrategyConfig.DEFAULT_POINTS_PER_HOST,null,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_MAXPERCENT,
                     null, null,
                     DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_METHOD, null,
@@ -3589,9 +3585,7 @@ public class DegraderLoadBalancerTest
         DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
         DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE, null,
         DegraderLoadBalancerStrategyConfig.DEFAULT_NUM_PROBES,
-        DegraderLoadBalancerStrategyConfig.DEFAULT_POINTS_PER_HOST,
-        DegraderLoadBalancerStrategyConfig.DEFAULT_BOUNDED_LOAD_BALANCE_FACTOR,
-        null,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_POINTS_PER_HOST, null,
         DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_MAXPERCENT,
         null, null, "GET", "/test/admin",
         DegraderImpl.DEFAULT_LOW_LATENCY, null,
@@ -3621,9 +3615,7 @@ public class DegraderLoadBalancerTest
         DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_MIN_CALL_COUNT_LOW_WATER_MARK,
         DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE, null,
         DegraderLoadBalancerStrategyConfig.DEFAULT_NUM_PROBES,
-        DegraderLoadBalancerStrategyConfig.DEFAULT_POINTS_PER_HOST,
-        DegraderLoadBalancerStrategyConfig.DEFAULT_BOUNDED_LOAD_BALANCE_FACTOR,
-        null,
+        DegraderLoadBalancerStrategyConfig.DEFAULT_POINTS_PER_HOST, null,
         DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_MAXPERCENT,
         null, null, "OPTIONS", null,
         DegraderImpl.DEFAULT_LOW_LATENCY, null,

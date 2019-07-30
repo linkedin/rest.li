@@ -203,26 +203,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       warn(_log, "Can not find hash ring to use");
     }
 
-    Map<URI, TrackerClient> trackerClientMap = new HashMap<>();
-
-    for (TrackerClient trackerClient : trackerClients)
-    {
-      trackerClientMap.put(trackerClient.getUri(), trackerClient);
-    }
-
     // we operate only on URIs to ensure that we never hold on to an old tracker client
     // that the cluster manager has removed
-    URI mostWantedURI = ring.get(hashCode);
-    TrackerClient client = trackerClientMap.get(mostWantedURI);
+    URI targetHostUri = ring.get(hashCode);
 
-    if (client != null && !excludedUris.contains(mostWantedURI))
-    {
-      ExcludedHostHints.addRequestContextExcludedHost(requestContext, mostWantedURI);
-      return client;
-    }
-
-    // Getting an iterator from the ring is usually an expensive operation. So we only get the iterator
-    // if the most wanted URI is unavailable
     Iterator<URI> iterator = ring.getIterator(hashCode);
 
     // Now we get a URI from the ring. We need to make sure it's valid:
@@ -231,18 +215,11 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     // so there could be an inconsistent situation where the trackerclient is already deleted
     // while the uri still exists in the hash ring. When this happens, instead of failing the search,
     // we simply return the next uri in the ring that is available in the trackerclient list.
-    URI targetHostUri = null;
-
-    while (iterator.hasNext())
+    TrackerClient client = null;
+    while ((excludedUris.contains(targetHostUri) || (client = searchClientFromUri(targetHostUri, trackerClients)) == null)
+        && iterator.hasNext())
     {
       targetHostUri = iterator.next();
-      client = trackerClientMap.get(targetHostUri);
-
-      if (targetHostUri != mostWantedURI && !excludedUris.contains(targetHostUri) && client != null)
-      {
-        ExcludedHostHints.addRequestContextExcludedHost(requestContext, targetHostUri);
-        return client;
-      }
     }
 
     if (client == null)
@@ -253,6 +230,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     {
       client = null;
       warn(_log, "No client found. We have tried all hosts in the cluster");
+    }
+    else
+    {
+      ExcludedHostHints.addRequestContextExcludedHost(requestContext, targetHostUri);
     }
 
     return client;
@@ -1055,7 +1036,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     {
       // returning empty ring (any implementation) and preventing to update the state with no trackers
       // to be consistent with the behavior in getTrackerClient
-      return new DegraderRingFactory<URI>(_config).createRing(Collections.emptyMap(), Collections.emptyMap());
+      return new DegraderRingFactory<URI>(_config).createRing(Collections.emptyMap());
     }
 
     checkUpdatePartitionState(clusterGenerationId, partitionId, trackerClients);
