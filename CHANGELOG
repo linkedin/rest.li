@@ -1,7 +1,14 @@
+27.3.14
+-------
+
+
 27.3.13
 -------
 (RB=1745519)
 Fix flaky unit test in BaseTestSmoothRateLimiter
+
+(RB=1703809)
+Add bounded-load consistent hashing algorithm implementation
 
 27.3.12
 -------
