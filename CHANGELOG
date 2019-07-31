@@ -1,5 +1,7 @@
 27.3.13
 -------
+(RB=1745519)
+Fix flaky unit test in BaseTestSmoothRateLimiter
 
 27.3.12
 -------
@@ -9,13 +11,13 @@ Support special floating point values - NaN, NEGATIVE_INFINITY, POSITIVE_INFINIT
 27.3.11
 -------
 (RB=1703809)
-Add bounded-load consistent hashing algorithm implementation
+(Revert pending DMRC review) Add bounded-load consistent hashing algorithm implementation
 
 (RB=1743222)
 Read Avro project properties at execution time.
 
 (RB=1703809)
-(Revert pending DMRC review) Add bounded-load consistent hashing algorithm implementation
+Add bounded-load consistent hashing algorithm implementation
 
 27.3.10
 -------
@@ -29,14 +31,14 @@ Adding support for RestLiServer to accept RestLiResponse callback
 
 27.3.8
 ------
-(RB=1735682)
-Make project properties cacheable for GenerateAvroSchemaTask
+(RB=1736316)
+Move migrated plugin code to use the Java plugin.
 
 (RB=1648868)
 Migrate PegasusPlugin from Groovy to Java.
 
-(RB=1736316)
-Move migrated plugin code to use the Java plugin.
+(RB=1735682)
+Make project properties cacheable for GenerateAvroSchemaTask
 
 27.3.7
 ------

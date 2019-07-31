@@ -127,8 +127,8 @@ public abstract class BaseTestSmoothRateLimiter
   @Test(timeOut = TEST_TIMEOUT)
   public void testSubmitExceedsPermits() throws Exception
   {
-    SettableClock clock = new SettableClock();
-    AsyncRateLimiter rateLimiter = getRateLimiter(_scheduledExecutorService, _executor, clock);
+    ClockedExecutor clockedExecutor = new ClockedExecutor();
+    AsyncRateLimiter rateLimiter = getRateLimiter(clockedExecutor, clockedExecutor, clockedExecutor);
 
     rateLimiter.setRate(ONE_PERMIT_PER_PERIOD, ONE_MILLISECOND_PERIOD, UNLIMITED_BURST);
 
@@ -138,6 +138,8 @@ public abstract class BaseTestSmoothRateLimiter
       rateLimiter.submit(callback);
       callbacks.add(callback);
     });
+    // trigger task to run them until current time
+    clockedExecutor.runFor(0);
 
     // We have one permit to begin with so the first task should run immediate and left with 4 pending
     callbacks.get(0).get();
@@ -145,22 +147,22 @@ public abstract class BaseTestSmoothRateLimiter
     IntStream.range(1, 5).forEach(i -> assertFalse(callbacks.get(i).isDone()));
 
     // We increment the clock by one period and one more permit should have been issued
-    clock.addDuration(ONE_MILLISECOND_PERIOD);
+    clockedExecutor.runFor(ONE_MILLISECOND_PERIOD);
     callbacks.get(1).get();
     IntStream.range(0, 2).forEach(i -> assertTrue(callbacks.get(i).isDone()));
     IntStream.range(2, 5).forEach(i -> assertFalse(callbacks.get(i).isDone()));
 
-    clock.addDuration(ONE_MILLISECOND_PERIOD);
+    clockedExecutor.runFor(ONE_MILLISECOND_PERIOD);
     callbacks.get(2).get();
     IntStream.range(0, 3).forEach(i -> assertTrue(callbacks.get(i).isDone()));
     IntStream.range(3, 5).forEach(i -> assertFalse(callbacks.get(i).isDone()));
 
-    clock.addDuration(ONE_MILLISECOND_PERIOD);
+    clockedExecutor.runFor(ONE_MILLISECOND_PERIOD);
     callbacks.get(3).get();
     IntStream.range(0, 4).forEach(i -> assertTrue(callbacks.get(i).isDone()));
     IntStream.range(4, 5).forEach(i -> assertFalse(callbacks.get(i).isDone()));
 
-    clock.addDuration(ONE_MILLISECOND_PERIOD);
+    clockedExecutor.runFor(ONE_MILLISECOND_PERIOD);
     callbacks.get(4).get();
     IntStream.range(0, 5).forEach(i -> assertTrue(callbacks.get(i).isDone()));
   }
