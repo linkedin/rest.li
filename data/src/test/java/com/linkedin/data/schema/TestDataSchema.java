@@ -16,8 +16,6 @@
 
 package com.linkedin.data.schema;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
@@ -26,8 +24,10 @@ import com.linkedin.data.codec.JacksonDataCodec;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -2489,9 +2489,9 @@ public class TestDataSchema
           "{ \"alias\": \"video\", \"type\": \"VideoUrn\", \"doc\": \"video doc\" }" +
         "] }" +
       "] }";
-    List<String> membersInDeclaredOrder = Lists.newArrayList(
-        "null", "member", "article", "school", "organization", "company", "jobs", "courses", "fingerprint", "audio", "video");
-    Set<String> inlinedMembers = Sets.newHashSet("organization", "jobs", "courses", "fingerprint", "audio");
+    List<String> membersInDeclaredOrder = new ArrayList<>(Arrays.asList(
+        "null", "member", "article", "school", "organization", "company", "jobs", "courses", "fingerprint", "audio", "video"));
+    Set<String> inlinedMembers = new HashSet<>(Arrays.asList("organization", "jobs", "courses", "fingerprint", "audio"));
 
     PegasusSchemaParser parser = schemaParserFromString(schema);
     RecordDataSchema mainRecordSchema = (RecordDataSchema) parser.topLevelDataSchemas().get(2);
@@ -2551,9 +2551,9 @@ public class TestDataSchema
           "{ \"type\" : \"typeref\", \"name\" : \"VideoUrn\", \"ref\" : \"string\" }" +
         "] }" +
       "] }";
-    List<String> membersInDeclaredOrder = Lists.newArrayList(
-        "null", "int", "AuxRecord", "Organization", "array", "map", "MD5", "string");
-    Set<String> inlinedMembers = Sets.newHashSet("Organization", "array", "map", "MD5", "string");
+    List<String> membersInDeclaredOrder = new ArrayList<>(Arrays.asList(
+        "null", "int", "AuxRecord", "Organization", "array", "map", "MD5", "string"));
+    Set<String> inlinedMembers = new HashSet<>(Arrays.asList("Organization", "array", "map", "MD5", "string"));
 
     PegasusSchemaParser parser = schemaParserFromString(schema);
     RecordDataSchema mainRecordSchema = (RecordDataSchema) parser.topLevelDataSchemas().get(2);

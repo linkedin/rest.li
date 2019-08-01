@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.util.hashing;
 
-import com.google.common.collect.Lists;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.HashBasedPartitionProperties;
 import com.linkedin.d2.balancer.properties.RangeBasedPartitionProperties;
@@ -28,6 +27,7 @@ import com.linkedin.r2.message.Request;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -69,9 +69,12 @@ public class URIMapperTestUtil
   public static HashRingProvider createStaticHashRingProvider(int totalHostCount, int partitionCount,
       HashFunction<Request> hashFunction)
   {
-    int hostPerPartition = totalHostCount / partitionCount;
-    List<Integer> hostsIds = IntStream.range(0, totalHostCount).boxed().collect(Collectors.toList());
-    List<List<Integer>> hostsIdsByPartition = Lists.partition(hostsIds, hostPerPartition);
+    int hostsPerPartition = totalHostCount / partitionCount;
+    final AtomicInteger hostCounter = new AtomicInteger();
+    Collection<List<Integer>> hostsIdsByPartition = IntStream.range(0, totalHostCount)
+        .boxed()
+        .collect(Collectors.groupingBy(s -> hostCounter.getAndIncrement() / hostsPerPartition))
+        .values();
 
     List<Ring<URI>> rings = new ArrayList<>();
     int partiitonId = 0;

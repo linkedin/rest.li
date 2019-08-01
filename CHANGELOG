@@ -1,6 +1,7 @@
 27.3.14
 -------
-
+(RB=1747751)
+Fix open-source builds by removing certain Guava usages
 
 27.3.13
 -------
