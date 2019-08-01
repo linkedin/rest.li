@@ -32,6 +32,7 @@ import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import com.linkedin.restli.server.TestRecord;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -140,6 +141,41 @@ public class TestErrorResponseBuilder
     Assert.assertTrue(errorResponse.hasMessage());
     Assert.assertTrue(errorResponse.hasCode());
     Assert.assertTrue(errorResponse.hasServiceErrorCode());
+    Assert.assertFalse(errorResponse.hasStackTrace());
+    Assert.assertFalse(errorResponse.hasDocUrl());
+    Assert.assertFalse(errorResponse.hasRequestId());
+  }
+
+
+  @Test
+  public void testErrorDetailsFromDataMap()
+  {
+    RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_200_OK, "Some message", new IllegalStateException("Some other message"));
+    exception.setCode("INVALID_SOMETHING");
+    exception.setDocUrl("www.documentation.com");
+    exception.setRequestId("id123");
+    exception.setErrorDetails((DataMap)null);
+    Assert.assertFalse(exception.hasErrorDetails());
+
+    ErrorResponseBuilder builder = new ErrorResponseBuilder(ErrorResponseFormat.FULL);
+
+    ErrorResponse errorResponse = builder.buildErrorResponse(exception);
+    Assert.assertFalse(errorResponse.hasErrorDetails());
+    Assert.assertTrue(errorResponse.hasExceptionClass());
+    Assert.assertTrue(errorResponse.hasStatus());
+    Assert.assertTrue(errorResponse.hasMessage());
+    Assert.assertTrue(errorResponse.hasCode());
+    Assert.assertTrue(errorResponse.hasStackTrace());
+    Assert.assertTrue(errorResponse.hasDocUrl());
+    Assert.assertTrue(errorResponse.hasRequestId());
+
+    exception.setOverridingFormat(ErrorResponseFormat.MESSAGE_AND_SERVICECODE);
+    errorResponse = builder.buildErrorResponse(exception);
+    Assert.assertFalse(errorResponse.hasErrorDetails());
+    Assert.assertFalse(errorResponse.hasExceptionClass());
+    Assert.assertTrue(errorResponse.hasStatus());
+    Assert.assertTrue(errorResponse.hasMessage());
+    Assert.assertTrue(errorResponse.hasCode());
     Assert.assertFalse(errorResponse.hasStackTrace());
     Assert.assertFalse(errorResponse.hasDocUrl());
     Assert.assertFalse(errorResponse.hasRequestId());

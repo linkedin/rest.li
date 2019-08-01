@@ -1,5 +1,11 @@
+27.3.15
+-------
+
 27.3.14
 -------
+(RB=1748571)
+Fix a backward-incompatible bug for setting ErrorDetails in RestliServiceException
+
 (RB=1747751)
 Fix open-source builds by removing certain Guava usages
 

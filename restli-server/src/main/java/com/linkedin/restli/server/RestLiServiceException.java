@@ -180,7 +180,7 @@ public class RestLiServiceException extends RuntimeException
 
   public RestLiServiceException setErrorDetails(final DataMap errorDetails)
   {
-    _errorDetails = new ErrorDetails(errorDetails);
+    _errorDetails = errorDetails == null ? null : new ErrorDetails(errorDetails);
     return this;
   }
 

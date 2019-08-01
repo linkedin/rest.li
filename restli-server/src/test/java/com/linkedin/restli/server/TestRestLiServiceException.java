@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.server;
 
+import com.linkedin.data.DataMap;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.server.errors.ServiceError;
 import org.testng.Assert;
@@ -49,6 +50,26 @@ public class TestRestLiServiceException
     Assert.assertEquals(restLiServiceException.getMessage(), TestServiceError.METHOD_LEVEL_ERROR.message());
     Assert.assertEquals(restLiServiceException.getErrorDetailsRecord(), new EmptyRecord());
     Assert.assertEquals(restLiServiceException.getErrorDetailType(), EmptyRecord.class.getCanonicalName());
+    Assert.assertEquals(restLiServiceException.getCause(), cause);
+  }
+
+  @Test
+  public void testErrorDetails()
+  {
+    final Throwable cause = new RuntimeException("Underlying exception message, should not be seen.");
+    final RestLiServiceException restLiServiceException = new RestLiServiceException(TestServiceError.METHOD_LEVEL_ERROR, cause)
+        .setErrorDetails((DataMap)null);
+
+    Assert.assertTrue(restLiServiceException.hasCode());
+    Assert.assertFalse(restLiServiceException.hasErrorDetails());
+    Assert.assertFalse(restLiServiceException.hasDocUrl());
+    Assert.assertFalse(restLiServiceException.hasRequestId());
+
+    Assert.assertEquals(restLiServiceException.getStatus(), TestServiceError.METHOD_LEVEL_ERROR.httpStatus());
+    Assert.assertEquals(restLiServiceException.getCode(), TestServiceError.METHOD_LEVEL_ERROR.code());
+    Assert.assertEquals(restLiServiceException.getMessage(), TestServiceError.METHOD_LEVEL_ERROR.message());
+    Assert.assertNull(restLiServiceException.getErrorDetails());
+    Assert.assertNull(restLiServiceException.getErrorDetailsRecord());
     Assert.assertEquals(restLiServiceException.getCause(), cause);
   }
 }
