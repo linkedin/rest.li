@@ -443,6 +443,31 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
     Assert.assertTrue(size > 20L * BODY_6_SIZE);
   }
 
+  @Test
+  public void testMimeWriterWithLargeNumberOfStreams() throws InterruptedException, ExecutionException {
+    long size = 0l;
+
+    List<MultiPartMIMEDataSourceWriter> list = new ArrayList<>();
+    for (int i = 0 ; i < 2000; i++) {
+      final MultiPartMIMEInputStream bodyADataSource =
+          new MultiPartMIMEInputStream.Builder(new ByteArrayInputStream(BODY_7.getPartData().copyBytes()),
+              _scheduledExecutorService, BODY_7.getPartHeaders()).build();
+      list.add(bodyADataSource);
+    }
+    final MultiPartMIMEWriter writer = new MultiPartMIMEWriter.Builder().appendDataSources(list).build();
+
+    EntityStreamReader reader = new EntityStreamReader();
+    writer.getEntityStream().setReader(reader);
+    CompletableFuture<Optional<ByteString>> future;
+    do {
+      future = reader.readNextChunk();
+      if (future.get().isPresent()) {
+        size += future.get().get().length();
+      }
+    } while (future.get().isPresent());
+    Assert.assertTrue(size > 2000L * BODY_7_SIZE);
+  }
+
   // mimic the reader behavior in Play
   private static class EntityStreamReader implements Reader {
     private final AtomicBoolean _done = new AtomicBoolean(false);

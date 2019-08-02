@@ -103,8 +103,10 @@ public final class MIMETestUtils
   public static final MIMEDataPart BODY_4;
   public static final MIMEDataPart BODY_5;
   public static final MIMEDataPart BODY_6;
+  public static final MIMEDataPart BODY_7;
 
   public static final int BODY_6_SIZE = 15000000;
+  public static final int BODY_7_SIZE = MultiPartMIMEInputStream.DEFAULT_WRITE_CHUNK_SIZE * 3;
 
   //Disable instantiation
   private MIMETestUtils()
@@ -192,6 +194,7 @@ public final class MIMETestUtils
     BODY_5 = new MIMEDataPart(ByteString.copy(localInputStreamBytes), localInputStreamHeaders);
 
     BODY_6 = new MIMEDataPart(ByteString.copy(new byte[BODY_6_SIZE]), Collections.emptyMap());
+    BODY_7 = new MIMEDataPart(ByteString.copy(new byte[BODY_7_SIZE]), Collections.emptyMap());
   }
 
   //Now create the javax data sources:

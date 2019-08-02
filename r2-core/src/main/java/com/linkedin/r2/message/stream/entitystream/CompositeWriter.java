@@ -57,13 +57,15 @@ public class CompositeWriter implements Writer
     // Entry point when the stream notifies more data can be written. This can be invoked when one of the input writers
     // is executing in a separate threadpool.
     int newOutstanding = _wh.remaining();
+    ReadHandle rh;
     synchronized (_lock)
     {
       _outstanding = newOutstanding;
+      rh = _currentRh;
     }
     if (newOutstanding > 0)
     {
-      _currentRh.request(newOutstanding);
+      rh.request(newOutstanding);
     }
   }
 
@@ -113,8 +115,12 @@ public class CompositeWriter implements Writer
     @Override
     public void onInit(ReadHandle rh)
     {
-      _currentRh = rh;
-      int outstanding = _outstanding;
+      int outstanding;
+      synchronized (_lock)
+      {
+        _currentRh = rh;
+        outstanding = _outstanding;
+      }
       if (outstanding > 0)
       {
         _currentRh.request(outstanding);
@@ -133,8 +139,16 @@ public class CompositeWriter implements Writer
         int diff;
         synchronized (_lock)
         {
-          _outstanding--;
           int newOutstanding = _wh.remaining();
+          if (newOutstanding == 0)
+          {
+            _outstanding = 0;
+            return;
+          }
+          else
+          {
+            _outstanding--;
+          }
           diff = newOutstanding - _outstanding;
           if (diff > 0)
           {

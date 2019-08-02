@@ -1,5 +1,7 @@
 27.3.17
 -------
+(RB=1750381)
+Fix a race condition bug in CompositeWriter.
 
 27.3.16
 -------
