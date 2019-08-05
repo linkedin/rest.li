@@ -29,6 +29,7 @@ import com.linkedin.r2.netty.entitystream.StreamWriter;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+import com.linkedin.r2.transport.http.client.stream.OrderedEntityStreamReader;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
@@ -71,7 +72,8 @@ public class ClientEntityStreamHandler extends ChannelDuplexHandler
       StreamRequest request = (StreamRequest) msg;
 
       // Sets reader after the headers have been flushed on the channel
-      ctx.write(request).addListener(future -> request.getEntityStream().setReader(new StreamReader(ctx)));
+      OrderedEntityStreamReader orderedReader = new OrderedEntityStreamReader(ctx, new StreamReader(ctx));
+      ctx.write(request).addListener(future -> request.getEntityStream().setReader(orderedReader));
     }
     else
     {
