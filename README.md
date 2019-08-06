@@ -8,38 +8,38 @@ fills a niche for applying RESTful principles at scale with an end-to-end develo
 workflow for building REST APIs, which promotes clean REST practices, uniform
 interface design and consistent data modeling.
 
-<p align="center"><a href="https://github.com/linkedin/rest.li">Source</a> | <a href="https://github.com/linkedin/rest.li/wiki">Documentation</a> | <a href="http://www.linkedin.com/groups/Restli-4855943">Discussion Group</a></p>
+<p align="center"><a href="https://github.com/linkedin/rest.li">Source</a> | <a href="https://rest.li">Documentation</a> | <a href="https://www.linkedin.com/groups/4855943/">Discussion Group</a></p>
 
 Features
 --------
 
-* [End-to-end framework](https://github.com/linkedin/rest.li/wiki/Rest.li-User-Guide#development-flow) for building RESTful APIs
+* [End-to-end framework](https://linkedin.github.io/rest.li/user_guide/server_architecture#development-flow) for building RESTful APIs
 * Approachable APIs for writing non-blocking client and server code using [ParSeq](https://github.com/linkedin/parseq)
 * Type-safe development using generated data and client bindings
 * [JAX-RS](http://en.wikipedia.org/wiki/Java_API_for_RESTful_Web_Services) inspired annotation driven server side resource development
 * Engineered and battle tested for high scalability and high availability
-* Optional [Dynamic Discovery](https://github.com/linkedin/rest.li/wiki/Dynamic-Discovery) subsystem adds client side load balancing and fault tolerance
+* Optional [Dynamic Discovery](https://linkedin.github.io/rest.li/Dynamic_Discovery) subsystem adds client side load balancing and fault tolerance
 * Backward compatibility checking to ensure all API changes are safe
 * Support for batch operations, partial updates and projections
 * [Web UI](https://github.com/linkedin/rest.li-api-hub) for browsing and searching a catalog of rest.li APIs.
 
 Website
 -------
-[http://rest.li](http://rest.li)
+[https://rest.li](https://rest.li)
 
 Documentation
 -------------
 
-See our [wiki](https://github.com/linkedin/rest.li/wiki) for full documentation and examples.
+See our [website](https://rest.li) for full documentation and examples.
 
 Community
 ---------
-* Discussion Group: [Linkedin Rest.li Group](http://www.linkedin.com/groups/Restli-4855943)
-* Follow us on twitter: [@rest_li](https://twitter.com/rest_li)
-* Issue Tracking: [github issue tracking](https://github.com/linkedin/rest.li/issues)
+* Discussion Group: [LinkedIn Rest.li Group](https://www.linkedin.com/groups/4855943/)
+* Follow us on Twitter: [@rest_li](https://twitter.com/rest_li)
+* Issue Tracking: [GitHub issue tracking](https://github.com/linkedin/rest.li/issues)
 
 Quickstart Guides and Examples
 ------------------------------
 
-* [Quickstart - a step-by-step tutorial on the basics](https://github.com/linkedin/rest.li/wiki/Quickstart:-A-Tutorial-Introduction-to-Rest.Li)
-* [Guided walkthrough of an example application](https://github.com/linkedin/rest.li/wiki/Quick-Start-Guide)
+* [Quickstart - a step-by-step tutorial on the basics](https://linkedin.github.io/rest.li/start/step_by_step)
+* [Guided walkthrough of an example application](https://linkedin.github.io/rest.li/get_started/quick_start)
