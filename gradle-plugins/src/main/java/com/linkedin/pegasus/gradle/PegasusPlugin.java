@@ -800,11 +800,12 @@ public class PegasusPlugin implements Plugin<Project>
       configureRestClientGeneration(project, sourceSet);
 
       Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName("clean", "GeneratedDir"));
-      cleanGeneratedDirTask.doLast(task -> {
+      cleanGeneratedDirTask.doLast(new CacheableAction<>(task ->
+      {
         deleteGeneratedDir(project, sourceSet, REST_GEN_TYPE);
         deleteGeneratedDir(project, sourceSet, AVRO_SCHEMA_GEN_TYPE);
         deleteGeneratedDir(project, sourceSet, DATA_TEMPLATE_GEN_TYPE);
-      });
+      }));
 
       // make clean depends on deleting the generated directories
       project.getTasks().getByName("clean").dependsOn(cleanGeneratedDirTask);
@@ -1101,7 +1102,7 @@ public class PegasusPlugin implements Plugin<Project>
 
             task.setResolverPath(restModelResolverPath);
 
-            task.doFirst(t -> deleteGeneratedDir(project, sourceSet, REST_GEN_TYPE));
+            task.doFirst(new CacheableAction<>(t -> deleteGeneratedDir(project, sourceSet, REST_GEN_TYPE)));
           });
 
       File apiSnapshotDir = apiProject.file(getSnapshotPath(apiProject, sourceSet));
@@ -1126,13 +1127,13 @@ public class PegasusPlugin implements Plugin<Project>
 
             task.onlyIf(t -> !isPropertyTrue(project, SKIP_IDL_CHECK));
 
-            task.doLast(t ->
+            task.doLast(new CacheableAction<>(t ->
             {
               if (!task.isEquivalent())
               {
                 _restModelCompatMessage.append(task.getWholeMessage());
               }
-            });
+            }));
           });
 
       CheckSnapshotTask checkSnapshotTask = project.getTasks()
@@ -1291,7 +1292,7 @@ public class PegasusPlugin implements Plugin<Project>
       changedFileReportTask.setSnapshotFiles(SharedFileUtils.getSuffixedFiles(project, apiSnapshotDir,
           SNAPSHOT_FILE_SUFFIX));
       changedFileReportTask.mustRunAfter(publishRestliSnapshotTask, publishRestliIdlTask);
-      changedFileReportTask.doLast(t ->
+      changedFileReportTask.doLast(new CacheableAction<>(t ->
       {
         if (!changedFileReportTask.getNeedCheckinFiles().isEmpty())
         {
@@ -1299,7 +1300,7 @@ public class PegasusPlugin implements Plugin<Project>
           _needCheckinFiles.addAll(changedFileReportTask.getNeedCheckinFiles());
           _needBuildFolders.add(getCheckedApiProject(project).getPath());
         }
-      });
+      }));
     });
   }
 
@@ -1334,7 +1335,7 @@ public class PegasusPlugin implements Plugin<Project>
             return !project.getConfigurations().getByName("avroSchemaGenerator").isEmpty();
           });
 
-          task.doFirst(t -> deleteGeneratedDir(project, sourceSet, AVRO_SCHEMA_GEN_TYPE));
+          task.doFirst(new CacheableAction<>(t -> deleteGeneratedDir(project, sourceSet, AVRO_SCHEMA_GEN_TYPE)));
         });
 
     project.getTasks().getByName(sourceSet.getCompileJavaTaskName()).dependsOn(generateAvroSchemaTask);
@@ -1393,7 +1394,7 @@ public class PegasusPlugin implements Plugin<Project>
 
       task.onlyIf(t -> task.getInputDir().exists());
 
-      task.doLast(t ->
+      task.doLast(new CacheableAction<>(t ->
       {
         System.out.println("pdsc to pdl conversion complete.");
         System.out.println("All pdsc files in " + dataSchemaDir + " have been replaced with pdl files");
@@ -1402,7 +1403,7 @@ public class PegasusPlugin implements Plugin<Project>
         ConfigurableFileTree tree = project.fileTree(dataSchemaDir);
         tree.include("**/*.pdsc");
         tree.forEach(File::delete);
-      });
+      }));
     });
   }
 
@@ -1437,7 +1438,7 @@ public class PegasusPlugin implements Plugin<Project>
             return false;
           });
 
-          task.doFirst(t -> deleteGeneratedDir(project, sourceSet, DATA_TEMPLATE_GEN_TYPE));
+          task.doFirst(new CacheableAction<>(t -> deleteGeneratedDir(project, sourceSet, DATA_TEMPLATE_GEN_TYPE)));
         });
 
     // TODO: Tighten the types so that _generateSourcesJarTask must be of type Jar.
@@ -1482,7 +1483,7 @@ public class PegasusPlugin implements Plugin<Project>
     if (isPropertyTrue(project, DESTROY_STALE_FILES_ENABLE) && publishableSchemasBuildDir.exists())
     {
       destroyStaleFiles.getInputs().dir(publishableSchemasBuildDir);
-      destroyStaleFiles.doLast(task -> project.delete(publishableSchemasBuildDir));
+      destroyStaleFiles.doLast(new CacheableAction<>(task -> project.delete(publishableSchemasBuildDir)));
     }
 
     // Copy all PDSC files directly over for publication

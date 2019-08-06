@@ -1,7 +1,13 @@
+27.3.18
+-------
+
 27.3.17
 -------
 (RB=1750381)
 Fix a race condition bug in CompositeWriter.
+
+(RB=1753446)
+Fix Gradle caching regression introduced in 27.3.8.
 
 27.3.16
 -------
