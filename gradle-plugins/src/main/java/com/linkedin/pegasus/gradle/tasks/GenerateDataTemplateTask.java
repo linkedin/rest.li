@@ -1,38 +1,30 @@
 package com.linkedin.pegasus.gradle.tasks;
 
+import com.linkedin.pegasus.gradle.PathingJarUtil;
 import com.linkedin.pegasus.gradle.PegasusPlugin;
-import com.linkedin.pegasus.gradle.internal.DataTemplateArgumentProvider;
-import com.linkedin.pegasus.gradle.internal.DataTemplateJvmArgumentProvider;
 import java.io.File;
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.InputDirectory;
-import org.gradle.api.tasks.Internal;
-import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.util.GradleVersion;
 
 import static com.linkedin.pegasus.gradle.SharedFileUtils.getSuffixedFiles;
 
 
 /**
  * Generate the data template source files from data schema files.
- * Adding this task automatically adds a corresponding 'config task' that will be responsible for configuring this task.
- * Config task approach is needed to keep this task neatly incremental
- * while offering the configurability and robustness of {@link JavaExec} API.
  *
  * To use this plugin, add these three lines to your build.gradle:
  * <pre>
@@ -43,7 +35,7 @@ import static com.linkedin.pegasus.gradle.SharedFileUtils.getSuffixedFiles;
  * for data schema (.pdsc) files.
  */
 @CacheableTask
-public class GenerateDataTemplateTask extends JavaExec
+public class GenerateDataTemplateTask extends DefaultTask
 {
   private File _destinationDir;
   private File _inputDir;
@@ -52,16 +44,11 @@ public class GenerateDataTemplateTask extends JavaExec
 
   public GenerateDataTemplateTask()
   {
-    //We need config task to add robustness and configurability to the JavaExec task such as this one.
-    //Config task is not typical but it is one of the fundamental design patterns in Gradle.
-    //We need config task here because the inputs to the JavaExec task such as 'jvmArgs'
-    // need to be set during Gradle's execution time because they require dependencies to be resolved/downloaded.
-    //'jvmArgs' value is driven from 'resolverPath' input property which should evaluated during execution time.
+    // This is a dummy task to maintain backward compatibility
     GenerateDataTemplateConfigurerTask configTask = getProject().getTasks()
         .create(getName() + "Configuration", GenerateDataTemplateConfigurerTask.class);
 
     configTask.setDescription("Configures " + getName() + " task and always runs before that task.");
-    configTask.setTarget(this);
 
     dependsOn(configTask);
   }
@@ -126,85 +113,55 @@ public class GenerateDataTemplateTask extends JavaExec
     _destinationDir = destinationDir;
   }
 
+  @TaskAction
+  public void generate()
+  {
+    FileTree inputDataSchemaFiles = getSuffixedFiles(getProject(), _inputDir,
+        PegasusPlugin.DATA_TEMPLATE_FILE_SUFFIXES);
+
+    List<String> inputDataSchemaFilenames = StreamSupport.stream(inputDataSchemaFiles.spliterator(), false)
+        .map(File::getPath)
+        .collect(Collectors.toList());
+
+    if (inputDataSchemaFilenames.isEmpty())
+    {
+      getLogger().lifecycle("There are no data schema input files. Skip generating data template.");
+      return;
+    }
+
+    getLogger().lifecycle("There are {} data schema input files. Using input root folder: {}",
+        inputDataSchemaFilenames.size(), _inputDir);
+
+    _destinationDir.mkdirs();
+
+    String resolverPathStr = _resolverPath.plus(getProject().files(_inputDir)).getAsPath();
+
+    FileCollection _pathedCodegenClasspath;
+    try
+    {
+      _pathedCodegenClasspath = PathingJarUtil.generatePathingJar(
+          getProject(), "generateDataTemplate", _codegenClasspath, true);
+    }
+    catch (IOException e)
+    {
+      throw new GradleException("Error occurred generating pathing JAR.", e);
+    }
+
+    getProject().javaexec(javaExecSpec ->
+    {
+      javaExecSpec.setMain("com.linkedin.pegasus.generator.PegasusDataTemplateGenerator");
+      javaExecSpec.setClasspath(_pathedCodegenClasspath);
+      javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr);
+      javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
+      javaExecSpec.args(_destinationDir.getPath());
+      javaExecSpec.args(_inputDir);
+    });
+  }
+
   /**
-   * Configures data template generation task.
-   * Should never be incremental because it is a 'config task' for target task.
-   * The target task will be neatly incremental.
+   * Configures data template generation task. Dummy task.
    */
   public static class GenerateDataTemplateConfigurerTask extends DefaultTask
   {
-    private static final Logger LOG = Logging.getLogger(GenerateDataTemplateConfigurerTask.class);
-
-    private GenerateDataTemplateTask _target;
-
-    @TaskAction
-    public void configureTask()
-    {
-      FileTree inputDataSchemaFiles = getSuffixedFiles(_target.getProject(), _target.getInputDir(),
-          PegasusPlugin.DATA_TEMPLATE_FILE_SUFFIXES);
-
-      List<String> inputDataSchemaFilenames = StreamSupport.stream(inputDataSchemaFiles.spliterator(), false)
-          .map(File::getPath)
-          .collect(Collectors.toList());
-
-      if (inputDataSchemaFilenames.isEmpty())
-      {
-        LOG.info("{} - disabling task {} because no input data data schema files found in {}",
-            getPath(), _target.getPath(), _target.getInputDir());
-        _target.setEnabled(false);
-      }
-      else
-      {
-        LOG.lifecycle("There are {} data schema input files. Using input root folder: {}",
-            inputDataSchemaFilenames.size(), _target.getInputDir());
-      }
-
-      String resolverPathStr = _target.getResolverPath().plus(getProject().files(_target.getInputDir())).getAsPath();
-
-      _target.setMain("com.linkedin.pegasus.generator.PegasusDataTemplateGenerator");
-
-      //needed for backwards compatibility, we need to keep the existing API (codegenClasspath method)
-      _target.setClasspath(_target.getCodegenClasspath());
-
-      if (GradleVersion.current().compareTo(GradleVersion.version("4.6")) < 0)
-      {
-        //Maintain backwards compatibility
-        _target.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr);
-        _target.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
-        _target.args(_target.getDestinationDir().getPath());
-        _target.args(_target.getInputDir());
-      }
-      else
-      {
-        //Use the new provider API to better leverage the build cache
-        _target.getJvmArgumentProviders().add(new DataTemplateJvmArgumentProvider(
-            resolverPathStr, getProject().getRootDir()));
-
-        _target.getArgumentProviders().add(new DataTemplateArgumentProvider(
-            Arrays.asList(_target.getDestinationDir().getPath(), _target.getInputDir().getPath())));
-      }
-
-      LOG.info("{} - finished configuring task {}: \n"
-          + "  - main: {}\n"
-          + "  - classpath: {}\n"
-          + "  - jvmArgs: {}\n"
-          + "  - args: {}",
-          getPath(), _target.getPath(),
-          _target.getMain(),
-          _target.getClasspath(),
-          _target.getJvmArgs(),
-          _target.getArgs());
-    }
-
-    @Internal
-    public GenerateDataTemplateTask getTarget()
-    {
-      return _target;
-    }
-
-    public void setTarget(GenerateDataTemplateTask target)
-    {
-      _target = target;
-    }
   }
 }
