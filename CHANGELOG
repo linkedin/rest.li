@@ -1,7 +1,14 @@
+27.3.19
+-------
+
+
 27.3.18
 -------
 (RB=1753170)
 Update README.md
+
+(RB=1709652)
+Add consistent hash ring simulator to visualize request distribution and server load
 
 27.3.17
 -------
