@@ -82,7 +82,7 @@ from identifiers to entities.
 
 Each Rest.li resource endpoint is one of the following types:
 Collection, Simple, Association. Additionally, each resource endpoint
-may be a sub-resource of any other resource.
+may be a sub-resource of any other resource. These resources can be implemented with synchronous or asynchronous templates. Asynchronous is recommended if the code implementation is non-blocking.
 
 #### Collection
 
@@ -95,33 +95,35 @@ represent the entity itself.
 Collections can support all of the Rest.li resource methods described
 above.
 
-Collections are declared by creating a class that extends
+Synchronous collections are declared by creating a class that extends
 CollectionResourceTemplate (or ComplexKeyResourceTemplate for complex
 keys, see below for details).
+
+Asynchronous collections are declared by creating a class that extends CollectionResourceAsyncTemplate or CollectionResourceTaskTemplate. 
 
 For example:
 
 ```java  
 @RestLiCollection(name=“items”, …)  
-public class ItemsResource extends CollectionResourceTemplate\<Long,
+public class ItemsResource extends CollectionResourceTaskTemplate\<Long,
 Item\>  
 ```
 
-Defines a resource with a URI of the form:
+Defines an asynchronous resource with a URI of the form:
 
 ```  
 /items/{longKey}  
 ```
 
 For keys with complex hierarchical data structures, use
-ComplexKeyResourceTemplate.
+ComplexKeyResourceTaskTemplate.
 
 For Example:
 
 ```java  
 @RestLiCollection(name=“widgets”, …)  
 public class WidgetResource implements extends
-ComplexKeyResourceTemplate\<WidgetKey, EmptyRecord, Widget\>  
+ComplexKeyResourceTaskTemplate\<WidgetKey, EmptyRecord, Widget\>  
 ```
 
 Defines a resource with a URI of the
@@ -137,14 +139,16 @@ A simple resource models a singleton entity in a particular scope.
 Simple resources support the Rest.li resource methods GET, UPDATE and
 DELETE.
 
-Simple resources are declared by creating a class that extends
+Synchronous simple resources are declared by creating a class that extends
 SimpleResourceTemplate.
+
+Asynchronous simple resources are declared by creating a class that extends SimpleResourceAsyncTemplate or SimpleResourceTaskTemplate.
 
 For example:
 
 ```java  
 @RestLiSimple(name=“selectedItem”, …)  
-public class SelectedItemResource extends SimpleResourceTemplate<Item>  
+public class SelectedItemResource extends SimpleResourceTaskTemplate<Item>  
 ```
 
 Defines a resource with a URI of the form:
@@ -171,11 +175,13 @@ keys are “foreign” keys from the referenced entities. Instead of using
 Create, new association relationships are made by using Update, which
 allows the client to provide the resource identifier.
 
+Asynchronous association resources are declared by creating a class that extends AssociationResourceAsyncTemplate or AssociationResourceTaskTemplate.
+
 For example:
 
 ```java  
 @RestLiAssociation(name="myRelations", assocKeys={`Key(name=“key1”, type=long.class), @Key(name=“key2”, type=long.class)}, …)  
-public class MyRelationResource extends AssociationResourceTemplate<Relation> { … }  
+public class MyRelationResource extends AssociationResourceTaskTemplate<Relation> { … }  
 ```
 
 Defines a child resource with a URI of the form:
@@ -183,6 +189,14 @@ Defines a child resource with a URI of the form:
 ```  
 /myRelations/key1={longKey1}\&key2={longKey2}  
 ```
+#### Asynchronous resources
+Asynchronous Rest.li resources should be used when the downstream implementations are non-blocking. There are asynchronous resource templates for Collection, Simple, Association, and ComplexKey resources.
+
+Task templates should be used when the resource implementation will leverage ParSeq `Task`s. 
+
+Async templates should be used when the resource implementation will leverage `Callback`s.
+
+Please see [Async Server Implementations](/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li/async-server-implementations) for more information on implementation.
 
 #### Child Resources (Sub-resources)
 
