@@ -1013,7 +1013,7 @@ public class HttpClientFactory implements TransportClientFactory
 
     // Add the disruptor filter to the end of the filter chain to get the most accurate simulation of disrupt
     Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
-    DisruptFilter disruptFilter = new DisruptFilter(_executor, _eventLoopGroup, requestTimeout);
+    DisruptFilter disruptFilter = new DisruptFilter(_executor, _eventLoopGroup, requestTimeout, SystemClock.instance());
     filters = filters.addLastRest(disruptFilter);
     filters = filters.addLast(disruptFilter);
 
