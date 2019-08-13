@@ -37,5 +37,10 @@ public enum DisruptMode
   /**
    * Simulated status code and exceptions thrown to the client.
    */
-  ERROR
+  ERROR,
+
+  /**
+   * If the round trip takes less time than the specified delay, a delay will be added.
+   */
+  MINIMUM_DELAY
 }
