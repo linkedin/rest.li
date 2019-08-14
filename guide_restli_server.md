@@ -16,6 +16,7 @@ index: 2
 -   [Writing Resources](#writing-resources)
 -   [Documenting Resources](#documenting-resources)
 -   [Resource Annotations](#resource-annotations)
+-   [Asynchronous Resources](#asynchronous-resources)
 -   [Sub-Resources](#sub-resources)
 -   [Resource Methods](#resource-methods)
     -  [Get](#get)
@@ -39,7 +40,6 @@ index: 2
 -   [Field Projection](#field-projection)
 -   [Collection Pagination](#collection-pagination)
 -   [Dependency Injection](#dependency-injection)
--   [Asynchronous Resources](#asynchronous-resources)
 -   [Online Documentation](#online-documentation)
 
 This document describes Rest.li support for implementing servers. 
@@ -250,6 +250,52 @@ public class FortunesResource extends CollectionResourceTemplate<Long, Fortune>
   ...
 }
 ```
+
+<a id="wiki-AsynchResources"></a>
+
+## Asynchronous Resources
+
+Rest.li allows resources to return results asynchronously through a
+[ParSeq](https://github.com/linkedin/parseq/wiki) `Task`, or
+`Callback`. For example, a getter can be declared in any of the
+following ways:
+```java
+@RestMethod.Get
+public Task<Greeting> get(Long key)
+{
+  // set up some ParSeq tasks and return the final Task
+  return Tasks.seq(Tasks.par(...), ...);
+}
+```
+
+```java
+@RestMethod.Get
+public void get(Long key, @CallbackParam Callback<Greeting> callback)
+{
+  // use the callback asynchronously
+}
+```
+
+These method signatures can be mixed arbitrarily with the synchronous
+signatures, including in the same resource class. For instance, simple
+methods can be implemented synchronously and slow methods can be
+implemented asynchronously. However, multiple implementations of the
+same REST method with different signatures may **not** be provided.
+
+You can also use the asynchronous resource templates in order to
+implement asynchronous Rest.li resources. The templates are:
+
+-   `AssociationResourceAsyncTemplate`
+-   `AssociationResourceTaskTemplate`
+-   `CollectionResourceAsyncTemplate`
+-   `CollectionResourceTaskTemplate`
+-   `ComplexKeyResourceAsyncTemplate`
+-   `ComplexKeyResourceTaskTemplate`
+-   `SimpleResourceAsyncTemplate`
+-   `SimpleResourceTaskTemplate`
+
+The Rest.li server will automatically start any `Task` that is returned
+by a `Task` based method by running it through a ParSeq engine.`Callback`-based methods do not receive special treatment.
 
 ## Sub-Resources
 
@@ -2212,68 +2258,6 @@ Spring ApplicationContext based on the type of the field. If `@Named` is
 used, the field will be bound to a bean with the same name. All beans
 must be in the root Spring context.
 
-<a id="wiki-AsynchResources"></a>
-
-## Asynchronous Resources
-
-Rest.li allows resources to return results asynchronously through a
-[ParSeq](https://github.com/linkedin/parseq/wiki) `Promise`, `Task`, or
-`Callback`. For example, a getter can be declared in any of the
-following ways:
-```java
-@RestMethod.Get
-public Promise<Greeting> get(Long key)
-{
-  // return a promise (e.g. SettablePromise) and set it asynchronously
-}
-```
-
-```java
-@RestMethod.Get
-public Task<Greeting> get(Long key)
-{
-  // set up some ParSeq tasks and return the final Task
-  return Tasks.seq(Tasks.par(...), ...);
-}
-```
-
-```java
-@RestMethod.Get
-public void get(Long key, @CallbackParam Callback<Greeting> callback)
-{
-  // use the callback asynchronously
-}
-```
-
-These method signatures can be mixed arbitrarily with the synchronous
-signatures, including in the same resource class. For instance, simple
-methods can be implemented synchronously and slow methods can be
-implemented asynchronously. However, multiple implementations of the
-same REST method with different signatures may **not** be provided.
-
-You can also use the asynchronous resource templates in order to
-implement asynchronous Rest.li resources. The templates are:
-
--   `AssociationResourceAsyncTemplate`
--   `AssociationResourcePromiseTemplate`
--   `AssociationResourceTaskTemplate`
--   `CollectionResourceAsyncTemplate`
--   `CollectionResourcePromiseTemplate`
--   `CollectionResourceTaskTemplate`
--   `ComplexKeyResourceAsyncTemplate`
--   `ComplexKeyResourcePromiseTemplate`
--   `ComplexKeyResourceTaskTemplate`
--   `SimpleResourceAsyncTemplate`
--   `SimpleResourcePromiseTemplate`
--   `SimpleResourceTaskTemplate`
-
-The Rest.li server will automatically start any `Task` that is returned
-by a `Task` based method by running it through a ParSeq engine. Also,
-`Promise` based methods are guaranteed to be run through a `Task` in the
-ParSeq engine, including those that do not explicitly take a ParSeq
-`Context`. `Callback`-based methods do not receive special treatment.
-
-<a id="wiki-OnlineDocumentation"></a>
 
 ## Online Documentation
 
