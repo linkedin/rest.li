@@ -143,7 +143,10 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_POOL_MIN_SIZE = 0;
   public static final int DEFAULT_MAX_HEADER_SIZE = 8 * 1024;
   public static final int DEFAULT_MAX_CHUNK_SIZE = 8 * 1024;
-  // constant to dynamically control turning turning on/off new netty pipeline v2. Increment this value with global config during major bug fix
+  /**
+   * Helper constant to allow specify which version of pipeline v2 the code is running on. Since it is a feature in active development,
+   * we want to be able to enable the pipeline through configs, only for clients that have loaded a specific version of code
+   */
   public static final int PIPELINE_V2_MATURITY_LEVEL = 1;
   // flag to enable/disable Nagle's algorithm
   public static final boolean DEFAULT_TCP_NO_DELAY = true;
@@ -648,7 +651,7 @@ public class HttpClientFactory implements TransportClientFactory
     private FilterChain                _filters = FilterChains.empty();
     private boolean                    _useClientCompression = true;
     private boolean                    _usePipelineV2 = false;
-    private int                        _pipelineV2MaturityLevel = PIPELINE_V2_MATURITY_LEVEL;
+    private int                        _pipelineV2MinimumMaturityLevel = PIPELINE_V2_MATURITY_LEVEL;
     private Executor                   _customCompressionExecutor = null;
     private AbstractJmxManager         _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
 
@@ -804,9 +807,9 @@ public class HttpClientFactory implements TransportClientFactory
       return this;
     }
 
-    public Builder setPipelineV2MaturityLevel(int pipelineV2MaturityLevel)
+    public Builder setPipelineV2MinimumMaturityLevel(int pipelineV2MinimumMaturityLevel)
     {
-      _pipelineV2MaturityLevel = pipelineV2MaturityLevel;
+      _pipelineV2MinimumMaturityLevel = pipelineV2MinimumMaturityLevel;
       return this;
     }
 
@@ -849,8 +852,11 @@ public class HttpClientFactory implements TransportClientFactory
       EventProviderRegistry eventProviderRegistry =  _eventProviderRegistry
           == null ? new EventProviderRegistry() : _eventProviderRegistry;
 
-      // do not enable Netty PipelineV2 if the pegasus pipeline v2 maturity level is not same or higher than what is configured
-      _usePipelineV2 = _usePipelineV2 && _pipelineV2MaturityLevel <= PIPELINE_V2_MATURITY_LEVEL;
+      if (_usePipelineV2 && _pipelineV2MinimumMaturityLevel > PIPELINE_V2_MATURITY_LEVEL)
+      {
+        LOG.warn("Disabling Pipeline V2, Since Pegasus Pipeline V2 Maturity Level is below the configured level.");
+        _usePipelineV2 = false;
+      }
 
       return new HttpClientFactory(_filters, eventLoopGroup, _shutdownFactory, scheduledExecutorService,
         _shutdownExecutor, callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
