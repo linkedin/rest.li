@@ -1,5 +1,13 @@
-27.3.20
+27.4.1
 -------
+
+27.4.0
+-------
+(RB=1637831)
+R2 Netty Pipeline Unification
+
+(RB=1767362)
+Control Pipeline V2 through a constant and a config value set through builder
 
 27.3.19
 -------
