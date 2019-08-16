@@ -16,6 +16,7 @@ index: 2
 -   [Writing Resources](#writing-resources)
 -   [Documenting Resources](#documenting-resources)
 -   [Resource Annotations](#resource-annotations)
+-   [Asynchronous Resources](#asynchronous-resources)
 -   [Sub-Resources](#sub-resources)
 -   [Resource Methods](#resource-methods)
     -  [Get](#get)
@@ -39,7 +40,6 @@ index: 2
 -   [Field Projection](#field-projection)
 -   [Collection Pagination](#collection-pagination)
 -   [Dependency Injection](#dependency-injection)
--   [Asynchronous Resources](#asynchronous-resources)
 -   [Online Documentation](#online-documentation)
 
 This document describes Rest.li support for implementing servers. 
@@ -250,6 +250,52 @@ public class FortunesResource extends CollectionResourceTemplate<Long, Fortune>
   ...
 }
 ```
+
+<a id="wiki-AsynchResources"></a>
+
+## Asynchronous Resources
+
+Rest.li allows resources to return results asynchronously through a
+[ParSeq](https://github.com/linkedin/parseq/wiki) `Task`, or
+`Callback`. For example, a getter can be declared in either of the
+following ways:
+```java
+@RestMethod.Get
+public Task<Greeting> get(Long key)
+{
+  // set up some ParSeq tasks and return the final Task
+  return Tasks.seq(Tasks.par(...), ...);
+}
+```
+
+```java
+@RestMethod.Get
+public void get(Long key, @CallbackParam Callback<Greeting> callback)
+{
+  // use the callback asynchronously
+}
+```
+
+These method signatures can be mixed arbitrarily with the synchronous
+signatures, including in the same resource class. For instance, simple
+methods can be implemented synchronously and slow methods can be
+implemented asynchronously. However, multiple implementations of the
+same REST method with different signatures may **not** be provided.
+
+You can also use the asynchronous resource templates in order to
+implement asynchronous Rest.li resources. The templates are:
+
+-   `AssociationResourceAsyncTemplate`
+-   `AssociationResourceTaskTemplate`
+-   `CollectionResourceAsyncTemplate`
+-   `CollectionResourceTaskTemplate`
+-   `ComplexKeyResourceAsyncTemplate`
+-   `ComplexKeyResourceTaskTemplate`
+-   `SimpleResourceAsyncTemplate`
+-   `SimpleResourceTaskTemplate`
+
+The Rest.li server will automatically start any `Task` that is returned
+by a `Task` based method by running it through a ParSeq engine.`Callback`-based methods do not receive special treatment.
 
 ## Sub-Resources
 
@@ -587,6 +633,12 @@ For simple resources:
 public V get();
 ```
 
+For asynchronous resources:
+
+```java
+public Task<V> get(K key);
+```
+
 Get methods can also be annotated if not overriding a base class method.
 GET supports a method signature with a wrapper return type.
 
@@ -602,6 +654,13 @@ For simple resources:
 ```java
 @RestMethod.Get
 public GetResult<V> getWithStatus();
+```
+
+For asynchronous resources:
+
+```java
+@RestMethod.Get
+public Task<GetResult<V>> getWithStatus(K key);
 ```
 
 An annotated get method may also have arbitrary query params added:
@@ -631,6 +690,11 @@ following method signature:
 
 ```java
 public Map<K, V> batchGet(Set<K> ids);
+```
+
+An asynchronous method must override the following method signature:
+```java
+public Task<Map<K, V>> batchGet(Set<K> ids);
 ```
 
 @`RestMethod.BatchGet` may be used to indicate a batch get method
@@ -680,6 +744,11 @@ FINDER.
 
 ```java
 public List<V> getAll(@Context PagingContext pagingContext);
+```
+
+An asynchronous resource would implement the following method signature:
+```java
+public Task<List<V>> getAll(@Context PagingContext pagingContext);
 ```
 
 @`RestMethod.GetAll` may be used to indicate a get all method instead of
@@ -802,6 +871,18 @@ public CollectionResult<V, MyMetaData> complexFinder(@Context(defaultStart= 10, 
                                                      @QueryParam("param2") @Optional String optionalParam);
 ```
 
+A Finder method in an asynchronous resource could implement the following method signatures:
+```java
+@Finder("simpleAsyncFinder")
+public Task<List<V>> simpleFind(`Context PagingContext context);
+
+@Finder("complexAsyncFinder")
+public Task<CollectionResult<V, MyMetaData>> complexFinder(@Context(defaultStart= 10, defaultCount = 100) PagingContext context,
+                                                     @AssocKey("key1") Long key,
+                                                     @QueryParam("param1") String requiredParam,
+                                                     @QueryParam("param2") @Optional String optionalParam);
+```
+
 <a id="TyperefSchema"></a>
 
 #### Typerefs (Custom Types)
@@ -914,7 +995,16 @@ public BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> searchGreeting
                                                                                   @QueryParam("criteria") GreetingCriteria[] criteria,
                                                                                   @QueryParam("message") String message)
 ```
-See more details about BATCH_FINDER resource method api here.[BatchFinder Resource API](/rest.li/batch_finder_resource_method#resource-api)
+
+An asynchronous BATCH_FINDER must return a `Task<BatchFinderResult>`. For example:
+
+```java
+@BatchFinder(value = "searchGreetings", batchParam = "criteria")
+public Task<BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord>> searchGreetings(@PagingContextParam PagingContext context,
+                                                                                  @QueryParam("criteria") GreetingCriteria[] criteria,
+                                                                                  @QueryParam("message") String message)
+```
+See more details about BATCH_FINDER resource method api here: [BatchFinder Resource API](/rest.li/batch_finder_resource_method#resource-api)
 
 
 
@@ -932,6 +1022,11 @@ following method signature:
 
 ```java
 public CreateResponse create(V entity);
+```
+
+An asynchronous method would override the following method signature:
+```java
+public Task<CreateResponse> create(V entity);
 ```
 
 The returned `CreateResponse` object indicates the HTTP status code to
@@ -995,6 +1090,12 @@ following method signature:
 
 ```java
 public BatchCreateResult<K, V> batchCreate(BatchCreateRequest<K, V> entities);
+```
+
+An asynchronous resource providing the BATCH_CREATE resource method must override the
+following method signature:
+```java
+public Task<BatchCreateResult<K, V>> batchCreate(BatchCreateRequest<K, V> entities);
 ```
 
 The `BatchCreateRequest` object wraps a list of entity representations
@@ -1121,6 +1222,11 @@ For simple resources:
 public UpdateResponse update(V entity);
 ```
 
+For asynchronous resources:
+```java
+public Task<UpdateResponse> update(K key, V entity);
+```
+
 The returned `UpdateResponse` object indicates the HTTP status code to
 be returned.
 
@@ -1146,6 +1252,11 @@ following method signature:
 
 ```java
 public BatchUpdateResult<K, V> batchUpdate(BatchUpdateRequest<K, V> entities);
+```
+
+An asynchronous resource must override the following method signature:
+```java
+public Task<BatchUpdateResult<K, V>> batchUpdate(BatchUpdateRequest<K, V> entities);
 ```
 
 `BatchUpdateRequest` contains a map of entity key to entity value.
@@ -1199,6 +1310,11 @@ the following method signature:
 
 ```java
 public UpdateResponse update(K key, PatchRequest<V> patch);
+```
+
+An asynchronous resource must override the following method signature:
+```java
+public Task<UpdateResponse> update(K key, PatchRequest<V> patch);
 ```
 
 The returned `UpdateResponse` object indicates the HTTP status code to
@@ -1398,6 +1514,13 @@ override the following method signature:
 public BatchUpdateResult<K, V> batchUpdate(BatchPatchRequest<K, V> patches);
 ```
 
+An asynchronous resource providing the BATCH_PARTIAL_UPDATE resource method must
+override the following method signature:
+
+```java
+public Task<BatchUpdateResult<K, V>> batchUpdate(BatchPatchRequest<K, V> patches);
+```
+
 The `BatchPatchRequest` input contains a map of entity key to
 `PatchRequest`.
 
@@ -1526,6 +1649,11 @@ For simple resources:
 public UpdateResponse delete();
 ```
 
+For asynchronous resources:
+```java
+public Task<UpdateResponse> delete(K key);
+```
+
 The returned `UpdateResponse` object indicates the HTTP status code to
 be returned.
 
@@ -1544,6 +1672,13 @@ following method signature:
 
 ```java
 public BatchUpdateResult<K, V> batchDelete(BatchDeleteRequest<K, V> ids);
+```
+
+Asynchronous resources providing the BATCH_DELETE resource method must override the
+following method signature:
+
+```java
+public Task<BatchUpdateResult<K, V>> batchDelete(BatchDeleteRequest<K, V> ids);
 ```
 
 The `BatchDeleteRequest` input contains the list of keys to be deleted.
@@ -1743,7 +1878,7 @@ for details).
 `CollectionResourceTemplate` provides a convenient base class for
 collection resources. `CollectionResourceTemplate` defines methods for
 all of the CRUD operations. Subclasses may also implement FINDER, BATCH_FINDER and
-ACTION methods by annotating as described above.
+ACTION methods by annotating as described above. The asynchronous collection resource templates are `CollectionResourceTaskTemplate` and `CollectionResourceAsyncTemplate`.
 
 ```java
 public CreateResponse create(V entity);
@@ -1763,7 +1898,7 @@ public BatchUpdateResult<K, V> batchDelete(BatchDeleteRequest<K, V> ids);
 `SimpleResourceTemplate` provides a convenient base class for simple
 resources. `SimpleResourceTemplate` defines methods for GET, UPDATE, and
 DELETE methods. Subclasses may also implement ACTION methods by
-annotating as described above.
+annotating as described above. The asynchronous simple resource templates are `SimpleResourceTaskTemplate` and `SimpleResourceAsyncTemplate`.
 
 ```java
 public V get();
@@ -1778,7 +1913,7 @@ association resources. `AssociationResourceTemplate` defines methods for
 all of the CRUD operations except CREATE. Association resources should
 implement CREATE by providing up-sert semantics on UPDATE. Subclasses
 may also implement FINDER, BATCH_FINDER and ACTION methods by annotating as described
-above.
+above. The asynchronous association resource templates are `AssociationResourceTaskTemplate` and `AssociationResourceAsyncTemplate`.
 
 ```java
 public CreateResponse create(V entity);
@@ -2212,68 +2347,6 @@ Spring ApplicationContext based on the type of the field. If `@Named` is
 used, the field will be bound to a bean with the same name. All beans
 must be in the root Spring context.
 
-<a id="wiki-AsynchResources"></a>
-
-## Asynchronous Resources
-
-Rest.li allows resources to return results asynchronously through a
-[ParSeq](https://github.com/linkedin/parseq/wiki) `Promise`, `Task`, or
-`Callback`. For example, a getter can be declared in any of the
-following ways:
-```java
-@RestMethod.Get
-public Promise<Greeting> get(Long key)
-{
-  // return a promise (e.g. SettablePromise) and set it asynchronously
-}
-```
-
-```java
-@RestMethod.Get
-public Task<Greeting> get(Long key)
-{
-  // set up some ParSeq tasks and return the final Task
-  return Tasks.seq(Tasks.par(...), ...);
-}
-```
-
-```java
-@RestMethod.Get
-public void get(Long key, @CallbackParam Callback<Greeting> callback)
-{
-  // use the callback asynchronously
-}
-```
-
-These method signatures can be mixed arbitrarily with the synchronous
-signatures, including in the same resource class. For instance, simple
-methods can be implemented synchronously and slow methods can be
-implemented asynchronously. However, multiple implementations of the
-same REST method with different signatures may **not** be provided.
-
-You can also use the asynchronous resource templates in order to
-implement asynchronous Rest.li resources. The templates are:
-
--   `AssociationResourceAsyncTemplate`
--   `AssociationResourcePromiseTemplate`
--   `AssociationResourceTaskTemplate`
--   `CollectionResourceAsyncTemplate`
--   `CollectionResourcePromiseTemplate`
--   `CollectionResourceTaskTemplate`
--   `ComplexKeyResourceAsyncTemplate`
--   `ComplexKeyResourcePromiseTemplate`
--   `ComplexKeyResourceTaskTemplate`
--   `SimpleResourceAsyncTemplate`
--   `SimpleResourcePromiseTemplate`
--   `SimpleResourceTaskTemplate`
-
-The Rest.li server will automatically start any `Task` that is returned
-by a `Task` based method by running it through a ParSeq engine. Also,
-`Promise` based methods are guaranteed to be run through a `Task` in the
-ParSeq engine, including those that do not explicitly take a ParSeq
-`Context`. `Callback`-based methods do not receive special treatment.
-
-<a id="wiki-OnlineDocumentation"></a>
 
 ## Online Documentation
 

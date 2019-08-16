@@ -36,7 +36,7 @@ There are two main options available to write async server implementations in Re
 
 ### Async Server Templates
 
-Rest.li also includes templates to make writing async resources slightly easier. There are templates that use `Callback`s, `Promise`s, and `Task`s for each type of Rest.li resource. For example, for collection resources with primitive keys we have `com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate`, `com.linkedin.restli.server.resources.CollectionResourceTaskTemplate`, and `com.linkedin.restli.server.resources.CollectionResourcePromiseTemplate`. There are similar templates for complex key resources, association resources, and simple resources.
+Rest.li also includes templates to make writing async resources slightly easier. There are templates that use `Callback`s and `Task`s for each type of Rest.li resource. For example, for collection resources with primitive keys we have `com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate` and `com.linkedin.restli.server.resources.CollectionResourceTaskTemplate`. There are similar templates for complex key resources, association resources, and simple resources.
 
 ### Server Configuration
 
@@ -159,7 +159,7 @@ public Task<Greeting> get(final Long id) {
 public Task<Greeting> get(final Long id) {
 ```
 
-In order to use ParSeq the function implementation must return either a ParSeq `Task<T>` or a `Promise<T>`. `T` here is whatever type you would have returned from a synchronous implementation of the same function. In this case the synchronous implementation would have returned a `Greeting`, which is why we are returning a `Task<Greeting>` here.
+In order to use ParSeq the function implementation must return a ParSeq `Task<T>`. `T` here is whatever type you would have returned from a synchronous implementation of the same function. In this case the synchronous implementation would have returned a `Greeting`, which is why we are returning a `Task<Greeting>` here.
 
 #### Function Body
 
@@ -175,7 +175,7 @@ final Task<Greeting> mainTask = Tasks.callable("main", new Callable<Greeting>() 
 return Tasks.seq(fileDataTask, mainTask);
 ```
 
-The basic idea to use ParSeq for Rest.li async method implementations is to return a `Task` or `Promise`.
+The basic idea to use ParSeq for Rest.li async method implementations is to return a `Task`.
 
 `fileDataTask` is a `Task` for the `FileData` that we read from disk. We want to transform this `FileData` into a `Greeting` to return to the user. We define a new `Task`, called `mainTask` in the example above, to do this.
 
@@ -185,39 +185,17 @@ So we have two `Task`s now, `fileDataTask` and `mainTask`, with `mainTask` depen
 
 #### Task Execution
 
-In the above example, `Task.seq(fileDataTask, mainTask)` returns a new `Task` that is **executed for you automatically** using the ParSeq engine within Rest.li. In other words, you do not have to provide a separate ParSeq execution engine to run this `Task`. Rest.li runs the `Task` for you and returns an appropriate response to the client.
+It is suggested to return a `Task` from your method. In the above example, `Task.seq(fileDataTask, mainTask)` returns a new `Task` that is **executed for you automatically** using the ParSeq engine within Rest.li. In other words, you do not have to provide a separate ParSeq execution engine to run this `Task`. Rest.li runs the `Task` for you and returns an appropriate response to the client.
 
 #### Promise Execution
 
-Even though the example above returns a `Task`, it is worth pointing out the difference between returning a `Task` and returning a `Promise` from an async method implementation. If you return a `Promise` from a resource method, Rest.li creates a `Task` for you to resolve the `Promise`. This `Task` is then run on the underlying ParSeq engine within Rest.li. 
+Even though the example above returns a `Task`, it is worth pointing out the difference between returning a `Task` and returning a `Promise` from an async method implementation. If you return a `Promise` from a resource method, Rest.li creates a `Task` for you to resolve the `Promise`. This `Task` is then run on the underlying ParSeq engine within Rest.li.
 
 One thing to keep in mind is that if you are returning a `Task` from your method you should **never** return it as a `Promise`! This is because the Rest.li framework will wrap this `Promise` in a new `Task` to execute it, and thus two ParSeq `Task`s are created. In our performance benchmarks, we have noticed that this one extra `Task` can lead to a noticeable increase in latency, especially in high QPS scenarios.
 
 #### Promise or Task?
 
-If you are using ParSeq, you can return either a `Promise` or a `Task` from your resource method implementation. In general, if you are using an async API, for example an async database API, create a `SettablePromise` to wrap the result you get back from the async API and return this `Promise` from your resource method. You should return a `Task` otherwise. 
-
-The [callback example above](#using-callbacks) would be a great scenario to return a `Promise` instead. Here is the same example implemented using a `Promise` - 
-
-```java
-@RestMethod.Get
-public Promise<Greeting> get(final Long id) {
-  SettablePromise<Greeting> result = Promises.settable();
-  String path = "/data/" + id;
-  // _zkClient is a regular ZooKeeper client
-  _zkClient.getData(path, false, new DataCallback() {
-    public void processResult(int i, String s, Object o, byte[] b, Stat st) {
-      if (b.length == 0) {
-        result.fail(new RestLiServiceException(HttpStatus.S_404_NOT_FOUND));
-      }
-      else {
-        result.done(buildGreeting(b));
-      }
-    }
-  }, null);
-  return result;
-}
-```
+If you are using ParSeq, you can return either a `Promise` or a `Task` from your resource method implementation. In general, you should return a `Task`. The `Promise` templates are deprecated and should not be used for new development.
 
 ## Async Client Implementations
 
