@@ -96,10 +96,10 @@ Collections can support all of the Rest.li resource methods described
 above.
 
 Synchronous collections are declared by creating a class that extends
-CollectionResourceTemplate (or ComplexKeyResourceTemplate for complex
+`CollectionResourceTemplate` (or `ComplexKeyResourceTemplate` for complex
 keys, see below for details).
 
-Asynchronous collections are declared by creating a class that extends CollectionResourceAsyncTemplate or CollectionResourceTaskTemplate. 
+Asynchronous collections are declared by creating a class that extends `CollectionResourceAsyncTemplate` or `CollectionResourceTaskTemplate`. 
 
 For example:
 
@@ -116,7 +116,7 @@ Defines an asynchronous resource with a URI of the form:
 ```
 
 For keys with complex hierarchical data structures, use
-ComplexKeyResourceTaskTemplate.
+`ComplexKeyResourceTaskTemplate`.
 
 For Example:
 
@@ -140,9 +140,9 @@ Simple resources support the Rest.li resource methods GET, UPDATE and
 DELETE.
 
 Synchronous simple resources are declared by creating a class that extends
-SimpleResourceTemplate.
+`SimpleResourceTemplate`.
 
-Asynchronous simple resources are declared by creating a class that extends SimpleResourceAsyncTemplate or SimpleResourceTaskTemplate.
+Asynchronous simple resources are declared by creating a class that extends `SimpleResourceAsyncTemplate` or `SimpleResourceTaskTemplate`.
 
 For example:
 
@@ -175,7 +175,7 @@ keys are “foreign” keys from the referenced entities. Instead of using
 Create, new association relationships are made by using Update, which
 allows the client to provide the resource identifier.
 
-Asynchronous association resources are declared by creating a class that extends AssociationResourceAsyncTemplate or AssociationResourceTaskTemplate.
+Asynchronous association resources are declared by creating a class that extends `AssociationResourceAsyncTemplate` or `AssociationResourceTaskTemplate`.
 
 For example:
 
@@ -190,7 +190,9 @@ Defines a child resource with a URI of the form:
 /myRelations/key1={longKey1}\&key2={longKey2}  
 ```
 #### Asynchronous resources
-Asynchronous Rest.li resources should be used when the downstream implementations are non-blocking. There are asynchronous resource templates for Collection, Simple, Association, and ComplexKey resources.
+Asynchronous Rest.li resources should be used when the downstream implementations are non-blocking. This means that your implementation should not be blocking while waiting for any downstream service. If the downstream service has an asynchronous implementation, please use that.
+
+There are asynchronous resource templates for Collection, Simple, Association, and ComplexKey resources.
 
 Task templates should be used when the resource implementation will leverage ParSeq `Task`s. 
 
@@ -261,8 +263,8 @@ representation at this location).
 
 #### Complex Keys
 
-By extending ComplexKeyResourceTemplate instead of
-CollectionResourceTemplate, a collection may use any complex type (any
+By extending `ComplexKeyResourceTemplate` instead of
+`CollectionResourceTemplate`, a collection may use any complex type (any
 defined pegasus record type) as a key.
 
 #### Factories
