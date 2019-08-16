@@ -44,17 +44,6 @@ public class TestDisruptContexts
     DisruptContexts.delay(latency);
   }
 
-
-  @Test
-  public void testMinimumDelay()
-  {
-    final long latency = 4200;
-    DisruptContexts.MinimumDelayDisruptContext context =
-        (DisruptContexts.MinimumDelayDisruptContext) DisruptContexts.minimumDelay(latency);
-    Assert.assertEquals(context.mode(), DisruptMode.MINIMUM_DELAY);
-    Assert.assertEquals(context.delay(), latency);
-  }
-
   @Test
   public void testTimeout()
   {

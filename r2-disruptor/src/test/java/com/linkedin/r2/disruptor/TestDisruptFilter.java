@@ -34,13 +34,10 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
-import com.linkedin.util.clock.SystemClock;
-import com.linkedin.util.clock.SettableClock;
 
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -63,11 +60,9 @@ public class TestDisruptFilter
 
   private static final int REQUEST_TIMEOUT = 0;
   private static final long REQUEST_LATENCY = 0;
-  private static final long MINIMUM_LATENCY = 20;
 
   private final ScheduledExecutorService _scheduler = new ScheduledThreadPoolExecutor(SCHEDULER_THREADS);
   private final ExecutorService _executor = Executors.newFixedThreadPool(EXECUTOR_THREADS);
-  private SettableClock _clock = new SettableClock();
 
   @AfterClass
   public void doAfterClass()
@@ -82,7 +77,7 @@ public class TestDisruptFilter
     final RequestContext requestContext = new RequestContext();
     requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.delay(REQUEST_LATENCY));
 
-    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT, _clock);
+    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT);
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean success = new AtomicBoolean(false);
     final NextFilter<RestRequest, RestResponse> next = new NextFilter<RestRequest, RestResponse>()
@@ -119,7 +114,7 @@ public class TestDisruptFilter
     final RequestContext requestContext = new RequestContext();
     requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.delay(REQUEST_LATENCY));
 
-    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT, _clock);
+    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT);
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean success = new AtomicBoolean(false);
     final NextFilter<StreamRequest, StreamResponse> next = new NextFilter<StreamRequest, StreamResponse>()
@@ -151,132 +146,12 @@ public class TestDisruptFilter
   }
 
   @Test
-  public void testMinimumDelayRealDelayLessThanSpecified() throws Exception {
-    final RequestContext requestContext = new RequestContext();
-    requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.minimumDelay(MINIMUM_LATENCY));
-
-    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT, _clock);
-    final CountDownLatch latch = new CountDownLatch(2);
-    final AtomicBoolean onRequestSuccess = new AtomicBoolean(false);
-    final AtomicBoolean onResponseSuccess = new AtomicBoolean(false);
-    final NextFilter<RestRequest, RestResponse> next = new NextFilter<RestRequest, RestResponse>() {
-      @Override
-      public void onRequest(RestRequest restRequest, RequestContext requestContext, Map<String, String> wireAttrs) {
-        onRequestSuccess.set(true);
-        latch.countDown();
-      }
-
-      @Override
-      public void onResponse(RestResponse restResponse, RequestContext requestContext, Map<String, String> wireAttrs) {
-        onResponseSuccess.set(true);
-        latch.countDown();
-      }
-
-      @Override
-      public void onError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs) {
-        Assert.fail("onError should not be called.");
-      }
-    };
-
-    long start = SystemClock.instance().currentTimeMillis();
-    filter.onRestRequest(new RestRequestBuilder(new URI(URI)).build(), requestContext, Collections.emptyMap(), next);
-    filter.onRestResponse(new RestResponseBuilder().build(), requestContext, Collections.emptyMap(), next);
-    Assert.assertTrue(latch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS), "Missing NextFilter invocation");
-    Assert.assertTrue(SystemClock.instance().currentTimeMillis() - start >= MINIMUM_LATENCY,
-        "total elapsed time should be longer than the specified minimum delay.");
-    Assert.assertTrue(onRequestSuccess.get(), "Unexpected method invocation");
-    Assert.assertTrue(onResponseSuccess.get(), "Unexpected method invocation");
-  }
-
-  @Test
-  public void testMinimumDelayRealDelayMoreThanSpecified() throws Exception {
-    final RequestContext requestContext = new RequestContext();
-    requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.minimumDelay(MINIMUM_LATENCY));
-
-    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT, _clock);
-    final CountDownLatch latch = new CountDownLatch(2);
-    final AtomicBoolean onRequestSuccess = new AtomicBoolean(false);
-    final AtomicBoolean onResponseSuccess = new AtomicBoolean(false);
-    final NextFilter<RestRequest, RestResponse> next = new NextFilter<RestRequest, RestResponse>() {
-      @Override
-      public void onRequest(RestRequest restRequest, RequestContext requestContext, Map<String, String> wireAttrs) {
-        onRequestSuccess.set(true);
-        latch.countDown();
-      }
-
-      @Override
-      public void onResponse(RestResponse restResponse, RequestContext requestContext, Map<String, String> wireAttrs) {
-        onResponseSuccess.set(true);
-        latch.countDown();
-      }
-
-      @Override
-      public void onError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs) {
-        Assert.fail("onError should not be called.");
-      }
-    };
-
-    long currentTimeMs = 100;
-    _clock.setCurrentTimeMillis(currentTimeMs);
-    filter.onRestRequest(new RestRequestBuilder(new URI(URI)).build(), requestContext, Collections.emptyMap(), next);
-
-    // Simulates that real processing took longer than the specified MINIMUM_LATENCY.
-    _clock.setCurrentTimeMillis(currentTimeMs + MINIMUM_LATENCY);
-    filter.onRestResponse(new RestResponseBuilder().build(), requestContext, Collections.emptyMap(), next);
-
-    // Since the real processing is simulated and no delay should be added, we expect nextFilter should be invoked soon.
-    Assert.assertTrue(latch.await(10, TimeUnit.MILLISECONDS), "Missing NextFilter invocation");
-    Assert.assertTrue(onRequestSuccess.get(), "Unexpected method invocation");
-    Assert.assertTrue(onResponseSuccess.get(), "Unexpected method invocation");
-  }
-
-  @Test
-  public void testMinimumDelayNoRequestStartTime() throws Exception {
-    final RequestContext requestContext = new RequestContext();
-    requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.minimumDelay(MINIMUM_LATENCY));
-
-    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT, _clock);
-    final CountDownLatch latch = new CountDownLatch(2);
-    final AtomicBoolean onRequestSuccess = new AtomicBoolean(false);
-    final AtomicBoolean onResponseSuccess = new AtomicBoolean(false);
-    final NextFilter<RestRequest, RestResponse> next = new NextFilter<RestRequest, RestResponse>() {
-      @Override
-      public void onRequest(RestRequest restRequest, RequestContext requestContext, Map<String, String> wireAttrs) {
-        onRequestSuccess.set(true);
-        latch.countDown();
-      }
-
-      @Override
-      public void onResponse(RestResponse restResponse, RequestContext requestContext, Map<String, String> wireAttrs) {
-        onResponseSuccess.set(true);
-        latch.countDown();
-      }
-
-      @Override
-      public void onError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs) {
-        Assert.fail("onError should not be called.");
-      }
-    };
-
-    long start = SystemClock.instance().currentTimeMillis();
-    filter.onRestRequest(new RestRequestBuilder(new URI(URI)).build(), requestContext, Collections.emptyMap(), next);
-    ((DisruptContexts.MinimumDelayDisruptContext)
-        requestContext.getLocalAttr(DisruptContext.DISRUPT_CONTEXT_KEY)).requestStartTime(0);
-    filter.onRestResponse(new RestResponseBuilder().build(), requestContext, Collections.emptyMap(), next);
-    Assert.assertTrue(latch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS), "Missing NextFilter invocation");
-    Assert.assertTrue(SystemClock.instance().currentTimeMillis() - start < MINIMUM_LATENCY,
-        "Delay should not be added if request start time is not logged");
-    Assert.assertTrue(onRequestSuccess.get(), "Unexpected method invocation");
-    Assert.assertTrue(onResponseSuccess.get(), "Unexpected method invocation");
-  }
-
-  @Test
   public void testRestTimeoutDisrupt() throws Exception
   {
     final RequestContext requestContext = new RequestContext();
     requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.timeout());
 
-    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT, _clock);
+    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT);
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean success = new AtomicBoolean(false);
     final NextFilter<RestRequest, RestResponse> next = new NextFilter<RestRequest, RestResponse>()
@@ -313,7 +188,7 @@ public class TestDisruptFilter
     final RequestContext requestContext = new RequestContext();
     requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.timeout());
 
-    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT, _clock);
+    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT);
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean success = new AtomicBoolean(false);
     final NextFilter<StreamRequest, StreamResponse> next = new NextFilter<StreamRequest, StreamResponse>()
@@ -350,7 +225,7 @@ public class TestDisruptFilter
     final RequestContext requestContext = new RequestContext();
     requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.error(REQUEST_LATENCY));
 
-    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT, _clock);
+    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT);
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean success = new AtomicBoolean(false);
     final NextFilter<RestRequest, RestResponse> next = new NextFilter<RestRequest, RestResponse>()
@@ -387,7 +262,7 @@ public class TestDisruptFilter
     final RequestContext requestContext = new RequestContext();
     requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.error(REQUEST_LATENCY));
 
-    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT, _clock);
+    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT);
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean success = new AtomicBoolean(false);
     final NextFilter<StreamRequest, StreamResponse> next = new NextFilter<StreamRequest, StreamResponse>()
@@ -432,7 +307,7 @@ public class TestDisruptFilter
     final RequestContext requestContext = new RequestContext();
     requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.error(REQUEST_LATENCY));
 
-    final DisruptFilter filter = new DisruptFilter(rejectedScheduler, _executor, REQUEST_TIMEOUT, _clock);
+    final DisruptFilter filter = new DisruptFilter(rejectedScheduler, _executor, REQUEST_TIMEOUT);
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean success = new AtomicBoolean(false);
     final NextFilter<StreamRequest, StreamResponse> next = new NextFilter<StreamRequest, StreamResponse>()
@@ -488,7 +363,7 @@ public class TestDisruptFilter
     final RequestContext requestContext = new RequestContext();
     requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.error(REQUEST_LATENCY));
 
-    final DisruptFilter filter = new DisruptFilter(_scheduler, rejectedExecutor, REQUEST_TIMEOUT, _clock);
+    final DisruptFilter filter = new DisruptFilter(_scheduler, rejectedExecutor, REQUEST_TIMEOUT);
     final NextFilter<StreamRequest, StreamResponse> next = new NextFilter<StreamRequest, StreamResponse>()
     {
       @Override
