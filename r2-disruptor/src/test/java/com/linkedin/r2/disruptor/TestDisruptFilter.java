@@ -39,9 +39,9 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
-import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.clock.SettableClock;
 
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -155,7 +155,15 @@ public class TestDisruptFilter
     final RequestContext requestContext = new RequestContext();
     requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.minimumDelay(MINIMUM_LATENCY));
 
-    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT, _clock);
+    ScheduledExecutorService scheduler = EasyMock.createStrictMock(ScheduledExecutorService.class);
+    Capture<Long> delay = new Capture<>();
+    EasyMock.expect(scheduler.schedule(
+        EasyMock.anyObject(Runnable.class),
+        EasyMock.captureLong(delay),
+        EasyMock.anyObject(TimeUnit.class))).andDelegateTo(_scheduler);
+    EasyMock.replay(scheduler);
+
+    final DisruptFilter filter = new DisruptFilter(scheduler, _executor, REQUEST_TIMEOUT, _clock);
     final CountDownLatch latch = new CountDownLatch(2);
     final AtomicBoolean onRequestSuccess = new AtomicBoolean(false);
     final AtomicBoolean onResponseSuccess = new AtomicBoolean(false);
@@ -178,14 +186,14 @@ public class TestDisruptFilter
       }
     };
 
-    long start = SystemClock.instance().currentTimeMillis();
     filter.onRestRequest(new RestRequestBuilder(new URI(URI)).build(), requestContext, Collections.emptyMap(), next);
     filter.onRestResponse(new RestResponseBuilder().build(), requestContext, Collections.emptyMap(), next);
     Assert.assertTrue(latch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS), "Missing NextFilter invocation");
-    Assert.assertTrue(SystemClock.instance().currentTimeMillis() - start >= MINIMUM_LATENCY,
-        "total elapsed time should be longer than the specified minimum delay.");
     Assert.assertTrue(onRequestSuccess.get(), "Unexpected method invocation");
     Assert.assertTrue(onResponseSuccess.get(), "Unexpected method invocation");
+    Assert.assertTrue(delay.getValue().longValue() > 0);
+    EasyMock.verify(scheduler);
+    EasyMock.reset(scheduler);
   }
 
   @Test
@@ -235,7 +243,14 @@ public class TestDisruptFilter
     final RequestContext requestContext = new RequestContext();
     requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.minimumDelay(MINIMUM_LATENCY));
 
-    final DisruptFilter filter = new DisruptFilter(_scheduler, _executor, REQUEST_TIMEOUT, _clock);
+    ScheduledExecutorService scheduler = EasyMock.createStrictMock(ScheduledExecutorService.class);
+    Capture<Long> delay = new Capture<>();
+    EasyMock.expect(scheduler.schedule(
+        EasyMock.anyObject(Runnable.class),
+        EasyMock.captureLong(delay),
+        EasyMock.anyObject(TimeUnit.class))).andDelegateTo(_scheduler);
+    EasyMock.replay(scheduler);
+    final DisruptFilter filter = new DisruptFilter(scheduler, _executor, REQUEST_TIMEOUT, _clock);
     final CountDownLatch latch = new CountDownLatch(2);
     final AtomicBoolean onRequestSuccess = new AtomicBoolean(false);
     final AtomicBoolean onResponseSuccess = new AtomicBoolean(false);
@@ -258,16 +273,16 @@ public class TestDisruptFilter
       }
     };
 
-    long start = SystemClock.instance().currentTimeMillis();
     filter.onRestRequest(new RestRequestBuilder(new URI(URI)).build(), requestContext, Collections.emptyMap(), next);
     ((DisruptContexts.MinimumDelayDisruptContext)
         requestContext.getLocalAttr(DisruptContext.DISRUPT_CONTEXT_KEY)).requestStartTime(0);
     filter.onRestResponse(new RestResponseBuilder().build(), requestContext, Collections.emptyMap(), next);
     Assert.assertTrue(latch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS), "Missing NextFilter invocation");
-    Assert.assertTrue(SystemClock.instance().currentTimeMillis() - start < MINIMUM_LATENCY,
-        "Delay should not be added if request start time is not logged");
     Assert.assertTrue(onRequestSuccess.get(), "Unexpected method invocation");
     Assert.assertTrue(onResponseSuccess.get(), "Unexpected method invocation");
+    Assert.assertEquals(0, delay.getValue().longValue());
+    EasyMock.verify(scheduler);
+    EasyMock.reset(scheduler);
   }
 
   @Test
