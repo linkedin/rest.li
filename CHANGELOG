@@ -1,3 +1,11 @@
+27.4.2
+-------
+(RB=1767362)
+Control Pipeline V2 through a constant and a config value set through builder.
+Adding a constant in HttpClientFactory 'PIPELINE_V2_MATURITY_LEVEL' to represent the psuedo version of Netty Pipeline Changes.
+Once this feature is rolled out globally to everyone - HttpClientFactory builder will make sure that the expected configured value
+for the maturity level is present in pegasus (way to turn off PIPELINE_V2 for early adopters until they adopt the new bug fixed version as well).
+
 27.4.1
 -------
 
