@@ -94,18 +94,8 @@ public class StreamWriter extends ChannelInboundHandlerAdapter implements Writer
 
     if (_bufferedBytes > BUFFER_HIGH_WATER_MARK && _ctx.channel().config().isAutoRead())
     {
-      //TODO: Currently Netty's Http2StreamChannel is not respecting channel.config().autoRead() property. So the
-      // flow control/back pressure functionality is currently disabled for Http2StreamChannel as a known limitation.
-      if (!(_ctx.channel() instanceof Http2StreamChannel))
-      {
-        _ctx.channel().config().setAutoRead(false);
-      }
-      else
-      {
-        LOG.warn("Flow control is not currently available in Http2StreamChannel !");
-      }
+      _ctx.channel().config().setAutoRead(false);
     }
-
 
     if (_wh != null)
     {

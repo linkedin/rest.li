@@ -1,5 +1,10 @@
+27.4.4
+------
+
 27.4.3
 ------
+(RB=1775062)
+Upgrade to Netty 4.1.39, Fix Deprecated Http2 APIs, Fix Netty Bug
 
 27.4.2
 -------

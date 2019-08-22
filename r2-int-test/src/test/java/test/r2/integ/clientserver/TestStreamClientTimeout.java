@@ -109,12 +109,8 @@ public class TestStreamClientTimeout extends AbstractServiceTest
   }
 
   @Test
-  // TODO need to adjust this test case to generalize for Http2 Stream Channel as well
-  // we do not need to throw the timeout exception when the response is already reached the client stack...
   public void testReadAfterTimeout() throws Exception
   {
-    if(isHttp2StreamBasedChannel())
-      return;
     StreamRequest request = new StreamRequestBuilder(_clientProvider.createHttpURI(_port, NORMAL_URI)).build(EntityStreams.emptyStream());
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicReference<StreamResponse> response = new AtomicReference<StreamResponse>();
@@ -155,60 +151,6 @@ public class TestStreamClientTimeout extends AbstractServiceTest
     Assert.assertNotNull(throwable.get());
     Throwable rootCause = ExceptionUtils.getRootCause(throwable.get());
     Assert.assertTrue(rootCause instanceof TimeoutException);
-  }
-
-  @Test
-  // The below test case work only in the new code path...we are not timing out if the entire request is already reached
-  // client side
-  public void testReadAfterTimeoutHttp2StreamChannel() throws Exception
-  {
-    if(!isHttp2StreamBasedChannel())
-      return;
-    StreamRequest request = new StreamRequestBuilder(_clientProvider.createHttpURI(_port, NORMAL_URI)).build(EntityStreams.emptyStream());
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<StreamResponse> response = new AtomicReference<StreamResponse>();
-    _client.streamRequest(request, new Callback<StreamResponse>()
-    {
-      @Override
-      public void onError(Throwable e)
-      {
-        latch.countDown();
-      }
-
-      @Override
-      public void onSuccess(StreamResponse result)
-      {
-        response.set(result);
-        latch.countDown();
-      }
-    });
-    latch.await(5000, TimeUnit.MILLISECONDS);
-    Assert.assertNotNull(response.get());
-
-    // let it timeout before we read
-    Thread.sleep(5000);
-
-    final AtomicReference<Throwable> throwable = new AtomicReference<Throwable>();
-    final AtomicReference<Boolean> readDone = new AtomicReference<Boolean>(false);
-    final CountDownLatch errorLatch = new CountDownLatch(1);
-    Reader reader = new DrainReader()
-    {
-      @Override
-      public void onError(Throwable ex)
-      {
-        throwable.set(ex);
-        errorLatch.countDown();
-      }
-
-      public void onDone()
-      {
-        readDone.set(true);
-      }
-    };
-    response.get().getEntityStream().setReader(reader);
-    errorLatch.await(5000, TimeUnit.MILLISECONDS);
-    Assert.assertNull(throwable.get());
-    Assert.assertTrue(readDone.get());
   }
 
   private class DelayBeforeResponseHandler implements StreamRequestHandler

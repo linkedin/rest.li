@@ -29,15 +29,16 @@ import com.linkedin.r2.netty.handler.http2.Http2MessageDecoders;
 import com.linkedin.r2.netty.handler.http2.Http2MessageEncoders;
 import com.linkedin.r2.netty.handler.http2.Http2ProtocolUpgradeHandler;
 import com.linkedin.r2.netty.handler.http2.UnsupportedHandler;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpClientUpgradeHandler;
-import io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
-import io.netty.handler.codec.http2.Http2MultiplexCodec;
-import io.netty.handler.codec.http2.Http2MultiplexCodecBuilder;
+import io.netty.handler.codec.http2.Http2ClientUpgradeCodecTemporaryFix;
+import io.netty.handler.codec.http2.Http2ConnectionHandler;
+import io.netty.handler.codec.http2.Http2FrameCodec;
+import io.netty.handler.codec.http2.Http2FrameCodecBuilder;
+import io.netty.handler.codec.http2.Http2MultiplexHandler;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
@@ -45,6 +46,7 @@ import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.IdentityCipherSuiteFilter;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
+
 import java.util.Arrays;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -59,27 +61,27 @@ import javax.net.ssl.SSLParameters;
  * {@link SessionResumptionSslHandler} and {@link Http2AlpnHandler} to perform application level
  * protocol negotiation. If SSL handshake or ALPN failed to negotiate HTTP/2, appropriate failure
  * exception will be set to the initialization {@link ChannelPromise}. If SSL handshake and ALPN
- * succeed, {@link Http2MultiplexCodec} is added and the pipeline should be setup with the following
- * handlers.
+ * succeed, {@link Http2FrameCodec} and {@link Http2MultiplexHandler}
+ * are added and the pipeline should be setup with the following handlers.
  *
  * DefaultChannelPipeline {
  *   (sslHandler = {@link io.netty.handler.ssl.SslHandler}),
  *   (CertificateHandler = {@link CertificateHandler}),
  *   (sslHandshakeTimingHandler = {@link SslHandshakeTimingHandler}),
- *   (Http2MultiplexCodec#0 = {@link io.netty.handler.codec.http2.Http2MultiplexCodec})
+ *   (Http2FrameCodec = {@link Http2FrameCodec})
  * }
  *
  * During clear text channel initialization, the channel pipeline is first configured with
- * {@link HttpClientCodec}, {@link Http2ClientUpgradeCodec}, and {@link Http2ProtocolUpgradeHandler}.
+ * {@link HttpClientCodec}, {@link Http2ClientUpgradeCodecTemporaryFix}, and {@link Http2ProtocolUpgradeHandler}.
  * An upgrade request is sent immediately upon the channel becoming active. If upgrade to
  * HTTP/2 fails, appropriate failure exception will be set to the initialization {@link ChannelPromise}.
- * If upgrade succeed, {@link Http2MultiplexCodec} is added and the pipeline should be setup with
- * the following handlers.
+ * If upgrade succeed, {@link Http2MultiplexHandler} is added
+ * and the pipeline should be setup with the following handlers.
  *
  * DefaultChannelPipeline{
- *   (HttpClientCodec#0 = {@link io.netty.handler.codec.http.HttpClientCodec}),
- *   (HttpClientUpgradeHandler#0 = {@link io.netty.handler.codec.http.HttpClientUpgradeHandler}),
- *   (Http2MultiplexCodec#0 = {@link io.netty.handler.codec.http2.Http2MultiplexCodec})
+ *   (HttpClientCodec#0 = {@link HttpClientCodec}),
+ *   (HttpClientUpgradeHandler#0 = {@link HttpClientUpgradeHandler}),
+ *   (Http2MultiplexHandler#0 = {@link Http2MultiplexHandler})
  * }
  *
  * Common to both SSL and clear text, HTTP/2 streams are represented as child channel of the parent
@@ -102,7 +104,7 @@ import javax.net.ssl.SSLParameters;
  * Remote created streams (even number streams) are not supported on the client side. The pipeline
  * of remote created streams are setup with a single handler to log errors.
  *
- * Http2MultiplexCodec$DefaultHttp2StreamChannel$1{
+ * Http2MultiplexHandler$DefaultHttp2StreamChannel$1{
  *   (unsupportedHandler = {@link UnsupportedHandler})
  * }
  *
@@ -113,7 +115,6 @@ class Http2ChannelInitializer extends ChannelInitializer<NioSocketChannel>
 {
   private static final long MAX_INITIAL_STREAM_WINDOW_SIZE = 8 * 1024 * 1024;
   private static final boolean IS_CLIENT = true;
-
   private final SSLContext _sslContext;
   private final SSLParameters _sslParameters;
   private final int _maxInitialLineLength;
@@ -192,12 +193,16 @@ class Http2ChannelInitializer extends ChannelInitializer<NioSocketChannel>
   {
     final HttpClientCodec sourceCodec = new HttpClientCodec(_maxInitialLineLength, _maxHeaderSize, _maxChunkSize);
 
-    Http2ClientUpgradeCodec upgradeCodec = new Http2ClientUpgradeCodec(
-        Http2MultiplexCodecBuilder
-        .forClient(new UnsupportedHandler())
+    UnsupportedHandler unsupportedHandler = new UnsupportedHandler();
+    Http2MultiplexHandler multiplexHandler = new Http2MultiplexHandler(unsupportedHandler, unsupportedHandler);
+
+    Http2ClientUpgradeCodecTemporaryFix upgradeCodec = new Http2ClientUpgradeCodecTemporaryFix(
+        (Http2ConnectionHandler) Http2FrameCodecBuilder
+        .forClient()
         .initialSettings(createHttp2Settings())
-        .withUpgradeStreamHandler(new ChannelInboundHandlerAdapter())
-        .build());
+        .build(),
+        multiplexHandler
+        );
 
     final ChannelPromise upgradePromise = channel.newPromise();
     channel.attr(NettyChannelAttributes.INITIALIZATION_FUTURE).set(upgradePromise);

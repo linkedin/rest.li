@@ -133,9 +133,6 @@ public class TestStreamEcho extends AbstractServiceTest
   @Test
   public void testBackPressureEcho() throws Exception
   {
-    if(isHttp2StreamBasedChannel()) // TODO Currently back pressure is not supported
-      return;
-
     TimedBytesWriter writer = new TimedBytesWriter(SMALL_BYTES_NUM, BYTE);
     StreamRequest request = new StreamRequestBuilder(_clientProvider.createHttpURI(_port, ECHO_URI))
         .build(EntityStreams.newEntityStream(writer));

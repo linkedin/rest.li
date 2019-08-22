@@ -18,7 +18,8 @@ package com.linkedin.r2.netty.handler.http2;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.http2.Http2MultiplexCodecBuilder;
+import io.netty.handler.codec.http2.Http2FrameCodecBuilder;
+import io.netty.handler.codec.http2.Http2MultiplexHandler;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
@@ -62,10 +63,11 @@ public class Http2AlpnHandler extends ApplicationProtocolNegotiationHandler
     switch (protocol)
     {
       case ApplicationProtocolNames.HTTP_2:
-        ctx.pipeline().addLast(Http2MultiplexCodecBuilder
-            .forClient(new UnsupportedHandler())
+        ctx.pipeline().addLast(Http2FrameCodecBuilder
+            .forClient()
             .initialSettings(_http2Settings)
             .build());
+        ctx.pipeline().addLast(new Http2MultiplexHandler(new UnsupportedHandler()));
         _alpnPromise.setSuccess();
         break;
       default:

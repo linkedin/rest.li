@@ -181,9 +181,6 @@ public class TestStreamRequest extends AbstractServiceTest
   @Test
   public void testBackPressure() throws Exception
   {
-    if(isHttp2StreamBasedChannel()) // TODO Currently back pressure is not supported
-      return;
-
     final long totalBytes = SMALL_BYTES_NUM;
     TimedBytesWriter writer = new TimedBytesWriter(totalBytes, BYTE);
     EntityStream entityStream = EntityStreams.newEntityStream(writer);
