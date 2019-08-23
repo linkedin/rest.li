@@ -1,5 +1,8 @@
 27.4.2
 -------
+(RB=1770806)
+Fix indentation for certain PDL encoder cases
+
 (RB=1770797)
 Extend PDL syntax to allow unions with aliases
 

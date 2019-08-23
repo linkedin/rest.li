@@ -47,6 +47,8 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     "array", "enum", "fixed", "import", "includes", "map", "namespace", "optional", "package",
 		"record", "typeref", "union", "null", "true", "false"
   ));
+  // Unions with at least this many members will be written onto multiple lines to improve readability
+  private static final int UNION_MULTILINE_THRESHOLD = 5;
 
   private static final JacksonDataCodec CODEC = new JacksonDataCodec();
 
@@ -208,9 +210,8 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writeRecord(RecordDataSchema schema) throws IOException
   {
-    boolean hasDoc = writeDoc(schema.getDoc());
-    boolean hasProperties = writeProperties(schema.getProperties());
-    if (hasDoc || hasProperties) {
+    final boolean hasDocOrProperties = writeDocAndProperties(schema.getDoc(), schema.getProperties());
+    if (hasDocOrProperties) {
       indent();
     }
     write("record ");
@@ -221,51 +222,56 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       writeIncludes(schema, includes);
     }
     write(" {");
-    newline();
 
-    _indentDepth++;
-    for (RecordDataSchema.Field field : schema.getFields())
+    // This check allows for field-less records to be wholly inlined (e.g. "record A {}")
+    List<RecordDataSchema.Field> fields = schema.getFields();
+    if (!fields.isEmpty())
     {
-      if (field.getRecord().equals(schema))
+      newline();
+      _indentDepth++;
+      for (RecordDataSchema.Field field : fields)
       {
-        if (StringUtils.isNotBlank(field.getDoc()) || !field.getProperties().isEmpty() || field.isDeclaredInline())
+        if (field.getRecord().equals(schema))
         {
-          // For any non-trivial field declarations, separate with an additional newline.
+          if (StringUtils.isNotBlank(field.getDoc()) || !field.getProperties().isEmpty() || field.isDeclaredInline())
+          {
+            // For any non-trivial field declarations, separate with an additional newline.
+            newline();
+          }
+          writeDocAndProperties(field.getDoc(), field.getProperties());
+          if (field.getOrder() != null && !field.getOrder().equals(RecordDataSchema.Field.Order.ASCENDING))
+          {
+            write("@order = \"");
+            write(field.getOrder().name());
+            write("\"");
+          }
+          if (field.getAliases() != null && field.getAliases().size() > 0)
+          {
+            write("@aliases = [");
+            write(field.getAliases().stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(", ")));
+            write("]");
+          }
+          indent();
+          write(escapeIdentifier(field.getName()));
+          write(": ");
+          if (field.getOptional())
+          {
+            write("optional ");
+          }
+          writeReferenceOrInline(field.getType(), field.isDeclaredInline());
+
+          if (field.getDefault() != null)
+          {
+            write(" = ");
+            write(toJson(field.getDefault()));
+          }
           newline();
         }
-        writeDoc(field.getDoc());
-        writeProperties(field.getProperties());
-        if (field.getOrder() != null && !field.getOrder().equals(RecordDataSchema.Field.Order.ASCENDING))
-        {
-          write("@order = \"");
-          write(field.getOrder().name());
-          write("\"");
-        }
-        if (field.getAliases() != null && field.getAliases().size() > 0)
-        {
-          write("@aliases = [");
-          write(field.getAliases().stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(", ")));
-          write("]");
-        }
-        indent();
-        write(escapeIdentifier(field.getName()));
-        write(": ");
-        if (field.getOptional())
-        {
-          write("optional ");
-        }
-        writeReferenceOrInline(field.getType(), field.isDeclaredInline());
-
-        if (field.getDefault() != null)
-        {
-          write(" = ");
-          write(toJson(field.getDefault()));
-        }
-        newline();
       }
+      _indentDepth--;
+      indent();
     }
-    _indentDepth--;
-    indent();
+
     write("}");
 
     if (includes.size() > 0 && schema.isFieldsBeforeIncludes())
@@ -289,12 +295,11 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writeEnum(EnumDataSchema schema) throws IOException
   {
-    boolean hasDoc = writeDoc(schema.getDoc());
     DataMap properties = new DataMap(schema.getProperties());
     DataMap propertiesMap = new DataMap(coercePropertyToDataMapOrFail(schema, "symbolProperties", properties.remove("symbolProperties")));
     DataMap deprecatedMap = coercePropertyToDataMapOrFail(schema, "deprecatedSymbols", properties.remove("deprecatedSymbols"));
-    boolean hasProperties = writeProperties(properties);
-    if (hasDoc || hasProperties) {
+    final boolean hasDocOrProperties = writeDocAndProperties(schema.getDoc(), properties);
+    if (hasDocOrProperties) {
       indent();
     }
     write("enum ");
@@ -320,8 +325,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         // For any non-trivial symbol declarations, separate with an additional newline.
         newline();
       }
-      writeDoc(docString);
-      writeProperties(symbolProperties);
+      writeDocAndProperties(docString, symbolProperties);
       writeLine(symbol);
     }
     _indentDepth--;
@@ -331,8 +335,10 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writeFixed(FixedDataSchema schema) throws IOException
   {
-    writeDoc(schema.getDoc());
-    writeProperties(schema.getProperties());
+    final boolean hasDocOrProperties = writeDocAndProperties(schema.getDoc(), schema.getProperties());
+    if (hasDocOrProperties) {
+      indent();
+    }
     write("fixed ");
     write(toTypeIdentifier(schema));
     write(" ");
@@ -341,8 +347,10 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writeTyperef(TyperefDataSchema schema) throws IOException
   {
-    writeDoc(schema.getDoc());
-    writeProperties(schema.getProperties());
+    final boolean hasDocOrProperties = writeDocAndProperties(schema.getDoc(), schema.getProperties());
+    if (hasDocOrProperties) {
+      indent();
+    }
     write("typeref ");
     write(toTypeIdentifier(schema));
     write(" = ");
@@ -371,7 +379,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private void writeUnion(UnionDataSchema schema) throws IOException
   {
     write("union[");
-    final boolean useMultilineFormat = schema.areMembersAliased();
+    final boolean useMultilineFormat = schema.areMembersAliased() || schema.getMembers().size() >= UNION_MULTILINE_THRESHOLD;
     if (useMultilineFormat)
     {
       newline();
@@ -416,8 +424,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         // For any non-trivial union member declarations, separate with an additional newline.
         newline();
       }
-      writeDoc(member.getDoc());
-      writeProperties(member.getProperties());
+      writeDocAndProperties(member.getDoc(), member.getProperties());
       indent();
       write(member.getAlias());
       write(": ");
@@ -650,6 +657,19 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     write(" = ");
     write(toJson(value));
     newline();
+  }
+
+  /**
+   * Write a doc string and a set of properties to this encoder's writer.
+   * @param doc doc string
+   * @param properties mapping of property paths to property values
+   * @return whether any doc string or properties were written at all
+   */
+  private boolean writeDocAndProperties(String doc, Map<String, Object> properties) throws IOException
+  {
+    final boolean hasDoc = writeDoc(doc);
+    final boolean hasProperties = writeProperties(properties);
+    return hasDoc || hasProperties;
   }
 
   /**
