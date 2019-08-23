@@ -1,0 +1,68 @@
+namespace com.linkedin.data.schema.grammar
+
+
+record MainRecord {
+
+  x: record AuxRecord {}
+
+  y: typeref VideoUrn = string
+
+  resource: union[
+    null,
+
+    /**
+     * member doc
+     */
+    member: string,
+
+    /**
+     * article doc
+     */
+    article: string,
+
+    /**
+     * school doc
+     */
+    school: AuxRecord,
+
+    /**
+     * organization doc
+     */
+    @inlined
+    organization: record Organization {},
+
+    /**
+     * company doc
+     */
+    company: Organization,
+
+    /**
+     * jobs doc
+     */
+    @inlined
+    jobs: array[string],
+
+    /**
+     * courses doc
+     */
+    @inlined
+    courses: map[string, AuxRecord],
+
+    /**
+     * fingerprint doc
+     */
+    @inlined
+    fingerprint: fixed md5 16,
+
+    /**
+     * audio doc
+     */
+    @inlined
+    audio: typeref AudioUrn = string,
+
+    /**
+     * video doc
+     */
+    video: VideoUrn
+  ]
+}

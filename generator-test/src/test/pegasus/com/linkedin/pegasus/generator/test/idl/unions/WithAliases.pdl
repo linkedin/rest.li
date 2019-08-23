@@ -1,0 +1,44 @@
+namespace com.linkedin.pegasus.generator.test.idl.unions
+
+import com.linkedin.pegasus.generator.test.idl.records.Message
+
+
+record WithAliases {
+  `union`: union[
+    null,
+    A: int,
+
+    /**
+     * Doc for B.
+     */
+    B: string,
+
+    @proppy
+    C: map[string, long]
+
+    /**
+     * Doc for D.
+     */
+    @proppy = "outer"
+    D:
+      /**
+       * Doc for D's typeref.
+       */
+      @proppy = "middle"
+      typeref Ref =
+        /**
+         * Doc for D's typeref's enum
+         */
+        @proppy = "inner"
+        enum Enummy {
+          One,
+          Two
+        }
+
+    E:
+      @proppy = "inlineRecord"
+      record Foo {}
+
+    F: array[Message]
+  ]
+}

@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import org.apache.commons.io.FileUtils;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
@@ -20,38 +21,48 @@ public class PdlEncoderTest extends GeneratorTest
   private final File pegasusSrcDir = new File(System.getProperty("testDir") + "/pegasus");
   private final DataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(pegasusSrcDir.getAbsolutePath());
 
+  @DataProvider(name = "pdlFilePaths")
+  private Object[][] providePdlFilePaths()
+  {
+    return new Object[][]
+        {
+            { "arrays.AnonArray" },
+            { "arrays.WithPrimitivesArray" },
+            { "denormalized.WithNamespacedDeclarations" },
+            { "denormalized.WithIncludeDeclaration" },
+            { "deprecated.DeprecatedRecord" },
+            { "enums.Fruits" },
+            { "enums.EnumProperties" },
+            { "enums.DeprecatedSymbols" },
+            { "escaping.PdlKeywordEscaping" },
+            { "fixed.Fixed8" },
+            { "maps.WithOrders" },
+            { "maps.WithPrimitivesMap" },
+            { "records.Note" },
+            { "records.WithAliases" },
+            { "records.WithInclude" },
+            { "records.WithIncludeAfter" },
+            { "records.WithInlineRecord" },
+            { "records.WithPrimitives" },
+            { "records.WithOptionalPrimitives" },
+            { "records.NumericDefaults" },
+            { "records.WithComplexTypeDefaults" },
+            { "typerefs.UnionWithInlineRecord" },
+            { "typerefs.MapTyperef" },
+            { "typerefs.IntTyperef" },
+            { "unions.WithPrimitivesUnion" },
+            { "unions.WithAliases" }
+        };
+  }
+
   /**
    * Validate {@link SchemaToPdlEncoder} by parsing a variety of .pdl files, encoding them back to source, and
    * verifying that the re-encoded source matches the original file.
    */
-  @Test
-  public void testEncode() throws IOException
+  @Test(dataProvider = "pdlFilePaths")
+  public void testEncode(String pdlFilePath) throws IOException
   {
-    assertRoundTrip("arrays.AnonArray");
-    assertRoundTrip("arrays.WithPrimitivesArray");
-    assertRoundTrip("denormalized.WithNamespacedDeclarations");
-    assertRoundTrip("denormalized.WithIncludeDeclaration");
-    assertRoundTrip("deprecated.DeprecatedRecord");
-    assertRoundTrip("enums.Fruits");
-    assertRoundTrip("enums.EnumProperties");
-    assertRoundTrip("enums.DeprecatedSymbols");
-    assertRoundTrip("escaping.PdlKeywordEscaping");
-    assertRoundTrip("fixed.Fixed8");
-    assertRoundTrip("maps.WithOrders");
-    assertRoundTrip("maps.WithPrimitivesMap");
-    assertRoundTrip("records.Note");
-    assertRoundTrip("records.WithAliases");
-    assertRoundTrip("records.WithInclude");
-    assertRoundTrip("records.WithIncludeAfter");
-    assertRoundTrip("records.WithInlineRecord");
-    assertRoundTrip("records.WithPrimitives");
-    assertRoundTrip("records.WithOptionalPrimitives");
-    assertRoundTrip("records.NumericDefaults");
-    assertRoundTrip("records.WithComplexTypeDefaults");
-    assertRoundTrip("typerefs.UnionWithInlineRecord");
-    assertRoundTrip("typerefs.MapTyperef");
-    assertRoundTrip("typerefs.IntTyperef");
-    assertRoundTrip("unions.WithPrimitivesUnion");
+    assertRoundTrip(pdlFilePath);
   }
 
   private DataSchema parseSchema(File file) throws IOException
@@ -88,7 +99,7 @@ public class PdlEncoderTest extends GeneratorTest
     encoder.setTypeReferenceFormat(SchemaToPdlEncoder.TypeReferenceFormat.PRESERVE);
     encoder.encode(parsed);
     String encoded = writer.toString();
-    assertEqualsIgnoringSpacing(original, encoded);
+    assertEqualsIgnoringSpacing(encoded, original);
   }
 
   private void assertEqualsIgnoringSpacing(String lhs, String rhs)

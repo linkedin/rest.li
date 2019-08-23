@@ -22,6 +22,31 @@ import com.linkedin.data.Null;
 import com.linkedin.data.codec.DataLocation;
 import com.linkedin.data.grammar.PdlLexer;
 import com.linkedin.data.grammar.PdlParser;
+import com.linkedin.data.grammar.PdlParser.AnonymousTypeDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.ArrayDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.DocumentContext;
+import com.linkedin.data.grammar.PdlParser.EnumDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.EnumSymbolDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.FieldDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.FieldDefaultContext;
+import com.linkedin.data.grammar.PdlParser.FieldSelectionContext;
+import com.linkedin.data.grammar.PdlParser.FixedDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.ImportDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.ImportDeclarationsContext;
+import com.linkedin.data.grammar.PdlParser.JsonValueContext;
+import com.linkedin.data.grammar.PdlParser.MapDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.NamedTypeDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.ObjectEntryContext;
+import com.linkedin.data.grammar.PdlParser.PropDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.RecordDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.ScopedNamedTypeDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.TypeAssignmentContext;
+import com.linkedin.data.grammar.PdlParser.TypeDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.TypeReferenceContext;
+import com.linkedin.data.grammar.PdlParser.TyperefDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.UnionDeclarationContext;
+import com.linkedin.data.grammar.PdlParser.UnionMemberAliasContext;
+import com.linkedin.data.grammar.PdlParser.UnionMemberDeclarationContext;
 import com.linkedin.data.schema.AbstractSchemaParser;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
@@ -59,30 +84,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
-import com.linkedin.data.grammar.PdlParser.AnonymousTypeDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.ArrayDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.DocumentContext;
-import com.linkedin.data.grammar.PdlParser.EnumDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.EnumSymbolDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.FieldDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.FieldDefaultContext;
-import com.linkedin.data.grammar.PdlParser.FieldSelectionContext;
-import com.linkedin.data.grammar.PdlParser.FixedDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.ImportDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.ImportDeclarationsContext;
-import com.linkedin.data.grammar.PdlParser.JsonValueContext;
-import com.linkedin.data.grammar.PdlParser.MapDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.NamedTypeDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.ObjectEntryContext;
-import com.linkedin.data.grammar.PdlParser.PropDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.RecordDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.ScopedNamedTypeDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.TypeAssignmentContext;
-import com.linkedin.data.grammar.PdlParser.TypeDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.TypeReferenceContext;
-import com.linkedin.data.grammar.PdlParser.TyperefDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.UnionDeclarationContext;
-import com.linkedin.data.grammar.PdlParser.UnionMemberDeclarationContext;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 
@@ -608,12 +609,35 @@ public class PdlSchemaParser extends AbstractSchemaParser
     List<UnionDataSchema.Member> unionMembers = new ArrayList<>(members.size());
     for (UnionMemberDeclarationContext memberDecl: members)
     {
+      // Get union member type assignment
       TypeAssignmentContext memberType = memberDecl.member;
       DataSchema dataSchema = toDataSchema(memberType);
       if (dataSchema != null)
       {
         UnionDataSchema.Member unionMember = new UnionDataSchema.Member(dataSchema);
         unionMember.setDeclaredInline(isDeclaredInline(memberDecl.member));
+        // Get union member alias, if any
+        UnionMemberAliasContext alias = memberDecl.unionMemberAlias();
+        if (alias != null)
+        {
+          // Set union member alias
+          boolean isAliasValid = unionMember.setAlias(alias.name.value, startCalleeMessageBuilder());
+          if (!isAliasValid)
+          {
+            appendCalleeMessage(unionMember);
+          }
+          // Set union member docs and properties
+          if (alias.doc != null)
+          {
+            unionMember.setDoc(alias.doc.value);
+          }
+          final Map<String, Object> properties = new HashMap<>();
+          for (PropDeclarationContext prop: alias.props)
+          {
+            addPropertiesAtPath(properties, prop);
+          }
+          unionMember.setProperties(properties);
+        }
         unionMembers.add(unionMember);
       }
     }

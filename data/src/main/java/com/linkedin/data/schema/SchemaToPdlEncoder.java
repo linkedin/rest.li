@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2017 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.data.schema;
 
 import com.linkedin.data.ByteString;
@@ -348,19 +364,70 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     write("]");
   }
 
+  /**
+   * Writes a union data schema to .pdl.
+   * @param schema union data schema
+   */
   private void writeUnion(UnionDataSchema schema) throws IOException
   {
     write("union[");
-    for(Iterator<UnionDataSchema.Member> iter = schema.getMembers().iterator(); iter.hasNext();)
+    final boolean useMultilineFormat = schema.areMembersAliased();
+    if (useMultilineFormat)
     {
-      UnionDataSchema.Member member = iter.next();
-      writeReferenceOrInline(member.getType(), member.isDeclaredInline());
+      newline();
+      _indentDepth++;
+    }
+    for (Iterator<UnionDataSchema.Member> iter = schema.getMembers().iterator(); iter.hasNext();)
+    {
+      writeUnionMember(iter.next(), useMultilineFormat);
       if (iter.hasNext())
       {
-        write(", ");
+        if (useMultilineFormat)
+        {
+          write(",");
+          newline();
+        }
+        else
+        {
+          write(", ");
+        }
       }
     }
+    if (useMultilineFormat)
+    {
+      _indentDepth--;
+      newline();
+      indent();
+    }
     write("]");
+  }
+
+  /**
+   * Writes a union member to .pdl.
+   * @param member union data schema member
+   * @param useMultilineFormat whether the union containing this member is being written onto multiple lines
+   */
+  private void writeUnionMember(UnionDataSchema.Member member, boolean useMultilineFormat) throws IOException
+  {
+    if (member.hasAlias())
+    {
+      if (StringUtils.isNotBlank(member.getDoc()) || !member.getProperties().isEmpty() || member.isDeclaredInline())
+      {
+        // For any non-trivial union member declarations, separate with an additional newline.
+        newline();
+      }
+      writeDoc(member.getDoc());
+      writeProperties(member.getProperties());
+      indent();
+      write(member.getAlias());
+      write(": ");
+    }
+    else if (useMultilineFormat)
+    {
+      // Necessary because "null" union members aren't aliased
+      indent();
+    }
+    writeReferenceOrInline(member.getType(), member.isDeclaredInline());
   }
 
   private void writePrimitive(PrimitiveDataSchema schema) throws IOException
@@ -501,7 +568,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   }
 
   /**
-   * For inline declarations, determine if a type requires a newline to be declared.  Only types without a
+   * For inline declarations, determine if a type requires a newline to be declared. Only types without a
    * doc string or properties can initiate their declaration as a continuation of an existing line
    * (e.g. "fieldName: record Example {}").
    *

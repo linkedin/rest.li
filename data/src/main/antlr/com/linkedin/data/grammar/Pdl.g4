@@ -105,7 +105,9 @@ unionDeclaration: UNION typeParams=unionTypeAssignments;
 
 unionTypeAssignments: OPEN_BRACKET members+=unionMemberDeclaration* CLOSE_BRACKET;
 
-unionMemberDeclaration: member=typeAssignment;
+unionMemberDeclaration: alias=unionMemberAlias? member=typeAssignment;
+
+unionMemberAlias: doc=schemadoc? props+=propDeclaration* name=identifier COLON;
 
 arrayDeclaration: ARRAY typeParams=arrayTypeAssignments;
 

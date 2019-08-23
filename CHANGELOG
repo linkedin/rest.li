@@ -1,23 +1,37 @@
 27.4.2
 -------
-(RB=1767362)
-Control Pipeline V2 through a constant and a config value set through builder.
-Adding a constant in HttpClientFactory 'PIPELINE_V2_MATURITY_LEVEL' to represent the psuedo version of Netty Pipeline Changes.
-Once this feature is rolled out globally to everyone - HttpClientFactory builder will make sure that the expected configured value
-for the maturity level is present in pegasus (way to turn off PIPELINE_V2 for early adopters until they adopt the new bug fixed version as well).
+(RB=1770797)
+Extend PDL syntax to allow unions with aliases
+
+(RB=1772174)
+Fix TestDisruptFilter flaky test
 
 27.4.1
 -------
+(RB=1767362)
+[pgasus]: Control Pipeline V2 through a constant and a config value set through builder
+
+(RB=1767362)
+Revert "[Pegasus]: Control Pipeline V2 through a constant and a config value set through builder"
+
+27.4.0
+-------
+(RB=1767362)
+[Pegasus]: Control Pipeline V2 through a constant and a config value set through builder
 
 (RB=1732683)
 Adding guarantee that last operation (markUp/Down) will always win
 Making more tolerant if a node is not found while deleting (since the goal is to delete it)
 Giving the guarantee that markUp/Down will be called the minimum set of time to make collapse multiple markUp/markDown requests which would be idempotent
 
-27.4.0
--------
-(RB=1637831)
-R2 Netty Pipeline Unification
+(RB=1729664)
+Adding MinimumDelay mode for disrupting restli response flow
+
+(RB=1729664)
+Revert "Adding MinimumDelay mode for disrupting restli response flow"
+
+(RB=1729664)
+Adding MinimumDelay mode for disrupting restli response flow
 
 (RB=1767362)
 Control Pipeline V2 through a constant and a config value set through builder
@@ -29,11 +43,11 @@ Refactor GenerateDataTemplateTask
 
 27.3.18
 -------
-(RB=1753170)
-Update README.md
-
 (RB=1709652)
 Add consistent hash ring simulator to visualize request distribution and server load
+
+(RB=1753170)
+Update README.md
 
 27.3.17
 -------

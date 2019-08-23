@@ -1,0 +1,18 @@
+namespace com.linkedin.data.schema.grammar
+
+
+record MainRecord {
+
+  x: record AuxRecord {},
+
+  resource: union[
+    null,
+    int,
+    AuxRecord,
+    record Organization {},
+    array[string],
+    map[string, AuxRecord],
+    fixed MD5 16,
+    typeref VideoUrn = string
+  ]
+}
