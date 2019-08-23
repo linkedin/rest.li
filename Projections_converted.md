@@ -184,7 +184,7 @@ Syntax for the map is the following:
       /* mask for value of key1 */
     },
     "key2": {
-      /* mask for value of key1 */
+      /* mask for value of key2 */
     }
   }
 }
