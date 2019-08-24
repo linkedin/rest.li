@@ -16,6 +16,8 @@
 
 package com.linkedin.d2.balancer;
 
+import java.io.File;
+
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -35,7 +37,7 @@ import com.linkedin.d2.discovery.stores.zk.ZKConnectionBuilder;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.builder.ZooKeeperEphemeralStoreBuilder;
 import com.linkedin.d2.discovery.stores.zk.builder.ZooKeeperPermanentStoreBuilder;
-import java.io.File;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,8 +91,8 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     SimpleLoadBalancer simpleLoadBalancer = new SimpleLoadBalancer(state, config.lbWaitTimeout, config.lbWaitUnit, config._executorService);
 
     // add facilities
-    LoadBalancerWithFacilities balancer = new LastSeenLoadBalancerWithFacilities(simpleLoadBalancer, config.basePath,
-      zkPersistentConnection, lsClusterStore, lsServiceStore, lsUrisStore);
+    LoadBalancerWithFacilities balancer = new LastSeenLoadBalancerWithFacilities(simpleLoadBalancer, config.basePath, config.d2ServicePath,
+                                                                                 zkPersistentConnection, lsClusterStore, lsServiceStore, lsUrisStore);
 
     return balancer;
   }
@@ -100,6 +102,11 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     ZooKeeperEphemeralStoreBuilder<UriProperties> zkUrisStoreBuilder = new ZooKeeperEphemeralStoreBuilder<UriProperties>()
       .setSerializer(new UriPropertiesJsonSerializer()).setPath(ZKFSUtil.uriPath(config.basePath)).setMerger(new UriPropertiesMerger())
       .setUseNewWatcher(config.useNewEphemeralStoreWatcher);
+
+    if (config.enableSaveUriDataOnDisk)
+    {
+      zkUrisStoreBuilder.setBackupStoreFilePath(config.fsBasePath);
+    }
 
     return new LastSeenZKStore<>(
       config.fsBasePath + File.separator + "uris",
@@ -115,7 +122,8 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
   private LastSeenZKStore<ServiceProperties> getServicePropertiesLastSeenZKStore(D2ClientConfig config, ZKPersistentConnection zkPersistentConnection)
   {
     ZooKeeperPermanentStoreBuilder<ServiceProperties> zkServiceStoreBuilder = new ZooKeeperPermanentStoreBuilder<ServiceProperties>()
-      .setSerializer(new ServicePropertiesJsonSerializer(config.clientServicesConfig)).setPath(ZKFSUtil.servicePath(config.basePath));
+      .setSerializer(new ServicePropertiesJsonSerializer(config.clientServicesConfig))
+      .setPath(ZKFSUtil.servicePath(config.basePath, config.d2ServicePath));
 
     return new LastSeenZKStore<>(
       FileSystemDirectory.getServiceDirectory(config.fsBasePath, config.d2ServicePath),
