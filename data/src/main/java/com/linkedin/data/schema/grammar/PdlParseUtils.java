@@ -20,7 +20,7 @@ import com.linkedin.data.grammar.PdlParser;
 import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.List;
-import org.antlr.v4.runtime.RecognitionException;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -32,6 +32,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class PdlParseUtils
 {
+  private static final Pattern BACKTICK_PATTERN = Pattern.compile("`");
+
   /**
    * Given a doc string comment, unescapes and extracts the contents.
    *
@@ -114,7 +116,7 @@ public class PdlParseUtils
    */
   public static String unescapeIdentifier(String identifier)
   {
-    return identifier.replaceAll("`", "");
+    return BACKTICK_PATTERN.matcher(identifier).replaceAll("");
   }
 
   /**

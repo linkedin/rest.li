@@ -86,6 +86,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 
@@ -102,6 +103,8 @@ public class ResourceModelEncoder
   public static final String DEPRECATED_ANNOTATION_NAME = "deprecated";
   public static final String DEPRECATED_ANNOTATION_DOC_FIELD = "doc";
   public static final String COMPOUND_KEY_TYPE_NAME = "CompoundKey";
+
+  private static final Pattern UNNECESSARY_WHITESPACE_PATTERN = Pattern.compile("[ \\t]+");
 
   private final DataCodec codec = new JacksonDataCodec();
 
@@ -759,7 +762,7 @@ public class ResourceModelEncoder
     {
       //Remove all unnecessary whitespace including tabs. Note we can't use \s because it will chew
       //up \n's which we need to preserve
-      String returnComment = doc.trim().replaceAll("[ \\t]+", " ");
+      String returnComment = UNNECESSARY_WHITESPACE_PATTERN.matcher(doc.trim()).replaceAll(" ");
       //We should not allow a space to the right or left of a new line character
       returnComment = returnComment.replace("\n ", "\n");
       returnComment = returnComment.replace(" \n", "\n");

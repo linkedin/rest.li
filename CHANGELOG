@@ -9,6 +9,9 @@ Extend PDL syntax to allow unions with aliases
 (RB=1772174)
 Fix TestDisruptFilter flaky test
 
+(RB=1778282)
+Precompiling regex Pattern instead of calling String.replaceAll
+
 27.4.1
 -------
 (RB=1767362)

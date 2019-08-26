@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.net.URI;
+import java.util.regex.Pattern;
 
 
 /**
@@ -52,6 +53,8 @@ import java.net.URI;
 public class URIParamUtils
 {
   private static final String[] _EMPTY_STRING_ARRAY = new String[0];
+  private static final Pattern NORMALIZED_URI_PATTERN = Pattern.compile("(^/|/$)");
+  private static final Pattern URI_SEPARATOR_PATTERN = Pattern.compile("/+");
 
   private static Map<String, String> dataMapToQueryParams(DataMap dataMap)
   {
@@ -533,9 +536,9 @@ public class URIParamUtils
 
   public static String[] extractPathComponentsFromUriTemplate(String uriTemplate)
   {
-    final String normalizedUriTemplate = uriTemplate.replaceAll("(^/|/$)", "");
+    final String normalizedUriTemplate = NORMALIZED_URI_PATTERN.matcher(uriTemplate).replaceAll("");
     final UriTemplate template = new UriTemplate(normalizedUriTemplate);
     final String uri = template.createURI(_EMPTY_STRING_ARRAY);
-    return uri.replaceAll("/+", "/").split("/");
+    return URI_SEPARATOR_PATTERN.split(uri);
   }
 }

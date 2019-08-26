@@ -36,6 +36,8 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.regex.Pattern;
+
 
 /**
  * The default serializer for messages. This serializer has two goals: 1) generate pseudo-HTTP 1.1
@@ -84,6 +86,9 @@ public class DefaultMessageSerializer implements MessageSerializer
   private static final String POST = "POST";
   private static final String HTTP_1_1 = "HTTP/1.1";
   private static final String STATUS_200 = "200";
+
+  private static final Pattern CR_PATTERN = Pattern.compile(CR);
+  private static final Pattern CRLF_PATTERN = Pattern.compile("[\n\r]+");
 
   @Override
   public void writeRequest(OutputStream out, RestRequest req) throws IOException
@@ -317,7 +322,7 @@ public class DefaultMessageSerializer implements MessageSerializer
     write(out, SP);
 
     // Replace CR/LF with SP, acceptable per RFC-2616
-    write(out, value.replaceAll("[\n\r]+", " "));
+    write(out, CRLF_PATTERN.matcher(value).replaceAll(" "));
 
     write(out, CRLF);
   }
@@ -382,7 +387,7 @@ public class DefaultMessageSerializer implements MessageSerializer
     // Our strategy for passing lines is to read until we hit LF and ignore any CR's along the way.
     // This is not strictly valid HTTP/1.1 (except for entities), but it makes life easier when
     // editing capture files in most editors on Mac and Linux.
-    return readUntil(LF_CHAR, in).replaceAll(CR, "");
+    return CR_PATTERN.matcher(readUntil(LF_CHAR, in)).replaceAll("");
   }
 
   private void writeEntity(OutputStream out, RestMessage res) throws IOException

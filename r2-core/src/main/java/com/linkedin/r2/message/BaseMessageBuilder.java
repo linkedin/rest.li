@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 
 /**
@@ -39,6 +40,8 @@ public abstract class BaseMessageBuilder<B extends BaseMessageBuilder<B>>
     implements MessageHeadersBuilder<B>
 {
   private static final String CANONICAL_REGEX = "[ \t\n\r]+";
+
+  private static final Pattern CANONICAL_PATTERN = Pattern.compile(CANONICAL_REGEX);
 
   private static final String CANONICAL_REPLACEMENT = " ";
 
@@ -308,7 +311,7 @@ public abstract class BaseMessageBuilder<B extends BaseMessageBuilder<B>>
 
       // Note: we don't handle null list elements because we don't know if the header is a list
       // or not.
-      final String value = entry.getValue().trim().replaceAll(CANONICAL_REGEX, CANONICAL_REPLACEMENT);
+      final String value = CANONICAL_PATTERN.matcher(entry.getValue().trim()).replaceAll(CANONICAL_REPLACEMENT);
       headers.put(key, value);
     }
 
@@ -321,7 +324,7 @@ public abstract class BaseMessageBuilder<B extends BaseMessageBuilder<B>>
     final List<String> cookies = new ArrayList<String>(orig.size());
     for (String entry : orig)
     {
-      final String value = entry.trim().replaceAll(CANONICAL_REGEX, CANONICAL_REPLACEMENT);
+      final String value = CANONICAL_PATTERN.matcher(entry.trim()).replaceAll(CANONICAL_REPLACEMENT);
       cookies.add(value);
     }
 

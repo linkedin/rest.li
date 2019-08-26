@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
+
 
 /**
  * <p>Parse boolean expression of {@link Predicate} names to a {@link Predicate}.</p>
@@ -44,12 +46,14 @@ import java.util.StringTokenizer;
  */
 public class PredicateExpressionParser
 {
+  private static final Pattern TRIMMER_PATTERN = Pattern.compile("\\s");
+
   public static Predicate parse(String expression)
   {
     final Stack<Predicate> predicateStack = new Stack<Predicate>();
     final Stack<Character> operatorStack = new Stack<Character>();
 
-    final String trimmedExpression = expression.replaceAll("\\s", "");
+    final String trimmedExpression = TRIMMER_PATTERN.matcher(expression).replaceAll("");
     final StringTokenizer tokenizer = new StringTokenizer(trimmedExpression, OPERATORS, true);
     boolean isTokenMode = true;
 
