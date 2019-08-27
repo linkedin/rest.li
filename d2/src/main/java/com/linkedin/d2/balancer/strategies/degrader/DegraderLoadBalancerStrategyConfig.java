@@ -122,6 +122,8 @@ public class DegraderLoadBalancerStrategyConfig
   public static final int DEFAULT_POINTS_PER_HOST = MPConsistentHashRing.DEFAULT_POINTS_PER_HOST;
 
   public static final double DEFAULT_BOUNDED_LOAD_BALANCING_FACTOR = -1;
+  public static final double MIN_BOUNDED_LOAD_BALANCING_FACTOR = 1.0;
+  public static final double MAX_BOUNDED_LOAD_BALANCING_FACTOR = 5.0;
 
   public static final double DEFAULT_QUARANTINE_MAXPERCENT = 0.0;  // 0 means disable quarantine
   public static final long DEFAULT_QUARANTINE_REENTRY_TIME = 30000;  // Milliseconds
