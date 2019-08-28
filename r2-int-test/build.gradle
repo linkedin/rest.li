@@ -6,3 +6,8 @@ dependencies {
     testCompile externalDependency.testng
     compile externalDependency.commonsLang
 }
+
+tasks.withType(Test) {
+    maxHeapSize '4g'
+    minHeapSize '2g'
+}
