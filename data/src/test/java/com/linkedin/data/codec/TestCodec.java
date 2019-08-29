@@ -277,7 +277,7 @@ public class TestCodec
     }
   }
 
-  private static void collectSymbols(Set<String> symbols, DataMap map)
+  public static void collectSymbols(Set<String> symbols, DataMap map)
   {
     for (Map.Entry<String, Object> entry : map.entrySet())
     {
@@ -295,7 +295,7 @@ public class TestCodec
     }
   }
 
-  private static void collectSymbols(Set<String> symbols, DataList list)
+  public static void collectSymbols(Set<String> symbols, DataList list)
   {
     for (Object element : list)
     {

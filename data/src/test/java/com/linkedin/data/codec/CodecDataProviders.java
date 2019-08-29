@@ -58,7 +58,7 @@ public class CodecDataProviders
         .toArray(new Object[][] {});
   }
 
-  private static Map<String, DataComplex> codecDataInputs()
+  public static Map<String, DataComplex> codecDataInputs()
   {
     final Map<String, DataComplex> inputs = new TreeMap<>();
 

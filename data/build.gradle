@@ -1,3 +1,7 @@
+plugins {
+  id "me.champeau.gradle.jmh" version "0.4.8"
+}
+
 apply plugin: 'antlr'
 
 dependencies {
@@ -12,7 +16,13 @@ dependencies {
   testCompile externalDependency.testng
 
   antlr externalDependency.antlr
+
+  jmh 'org.openjdk.jmh:jmh-core:1.21'
+  jmh 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
+
+  jmh project(':data')
 }
+
 
 test {
   maxHeapSize = '4g'
@@ -39,3 +49,17 @@ idea.module {
 clean {
   delete generatedAntlrDir
 }
+
+jmh {
+  // keep these locked to make the build work
+  duplicateClassesStrategy = DuplicatesStrategy.WARN
+  includeTests = true
+
+  // ok to tweak these for your benchmarking
+  forceGC = true
+  fork = 3
+  warmupIterations = 2
+  iterations = 3
+}
+
+tasks.compileJmhJava.dependsOn(':data:compileTestJava')
