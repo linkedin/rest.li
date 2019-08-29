@@ -13,15 +13,22 @@ import java.util.Objects;
 class ResourceMethodConfigImpl implements ResourceMethodConfig
 {
   private final ConfigValue<Long> _timeoutMs;
+  private boolean _validateQueryParams;
 
-  ResourceMethodConfigImpl(ConfigValue<Long> timeoutMs)
+  ResourceMethodConfigImpl(ConfigValue<Long> timeoutMs, boolean validateQueryParams)
   {
     _timeoutMs = timeoutMs;
+    _validateQueryParams = validateQueryParams;
   }
 
   public ConfigValue<Long> getTimeoutMs()
   {
     return _timeoutMs;
+  }
+
+  @Override
+  public boolean shouldValidateQueryParams() {
+    return _validateQueryParams;
   }
 
   @Override

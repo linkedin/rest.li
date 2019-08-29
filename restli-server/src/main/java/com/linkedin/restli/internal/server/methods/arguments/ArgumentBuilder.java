@@ -25,6 +25,7 @@ import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.AbstractArrayTemplate;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -66,6 +67,7 @@ import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.UnstructuredDataReactiveReader;
 import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.annotations.HeaderParam;
+import com.linkedin.restli.server.config.ResourceMethodConfig;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -95,10 +97,11 @@ public class ArgumentBuilder
    * @return array of method argument for method invocation.
    */
   @SuppressWarnings("deprecation")
-  public static Object[] buildArgs(final Object[] positionalArguments,
+  static Object[] buildArgs(final Object[] positionalArguments,
                                    final ResourceMethodDescriptor resourceMethod,
                                    final ServerResourceContext context,
-                                   final DynamicRecordTemplate template)
+                                   final DynamicRecordTemplate template,
+                                   final ResourceMethodConfig resourceMethodConfig)
   {
     List<Parameter<?>> parameters = resourceMethod.getParameters();
     Object[] arguments = Arrays.copyOf(positionalArguments, parameters.size());
@@ -225,7 +228,7 @@ public class ArgumentBuilder
           Object value;
           if (DataTemplate.class.isAssignableFrom(param.getType()))
           {
-            value = buildDataTemplateArgument(context, param);
+            value = buildDataTemplateArgument(context, param, resourceMethodConfig.shouldValidateQueryParams());
           }
           else
           {
@@ -480,7 +483,9 @@ public class ArgumentBuilder
   }
 
   private static DataTemplate<?> buildDataTemplateArgument(final ResourceContext context,
-                                                           final Parameter<?> param)
+                                                           final Parameter<?> param,
+                                                           final boolean validateRequestQueryParam)
+
   {
     Object paramValue = context.getStructuredParameter(param.getName());
     DataTemplate<?> paramRecordTemplate;
@@ -514,8 +519,15 @@ public class ArgumentBuilder
 
       // Validate against the class schema with FixupMode.STRING_TO_PRIMITIVE to parse the
       // strings into the corresponding primitive types.
-      ValidateDataAgainstSchema.validate(paramRecordTemplate.data(), paramRecordTemplate.schema(),
-            new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE));
+      ValidationResult result =
+          ValidateDataAgainstSchema.validate(paramRecordTemplate.data(), paramRecordTemplate.schema(),
+              new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE));
+      if (validateRequestQueryParam && !result.isValid())
+      {
+        throw new RoutingException(String.format("Argument parameter '%s' value '%s' is invalid, reason: %s", param.getName(),
+            paramRecordTemplate.data(), result.getMessages()), HttpStatus.S_400_BAD_REQUEST.getCode());
+      }
+
       return paramRecordTemplate;
     }
   }

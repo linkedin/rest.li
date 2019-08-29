@@ -53,7 +53,8 @@ public class UpdateArgumentBuilder implements RestLiArgumentBuilder
     return ArgumentBuilder.buildArgs(positionalArgs.toArray(),
                                      routingResult.getResourceMethod(),
                                      routingResult.getContext(),
-                                     null);
+                                     null,
+                                     routingResult.getResourceMethodConfig());
   }
 
   @Override

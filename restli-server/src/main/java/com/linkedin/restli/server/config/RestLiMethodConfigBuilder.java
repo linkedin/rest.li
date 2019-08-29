@@ -12,6 +12,9 @@ public class RestLiMethodConfigBuilder
 {
   private final Map<String, Long> _timeoutMsConfig = new HashMap<>();
 
+  // Whether to validate parameter in the query parameters.
+  private boolean shouldValidateQueryParams = false;
+
   public RestLiMethodConfigBuilder()
   {
   }
@@ -26,14 +29,19 @@ public class RestLiMethodConfigBuilder
     if (config != null)
     {
       addTimeoutMsConfigMap(config.getTimeoutMsConfig());
+      withShouldValidateQueryParams(config.shouldValidateQueryParams());
     }
   }
 
   public RestLiMethodConfig build()
   {
-    return new RestLiMethodConfigImpl(_timeoutMsConfig);
+    return new RestLiMethodConfigImpl(_timeoutMsConfig, shouldValidateQueryParams);
   }
 
+  public RestLiMethodConfigBuilder withShouldValidateQueryParams(boolean shouldValidateQueryParams) {
+    this.shouldValidateQueryParams = shouldValidateQueryParams;
+    return this;
+  }
 
   public RestLiMethodConfigBuilder addTimeoutMsConfigMap(Map<String, Long> config)
   {

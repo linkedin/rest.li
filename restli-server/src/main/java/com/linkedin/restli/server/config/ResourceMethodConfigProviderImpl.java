@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+
 
 /**
  * An implementation for rest.li resource method level configuration resolver based on configurations provided
@@ -28,10 +28,13 @@ class ResourceMethodConfigProviderImpl implements ResourceMethodConfigProvider
 
   private final ResourceMethodConfigTree<Long> _timeoutMs = new ResourceMethodConfigTree<>();
   private final ConcurrentMap<ResourceMethodConfigCacheKey, ResourceMethodConfig> _cache = new ConcurrentHashMap<>();
+  private boolean _shouldValidateQueryParams;
 
-  public ResourceMethodConfigProviderImpl(RestLiMethodConfig config) throws ResourceMethodConfigParsingException
+  public ResourceMethodConfigProviderImpl(RestLiMethodConfig config)
+      throws ResourceMethodConfigParsingException
   {
     initialize(config);
+    _shouldValidateQueryParams = config.shouldValidateQueryParams();
   }
 
   private void initialize(RestLiMethodConfig config) throws ResourceMethodConfigParsingException
@@ -88,7 +91,7 @@ class ResourceMethodConfigProviderImpl implements ResourceMethodConfigProvider
   }
 
   private ResourceMethodConfig resolve(ResourceMethodConfigCacheKey cacheKey) {
-    return new ResourceMethodConfigImpl(_timeoutMs.resolve(cacheKey));
+    return new ResourceMethodConfigImpl(_timeoutMs.resolve(cacheKey), _shouldValidateQueryParams);
   }
 
   /**

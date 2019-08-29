@@ -37,7 +37,8 @@ public class CollectionArgumentBuilder implements RestLiArgumentBuilder
     return ArgumentBuilder.buildArgs(new Object[0],
                                      routingResult.getResourceMethod(),
                                      routingResult.getContext(),
-                                     null);
+                                     null,
+                                     routingResult.getResourceMethodConfig());
   }
 
   @Override

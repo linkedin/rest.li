@@ -34,6 +34,7 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceContext;
+import com.linkedin.restli.server.config.ResourceMethodConfig;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,10 +43,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.easymock.EasyMock;
 
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.mockito.Matchers.*;
 
 
 /**
@@ -377,7 +380,10 @@ public class RestLiArgumentBuilderTestHelper
   public static RoutingResult getMockRoutingResult()
   {
     RoutingResult mockRoutingResult = createMock(RoutingResult.class);
-    replay(mockRoutingResult);
+    ResourceMethodConfig mockResourceMethodConfig = createMock(ResourceMethodConfig.class);
+    expect(mockRoutingResult.getResourceMethodConfig()).andReturn(mockResourceMethodConfig).anyTimes();
+    replay(mockRoutingResult, mockResourceMethodConfig);
+
     return mockRoutingResult;
   }
 
@@ -393,11 +399,14 @@ public class RestLiArgumentBuilderTestHelper
     {
       expect(mockRoutingResult.getContext()).andReturn(context).times(getContextCount);
     }
-    replay(mockRoutingResult);
+    ResourceMethodConfig mockResourceMethodConfig = createMock(ResourceMethodConfig.class);
+    expect(mockRoutingResult.getResourceMethodConfig()).andReturn(mockResourceMethodConfig).anyTimes();
+    replay(mockRoutingResult, mockResourceMethodConfig);
     return mockRoutingResult;
   }
 
-  static RoutingResult getMockRoutingResult(ResourceMethodDescriptor descriptor, ServerResourceContext context)
+  static RoutingResult getMockRoutingResult(ResourceMethodDescriptor descriptor,
+      ServerResourceContext context)
   {
     RoutingResult mockRoutingResult = createMock(RoutingResult.class);
     if (descriptor != null)
@@ -408,7 +417,10 @@ public class RestLiArgumentBuilderTestHelper
     {
       expect(mockRoutingResult.getContext()).andReturn(context).anyTimes();
     }
-    replay(mockRoutingResult);
+    ResourceMethodConfig mockResourceMethodConfig = createMock(ResourceMethodConfig.class);
+    expect(mockRoutingResult.getResourceMethodConfig()).andReturn(mockResourceMethodConfig).anyTimes();
+    replay(mockRoutingResult, mockResourceMethodConfig);
+
     return mockRoutingResult;
   }
 }

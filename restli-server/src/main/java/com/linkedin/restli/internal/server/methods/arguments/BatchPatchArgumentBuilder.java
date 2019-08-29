@@ -47,7 +47,8 @@ public class BatchPatchArgumentBuilder implements RestLiArgumentBuilder
     return ArgumentBuilder.buildArgs(positionalArgs,
                                      routingResult.getResourceMethod(),
                                      routingResult.getContext(),
-                                     null);
+                                     null,
+                                     routingResult.getResourceMethodConfig());
   }
 
   @SuppressWarnings("unchecked")

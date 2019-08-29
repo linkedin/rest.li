@@ -48,7 +48,8 @@ public class ActionArgumentBuilder implements RestLiArgumentBuilder
     return ArgumentBuilder.buildArgs(new Object[0],
                                      routingResult.getResourceMethod(),
                                      routingResult.getContext(),
-                                     template);
+                                     template,
+                                     routingResult.getResourceMethodConfig());
   }
 
   @Override

@@ -46,6 +46,7 @@ import com.linkedin.restli.server.TestRecordArray;
 import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.annotations.HeaderParam;
 
+import com.linkedin.restli.server.config.ResourceMethodConfig;
 import java.io.ByteArrayOutputStream;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -74,6 +75,13 @@ public class TestArgumentBuilder
     EasyMock.expect(resourceMethodDescriptor.getParameters()).andReturn(parameters);
     EasyMock.replay(resourceMethodDescriptor);
     return resourceMethodDescriptor;
+  }
+
+  private ResourceMethodConfig getMockResourceMethodConfig(boolean shouldValidateQueryParams) {
+    ResourceMethodConfig mockResourceMethodConfig = EasyMock.createMock(ResourceMethodConfig.class);
+    EasyMock.expect(mockResourceMethodConfig.shouldValidateQueryParams()).andReturn(shouldValidateQueryParams);
+    EasyMock.replay(mockResourceMethodConfig);
+    return mockResourceMethodConfig;
   }
 
   @Test
@@ -176,6 +184,10 @@ public class TestArgumentBuilder
     MutablePathKeys mockPathKeys = EasyMock.createMock(MutablePathKeys.class);
     ResourceMethodDescriptor mockResourceMethodDescriptor = getMockResourceMethod(parameters);
 
+    ResourceMethodConfig mockResourceMethodConfig = EasyMock.createMock(ResourceMethodConfig.class);
+    EasyMock.expect(mockResourceMethodConfig.shouldValidateQueryParams()).andReturn(false).times(4);
+    EasyMock.replay(mockResourceMethodConfig);
+
     //easy mock for processing param1
     EasyMock.expect(mockPathKeys.get(EasyMock.capture(param1Capture))).andReturn(param1Value);
     EasyMock.expect(mockResourceContext.getPathKeys()).andReturn(mockPathKeys);
@@ -192,9 +204,9 @@ public class TestArgumentBuilder
     EasyMock.expect(mockResourceContext.getStructuredParameter(EasyMock.capture(param6Capture))).andReturn(param6Value);
     EasyMock.replay(mockResourceContext, mockPathKeys);
 
-    Object[] results = ArgumentBuilder.buildArgs(positionalArguments, mockResourceMethodDescriptor, mockResourceContext, null);
+    Object[] results = ArgumentBuilder.buildArgs(positionalArguments, mockResourceMethodDescriptor, mockResourceContext, null, mockResourceMethodConfig);
 
-    EasyMock.verify(mockPathKeys, mockResourceContext, mockResourceMethodDescriptor);
+    EasyMock.verify(mockPathKeys, mockResourceContext);
     Assert.assertEquals(param1Capture.getValue(), param1Key);
     Assert.assertEquals(param2Capture.getValue(), param2Key);
     Assert.assertEquals(param3Capture.getValue(), param3Key);
@@ -232,7 +244,7 @@ public class TestArgumentBuilder
         false, null, Parameter.ParamType.HEADER, false, annotationSet);
     List<Parameter<?>> parameters = Collections.singletonList(param);
 
-    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(false));
     Assert.assertEquals(results[0], expectedTestParamValue);
   }
 
@@ -269,7 +281,7 @@ public class TestArgumentBuilder
         false, AnnotationSet.EMPTY);
     List<Parameter<?>> parameters = Collections.singletonList(param);
 
-    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(false));
     Assert.assertEquals(results[0], null);
   }
 
@@ -321,7 +333,7 @@ public class TestArgumentBuilder
         false, AnnotationSet.EMPTY);
     List<Parameter<?>> parameters = Collections.singletonList(param);
 
-    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(false));
     Assert.assertEquals(results[0], mockMask);
   }
 
@@ -346,7 +358,7 @@ public class TestArgumentBuilder
     parameters.add(param1);
     parameters.add(param2);
 
-    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(false));
     Assert.assertEquals(results[0], pagingContext);
     Assert.assertEquals(results[1], pagingContext);
   }
@@ -369,7 +381,7 @@ public class TestArgumentBuilder
 
     List<Parameter<?>> parameters = Collections.singletonList(param);
 
-    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(false));
 
     UnstructuredDataWriter result = (UnstructuredDataWriter) results[0];
     Assert.assertNotNull(result);
@@ -395,7 +407,7 @@ public class TestArgumentBuilder
 
     List<Parameter<?>> parameters = Collections.singletonList(param);
 
-    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(false));
     Assert.assertEquals(results[0], restLiAttachmentReader);
   }
 
@@ -417,7 +429,7 @@ public class TestArgumentBuilder
 
     List<Parameter<?>> parameters = Collections.singletonList(param);
 
-    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(false));
     Assert.assertEquals(results[0], null);
   }
 
@@ -437,7 +449,7 @@ public class TestArgumentBuilder
 
     try
     {
-      ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+      ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(false));
       Assert.fail();
     }
     catch (RestLiServiceException restLiServiceException)
@@ -476,7 +488,7 @@ public class TestArgumentBuilder
     parameters.add(param3);
     parameters.add(param4);
 
-    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(false));
     Assert.assertEquals(results[0], expectedTestParamValue);
     Assert.assertEquals(results[1], expectedTestParamValue);
     Assert.assertEquals(results[2], mockPathKeys);
@@ -500,7 +512,7 @@ public class TestArgumentBuilder
     parameters.add(param2);
 
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
-    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(false));
     Assert.assertEquals(results[0], mockResourceContext);
     Assert.assertEquals(results[1], mockResourceContext);
   }
@@ -521,7 +533,7 @@ public class TestArgumentBuilder
     List<Parameter<?>> parameters = Collections.singletonList(param);
 
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
-    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, template);
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, template, getMockResourceMethodConfig(false));
     Assert.assertEquals(results[0], expectedTestParamValue);
   }
 
@@ -541,7 +553,7 @@ public class TestArgumentBuilder
         false, null, Parameter.ParamType.QUERY, false, AnnotationSet.EMPTY);
     List<Parameter<?>> parameters = Collections.singletonList(param);
 
-    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    Object[] results = ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(false));
     Assert.assertEquals(results[0], expectedTestParamValue);
   }
 
@@ -573,7 +585,7 @@ public class TestArgumentBuilder
         false, AnnotationSet.EMPTY);
     List<Parameter<?>> parameters = Collections.singletonList(param);
 
-    ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null);
+    ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(false));
   }
 
 
@@ -611,7 +623,7 @@ public class TestArgumentBuilder
 
     // invoke buildArgs
     List<Parameter<?>> parameters = Collections.singletonList(param);
-    return ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, template);
+    return ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, template, getMockResourceMethodConfig(false));
   }
 
   @DataProvider(name = "parameterDataWithDefault")
@@ -784,4 +796,84 @@ public class TestArgumentBuilder
         false, null, paramType, false, AnnotationSet.EMPTY);
     testBuildOptionalArg(param);
   }
+
+  @DataProvider(name = "validateQueryParameter")
+  private Object[][] validateQueryParameter()
+  {
+
+    //missing required
+    String recordParamKey = "recParam";
+    DataMap recordParamValue = new DataMap();
+    recordParamValue.put("intField", "5");
+    recordParamValue.put("longField", "5");
+
+    //field cannot be coerced
+    DataMap recordParamValue2 = new DataMap();
+    recordParamValue2.put("intField", "5");
+    recordParamValue2.put("longField", "5");
+    recordParamValue2.put("doubleField", "5.0");
+    recordParamValue2.put("floatField", "invalidValue");
+
+
+    //a valid example
+    DataMap recordParamValue3 = new DataMap();
+    recordParamValue3.put("intField", "5");
+    recordParamValue3.put("longField", "5");
+    recordParamValue3.put("doubleField", "5.0");
+    recordParamValue3.put("floatField", "5.0");
+
+    return new Object[][]
+        {
+            {
+                recordParamKey,
+                TestRecord.class,
+                recordParamValue,
+                false,
+                "Argument parameter 'recParam' value '{longField=5, intField=5}' is invalid, reason: ERROR :: /floatField :: field is required but not found and has no default value\n" +
+                    "ERROR :: /doubleField :: field is required but not found and has no default value\n"
+
+            },
+            {
+                recordParamKey,
+                TestRecord.class,
+                recordParamValue2,
+                false,
+                "Argument parameter 'recParam' value '{floatField=invalidValue, longField=5, doubleField=5.0, intField=5}' is invalid, reason: ERROR :: /floatField :: invalidValue cannot be coerced to Float\n"
+            },
+            {
+                recordParamKey,
+                TestRecord.class,
+                recordParamValue3,
+                true,
+                null
+            }
+        };
+  }
+
+  @Test(dataProvider = "validateQueryParameter")
+  public void testQueryParameterValidation(String paramKey, Class<?> dataType,
+                                           Object paramValue,
+                                           boolean isValid,
+                                           String errorMessage)
+  {
+    Parameter<?> param = new Parameter<>(paramKey, dataType, DataTemplateUtil.getSchema(dataType),
+        false, null, Parameter.ParamType.QUERY, false, AnnotationSet.EMPTY);
+
+    ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
+    EasyMock.expect(mockResourceContext.getStructuredParameter(paramKey)).andReturn(paramValue);
+    EasyMock.replay(mockResourceContext);
+
+    List<Parameter<?>> parameters = Collections.singletonList(param);
+
+    try
+    {
+      ArgumentBuilder.buildArgs(new Object[0], getMockResourceMethod(parameters), mockResourceContext, null, getMockResourceMethodConfig(true));
+      assert(isValid);
+    } catch (Exception e) {
+      assert(!isValid);
+      assert(e.getMessage().equals(errorMessage));
+    }
+  }
+
 }
