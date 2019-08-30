@@ -84,7 +84,6 @@ public abstract class AbstractServiceTest
   @BeforeClass
   public void setup() throws Exception
   {
-    System.out.println("Setting up");
     _scheduler = Executors.newSingleThreadScheduledExecutor();
     _executor = Executors.newCachedThreadPool();
     _client = createClient();
@@ -95,8 +94,8 @@ public abstract class AbstractServiceTest
   @AfterClass
   public void tearDown() throws Exception
   {
-    System.out.println("Tearing down");
     tearDown(_client, _server);
+    _clientProvider.tearDown();
   }
 
   protected Client createClient() throws Exception
@@ -126,6 +125,7 @@ public abstract class AbstractServiceTest
       callback.get();
       _scheduler.shutdown();
       _executor.shutdown();
+      _clientProvider.tearDown();
     }
     finally
     {

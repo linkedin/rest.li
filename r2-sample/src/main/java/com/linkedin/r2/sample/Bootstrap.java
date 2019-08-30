@@ -162,12 +162,12 @@ public class Bootstrap
 
   // ############# HTTP1.1 Clear Section #############
 
-  public static Client createHttpClient(FilterChain filters, boolean restOverStream, boolean usePipelineV2)
+  public static Client createHttpClient(HttpClientFactory httpClientFactory, boolean restOverStream)
   {
-    return createHttpClient(filters, restOverStream, usePipelineV2, null);
+    return createHttpClient(httpClientFactory, restOverStream, null);
   }
 
-  public static Client createHttpClient(FilterChain filters, boolean restOverStream, boolean usePipelineV2, Map<String, Object> clientProperties)
+  public static Client createHttpClient(HttpClientFactory httpClientFactory, boolean restOverStream, Map<String, Object> clientProperties)
   {
     HashMap<String, Object> properties = new HashMap<>();
     properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_1_1.name());
@@ -175,12 +175,19 @@ public class Bootstrap
 
     merge(properties, clientProperties);
 
-    final TransportClient client = new HttpClientFactory.Builder()
-        .setFilterChain(filters)
-        .setUsePipelineV2(usePipelineV2)
-        .build()
-        .getClient(properties);
+    return createClient(restOverStream, properties, httpClientFactory);
+  }
+
+  public static Client createClient(boolean restOverStream, HashMap<String, Object> properties,
+      HttpClientFactory httpClientFactory)
+  {
+    final TransportClient client = httpClientFactory.getClient(properties);
     return new TransportClientAdapter(client, restOverStream);
+  }
+
+  public static HttpClientFactory createHttpClientFactory(FilterChain filters, boolean usePipelineV2)
+  {
+    return new HttpClientFactory.Builder().setFilterChain(filters).setUsePipelineV2(usePipelineV2).build();
   }
 
   private static void merge(HashMap<String, Object> defaultValues, Map<String, Object> override)
@@ -196,19 +203,20 @@ public class Bootstrap
 
   public static Client createHttpClient(FilterChain filters)
   {
-    return createHttpClient(filters, R2Constants.DEFAULT_REST_OVER_STREAM, false);
+    return createHttpClient(createHttpClientFactory(filters, false), R2Constants.DEFAULT_REST_OVER_STREAM);
   }
 
 
   // ############# HTTPS 1.1 Section #############
 
-  public static Client createHttpsClient(FilterChain filters, boolean restOverStream, SSLContext sslContext, SSLParameters sslParameters, boolean usePipelineV2)
+  public static Client createHttpsClient(HttpClientFactory httpClientFactory, boolean restOverStream, SSLContext sslContext,
+      SSLParameters sslParameters)
   {
-    return createHttpsClient(filters, restOverStream, sslContext, sslParameters, usePipelineV2, null);
+    return createHttpsClient(httpClientFactory, restOverStream, sslContext, sslParameters, null);
   }
 
-  public static Client createHttpsClient(FilterChain filters, boolean restOverStream, SSLContext sslContext,
-      SSLParameters sslParameters, boolean usePipelineV2, Map<String, Object> clientProperties)
+  public static Client createHttpsClient(HttpClientFactory httpClientFactory, boolean restOverStream, SSLContext sslContext,
+      SSLParameters sslParameters, Map<String, Object> clientProperties)
   {
     HashMap<String, Object> properties = new HashMap<>();
     properties.put(HttpClientFactory.HTTP_SSL_CONTEXT, sslContext);
@@ -218,22 +226,18 @@ public class Bootstrap
 
     merge(properties, clientProperties);
 
-    final TransportClient client = new HttpClientFactory.Builder()
-        .setFilterChain(filters)
-        .setUsePipelineV2(usePipelineV2)
-        .build()
-        .getClient(properties);
-    return new TransportClientAdapter(client, restOverStream);
+    return createClient(restOverStream, properties, httpClientFactory);
   }
 
   // ############# HTTP2 Clear Section #############
 
-  public static Client createHttp2Client(FilterChain filters, boolean restOverStream, boolean usePipelineV2)
+  public static Client createHttp2Client(HttpClientFactory httpClientFactory, boolean restOverStream)
   {
-    return createHttp2Client(filters, restOverStream, usePipelineV2, null);
+    return createHttp2Client(httpClientFactory, restOverStream, null);
   }
 
-  public static Client createHttp2Client(FilterChain filters, boolean restOverStream, boolean usePipelineV2, Map<String, Object> clientProperties)
+  public static Client createHttp2Client(HttpClientFactory httpClientFactory, boolean restOverStream,
+      Map<String, Object> clientProperties)
   {
     HashMap<String, Object> properties = new HashMap<>();
     properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, HttpProtocolVersion.HTTP_2.name());
@@ -241,26 +245,21 @@ public class Bootstrap
 
     merge(properties, clientProperties);
 
-    final TransportClient client = new HttpClientFactory.Builder()
-        .setFilterChain(filters)
-        .setUsePipelineV2(usePipelineV2)
-        .build()
-        .getClient(properties);
-    return new TransportClientAdapter(client, restOverStream);
+    return createClient(restOverStream, properties, httpClientFactory);
   }
 
   // ############# HTTPS 2 Section #############
 
-  public static Client createHttps2Client(FilterChain filters, boolean restOverStream, SSLContext sslContext,
-      SSLParameters sslParameters, boolean usePipelineV2)
+  public static Client createHttps2Client(HttpClientFactory httpClientFactory, boolean restOverStream, SSLContext sslContext,
+      SSLParameters sslParameters)
   {
-    return createHttps2Client(filters, restOverStream, sslContext,
-        sslParameters, usePipelineV2, null);
+    return createHttps2Client(httpClientFactory, restOverStream, sslContext,
+        sslParameters, null);
   }
 
 
-  public static Client createHttps2Client(FilterChain filters, boolean restOverStream, SSLContext sslContext,
-      SSLParameters sslParameters, boolean usePipelineV2, Map<String, Object> clientProperties)
+  public static Client createHttps2Client(HttpClientFactory httpClientFactory, boolean restOverStream, SSLContext sslContext,
+      SSLParameters sslParameters, Map<String, Object> clientProperties)
   {
     HashMap<String, Object> properties = new HashMap<>();
     properties.put(HttpClientFactory.HTTP_SSL_CONTEXT, sslContext);
@@ -269,12 +268,7 @@ public class Bootstrap
 
     merge(properties, clientProperties);
 
-    final TransportClient client = new HttpClientFactory.Builder()
-      .setFilterChain(filters)
-      .setUsePipelineV2(usePipelineV2)
-      .build()
-      .getClient(properties);
-    return new TransportClientAdapter(client, restOverStream);
+    return createClient(restOverStream, properties, httpClientFactory);
   }
 
   // ############# Tools Section #############

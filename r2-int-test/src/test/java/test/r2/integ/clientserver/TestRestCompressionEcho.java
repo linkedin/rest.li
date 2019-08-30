@@ -73,6 +73,8 @@ public class TestRestCompressionEcho extends AbstractServiceTest
       client.shutdown(clientShutdownCallback);
       clientShutdownCallback.get();
     }
+
+    super.tearDown(_client, _server);
   }
 
 

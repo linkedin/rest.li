@@ -41,4 +41,6 @@ public interface ClientProvider
   }
 
   boolean getUsePipelineV2();
+
+  void tearDown();
 }

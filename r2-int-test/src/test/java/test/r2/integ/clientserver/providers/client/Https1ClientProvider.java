@@ -16,58 +16,35 @@
 
 package test.r2.integ.clientserver.providers.client;
 
-import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import java.net.URI;
 import java.util.Map;
 import test.r2.integ.clientserver.providers.common.SslContextUtil;
 
-public class Https1ClientProvider implements ClientProvider
+public class Https1ClientProvider extends AbstractClientProvider
 {
-  private final boolean _clientROS;
-  private final boolean _usePipelineV2;
-
   public Https1ClientProvider(boolean clientROS)
   {
-    this(clientROS, false);
+    super(clientROS);
   }
 
   public Https1ClientProvider(boolean clientROS, boolean usePipelineV2)
   {
-    _clientROS = clientROS;
-    _usePipelineV2 = usePipelineV2;
+    super(clientROS, usePipelineV2);
   }
 
   @Override
-  public Client createClient(FilterChain filters) throws Exception
+  protected Client createClient(HttpClientFactory httpClientFactory, Map<String, Object> clientProperties) throws Exception
   {
-    return Bootstrap.createHttpsClient(filters, _clientROS, SslContextUtil.getContext(),
-        SslContextUtil.getSSLParameters(), _usePipelineV2);
-  }
-
-  @Override
-  public Client createClient(FilterChain filters, Map<String, Object> clientProperties) throws Exception
-  {
-    return Bootstrap.createHttpsClient(filters, _clientROS, SslContextUtil.getContext(),
-        SslContextUtil.getSSLParameters(), _usePipelineV2, clientProperties);
+    return Bootstrap.createHttpsClient(httpClientFactory, _clientROS, SslContextUtil.getContext(),
+        SslContextUtil.getSSLParameters(), clientProperties);
   }
 
   @Override
   public URI createHttpURI(int port, URI relativeURI)
   {
     return Bootstrap.createHttpsURI(port, relativeURI);
-  }
-
-  @Override
-  public boolean getUsePipelineV2()
-  {
-    return _usePipelineV2;
-  }
-
-  @Override
-  public String toString()
-  {
-    return "[" + getClass().getName() + ", stream=" + _clientROS +", _usePipelineV2=" + _usePipelineV2 + "]";
   }
 }

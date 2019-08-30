@@ -1,10 +1,11 @@
-27.4.5
+27.5.1
 ------
 
-27.4.4
+27.5.0
 ------
 (RB=1779724)
-Create constants for bounded load thresholds.
+Fix memory leak in test by properly shutting down HttpClientFactory in test data providers.
+Revert commit 'f9d016b1b7f969c04368c0872b501e592c48c889' - that introduced a test failure
 
 27.4.3
 ------

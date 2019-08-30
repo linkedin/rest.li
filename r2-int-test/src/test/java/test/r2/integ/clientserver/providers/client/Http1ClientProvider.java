@@ -16,49 +16,28 @@
 
 package test.r2.integ.clientserver.providers.client;
 
-import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import java.util.Map;
 
 
-public class Http1ClientProvider implements ClientProvider
+public class Http1ClientProvider extends AbstractClientProvider
 {
-  private final boolean _clientROS;
-  private boolean _usePipelineV2;
 
   public Http1ClientProvider(boolean clientROS)
   {
-    this(clientROS,false);
+    super(clientROS);
   }
 
   public Http1ClientProvider(boolean clientROS, boolean usePipelineV2)
   {
-    _clientROS = clientROS;
-    _usePipelineV2 = usePipelineV2;
+    super(clientROS, usePipelineV2);
   }
 
   @Override
-  public Client createClient(FilterChain filters)
+  protected Client createClient(HttpClientFactory httpClientFactory, Map<String, Object> clientProperties)
   {
-    return Bootstrap.createHttpClient(filters, _clientROS, _usePipelineV2);
-  }
-
-  @Override
-  public Client createClient(FilterChain filters, Map<String, Object> clientProperties)
-  {
-    return Bootstrap.createHttpClient(filters, _clientROS, _usePipelineV2, clientProperties);
-  }
-
-  @Override
-  public boolean getUsePipelineV2()
-  {
-    return _usePipelineV2;
-  }
-
-  @Override
-  public String toString()
-  {
-    return "[" + getClass().getName() + ", stream=" + _clientROS +", _usePipelineV2=" + _usePipelineV2 + "]";
+    return Bootstrap.createHttpClient(httpClientFactory, _clientROS, clientProperties);
   }
 }
