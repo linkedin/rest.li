@@ -16,15 +16,10 @@
 
 package com.linkedin.d2.discovery.stores.zk.builder;
 
-import java.io.File;
-
-import javax.annotation.Nullable;
-
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
-
 
 /**
  * Builder class for {@link ZooKeeperEphemeralStore}
@@ -33,67 +28,52 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
  */
 public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<ZooKeeperEphemeralStore<T>>
 {
-  private static final String URIS_VALUES_DIRECTORY = "urisValues";
-  private ZKConnection _client;
-  private PropertySerializer<T> _serializer;
-  private ZooKeeperPropertyMerger<T> _merger;
-  private String _path;
-  private boolean _watchChildNodes = false;
-  private boolean _useNewWatcher = false;
-  private String _backupStoreFilePath = null;
+  private ZKConnection client;
+  private PropertySerializer<T> serializer;
+  private ZooKeeperPropertyMerger<T> merger;
+  private String path;
+  private boolean watchChildNodes = false;
+  private boolean useNewWatcher = false;
 
   @Override
   public void setZkConnection(ZKConnection client)
   {
-    _client = client;
+    this.client = client;
   }
 
   public ZooKeeperEphemeralStoreBuilder<T> setSerializer(PropertySerializer<T> serializer)
   {
-    _serializer = serializer;
+    this.serializer = serializer;
     return this;
   }
 
   public ZooKeeperEphemeralStoreBuilder<T> setMerger(ZooKeeperPropertyMerger<T> merger)
   {
-    _merger = merger;
+    this.merger = merger;
     return this;
   }
 
   public ZooKeeperEphemeralStoreBuilder<T> setPath(String path)
   {
-    _path = path;
+    this.path = path;
     return this;
   }
 
   public ZooKeeperEphemeralStoreBuilder<T> setWatchChildNodes(boolean watchChildNodes)
   {
-    _watchChildNodes = watchChildNodes;
+    this.watchChildNodes = watchChildNodes;
     return this;
   }
 
   public ZooKeeperEphemeralStoreBuilder<T> setUseNewWatcher(boolean useNewWatcher)
   {
-    _useNewWatcher = useNewWatcher;
-    return this;
-  }
-
-  /**
-   * Set null to disable
-   */
-  public ZooKeeperEphemeralStoreBuilder<T> setBackupStoreFilePath(@Nullable String fsd2DirPath)
-  {
-    _backupStoreFilePath = null;
-    if (fsd2DirPath != null)
-    {
-      _backupStoreFilePath = fsd2DirPath + File.separator + URIS_VALUES_DIRECTORY;
-    }
+    this.useNewWatcher = useNewWatcher;
     return this;
   }
 
   @Override
   public ZooKeeperEphemeralStore<T> build()
   {
-    return new ZooKeeperEphemeralStore<>(_client, _serializer, _merger, _path, _watchChildNodes, _useNewWatcher, _backupStoreFilePath);
+    return new ZooKeeperEphemeralStore<>(client, serializer, merger, path, watchChildNodes, useNewWatcher);
   }
 }

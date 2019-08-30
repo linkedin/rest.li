@@ -16,9 +16,6 @@
 
 package com.linkedin.d2.balancer.zkfs;
 
-import java.io.IOException;
-import java.util.Collections;
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.MultiCallback;
 import com.linkedin.common.util.None;
@@ -39,7 +36,8 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-
+import java.io.IOException;
+import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,11 +60,11 @@ public class LastSeenLoadBalancerWithFacilities implements LoadBalancerWithFacil
   private final SimpleLoadBalancer _loadBalancer;
   private final KeyMapper _keyMapper;
 
-  public LastSeenLoadBalancerWithFacilities(SimpleLoadBalancer loadBalancer, String basePath, String d2ServicePath,
-      ZKPersistentConnection zkPersistentConnection, LastSeenZKStore<ClusterProperties> lsClusterStore, LastSeenZKStore<ServiceProperties> lsServiceStore,
-      LastSeenZKStore<UriProperties> lsUrisStore) {
+  public LastSeenLoadBalancerWithFacilities(SimpleLoadBalancer loadBalancer, String basePath,
+                                            ZKPersistentConnection zkPersistentConnection, LastSeenZKStore<ClusterProperties> lsClusterStore,
+                                            LastSeenZKStore<ServiceProperties> lsServiceStore, LastSeenZKStore<UriProperties> lsUrisStore) {
     _loadBalancer = loadBalancer;
-    _directory = new ZKFSDirectory(basePath, d2ServicePath);
+    _directory = new ZKFSDirectory(basePath);
     _zkPersistentConnection = zkPersistentConnection;
 
     _lsClusterStore = lsClusterStore;
