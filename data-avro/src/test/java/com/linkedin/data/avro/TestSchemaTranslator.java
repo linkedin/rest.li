@@ -1442,6 +1442,51 @@ public class TestSchemaTranslator
               null
           },
           {
+            // Test Annotations propagation for TypeRef, reserved word, such as "validate", should not be propagated
+              "{" +
+              "  \"type\": \"record\"," +
+              "  \"name\": \"Foo\"," +
+              "  \"namespace\": \"com.x.y.z\"," +
+              "  \"fields\": [" +
+              "    {" +
+              "      \"name\": \"typedefField\"," +
+              "      \"type\": {" +
+              "        \"type\": \"typeref\"," +
+              "        \"name\": \"refereeTypeName\"," +
+              "        \"ref\": \"string\"," +
+              "        \"compliance\": [" +
+              "          {" +
+              "            \"dataType\": \"MEMBER_NAME\"," +
+              "            \"format\": \"STRING\"" +
+              "          }" +
+              "        ]," +
+              "        \"validate\": {" +
+              "          \"validator\": \"validateContent\"" +
+              "        }," +
+              "        \"java\": {" +
+              "          \"class\": \"exampleTypedUrn\"" +
+              "        }" +
+              "      }" +
+              "    }" +
+              "  ]" +
+              "}",
+              allModes,
+              "{ \"type\" : " +
+                  "\"record\", " +
+                  "\"name\" : " +
+                  "\"Foo\", " +
+                  "\"namespace\" : \"com.x.y.z\", " +
+                  "\"fields\" : [ " +
+                  "{ \"name\" : \"typedefField\", " +
+                  "\"type\" : \"string\", " +
+                  "\"java\" : { \"class\" : \"exampleTypedUrn\" }, " +
+                  "\"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }",
+              null,
+              null,
+              null
+
+          },
+          {
               // Test Annotations for TypeRef : two layer nested TypeRef both have compliance annotation and outer layer should override
               "{\"type\" : " +
                   "\"record\", " +

@@ -1,5 +1,10 @@
+27.5.2
+------
+
 27.5.1
 ------
+(RB=1785332)
+remove "validate" property that brought by TypedUrn in avsc schemas
 
 27.5.0
 ------

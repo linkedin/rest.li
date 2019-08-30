@@ -29,6 +29,7 @@ import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 
+import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -415,7 +416,8 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
     if (field.getType().getType() == DataSchema.Type.TYPEREF)
     {
       toBeFiltered = Stream.concat(toBeFiltered,
-          ((TyperefDataSchema) field.getType()).getMergedTyperefProperties().entrySet().stream());
+          ((TyperefDataSchema) field.getType()).getMergedTyperefProperties().entrySet().stream())
+          .filter(entry -> !DataSchemaAnnotationValidator.VALIDATE.equals(entry.getKey()));
     }
     // Property merge rule:
     // For property content inherited from TypeRef that appears to be have same property name as the record field:
