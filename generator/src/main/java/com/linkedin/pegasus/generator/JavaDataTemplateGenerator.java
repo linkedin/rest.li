@@ -136,6 +136,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   }
 
   private static final int MAX_SCHEMA_FIELD_JSON_LENGTH = 32000;
+  private static final int DEFAULT_DATAMAP_INITIAL_CAPACITY = 16; // From HashMap's default initial capacity
   private static final Logger _log = LoggerFactory.getLogger(JavaDataTemplateGenerator.class);
   //
   // Deprecated annotation utils
@@ -308,12 +309,6 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   private static boolean isArrayType(DataSchema schema)
   {
     return schema.getDereferencedType() == DataSchema.Type.ARRAY;
-  }
-
-  private static void generateConstructorWithNoArg(JDefinedClass cls, JVar schemaField, JClass newClass)
-  {
-    final JMethod noArgConstructor = cls.constructor(JMod.PUBLIC);
-    noArgConstructor.body().invoke(SUPER).arg(JExpr._new(newClass)).arg(schemaField);
   }
 
   private static void generateConstructorWithNoArg(JDefinedClass cls, JClass newClass)
@@ -667,7 +662,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
 
     final JFieldVar schemaFieldVar = generateSchemaField(templateClass, recordSpec.getSchema());
-    generateConstructorWithNoArg(templateClass, schemaFieldVar, _dataMapClass);
+    generateDataMapConstructor(templateClass, schemaFieldVar, recordSpec.getFields().size());
     generateConstructorWithArg(templateClass, schemaFieldVar, _dataMapClass);
 
     for (RecordTemplateSpec.Field field : recordSpec.getFields())
@@ -685,6 +680,28 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       generateCopierMethods(templateClass);
     }
+  }
+
+  /**
+   * Generates a constructor with no arguments for a DataTemplate type. The constructor calls the super class
+   * constructor that accepts a new instance of "DataMap" type (provided by _dataMapClass) and the SCHEMA.
+   * @param cls DataTemplate class being constructed.
+   * @param schemaField SCHEMA field to use for initialization.
+   * @param dataMapSize Initial size for the DataMap, applied only if this size is smaller than
+   *                    {@link #DEFAULT_DATAMAP_INITIAL_CAPACITY}.
+   */
+  private void generateDataMapConstructor(JDefinedClass cls, JVar schemaField, int dataMapSize)
+  {
+    final JMethod noArgConstructor = cls.constructor(JMod.PUBLIC);
+    JInvocation superConstructorArg = JExpr._new(_dataMapClass);
+    // Compute the DataMap initial capacity based on the load factor of 0.75. Use lower capacity if possible.
+    int initialCapacity = (int) (dataMapSize/.75f) + 1;
+    if (initialCapacity < DEFAULT_DATAMAP_INITIAL_CAPACITY)
+    {
+      superConstructorArg.arg(JExpr.lit(initialCapacity)); // Initial capacity
+      superConstructorArg.arg(JExpr.lit(0.75f));  // Load factor.
+    }
+    noArgConstructor.body().invoke(SUPER).arg(superConstructorArg).arg(schemaField);
   }
 
   protected void extendRecordBaseClass(JDefinedClass templateClass)
@@ -880,7 +897,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     final JVar schemaField = generateSchemaField(unionClass, unionSpec.getSchema());
 
-    generateConstructorWithNoArg(unionClass, schemaField, _dataMapClass);
+    // Default union datamap size to 1 (last arg) as union can have at-most one element.
+    generateDataMapConstructor(unionClass, schemaField, 1);
     generateConstructorWithObjectArg(unionClass, schemaField);
 
     for (UnionTemplateSpec.Member member : unionSpec.getMembers())
