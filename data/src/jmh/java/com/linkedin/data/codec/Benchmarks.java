@@ -4,6 +4,7 @@ import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.symbol.InMemorySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
+import com.linkedin.data.codec.symbol.SymbolTableProvider;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -51,6 +52,25 @@ public class Benchmarks {
       return _codec.mapToBytes(_case3);
     }
 
+    String _sharedSymbolTableName = "SHARED";
+
+    SymbolTableProvider getSharedSymbolTableProvider() {
+      Set<String> symbols = new HashSet<>();
+      TestCodec.collectSymbols(symbols, _case1);
+      TestCodec.collectSymbols(symbols, _case2);
+      TestCodec.collectSymbols(symbols, _case3);
+
+      SymbolTable symbolTable = new InMemorySymbolTable(new ArrayList<>(symbols));
+
+      return symbolTableName -> {
+        if (_sharedSymbolTableName.equals(symbolTableName)) {
+          return symbolTable;
+        }
+
+        return null;
+      };
+    }
+
     protected abstract DataCodec getCodec();
   }
 
@@ -71,25 +91,17 @@ public class Benchmarks {
   public static class JacksonLICORDataCodecBenchmark extends AbstractBenchmark {
     @Override
     protected DataCodec getCodec() {
-
-      Set<String> symbols = new HashSet<>();
-      TestCodec.collectSymbols(symbols, _case1);
-      TestCodec.collectSymbols(symbols, _case2);
-      TestCodec.collectSymbols(symbols, _case3);
-
-      SymbolTable symbolTable = new InMemorySymbolTable(new ArrayList<>(symbols));
-
-      final String sharedSymbolTableName = "SHARED";
-      JacksonLICORDataCodec.setSymbolTableProvider(symbolTableName -> {
-        if (sharedSymbolTableName.equals(symbolTableName))
-        {
-          return symbolTable;
-        }
-
-        return null;
-      });
-
-      return new JacksonLICORDataCodec(true, sharedSymbolTableName);
+      JacksonLICORDataCodec.setSymbolTableProvider(getSharedSymbolTableProvider());
+      return new JacksonLICORDataCodec(true, _sharedSymbolTableName);
     }
+  }
+
+  public static class ProtobufDataCodecBenchmark extends AbstractBenchmark {
+    @Override
+    protected DataCodec getCodec() {
+      ProtobufDataCodec.setSymbolTableProvider(getSharedSymbolTableProvider());
+      return new ProtobufDataCodec(_sharedSymbolTableName);
+    }
+
   }
 }

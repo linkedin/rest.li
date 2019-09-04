@@ -58,7 +58,7 @@ jmh {
 
   // ok to tweak these for your benchmarking
   forceGC = true
-  fork = 3
+  fork = 10 // this is set high to keep the error bands small, lower and you'll see more variance
   warmupIterations = 2
   iterations = 3
 }
