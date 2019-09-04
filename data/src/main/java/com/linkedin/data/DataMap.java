@@ -400,8 +400,8 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
     super._checker = null;
   }
 
-  // Unit test use only
-  Map<String, Object> getUnderlying()
+  // Unit test and codec use only
+  public Map<String, Object> getUnderlying()
   {
     return getObject();
   }

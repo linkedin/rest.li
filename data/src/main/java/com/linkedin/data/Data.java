@@ -116,17 +116,17 @@ public class Data
   /**
    * A map of all underlying types supported by Data objects.
    */
-  public static final Map<Class<?>, Integer> TYPE_MAP = new HashMap<>();
+  public static final Map<Class<?>, Byte> TYPE_MAP = new HashMap<>();
   static {
-    TYPE_MAP.put(String.class, 1);
-    TYPE_MAP.put(Integer.class, 2);
-    TYPE_MAP.put(DataMap.class, 3);
-    TYPE_MAP.put(DataList.class, 4);
-    TYPE_MAP.put(Boolean.class, 5);
-    TYPE_MAP.put(Long.class, 6);
-    TYPE_MAP.put(Float.class, 7);
-    TYPE_MAP.put(Double.class, 8);
-    TYPE_MAP.put(ByteString.class, 9);
+    TYPE_MAP.put(String.class, (byte) 1);
+    TYPE_MAP.put(Integer.class, (byte) 2);
+    TYPE_MAP.put(DataMap.class, (byte) 3);
+    TYPE_MAP.put(DataList.class, (byte) 4);
+    TYPE_MAP.put(Boolean.class, (byte) 5);
+    TYPE_MAP.put(Long.class, (byte) 6);
+    TYPE_MAP.put(Float.class, (byte) 7);
+    TYPE_MAP.put(Double.class, (byte) 8);
+    TYPE_MAP.put(ByteString.class, (byte) 9);
   }
 
   /**

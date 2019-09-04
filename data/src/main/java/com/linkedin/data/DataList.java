@@ -231,8 +231,8 @@ public final class DataList extends CheckedList<Object> implements DataComplex
     super._checker = null;
   }
 
-  // Unit test use only
-  List<Object> getUnderlying()
+  // Unit test and codec use only
+  public List<Object> getUnderlying()
   {
     return getObject();
   }

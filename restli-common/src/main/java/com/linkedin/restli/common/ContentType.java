@@ -20,6 +20,7 @@ import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.HeaderBasedCodecProvider;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.JacksonLICORDataCodec;
+import com.linkedin.data.codec.ProtobufDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.codec.JacksonSmileDataCodec;
 import com.linkedin.data.codec.entitystream.JacksonStreamDataCodec;
@@ -54,6 +55,7 @@ public class ContentType
   private static final PsonDataCodec PSON_DATA_CODEC = new PsonDataCodec();
   private static final JacksonSmileDataCodec SMILE_DATA_CODEC = new JacksonSmileDataCodec();
   private static final JacksonSmileStreamDataCodec SMILE_STREAM_DATA_CODEC = new JacksonSmileStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
+  private static final ProtobufDataCodec PROTOBUF_DATA_CODEC = new ProtobufDataCodec();
 
   public static final ContentType PSON =
       new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PSON, PSON_DATA_CODEC, null, null);
@@ -85,6 +87,19 @@ public class ContentType
           return new JacksonLICORStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, true, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
         }
       });
+  public static final ContentType PROTOBUF =
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF, PROTOBUF_DATA_CODEC,
+          null, new HeaderBasedCodecProvider() {
+        @Override
+        public DataCodec getCodec(Map<String, String> requestHeaders) {
+          return new ProtobufDataCodec(requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
+        }
+
+        @Override
+        public StreamDataCodec getStreamCodec(Map<String, String> requestHeaders) {
+          return null;
+        }
+      });
   public static final ContentType SMILE =
       new ContentType(RestConstants.HEADER_VALUE_APPLICATION_SMILE, SMILE_DATA_CODEC, SMILE_STREAM_DATA_CODEC, null);
   // Content type to be used only as an accept type.
@@ -99,6 +114,7 @@ public class ContentType
     SUPPORTED_TYPES.put(JSON.getHeaderKey(), JSON);
     SUPPORTED_TYPES.put(LICOR_TEXT.getHeaderKey(), LICOR_TEXT);
     SUPPORTED_TYPES.put(LICOR_BINARY.getHeaderKey(), LICOR_BINARY);
+    SUPPORTED_TYPES.put(PROTOBUF.getHeaderKey(), PROTOBUF);
     SUPPORTED_TYPES.put(SMILE.getHeaderKey(), SMILE);
   }
 

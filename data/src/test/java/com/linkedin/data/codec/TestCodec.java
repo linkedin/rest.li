@@ -24,6 +24,7 @@ import com.linkedin.data.TestUtil;
 
 import com.linkedin.data.codec.symbol.InMemorySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
+import com.linkedin.data.codec.symbol.SymbolTableProvider;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
@@ -240,24 +242,29 @@ public class TestCodec
   {
     List<DataCodec> codecs = new ArrayList<>();
     codecs.add(new JacksonDataCodec());
-    codecs.add(new BsonDataCodec());
-    codecs.add(new JacksonSmileDataCodec());
+    //codecs.add(new BsonDataCodec());
+    //codecs.add(new JacksonSmileDataCodec());
     Set<String> symbols = new HashSet<>();
 
     collectSymbols(symbols, map);
     final String sharedSymbolTableName = "SHARED";
     SymbolTable symbolTable = new InMemorySymbolTable(new ArrayList<>(symbols));
 
-    JacksonLICORDataCodec.setSymbolTableProvider(symbolTableName -> {
+    SymbolTableProvider provider = symbolTableName -> {
       if (sharedSymbolTableName.equals(symbolTableName))
       {
         return symbolTable;
       }
 
       return null;
-    });
+    };
+
+    JacksonLICORDataCodec.setSymbolTableProvider(provider);
     codecs.add(new JacksonLICORBinaryDataCodec(sharedSymbolTableName));
-    codecs.add(new JacksonLICORTextDataCodec(sharedSymbolTableName));
+    //codecs.add(new JacksonLICORTextDataCodec(sharedSymbolTableName));
+
+    ProtobufDataCodec.setSymbolTableProvider(provider);
+    codecs.add(new ProtobufDataCodec(sharedSymbolTableName));
 
     for (DataCodec codec : codecs)
     {
@@ -326,13 +333,13 @@ public class TestCodec
     }
   }
 
-  //@Test(dataProvider = "codecData", dataProviderClass = CodecDataProviders.class)
+  @Test(dataProvider = "codecData", dataProviderClass = CodecDataProviders.class)
   public void perfTest(String testName, DataComplex value) throws IOException
   {
     if (value.getClass() == DataMap.class)
     {
       out.println("------------- " + testName + " -------------");
-      perfTest(1000, (DataMap) value);
+      perfTest(100, (DataMap) value);
     }
   }
 

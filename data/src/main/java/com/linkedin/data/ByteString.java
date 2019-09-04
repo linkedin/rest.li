@@ -19,6 +19,7 @@ package com.linkedin.data;
 
 
 import com.fasterxml.jackson.core.async.ByteArrayFeeder;
+import com.google.protobuf.CodedOutputStream;
 import com.linkedin.util.ArgumentUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -446,7 +447,8 @@ public final class ByteString
     ByteArray byteArray = _byteArrays.get(index);
     if (feeder.needMoreInput())
     {
-      feeder.feedInput(byteArray.getArray(), byteArray.getOffset(), byteArray.getLength());
+      int end = byteArray.getOffset() + byteArray.getLength();
+      feeder.feedInput(byteArray.getArray(), byteArray.getOffset(), end);
     }
     else
     {
@@ -470,6 +472,23 @@ public final class ByteString
     {
       ByteArray byteArray = _byteArrays.get(i);
       out.write(byteArray.getArray(), byteArray.getOffset(), byteArray.getLength());
+    }
+  }
+
+  /**
+   * Writes this {@link ByteString} to a {@link CodedOutputStream} without copying the underlying byte[].
+   *
+   * @param out the CodedOutputStream to write the bytes to
+   *
+   * @throws IOException if an error occurs while writing to the stream
+   */
+  public void write(CodedOutputStream out) throws IOException
+  {
+    out.writeUInt32NoTag(length());
+    for (int i = 0; i < _byteArrays.getArraySize(); i++)
+    {
+      ByteArray byteArray = _byteArrays.get(i);
+      out.writeRawBytes(byteArray.getArray(), byteArray.getOffset(), byteArray.getLength());
     }
   }
 

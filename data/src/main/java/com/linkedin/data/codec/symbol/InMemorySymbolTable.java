@@ -38,7 +38,7 @@ public class InMemorySymbolTable implements SymbolTable {
 
   public InMemorySymbolTable(List<String> symbols)
   {
-    _symbolNameToId = new HashMap<>();
+    _symbolNameToId = new HashMap<>(symbols.size());
     _symbols = new String[symbols.size()];
 
     for (int i = 0; i < symbols.size(); i++)
