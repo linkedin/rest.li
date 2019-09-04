@@ -12,6 +12,9 @@ remove "validate" property that brought by TypedUrn in avsc schemas
 Fix memory leak in test by properly shutting down HttpClientFactory in test data providers.
 Revert commit 'f9d016b1b7f969c04368c0872b501e592c48c889' - that introduced a test failure
 
+(RB=1780445)
+Create constants for bounded load thresholds.
+
 27.4.3
 ------
 (RB=1775062)
