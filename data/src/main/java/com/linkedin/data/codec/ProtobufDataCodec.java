@@ -9,7 +9,7 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTableProvider;
-import java.io.ByteArrayOutputStream;
+import com.linkedin.util.FastByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -92,7 +92,7 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public byte[] mapToBytes(DataMap map) throws IOException
   {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    FastByteArrayOutputStream baos = new FastByteArrayOutputStream();
     writeMap(map, baos);
     return baos.toByteArray();
   }
@@ -100,7 +100,7 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public byte[] listToBytes(DataList list) throws IOException
   {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    FastByteArrayOutputStream baos = new FastByteArrayOutputStream();
     writeList(list, baos);
     return baos.toByteArray();
   }
