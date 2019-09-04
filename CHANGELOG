@@ -1,5 +1,8 @@
 27.5.4
 ------
+(RB=1788651)
+Set the initial capacity of records and union templates to reduce unused memory.
+
 (RB=1791278)
 Int-tests for Alternative Key Server Implementation
 
