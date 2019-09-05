@@ -1,5 +1,10 @@
+27.5.3
+------
+
 27.5.2
 ------
+(RB=1790760)
+Properly recover from corrupted uriValues in FileStore.
 
 27.5.1
 ------

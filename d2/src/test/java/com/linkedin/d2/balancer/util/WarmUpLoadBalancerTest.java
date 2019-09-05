@@ -33,7 +33,6 @@ import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetche
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
-import com.linkedin.d2.discovery.stores.file.FileStoreTest;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
@@ -65,9 +64,9 @@ public class WarmUpLoadBalancerTest
   // files with the wrong extension
   private static final List<String> UNVALID_FILES = Arrays.asList("unvalidServiceFile4.indgi", "unvalidServiceFile5.inagi");
   private static final List<String> VALID_FILES = Arrays.asList(
-    "service1" + FileStoreTest.FILE_STORE_EXTENSION,
-    "service2" + FileStoreTest.FILE_STORE_EXTENSION,
-    "service3" + FileStoreTest.FILE_STORE_EXTENSION
+    "service1" + FileSystemDirectory.FILE_STORE_EXTENSION,
+    "service2" + FileSystemDirectory.FILE_STORE_EXTENSION,
+    "service3" + FileSystemDirectory.FILE_STORE_EXTENSION
   );
 
   private static final List<String> VALID_AND_UNVALID_FILES = new ArrayList<>();
@@ -384,7 +383,7 @@ public class WarmUpLoadBalancerTest
     List<String> files = new ArrayList<>();
     for (int i = 0; i < n; i++)
     {
-      files.add("randomFile" + i + FileStoreTest.FILE_STORE_EXTENSION);
+      files.add("randomFile" + i + FileSystemDirectory.FILE_STORE_EXTENSION);
     }
     createServicesIniFiles(files);
   }

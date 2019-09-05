@@ -35,7 +35,6 @@ import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.file.FileStore;
-import com.linkedin.d2.discovery.stores.file.FileStoreTest;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
@@ -166,17 +165,17 @@ public class LoadBalancerEchoClient
 
     FileStore<ClusterProperties> fsClusterStore =
         new FileStore<ClusterProperties>(testDirectory + File.separator + "cluster",
-          FileStoreTest.FILE_STORE_EXTENSION,
+            FileSystemDirectory.FILE_STORE_EXTENSION,
                                          new ClusterPropertiesJsonSerializer());
 
     FileStore<ServiceProperties> fsServiceStore =
         new FileStore<ServiceProperties>(testDirectory + File.separator + "service",
-          FileStoreTest.FILE_STORE_EXTENSION,
+            FileSystemDirectory.FILE_STORE_EXTENSION,
                                          new ServicePropertiesJsonSerializer());
 
     FileStore<UriProperties> fsUriStore =
         new FileStore<UriProperties>(testDirectory + File.separator + "uri",
-          FileStoreTest.FILE_STORE_EXTENSION,
+            FileSystemDirectory.FILE_STORE_EXTENSION,
                                      new UriPropertiesJsonSerializer());
 
     // chains

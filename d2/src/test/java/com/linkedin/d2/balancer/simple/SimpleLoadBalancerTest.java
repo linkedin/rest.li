@@ -45,6 +45,7 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.util.FileSystemDirectory;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.KeysAndHosts;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
@@ -63,7 +64,6 @@ import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdown
 import com.linkedin.d2.discovery.event.SynchronousExecutorService;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.file.FileStore;
-import com.linkedin.d2.discovery.stores.file.FileStoreTest;
 import com.linkedin.d2.discovery.stores.mock.MockStore;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
@@ -1241,7 +1241,7 @@ public class SimpleLoadBalancerTest
     public PropertyStore<T> getStore()
     {
       return new FileStore<T>(_testDirectory + File.separator + _subfolder,
-                              FileStoreTest.FILE_STORE_EXTENSION,
+                              FileSystemDirectory.FILE_STORE_EXTENSION,
                               _serializer);
     }
   }

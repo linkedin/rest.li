@@ -16,19 +16,24 @@
 
 package com.linkedin.d2.discovery.stores.file;
 
+import com.linkedin.d2.balancer.util.FileSystemDirectory;
+import com.linkedin.d2.discovery.PropertySerializationException;
+import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.stores.PropertyStore;
+import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.PropertyStoreTest;
 import com.linkedin.d2.discovery.stores.PropertyStringSerializer;
+import java.util.Collections;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.io.IOException;
 
+import static com.linkedin.d2.balancer.util.LoadBalancerUtil.createTempDirectory;
 import static org.testng.Assert.fail;
 
 public class FileStoreTest extends PropertyStoreTest
 {
-  public static final String FILE_STORE_EXTENSION = ".ini";
 
   @Override
   public PropertyStore<String> getStore()
@@ -36,8 +41,8 @@ public class FileStoreTest extends PropertyStoreTest
     try
     {
       return new FileStore<>(createTempDirectory("file-store-test").toString(),
-                                   FILE_STORE_EXTENSION,
-                                   new PropertyStringSerializer());
+          FileSystemDirectory.FILE_STORE_EXTENSION,
+          new PropertyStringSerializer());
     }
     catch (IOException e)
     {
@@ -50,24 +55,62 @@ public class FileStoreTest extends PropertyStoreTest
   @Test(groups = { "small", "back-end" })
   public void test()
   {
+
   }
 
-  public static File createTempDirectory(String name) throws IOException
+  @Test
+  public void testFileStoreGetDeserializationError() throws IOException, PropertyStoreException
   {
-    final File temp;
+    final PropertyStore<String> fileStore = new FileStore<>(createTempDirectory("file-store-test").toString(),
+      FileSystemDirectory.FILE_STORE_EXTENSION,
+      new TestPropertySerializer<>(new PropertyStringSerializer()));
+    final String name = "testFileStoreGet";
+    final String contents = "contents";
 
-    temp = File.createTempFile("temp-" + name, Long.toString(System.nanoTime()));
+    fileStore.put(name, contents);
 
-    if (!(temp.delete()))
+    Assert.assertNull(fileStore.get(name));
+  }
+
+  @Test
+  public void testFileStoreGetAllDeserializationError() throws IOException, PropertyStoreException
+  {
+    final FileStore<String> fileStore = new FileStore<>(createTempDirectory("file-store-test").toString(),
+        FileSystemDirectory.FILE_STORE_EXTENSION,
+        new TestPropertySerializer<>(new PropertyStringSerializer()));
+    final String name = "testFileStoreGetAll";
+    final String name2 = "testFileStoreGetAll2";
+    final String contents = "contents";
+
+    fileStore.put(name, contents);
+    fileStore.put(name2, contents);
+
+    Assert.assertEquals(fileStore.getAll(), Collections.emptyMap(), "Expected empty map since all files were not deserialized properly.");
+  }
+
+  /**
+   * Test serializer that throws when deserializing.
+   *
+   * @param <T>
+   */
+  private class TestPropertySerializer<T> implements PropertySerializer<T>
+  {
+    private final PropertySerializer<T> _serializer;
+
+    private TestPropertySerializer(PropertySerializer<T> serializer)
     {
-      throw new IOException("Could not delete temp file: " + temp.getAbsolutePath());
+      _serializer = serializer;
     }
 
-    if (!(temp.mkdir()))
-    {
-      throw new IOException("Could not create temp directory: " + temp.getAbsolutePath());
+    @Override
+    public byte[] toBytes(T property) {
+      return _serializer.toBytes(property);
     }
 
-    return (temp);
+    @Override
+    public T fromBytes(byte[] bytes) throws PropertySerializationException
+    {
+      throw new PropertySerializationException("Expected exception.");
+    }
   }
 }

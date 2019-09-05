@@ -32,8 +32,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,6 +122,11 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
     return true;
   }
 
+  /**
+   * @return The deserialized property or null if the file does not exist or
+   *         there was an error deserializing the property.
+   */
+  @Nullable
   @Override
   public T get(String listenTo)
   {
@@ -169,18 +176,25 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
     }
   }
 
+  /**
+   * @return All deserialized properties, filtering out those that were unable to be deserialized properly.
+   */
   public Map<String, T> getAll()
   {
     r.lock();
-    List<String> props;
+    List<String> propertyNames;
     try
     {
-      props = FileSystemDirectory.getFileListWithoutExtension(_fsPath);
+      propertyNames = FileSystemDirectory.getFileListWithoutExtension(_fsPath);
 
       Map<String, T> result = new HashMap<>();
-      for (String prop : props)
+      for (String propertyName : propertyNames)
       {
-        result.put(prop, get(prop));
+        T property = get(propertyName);
+        if (property != null)
+        {
+          result.put(propertyName, property);
+        }
       }
       return result;
     }
