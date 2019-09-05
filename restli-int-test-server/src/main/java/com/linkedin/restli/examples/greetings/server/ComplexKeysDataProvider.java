@@ -52,6 +52,9 @@ public class ComplexKeysDataProvider
     addExample(StringTestKeys.SIMPLEKEY,
                StringTestKeys.SIMPLEKEY2,
                StringTestKeys.SIMPLEKEY + " " + StringTestKeys.SIMPLEKEY2);
+    addExample(StringTestKeys.SIMPLEKEY3,
+        StringTestKeys.SIMPLEKEY4,
+        StringTestKeys.SIMPLEKEY3 + " " + StringTestKeys.SIMPLEKEY4);
   }
 
   public Message get(ComplexResourceKey<TwoPartKey, TwoPartKey> key)
@@ -67,6 +70,10 @@ public class ComplexKeysDataProvider
 
     _db.put(keyToString(key), message);
     return new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, new TwoPartKey());
+  }
+
+  public void update(ComplexResourceKey<TwoPartKey, TwoPartKey> key, Message message) {
+    _db.put(keyToString(key.getKey()), message);
   }
 
   public void partialUpdate(

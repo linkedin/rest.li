@@ -131,6 +131,11 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.reactiveGreetingAssociationUnstructuredData", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.reactiveGreetingSimpleUnstructuredData", ResourceType.SIMPLE);
 
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.altKey", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.associationAltKey", ResourceType.ASSOCIATION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexKeyAltKey", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.altKey.altKeySub", ResourceType.COLLECTION);
+
     for (Map.Entry<String, ResourceSchema> entry: _schemas.getResources().entrySet())
     {
       final ResourceSchema schema = entry.getValue();

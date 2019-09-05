@@ -37,6 +37,7 @@ public class StringTestKeys
   public static String SIMPLEKEY = "KEY 1";
   public static String SIMPLEKEY2 = "KEY 2";
   public static String SIMPLEKEY3 = "KEY 3";
+  public static String SIMPLEKEY4 = "KEY 4";
 
   static {
     try

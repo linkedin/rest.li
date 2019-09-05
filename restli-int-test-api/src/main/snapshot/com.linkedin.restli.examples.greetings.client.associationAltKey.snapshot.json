@@ -1,0 +1,80 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : {
+        "type" : "enum",
+        "name" : "Tone",
+        "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+      },
+      "doc" : "tone"
+    }, {
+      "name" : "senders",
+      "type" : {
+        "type" : "array",
+        "items" : "string"
+      },
+      "doc" : "Sender(s) of the message",
+      "optional" : true
+    } ]
+  }, "com.linkedin.restli.examples.greetings.api.Tone" ],
+  "schema" : {
+    "name" : "associationAltKey",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/associationAltKey",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "Resource for testing Alternative Key Feature for AssociationResource template.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.altkey.AssociationAltKeyResource",
+    "association" : {
+      "identifier" : "associationAltKeyId",
+      "assocKeys" : [ {
+        "name" : "greetingId",
+        "type" : "long"
+      }, {
+        "name" : "message",
+        "type" : "string"
+      } ],
+      "alternativeKeys" : [ {
+        "name" : "alt",
+        "type" : "string",
+        "keyCoercer" : "com.linkedin.restli.examples.greetings.server.altkey.StringCompoundKeyCoercer"
+      } ],
+      "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "partial_update", "update" ],
+      "methods" : [ {
+        "method" : "create"
+      }, {
+        "method" : "get"
+      }, {
+        "method" : "update"
+      }, {
+        "method" : "partial_update"
+      }, {
+        "method" : "delete"
+      }, {
+        "method" : "batch_get"
+      }, {
+        "method" : "batch_update"
+      }, {
+        "method" : "batch_partial_update"
+      }, {
+        "method" : "batch_delete"
+      } ],
+      "entity" : {
+        "path" : "/associationAltKey/{associationAltKeyId}",
+        "actions" : [ {
+          "name" : "testAction",
+          "returns" : "string"
+        } ]
+      }
+    }
+  }
+}
