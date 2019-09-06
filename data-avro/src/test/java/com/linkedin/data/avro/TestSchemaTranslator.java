@@ -1471,16 +1471,13 @@ public class TestSchemaTranslator
               "  ]" +
               "}",
               allModes,
-              "{ \"type\" : " +
-                  "\"record\", " +
-                  "\"name\" : " +
-                  "\"Foo\", " +
-                  "\"namespace\" : \"com.x.y.z\", " +
-                  "\"fields\" : [ " +
-                  "{ \"name\" : \"typedefField\", " +
-                  "\"type\" : \"string\", " +
-                  "\"java\" : { \"class\" : \"exampleTypedUrn\" }, " +
-                  "\"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }",
+              "{ \"type\" : \"record\", "
+                  + "\"name\" : \"Foo\", "
+                  + "\"namespace\" : \"com.x.y.z\", "
+                  + "\"fields\" : [ "
+                  + "{ \"name\" : \"typedefField\", "
+                  + "\"type\" : \"string\", "
+                  + "\"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }",
               null,
               null,
               null

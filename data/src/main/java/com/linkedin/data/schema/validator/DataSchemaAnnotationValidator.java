@@ -167,6 +167,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DataSchemaAnnotationValidator implements Validator
 {
   public static final String VALIDATE = "validate";
+  public static final String JAVA_PROPERTY = "java";
   public static final String VALIDATOR_PRIORITY = "validatorPriority";
 
   public static final int DEFAULT_VALIDATOR_PRIORITY = 0;

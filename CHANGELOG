@@ -1,5 +1,10 @@
+27.5.4
+------
+
 27.5.3
 ------
+(RB=1785332)
+Temporarily add the "java" keyword poped from TypedUrn as excluded property keyword for pdsc to avsc schema translation
 
 27.5.2
 ------
