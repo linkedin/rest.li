@@ -26,9 +26,11 @@ import com.linkedin.r2.sample.echo.ThrowingEchoService;
 import com.linkedin.r2.sample.echo.rest.RestEchoClient;
 import com.linkedin.r2.sample.echo.rest.RestEchoServer;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.r2.transport.common.Server;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import java.net.URI;
+import org.testng.annotations.AfterClass;
 import test.r2.integ.clientserver.providers.client.ClientProvider;
 import test.r2.integ.clientserver.providers.server.ServerProvider;
 import test.r2.integ.helper.CaptureWireAttributesFilter;
@@ -60,6 +62,29 @@ public abstract class AbstractEchoServiceTest extends AbstractServiceTest
   public AbstractEchoServiceTest(ClientProvider clientProvider, ServerProvider serverProvider, int port)
   {
     super(clientProvider, serverProvider, port);
+  }
+
+  @AfterClass
+  @Override
+  public void tearDown() throws Exception
+  {
+    super.tearDown();
+
+    // By de-referencing test specific objects - making sure the GC will reclaim all the test data inside these objects.
+    _clientCaptureFilter = null;
+    _serverCaptureFilter = null;
+    _serverLengthFilter = null;
+    _clientLengthFilter = null;
+  }
+
+  @Override
+  protected void tearDown(Client client, Server server) throws Exception
+  {
+    super.tearDown(client, server);
+
+    // By de-referencing test specific objects - making sure the GC will reclaim all the test data inside these objects.
+    _clientCaptureFilter = null;
+    _serverCaptureFilter = null;
   }
 
   @Override

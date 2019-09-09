@@ -105,11 +105,33 @@ import javax.net.ssl.SSLParameters;
   @Override
   public void stop()
   {
-    System.out.println("Shutting down");
     // shut down Netty thread pool and close all channels associated with.
-    _bossGroup.shutdownGracefully();
-    _workerGroup.shutdownGracefully();
-    _eventExecutors.shutdownGracefully();
+    try
+    {
+      _bossGroup.shutdownGracefully().sync();
+    }
+    catch(Exception ex)
+    {
+      // Do nothing
+    }
+
+    try
+    {
+      _workerGroup.shutdownGracefully().sync();
+    }
+    catch(Exception ex)
+    {
+      // Do nothing
+    }
+
+    try
+    {
+      _eventExecutors.shutdownGracefully().sync();
+    }
+    catch(Exception ex)
+    {
+      // Do nothing
+    }
   }
 
   @Override

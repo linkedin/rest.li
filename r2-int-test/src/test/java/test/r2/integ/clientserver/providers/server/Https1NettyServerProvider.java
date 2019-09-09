@@ -51,29 +51,7 @@ public class Https1NettyServerProvider implements ServerProvider
         .sslContext(SslContextUtil.getContext()).build();
 
     // start both an http and https server
-    return new Server()
-    {
-      @Override
-      public void start() throws IOException
-      {
-        httpServer.start();
-        httpsServer.start();
-      }
-
-      @Override
-      public void stop() throws IOException
-      {
-        httpServer.stop();
-        httpsServer.stop();
-      }
-
-      @Override
-      public void waitForStop() throws InterruptedException
-      {
-        httpServer.waitForStop();
-        httpsServer.waitForStop();
-      }
-    };
+    return new HttpAndHttpsServer(httpServer, httpsServer);
   }
 
   @Override
@@ -99,6 +77,70 @@ public class Https1NettyServerProvider implements ServerProvider
   public String toString()
   {
     return "[" + getClass().getName() + "]";
+  }
+
+  private class HttpAndHttpsServer implements Server
+  {
+    private final Server _httpServer;
+    private final Server _httpsServer;
+
+    public HttpAndHttpsServer(Server httpServer, Server httpsServer)
+    {
+
+      _httpServer = httpServer;
+      _httpsServer = httpsServer;
+    }
+
+    @Override
+    public void start() throws IOException
+    {
+      _httpServer.start();
+      _httpsServer.start();
+    }
+
+    @Override
+    public void stop() throws IOException
+    {
+      try
+      {
+        _httpServer.stop();
+      }
+      catch (Exception ex)
+      {
+        // DO NOTHING
+      }
+
+      try
+      {
+        _httpsServer.stop();
+      }
+      catch (Exception ex)
+      {
+        // DO NOTHING
+      }
+    }
+
+    @Override
+    public void waitForStop() throws InterruptedException
+    {
+      try
+      {
+        _httpServer.waitForStop();
+      }
+      catch (Exception ex)
+      {
+        // DO NOTHING
+      }
+
+      try
+      {
+        _httpsServer.waitForStop();
+      }
+      catch (Exception ex)
+      {
+        // DO NOTHING
+      }
+    }
   }
 
 }

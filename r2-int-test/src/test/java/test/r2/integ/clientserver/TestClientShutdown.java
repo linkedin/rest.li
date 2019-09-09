@@ -58,9 +58,8 @@ public class TestClientShutdown extends AbstractEchoServiceTest
   @AfterClass
   public void tearDown() throws Exception
   {
-    // since _client is already shutdown as part of the test...we need to pass a dummy client for the teardown
-    Client dummyClient = _clientProvider.createClient(getClientFilterChain());
-    tearDown(dummyClient, _server);
+    // since _client is already shutdown as part of the test...we need to pass a null for the client during tearDown
+    tearDown(null, _server);
   }
 
 

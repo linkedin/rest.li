@@ -31,9 +31,13 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
+import com.linkedin.r2.util.NamedThreadFactory;
+import io.netty.channel.nio.NioEventLoopGroup;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 
@@ -46,10 +50,13 @@ public class Bootstrap
 {
   private static final int HTTP_FREE_PORT = 0;
   private static final int HTTPS_PORT = 8443;
+  private static final int NUMBER_OF_EXECUTOR_THREAD = 10;
 
   private static final URI ECHO_URI = URI.create("/echo");
   private static final URI ON_EXCEPTION_ECHO_URI = URI.create("/on-exception-echo");
   private static final URI THROWING_ECHO_URI = URI.create("/throwing-echo");
+  private static final ScheduledExecutorService r2Scheduler = Executors.
+      newScheduledThreadPool(NUMBER_OF_EXECUTOR_THREAD, new NamedThreadFactory("R2 Netty Scheduler"));
 
   // ##################### Server Section #####################
 
@@ -185,9 +192,17 @@ public class Bootstrap
     return new TransportClientAdapter(client, restOverStream);
   }
 
-  public static HttpClientFactory createHttpClientFactory(FilterChain filters, boolean usePipelineV2)
+  public static HttpClientFactory createHttpClientFactory(FilterChain filters, boolean usePipelineV2,
+      NioEventLoopGroup nioEventLoopGroup)
   {
-    return new HttpClientFactory.Builder().setFilterChain(filters).setUsePipelineV2(usePipelineV2).build();
+    return new HttpClientFactory.Builder().
+        setNioEventLoopGroup(nioEventLoopGroup).
+        setFilterChain(filters).
+        setShutDownFactory(false).
+        setScheduleExecutorService(r2Scheduler).
+        setShutdownScheduledExecutorService(false).
+        setUsePipelineV2(usePipelineV2).
+        build();
   }
 
   private static void merge(HashMap<String, Object> defaultValues, Map<String, Object> override)
@@ -203,7 +218,7 @@ public class Bootstrap
 
   public static Client createHttpClient(FilterChain filters)
   {
-    return createHttpClient(createHttpClientFactory(filters, false), R2Constants.DEFAULT_REST_OVER_STREAM);
+    return createHttpClient(createHttpClientFactory(filters, false,  null), R2Constants.DEFAULT_REST_OVER_STREAM);
   }
 
 

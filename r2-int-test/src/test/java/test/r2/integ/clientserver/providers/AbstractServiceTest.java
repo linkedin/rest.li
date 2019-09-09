@@ -117,12 +117,15 @@ public abstract class AbstractServiceTest
 
   protected void tearDown(Client client, Server server) throws Exception
   {
-    final FutureCallback<None> callback = new FutureCallback<>();
-    client.shutdown(callback);
-
     try
     {
-      callback.get();
+      if (client != null)
+      {
+        final FutureCallback<None> callback = new FutureCallback<>();
+        client.shutdown(callback);
+        callback.get();
+      }
+
       _scheduler.shutdown();
       _executor.shutdown();
       _clientProvider.tearDown();
@@ -134,6 +137,10 @@ public abstract class AbstractServiceTest
         server.stop();
         server.waitForStop();
       }
+
+      // By de-referencing test specific objects - making sure the GC will reclaim all the test data inside these objects.
+      _client = null;
+      _server = null;
     }
   }
 

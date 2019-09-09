@@ -21,6 +21,10 @@ Support aliases for named data schemas in PDL
 (RB=1783117)
 Add a config field in RestLiMethodConfig to validate query parameters
 
+(RB=1794904)
+Pegasus tmc release job is failing with out of memory error while runing r2-int-tests. Try to reduce the overall memory
+footprint by having one netty eventloop group and cleaning up objects created in tests
+
 27.5.3
 ------
 (RB=1785332)

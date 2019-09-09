@@ -23,6 +23,8 @@ import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.util.NamedThreadFactory;
+import io.netty.channel.nio.NioEventLoopGroup;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,7 @@ public abstract class AbstractClientProvider implements ClientProvider
   protected final boolean _clientROS;
   protected boolean _usePipelineV2;
   private List<HttpClientFactory> _httpClientFactoryList;
+  private final static NioEventLoopGroup _nioEventLoopGroup = new NioEventLoopGroup(5, new NamedThreadFactory("R2 Nio EventLoop Integration Test"));
 
   protected AbstractClientProvider(boolean clientROS)
   {
@@ -96,7 +99,7 @@ public abstract class AbstractClientProvider implements ClientProvider
 
   private HttpClientFactory createHttpClientFactory(FilterChain filters)
   {
-    HttpClientFactory httpClientFactory = Bootstrap.createHttpClientFactory(filters, _usePipelineV2);
+    HttpClientFactory httpClientFactory = Bootstrap.createHttpClientFactory(filters, _usePipelineV2, _nioEventLoopGroup);
     _httpClientFactoryList.add(httpClientFactory);
     return httpClientFactory;
   }
