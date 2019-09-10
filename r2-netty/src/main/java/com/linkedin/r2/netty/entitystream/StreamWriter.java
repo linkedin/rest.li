@@ -22,6 +22,8 @@ import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.r2.netty.common.ChannelPipelineEvent;
+import com.linkedin.r2.netty.common.NettyChannelAttributes;
+import com.linkedin.r2.netty.common.StreamingTimeout;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -129,7 +131,10 @@ public class StreamWriter extends ChannelInboundHandlerAdapter implements Writer
   public void onInit(WriteHandle wh)
   {
     _wh = wh;
+
+    refreshStreamLastActiveTime();
   }
+
 
   @Override
   public void onWritePossible()
@@ -165,6 +170,8 @@ public class StreamWriter extends ChannelInboundHandlerAdapter implements Writer
    */
   private void doWrite()
   {
+    refreshStreamLastActiveTime();
+
     while (_wh.remaining() > 0)
     {
       if (_buffer.isEmpty())
@@ -186,6 +193,17 @@ public class StreamWriter extends ChannelInboundHandlerAdapter implements Writer
       {
         _ctx.channel().config().setAutoRead(true);
       }
+
+      refreshStreamLastActiveTime();
+    }
+  }
+
+  private void refreshStreamLastActiveTime()
+  {
+    StreamingTimeout idleTimeout = _ctx.channel().attr(NettyChannelAttributes.STREAMING_TIMEOUT_FUTURE).get();
+    if (idleTimeout != null)
+    {
+      idleTimeout.refreshLastActiveTime();
     }
   }
 }

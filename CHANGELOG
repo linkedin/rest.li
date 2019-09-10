@@ -1,7 +1,14 @@
+27.6.4
+------
+
 27.6.3
 ------
 (RB=1802974)
 Add RestRequest support in Pipeline V2 and Convert FullyBuffered StreaRequest to RestRequest for better efficiency.
+
+(RB=1771744)
+Streaming Timeout (Idle Timeout) Implementation - as detiled in the document @ https://docs.google.com/document/d/1s1dNjqoUkmo2TZ4mql4utHB2CZwe14JW8EPZFRmxOwA
+
 
 27.6.2
 ------

@@ -20,6 +20,9 @@ import com.linkedin.data.ByteString;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
+import com.linkedin.r2.netty.common.NettyChannelAttributes;
+import com.linkedin.r2.netty.common.StreamingTimeout;
+import com.linkedin.util.clock.SystemClock;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
@@ -64,12 +67,18 @@ public class StreamReader implements Reader
   public void onInit(ReadHandle rh)
   {
     _rh = rh;
+
+    refreshStreamLastActiveTime();
+
     _rh.request(MAX_BUFFERED_CHUNKS);
   }
+
 
   @Override
   public void onDataAvailable(ByteString data)
   {
+    refreshStreamLastActiveTime();
+
     // Additional chunks will not be requested until flush() is called and the data is actually written to socket
     _ctx.write(data).addListener(future -> _rh.request(REQUEST_CHUNKS));
 
@@ -93,5 +102,14 @@ public class StreamReader implements Reader
   public void onError(Throwable e)
   {
     _ctx.fireExceptionCaught(e);
+  }
+
+  private void refreshStreamLastActiveTime()
+  {
+    StreamingTimeout idleTimeout = _ctx.channel().attr(NettyChannelAttributes.STREAMING_TIMEOUT_FUTURE).get();
+    if (idleTimeout != null)
+    {
+      idleTimeout.refreshLastActiveTime();
+    }
   }
 }

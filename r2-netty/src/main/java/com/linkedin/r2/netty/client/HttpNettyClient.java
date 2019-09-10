@@ -32,6 +32,7 @@ import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.message.timing.TimingImportance;
 import com.linkedin.r2.message.timing.TimingKey;
 import com.linkedin.r2.netty.callback.StreamExecutionCallback;
+import com.linkedin.r2.netty.common.StreamingTimeout;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.netty.common.NettyClientState;
 import com.linkedin.r2.netty.common.ShutdownTimeoutException;
@@ -43,6 +44,7 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.AsyncPool;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.client.InvokedOnceTransportCallback;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
@@ -89,14 +91,17 @@ public class HttpNettyClient implements TransportClient
   private static final String HTTPS_SCHEME = HttpScheme.HTTPS.toString();
   private static final int HTTP_DEFAULT_PORT = 80;
   private static final int HTTPS_DEFAULT_PORT = 443;
+  private static final int DEFAULT_STREAMING_TIMEOUT = -1;
 
   private final NioEventLoopGroup _eventLoopGroup;
   private final ScheduledExecutorService _scheduler;
   private final ExecutorService _callbackExecutor;
   private final ChannelPoolManager _channelPoolManager;
   private final ChannelPoolManager _sslChannelPoolManager;
+  private final Clock _clock;
   private final HttpProtocolVersion _protocolVersion;
   private final long _requestTimeout;
+  private final long _streamingTimeout;
   private final long _shutdownTimeout;
   private final AtomicReference<NettyClientState> _state;
 
@@ -124,6 +129,7 @@ public class HttpNettyClient implements TransportClient
       HttpProtocolVersion protocolVersion,
       Clock clock,
       long requestTimeout,
+      long streamingTimeout,
       long shutdownTimeout)
   {
     ArgumentUtil.notNull(eventLoopGroup, "eventLoopGroup");
@@ -133,15 +139,24 @@ public class HttpNettyClient implements TransportClient
     ArgumentUtil.notNull(sslChannelPoolManager, "sslChannelPoolManager");
     ArgumentUtil.notNull(clock, "clock");
     ArgumentUtil.checkArgument(requestTimeout >= 0, "requestTimeout");
+    ArgumentUtil.checkArgument(streamingTimeout >= DEFAULT_STREAMING_TIMEOUT, "streamingTimeout");
     ArgumentUtil.checkArgument(shutdownTimeout >= 0, "shutdownTimeout");
+
+    // If StreamingTimeout is greater than RequestTimeout then its as good as not being set
+    if (streamingTimeout >= requestTimeout)
+    {
+      streamingTimeout = DEFAULT_STREAMING_TIMEOUT;
+    }
 
     _eventLoopGroup = eventLoopGroup;
     _scheduler = scheduler;
     _callbackExecutor = callbackExecutor;
     _channelPoolManager = channelPoolManager;
     _sslChannelPoolManager = sslChannelPoolManager;
+    _clock = clock;
     _protocolVersion = protocolVersion;
     _requestTimeout = requestTimeout;
+    _streamingTimeout = streamingTimeout;
     _shutdownTimeout = shutdownTimeout;
 
     _state = new AtomicReference<>(NettyClientState.RUNNING);
@@ -323,7 +338,7 @@ public class HttpNettyClient implements TransportClient
     requestContext.putLocalAttr(R2Constants.HTTP_PROTOCOL_VERSION, _protocolVersion);
 
     final Cancellable pendingGet = pool.get(new ChannelPoolGetCallback(
-        pool, requestWithWireAttrHeaders, requestContext, decoratedCallback, timeout, resolvedRequestTimeout));
+        pool, requestWithWireAttrHeaders, requestContext, decoratedCallback, timeout, resolvedRequestTimeout, _streamingTimeout));
 
     if (pendingGet != null)
     {
@@ -356,6 +371,7 @@ public class HttpNettyClient implements TransportClient
     private final TransportCallback<StreamResponse> _callback;
     private final Timeout<None> _timeout;
     private final long _resolvedRequestTimeout;
+    private final long _streamingTimeout;
 
     ChannelPoolGetCallback(
         AsyncPool<Channel> pool,
@@ -363,7 +379,8 @@ public class HttpNettyClient implements TransportClient
         RequestContext requestContext,
         TransportCallback<StreamResponse> callback,
         Timeout<None> timeout,
-        long resolvedRequestTimeout)
+        long resolvedRequestTimeout,
+        long streamingTimeout)
     {
       _pool = pool;
       _request = request;
@@ -371,6 +388,7 @@ public class HttpNettyClient implements TransportClient
       _callback = callback;
       _timeout = timeout;
       _resolvedRequestTimeout = resolvedRequestTimeout;
+      _streamingTimeout = streamingTimeout;
     }
 
     @Override
@@ -407,11 +425,24 @@ public class HttpNettyClient implements TransportClient
               new TimeoutException("Exceeded request timeout of " + _resolvedRequestTimeout + "ms")),
           _resolvedRequestTimeout,
           TimeUnit.MILLISECONDS);
+
+      // Schedules a stream timeout exception to be fired after specified stream idle time
+      if (isStreamingTimeoutEnabled())
+      {
+        final StreamingTimeout streamingTimeout = new StreamingTimeout(_scheduler, _streamingTimeout, channel, _clock);
+        channel.attr(NettyChannelAttributes.STREAMING_TIMEOUT_FUTURE).set(streamingTimeout);
+      }
+
       channel.attr(NettyChannelAttributes.TIMEOUT_FUTURE).set(timeoutFuture);
 
       // Here we want the exception in outbound operations to be passed back through pipeline so that
       // the user callback would be invoked with the exception and the channel can be put back into the pool
       channel.writeAndFlush(_request).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+    }
+
+    private boolean isStreamingTimeoutEnabled()
+    {
+      return _streamingTimeout > HttpClientFactory.DEFAULT_STREAMING_TIMEOUT;
     }
 
     @Override

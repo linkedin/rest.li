@@ -103,6 +103,7 @@ public class HttpClientFactory implements TransportClientFactory
 
   public static final String HTTP_QUERY_POST_THRESHOLD = "http.queryPostThreshold";
   public static final String HTTP_REQUEST_TIMEOUT = "http.requestTimeout";
+  public static final String HTTP_STREAMING_TIMEOUT = "http.streamingTimeout";
   public static final String HTTP_MAX_RESPONSE_SIZE = "http.maxResponseSize";
   public static final String HTTP_POOL_SIZE = "http.poolSize";
   public static final String HTTP_POOL_WAITER_SIZE = "http.poolWaiterSize";
@@ -132,6 +133,8 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_SIZE = 200;
   public static final int DEFAULT_REQUEST_TIMEOUT = 1000;
+  public static final int DEFAULT_STREAMING_TIMEOUT = -1;
+  public static final int DEFAULT_MINIMUM_STREAMING_TIMEOUT = 1000;
   public static final int DEFAULT_GRACEFUL_SHUTDOWN_TIMEOUT = 30000;
   public static final int DEFAULT_IDLE_TIMEOUT = 25000;
   public static final int DEFAULT_SSL_IDLE_TIMEOUT = (2 * 3600 + 60 * 55) * 1000; // 2h 55m
@@ -1273,8 +1276,18 @@ public class HttpClientFactory implements TransportClientFactory
     LOG.info("The service '{}' has been assigned to the ChannelPoolManager with key '{}' ", httpServiceName, key.getName());
 
     // Raw Client properties
-    Integer shutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT), DEFAULT_SHUTDOWN_TIMEOUT);
-    Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
+    int shutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT), DEFAULT_SHUTDOWN_TIMEOUT);
+    int requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
+    int streamingTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_STREAMING_TIMEOUT), DEFAULT_STREAMING_TIMEOUT);
+    if (streamingTimeout > DEFAULT_STREAMING_TIMEOUT)
+    {
+      // Minimum value for idle timeout so we don't have a busy thread checking for idle timeout too frequently!
+      if(streamingTimeout < DEFAULT_MINIMUM_STREAMING_TIMEOUT)
+      {
+        streamingTimeout = DEFAULT_MINIMUM_STREAMING_TIMEOUT;
+        LOG.warn("Streaming timeout is too small, resetting to the minimum allowed timeout value of {}ms", DEFAULT_MINIMUM_STREAMING_TIMEOUT);
+      }
+    }
 
     HttpProtocolVersion httpProtocolVersion =
       chooseNewOverDefault(getHttpProtocolVersion(properties, HTTP_PROTOCOL_VERSION), _defaultHttpVersion);
@@ -1298,7 +1311,8 @@ public class HttpClientFactory implements TransportClientFactory
       }
 
       return new com.linkedin.r2.netty.client.HttpNettyClient(_eventLoopGroup, _executor, _callbackExecutorGroup,
-          channelPoolManager, sslChannelPoolManager, httpProtocolVersion, SystemClock.instance(), requestTimeout, shutdownTimeout);
+          channelPoolManager, sslChannelPoolManager, httpProtocolVersion, SystemClock.instance(),
+              requestTimeout, streamingTimeout, shutdownTimeout);
     }
 
     TransportClient streamClient;

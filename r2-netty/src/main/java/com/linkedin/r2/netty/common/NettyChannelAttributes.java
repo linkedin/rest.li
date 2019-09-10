@@ -62,6 +62,11 @@ public interface NettyChannelAttributes
   AttributeKey<ScheduledFuture<ChannelPipeline>> TIMEOUT_FUTURE = AttributeKey.newInstance("timeout");
 
   /**
+   * Attribute for the channel {@link ScheduledFuture} that trigger stream idle timeout Exception.
+   */
+  AttributeKey<StreamingTimeout> STREAMING_TIMEOUT_FUTURE = AttributeKey.newInstance("streamingTimeout");
+
+  /**
    * Attribute for the channel response {@link TransportCallback}.
    */
   AttributeKey<TransportCallback<StreamResponse>> RESPONSE_CALLBACK = AttributeKey.newInstance("responseCallback");

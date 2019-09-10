@@ -17,6 +17,7 @@
 package com.linkedin.r2.netty.handler.common;
 
 import com.linkedin.r2.netty.common.ChannelPipelineEvent;
+import com.linkedin.r2.netty.common.StreamingTimeout;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
@@ -70,6 +71,12 @@ public class CancelTimeoutHandler extends ChannelInboundHandlerAdapter
     if (timeout != null && !timeout.isDone())
     {
       timeout.cancel(false);
+    }
+
+    StreamingTimeout streamTimeout = ctx.channel().attr(NettyChannelAttributes.STREAMING_TIMEOUT_FUTURE).getAndSet(null);
+    if (streamTimeout != null)
+    {
+      streamTimeout.cancel();
     }
   }
 }
