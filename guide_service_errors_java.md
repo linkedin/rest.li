@@ -48,10 +48,11 @@ see [this table of codes](https://www.iana.org/assignments/http-status-codes/htt
 
 ## Step 2: Write Your Service Error Definition
 
-Write a Java enum implementing the `ServiceError` interface, which will contain a set of service error definitions for
-your service. The enum implementation may expose methods for obtaining the HTTP status, the error code, the error
-message, and the error detail type. Here is an example implementation which defines one service error and exposes all
-four accessor methods:
+Write a Java enum implementing the
+[`ServiceError`](https://github.com/linkedin/rest.li/blob/master/restli-server/src/main/java/com/linkedin/restli/server/errors/ServiceError.java)
+interface, which will contain a set of service error definitions for your service. The enum implementation may expose
+methods for obtaining the HTTP status, the error code, the error message, and the error detail type. Here is an example
+implementation which defines one service error and exposes all four accessor methods:
 
 ```java
 public enum SampleServiceError implements ServiceError
@@ -74,6 +75,9 @@ public enum SampleServiceError implements ServiceError
 
   /*
    * Suggested: Define string constants for each of the error codes for easy access.
+   * String literals or constants must be used as annotation attributes due to the
+   * restrictions imposed by Java.
+   *
    * These codes should match the enum value names.
    */
   public class Codes
