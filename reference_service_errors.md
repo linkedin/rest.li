@@ -47,10 +47,10 @@ which contains various fields describing the service failure.
 
 ### Example
 
-Here is an example error response serialized to JSON as it would be sent over the wire and received by the client.
-This scenario involves a client which has used up its daily quota for a particular service, triggering the resource
-method to throw a fictitious `QuotaExceededException`. The error details object conforms to the fictitious `QuotaDetails`
-schema, which we can see contains relevant information about the quota usage.
+Here is an example error response serialized to JSON as it would be sent over the wire and received by the client. This
+scenario involves a client which has used up its daily quota for a particular service, triggering the resource method to
+throw a fictitious `QuotaExceededException`. The error details object conforms to the fictitious `QuotaDetails` schema,
+which contains relevant information about the quota usage.
 
 Please note that the stack trace has been truncated for the sake of space.
 
@@ -116,10 +116,9 @@ restLiConfig.setErrorResponseFormat(new ErrorResponseFormat(parts));
 
 ## Documenting Service Errors in the IDL
 
-Although it's important for developers to be aware of the expected, successful inputs and outputs of an API, it's also
-just as important for them to be aware of the unexpected failures that the API may return. Having well-documented
-service errors as part of an API enables clients to handle failures resiliently, and allows developers to intelligently
-prepare their clients for failures.
+Semantically, an error response is still a valid API response – it’s one of the possible outputs of an API call - so it
+must be part of the formal contract. Having well-documented service errors as part of an API enables clients to handle
+failures resiliently, and allows developers to intelligently prepare their clients for failures.
 
 For a full, in-depth example of what an IDL looks like documented with service errors and success codes, see
 [AlbumEntryResource]({{site.data.urls.repo}}/restli-example-server/src/main/java/com/linkedin/restli/example/impl/AlbumEntryResource.java)
@@ -202,6 +201,7 @@ The following changes are considered **backward compatible**:
 The following changes are considered **backward incompatible**:
 
 - Adding a new service error code to a resource or a method.
+  - *Note:* Changing an existing code is treated semantically as removing one and adding another.
 - Changing the `errorDetailType` for an existing service error code.
 - Changing the HTTP `status` code for an existing service error code.
 - Changing the `message` for an existing service error code.
