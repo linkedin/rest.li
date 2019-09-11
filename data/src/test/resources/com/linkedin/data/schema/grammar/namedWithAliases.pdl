@@ -1,0 +1,37 @@
+namespace com.linkedin.data.schema.grammar
+
+
+/**
+ * Record to ensure that named data schemas can have aliases, and that they can be referenced.
+ */
+record NamedWithAliases {
+  recordField:
+    @aliases = ["RecordAlias", "RecordAlias2"]
+    record Foo {}
+
+  typerefField:
+    @aliases = ["TyperefAlias"]
+    typeref Ref = string
+
+  fixedField:
+    @aliases = ["FixedAlias"]
+    fixed Fix 16
+
+  enumField:
+    @aliases = ["EnumAlias", "org.example.OverriddenEnumAlias"]
+    enum Letters {
+      A,
+      B,
+      C
+    }
+
+  /**
+   * Tests that the aliases are correctly bound to their respective schemas.
+   */
+  references: record References {
+    recordField: RecordAlias2
+    typerefField: TyperefAlias
+    fixedField: FixedAlias
+    enumField: org.example.OverriddenEnumAlias
+  }
+}

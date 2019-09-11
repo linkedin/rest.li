@@ -77,6 +77,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -461,10 +462,10 @@ public class PdlSchemaParser extends AbstractSchemaParser
     Name name = toName(fixed.name);
     FixedDataSchema schema = new FixedDataSchema(name);
 
-    bindNameToSchema(name, schema);
+    setDocAndProperties(context, schema);
+    bindNameToSchema(name, schema.getAliases(), schema);
 
     schema.setSize(fixed.size, errorMessageBuilder());
-    setProperties(context, schema);
     return schema;
   }
 
@@ -475,12 +476,13 @@ public class PdlSchemaParser extends AbstractSchemaParser
     Name name = toName(enumDecl.name);
     EnumDataSchema schema = new EnumDataSchema(name);
 
-    bindNameToSchema(name, schema);
+    // This is useful to set the doc and the aliases, but the properties are overwritten later (see below)
+    Map<String, Object> props = setDocAndProperties(context, schema);
+    bindNameToSchema(name, schema.getAliases(), schema);
 
     List<EnumSymbolDeclarationContext> symbolDecls = enumDecl.enumDecl.symbolDecls;
 
     List<String> symbols = new ArrayList<>(symbolDecls.size());
-    Map<String, Object> props = setProperties(context, schema);
     Map<String, Object> symbolDocs = new HashMap<>();
     DataMap deprecatedSymbols = new DataMap();
     DataMap symbolProperties = new DataMap();
@@ -510,22 +512,24 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
 
     schema.setSymbols(symbols, errorMessageBuilder());
-    if (symbolDocs.size() > 0)
+    if (!symbolDocs.isEmpty())
     {
       schema.setSymbolDocs(symbolDocs, errorMessageBuilder());
     }
 
-    if (deprecatedSymbols.size() > 0)
+    if (!deprecatedSymbols.isEmpty())
     {
-      props.put("deprecatedSymbols", deprecatedSymbols);
+      props.put(DataSchemaConstants.DEPRECATED_SYMBOLS_KEY, deprecatedSymbols);
     }
 
-    if (symbolProperties.size() > 0)
+    if (!symbolProperties.isEmpty())
     {
-      props.put("symbolProperties", symbolProperties);
+      props.put(DataSchemaConstants.SYMBOL_PROPERTIES_KEY, symbolProperties);
     }
 
+    // Overwrite the properties now that we've computed the special symbol properties
     schema.setProperties(props);
+
     return schema;
   }
 
@@ -538,12 +542,11 @@ public class PdlSchemaParser extends AbstractSchemaParser
     getResolver().addPendingSchema(schema.getFullName());
     try
     {
-      bindNameToSchema(name, schema);
+      setDocAndProperties(context, schema);
+      bindNameToSchema(name, schema.getAliases(), schema);
       DataSchema refSchema = toDataSchema(typeref.ref);
       schema.setReferencedType(refSchema);
       schema.setRefDeclaredInline(isDeclaredInline(typeref.ref));
-
-      setProperties(context, schema);
     }
     finally
     {
@@ -655,7 +658,8 @@ public class PdlSchemaParser extends AbstractSchemaParser
     getResolver().addPendingSchema(schema.getFullName());
     try
     {
-      bindNameToSchema(name, schema);
+      setDocAndProperties(context, schema);
+      bindNameToSchema(name, schema.getAliases(), schema);
       FieldsAndIncludes fieldsAndIncludes = parseIncludes(schema, record.beforeIncludes);
       boolean hasBeforeIncludes = fieldsAndIncludes.includes.size() > 0;
       fieldsAndIncludes.fields.addAll(parseFields(schema, record.recordDecl));
@@ -673,7 +677,6 @@ public class PdlSchemaParser extends AbstractSchemaParser
       schema.setIncludesDeclaredInline(fieldsAndIncludes.includesDeclaredInline);
       schema.setFieldsBeforeIncludes(hasAfterIncludes);
       validateDefaults(schema);
-      setProperties(context, schema);
     }
     finally
     {
@@ -682,11 +685,18 @@ public class PdlSchemaParser extends AbstractSchemaParser
     return schema;
   }
 
-  private Map<String, Object> setProperties(
-      NamedTypeDeclarationContext source, NamedDataSchema target) throws ParseException
+  /**
+   * Sets doc, properties, and aliases on the provided {@link NamedDataSchema} using data parsed from the provided
+   * {@link NamedTypeDeclarationContext}.
+   *
+   * @param source source to read doc, properties, and aliases from
+   * @param target target on which to set doc, properties, and aliases
+   * @return parsed properties
+   */
+  private Map<String, Object> setDocAndProperties(NamedTypeDeclarationContext source, NamedDataSchema target)
+      throws ParseException
   {
-    Map<String, Object> properties = new HashMap<>();
-    properties.putAll(target.getProperties());
+    Map<String, Object> properties = new HashMap<>(target.getProperties());
 
     if (source.doc != null)
     {
@@ -695,7 +705,17 @@ public class PdlSchemaParser extends AbstractSchemaParser
 
     for (PropDeclarationContext prop: source.props)
     {
-      addPropertiesAtPath(properties, prop);
+      if (prop.name.equals(DataSchemaConstants.ALIASES_KEY))
+      {
+        List<Name> aliases = parseAliases(prop).stream()
+            .map(this::toName)
+            .collect(Collectors.toList());
+        target.setAliases(aliases);
+      }
+      else
+      {
+        addPropertiesAtPath(properties, prop);
+      }
     }
 
     target.setProperties(properties);
@@ -895,36 +915,13 @@ public class PdlSchemaParser extends AbstractSchemaParser
           }
         }
 
-        List<String> aliases = new ArrayList<>(0);
+        List<String> aliases = new ArrayList<>();
         RecordDataSchema.Field.Order sortOrder = null;
         for (PropDeclarationContext prop : field.props)
         {
           if (prop.name.equals(DataSchemaConstants.ALIASES_KEY))
           {
-            Object value = parsePropValue(prop);
-            if (!(value instanceof DataList))
-            {
-              startErrorMessage(prop)
-                  .append("'aliases' must be a list, but found ")
-                  .append(prop.getText()).append(NEWLINE);
-            }
-            else
-            {
-              for (Object alias : (DataList) value) {
-                if (!(alias instanceof String))
-                {
-                  startErrorMessage(prop)
-                      .append("'aliases' list elements must be string, but found ")
-                      .append(alias.getClass())
-                      .append(" at ")
-                      .append(prop.getText()).append(NEWLINE);
-                }
-                else
-                {
-                  aliases.add((String) alias);
-                }
-              }
-            }
+            aliases = parseAliases(prop);
           }
           else if (prop.name.equals(DataSchemaConstants.ORDER_KEY))
           {
@@ -979,6 +976,45 @@ public class PdlSchemaParser extends AbstractSchemaParser
       }
     }
     return results;
+  }
+
+  /**
+   * Parse the aliases (as strings) from some property declaration which is assumed to be an "aliases" property.
+   * @param prop property declaration
+   * @return list of aliases as strings
+   */
+  private List<String> parseAliases(PropDeclarationContext prop) throws ParseException
+  {
+    assert prop.name.equals(DataSchemaConstants.ALIASES_KEY);
+
+    final List<String> aliases = new ArrayList<>();
+
+    Object value = parsePropValue(prop);
+    if (!(value instanceof DataList))
+    {
+      startErrorMessage(prop)
+          .append("'aliases' must be a list, but found ")
+          .append(prop.getText()).append(NEWLINE);
+    }
+    else
+    {
+      for (Object alias : (DataList) value) {
+        if (!(alias instanceof String))
+        {
+          startErrorMessage(prop)
+              .append("'aliases' list elements must be string, but found ")
+              .append(alias.getClass())
+              .append(" at ")
+              .append(prop.getText()).append(NEWLINE);
+        }
+        else
+        {
+          aliases.add((String) alias);
+        }
+      }
+    }
+
+    return aliases;
   }
 
   private boolean isDeclaredInline(TypeAssignmentContext assignment)

@@ -1,0 +1,4 @@
+namespace com.linkedin.pegasus.generator.test.idl.typerefs
+
+@aliases = ["org.example.TyperefAlias1", "com.linkedin.pegasus.generator.test.idl.typerefs.TyperefAlias2"]
+typeref WithAliases = string

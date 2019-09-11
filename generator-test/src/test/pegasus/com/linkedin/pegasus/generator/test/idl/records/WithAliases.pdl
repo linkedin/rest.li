@@ -1,6 +1,6 @@
 namespace com.linkedin.pegasus.generator.test.idl.records
 
-@aliases = ["org.example.RecordAlias1", "RecordAlias2"]
+@aliases = ["org.example.RecordAlias1", "com.linkedin.pegasus.generator.test.idl.records.RecordAlias2"]
 record WithAliases {
 
   @aliases = ["fieldAlias1", "fieldAlias2"]

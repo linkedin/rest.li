@@ -25,22 +25,24 @@ import java.util.regex.Pattern;
 
 public class DataSchemaConstants
 {
+  public static final String ALIAS_KEY = "alias";
   public static final String ALIASES_KEY = "aliases";
   public static final String DEFAULT_KEY = "default";
+  public static final String DEPRECATED_SYMBOLS_KEY = "deprecatedSymbols";
   public static final String DOC_KEY = "doc";
   public static final String FIELDS_KEY = "fields";
   public static final String INCLUDE_KEY = "include";
   public static final String ITEMS_KEY = "items";
   public static final String NAME_KEY = "name";
-  public static final String ALIAS_KEY = "alias";
   public static final String NAMESPACE_KEY = "namespace";
-  public static final String PACKAGE_KEY = "package";
   public static final String OPTIONAL_KEY = "optional";
   public static final String ORDER_KEY = "order";
+  public static final String PACKAGE_KEY = "package";
   public static final String REF_KEY = "ref";
   public static final String SIZE_KEY = "size";
-  public static final String SYMBOLS_KEY = "symbols";
   public static final String SYMBOL_DOCS_KEY = "symbolDocs";
+  public static final String SYMBOL_PROPERTIES_KEY = "symbolProperties";
+  public static final String SYMBOLS_KEY = "symbols";
   public static final String TYPE_KEY = "type";
   public static final String VALUES_KEY = "values";
 

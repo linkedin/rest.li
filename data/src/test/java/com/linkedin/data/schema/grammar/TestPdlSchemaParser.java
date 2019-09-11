@@ -20,6 +20,8 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.Name;
+import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
@@ -31,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -69,9 +72,7 @@ public class TestPdlSchemaParser
         "organization", "company", "jobs", "courses", "fingerprint", "audio", "video"));
     Set<String> inlinedMembers = new HashSet<>(Arrays.asList("organization", "jobs", "courses", "fingerprint", "audio"));
 
-    PdlSchemaParser parser = new PdlSchemaParser(new DefaultDataSchemaResolver());
-    parser.parse(getClass().getResourceAsStream("unionWithAliases.pdl"));
-    RecordDataSchema mainRecordSchema = (RecordDataSchema) parser.topLevelDataSchemas().get(0);
+    RecordDataSchema mainRecordSchema = (RecordDataSchema) parsePdlSchema("unionWithAliases.pdl");
     RecordDataSchema.Field resourceField = mainRecordSchema.getField("resource");
 
     UnionDataSchema resourceSchema = (UnionDataSchema) resourceField.getType();
@@ -119,9 +120,7 @@ public class TestPdlSchemaParser
     Set<String> inlinedMembers = new HashSet<>(Arrays.asList("com.linkedin.data.schema.grammar.Organization", "array",
         "map", "com.linkedin.data.schema.grammar.MD5", "string"));
 
-    PdlSchemaParser parser = new PdlSchemaParser(new DefaultDataSchemaResolver());
-    parser.parse(getClass().getResourceAsStream("unionWithoutAliases.pdl"));
-    RecordDataSchema mainRecordSchema = (RecordDataSchema) parser.topLevelDataSchemas().get(0);
+    RecordDataSchema mainRecordSchema = (RecordDataSchema) parsePdlSchema("unionWithoutAliases.pdl");
     RecordDataSchema.Field resourceField = mainRecordSchema.getField("resource");
 
     UnionDataSchema resourceSchema = (UnionDataSchema) resourceField.getType();
@@ -156,5 +155,91 @@ public class TestPdlSchemaParser
 
       index++;
     }
+  }
+
+  /**
+   * Ensures that a {@link NamedDataSchema} can have aliases defined, and that those aliases can be used to reference
+   * the schema.
+   */
+  @Test
+  public void testNamedDataSchemaWithAliases()
+  {
+    RecordDataSchema mainRecordSchema = (RecordDataSchema) parsePdlSchema("namedWithAliases.pdl");
+
+    // Test that all the aliases have the correct full name
+    assertAliasesEqual(mainRecordSchema.getField("recordField"),
+        "com.linkedin.data.schema.grammar.RecordAlias",
+        "com.linkedin.data.schema.grammar.RecordAlias2");
+    assertAliasesEqual(mainRecordSchema.getField("typerefField"),
+        "com.linkedin.data.schema.grammar.TyperefAlias");
+    assertAliasesEqual(mainRecordSchema.getField("fixedField"),
+        "com.linkedin.data.schema.grammar.FixedAlias");
+    assertAliasesEqual(mainRecordSchema.getField("enumField"),
+        "com.linkedin.data.schema.grammar.EnumAlias",
+        "org.example.OverriddenEnumAlias");
+
+    // Test that the aliases are bound to the correct schemas
+    RecordDataSchema.Field refsField = mainRecordSchema.getField("references");
+    Assert.assertNotNull(refsField);
+    RecordDataSchema refsRecord = (RecordDataSchema) refsField.getType();
+
+    assertFieldTypesEqual(refsRecord, mainRecordSchema, "recordField");
+    assertFieldTypesEqual(refsRecord, mainRecordSchema, "typerefField");
+    assertFieldTypesEqual(refsRecord, mainRecordSchema, "fixedField");
+    assertFieldTypesEqual(refsRecord, mainRecordSchema, "enumField");
+
+  }
+
+  /**
+   * Asserts that the aliases of some field's type are equivalent to the given strings.
+   * @param field field whose type has aliases
+   * @param expectedFullAliasNames expected aliases (full names)
+   */
+  private void assertAliasesEqual(RecordDataSchema.Field field, String ... expectedFullAliasNames)
+  {
+    Assert.assertNotNull(field);
+    List<String> actualFullAliasNames = ((NamedDataSchema) field.getType()).getAliases()
+        .stream()
+        .map(Name::getFullName)
+        .collect(Collectors.toList());
+
+    Set<String> expectedFullAliasNameSet = new HashSet<>(Arrays.asList(expectedFullAliasNames));
+    Assert.assertEquals(actualFullAliasNames.size(), expectedFullAliasNameSet.size());
+    Assert.assertTrue(expectedFullAliasNameSet.containsAll(actualFullAliasNames),
+        String.format("Incorrect aliases for field \"%s\". Expected aliases %s. Found aliases %s.",
+            field.getName(), expectedFullAliasNameSet, actualFullAliasNames));
+  }
+
+  /**
+   * Asserts that for two schemas A and B, the field "fieldName" for each is of the same type.
+   * @param schemaA schema A
+   * @param schemaB schema B
+   * @param fieldName field name to check on each schema
+   */
+  private void assertFieldTypesEqual(RecordDataSchema schemaA, RecordDataSchema schemaB, String fieldName)
+  {
+    RecordDataSchema.Field fieldA = schemaA.getField(fieldName);
+    Assert.assertNotNull(fieldA);
+
+    RecordDataSchema.Field fieldB = schemaB.getField(fieldName);
+    Assert.assertNotNull(fieldB);
+
+    Assert.assertEquals(fieldA.getType(), fieldB.getType(), "Expected the type of both fields to be the same.");
+  }
+
+  /**
+   * Parses a .pdl file found at a given filename in the resource directory for this class.
+   * @param filename file name pointing to a .pdl file
+   * @return parsed data schema
+   */
+  private DataSchema parsePdlSchema(String filename)
+  {
+    PdlSchemaParser parser = new PdlSchemaParser(new DefaultDataSchemaResolver());
+    parser.parse(getClass().getResourceAsStream(filename));
+    List<DataSchema> topLevelSchemas = parser.topLevelDataSchemas();
+
+    Assert.assertEquals(topLevelSchemas.size(), 1, "Expected 1 top-level schema to be parsed.");
+
+    return topLevelSchemas.get(0);
   }
 }

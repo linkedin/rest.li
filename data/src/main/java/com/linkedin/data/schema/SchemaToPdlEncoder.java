@@ -210,10 +210,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writeRecord(RecordDataSchema schema) throws IOException
   {
-    final boolean hasDocOrProperties = writeDocAndProperties(schema.getDoc(), schema.getProperties());
-    if (hasDocOrProperties) {
-      indent();
-    }
+    writeDocAndProperties(schema);
     write("record ");
     write(toTypeIdentifier(schema));
     List<NamedDataSchema> includes = schema.getInclude();
@@ -233,39 +230,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       {
         if (field.getRecord().equals(schema))
         {
-          if (StringUtils.isNotBlank(field.getDoc()) || !field.getProperties().isEmpty() || field.isDeclaredInline())
-          {
-            // For any non-trivial field declarations, separate with an additional newline.
-            newline();
-          }
-          writeDocAndProperties(field.getDoc(), field.getProperties());
-          if (field.getOrder() != null && !field.getOrder().equals(RecordDataSchema.Field.Order.ASCENDING))
-          {
-            write("@order = \"");
-            write(field.getOrder().name());
-            write("\"");
-          }
-          if (field.getAliases() != null && field.getAliases().size() > 0)
-          {
-            write("@aliases = [");
-            write(field.getAliases().stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(", ")));
-            write("]");
-          }
-          indent();
-          write(escapeIdentifier(field.getName()));
-          write(": ");
-          if (field.getOptional())
-          {
-            write("optional ");
-          }
-          writeReferenceOrInline(field.getType(), field.isDeclaredInline());
-
-          if (field.getDefault() != null)
-          {
-            write(" = ");
-            write(toJson(field.getDefault()));
-          }
-          newline();
+          writeField(field);
         }
       }
       _indentDepth--;
@@ -278,6 +243,30 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     {
       writeIncludes(schema, includes);
     }
+  }
+
+  /**
+   * Writes a {@link com.linkedin.data.schema.RecordDataSchema.Field} to .pdl.
+   * @param field record field
+   */
+  private void writeField(RecordDataSchema.Field field) throws IOException
+  {
+    writeDocAndProperties(field);
+    indent();
+    write(escapeIdentifier(field.getName()));
+    write(": ");
+    if (field.getOptional())
+    {
+      write("optional ");
+    }
+    writeReferenceOrInline(field.getType(), field.isDeclaredInline());
+
+    if (field.getDefault() != null)
+    {
+      write(" = ");
+      write(toJson(field.getDefault()));
+    }
+    newline();
   }
 
   private void writeIncludes(RecordDataSchema schema, List<NamedDataSchema> includes) throws IOException {
@@ -295,13 +284,16 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writeEnum(EnumDataSchema schema) throws IOException
   {
-    DataMap properties = new DataMap(schema.getProperties());
-    DataMap propertiesMap = new DataMap(coercePropertyToDataMapOrFail(schema, "symbolProperties", properties.remove("symbolProperties")));
-    DataMap deprecatedMap = coercePropertyToDataMapOrFail(schema, "deprecatedSymbols", properties.remove("deprecatedSymbols"));
-    final boolean hasDocOrProperties = writeDocAndProperties(schema.getDoc(), properties);
-    if (hasDocOrProperties) {
-      indent();
-    }
+    // Retrieve symbol properties and deprecated symbols from the properties map
+    Map<String, Object> properties = schema.getProperties();
+    DataMap propertiesMap = new DataMap(coercePropertyToDataMapOrFail(schema,
+        DataSchemaConstants.SYMBOL_PROPERTIES_KEY,
+        properties.get(DataSchemaConstants.SYMBOL_PROPERTIES_KEY)));
+    DataMap deprecatedMap = coercePropertyToDataMapOrFail(schema,
+        DataSchemaConstants.DEPRECATED_SYMBOLS_KEY,
+        properties.get(DataSchemaConstants.DEPRECATED_SYMBOLS_KEY));
+
+    writeDocAndProperties(schema);
     write("enum ");
     write(toTypeIdentifier(schema));
     write(" {");
@@ -313,7 +305,9 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     for (String symbol : schema.getSymbols())
     {
       String docString = docs.get(symbol);
-      DataMap symbolProperties = coercePropertyToDataMapOrFail(schema, "symbolProperties." + symbol, propertiesMap.get(symbol));
+      DataMap symbolProperties = coercePropertyToDataMapOrFail(schema,
+          DataSchemaConstants.SYMBOL_PROPERTIES_KEY + "." + symbol,
+          propertiesMap.get(symbol));
       Object deprecated = deprecatedMap.get(symbol);
       if (deprecated != null)
       {
@@ -335,10 +329,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writeFixed(FixedDataSchema schema) throws IOException
   {
-    final boolean hasDocOrProperties = writeDocAndProperties(schema.getDoc(), schema.getProperties());
-    if (hasDocOrProperties) {
-      indent();
-    }
+    writeDocAndProperties(schema);
     write("fixed ");
     write(toTypeIdentifier(schema));
     write(" ");
@@ -347,10 +338,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writeTyperef(TyperefDataSchema schema) throws IOException
   {
-    final boolean hasDocOrProperties = writeDocAndProperties(schema.getDoc(), schema.getProperties());
-    if (hasDocOrProperties) {
-      indent();
-    }
+    writeDocAndProperties(schema);
     write("typeref ");
     write(toTypeIdentifier(schema));
     write(" = ");
@@ -551,7 +539,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     markEncountered(dataSchema);
     if (representation == TypeRepresentation.DECLARED_INLINE)
     {
-      boolean requiresNewlineLayout = requiredNewlineLayout(dataSchema);
+      boolean requiresNewlineLayout = requiresNewlineLayout(dataSchema);
       if (requiresNewlineLayout) {
         newline();
         _indentDepth++;
@@ -576,18 +564,18 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   /**
    * For inline declarations, determine if a type requires a newline to be declared. Only types without a
-   * doc string or properties can initiate their declaration as a continuation of an existing line
+   * doc string, properties, or aliases can initiate their declaration as a continuation of an existing line
    * (e.g. "fieldName: record Example {}").
    *
    * @param dataSchema provides the type to check for layout requirements.
    * @return true if the type requires a newline for layout
    */
-  private boolean requiredNewlineLayout(DataSchema dataSchema) {
-    if (dataSchema instanceof NamedDataSchema) {
+  private boolean requiresNewlineLayout(DataSchema dataSchema)
+  {
+    if (dataSchema instanceof NamedDataSchema)
+    {
       NamedDataSchema named = (NamedDataSchema) dataSchema;
-      if (StringUtils.isNotBlank(named.getDoc()) || !named.getProperties().isEmpty()) {
-        return true;
-      }
+      return StringUtils.isNotBlank(named.getDoc()) || !named.getProperties().isEmpty() || !named.getAliases().isEmpty();
     }
     return false;
   }
@@ -670,6 +658,72 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     final boolean hasDoc = writeDoc(doc);
     final boolean hasProperties = writeProperties(properties);
     return hasDoc || hasProperties;
+  }
+
+  /**
+   * Write the doc string and properties for a {@link NamedDataSchema}, including attributes that aren't really
+   * properties but are written as such (e.g. aliases).
+   * @param schema named data schema
+   */
+  private void writeDocAndProperties(NamedDataSchema schema) throws IOException
+  {
+    // Add all schema properties
+    final DataMap properties = new DataMap(schema.getProperties());
+
+    // Remove enum reserved keys
+    if (schema instanceof EnumDataSchema)
+    {
+      properties.remove(DataSchemaConstants.DEPRECATED_SYMBOLS_KEY);
+      properties.remove(DataSchemaConstants.SYMBOL_PROPERTIES_KEY);
+    }
+
+    // Add aliases
+    final List<Name> aliases = schema.getAliases();
+    if (aliases != null && aliases.size() > 0)
+    {
+      List<String> aliasStrings = aliases.stream()
+          .map(Name::getFullName)
+          .collect(Collectors.toList());
+      properties.put(DataSchemaConstants.ALIASES_KEY, new DataList(aliasStrings));
+    }
+
+    final boolean hasDocOrProperties = writeDocAndProperties(schema.getDoc(), properties);
+
+    // If anything was written, indentation needs to be corrected
+    if (hasDocOrProperties) {
+      indent();
+    }
+  }
+
+  /**
+   * Write the doc string and properties for a {@link com.linkedin.data.schema.RecordDataSchema.Field}, including
+   * attributes that aren't really properties but are written as such (e.g. aliases, order).
+   * @param field record field
+   */
+  private void writeDocAndProperties(RecordDataSchema.Field field) throws IOException
+  {
+    final DataMap properties = new DataMap(field.getProperties());
+
+    // Add aliases property
+    final List<String> aliases = field.getAliases();
+    if (aliases != null && !aliases.isEmpty())
+    {
+      properties.put(DataSchemaConstants.ALIASES_KEY, new DataList(aliases));
+    }
+
+    // Add order property
+    if (field.getOrder() != null && !field.getOrder().equals(RecordDataSchema.Field.Order.ASCENDING))
+    {
+      properties.put(DataSchemaConstants.ORDER_KEY, field.getOrder().name());
+    }
+
+    // For any non-trivial field declarations, separate with an additional newline
+    if (StringUtils.isNotBlank(field.getDoc()) || !properties.isEmpty() || field.isDeclaredInline())
+    {
+      newline();
+    }
+
+    writeDocAndProperties(field.getDoc(), properties);
   }
 
   /**

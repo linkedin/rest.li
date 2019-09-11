@@ -21,6 +21,7 @@ import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.MapDataSchema;
@@ -140,7 +141,6 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   // Deprecated annotation utils
   //
   private static final String DEPRECATED_KEY = "deprecated";
-  private static final String DEPRECATED_SYMBOLS_KEY = "deprecatedSymbols";
 
   private final Map<ClassTemplateSpec, JDefinedClass> _definedClasses = new HashMap<ClassTemplateSpec, JDefinedClass>();
   private final Map<JDefinedClass, ClassTemplateSpec> _generatedClasses = new HashMap<JDefinedClass, ClassTemplateSpec>();
@@ -389,7 +389,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
   private static void setDeprecatedAnnotationAndJavadoc(EnumDataSchema enumSchema, String symbol, JEnumConstant constant)
   {
-    final Object deprecatedSymbolsProp = enumSchema.getProperties().get(DEPRECATED_SYMBOLS_KEY);
+    final Object deprecatedSymbolsProp = enumSchema.getProperties().get(DataSchemaConstants.DEPRECATED_SYMBOLS_KEY);
     if (deprecatedSymbolsProp instanceof DataMap)
     {
       final DataMap deprecatedSymbols = (DataMap) deprecatedSymbolsProp;
