@@ -16,12 +16,16 @@
 
 package com.linkedin.pegasus.generator.test.pdl;
 
+import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.AbstractSchemaEncoder.TypeReferenceFormat;
 import com.linkedin.data.schema.AbstractSchemaParser;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.SchemaToPdlEncoder;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
+import com.linkedin.pegasus.generator.test.idl.PdlEncoderTestConfig;
+import com.linkedin.pegasus.generator.test.idl.ReferenceFormat;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -61,6 +65,7 @@ public class PdlEncoderTest extends GeneratorTest
             { "maps.WithOrders" },
             { "maps.WithPrimitivesMap" },
             { "records.Note" },
+            { "records.RecursivelyDefinedRecord" },
             { "records.WithAliases" },
             { "records.WithInclude" },
             { "records.WithIncludeAfter" },
@@ -117,17 +122,26 @@ public class PdlEncoderTest extends GeneratorTest
     String original = loadSchema(file);
     assertNotNull(parsed, "Failed to resolve: " + fullName + " resolver path: " + pegasusSrcDir.getAbsolutePath());
 
-    StringWriter writer = new StringWriter();
-    SchemaToPdlEncoder encoder = new SchemaToPdlEncoder(writer);
-    encoder.setTypeReferenceFormat(SchemaToPdlEncoder.TypeReferenceFormat.PRESERVE);
-    encoder.encode(parsed);
-    String encoded = writer.toString();
-    assertEqualsIgnoringSpacing(encoded, original);
+    // Read the test config (if any) from the schema
+    DataMap testConfigDataMap = (DataMap) parsed.getProperties().getOrDefault("testConfig", new DataMap());
+    PdlEncoderTestConfig testConfig = new PdlEncoderTestConfig(testConfigDataMap);
+
+    // Encode and compare for each type reference format (just PRESERVE by default)
+    for (ReferenceFormat referenceFormat : testConfig.getReferenceFormats())
+    {
+      StringWriter writer = new StringWriter();
+      SchemaToPdlEncoder encoder = new SchemaToPdlEncoder(writer);
+      encoder.setTypeReferenceFormat(TypeReferenceFormat.valueOf(referenceFormat.name()));
+      encoder.encode(parsed);
+      String encoded = writer.toString();
+      assertEqualsIgnoringSpacing(encoded, original,
+          "Encoded schema doesn't match original for type reference format: \"" + referenceFormat + "\".");
+    }
   }
 
-  private void assertEqualsIgnoringSpacing(String lhs, String rhs)
+  private void assertEqualsIgnoringSpacing(String lhs, String rhs, String message)
   {
-    assertEquals(canonicalize(lhs), canonicalize(rhs));
+    assertEquals(canonicalize(lhs), canonicalize(rhs), message);
   }
 
   private String loadSchema(File file)

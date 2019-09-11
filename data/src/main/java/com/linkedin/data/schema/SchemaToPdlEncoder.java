@@ -133,6 +133,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     String surroundingNamespace = _namespace;
     String surroundingPackage = _package;
     if (schema instanceof NamedDataSchema) {
+      markEncountered(schema);
       NamedDataSchema namedSchema = (NamedDataSchema) schema;
       hasNamespaceOverride = !namedSchema.getNamespace().equals(surroundingNamespace);
       hasPackageOverride = !StringUtils.isEmpty(namedSchema.getPackage()) && !namedSchema.getPackage().equals(surroundingPackage);
@@ -536,7 +537,6 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private void writeReferenceOrInline(DataSchema dataSchema, boolean originallyInlined) throws IOException
   {
     TypeRepresentation representation = selectTypeRepresentation(dataSchema, originallyInlined);
-    markEncountered(dataSchema);
     if (representation == TypeRepresentation.DECLARED_INLINE)
     {
       boolean requiresNewlineLayout = requiresNewlineLayout(dataSchema);
@@ -553,6 +553,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     {
       if (dataSchema instanceof NamedDataSchema)
       {
+        markEncountered(dataSchema);
         write(toTypeIdentifier((NamedDataSchema) dataSchema));
       }
       else
