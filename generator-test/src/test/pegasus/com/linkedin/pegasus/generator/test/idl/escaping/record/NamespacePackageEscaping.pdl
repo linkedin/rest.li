@@ -1,0 +1,14 @@
+namespace com.linkedin.pegasus.generator.test.idl.escaping.`record`
+package com.linkedin.pegasus.generator.test.idl.escaping.override.`typeref`
+
+/**
+ * Ensures that the namespace and package are properly escaped at the root as well as in scoped named-type declarations.
+ */
+record NamespacePackageEscaping {
+  x: {
+    namespace com.x.y.z.`enum`
+    package com.a.b.c.`fixed`
+
+    record Foo {}
+  }
+}

@@ -152,7 +152,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         }
         if (hasPackageOverride) {
           write("package ");
-          write(namedSchema.getPackage());
+          write(escapeIdentifier(namedSchema.getPackage()));
           newline();
           indent();
           _package = namedSchema.getPackage();

@@ -1,5 +1,8 @@
 27.5.4
 ------
+(RB=1795608)
+Fix PDL bug for encoding escaped package declarations
+
 (RB=1794668)
 Fix PDL bug for encoding schemas with empty namespaces
 
