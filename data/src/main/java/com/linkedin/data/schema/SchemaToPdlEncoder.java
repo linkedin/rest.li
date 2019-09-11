@@ -55,8 +55,8 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private final Writer _out;
   private Map<String, Name> _importsByLocalName;
   private int _indentDepth = 0;
-  private String _namespace = null;
-  private String _package = null;
+  private String _namespace = "";
+  private String _package = "";
 
   /**
    * Construct a .pdl source code encoder.
@@ -135,7 +135,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     if (schema instanceof NamedDataSchema) {
       markEncountered(schema);
       NamedDataSchema namedSchema = (NamedDataSchema) schema;
-      hasNamespaceOverride = !namedSchema.getNamespace().equals(surroundingNamespace);
+      hasNamespaceOverride = !StringUtils.isEmpty(namedSchema.getNamespace()) && !namedSchema.getNamespace().equals(surroundingNamespace);
       hasPackageOverride = !StringUtils.isEmpty(namedSchema.getPackage()) && !namedSchema.getPackage().equals(surroundingPackage);
       if (hasNamespaceOverride || hasPackageOverride) {
         write("{");

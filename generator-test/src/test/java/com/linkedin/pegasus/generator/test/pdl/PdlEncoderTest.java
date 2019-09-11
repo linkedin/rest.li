@@ -64,6 +64,7 @@ public class PdlEncoderTest extends GeneratorTest
             { "fixed.WithAliases" },
             { "maps.WithOrders" },
             { "maps.WithPrimitivesMap" },
+            { "records.EmptyNamespace" },
             { "records.Note" },
             { "records.RecursivelyDefinedRecord" },
             { "records.WithAliases" },

@@ -1,5 +1,8 @@
 27.5.4
 ------
+(RB=1794668)
+Fix PDL bug for encoding schemas with empty namespaces
+
 (RB=1793893)
 Fix PDL bug for encoding self-referential schemas in DENORMALIZE mode
 
