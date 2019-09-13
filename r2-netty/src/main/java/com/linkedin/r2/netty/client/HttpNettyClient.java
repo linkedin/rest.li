@@ -24,6 +24,7 @@ import com.linkedin.r2.message.Messages;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
@@ -36,6 +37,7 @@ import com.linkedin.r2.netty.common.NettyClientState;
 import com.linkedin.r2.netty.common.ShutdownTimeoutException;
 import com.linkedin.r2.netty.common.UnknownSchemeException;
 import com.linkedin.r2.netty.handler.common.SslHandshakeTimingHandler;
+import com.linkedin.r2.transport.common.MessageType;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
@@ -157,7 +159,7 @@ public class HttpNettyClient implements TransportClient
       Map<String, String> wireAttrs,
       TransportCallback<RestResponse> callback)
   {
-    sendRequest(Messages.toStreamRequest(request), requestContext, wireAttrs, Messages.toStreamTransportCallback(callback));
+    sendRequest(request, requestContext, wireAttrs, Messages.toStreamTransportCallback(callback));
   }
 
   @Override
@@ -166,8 +168,24 @@ public class HttpNettyClient implements TransportClient
       Map<String, String> wireAttrs,
       TransportCallback<StreamResponse> callback)
   {
-    sendRequest(request, requestContext, wireAttrs, callback);
+    // We treat full request (already fully in memory) and real stream request (not fully buffered in memory)
+    // differently. For the latter we have to use streaming handshakes to read the data as the data not fully buffered in memory.
+    // For the former we can avoid using streaming which has following benefits:
+    // 1) Avoid the cost associated with streaming handshakes (even though it is negligible)
+    // 2) Avoid the use of chunked encoding during http/1.1 transport to slightly save cost of transmitting over the wire
+    // 3) more importantly legacy R2 servers cannot work with chunked transfer encoding (http/1.1), so this allow the new client
+    // talk to legacy R2 servers without problem if they're just using restRequest (full request) with http/1.1
+    if(isFullRequest(requestContext))
+    {
+      sendStreamRequestAsRestRequest(request, requestContext, wireAttrs, callback);
+    }
+    else
+    {
+      sendRequest(request, requestContext, wireAttrs, callback);
+    }
   }
+
+
 
   @Override
   public void shutdown(Callback<None> callback)
@@ -215,13 +233,35 @@ public class HttpNettyClient implements TransportClient
     }
   }
 
+  private void sendStreamRequestAsRestRequest(StreamRequest request, RequestContext requestContext,
+      Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback)
+  {
+    Messages.toRestRequest(request, new Callback<RestRequest>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        callback.onResponse(TransportResponseImpl.error(e));
+      }
+
+      @Override
+      public void onSuccess(RestRequest restRequest)
+      {
+        sendRequest(restRequest, requestContext, wireAttrs, callback);
+      }
+    });
+  }
+
+  private static boolean isFullRequest(RequestContext requestContext)
+  {
+    Object isFullRequest = requestContext.getLocalAttr(R2Constants.IS_FULL_REQUEST);
+    return isFullRequest != null && (Boolean)isFullRequest;
+  }
+
   /**
    * Sends the request to the {@link ChannelPipeline}.
    */
-  private void sendRequest(StreamRequest request,
-      RequestContext requestContext,
-      Map<String, String> wireAttrs,
-      TransportCallback<StreamResponse> callback)
+  private void sendRequest(Request request, RequestContext requestContext, Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback)
   {
     final TransportCallback<StreamResponse> decoratedCallback = decorateUserCallback(request, callback);
 
@@ -255,9 +295,17 @@ public class HttpNettyClient implements TransportClient
     }
 
     // Serialize wire attributes
-    final StreamRequest requestWithWireAttrHeaders = request.builder()
-        .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
-        .build(request.getEntityStream());
+    final Request requestWithWireAttrHeaders;
+
+    if (request instanceof StreamRequest)
+    {
+      requestWithWireAttrHeaders = buildRequestWithWireAttributes((StreamRequest)request, wireAttrs);
+    }
+    else
+    {
+      MessageType.setMessageType(MessageType.Type.REST, wireAttrs);
+      requestWithWireAttrHeaders = buildRequestWithWireAttributes((RestRequest)request, wireAttrs);
+    }
 
     // Gets channel pool
     final AsyncPool<Channel> pool;
@@ -281,6 +329,20 @@ public class HttpNettyClient implements TransportClient
     {
       timeout.addTimeoutTask(pendingGet::cancel);
     }
+  }
+
+  private StreamRequest buildRequestWithWireAttributes(StreamRequest request, Map<String, String> wireAttrs)
+  {
+    return request.builder()
+        .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
+        .build(request.getEntityStream());
+  }
+
+  private RestRequest buildRequestWithWireAttributes(RestRequest request, Map<String, String> wireAttrs)
+  {
+    return new RestRequestBuilder(request)
+        .overwriteHeaders(WireAttributeHelper.toWireAttributes(wireAttrs))
+        .build();
   }
 
   /**
@@ -368,7 +430,7 @@ public class HttpNettyClient implements TransportClient
    * <li> Callback is not sensitive to response status code, see {@link HttpBridge} #streamToHttpCallback
    * </ul><p>
    */
-  private TransportCallback<StreamResponse> decorateUserCallback(StreamRequest request, TransportCallback<StreamResponse> callback)
+  private TransportCallback<StreamResponse> decorateUserCallback(Request request, TransportCallback<StreamResponse> callback)
   {
     final TransportCallback<StreamResponse> httpCallback = HttpBridge.streamToHttpCallback(callback, request);
     final TransportCallback<StreamResponse> executionCallback = getExecutionCallback(httpCallback);

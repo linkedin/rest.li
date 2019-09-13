@@ -17,9 +17,12 @@
 package com.linkedin.r2.netty.handler.http2;
 
 import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.netty.common.NettyRequestAdapter;
 import com.linkedin.r2.netty.entitystream.StreamReader;
+
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -41,9 +44,14 @@ public final class Http2MessageEncoders
 {
   private static final boolean END_OF_STREAM = true;
 
-  public static RequestEncoder newRequestEncoder()
+  public static StreamRequestEncoder newStreamRequestEncoder()
   {
-    return new RequestEncoder();
+    return new StreamRequestEncoder();
+  }
+
+  public static RestRequestEncoder newRestRequestEncoder()
+  {
+    return new RestRequestEncoder();
   }
 
   public static DataEncoder newDataEncoder()
@@ -51,9 +59,9 @@ public final class Http2MessageEncoders
     return new DataEncoder();
   }
 
-  public static class RequestEncoder extends MessageToMessageEncoder<StreamRequest>
+  public static class StreamRequestEncoder extends MessageToMessageEncoder<StreamRequest>
   {
-    private RequestEncoder()
+    private StreamRequestEncoder()
     {
     }
 
@@ -61,6 +69,21 @@ public final class Http2MessageEncoders
     protected void encode(ChannelHandlerContext ctx, StreamRequest request, List<Object> out) throws Exception
     {
       out.add(new DefaultHttp2HeadersFrame(NettyRequestAdapter.toHttp2Headers(request)));
+    }
+  }
+
+  public static class RestRequestEncoder extends MessageToMessageEncoder<RestRequest>
+  {
+    private RestRequestEncoder()
+    {
+    }
+
+    @Override
+    protected void encode(ChannelHandlerContext ctx, RestRequest request, List<Object> out) throws Exception
+    {
+      out.add(new DefaultHttp2HeadersFrame(NettyRequestAdapter.toHttp2Headers(request)));
+      ByteBuf content = Unpooled.wrappedBuffer(request.getEntity().asByteBuffer());
+      out.add(new DefaultHttp2DataFrame(content, true));
     }
   }
 

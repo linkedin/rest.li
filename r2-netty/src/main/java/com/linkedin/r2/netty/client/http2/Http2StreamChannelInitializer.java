@@ -50,10 +50,11 @@ class Http2StreamChannelInitializer extends ChannelInitializer<Channel>
   @Override
   protected void initChannel(Channel channel)
   {
-    channel.pipeline().addLast("outboundDataHandler", Http2MessageEncoders.newDataEncoder());
-    channel.pipeline().addLast("outboundRequestHandler", Http2MessageEncoders.newRequestEncoder());
-    channel.pipeline().addLast("inboundDataHandler", Http2MessageDecoders.newDataDecoder());
-    channel.pipeline().addLast("inboundRequestHandler", Http2MessageDecoders.newResponseDecoder());
+    channel.pipeline().addLast("outboundRestRequestEncoder", Http2MessageEncoders.newRestRequestEncoder());
+    channel.pipeline().addLast("outboundStreamDataEncoder", Http2MessageEncoders.newDataEncoder());
+    channel.pipeline().addLast("outboundStreamRequestEncoder", Http2MessageEncoders.newStreamRequestEncoder());
+    channel.pipeline().addLast("inboundDataDecoder", Http2MessageDecoders.newDataDecoder());
+    channel.pipeline().addLast("inboundRequestDecoder", Http2MessageDecoders.newResponseDecoder());
     channel.pipeline().addLast("schemeHandler", new SchemeHandler(_ssl ? HttpScheme.HTTPS.toString() : HttpScheme.HTTP.toString()));
     channel.pipeline().addLast("streamDuplexHandler", new ClientEntityStreamHandler(_maxContentLength));
     channel.pipeline().addLast("timeoutHandler", new CancelTimeoutHandler());

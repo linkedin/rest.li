@@ -46,8 +46,9 @@ import javax.net.ssl.SSLParameters;
  *
  * DefaultChannelPipeline {
  *   (codec = {@link io.netty.handler.codec.http.HttpClientCodec}),
- *   (outboundDataEncoder = {@link HttpMessageEncoders.DataEncoder}),
- *   (outboundRequestEncoder = {@link HttpMessageEncoders.RequestEncoder}),
+ *   (outboundRestRequestEncoder = {@link HttpMessageEncoders.RestRequestEncoder}),
+ *   (outboundStreamDataEncoder = {@link HttpMessageEncoders.DataEncoder}),
+ *   (outboundStreamRequestEncoder = {@link HttpMessageEncoders.StreamRequestEncoder}),
  *   (inboundDataDecoder = {@link HttpMessageDecoders.DataDecoder}),
  *   (inboundRequestDecoder = {@link HttpMessageDecoders.ResponseDecoder}),
  *   (schemeHandler = {@link SchemeHandler}),
@@ -98,8 +99,9 @@ class HttpChannelInitializer extends ChannelInitializer<NioSocketChannel>
     }
 
     channel.pipeline().addLast("codec", new HttpClientCodec(_maxInitialLineLength, _maxHeaderSize, _maxChunkSize));
-    channel.pipeline().addLast("outboundDataEncoder", HttpMessageEncoders.newDataEncoder());
-    channel.pipeline().addLast("outboundRequestEncoder", HttpMessageEncoders.newRequestEncoder());
+    channel.pipeline().addLast("outboundRestRequestEncoder", HttpMessageEncoders.newRestRequestEncoder());
+    channel.pipeline().addLast("outboundStreamDataEncoder", HttpMessageEncoders.newDataEncoder());
+    channel.pipeline().addLast("outboundStreamRequestEncoder", HttpMessageEncoders.newStreamRequestEncoder());
     channel.pipeline().addLast("inboundDataDecoder", HttpMessageDecoders.newDataDecoder());
     channel.pipeline().addLast("inboundRequestDecoder", HttpMessageDecoders.newResponseDecoder());
     channel.pipeline().addLast("schemeHandler", new SchemeHandler(_ssl ? HttpScheme.HTTPS.toString() : HttpScheme.HTTP.toString()));

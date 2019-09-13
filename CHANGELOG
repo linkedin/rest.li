@@ -1,5 +1,7 @@
 27.6.3
 ------
+(RB=1802974)
+Add RestRequest support in Pipeline V2 and Convert FullyBuffered StreaRequest to RestRequest for better efficiency.
 
 27.6.2
 ------

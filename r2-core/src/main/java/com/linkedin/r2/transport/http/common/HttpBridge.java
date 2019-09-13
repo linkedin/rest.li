@@ -19,6 +19,7 @@ package com.linkedin.r2.transport.http.common;
 
 
 import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -138,7 +139,7 @@ public class HttpBridge
    * @return the callback to receive the incoming HTTP response
    */
   public static TransportCallback<StreamResponse> streamToHttpCallback(final TransportCallback<StreamResponse> callback,
-                                                        StreamRequest request)
+                                                        Request request)
   {
     final String uri = getDisplayedURI(request.getURI());
     return new TransportCallback<StreamResponse>()

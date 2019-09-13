@@ -16,6 +16,8 @@
 
 package com.linkedin.r2.netty.handler.common;
 
+import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.stream.StreamRequest;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
@@ -41,9 +43,9 @@ public class SchemeHandler extends ChannelOutboundHandlerAdapter
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)
   {
-    if (msg instanceof StreamRequest)
+    if (msg instanceof StreamRequest || msg instanceof RestRequest)
     {
-      StreamRequest request = (StreamRequest) msg;
+      Request request = (Request) msg;
       URI uri = request.getURI();
       String scheme = uri.getScheme();
 

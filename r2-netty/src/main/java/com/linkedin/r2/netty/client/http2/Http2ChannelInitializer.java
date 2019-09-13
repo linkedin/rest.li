@@ -34,7 +34,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpClientUpgradeHandler;
-import io.netty.handler.codec.http2.Http2ClientUpgradeCodecTemporaryFix;
+import io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
 import io.netty.handler.codec.http2.Http2ConnectionHandler;
 import io.netty.handler.codec.http2.Http2FrameCodec;
 import io.netty.handler.codec.http2.Http2FrameCodecBuilder;
@@ -72,7 +72,7 @@ import javax.net.ssl.SSLParameters;
  * }
  *
  * During clear text channel initialization, the channel pipeline is first configured with
- * {@link HttpClientCodec}, {@link Http2ClientUpgradeCodecTemporaryFix}, and {@link Http2ProtocolUpgradeHandler}.
+ * {@link HttpClientCodec}, {@link Http2ClientUpgradeCodec}, and {@link Http2ProtocolUpgradeHandler}.
  * An upgrade request is sent immediately upon the channel becoming active. If upgrade to
  * HTTP/2 fails, appropriate failure exception will be set to the initialization {@link ChannelPromise}.
  * If upgrade succeed, {@link Http2MultiplexHandler} is added
@@ -91,10 +91,11 @@ import javax.net.ssl.SSLParameters;
  *
  * Http2MultiplexCodec$DefaultHttp2StreamChannel$1{
  *   (Http2StreamChannelInitializer#0 = {@link Http2StreamChannelInitializer}),
- *   (outboundDataHandler = {@link Http2MessageEncoders.DataEncoder}),
- *   (outboundRequestHandler = {@link Http2MessageEncoders.RequestEncoder}),
- *   (inboundDataHandler = {@link Http2MessageDecoders.DataDecoder}),
- *   (inboundRequestHandler = {@link Http2MessageDecoders.ResponseDecoder}),
+ *   (outboundRestRequestEncoder = {@link Http2MessageEncoders.RestRequestEncoder}),
+ *   (outboundStreamDataEncoder = {@link Http2MessageEncoders.DataEncoder}),
+ *   (outboundStreamRequestEncoder = {@link Http2MessageEncoders.StreamRequestEncoder}),
+ *   (inboundDataDecoder = {@link Http2MessageDecoders.DataDecoder}),
+ *   (inboundRequestDecoder = {@link Http2MessageDecoders.ResponseDecoder}),
  *   (schemeHandler = {@link SchemeHandler}),
  *   (streamDuplexHandler = {@link ClientEntityStreamHandler}),
  *   (timeoutHandler = {@link CancelTimeoutHandler}),
@@ -196,7 +197,7 @@ class Http2ChannelInitializer extends ChannelInitializer<NioSocketChannel>
     UnsupportedHandler unsupportedHandler = new UnsupportedHandler();
     Http2MultiplexHandler multiplexHandler = new Http2MultiplexHandler(unsupportedHandler, unsupportedHandler);
 
-    Http2ClientUpgradeCodecTemporaryFix upgradeCodec = new Http2ClientUpgradeCodecTemporaryFix(
+    Http2ClientUpgradeCodec upgradeCodec = new Http2ClientUpgradeCodec(
         (Http2ConnectionHandler) Http2FrameCodecBuilder
         .forClient()
         .initialSettings(createHttp2Settings())
