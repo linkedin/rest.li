@@ -292,7 +292,16 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
 
   protected void writeSchemaName(NamedDataSchema schema) throws IOException
   {
-    _builder.writeString(_currentNamespace.equals(schema.getNamespace()) ? schema.getName() : schema.getFullName());
+    if (_currentNamespace.equals(schema.getNamespace())) {
+      _builder.writeString(schema.getName());
+    } else {
+      // when the model is DENORMALIZE and turn on the override namespace option, add namespace prefix for all schema reference
+      if (_typeReferenceFormat == TypeReferenceFormat.DENORMALIZE) {
+        _builder.writeString(encodeNamespace(schema).isEmpty() ? schema.getName() : encodeNamespace(schema) + "." + schema.getName());
+      } else {
+        _builder.writeString(schema.getFullName());
+      }
+    }
   }
 
   /**

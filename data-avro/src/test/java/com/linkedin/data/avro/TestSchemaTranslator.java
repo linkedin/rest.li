@@ -2249,6 +2249,54 @@ public class TestSchemaTranslator
                 // exist namespace
                 "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"x.y\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ]}",
                 "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"avro.x.y\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }"
+            },
+            {
+              // reference to inlined schema
+                "{" +
+                    "  \"type\": \"record\"," +
+                    "  \"name\": \"foo\"," +
+                    "  \"namespace\": \"x.y\"," +
+                    "  \"fields\": [" +
+                    "    {" +
+                    "      \"name\": \"bar\"," +
+                    "      \"type\": \"int\"" +
+                    "    }," +
+                    "    {" +
+                    "      \"name\": \"FirstPost\"," +
+                    "      \"type\": {" +
+                    "        \"type\": \"record\"," +
+                    "        \"name\": \"Date\"," +
+                    "        \"namespace\": \"x.y\"," +
+                    "        \"fields\": [" +
+                    "          {" +
+                    "            \"name\": \"day\"," +
+                    "            \"type\": \"int\"" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"month\"," +
+                    "            \"type\": \"int\"" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"year\"," +
+                    "            \"type\": \"int\"" +
+                    "          }" +
+                    "        ]" +
+                    "      }" +
+                    "    }," +
+                    "    {" +
+                    "      \"name\": \"SecondPost\"," +
+                    "      \"type\": \"Date\"" +
+                    "    }," +
+                    "    {" +
+                    "      \"name\": \"LastPost\"," +
+                    "      \"type\": \"x.y.Date\"" +
+                    "    }" +
+                    "  ]" +
+                    "}",
+                "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"avro.x.y\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" }," +
+                    " { \"name\" : \"FirstPost\", \"type\" : { \"type\" : \"record\", \"name\" : \"Date\", \"fields\" : [ { \"name\" : \"day\", \"type\" : \"int\" }, " +
+                    "{ \"name\" : \"month\", \"type\" : \"int\" }, { \"name\" : \"year\", \"type\" : \"int\" } ] } }," +
+                    " { \"name\" : \"SecondPost\", \"type\" : \"avro.x.y.Date\" }, { \"name\" : \"LastPost\", \"type\" : \"avro.x.y.Date\" } ] }"
             }
         };
   }

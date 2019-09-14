@@ -1,5 +1,11 @@
+27.6.5
+------
+
+
 27.6.4
 ------
+(RB=1803237)
+Fix bug when convert .pdsc to .avsc with override namespace prefix in DENORMALIZE model
 
 27.6.3
 ------
