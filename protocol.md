@@ -347,16 +347,16 @@ would
     
     {
       "errors": {},
-        "results": {
-            "dest=KEY3&src=KEY1": {
-                "message": "Hi!",
-                "id": "1"
-            },
-            "dest=KEY2&src=KEY1": {
-                "message": "Hello!",
-                "id": "2"
-            }
-        }
+      "results": {
+          "dest=KEY3&src=KEY1": {
+              "message": "Hi!",
+              "id": "1"
+          },
+          "dest=KEY2&src=KEY1": {
+              "message": "Hello!",
+              "id": "2"
+          }
+      }
     }
 
 In protocol 2.0 a batch get for the keys:
@@ -368,16 +368,16 @@ would
     
     {
       "errors": {},
-        "results": {
-            "(dest:KEY3,src:KEY1)": {
-                "message": "Hi!",
-                "id": "1"
-            },
-            "(dest:KEY2,src:KEY1)": {
-                "message": "Hello!",
-                "id": "2"
-            }
-        }
+      "results": {
+          "(dest:KEY3,src:KEY1)": {
+              "message": "Hi!",
+              "id": "1"
+          },
+          "(dest:KEY2,src:KEY1)": {
+              "message": "Hello!",
+              "id": "2"
+          }
+      }
     }
 
 Here’s the basic form of a batch update request using association keys.
