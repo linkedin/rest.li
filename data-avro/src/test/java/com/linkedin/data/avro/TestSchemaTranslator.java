@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
@@ -1442,7 +1443,7 @@ public class TestSchemaTranslator
               null
           },
           {
-            // Test Annotations propagation for TypeRef, reserved word, such as "validate", should not be propagated
+            // Test Annotations propagation for TypeRef, reserved word, such as "validate", "java", should not be propagated
               "{" +
               "  \"type\": \"record\"," +
               "  \"name\": \"Foo\"," +
@@ -1723,10 +1724,10 @@ public class TestSchemaTranslator
         DataSchema schema = TestUtil.dataSchemaFromString(schemaText);
         String preTranslateSchemaText = schema.toString();
         String avroTextFromSchema = null;
+        DataToAvroSchemaTranslationOptions transOptions = new DataToAvroSchemaTranslationOptions(optionalDefaultMode, JsonBuilder.Pretty.SPACES, embedSchemaMode);
+        transOptions.setTyperefPropertiesExcludeSet(new HashSet<>(Arrays.asList("validate", "java")));
         avroTextFromSchema = SchemaTranslator.dataToAvroSchemaJson(
-          schema,
-          new DataToAvroSchemaTranslationOptions(optionalDefaultMode, JsonBuilder.Pretty.SPACES, embedSchemaMode)
-        );
+          schema, transOptions);
 
         if (embedSchemaMode == EmbedSchemaMode.ROOT_ONLY && hasEmbeddedSchema(schema))
         {
