@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
 {
   public static final String GENERATOR_AVRO_TRANSLATE_OPTIONAL_DEFAULT = "generator.avro.optional.default";
   public static final String GENERATOR_AVRO_NAMESPACE_OVERRIDE = "generator.avro.namespace.override";
+  public static final String GENERATOR_AVRO_TYPEREF_PROPERTY_EXCLUDE = "generator.avro.typeref.properties.exclude";
 
   private static final Logger _log = LoggerFactory.getLogger(AvroSchemaGenerator.class);
 
@@ -112,6 +114,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
 
     run(System.getProperty(GENERATOR_RESOLVER_PATH),
         System.getProperty(GENERATOR_AVRO_TRANSLATE_OPTIONAL_DEFAULT),
+        System.getProperty(GENERATOR_AVRO_TYPEREF_PROPERTY_EXCLUDE),
         Boolean.parseBoolean(System.getProperty(GENERATOR_AVRO_NAMESPACE_OVERRIDE)),
         args[0],
         Arrays.copyOfRange(args, 1, args.length));
@@ -123,7 +126,12 @@ public class AvroSchemaGenerator extends AbstractGenerator
     _config = config;
   }
 
-  public static void run(String resolverPath, String optionalDefault, boolean overrideNamespace, String targetDirectoryPath, String[] sources) throws IOException
+  public static void run(String resolverPath,
+                         String optionalDefault,
+                         String typeRefPropertiesExcludeList,
+                         boolean overrideNamespace,
+                         String targetDirectoryPath,
+                         String[] sources) throws IOException
   {
     final AvroSchemaGenerator generator = new AvroSchemaGenerator(new Config(resolverPath));
 
@@ -133,6 +141,15 @@ public class AvroSchemaGenerator extends AbstractGenerator
       generator.getDataToAvroSchemaTranslationOptions().setOptionalDefaultMode(optionalDefaultMode);
     }
     generator.getDataToAvroSchemaTranslationOptions().setOverrideNamespace(overrideNamespace);
+
+    if (null != typeRefPropertiesExcludeList)
+    {
+      generator.getDataToAvroSchemaTranslationOptions().setTyperefPropertiesExcludeSet(
+          Arrays.stream(typeRefPropertiesExcludeList.split(","))
+              .map(String::trim)
+              .collect(Collectors.toSet()));
+    }
+
     if (overrideNamespace)
     {
       targetDirectoryPath += "/" + AVRO_PREFIX;

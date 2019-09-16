@@ -417,8 +417,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
     {
       toBeFiltered = Stream.concat(toBeFiltered,
           ((TyperefDataSchema) field.getType()).getMergedTyperefProperties().entrySet().stream())
-          .filter(entry -> !DataSchemaAnnotationValidator.VALIDATE.equals(entry.getKey()))
-          .filter(entry -> !DataSchemaAnnotationValidator.JAVA_PROPERTY.equals(entry.getKey()));
+          .filter(entry -> !_options.getTyperefPropertiesExcludeSet().contains(entry.getKey()));
     }
     // Property merge rule:
     // For property content inherited from TypeRef that appears to be have same property name as the record field:

@@ -17,6 +17,10 @@
 package com.linkedin.data.avro;
 
 import com.linkedin.data.schema.JsonBuilder;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 
 /**
  * Options that affect the translation of {@link com.linkedin.data.schema.DataSchema} to Avro schema.
@@ -232,10 +236,30 @@ public class DataToAvroSchemaTranslationOptions
     return _embedSchemaMode;
   }
 
+  /**
+   * This list is a list of keywords that you want to exclude from translating from
+   *  TypeRef to Avro schema.
+   *
+   * By default properties in TypeRef will be translated to Avro Schema when TypeRef are dereferenced
+   * Here using this option,
+   * user can provide a list of property keywords that don't want to be translated into Avro Schema
+   *
+   * @param typerefPropertiesExcludeSet sets of words used as excluding list
+   */
+  public void setTyperefPropertiesExcludeSet(Set<String> typerefPropertiesExcludeSet) {
+    this.typerefPropertiesExcludeSet = typerefPropertiesExcludeSet;
+  }
+
+  public Set<String> getTyperefPropertiesExcludeSet() {
+    return typerefPropertiesExcludeSet;
+  }
+
+
   private OptionalDefaultMode _optionalDefaultMode;
   private JsonBuilder.Pretty  _pretty;
   private EmbedSchemaMode _embedSchemaMode;
   private PegasusToAvroDefaultFieldTranslationMode _defaultFieldTranslationMode =
       PegasusToAvroDefaultFieldTranslationMode.TRANSLATE;
   private boolean _overrideNamespace = false;
+  private Set<String> typerefPropertiesExcludeSet = new HashSet<>();
 }

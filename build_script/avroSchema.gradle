@@ -32,6 +32,7 @@ project.sourceSets.all { SourceSet sourceSet ->
     args outputDirPath
     args inputDataSchemaFiles
     systemProperties(['generator.resolver.path': inputDataSchemaDirPath])
+    systemProperties(['generator.avro.typeref.properties.exclude': 'field_to_removed1,field_to_removed2'])
     doFirst {
       project.mkdir(outputDirPath)
     }

@@ -16,8 +16,8 @@ import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
-import org.gradle.api.tasks.StopExecutionException;
 import org.gradle.api.tasks.SkipWhenEmpty;
+import org.gradle.api.tasks.StopExecutionException;
 import org.gradle.api.tasks.TaskAction;
 
 import static com.linkedin.pegasus.gradle.SharedFileUtils.getSuffixedFiles;
@@ -41,6 +41,7 @@ public class GenerateAvroSchemaTask extends DefaultTask
   private FileCollection _resolverPath;
   private FileCollection _codegenClasspath;
   private File _destinationDir;
+  private static final String TYPERF_PROPERTIES_EXCLUDE = "generator.avro.typeref.properties.exclude";
 
   @TaskAction
   public void generate()
@@ -80,6 +81,15 @@ public class GenerateAvroSchemaTask extends DefaultTask
       if (overrideNamespace != null) {
         javaExecSpec.jvmArgs("-Dgenerator.avro.namespace.override=" + overrideNamespace);
       }
+
+      String typeRefPropertiesExcludeList = getTypeRefPropertiesExcludeList();
+      if (typeRefPropertiesExcludeList == null)
+      {
+        // unless overridden,
+        // by default gradle plugin tasks will set this to have "validate" "java" so it is backward compatible
+        typeRefPropertiesExcludeList = "validate,data";
+      }
+      javaExecSpec.jvmArgs(String.format("-D%s=%s", TYPERF_PROPERTIES_EXCLUDE, typeRefPropertiesExcludeList));
 
       javaExecSpec.args(_destinationDir.getPath());
       javaExecSpec.args(inputDataSchemaFilenames);
@@ -160,6 +170,17 @@ public class GenerateAvroSchemaTask extends DefaultTask
   {
     return getProjectProperty("generator.avro.namespace.override");
   }
+
+  /**
+   * Value of project property "generator.avro.typeref.properties.exclude"
+   */
+  @Input
+  @Optional
+  public String getTypeRefPropertiesExcludeList()
+  {
+    return getProjectProperty(TYPERF_PROPERTIES_EXCLUDE);
+  }
+
 
   private String getProjectProperty(String name)
   {

@@ -1,5 +1,10 @@
+27.6.5
+------
+
 27.6.4
 ------
+(RB=1803600)
+Add an configurable option to exclude some typeRef properties from translating into avro schema
 
 27.6.3
 ------
