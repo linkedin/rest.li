@@ -299,6 +299,10 @@ dependencies {
   avroSchemaGenerator "com.linkedin.pegasus:data-avro-generator:<pegasus-version>"
 }
 ```
+And then adding the following configuration in build.gradle to enable avro schema generation:
+```groovy
+pegasus.main.generationModes = [PegasusGenerationMode.AVRO]
+```
 
 ### Published artifacts and their classifications
 
