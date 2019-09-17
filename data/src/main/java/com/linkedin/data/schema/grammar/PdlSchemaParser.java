@@ -100,6 +100,11 @@ public class PdlSchemaParser extends AbstractSchemaParser
 
   private static final String NEWLINE = System.lineSeparator();
 
+  // Mapping from simple name to full name
+  private Map<String, Name> _currentImports;
+
+  private StringBuilder _errorMessageBuilder = new StringBuilder();
+
   public PdlSchemaParser(DataSchemaResolver resolver)
   {
     super(resolver);
@@ -317,27 +322,29 @@ public class PdlSchemaParser extends AbstractSchemaParser
    */
   private DataSchema parse(DocumentContext document) throws ParseException
   {
-    PdlParser.NamespaceDeclarationContext namespaceDecl = document.namespaceDeclaration();
-
-    if (namespaceDecl != null)
+    // Set root namespace
+    PdlParser.NamespaceDeclarationContext namespaceDeclaration = document.namespaceDeclaration();
+    if (namespaceDeclaration != null)
     {
-      setCurrentNamespace(namespaceDecl.typeName().value);
+      setCurrentNamespace(namespaceDeclaration.typeName().value);
     }
     else
     {
       setCurrentNamespace("");
     }
 
-    if (document.packageDeclaration() != null)
+    // Set root package
+    PdlParser.PackageDeclarationContext packageDeclaration = document.packageDeclaration();
+    if (packageDeclaration != null)
     {
-      setCurrentPackage(document.packageDeclaration().typeName().value);
+      setCurrentPackage(packageDeclaration.typeName().value);
     }
     else
     {
       setCurrentPackage(null);
     }
 
-    setCurrentImports(document.importDeclarations());
+    setCurrentImports(document.importDeclarations(), getCurrentNamespace());
     TypeDeclarationContext typeDeclaration = document.typeDeclaration();
     DataSchema schema;
     if (typeDeclaration.namedTypeDeclaration() != null)
@@ -451,6 +458,32 @@ public class PdlSchemaParser extends AbstractSchemaParser
       throw new ParseException(namedType,
         "Unrecognized named type parse node: " + namedType.getText());
     }
+
+    if (_currentImports.containsKey(schema.getName()))
+    {
+      final Name importName = _currentImports.get(schema.getName());
+      if (importName.getFullName().equals(schema.getFullName()))
+      {
+        // Prohibit importing types that are declared in the same document
+        startErrorMessage(namedType)
+            .append("'")
+            .append(schema.getFullName())
+            .append("' is imported in the document in which it's declared.")
+            .append(NEWLINE);
+      }
+      else
+      {
+        // Prohibit declaring types that conflict with imported types
+        startErrorMessage(namedType)
+            .append("Declaration of type '")
+            .append(schema.getFullName())
+            .append("' conflicts with import '")
+            .append(importName.getFullName())
+            .append("'")
+            .append(NEWLINE);
+      }
+    }
+
     schema.setPackage(getCurrentPackage());
     return schema;
   }
@@ -1165,10 +1198,10 @@ public class PdlSchemaParser extends AbstractSchemaParser
     {
       fullname = name; // already a fullname
     }
-    else if (currentImports.containsKey(name))
+    else if (_currentImports.containsKey(name))
     {
       // imported names are higher precedence than names in current namespace
-      fullname = currentImports.get(name).getFullName();
+      fullname = _currentImports.get(name).getFullName();
     }
     else if (getCurrentNamespace().isEmpty())
     {
@@ -1181,28 +1214,40 @@ public class PdlSchemaParser extends AbstractSchemaParser
     return fullname;
   }
 
-  // simple name -> fullname
-  private Map<String, Name> currentImports;
-
-  private void setCurrentImports(ImportDeclarationsContext imports)
+  /**
+   * Sets the imports that can be used while parsing this document.
+   * @param imports import declaration context for the document.
+   * @param rootNamespace root namespace of this document.
+   */
+  private void setCurrentImports(ImportDeclarationsContext imports, String rootNamespace)
   {
     Map<String, Name> importsBySimpleName = new HashMap<>();
     for (ImportDeclarationContext importDecl: imports.importDeclaration())
     {
       String importedFullname = importDecl.type.value;
       Name importedName = new Name(importedFullname);
+      // Prohibit imports from the root namespace
+      if (importedName.getNamespace().equals(rootNamespace))
+      {
+        startErrorMessage(importDecl)
+            .append("'")
+            .append(importedFullname)
+            .append("' is an illegal import from the root namespace.")
+            .append(NEWLINE);
+      }
+      // Prohibit imports with conflicting simple names
       String importedSimpleName = importedName.getName();
       if (importsBySimpleName.containsKey(importedSimpleName))
       {
         startErrorMessage(importDecl)
-          .append("'")
-          .append(importsBySimpleName.get(importedSimpleName))
-          .append("' is already defined in an import.")
-          .append(NEWLINE);
+            .append("'")
+            .append(importsBySimpleName.get(importedSimpleName))
+            .append("' is already defined in an import.")
+            .append(NEWLINE);
       }
       importsBySimpleName.put(importedSimpleName, importedName);
     }
-    this.currentImports = importsBySimpleName;
+    this._currentImports = importsBySimpleName;
   }
 
   @Override
@@ -1216,7 +1261,4 @@ public class PdlSchemaParser extends AbstractSchemaParser
   {
     return _errorMessageBuilder;
   }
-
-  private StringBuilder _errorMessageBuilder = new StringBuilder();
-
 }

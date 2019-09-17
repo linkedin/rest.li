@@ -31,10 +31,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import org.apache.commons.io.FileUtils;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.*;
 
 
 /**
@@ -43,7 +43,13 @@ import static org.testng.Assert.*;
 public class PdlEncoderTest extends GeneratorTest
 {
   private final File pegasusSrcDir = new File(System.getProperty("testDir", "src/test") + "/pegasus");
-  private final DataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(pegasusSrcDir.getAbsolutePath());
+  private DataSchemaResolver resolver;
+
+  @BeforeMethod
+  private void beforeMethod()
+  {
+    resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(pegasusSrcDir.getAbsolutePath());
+  }
 
   @DataProvider(name = "pdlFilePaths")
   private Object[][] providePdlFilePaths()
@@ -63,6 +69,8 @@ public class PdlEncoderTest extends GeneratorTest
             { "escaping.PdlKeywordEscaping" },
             { "fixed.Fixed8" },
             { "fixed.WithAliases" },
+            { "imports.ConflictResolution" },
+            { "imports.NamespaceOverrides" },
             { "maps.WithOrders" },
             { "maps.WithPrimitivesMap" },
             { "records.EmptyNamespace" },
@@ -102,15 +110,11 @@ public class PdlEncoderTest extends GeneratorTest
     StringBuilder errorMessageBuilder = parser.errorMessageBuilder();
     if (errorMessageBuilder.length() > 0)
     {
-      fail(
-          "Failed to parse schema: " + file.getAbsolutePath() + "\nerrors: " + errorMessageBuilder.toString());
-      System.exit(1);
+      Assert.fail("Failed to parse schema: " + file.getAbsolutePath() + "\nerrors: " + errorMessageBuilder.toString());
     }
     if (parser.topLevelDataSchemas().size() != 1)
     {
-      fail(
-          "Failed to parse any schemas from: " + file.getAbsolutePath() + "\nerrors: " + errorMessageBuilder.toString());
-      System.exit(1);
+      Assert.fail("Failed to parse any schemas from: " + file.getAbsolutePath() + "\nerrors: " + errorMessageBuilder.toString());
     }
     return parser.topLevelDataSchemas().get(0);
   }
@@ -122,7 +126,7 @@ public class PdlEncoderTest extends GeneratorTest
 
     DataSchema parsed = parseSchema(file);
     String original = loadSchema(file);
-    assertNotNull(parsed, "Failed to resolve: " + fullName + " resolver path: " + pegasusSrcDir.getAbsolutePath());
+    Assert.assertNotNull(parsed, "Failed to resolve: " + fullName + " resolver path: " + pegasusSrcDir.getAbsolutePath());
 
     // Read the test config (if any) from the schema
     DataMap testConfigDataMap = (DataMap) parsed.getProperties().getOrDefault("testConfig", new DataMap());
@@ -143,7 +147,7 @@ public class PdlEncoderTest extends GeneratorTest
 
   private void assertEqualsIgnoringSpacing(String lhs, String rhs, String message)
   {
-    assertEquals(canonicalize(lhs), canonicalize(rhs), message);
+    Assert.assertEquals(canonicalize(lhs), canonicalize(rhs), message);
   }
 
   private String loadSchema(File file)
@@ -154,7 +158,7 @@ public class PdlEncoderTest extends GeneratorTest
     }
     catch (IOException e)
     {
-      fail("Failed to load file: " + file + ": " + e.getMessage());
+      Assert.fail("Failed to load file: " + file + ": " + e.getMessage());
       return null;
     }
   }

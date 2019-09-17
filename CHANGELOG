@@ -1,5 +1,18 @@
-27.5.4
+27.6.1
 ------
+
+27.6.0
+------
+(RB=1799751)
+Fix PDL encoder logic for writing import statements
+
+(RB=1794904)
+Pegasus tmc release job is failing with out of memory error while runing r2-int-tests. Try to reduce the overall memory
+footprint by having one netty eventloop group and cleaning up objects created in tests
+
+(RB=1783117)
+Add a config field in RestLiMethodConfig to validate query parameters
+
 (RB=1788651)
 Set the initial capacity of records and union templates to reduce unused memory.
 
@@ -17,13 +30,6 @@ Fix PDL bug for encoding self-referential schemas in DENORMALIZE mode
 
 (RB=1793883)
 Support aliases for named data schemas in PDL
-
-(RB=1783117)
-Add a config field in RestLiMethodConfig to validate query parameters
-
-(RB=1794904)
-Pegasus tmc release job is failing with out of memory error while runing r2-int-tests. Try to reduce the overall memory
-footprint by having one netty eventloop group and cleaning up objects created in tests
 
 27.5.3
 ------

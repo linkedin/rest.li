@@ -1,0 +1,84 @@
+namespace com.linkedin.pegasus.generator.test.idl.imports
+
+import com.linkedin.pegasus.generator.test.idl.records.Note
+import com.linkedin.pegasus.generator.test.idl.records.Simple
+
+/**
+ * The PDL encoder only writes imports for types that are outside the root namespace of the document and are declared
+ * outside the document. A FQN is required for references to types outside the current namespace that don't have a
+ * corresponding import.
+ */
+record NamespaceOverrides {
+  /**
+   * This record "OverriddenChild" and its child "Grandchild" are declared in an overridden namespace.
+   */
+  inlinedOverriddenChild: {
+    namespace com.example.overridden
+
+    record OverriddenChild {
+      /**
+       * An import is prohibited for this type since it's in the root namespace and declared in this file.
+       * Requires a FQN since it references a type outside the current namespace.
+       */
+      referencedParent: com.linkedin.pegasus.generator.test.idl.imports.NamespaceOverrides,
+
+      /**
+       * This record "Grandchild" inherits the overridden namespace from its parent "OverriddenChild".
+       */
+      inlinedGrandchild: record Grandchild {
+        /**
+         * References the current namespace.
+         */
+        referencedParent: OverriddenChild
+      },
+
+      /**
+       * References the current namespace.
+       */
+      referencedGrandchild: Grandchild
+
+      /**
+       * An import is prohibited for this type since it's in the root namespace, despite being declared outside this file.
+       * Requires a FQN since it references a type outside the current namespace.
+       */
+      externalWithinRootNS: com.linkedin.pegasus.generator.test.idl.imports.Dummy
+
+      /**
+       * Requires an import since this type is outside the root namespace and is not declared in this file.
+       */
+      externalOutsideNS: Note
+    }
+  }
+
+  /**
+   * Requires a FQN since it's outside the current namespace yet inlined in this file.
+   */
+  referencedOverriddenChild: com.example.overridden.OverriddenChild
+
+  /**
+   * This record "Child" is declared in the root namespace.
+   */
+  inlinedChild: record Child {
+    /**
+     * References the current namespace.
+     */
+    referencedParent: NamespaceOverrides
+  }
+
+  /**
+   * References the current namespace.
+   */
+  referencedChild: Child
+
+  /**
+   * Requires neither import nor FQN.
+   * An import is prohibited for this type since it's in the root namespace, despite being declared outside this file.
+   * A FQN is inappropriate since it references a type in the current namespace.
+   */
+  externalWithinNS: Dummy
+
+  /**
+   * Requires an import since this type is outside the root namespace and is not declared in this file.
+   */
+  externalOutsideNS: Simple
+}
