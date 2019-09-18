@@ -48,6 +48,7 @@ import com.linkedin.restli.common.TypeSpec;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
 import com.linkedin.restli.internal.testutils.RestLiTestAttachmentDataSource;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -389,26 +390,28 @@ public class TestRestClientRequestBuilder
   public void testMultiplexedGet(ContentType contentType,
       String expectedContentTypeHeader,
       List<ContentType> acceptTypes,
-      String expectedAcceptHeader) throws URISyntaxException, RestLiEncodingException
+      String expectedAcceptHeader) throws URISyntaxException, IOException
   {
     RestRequest restRequest = clientGeneratedMultiplexedRestRequest(
         BatchGetRequest.class, ResourceMethod.BATCH_GET, null, contentType, acceptTypes);
     Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
-    Assert.assertEquals(restRequest.getEntity().asAvroString(), MULTIPLEXED_GET_ENTITY_BODY);
+    // This assumes that the content type is always JSON-like
+    assertEqualsJsonString(restRequest.getEntity().asAvroString(), MULTIPLEXED_GET_ENTITY_BODY);
   }
 
   @Test(dataProvider = "multiplexerData")
   public void testMultiplexedCreate(ContentType contentType,
       String expectedContentTypeHeader,
       List<ContentType> acceptTypes,
-      String expectedAcceptHeader) throws URISyntaxException, RestLiEncodingException
+      String expectedAcceptHeader) throws URISyntaxException, IOException
   {
     RestRequest restRequest = clientGeneratedMultiplexedRestRequest(
         CreateRequest.class, ResourceMethod.CREATE, ENTITY_BODY, contentType, acceptTypes);
     Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
-    Assert.assertEquals(restRequest.getEntity().asAvroString(), MULTIPLEXED_POST_ENTITY_BODY);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
+    // This assumes that the content type is always JSON-like
+    assertEqualsJsonString(restRequest.getEntity().asAvroString(), MULTIPLEXED_POST_ENTITY_BODY);
   }
 
   @DataProvider(name = "multiplexerData")
@@ -1483,5 +1486,19 @@ public class TestRestClientRequestBuilder
     requestAttachments.add(new RestLiTestAttachmentDataSource(FIRST_PART_ID, FIRST_PART_PAYLOAD));
     requestAttachments.add(new RestLiTestAttachmentDataSource(SECOND_PART_ID, SECOND_PART_PAYLOAD));
     return requestAttachments;
+  }
+
+  /**
+   * Asserts that two JSON strings are semantically equivalent.
+   * TODO: This seems to be common among unit tests, we should create some framework-wide test utils
+   *
+   * @param actual actual JSON string
+   * @param expected expected JSON string
+   * @throws IOException in the case of a parsing failure
+   */
+  private void assertEqualsJsonString(String actual, String expected) throws IOException
+  {
+    JacksonDataCodec codec = new JacksonDataCodec();
+    Assert.assertEquals(codec.stringToMap(actual), codec.stringToMap(expected));
   }
 }

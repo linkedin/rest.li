@@ -3,6 +3,9 @@
 
 27.6.0
 ------
+(RB=1807058)
+Fix unreliable unit tests in TestRestClientRequestBuilder
+
 (RB=1799751)
 Fix PDL encoder logic for writing import statements
 
