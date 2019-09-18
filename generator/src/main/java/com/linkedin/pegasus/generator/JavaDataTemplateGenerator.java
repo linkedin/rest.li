@@ -505,6 +505,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     generateConstructorWithInitialCapacity(arrayClass, _dataListClass);
     generateConstructorWithCollection(arrayClass, itemJClass);
     generateConstructorWithArg(arrayClass, schemaField, _dataListClass, itemJClass, dataJClass);
+    generateConstructorWithVarArgs(arrayClass, itemJClass);
 
     if (_pathSpecMethods)
     {
@@ -1154,6 +1155,17 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JVar c = argConstructor.param(_collectionClass.narrow(elementClass), "c");
     argConstructor.body().invoke(THIS).arg(JExpr._new(_dataListClass).arg(c.invoke("size")));
     argConstructor.body().invoke("addAll").arg(c);
+  }
+
+  private void generateConstructorWithVarArgs(JDefinedClass cls, JClass elementClass)
+  {
+    final JMethod argConstructor = cls.constructor(JMod.PUBLIC);
+    final JVar first = argConstructor.param(elementClass, "first");
+    final JVar rest = argConstructor.varParam(elementClass, "rest");
+    argConstructor.body().invoke(THIS).arg(JExpr._new(_dataListClass)
+        .arg(rest.ref("length").plus(JExpr.lit(1))));
+    argConstructor.body().invoke("add").arg(first);
+    argConstructor.body().invoke("addAll").arg(_arraysClass.staticInvoke("asList").arg(rest));
   }
 
   private void generateConstructorWithInitialCapacityAndLoadFactor(JDefinedClass cls)

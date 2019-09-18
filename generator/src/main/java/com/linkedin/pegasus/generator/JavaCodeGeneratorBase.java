@@ -69,6 +69,7 @@ public class JavaCodeGeneratorBase
    */
   protected final JClass _byteStringClass;
   protected final JClass _collectionClass;
+  protected final JClass _arraysClass;
   protected final JClass _customClass;
   protected final JClass _dataListClass;
   protected final JClass _dataMapClass;
@@ -95,6 +96,7 @@ public class JavaCodeGeneratorBase
   {
     _byteStringClass = getCodeModel().ref(ByteString.class);
     _collectionClass = getCodeModel().ref(Collection.class);
+    _arraysClass = getCodeModel().ref(Arrays.class);
     _customClass = getCodeModel().ref(Custom.class);
     _dataListClass = getCodeModel().ref(DataList.class);
     _dataMapClass = getCodeModel().ref(DataMap.class);

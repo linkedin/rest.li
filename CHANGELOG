@@ -1,5 +1,10 @@
+27.6.3
+------
+
 27.6.2
 ------
+(RB=1807496)
+Add a varargs constructor to *Array classes.
 
 27.6.1
 ------
