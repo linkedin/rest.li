@@ -16,16 +16,15 @@
 
 package com.linkedin.d2.balancer.zkfs;
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
-import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
+import java.util.Collections;
+import java.util.List;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Steven Ihde
@@ -33,18 +32,25 @@ import java.util.List;
 public class ZKFSDirectory implements Directory
 {
   private final String _basePath;
+  private final String _d2ServicePath;
   private volatile ZKConnection _connection;
 
   public ZKFSDirectory(String basePath)
   {
+    this(basePath, ZKFSUtil.SERVICE_PATH);
+  }
+
+  public ZKFSDirectory(String basePath, String d2ServicePath)
+  {
     _basePath = basePath;
+    _d2ServicePath = d2ServicePath;
   }
 
   @Override
   public void getServiceNames(final Callback<List<String>> callback)
   {
     final ZooKeeper zk = _connection.getZooKeeper();
-    final String path = ZKFSUtil.servicePath(_basePath);
+    final String path = ZKFSUtil.servicePath(_basePath, _d2ServicePath);
     zk.getChildren(path, false, new ChildrenCallback(callback), null);
   }
 

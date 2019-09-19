@@ -60,11 +60,11 @@ public class LastSeenLoadBalancerWithFacilities implements LoadBalancerWithFacil
   private final SimpleLoadBalancer _loadBalancer;
   private final KeyMapper _keyMapper;
 
-  public LastSeenLoadBalancerWithFacilities(SimpleLoadBalancer loadBalancer, String basePath,
-                                            ZKPersistentConnection zkPersistentConnection, LastSeenZKStore<ClusterProperties> lsClusterStore,
-                                            LastSeenZKStore<ServiceProperties> lsServiceStore, LastSeenZKStore<UriProperties> lsUrisStore) {
+  public LastSeenLoadBalancerWithFacilities(SimpleLoadBalancer loadBalancer, String basePath, String d2ServicePath,
+      ZKPersistentConnection zkPersistentConnection, LastSeenZKStore<ClusterProperties> lsClusterStore, LastSeenZKStore<ServiceProperties> lsServiceStore,
+      LastSeenZKStore<UriProperties> lsUrisStore) {
     _loadBalancer = loadBalancer;
-    _directory = new ZKFSDirectory(basePath);
+    _directory = new ZKFSDirectory(basePath, d2ServicePath);
     _zkPersistentConnection = zkPersistentConnection;
 
     _lsClusterStore = lsClusterStore;

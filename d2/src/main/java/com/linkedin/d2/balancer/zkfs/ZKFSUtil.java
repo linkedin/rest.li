@@ -47,11 +47,15 @@ public class ZKFSUtil
 
   public static String servicePath(String basePath)
   {
-    return String.format("%s/%s", normalizeBasePath(basePath), SERVICE_PATH);
+    return servicePath(basePath, SERVICE_PATH);
   }
 
   public static String servicePath(String basePath, String servicePath)
   {
+    if (servicePath == null)
+    {
+      servicePath = SERVICE_PATH;
+    }
     return String.format("%s/%s", normalizeBasePath(basePath), servicePath);
   }
 
