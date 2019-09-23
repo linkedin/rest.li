@@ -1,9 +1,0 @@
-{
-    "type": "typeref",
-    "name": "FruitsTypeRef",
-    "namespace" : "com.linkedin.pegasus.generator.examples",
-    "ref" : "Fruits",
-    "field_to_removed1": "test_content_1",
-    "field_to_removed2": "test_content_2",
-    "field_to_retain": "test_content_3"
-}

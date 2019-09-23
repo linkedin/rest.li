@@ -24,11 +24,6 @@
         { "type" : "map", "values" : "long" },
         "null"
       ]
-    },
-    {
-      "name": "typeRefField",
-      "type": "FruitsTypeRef"
     }
-
   ]
 }
