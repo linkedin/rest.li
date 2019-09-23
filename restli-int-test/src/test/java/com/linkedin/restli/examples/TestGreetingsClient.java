@@ -321,7 +321,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Request<Void> requestVoid = builders.<Void>action("AnotherAction")
         .setActionParam("bitfield", new BooleanArray())
         .setActionParam("request", new TransferOwnershipRequest())
-        .setActionParam("someString", new String(""))
+        .setActionParam("someString", "")
         .setActionParam("stringMap", new StringMap())
         .build();
     ResponseFuture<Void> responseFutureVoid = getClient().sendRequest(requestVoid);

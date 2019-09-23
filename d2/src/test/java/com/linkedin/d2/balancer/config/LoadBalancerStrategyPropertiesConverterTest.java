@@ -26,6 +26,7 @@ import com.linkedin.d2.hashConfigType;
 import com.linkedin.d2.hashMethodEnum;
 import com.linkedin.d2.quarantineInfo;
 import com.linkedin.data.template.StringArray;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,7 +54,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
     final Integer minCallCountLowWaterMark = 1500;
     final hashMethodEnum hashMethod = hashMethodEnum.URI_REGEX;
     final hashConfigType hashConfig = new hashConfigType();
-    final StringArray regexes = new StringArray();
+    final StringArray regexes = new StringArray("+231{w+)");
     final Double hashringPointCleanupRate = 0.2;
     final ConsistentHashAlgorithmEnum consistentHashAlgorithm = ConsistentHashAlgorithmEnum.MULTI_PROBE;
     final Integer numProbes = 1024;
@@ -67,7 +68,6 @@ public class LoadBalancerStrategyPropertiesConverterTest
     final Integer lowEmittingInterval = 10;
     final Integer highEmittingInterval = 60;
 
-    regexes.add("+231{w+)");
     hashConfig.setUriRegexes(regexes);
     hashConfig.setWarnOnNoMatch(false);
     hashConfig.setFailOnNoMatch(true);
@@ -90,7 +90,7 @@ public class LoadBalancerStrategyPropertiesConverterTest
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_POINTS_PER_HOST, numPointsPerHost.toString());
 
     Map<String, Object> hashConfigMap = new HashMap<>();
-    hashConfigMap.put(URIRegexHash.KEY_REGEXES, regexes.stream().collect(Collectors.toList()));
+    hashConfigMap.put(URIRegexHash.KEY_REGEXES, new ArrayList<>(regexes));
     hashConfigMap.put(URIRegexHash.KEY_WARN_ON_NO_MATCH, "false");
     hashConfigMap.put(URIRegexHash.KEY_FAIL_ON_NO_MATCH, "true");
     loadBalancerStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, hashConfigMap);

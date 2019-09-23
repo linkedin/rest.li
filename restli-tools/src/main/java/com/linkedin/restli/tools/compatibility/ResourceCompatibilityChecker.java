@@ -865,8 +865,7 @@ public class ResourceCompatibilityChecker
     {
       // upgrade case
 
-      final StringArray upgradedPrevAssocKeys = new StringArray();
-      upgradedPrevAssocKeys.add(prevAssocKey);
+      final StringArray upgradedPrevAssocKeys = new StringArray(prevAssocKey);
       checkEqualSingleValue(assocKey, upgradedPrevAssocKeys, currAssocKeys);
     }
     else

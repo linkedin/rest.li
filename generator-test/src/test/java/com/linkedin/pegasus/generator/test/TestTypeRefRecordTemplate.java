@@ -58,15 +58,13 @@ public class TestTypeRefRecordTemplate
     TyperefTest record = new TyperefTest();
     RecordDataSchema recordDataSchema = record.schema();
 
-    DoubleArray doubleArray = new DoubleArray();
-    record.setDoubleRefArray(doubleArray);
-    doubleArray = record.getDoubleRefArray();
+    record.setDoubleRefArray(new DoubleArray());
+    DoubleArray doubleArray = record.getDoubleRefArray();
     assertEquals(doubleArray.schema(), DataTemplateUtil.getSchema(DoubleArray.class));
     assertNotEquals(recordDataSchema.getField("doubleRefArray").getType(), doubleArray.schema());
 
-    IntegerArray intArray = new IntegerArray();
-    record.setIntArray(intArray);
-    intArray = record.getIntArray();
+    record.setIntArray(new IntegerArray());
+    IntegerArray intArray = record.getIntArray();
     assertEquals(intArray.schema(), DataTemplateUtil.getSchema(IntegerArray.class));
     assertNotEquals(recordDataSchema.getField("intArray").getType(), intArray.schema());
 
@@ -84,15 +82,13 @@ public class TestTypeRefRecordTemplate
     TyperefTest record = new TyperefTest();
     RecordDataSchema recordDataSchema = record.schema();
 
-    DoubleMap doubleMap = new DoubleMap();
-    record.setDoubleRefMap(doubleMap);
-    doubleMap = record.getDoubleRefMap();
+    record.setDoubleRefMap(new DoubleMap());
+    DoubleMap doubleMap = record.getDoubleRefMap();
     assertEquals(doubleMap.schema(), DataTemplateUtil.getSchema(DoubleMap.class));
     assertNotEquals(recordDataSchema.getField("doubleRefMap").getType(), doubleMap.schema());
 
-    IntegerMap intMap = new IntegerMap();
-    record.setIntMap(intMap);
-    intMap = record.getIntMap();
+    record.setIntMap(new IntegerMap());
+    IntegerMap intMap = record.getIntMap();
     assertEquals(intMap.schema(), DataTemplateUtil.getSchema(IntegerMap.class));
     assertNotEquals(recordDataSchema.getField("intMap").getType(), intMap.schema());
 

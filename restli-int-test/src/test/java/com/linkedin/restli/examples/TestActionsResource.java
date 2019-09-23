@@ -109,9 +109,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     Assert.assertEquals(messageArray.get(1).getMessage(), "My Message 2");
 
     //Primitive type array
-    StringArray inputStringArray = new StringArray();
-    inputStringArray.add("message1");
-    inputStringArray.add("message2");
+    StringArray inputStringArray = new StringArray("message1", "message2");
     Request<StringArray> stringArrayRequest =
         builders.<StringArray>action("EchoStringArray").setActionParam("Strings", inputStringArray).build();
     StringArray stringArray = getClient().sendRequest(stringArrayRequest).getResponse().getEntity();

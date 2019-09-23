@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.internal.server.model;
 
-
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
@@ -42,7 +41,6 @@ import com.linkedin.pegasus.generator.test.EnumFruits;
 import com.linkedin.pegasus.generator.test.EnumFruitsArray;
 import com.linkedin.pegasus.generator.test.FixedMD5;
 import com.linkedin.pegasus.generator.test.FixedMD5Array;
-import com.linkedin.pegasus.generator.test.LongRef;
 import com.linkedin.pegasus.generator.test.RecordBar;
 import com.linkedin.pegasus.generator.test.RecordBarArray;
 import com.linkedin.pegasus.generator.test.RecordBarMap;
@@ -50,9 +48,9 @@ import com.linkedin.pegasus.generator.test.Union;
 import com.linkedin.restli.server.CustomLongRef;
 import com.linkedin.restli.server.CustomStringRef;
 import com.linkedin.restli.server.ResourceConfigException;
-
 import com.linkedin.restli.server.custom.types.CustomLong;
 import com.linkedin.restli.server.custom.types.CustomString;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -92,11 +90,11 @@ public class TestParameterDefaultValue
     Object result;
 
     result = test("[\"Hello\", \"World\"]", StringArray.class);
-    Assert.assertEquals(result, new StringArray(Arrays.asList("Hello", "World")));
+    Assert.assertEquals(result, new StringArray("Hello", "World"));
     Assert.assertSame(result.getClass(), StringArray.class);
 
     result = test("[false, true]", BooleanArray.class);
-    Assert.assertEquals(result, new BooleanArray(Arrays.asList(false, true)));
+    Assert.assertEquals(result, new BooleanArray(false, true));
     Assert.assertSame(result.getClass(), BooleanArray.class);
 
     result = test("[1, 2, 3]", IntegerArray.class);
@@ -108,35 +106,33 @@ public class TestParameterDefaultValue
     Assert.assertSame(result.getClass(), IntegerArray.class);
 
     result = test("[2, 3, 4]", LongArray.class);
-    Assert.assertEquals(result, new LongArray(Arrays.asList(2L, 3L, 4L)));
+    Assert.assertEquals(result, new LongArray(2L, 3L, 4L));
     Assert.assertSame(result.getClass(), LongArray.class);
 
     result = test("[1.1, 2.2, 3.3]", FloatArray.class);
-    Assert.assertEquals(result, new FloatArray(Arrays.asList(1.1F, 2.2F, 3.3F)));
+    Assert.assertEquals(result, new FloatArray(1.1F, 2.2F, 3.3F));
     Assert.assertSame(result.getClass(), FloatArray.class);
 
     result = test("[2.2, 3.3, 4.4]", DoubleArray.class);
-    Assert.assertEquals(result, new DoubleArray(Arrays.asList(2.2D, 3.3D, 4.4D)));
+    Assert.assertEquals(result, new DoubleArray(2.2D, 3.3D, 4.4D));
     Assert.assertSame(result.getClass(), DoubleArray.class);
 
     result = test("[\"APPLE\", \"BANANA\"]", EnumFruitsArray.class);
-    Assert.assertEquals(result, new EnumFruitsArray(Arrays.asList(EnumFruits.APPLE, EnumFruits.BANANA)));
+    Assert.assertEquals(result, new EnumFruitsArray(EnumFruits.APPLE, EnumFruits.BANANA));
     Assert.assertSame(result.getClass(), EnumFruitsArray.class);
 
     result = test("[" + _bytes16Quoted + ", " + _bytes16Quoted + "]", BytesArray.class);
-    Assert.assertEquals(result, new BytesArray(Arrays.asList(ByteString.copyAvroString(_bytes16, true), ByteString.copyAvroString(_bytes16, true))));
+    Assert.assertEquals(result, new BytesArray(ByteString.copyAvroString(_bytes16, true), ByteString.copyAvroString(_bytes16, true)));
     Assert.assertSame(result.getClass(), BytesArray.class);
 
     result = test("[" + _bytes16Quoted + ", " + _bytes16Quoted + "]", FixedMD5Array.class);
-    Assert.assertEquals(result, new FixedMD5Array(Arrays.asList(new FixedMD5(_bytes16), new FixedMD5(_bytes16))));
+    Assert.assertEquals(result, new FixedMD5Array(new FixedMD5(_bytes16), new FixedMD5(_bytes16)));
     Assert.assertSame(result.getClass(), FixedMD5Array.class);
 
     result = test("[{\"string\": \"String in union\"}, {\"int\": 1}]", ArrayTest.UnionArrayArray.class);
-    final ArrayTest.UnionArray fixture1 = new ArrayTest.UnionArray();
-    fixture1.setString("String in union");
-    final ArrayTest.UnionArray fixture2 = new ArrayTest.UnionArray();
-    fixture2.setInt(1);
-    Assert.assertEquals(result, new ArrayTest.UnionArrayArray(Arrays.asList(fixture1, fixture2)));
+    final ArrayTest.UnionArray fixture1 = ArrayTest.UnionArray.create("String in union");
+    final ArrayTest.UnionArray fixture2 = ArrayTest.UnionArray.create(1);
+    Assert.assertEquals(result, new ArrayTest.UnionArrayArray(fixture1, fixture2));
     Assert.assertSame(result.getClass(), ArrayTest.UnionArrayArray.class);
 
     result = test("[{\"location\": \"Sunnyvale\"}, {\"location\": \"Mountain View\"}]", RecordBarArray.class);
@@ -144,7 +140,7 @@ public class TestParameterDefaultValue
     final DataMap dataFixture2 = new DataMap();
     dataFixture1.put("location", "Sunnyvale");
     dataFixture2.put("location", "Mountain View");
-    Assert.assertEquals(result, new RecordBarArray(Arrays.asList(new RecordBar(dataFixture1), new RecordBar(dataFixture2))));
+    Assert.assertEquals(result, new RecordBarArray(new RecordBar(dataFixture1), new RecordBar(dataFixture2)));
     Assert.assertSame(result.getClass(), RecordBarArray.class);
   }
 

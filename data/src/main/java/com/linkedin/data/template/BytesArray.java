@@ -19,6 +19,7 @@ package com.linkedin.data.template;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.schema.ArrayDataSchema;
+import java.util.Arrays;
 import java.util.Collection;
 
 
@@ -48,6 +49,13 @@ public final class BytesArray extends DirectArrayTemplate<ByteString>
   public BytesArray(DataList list)
   {
     super(list, SCHEMA, ByteString.class, ByteString.class);
+  }
+
+  public BytesArray(ByteString first, ByteString... rest)
+  {
+    this(new DataList(rest.length + 1));
+    add(first);
+    addAll(Arrays.asList(rest));
   }
 
   @Override

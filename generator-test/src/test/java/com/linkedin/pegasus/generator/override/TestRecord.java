@@ -17,7 +17,6 @@
 package com.linkedin.pegasus.generator.override;
 
 import com.linkedin.data.ByteString;
-import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.RecordDataSchema;
@@ -283,11 +282,11 @@ public class TestRecord
       },
       {
         "arrayField",
-        new IntegerArray(new DataList(Arrays.asList(1, 2, 3, 4, 5)))
+        new IntegerArray(Arrays.asList(1, 2, 3, 4, 5))
       },
       {
         "mapField",
-        new StringMap(new DataMap(TestUtil.asMap("k1", "v1", "k2", "v2", "k3", "v3")))
+        new StringMap(TestUtil.asMap("k1", "v1", "k2", "v2", "k3", "v3"))
       },
       {
         "unionField",

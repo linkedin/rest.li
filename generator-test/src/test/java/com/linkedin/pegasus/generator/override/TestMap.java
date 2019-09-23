@@ -57,15 +57,13 @@ public class TestMap
     for (int i = 0; i < 5; ++i)
     {
       String key = "input" + i;
-      input.put(key, new StringArray());
-      input.get(key).add("subinput" + i);
+      input.put(key, new StringArray("subinput" + i));
     }
     Map<String, StringArray> adds = new HashMap<String, StringArray>();
     for (int i = 0; i < 5; ++i)
     {
       String key = "add" + i;
-      adds.put(key, new StringArray());
-      adds.get(key).add("subadd" + i);
+      adds.put(key, new StringArray("subadd" + i));
     }
 
     TestMapTemplate.testMap(templateClass, schema, input, adds);

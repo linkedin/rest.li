@@ -135,7 +135,6 @@ import com.linkedin.restli.server.twitter.TwitterTestDataModels.Location;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.StatusType;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import java.net.URI;
@@ -2876,7 +2875,7 @@ public class TestRestLiMethodInvocation
     // #1 no defaults provided
     methodDescriptor = accountsResourceModel.findActionMethod("closeAccounts", ResourceLevel.COLLECTION);
     accountsResource = getMockResource(TwitterAccountsResource.class);
-    StringArray emailAddresses = new StringArray(Lists.newArrayList("bob@test.linkedin.com", "joe@test.linkedin.com"));
+    StringArray emailAddresses = new StringArray("bob@test.linkedin.com", "joe@test.linkedin.com");
 
     EasyMock.expect(accountsResource.closeAccounts(eq(emailAddresses), eq(true), eq((StringMap)null)))
         .andReturn((new StringMap())).once();

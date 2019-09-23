@@ -48,75 +48,62 @@ public class GroupGenerator
 
   public static Group create(int groupID, String name)
   {
-    Group group = new Group();
-    group.setApprovalModes(1);
-    group.setBadge(Badge.FEATURED);
-    group.setCategoriesEnabled(PostCategory.DISCUSSION);
-    group.setCategoriesForModeratorsOnly(PostCategory.DISCUSSION);
-    group.setCategory(1);
-    group.setContactability(Contactability.CONTACTABLE);
-    group.setContactEmail("bob@example.com");
-    group.setCreatedTimestamp(System.currentTimeMillis());
-    group.setDescription("long description long description long description long description long description long description long description long description long description long description long description long description long description long description long description ");
-    group.setDirectoryPresence(DirectoryPresence.PUBLIC);
-    group.setHasEmailExport(true);
-    group.setHasMemberInvites(false);
-    group.setHasMemberRoster(true);
-    group.setHasNetworkUpdates(true);
-    group.setHasSettings(true);
-    group.setHideSubgroups(false);
-    group.setHomeSiteUrl("http://www.example.com");
-    group.setId(groupID);
-    group.setIsOpenToNonMembers(true);
-    group.setLargeLogoMediaUrl("/0/0/1/skafhdsjahiuewh");
-    group.setLastModifiedTimestamp(System.currentTimeMillis());
-    group.setLocale("en_US");
-
-    Location location = new Location();
-    location.setCountryCode("us");
-    StringArray geoPlaceCodes = new StringArray();
-    geoPlaceCodes.add("1-2-3-4-5");
-    location.setGeoPlaceCodes(geoPlaceCodes);
-    location.setGeoPostalCode("94043");
-    location.setGmtOffset(-8f);
-    location.setLatitude(122.1f);
-    location.setLongitude(37.4f);
-    location.setPostalCode("94043");
-    location.setRegionCode(37);
-    location.setUsesDaylightSavings(true);
-    group.setLocation(location);
-
-    group.setMaxFeeds(100);
-    group.setMaxIdentityChanges(5);
-    group.setMaxMembers(2000);
-    group.setMaxModerators(10);
-    group.setMaxSubgroups(20);
-    group.setName(name);
-    group.setNewsFormat(NewsFormat.RECENT);
-    group.setNonMemberPermissions(NonMemberPermissions.COMMENT_AND_POST_WITH_MODERATION);
-    group.setNumIdentityChanges(5);
-    group.setNumMemberFlagsToDelete(3);
-    group.setOpenedToNonMembersTimestamp(System.currentTimeMillis());
-    group.setOtherCategory(3);
-    // group.setParentGroupId();
-
-    StringArray preApprovedEmailDomains = new StringArray();
-    preApprovedEmailDomains.add("example.com");
-    preApprovedEmailDomains.add("linkedin.com");
-
-    group.setPreApprovedEmailDomains(preApprovedEmailDomains);
-    group.setPreModerateMembersWithLowConnections(true);
-    group.setPreModerateNewMembersPeriodInDays(3);
-    group.setPreModeration(PreModerationType.COMMENTS);
-    group.setPreModerationCategories(PostCategory.JOB);
-    group.setRules("No spam, please");
-    group.setSharingKey("HJFD3JH98JKH3");
-    group.setShortDescription("short description");
-    group.setSmallLogoMediaUrl("/0/0/1/skafhdsjahiuewh");
-    group.setState(State.ACTIVE);
-    group.setVanityUrl(name.toLowerCase().replace(' ', '-'));
-    group.setVisibility(Visibility.PUBLIC);
-
-    return group;
+    return new Group()
+        .setApprovalModes(1)
+        .setBadge(Badge.FEATURED)
+        .setCategoriesEnabled(PostCategory.DISCUSSION)
+        .setCategoriesForModeratorsOnly(PostCategory.DISCUSSION)
+        .setCategory(1)
+        .setContactability(Contactability.CONTACTABLE)
+        .setContactEmail("bob@example.com")
+        .setCreatedTimestamp(System.currentTimeMillis())
+        .setDescription("long description long description long description long description long description long description long description long description long description long description long description long description long description long description long description ")
+        .setDirectoryPresence(DirectoryPresence.PUBLIC)
+        .setHasEmailExport(true)
+        .setHasMemberInvites(false)
+        .setHasMemberRoster(true)
+        .setHasNetworkUpdates(true)
+        .setHasSettings(true)
+        .setHideSubgroups(false)
+        .setHomeSiteUrl("http://www.example.com")
+        .setId(groupID)
+        .setIsOpenToNonMembers(true)
+        .setLargeLogoMediaUrl("/0/0/1/skafhdsjahiuewh")
+        .setLastModifiedTimestamp(System.currentTimeMillis())
+        .setLocale("en_US")
+        .setLocation(new Location()
+            .setCountryCode("us")
+            .setGeoPlaceCodes(new StringArray("1-2-3-4-5"))
+            .setGeoPostalCode("94043")
+            .setGmtOffset(-8f)
+            .setLatitude(122.1f)
+            .setLongitude(37.4f)
+            .setPostalCode("94043")
+            .setRegionCode(37)
+            .setUsesDaylightSavings(true))
+        .setMaxFeeds(100)
+        .setMaxIdentityChanges(5)
+        .setMaxMembers(2000)
+        .setMaxModerators(10)
+        .setMaxSubgroups(20)
+        .setName(name)
+        .setNewsFormat(NewsFormat.RECENT)
+        .setNonMemberPermissions(NonMemberPermissions.COMMENT_AND_POST_WITH_MODERATION)
+        .setNumIdentityChanges(5)
+        .setNumMemberFlagsToDelete(3)
+        .setOpenedToNonMembersTimestamp(System.currentTimeMillis())
+        .setOtherCategory(3)
+        .setPreApprovedEmailDomains(new StringArray("example.com", "linkedin.com"))
+        .setPreModerateMembersWithLowConnections(true)
+        .setPreModerateNewMembersPeriodInDays(3)
+        .setPreModeration(PreModerationType.COMMENTS)
+        .setPreModerationCategories(PostCategory.JOB)
+        .setRules("No spam, please")
+        .setSharingKey("HJFD3JH98JKH3")
+        .setShortDescription("short description")
+        .setSmallLogoMediaUrl("/0/0/1/skafhdsjahiuewh")
+        .setState(State.ACTIVE)
+        .setVanityUrl(name.toLowerCase().replace(' ', '-'))
+        .setVisibility(Visibility.PUBLIC);
   }
 }

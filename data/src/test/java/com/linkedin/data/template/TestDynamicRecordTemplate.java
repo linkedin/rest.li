@@ -22,6 +22,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -389,10 +390,7 @@ public class TestDynamicRecordTemplate
     Assert.assertEquals(intArray[1], intArray2[1]);
 
     //integer array template
-    IntegerArray intArrayTemplate = new IntegerArray();
-    intArrayTemplate.add(63);
-    intArrayTemplate.add(64);
-
+    IntegerArray intArrayTemplate = new IntegerArray(Arrays.asList(63, 64));
     foo.setIntArrayTemplate(intArrayTemplate);
 
     IntegerArray intArrayTemplate2 = foo.getIntArrayTemplate();

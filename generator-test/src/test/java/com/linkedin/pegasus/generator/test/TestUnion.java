@@ -174,7 +174,7 @@ public class TestUnion
         "FixedMD5", new FixedMD5(ByteString.copyAvroString("0123456789abcdef", false))
       },
       {
-        "array", new StringArray(Arrays.asList("a1", "b2", "c3"))
+        "array", new StringArray("a1", "b2", "c3")
       },
       {
         "map", new LongMap(TestUtil.dataMapFromString("{ \"k1\" : \"v1\" }"))

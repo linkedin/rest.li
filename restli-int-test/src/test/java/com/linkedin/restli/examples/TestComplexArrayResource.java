@@ -20,7 +20,6 @@
 
 package com.linkedin.restli.examples;
 
-
 import com.linkedin.data.template.LongArray;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.Request;
@@ -77,8 +76,7 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
   public void testGet(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException
   {
     // all array are singletons with single element
-    LongArray singleton = new LongArray();
-    singleton.add(1L);
+    LongArray singleton = new LongArray(1L);
 
     ComplexArray next = new ComplexArray().setArray(singleton);
     ComplexArray key = new ComplexArray().setArray(singleton).setNext(next);
@@ -152,8 +150,7 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testFinder(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException
   {
-    LongArray singleton = new LongArray();
-    singleton.add(1L);
+    LongArray singleton = new LongArray(1L);
     ComplexArray next = new ComplexArray().setArray(singleton);
     ComplexArray array = new ComplexArray().setArray(singleton).setNext(next);
 
@@ -164,8 +161,7 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testAction(RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> builders) throws RemoteInvocationException
   {
-    LongArray singleton = new LongArray();
-    singleton.add(1L);
+    LongArray singleton = new LongArray(1L);
     ComplexArray next = new ComplexArray().setArray(singleton);
     ComplexArray array = new ComplexArray().setArray(singleton).setNext(next);
 
@@ -175,16 +171,14 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
 
   private static List<ComplexResourceKey<ComplexArray, ComplexArray>> getBatchCompleKeys()
   {
-    LongArray singleton1 = new LongArray();
-    singleton1.add(1L);
+    LongArray singleton1 = new LongArray(1L);
     ComplexArray next1 = new ComplexArray().setArray(singleton1);
     ComplexArray key1 = new ComplexArray().setArray(singleton1).setNext(next1);
     ComplexArray params1 = new ComplexArray().setArray(singleton1).setNext(next1);
     ComplexResourceKey<ComplexArray, ComplexArray> complexKey1 =
       new ComplexResourceKey<ComplexArray, ComplexArray>(key1, params1);
 
-    LongArray singleton2 = new LongArray();
-    singleton2.add(2L);
+    LongArray singleton2 = new LongArray(2L);
     ComplexArray next2 = new ComplexArray().setArray(singleton2);
     ComplexArray key2 = new ComplexArray().setArray(singleton2).setNext(next2);
     ComplexArray params2 = new ComplexArray().setArray(singleton2).setNext(next2);

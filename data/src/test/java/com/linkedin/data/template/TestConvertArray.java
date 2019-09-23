@@ -16,7 +16,6 @@
 
 package com.linkedin.data.template;
 
-
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -91,11 +90,11 @@ public class TestConvertArray
     Object result;
 
     result = convert("[[1.1], [2.2]]", DoubleArray[].class);
-    Assert.assertEquals(result, new DoubleArray[] { new DoubleArray(Arrays.asList(1.1D)), new DoubleArray(Arrays.asList(2.2D)) });
+    Assert.assertEquals(result, new DoubleArray[] { new DoubleArray(1.1D), new DoubleArray(2.2D) });
     Assert.assertSame(result.getClass(), DoubleArray[].class);
 
     result = convert("[[[1.1]], [[2.2]]]", DoubleArray[][].class);
-    Assert.assertEquals(result, new DoubleArray[][] { { new DoubleArray(Arrays.asList(1.1D)) }, { new DoubleArray(Arrays.asList(2.2D)) } });
+    Assert.assertEquals(result, new DoubleArray[][] { { new DoubleArray(1.1D) }, { new DoubleArray(2.2D) } });
     Assert.assertSame(result.getClass(), DoubleArray[][].class);
 
     result = convert("[[\"APPLE\"], [\"BANANA\"]]", TestArrayTemplate.EnumArrayTemplate[].class);

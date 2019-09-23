@@ -1,5 +1,10 @@
+27.7.5
+------
+
 27.7.4
 ------
+(RB=1813571)
+Add varargs constructor to primitive arrays.
 
 27.7.3
 ------

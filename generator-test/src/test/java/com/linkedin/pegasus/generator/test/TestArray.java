@@ -80,14 +80,12 @@ public class TestArray
     List<StringArray> input = new ArrayList<StringArray>();
     for (int i = 0; i < 5; ++i)
     {
-      input.add(new StringArray());
-      input.get(i).add("input " + i);
+      input.add(new StringArray("input" + i));
     }
     List<StringArray> adds = new ArrayList<StringArray>();
     for (int i = 0; i < 5; ++i)
     {
-      adds.add(new StringArray());
-      adds.get(i).add("add " + i);
+      adds.add(new StringArray("add" + i));
     }
 
     TestArrayTemplate.testArray(templateClass, schema, input, adds);

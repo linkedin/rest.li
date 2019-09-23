@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.examples.greetings.server;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.parseq.BaseTask;
@@ -368,12 +367,8 @@ public class NullGreetingsResourceImpl extends CollectionResourceTemplate<Long, 
   @Action(name = "returnStringArrayWithNullElement")
   public StringArray returnStringArrayWithNullElement()
   {
-    final List<String> stringList = new ArrayList<String>();
-    stringList.add("abc");
-    stringList.add(null);
-    stringList.add("def");
     //Return a StringArray with a null element
-    return new StringArray(stringList);
+    return new StringArray("abc", null, "def");
   }
 
   @Action(name = "returnNullActionResult")

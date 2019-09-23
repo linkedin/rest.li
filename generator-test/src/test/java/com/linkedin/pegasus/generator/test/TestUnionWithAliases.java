@@ -66,7 +66,7 @@ public class TestUnionWithAliases {
           "memFixed", new FixedMD5(ByteString.copyAvroString("0123456789abcdef", false))
         },
         {
-          "memArray", new StringArray(Arrays.asList("a1", "b2", "c3"))
+          "memArray", new StringArray("a1", "b2", "c3")
         },
         {
           "memMap", new LongMap(TestUtil.dataMapFromString("{ \"k1\" : \"v1\" }"))

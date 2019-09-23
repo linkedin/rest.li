@@ -17,12 +17,8 @@
 package com.linkedin.pegasus.generator.test;
 
 import com.linkedin.data.ByteString;
-import com.linkedin.data.Data;
-import com.linkedin.data.DataComplex;
-import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
-import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -34,7 +30,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.List;
 import org.testng.annotations.Test;
 
 import com.linkedin.data.template.GetMode;
@@ -292,11 +287,11 @@ public class TestRecord
       },
       {
         "arrayField",
-        new IntegerArray(new DataList(Arrays.asList(1, 2, 3, 4, 5)))
+        new IntegerArray(Arrays.asList(1, 2, 3, 4, 5))
       },
       {
         "mapField",
-        new StringMap(new DataMap(TestUtil.asMap("k1", "v1", "k2", "v2", "k3", "v3")))
+        new StringMap(TestUtil.asMap("k1", "v1", "k2", "v2", "k3", "v3"))
       },
       {
         "unionField",

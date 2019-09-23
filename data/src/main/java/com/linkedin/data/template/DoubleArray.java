@@ -18,6 +18,7 @@ package com.linkedin.data.template;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.schema.ArrayDataSchema;
+import java.util.Arrays;
 import java.util.Collection;
 
 
@@ -47,6 +48,13 @@ public final class DoubleArray extends DirectArrayTemplate<Double>
   public DoubleArray(DataList list)
   {
     super(list, SCHEMA, Double.class, Double.class);
+  }
+
+  public DoubleArray(Double first, Double... rest)
+  {
+    this(new DataList(rest.length + 1));
+    add(first);
+    addAll(Arrays.asList(rest));
   }
 
   @Override

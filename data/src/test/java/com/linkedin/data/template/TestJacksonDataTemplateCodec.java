@@ -16,7 +16,6 @@
 
 package com.linkedin.data.template;
 
-
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
@@ -238,6 +237,12 @@ public class TestJacksonDataTemplateCodec
     public FooArray(DataList list)
     {
       super(list, SCHEMA, Foo.class);
+    }
+    public FooArray(Foo first, Foo... rest)
+    {
+      this(new DataList(rest.length + 1));
+      add(first);
+      addAll(Arrays.asList(rest));
     }
   }
 

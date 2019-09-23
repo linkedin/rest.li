@@ -18,6 +18,7 @@ package com.linkedin.data.template;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.schema.ArrayDataSchema;
+import java.util.Arrays;
 import java.util.Collection;
 
 
@@ -47,6 +48,13 @@ public final class BooleanArray extends DirectArrayTemplate<Boolean>
   public BooleanArray(DataList list)
   {
     super(list, SCHEMA, Boolean.class, Boolean.class);
+  }
+
+  public BooleanArray(Boolean first, Boolean... rest)
+  {
+    this(new DataList(rest.length + 1));
+    add(first);
+    addAll(Arrays.asList(rest));
   }
 
   @Override

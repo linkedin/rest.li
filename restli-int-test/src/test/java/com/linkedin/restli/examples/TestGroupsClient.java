@@ -463,17 +463,18 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Response<EmptyRecord> createResponse = getClient().sendRequest(createRequest).getResponse();
     Assert.assertEquals(createResponse.getStatus(), 201);
 
-    GroupMembershipParam param = new GroupMembershipParam();
-    param.setIntParameter(1);
-    param.setStringParameter("1");
+    GroupMembershipParam param = new GroupMembershipParam()
+        .setIntParameter(1)
+        .setStringParameter("1");
 
-    GroupMembershipQueryParam groupMembershipQueryParam1 = new GroupMembershipQueryParam();
-    groupMembershipQueryParam1.setIntParameter(1);
-    groupMembershipQueryParam1.setStringParameter("1");
-    GroupMembershipQueryParam groupMembershipQueryParam2 = new GroupMembershipQueryParam();
-    groupMembershipQueryParam2.setIntParameter(2);
-    groupMembershipQueryParam2.setStringParameter("2");
-    GroupMembershipQueryParamArray queryParamArray = new GroupMembershipQueryParamArray(Arrays.asList(groupMembershipQueryParam1, groupMembershipQueryParam2));
+    GroupMembershipQueryParam groupMembershipQueryParam1 = new GroupMembershipQueryParam()
+        .setIntParameter(1)
+        .setStringParameter("1");
+    GroupMembershipQueryParam groupMembershipQueryParam2 = new GroupMembershipQueryParam()
+        .setIntParameter(2)
+        .setStringParameter("2");
+    GroupMembershipQueryParamArray queryParamArray = new GroupMembershipQueryParamArray(
+        groupMembershipQueryParam1, groupMembershipQueryParam2);
     // Get the resource back and check state
     Request<ComplexKeyGroupMembership> request = builders.get()
                                           .id(complexKey)

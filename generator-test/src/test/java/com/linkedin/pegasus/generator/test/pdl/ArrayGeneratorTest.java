@@ -41,6 +41,7 @@ import com.linkedin.pegasus.generator.test.idl.records.SimpleArrayArray;
 import com.linkedin.pegasus.generator.test.idl.records.SimpleMap;
 import com.linkedin.pegasus.generator.test.idl.records.SimpleMapArray;
 import com.linkedin.pegasus.generator.test.pdl.fixtures.CustomInt;
+import java.util.Arrays;
 import org.testng.annotations.Test;
 
 
@@ -52,17 +53,11 @@ public class ArrayGeneratorTest extends GeneratorTest
       throws Throwable
   {
     String json = load("WithRecordArray.json");
-    EmptyArray empties = new EmptyArray();
-    empties.add(new Empty());
-    empties.add(new Empty());
-    empties.add(new Empty());
-    FruitsArray fruitsArray = new FruitsArray();
-    fruitsArray.add(Fruits.APPLE);
-    fruitsArray.add(Fruits.BANANA);
-    fruitsArray.add(Fruits.ORANGE);
-    WithRecordArray original = new WithRecordArray();
-    original.setEmpties(empties);
-    original.setFruits(fruitsArray);
+
+    WithRecordArray original = new WithRecordArray()
+        .setEmpties(new EmptyArray(new Empty(), new Empty(), new Empty()))
+        .setFruits(new FruitsArray(Fruits.APPLE, Fruits.BANANA, Fruits.ORANGE));
+
     assertJson(original, json);
 
     WithRecordArray roundTripped = new WithRecordArray(roundTrip(original.data()));
@@ -74,40 +69,16 @@ public class ArrayGeneratorTest extends GeneratorTest
       throws Throwable
   {
     String json = load("WithPrimitivesArray.json");
-    WithPrimitivesArray original = new WithPrimitivesArray();
-    IntegerArray ints = new IntegerArray();
-    ints.add(1);
-    ints.add(2);
-    ints.add(3);
-    original.setInts(ints);
-    LongArray longs = new LongArray();
-    longs.add(10L);
-    longs.add(20L);
-    longs.add(30L);
-    original.setLongs(longs);
-    FloatArray floats = new FloatArray();
-    floats.add(1.1f);
-    floats.add(2.2f);
-    floats.add(3.3f);
-    original.setFloats(floats);
-    DoubleArray doubles = new DoubleArray();
-    doubles.add(11.1d);
-    doubles.add(22.2d);
-    doubles.add(33.3d);
-    original.setDoubles(doubles);
-    BooleanArray booleans = new BooleanArray();
-    booleans.add(false);
-    booleans.add(true);
-    original.setBooleans(booleans);
-    StringArray strings = new StringArray();
-    strings.add("a");
-    strings.add("b");
-    strings.add("c");
-    original.setStrings(strings);
-    BytesArray bytes = new BytesArray();
-    bytes.add(SchemaFixtures.bytes1);
-    bytes.add(SchemaFixtures.bytes2);
-    original.setBytes(bytes);
+
+    WithPrimitivesArray original = new WithPrimitivesArray()
+        .setInts(new IntegerArray(Arrays.asList(1, 2, 3)))
+        .setLongs(new LongArray(10L, 20L, 30L))
+        .setFloats(new FloatArray(1.1f, 2.2f, 3.3f))
+        .setDoubles(new DoubleArray(11.1d, 22.2d, 33.3d))
+        .setBooleans(new BooleanArray(false, true))
+        .setStrings(new StringArray("a", "b", "c"))
+        .setBytes(new BytesArray(SchemaFixtures.bytes1, SchemaFixtures.bytes2));
+
     assertJson(original, json);
 
     WithPrimitivesArray roundTripped = new WithPrimitivesArray(roundTrip(original.data()));
@@ -119,37 +90,20 @@ public class ArrayGeneratorTest extends GeneratorTest
       throws Throwable
   {
     String json = load("WithCustomTypesArray.json");
-    WithCustomTypesArray original = new WithCustomTypesArray();
-    CustomIntArray ints = new CustomIntArray();
-    ints.add(new CustomInt(1));
-    ints.add(new CustomInt(2));
-    ints.add(new CustomInt(3));
-    original.setInts(ints);
-    SimpleArrayArray arrays = new SimpleArrayArray();
-    SimpleArray simpleArray = new SimpleArray();
-    Simple simple = new Simple();
-    simple.setMessage("a1");
-    simpleArray.add(simple);
-    arrays.add(simpleArray);
-    original.setArrays(arrays);
-    SimpleMapArray maps = new SimpleMapArray();
+
     SimpleMap map = new SimpleMap();
-    Simple simplem1 = new Simple();
-    simplem1.setMessage("m1");
-    map.put("a", simplem1);
-    maps.add(map);
-    original.setMaps(maps);
-    Simple simpleu1 = new Simple();
-    simpleu1.setMessage("u1");
-    WithCustomTypesArrayUnionArray unions = new WithCustomTypesArrayUnionArray();
-    unions.add(WithCustomTypesArrayUnion.create(1));
-    unions.add(WithCustomTypesArrayUnion.create("str"));
-    unions.add(WithCustomTypesArrayUnion.create(simpleu1));
-    original.setUnions(unions);
-    Fixed8 fixed8 = new Fixed8(SchemaFixtures.bytesFixed8);
-    Fixed8Array fixed8Array = new Fixed8Array();
-    fixed8Array.add(fixed8);
-    original.setFixed(fixed8Array);
+    map.put("a", new Simple().setMessage("m1"));
+
+    WithCustomTypesArray original = new WithCustomTypesArray()
+        .setInts(new CustomIntArray(new CustomInt(1), new CustomInt(2), new CustomInt(3)))
+        .setArrays(new SimpleArrayArray(new SimpleArray(new Simple().setMessage("a1"))))
+        .setMaps(new SimpleMapArray(map))
+        .setUnions(new WithCustomTypesArrayUnionArray(
+            WithCustomTypesArrayUnion.create(1),
+            WithCustomTypesArrayUnion.create("str"),
+            WithCustomTypesArrayUnion.create(new Simple().setMessage("u1"))))
+        .setFixed(new Fixed8Array(new Fixed8(SchemaFixtures.bytesFixed8)));
+
     assertJson(original, json);
 
     WithCustomTypesArray roundTripped = new WithCustomTypesArray(roundTrip(original.data()));

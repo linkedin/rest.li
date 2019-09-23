@@ -44,6 +44,7 @@ import com.linkedin.pegasus.generator.test.idl.records.WithPrimitiveDefaults;
 import com.linkedin.pegasus.generator.test.idl.records.WithPrimitiveTyperefs;
 import com.linkedin.pegasus.generator.test.idl.records.WithPrimitives;
 import com.linkedin.pegasus.generator.test.pdl.fixtures.CustomInt;
+import java.util.Collections;
 import java.util.List;
 import org.testng.annotations.Test;
 
@@ -268,22 +269,23 @@ public class RecordGeneratorTest extends GeneratorTest
   public void testWithComplexTypes()
       throws Throwable
   {
-    WithComplexTypes original = new WithComplexTypes();
     Simple simple = new Simple();
     simple.setMessage("message");
-    original.setRecord(simple);
-    original.setEnum(Fruits.APPLE);
-    original.setUnion(WithComplexTypes.Union.create(1));
-    IntegerArray intArray = new IntegerArray();
-    intArray.add(1);
-    original.setArray(intArray);
+
     IntegerMap intMap = new IntegerMap();
     intMap.put("a", 1);
-    original.setMap(intMap);
+
     SimpleMap simpleMap = new SimpleMap();
     simpleMap.put("a", simple);
-    original.setComplexMap(simpleMap);
-    original.setCustom(new CustomInt(1));
+
+    WithComplexTypes original = new WithComplexTypes()
+        .setRecord(simple)
+        .setEnum(Fruits.APPLE)
+        .setUnion(WithComplexTypes.Union.create(1))
+        .setArray(new IntegerArray(Collections.singletonList(1)))
+        .setMap(intMap)
+        .setComplexMap(simpleMap)
+        .setCustom(new CustomInt(1));
 
     WithComplexTypes roundTripped = new WithComplexTypes(roundTrip(original.data()));
     assertEquals(roundTripped.getRecord(), simple);
@@ -335,8 +337,7 @@ public class RecordGeneratorTest extends GeneratorTest
     assertEquals(withDefaults.getRecord(), simple);
     assertEquals(withDefaults.getEnum(), Fruits.APPLE);
     assertEquals(withDefaults.getUnion(), WithComplexTypeDefaults.Union.create(1));
-    IntegerArray intArray = new IntegerArray();
-    intArray.add(1);
+    IntegerArray intArray = new IntegerArray(Collections.singletonList(1));
     assertEquals(withDefaults.getArray(), intArray);
     IntegerMap intMap = new IntegerMap();
     intMap.put("a", 1);
@@ -353,8 +354,7 @@ public class RecordGeneratorTest extends GeneratorTest
     assertEquals(withDefaults.getRecord(), simple);
     assertEquals(withDefaults.getEnum(), Fruits.APPLE);
     assertEquals(withDefaults.getUnion(), WithComplexTypeDefaults.Union.create(1));
-    IntegerArray intArray = new IntegerArray();
-    intArray.add(1);
+    IntegerArray intArray = new IntegerArray(Collections.singletonList(1));
     assertEquals(withDefaults.getArray(), intArray);
     IntegerMap intMap = new IntegerMap();
     intMap.put("a", 1);

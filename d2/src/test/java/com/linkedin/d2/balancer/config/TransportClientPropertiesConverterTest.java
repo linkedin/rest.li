@@ -24,11 +24,8 @@ import com.linkedin.data.template.StringArray;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 /**
@@ -48,9 +45,9 @@ public class TransportClientPropertiesConverterTest
     final Long sslIdleTimeout = 900000L;
     final Long shutdownTimeout = 50000L;
     final Long gracefulShutdownTimeout = 30000L;
-    final List<String> responseCompressionRaw = Arrays.asList("finder:*");
-    final List<String> responseContentEncoding = Arrays.asList("gzip", "snappy");
-    final List<String> requestContentEncoding = Arrays.asList("lz4", "identity");
+    final StringArray responseCompressionRaw = new StringArray("finder:*");
+    final StringArray responseContentEncoding = new StringArray("gzip", "snappy");
+    final StringArray requestContentEncoding = new StringArray("lz4", "identity");
     final Boolean useResponseCompression = true;
     final Integer maxHeaderSize = 8192;
     final Integer maxChunkSize = 4096;
@@ -60,7 +57,7 @@ public class TransportClientPropertiesConverterTest
     final Integer maxConcurrentConnections = 1000;
     final Boolean tcpNoDelay = true;
     final HttpProtocolVersionType protocolVersion = HttpProtocolVersionType.HTTP_1_1;
-    final List<String> allowedClientOverrideKeys = Arrays.asList(PropertyKeys.HTTP_REQUEST_TIMEOUT,
+    final StringArray allowedClientOverrideKeys = new StringArray(PropertyKeys.HTTP_REQUEST_TIMEOUT,
         PropertyKeys.HTTP_QUERY_POST_THRESHOLD);
 
     Map<String, Object> transportClientProperties = new HashMap<>();
@@ -73,10 +70,12 @@ public class TransportClientPropertiesConverterTest
     transportClientProperties.put(PropertyKeys.HTTP_SSL_IDLE_TIMEOUT, sslIdleTimeout.toString());
     transportClientProperties.put(PropertyKeys.HTTP_SHUTDOWN_TIMEOUT, shutdownTimeout.toString());
     transportClientProperties.put(PropertyKeys.HTTP_GRACEFUL_SHUTDOWN_TIMEOUT, gracefulShutdownTimeout.toString());
-    transportClientProperties.put(PropertyKeys.HTTP_RESPONSE_COMPRESSION_OPERATIONS, responseCompressionRaw.stream().collect(
-        Collectors.joining(",")));
-    transportClientProperties.put(PropertyKeys.HTTP_RESPONSE_CONTENT_ENCODINGS, responseContentEncoding.stream().collect(Collectors.joining(",")));
-    transportClientProperties.put(PropertyKeys.HTTP_REQUEST_CONTENT_ENCODINGS, requestContentEncoding.stream().collect(Collectors.joining(",")));
+    transportClientProperties.put(PropertyKeys.HTTP_RESPONSE_COMPRESSION_OPERATIONS,
+        String.join(",", responseCompressionRaw));
+    transportClientProperties.put(PropertyKeys.HTTP_RESPONSE_CONTENT_ENCODINGS,
+        String.join(",", responseContentEncoding));
+    transportClientProperties.put(PropertyKeys.HTTP_REQUEST_CONTENT_ENCODINGS,
+        String.join(",", requestContentEncoding));
     transportClientProperties.put(PropertyKeys.HTTP_USE_RESPONSE_COMPRESSION, useResponseCompression.toString());
     transportClientProperties.put(PropertyKeys.HTTP_MAX_HEADER_SIZE, maxHeaderSize.toString());
     transportClientProperties.put(PropertyKeys.HTTP_MAX_CHUNK_SIZE, maxChunkSize.toString());
@@ -86,7 +85,8 @@ public class TransportClientPropertiesConverterTest
     transportClientProperties.put(PropertyKeys.HTTP_MAX_CONCURRENT_CONNECTIONS, maxConcurrentConnections.toString());
     transportClientProperties.put(PropertyKeys.HTTP_TCP_NO_DELAY, tcpNoDelay.toString());
     transportClientProperties.put(PropertyKeys.HTTP_PROTOCOL_VERSION, protocolVersion.name());
-    transportClientProperties.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS, allowedClientOverrideKeys.stream().collect(Collectors.joining(",")));
+    transportClientProperties.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS,
+        String.join(",", allowedClientOverrideKeys));
 
     D2TransportClientProperties d2TransportClientProperties =
         new D2TransportClientProperties()
@@ -99,9 +99,9 @@ public class TransportClientPropertiesConverterTest
             .setSslIdleTimeout(sslIdleTimeout)
             .setShutdownTimeout(shutdownTimeout)
             .setGracefulShutdownTimeout(gracefulShutdownTimeout)
-            .setResponseCompressionOperations(new StringArray(responseCompressionRaw))
-            .setResponseContentEncodings(new StringArray(responseContentEncoding))
-            .setRequestContentEncodings(new StringArray(requestContentEncoding))
+            .setResponseCompressionOperations(responseCompressionRaw)
+            .setResponseContentEncodings(responseContentEncoding)
+            .setRequestContentEncodings(requestContentEncoding)
             .setUseResponseCompression(useResponseCompression)
             .setMaxHeaderSize(maxHeaderSize)
             .setMaxChunkSize(maxChunkSize)
@@ -111,7 +111,7 @@ public class TransportClientPropertiesConverterTest
             .setMaxConcurrentConnections(maxConcurrentConnections)
             .setProtocolVersion(protocolVersion)
             .setTcpNoDelay(tcpNoDelay)
-            .setAllowedClientOverrideKeys(new StringArray(allowedClientOverrideKeys));
+            .setAllowedClientOverrideKeys(allowedClientOverrideKeys);
 
     Assert.assertEquals(TransportClientPropertiesConverter.toConfig(transportClientProperties), d2TransportClientProperties);
     Assert.assertEquals(TransportClientPropertiesConverter.toProperties(d2TransportClientProperties), transportClientProperties);

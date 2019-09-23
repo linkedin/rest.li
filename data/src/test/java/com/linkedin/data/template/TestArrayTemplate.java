@@ -985,14 +985,12 @@ public class TestArrayTemplate
     List<StringArray> input = new ArrayList<StringArray>();
     for (int i = 0; i < 5; ++i)
     {
-      input.add(new StringArray());
-      input.get(i).add("input " + i);
+      input.add(new StringArray("input" + i));
     }
     List<StringArray> adds = new ArrayList<StringArray>();
     for (int i = 0; i < 5; ++i)
     {
-      adds.add(new StringArray());
-      adds.get(i).add("add " + i);
+      adds.add(new StringArray("add" + i));
     }
     List<Object> badInput = asList(true, 1, 2L, 3.0f, 4.0, ByteString.empty(), new StringMap(), new IntegerArray(), null);
     List<Object> badOutput = asList(true, 1, 2L, 3.0f, 4.0, ByteString.empty(), new DataMap());

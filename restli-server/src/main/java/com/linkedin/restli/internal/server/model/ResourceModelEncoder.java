@@ -1269,8 +1269,10 @@ public class ResourceModelEncoder
     // Wrap the underlying data map in the shared schema interface
     SuccessStatusesSchema successStatusesSchema = new SuccessStatusesSchema(schema.data());
 
-    List<Integer> statuses = successStatuses.stream().map(HttpStatus::getCode).collect(Collectors.toList());
+    IntegerArray statuses = successStatuses.stream()
+        .map(HttpStatus::getCode)
+        .collect(Collectors.toCollection(IntegerArray::new));
 
-    successStatusesSchema.setSuccess(new IntegerArray(statuses));
+    successStatusesSchema.setSuccess(statuses);
   }
 }

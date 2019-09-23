@@ -112,7 +112,7 @@ public class TestArgumentBuilder
     Parameter<StringArray> param4 = new Parameter<>(param4Key, StringArray.class, DataTemplateUtil.getSchema(StringArray.class),
                                           true, null, Parameter.ParamType.QUERY, true, AnnotationSet.EMPTY);
     String param4Value = "param4Value";
-    StringArray param4Final = new StringArray(new DataList(Collections.singletonList(param4Value)));
+    StringArray param4Final = new StringArray(param4Value);
 
     // test record template
     String param5Key = "param5";

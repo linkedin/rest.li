@@ -350,7 +350,7 @@ public class TestResourceCompatibilityChecker
                             CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from string to long"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "supports"),
                                          CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
-                                         new StringArray(Arrays.asList("batch_get", "create", "delete", "get", "get_all"))));
+                                         new StringArray("batch_get", "create", "delete", "get", "get_all")));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods"),
                                          CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "batch_get"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "search", "metadata", "type"),
@@ -359,7 +359,7 @@ public class TestResourceCompatibilityChecker
                                                  CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from array to int"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "search", "assocKeys"),
                                                  CompatibilityInfo.Type.VALUE_NOT_EQUAL,
-                                                 new StringArray(Arrays.asList("q", "s")), new StringArray(Arrays.asList("q", "changed_key"))));
+                                                 new StringArray("q", "s"), new StringArray("q", "changed_key")));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "find_assocKey_downgrade", "assocKeys"),
                                                  CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "actions", "oneAction", "parameters", "bitfield", "items"),
@@ -372,7 +372,7 @@ public class TestResourceCompatibilityChecker
                                                  CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "subMap"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "entity", "actions", "exceptionTest", "throws"),
                                                  CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
-                                                 new StringArray(Arrays.asList("com.linkedin.groups.api.GroupOwnerException", "java.io.FileNotFoundException"))));
+                                                 new StringArray("com.linkedin.groups.api.GroupOwnerException", "java.io.FileNotFoundException")));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "entity", "actions", "someAction", "parameters", "a", "optional"),
                                                  CompatibilityInfo.Type.PARAMETER_WRONG_OPTIONALITY));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "type"),
@@ -446,10 +446,10 @@ public class TestResourceCompatibilityChecker
     final Collection<CompatibilityInfo> testErrors = new HashSet<CompatibilityInfo>();
     testErrors.add(new CompatibilityInfo(Arrays.asList("", "association", "assocKeys"),
                                          CompatibilityInfo.Type.ARRAY_NOT_EQUAL,
-                                         new AssocKeySchemaArray(Arrays.asList(prevAssocKey))));
+                                         new AssocKeySchemaArray(prevAssocKey)));
     testErrors.add(new CompatibilityInfo(Arrays.asList("", "association", "supports"),
                                          CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
-                                         new StringArray(Arrays.asList("create", "get"))));
+                                         new StringArray("create", "get")));
     testErrors.add(new CompatibilityInfo(Arrays.asList("", "association", "methods", "create", "parameters"),
                                          CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED, "data"));
     testErrors.add(new CompatibilityInfo(Arrays.asList("", "association", "methods"),
@@ -486,7 +486,7 @@ public class TestResourceCompatibilityChecker
 
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "simple", "supports"),
                                                  CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
-                                                 new StringArray(Arrays.asList("delete", "get"))));
+                                                 new StringArray("delete", "get")));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "simple", "methods"),
                                                  CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "delete"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "simple", "methods", "get", "parameters", "param1", "type"),
