@@ -63,9 +63,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.AfterMethod;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -283,14 +283,14 @@ public class SharedZkConnectionProviderTest {
     }
     ZKPersistentConnection firstConn = connections.get(0);
     for (ZKPersistentConnection conn : connections) {
-      Assert.assertSame(conn, firstConn);
+      Assert.assertTrue(conn == firstConn);
     }
 
     ZKConnectionBuilder differentBuilder = new ZKConnectionBuilder("localhost:2122");
     ZKPersistentConnection differentConnection = _provider.getZKPersistentConnection(differentBuilder);
-    Assert.assertNotSame(differentConnection, firstConn);
+    Assert.assertTrue(differentConnection != firstConn);
 
-    assertEquals(_provider.getZkConnectionCount(), 2);
+    Assert.assertTrue(_provider.getZkConnectionCount() == 2);
   }
 
   /**
@@ -369,7 +369,7 @@ public class SharedZkConnectionProviderTest {
     D2Client client = getD2Client(transportClientMap);
 
     //there should only be one connection
-    assertEquals(_provider.getZkConnectionCount(), 1);
+    Assert.assertTrue(_provider.getZkConnectionCount() == 1);
 
 
     //start both announcers and client
@@ -547,7 +547,7 @@ public class SharedZkConnectionProviderTest {
     List<URI> hosts = prepareHostNames(5, "testAnnouncerNoStartup");
     List<ZooKeeperConnectionManager> connectionManagers = prepareConnectionManagers(hosts);
     List<ZooKeeperConnectionManager> managersToStart = connectionManagers.subList(0,3);
-    assertEquals(_provider.getZkConnectionCount(), 1);
+    Assert.assertTrue(_provider.getZkConnectionCount() == 1);
 
     startConnectionManagers(connectionManagers.subList(0,3));
 
