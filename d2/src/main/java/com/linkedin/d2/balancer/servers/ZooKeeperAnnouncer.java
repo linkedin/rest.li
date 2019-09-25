@@ -37,6 +37,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.util.ArgumentUtil;
 
 import javax.annotation.Nullable;
+
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +112,8 @@ public class ZooKeeperAnnouncer
    * to be called whenever the zookeeper connection is lost and then back again(zk session
    * is still valid).
    */
-  /* package private */synchronized void retry(Callback<None> callback)
+  /* package private */
+  synchronized void retry(Callback<None> callback)
   {
     // If we have pending operations failed because of a connection loss,
     // retry the last one.
@@ -261,7 +263,7 @@ public class ZooKeeperAnnouncer
         runNextMarkUpOrMarkDown();
       }
     });
-    _log.info("overrideMarkDown is called for uri = " + _uri );
+    _log.info("overrideMarkDown is called for uri = " + _uri);
   }
 
   // ################################## Concurrency Util Section ##################################
@@ -295,7 +297,7 @@ public class ZooKeeperAnnouncer
 
   private void drain(Deque<Callback<None>> callbacks, @Nullable Throwable t)
   {
-    for (;!callbacks.isEmpty();)
+    for (; !callbacks.isEmpty(); )
     {
       try
       {
@@ -385,7 +387,7 @@ public class ZooKeeperAnnouncer
     ArgumentUtil.notNull(data, "weightOrPartitionData");
     if (data instanceof Number)
     {
-      setWeight(((Number)data).doubleValue());
+      setWeight(((Number) data).doubleValue());
     }
     else
     {
@@ -397,27 +399,45 @@ public class ZooKeeperAnnouncer
       }
       catch (ClassCastException e)
       {
-        throw new IllegalArgumentException(
-            "data: " + data + " is not an instance of Map", e);
+        throw new IllegalArgumentException("data: " + data + " is not an instance of Map", e);
       }
     }
   }
 
   public void setWeight(double weight)
   {
+    int numberOfPartitions = getNumberOfPartitions();
+
+    if (numberOfPartitions > 1)
+    {
+      throw new IllegalArgumentException("When a single announcer is serving multiple partitions, you cannot call "
+                                           + "setWeight since it would change the weight for multiple partitions. The partitionData should be changed instead.");
+    }
+
+    int partitionId = DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
+    if (numberOfPartitions == 1)
+    {
+      partitionId = getPartitionData().entrySet().iterator().next().getKey();
+    }
+
     Map<Integer, PartitionData> partitionDataMap = new HashMap<>(1);
-    partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
+    partitionDataMap.put(partitionId, new PartitionData(weight));
     _partitionDataMap = Collections.unmodifiableMap(partitionDataMap);
   }
 
   public void setPartitionData(Map<Integer, PartitionData> partitionData)
   {
-    _partitionDataMap =
-        Collections.unmodifiableMap(new HashMap<>(partitionData));
+    _partitionDataMap = Collections.unmodifiableMap(new HashMap<>(partitionData));
   }
 
   public Map<Integer, PartitionData> getPartitionData()
   {
     return _partitionDataMap;
+  }
+
+  private int getNumberOfPartitions()
+  {
+    Map<Integer, PartitionData> partitionDataMap = getPartitionData();
+    return partitionDataMap == null ? 0 : partitionDataMap.size();
   }
 }

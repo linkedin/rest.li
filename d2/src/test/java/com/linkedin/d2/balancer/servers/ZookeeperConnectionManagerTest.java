@@ -29,6 +29,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.test.util.AssertionMethods;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 
 
 /**
@@ -55,6 +57,10 @@ public class ZookeeperConnectionManagerTest
   private String _cluster;
   private int testId = 0;
   private static final double WEIGHT = 0.5d;
+  private static final int PARTITION1_ID = 1;
+  private static final int PARTITION2_ID = 2;
+  private static final double PARTITION1_WEIGHT = 1.5d;
+  private static final double PARTITION2_WEIGHT = 2.5d;
 
   @BeforeMethod
   public void setUp() throws InterruptedException
@@ -94,6 +100,59 @@ public class ZookeeperConnectionManagerTest
     UriProperties properties = store.get(_cluster);
     assertNotNull(properties);
     assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
+    assertEquals(properties.Uris().size(), 1);
+
+    shutdownManager(manager);
+  }
+
+  @Test
+  public void testMarkUpWithMultiPartition()
+      throws Exception
+  {
+    double newWeight = 10d;
+    ZooKeeperAnnouncer announcer = getZooKeeperMultiPartitionAnnouncer(_cluster, _uri, PARTITION1_ID, PARTITION2_ID, PARTITION1_WEIGHT,  PARTITION2_WEIGHT);
+
+    try
+    {
+      announcer.setWeight(newWeight);
+      Assert.fail("The operation should not be supported since we don't know for which partition we should change weight for.");
+    }
+    catch(IllegalArgumentException ex)
+    {
+      // Success
+    }
+
+    ZooKeeperConnectionManager manager = createManager(true, announcer);
+
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+    UriProperties properties = store.get(_cluster);
+    assertNotNull(properties);
+    assertNotEquals(properties.getPartitionDataMap(URI.create(_uri)).get(PARTITION1_ID).getWeight(), newWeight);
+    assertNotEquals(properties.getPartitionDataMap(URI.create(_uri)).get(PARTITION2_ID).getWeight(), newWeight);
+    assertNull(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID));
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(PARTITION1_ID).getWeight(), PARTITION1_WEIGHT);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(PARTITION2_ID).getWeight(), PARTITION2_WEIGHT);
+    assertEquals(properties.Uris().size(), 1);
+
+    shutdownManager(manager);
+  }
+
+  @Test
+  public void testMarkUpWithSinglePartition()
+      throws Exception
+  {
+    double newWeight = 10d;
+    ZooKeeperAnnouncer announcer = getZooKeeperSinglePartitionAnnouncer(_cluster, _uri, PARTITION1_ID, PARTITION1_WEIGHT);
+    announcer.setWeight(newWeight);
+
+    ZooKeeperConnectionManager manager = createManager(true, announcer);
+
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+    UriProperties properties = store.get(_cluster);
+    assertNotNull(properties);
+    assertNull(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID));
+    assertNotEquals(properties.getPartitionDataMap(URI.create(_uri)).get(PARTITION1_ID).getWeight(), PARTITION1_WEIGHT);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(PARTITION1_ID).getWeight(), newWeight);
     assertEquals(properties.Uris().size(), 1);
 
     shutdownManager(manager);
@@ -514,11 +573,29 @@ public class ZookeeperConnectionManagerTest
 
   private static ZooKeeperAnnouncer getZooKeeperAnnouncer(String cluster, String uri, double weight)
   {
+    return getZooKeeperSinglePartitionAnnouncer(cluster, uri, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, weight);
+  }
+
+  private static ZooKeeperAnnouncer getZooKeeperSinglePartitionAnnouncer(String cluster, String uri, int partitionId, double weight)
+  {
+    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
+    partitionWeight.put(partitionId, new PartitionData(weight));
+    return getZookeeperAnnouncer(cluster, uri, partitionWeight);
+  }
+
+  private static ZooKeeperAnnouncer getZooKeeperMultiPartitionAnnouncer(String cluster, String uri, int partition1Id, int partition2Id, double partition1Weight, double partition2Weight)
+  {
+    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
+    partitionWeight.put(partition1Id, new PartitionData(partition1Weight));
+    partitionWeight.put(partition2Id, new PartitionData(partition2Weight));
+    return getZookeeperAnnouncer(cluster, uri, partitionWeight);
+  }
+
+  private static ZooKeeperAnnouncer getZookeeperAnnouncer(String cluster, String uri, Map<Integer, PartitionData> partitionWeight)
+  {
     ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer());
     announcer.setCluster(cluster);
     announcer.setUri(uri);
-    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
-    partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
     announcer.setPartitionData(partitionWeight);
     return announcer;
   }
