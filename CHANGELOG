@@ -1,9 +1,13 @@
+27.6.8
+------
+
 27.6.7
 ------
+Reverting fix LastSeenLoadBalancer parameter passing
 
 27.6.6
 ------
-Fixing LastSeenLoadBalancer parametr passing
+Fixing LastSeenLoadBalancer parameter passing
 
 27.6.5
 ------
