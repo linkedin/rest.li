@@ -3,11 +3,16 @@
 
 27.6.7
 ------
-Reverting fix LastSeenLoadBalancer parameter passing
+(RB=1816822)
+Rephrase PDL parser error messages to make them more clear
+
+(RB=1809448)
+Revert "LastSeenLoadBalancer: adding support for custom d2ServicePath on ZK. Add support for BackupStoreFilePath to LastSeen"
 
 27.6.6
 ------
-Fixing LastSeenLoadBalancer parameter passing
+(RB=1809448)
+LastSeenLoadBalancer: adding support for custom d2ServicePath on ZK. Add support for BackupStoreFilePath to LastSeen
 
 27.6.5
 ------
@@ -21,12 +26,11 @@ Fix bug when convert .pdsc to .avsc with override namespace prefix in DENORMALIZ
 
 27.6.3
 ------
-(RB=1802974)
-Add RestRequest support in Pipeline V2 and Convert FullyBuffered StreaRequest to RestRequest for better efficiency.
-
 (RB=1771744)
 Streaming Timeout (Idle Timeout) Implementation - as detiled in the document @ https://docs.google.com/document/d/1s1dNjqoUkmo2TZ4mql4utHB2CZwe14JW8EPZFRmxOwA
 
+(RB=1802974)
+Add RestRequest support in Pipeline V2 and Convert FullyBuffered StreaRequest to RestRequest for better efficiency.
 
 27.6.2
 ------

@@ -466,9 +466,9 @@ public class PdlSchemaParser extends AbstractSchemaParser
       {
         // Prohibit importing types that are declared in the same document
         startErrorMessage(namedType)
-            .append("'")
+            .append("Import '")
             .append(schema.getFullName())
-            .append("' is imported in the document in which it's declared.")
+            .append("' references a type declared in the same document. Please remove it.")
             .append(NEWLINE);
       }
       else
@@ -479,7 +479,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
             .append(schema.getFullName())
             .append("' conflicts with import '")
             .append(importName.getFullName())
-            .append("'")
+            .append("'. Please remove the import and instead use its fully qualified name to avoid ambiguity.")
             .append(NEWLINE);
       }
     }
@@ -1230,9 +1230,9 @@ public class PdlSchemaParser extends AbstractSchemaParser
       if (importedName.getNamespace().equals(rootNamespace))
       {
         startErrorMessage(importDecl)
-            .append("'")
+            .append("Import '")
             .append(importedFullname)
-            .append("' is an illegal import from the root namespace.")
+            .append("' is from within the document's root namespace and is thus unnecessary. Please remove it.")
             .append(NEWLINE);
       }
       // Prohibit imports with conflicting simple names
@@ -1240,9 +1240,11 @@ public class PdlSchemaParser extends AbstractSchemaParser
       if (importsBySimpleName.containsKey(importedSimpleName))
       {
         startErrorMessage(importDecl)
-            .append("'")
-            .append(importsBySimpleName.get(importedSimpleName))
-            .append("' is already defined in an import.")
+            .append("Import '")
+            .append(importedFullname)
+            .append("' conflicts with import '")
+            .append(importsBySimpleName.get(importedSimpleName).getFullName())
+            .append("'. Please remove one and instead use its fully qualified name.")
             .append(NEWLINE);
       }
       importsBySimpleName.put(importedSimpleName, importedName);
