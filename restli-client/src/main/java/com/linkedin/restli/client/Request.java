@@ -17,6 +17,8 @@
 package com.linkedin.restli.client;
 
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriTemplate;
@@ -46,6 +48,9 @@ import java.util.regex.Pattern;
 public class Request<T>
 {
   private static final Pattern SLASH_PATTERN = Pattern.compile("/");
+  private static final Cache<String, String> URI_TEMPLATE_TO_SERVICE_NAME_CACHE = Caffeine.newBuilder()
+      .maximumSize(1000)
+      .build();
 
   private final ResourceMethod              _method;
   private final RecordTemplate              _inputRecord;
@@ -291,7 +296,8 @@ public class Request<T>
   {
     if (_baseUriTemplate != null)
     {
-      return URIParamUtils.extractPathComponentsFromUriTemplate(_baseUriTemplate)[0];
+      return URI_TEMPLATE_TO_SERVICE_NAME_CACHE.get(_baseUriTemplate,
+          template -> URIParamUtils.extractPathComponentsFromUriTemplate(template)[0]);
     }
     return "";
   }

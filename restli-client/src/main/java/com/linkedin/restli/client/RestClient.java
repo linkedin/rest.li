@@ -17,6 +17,8 @@
 package com.linkedin.restli.client;
 
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
@@ -27,7 +29,6 @@ import com.linkedin.d2.balancer.util.URIKeyPair;
 import com.linkedin.d2.balancer.util.URIMappingResult;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.multipart.MultiPartMIMEUtils;
 import com.linkedin.multipart.MultiPartMIMEWriter;
@@ -43,8 +44,6 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
-import com.linkedin.r2.message.stream.entitystream.EntityStreams;
-import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.r2.message.stream.entitystream.adapter.EntityStreamAdapters;
 import com.linkedin.restli.client.multiplexer.MultiplexedCallback;
 import com.linkedin.restli.client.multiplexer.MultiplexedRequest;
@@ -71,12 +70,14 @@ import com.linkedin.util.ArgumentUtil;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.activation.MimeTypeParseException;
@@ -148,6 +149,12 @@ public class RestClient implements Client {
   // is set. THIS SHOULD NOT BE USED IN PRODUCTION!
   private final boolean _forceUseNextVersionOverride =
       "true".equalsIgnoreCase(System.getProperty(RestConstants.RESTLI_FORCE_USE_NEXT_VERSION_OVERRIDE));
+
+  // using Caffeine cache with expiration enabled. Cached data will auto expire and invalidates itself.
+  private final Cache<String, CompletionStage<ProtocolVersion>> _announcedProtocolVersionCache = Caffeine.newBuilder()
+      .maximumSize(1000)
+      .expireAfterWrite(Duration.ofSeconds(30))
+      .build();
 
   public RestClient(com.linkedin.r2.transport.common.Client client, String uriPrefix)
   {
@@ -377,22 +384,58 @@ public class RestClient implements Client {
 
   }
 
-  private void getProtocolVersionForService(final Request<?> request, Callback<ProtocolVersion> callback)
+  /*package private*/ void getProtocolVersionForService(final Request<?> request, Callback<ProtocolVersion> callback)
   {
-    try
-    {
-      _client.getMetadata(new URI(_uriPrefix + request.getServiceName()), Callbacks.handle(metadata ->
-        callback.onSuccess(getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
+
+    ProtocolVersionOption versionOption = request.getRequestOptions().getProtocolVersionOption();
+    // fetch server announced version only for 'ProtocolVersionOption.USE_LATEST_IF_AVAILABLE'
+    if (versionOption == ProtocolVersionOption.USE_LATEST_IF_AVAILABLE) {
+      final String serviceName = request.getServiceName();
+      // fetch from cache if exists, otherwise find and cache it.
+      CompletionStage<ProtocolVersion> announcedVersionFuture =
+          _announcedProtocolVersionCache.get(serviceName, key -> {
+            CompletableFuture<ProtocolVersion> future = new CompletableFuture<ProtocolVersion>();
+            try {
+              _client.getMetadata(new URI(_uriPrefix + serviceName), new Callback<Map<String, Object>>() {
+                @Override
+                public void onError(Throwable e) {
+                  future.completeExceptionally(e);
+                }
+
+                @Override
+                public void onSuccess(Map<String, Object> metadata) {
+                  future.complete(getAnnouncedVersion(metadata));
+                }
+              });
+            } catch (URISyntaxException e) {
+              throw new RuntimeException("Failed to create a valid URI to fetch properties for!");
+            }
+            return future;
+          });
+
+      announcedVersionFuture.whenComplete((version, error) -> {
+        if (error != null) {
+          // invalidate the cache as we don't want to cache the failed future.
+          _announcedProtocolVersionCache.invalidate(serviceName);
+          callback.onError(error);
+        } else {
+          callback.onSuccess(getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
+              AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
+              AllProtocolVersions.LATEST_PROTOCOL_VERSION,
+              AllProtocolVersions.NEXT_PROTOCOL_VERSION,
+              version,
+              versionOption,
+              _forceUseNextVersionOverride));
+        }
+      });
+    } else {
+      callback.onSuccess(getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
           AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
           AllProtocolVersions.LATEST_PROTOCOL_VERSION,
           AllProtocolVersions.NEXT_PROTOCOL_VERSION,
-          getAnnouncedVersion(metadata),
-          request.getRequestOptions().getProtocolVersionOption(),
-          _forceUseNextVersionOverride)), callback));
-    }
-    catch (URISyntaxException e)
-    {
-      throw new RuntimeException("Failed to create a valid URI to fetch properties for!");
+          null, // passing 'null' announcedVersion for version options other than ProtocolVersionOption.USE_LATEST_IF_AVAILABLE
+          versionOption,
+          _forceUseNextVersionOverride));
     }
   }
 

@@ -1,5 +1,11 @@
+27.7.2
+------
+
 27.7.1
 ------
+(RB=1818010)
+Adding cache to store 'serviceName' in Request and 'protocolVersion' in RestClient.
+
 (RB=1817516)
 Do not allow to set weight through ZooKeeperAnnouncerJmx when D2 Server is announced to multiple partitions and Fix the bug of resetting the D2 Partition to Default Partition in Zookeeper
 

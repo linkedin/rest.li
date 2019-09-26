@@ -19,11 +19,16 @@ package com.linkedin.restli.client;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import org.mockito.Mockito;
+import com.linkedin.common.callback.Callback;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.mockito.Mockito.*;
+
 
 /**
  * Tests protocol version negotiation between the client and the server.
@@ -36,6 +41,8 @@ public class TestVersionNegotiation
   private static final ProtocolVersion _PREV_VERSION = AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION;
   private static final ProtocolVersion _LATEST_VERSION = new ProtocolVersion(3, 0, 0);
   private static final ProtocolVersion _NEXT_VERSION = new ProtocolVersion(3, 0, 0);
+  private static final String TEST_URI_PREFIX = "http://localhost:1338/";
+  private static final String TEST_SERVICE_NAME = "serviceName";
 
   @DataProvider(name = "data")
   public Object[][] getProtocolVersionClient()
@@ -63,10 +70,10 @@ public class TestVersionNegotiation
             // latest protocol "advertised" + force latest option => latest protocol version
             { _LATEST_VERSION, ProtocolVersionOption.FORCE_USE_LATEST, _LATEST_VERSION },
 
-            // baseline protocol "advertised" + force latest option => latest protocol version 
+            // baseline protocol "advertised" + force latest option => latest protocol version
             {_BASELINE_VERSION, ProtocolVersionOption.FORCE_USE_LATEST, _LATEST_VERSION },
 
-            // latest protocol "advertised" + graceful option => latest protocol version 
+            // latest protocol "advertised" + graceful option => latest protocol version
             { _LATEST_VERSION, ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _LATEST_VERSION },
 
             // use the version "advertised" by the server as it is less than the latest protocol version
@@ -76,10 +83,10 @@ public class TestVersionNegotiation
             // servers should support it as well.
             { greaterThanNextVersion, ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, _LATEST_VERSION },
 
-            // force latest option => latest protocol version 
+            // force latest option => latest protocol version
             { betweenDefaultAndLatestVersion, ProtocolVersionOption.FORCE_USE_LATEST, _LATEST_VERSION },
 
-            // force latest option => latest protocol version 
+            // force latest option => latest protocol version
             { lessThanDefaultVersion, ProtocolVersionOption.FORCE_USE_LATEST, _LATEST_VERSION },
 
             // if servers "advertise" a version that is greater than the latest version we always use the latest version
@@ -195,6 +202,65 @@ public class TestVersionNegotiation
       Assert.assertEquals(announcedVersion, expectedAnnouncedVersion);
   }
 
+  @Test
+  public void testAnnouncedVersionCacheBehavior() {
+    com.linkedin.r2.transport.common.Client mockClient = Mockito.mock(com.linkedin.r2.transport.common.Client.class);
+    Request<?> mockRequest = Mockito.mock(Request.class);
+    RestliRequestOptions mockRequestOptions = Mockito.mock(RestliRequestOptions.class);
+
+    final RestClient restClient = new RestClient(mockClient, TEST_URI_PREFIX);
+    Mockito.when(mockRequest.getRequestOptions()).thenReturn(mockRequestOptions);
+    Mockito.when(mockRequestOptions.getProtocolVersionOption()).thenReturn(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE);
+    Mockito.when(mockRequest.getServiceName()).thenReturn(TEST_SERVICE_NAME);
+    doAnswer(invocation -> {
+      @SuppressWarnings("unchecked")
+      Callback<Map<String, Object>> metadataCallback = (Callback<Map<String, Object>>) invocation.getArguments()[1];
+      metadataCallback.onSuccess(new HashMap<>());
+      return null;
+    }).when(mockClient).getMetadata(any(), any());
+
+    @SuppressWarnings("unchecked")
+    final Callback<ProtocolVersion> mockCallback = Mockito.mock(Callback.class);
+    // make multiple requests to test the cache behavior
+    restClient.getProtocolVersionForService(mockRequest, mockCallback);
+    restClient.getProtocolVersionForService(mockRequest, mockCallback);
+    restClient.getProtocolVersionForService(mockRequest, mockCallback);
+    // verify getMetadata is invoked only once. second request MUST be served from the cache.
+    Mockito.verify(mockClient, times(1)).getMetadata(any(), any());
+    // verify all same protocolVersion is returned all the 3 times.
+    Mockito.verify(mockCallback, times(3)).onSuccess(AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
+  }
+
+  @Test
+  public void testAnnouncedVersionCacheBehaviorOnError() throws Exception {
+    com.linkedin.r2.transport.common.Client mockClient = Mockito.mock(com.linkedin.r2.transport.common.Client.class);
+    Request<?> mockRequest = Mockito.mock(Request.class);
+    RestliRequestOptions mockRequestOptions = Mockito.mock(RestliRequestOptions.class);
+
+    final RestClient restClient = new RestClient(mockClient, TEST_URI_PREFIX);
+    Mockito.when(mockRequest.getRequestOptions()).thenReturn(mockRequestOptions);
+    Mockito.when(mockRequestOptions.getProtocolVersionOption()).thenReturn(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE);
+    Mockito.when(mockRequest.getServiceName()).thenReturn(TEST_SERVICE_NAME);
+    doAnswer(invocation -> {
+      @SuppressWarnings("unchecked")
+      Callback<Map<String, Object>> metadataCallback = (Callback<Map<String, Object>>) invocation.getArguments()[1];
+      // throw exception to test the error scenario.
+      metadataCallback.onError(new RuntimeException("TEST"));
+      return null;
+    }).when(mockClient).getMetadata(any(), any());
+
+    @SuppressWarnings("unchecked")
+    final Callback<ProtocolVersion> mockCallback = Mockito.mock(Callback.class);
+    // make multiple requests to test the cache behavior
+    restClient.getProtocolVersionForService(mockRequest, mockCallback);
+    restClient.getProtocolVersionForService(mockRequest, mockCallback);
+    restClient.getProtocolVersionForService(mockRequest, mockCallback);
+    // getMetadata should be called all 3 times as cache will be invalidated after each error.
+    Mockito.verify(mockClient, times(3)).getMetadata(any(), any());
+    Mockito.verify(mockCallback, times(3)).onError(any(Throwable.class));
+    Mockito.verify(mockCallback, times(0)).onSuccess(any(ProtocolVersion.class));
+  }
+
   @DataProvider(name = "testForceUseNextVersionOverrideData")
   public Object[][] testForceUseVersionOverrideData()
   {
@@ -228,4 +294,3 @@ public class TestVersionNegotiation
     Assert.assertEquals(actualProtocolVersion, expectedProtocolVersion);
   }
 }
-
