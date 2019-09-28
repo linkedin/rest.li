@@ -1,5 +1,11 @@
+27.6.9
+------
+
+
 27.6.8
 ------
+(RB=1809448)
+LastSeenLoadBalancer: adding back again support for custom d2ServicePath on ZK. Add support for BackupStoreFilePath to LastSeen
 
 27.6.7
 ------
