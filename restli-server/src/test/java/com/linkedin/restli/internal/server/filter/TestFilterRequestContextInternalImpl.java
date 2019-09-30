@@ -102,6 +102,7 @@ public class TestFilterRequestContextInternalImpl
     r2RequestContext.putLocalAttr("Key1", "Val1");
 
     final String finderName = UUID.randomUUID().toString();
+    final String batchFinderName = UUID.randomUUID().toString();
     final String actionName = UUID.randomUUID().toString();
 
     final List<ServiceError> methodServiceErrors = Collections.singletonList(TestServiceError.METHOD_LEVEL_ERROR);
@@ -113,6 +114,7 @@ public class TestFilterRequestContextInternalImpl
     when(resourceMethod.getResourceModel()).thenReturn(resourceModel);
     when(resourceMethod.getMethodType()).thenReturn(methodType);
     when(resourceMethod.getFinderName()).thenReturn(finderName);
+    when(resourceMethod.getBatchFinderName()).thenReturn(batchFinderName);
     when(resourceMethod.getActionName()).thenReturn(actionName);
     when(resourceMethod.getCustomAnnotationData()).thenReturn(customAnnotations);
     when(resourceMethod.getMethod()).thenReturn(null);
@@ -150,6 +152,7 @@ public class TestFilterRequestContextInternalImpl
     assertEquals(filterContext.getQueryParameters(), queryParams);
     assertEquals(filterContext.getActionName(), actionName);
     assertEquals(filterContext.getFinderName(), finderName);
+    assertEquals(filterContext.getBatchFinderName(), batchFinderName);
     assertEquals(filterContext.getRequestContextLocalAttrs(), localAttrs);
     assertNull(filterContext.getMethod());
     assertEquals(filterContext.getMethodServiceErrors(), methodServiceErrors);
@@ -162,6 +165,7 @@ public class TestFilterRequestContextInternalImpl
     verify(resourceMethod).getResourceModel();
     verify(resourceMethod).getCustomAnnotationData();
     verify(resourceMethod).getFinderName();
+    verify(resourceMethod).getBatchFinderName();
     verify(resourceMethod).getActionName();
     verify(resourceMethod).getMethod();
     verify(resourceMethod).getServiceErrors();

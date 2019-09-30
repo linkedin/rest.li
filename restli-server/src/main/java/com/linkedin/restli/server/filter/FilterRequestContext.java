@@ -147,11 +147,18 @@ public interface FilterRequestContext extends CustomRequestContext
   String getResourceNamespace();
 
   /**
-   * Obtain the finder name associate with the resource.
+   * Obtain finder name if the invoked method is a FINDER.
    *
    * @return Method name if the method is a finder; else, null.
    */
   String getFinderName();
+
+  /**
+   * Obtain batch finder name if the invoked method is a BATCH_FINDER.
+   *
+   * @return Method name if the method is a batch_finder; else, null.
+   */
+  String getBatchFinderName();
 
   /**
    * Obtain the name of the action associate with the resource.

@@ -209,6 +209,12 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   }
 
   @Override
+  public String getBatchFinderName()
+  {
+    return _resourceMethod.getBatchFinderName();
+  }
+
+  @Override
   public String getActionName()
   {
     return _resourceMethod.getActionName();

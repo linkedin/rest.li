@@ -4,6 +4,9 @@
 
 27.6.8
 ------
+(RB=1822085)
+Update call tracking filter to handle batch finder
+
 (RB=1809448)
 LastSeenLoadBalancer: adding back again support for custom d2ServicePath on ZK. Add support for BackupStoreFilePath to LastSeen
 
