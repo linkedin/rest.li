@@ -1,6 +1,7 @@
 27.6.9
 ------
-
+(RB=1809448)
+Make ApplicationProtocolConfig constructor backward compatible to previous versions of netty by using the deprecated versions present in the previous versions.
 
 27.6.8
 ------

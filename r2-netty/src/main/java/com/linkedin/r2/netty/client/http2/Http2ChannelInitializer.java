@@ -168,6 +168,7 @@ class Http2ChannelInitializer extends ChannelInitializer<NioSocketChannel>
   }
 
 
+  @SuppressWarnings("deprecation")
   private JdkSslContext createSslContext()
   {
     // Ideally we would use the SslContextBuilder class provided by Netty here however the builder
@@ -177,14 +178,15 @@ class Http2ChannelInitializer extends ChannelInitializer<NioSocketChannel>
         IS_CLIENT,
         Arrays.asList(_sslParameters.getCipherSuites()),
         IdentityCipherSuiteFilter.INSTANCE,
+        // We should not use the non deprecated version to avoid breaking forward compatibility
+        // until we dont have a shadowed version of Netty
         new ApplicationProtocolConfig(
             ApplicationProtocolConfig.Protocol.ALPN,
             ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
             ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
             ApplicationProtocolNames.HTTP_2,
             ApplicationProtocolNames.HTTP_1_1),
-        _sslParameters.getNeedClientAuth() ? ClientAuth.REQUIRE : ClientAuth.OPTIONAL,
-        null,  false);
+        _sslParameters.getNeedClientAuth() ? ClientAuth.REQUIRE : ClientAuth.OPTIONAL);
   }
 
   /**

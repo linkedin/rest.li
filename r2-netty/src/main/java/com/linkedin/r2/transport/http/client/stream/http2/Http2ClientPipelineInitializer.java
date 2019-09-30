@@ -155,6 +155,7 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
   /**
    * Sets up HTTP/2 over TLS through ALPN (h2) pipeline
    */
+  @SuppressWarnings("deprecation")
   private void configureHttpsPipeline(NioSocketChannel ctx, Http2Connection connection) throws Exception
   {
     JdkSslContext context = new JdkSslContext(
@@ -162,14 +163,15 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
       IS_CLIENT,
       Arrays.asList(_sslParameters.getCipherSuites()),
       IdentityCipherSuiteFilter.INSTANCE,
+      // We should not use the non deprecated version to avoid breaking forward compatibility
+      // until we dont have a shadowed version of Netty
       new ApplicationProtocolConfig(
         ApplicationProtocolConfig.Protocol.ALPN,
         ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
         ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
         ApplicationProtocolNames.HTTP_2,
         ApplicationProtocolNames.HTTP_1_1),
-      _sslParameters.getNeedClientAuth() ? ClientAuth.REQUIRE : ClientAuth.OPTIONAL,
-        null, false); // protocols is currently passed as null. But this will be eventually filled in.
+      _sslParameters.getNeedClientAuth() ? ClientAuth.REQUIRE : ClientAuth.OPTIONAL);
 
     Http2StreamCodec http2Codec = new Http2StreamCodecBuilder()
       .connection(connection)
