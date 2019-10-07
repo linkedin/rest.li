@@ -1,5 +1,11 @@
+27.7.3
+------
+
+
 27.7.2
 ------
+(RB=1831592)
+Small improvement in test performance for the ClockExecutor
 
 27.7.1
 ------
