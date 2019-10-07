@@ -67,7 +67,10 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
       {
         _currentTimeMillis = expectTime;
       }
-      LOG.debug("Processing task " + task.toString() + " total {}, time {}", _taskList.size(), _currentTimeMillis);
+      if (LOG.isDebugEnabled())
+      {
+        LOG.debug("Processing task " + task.toString() + " total {}, time {}", _taskList.size(), _currentTimeMillis);
+      }
       task.run();
       if (task.repeatCount() > 0 && !task.isCancelled() && !_stopped)
       {
