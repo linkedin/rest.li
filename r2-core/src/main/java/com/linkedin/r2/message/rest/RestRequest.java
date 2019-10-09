@@ -31,13 +31,13 @@ import com.linkedin.r2.message.Request;
  */
 public interface RestRequest extends Request, RestMessage
 {
-   /**
-    * Returns a {@link RestRequestBuilder}, which provides a means of constructing a new request using
-    * this request as a starting point. Changes made with the builder are not reflected by this
-    * request instance.
-    *
-    * @return a builder for this request
-    */
-   @Override
+  /**
+   * Returns a {@link RestRequestBuilder}, which provides a means of constructing a new request using
+   * this request as a starting point. Changes made with the builder are not reflected by this
+   * request instance.
+   *
+   * @return a builder for this request
+   */
+  @Override
   RestRequestBuilder builder();
 }

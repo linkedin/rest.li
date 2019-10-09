@@ -31,6 +31,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.r2.message.rest.RestResponseFactory;
 import com.linkedin.r2.message.stream.StreamException;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
@@ -133,7 +134,7 @@ public class TrackerClientTest
           switch (action.get())
           {
             // success
-            case 0: callback.onResponse(TransportResponseImpl.success(RestResponse.NO_RESPONSE));
+            case 0: callback.onResponse(TransportResponseImpl.success(RestResponseFactory.noResponse()));
                     break;
             // fail with rest exception
             case 1: callback.onResponse(TransportResponseImpl.error(RestException.forError(500, "rest exception")));

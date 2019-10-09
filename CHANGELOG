@@ -1,5 +1,10 @@
+27.7.7
+------
+
 27.7.6
 ------
+(RB=1836131)
+Move NO_RESPONSE to RestResponseFactory.
 
 27.7.5
 ------

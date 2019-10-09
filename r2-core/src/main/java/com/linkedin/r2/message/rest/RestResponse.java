@@ -20,6 +20,7 @@ import com.linkedin.r2.message.Response;
 
 import java.util.Collections;
 
+
 /**
  * An object that contains details of a REST response.
  *
@@ -34,6 +35,10 @@ import java.util.Collections;
  */
 public interface RestResponse extends Response, RestMessage
 {
+  /**
+   * @deprecated for RestResponseFactory#noResponse(). See SI-13282 for context.
+   */
+  @Deprecated
   RestResponse NO_RESPONSE = new RestResponseImpl(
       ByteString.empty(), Collections.<String, String>emptyMap(), Collections.<String>emptyList(), 0);
 
