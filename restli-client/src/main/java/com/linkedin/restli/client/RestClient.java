@@ -76,8 +76,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.activation.MimeTypeParseException;
@@ -151,7 +149,7 @@ public class RestClient implements Client {
       "true".equalsIgnoreCase(System.getProperty(RestConstants.RESTLI_FORCE_USE_NEXT_VERSION_OVERRIDE));
 
   // using Caffeine cache with expiration enabled. Cached data will auto expire and invalidates itself.
-  private final Cache<String, CompletionStage<ProtocolVersion>> _announcedProtocolVersionCache = Caffeine.newBuilder()
+  private final Cache<String, ProtocolVersion> _announcedProtocolVersionCache = Caffeine.newBuilder()
       .maximumSize(1000)
       .expireAfterWrite(Duration.ofSeconds(30))
       .build();
@@ -384,59 +382,42 @@ public class RestClient implements Client {
 
   }
 
-  /*package private*/ void getProtocolVersionForService(final Request<?> request, Callback<ProtocolVersion> callback)
-  {
+  /*package private*/ void getProtocolVersionForService(final Request<?> request, Callback<ProtocolVersion> callback) {
 
     ProtocolVersionOption versionOption = request.getRequestOptions().getProtocolVersionOption();
+    ProtocolVersion announcedProtocolVersion = null;
     // fetch server announced version only for 'ProtocolVersionOption.USE_LATEST_IF_AVAILABLE'
     if (versionOption == ProtocolVersionOption.USE_LATEST_IF_AVAILABLE) {
       final String serviceName = request.getServiceName();
-      // fetch from cache if exists, otherwise find and cache it.
-      CompletionStage<ProtocolVersion> announcedVersionFuture =
-          _announcedProtocolVersionCache.get(serviceName, key -> {
-            CompletableFuture<ProtocolVersion> future = new CompletableFuture<ProtocolVersion>();
-            try {
-              _client.getMetadata(new URI(_uriPrefix + serviceName), new Callback<Map<String, Object>>() {
-                @Override
-                public void onError(Throwable e) {
-                  future.completeExceptionally(e);
-                }
-
-                @Override
-                public void onSuccess(Map<String, Object> metadata) {
-                  future.complete(getAnnouncedVersion(metadata));
-                }
-              });
-            } catch (URISyntaxException e) {
-              throw new RuntimeException("Failed to create a valid URI to fetch properties for!");
-            }
-            return future;
-          });
-
-      announcedVersionFuture.whenComplete((version, error) -> {
-        if (error != null) {
-          // invalidate the cache as we don't want to cache the failed future.
-          _announcedProtocolVersionCache.invalidate(serviceName);
-          callback.onError(error);
-        } else {
-          callback.onSuccess(getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
-              AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
-              AllProtocolVersions.LATEST_PROTOCOL_VERSION,
-              AllProtocolVersions.NEXT_PROTOCOL_VERSION,
-              version,
-              versionOption,
-              _forceUseNextVersionOverride));
+      // check cache first.
+      announcedProtocolVersion = _announcedProtocolVersionCache.getIfPresent(serviceName);
+      if (announcedProtocolVersion == null) {
+        // if announcedProtocolVersion is not available in cache find and cache it.
+        try {
+          _client.getMetadata(new URI(_uriPrefix + serviceName), Callbacks.handle(metadata -> {
+            ProtocolVersion announcedVersion = getAnnouncedVersion(metadata);
+            _announcedProtocolVersionCache.put(serviceName, announcedVersion);
+            callback.onSuccess(getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
+                AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
+                AllProtocolVersions.LATEST_PROTOCOL_VERSION,
+                AllProtocolVersions.NEXT_PROTOCOL_VERSION,
+                announcedVersion,
+                versionOption,
+                _forceUseNextVersionOverride));
+          }, callback));
+        } catch (URISyntaxException e) {
+          throw new RuntimeException("Failed to create a valid URI to fetch properties for!");
         }
-      });
-    } else {
-      callback.onSuccess(getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
-          AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
-          AllProtocolVersions.LATEST_PROTOCOL_VERSION,
-          AllProtocolVersions.NEXT_PROTOCOL_VERSION,
-          null, // passing 'null' announcedVersion for version options other than ProtocolVersionOption.USE_LATEST_IF_AVAILABLE
-          versionOption,
-          _forceUseNextVersionOverride));
+        return;
+      }
     }
+    callback.onSuccess(getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
+        AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
+        AllProtocolVersions.LATEST_PROTOCOL_VERSION,
+        AllProtocolVersions.NEXT_PROTOCOL_VERSION,
+        announcedProtocolVersion,
+        versionOption,
+        _forceUseNextVersionOverride));
   }
 
   /**

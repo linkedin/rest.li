@@ -1,6 +1,10 @@
-27.7.3
+27.7.4
 ------
 
+27.7.3
+------
+(RB=1834552)
+Fixing possible IC corruption issue in dealing with cached CompletionStage.
 
 27.7.2
 ------
