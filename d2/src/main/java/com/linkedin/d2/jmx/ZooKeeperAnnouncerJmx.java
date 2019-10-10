@@ -20,6 +20,7 @@
 
 package com.linkedin.d2.jmx;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
@@ -139,9 +140,8 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
   public void setPartitionDataUsingJson(String partitionDataJson)
       throws IOException
   {
-    @SuppressWarnings("unchecked")
     Map<Integer, Double> rawObject =
-        JacksonUtil.getObjectMapper().readValue(partitionDataJson, HashMap.class);
+        JacksonUtil.getObjectMapper().readValue(partitionDataJson, new TypeReference<HashMap<Integer, Double>>(){});
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>();
     for (Map.Entry<Integer, Double> entry : rawObject.entrySet())
     {

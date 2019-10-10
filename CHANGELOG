@@ -1,5 +1,10 @@
+27.7.6
+------
+
 27.7.5
 ------
+(RB=1837489)
+Fixing JSON deserialization bug  while setting partition weight via JMX using JSON format
 
 27.7.4
 ------
