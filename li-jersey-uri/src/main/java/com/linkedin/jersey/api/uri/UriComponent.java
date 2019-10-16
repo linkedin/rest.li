@@ -79,6 +79,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
+
 
 /**
  * Utility class for validating, encoding and decoding components
@@ -602,6 +605,30 @@ public class UriComponent {
          */
         public MultivaluedMap getMatrixParameters() {
             return matrixParameters;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            PathSegment that = (PathSegment) o;
+            return Objects.equals(path, that.path) && Objects.equals(matrixParameters, that.matrixParameters);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(path, matrixParameters);
+        }
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", PathSegment.class.getSimpleName() + "[", "]").add("path='" + path + "'")
+                .add("matrixParameters=" + matrixParameters)
+                .toString();
         }
     }
 

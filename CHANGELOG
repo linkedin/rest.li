@@ -10,6 +10,8 @@ Right size the DataObjectToObjectCache used for wrapped fields to avoid wasting 
 -------
 (RB=1847578)
 Adding initial capacity to clientsToLoadBalance list and trackerClientMap to avoid expensive resize operations.
+(RB=1843935)
+Generate ToString, Equals and Hashcode for PathSegment
 
 27.7.10
 -------
