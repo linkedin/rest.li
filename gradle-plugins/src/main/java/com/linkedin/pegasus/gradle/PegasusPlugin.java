@@ -40,6 +40,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -1875,7 +1876,7 @@ public class PegasusPlugin implements Plugin<Project>
     return idlOptions.getIdlItems().stream()
         .flatMap(idlItem -> Arrays.stream(idlItem.packageNames))
         .map(packageName -> new File(rootPath, packageName.replace('.', '/')))
-        .collect(Collectors.toSet());
+        .collect(Collectors.toCollection(TreeSet::new));
   }
 
   private static <T> Set<T> difference(Set<T> left, Set<T> right)

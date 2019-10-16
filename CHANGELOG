@@ -1,5 +1,7 @@
 27.7.7
 ------
+(RB=1843206)
+Update GenerateRestModelTask to have an ordered set for setWatchedInputDirs input property.
 
 27.7.6
 ------
