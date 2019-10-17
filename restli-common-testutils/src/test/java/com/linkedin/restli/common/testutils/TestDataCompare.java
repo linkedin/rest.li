@@ -20,6 +20,7 @@ import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.restli.common.EmptyRecord;
+import java.util.Comparator;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -176,6 +177,15 @@ public class TestDataCompare
         ),
         "fixedField\nExpected: string\n got: bytes"
     );
+  }
+
+  public void testListWithoutOrder()
+  {
+    DataMap dataOne = toDataMap("mapField", toDataMap("key", toDataList("value1", "value2")));
+    DataMap dataTwo = toDataMap("mapField", toDataMap("key", toDataList("value2", "value1")));
+    DataCompare.Result result = DataCompare.compare(dataOne, dataTwo,
+        new DataCompare.Options(true, true, Comparator.comparing(Object::toString)));
+    assertFalse(result.hasError());
   }
 
   public void testStringLikeMatch()

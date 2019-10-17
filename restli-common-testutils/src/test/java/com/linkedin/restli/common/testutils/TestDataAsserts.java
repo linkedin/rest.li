@@ -17,6 +17,7 @@
 package com.linkedin.restli.common.testutils;
 
 import com.linkedin.restli.test.RecordTemplateWithDefaultValue;
+import java.util.Comparator;
 import org.testng.annotations.Test;
 
 import static com.linkedin.restli.common.testutils.DataAsserts.*;
@@ -40,7 +41,14 @@ public class TestDataAsserts
   )
   public void testAssertEqualsDataLists()
   {
-    assertEquals(toDataList("foo"), toDataList("bar"));
+    assertEquals(toDataList("foo", "bar"), toDataList("bar", "foo"));
+  }
+
+  @Test
+  public void testAssertEqualsDataListsWithoutOrder()
+  {
+    assertEquals(toDataList("foo", "bar"), toDataList("bar", "foo"),
+        new DataCompare.Options(true, true, Comparator.comparing(Object::toString)));
   }
 
   @Test(

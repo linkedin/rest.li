@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.common.testutils;
 
+import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
@@ -42,6 +43,18 @@ public final class DataAsserts
   }
 
   /**
+   * Assert that the actual data map equals the expected data map using {@link DataCompare}
+   *
+   * @param actual   the actual data object
+   * @param expected the expected data object
+   * @param options the options used to configure comparison of data objects
+   */
+  public static void assertEquals(DataMap actual, DataMap expected, DataCompare.Options options)
+  {
+    assertDataEquals(actual, expected, options);
+  }
+
+  /**
    * Assert that the actual data list equals the expected data list using {@link DataCompare}
    *
    * @param actual   the actual data object
@@ -50,6 +63,18 @@ public final class DataAsserts
   public static void assertEquals(DataList actual, DataList expected)
   {
     assertDataEquals(actual, expected);
+  }
+
+  /**
+   * Assert that the actual data list equals the expected data list using {@link DataCompare}
+   *
+   * @param actual   the actual data object
+   * @param expected the expected data object
+   * @param options the options used to configure comparison of data objects
+   */
+  public static void assertEquals(DataList actual, DataList expected, DataCompare.Options options)
+  {
+    assertDataEquals(actual, expected, options);
   }
 
   /**
@@ -63,9 +88,30 @@ public final class DataAsserts
     assertDataEquals(actual.data(), expected.data());
   }
 
+  /**
+   * Asserts that actual record template data equals the expected record template data using {@link DataCompare}
+   *
+   * @param actual   the actual data object
+   * @param expected the expected object
+   * @param options the options used to configure comparison of data objects
+   */
+  public static void assertEquals(RecordTemplate actual, RecordTemplate expected, DataCompare.Options options)
+  {
+    assertDataEquals(actual.data(), expected.data(), options);
+  }
+
   private static void assertDataEquals(Object actual, Object expected)
   {
     DataCompare.Result compareResult = DataCompare.compare(expected, actual);
+    if (compareResult.hasError())
+    {
+      throw new AssertionError(compareResult.toString());
+    }
+  }
+
+  private static void assertDataEquals(DataComplex actual, DataComplex expected, DataCompare.Options options)
+  {
+    DataCompare.Result compareResult = DataCompare.compare(expected, actual, options);
     if (compareResult.hasError())
     {
       throw new AssertionError(compareResult.toString());

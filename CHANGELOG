@@ -1,7 +1,10 @@
-27.7.8
+27.7.9
 ------
 
-
+27.7.8
+------
+(RB=1846176)
+Add support to compare DataList without order, by sorting them with a comparator.
 
 27.7.7
 ------

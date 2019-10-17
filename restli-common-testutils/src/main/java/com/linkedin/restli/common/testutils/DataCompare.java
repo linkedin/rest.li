@@ -25,6 +25,7 @@ import com.linkedin.data.schema.DataSchemaUtil;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -161,6 +162,11 @@ public class DataCompare
       return;
     }
 
+    if (_options._dataListComparator != null) {
+      expected.sort(_options._dataListComparator);
+      actual.sort(_options._dataListComparator);
+    }
+
     for (int index = 0; index < expected.size(); ++index)
     {
       Object expectedItem = expected.get(index);
@@ -262,10 +268,22 @@ public class DataCompare
      */
     private final boolean _shouldCoerceByteStrings;
 
+    /**
+     * When comparing DataList, use the non-null comparator to sort and then compare.
+     */
+    private final Comparator<? super Object> _dataListComparator;
+
     public Options(boolean shouldCoerceNumbers, boolean shouldCoerceByteStrings)
+    {
+      this(shouldCoerceNumbers, shouldCoerceByteStrings, null);
+    }
+
+    public Options(boolean shouldCoerceNumbers, boolean shouldCoerceByteStrings,
+        Comparator<? super Object> dataListComparator)
     {
       _shouldCoerceNumbers = shouldCoerceNumbers;
       _shouldCoerceByteStrings = shouldCoerceByteStrings;
+      _dataListComparator = dataListComparator;
     }
   }
 
