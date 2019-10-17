@@ -22,6 +22,7 @@ import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.entitystream.ReadHandle;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -93,6 +94,9 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
   private byte _expectedTokens;
   private boolean _isCurrList;
 
+  private ByteString _currentChunk;
+  private int _currentChunkIndex = -1;
+
   protected AbstractJacksonDataDecoder(JsonFactory jsonFactory, byte expectedFirstToken)
   {
     _jsonFactory = jsonFactory;
@@ -128,29 +132,35 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
   @Override
   public void onDataAvailable(ByteString data)
   {
-    byte[] bytes = data.copyBytes(); // TODO: Avoid copying bytes?
+    // Process chunk incrementally without copying the data in the interest of performance.
+    _currentChunk = data;
+    _currentChunkIndex = 0;
+
+    processCurrentChunk();
+  }
+
+  private void readNextChunk()
+  {
+    if (_currentChunkIndex == -1)
+    {
+      _readHandle.request(1);
+      return;
+    }
+
+    processCurrentChunk();
+  }
+
+  private void processCurrentChunk()
+  {
     try
     {
-      /**
-       * Method that can be called to feed more data, if (and only if)
-       * {@link #needMoreInput} returns true.
-       * --Copied from ByteArrayFeeder--
-       **/
-      if (_byteArrayFeeder.needMoreInput())
-      {
-        _byteArrayFeeder.feedInput(bytes, 0, bytes.length);
-      }
-      else
-      {
-        handleException(new Exception("Byte Array Feeder is not ok to feed more data."));
-      }
+      _currentChunkIndex = _currentChunk.feed(_byteArrayFeeder, _currentChunkIndex);
+      processTokens();
     }
     catch (IOException e)
     {
       handleException(e);
     }
-
-    processTokens();
   }
 
   private void processTokens()
@@ -225,7 +235,7 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
             addValue(Data.NULL);
             break;
           case NOT_AVAILABLE:
-            _readHandle.request(1);
+            readNextChunk();
             return;
           default:
             handleException(new Exception("Unexpected token " + token + " at " + _jsonParser.getTokenLocation()));
@@ -282,11 +292,11 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
       DataComplex currItem = _stack.peek();
       if (_isCurrList)
       {
-        ((DataList) currItem).add(value);
+        CheckedUtil.addWithoutChecking((DataList) currItem, value);
       }
       else
       {
-        ((DataMap) currItem).put(_currField, value);
+        CheckedUtil.putWithoutChecking((DataMap) currItem, _currField, value);
       }
 
       updateExpected();

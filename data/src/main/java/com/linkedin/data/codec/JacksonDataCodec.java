@@ -54,7 +54,6 @@ public class JacksonDataCodec extends AbstractJacksonDataCodec implements TextDa
   public JacksonDataCodec(JsonFactory jsonFactory)
   {
     super(jsonFactory);
-    jsonFactory.disable(JsonFactory.Feature.INTERN_FIELD_NAMES);
     setAllowComments(true);
   }
 

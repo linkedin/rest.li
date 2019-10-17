@@ -16,10 +16,8 @@
 
 package com.linkedin.data.codec.entitystream;
 
-import com.linkedin.data.DataComplex;
-
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.json.async.NonBlockingJsonParser;
+import com.linkedin.data.DataComplex;
 
 
 /**
@@ -30,15 +28,13 @@ import com.fasterxml.jackson.core.json.async.NonBlockingJsonParser;
  */
 public class JacksonJsonDataDecoder<T extends DataComplex> extends AbstractJacksonDataDecoder<T> implements JsonDataDecoder<T>
 {
-  private static final JsonFactory JSON_FACTORY = new JsonFactory();
-
   protected JacksonJsonDataDecoder(byte expectedFirstToken)
   {
-    super(JSON_FACTORY, expectedFirstToken);
+    super(JacksonStreamDataCodec.JSON_FACTORY, expectedFirstToken);
   }
 
   public JacksonJsonDataDecoder()
   {
-    super(JSON_FACTORY);
+    super(JacksonStreamDataCodec.JSON_FACTORY);
   }
 }

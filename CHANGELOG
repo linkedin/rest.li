@@ -1,5 +1,10 @@
+27.7.10
+-------
+
 27.7.9
 ------
+(RB=1845042)
+Fix codec bugs and improve deserialization performance
 
 27.7.8
 ------

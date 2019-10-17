@@ -446,7 +446,9 @@ public final class ByteString
     ByteArray byteArray = _byteArrays.get(index);
     if (feeder.needMoreInput())
     {
-      feeder.feedInput(byteArray.getArray(), byteArray.getOffset(), byteArray.getLength());
+      // Note that jackson ByteArrayFeeder API takes in end and NOT length.
+      int end = byteArray.getOffset() + byteArray.getLength();
+      feeder.feedInput(byteArray.getArray(), byteArray.getOffset(), end);
     }
     else
     {

@@ -16,30 +16,25 @@
 
 package com.linkedin.data.codec;
 
-
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.PrettyPrinter;
+import com.fasterxml.jackson.core.util.Instantiatable;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestData;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.PrettyPrinter;
-import com.fasterxml.jackson.core.util.Instantiatable;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertNotSame;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
 
@@ -146,39 +141,25 @@ public class TestJacksonCodec extends TestCodec
   }
 
   /**
-   * Test to make sure that field names are not interned.
+   * Test to make sure that field names are interned.
    *
    * @throws IOException
    */
   @Test
-  public void testNoStringIntern() throws IOException
+  public void testStringIntern() throws IOException
   {
     final String keyName = "testKey";
     final String json = "{ \"" + keyName + "\" : 1 }";
     final byte[] jsonAsBytes = json.getBytes(Data.UTF_8_CHARSET);
 
-    {
-      final JsonFactory jsonFactory = new JsonFactory();
-      final JacksonDataCodec codec = new JacksonDataCodec(jsonFactory);
-      // make sure intern field names is not enabled
-      assertFalse(jsonFactory.isEnabled(JsonFactory.Feature.INTERN_FIELD_NAMES));
-      assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES));
-      final DataMap map = codec.bytesToMap(jsonAsBytes);
-      final String key = map.keySet().iterator().next();
-      assertNotSame(key, keyName);
-    }
-
-    {
-      final JsonFactory jsonFactory = new JsonFactory();
-      final JacksonDataCodec codec = new JacksonDataCodec(jsonFactory);
-      // enable intern field names
-      jsonFactory.enable(JsonFactory.Feature.INTERN_FIELD_NAMES);
-      assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.INTERN_FIELD_NAMES));
-      assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES));
-      final DataMap map = codec.bytesToMap(jsonAsBytes);
-      final String key = map.keySet().iterator().next();
-      assertSame(key, keyName);
-    }
+    final JsonFactory jsonFactory = new JsonFactory();
+    final JacksonDataCodec codec = new JacksonDataCodec(jsonFactory);
+    // make sure intern field names is enabled
+    assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.INTERN_FIELD_NAMES));
+    assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES));
+    final DataMap map = codec.bytesToMap(jsonAsBytes);
+    final String key = map.keySet().iterator().next();
+    assertSame(key, keyName);
   }
 
   @Test(dataProvider = "longKeyFromByteSource", dataProviderClass = CodecDataProviders.class)

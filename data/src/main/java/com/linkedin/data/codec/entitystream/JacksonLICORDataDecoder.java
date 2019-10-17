@@ -25,6 +25,7 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataDecodingException;
 import com.linkedin.data.codec.symbol.SymbolTable;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.entitystream.ReadHandle;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -137,6 +138,7 @@ class JacksonLICORDataDecoder<T extends DataComplex> implements DataDecoder<T>
   @Override
   public void onDataAvailable(ByteString data)
   {
+    // Process chunk incrementally without copying the data in the interest of performance.
     _currentChunk = data;
     _currentChunkIndex = 0;
 
@@ -345,12 +347,12 @@ class JacksonLICORDataDecoder<T extends DataComplex> implements DataDecoder<T>
       DataComplex currItem = _stack.peek();
       if (_isCurrList)
       {
-        ((DataList) currItem).add(value);
+        CheckedUtil.addWithoutChecking((DataList) currItem, value);
         _expectedTokens = NEXT_ARRAY_ITEM;
       }
       else
       {
-        ((DataMap) currItem).put(_currField, value);
+        CheckedUtil.putWithoutChecking((DataMap) currItem, _currField, value);
         _isFieldNameExpected = true;
         _expectedTokens = NEXT_MAP_KEY;
       }

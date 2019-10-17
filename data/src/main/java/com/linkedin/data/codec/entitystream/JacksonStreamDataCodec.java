@@ -17,6 +17,7 @@
 
 package com.linkedin.data.codec.entitystream;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -33,6 +34,14 @@ import java.util.concurrent.CompletionStage;
  */
 public class JacksonStreamDataCodec implements StreamDataCodec
 {
+  /**
+   * Default factory to be shared between encoder and decoder. This is done to maximize factory reuse for
+   * performance reasons as recommended by Jackson authors.
+   *
+   * <a href="https://github.com/FasterXML/jackson-docs/wiki/Presentation:-Jackson-Performance">Jackson Performance</a>
+   */
+  static final JsonFactory JSON_FACTORY = new JsonFactory();
+
   protected final int _bufferSize;
 
   public JacksonStreamDataCodec(int bufferSize)

@@ -16,22 +16,10 @@
 
 package com.linkedin.data.codec.entitystream;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
-import com.linkedin.entitystream.WriteHandle;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.Map;
 
 
 /**
@@ -45,15 +33,13 @@ import java.util.Map;
  */
 public class JacksonJsonDataEncoder extends AbstractJacksonDataEncoder implements JsonDataEncoder
 {
-  protected static final JsonFactory JSON_FACTORY = new JsonFactory();
-
   public JacksonJsonDataEncoder(DataMap dataMap, int bufferSize)
   {
-    super(JSON_FACTORY, dataMap, bufferSize);
+    super(JacksonStreamDataCodec.JSON_FACTORY, dataMap, bufferSize);
   }
 
   public JacksonJsonDataEncoder(DataList dataList, int bufferSize)
   {
-    super(JSON_FACTORY, dataList, bufferSize);
+    super(JacksonStreamDataCodec.JSON_FACTORY, dataList, bufferSize);
   }
 }

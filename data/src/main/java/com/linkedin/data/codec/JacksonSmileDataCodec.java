@@ -36,9 +36,6 @@ public class JacksonSmileDataCodec extends AbstractJacksonDataCodec
   public JacksonSmileDataCodec(SmileFactory smileFactory)
   {
     super(smileFactory);
-
-    // Always disable field name interning.
-    smileFactory.disable(SmileFactory.Feature.INTERN_FIELD_NAMES);
   }
 
   private static SmileFactory createDefaultSmileFactory()
