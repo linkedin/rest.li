@@ -80,6 +80,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.activation.MimeTypeParseException;
 
+import static com.linkedin.r2.disruptor.DisruptContext.addDisruptContextIfNotPresent;
+
 
 /**
  * Subset of Jersey's REST client, omitting things we probably won't use for internal API calls +
@@ -983,36 +985,22 @@ public class RestClient implements Client {
       return;
     }
 
-    // Do not evaluate further if disrupt source key is already present in the request context
-    if (requestContext.getLocalAttr(DisruptContext.DISRUPT_SOURCE_KEY) != null)
-    {
-      return;
-    }
+    addDisruptContextIfNotPresent(requestContext, controller.getClass(), () -> {
+      ArgumentUtil.notNull(resource, "resource");
 
-    ArgumentUtil.notNull(resource, "resource");
-
-    final DisruptContext disruptContext;
-    if (method == null)
-    {
-      disruptContext = controller.getDisruptContext(resource);
-    }
-    else
-    {
-      if (name == null)
+      if (method == null)
       {
-        disruptContext = controller.getDisruptContext(resource, method);
+        return controller.getDisruptContext(resource);
+      }
+      else if (name == null)
+      {
+        return controller.getDisruptContext(resource, method);
       }
       else
       {
-        disruptContext = controller.getDisruptContext(resource, method, name);
+        return controller.getDisruptContext(resource, method, name);
       }
-    }
-
-    requestContext.putLocalAttr(DisruptContext.DISRUPT_SOURCE_KEY, controller.getClass().getCanonicalName());
-    if (disruptContext != null)
-    {
-      requestContext.putLocalAttr(DisruptContext.DISRUPT_CONTEXT_KEY, disruptContext);
-    }
+    });
   }
 
   // Return the scatter gather strategy for the given request, and per-request strategy takes precedence

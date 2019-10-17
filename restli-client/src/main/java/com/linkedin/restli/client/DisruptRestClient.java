@@ -27,6 +27,8 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.disruptor.DisruptRestController;
 import com.linkedin.util.ArgumentUtil;
 
+import static com.linkedin.r2.disruptor.DisruptContext.addDisruptContextIfNotPresent;
+
 
 /**
  * Decorator Rest.li {@link Client} implementation that evaluates each {@link Request}
@@ -191,19 +193,8 @@ public class DisruptRestClient implements Client
    */
   private <T> void doEvaluateDisruptContext(RequestContext requestContext)
   {
-    // Do not evaluate further if disrupt source key is already present in the request context
-    if (isDisruptSourceAlreadySet(requestContext))
-    {
-      return;
-    }
-
-    requestContext.putLocalAttr(DisruptContext.DISRUPT_SOURCE_KEY, _controller.getClass().getCanonicalName());
-
-    final DisruptContext disruptContext = _controller.getDisruptContext(MULTIPLEXER_RESOURCE);
-    if (disruptContext != null)
-    {
-      requestContext.putLocalAttr(DisruptContext.DISRUPT_CONTEXT_KEY, disruptContext);
-    }
+    addDisruptContextIfNotPresent(requestContext, _controller.getClass(),
+        () -> _controller.getDisruptContext(MULTIPLEXER_RESOURCE));
   }
 
   /**
@@ -217,42 +208,18 @@ public class DisruptRestClient implements Client
    */
   private <T> void doEvaluateDisruptContext(Request<T> request, RequestContext requestContext)
   {
-    // Do not evaluate further if disrupt source key is already present in the request context
-    if (isDisruptSourceAlreadySet(requestContext))
-    {
-      return;
-    }
-
-    // Marks the disrupt source key property in the request context to indicate that disrupt has already been evaluated
-    requestContext.putLocalAttr(DisruptContext.DISRUPT_SOURCE_KEY, _controller.getClass().getCanonicalName());
-
-    final ResourceMethod method = request.getMethod();
-    final String resource = request.getBaseUriTemplate();
-    final String name = request.getMethodName();
-    final DisruptContext disruptContext;
-    if (name == null)
-    {
-      disruptContext = _controller.getDisruptContext(resource, method);
-    }
-    else
-    {
-      disruptContext = _controller.getDisruptContext(resource, method, name);
-    }
-
-    if (disruptContext != null)
-    {
-      requestContext.putLocalAttr(DisruptContext.DISRUPT_CONTEXT_KEY, disruptContext);
-    }
-  }
-
-  /**
-   * Evaluates if the disrupt source is already set in the {@link RequestContext}
-   *
-   * @param requestContext Context associated with the request
-   * @return {@code true} if disrupt source is already set, {@code false} otherse;
-   */
-  private boolean isDisruptSourceAlreadySet(RequestContext requestContext)
-  {
-    return requestContext.getLocalAttr(DisruptContext.DISRUPT_SOURCE_KEY) != null;
+    addDisruptContextIfNotPresent(requestContext, _controller.getClass(), () -> {
+      final ResourceMethod method = request.getMethod();
+      final String resource = request.getBaseUriTemplate();
+      final String name = request.getMethodName();
+      if (name == null)
+      {
+        return _controller.getDisruptContext(resource, method);
+      }
+      else
+      {
+        return _controller.getDisruptContext(resource, method, name);
+      }
+    });
   }
 }
