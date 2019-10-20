@@ -203,7 +203,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       warn(_log, "Can not find hash ring to use");
     }
 
-    Map<URI, TrackerClient> trackerClientMap = new HashMap<>();
+    Map<URI, TrackerClient> trackerClientMap = new HashMap<>(trackerClients.size());
 
     for (TrackerClient trackerClient : trackerClients)
     {

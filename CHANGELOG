@@ -1,5 +1,7 @@
 27.7.11
 -------
+(RB=1847578)
+Adding initial capacity to clientsToLoadBalance list and trackerClientMap to avoid expensive resize operations.
 
 27.7.10
 -------

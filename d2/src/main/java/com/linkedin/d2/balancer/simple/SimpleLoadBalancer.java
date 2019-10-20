@@ -710,10 +710,15 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
                                                   ClusterProperties clusterProperties,
                                                   Set<URI> possibleUris)
   {
-    List<TrackerClient> clientsToLoadBalance = new ArrayList<TrackerClient>();
-
-    if (possibleUris != null)
+    List<TrackerClient> clientsToLoadBalance;
+    if (possibleUris == null)
     {
+      // just return an empty list if possibleUris is 'null'.
+      clientsToLoadBalance = Collections.emptyList();
+    }
+    else
+    {
+      clientsToLoadBalance = new ArrayList<>(possibleUris.size());
       for (URI possibleUri : possibleUris)
       {
         // don't pay attention to this uri if it's banned
