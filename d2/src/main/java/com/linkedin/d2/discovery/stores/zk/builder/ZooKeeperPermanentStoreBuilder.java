@@ -19,6 +19,9 @@ package com.linkedin.d2.discovery.stores.zk.builder;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Builder class for {@link ZooKeeperPermanentStore}
@@ -30,6 +33,7 @@ public class ZooKeeperPermanentStoreBuilder<T> implements ZooKeeperStoreBuilder<
   private ZKConnection client;
   private PropertySerializer<T> serializer;
   private String path;
+  private List<Consumer<ZooKeeperPermanentStore<T>>> _onBuildListeners = new ArrayList<>();
 
   public void setZkConnection(ZKConnection client)
   {
@@ -49,9 +53,23 @@ public class ZooKeeperPermanentStoreBuilder<T> implements ZooKeeperStoreBuilder<
   }
 
   @Override
+  public ZooKeeperPermanentStoreBuilder<T> addOnBuildListener(Consumer<ZooKeeperPermanentStore<T>> onBuildListener)
+  {
+    _onBuildListeners.add(onBuildListener);
+    return this;
+  }
+
+  @Override
   public ZooKeeperPermanentStore<T> build()
   {
-    return new ZooKeeperPermanentStore<>(client, serializer, path);
+    ZooKeeperPermanentStore<T> zooKeeperPermanentStore = new ZooKeeperPermanentStore<>(client, serializer, path);
+
+    for (Consumer<ZooKeeperPermanentStore<T>> onBuildListener : _onBuildListeners)
+    {
+      onBuildListener.accept(zooKeeperPermanentStore);
+    }
+
+    return zooKeeperPermanentStore;
   }
 
 

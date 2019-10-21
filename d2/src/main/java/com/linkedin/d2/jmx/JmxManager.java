@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.jmx;
 
-
 import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
 import com.linkedin.d2.balancer.servers.ZooKeeperServer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
@@ -27,15 +26,13 @@ import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperTogglingStore;
-
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +43,7 @@ public class JmxManager
   private static final Logger _log = LoggerFactory.getLogger(JmxManager.class);
 
   private final MBeanServer   _server;
-  private final Set<ObjectName> _registeredNames = new HashSet<ObjectName>();
+  private final Set<ObjectName> _registeredNames = new HashSet<>();
 
   public JmxManager()
   {
@@ -57,7 +54,7 @@ public class JmxManager
   {
     // Copy the set to avoid ConcurrentModificationException since unregister
     // removes the object from the set
-    for (ObjectName name : new HashSet<ObjectName>(_registeredNames))
+    for (ObjectName name : new HashSet<>(_registeredNames))
     {
       unregister(name);
     }
@@ -65,7 +62,7 @@ public class JmxManager
 
   public synchronized <T> JmxManager registerFileStore(String name, FileStore<T> store)
   {
-    checkReg(new FileStoreJmx<T>(store), name);
+    checkReg(new FileStoreJmx<>(store), name);
 
     return this;
   }
@@ -86,30 +83,6 @@ public class JmxManager
     return this;
   }
 
-  public synchronized <T> JmxManager registerZooKeeperTogglingStore(String name,
-                                                                    ZooKeeperTogglingStore<T> store)
-  {
-    checkReg(new ZooKeeperTogglingStoreJmx<T>(store), name);
-
-    return this;
-  }
-
-  public synchronized JmxManager registerScheduledThreadPoolExecutor(String name,
-                                                                     ScheduledThreadPoolExecutor executor)
-  {
-    checkReg(new ScheduledThreadPoolExecutorJmx(executor), name);
-
-    return this;
-  }
-
-  public synchronized JmxManager registerZooKeeperServer(String name,
-                                                         ZooKeeperServer zkServer)
-  {
-    checkReg(new ZooKeeperServerJmx(zkServer), name);
-
-    return this;
-  }
-
   public synchronized JmxManager registerLoadBalancerState(String name,
                                                            SimpleLoadBalancerState state)
   {
@@ -126,8 +99,7 @@ public class JmxManager
     return this;
   }
 
-  public synchronized JmxManager registerLoadBalancerStrategy(String name,
-                                                              LoadBalancerStrategy strategy)
+  public synchronized JmxManager registerLoadBalancerStrategy(String name, LoadBalancerStrategy strategy)
   {
     if (strategy instanceof DegraderLoadBalancerStrategyV3)
     {
@@ -141,9 +113,10 @@ public class JmxManager
     return this;
   }
 
-  // Register the jmx bean passed in with the jmx manager.
-  public synchronized JmxManager registerLoadBalancerStrategyV3JmxBean(String name,
-                                                                       DegraderLoadBalancerStrategyV3JmxMBean strategyJmx)
+  /**
+   * Register the jmx bean passed in with the jmx manager.
+   */
+  public synchronized JmxManager registerLoadBalancerStrategyV3JmxBean(String name, DegraderLoadBalancerStrategyV3JmxMBean strategyJmx)
   {
     checkReg(strategyJmx, name);
     return this;
@@ -156,6 +129,31 @@ public class JmxManager
 
     return this;
   }
+
+  // ####################################### Less used #######################################
+
+  public synchronized <T> JmxManager registerZooKeeperTogglingStore(String name, ZooKeeperTogglingStore<T> store)
+  {
+    checkReg(new ZooKeeperTogglingStoreJmx<T>(store), name);
+
+    return this;
+  }
+
+  public synchronized JmxManager registerScheduledThreadPoolExecutor(String name, ScheduledThreadPoolExecutor executor)
+  {
+    checkReg(new ScheduledThreadPoolExecutorJmx(executor), name);
+
+    return this;
+  }
+
+  public synchronized JmxManager registerZooKeeperServer(String name, ZooKeeperServer zkServer)
+  {
+    checkReg(new ZooKeeperServerJmx(zkServer), name);
+
+    return this;
+  }
+
+  // ####################################### Tools #######################################
 
   public synchronized JmxManager unregister(String name)
   {
@@ -173,7 +171,6 @@ public class JmxManager
     unregister(oName);
 
     return this;
-
   }
 
   public void unregister(ObjectName oName)

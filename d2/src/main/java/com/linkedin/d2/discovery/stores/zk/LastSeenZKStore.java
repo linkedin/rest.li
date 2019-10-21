@@ -20,8 +20,6 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.MultiCallback;
 import com.linkedin.common.util.None;
-import com.linkedin.d2.balancer.util.FileSystemDirectory;
-import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
 import com.linkedin.d2.discovery.event.PropertyEventBusRequestsThrottler;
@@ -30,6 +28,7 @@ import com.linkedin.d2.discovery.event.PropertyEventSubscriber;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.zk.builder.ZooKeeperStoreBuilder;
 import com.linkedin.r2.transport.http.client.TimeoutCallback;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -63,21 +62,19 @@ public class LastSeenZKStore<T> implements PropertyEventPublisher<T>
   private final ZkBusUpdater _zkBusUpdaterSubscriber;
   private final ScheduledExecutorService _executorService;
   private final int _warmUpTimeoutSeconds;
-  private final String _fsPath;
   private PropertyEventBus<T> _clientBus;
   private PropertyEventBus<T> _zkToFsBus;
   private final int _concurrentRequests;
 
-  public LastSeenZKStore(String fsPath, PropertySerializer<T> fsSerializer,
+  public LastSeenZKStore(FileStore<T> fsStore,
                          ZooKeeperStoreBuilder<? extends ZooKeeperStore<T>> zooKeeperStoreBuilder,
       ZKPersistentConnection zkPersistentConnection, ScheduledExecutorService executorService, int warmUpTimeoutSeconds,
       int concurrentRequests)
   {
-    _fsPath = fsPath;
     _executorService = executorService;
     _warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     _concurrentRequests = concurrentRequests;
-    _fsStore = new FileStore<>(fsPath, fsSerializer);
+    _fsStore = fsStore;
     _zkToFsBus = new PropertyEventBusImpl<>(executorService);
     _zkBusUpdaterSubscriber = new ZkBusUpdater();
     _zkAwareStore = new ZooKeeperConnectionAwareStore<>(zooKeeperStoreBuilder, zkPersistentConnection);
@@ -219,7 +216,7 @@ public class LastSeenZKStore<T> implements PropertyEventPublisher<T>
         }, "This message will never be used, even in case of timeout, no exception should be passed up");
 
     // make warmup requests through requests throttler
-    List<String> fileListWithoutExtension = FileSystemDirectory.getFileListWithoutExtension(_fsPath);
+    List<String> fileListWithoutExtension = new ArrayList<>(_fsStore.getAll().keySet());
     PropertyEventBusRequestsThrottler<T> throttler =
         new PropertyEventBusRequestsThrottler<>(_zkToFsBus, _zkBusUpdaterSubscriber, fileListWithoutExtension,
             _concurrentRequests, true);

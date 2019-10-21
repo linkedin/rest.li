@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
@@ -36,9 +35,10 @@ import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetche
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
-import com.linkedin.d2.discovery.stores.zk.ZKConnectionBuilder;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
+import com.linkedin.d2.jmx.JmxManager;
+import com.linkedin.d2.jmx.NoOpJmxManager;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
@@ -103,6 +103,11 @@ public class D2ClientBuilder
       _config.downstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.fsBasePath, _config.d2ServicePath);
     }
 
+    if (_config.jmxManager == null)
+    {
+      _config.jmxManager = new NoOpJmxManager();
+    }
+
     final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
         createDefaultLoadBalancerStrategyFactories();
 
@@ -146,7 +151,9 @@ public class D2ClientBuilder
                   _config.requestTimeoutHandlerEnabled,
                   _config.sslSessionValidatorFactory,
                   _config.zkConnectionToUseForLB,
-                  _config.startUpExecutorService);
+                  _config.startUpExecutorService,
+                  _config.jmxManager,
+                  _config.d2JmxManagerPrefix);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -438,8 +445,19 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setSslSessionValidatorFactory(SslSessionValidatorFactory sslSessionValidatorFactory)
   {
-    _config.sslSessionValidatorFactory = ArgumentUtil.ensureNotNull(sslSessionValidatorFactory,
-        "sslSessionValidatorFactor");
+    _config.sslSessionValidatorFactory = ArgumentUtil.ensureNotNull(sslSessionValidatorFactory, "sslSessionValidatorFactor");
+    return this;
+  }
+
+  public D2ClientBuilder setD2JmxManager(JmxManager d2JmxManager)
+  {
+    _config.jmxManager = d2JmxManager;
+    return this;
+  }
+
+  public D2ClientBuilder setD2JmxManagerPrefix(String d2JmxManagerPrefix)
+  {
+    _config.d2JmxManagerPrefix = d2JmxManagerPrefix;
     return this;
   }
 

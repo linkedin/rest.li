@@ -28,6 +28,8 @@ import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
+import com.linkedin.d2.jmx.JmxManager;
+import com.linkedin.d2.jmx.NoOpJmxManager;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import java.util.Collections;
 import java.util.Map;
@@ -83,6 +85,8 @@ public class D2ClientConfig
   SslSessionValidatorFactory sslSessionValidatorFactory = null;
   ZKPersistentConnection zkConnectionToUseForLB = null;
   ScheduledExecutorService startUpExecutorService = null;
+  JmxManager jmxManager = new NoOpJmxManager();
+  String d2JmxManagerPrefix = "UnknownPrefix";
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -130,7 +134,9 @@ public class D2ClientConfig
                  boolean requestTimeoutHandlerEnabled,
                  SslSessionValidatorFactory sslSessionValidatorFactory,
                  ZKPersistentConnection zkConnection,
-                 ScheduledExecutorService startUpExecutorService)
+                 ScheduledExecutorService startUpExecutorService,
+                 JmxManager jmxManager,
+                 String d2JmxManagerPrefix)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -173,5 +179,7 @@ public class D2ClientConfig
     this.sslSessionValidatorFactory = sslSessionValidatorFactory;
     this.zkConnectionToUseForLB = zkConnection;
     this.startUpExecutorService = startUpExecutorService;
+    this.jmxManager = jmxManager;
+    this.d2JmxManagerPrefix = d2JmxManagerPrefix;
   }
 }

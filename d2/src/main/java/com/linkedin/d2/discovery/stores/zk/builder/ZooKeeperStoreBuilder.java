@@ -18,6 +18,7 @@ package com.linkedin.d2.discovery.stores.zk.builder;
 
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
+import java.util.function.Consumer;
 
 
 /**
@@ -31,7 +32,15 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
  */
 public interface ZooKeeperStoreBuilder<STORE extends ZooKeeperStore<?>>
 {
+  /**
+   * Set the ZK connection that will be used building the store
+   */
   void setZkConnection(ZKConnection client);
+
+  /**
+   * Set an action to be run when the store is built
+   */
+  ZooKeeperStoreBuilder<STORE> addOnBuildListener(Consumer<STORE> onBuildAction);
 
   STORE build();
 }

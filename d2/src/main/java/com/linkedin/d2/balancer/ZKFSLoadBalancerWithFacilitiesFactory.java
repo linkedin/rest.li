@@ -20,6 +20,7 @@ import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
+import com.linkedin.d2.jmx.D2ClientJmxManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +73,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
       loadBalancerComponentFactory = config.componentFactory;
     }
 
+    D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager);
+
     return new ZKFSTogglingLoadBalancerFactoryImpl(loadBalancerComponentFactory,
                                                    config.lbWaitTimeout,
                                                    config.lbWaitUnit,
@@ -87,7 +90,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.useNewEphemeralStoreWatcher,
                                                    config.partitionAccessorRegistry,
                                                    config.enableSaveUriDataOnDisk,
-                                                   config.sslSessionValidatorFactory
+                                                   config.sslSessionValidatorFactory,
+                                                   d2ClientJmxManager
     );
   }
 }

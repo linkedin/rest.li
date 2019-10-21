@@ -30,11 +30,13 @@ import com.linkedin.d2.balancer.zkfs.LastSeenLoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
+import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.zk.LastSeenZKStore;
 import com.linkedin.d2.discovery.stores.zk.ZKConnectionBuilder;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.builder.ZooKeeperEphemeralStoreBuilder;
 import com.linkedin.d2.discovery.stores.zk.builder.ZooKeeperPermanentStoreBuilder;
+import com.linkedin.d2.jmx.D2ClientJmxManager;
 import java.io.File;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +55,8 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
   {
     LOG.info("Creating D2 LoadBalancer based on LastSeenLoadBalancerWithFacilities");
 
+    D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager);
+
     // init connection
     ZKConnectionBuilder zkConnectionBuilder = new ZKConnectionBuilder(config.zkHosts);
     zkConnectionBuilder.setShutdownAsynchronously(config.shutdownAsynchronously)
@@ -69,15 +73,15 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     }
 
     // init all the stores
-    LastSeenZKStore<ClusterProperties> lsClusterStore = getClusterPropertiesLastSeenZKStore(config, zkPersistentConnection);
+    LastSeenZKStore<ClusterProperties> lsClusterStore = getClusterPropertiesLastSeenZKStore(config, zkPersistentConnection, d2ClientJmxManager);
     PropertyEventBus<ClusterProperties> clusterBus = new PropertyEventBusImpl<>(config._executorService);
     clusterBus.setPublisher(lsClusterStore);
 
-    LastSeenZKStore<ServiceProperties> lsServiceStore = getServicePropertiesLastSeenZKStore(config, zkPersistentConnection);
+    LastSeenZKStore<ServiceProperties> lsServiceStore = getServicePropertiesLastSeenZKStore(config, zkPersistentConnection, d2ClientJmxManager);
     PropertyEventBus<ServiceProperties> serviceBus = new PropertyEventBusImpl<>(config._executorService);
     serviceBus.setPublisher(lsServiceStore);
 
-    LastSeenZKStore<UriProperties> lsUrisStore = getUriPropertiesLastSeenZKStore(config, zkPersistentConnection);
+    LastSeenZKStore<UriProperties> lsUrisStore = getUriPropertiesLastSeenZKStore(config, zkPersistentConnection, d2ClientJmxManager);
     PropertyEventBus<UriProperties> uriBus = new PropertyEventBusImpl<>(config._executorService);
     uriBus.setPublisher(lsUrisStore);
 
@@ -86,7 +90,10 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
       config._executorService, uriBus, clusterBus, serviceBus, config.clientFactories, config.loadBalancerStrategyFactories,
       config.sslContext, config.sslParameters, config.isSSLEnabled, config.partitionAccessorRegistry,
       config.sslSessionValidatorFactory);
+    d2ClientJmxManager.setSimpleLoadBalancerState(state);
+
     SimpleLoadBalancer simpleLoadBalancer = new SimpleLoadBalancer(state, config.lbWaitTimeout, config.lbWaitUnit, config._executorService);
+    d2ClientJmxManager.setSimpleLoadBalancer(simpleLoadBalancer);
 
     // add facilities
     LoadBalancerWithFacilities balancer = new LastSeenLoadBalancerWithFacilities(simpleLoadBalancer, config.basePath, config.d2ServicePath,
@@ -95,20 +102,24 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     return balancer;
   }
 
-  private LastSeenZKStore<UriProperties> getUriPropertiesLastSeenZKStore(D2ClientConfig config, ZKPersistentConnection zkPersistentConnection)
+  private LastSeenZKStore<UriProperties> getUriPropertiesLastSeenZKStore(D2ClientConfig config, ZKPersistentConnection zkPersistentConnection,
+                                                                         D2ClientJmxManager d2ClientJmxManager)
   {
     ZooKeeperEphemeralStoreBuilder<UriProperties> zkUrisStoreBuilder = new ZooKeeperEphemeralStoreBuilder<UriProperties>()
       .setSerializer(new UriPropertiesJsonSerializer()).setPath(ZKFSUtil.uriPath(config.basePath)).setMerger(new UriPropertiesMerger())
-      .setUseNewWatcher(config.useNewEphemeralStoreWatcher);
+      .setUseNewWatcher(config.useNewEphemeralStoreWatcher)
+      // register jmx every time the object is created
+      .addOnBuildListener(d2ClientJmxManager::setZkUriRegistry);
+
+    FileStore<UriProperties> fileStore = new FileStore<>(config.fsBasePath + File.separator + ZKFSUtil.URI_PATH, new UriPropertiesJsonSerializer());
+    d2ClientJmxManager.setFsUriStore(fileStore);
 
     if (config.enableSaveUriDataOnDisk)
     {
       zkUrisStoreBuilder.setBackupStoreFilePath(config.fsBasePath);
     }
 
-    return new LastSeenZKStore<>(
-      config.fsBasePath + File.separator + "uris",
-      new UriPropertiesJsonSerializer(),
+    return new LastSeenZKStore<>(fileStore,
       zkUrisStoreBuilder,
       zkPersistentConnection,
       config._executorService,
@@ -117,15 +128,19 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     );
   }
 
-  private LastSeenZKStore<ServiceProperties> getServicePropertiesLastSeenZKStore(D2ClientConfig config, ZKPersistentConnection zkPersistentConnection)
+  private LastSeenZKStore<ServiceProperties> getServicePropertiesLastSeenZKStore(D2ClientConfig config, ZKPersistentConnection zkPersistentConnection,
+                                                                                 D2ClientJmxManager d2ClientJmxManager)
   {
     ZooKeeperPermanentStoreBuilder<ServiceProperties> zkServiceStoreBuilder = new ZooKeeperPermanentStoreBuilder<ServiceProperties>()
       .setSerializer(new ServicePropertiesJsonSerializer(config.clientServicesConfig))
-      .setPath(ZKFSUtil.servicePath(config.basePath, config.d2ServicePath));
+      .setPath(ZKFSUtil.servicePath(config.basePath, config.d2ServicePath))
+      // register jmx every time the object is created
+      .addOnBuildListener(d2ClientJmxManager::setZkServiceRegistry);
 
-    return new LastSeenZKStore<>(
-      FileSystemDirectory.getServiceDirectory(config.fsBasePath, config.d2ServicePath),
-      new ServicePropertiesJsonSerializer(),
+    FileStore<ServiceProperties> fileStore = new FileStore<>(FileSystemDirectory.getServiceDirectory(config.fsBasePath, config.d2ServicePath), new ServicePropertiesJsonSerializer());
+    d2ClientJmxManager.setFsServiceStore(fileStore);
+
+    return new LastSeenZKStore<>(fileStore,
       zkServiceStoreBuilder,
       zkPersistentConnection,
       config._executorService,
@@ -134,14 +149,18 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     );
   }
 
-  private LastSeenZKStore<ClusterProperties> getClusterPropertiesLastSeenZKStore(D2ClientConfig config, ZKPersistentConnection zkPersistentConnection)
+  private LastSeenZKStore<ClusterProperties> getClusterPropertiesLastSeenZKStore(D2ClientConfig config, ZKPersistentConnection zkPersistentConnection,
+                                                                                 D2ClientJmxManager d2ClientJmxManager)
   {
     ZooKeeperPermanentStoreBuilder<ClusterProperties> zkClusterStoreBuilder = new ZooKeeperPermanentStoreBuilder<ClusterProperties>()
-      .setSerializer(new ClusterPropertiesJsonSerializer()).setPath(ZKFSUtil.clusterPath(config.basePath));
+      .setSerializer(new ClusterPropertiesJsonSerializer()).setPath(ZKFSUtil.clusterPath(config.basePath))
+      // register jmx every time the object is created
+      .addOnBuildListener(d2ClientJmxManager::setZkClusterRegistry);
 
-    return new LastSeenZKStore<>(
-      FileSystemDirectory.getClusterDirectory(config.fsBasePath),
-      new ClusterPropertiesJsonSerializer(),
+    FileStore<ClusterProperties> fileStore = new FileStore<>( FileSystemDirectory.getClusterDirectory(config.fsBasePath), new ClusterPropertiesJsonSerializer());
+    d2ClientJmxManager.setFsClusterStore(fileStore);
+
+    return new LastSeenZKStore<>(fileStore,
       zkClusterStoreBuilder,
       zkPersistentConnection,
       config._executorService,

@@ -559,7 +559,7 @@ public class SharedZkConnectionProviderTest {
     shutdownConnectionManagers(connectionManagers);
   }
 
-  private class TestTransportClientFactory implements TransportClientFactory {
+  public static class TestTransportClientFactory implements TransportClientFactory {
 
     public Map<String, ?> _properties;
     public int getClientCount;

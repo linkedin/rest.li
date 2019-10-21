@@ -22,6 +22,7 @@ import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.PropertyStringMerger;
 import com.linkedin.d2.discovery.stores.PropertyStringSerializer;
+import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.zk.builder.ZooKeeperEphemeralStoreBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -116,8 +117,8 @@ public final class ZkStoreTestOnlyUtil
     // not-started-yet connection
     ZKPersistentConnection zkPersistentConnection = ZkStoreTestOnlyUtil.getZkPersistentConnection(port, true);
     LastSeenZKStore<String> lastSeenZKStore =
-        new LastSeenZKStore<>(path, new PropertyStringSerializer(), ZkStoreTestOnlyUtil.getZooKeeperEphemeralStoreBuilder(),
-            zkPersistentConnection, Executors.newSingleThreadScheduledExecutor(), 1, 10);
+        new LastSeenZKStore<>(new FileStore<>(path, new PropertyStringSerializer()), ZkStoreTestOnlyUtil.getZooKeeperEphemeralStoreBuilder(),
+                              zkPersistentConnection, Executors.newSingleThreadScheduledExecutor(), 1, 10);
 
     zkPersistentConnection.start();
 
