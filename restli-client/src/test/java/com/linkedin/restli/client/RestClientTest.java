@@ -173,6 +173,7 @@ public class RestClientTest
     JSON(ContentType.JSON),
     LICOR_TEXT(ContentType.LICOR_TEXT),
     LICOR_BINARY(ContentType.LICOR_BINARY),
+    PROTOBUF(ContentType.PROTOBUF),
     PSON(ContentType.PSON),
     SMILE(ContentType.SMILE);
 

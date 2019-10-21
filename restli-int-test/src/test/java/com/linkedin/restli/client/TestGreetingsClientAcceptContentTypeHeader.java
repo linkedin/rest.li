@@ -134,6 +134,11 @@ public class TestGreetingsClientAcceptContentTypeHeader extends RestLiIntegratio
             new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
                 ContentType.LICOR_BINARY)).build())),
             RestConstants.HEADER_VALUE_APPLICATION_LICOR_BINARY
+        },
+        {
+            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
+                ContentType.PROTOBUF)).build())),
+            RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF
         }
     };
   }

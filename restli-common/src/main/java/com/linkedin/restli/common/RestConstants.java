@@ -44,6 +44,7 @@ public interface RestConstants
   String HEADER_VALUE_APPLICATION_LICOR_TEXT = "application/licor";
   String HEADER_VALUE_APPLICATION_LICOR_BINARY = "application/x-licor";
   String HEADER_VALUE_APPLICATION_PSON = "application/x-pson";
+  String HEADER_VALUE_APPLICATION_PROTOBUF = "application/x-protobuf";
   String HEADER_VALUE_APPLICATION_SMILE = "application/x-smile";
   String HEADER_VALUE_MULTIPART_RELATED = "multipart/related";
   String HEADER_VALUE_ACCEPT_ANY = "*/*";
@@ -56,6 +57,7 @@ public interface RestConstants
       Arrays.asList(HEADER_VALUE_APPLICATION_LICOR_TEXT,
           HEADER_VALUE_APPLICATION_LICOR_BINARY,
           HEADER_VALUE_APPLICATION_SMILE,
+          HEADER_VALUE_APPLICATION_PROTOBUF,
           HEADER_VALUE_APPLICATION_PSON,
           HEADER_VALUE_APPLICATION_JSON));
 

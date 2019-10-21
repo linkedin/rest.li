@@ -24,6 +24,7 @@ import com.linkedin.data.TestUtil;
 
 import com.linkedin.data.codec.symbol.InMemorySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
+import com.linkedin.data.codec.symbol.SymbolTableProvider;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
@@ -248,16 +249,21 @@ public class TestCodec
     final String sharedSymbolTableName = "SHARED";
     SymbolTable symbolTable = new InMemorySymbolTable(new ArrayList<>(symbols));
 
-    JacksonLICORDataCodec.setSymbolTableProvider(symbolTableName -> {
+    SymbolTableProvider provider = symbolTableName -> {
       if (sharedSymbolTableName.equals(symbolTableName))
       {
         return symbolTable;
       }
 
       return null;
-    });
+    };
+
+    JacksonLICORDataCodec.setSymbolTableProvider(provider);
     codecs.add(new JacksonLICORBinaryDataCodec(sharedSymbolTableName));
     codecs.add(new JacksonLICORTextDataCodec(sharedSymbolTableName));
+
+    ProtobufDataCodec.setSymbolTableProvider(provider);
+    codecs.add(new ProtobufDataCodec(sharedSymbolTableName));
 
     for (DataCodec codec : codecs)
     {
