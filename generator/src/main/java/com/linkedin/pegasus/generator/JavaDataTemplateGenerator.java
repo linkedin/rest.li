@@ -663,7 +663,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
 
     final JFieldVar schemaFieldVar = generateSchemaField(templateClass, recordSpec.getSchema());
-    generateDataMapConstructor(templateClass, schemaFieldVar, recordSpec.getFields().size());
+    generateDataMapConstructor(templateClass, schemaFieldVar, recordSpec.getFields().size(), recordSpec.getWrappedFields().size());
     generateConstructorWithArg(templateClass, schemaFieldVar, _dataMapClass);
 
     for (RecordTemplateSpec.Field field : recordSpec.getFields())
@@ -688,21 +688,37 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
    * constructor that accepts a new instance of "DataMap" type (provided by _dataMapClass) and the SCHEMA.
    * @param cls DataTemplate class being constructed.
    * @param schemaField SCHEMA field to use for initialization.
-   * @param dataMapSize Initial size for the DataMap, applied only if this size is smaller than
-   *                    {@link #DEFAULT_DATAMAP_INITIAL_CAPACITY}.
+   * @param initialDataMapSize Initial size for the DataMap, applied only if the capacity derived from this is smaller
+   *                           than {@link #DEFAULT_DATAMAP_INITIAL_CAPACITY}.
+   * @param initialCacheSize Initial size for the cache, applied only if capacity derived from this is smaller than
+   *                         {@link #DEFAULT_DATAMAP_INITIAL_CAPACITY}
    */
-  private void generateDataMapConstructor(JDefinedClass cls, JVar schemaField, int dataMapSize)
+  private void generateDataMapConstructor(JDefinedClass cls, JVar schemaField, int initialDataMapSize, int initialCacheSize)
   {
     final JMethod noArgConstructor = cls.constructor(JMod.PUBLIC);
     JInvocation superConstructorArg = JExpr._new(_dataMapClass);
     // Compute the DataMap initial capacity based on the load factor of 0.75. Use lower capacity if possible.
-    int initialCapacity = (int) (dataMapSize/.75f) + 1;
-    if (initialCapacity < DEFAULT_DATAMAP_INITIAL_CAPACITY)
+    int initialDataMapCapacity = (int) (initialDataMapSize/.75f) + 1;
+    if (initialDataMapCapacity < DEFAULT_DATAMAP_INITIAL_CAPACITY)
     {
-      superConstructorArg.arg(JExpr.lit(initialCapacity)); // Initial capacity
+      superConstructorArg.arg(JExpr.lit(initialDataMapCapacity)); // Initial capacity
       superConstructorArg.arg(JExpr.lit(0.75f));  // Load factor.
     }
-    noArgConstructor.body().invoke(SUPER).arg(superConstructorArg).arg(schemaField);
+
+    // Compute the cache initial capacity based on the load factor of 0.75. Use lower capacity if possible.
+    int initialCacheCapacity = (int) (initialCacheSize/.75f) + 1;
+
+    // If the cache size is positive and the capacity is less than the default data map initial capacity aka default
+    // HashMap capacity, then explicitly pass in the cache capacity param. Else don't pass it in, so that the default
+    // cache capacity gets used.
+    if (initialCacheSize > 0 && initialCacheCapacity < DEFAULT_DATAMAP_INITIAL_CAPACITY)
+    {
+      noArgConstructor.body().invoke(SUPER).arg(superConstructorArg).arg(schemaField).arg(JExpr.lit(initialCacheCapacity));
+    }
+    else
+    {
+      noArgConstructor.body().invoke(SUPER).arg(superConstructorArg).arg(schemaField);
+    }
   }
 
   protected void extendRecordBaseClass(JDefinedClass templateClass)
@@ -899,7 +915,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JVar schemaField = generateSchemaField(unionClass, unionSpec.getSchema());
 
     // Default union datamap size to 1 (last arg) as union can have at-most one element.
-    generateDataMapConstructor(unionClass, schemaField, 1);
+    // We don't need cache for unions, so pass in -1 for cache size to ignore size param.
+    generateDataMapConstructor(unionClass, schemaField, 1, -1);
     generateConstructorWithObjectArg(unionClass, schemaField);
 
     for (UnionTemplateSpec.Member member : unionSpec.getMembers())

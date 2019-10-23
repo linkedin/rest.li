@@ -1,3 +1,11 @@
+27.7.13
+-------
+
+27.7.12
+-------
+(RB=1851128)
+Right size the DataObjectToObjectCache used for wrapped fields to avoid wasting memory.
+
 27.7.11
 -------
 (RB=1847578)

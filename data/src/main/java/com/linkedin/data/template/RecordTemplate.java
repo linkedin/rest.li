@@ -44,10 +44,18 @@ import com.linkedin.data.schema.RecordDataSchema;
  */
 public abstract class RecordTemplate implements DataTemplate<DataMap>
 {
+  private static final int UNKNOWN_INITIAL_CACHE_CAPACITY = -1;
+
   protected RecordTemplate(DataMap map, RecordDataSchema schema)
+  {
+    this(map, schema, UNKNOWN_INITIAL_CACHE_CAPACITY);
+  }
+
+  protected RecordTemplate(DataMap map, RecordDataSchema schema, int initialCacheCapacity)
   {
     _map = map;
     _schema = schema;
+    _initialCacheCapacity = initialCacheCapacity;
   }
 
   @Override
@@ -68,6 +76,7 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
     RecordTemplate clone = (RecordTemplate) super.clone();
     clone._map = clone._map.clone();
     clone._cache = clone._cache != null ? clone._cache.clone() : null;
+    clone._initialCacheCapacity = _initialCacheCapacity;
     return clone;
   }
 
@@ -484,12 +493,14 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
   {
     if (_cache == null)
     {
-      _cache = new DataObjectToObjectCache<Object>();
+      _cache = _initialCacheCapacity == UNKNOWN_INITIAL_CACHE_CAPACITY ? new DataObjectToObjectCache<>() :
+          new DataObjectToObjectCache<>(_initialCacheCapacity);
     }
     return _cache;
   }
 
   private DataMap _map;
   private final RecordDataSchema _schema;
+  private int _initialCacheCapacity;
   private DataObjectToObjectCache<Object> _cache;
 }
