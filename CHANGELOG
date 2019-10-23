@@ -1,3 +1,8 @@
+28.0.11
+-------
+(RB=1851797)
+Optimize Jackson data decoder to create DataMaps with proper capacity.
+
 28.0.10
 -------
 (RB=1896607)

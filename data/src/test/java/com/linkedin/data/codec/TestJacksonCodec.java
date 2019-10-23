@@ -170,6 +170,17 @@ public class TestJacksonCodec extends TestCodec
     Assert.assertEquals(map.keySet().iterator().next().length(), 262146);
   }
 
+  /**
+   * Test to make sure that nested maps, with no non-map entries on any level other than
+   * the bottom, are processed correctly. This in turn is required to verify that there
+   * are no bugs in DataMapBuilder reuse code.
+   */
+  @Test
+  public void testJacksonDataCodecNestedMaps() throws IOException {
+    JacksonDataCodec codec = new JacksonDataCodec();
+    testDataCodec(codec, TestData.referenceDataMapOfMaps);
+  }
+
   @Test(expectedExceptions = IOException.class)
   public void testJacksonDataCodecErrorEmptyInput() throws IOException
   {

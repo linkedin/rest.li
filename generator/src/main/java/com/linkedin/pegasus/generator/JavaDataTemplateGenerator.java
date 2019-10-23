@@ -19,6 +19,7 @@ package com.linkedin.pegasus.generator;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
@@ -702,7 +703,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JMethod noArgConstructor = cls.constructor(JMod.PUBLIC);
     JInvocation superConstructorArg = JExpr._new(_dataMapClass);
     // Compute the DataMap initial capacity based on the load factor of 0.75. Use lower capacity if possible.
-    int initialDataMapCapacity = (int) (initialDataMapSize/.75f) + 1;
+    int initialDataMapCapacity = DataMapBuilder.getOptimumHashMapCapacityFromSize(initialDataMapSize);
     if (initialDataMapCapacity < DEFAULT_DATAMAP_INITIAL_CAPACITY)
     {
       superConstructorArg.arg(JExpr.lit(initialDataMapCapacity)); // Initial capacity
@@ -710,7 +711,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
 
     // Compute the cache initial capacity based on the load factor of 0.75. Use lower capacity if possible.
-    int initialCacheCapacity = (int) (initialCacheSize/.75f) + 1;
+    int initialCacheCapacity = DataMapBuilder.getOptimumHashMapCapacityFromSize(initialCacheSize);
 
     // If the cache size is positive and the capacity is less than the default data map initial capacity aka default
     // HashMap capacity, then explicitly pass in the cache capacity param. Else don't pass it in, so that the default

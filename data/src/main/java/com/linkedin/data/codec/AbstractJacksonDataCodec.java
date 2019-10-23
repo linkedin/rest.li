@@ -26,6 +26,7 @@ import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.util.FastByteArrayOutputStream;
 import java.io.Closeable;
@@ -341,6 +342,8 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     private Deque<Object> _nameStack = null;
     private Map<Object, DataLocation> _locationMap = null;
 
+    private DataMapBuilder _currDataMapBuilder = new DataMapBuilder();
+
     Parser()
     {
       this(false);
@@ -387,7 +390,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
       JsonToken token;
       while ((token = _parser.nextToken()) != null)
       {
-        parse(list, null, null, token);
+        parse(list, null, token);
       }
       _errorBuilder = null;
 
@@ -412,8 +415,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
           throw new DataDecodingException("Object must start with start object token.");
         }
 
-        final DataMap map = new DataMap();
-        parseDataMap(map);
+        final DataMap map = parseDataMap();
         if (_errorBuilder != null)
         {
           map.addError(_errorBuilder.toString());
@@ -427,8 +429,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
           throw new DataDecodingException("Array must start with start object token.");
         }
 
-        final DataList list = new DataList();
-        parseDataList(list);
+        final DataList list = parseDataList();
         if (_errorBuilder != null)
         {
           //list.addError(_errorBuilder.toString());
@@ -457,7 +458,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
       }
     }
 
-    private Object parse(DataList parentList, DataMap parentMap, String name, JsonToken token) throws IOException
+    private Object parse(DataComplex parent, String name, JsonToken token) throws IOException
     {
       if (token == null)
       {
@@ -468,22 +469,18 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
       switch (token)
       {
         case START_OBJECT:
-          DataMap childMap = new DataMap();
-          value = childMap;
-          updateParent(parentList, parentMap, name, childMap);
-          parseDataMap(childMap);
+          value = parseDataMap();
+          updateParent(parent, name, value);
           break;
         case START_ARRAY:
-          DataList childList = new DataList();
-          value = childList;
-          updateParent(parentList, parentMap, name, childList);
-          parseDataList(childList);
+          value = parseDataList();
+          updateParent(parent, name, value);
           break;
         default:
           value = parsePrimitive(token);
           if (value != null)
           {
-            updateParent(parentList, parentMap, name, value);
+            updateParent(parent, name, value);
           }
           break;
       }
@@ -491,11 +488,15 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
       return value;
     }
 
-    private void updateParent(DataList parentList, DataMap parentMap, String name, Object value)
+    private void updateParent(DataComplex parent, String name, Object value)
     {
-      if (parentMap != null)
+      if (parent instanceof DataMapBuilder)
       {
-        Object replaced = CheckedUtil.putWithoutChecking(parentMap, name, value);
+        ((DataMapBuilder) parent).addKVPair(name, value);
+      }
+      else if (parent instanceof DataMap)
+      {
+        Object replaced = CheckedUtil.putWithoutChecking((DataMap) parent, name, value);
         if (replaced != null)
         {
           if (_errorBuilder == null)
@@ -507,7 +508,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
       }
       else
       {
-        CheckedUtil.addWithoutChecking(parentList, value);
+        CheckedUtil.addWithoutChecking((DataList) parent, value);
       }
     }
 
@@ -570,8 +571,15 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
       return object;
     }
 
-    private void parseDataMap(DataMap map) throws IOException
+    private DataMap parseDataMap() throws IOException
     {
+      if (_currDataMapBuilder.inUse())
+      {
+        _currDataMapBuilder = new DataMapBuilder();
+      }
+      _currDataMapBuilder.setInUse(true);
+      DataMapBuilder mapBuilder = _currDataMapBuilder;
+      DataComplex map = _currDataMapBuilder;
       while (_parser.nextToken() != JsonToken.END_OBJECT)
       {
         String key = _parser.getCurrentName();
@@ -580,16 +588,24 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
           _nameStack.addLast(key);
         }
         JsonToken token = _parser.nextToken();
-        parse(null, map, key, token);
+        parse(map, key, token);
+        if (mapBuilder != null && mapBuilder.smallHashMapThresholdReached())
+        {
+          map = mapBuilder.convertToDataMap();
+          mapBuilder = null;
+        }
         if (_debug)
         {
           _nameStack.removeLast();
         }
       }
+
+      return mapBuilder != null ? mapBuilder.convertToDataMap() : (DataMap) map;
     }
 
-    private void parseDataList(DataList list) throws IOException
+    private DataList parseDataList() throws IOException
     {
+      DataList list = new DataList();
       JsonToken token;
       int index = 0;
       while ((token = _parser.nextToken()) != JsonToken.END_ARRAY)
@@ -599,12 +615,13 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
           _nameStack.addLast(index);
           index++;
         }
-        parse(list, null, null, token);
+        parse(list, null, token);
         if (_debug)
         {
           _nameStack.removeLast();
         }
       }
+      return list;
     }
 
     private void error(JsonToken token, JsonParser.NumberType type) throws IOException

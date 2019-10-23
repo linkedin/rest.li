@@ -167,6 +167,18 @@ public class TestData
     referenceDataList1.makeReadOnly();
   }
 
+  public final static DataMap referenceDataMapOfMaps = new DataMap();
+  static
+  {
+    DataMap mapLevel1 = new DataMap();
+    DataMap mapLevel2 = new DataMap();
+    mapLevel2.put("mapLevel3_1", referenceDataMap1);
+    mapLevel1.put("mapLevel2_1", mapLevel2);
+    mapLevel1.put("mapLevel2_2", referenceDataMap1);
+    referenceDataMapOfMaps.put("mapLevel1_1", mapLevel1);
+    referenceDataMapOfMaps.put("mapLevel1_2", referenceDataMap1);
+  }
+
   public void testDataMapChecker(Map<String,Object> map)
   {
     Exception exc = null;

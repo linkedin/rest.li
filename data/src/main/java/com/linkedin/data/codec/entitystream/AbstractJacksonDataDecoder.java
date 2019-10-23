@@ -22,6 +22,7 @@ import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.entitystream.ReadHandle;
 
@@ -89,6 +90,7 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
   private ByteArrayFeeder _byteArrayFeeder;
 
   private Deque<DataComplex> _stack;
+  private Deque<String> _currFieldStack;
   private String _currField;
   // Expected tokens represented by a bit pattern. Every bit represents a token.
   private byte _expectedTokens;
@@ -97,13 +99,17 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
   private ByteString _currentChunk;
   private int _currentChunkIndex = -1;
 
+  private DataMapBuilder _currDataMapBuilder;
+
   protected AbstractJacksonDataDecoder(JsonFactory jsonFactory, byte expectedFirstToken)
   {
     _jsonFactory = jsonFactory;
     _completable = new CompletableFuture<>();
     _result = null;
     _stack = new ArrayDeque<>();
+    _currFieldStack = new ArrayDeque<>();
     _expectedTokens = expectedFirstToken;
+    _currDataMapBuilder = new DataMapBuilder();
   }
 
   protected AbstractJacksonDataDecoder(JsonFactory jsonFactory)
@@ -174,7 +180,14 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
         {
           case START_OBJECT:
             validate(START_OBJECT);
-            push(new DataMap(), false);
+            // If we are already filling out a DataMap, we cannot reuse _currDataMapBuilder and thus
+            // need to create a new one.
+            if (_currDataMapBuilder.inUse())
+            {
+              _currDataMapBuilder = new DataMapBuilder();
+            }
+            _currDataMapBuilder.setInUse(true);
+            push(_currDataMapBuilder, false);
             break;
           case END_OBJECT:
             validate(END_OBJECT);
@@ -259,7 +272,10 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
 
   private void push(DataComplex dataComplex, boolean isList)
   {
-    addValue(dataComplex);
+    if (!(_isCurrList || _stack.isEmpty()))
+    {
+      _currFieldStack.push(_currField);
+    }
     _stack.push(dataComplex);
     _isCurrList = isList;
     updateExpected();
@@ -272,6 +288,12 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
     assert !_stack.isEmpty() : "Trying to pop empty stack at " + _jsonParser.getTokenLocation();
 
     DataComplex tmp = _stack.pop();
+
+    if (tmp instanceof DataMapBuilder)
+    {
+      tmp = ((DataMapBuilder) tmp).convertToDataMap();
+    }
+
     if (_stack.isEmpty())
     {
       _result = (T) tmp;
@@ -281,6 +303,11 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
     else
     {
       _isCurrList = _stack.peek() instanceof DataList;
+      if (!_isCurrList)
+      {
+        _currField = _currFieldStack.pop();
+      }
+      addValue(tmp);
       updateExpected();
     }
   }
@@ -296,7 +323,25 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
       }
       else
       {
-        CheckedUtil.putWithoutChecking((DataMap) currItem, _currField, value);
+        if (currItem instanceof DataMapBuilder)
+        {
+          DataMapBuilder dataMapBuilder = (DataMapBuilder) currItem;
+          if (dataMapBuilder.smallHashMapThresholdReached())
+          {
+            _stack.pop();
+            DataMap dataMap = dataMapBuilder.convertToDataMap();
+            _stack.push(dataMap);
+            CheckedUtil.putWithoutChecking(dataMap, _currField, value);
+          }
+          else
+          {
+            dataMapBuilder.addKVPair(_currField, value);
+          }
+        }
+        else
+        {
+          CheckedUtil.putWithoutChecking((DataMap) currItem, _currField, value);
+        }
       }
 
       updateExpected();
