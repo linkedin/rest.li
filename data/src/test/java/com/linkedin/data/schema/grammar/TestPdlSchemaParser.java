@@ -16,6 +16,7 @@
 
 package com.linkedin.data.schema.grammar;
 
+import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
@@ -46,8 +47,15 @@ public class TestPdlSchemaParser
   @Test
   public void testParseNestedProperties() throws IOException
   {
-    String sourcePdl = "namespace com.linkedin.test\n" + "\n" + "@validate.one.two.arrayOne = [\"a\", \"b\"]\n"
-        + "@validate.one.two.arrayTwo = [1,2,3,4]\n" + "record RecordDataSchema {}";
+    String sourcePdl = "namespace com.linkedin.test\n"
+        + "\n"
+        + "@validate.one.two.arrayOne = [\"a\", \"b\"]\n"
+        + "@validate.one.two.arrayTwo = [1,2,3,4]\n"
+        + "@validate.`com.linkedin.CustomValidator`.low = 5\n"
+        + "@validate.`com.linkedin.namespace.CustomValidator`.low = 15\n"
+        + "@validate.`com.linkedin.namespace.CustomValidator`.`union`.low.`record` = \"Date\"\n"
+        + "@`com.linkedin.CustomValidator` = \"abc\"\n"
+        + "record RecordDataSchema {}";
 
     // construct expected data map
     Map<String, Object> expected = new HashMap<>();
@@ -58,7 +66,24 @@ public class TestPdlSchemaParser
     two.put("arrayTwo", new DataList(Arrays.asList(1, 2, 3, 4)));
     one.put("two", two);
     validate.put("one", one);
+
+    DataMap customValidator = new DataMap();
+    customValidator.put("low", 5);
+    validate.put("com.linkedin.CustomValidator", customValidator);
+
+    DataMap customValidator2 = new DataMap();
+    customValidator2.put("low", 15);
+
+    DataMap unionMap = new DataMap();
+    customValidator2.put("union", unionMap);
+
+    DataMap lowMap = new DataMap();
+    unionMap.put("low", lowMap);
+    lowMap.put("record", "Date");
+    validate.put("com.linkedin.namespace.CustomValidator", customValidator2);
+
     expected.put("validate", validate);
+    expected.put("com.linkedin.CustomValidator", "abc");
 
     DataSchema encoded = TestUtil.dataSchemaFromPdlString(sourcePdl);
     Assert.assertNotNull(encoded);

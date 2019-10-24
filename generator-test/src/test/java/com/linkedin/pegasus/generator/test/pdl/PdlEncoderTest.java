@@ -67,6 +67,7 @@ public class PdlEncoderTest extends GeneratorTest
             { "enums.WithAliases" },
             { "escaping.record.NamespacePackageEscaping" },
             { "escaping.PdlKeywordEscaping" },
+            { "escaping.PropertyKeyEscaping" },
             { "fixed.Fixed8" },
             { "fixed.WithAliases" },
             { "imports.ConflictResolution" },

@@ -51,6 +51,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private static final int UNION_MULTILINE_THRESHOLD = 5;
 
   private static final JacksonDataCodec CODEC = new JacksonDataCodec();
+  public static final char ESCAPE_CHAR = '`';
 
   private final Writer _out;
   private Map<String, Name> _importsByLocalName;
@@ -739,7 +740,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    */
   private String pathToString(List<String> path)
   {
-    return path.stream().map(this::escapeIdentifier).collect(Collectors.joining("."));
+    return path.stream().map(this::escapePropertyKey).collect(Collectors.joining("."));
   }
 
   /**
@@ -875,13 +876,35 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     return Arrays.stream(identifier.split("\\.")).map(part -> {
       if (KEYWORDS.contains(part))
       {
-        return '`' + part.trim() + '`';
+        return ESCAPE_CHAR + part.trim() + ESCAPE_CHAR;
       }
       else
       {
         return part.trim();
       }
     }).collect(Collectors.joining("."));
+  }
+
+  /**
+   * Escape a property key for use in .pdl source code, for keys that would conflict with .pdl keywords or those with
+   * dots it returns key escaped with a back-tick '`' character.
+   * Eg, `namespace`
+   *     `com.linkedin.validate.CustomValidator`
+   *
+   * @param propertyKey provides the property key to escape.
+   * @return an escaped property key for use in .pdl source code.
+   */
+  private String escapePropertyKey(String propertyKey)
+  {
+    propertyKey = propertyKey.trim();
+    if (KEYWORDS.contains(propertyKey) || propertyKey.contains("."))
+    {
+      return ESCAPE_CHAR + propertyKey + ESCAPE_CHAR;
+    }
+    else
+    {
+      return propertyKey;
+    }
   }
 
   /**

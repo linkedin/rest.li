@@ -64,13 +64,12 @@ typeAssignment: typeReference | typeDeclaration;
 // Each property is a node in a properties tree, keyed by it's path in the tree.
 // The value of each property may be any JSON type.
 // If the property does not specify a property, it defaults to JSON 'true'.
-propDeclaration returns [String name, List<String> path]: propNameDeclaration propJsonValue? {
-  $name = $propNameDeclaration.name;
-  $path = Arrays.asList($propNameDeclaration.name.split("\\."));
+propDeclaration returns [List<String> path]: propNameDeclaration propJsonValue? {
+  $path = $propNameDeclaration.path;
 };
 
-propNameDeclaration returns [String name]: AT propName {
-  $name = $propName.value;
+propNameDeclaration returns [List<String> path]: AT propName {
+  $path = $propName.path;
 };
 
 propJsonValue: EQ jsonValue;
@@ -139,7 +138,19 @@ identifier returns [String value]: ID {
   $value = PdlParseUtils.validatePegasusId(PdlParseUtils.unescapeIdentifier($text));
 };
 
-propName returns [String value]: ID (DOT ID)* {
+// A full property name, made of property segments separated by dots.
+// Returns the list of property segments.
+propName returns [List<String> path]
+@init{$path = new ArrayList<String>();}
+  : propSegment {$path.add($propSegment.value);} (DOT propSegment {$path.add($propSegment.value);})*
+  ;
+
+// A property segment. Can be escaped with back-tick() to include dots (.) in the segment.
+// Eg,
+// validate
+// `com.linkedin.validate.CustomValidator`
+// deprecated
+propSegment returns [String value]: (ID | ESCAPED_PROP_ID) {
   $value = PdlParseUtils.unescapeIdentifier($text);
 };
 
@@ -224,3 +235,6 @@ ID: UNESCAPED_ID | ESCAPED_ID;
 // "insignificant commas" are used in this grammar. Commas may be added as desired
 // in source files, but they are treated as whitespace.
 WS: [ \t\n\r\f,]+ -> skip;
+
+// Property segment id escaped with ` to include dots in them.
+ESCAPED_PROP_ID: '`' UNESCAPED_ID (DOT UNESCAPED_ID)* '`';

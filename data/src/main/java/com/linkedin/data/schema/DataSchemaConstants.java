@@ -28,6 +28,7 @@ public class DataSchemaConstants
   public static final String ALIAS_KEY = "alias";
   public static final String ALIASES_KEY = "aliases";
   public static final String DEFAULT_KEY = "default";
+  public static final String DEPRECATED_KEY = "deprecated";
   public static final String DEPRECATED_SYMBOLS_KEY = "deprecatedSymbols";
   public static final String DOC_KEY = "doc";
   public static final String FIELDS_KEY = "fields";

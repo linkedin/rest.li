@@ -531,7 +531,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
       {
         String symbol = symbolDecl.symbol.value;
         Object value = parsePropValue(prop);
-        if (prop.name.equals("deprecated"))
+        if (equalsSingleSegmentProperty(prop, DataSchemaConstants.DEPRECATED_KEY))
         {
           deprecatedSymbols.put(symbol, value);
         }
@@ -738,7 +738,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
 
     for (PropDeclarationContext prop: source.props)
     {
-      if (prop.name.equals(DataSchemaConstants.ALIASES_KEY))
+      if (equalsSingleSegmentProperty(prop, DataSchemaConstants.ALIASES_KEY))
       {
         List<Name> aliases = parseAliases(prop).stream()
             .map(this::toName)
@@ -952,11 +952,11 @@ public class PdlSchemaParser extends AbstractSchemaParser
         RecordDataSchema.Field.Order sortOrder = null;
         for (PropDeclarationContext prop : field.props)
         {
-          if (prop.name.equals(DataSchemaConstants.ALIASES_KEY))
+          if (equalsSingleSegmentProperty(prop, DataSchemaConstants.ALIASES_KEY))
           {
             aliases = parseAliases(prop);
           }
-          else if (prop.name.equals(DataSchemaConstants.ORDER_KEY))
+          else if (equalsSingleSegmentProperty(prop, DataSchemaConstants.ORDER_KEY))
           {
             Object value = parsePropValue(prop);
             if (!(value instanceof String))
@@ -1018,7 +1018,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
    */
   private List<String> parseAliases(PropDeclarationContext prop) throws ParseException
   {
-    assert prop.name.equals(DataSchemaConstants.ALIASES_KEY);
+    assert equalsSingleSegmentProperty(prop, DataSchemaConstants.ALIASES_KEY);
 
     final List<String> aliases = new ArrayList<>();
 
@@ -1048,6 +1048,14 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
 
     return aliases;
+  }
+
+  /**
+   * Checks if the property is a single segment property and if that segment matches the property key provided.
+   */
+  private boolean equalsSingleSegmentProperty(PropDeclarationContext prop, String propertyKey)
+  {
+    return prop.path.size() == 1 && prop.path.get(0).equals(propertyKey);
   }
 
   private boolean isDeclaredInline(TypeAssignmentContext assignment)
