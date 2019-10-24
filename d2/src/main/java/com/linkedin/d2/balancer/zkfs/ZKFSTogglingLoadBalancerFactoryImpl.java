@@ -180,15 +180,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _clientFactories = clientFactories;
     _loadBalancerStrategyFactories = loadBalancerStrategyFactories;
     _enableSaveUriDataOnDisk = enableSaveUriDataOnDisk;
-    if(d2ServicePath == null || d2ServicePath.isEmpty())
-    {
-      _d2ServicePath = "services";
-    }
-    else
-    {
-      _d2ServicePath = d2ServicePath;
-    }
-
+    _d2ServicePath = d2ServicePath;
     _sslContext = sslContext;
     _sslParameters = sslParameters;
     _isSSLEnabled = isSSLEnabled;

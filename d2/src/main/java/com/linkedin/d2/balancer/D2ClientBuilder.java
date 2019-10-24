@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer;
 
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
@@ -35,6 +36,7 @@ import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetche
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
+import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.jmx.JmxManager;
@@ -106,6 +108,13 @@ public class D2ClientBuilder
     if (_config.jmxManager == null)
     {
       _config.jmxManager = new NoOpJmxManager();
+    }
+
+    if(_config.d2ServicePath == null
+        // checking empty for backward compatibility with ZKFS behavior
+        || _config.d2ServicePath.isEmpty())
+    {
+      _config.d2ServicePath = ZKFSUtil.SERVICE_PATH;
     }
 
     final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =

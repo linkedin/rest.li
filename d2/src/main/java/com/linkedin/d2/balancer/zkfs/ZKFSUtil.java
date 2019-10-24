@@ -50,10 +50,13 @@ public class ZKFSUtil
     return servicePath(basePath, SERVICE_PATH);
   }
 
-  public static String servicePath(String basePath, String servicePath)
-  {
-    if (servicePath == null)
-    {
+  /**
+   * @param servicePath empty and default values will use the default path for backward compatibility.
+   */
+  public static String servicePath(String basePath, String servicePath) {
+    if (servicePath == null
+        // not resolving the empty servicePath to the default, would not make sense in the ZK data structure.
+        || servicePath.isEmpty()) {
       servicePath = SERVICE_PATH;
     }
     return String.format("%s/%s", normalizeBasePath(basePath), servicePath);

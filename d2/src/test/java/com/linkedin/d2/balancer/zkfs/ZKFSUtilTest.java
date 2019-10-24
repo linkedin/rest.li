@@ -38,8 +38,29 @@ public class ZKFSUtilTest
   }
 
   @Test (dataProvider = "clusterPaths")
-  public void testZKFSUtil(String basePath, String clusterPath)
+  public void testZKFSUtilClusterPath(String basePath, String clusterPath)
   {
     Assert.assertEquals(ZKFSUtil.clusterPath(basePath), clusterPath);
+  }
+
+  @DataProvider(name = "servicePaths")
+  public Object[][] createServicePaths() {
+    return new Object[][]{
+        {"/d2", null, "/d2/services"},
+        {"/d2/", null, "/d2/services"},
+        {"/d2//", null, "/d2/services"},
+        {"/", null, "/services"},
+        {"", null, "/services"},
+        {"", "test", "/test"},
+        // empty servicePath values should use the default path
+        {"", "", "/services"},
+        {"/d2", "", "/d2/services"},
+        {"/d2/", "", "/d2/services"}
+    };
+  }
+
+  @Test(dataProvider = "servicePaths")
+  public void testZKFSUtilServicePath(String basePath, String servicePath, String resultServicePath) {
+    Assert.assertEquals(ZKFSUtil.servicePath(basePath, servicePath), resultServicePath);
   }
 }
