@@ -17,6 +17,7 @@
 package com.linkedin.restli.client;
 
 
+import com.google.common.collect.ImmutableMap;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.data.ByteString;
@@ -24,6 +25,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.jersey.api.uri.UriTemplate;
 import com.linkedin.multipart.MultiPartMIMEReader;
 import com.linkedin.multipart.utils.MIMETestUtils.MultiPartMIMEFullReaderCallback;
 import com.linkedin.multipart.utils.MIMETestUtils.SinglePartMIMEFullReaderCallback;
@@ -55,6 +57,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -82,6 +85,8 @@ public class TestRestClientRequestBuilder
   private static final String HOST = "host";
   private static final String SERVICE_NAME = "foo";
   private static final String BASE_URI_TEMPLATE = "/foo";
+  private static final UriTemplate URI_TEMPALTE = new UriTemplate(BASE_URI_TEMPLATE);
+  private static final Map<String, String> PATH_KEYS = ImmutableMap.of("test", "test");
   private static final String SERIALIZED_EMPTY_JSON = "{}";
   private static final String SERIALIZED_EMPTY_PSON = "#!PSON1\n ";
   private static final String MULTIPLEXED_GET_ENTITY_BODY = "{\"requests\":{\"0\":{\"headers\":{},\"method\":\"GET\",\"relativeUrl\":\"/foo\",\"dependentRequests\":{}}}}";
@@ -110,16 +115,17 @@ public class TestRestClientRequestBuilder
                       String expectedAcceptHeader,
                       boolean acceptContentTypePerClient,
                       boolean streamAttachments,
-                      boolean acceptResponseAttachments) throws URISyntaxException
+                      boolean acceptResponseAttachments,
+                      boolean useNonEmptyPathKeys) throws URISyntaxException
   {
     RestRequest restRequest = clientGeneratedRestRequest(GetRequest.class, ResourceMethod.GET, null, contentType,
-                                                         acceptTypes, acceptContentTypePerClient);
+                                                         acceptTypes, acceptContentTypePerClient, useNonEmptyPathKeys);
     Assert.assertNull(restRequest.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequest.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
     RestRequest restRequestBatch = clientGeneratedRestRequest(BatchGetRequest.class, ResourceMethod.BATCH_GET, null,
-                                                              contentType, acceptTypes, acceptContentTypePerClient);
+                                                              contentType, acceptTypes, acceptContentTypePerClient, useNonEmptyPathKeys);
     Assert.assertNull(restRequestBatch.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequestBatch.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -134,16 +140,17 @@ public class TestRestClientRequestBuilder
                          String expectedAcceptHeader,
                          boolean acceptContentTypePerClient,
                          boolean streamAttachments,
-                         boolean acceptResponseAttachments) throws URISyntaxException
+                         boolean acceptResponseAttachments,
+                         boolean useNonEmptyPathKeys) throws URISyntaxException
   {
     RestRequest restRequest = clientGeneratedRestRequest(FindRequest.class, ResourceMethod.FINDER, null, contentType,
-                                                         acceptTypes, acceptContentTypePerClient);
+                                                         acceptTypes, acceptContentTypePerClient, useNonEmptyPathKeys);
     Assert.assertNull(restRequest.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequest.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
     RestRequest restRequestAll = clientGeneratedRestRequest(GetAllRequest.class, ResourceMethod.GET_ALL, null,
-                                                            contentType, acceptTypes, acceptContentTypePerClient);
+                                                            contentType, acceptTypes, acceptContentTypePerClient, useNonEmptyPathKeys);
     Assert.assertNull(restRequestAll.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequestAll.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -158,7 +165,8 @@ public class TestRestClientRequestBuilder
                          String expectedAcceptHeader,
                          boolean acceptContentTypePerClient,
                          boolean streamAttachments,
-                         boolean acceptResponseAttachments) throws URISyntaxException
+                         boolean acceptResponseAttachments,
+                         boolean useNonEmptyPathKeys) throws URISyntaxException
   {
     //We only proceed with StreamRequest tests if there are request attachments OR there is a desire for response
     //attachments. If there are no request attachments present AND no desire to accept response attachments, then
@@ -168,7 +176,7 @@ public class TestRestClientRequestBuilder
       //RestRequest with a request entity
       RestRequest restRequest = clientGeneratedRestRequest(ActionRequest.class, ResourceMethod.ACTION, ENTITY_BODY,
                                                            contentType, acceptTypes,
-                                                           acceptContentTypePerClient);
+                                                           acceptContentTypePerClient, useNonEmptyPathKeys);
       Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
       Assert.assertEquals(restRequest.getEntity().asAvroString(), expectedRequestBody);
       Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -176,7 +184,7 @@ public class TestRestClientRequestBuilder
       //RestRequest without a request entity
       RestRequest restRequestNoEntity = clientGeneratedRestRequest(ActionRequest.class, ResourceMethod.ACTION, new DataMap(),
                                                                    contentType, acceptTypes,
-                                                                   acceptContentTypePerClient);
+                                                                   acceptContentTypePerClient, useNonEmptyPathKeys);
       Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
 
       //Verify that that there is an empty payload based on the expected content type
@@ -232,7 +240,8 @@ public class TestRestClientRequestBuilder
                          String expectedAcceptHeader,
                          boolean acceptContentTypePerClient,
                          boolean streamAttachments,
-                         boolean acceptResponseAttachments) throws URISyntaxException
+                         boolean acceptResponseAttachments,
+                         boolean useNonEmptyPathKeys) throws URISyntaxException
   {
     //We only proceed with StreamRequest tests if there are request attachments OR there is a desire for response
     //attachments. If there are no request attachments present AND no desire to accept response attachments, then
@@ -240,21 +249,21 @@ public class TestRestClientRequestBuilder
     if (streamAttachments == false && acceptResponseAttachments == false)
     {
       RestRequest restRequest = clientGeneratedRestRequest(UpdateRequest.class, ResourceMethod.UPDATE, ENTITY_BODY,
-                                                           contentType, acceptTypes, acceptContentTypePerClient);
+                                                           contentType, acceptTypes, acceptContentTypePerClient, useNonEmptyPathKeys);
       Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
       Assert.assertEquals(restRequest.getEntity().asAvroString(), expectedRequestBody);
       Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
       RestRequest restRequestBatch = clientGeneratedRestRequest(BatchUpdateRequest.class, ResourceMethod.BATCH_UPDATE,
                                                                 ENTITY_BODY, contentType, acceptTypes,
-                                                                acceptContentTypePerClient);
+                                                                acceptContentTypePerClient, useNonEmptyPathKeys);
       Assert.assertEquals(restRequestBatch.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
       Assert.assertEquals(restRequestBatch.getEntity().asAvroString(), expectedEntitiesBody);
       Assert.assertEquals(restRequestBatch.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
       RestRequest restRequestPartial = clientGeneratedRestRequest(PartialUpdateRequest.class,
                                                                   ResourceMethod.PARTIAL_UPDATE, ENTITY_BODY, contentType,
-                                                                  acceptTypes, acceptContentTypePerClient);
+                                                                  acceptTypes, acceptContentTypePerClient, useNonEmptyPathKeys);
       Assert.assertEquals(restRequestPartial.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
       Assert.assertEquals(restRequestPartial.getEntity().asAvroString(), expectedRequestBody);
       Assert.assertEquals(restRequestPartial.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -262,7 +271,7 @@ public class TestRestClientRequestBuilder
       RestRequest restRequestBatchPartial = clientGeneratedRestRequest(BatchPartialUpdateRequest.class,
                                                                        ResourceMethod.BATCH_PARTIAL_UPDATE, ENTITY_BODY,
                                                                        contentType, acceptTypes,
-                                                                       acceptContentTypePerClient);
+                                                                       acceptContentTypePerClient, useNonEmptyPathKeys);
       Assert.assertEquals(restRequestBatchPartial.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
       Assert.assertEquals(restRequestBatchPartial.getEntity().asAvroString(), expectedEntitiesBody);
       Assert.assertEquals(restRequestBatchPartial.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -312,7 +321,8 @@ public class TestRestClientRequestBuilder
                          String expectedAcceptHeader,
                          boolean acceptContentTypePerClient,
                          boolean streamAttachments,
-                         boolean acceptResponseAttachments) throws URISyntaxException
+                         boolean acceptResponseAttachments,
+                         boolean useNonEmptyPathKeys) throws URISyntaxException
   {
     //We only proceed with StreamRequest tests if there are request attachments OR there is a desire for response
     //attachments. If there are no request attachments present AND no desire to accept response attachments, then
@@ -320,14 +330,14 @@ public class TestRestClientRequestBuilder
     if (streamAttachments == false && acceptResponseAttachments == false)
     {
       RestRequest restRequest = clientGeneratedRestRequest(CreateRequest.class, ResourceMethod.CREATE, ENTITY_BODY,
-                                                           contentType, acceptTypes, acceptContentTypePerClient);
+                                                           contentType, acceptTypes, acceptContentTypePerClient, useNonEmptyPathKeys);
       Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
       Assert.assertEquals(restRequest.getEntity().asAvroString(), expectedRequestBody);
       Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
       RestRequest restRequestBatch = clientGeneratedRestRequest(BatchCreateRequest.class, ResourceMethod.BATCH_CREATE,
                                                                 ENTITY_BODY, contentType, acceptTypes,
-                                                                acceptContentTypePerClient);
+                                                                acceptContentTypePerClient, useNonEmptyPathKeys);
       Assert.assertEquals(restRequestBatch.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
       Assert.assertEquals(restRequestBatch.getEntity().asAvroString(), expectedRequestBody);
       Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -360,17 +370,18 @@ public class TestRestClientRequestBuilder
                          String expectedAcceptHeader,
                          boolean acceptContentTypePerClient,
                          boolean streamAttachments,
-                         boolean acceptResponseAttachments) throws URISyntaxException
+                         boolean acceptResponseAttachments,
+                         boolean useNonEmptyPathKeys) throws URISyntaxException
   {
     RestRequest restRequest = clientGeneratedRestRequest(DeleteRequest.class, ResourceMethod.DELETE, null, contentType,
-                                                         acceptTypes, acceptContentTypePerClient);
+                                                         acceptTypes, acceptContentTypePerClient, useNonEmptyPathKeys);
     Assert.assertNull(restRequest.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequest.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
     RestRequest restRequestBatch = clientGeneratedRestRequest(BatchDeleteRequest.class, ResourceMethod.BATCH_DELETE,
                                                               null, contentType, acceptTypes,
-                                                              acceptContentTypePerClient);
+                                                              acceptContentTypePerClient, useNonEmptyPathKeys);
     Assert.assertNull(restRequestBatch.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequestBatch.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
@@ -468,6 +479,7 @@ public class TestRestClientRequestBuilder
             //    boolean acceptContentTypePerClient
             //    boolean streamAttachments, //false for RestRequest
             //    boolean acceptResponseAttachments  //false for RestRequest
+            //    boolean useNonEmptyPathKeys
             // }
             {
                 null,
@@ -477,6 +489,7 @@ public class TestRestClientRequestBuilder
                 null,
                 null,
                 true,
+                false,
                 false,
                 false
             }, // default client
@@ -490,7 +503,7 @@ public class TestRestClientRequestBuilder
                 true,
                 false,
                 false,
-
+                false
             },
             {
                 ContentType.PSON,
@@ -501,6 +514,7 @@ public class TestRestClientRequestBuilder
                 null,
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -512,6 +526,7 @@ public class TestRestClientRequestBuilder
                 "*/*",
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -522,6 +537,7 @@ public class TestRestClientRequestBuilder
                 Collections.singletonList(ContentType.ACCEPT_TYPE_ANY),
                 "*/*",
                 true,
+                false,
                 false,
                 false
             },
@@ -534,6 +550,7 @@ public class TestRestClientRequestBuilder
                 "application/json",
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -545,6 +562,7 @@ public class TestRestClientRequestBuilder
                 "application/json",
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -556,6 +574,7 @@ public class TestRestClientRequestBuilder
                 "application/x-pson",
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -566,6 +585,7 @@ public class TestRestClientRequestBuilder
                 Collections.singletonList(ContentType.PSON),
                 "application/x-pson",
                 true,
+                false,
                 false,
                 false
             },
@@ -578,6 +598,7 @@ public class TestRestClientRequestBuilder
                 "application/json;q=1.0,application/x-pson;q=0.9",
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -589,6 +610,7 @@ public class TestRestClientRequestBuilder
                 "application/json;q=1.0,application/x-pson;q=0.9",
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -600,6 +622,7 @@ public class TestRestClientRequestBuilder
                 "application/json;q=1.0,*/*;q=0.9",
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -610,6 +633,7 @@ public class TestRestClientRequestBuilder
                 Arrays.asList(ContentType.JSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/json;q=1.0,*/*;q=0.9",
                 true,
+                false,
                 false,
                 false
             },
@@ -622,6 +646,7 @@ public class TestRestClientRequestBuilder
                 "application/x-pson;q=1.0,application/json;q=0.9",
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -633,6 +658,7 @@ public class TestRestClientRequestBuilder
                 "application/x-pson;q=1.0,application/json;q=0.9",
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -644,6 +670,7 @@ public class TestRestClientRequestBuilder
                 "application/x-pson;q=1.0,*/*;q=0.9",
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -654,6 +681,7 @@ public class TestRestClientRequestBuilder
                 Arrays.asList(ContentType.PSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/x-pson;q=1.0,*/*;q=0.9",
                 true,
+                false,
                 false,
                 false
             },
@@ -666,6 +694,7 @@ public class TestRestClientRequestBuilder
                 "*/*;q=1.0,application/json;q=0.9",
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -676,6 +705,7 @@ public class TestRestClientRequestBuilder
                 Arrays.asList(ContentType.ACCEPT_TYPE_ANY, ContentType.JSON),
                 "*/*;q=1.0,application/json;q=0.9",
                 true,
+                false,
                 false,
                 false
             },
@@ -688,6 +718,7 @@ public class TestRestClientRequestBuilder
                 "*/*;q=1.0,application/x-pson;q=0.9",
                 true,
                 false,
+                false,
                 false
             },
             {
@@ -698,6 +729,7 @@ public class TestRestClientRequestBuilder
                 Arrays.asList(ContentType.ACCEPT_TYPE_ANY, ContentType.PSON),
                 "*/*;q=1.0,application/x-pson;q=0.9",
                 true,
+                false,
                 false,
                 false
             },
@@ -709,6 +741,7 @@ public class TestRestClientRequestBuilder
                 Arrays.asList(ContentType.JSON, ContentType.PSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/json;q=1.0,application/x-pson;q=0.9,*/*;q=0.8",
                 true,
+                false,
                 false,
                 false
             },
@@ -734,6 +767,7 @@ public class TestRestClientRequestBuilder
                 null,
                 false,
                 false,
+                false,
                 false
             }, // default client
             {
@@ -745,6 +779,7 @@ public class TestRestClientRequestBuilder
                 null,
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -756,6 +791,7 @@ public class TestRestClientRequestBuilder
                 null,
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -767,6 +803,7 @@ public class TestRestClientRequestBuilder
                 "*/*",
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -776,6 +813,7 @@ public class TestRestClientRequestBuilder
                 PSON_ENTITIES_BODY,
                 Collections.singletonList(ContentType.ACCEPT_TYPE_ANY),
                 "*/*",
+                false,
                 false,
                 false,
                 false
@@ -789,6 +827,7 @@ public class TestRestClientRequestBuilder
                 "application/json",
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -800,6 +839,7 @@ public class TestRestClientRequestBuilder
                 "application/json",
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -811,6 +851,7 @@ public class TestRestClientRequestBuilder
                 "application/x-pson",
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -820,6 +861,7 @@ public class TestRestClientRequestBuilder
                 PSON_ENTITIES_BODY,
                 Collections.singletonList(ContentType.PSON),
                 "application/x-pson",
+                false,
                 false,
                 false,
                 false
@@ -833,6 +875,7 @@ public class TestRestClientRequestBuilder
                 "application/json;q=1.0,application/x-pson;q=0.9",
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -844,6 +887,7 @@ public class TestRestClientRequestBuilder
                 "application/json;q=1.0,application/x-pson;q=0.9",
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -855,6 +899,7 @@ public class TestRestClientRequestBuilder
                 "application/json;q=1.0,*/*;q=0.9",
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -864,6 +909,7 @@ public class TestRestClientRequestBuilder
                 PSON_ENTITIES_BODY,
                 Arrays.asList(ContentType.JSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/json;q=1.0,*/*;q=0.9",
+                false,
                 false,
                 false,
                 false
@@ -877,6 +923,7 @@ public class TestRestClientRequestBuilder
                 "application/x-pson;q=1.0,application/json;q=0.9",
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -888,6 +935,7 @@ public class TestRestClientRequestBuilder
                 "application/x-pson;q=1.0,application/json;q=0.9",
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -899,6 +947,7 @@ public class TestRestClientRequestBuilder
                 "application/x-pson;q=1.0,*/*;q=0.9",
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -908,6 +957,7 @@ public class TestRestClientRequestBuilder
                 PSON_ENTITIES_BODY,
                 Arrays.asList(ContentType.PSON, ContentType.ACCEPT_TYPE_ANY),
                 "application/x-pson;q=1.0,*/*;q=0.9",
+                false,
                 false,
                 false,
                 false
@@ -921,6 +971,7 @@ public class TestRestClientRequestBuilder
                 "*/*;q=1.0,application/json;q=0.9",
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -930,6 +981,7 @@ public class TestRestClientRequestBuilder
                 PSON_ENTITIES_BODY,
                 Arrays.asList(ContentType.ACCEPT_TYPE_ANY, ContentType.JSON),
                 "*/*;q=1.0,application/json;q=0.9",
+                false,
                 false,
                 false,
                 false
@@ -943,6 +995,7 @@ public class TestRestClientRequestBuilder
                 "*/*;q=1.0,application/x-pson;q=0.9",
                 false,
                 false,
+                false,
                 false
             },
             {
@@ -952,6 +1005,7 @@ public class TestRestClientRequestBuilder
                 PSON_ENTITIES_BODY,
                 Arrays.asList(ContentType.ACCEPT_TYPE_ANY, ContentType.PSON),
                 "*/*;q=1.0,application/x-pson;q=0.9",
+                false,
                 false,
                 false,
                 false
@@ -965,6 +1019,7 @@ public class TestRestClientRequestBuilder
                 "application/json;q=1.0,application/x-pson;q=0.9,*/*;q=0.8",
                 false,
                 false,
+                false,
                 false
             },
             {   // Test custom content and accept types.
@@ -976,7 +1031,21 @@ public class TestRestClientRequestBuilder
                 "application/json-v2;q=1.0,*/*;q=0.9",
                 true,
                 false,
+                false,
                 false
+            },
+            {
+                // Test with non-empty path keys
+                null,
+                "application/json",
+                JSON_ENTITY_BODY,
+                JSON_ENTITIES_BODY,
+                null,
+                null,
+                true,
+                false,
+                false,
+                true
             }
         };
   }
@@ -1075,6 +1144,25 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.getPathKeys()).andReturn(Collections.<String, String>emptyMap()).once();
     EasyMock.expect(mockRequest.getQueryParamsObjects()).andReturn(Collections.emptyMap()).once();
     EasyMock.expect(mockRequest.getQueryParamClasses()).andReturn(Collections.<String, Class<?>>emptyMap()).once();
+    EasyMock.expect(mockRequest.getBaseUriTemplate()).andReturn(BASE_URI_TEMPLATE).times(3);
+    EasyMock.expect(mockRequest.getServiceName()).andReturn(SERVICE_NAME).once();
+    EasyMock.expect(mockRequest.getResponseDecoder()).andReturn(mockResponseDecoder).once();
+    EasyMock.expect(mockRequest.getHeaders()).andReturn(Collections.<String, String>emptyMap()).once();
+    EasyMock.expect(mockRequest.getCookies()).andReturn(Collections.<String>emptyList()).once();
+    EasyMock.expect(mockRequest.getRequestOptions()).andReturn(requestOptions).anyTimes();
+  }
+
+  @SuppressWarnings("rawtypes")
+  private void setExpectationsForNonEmptyPathKeys(Request mockRequest,
+      ResourceMethod method,
+      RestResponseDecoder mockResponseDecoder,
+      RestliRequestOptions requestOptions)
+  {
+    EasyMock.expect(mockRequest.getMethod()).andReturn(method).anyTimes();
+    EasyMock.expect(mockRequest.getPathKeys()).andReturn(PATH_KEYS).times(2);
+    EasyMock.expect(mockRequest.getUriTemplate()).andReturn(URI_TEMPALTE);
+    EasyMock.expect(mockRequest.getQueryParamsObjects()).andReturn(Collections.emptyMap()).once();
+    EasyMock.expect(mockRequest.getQueryParamClasses()).andReturn(Collections.<String, Class<?>>emptyMap()).once();
     EasyMock.expect(mockRequest.getBaseUriTemplate()).andReturn(BASE_URI_TEMPLATE).times(2);
     EasyMock.expect(mockRequest.getServiceName()).andReturn(SERVICE_NAME).once();
     EasyMock.expect(mockRequest.getResponseDecoder()).andReturn(mockResponseDecoder).once();
@@ -1112,7 +1200,8 @@ public class TestRestClientRequestBuilder
                                                                      DataMap entityBody,
                                                                      ContentType contentType,
                                                                      List<ContentType> acceptTypes,
-                                                                     boolean acceptContentTypePerClient)
+                                                                     boolean acceptContentTypePerClient,
+                                                                     boolean useNonEmptyPathKeys)
     throws URISyntaxException
   {
     // massive setup...
@@ -1132,7 +1221,14 @@ public class TestRestClientRequestBuilder
       requestOptions = new RestliRequestOptions(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null, null, contentType, acceptTypes, false, null);
     }
 
-    setCommonExpectations(mockRequest, method, mockResponseDecoder, requestOptions);
+    if (useNonEmptyPathKeys)
+    {
+      setExpectationsForNonEmptyPathKeys(mockRequest, method, mockResponseDecoder, requestOptions);
+    }
+    else
+    {
+      setCommonExpectations(mockRequest, method, mockResponseDecoder, requestOptions);
+    }
 
     EasyMock.expect(mockRequest.getStreamingAttachments()).andReturn(null).times(2);
 

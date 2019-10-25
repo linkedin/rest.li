@@ -17,6 +17,8 @@
 package com.linkedin.restli.client.uribuilders;
 
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.linkedin.data.DataMap;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
@@ -37,6 +39,9 @@ import java.net.URI;
  */
 abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements RestliUriBuilder
 {
+  private static final Cache<String, URI> URI_TEMPLATE_STRING_TO_URI_CACHE = Caffeine.newBuilder()
+      .maximumSize(1000)
+      .build();
   protected final R _request;
   protected final ProtocolVersion _version;
   protected final CompoundKey _assocKey; // can be null
@@ -74,7 +79,7 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
 
   private String bindPathKeys()
   {
-    UriTemplate template = new UriTemplate(_request.getBaseUriTemplate());
+    UriTemplate template = _request.getUriTemplate();
     return template.createURI(URIParamUtils.encodePathKeysForUri(_request.getPathKeys(), _version));
   }
 
@@ -120,6 +125,14 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
 
   public URI buildBaseUriWithPrefix()
   {
-    return URI.create(addPrefix(bindPathKeys()));
+    if (_request.getPathKeys().isEmpty())
+    {
+      // if path keys are empty we don't need to bind the path keys, we can directly use the request base uri template.
+      return URI_TEMPLATE_STRING_TO_URI_CACHE.get(addPrefix(_request.getBaseUriTemplate()), template -> URI.create(template));
+    }
+    else
+    {
+      return URI.create(addPrefix(bindPathKeys()));
+    }
   }
 }

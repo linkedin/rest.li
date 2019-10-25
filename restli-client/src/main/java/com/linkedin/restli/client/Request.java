@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.apache.commons.lang.StringUtils;
 
 
 /**
@@ -49,6 +50,9 @@ public class Request<T>
 {
   private static final Pattern SLASH_PATTERN = Pattern.compile("/");
   private static final Cache<String, String> URI_TEMPLATE_TO_SERVICE_NAME_CACHE = Caffeine.newBuilder()
+      .maximumSize(1000)
+      .build();
+  private static final Cache<String, UriTemplate> URI_TEMPLATE_STRING_TO_URI_TEMPLATE_CACHE = Caffeine.newBuilder()
       .maximumSize(1000)
       .build();
 
@@ -143,7 +147,7 @@ public class Request<T>
    */
   private void validatePathKeys()
   {
-    UriTemplate template = new UriTemplate(getBaseUriTemplate());
+    UriTemplate template = getUriTemplate();
     for (String key: template.getTemplateVariables())
     {
       Object value = getPathKeys().get(key);
@@ -267,6 +271,22 @@ public class Request<T>
   public boolean isStreaming()
   {
     return _streamingAttachments != null || _requestOptions.getAcceptResponseAttachments();
+  }
+
+  /**
+   * Get UriTemplate for this request.
+   * @return An UriTemplate instance corresponding to the base Uri template string.
+   * @throws IllegalArgumentException if the template is null or an empty string.
+   */
+  public UriTemplate getUriTemplate()
+  {
+    if (StringUtils.isNotEmpty(getBaseUriTemplate()))
+    {
+      return URI_TEMPLATE_STRING_TO_URI_TEMPLATE_CACHE.get(getBaseUriTemplate(),
+          template -> new UriTemplate(getBaseUriTemplate()));
+    }
+    // if the template is 'null' or an empty string throw an exception.
+    throw new IllegalArgumentException("Invalid base uri template. Template can not be null or an empty string.");
   }
 
   List<Object> getStreamingAttachments()

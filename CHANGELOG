@@ -1,7 +1,13 @@
+27.7.16
+-------
+
 27.7.15
 -------
 (RB=1853192)
 Update PDL schema parser and encoder to allow properties with dots in them. Properties with dots are escaped using back-tick ` character.
+
+(RB=1854466)
+Optimizing UriBuilder & validatePathKeys.
 
 27.7.14
 -------
