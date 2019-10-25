@@ -44,13 +44,6 @@ public class GenerateDataTemplateTask extends DefaultTask
 
   public GenerateDataTemplateTask()
   {
-    // This is a dummy task to maintain backward compatibility
-    GenerateDataTemplateConfigurerTask configTask = getProject().getTasks()
-        .create(getName() + "Configuration", GenerateDataTemplateConfigurerTask.class);
-
-    configTask.setDescription("Configures " + getName() + " task and always runs before that task.");
-
-    dependsOn(configTask);
   }
 
   /**
@@ -156,12 +149,5 @@ public class GenerateDataTemplateTask extends DefaultTask
       javaExecSpec.args(_destinationDir.getPath());
       javaExecSpec.args(_inputDir);
     });
-  }
-
-  /**
-   * Configures data template generation task. Dummy task.
-   */
-  public static class GenerateDataTemplateConfigurerTask extends DefaultTask
-  {
   }
 }
