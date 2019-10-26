@@ -1,7 +1,15 @@
+27.7.14
+-------
+
+
+
 27.7.13
 -------
 (RB=1855054)
 Remove configure task for data template
+
+(RB=1848734)
+Adding JMX registration of D2 LoadBalancer components
 
 27.7.12
 -------
