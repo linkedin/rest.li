@@ -60,15 +60,18 @@ public class RestLiArgumentBuilderTestHelper
   public static RestRequest getMockRequest(boolean returnHeaders, String entity)
   {
     RestRequest mockRequest = createMock(RestRequest.class);
-    if (returnHeaders)
+
+    if (entity != null)
+    {
+      expect(mockRequest.getHeaders()).andReturn(
+          Collections.singletonMap(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON));
+      expect(mockRequest.getEntity()).andReturn(ByteString.copy(entity.getBytes())).anyTimes();
+    }
+    else if (returnHeaders)
     {
       expect(mockRequest.getHeaders()).andReturn(Collections.emptyMap());
     }
-    if (entity != null)
-    {
-      expect(mockRequest.getHeader("Content-Type")).andReturn("application/json");
-      expect(mockRequest.getEntity()).andReturn(ByteString.copy(entity.getBytes())).anyTimes();
-    }
+
     replay(mockRequest);
     return mockRequest;
   }
@@ -78,12 +81,13 @@ public class RestLiArgumentBuilderTestHelper
     RestRequest mockRequest = createMock(RestRequest.class);
     Map<String, String> headers = new HashMap<>();
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
-    expect(mockRequest.getHeaders()).andReturn(headers).anyTimes();
     if (entity != null)
     {
-      expect(mockRequest.getHeader("Content-Type")).andReturn("application/json");
+      headers.put(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON);
       expect(mockRequest.getEntity()).andReturn(ByteString.copy(entity.getBytes()));
     }
+
+    expect(mockRequest.getHeaders()).andReturn(headers).anyTimes();
     replay(mockRequest);
     return mockRequest;
   }

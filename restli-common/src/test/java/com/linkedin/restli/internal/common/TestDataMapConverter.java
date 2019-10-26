@@ -44,11 +44,9 @@ public class TestDataMapConverter
   {
     DataMap testDataMap = createTestDataMap();
     byte[] expectedBytes = JACKSON_DATA_CODEC.mapToBytes(testDataMap);
-    ByteString byteString = DataMapConverter.dataMapToByteString("application/json", testDataMap);
-    Assert.assertEquals(byteString.copyBytes(), expectedBytes);
 
     Map<String, String> headers = Collections.singletonMap(RestConstants.HEADER_CONTENT_TYPE, "application/json");
-    byteString = DataMapConverter.dataMapToByteString(headers, testDataMap);
+    ByteString byteString = DataMapConverter.dataMapToByteString(headers, testDataMap);
     Assert.assertEquals(byteString.copyBytes(), expectedBytes);
   }
 
@@ -58,11 +56,9 @@ public class TestDataMapConverter
     // unsupport content type should fallback to JSON
     DataMap testDataMap = createTestDataMap();
     byte[] expectedBytes = JACKSON_DATA_CODEC.mapToBytes(testDataMap);
-    ByteString byteString = DataMapConverter.dataMapToByteString("mysuperkool/xson", testDataMap);
-    Assert.assertEquals(byteString.copyBytes(), expectedBytes);
 
     Map<String, String> headers = Collections.singletonMap(RestConstants.HEADER_CONTENT_TYPE, "mysuperkool/xson");
-    byteString = DataMapConverter.dataMapToByteString(headers, testDataMap);
+    ByteString byteString = DataMapConverter.dataMapToByteString(headers, testDataMap);
     Assert.assertEquals(byteString.copyBytes(), expectedBytes);
   }
 
@@ -71,11 +67,9 @@ public class TestDataMapConverter
   {
     DataMap testDataMap = createTestDataMap();
     byte[] expectedBytes = PSON_DATA_CODEC.mapToBytes(testDataMap);
-    ByteString byteString = DataMapConverter.dataMapToByteString("application/x-pson", testDataMap);
-    Assert.assertEquals(byteString.copyBytes(), expectedBytes);
 
     Map<String, String> headers = Collections.singletonMap(RestConstants.HEADER_CONTENT_TYPE, "application/x-pson");
-    byteString = DataMapConverter.dataMapToByteString(headers, testDataMap);
+    ByteString byteString = DataMapConverter.dataMapToByteString(headers, testDataMap);
     Assert.assertEquals(byteString.copyBytes(), expectedBytes);
   }
 
@@ -85,11 +79,9 @@ public class TestDataMapConverter
   {
     DataMap expectedDataMap = createTestDataMap();
     ByteString byteString = ByteString.copy(JACKSON_DATA_CODEC.mapToBytes(expectedDataMap));
-    DataMap dataMap = DataMapConverter.bytesToDataMap("application/json", byteString);
-    Assert.assertEquals(dataMap, expectedDataMap);
 
     Map<String, String> headers = Collections.singletonMap(RestConstants.HEADER_CONTENT_TYPE, "application/json");
-    dataMap = DataMapConverter.bytesToDataMap(headers, byteString);
+    DataMap dataMap = DataMapConverter.bytesToDataMap(headers, byteString);
     Assert.assertEquals(dataMap, expectedDataMap);
   }
 
@@ -99,11 +91,9 @@ public class TestDataMapConverter
     // unsupport content type should fallback to JSON
     DataMap expectedDataMap = createTestDataMap();
     ByteString byteString = ByteString.copy(JACKSON_DATA_CODEC.mapToBytes(expectedDataMap));
-    DataMap dataMap = DataMapConverter.bytesToDataMap("mysuperkool/xson", byteString);
-    Assert.assertEquals(dataMap, expectedDataMap);
 
     Map<String, String> headers = Collections.singletonMap(RestConstants.HEADER_CONTENT_TYPE, "mysuperkool/xson");
-    dataMap = DataMapConverter.bytesToDataMap(headers, byteString);
+    DataMap dataMap = DataMapConverter.bytesToDataMap(headers, byteString);
     Assert.assertEquals(dataMap, expectedDataMap);
   }
 
@@ -112,7 +102,7 @@ public class TestDataMapConverter
   {
     DataMap expectedDataMap = createTestDataMap();
     ByteString byteString = ByteString.copy(PSON_DATA_CODEC.mapToBytes(expectedDataMap));
-    DataMap dataMap = DataMapConverter.bytesToDataMap("application/x-pson", byteString);
+    DataMap dataMap = bytesToDataMap("application/x-pson", byteString);
     Assert.assertEquals(dataMap, expectedDataMap);
 
     Map<String, String> headers = Collections.singletonMap(RestConstants.HEADER_CONTENT_TYPE, "application/x-pson");
@@ -123,25 +113,25 @@ public class TestDataMapConverter
   @Test(expectedExceptions = IOException.class)
   public void testInvalidJSONByteStringToDataMap() throws MimeTypeParseException, IOException
   {
-    DataMapConverter.bytesToDataMap("application/json", ByteString.copy("helloWorld".getBytes()));
+    bytesToDataMap("application/json", ByteString.copy("helloWorld".getBytes()));
   }
 
   @Test(expectedExceptions = IOException.class)
   public void testInvalidPSONByteStringToDataMap() throws MimeTypeParseException, IOException
   {
-    DataMapConverter.bytesToDataMap("application/x-pson", ByteString.copy("helloWorld".getBytes()));
+    bytesToDataMap("application/x-pson", ByteString.copy("helloWorld".getBytes()));
   }
 
   @Test(expectedExceptions = IOException.class)
   public void testEmptyJSONByteStringToDataMap() throws MimeTypeParseException, IOException
   {
-    DataMapConverter.bytesToDataMap("application/json", ByteString.copy(new byte[0]));
+    bytesToDataMap("application/json", ByteString.copy(new byte[0]));
   }
 
   @Test(expectedExceptions = IOException.class)
   public void testEmptyPSONByteStringToDataMap() throws MimeTypeParseException, IOException
   {
-    DataMapConverter.bytesToDataMap("application/x-pson", ByteString.copy(new byte[0]));
+    bytesToDataMap("application/x-pson", ByteString.copy(new byte[0]));
   }
 
   @Test(expectedExceptions = IOException.class)
@@ -149,7 +139,7 @@ public class TestDataMapConverter
   {
     DataMap dataMap = createTestDataMap();
     ByteString byteString = ByteString.copy(JACKSON_DATA_CODEC.mapToBytes(dataMap));
-    DataMapConverter.bytesToDataMap("application/x-pson", byteString);
+    bytesToDataMap("application/x-pson", byteString);
   }
 
   @Test(expectedExceptions = MimeTypeParseException.class)
@@ -157,14 +147,22 @@ public class TestDataMapConverter
   {
     DataMap dataMap = createTestDataMap();
     ByteString byteString = ByteString.copy(JACKSON_DATA_CODEC.mapToBytes(dataMap));
-    DataMapConverter.bytesToDataMap("foo=bar", byteString);
+    bytesToDataMap("foo=bar", byteString);
   }
 
   @Test(expectedExceptions = MimeTypeParseException.class)
   public void testDataMapToByteStringWithNonParsableContentType() throws MimeTypeParseException, IOException
   {
     DataMap dataMap = createTestDataMap();
-    DataMapConverter.dataMapToByteString("application::json", dataMap);
+    DataMapConverter.dataMapToByteString(
+        Collections.singletonMap(RestConstants.HEADER_CONTENT_TYPE, "application::json"), dataMap);
+  }
+
+  private static DataMap bytesToDataMap(String contentTypeHeaderValue, ByteString byteString)
+      throws MimeTypeParseException, IOException
+  {
+    return DataMapConverter.bytesToDataMap(
+        Collections.singletonMap(RestConstants.HEADER_CONTENT_TYPE, contentTypeHeaderValue), byteString);
   }
 
   private DataMap createTestDataMap()

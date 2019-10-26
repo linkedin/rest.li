@@ -17,9 +17,12 @@
 package com.linkedin.restli.internal.server.model;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.server.ResourceLevel;
@@ -31,6 +34,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Representation of a Rest.li resource method.
@@ -39,6 +46,8 @@ import java.util.List;
  */
 public class ResourceMethodDescriptor
 {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ResourceMethodDescriptor.class.getSimpleName());
+
   public enum InterfaceType
   {
     SYNC, CALLBACK, PROMISE, TASK
@@ -450,6 +459,55 @@ public class ResourceMethodDescriptor
   public RecordDataSchema getRequestDataSchema()
   {
     return _requestDataSchema;
+  }
+
+  /**
+   * Collect all the data schemas referenced by this method descriptor.
+   */
+  public void collectReferencedDataSchemas(Set<DataSchema> schemas)
+  {
+    if (_requestDataSchema != null)
+    {
+      schemas.add(_requestDataSchema);
+    }
+
+    if (_actionReturnRecordDataSchema != null)
+    {
+      schemas.add(_actionReturnRecordDataSchema);
+    }
+
+    if (_actionReturnFieldDef != null)
+    {
+      DataSchema schema = _actionReturnFieldDef.getDataSchema();
+      if (schema != null)
+      {
+        schemas.add(schema);
+      }
+    }
+
+    if (_collectionCustomMetadataType != null)
+    {
+      try
+      {
+        schemas.add(DataTemplateUtil.getSchema(_collectionCustomMetadataType));
+      }
+      catch (TemplateRuntimeException e)
+      {
+        LOGGER.debug("Failed to get schema for collection metadata type: " + _collectionCustomMetadataType.getName(), e);
+      }
+    }
+
+    if (_parameters != null)
+    {
+      for (Parameter<?> parameter : _parameters)
+      {
+        DataSchema schema = parameter.getDataSchema();
+        if (schema != null)
+        {
+          schemas.add(schema);
+        }
+      }
+    }
   }
 
   /**

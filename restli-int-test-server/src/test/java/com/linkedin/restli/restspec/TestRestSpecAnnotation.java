@@ -19,6 +19,7 @@ package com.linkedin.restli.restspec;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import java.util.Collections;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -52,15 +53,18 @@ public class TestRestSpecAnnotation
   @Test(dataProvider = "annotationFiles")
   public void testExport(String annotationFile) throws FileNotFoundException
   {
-    final DataMap actualRestSpecData = DataMapUtils.readMap(new FileInputStream(GENERATED_IDL_DIR + annotationFile));
-    final DataMap expectedRestSpecData = DataMapUtils.readMap(new FileInputStream(EXPECTED_IDL_DIR + annotationFile));
+    final DataMap actualRestSpecData = DataMapUtils.readMap(
+        new FileInputStream(GENERATED_IDL_DIR + annotationFile), Collections.emptyMap());
+    final DataMap expectedRestSpecData = DataMapUtils.readMap(
+        new FileInputStream(EXPECTED_IDL_DIR + annotationFile), Collections.emptyMap());
     Assert.assertEquals(actualRestSpecData, expectedRestSpecData);
   }
 
   @Test(dataProvider = "annotationFiles")
   public void testParse(String annotationFile) throws FileNotFoundException
   {
-    final DataMap generatedRestSpecData = DataMapUtils.readMap(new FileInputStream(GENERATED_IDL_DIR + annotationFile));
+    final DataMap generatedRestSpecData = DataMapUtils.readMap(
+        new FileInputStream(GENERATED_IDL_DIR + annotationFile), Collections.emptyMap());
     final ResourceSchema schema = new ResourceSchema(generatedRestSpecData);
     Assert.assertTrue(schema.hasAnnotations());
     final DataMap parsedRestSpecData = schema.getAnnotations().data();

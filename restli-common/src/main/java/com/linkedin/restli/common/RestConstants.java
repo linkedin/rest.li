@@ -49,7 +49,7 @@ public interface RestConstants
   String HEADER_VALUE_MULTIPART_RELATED = "multipart/related";
   String HEADER_VALUE_ACCEPT_ANY = "*/*";
   String HEADER_RESTLI_PROTOCOL_VERSION = "X-RestLi-Protocol-Version";
-  String HEADER_RESTLI_SYMBOL_TABLE_NAME = "X-RestLi-Symbol-Table-Name";
+  String CONTENT_TYPE_PARAM_SYMBOL_TABLE = "symbol-table";
   String HEADER_CONTENT_ID = "Content-ID";
 
   // Default supported mime types.

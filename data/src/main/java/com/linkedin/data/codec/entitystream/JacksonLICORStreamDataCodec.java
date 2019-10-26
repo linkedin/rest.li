@@ -24,10 +24,8 @@ import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.symbol.SymbolTable;
-import com.linkedin.data.codec.symbol.SymbolTableProvider;
 import com.linkedin.entitystream.EntityStream;
 import com.linkedin.entitystream.EntityStreams;
-
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -42,8 +40,6 @@ import java.util.concurrent.CompletionStage;
  */
 public class JacksonLICORStreamDataCodec implements StreamDataCodec
 {
-  private static volatile SymbolTableProvider _symbolTableProvider;
-
   private static final JsonFactory TEXT_FACTORY = new JsonFactory();
   private static final JsonFactory BINARY_FACTORY =
       new SmileFactory().enable(SmileGenerator.Feature.CHECK_SHARED_STRING_VALUES);
@@ -55,37 +51,16 @@ public class JacksonLICORStreamDataCodec implements StreamDataCodec
   protected final boolean _useBinary;
   protected final SymbolTable _symbolTable;
 
-  /**
-   * Set the symbol table provider. This will be used by all codec instances.
-   *
-   * <p>It is the responsibility of the application to set this provider if it wants shared symbol
-   * tables to be used.</p>
-   *
-   * @param symbolTableProvider The provider to set.
-   */
-  public static void setSymbolTableProvider(SymbolTableProvider symbolTableProvider)
-  {
-    _symbolTableProvider = symbolTableProvider;
-  }
-
   public JacksonLICORStreamDataCodec(int bufferSize, boolean useBinary)
   {
     this(bufferSize, useBinary, null);
   }
 
-  public JacksonLICORStreamDataCodec(int bufferSize, boolean useBinary, String symbolTableName)
+  public JacksonLICORStreamDataCodec(int bufferSize, boolean useBinary, SymbolTable symbolTable)
   {
     _bufferSize = bufferSize;
     _useBinary = useBinary;
-
-    if (symbolTableName != null && _symbolTableProvider != null)
-    {
-      _symbolTable = _symbolTableProvider.getSymbolTable(symbolTableName);
-    }
-    else
-    {
-      _symbolTable = null;
-    }
+    _symbolTable = symbolTable;
   }
 
   @SuppressWarnings("unchecked")

@@ -16,8 +16,12 @@
 
 package com.linkedin.data.codec.symbol;
 
+import java.net.URI;
+import java.util.Map;
+
+
 /**
- * An abstraction to manage vending symbol tables keyed by name.
+ * An abstraction to manage shared symbol tables keyed by name.
  */
 public interface SymbolTableProvider {
 
@@ -28,5 +32,41 @@ public interface SymbolTableProvider {
    *
    * @return The symbol table if found, null otherwise.
    */
-  SymbolTable getSymbolTable(String symbolTableName);
+  default SymbolTable getSymbolTable(String symbolTableName)
+  {
+    if (symbolTableName != null)
+    {
+      throw new IllegalStateException("Not configured to fetch symbol table with name: " + symbolTableName);
+    }
+
+    return null;
+  }
+
+  /**
+   * Get the symbol table for the given a request.
+   *
+   * @param requestUri The URI of the request.
+   *
+   * @return The symbol table if found, null otherwise.
+   */
+  default SymbolTable getRequestSymbolTable(URI requestUri)
+  {
+    return null;
+  }
+
+  /**
+   * Get the response symbol table.
+   *
+   * @param requestUri     The request URI.
+   * @param requestHeaders The request headers.
+   *
+   * <p>Choosing the response symbol table based on the request URI and headers is useful in scenarios where the
+   * client may not have access to the latest server symbol table at runtime (eg: Remote clients).</p>
+   *
+   * @return The symbol table if found, null otherwise.
+   */
+  default SymbolTable getResponseSymbolTable(URI requestUri, Map<String, String> requestHeaders)
+  {
+    return null;
+  }
 }

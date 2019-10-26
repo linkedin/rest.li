@@ -26,7 +26,7 @@ import javax.activation.MimeTypeParseException;
 
 
 /**
- * Converter that converts DataMap to JSON/PSON byteString and vice versa
+ * Converter that converts DataMap to byteString and vice versa
  */
 public class DataMapConverter
 {
@@ -40,7 +40,7 @@ public class DataMapConverter
    */
   public static ByteString dataMapToByteString(Map<String, String> headers, DataMap dataMap) throws MimeTypeParseException, IOException
   {
-    return dataMapToByteString(getContentTypeHeader(headers), dataMap);
+    return ByteString.unsafeWrap(getContentType(headers).getCodec().mapToBytes(dataMap));
   }
 
   /**
@@ -53,7 +53,7 @@ public class DataMapConverter
    */
   public static DataMap bytesToDataMap(Map<String, String> headers, ByteString bytes) throws MimeTypeParseException, IOException
   {
-    return bytesToDataMap(getContentTypeHeader(headers), bytes);
+    return getContentType(headers).getCodec().readMap(bytes.asInputStream());
   }
 
   /**
@@ -66,11 +66,7 @@ public class DataMapConverter
    */
   public static ByteString dataMapToByteString(String contentTypeHeaderValue, DataMap dataMap) throws MimeTypeParseException, IOException
   {
-    // TODO: We should throw an exception instead of using JSON for an unknown content type. This behavior was introduced
-    // in commit d149605e4181349b64180bdfe0b4d24a294dc6f6 when this logic is refactored from DataMapUtils.readMapWithExceptions.
-    ContentType contentType  = ContentType.getContentType(contentTypeHeaderValue).orElse(ContentType.JSON);
-
-    return ByteString.unsafeWrap(contentType.getCodec().mapToBytes(dataMap));
+    return ByteString.unsafeWrap(getContentType(contentTypeHeaderValue).getCodec().mapToBytes(dataMap));
   }
 
   /**
@@ -83,13 +79,18 @@ public class DataMapConverter
    */
   public static DataMap bytesToDataMap(String contentTypeHeaderValue, ByteString bytes) throws MimeTypeParseException, IOException
   {
-    ContentType contentType = ContentType.getContentType(contentTypeHeaderValue).orElse(ContentType.JSON);
-
-    return contentType.getCodec().readMap(bytes.asInputStream());
+    return getContentType(contentTypeHeaderValue).getCodec().readMap(bytes.asInputStream());
   }
 
-  private static String getContentTypeHeader(Map<String, String> headers)
+  public static ContentType getContentType(Map<String, String> headers) throws MimeTypeParseException
   {
-    return headers.get(RestConstants.HEADER_CONTENT_TYPE);
+    return getContentType(headers.get(RestConstants.HEADER_CONTENT_TYPE));
+  }
+
+  private static ContentType getContentType(String contentTypeHeaderValue) throws MimeTypeParseException
+  {
+    // TODO: We should throw an exception instead of using JSON for an unknown content type. This behavior was introduced
+    // in commit d149605e4181349b64180bdfe0b4d24a294dc6f6 when this logic is refactored from DataMapUtils.readMapWithExceptions.
+    return ContentType.getContentType(contentTypeHeaderValue).orElse(ContentType.JSON);
   }
 }

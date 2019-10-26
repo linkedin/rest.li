@@ -228,7 +228,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
           .orElse(ContentType.JSON);
 
       String respMimeType = routingResult.getContext().getResponseMimeType();
-      respContentType = ContentType.getContentType(respMimeType)
+      respContentType = ContentType.getResponseContentType(respMimeType, request.getURI(), request.getHeaders())
           .orElseThrow(() -> new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE, "Requested mime type for encoding is not supported. Mimetype: " + respMimeType));
     }
     catch (MimeTypeParseException e)
@@ -236,8 +236,8 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
       callback.onError(e);
       return;
     }
-    StreamDataCodec reqCodec = reqContentType.getStreamCodec(request.getHeaders());
-    StreamDataCodec respCodec = respContentType.getStreamCodec(routingResult.getContext().getResponseHeaders());
+    StreamDataCodec reqCodec = reqContentType.getStreamCodec();
+    StreamDataCodec respCodec = respContentType.getStreamCodec();
 
     if (_useStreamCodec && reqCodec != null && respCodec != null)
     {
@@ -331,7 +331,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
       if (restLiResponse.hasData())
       {
         responseBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, _contentType.getHeaderKey());
-        entityStream = _contentType.getStreamCodec(restLiResponse.getHeaders()).encodeMap(restLiResponse.getDataMap());
+        entityStream = _contentType.getStreamCodec().encodeMap(restLiResponse.getDataMap());
       }
       else
       {
@@ -347,9 +347,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
       if (e instanceof RestLiResponseException)
       {
         RestLiResponseException responseException = (RestLiResponseException) e;
-        StreamDataCodec streamDataCodec =
-            _contentType.getStreamCodec(responseException.getRestLiResponse().getHeaders());
-        return ResponseUtils.buildStreamException(responseException, streamDataCodec);
+        return ResponseUtils.buildStreamException(responseException, _contentType.getStreamCodec());
       }
       else
       {

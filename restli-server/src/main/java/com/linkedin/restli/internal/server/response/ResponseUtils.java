@@ -43,6 +43,7 @@ import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.RestLiServiceException;
 
 import java.io.ByteArrayOutputStream;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import javax.activation.MimeTypeParseException;
@@ -98,25 +99,28 @@ public class ResponseUtils
     {
       DataMap dataMap = restLiResponse.getDataMap();
       String mimeType = context.getResponseMimeType();
-      builder = encodeResult(mimeType, context.getRequestHeaders(), builder, dataMap);
+      URI requestUri = context.getRequestURI();
+      Map<String, String> requestHeaders = context.getRequestHeaders();
+      builder = encodeResult(mimeType, requestUri, requestHeaders, builder, dataMap);
     }
     return builder.build();
   }
 
   private static RestResponseBuilder encodeResult(String mimeType,
+      URI requestUri,
       Map<String, String> requestHeaders,
       RestResponseBuilder builder,
       DataMap dataMap)
   {
     try
     {
-      ContentType type = ContentType.getContentType(mimeType).orElseThrow(
+      ContentType type = ContentType.getResponseContentType(mimeType, requestUri, requestHeaders).orElseThrow(
           () -> new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE,
               "Requested mime type for encoding is not supported. Mimetype: " + mimeType));
       assert type != null;
       builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
       // Use unsafe wrap to avoid copying the bytes when request builder creates ByteString.
-      builder.setEntity(ByteString.unsafeWrap(DataMapUtils.mapToBytes(dataMap, type.getCodec(requestHeaders))));
+      builder.setEntity(ByteString.unsafeWrap(DataMapUtils.mapToBytes(dataMap, type.getCodec())));
     }
     catch (MimeTypeParseException e)
     {
@@ -138,10 +142,8 @@ public class ResponseUtils
     {
       DataMap dataMap = restLiResponse.getDataMap();
       ByteArrayOutputStream baos = new ByteArrayOutputStream(4096);
-      DataMapUtils.write(dataMap, null, baos, true);
+      DataMapUtils.write(dataMap, baos, responseBuilder.getHeaders());
       responseBuilder.setEntity(ByteString.unsafeWrap(baos.toByteArray()));
-      // TODO: Error response not always built in requested content type.
-      responseBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.JSON.getHeaderKey());
     }
 
     RestResponse restResponse = responseBuilder.build();

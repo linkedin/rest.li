@@ -33,6 +33,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.LinkArray;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.Parameter;
@@ -296,9 +297,9 @@ public class RestUtils
     if (StringUtils.isEmpty(mimeType))
     {
       throw new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE,
-                                       "None of the types in the request's 'Accept' header are supported. Supported MIME types are: "
-                                           + RestConstants.SUPPORTED_MIME_TYPES
-                                           + customMimeTypesSupported);
+          "None of the types in the request's 'Accept' header are supported. Supported MIME types are: "
+              + RestConstants.SUPPORTED_MIME_TYPES
+              + customMimeTypesSupported);
     }
     else
     {

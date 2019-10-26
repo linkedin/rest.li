@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -216,7 +217,7 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
   private byte[] createNewGreetingBytes(Long id)
   {
     Greeting newGreeting = new Greeting().setMessage("New Greeting!").setId(id);
-    return DataMapUtils.mapToBytes(newGreeting.data());
+    return DataMapUtils.mapToBytes(newGreeting.data(), Collections.emptyMap());
   }
 
   private void sendRequestAndVerifyParseqTracevisResponse(RestRequest request)

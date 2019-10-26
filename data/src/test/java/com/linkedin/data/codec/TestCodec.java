@@ -25,6 +25,7 @@ import com.linkedin.data.TestUtil;
 import com.linkedin.data.codec.symbol.InMemorySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTableProvider;
+import com.linkedin.data.codec.symbol.SymbolTableProviderHolder;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
@@ -247,23 +248,26 @@ public class TestCodec
 
     collectSymbols(symbols, map);
     final String sharedSymbolTableName = "SHARED";
-    SymbolTable symbolTable = new InMemorySymbolTable(new ArrayList<>(symbols));
+    SymbolTable symbolTable = new InMemorySymbolTable(sharedSymbolTableName, new ArrayList<>(symbols));
 
-    SymbolTableProvider provider = symbolTableName -> {
-      if (sharedSymbolTableName.equals(symbolTableName))
+    SymbolTableProvider provider = new SymbolTableProvider()
+    {
+      @Override
+      public SymbolTable getSymbolTable(String symbolTableName)
       {
-        return symbolTable;
-      }
+        if (sharedSymbolTableName.equals(symbolTableName))
+        {
+          return symbolTable;
+        }
 
-      return null;
+        return null;
+      }
     };
 
-    JacksonLICORDataCodec.setSymbolTableProvider(provider);
-    codecs.add(new JacksonLICORBinaryDataCodec(sharedSymbolTableName));
-    codecs.add(new JacksonLICORTextDataCodec(sharedSymbolTableName));
-
-    ProtobufDataCodec.setSymbolTableProvider(provider);
-    codecs.add(new ProtobufDataCodec(sharedSymbolTableName));
+    SymbolTableProviderHolder.INSTANCE.setSymbolTableProvider(provider);
+    codecs.add(new JacksonLICORBinaryDataCodec(symbolTable));
+    codecs.add(new JacksonLICORTextDataCodec(symbolTable));
+    codecs.add(new ProtobufDataCodec(symbolTable));
 
     for (DataCodec codec : codecs)
     {
@@ -318,17 +322,17 @@ public class TestCodec
 
   private static class JacksonLICORTextDataCodec extends JacksonLICORDataCodec
   {
-    JacksonLICORTextDataCodec(String symbolTableName)
+    JacksonLICORTextDataCodec(SymbolTable symbolTable)
     {
-      super(false, symbolTableName);
+      super(false, symbolTable);
     }
   }
 
   private static class JacksonLICORBinaryDataCodec extends JacksonLICORDataCodec
   {
-    JacksonLICORBinaryDataCodec(String symbolTableName)
+    JacksonLICORBinaryDataCodec(SymbolTable symbolTable)
     {
-      super(true, symbolTableName);
+      super(true, symbolTable);
     }
   }
 

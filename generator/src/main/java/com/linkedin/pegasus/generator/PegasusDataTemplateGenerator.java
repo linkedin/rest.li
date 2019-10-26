@@ -16,19 +16,17 @@
 
 package com.linkedin.pegasus.generator;
 
-
-import com.linkedin.data.codec.symbol.InMemorySymbolTable;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.util.FileUtil;
-
+import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JPackage;
+import com.sun.codemodel.writer.FileCodeWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,11 +34,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.JPackage;
-import com.sun.codemodel.writer.FileCodeWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,11 +48,6 @@ public class PegasusDataTemplateGenerator
    * The system property that specifies whether to generate classes for externally resolved schemas
    */
   public static final String GENERATOR_GENERATE_IMPORTED = "generator.generate.imported";
-
-  /**
-   * The system property that specifies whether to generate symbol tables for all resolved schemas
-   */
-  public static final String GENERATOR_GENERATE_SYMBOL_TABLE = "generator.generate.symbolTable";
 
   private static final Logger _log = LoggerFactory.getLogger(PegasusDataTemplateGenerator.class);
 
@@ -109,18 +97,15 @@ public class PegasusDataTemplateGenerator
 
     final String generateImportedProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED);
     final boolean generateImported = generateImportedProperty == null ? true : Boolean.parseBoolean(generateImportedProperty);
-    final String generateSymbolTableProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_SYMBOL_TABLE);
-    final boolean generateSymbolTable = generateSymbolTableProperty == null ? false : Boolean.parseBoolean(generateSymbolTableProperty);
     PegasusDataTemplateGenerator.run(System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH),
                                      System.getProperty(JavaCodeGeneratorBase.GENERATOR_DEFAULT_PACKAGE),
                                      System.getProperty(JavaCodeGeneratorBase.ROOT_PATH),
                                      generateImported,
-                                     generateSymbolTable,
                                      args[0],
                                      Arrays.copyOfRange(args, 1, args.length));
   }
 
-  public static GeneratorResult run(String resolverPath, String defaultPackage, String rootPath, final boolean generateImported, final boolean generateSymbolTable, String targetDirectoryPath, String[] sources)
+  public static GeneratorResult run(String resolverPath, String defaultPackage, String rootPath, final boolean generateImported, String targetDirectoryPath, String[] sources)
       throws IOException
   {
     final DataSchemaParser schemaParser = new DataSchemaParser(resolverPath);
@@ -164,18 +149,7 @@ public class PegasusDataTemplateGenerator
       dataTemplateGenerator.getCodeModel().build(new FileCodeWriter(targetDirectory, true));
     }
 
-    if (generateSymbolTable)
-    {
-      writeSymbolTable(targetDirectory, dataTemplateGenerator.getGeneratedSymbols());
-    }
-
     return new DefaultGeneratorResult(parseResult.getSourceFiles(), targetFiles, modifiedFiles);
-  }
-
-  private static void writeSymbolTable(File targetDirectory, Set<String> symbols) throws IOException
-  {
-    String symbolTableFilePath = new File(targetDirectory, "symbols").getAbsolutePath();
-    new InMemorySymbolTable(new ArrayList<>(symbols)).writeToFile(symbolTableFilePath);
   }
 
   /**

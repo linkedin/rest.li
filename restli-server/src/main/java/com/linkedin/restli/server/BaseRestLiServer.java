@@ -2,6 +2,8 @@ package com.linkedin.restli.server;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.symbol.SymbolTableProvider;
+import com.linkedin.data.codec.symbol.SymbolTableProviderHolder;
 import com.linkedin.parseq.Engine;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
@@ -131,8 +133,7 @@ abstract class BaseRestLiServer
     try
     {
       ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, requestContext);
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), _customContentTypes,
-          context);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), _customContentTypes, context);
 
       ResourceMethodDescriptor method = _router.process(context);
       ResourceMethodConfig methodConfig = _methodConfigProvider.apply(method);

@@ -988,7 +988,8 @@ public class TestRestLiServer
           assertEquals(restResponse.getStatus(), 500);
           assertTrue(restResponse.getEntity().length() > 0);
           assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR);
-          ErrorResponse responseBody = DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class);
+          ErrorResponse responseBody =
+              DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class, restResponse.getHeaders());
           assertEquals(responseBody.getMessage(), "Mock Exception");
           assertEquals(responseBody.getExceptionClass(), "com.linkedin.restli.server.RestLiServiceException");
           assertTrue(responseBody.getStackTrace().startsWith(
@@ -1074,7 +1075,8 @@ public class TestRestLiServer
 
         try
         {
-          ErrorResponse responseBody = DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class);
+          ErrorResponse responseBody =
+              DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class, restResponse.getHeaders());
           assertEquals(responseBody.getMessage(), ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE);
 
           EasyMock.verify(statusResource);
@@ -1156,7 +1158,8 @@ public class TestRestLiServer
 
         try
         {
-          ErrorResponse responseBody = DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class);
+          ErrorResponse responseBody =
+              DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class, restResponse.getHeaders());
           assertEquals(responseBody.getMessage(), "kthxbye.");
 
           EasyMock.verify(statusResource);
@@ -1245,7 +1248,8 @@ public class TestRestLiServer
           assertEquals(restResponse.getStatus(), 500);
           assertTrue(restResponse.getEntity().length() > 0);
           assertEquals(restResponse.getHeader(errorResponseHeaderName), RestConstants.HEADER_VALUE_ERROR);
-          ErrorResponse responseBody = DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class);
+          ErrorResponse responseBody =
+              DataMapUtils.read(restResponse.getEntity().asInputStream(), ErrorResponse.class, restResponse.getHeaders());
 
           // in this test, we're using the _serverWithCustomErrorResponseConfig (see below), which has been configure to use the
           // MESSAGE_AND_DETAILS ErrorResponseFormat, so stack trace and other error response parts should be absent

@@ -158,7 +158,6 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   private final boolean _pathSpecMethods;
   private final boolean _copierMethods;
   private final String _rootPath;
-  private final Set<String> _generatedSymbols;
 
   private JavaDataTemplateGenerator(String defaultPackage,
                                     boolean recordFieldAccessorWithMode,
@@ -181,7 +180,6 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     _pathSpecMethods = pathSpecMethods;
     _copierMethods = copierMethods;
     _rootPath = rootPath;
-    _generatedSymbols = new HashSet<>();
   }
 
   public JavaDataTemplateGenerator(Config config)
@@ -220,11 +218,6 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   public Map<JDefinedClass, ClassTemplateSpec> getGeneratedClasses()
   {
     return _generatedClasses;
-  }
-
-  public Set<String> getGeneratedSymbols()
-  {
-    return _generatedSymbols;
   }
 
   public JClass generate(ClassTemplateSpec classTemplateSpec)
@@ -669,7 +662,6 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     for (RecordTemplateSpec.Field field : recordSpec.getFields())
     {
       generateRecordFieldAccessors(templateClass, field, generate(field.getType()), schemaFieldVar);
-      _generatedSymbols.add(field.getSchemaField().getName());
     }
 
     recordSpec.getFields().stream()
@@ -925,7 +917,6 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       {
         generateUnionMemberAccessors(unionClass, member, generate(member.getClassTemplateSpec()), generate(member.getDataClass()), schemaField);
       }
-      _generatedSymbols.add(member.getUnionMemberKey());
     }
 
     unionSpec.getMembers().stream()

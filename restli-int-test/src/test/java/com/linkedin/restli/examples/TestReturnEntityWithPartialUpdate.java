@@ -267,7 +267,8 @@ public class TestReturnEntityWithPartialUpdate extends RestLiIntegrationTest
    */
   private PatchRequest<Greeting> makeGreetingMessagePatch(String message) throws MimeTypeParseException, IOException
   {
-    DataMap patchDoc = DataMapConverter.bytesToDataMap(RestConstants.HEADER_VALUE_APPLICATION_JSON,
+    DataMap patchDoc = DataMapConverter.bytesToDataMap(
+        Collections.singletonMap(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON),
         ByteString.copyString(String.format("{\"$set\":{\"message\":\"%s\"}}", message), Charset.defaultCharset()));
     return PatchRequest.createFromPatchDocument(patchDoc);
   }

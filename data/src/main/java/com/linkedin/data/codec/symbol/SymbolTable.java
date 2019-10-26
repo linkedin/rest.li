@@ -45,4 +45,10 @@ public interface SymbolTable {
    * @return The name of the symbol if found, null otherwise.
    */
   String getSymbolName(int symbolId);
+
+  /**
+   * @return The name of the symbol table. This acts as a primary key for the symbol table in any caches clients
+   * may choose to maintain.
+   */
+  String getName();
 }

@@ -202,7 +202,7 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
       Assert.assertEquals(response.getHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION),
                           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion().toString());
 
-      final DataMap exceptionDetail = DataMapUtils.readMap(response.getEntity().asInputStream());
+      final DataMap exceptionDetail = DataMapUtils.readMap(response.getEntity().asInputStream(), response.getHeaders());
       Assert.assertEquals(exceptionDetail.getString("exceptionClass"), RestLiServiceException.class.getName());
     }
   }

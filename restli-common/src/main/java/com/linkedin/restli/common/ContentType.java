@@ -17,18 +17,17 @@
 package com.linkedin.restli.common;
 
 import com.linkedin.data.codec.DataCodec;
-import com.linkedin.data.codec.HeaderBasedCodecProvider;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.JacksonLICORDataCodec;
+import com.linkedin.data.codec.JacksonSmileDataCodec;
 import com.linkedin.data.codec.ProtobufDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
-import com.linkedin.data.codec.JacksonSmileDataCodec;
-import com.linkedin.data.codec.entitystream.JacksonStreamDataCodec;
-import com.linkedin.data.codec.entitystream.JacksonSmileStreamDataCodec;
 import com.linkedin.data.codec.entitystream.JacksonLICORStreamDataCodec;
+import com.linkedin.data.codec.entitystream.JacksonSmileStreamDataCodec;
+import com.linkedin.data.codec.entitystream.JacksonStreamDataCodec;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
 import com.linkedin.r2.filter.R2Constants;
-
+import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,63 +57,43 @@ public class ContentType
   private static final JacksonSmileStreamDataCodec SMILE_STREAM_DATA_CODEC = new JacksonSmileStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
 
   public static final ContentType PSON =
-      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PSON, PSON_DATA_CODEC, null, null);
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PSON, PSON_DATA_CODEC, null);
   public static final ContentType JSON =
-      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_JSON, JACKSON_DATA_CODEC, JACKSON_STREAM_DATA_CODEC, null);
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_JSON, JACKSON_DATA_CODEC, JACKSON_STREAM_DATA_CODEC);
   public static final ContentType LICOR_TEXT =
       new ContentType(RestConstants.HEADER_VALUE_APPLICATION_LICOR_TEXT, LICOR_TEXT_DATA_CODEC,
-          LICOR_TEXT_STREAM_DATA_CODEC, new HeaderBasedCodecProvider() {
-        @Override
-        public DataCodec getCodec(Map<String, String> requestHeaders) {
-          return new JacksonLICORDataCodec(false, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
-        }
-
-        @Override
-        public StreamDataCodec getStreamCodec(Map<String, String> requestHeaders) {
-          return new JacksonLICORStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, false, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
-        }
-      });
+          LICOR_TEXT_STREAM_DATA_CODEC);
   public static final ContentType LICOR_BINARY =
       new ContentType(RestConstants.HEADER_VALUE_APPLICATION_LICOR_BINARY, LICOR_BINARY_DATA_CODEC,
-          LICOR_BINARY_STREAM_DATA_CODEC, new HeaderBasedCodecProvider() {
-        @Override
-        public DataCodec getCodec(Map<String, String> requestHeaders) {
-          return new JacksonLICORDataCodec(true, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
-        }
-
-        @Override
-        public StreamDataCodec getStreamCodec(Map<String, String> requestHeaders) {
-          return new JacksonLICORStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, true, requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
-        }
-      });
+          LICOR_BINARY_STREAM_DATA_CODEC);
   public static final ContentType SMILE =
-      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_SMILE, SMILE_DATA_CODEC, SMILE_STREAM_DATA_CODEC, null);
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_SMILE, SMILE_DATA_CODEC, SMILE_STREAM_DATA_CODEC);
   public static final ContentType PROTOBUF =
-      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF, PROTOBUF_DATA_CODEC, null, new HeaderBasedCodecProvider() {
-        @Override
-        public DataCodec getCodec(Map<String, String> requestHeaders) {
-          return new ProtobufDataCodec(requestHeaders.get(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME));
-        }
-
-        @Override
-        public StreamDataCodec getStreamCodec(Map<String, String> requestHeaders) {
-          return null;
-        }
-      });
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF, PROTOBUF_DATA_CODEC, null);
   // Content type to be used only as an accept type.
   public static final ContentType ACCEPT_TYPE_ANY =
-      new ContentType(RestConstants.HEADER_VALUE_ACCEPT_ANY, JACKSON_DATA_CODEC, null, null);
+      new ContentType(RestConstants.HEADER_VALUE_ACCEPT_ANY, JACKSON_DATA_CODEC, null);
 
-  private static final Map<String, ContentType> SUPPORTED_TYPES = new ConcurrentHashMap<>();
+  private static final Map<String, ContentTypeProvider> SUPPORTED_TYPE_PROVIDERS = new ConcurrentHashMap<>();
   static
   {
-    // Include content types supported by Rest.Li by default.
-    SUPPORTED_TYPES.put(PSON.getHeaderKey(), PSON);
-    SUPPORTED_TYPES.put(JSON.getHeaderKey(), JSON);
-    SUPPORTED_TYPES.put(LICOR_TEXT.getHeaderKey(), LICOR_TEXT);
-    SUPPORTED_TYPES.put(LICOR_BINARY.getHeaderKey(), LICOR_BINARY);
-    SUPPORTED_TYPES.put(SMILE.getHeaderKey(), SMILE);
-    SUPPORTED_TYPES.put(PROTOBUF.getHeaderKey(), PROTOBUF);
+    // Include content types supported by Rest.li by default.
+    SUPPORTED_TYPE_PROVIDERS.put(JSON.getHeaderKey(), (rawMimeType, mimeType) -> JSON);
+    SUPPORTED_TYPE_PROVIDERS.put(PSON.getHeaderKey(), (rawMimeType, mimeType) -> PSON);
+    SUPPORTED_TYPE_PROVIDERS.put(SMILE.getHeaderKey(), (rawMimeType, mimeType) -> SMILE);
+    SUPPORTED_TYPE_PROVIDERS.put(PROTOBUF.getHeaderKey(),
+        new SymbolTableBasedContentTypeProvider(PROTOBUF,
+            (rawMimeType, symbolTable) -> new ContentType(rawMimeType, new ProtobufDataCodec(symbolTable), null)));
+    SUPPORTED_TYPE_PROVIDERS.put(LICOR_TEXT.getHeaderKey(),
+        new SymbolTableBasedContentTypeProvider(LICOR_TEXT,
+            (rawMimeType, symbolTable) -> new ContentType(rawMimeType,
+                new JacksonLICORDataCodec(false, symbolTable),
+                new JacksonLICORStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, false, symbolTable))));
+    SUPPORTED_TYPE_PROVIDERS.put(LICOR_BINARY.getHeaderKey(),
+        new SymbolTableBasedContentTypeProvider(LICOR_BINARY,
+            (rawMimeType, symbolTable) -> new ContentType(rawMimeType,
+                new JacksonLICORDataCodec(true, symbolTable),
+                new JacksonLICORStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, true, symbolTable))));
   }
 
   /**
@@ -122,7 +101,7 @@ public class ContentType
    * @param headerKey Content-Type header value to associate this content type with.
    * @param codec Codec to use for this content type.
    *
-   * @return A ContentType representing this custom type that can be use with restli framework.
+   * @return The created content type
    */
   public static ContentType createContentType(String headerKey, DataCodec codec)
   {
@@ -131,42 +110,38 @@ public class ContentType
 
   /**
    * Helper method to create a custom content type and also register it as a supported type.
-   * @param headerKey Content-Type header value to associate this content type with.
+   * @param headerKey Content-Type header base mime type value to associate this content type with.
    * @param codec Codec to use for this content type.
-   * @param streamCodec A {@link StreamDataCodec} to use for this content type.
+   * @param streamCodec An optional {@link StreamDataCodec} to use for this content type.
    *
-   * @return A ContentType representing this custom type that can be use with restli framework.
+   * @return The created content type
    */
   public static ContentType createContentType(String headerKey, DataCodec codec, StreamDataCodec streamCodec)
   {
-    return createContentType(headerKey, codec, streamCodec, null);
+    assert headerKey != null : "Header key for custom content type cannot be null";
+    assert codec != null : "Codec for custom content type cannot be null";
+    final ContentType contentType = new ContentType(headerKey, codec, streamCodec);
+    SUPPORTED_TYPE_PROVIDERS.put(headerKey, (rawMimeType, mimeType) -> contentType);
+    return contentType;
   }
 
   /**
    * Helper method to create a custom content type and also register it as a supported type.
-   * @param headerKey Content-Type header value to associate this content type with.
-   * @param codec Codec to use for this content type.
-   * @param streamCodec A {@link StreamDataCodec} to use for this content type.
-   * @param headerBasedCodecProvider A {@link HeaderBasedCodecProvider} to use to pick codec to use based on the header.
-   *
-   * @return A ContentType representing this custom type that can be use with restli framework.
+   * @param headerKey Content-Type header base mime type value to associate this content type with.
+   * @param provider A {@link ContentTypeProvider} to provide the actual content type.
    */
-  public static ContentType createContentType(String headerKey,
-                                              DataCodec codec,
-                                              StreamDataCodec streamCodec,
-                                              HeaderBasedCodecProvider headerBasedCodecProvider)
+  public static void createContentType(String headerKey, ContentTypeProvider provider)
   {
     assert headerKey != null : "Header key for custom content type cannot be null";
-    assert codec != null : "Codec for custom content type cannot be null";
-    ContentType customType = new ContentType(headerKey, codec, streamCodec, headerBasedCodecProvider);
-    SUPPORTED_TYPES.put(headerKey.toLowerCase(), customType);
-    return customType;
+    assert provider != null : "Provider for custom content type cannot be null";
+    SUPPORTED_TYPE_PROVIDERS.put(headerKey.toLowerCase(), provider);
   }
 
   /**
-   * Get content type based on the given mime type
+   * Get content type based on the given mime type. This is to be used when decoding request/response bodies.
+   *
    * @param contentTypeHeaderValue value of Content-Type header.
-   * @return type of content Restli supports. Can be null if the Content-Type header does not match any of the supported
+   * @return type of content Rest.li supports. Can be empty if the Content-Type header does not match any of the supported
    * content types.
    *
    * @throws MimeTypeParseException thrown when content type is not parsable.
@@ -178,25 +153,79 @@ public class ContentType
       return Optional.of(JSON);
     }
     MimeType parsedMimeType = new MimeType(contentTypeHeaderValue);
-    return Optional.ofNullable(SUPPORTED_TYPES.get(parsedMimeType.getBaseType().toLowerCase()));
+    ContentTypeProvider provider = SUPPORTED_TYPE_PROVIDERS.get(parsedMimeType.getBaseType().toLowerCase());
+    if (provider == null)
+    {
+      return Optional.empty();
+    }
+    return Optional.of(provider.getContentType(contentTypeHeaderValue, parsedMimeType));
+  }
+
+  /**
+   * Get content type to use for encoding the request body.
+   *
+   * @param rawMimeType Raw value of the mime type.
+   * @param requestUri The request URI
+   * @return type of content Rest.li supports. Can be empty if the mime type does not match any of the supported
+   * content types.
+   *
+   * @throws MimeTypeParseException thrown when mime type is not parsable.
+   */
+  public static Optional<ContentType> getRequestContentType(String rawMimeType, URI requestUri) throws MimeTypeParseException
+  {
+    if (rawMimeType == null)
+    {
+      return Optional.of(JSON);
+    }
+    MimeType parsedMimeType = new MimeType(rawMimeType);
+    ContentTypeProvider provider = SUPPORTED_TYPE_PROVIDERS.get(parsedMimeType.getBaseType().toLowerCase());
+    if (provider == null)
+    {
+      return Optional.empty();
+    }
+    return Optional.of(provider.getRequestContentType(rawMimeType, parsedMimeType, requestUri));
+  }
+
+  /**
+   * Get content type to use for encoding the response body.
+   *
+   * @param rawMimeType Raw value of the mime type.
+   * @param requestUri The request URI
+   * @param requestHeaders The request headers.
+   * @return type of content Rest.li supports. Can be empty if the mime type does not match any of the supported
+   * content types.
+   *
+   * @throws MimeTypeParseException thrown when mime type is not parsable.
+   */
+  public static Optional<ContentType> getResponseContentType(String rawMimeType, URI requestUri, Map<String, String> requestHeaders)
+      throws MimeTypeParseException
+  {
+    if (rawMimeType == null)
+    {
+      return Optional.of(JSON);
+    }
+    MimeType parsedMimeType = new MimeType(rawMimeType);
+    ContentTypeProvider provider = SUPPORTED_TYPE_PROVIDERS.get(parsedMimeType.getBaseType().toLowerCase());
+    if (provider == null)
+    {
+      return Optional.empty();
+    }
+    return Optional.of(provider.getResponseContentType(rawMimeType, parsedMimeType, requestUri, requestHeaders));
   }
 
   private final String _headerKey;
   private final DataCodec _codec;
   private final StreamDataCodec _streamCodec;
-  private final HeaderBasedCodecProvider _headerBasedCodecProvider;
 
   /**
    * Constructable only through
-   * {@link ContentType#createContentType(String, DataCodec, StreamDataCodec, HeaderBasedCodecProvider)}
+   * {@link ContentType#createContentType(String, DataCodec, StreamDataCodec)}
    */
-  private ContentType(String headerKey, DataCodec codec, StreamDataCodec streamCodec,
-      HeaderBasedCodecProvider headerBasedCodecProvider)
+  private ContentType(String headerKey, DataCodec codec, StreamDataCodec streamCodec)
   {
     _headerKey = headerKey;
     _codec = codec;
     _streamCodec = streamCodec;
-    _headerBasedCodecProvider = headerBasedCodecProvider;
   }
 
   public String getHeaderKey()
@@ -209,33 +238,14 @@ public class ContentType
     return _codec;
   }
 
-  public DataCodec getCodec(Map<String, String> requestHeaders)
+  public boolean supportsStreaming()
   {
-    if (_headerBasedCodecProvider != null)
-    {
-      return _headerBasedCodecProvider.getCodec(requestHeaders);
-    }
-    else
-    {
-      return _codec;
-    }
+    return _streamCodec != null;
   }
 
   public StreamDataCodec getStreamCodec()
   {
     return _streamCodec;
-  }
-
-  public StreamDataCodec getStreamCodec(Map<String, String> requestHeaders)
-  {
-    if (_headerBasedCodecProvider != null)
-    {
-      return _headerBasedCodecProvider.getStreamCodec(requestHeaders);
-    }
-    else
-    {
-      return _streamCodec;
-    }
   }
 
   @Override

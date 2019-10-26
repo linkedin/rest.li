@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.client;
 
-
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.linkedin.common.callback.Callback;
@@ -80,7 +79,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.activation.MimeTypeParseException;
 
-import static com.linkedin.r2.disruptor.DisruptContext.addDisruptContextIfNotPresent;
+import static com.linkedin.r2.disruptor.DisruptContext.*;
 
 
 /**
@@ -133,12 +132,6 @@ public class RestClient implements Client {
   private static final ContentType DEFAULT_CONTENT_TYPE = ContentType.JSON;
   private static final Random RANDOM_INSTANCE = new Random();
   private final com.linkedin.r2.transport.common.Client _client;
-
-  /**
-   * The symbol table to use when encoding request payloads from this client. This is useful for codecs like KSON
-   * which compress the payload using symbol tables.
-   */
-  public static String CLIENT_SYMBOL_TABLE_NAME = null;
 
   private final String _uriPrefix;
   private final List<ContentType> _acceptTypes;
@@ -582,38 +575,36 @@ public class RestClient implements Client {
   // 1. Request header
   // 2. RestLiRequestOption
   // 3. RestClient configuration
-  private ContentType resolveContentType(MessageHeadersBuilder<?> builder, DataMap dataMap, ContentType contentType)
+  private ContentType resolveContentType(MessageHeadersBuilder<?> builder, DataMap dataMap, ContentType contentType,
+      URI requestUri)
       throws IOException
   {
     if (dataMap != null)
     {
       String header = builder.getHeader(RestConstants.HEADER_CONTENT_TYPE);
-
       if (header == null)
       {
         if (contentType != null)
         {
-          return contentType;
+          header = contentType.getHeaderKey();
         }
         else if (_contentType != null)
         {
-          return _contentType;
+          header = _contentType.getHeaderKey();
         }
         else
         {
-          return DEFAULT_CONTENT_TYPE;
+          header = DEFAULT_CONTENT_TYPE.getHeaderKey();
         }
       }
-      else
+
+      try
       {
-        try
-        {
-          return ContentType.getContentType(header).orElse(DEFAULT_CONTENT_TYPE);
-        }
-        catch (MimeTypeParseException e)
-        {
-          throw new IllegalStateException("Invalid mime type in Content-Type header: " + header, e);
-        }
+        return ContentType.getRequestContentType(header, requestUri).orElse(DEFAULT_CONTENT_TYPE);
+      }
+      catch (MimeTypeParseException e)
+      {
+        throw new IOException("Invalid mime type in Content-Type header: " + header, e);
       }
     }
 
@@ -702,16 +693,10 @@ public class RestClient implements Client {
 
     final DataMap multiplexedPayload = multiplexedRequest.getContent().data();
     final ContentType type = resolveContentType(
-        requestBuilder, multiplexedPayload, multiplexedRequest.getRequestOptions().getContentType());
+        requestBuilder, multiplexedPayload, multiplexedRequest.getRequestOptions().getContentType(), requestUri);
     assert (type != null);
     requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
-
-    final String clientSymbolTableName = CLIENT_SYMBOL_TABLE_NAME;
-    if (clientSymbolTableName != null)
-    {
-      requestBuilder.setHeader(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME, clientSymbolTableName);
-    }
-    requestBuilder.setEntity(type.getCodec(requestBuilder.getHeaders()).mapToBytes(multiplexedPayload));
+    requestBuilder.setEntity(type.getCodec().mapToBytes(multiplexedPayload));
 
     requestBuilder.setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
                              AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion().toString());
@@ -833,17 +818,12 @@ public class RestClient implements Client {
 
     addAcceptHeaders(requestBuilder, acceptTypes, acceptResponseAttachments);
 
-    final ContentType type = resolveContentType(requestBuilder, dataMap, contentType);
+    final ContentType type = resolveContentType(requestBuilder, dataMap, contentType, uri);
     if (type != null)
     {
       requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
-      final String clientSymbolTableName = CLIENT_SYMBOL_TABLE_NAME;
-      if (clientSymbolTableName != null)
-      {
-        requestBuilder.setHeader(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME, clientSymbolTableName);
-      }
       // Use unsafe wrap to avoid copying the bytes when request builder creates ByteString.
-      requestBuilder.setEntity(ByteString.unsafeWrap(type.getCodec(requestBuilder.getHeaders()).mapToBytes(dataMap)));
+      requestBuilder.setEntity(ByteString.unsafeWrap(type.getCodec().mapToBytes(dataMap)));
     }
 
     addProtocolVersionHeader(requestBuilder, protocolVersion);
@@ -879,7 +859,7 @@ public class RestClient implements Client {
       requestBuilder.setHeader(RestConstants.HEADER_RESTLI_REQUEST_METHOD, method.toString());
     }
 
-    final ContentType type = resolveContentType(requestBuilder, dataMap, contentType);
+    final ContentType type = resolveContentType(requestBuilder, dataMap, contentType, uri);
 
     //If we have attachments outbound we use multipart related. If we don't, we just stream out our traditional
     //wire protocol. Also note that it is not possible for streaming attachments to be non-null and have 0 attachments.
@@ -891,12 +871,7 @@ public class RestClient implements Client {
       //eligible to have attachments. This is because all such requests are POST or PUTs. Even an action request
       //with empty action parameters will have an empty JSON ({}) as the body.
       assert (type != null);
-      final String clientSymbolTableName = CLIENT_SYMBOL_TABLE_NAME;
-      if (clientSymbolTableName != null)
-      {
-        requestBuilder.setHeader(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME, clientSymbolTableName);
-      }
-      firstPartWriter = new ByteStringWriter(ByteString.copy(type.getCodec(requestBuilder.getHeaders()).mapToBytes(dataMap)));
+      firstPartWriter = new ByteStringWriter(ByteString.copy(type.getCodec().mapToBytes(dataMap)));
 
       //Our protocol does not use an epilogue or a preamble.
       final MultiPartMIMEWriter.Builder attachmentsBuilder = new MultiPartMIMEWriter.Builder();
@@ -927,15 +902,10 @@ public class RestClient implements Client {
     }
     else
     {
-      if (dataMap != null && type != null && type.getStreamCodec() != null)
+      if (dataMap != null && type != null && type.supportsStreaming())
       {
-        final String clientSymbolTableName = CLIENT_SYMBOL_TABLE_NAME;
-        if (clientSymbolTableName != null)
-        {
-          requestBuilder.setHeader(RestConstants.HEADER_RESTLI_SYMBOL_TABLE_NAME, clientSymbolTableName);
-        }
         return requestBuilder.build(EntityStreamAdapters.fromGenericEntityStream(
-            type.getStreamCodec(requestBuilder.getHeaders()).encodeMap(dataMap)));
+            type.getStreamCodec().encodeMap(dataMap)));
       }
       else
       {

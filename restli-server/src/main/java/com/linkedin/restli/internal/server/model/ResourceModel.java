@@ -17,7 +17,10 @@
 package com.linkedin.restli.internal.server.model;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.ResourceMethod;
@@ -39,6 +42,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -48,6 +53,8 @@ import java.util.Set;
  */
 public class ResourceModel implements ResourceDefinition
 {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ResourceModel.class.getSimpleName());
+
   private final String                          _name;
   private final String                          _namespace;
 
@@ -575,5 +582,85 @@ public class ResourceModel implements ResourceDefinition
     return _serviceErrors != null || _resourceMethodDescriptors.stream()
         .map(ResourceMethodDescriptor::getServiceErrors)
         .anyMatch(Objects::nonNull);
+  }
+
+  /**
+   * Collect all the data schemas referenced by this model into the given set.
+   */
+  @Override
+  public void collectReferencedDataSchemas(Set<DataSchema> schemas)
+  {
+    // Add schemas referenced by method descriptors.
+    _resourceMethodDescriptors.forEach(descriptor -> descriptor.collectReferencedDataSchemas(schemas));
+
+    // Add complex resource key RecordTemplate-derived constituents Key and Params
+    if (_keyKeyClass != null)
+    {
+      try
+      {
+        schemas.add(DataTemplateUtil.getSchema(_keyKeyClass));
+      }
+      catch (TemplateRuntimeException e)
+      {
+        LOGGER.debug("Failed to get schema for complex key type: " + _keyKeyClass.getName(), e);
+      }
+    }
+
+    if (_keyParamsClass != null)
+    {
+      try
+      {
+        schemas.add(DataTemplateUtil.getSchema(_keyParamsClass));
+      }
+      catch (TemplateRuntimeException e)
+      {
+        LOGGER.debug("Failed to get schema for complex param type: " + _keyParamsClass.getName(), e);
+      }
+    }
+
+    // Add value class
+    if (_valueClass != null)
+    {
+      try
+      {
+        schemas.add(DataTemplateUtil.getSchema(_valueClass));
+      }
+      catch (TemplateRuntimeException e)
+      {
+        LOGGER.debug("Failed to get schema for value class: " + _valueClass.getName(), e);
+      }
+    }
+
+    // Add resource keys
+    if (_keys != null)
+    {
+      for (Key key : _keys)
+      {
+        DataSchema schema = key.getDataSchema();
+        if (schema != null)
+        {
+          schemas.add(schema);
+        }
+      }
+    }
+
+    // Add alternate keys.
+    if (_alternativeKeys != null)
+    {
+      for (AlternativeKey<?, ?> alternativeKey : _alternativeKeys.values())
+      {
+        DataSchema schema = alternativeKey.getDataSchema();
+        if (schema != null)
+        {
+          schemas.add(schema);
+        }
+      }
+    }
+
+    // Recurse over all sub-resources and repeat.
+    if (hasSubResources())
+    {
+      getSubResources().forEach(subResourceModel -> subResourceModel.collectReferencedDataSchemas(schemas));
+    }
   }
 }

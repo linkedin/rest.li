@@ -73,6 +73,7 @@ import com.linkedin.restli.restspec.ResourceSchema;
 import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.Map;
 
 import org.testng.Assert;
@@ -128,7 +129,8 @@ public class TestResourceSchemaToResourceSpecTranslator
 
   private RichResourceSchema loadResourceSchema(String restspecFile) throws Exception
   {
-    ResourceSchema resourceSchema = DataMapUtils.read(new FileInputStream(idlDir + FS + restspecFile), ResourceSchema.class);
+    ResourceSchema resourceSchema = DataMapUtils.read(
+        new FileInputStream(idlDir + FS + restspecFile), ResourceSchema.class, Collections.emptyMap());
     return new RichResourceSchema(resourceSchema);
   }
 

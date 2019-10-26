@@ -41,6 +41,7 @@ import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import com.linkedin.restli.internal.common.DataMapConverter;
 import com.linkedin.restli.internal.common.TestConstants;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -51,6 +52,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.activation.MimeTypeParseException;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -849,19 +851,19 @@ public class RestClientTest
     er.setDocUrl(docUrl);
     er.setRequestId(requestId);
 
-    byte[] mapBytes;
-    try
-    {
-      mapBytes = ContentType.JSON.getCodec().mapToBytes(er.data());
-    }
-    catch (IOException e)
-    {
-      throw new RuntimeException(e);
-    }
-
     Map<String,String> headers = new HashMap<String,String>();
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
     headers.put(errorResponseHeaderName, RestConstants.HEADER_VALUE_ERROR);
+
+    byte[] mapBytes;
+    try
+    {
+      mapBytes = DataMapConverter.getContentType(headers).getCodec().mapToBytes(er.data());
+    }
+    catch (IOException | MimeTypeParseException e)
+    {
+      throw new RuntimeException(e);
+    }
 
     return new RestClient(new MyMockClient(httpCode, headers, mapBytes), "http://localhost");
   }

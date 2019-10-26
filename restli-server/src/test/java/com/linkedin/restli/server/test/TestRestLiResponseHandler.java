@@ -259,7 +259,7 @@ public class TestRestLiResponseHandler
     checkResponse(response, 200, 1, true, errorResponseHeaderName);
     if (acceptTypeData != AcceptTypeData.PSON)
     {
-      assertEquals(DataMapUtils.mapToByteString(response.getDataMap()).asAvroString(), expectedStatus);
+      assertEquals(DataMapUtils.mapToByteString(response.getDataMap(), response.getHeaders()).asAvroString(), expectedStatus);
     }
     RestRequest req = buildRequest("/test", acceptTypeData.acceptHeaders, protocolVersion);
     RoutingResult routing = buildRoutingResult(ResourceMethod.GET, req, acceptTypeData.acceptHeaders);
@@ -598,7 +598,7 @@ public class TestRestLiResponseHandler
     checkResponse(response, 200, 1, true, errorResponseHeaderName);
     if (acceptTypeData != AcceptTypeData.PSON)
     {
-      assertEquals(DataMapUtils.mapToByteString(response.getDataMap()).asAvroString(), response1);
+      assertEquals(DataMapUtils.mapToByteString(response.getDataMap(), response.getHeaders()).asAvroString(), response1);
     }
     RestResponse restResponse = ResponseUtils.buildResponse(routing, response);
     assertEquals(restResponse.getEntity().asAvroString(), response1);
@@ -625,7 +625,8 @@ public class TestRestLiResponseHandler
     }
     else
     {
-      actualMap = JACKSON_DATA_CODEC.bytesToMap(DataMapUtils.mapToByteString(response.getDataMap()).copyBytes());
+      actualMap = JACKSON_DATA_CODEC.bytesToMap(
+          DataMapUtils.mapToByteString(response.getDataMap(), response.getHeaders()).copyBytes());
       expectedMap = JACKSON_DATA_CODEC.stringToMap(response2);
     }
     assertEquals(actualMap, expectedMap);
@@ -1154,7 +1155,7 @@ public class TestRestLiResponseHandler
                   errorResponseHeaderName);
     if (acceptTypeData != AcceptTypeData.PSON)
     {
-      assertEquals(DataMapUtils.mapToByteString(response.getDataMap()).asAvroString(), expectedStatus);
+      assertEquals(DataMapUtils.mapToByteString(response.getDataMap(), response.getHeaders()).asAvroString(), expectedStatus);
     }
     RestRequest req = buildRequest("/test", acceptTypeData.acceptHeaders, protocolVersion);
     RoutingResult routing = buildRoutingResult(ResourceMethod.GET, req, acceptTypeData.acceptHeaders);
@@ -1171,7 +1172,7 @@ public class TestRestLiResponseHandler
                   errorResponseHeaderName);
     if (acceptTypeData != AcceptTypeData.PSON)
     {
-      assertEquals(DataMapUtils.mapToByteString(response.getDataMap()).asAvroString(), expectedActionStatus);
+      assertEquals(DataMapUtils.mapToByteString(response.getDataMap(), response.getHeaders()).asAvroString(), expectedActionStatus);
     }
     restResponse = ResponseUtils.buildResponse(routing, response);
     assertEquals(restResponse.getEntity().asAvroString(), expectedActionStatus);

@@ -16,16 +16,9 @@
 
 package com.linkedin.data.codec.symbol;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 
 /**
@@ -35,9 +28,11 @@ public class InMemorySymbolTable implements SymbolTable {
 
   private final Map<String, Integer> _symbolNameToId;
   private final String[] _symbols;
+  private final String _symbolTableName;
 
-  public InMemorySymbolTable(List<String> symbols)
+  public InMemorySymbolTable(String symbolTableName, List<String> symbols)
   {
+    _symbolTableName = symbolTableName;
     _symbolNameToId = new HashMap<>();
     _symbols = new String[symbols.size()];
 
@@ -47,11 +42,6 @@ public class InMemorySymbolTable implements SymbolTable {
       _symbolNameToId.put(symbol, i);
       _symbols[i] = symbol;
     }
-  }
-
-  public InMemorySymbolTable(String symbolTableFilePath) throws IOException
-  {
-    this(getSymbols(symbolTableFilePath));
   }
 
   @Override
@@ -78,31 +68,13 @@ public class InMemorySymbolTable implements SymbolTable {
     return null;
   }
 
-  /**
-   * Serialize symbol table to the given file path.
-   */
-  public void writeToFile(String symbolTableFilePath) throws IOException
-  {
-    Path path = Paths.get(symbolTableFilePath);
-
-    try (BufferedWriter writer = Files.newBufferedWriter(path))
-    {
-      for (String symbol : _symbols)
-      {
-        writer.write(symbol);
-        writer.write('\n');
-      }
-    }
+  @Override
+  public String getName() {
+    return _symbolTableName;
   }
 
-  private static List<String> getSymbols(String symbolTableFilePath) throws IOException
+  public int size()
   {
-    List<String> symbols = new ArrayList<>();
-    try (Stream<String> stream = Files.lines(Paths.get(symbolTableFilePath)))
-    {
-      stream.forEach(symbols::add);
-    }
-
-    return symbols;
+    return _symbols.length;
   }
 }

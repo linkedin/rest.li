@@ -16,6 +16,8 @@
 package com.linkedin.restli.examples;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.template.DataTemplate;
+import com.linkedin.data.template.JacksonDataTemplateCodec;
 import com.linkedin.r2.message.rest.RestMethod;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -30,7 +32,9 @@ import com.linkedin.restli.examples.greetings.api.TwoPartKey;
 import com.linkedin.restli.examples.greetings.server.altkey.StringComplexKeyCoercer;
 import com.linkedin.restli.examples.greetings.server.altkey.StringCompoundKeyCoercer;
 import com.linkedin.restli.examples.greetings.server.altkey.StringLongCoercer;
+import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collections;
@@ -61,6 +65,7 @@ public class TestAltKeyResource extends RestLiIntegrationTest
   private Client client;
   private final static String URI_PREFIX = "http://localhost:";
   private final static String PROTOCOL_VERSION_2 = RESTLI_PROTOCOL_2_0_0.getProtocolVersion().toString();
+  private static final JacksonDataTemplateCodec TEMPLATE_CODEC = new JacksonDataTemplateCodec();
 
   @BeforeClass
   public void initClass() throws Exception
@@ -123,7 +128,7 @@ public class TestAltKeyResource extends RestLiIntegrationTest
   public void testAltKeyUpdate() throws Throwable
   {
     Greeting greeting = new Greeting().setMessage("Update Message");
-    byte[] jsonByte = DataMapUtils.dataTemplateToBytes(greeting, true);
+    byte[] jsonByte = dataTemplateToBytes(greeting);
     URI altKeyUri = URI.create(URI_PREFIX + RestLiIntTestServer.DEFAULT_PORT + "/altKey/Alt1?altkey=alt");
     RestRequest altKeyRequest = new RestRequestBuilder(altKeyUri).setHeader(HEADER_RESTLI_PROTOCOL_VERSION,
         PROTOCOL_VERSION_2).setMethod(RestMethod.PUT).setEntity(jsonByte).build();
@@ -329,7 +334,7 @@ public class TestAltKeyResource extends RestLiIntegrationTest
   public void testAssociationAltKeyUpdate() throws Throwable
   {
     Greeting greeting = new Greeting().setMessage("Update Message");
-    byte[] jsonByte = DataMapUtils.dataTemplateToBytes(greeting, true);
+    byte[] jsonByte = dataTemplateToBytes(greeting);
     URI altKeyUri = URI.create(URI_PREFIX + RestLiIntTestServer.DEFAULT_PORT + "/associationAltKey/messageaxgreetingId1?altkey=alt");
     RestRequest altKeyRequest = new RestRequestBuilder(altKeyUri).setHeader(HEADER_RESTLI_PROTOCOL_VERSION,
         PROTOCOL_VERSION_2).setMethod(RestMethod.PUT).setEntity(jsonByte).build();
@@ -540,7 +545,7 @@ public class TestAltKeyResource extends RestLiIntegrationTest
   public void testComplexKeyAltKeyUpdate() throws Throwable
   {
     Message message = new Message().setMessage("Update Message");
-    byte[] byteArray = DataMapUtils.dataTemplateToBytes(message, true);
+    byte[] byteArray = dataTemplateToBytes(message);
     URI altKeyUri = URI.create(URI_PREFIX + RestLiIntTestServer.DEFAULT_PORT + "/complexKeyAltKey/majorxKEY%201xminorxKEY%202?altkey=alt");
     RestRequest altKeyRequest = new RestRequestBuilder(altKeyUri).setHeader(HEADER_RESTLI_PROTOCOL_VERSION,
         PROTOCOL_VERSION_2).setMethod(RestMethod.PUT).setEntity(byteArray).build();
@@ -752,7 +757,7 @@ public class TestAltKeyResource extends RestLiIntegrationTest
     String altKey = coercer.coerceFromKey(key);
 
     Greeting greeting = new Greeting().setId(key).setMessage("message");
-    byte[] byteArray = DataMapUtils.dataTemplateToBytes(greeting, true);
+    byte[] byteArray = dataTemplateToBytes(greeting);
 
     URI altKeyUri = URI.create(URI_PREFIX + RestLiIntTestServer.DEFAULT_PORT + "/altKey?altkey=alt");
     RestRequest altKeyRequest = new RestRequestBuilder(altKeyUri).setHeader(HEADER_RESTLI_PROTOCOL_VERSION,
@@ -777,7 +782,7 @@ public class TestAltKeyResource extends RestLiIntegrationTest
     String altKey = coercer.coerceFromKey(key);
 
     Greeting greeting = new Greeting().setMessage("message");
-    byte[] byteArray = DataMapUtils.dataTemplateToBytes(greeting, true);
+    byte[] byteArray = dataTemplateToBytes(greeting);
 
     URI altKeyUri = URI.create(URI_PREFIX + RestLiIntTestServer.DEFAULT_PORT + "/associationAltKey?altkey=alt");
     RestRequest altKeyRequest = new RestRequestBuilder(altKeyUri).setHeader(HEADER_RESTLI_PROTOCOL_VERSION,
@@ -803,7 +808,7 @@ public class TestAltKeyResource extends RestLiIntegrationTest
     String altKey = coercer.coerceFromKey(complexKey);
 
     Message message = new Message().setMessage("message");
-    byte[] byteArray = DataMapUtils.dataTemplateToBytes(message, true);
+    byte[] byteArray = dataTemplateToBytes(message);
     URI altKeyUri = URI.create(URI_PREFIX + RestLiIntTestServer.DEFAULT_PORT + "/complexKeyAltKey?altkey=alt");
 
     RestRequest altKeyRequest = new RestRequestBuilder(altKeyUri).setHeader(HEADER_RESTLI_PROTOCOL_VERSION,
@@ -818,7 +823,7 @@ public class TestAltKeyResource extends RestLiIntegrationTest
   private String getBatchResult(RestResponse restResponse, String keyName)
   {
     InputStream input = restResponse.getEntity().asInputStream();
-    DataMap map = DataMapUtils.readMap(input);
+    DataMap map = DataMapUtils.readMap(input, restResponse.getHeaders());
     DataMap entities = (DataMap) map.get("results");
     return entities.get(keyName).toString();
   }
@@ -829,5 +834,17 @@ public class TestAltKeyResource extends RestLiIntegrationTest
     Assert.assertNotNull(primaryKeyResponse.getEntity());
     Assert.assertEquals(altKeyResponse.getStatus(), primaryKeyResponse.getStatus());
     Assert.assertEquals(altKeyResponse.getEntity(), primaryKeyResponse.getEntity());
+  }
+
+  private static byte[] dataTemplateToBytes(final DataTemplate<?> record)
+  {
+    try
+    {
+      return TEMPLATE_CODEC.dataTemplateToBytes(record, true);
+    }
+    catch (IOException e)
+    {
+      throw new RestLiInternalException(e);
+    }
   }
 }

@@ -44,6 +44,7 @@ import com.linkedin.restli.internal.server.util.DataMapUtils;
 
 import java.net.HttpCookie;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -288,7 +289,8 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
   {
     MultiplexedResponseContent aggregatedResponseContent = new MultiplexedResponseContent();
     aggregatedResponseContent.setResponses(responses);
-    byte[] aggregatedResponseData = DataMapUtils.mapToBytes(aggregatedResponseContent.data());
+    byte[] aggregatedResponseData = DataMapUtils.mapToBytes(aggregatedResponseContent.data(),
+        Collections.singletonMap(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON));
     return new RestResponseBuilder()
         .setStatus(HttpStatus.S_200_OK.getCode())
         .setEntity(aggregatedResponseData)

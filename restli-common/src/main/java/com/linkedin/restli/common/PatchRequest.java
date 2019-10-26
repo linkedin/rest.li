@@ -33,7 +33,7 @@ import com.linkedin.data.template.RecordTemplate;
 
 public class PatchRequest<T> extends RecordTemplate
 {
-  private static final String PATCH="patch";
+  public static final String PATCH = "patch";
   private static final String SCHEMA_STRING = "{\n" +
       "  \"type\" : \"record\",\n" +
       "  \"name\" : \"PatchRequest\",\n" +

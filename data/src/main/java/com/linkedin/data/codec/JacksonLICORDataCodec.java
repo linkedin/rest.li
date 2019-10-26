@@ -16,6 +16,9 @@
 
 package com.linkedin.data.codec;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
@@ -23,17 +26,11 @@ import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
-
 import com.linkedin.data.codec.symbol.SymbolTable;
-import com.linkedin.data.codec.symbol.SymbolTableProvider;
 import com.linkedin.data.collections.CheckedUtil;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
 
 /**
  * A codec that serializes to and deserializes from LICOR (LinkedIn Compact Object Representation) encoded data, using
@@ -53,40 +50,18 @@ public class JacksonLICORDataCodec extends AbstractJacksonDataCodec
   private static final byte MAP_ORDINAL = 0;
   private static final byte LIST_ORDINAL = 1;
 
-  private static volatile SymbolTableProvider _symbolTableProvider;
-
   protected final SymbolTable _symbolTable;
-
-  /**
-   * Set the symbol table provider. This will be used by all codec instances.
-   *
-   * <p>It is the responsibility of the application to set this provider if it wants shared symbol
-   * tables to be used.</p>
-   *
-   * @param symbolTableProvider The provider to set.
-   */
-  public static void setSymbolTableProvider(SymbolTableProvider symbolTableProvider)
-  {
-    _symbolTableProvider = symbolTableProvider;
-  }
 
   public JacksonLICORDataCodec(boolean useBinary)
   {
     this(useBinary, null);
   }
 
-  public JacksonLICORDataCodec(boolean useBinary, String symbolTableName)
+  public JacksonLICORDataCodec(boolean useBinary, SymbolTable symbolTable)
   {
     super(getFactory(useBinary));
 
-    if (symbolTableName != null && _symbolTableProvider != null)
-    {
-      _symbolTable = _symbolTableProvider.getSymbolTable(symbolTableName);
-    }
-    else
-    {
-      _symbolTable = null;
-    }
+    _symbolTable = symbolTable;
   }
 
   @SuppressWarnings("unchecked")

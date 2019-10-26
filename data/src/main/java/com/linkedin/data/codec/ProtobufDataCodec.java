@@ -24,7 +24,6 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.protobuf.ProtoReader;
 import com.linkedin.data.protobuf.ProtoWriter;
 import com.linkedin.data.codec.symbol.SymbolTable;
-import com.linkedin.data.codec.symbol.SymbolTableProvider;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.util.FastByteArrayOutputStream;
 
@@ -46,8 +45,6 @@ import java.util.function.Function;
  */
 public class ProtobufDataCodec implements DataCodec
 {
-  private static volatile SymbolTableProvider SYMBOL_TABLE_PROVIDER;
-
   private static final byte MAP_ORDINAL = 0;
   private static final byte LIST_ORDINAL = 1;
   private static final byte STRING_LITERAL_ORDINAL = 2;
@@ -76,34 +73,14 @@ public class ProtobufDataCodec implements DataCodec
 
   protected final SymbolTable _symbolTable;
 
-  /**
-   * Set the symbol table provider. This will be used by all codec instances.
-   *
-   * <p>It is the responsibility of the application to set this provider if it wants shared symbol
-   * tables to be used.</p>
-   *
-   * @param symbolTableProvider The provider to set.
-   */
-  public static void setSymbolTableProvider(SymbolTableProvider symbolTableProvider)
-  {
-    SYMBOL_TABLE_PROVIDER = symbolTableProvider;
-  }
-
   public ProtobufDataCodec()
   {
     this(null);
   }
 
-  public ProtobufDataCodec(String symbolTableName)
+  public ProtobufDataCodec(SymbolTable symbolTable)
   {
-    if (symbolTableName != null && SYMBOL_TABLE_PROVIDER != null)
-    {
-      _symbolTable = SYMBOL_TABLE_PROVIDER.getSymbolTable(symbolTableName);
-    }
-    else
-    {
-      _symbolTable = null;
-    }
+    _symbolTable = symbolTable;
   }
 
   @Override

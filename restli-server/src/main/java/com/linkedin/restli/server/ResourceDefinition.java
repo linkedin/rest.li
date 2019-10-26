@@ -17,7 +17,9 @@
 package com.linkedin.restli.server;
 
 
+import com.linkedin.data.schema.DataSchema;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -66,4 +68,9 @@ public interface ResourceDefinition
    * @return the sub resources map
    */
   Map<String, ResourceDefinition> getSubResourceDefinitions();
+
+  /**
+   * Collect all the data schemas referenced by this definition into the given set.
+   */
+  void collectReferencedDataSchemas(Set<DataSchema> schemas);
 }
