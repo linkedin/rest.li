@@ -70,6 +70,259 @@ public class TestSchemaTranslator
     assertSame(DataToAvroSchemaTranslationOptions.DEFAULT_OPTIONAL_DEFAULT_MODE, OptionalDefaultMode.TRANSLATE_DEFAULT);
   }
 
+ @DataProvider
+ public Object[][] toAvroSchemaData_testTypeRefAnnotationPropagation()
+ {
+   //These test were specially moved out from "toAvroSchemaData" tests because custom logic needed to validate the correctness
+   //of those properties
+   //The reason is that properties in the Avro's {@link Schema} class were represented as HashMap and
+   //Schema#equal() comparision could cause issue when comparing properties because it uses serialization of HashMap as part of comparison
+   // and the result won't be guaranteed to be same  as the entry set order might be different when serialized
+
+   return new Object[][]
+       {
+           {
+               // Test Annotations for TypeRef: one layer TypeRef case
+               "{ \"type\" : \"record\", " +
+               "\"name\" : \"Foo\", " +
+               "\"namespace\" : \"com.x.y.z\", " +
+               "\"fields\" : [ {" +
+               "\"name\" : \"typedefField\", " +
+               "\"type\" : { \"type\" : \"typeref\", " +
+               "             \"name\" : \"refereeTypeName\", " +
+               "             \"ref\"  : \"string\", " +
+               "             \"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"STRING\"}] } }] }",
+
+               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefField\", \"type\" : \"string\", \"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }"
+           },
+           {
+               // Test Annotations propagation for TypeRef, reserved word, such as "validate", "java", should not be propagated
+               "{" +
+               "  \"type\": \"record\"," +
+               "  \"name\": \"Foo\"," +
+               "  \"namespace\": \"com.x.y.z\"," +
+               "  \"fields\": [" +
+               "    {" +
+               "      \"name\": \"typedefField\"," +
+               "      \"type\": {" +
+               "        \"type\": \"typeref\"," +
+               "        \"name\": \"refereeTypeName\"," +
+               "        \"ref\": \"string\"," +
+               "        \"compliance\": [" +
+               "          {" +
+               "            \"dataType\": \"MEMBER_NAME\"," +
+               "            \"format\": \"STRING\"" +
+               "          }" +
+               "        ]," +
+               "        \"validate\": {" +
+               "          \"validator\": \"validateContent\"" +
+               "        }," +
+               "        \"java\": {" +
+               "          \"class\": \"exampleTypedUrn\"" +
+               "        }" +
+               "      }" +
+               "    }" +
+               "  ]" +
+               "}",
+
+               "{ \"type\" : \"record\", " +
+               "\"name\" : \"Foo\", " +
+               "\"namespace\" : \"com.x.y.z\", " +
+               "\"fields\" : [ " +
+               "{ \"name\" : \"typedefField\", " +
+               "\"type\" : \"string\", " +
+               "\"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }",
+           },
+           {
+               // Test Annotations for TypeRef : two layer nested TypeRef both have compliance annotation and outer layer should override
+               "{\"type\" : " +
+               "\"record\", " +
+               "\"name\" : \"Foo\", " +
+               "\"namespace\" : \"com.x.y.z\", " +
+               "\"fields\" : [{\"name\" : " +
+               "               \"typedefField\", " +
+               "               \"type\" : {\"type\" : \"typeref\", " +
+               "                           \"name\" : \"refereeTypeName\", " +
+               "                           \"ref\"  : {\"type\" : \"typeref\", " +
+               "                                       \"name\" : \"nestedrefereeTypeName\", " +
+               "                                       \"ref\"  : \"int\", " +
+               "               \"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"INTEGER\"}] }, " +
+               "\"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"STRING\"}] } }] }",
+
+               "{ \"type\" : \"record\", " +
+               "\"name\" : \"Foo\", " +
+               "\"namespace\" : \"com.x.y.z\", " +
+               "\"fields\" : [ { " +
+               "\"name\" : \"typedefField\", " +
+               "\"type\" : \"int\", " +
+               "\"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }"
+           },
+
+           {
+               // Test Annotations for TypeRef : two layer nested TypeRef only second layer has compliance annotation
+               "{ \"type\" : " +
+               "\"record\", " +
+               "\"name\" : " +
+               "\"Foo\", " +
+               "\"namespace\" : " +
+               "\"com.x.y.z\", " +
+               "\"fields\" : [ {\"name\" : " +
+               "               \"typedefField\", " +
+               "               \"type\" : { \"type\" : " +
+               "                            \"typeref\", " +
+               "                            \"name\" : " +
+               "                            \"refereeTypeName\", " +
+               "                            \"ref\"  : { \"type\" : " +
+               "                                         \"typeref\", " +
+               "                                         \"name\" : " +
+               "                                         \"nestedrefereeTypeName\", " +
+               "                                         \"ref\"  : \"int\", " +
+               "\"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"INTEGER\"}] } } }] }",
+
+               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefField\", \"type\" : \"int\", \"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"INTEGER\" } ] } ] }",
+           },
+           {
+               // Test Annotations for TypeRef : three layer typerefs
+               "{\"type\" : \"record\", " +
+               "\"name\" : \"Foo\", " +
+               "\"namespace\" : \"com.x.y.z\", " +
+               "\"fields\" : [{\"name\" : \"typedefField\", " +
+               "               \"type\" : {\"type\" : \"typeref\", " +
+               "                           \"name\" : \"L1\", " +
+               "                           \"ref\"  : {\"type\" : \"typeref\", " +
+               "                                       \"name\" : \"L2\", " +
+               "                                       \"ref\"  :  {\"type\" : " +
+               "                                                    \"typeref\", " +
+               "                                                    \"name\" : \"L3\", " +
+               "                                                     \"ref\"  : \"boolean\", " +
+               "\"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"boolean\"}] } } } }] }",
+
+               "{ \"type\" : \"record\", " +
+               "\"name\" : \"Foo\", " +
+               "\"namespace\" : \"com.x.y.z\", " +
+               "\"fields\" : [ " + "{ " +
+               "\"name\" : \"typedefField\", " +
+               "\"type\" : \"boolean\", " + "" +
+               "\"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"boolean\" } ] } ] }",
+           },
+           {
+               // Test Annotations for TypeRef : one layer typeref, with field level has same property and has override and merged
+               "{\n" +
+               "  \"type\" : \"record\",\n" +
+               "  \"name\" : \"Foo\",\n" +
+               "  \"namespace\" : \"com.x.y.z\",\n" +
+               "  \"fields\" : [\n" +
+               "    {\"name\" : \"typedefMapField\",\n" +
+               "      \"type\" :{\n" +
+               "                    \"type\" : \"typeref\",\n" +
+               "                    \"name\" : \"refToMap\", \"ref\" :{\n" +
+               "                      \"type\" : \"map\",\n" +
+               "                      \"values\":\"string\"\n" +
+               "                    },\n" +
+               "                    \"compliance\" : {\"/*\":[{\"dataType\":\"MEMBER_ID\"}], " +
+               "                                     \"keysymbol\":[{\"dataType\":\"MEMBER_ID\"}]}\n" +
+               "                },\n" +
+               "      \"compliance\" : {\"keysymbol\":[{\"dataType\":\"MEMBER_NAME\"}]}\n" +
+               "    }\n" +
+               "  ]\n" +
+               "}",
+
+               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"compliance\" : { \"keysymbol\" : [ { \"dataType\" : \"MEMBER_NAME\" } ], \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
+           },
+           {
+               // Test Annotations for TypeRef : one layer typeref, with field level has same property as Typeref and merged
+               "{\n" +
+               "  \"type\" : \"record\",\n" +
+               "  \"name\" : \"Foo\",\n" +
+               "  \"namespace\" : \"com.x.y.z\",\n" +
+               "  \"fields\" : [\n" +
+               "    {\"name\" : \"typedefMapField\",\n" +
+               "      \"type\" :{\n" +
+               "                    \"type\" : \"typeref\",\n" +
+               "                    \"name\" : \"refToMap\", \"ref\" :{\n" +
+               "                      \"type\" : \"map\",\n" +
+               "                      \"values\":\"string\"\n" +
+               "                    },\n" +
+               "                    \"compliance\" : {\"/*\":[{\"dataType\":\"MEMBER_ID\"}]}\n" +
+               "                },\n" +
+               "      \"compliance\" : {\"keysymbol\":[{\"dataType\":\"MEMBER_NAME\"}]}\n" +
+               "    }\n" +
+               "  ]\n" +
+               "}",
+
+               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"compliance\" : { \"keysymbol\" : [ { \"dataType\" : \"MEMBER_NAME\" } ], \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
+           },
+           {
+               // Test Annotations for TypeRef : one layer typeref, with field level has same property's override and not merged
+               "{\n" +
+               "  \"type\" : \"record\",\n" +
+               "  \"name\" : \"Foo\",\n" +
+               "  \"namespace\" : \"com.x.y.z\",\n" +
+               "  \"fields\" : [\n" +
+               "    {\"name\" : \"typedefMapField\",\n" +
+               "      \"type\" :{\n" +
+               "                    \"type\" : \"typeref\",\n" +
+               "                    \"name\" : \"refToMap\", \"ref\" :{\n" +
+               "                      \"type\" : \"map\",\n" +
+               "                      \"values\":\"string\"\n" +
+               "                    },\n" +
+               "                    \"compliance\" : {\"/*\":[{\"dataType\":\"MEMBER_ID\"}]}\n" +
+               "                },\n" +
+               "      \"compliance\" : \"None\"\n" +
+               "    }\n" +
+               "  ]\n" +
+               "}",
+
+               "{ \"type\" : \"record\", " +
+               "\"name\" : \"Foo\", " +
+               "\"namespace\" : \"com.x.y.z\", " +
+               "\"fields\" : [ { \"name\" : \"typedefMapField\", " +
+               "\"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, " +
+               "\"compliance\" : \"None\" } ] }",
+           },
+           {
+               // Test Annotations for TypeRef : one layer typeref, and properties merged
+               "{\n" +
+               "  \"type\" : \"record\",\n" +
+               "  \"name\" : \"Foo\",\n" +
+               "  \"namespace\" : \"com.x.y.z\",\n" +
+               "  \"fields\" : [\n" +
+               "    {\"name\" : \"typedefMapField\",\n" +
+               "      \"type\" :{\n" +
+               "                    \"type\" : \"typeref\",\n" +
+               "                    \"name\" : \"refToMap\", \"ref\" :{\n" +
+               "                      \"type\" : \"map\",\n" +
+               "                      \"values\":\"string\"\n" +
+               "                    },\n" +
+               "                    \"compliance\" : {\"/*\":[{\"dataType\":\"MEMBER_ID\"}]}\n" +
+               "                },\n" +
+               "      \"otherannotation\" : \"None\"\n" +
+               "    }\n" +
+               "  ]\n" +
+               "}",
+
+               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"otherannotation\" : \"None\", \"compliance\" : { \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
+           }
+
+       };
+
+ }
+
+ @Test(dataProvider = "toAvroSchemaData_testTypeRefAnnotationPropagation")
+ public void testToAvroSchema_testTypeRefAnnotationPropagation(String schemaBeforeTranslation,
+                                                               String expectedAvroSchemaAsString) throws Exception
+ {
+   DataSchema schema = TestUtil.dataSchemaFromString(schemaBeforeTranslation);
+   DataToAvroSchemaTranslationOptions transOptions = new DataToAvroSchemaTranslationOptions(OptionalDefaultMode.TRANSLATE_DEFAULT, JsonBuilder.Pretty.SPACES, EmbedSchemaMode.NONE);
+   transOptions.setTyperefPropertiesExcludeSet(new HashSet<>(Arrays.asList("validate", "java")));
+
+   String avroSchemaText = SchemaTranslator.dataToAvroSchemaJson(schema, transOptions);
+   DataMap avroSchemaAsDataMap = TestUtil.dataMapFromString(avroSchemaText);
+   DataMap fieldsPropertiesMap = TestUtil.dataMapFromString(expectedAvroSchemaAsString);
+   assertEquals(fieldsPropertiesMap, avroSchemaAsDataMap);
+ }
+
+
   @DataProvider
   public Object[][] toAvroSchemaData()
   {
@@ -1407,273 +1660,6 @@ public class TestSchemaTranslator
               null,
               null,
               null
-          },
-          {
-              // Test Annotations for Fixed case
-              "{ \"type\" : \"record\", " +
-                  "\"name\" : \"Foo\", " +
-                  "\"namespace\" : \"com.x.y.z\", " +
-                  "\"fields\" : [ {\"name\" : \"FixedField\", " +
-                  "                \"type\" : { \"type\" : \"fixed\", " +
-                  "                             \"name\" : \"Fixed16\", " +
-                  "                             \"namespace\" : \"com.linkedin.restli.examples.typeref.api\", " +
-                  "                              \"size\" : 16, " +
-                  "\"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"STRING\"}] } }] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"FixedField\", \"type\" : { \"type\" : \"fixed\", \"name\" : \"Fixed16\", \"namespace\" : \"com.linkedin.restli.examples.typeref.api\", \"size\" : 16, \"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } } ] }",
-              null,
-              null,
-              null
-          },
-           {
-              // Test Annotations for TypeRef: one layer TypeRef case
-              "{ \"type\" : \"record\", " +
-                  "\"name\" : \"Foo\", " +
-                  "\"namespace\" : \"com.x.y.z\", " +
-                  "\"fields\" : [ {" +
-                  "\"name\" : \"typedefField\", " +
-                  "\"type\" : { \"type\" : \"typeref\", " +
-                  "             \"name\" : \"refereeTypeName\", " +
-                  "             \"ref\"  : \"string\", " +
-                  "             \"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"STRING\"}] } }] }",
-              allModes,
-               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefField\", \"type\" : \"string\", \"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }",
-              null,
-              null,
-              null
-          },
-          {
-            // Test Annotations propagation for TypeRef, reserved word, such as "validate", "java", should not be propagated
-              "{" +
-              "  \"type\": \"record\"," +
-              "  \"name\": \"Foo\"," +
-              "  \"namespace\": \"com.x.y.z\"," +
-              "  \"fields\": [" +
-              "    {" +
-              "      \"name\": \"typedefField\"," +
-              "      \"type\": {" +
-              "        \"type\": \"typeref\"," +
-              "        \"name\": \"refereeTypeName\"," +
-              "        \"ref\": \"string\"," +
-              "        \"compliance\": [" +
-              "          {" +
-              "            \"dataType\": \"MEMBER_NAME\"," +
-              "            \"format\": \"STRING\"" +
-              "          }" +
-              "        ]," +
-              "        \"validate\": {" +
-              "          \"validator\": \"validateContent\"" +
-              "        }," +
-              "        \"java\": {" +
-              "          \"class\": \"exampleTypedUrn\"" +
-              "        }" +
-              "      }" +
-              "    }" +
-              "  ]" +
-              "}",
-              allModes,
-              "{ \"type\" : \"record\", "
-                  + "\"name\" : \"Foo\", "
-                  + "\"namespace\" : \"com.x.y.z\", "
-                  + "\"fields\" : [ "
-                  + "{ \"name\" : \"typedefField\", "
-                  + "\"type\" : \"string\", "
-                  + "\"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }",
-              null,
-              null,
-              null
-
-          },
-          {
-              // Test Annotations for TypeRef : two layer nested TypeRef both have compliance annotation and outer layer should override
-              "{\"type\" : " +
-                  "\"record\", " +
-                  "\"name\" : \"Foo\", " +
-                  "\"namespace\" : \"com.x.y.z\", " +
-                  "\"fields\" : [{\"name\" : " +
-                  "               \"typedefField\", " +
-                  "               \"type\" : {\"type\" : \"typeref\", " +
-                  "                           \"name\" : \"refereeTypeName\", " +
-                  "                           \"ref\"  : {\"type\" : \"typeref\", " +
-                  "                                       \"name\" : \"nestedrefereeTypeName\", " +
-                  "                                       \"ref\"  : \"int\", " +
-                  "               \"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"INTEGER\"}] }, " +
-                  "\"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"STRING\"}] } }] }",
-              allModes,
-              "{ \"type\" : \"record\", " +
-                  "\"name\" : \"Foo\", " +
-                  "\"namespace\" : \"com.x.y.z\", " +
-                  "\"fields\" : [ { " +
-                  "\"name\" : \"typedefField\", " +
-                  "\"type\" : \"int\", " +
-                  "\"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }",
-              null,
-              null,
-              null
-          },
-
-          {
-              // Test Annotations for TypeRef : two layer nested TypeRef only second layer has compliance annotation
-              "{ \"type\" : " +
-                  "\"record\", " +
-                  "\"name\" : " +
-                  "\"Foo\", " +
-                  "\"namespace\" : " +
-                  "\"com.x.y.z\", " +
-                  "\"fields\" : [ {\"name\" : " +
-                  "               \"typedefField\", " +
-                  "               \"type\" : { \"type\" : " +
-                  "                            \"typeref\", " +
-                  "                            \"name\" : " +
-                  "                            \"refereeTypeName\", " +
-                  "                            \"ref\"  : { \"type\" : " +
-                  "                                         \"typeref\", " +
-                  "                                         \"name\" : " +
-                  "                                         \"nestedrefereeTypeName\", " +
-                  "                                         \"ref\"  : \"int\", " +
-                  "\"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"INTEGER\"}] } } }] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefField\", \"type\" : \"int\", \"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"INTEGER\" } ] } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // Test Annotations for TypeRef : three layer typerefs
-              "{\"type\" : \"record\", " +
-                  "\"name\" : \"Foo\", " +
-                  "\"namespace\" : \"com.x.y.z\", " +
-                  "\"fields\" : [{\"name\" : \"typedefField\", " +
-                  "               \"type\" : {\"type\" : \"typeref\", " +
-                  "                           \"name\" : \"L1\", " +
-                  "                           \"ref\"  : {\"type\" : \"typeref\", " +
-                  "                                       \"name\" : \"L2\", " +
-                  "                                       \"ref\"  :  {\"type\" : " +
-                  "                                                    \"typeref\", " +
-                  "                                                    \"name\" : \"L3\", " +
-                  "                                                     \"ref\"  : \"boolean\", " +
-                  "\"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"boolean\"}] } } } }] }",
-              allModes,
-              "{ \"type\" : \"record\", " +
-                  "\"name\" : \"Foo\", " +
-                  "\"namespace\" : \"com.x.y.z\", " +
-                  "\"fields\" : [ " + "{ " +
-                  "\"name\" : \"typedefField\", " +
-                  "\"type\" : \"boolean\", " + "" +
-                  "\"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"boolean\" } ] } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // Test Annotations for TypeRef : one layer typeref, with field level has same property and has override and merged
-              "{\n" +
-                  "  \"type\" : \"record\",\n" +
-                  "  \"name\" : \"Foo\",\n" +
-                  "  \"namespace\" : \"com.x.y.z\",\n" +
-                  "  \"fields\" : [\n" +
-                  "    {\"name\" : \"typedefMapField\",\n" +
-                  "      \"type\" :{\n" +
-                  "                    \"type\" : \"typeref\",\n" +
-                  "                    \"name\" : \"refToMap\", \"ref\" :{\n" +
-                  "                      \"type\" : \"map\",\n" +
-                  "                      \"values\":\"string\"\n" +
-                  "                    },\n" +
-                  "                    \"compliance\" : {\"/*\":[{\"dataType\":\"MEMBER_ID\"}], " +
-                  "                                     \"keysymbol\":[{\"dataType\":\"MEMBER_ID\"}]}\n" +
-                  "                },\n" +
-                  "      \"compliance\" : {\"keysymbol\":[{\"dataType\":\"MEMBER_NAME\"}]}\n" +
-                  "    }\n" +
-                  "  ]\n" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"compliance\" : { \"keysymbol\" : [ { \"dataType\" : \"MEMBER_NAME\" } ], \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // Test Annotations for TypeRef : one layer typeref, with field level has same property as Typeref and merged
-              "{\n" +
-                  "  \"type\" : \"record\",\n" +
-                  "  \"name\" : \"Foo\",\n" +
-                  "  \"namespace\" : \"com.x.y.z\",\n" +
-                  "  \"fields\" : [\n" +
-                  "    {\"name\" : \"typedefMapField\",\n" +
-                  "      \"type\" :{\n" +
-                  "                    \"type\" : \"typeref\",\n" +
-                  "                    \"name\" : \"refToMap\", \"ref\" :{\n" +
-                  "                      \"type\" : \"map\",\n" +
-                  "                      \"values\":\"string\"\n" +
-                  "                    },\n" +
-                  "                    \"compliance\" : {\"/*\":[{\"dataType\":\"MEMBER_ID\"}]}\n" +
-                  "                },\n" +
-                  "      \"compliance\" : {\"keysymbol\":[{\"dataType\":\"MEMBER_NAME\"}]}\n" +
-                  "    }\n" +
-                  "  ]\n" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"compliance\" : { \"keysymbol\" : [ { \"dataType\" : \"MEMBER_NAME\" } ], \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // Test Annotations for TypeRef : one layer typeref, with field level has same property's override and not merged
-              "{\n" +
-                  "  \"type\" : \"record\",\n" +
-                  "  \"name\" : \"Foo\",\n" +
-                  "  \"namespace\" : \"com.x.y.z\",\n" +
-                  "  \"fields\" : [\n" +
-                  "    {\"name\" : \"typedefMapField\",\n" +
-                  "      \"type\" :{\n" +
-                  "                    \"type\" : \"typeref\",\n" +
-                  "                    \"name\" : \"refToMap\", \"ref\" :{\n" +
-                  "                      \"type\" : \"map\",\n" +
-                  "                      \"values\":\"string\"\n" +
-                  "                    },\n" +
-                  "                    \"compliance\" : {\"/*\":[{\"dataType\":\"MEMBER_ID\"}]}\n" +
-                  "                },\n" +
-                  "      \"compliance\" : \"None\"\n" +
-                  "    }\n" +
-                  "  ]\n" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", " +
-                  "\"name\" : \"Foo\", " +
-                  "\"namespace\" : \"com.x.y.z\", " +
-                  "\"fields\" : [ { \"name\" : \"typedefMapField\", " +
-                  "\"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, " +
-                  "\"compliance\" : \"None\" } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // Test Annotations for TypeRef : one layer typeref, and properties merged
-              "{\n" +
-                  "  \"type\" : \"record\",\n" +
-                  "  \"name\" : \"Foo\",\n" +
-                  "  \"namespace\" : \"com.x.y.z\",\n" +
-                  "  \"fields\" : [\n" +
-                  "    {\"name\" : \"typedefMapField\",\n" +
-                  "      \"type\" :{\n" +
-                  "                    \"type\" : \"typeref\",\n" +
-                  "                    \"name\" : \"refToMap\", \"ref\" :{\n" +
-                  "                      \"type\" : \"map\",\n" +
-                  "                      \"values\":\"string\"\n" +
-                  "                    },\n" +
-                  "                    \"compliance\" : {\"/*\":[{\"dataType\":\"MEMBER_ID\"}]}\n" +
-                  "                },\n" +
-                  "      \"otherannotation\" : \"None\"\n" +
-                  "    }\n" +
-                  "  ]\n" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"otherannotation\" : \"None\", \"compliance\" : { \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
-              null,
-              null,
-              null
           }
       };
 
@@ -2487,7 +2473,7 @@ public class TestSchemaTranslator
   }
 
   @Test(dataProvider = "fromAvroSchemaData")
-  public void testFromAvroSchema(String avroText, String schemaText)
+  public void testFromAvroSchema(String avroText, String schemaText) throws Exception
   {
     AvroToDataSchemaTranslationOptions options[] =
     {
@@ -2501,13 +2487,13 @@ public class TestSchemaTranslator
     {
       DataSchema schema = SchemaTranslator.avroToDataSchema(avroText, option);
       String schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
-      assertEquals(schemaTextFromAvro, schemaText);
+      assertEquals(TestUtil.dataMapFromString(schemaTextFromAvro), TestUtil.dataMapFromString(schemaText));
 
       Schema avroSchema = Schema.parse(avroText);
       String preTranslateAvroSchema = avroSchema.toString();
       schema = SchemaTranslator.avroToDataSchema(avroSchema, option);
       schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
-      assertEquals(schemaTextFromAvro, schemaText);
+      assertEquals(TestUtil.dataMapFromString(schemaTextFromAvro), TestUtil.dataMapFromString(schemaText));
       String postTranslateAvroSchema = avroSchema.toString();
       assertEquals(preTranslateAvroSchema, postTranslateAvroSchema);
     }

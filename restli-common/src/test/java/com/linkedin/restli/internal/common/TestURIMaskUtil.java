@@ -113,8 +113,8 @@ public class TestURIMaskUtil
   {
     MaskTree decoded = URIMaskUtil.decodeMaskUriFormat(new StringBuilder(uriMask));
     DataMap expectedMask = dataMapFromString(jsonMask.replace('\'', '"'));
-    assertEquals(decoded.getDataMap().toString(),
-                 expectedMask.toString(),
+    assertEquals(decoded.getDataMap(),
+                 expectedMask,
                  "Decoding test case failed: \n" + description + "\nmask in URI: "
                      + uriMask + "\nexcpected: " + expectedMask.toString() + "\nactual: "
                      + decoded.toString());
