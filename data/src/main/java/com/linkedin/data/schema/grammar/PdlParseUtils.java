@@ -17,7 +17,6 @@
 package com.linkedin.data.schema.grammar;
 
 import com.linkedin.data.grammar.PdlParser;
-import com.linkedin.data.schema.SchemaToPdlEncoder;
 import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.List;
@@ -33,7 +32,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class PdlParseUtils
 {
-  private static final Pattern ESCAPE_CHAR_PATTERN = Pattern.compile(String.valueOf(SchemaToPdlEncoder.ESCAPE_CHAR));
+  // TODO: Put this in a unified "PDL constants" file
+  private static final Pattern ESCAPE_CHAR_PATTERN = Pattern.compile(String.valueOf('`'));
 
   /**
    * Given a doc string comment, unescapes and extracts the contents.

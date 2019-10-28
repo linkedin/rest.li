@@ -24,6 +24,7 @@ import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.SchemaToPdlEncoder;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
+import com.linkedin.pegasus.generator.test.idl.EncodingStyle;
 import com.linkedin.pegasus.generator.test.idl.PdlEncoderTestConfig;
 import com.linkedin.pegasus.generator.test.idl.ReferenceFormat;
 import java.io.File;
@@ -32,24 +33,18 @@ import java.io.IOException;
 import java.io.StringWriter;
 import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
 /**
- * Tests {@link SchemaToPdlEncoder} by parsing some .pdl file then encoding it back to .pdl and comparing the two.
+ * Tests {@link SchemaToPdlEncoder} by parsing a .pdl file then encoding it back to .pdl and comparing the two.
+ * Furthermore, it parses the resulting encoded .pdl text to test that different encoding styles
+ * ({@link com.linkedin.data.schema.SchemaToPdlEncoder.EncodingStyle}) produce correct schemas.
  */
 public class PdlEncoderTest extends GeneratorTest
 {
   private final File pegasusSrcDir = new File(System.getProperty("testDir", "src/test") + "/pegasus");
-  private DataSchemaResolver resolver;
-
-  @BeforeMethod
-  private void beforeMethod()
-  {
-    resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(pegasusSrcDir.getAbsolutePath());
-  }
 
   @DataProvider(name = "pdlFilePaths")
   private Object[][] providePdlFilePaths()
@@ -104,22 +99,6 @@ public class PdlEncoderTest extends GeneratorTest
     assertRoundTrip(pdlFilePath);
   }
 
-  private DataSchema parseSchema(File file) throws IOException
-  {
-    AbstractSchemaParser parser = new PdlSchemaParser(resolver);
-    parser.parse(new FileInputStream(file));
-    StringBuilder errorMessageBuilder = parser.errorMessageBuilder();
-    if (errorMessageBuilder.length() > 0)
-    {
-      Assert.fail("Failed to parse schema: " + file.getAbsolutePath() + "\nerrors: " + errorMessageBuilder.toString());
-    }
-    if (parser.topLevelDataSchemas().size() != 1)
-    {
-      Assert.fail("Failed to parse any schemas from: " + file.getAbsolutePath() + "\nerrors: " + errorMessageBuilder.toString());
-    }
-    return parser.topLevelDataSchemas().get(0);
-  }
-
   private void assertRoundTrip(String relativeName) throws IOException
   {
     String fullName = "com.linkedin.pegasus.generator.test.idl." + relativeName;
@@ -136,14 +115,59 @@ public class PdlEncoderTest extends GeneratorTest
     // Encode and compare for each type reference format (just PRESERVE by default)
     for (ReferenceFormat referenceFormat : testConfig.getReferenceFormats())
     {
-      StringWriter writer = new StringWriter();
-      SchemaToPdlEncoder encoder = new SchemaToPdlEncoder(writer);
-      encoder.setTypeReferenceFormat(TypeReferenceFormat.valueOf(referenceFormat.name()));
-      encoder.encode(parsed);
-      String encoded = writer.toString();
-      assertEqualsIgnoringSpacing(encoded, original,
-          "Encoded schema doesn't match original for type reference format: \"" + referenceFormat + "\".");
+      // Do this as well for each encoding style (all by default)
+      for (EncodingStyle encodingStyle : testConfig.getEncodingStyles())
+      {
+        StringWriter writer = new StringWriter();
+        SchemaToPdlEncoder encoder = new SchemaToPdlEncoder(writer);
+        encoder.setTypeReferenceFormat(TypeReferenceFormat.valueOf(referenceFormat.name()));
+        encoder.setEncodingStyle(SchemaToPdlEncoder.EncodingStyle.valueOf(encodingStyle.name()));
+        encoder.encode(parsed);
+        String encoded = writer.toString();
+
+        // Only test against original text for indented encoding since original text uses this style
+        if (encodingStyle == EncodingStyle.INDENTED)
+        {
+          assertEqualsIgnoringSpacing(encoded, original,
+              "Encoded schema doesn't match original for type reference format: \"" + referenceFormat + "\".");
+        }
+
+        // Parse the newly encoded PDL text to ensure the encoding style didn't produce an invalid schema
+        DataSchema parsedAgain = parseSchema(encoded, relativeName);
+        Assert.assertEquals(parsedAgain, parsed,
+            "Encoding using the \"" + encodingStyle + "\" style resulted in a different/invalid schema.");
+      }
     }
+  }
+
+  private DataSchema parseSchema(File file) throws IOException
+  {
+    DataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(pegasusSrcDir.getAbsolutePath());
+    AbstractSchemaParser parser = new PdlSchemaParser(resolver);
+    parser.parse(new FileInputStream(file));
+    return extractSchema(parser, file.getAbsolutePath());
+  }
+
+  private DataSchema parseSchema(String text, String name) throws IOException
+  {
+    DataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(pegasusSrcDir.getAbsolutePath());
+    AbstractSchemaParser parser = new PdlSchemaParser(resolver);
+    parser.parse(text);
+    return extractSchema(parser, name);
+  }
+
+  private DataSchema extractSchema(AbstractSchemaParser parser, String name)
+  {
+    StringBuilder errorMessageBuilder = parser.errorMessageBuilder();
+    if (errorMessageBuilder.length() > 0)
+    {
+      Assert.fail("Failed to parse schema: " + name + "\nerrors: " + errorMessageBuilder.toString());
+    }
+    if (parser.topLevelDataSchemas().size() != 1)
+    {
+      Assert.fail("Failed to parse any schemas from: " + name + "\nerrors: " + errorMessageBuilder.toString());
+    }
+    return parser.topLevelDataSchemas().get(0);
   }
 
   private void assertEqualsIgnoringSpacing(String lhs, String rhs, String message)

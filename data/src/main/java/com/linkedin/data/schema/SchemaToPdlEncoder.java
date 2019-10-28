@@ -16,15 +16,10 @@
 
 package com.linkedin.data.schema;
 
-import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.Null;
-import com.linkedin.data.codec.JacksonDataCodec;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -34,7 +29,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 
 
@@ -43,19 +37,46 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 {
-  private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
-    "array", "enum", "fixed", "import", "includes", "map", "namespace", "optional", "package",
-		"record", "typeref", "union", "null", "true", "false"
-  ));
   // Unions with at least this many members will be written onto multiple lines to improve readability
   private static final int UNION_MULTILINE_THRESHOLD = 5;
 
-  private static final JacksonDataCodec CODEC = new JacksonDataCodec();
-  public static final char ESCAPE_CHAR = '`';
+  /**
+   * Encoding style for PDL.
+   */
+  public enum EncodingStyle
+  {
+    /**
+     * As compact as possible.
+     */
+    COMPACT(new CompactPdlBuilder.Provider()),
 
-  private final Writer _out;
+    /**
+     * Very neat and human-readable, using newlines and indentation.
+     */
+    INDENTED(new IndentedPdlBuilder.Provider());
+
+    // Provider for creating new PDL builder instances which can encode in this style
+    PdlBuilder.Provider _pdlBuilderProvider;
+
+    EncodingStyle(PdlBuilder.Provider pdlBuilderProvider)
+    {
+      _pdlBuilderProvider = pdlBuilderProvider;
+    }
+
+    PdlBuilder newBuilderInstance(Writer writer)
+    {
+      return _pdlBuilderProvider.newInstance(writer);
+    }
+  }
+
+  private final Writer _writer;
+
+  // Configurable options
+  private EncodingStyle _encodingStyle;
+
+  // Stateful variables used on a per-encoding basis
+  private PdlBuilder _builder;
   private Map<String, Name> _importsByLocalName;
-  private int _indentDepth = 0;
   private String _namespace = "";
   private String _package = "";
 
@@ -66,7 +87,18 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    */
   public SchemaToPdlEncoder(Writer out)
   {
-    _out = out;
+    _writer = out;
+    _encodingStyle = EncodingStyle.INDENTED;
+  }
+
+  /**
+   * Set the preferred {@link EncodingStyle}.
+   *
+   * @param encodingStyle preferred encoding style
+   */
+  public void setEncodingStyle(EncodingStyle encodingStyle)
+  {
+    _encodingStyle = encodingStyle;
   }
 
   /**
@@ -78,6 +110,9 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   @Override
   public void encode(DataSchema schema) throws IOException
   {
+    // Initialize a new builder for the preferred encoding style
+    _builder = _encodingStyle.newBuilderInstance(_writer);
+
     // Set and write root namespace/package
     if (schema instanceof NamedDataSchema)
     {
@@ -88,15 +123,21 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       {
         if (hasNamespace)
         {
-          writeLine("namespace " + escapeIdentifier(namedSchema.getNamespace()));
+          _builder.write("namespace")
+              .writeSpace()
+              .writeIdentifier(namedSchema.getNamespace())
+              .newline();
           _namespace = namedSchema.getNamespace();
         }
         if (hasPackage)
         {
-          writeLine("package " + escapeIdentifier(namedSchema.getPackage()));
+          _builder.write("package")
+              .writeSpace()
+              .writeIdentifier(namedSchema.getPackage())
+              .newline();
           _package = namedSchema.getPackage();
         }
-        newline();
+        _builder.newline();
       }
     }
 
@@ -115,9 +156,12 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     {
       for (Name importName : new TreeSet<>(_importsByLocalName.values()))
       {
-        writeLine("import " + escapeIdentifier(importName.getFullName()));
+        _builder.write("import")
+            .writeSpace()
+            .writeIdentifier(importName.getFullName())
+            .newline();
       }
-      newline();
+      _builder.newline();
     }
 
     // Write the schema
@@ -141,24 +185,28 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       NamedDataSchema namedSchema = (NamedDataSchema) schema;
       hasNamespaceOverride = !StringUtils.isEmpty(namedSchema.getNamespace()) && !namedSchema.getNamespace().equals(surroundingNamespace);
       hasPackageOverride = !StringUtils.isEmpty(namedSchema.getPackage()) && !namedSchema.getPackage().equals(surroundingPackage);
-      if (hasNamespaceOverride || hasPackageOverride) {
-        write("{");
-        newline();
-        _indentDepth++;
-        indent();
-        if (hasNamespaceOverride) {
-
-          write("namespace ");
-          write(escapeIdentifier(namedSchema.getNamespace()));
-          newline();
-          indent();
+      if (hasNamespaceOverride || hasPackageOverride)
+      {
+        _builder.write("{")
+            .newline()
+            .increaseIndent()
+            .indent();
+        if (hasNamespaceOverride)
+        {
+          _builder.write("namespace")
+              .writeSpace()
+              .writeIdentifier(namedSchema.getNamespace())
+              .newline()
+              .indent();
           _namespace = namedSchema.getNamespace();
         }
-        if (hasPackageOverride) {
-          write("package ");
-          write(escapeIdentifier(namedSchema.getPackage()));
-          newline();
-          indent();
+        if (hasPackageOverride)
+        {
+          _builder.write("package")
+              .writeSpace()
+              .writeIdentifier(namedSchema.getPackage())
+              .newline()
+              .indent();
           _package = namedSchema.getPackage();
         }
       }
@@ -198,7 +246,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         writePrimitive((PrimitiveDataSchema) schema);
         break;
       case NULL:
-        write("null");
+        _builder.write("null");
         break;
       default:
         throw new IllegalArgumentException("Unrecognized schema type " + schema.getClass());
@@ -206,10 +254,10 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
     // End overridden namespace scope
     if (hasNamespaceOverride || hasPackageOverride) {
-      --_indentDepth;
-      newline();
-      indent();
-      write("}");
+      _builder.decreaseIndent()
+          .newline()
+          .indent()
+          .write("}");
       _namespace = surroundingNamespace;
       _package = surroundingPackage;
     }
@@ -218,21 +266,23 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private void writeRecord(RecordDataSchema schema) throws IOException
   {
     writeDocAndProperties(schema);
-    write("record ");
-    write(toTypeIdentifier(schema));
+    _builder.write("record")
+        .writeSpace()
+        .writeIdentifier(schema.getName());
+
     List<NamedDataSchema> includes = schema.getInclude();
     if (includes.size() > 0 && !schema.isFieldsBeforeIncludes())
     {
       writeIncludes(schema, includes);
     }
-    write(" {");
+    _builder.writeSpace().write("{");
 
     // This check allows for field-less records to be wholly inlined (e.g. "record A {}")
     List<RecordDataSchema.Field> fields = schema.getFields();
     if (!fields.isEmpty())
     {
-      newline();
-      _indentDepth++;
+      _builder.newline().increaseIndent();
+
       for (RecordDataSchema.Field field : fields)
       {
         if (field.getRecord().equals(schema))
@@ -240,11 +290,10 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
           writeField(field);
         }
       }
-      _indentDepth--;
-      indent();
+      _builder.decreaseIndent().indent();
     }
 
-    write("}");
+    _builder.write("}");
 
     if (includes.size() > 0 && schema.isFieldsBeforeIncludes())
     {
@@ -259,32 +308,37 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private void writeField(RecordDataSchema.Field field) throws IOException
   {
     writeDocAndProperties(field);
-    indent();
-    write(escapeIdentifier(field.getName()));
-    write(": ");
+    _builder.indent()
+        .writeIdentifier(field.getName())
+        .write(":")
+        .writeSpace();
     if (field.getOptional())
     {
-      write("optional ");
+      _builder.write("optional").writeSpace();
     }
     writeReferenceOrInline(field.getType(), field.isDeclaredInline());
 
     if (field.getDefault() != null)
     {
-      write(" = ");
-      write(toJson(field.getDefault()));
+      _builder.writeSpace()
+          .write("=")
+          .writeSpace()
+          .writeJson(field.getDefault());
     }
-    newline();
+    _builder.newline();
   }
 
   private void writeIncludes(RecordDataSchema schema, List<NamedDataSchema> includes) throws IOException {
-    write(" includes ");
+    _builder.writeSpace()
+        .write("includes")
+        .writeSpace();
     for (Iterator<NamedDataSchema> iter = includes.iterator(); iter.hasNext();)
     {
       NamedDataSchema include = iter.next();
       writeReferenceOrInline(include, schema.isIncludeDeclaredInline(include));
       if (iter.hasNext())
       {
-        write(", ");
+        _builder.writeComma().writeSpace();
       }
     }
   }
@@ -301,12 +355,14 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         properties.get(DataSchemaConstants.DEPRECATED_SYMBOLS_KEY));
 
     writeDocAndProperties(schema);
-    write("enum ");
-    write(toTypeIdentifier(schema));
-    write(" {");
-    newline();
+    _builder.write("enum")
+        .writeSpace()
+        .writeIdentifier(schema.getName())
+        .writeSpace()
+        .write("{")
+        .newline()
+        .increaseIndent();
 
-    _indentDepth++;
     Map<String, String> docs = schema.getSymbolDocs();
 
     for (String symbol : schema.getSymbols())
@@ -324,47 +380,55 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       if (StringUtils.isNotBlank(docString) || !symbolProperties.isEmpty())
       {
         // For any non-trivial symbol declarations, separate with an additional newline.
-        newline();
+        _builder.newline();
       }
       writeDocAndProperties(docString, symbolProperties);
-      writeLine(symbol);
+      _builder.indent()
+          .write(symbol)
+          .newline();
     }
-    _indentDepth--;
-    indent();
-    write("}");
+    _builder.decreaseIndent()
+        .indent()
+        .write("}");
   }
 
   private void writeFixed(FixedDataSchema schema) throws IOException
   {
     writeDocAndProperties(schema);
-    write("fixed ");
-    write(toTypeIdentifier(schema));
-    write(" ");
-    write(String.valueOf(schema.getSize()));
+    _builder.write("fixed")
+        .writeSpace()
+        .writeIdentifier(schema.getName())
+        .writeSpace()
+        .write(String.valueOf(schema.getSize()));
   }
 
   private void writeTyperef(TyperefDataSchema schema) throws IOException
   {
     writeDocAndProperties(schema);
-    write("typeref ");
-    write(toTypeIdentifier(schema));
-    write(" = ");
+    _builder.write("typeref")
+        .writeSpace()
+        .writeIdentifier(schema.getName())
+        .writeSpace()
+        .write("=")
+        .writeSpace();
     DataSchema ref = schema.getRef();
     writeReferenceOrInline(ref, schema.isRefDeclaredInline());
   }
 
   private void writeMap(MapDataSchema schema) throws IOException
   {
-    write("map[string, ");
+    _builder.write("map[string")
+        .writeComma()
+        .writeSpace();
     writeReferenceOrInline(schema.getValues(), schema.isValuesDeclaredInline());
-    write("]");
+    _builder.write("]");
   }
 
   private void writeArray(ArrayDataSchema schema) throws IOException
   {
-    write("array[");
+    _builder.write("array[");
     writeReferenceOrInline(schema.getItems(), schema.isItemsDeclaredInline());
-    write("]");
+    _builder.write("]");
   }
 
   /**
@@ -373,12 +437,11 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    */
   private void writeUnion(UnionDataSchema schema) throws IOException
   {
-    write("union[");
+    _builder.write("union[");
     final boolean useMultilineFormat = schema.areMembersAliased() || schema.getMembers().size() >= UNION_MULTILINE_THRESHOLD;
     if (useMultilineFormat)
     {
-      newline();
-      _indentDepth++;
+      _builder.newline().increaseIndent();
     }
     for (Iterator<UnionDataSchema.Member> iter = schema.getMembers().iterator(); iter.hasNext();)
     {
@@ -387,22 +450,21 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       {
         if (useMultilineFormat)
         {
-          write(",");
-          newline();
+          _builder.writeComma().newline();
         }
         else
         {
-          write(", ");
+          _builder.writeComma().writeSpace();
         }
       }
     }
     if (useMultilineFormat)
     {
-      _indentDepth--;
-      newline();
-      indent();
+      _builder.decreaseIndent()
+          .newline()
+          .indent();
     }
-    write("]");
+    _builder.write("]");
   }
 
   /**
@@ -417,24 +479,25 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       if (StringUtils.isNotBlank(member.getDoc()) || !member.getProperties().isEmpty() || member.isDeclaredInline())
       {
         // For any non-trivial union member declarations, separate with an additional newline.
-        newline();
+        _builder.newline();
       }
       writeDocAndProperties(member.getDoc(), member.getProperties());
-      indent();
-      write(member.getAlias());
-      write(": ");
+      _builder.indent()
+          .write(member.getAlias())
+          .write(":")
+          .writeSpace();
     }
     else if (useMultilineFormat)
     {
       // Necessary because "null" union members aren't aliased
-      indent();
+      _builder.indent();
     }
     writeReferenceOrInline(member.getType(), member.isDeclaredInline());
   }
 
   private void writePrimitive(PrimitiveDataSchema schema) throws IOException
   {
-    write(schema.getUnionMemberKey());
+    _builder.write(schema.getUnionMemberKey());
   }
 
   /**
@@ -460,75 +523,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     return (DataMap) value;
   }
 
-  /**
-   * Write a documentation string to .pdl code.
-   * The documentation string will be embedded in a properly indented javadoc style doc string delimiters and margin.
-   * @param doc provides the documentation to write.
-   */
-  private boolean writeDoc(String doc) throws IOException
-  {
-    if (StringUtils.isNotBlank(doc))
-    {
-      writeLine("/**");
 
-      for (String line : doc.split("\n"))
-      {
-        indent();
-        write(" * ");
-        write(line);
-        newline();
-      }
-      writeLine(" */");
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Serialize a pegasus Data binding type to JSON.
-   * Valid types: DataList, DataMap, String, Int, Long, Float, Double, Boolean, ByteArray
-   * @param value provides the value to serialize to JSON.
-   * @return a JSON serialized string representation of the data value.
-   */
-  private String toJson(Object value) throws IOException
-  {
-    if (value instanceof DataMap)
-    {
-      return CODEC.mapToString((DataMap) value);
-    }
-    else if (value instanceof DataList)
-    {
-      return CODEC.listToString((DataList) value);
-    }
-    else if (value instanceof String)
-    {
-      // JSON also allows the '/' char to be written in strings both unescaped ("/") and escaped ("\/").
-      // StringEscapeUtils.escapeJson always escapes '/' so we deliberately use escapeJava instead, which
-      // is exactly like escapeJson but without the '/' escaping.
-      return "\"" + StringEscapeUtils.escapeJava((String) value) + "\"";
-    }
-    else if (value instanceof Number)
-    {
-      return String.valueOf(value);
-    }
-    else if (value instanceof Boolean)
-    {
-      return String.valueOf(value);
-    }
-    else if (value instanceof ByteString)
-    {
-      return ((ByteString) value).asAvroString();
-    }
-    else if (value instanceof Null)
-    {
-      // some legacy PDSC use union[null, xxx] to represent an optional field
-      return "null";
-    }
-    else
-    {
-      throw new IllegalArgumentException("Unsupported data type: " + value.getClass());
-    }
-  }
 
   /**
    * Writes a data schema type to .pdl code, either as a by-name reference, or as an inlined declaration.
@@ -547,12 +542,11 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     {
       boolean requiresNewlineLayout = requiresNewlineLayout(dataSchema);
       if (requiresNewlineLayout) {
-        newline();
-        _indentDepth++;
+        _builder.newline().increaseIndent();
       }
       writeInlineSchema(dataSchema);
       if (requiresNewlineLayout) {
-        _indentDepth--;
+        _builder.decreaseIndent();
       }
     }
     else
@@ -560,7 +554,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       if (dataSchema instanceof NamedDataSchema)
       {
         markEncountered(dataSchema);
-        write(toTypeIdentifier((NamedDataSchema) dataSchema));
+        writeReference((NamedDataSchema) dataSchema);
       }
       else
       {
@@ -593,65 +587,8 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    */
   private boolean writeProperties(Map<String, Object> properties) throws IOException
   {
-    writeProperties(Collections.emptyList(), properties);
+    _builder.writeProperties(Collections.emptyList(), properties);
     return !properties.isEmpty();
-  }
-
-  /**
-   * Writes a set of schema properties that share a common prefix to .pdl.
-   * @param prefix provides the common prefix of all the properties.
-   * @param properties provides the properties to write.
-   */
-  private void writeProperties(List<String> prefix, Map<String, Object> properties) throws IOException
-  {
-    for (Map.Entry<String, Object> entry : properties.entrySet())
-    {
-      String key = entry.getKey();
-      Object value = entry.getValue();
-      ArrayList<String> pathParts = new ArrayList<>(prefix);
-      pathParts.add(key);
-      if (value instanceof DataMap)
-      {
-        // Favor @x.y.z = "value" property encoding style over @x = { "y": { "z": "value" } }
-        DataMap dm = (DataMap) value;
-        if (!dm.isEmpty()) {
-          // encode non-empty value property like @x.y.z = "value"
-          writeProperties(pathParts, dm);
-        } else if (!pathParts.isEmpty()) {
-          // encode empty value property like @x.y = {}
-          writeProperty(pathParts, dm);
-        }
-      }
-      else if (Boolean.TRUE.equals(value))
-      {
-          // Use shorthand for boolean true.  Instead of writing "@deprecated = true",
-          // write "@deprecated".
-          indent();
-          write("@");
-          write(pathToString(pathParts));
-          newline();
-      }
-      else
-      {
-        writeProperty(pathParts, value);
-      }
-    }
-  }
-
-  /**
-   * Write a property string to this encoder's writer.
-   * @param path provides the property's full path.
-   * @param value provides the property's value, it may be any valid pegasus Data binding type (DataList, DataMap,
-   *              String, Int, Long, Float, Double, Boolean, ByteArray)
-   */
-  private void writeProperty(List<String> path, Object value) throws IOException
-  {
-    indent();
-    write("@");
-    write(pathToString(path));
-    write(" = ");
-    write(toJson(value));
-    newline();
   }
 
   /**
@@ -662,7 +599,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    */
   private boolean writeDocAndProperties(String doc, Map<String, Object> properties) throws IOException
   {
-    final boolean hasDoc = writeDoc(doc);
+    final boolean hasDoc = _builder.writeDoc(doc);
     final boolean hasProperties = writeProperties(properties);
     return hasDoc || hasProperties;
   }
@@ -698,7 +635,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
     // If anything was written, indentation needs to be corrected
     if (hasDocOrProperties) {
-      indent();
+      _builder.indent();
     }
   }
 
@@ -727,20 +664,10 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     // For any non-trivial field declarations, separate with an additional newline
     if (StringUtils.isNotBlank(field.getDoc()) || !properties.isEmpty() || field.isDeclaredInline())
     {
-      newline();
+      _builder.newline();
     }
 
     writeDocAndProperties(field.getDoc(), properties);
-  }
-
-  /**
-   * Converts a property path list to an escaped .pdl path string.
-   * @param path provide a property path list.
-   * @return a escaped .pdl path string.
-   */
-  private String pathToString(List<String> path)
-  {
-    return path.stream().map(this::escapePropertyKey).collect(Collectors.joining("."));
   }
 
   /**
@@ -844,109 +771,23 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   }
 
   /**
-   * Get the .pdl escaped source identifier for the given named type.
-   * If the type is imported, it's simple name will be returned, else it's fully qualified name will be returned.
+   * Writes the .pdl escaped source identifier for the given named type.
+   * The simple name will be written if writing within the type's namespace or if this type has been imported, otherwise
+   * the fully qualified name will be written.
    *
-   * @param schema provides the named schema to get a .pdl escaped source identifier for.
-   * @return a escaped source identifier.
+   * @param schema the named schema to get a .pdl escaped source identifier for.
    */
-  private String toTypeIdentifier(NamedDataSchema schema)
+  private void writeReference(NamedDataSchema schema) throws IOException
   {
     if (schema.getNamespace().equals(_namespace) ||
         (_importsByLocalName.containsKey(schema.getName()) &&
         _importsByLocalName.get(schema.getName()).getNamespace().equals(schema.getNamespace())))
     {
-      return escapeIdentifier(schema.getName());
+      _builder.writeIdentifier(schema.getName());
     }
     else
     {
-      return escapeIdentifier(schema.getFullName());
+      _builder.writeIdentifier(schema.getFullName());
     }
-  }
-
-  /**
-   * Escape an identifier for use in .pdl source code, replacing all identifiers that would conflict with .pdl
-   * keywords with a '`' escaped identifier. The identifier may be either qualified or unqualified.
-   *
-   * @param identifier provides the identifier to escape.
-   * @return an escaped identifier for use in .pdl source code.
-   */
-  private String escapeIdentifier(String identifier)
-  {
-    return Arrays.stream(identifier.split("\\.")).map(part -> {
-      if (KEYWORDS.contains(part))
-      {
-        return ESCAPE_CHAR + part.trim() + ESCAPE_CHAR;
-      }
-      else
-      {
-        return part.trim();
-      }
-    }).collect(Collectors.joining("."));
-  }
-
-  /**
-   * Escape a property key for use in .pdl source code, for keys that would conflict with .pdl keywords or those with
-   * dots it returns key escaped with a back-tick '`' character.
-   * Eg, `namespace`
-   *     `com.linkedin.validate.CustomValidator`
-   *
-   * @param propertyKey provides the property key to escape.
-   * @return an escaped property key for use in .pdl source code.
-   */
-  private String escapePropertyKey(String propertyKey)
-  {
-    propertyKey = propertyKey.trim();
-    if (KEYWORDS.contains(propertyKey) || propertyKey.contains("."))
-    {
-      return ESCAPE_CHAR + propertyKey + ESCAPE_CHAR;
-    }
-    else
-    {
-      return propertyKey;
-    }
-  }
-
-  /**
-   * Write an intended line of .pdl code.
-   * The code will be prefixed by the current indentation and suffixed with a newline.
-   * @param code provide the line of .pdl code.
-   */
-  private void writeLine(String code) throws IOException
-  {
-    indent();
-    write(code);
-    newline();
-  }
-
-  /**
-   * Writes the current indentation as .pdl source.
-   * Typically used in conjunction with write() and newline() to emit an entire line of .pdl source.
-   */
-  private void indent() throws IOException
-  {
-    for (int i = 0; i < _indentDepth; i++)
-    {
-      _out.write("  ");
-    }
-  }
-
-  /**
-   * Write a fragment of .pdl code.
-   * The code fragment will be written verbatim.
-   * @param codeFragment provides the fragment to write.
-   */
-  private void write(String codeFragment) throws IOException
-  {
-    _out.write(codeFragment);
-  }
-
-  /**
-   * Write a newline as .pdl source.
-   * Typically used in conjunction with indent() and write() to emit an entire line of .pdl source.
-   */
-  private void newline() throws IOException
-  {
-    _out.write(System.lineSeparator());
   }
 }

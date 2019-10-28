@@ -7,7 +7,10 @@ import com.linkedin.pegasus.generator.test.idl.records.Simple
  * The PDL encoder only writes imports for types that are outside the root namespace of the document and are declared
  * outside the document. A FQN is required for references to types outside the current namespace that don't have a
  * corresponding import.
+ *
+ * TODO: Test all encoding styles once doc string whitespace bug is fixed.
  */
+@testConfig.encodingStyles = ["COMPACT"]
 record NamespaceOverrides {
   /**
    * This record "OverriddenChild" and its child "Grandchild" are declared in an overridden namespace.

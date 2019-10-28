@@ -5,7 +5,10 @@ import com.linkedin.pegasus.generator.test.idl.enums.WithAliases
 /**
  * Ensures that alphabetical priority is used to determine which import to write when there are multiple options for
  * any given simple name.
+ *
+ * TODO: Test all encoding styles once doc string whitespace bug is fixed.
  */
+@testConfig.encodingStyles = ["COMPACT"]
 record ConflictResolution {
   a: WithAliases,
   b: com.linkedin.pegasus.generator.test.idl.`fixed`.WithAliases,

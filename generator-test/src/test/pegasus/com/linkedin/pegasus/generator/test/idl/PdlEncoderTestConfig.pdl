@@ -4,7 +4,7 @@ namespace com.linkedin.pegasus.generator.test.idl
  * This model allows .pdl schemas in this package to specify custom test configs for PdlEncoderTest by using the
  * `@test` property on the root schema.
  *
- * e.g. `@test.referenceFormats = ["PRESERVE", "DENORMALIZE"]`
+ * e.g. `@testConfig.referenceFormats = ["PRESERVE", "DENORMALIZE"]`
  *
  * TODO: perhaps we can enhance this by adding a field to specify which file the schema should match after encoding
  */
@@ -13,4 +13,9 @@ record PdlEncoderTestConfig {
    * Specifies which TypeReferenceFormat(s) to use for encoding.
    */
   referenceFormats: array[enum ReferenceFormat { PRESERVE, DENORMALIZE, MINIMIZE }] = ["PRESERVE"]
+
+  /**
+   * Specifies which SchemaToPdlEncoder.EncodingStyle(s) to use for encoding.
+   */
+  encodingStyles: array[enum EncodingStyle { COMPACT, INDENTED }] = ["COMPACT", "INDENTED"]
 }
