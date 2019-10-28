@@ -18,6 +18,8 @@ package com.linkedin.data.element;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.PathSpec;
 import java.util.Collections;
 import java.util.List;
 
@@ -170,4 +172,33 @@ public abstract class AbstractDataElement implements DataElement
     }
     return builder;
   }
+
+  @Override
+  public PathSpec getSchemaPathSpec()
+  {
+    int index = level();
+    DataElement element = this;
+    String[] pathSpec = new String[index];
+    while (index > 0)
+    {
+      if (element.getSchema() == null)
+      {
+        return null;
+      }
+      index--;
+      DataSchema parentDataSchema = element.getParent().getSchema();
+      if (parentDataSchema != null && (parentDataSchema.getType() == DataSchema.Type.MAP ||
+                                       parentDataSchema.getType() == DataSchema.Type.ARRAY))
+      {
+        pathSpec[index] = PathSpec.WILDCARD;
+      }
+      else
+      {
+        pathSpec[index] = (String) element.getName();
+      }
+      element = element.getParent();
+    }
+    return new PathSpec(pathSpec);
+  }
+
 }

@@ -19,6 +19,7 @@ package com.linkedin.data.element;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
 import java.util.List;
 
@@ -169,9 +170,14 @@ public interface DataElement
    *
    * The fully qualified path is the list of names (also known
    * as path components) of the Data object's traversed
-   * from the root Data object to reach this Data object.
+   * from the root Data object to reach this Data object. If the
+   * Data object is an array item, the path component will be its
+   * index within the array and if the data object is a map value,
+   * the path component will be its map entry key.
+   *
    * The root Data object's name is not included in this list since
    * it is always the same and present.
+   *
    * <p>
    *
    * @param separator provides the character that will be used to
@@ -192,4 +198,19 @@ public interface DataElement
    * to the root, i.e. the {@link DataElement} whose parent is null.
    */
   DataElement copyChain();
+
+  /**
+   * Output this element's corresponding schema field's
+   * {@link com.linkedin.data.schema.PathSpec}, if DataSchemas needed to construct it are available
+   *
+   * Because DataElement does not necessarily associate with DataSchemas, therefore for a dataElement with no
+   * DataSchema, or its parents or ancestors don't have one, there will not be PathSpec for it.
+   *
+   * Note that the path component representing the array index and map key entry will be
+   * {@link com.linkedin.data.schema.PathSpec#WILDCARD} inside PathSpec.
+   *
+   * @return schema's {@link PathSpec} of this dataElement's corresponding field
+   *   if there is no PathSpec,  will return null
+   */
+   PathSpec getSchemaPathSpec();
 }

@@ -23,13 +23,17 @@ import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
+import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.schema.UnionDataSchema;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import sun.tools.asm.ArrayData;
 
 import static com.linkedin.data.TestUtil.dataMapFromString;
 import static org.testng.Assert.assertEquals;
@@ -48,15 +52,31 @@ public class TestDataElement
   }
 
   public String fooSchemaText =
-    "{\n" +
-    "  \"name\" : \"Foo\",\n" +
-    "  \"type\" : \"record\",\n" +
-    "  \"fields\" : [\n" +
-    "    { \"name\" : \"int\", \"type\" : \"int\", \"optional\" : true },\n" +
-    "    { \"name\" : \"string\", \"type\" : \"string\", \"optional\" : true },\n" +
-    "    { \"name\" : \"array\", \"type\" : { \"type\" : \"array\", \"items\" : \"Foo\" }, \"optional\" : true }\n" +
-    "  ]\n" +
-    "}\n";
+      "{" +
+      "  \"name\" : \"Foo\"," +
+      "  \"type\" : \"record\"," +
+      "  \"fields\" : [" +
+      "    { \"name\" : \"int\", \"type\" : \"int\", \"optional\" : true }," +
+      "    { \"name\" : \"string\", \"type\" : \"string\", \"optional\" : true }," +
+      "    { \"name\" : \"array\", \"type\" : { \"type\" : \"array\", \"items\" : \"Foo\" }, \"optional\" : true }," +
+      "    { \"name\" : \"enumField\", \"type\" : {\"name\":\"namedEnum\", \"type\":\"enum\", \"symbols\": [ \"SYMBOL1\", \"SYMBOL2\", \"SYMBOL3\" ] }, \"optional\" : true }," +
+      "    { \"name\" : \"unionField\", \"type\" : [ \"int\", \"string\" ], \"optional\" : true }," +
+      "    { \"name\" : \"typeRefField\", \"type\" : {\"name\":\"namedTypeRef\", \"type\": \"typeref\", \"ref\": \"int\"}, \"optional\" : true }," +
+      "    { \"name\" : \"unionWithAliasesField\", \"type\" : [" +
+      "        {" +
+      "          \"type\" : \"string\"," +
+      "          \"alias\" : \"stringFieldInUnionWithAliases\"" +
+      "        }," +
+      "        {" +
+      "          \"type\": {" +
+      "            \"type\" : \"array\"," +
+      "            \"items\" : \"string\"" +
+      "          }," +
+      "          \"alias\" : \"arrayOfStringInUnionWithAliases\"" +
+      "        }" +
+      "     ], \"optional\" : true }" +
+      "  ]" +
+      "}";
 
   public static interface DataElementFactory
   {
@@ -100,17 +120,26 @@ public class TestDataElement
     ArrayDataSchema arraySchema = (ArrayDataSchema) fooSchema.getField("array").getType();
 
     String fooText =
-      "{\n" +
-      "  \"int\" : 34,\n" +
-      "  \"string\" : \"abc\",\n" +
-      "  \"array\" : [\n" +
-      "    { \"int\" : 56 },\n" +
-      "    { \"string\" : \"xyz\" },\n" +
-      "    { \"array\" : [\n" +
-      "      { \"int\" : 78 }\n" +
-      "    ] }\n" +
-      "  ]\n" +
-      "}\n";
+        " { " +
+        "   \"int\" : 34, " +
+        "   \"string\" : \"abc\", " +
+        "   \"array\" : [ " +
+        "     { \"int\" : 56 }, " +
+        "     { \"string\" : \"xyz\" }, " +
+        "     { \"array\" : [ " +
+        "       { \"int\" : 78 } " +
+        "     ] } " +
+        "   ], " +
+        "   \"enumField\": \"SYMBOL1\", " +
+        "   \"unionField\": { " +
+        "       \"string\":\"unionString\" " +
+        "   }, " +
+        "   \"typeRefField\": \"42\", " +
+        "   \"unionWithAliasesField\" : { " +
+        "       \"stringFieldInUnionWithAliases\" : \"stringInUnionWithAlias\" " +
+        "   } " +
+        " } ";
+
 
     DataMap foo = TestUtil.dataMapFromString(fooText);
 
@@ -118,6 +147,24 @@ public class TestDataElement
     DataElement int1 = factory.create(foo.get("int"), "int", fooSchema.getField("int").getType(), root);
     DataElement string1 = factory.create(foo.get("string"), "string", fooSchema.getField("string").getType(), root);
     DataElement array1 = factory.create(foo.get("array"), "array", fooSchema.getField("array").getType(), root);
+
+    EnumDataSchema enumDataSchema = (EnumDataSchema) fooSchema.getField("enumField").getType();
+    DataElement enumField = factory.create(foo.get("enumField"), "enumField", enumDataSchema, root);
+
+    DataElement unionField = factory.create(foo.get("unionField"), "unionField", fooSchema.getField("unionField").getType(), root);
+    UnionDataSchema unionFieldSchema = (UnionDataSchema) fooSchema.getField("unionField").getType();
+    DataElement unionFieldString = factory.create(unionField.getChild("string"), "string", unionFieldSchema.getTypeByMemberKey("string"), unionField);
+
+    TyperefDataSchema typerefDataSchema = (TyperefDataSchema) fooSchema.getField("typeRefField").getType();
+    DataElement typeRefField = factory.create(foo.get("typeRefField"), "typeRefField", typerefDataSchema, root);
+
+    DataElement unionWithAliasesField = factory.create(foo.get("unionWithAliasesField"), "unionWithAliasesField", fooSchema.getField("unionWithAliasesField").getType(), root);
+    UnionDataSchema unionWithAliasesSchema = (UnionDataSchema) fooSchema.getField("unionWithAliasesField").getType();
+    DataElement stringFieldInUnionWithAliases = factory.create(unionWithAliasesField.getChild("stringFieldInUnionWithAliases"),
+                                                               "stringFieldInUnionWithAliases",
+                                                               unionWithAliasesSchema.getTypeByMemberKey("stringFieldInUnionWithAliases"),
+                                                               unionWithAliasesField);
+
 
     DataElement foo20 = factory.create(array1.getChild(0), 0, arraySchema.getItems(), array1);
     DataElement foo21 = factory.create(array1.getChild(1), 1, arraySchema.getItems(), array1);
@@ -138,73 +185,113 @@ public class TestDataElement
           root,
           foo,
           fooSchema,
-          new Object[] {}
+          new Object[] {},
+          ""
         },
         {
           int1,
           foo.get("int"),
           DataSchemaConstants.INTEGER_DATA_SCHEMA,
-          new Object[] { "int" }
+          new Object[] { "int" },
+          "/int"
         },
         {
           string1,
           foo.get("string"),
           DataSchemaConstants.STRING_DATA_SCHEMA,
-          new Object[] { "string" }
+          new Object[] { "string" },
+          "/string"
         },
         {
           array1,
           foo.get("array"),
           arraySchema,
-          new Object[] { "array" }
+          new Object[] { "array" },
+          "/array"
         },
         {
-          foo20,
-          ((DataList) foo.get("array")).get(0),
-          fooSchema,
-          new Object[] { "array", 0 }
+            enumField,
+            foo.get("enumField"),
+            enumDataSchema,
+            new Object[] { "enumField" },
+            "/enumField"
+        },
+        {
+            unionFieldString,
+            ((DataMap) foo.get("unionField")).get("string"),
+            DataSchemaConstants.STRING_DATA_SCHEMA,
+            new Object[] { "unionField", "string" },
+            "/unionField/string"
+        },
+        {
+            typeRefField,
+            foo.get("typeRefField"),
+            typerefDataSchema,
+            new Object[] { "typeRefField"},
+            "/typeRefField"
+        },
+        {
+            stringFieldInUnionWithAliases,
+            ((DataMap) foo.get("unionWithAliasesField")).get("stringFieldInUnionWithAliases"),
+            DataSchemaConstants.STRING_DATA_SCHEMA,
+            new Object[] { "unionWithAliasesField", "stringFieldInUnionWithAliases"},
+            "/unionWithAliasesField/stringFieldInUnionWithAliases"
+        },
+        {
+        foo20,
+        ((DataList) foo.get("array")).get(0),
+        fooSchema,
+        new Object[] { "array", 0 },
+        "/array/*"
         },
         {
           foo21,
           ((DataList) foo.get("array")).get(1),
           fooSchema,
-          new Object[] { "array", 1 }
+          new Object[] { "array", 1 },
+          "/array/*"
         },
         {
           foo22,
           ((DataList) foo.get("array")).get(2),
           fooSchema,
-          new Object[] { "array", 2 }
+          new Object[] { "array", 2 },
+          "/array/*"
         },
         {
           int20,
           ((DataMap) ((DataList) foo.get("array")).get(0)).get("int"),
           DataSchemaConstants.INTEGER_DATA_SCHEMA,
-          new Object[] { "array", 0, "int" }
+          new Object[] { "array", 0, "int" },
+          "/array/*/int"
         },
         {
           string21,
           ((DataMap) ((DataList) foo.get("array")).get(1)).get("string"),
           DataSchemaConstants.STRING_DATA_SCHEMA,
-          new Object[] { "array", 1, "string" }
+          new Object[] { "array", 1, "string" },
+          "/array/*/string"
         },
         {
           array22,
           ((DataMap) ((DataList) foo.get("array")).get(2)).get("array"),
           arraySchema,
-          new Object[] { "array", 2, "array" }
+          new Object[] { "array", 2, "array" },
+          "/array/*/array"
         },
         {
           foo30,
           ((DataList) ((DataMap) ((DataList) foo.get("array")).get(2)).get("array")).get(0),
           fooSchema,
-          new Object[] { "array", 2, "array", 0 }
+          new Object[] { "array", 2, "array", 0 },
+          "/array/*/array/*"
         },
         {
           int30,
           ((DataMap) ((DataList) ((DataMap) ((DataList) foo.get("array")).get(2)).get("array")).get(0)).get("int"),
           DataSchemaConstants.INTEGER_DATA_SCHEMA,
-          new Object[] { "array", 2, "array", 0, "int" }
+          new Object[] { "array", 2, "array", 0, "int" },
+          "/array/*/array/*/int"
         }
       };
 
@@ -264,6 +351,11 @@ public class TestDataElement
       assertElementChainEquals(elementFromUtil, element, root);
       elementFromUtil = DataElementUtil.element(root.getValue(), root.getSchema(), element.pathAsString('*'), '*');
       assertElementChainEquals(elementFromUtil, element, root);
+
+      // test pathSpec
+      String pathSpecString = (String) row[4];
+      assertEquals(element.getSchemaPathSpec().toString(), pathSpecString);
+
     }
   }
 
