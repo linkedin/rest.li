@@ -318,7 +318,7 @@ public class TestRestLiServer
 
     @SuppressWarnings("unchecked")
     Callback<StreamResponse> r2Callback = createMock(Callback.class);
-    final Capture<StreamResponse> streamResponse = new Capture<>();
+    final Capture<StreamResponse> streamResponse = EasyMock.newCapture();
     r2Callback.onSuccess(capture(streamResponse));
     expectLastCall().once();
     replay(r2Callback);
@@ -363,7 +363,7 @@ public class TestRestLiServer
 
     @SuppressWarnings("unchecked")
     Callback<StreamResponse> r2Callback = createMock(Callback.class);
-    final Capture<StreamResponse> streamResponse = new Capture<>();
+    final Capture<StreamResponse> streamResponse = EasyMock.newCapture();
     r2Callback.onSuccess(capture(streamResponse));
     expectLastCall().once();
     replay(r2Callback);
@@ -1742,7 +1742,7 @@ public class TestRestLiServer
     responseAttachmentsBuilder.appendSingleAttachment(new RestLiTestAttachmentDataSource("1",
                                                                                          ByteString.copyString("one", Charset.defaultCharset())));
 
-    Capture<ResourceContext> resourceContextCapture = new Capture<ResourceContext>();
+    Capture<ResourceContext> resourceContextCapture = EasyMock.newCapture();
     final AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class,
                                                                          capture(resourceContextCapture));
 
@@ -2006,7 +2006,7 @@ public class TestRestLiServer
 
     responseAttachmentsBuilder.appendSingleAttachment(toBeAbortedDataSource);
 
-    Capture<ResourceContext> resourceContextCapture = new Capture<ResourceContext>();
+    Capture<ResourceContext> resourceContextCapture = EasyMock.newCapture();
     final AsyncStatusCollectionResource statusResource = getMockResource(AsyncStatusCollectionResource.class,
                                                                          capture(resourceContextCapture));
 

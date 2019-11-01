@@ -172,12 +172,12 @@ public class TestArgumentBuilder
     parameters.add(param6);
     Object[] positionalArguments = new Object[0];
 
-    Capture<String> param1Capture = new Capture<>();
-    Capture<String> param2Capture = new Capture<>();
-    Capture<String> param3Capture = new Capture<>();
-    Capture<String> param4Capture = new Capture<>();
-    Capture<String> param5Capture = new Capture<>();
-    Capture<String> param6Capture = new Capture<>();
+    Capture<String> param1Capture = EasyMock.newCapture();
+    Capture<String> param2Capture = EasyMock.newCapture();
+    Capture<String> param3Capture = EasyMock.newCapture();
+    Capture<String> param4Capture = EasyMock.newCapture();
+    Capture<String> param5Capture = EasyMock.newCapture();
+    Capture<String> param6Capture = EasyMock.newCapture();
 
     ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);

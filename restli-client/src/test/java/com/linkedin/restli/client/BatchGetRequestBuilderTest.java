@@ -366,7 +366,7 @@ public class BatchGetRequestBuilderTest
     Assert.assertEquals(batchingRequest.getObjectIds(), new HashSet<Integer>(Arrays.asList(1, 2, 3)));
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Test
   public void testComplexKeyBatching()
       throws URISyntaxException, PathSegmentSyntaxException {
@@ -385,11 +385,8 @@ public class BatchGetRequestBuilderTest
                                                                                            TestRecord.class,
                                                                                            _complexResourceSpec,
                                                                                            RestliRequestOptions.DEFAULT_OPTIONS);
-    @SuppressWarnings("unchecked")
-    ComplexResourceKey<TestRecord, TestRecord>[] complexKeys1 =
-        (ComplexResourceKey<TestRecord, TestRecord>[]) Arrays.asList(complexKey1,
-                                                                     complexKey2)
-                                                             .toArray();
+
+    ComplexResourceKey<TestRecord, TestRecord>[] complexKeys1 = new ComplexResourceKey[] {complexKey1, complexKey2};
     batchRequestBuilder1.ids(complexKeys1)
                         .fields(FIELDS.id())
                         .setParam("param2", "value2")
@@ -400,11 +397,8 @@ public class BatchGetRequestBuilderTest
                                                                                            TestRecord.class,
                                                                                            _complexResourceSpec,
                                                                                            RestliRequestOptions.DEFAULT_OPTIONS);
-    @SuppressWarnings("unchecked")
-    ComplexResourceKey<TestRecord, TestRecord>[] complexKeys2 =
-        (ComplexResourceKey<TestRecord, TestRecord>[]) Arrays.asList(complexKey2,
-                                                                     complexKey3)
-                                                             .toArray();
+
+    ComplexResourceKey<TestRecord, TestRecord>[] complexKeys2 = new ComplexResourceKey[]{complexKey2, complexKey3};
     batchRequestBuilder2.ids(complexKeys2)
                         .fields(FIELDS.id(), FIELDS.message())
                         .setParam("param1", "value1")

@@ -1,5 +1,6 @@
 dependencies {
   compile project(':data')
+  compile externalDependency.javaxAnnotation
   testCompile externalDependency.testng
 }
 

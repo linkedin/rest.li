@@ -15,7 +15,7 @@
 */
 
 // determine data template generator classpath
-final FileCollection generatorConfig
+FileCollection generatorConfig
 if (project.name == 'generator') {
   generatorConfig = project.configurations.default + project.sourceSets.main.output
 } else {
@@ -24,7 +24,7 @@ if (project.name == 'generator') {
 }
 
 // determine rest model generator classpath
-final FileCollection restGeneratorConfig
+FileCollection restGeneratorConfig
 if (project.name == 'restli-tools') {
   restGeneratorConfig = project.configurations.default + project.sourceSets.main.output
 } else {

@@ -162,14 +162,7 @@ import org.easymock.IAnswer;
 
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModel;
 import static com.linkedin.restli.server.test.RestLiTestHelper.buildResourceModels;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.eq;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.getCurrentArguments;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.reset;
-import static org.easymock.EasyMock.verify;
+import static org.easymock.EasyMock.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
@@ -330,7 +323,7 @@ public class TestRestLiMethodInvocation
     filterChain.onRequest(mockFilterContext,
                           new RestLiFilterResponseContextFactory(request, routingResult, new RestLiResponseHandler()));
 
-    verify(mockArgumentBuilder, mockFilterContext, mockFilter);
+    verifyRecording(mockArgumentBuilder, mockFilterContext, mockFilter);
     if (throwExceptionFromFirstFilter)
     {
       assertEquals(requestData.getKey(), "Key");

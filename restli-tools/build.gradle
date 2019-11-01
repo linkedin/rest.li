@@ -21,4 +21,3 @@ dependencies {
 }
 
 apply from: "${buildScriptDirPath}/restModel.gradle"
-apply from: "${buildScriptDirPath}/cleanGenerated.gradle"

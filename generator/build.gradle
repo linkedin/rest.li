@@ -5,6 +5,7 @@ dependencies {
   compile externalDependency.commonsIo
   compile externalDependency.codemodel
   compile externalDependency.jsr305
+  compile externalDependency.javaxAnnotation
 
   testCompile externalDependency.testng
   testCompile externalDependency.mockito

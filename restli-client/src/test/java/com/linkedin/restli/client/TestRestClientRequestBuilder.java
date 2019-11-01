@@ -1234,9 +1234,9 @@ public class TestRestClientRequestBuilder
 
     setResourceMethodExpectations(method, mockRequest, mockRecordTemplate, entityBody);
 
-    Capture<RestRequest> restRequestCapture = new Capture<RestRequest>();
+    Capture<RestRequest> restRequestCapture = EasyMock.newCapture();
 
-    Capture<Callback<Map<String, Object>>> callbackMetadataCapture = new Capture<>();
+    Capture<Callback<Map<String, Object>>> callbackMetadataCapture = EasyMock.newCapture();
     mockClient.getMetadata(EasyMock.anyObject(), EasyMock.capture(callbackMetadataCapture));
 
     mockClient.restRequest(EasyMock.capture(restRequestCapture),
@@ -1296,7 +1296,7 @@ public class TestRestClientRequestBuilder
       EasyMock.expect(mockRequest.getInputRecord()).andReturn(null).anyTimes();
     }
 
-    Capture<RestRequest> restRequestCapture = new Capture<RestRequest>();
+    Capture<RestRequest> restRequestCapture = EasyMock.newCapture();
 
     EasyMock.expect(mockClient.getMetadata(new URI(HOST + SERVICE_NAME)))
         .andReturn(Collections.<String, Object>emptyMap()).once();
@@ -1368,9 +1368,9 @@ public class TestRestClientRequestBuilder
 
     setResourceMethodExpectations(method, mockRequest, mockRecordTemplate, entityBody);
 
-    Capture<StreamRequest> streamRequestCapture = new Capture<StreamRequest>();
+    Capture<StreamRequest> streamRequestCapture = EasyMock.newCapture();
 
-    Capture<Callback<Map<String, Object>>> callbackMetadataCapture = new Capture<>();
+    Capture<Callback<Map<String, Object>>> callbackMetadataCapture = EasyMock.newCapture();
     mockClient.getMetadata(EasyMock.anyObject(), EasyMock.capture(callbackMetadataCapture));
 
     mockClient.streamRequest(EasyMock.capture(streamRequestCapture), (RequestContext) EasyMock.anyObject(),

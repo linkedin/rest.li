@@ -576,7 +576,7 @@ public class RetryZooKeeperTest {
 
   private static RetryZooKeeper createMockObject(Method... methods)
   {
-    final IMockBuilder<RetryZooKeeper> mockBuilder = EasyMock.createMockBuilder(RetryZooKeeper.class)
+    final IMockBuilder<RetryZooKeeper> mockBuilder = EasyMock.<RetryZooKeeper>createMockBuilder(RetryZooKeeper.class)
         .withConstructor(_rzkCstr1)
         .withArgs("127.0.0.1:11711",
                   5000000,

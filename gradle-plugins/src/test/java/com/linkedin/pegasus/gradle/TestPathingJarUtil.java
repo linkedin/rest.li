@@ -2,8 +2,15 @@ package com.linkedin.pegasus.gradle;
 
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
+import org.gradle.internal.FileUtils;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.gradle.util.GFileUtils;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -18,13 +25,28 @@ import static org.testng.Assert.*;
 
 public final class TestPathingJarUtil
 {
+  private File temp;
+
+  private void createTempDir() {
+    temp = new File("/tmp/TestPathingJarUtil");
+    temp.mkdir();
+  }
+
+  private void cleanupTempDir() {
+    GFileUtils.deleteDirectory(temp);
+  }
+
+
   @Test
   public void testCreatesGeneratesPathingJar() throws IOException
   {
     //setup
-    Project project = ProjectBuilder.builder().build();
+    createTempDir();
+    Project project = ProjectBuilder.builder().withProjectDir(temp).build();
     String taskName = "myTaskName";
-    File tempFile = new File(project.getBuildDir(), "temp.class");
+    project.getBuildDir().mkdir();
+    System.out.println(project.getBuildDir().getAbsolutePath());
+    File tempFile = new File(project.getBuildDir(), "temp1.class");
     GFileUtils.touch(tempFile);
     FileCollection files = project.files(tempFile);
 
@@ -34,16 +56,20 @@ public final class TestPathingJarUtil
     assertTrue(pathingJar.exists());
     JarInputStream jarStream = new JarInputStream(new FileInputStream(pathingJar));
     Manifest manifest = jarStream.getManifest();
-    assertTrue(manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH).contains("temp.class"));
+    assertTrue(manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH).contains("temp1.class"));
+
+    cleanupTempDir();
   }
 
   @Test
   public void testDoesNotCreatePathingJar() throws IOException
   {
     //setup
-    Project project = ProjectBuilder.builder().build();
+    createTempDir();
+    Project project = ProjectBuilder.builder().withProjectDir(temp).build();
     String taskName = "myTaskName";
 
+    project.getBuildDir().mkdir();
     File tempFile = new File(project.getBuildDir(), "temp.class");
     File restliTools = new File(project.getBuildDir(), "restli-tools-scala");
 
@@ -55,5 +81,7 @@ public final class TestPathingJarUtil
     File pathingJar = new File(project.getBuildDir(), taskName + '/' + project.getName() + "-pathing.jar");
     PathingJarUtil.generatePathingJar(project, taskName, files, false);
     assertFalse(pathingJar.exists());
+
+    cleanupTempDir();
   }
 }

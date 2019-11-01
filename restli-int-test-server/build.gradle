@@ -91,10 +91,11 @@ sourceSets {
   generated {
     java {
       srcDirs = [ 'src/mainGeneratedTest/java' ]
-      output.classesDir = sourceSets.main.output.classesDir
+      outputDir = sourceSets.main.java.outputDir
     }
   }
 }
+
 // need to reference GreetingsResourceImpl, which is in runtime classpath
 sourceSets.generated.compileClasspath = sourceSets.main.compileClasspath + sourceSets.main.runtimeClasspath
 compileGeneratedJava.dependsOn(generateGreetings)
@@ -140,17 +141,21 @@ test {
 
 // TODO When using spawn: true, the server process seems to exit after when gradle exits
 // the groups example requires some application setup/wiring, hence the custom RestLiExamplesServer class
-task startServer(dependsOn: ['build']) << {
-  logging.captureStandardOutput LogLevel.INFO
-  ant.java(classname: 'com.linkedin.restli.examples.RestLiIntTestServer', fork: true, output: '/tmp/restli-int-test-server.log',
+task startServer(dependsOn: ['build']) {
+  doLast {
+    logging.captureStandardOutput LogLevel.INFO
+    ant.java(classname: 'com.linkedin.restli.examples.RestLiIntTestServer', fork: true, output: '/tmp/restli-int-test-server.log',
            classpath: "${sourceSets.main.runtimeClasspath.asPath}")
+  }
 }
 
 // all other examples are simple (no app-specific setup/configuration) and can be booted directly via the StandaloneLauncher class
-task startServerStandaloneLauncher(dependsOn: ['build']) << {
-  logging.captureStandardOutput LogLevel.INFO
-  ant.java(classname: 'com.linkedin.restli.server.StandaloneLauncher', fork: true, output: '/tmp/restli-int-test-server.log',
-  classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
-     arg(line: '-packages com.linkedin.restli.examples.greetings.server,com.linkedin.restli.examples.typeref.server')
+task startServerStandaloneLauncher(dependsOn: ['build']) {
+  doLast {
+    logging.captureStandardOutput LogLevel.INFO
+    ant.java(classname: 'com.linkedin.restli.server.StandaloneLauncher', fork: true, output: '/tmp/restli-int-test-server.log',
+    classpath: "${sourceSets.main.runtimeClasspath.asPath}") {
+       arg(line: '-packages com.linkedin.restli.examples.greetings.server,com.linkedin.restli.examples.typeref.server')
+    }
   }
 }

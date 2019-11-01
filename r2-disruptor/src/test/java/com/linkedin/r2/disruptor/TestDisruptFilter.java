@@ -156,7 +156,7 @@ public class TestDisruptFilter
     requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.minimumDelay(MINIMUM_LATENCY));
 
     ScheduledExecutorService scheduler = EasyMock.createStrictMock(ScheduledExecutorService.class);
-    Capture<Long> delay = new Capture<>();
+    Capture<Long> delay = EasyMock.newCapture();
     EasyMock.expect(scheduler.schedule(
         EasyMock.anyObject(Runnable.class),
         EasyMock.captureLong(delay),
@@ -244,7 +244,7 @@ public class TestDisruptFilter
     requestContext.putLocalAttr(DISRUPT_CONTEXT_KEY, DisruptContexts.minimumDelay(MINIMUM_LATENCY));
 
     ScheduledExecutorService scheduler = EasyMock.createStrictMock(ScheduledExecutorService.class);
-    Capture<Long> delay = new Capture<>();
+    Capture<Long> delay = EasyMock.newCapture();
     EasyMock.expect(scheduler.schedule(
         EasyMock.anyObject(Runnable.class),
         EasyMock.captureLong(delay),

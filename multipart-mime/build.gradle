@@ -1,6 +1,7 @@
 dependencies {
   compile project(':r2-core')
   compile project(':data')
+  compile externalDependency.javaxActivation
   compile externalDependency.commonsLang
   testCompile project(':r2-int-test')
   testCompile externalDependency.testng

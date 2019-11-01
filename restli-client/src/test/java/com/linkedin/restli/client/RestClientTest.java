@@ -97,7 +97,7 @@ public class RestClientTest
 
     @SuppressWarnings("unchecked")
     Callback<None> callback = EasyMock.createMock(Callback.class);
-    Capture<Callback<None>> callbackCapture = new Capture<Callback<None>>();
+    Capture<Callback<None>> callbackCapture = EasyMock.newCapture();
 
     // Underlying client's shutdown should be invoked with correct callback
     client.shutdown(EasyMock.capture(callbackCapture));
