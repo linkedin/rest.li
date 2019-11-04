@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.List;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import sun.tools.asm.ArrayData;
 
 import static com.linkedin.data.TestUtil.dataMapFromString;
 import static org.testng.Assert.assertEquals;
