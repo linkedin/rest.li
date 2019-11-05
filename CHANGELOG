@@ -1,3 +1,8 @@
+27.7.17
+-------
+(RB=1866668)
+Remove dependency on protobuf artifact, to avoid runtime errors with dependencies of pegasus that may depend on other protobuf versions. Instead extract relevant parts of protobuf code into a separate li-protobuf module.
+
 27.7.16
 -------
 (RB=1411984)

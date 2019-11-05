@@ -1,0 +1,9 @@
+This sub-project consists of a few files with logic extracted and modified from Google's Protocol Buffers. They are
+used to support a protocol buffers codec in rest.li.
+
+The reason we do this instead of depending on Protocol Buffers directly, is that a direct dependency causes
+some runtime incompatibilities with dependencies of pegasus that depend on/generate code using old protocol
+buffer versions.
+
+We should ideally delete this code and move to directly depending on the official Google Protocol Buffers Library
+once we have figured how to solve this problem.

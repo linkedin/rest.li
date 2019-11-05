@@ -74,7 +74,6 @@ project.ext.externalDependency = [
   'parseq': 'com.linkedin.parseq:parseq:2.6.31',
   'parseq_tracevis': 'com.linkedin.parseq:parseq-tracevis:2.6.31',
   'parseq_restClient': 'com.linkedin.parseq:parseq-restli-client:2.6.31',
-  'protobuf': 'com.google.protobuf:protobuf-java:3.9.1',
   'servletApi': 'javax.servlet:javax.servlet-api:3.1.0',
   'slf4jApi': 'org.slf4j:slf4j-api:1.6.2',
   'slf4jLog4j2': 'org.apache.logging.log4j:log4j-slf4j-impl:2.0.2',

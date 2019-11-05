@@ -16,17 +16,18 @@
 
 package com.linkedin.data.codec;
 
-import com.google.protobuf.CodedInputStream;
-import com.google.protobuf.CodedOutputStream;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.Data.TraverseCallback;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.protobuf.ProtoReader;
+import com.linkedin.data.protobuf.ProtoWriter;
 import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTableProvider;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.util.FastByteArrayOutputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -124,48 +125,48 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public void writeMap(DataMap map, OutputStream out) throws IOException
   {
-    CodedOutputStream codedOutputStream = CodedOutputStream.newInstance(out);
-    TraverseCallback callback = createTraverseCallback(codedOutputStream, _symbolTable);
+    ProtoWriter protoWriter = new ProtoWriter(out);
+    TraverseCallback callback = createTraverseCallback(protoWriter, _symbolTable);
     Data.traverse(map, callback);
-    codedOutputStream.flush();
+    protoWriter.flush();
   }
 
   @Override
   public void writeList(DataList list, OutputStream out) throws IOException
   {
-    CodedOutputStream codedOutputStream = CodedOutputStream.newInstance(out);
-    TraverseCallback callback = createTraverseCallback(codedOutputStream, _symbolTable);
+    ProtoWriter protoWriter = new ProtoWriter(out);
+    TraverseCallback callback = createTraverseCallback(protoWriter, _symbolTable);
     Data.traverse(list, callback);
-    codedOutputStream.flush();
+    protoWriter.flush();
   }
 
   @Override
   public DataMap bytesToMap(byte[] input) throws IOException
   {
-    return (DataMap) readValue(CodedInputStream.newInstance(input), this::isMap);
+    return (DataMap) readValue(ProtoReader.newInstance(input), this::isMap);
   }
 
   @Override
   public DataList bytesToList(byte[] input) throws IOException
   {
-    return (DataList) readValue(CodedInputStream.newInstance(input), this::isList);
+    return (DataList) readValue(ProtoReader.newInstance(input), this::isList);
   }
 
   @Override
   public DataMap readMap(InputStream in) throws IOException
   {
-    return (DataMap) readValue(CodedInputStream.newInstance(in), this::isMap);
+    return (DataMap) readValue(ProtoReader.newInstance(in), this::isMap);
   }
 
   @Override
   public DataList readList(InputStream in) throws IOException
   {
-    return (DataList) readValue(CodedInputStream.newInstance(in), this::isList);
+    return (DataList) readValue(ProtoReader.newInstance(in), this::isList);
   }
 
-  protected TraverseCallback createTraverseCallback(CodedOutputStream outputStream, SymbolTable symbolTable)
+  protected TraverseCallback createTraverseCallback(ProtoWriter protoWriter, SymbolTable symbolTable)
   {
-    return new ProtobufTraverseCallback(outputStream, symbolTable);
+    return new ProtobufTraverseCallback(protoWriter, symbolTable);
   }
 
   protected Object readUnknownValue(byte ordinal) throws IOException
@@ -173,48 +174,48 @@ public class ProtobufDataCodec implements DataCodec
     throw new DataDecodingException("Unknown ordinal: " + ordinal);
   }
 
-  private DataList readList(CodedInputStream in) throws IOException
+  private DataList readList(ProtoReader reader) throws IOException
   {
-    int size = in.readRawVarint32();
+    int size = reader.readInt32();
     DataList dataList = new DataList(size);
     for (int i = 0; i < size; i++)
     {
-      CheckedUtil.addWithoutChecking(dataList, readValue(in, null));
+      CheckedUtil.addWithoutChecking(dataList, readValue(reader, null));
     }
 
     return dataList;
   }
 
-  private DataMap readMap(CodedInputStream in) throws IOException
+  private DataMap readMap(ProtoReader reader) throws IOException
   {
-    int size = in.readRawVarint32();
+    int size = reader.readInt32();
     DataMap dataMap = new DataMap(size);
     for (int i = 0; i < size; i++)
     {
-      CheckedUtil.putWithoutChecking(dataMap, (String) readValue(in, this::isString), readValue(in, null));
+      CheckedUtil.putWithoutChecking(dataMap, (String) readValue(reader, this::isString), readValue(reader, null));
     }
 
     return dataMap;
   }
 
-  private String readStringReference(CodedInputStream in) throws IOException
+  private String readStringReference(ProtoReader reader) throws IOException
   {
     String value;
-    if (_symbolTable == null || (value = _symbolTable.getSymbolName(in.readRawVarint32())) == null)
+    if (_symbolTable == null || (value = _symbolTable.getSymbolName(reader.readInt32())) == null)
     {
       throw new DataDecodingException("Error decoding string reference");
     }
     return value;
   }
 
-  private String readStringLiteral(CodedInputStream in) throws IOException
+  private String readStringLiteral(ProtoReader reader) throws IOException
   {
-    return in.readString();
+    return reader.readString();
   }
 
-  private Object readValue(CodedInputStream in, Function<Byte, Boolean> matcher) throws IOException
+  private Object readValue(ProtoReader reader, Function<Byte, Boolean> matcher) throws IOException
   {
-    byte ordinal = in.readRawByte();
+    byte ordinal = reader.readRawByte();
     if (matcher != null && !matcher.apply(ordinal))
     {
       throw new DataDecodingException("Unable to find expected ordinal. Read: " + ordinal);
@@ -222,17 +223,17 @@ public class ProtobufDataCodec implements DataCodec
 
     switch (ordinal)
     {
-      case MAP_ORDINAL: return readMap(in);
-      case LIST_ORDINAL: return readList(in);
-      case STRING_LITERAL_ORDINAL: return readStringLiteral(in);
-      case STRING_REFERENCE_ORDINAL: return readStringReference(in);
-      case INTEGER_ORDINAL: return in.readRawVarint32();
-      case LONG_ORDINAL: return in.readRawVarint64();
-      case FLOAT_ORDINAL: return Float.intBitsToFloat(in.readRawVarint32());
-      case DOUBLE_ORDINAL: return Double.longBitsToDouble(in.readRawVarint64());
+      case MAP_ORDINAL: return readMap(reader);
+      case LIST_ORDINAL: return readList(reader);
+      case STRING_LITERAL_ORDINAL: return readStringLiteral(reader);
+      case STRING_REFERENCE_ORDINAL: return readStringReference(reader);
+      case INTEGER_ORDINAL: return reader.readInt32();
+      case LONG_ORDINAL: return reader.readInt64();
+      case FLOAT_ORDINAL: return Float.intBitsToFloat(reader.readInt32());
+      case DOUBLE_ORDINAL: return Double.longBitsToDouble(reader.readInt64());
       case BOOLEAN_TRUE_ORDINAL: return true;
       case BOOLEAN_FALSE_ORDINAL: return false;
-      case RAW_BYTES_ORDINAL: return ByteString.unsafeWrap(in.readByteArray());
+      case RAW_BYTES_ORDINAL: return ByteString.unsafeWrap(reader.readByteArray());
       case NULL_ORDINAL: return Data.NULL;
     }
 
@@ -256,18 +257,18 @@ public class ProtobufDataCodec implements DataCodec
 
   public static class ProtobufTraverseCallback implements TraverseCallback
   {
-    protected final CodedOutputStream _codedOutputStream;
+    protected final ProtoWriter _protoWriter;
     protected final SymbolTable _symbolTable;
 
-    public ProtobufTraverseCallback(CodedOutputStream codedOutputStream, SymbolTable symbolTable)
+    public ProtobufTraverseCallback(ProtoWriter protoWriter, SymbolTable symbolTable)
     {
-      _codedOutputStream = codedOutputStream;
+      _protoWriter = protoWriter;
       _symbolTable = symbolTable;
     }
 
     public void nullValue() throws IOException
     {
-      _codedOutputStream.writeRawByte(NULL_ORDINAL);
+      _protoWriter.writeByte(NULL_ORDINAL);
     }
 
     /**
@@ -279,11 +280,11 @@ public class ProtobufDataCodec implements DataCodec
     {
       if (value)
       {
-        _codedOutputStream.writeRawByte(BOOLEAN_TRUE_ORDINAL);
+        _protoWriter.writeByte(BOOLEAN_TRUE_ORDINAL);
       }
       else
       {
-        _codedOutputStream.writeRawByte(BOOLEAN_FALSE_ORDINAL);
+        _protoWriter.writeByte(BOOLEAN_FALSE_ORDINAL);
       }
     }
 
@@ -294,8 +295,8 @@ public class ProtobufDataCodec implements DataCodec
      */
     public void integerValue(int value) throws IOException
     {
-      _codedOutputStream.writeRawByte(INTEGER_ORDINAL);
-      _codedOutputStream.writeInt32NoTag(value);
+      _protoWriter.writeByte(INTEGER_ORDINAL);
+      _protoWriter.writeInt32(value);
     }
 
     /**
@@ -305,8 +306,8 @@ public class ProtobufDataCodec implements DataCodec
      */
     public void longValue(long value) throws IOException
     {
-      _codedOutputStream.writeRawByte(LONG_ORDINAL);
-      _codedOutputStream.writeInt64NoTag(value);
+      _protoWriter.writeByte(LONG_ORDINAL);
+      _protoWriter.writeInt64(value);
     }
 
     /**
@@ -316,8 +317,8 @@ public class ProtobufDataCodec implements DataCodec
      */
     public void floatValue(float value) throws IOException
     {
-      _codedOutputStream.writeRawByte(FLOAT_ORDINAL);
-      _codedOutputStream.writeInt32NoTag(Float.floatToIntBits(value));
+      _protoWriter.writeByte(FLOAT_ORDINAL);
+      _protoWriter.writeInt32(Float.floatToIntBits(value));
     }
 
     /**
@@ -327,8 +328,8 @@ public class ProtobufDataCodec implements DataCodec
      */
     public void doubleValue(double value) throws IOException
     {
-      _codedOutputStream.writeRawByte(DOUBLE_ORDINAL);
-      _codedOutputStream.writeInt64NoTag(Double.doubleToLongBits(value));
+      _protoWriter.writeByte(DOUBLE_ORDINAL);
+      _protoWriter.writeInt64(Double.doubleToLongBits(value));
     }
 
     /**
@@ -341,13 +342,13 @@ public class ProtobufDataCodec implements DataCodec
       int symbolId;
       if (_symbolTable != null && (symbolId = _symbolTable.getSymbolId(value)) != SymbolTable.UNKNOWN_SYMBOL_ID)
       {
-        _codedOutputStream.writeRawByte(STRING_REFERENCE_ORDINAL);
-        _codedOutputStream.writeUInt32NoTag(symbolId);
+        _protoWriter.writeByte(STRING_REFERENCE_ORDINAL);
+        _protoWriter.writeUInt32(symbolId);
       }
       else
       {
-        _codedOutputStream.writeRawByte(STRING_LITERAL_ORDINAL);
-        _codedOutputStream.writeStringNoTag(value);
+        _protoWriter.writeByte(STRING_LITERAL_ORDINAL);
+        _protoWriter.writeString(value);
       }
     }
 
@@ -358,8 +359,8 @@ public class ProtobufDataCodec implements DataCodec
      */
     public void byteStringValue(ByteString value) throws IOException
     {
-      _codedOutputStream.writeRawByte(RAW_BYTES_ORDINAL);
-      value.write(_codedOutputStream);
+      _protoWriter.writeByte(RAW_BYTES_ORDINAL);
+      value.write(_protoWriter);
     }
 
     /**
@@ -381,8 +382,8 @@ public class ProtobufDataCodec implements DataCodec
      */
     public void emptyMap() throws IOException
     {
-      _codedOutputStream.writeRawByte(MAP_ORDINAL);
-      _codedOutputStream.writeUInt32NoTag(0);
+      _protoWriter.writeByte(MAP_ORDINAL);
+      _protoWriter.writeUInt32(0);
     }
 
     /**
@@ -392,8 +393,8 @@ public class ProtobufDataCodec implements DataCodec
      */
     public void startMap(DataMap map) throws IOException
     {
-      _codedOutputStream.writeRawByte(MAP_ORDINAL);
-      _codedOutputStream.writeUInt32NoTag(map.size());
+      _protoWriter.writeByte(MAP_ORDINAL);
+      _protoWriter.writeUInt32(map.size());
     }
 
     /**
@@ -415,8 +416,8 @@ public class ProtobufDataCodec implements DataCodec
      */
     public void emptyList() throws IOException
     {
-      _codedOutputStream.writeRawByte(LIST_ORDINAL);
-      _codedOutputStream.writeUInt32NoTag(0);
+      _protoWriter.writeByte(LIST_ORDINAL);
+      _protoWriter.writeUInt32(0);
     }
 
     /**
@@ -426,8 +427,8 @@ public class ProtobufDataCodec implements DataCodec
      */
     public void startList(DataList list) throws IOException
     {
-      _codedOutputStream.writeRawByte(LIST_ORDINAL);
-      _codedOutputStream.writeUInt32NoTag(list.size());
+      _protoWriter.writeByte(LIST_ORDINAL);
+      _protoWriter.writeUInt32(list.size());
     }
   }
 }
