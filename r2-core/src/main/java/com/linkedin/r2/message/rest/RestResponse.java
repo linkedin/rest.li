@@ -15,10 +15,7 @@
 */
 package com.linkedin.r2.message.rest;
 
-import com.linkedin.data.ByteString;
 import com.linkedin.r2.message.Response;
-
-import java.util.Collections;
 
 
 /**
@@ -35,13 +32,6 @@ import java.util.Collections;
  */
 public interface RestResponse extends Response, RestMessage
 {
-  /**
-   * @deprecated for RestResponseFactory#noResponse(). See SI-13282 for context.
-   */
-  @Deprecated
-  RestResponse NO_RESPONSE = new RestResponseImpl(
-      ByteString.empty(), Collections.<String, String>emptyMap(), Collections.<String>emptyList(), 0);
-
   /**
    * Returns a {@link RestResponseBuilder}, which provides a means of constructing a new
    * response using this response as a starting point. Changes made with the builder are
