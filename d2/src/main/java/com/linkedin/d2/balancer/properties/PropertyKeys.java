@@ -119,6 +119,7 @@ public class PropertyKeys
   public static final String FULL_CLUSTER_LIST = "fullClusterList";
   public static final String CLUSTER_PROPERTIES = "properties";
   public static final String SSL_VALIDATION_STRINGS = "sslSessionValidationStrings";
+  public static final String DARK_CLUSTER_MAP = "darkClusters";
 
   //used by transport client creation
   public static final String HTTP_POOL_WAITER_SIZE = HttpClientFactory.HTTP_POOL_WAITER_SIZE;
