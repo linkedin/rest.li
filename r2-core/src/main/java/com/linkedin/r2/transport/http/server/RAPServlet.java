@@ -43,7 +43,7 @@ public class RAPServlet extends AbstractR2Servlet
 
   public RAPServlet(TransportDispatcher dispatcher)
   {
-    this(new HttpDispatcher(dispatcher));
+    this(HttpDispatcherFactory.create((dispatcher)));
   }
 
   /**
@@ -68,7 +68,7 @@ public class RAPServlet extends AbstractR2Servlet
                     int timeOut,
                     int timeOutDelta)
   {
-    this(new HttpDispatcher(dispatcher), useContinuations, timeOut, timeOutDelta);
+    this(HttpDispatcherFactory.create((dispatcher)), useContinuations, timeOut, timeOutDelta);
   }
 
 

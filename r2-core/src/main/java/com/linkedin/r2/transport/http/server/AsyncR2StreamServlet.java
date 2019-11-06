@@ -54,7 +54,7 @@ public class AsyncR2StreamServlet extends AbstractAsyncR2StreamServlet
   public AsyncR2StreamServlet(TransportDispatcher dispatcher, long timeout, boolean logServletExceptions)
   {
 
-    this(new HttpDispatcher(dispatcher), timeout, logServletExceptions);
+    this(HttpDispatcherFactory.create((dispatcher)), timeout, logServletExceptions);
   }
 
   @Override

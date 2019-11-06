@@ -77,4 +77,12 @@ public class R2Constants
    * single aggregation and monitored from client's perspective.
    */
   public static final String CLIENT_REQUEST_METRIC_GROUP_NAME = "CLIENT_REQUEST_METRIC_GROUP_NAME";
+
+  /**
+   * Server-side request finalizer manager.
+   *
+   * @see com.linkedin.r2.util.finalizer.RequestFinalizerManager
+   * @see com.linkedin.r2.util.finalizer.RequestFinalizerDispatcher
+   */
+  public static final String SERVER_REQUEST_FINALIZER_MANAGER_REQUEST_CONTEXT_KEY = "SERVER_REQUEST_FINALIZER_MANAGER";
 }

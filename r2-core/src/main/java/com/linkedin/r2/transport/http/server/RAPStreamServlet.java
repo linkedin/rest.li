@@ -42,13 +42,13 @@ public class RAPStreamServlet extends AbstractR2StreamServlet
   @Deprecated
   public RAPStreamServlet(TransportDispatcher dispatcher)
   {
-    this(new HttpDispatcher(dispatcher));
+    this(HttpDispatcherFactory.create((dispatcher)));
   }
 
   @Deprecated
   public RAPStreamServlet(TransportDispatcher dispatcher, long ioHandlerTimeout)
   {
-    this(new HttpDispatcher(dispatcher), ioHandlerTimeout, false);
+    this(HttpDispatcherFactory.create((dispatcher)), ioHandlerTimeout, false);
   }
 
   @Deprecated
@@ -59,7 +59,7 @@ public class RAPStreamServlet extends AbstractR2StreamServlet
 
   public RAPStreamServlet(TransportDispatcher dispatcher, long ioHandlerTimeout, boolean logServletExceptions)
   {
-    this(new HttpDispatcher(dispatcher), ioHandlerTimeout, logServletExceptions);
+    this(HttpDispatcherFactory.create((dispatcher)), ioHandlerTimeout, logServletExceptions);
   }
 
   public RAPStreamServlet(HttpDispatcher dispatcher, long ioHandlerTimeout, boolean logServletExceptions)

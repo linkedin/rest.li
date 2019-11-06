@@ -47,7 +47,7 @@ public class AsyncR2Servlet extends AbstractAsyncR2Servlet
   public AsyncR2Servlet(TransportDispatcher dispatcher,
                         long timeout)
   {
-    this(new HttpDispatcher(dispatcher), timeout);
+    this(HttpDispatcherFactory.create((dispatcher)), timeout);
   }
 
   @Override

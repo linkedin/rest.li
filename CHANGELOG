@@ -1,3 +1,8 @@
+27.7.18
+-------
+(RB=1754676)
+Introduce RequestFinalizer API and server-side RequestFinalizerTransportDispatcher.
+
 27.7.17
 -------
 (RB=1866668)

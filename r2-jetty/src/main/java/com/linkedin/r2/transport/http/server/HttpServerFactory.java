@@ -113,7 +113,7 @@ public class HttpServerFactory
   {
     final TransportDispatcher filterDispatcher =
         new FilterChainDispatcher(transportDispatcher,  _filters);
-    final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
+    final HttpDispatcher dispatcher = HttpDispatcherFactory.create((filterDispatcher));
     return new HttpJettyServer(port,
                                contextPath,
                                threadPoolSize,
@@ -172,7 +172,7 @@ public class HttpServerFactory
   {
     final TransportDispatcher filterDispatcher =
       new FilterChainDispatcher(transportDispatcher, _filters);
-    final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
+    final HttpDispatcher dispatcher = HttpDispatcherFactory.create((filterDispatcher));
     return new HttpsJettyServer(port,
                                 sslPort,
                                 keyStore,
@@ -195,7 +195,7 @@ public class HttpServerFactory
   {
     final TransportDispatcher filterDispatcher =
       new FilterChainDispatcher(transportDispatcher, _filters);
-    final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
+    final HttpDispatcher dispatcher = HttpDispatcherFactory.create((filterDispatcher));
     return new HttpsH2JettyServer(port,
       sslPort,
       keyStore,
@@ -221,7 +221,7 @@ public class HttpServerFactory
   {
     final TransportDispatcher filterDispatcher =
         new FilterChainDispatcher(transportDispatcher, _filters);
-    final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
+    final HttpDispatcher dispatcher = HttpDispatcherFactory.create((filterDispatcher));
     return new HttpsH2JettyServer(port,
         sslPort,
         keyStore,
@@ -246,7 +246,7 @@ public class HttpServerFactory
       boolean restOverStream)
   {
     final TransportDispatcher filterDispatcher = new FilterChainDispatcher(transportDispatcher,  _filters);
-    final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
+    final HttpDispatcher dispatcher = HttpDispatcherFactory.create((filterDispatcher));
     return new H2cJettyServer(
         port,
         contextPath,
@@ -264,7 +264,7 @@ public class HttpServerFactory
       boolean restOverStream)
   {
     final TransportDispatcher filterDispatcher = new FilterChainDispatcher(transportDispatcher,  _filters);
-    final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
+    final HttpDispatcher dispatcher = HttpDispatcherFactory.create((filterDispatcher));
     return new H2cJettyServer(
         port,
         contextPath,

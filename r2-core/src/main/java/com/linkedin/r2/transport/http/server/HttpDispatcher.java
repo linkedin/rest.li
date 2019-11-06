@@ -51,7 +51,9 @@ public class HttpDispatcher
    * Construct a new instance which delegates to the specified dispatcher.
    *
    * @param dispatcher the {@link com.linkedin.r2.transport.common.bridge.server.TransportDispatcher} to which requests are delegated.
+   * @deprecated Use {@link HttpDispatcherFactory#create(TransportDispatcher)} instead.
    */
+  @Deprecated
   public HttpDispatcher(TransportDispatcher dispatcher)
   {
     _dispatcher = dispatcher;

@@ -96,7 +96,7 @@ public class HttpNettyServerBuilder
   {
     validateParameters();
     final TransportDispatcher filterDispatcher = new FilterChainDispatcher(_transportDispatcher, _filters);
-    final HttpDispatcher dispatcher = new HttpDispatcher(filterDispatcher);
+    final HttpDispatcher dispatcher = HttpDispatcherFactory.create((filterDispatcher));
     return new HttpNettyServer(_port, _threadPoolSize, dispatcher, _sslContext, _sslParameters);
   }
 

@@ -19,6 +19,8 @@ package com.linkedin.r2.util;
 
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.util.finalizer.RequestFinalizerManager;
+
 
 /**
  * Utility methods for modifying the request context.
@@ -27,6 +29,12 @@ import com.linkedin.r2.message.RequestContext;
  */
 public class RequestContextUtil
 {
+
+  private RequestContextUtil()
+  {
+    // Can't be instantiated.
+  }
+
   /**
    * Forces the client compression filter to not decompress responses.
    * @param requestContext request context to be modified.
@@ -34,5 +42,34 @@ public class RequestContextUtil
   public static void turnOffResponseDecompression(RequestContext requestContext)
   {
     requestContext.putLocalAttr(R2Constants.RESPONSE_DECOMPRESSION_OFF, true);
+  }
+
+  /**
+   * Get object with key in the provided {@link RequestContext}.
+   *
+   * @param key Request context attribute key.
+   * @param requestContext Given request context.
+   * @param clazz Object class.
+   * @param <T> Object class.
+   * @return The typed object or null.
+   */
+  @SuppressWarnings("unchecked")
+  public static <T> T getObjectWithKey(String key, RequestContext requestContext, Class<T> clazz)
+  {
+    final Object object = requestContext.getLocalAttr(key);
+
+    return (clazz.isInstance(object)) ? (T) object : null;
+  }
+
+  /**
+   * Grabs the server-side {@link RequestFinalizerManager} from the request context.
+   *
+   * @param requestContext Given request context.
+   * @return Server-side RequestFinalizerManager.
+   */
+  public static RequestFinalizerManager getServerRequestFinalizerManager(RequestContext requestContext)
+  {
+    return getObjectWithKey(R2Constants.SERVER_REQUEST_FINALIZER_MANAGER_REQUEST_CONTEXT_KEY,
+        requestContext, RequestFinalizerManager.class);
   }
 }
