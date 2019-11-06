@@ -85,4 +85,12 @@ public class R2Constants
    * @see com.linkedin.r2.util.finalizer.RequestFinalizerDispatcher
    */
   public static final String SERVER_REQUEST_FINALIZER_MANAGER_REQUEST_CONTEXT_KEY = "SERVER_REQUEST_FINALIZER_MANAGER";
+
+  /**
+   * Client-side request finalizer manager.
+   *
+   * @see com.linkedin.r2.util.finalizer.RequestFinalizerManager
+   * @see com.linkedin.r2.filter.ClientRequestFinalizerFilter
+   */
+  public static final String CLIENT_REQUEST_FINALIZER_MANAGER_REQUEST_CONTEXT_KEY = "CLIENT_REQUEST_FINALIZER_MANAGER";
 }

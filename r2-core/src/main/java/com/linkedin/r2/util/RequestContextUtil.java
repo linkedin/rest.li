@@ -72,4 +72,16 @@ public class RequestContextUtil
     return getObjectWithKey(R2Constants.SERVER_REQUEST_FINALIZER_MANAGER_REQUEST_CONTEXT_KEY,
         requestContext, RequestFinalizerManager.class);
   }
+
+  /**
+   * Grabs the client-side {@link RequestFinalizerManager} from the request context.
+   *
+   * @param requestContext Given request context.
+   * @return Client-side RequestFinalizerManager.
+   */
+  public static RequestFinalizerManager getClientRequestFinalizerManager(RequestContext requestContext)
+  {
+    return getObjectWithKey(R2Constants.CLIENT_REQUEST_FINALIZER_MANAGER_REQUEST_CONTEXT_KEY,
+        requestContext, RequestFinalizerManager.class);
+  }
 }

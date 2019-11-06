@@ -85,4 +85,15 @@ public class TestRequestContextUtil
 
     Assert.assertNotNull(RequestContextUtil.getServerRequestFinalizerManager(_requestContext));
   }
+
+  @Test
+  public void testGetClientRequestFinalizerManager()
+  {
+    Assert.assertNull(RequestContextUtil.getClientRequestFinalizerManager(_requestContext));
+
+    _requestContext.putLocalAttr(R2Constants.CLIENT_REQUEST_FINALIZER_MANAGER_REQUEST_CONTEXT_KEY,
+        new RequestFinalizerManagerImpl(null, null));
+
+    Assert.assertNotNull(RequestContextUtil.getClientRequestFinalizerManager(_requestContext));
+  }
 }

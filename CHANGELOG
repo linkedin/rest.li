@@ -1,7 +1,13 @@
+27.7.19
+-------
+
 27.7.18
 -------
 (RB=1754676)
 Introduce RequestFinalizer API and server-side RequestFinalizerTransportDispatcher.
+
+(RB=1808820)
+Add ClientRequestFinalizerFilter to finalize requests on the client-side.
 
 27.7.17
 -------
