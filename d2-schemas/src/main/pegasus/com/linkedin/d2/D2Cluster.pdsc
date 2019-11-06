@@ -51,6 +51,15 @@
       },
       "default": [],
       "doc": "List of validation strings. SSL session validator use this information to verify the host it connects to. The name is generically defined because it can be used by any type SSLSessionValidator in open source world."
+    },
+    {
+      "name": "darkClusters",
+      "type": {
+        "type": "map",
+        "values": "DarkClusterConfig"
+      },
+      "default": {},
+      "doc": "Holds the configuration for this cluster's dark canary clusters, if any. The map is keyed by the dark canary name."
     }
   ]
 }
