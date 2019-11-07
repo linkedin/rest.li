@@ -7,6 +7,7 @@ dependencies {
   compile project(':restli-common')
   compile project(':restli-client')
   compile project(':restli-server')
+  compile externalDependency.caffeine
   compile externalDependency.commonsIo
   compile externalDependency.codemodel
   compile externalDependency.commonsCli

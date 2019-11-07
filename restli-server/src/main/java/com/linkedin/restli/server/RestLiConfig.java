@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.server;
 
-
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
@@ -24,7 +23,6 @@ import com.linkedin.restli.server.config.RestLiMethodConfig;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.multiplexer.MultiplexerRunMode;
 import com.linkedin.restli.server.multiplexer.MultiplexerSingletonFilter;
-
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;

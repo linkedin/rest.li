@@ -1,0 +1,171 @@
+/*
+   Copyright (c) 2019 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+package com.linkedin.restli.tools.symbol;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.linkedin.data.codec.symbol.InMemorySymbolTable;
+import com.linkedin.data.codec.symbol.SymbolTable;
+import com.linkedin.data.codec.symbol.SymbolTableSerializer;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.EnumDataSchema;
+import com.linkedin.data.schema.Name;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.r2.transport.common.Client;
+import com.linkedin.restli.common.ContentType;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.server.ResourceDefinition;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import static org.mockito.Mockito.*;
+
+
+public class TestRestLiSymbolTableProvider
+{
+  private Client _client;
+  private RestLiSymbolTableProvider _provider;
+  private ResourceDefinition _resourceDefinition;
+
+  @SuppressWarnings("unchecked")
+  @BeforeMethod
+  public void setup()
+  {
+    _client = mock(Client.class);
+    _provider = new RestLiSymbolTableProvider(_client, "d2://", "Test", 10, "Host", 100);
+
+    _resourceDefinition = mock(ResourceDefinition.class);
+    doAnswer(invocation -> {
+      Set<DataSchema> schemas = (Set<DataSchema>) invocation.getArguments()[0];
+      EnumDataSchema schema = new EnumDataSchema(new Name("TestEnum"));
+      schema.setSymbols(ImmutableList.of("Symbol1", "Symbol2"), new StringBuilder());
+      schemas.add(schema);
+      return null;
+    }).when(_resourceDefinition).collectReferencedDataSchemas(any(Set.class));
+  }
+
+  @Test
+  public void testGetResponseSymbolTableBeforeInit()
+  {
+    Assert.assertNull(_provider.getResponseSymbolTable(URI.create("https://www.linkedin.com"), Collections.emptyMap()));
+  }
+
+  @Test
+  public void testGetResponseSymbolTableAfterInit()
+  {
+    _provider.onInitialized(ImmutableMap.of("TestResourceName", _resourceDefinition));
+
+    SymbolTable symbolTable = _provider.getResponseSymbolTable(URI.create("https://www.linkedin.com"), Collections.emptyMap());
+    Assert.assertNotNull(symbolTable);
+    Assert.assertEquals(39, symbolTable.size());
+    Assert.assertEquals("Host:100|Test--332004310", symbolTable.getName());
+  }
+
+  @Test
+  public void testGetValidLocalSymbolTable()
+  {
+    _provider.onInitialized(ImmutableMap.of("TestResourceName", _resourceDefinition));
+    SymbolTable symbolTable = _provider.getSymbolTable("Host:100|Test--332004310");
+    Assert.assertNotNull(symbolTable);
+  }
+
+  @Test(expectedExceptions = IllegalStateException.class)
+  public void testGetMissingLocalSymbolTable()
+  {
+    _provider.onInitialized(ImmutableMap.of("TestResourceName", _resourceDefinition));
+    _provider.getSymbolTable("Host:100|Blah-100");
+  }
+
+  @Test
+  public void testGetRemoteSymbolTableFetchSuccess() throws IOException
+  {
+    RestResponseBuilder builder = new RestResponseBuilder();
+    builder.setStatus(200);
+    SymbolTable symbolTable = new InMemorySymbolTable("OtherHost:100|Test--332004310",
+        ImmutableList.of("Haha", "Hehe"));
+    builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF.getCodec(), symbolTable));
+    builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF.getHeaderKey());
+    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("https://OtherHost:100/symbolTable/Test--332004310")).build())))
+        .thenReturn(CompletableFuture.completedFuture(builder.build()));
+
+    SymbolTable remoteSymbolTable = _provider.getSymbolTable("OtherHost:100|Test--332004310");
+    Assert.assertNotNull(remoteSymbolTable);
+    Assert.assertEquals("Host:100|Test--332004310", remoteSymbolTable.getName());
+    Assert.assertEquals(2, remoteSymbolTable.size());
+
+    // Subsequent fetch should not trigger network fetch and get the table from the cache.
+    when(_client.restRequest(any(RestRequest.class))).thenThrow(new IllegalStateException());
+    SymbolTable cachedSymbolTable = _provider.getSymbolTable("OtherHost:100|Test--332004310");
+    Assert.assertSame(remoteSymbolTable, cachedSymbolTable);
+  }
+
+  @Test(expectedExceptions = IllegalStateException.class)
+  public void testGetRemoteSymbolTableFetchError()
+  {
+    RestResponseBuilder builder = new RestResponseBuilder();
+    builder.setStatus(404);
+    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("https://OtherHost:100/symbolTable/Test--332004310")).build())))
+        .thenReturn(CompletableFuture.completedFuture(builder.build()));
+
+    _provider.getSymbolTable("OtherHost:100|Test--332004310");
+  }
+
+  @Test
+  public void testGetRemoteRequestSymbolTableFetchSuccess() throws IOException
+  {
+    RestResponseBuilder builder = new RestResponseBuilder();
+    builder.setStatus(200);
+    SymbolTable symbolTable = new InMemorySymbolTable("OtherHost:100|Test--332004310",
+        ImmutableList.of("Haha", "Hehe"));
+    builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF.getCodec(), symbolTable));
+    builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF.getHeaderKey());
+    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://someservice/symbolTable")).build())))
+        .thenReturn(CompletableFuture.completedFuture(builder.build()));
+
+    SymbolTable remoteSymbolTable = _provider.getRequestSymbolTable(URI.create("d2://someservice/path"));
+    Assert.assertNotNull(remoteSymbolTable);
+    Assert.assertEquals("Host:100|Test--332004310", remoteSymbolTable.getName());
+    Assert.assertEquals(2, remoteSymbolTable.size());
+
+    // Subsequent fetch should not trigger network fetch and get the table from the cache, regardless of
+    // whether the table is fetched by request URI or symbol table name.
+    when(_client.restRequest(any(RestRequest.class))).thenThrow(new IllegalStateException());
+    SymbolTable cachedSymbolTable = _provider.getRequestSymbolTable(URI.create("d2://someservice/path"));
+    Assert.assertSame(remoteSymbolTable, cachedSymbolTable);
+    cachedSymbolTable = _provider.getSymbolTable("OtherHost:100|Test--332004310");
+    Assert.assertSame(remoteSymbolTable, cachedSymbolTable);
+  }
+
+  @Test
+  public void testGetRemoteRequestSymbolTableFetchError()
+  {
+    RestResponseBuilder builder = new RestResponseBuilder();
+    builder.setStatus(404);
+    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://someservice/symbolTable/Test--332004310")).build())))
+        .thenReturn(CompletableFuture.completedFuture(builder.build()));
+
+    Assert.assertNull(_provider.getRequestSymbolTable(URI.create("d2://someservice/path")));
+  }
+}

@@ -1,3 +1,11 @@
+28.0.6
+------
+
+28.0.5
+------
+(RB=1870820)
+Reference symbol table provider and handler implementation to enable symmetric protocol for exchanging symbol tables between rest.li services
+
 28.0.4
 ------
 (RB=1878020)

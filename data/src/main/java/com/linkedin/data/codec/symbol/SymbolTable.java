@@ -20,6 +20,8 @@ package com.linkedin.data.codec.symbol;
 /**
  * A symbol table provides a two way mapping from string symbols to integer identifiers. Some codecs can optionally use
  * this capability to compress the payload, and make it more efficient to serialize/parse.
+ *
+ * <p>Symbol table IDs are supposed to always start at 0 and end at {@link #size()} - 1</p>
  */
 public interface SymbolTable {
 
@@ -51,4 +53,9 @@ public interface SymbolTable {
    * may choose to maintain.
    */
   String getName();
+
+  /**
+   * @return The total number of symbols in this table.
+   */
+  int size();
 }

@@ -16,9 +16,11 @@
 
 package com.linkedin.data.codec.symbol;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 
 /**
@@ -60,12 +62,14 @@ public class InMemorySymbolTable implements SymbolTable {
   @Override
   public String getSymbolName(int symbolId)
   {
-    if (symbolId >= 0 && symbolId < _symbols.length)
+    try
     {
       return _symbols[symbolId];
     }
-
-    return null;
+    catch (ArrayIndexOutOfBoundsException e)
+    {
+      return null;
+    }
   }
 
   @Override
@@ -73,8 +77,34 @@ public class InMemorySymbolTable implements SymbolTable {
     return _symbolTableName;
   }
 
+  @Override
   public int size()
   {
     return _symbols.length;
+  }
+
+  @Override
+  public boolean equals(Object o)
+  {
+    if (this == o)
+    {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass())
+    {
+      return false;
+    }
+
+    InMemorySymbolTable that = (InMemorySymbolTable) o;
+    return Arrays.equals(_symbols, that._symbols) && Objects.equals(_symbolTableName, that._symbolTableName);
+  }
+
+  @Override
+  public int hashCode()
+  {
+    int result = Objects.hash(_symbolTableName);
+    result = 31 * result + Arrays.hashCode(_symbols);
+    return result;
   }
 }

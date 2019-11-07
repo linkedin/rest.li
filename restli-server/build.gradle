@@ -9,6 +9,7 @@ dependencies {
   compile project(':restli-common')
   compile project(':pegasus-common')
   compile project(':multipart-mime')
+  compile externalDependency.caffeine
   compile externalDependency.javaxInject
   compile externalDependency.mail
   compile externalDependency.commonsLang

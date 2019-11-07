@@ -56,17 +56,17 @@ import org.slf4j.LoggerFactory;
 /**
  * Generates symbol tables at runtime.
  */
-public class RuntimeSymbolTableGenerator {
+class RuntimeSymbolTableGenerator {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RuntimeSymbolTableGenerator.class);
 
   /**
    * Generate and return the current container's symbol table.
    *
-   * @param containerName     The name of the current container instance.
-   * @param resourceSchemas   The set of {@link DataSchema} referenced by resources.
+   * @param symbolTableNameHandler The symbol table name handler to generate symbol table names.
+   * @param resourceSchemas        The set of {@link DataSchema} referenced by resources.
    */
-  public static InMemorySymbolTable generate(String containerName, Set<DataSchema> resourceSchemas)
+  static InMemorySymbolTable generate(SymbolTableNameHandler symbolTableNameHandler, Set<DataSchema> resourceSchemas)
   {
     Set<String> symbols = new HashSet<>();
     addFrameworkSymbols(symbols);
@@ -80,7 +80,7 @@ public class RuntimeSymbolTableGenerator {
     // Sort symbols to ensure stable ordering across invocations for the same input.
     List<String> symbolList = new ArrayList<>(symbols);
     Collections.sort(symbolList);
-    String symbolTableName = containerName + "-" + symbolList.hashCode();
+    String symbolTableName = symbolTableNameHandler.generateName(symbolList);
     return new InMemorySymbolTable(symbolTableName, symbolList);
   }
 

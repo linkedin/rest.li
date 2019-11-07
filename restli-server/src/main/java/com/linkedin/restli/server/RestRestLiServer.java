@@ -19,6 +19,7 @@ import com.linkedin.restli.internal.server.response.RestLiResponseException;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.multiplexer.MultiplexedRequestHandlerImpl;
 import com.linkedin.restli.server.resources.ResourceFactory;
+import com.linkedin.restli.server.symbol.RestLiSymbolTableRequestHandler;
 import com.linkedin.restli.server.util.UnstructuredDataUtil;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -62,6 +63,9 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
       docReqHandler.initialize(config, rootResources);
       _nonResourceRequestHandlers.add(docReqHandler);
     }
+
+    // Add symbol table request handler
+    _nonResourceRequestHandlers.add(new RestLiSymbolTableRequestHandler());
 
     // Add multiplexed request handler
     _nonResourceRequestHandlers.add(new MultiplexedRequestHandlerImpl(this,

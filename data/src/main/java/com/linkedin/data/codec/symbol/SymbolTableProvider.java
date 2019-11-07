@@ -34,12 +34,7 @@ public interface SymbolTableProvider {
    */
   default SymbolTable getSymbolTable(String symbolTableName)
   {
-    if (symbolTableName != null)
-    {
-      throw new IllegalStateException("Not configured to fetch symbol table with name: " + symbolTableName);
-    }
-
-    return null;
+    throw new IllegalStateException("Not configured to fetch symbol table with name: " + symbolTableName);
   }
 
   /**

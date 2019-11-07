@@ -21,17 +21,18 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.restli.tools.sample.SimpleGreeting;
 import java.util.Collections;
-import org.junit.Assert;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 
-public class TestRuntimeSymbolTableGenerator {
-
+public class TestRuntimeSymbolTableGenerator
+{
   @Test
   public void testSymbolTableGenerator()
   {
     DataSchema schema = DataTemplateUtil.getSchema(SimpleGreeting.class);
-    InMemorySymbolTable symbolTable = RuntimeSymbolTableGenerator.generate("Haha", Collections.singleton(schema));
+    SymbolTableNameHandler handler = new SymbolTableNameHandler("Haha", "localhost", 1000);
+    InMemorySymbolTable symbolTable = RuntimeSymbolTableGenerator.generate(handler, Collections.singleton(schema));
     Assert.assertEquals(37, symbolTable.size());
   }
 }
