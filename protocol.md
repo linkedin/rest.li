@@ -572,7 +572,7 @@ Error
 | Response             | X-RestLi-Id               | indicates the id assigned by the server to a new entity created in a collection.                                                                                                                        | set on response messages resulting from a successful POST request to create an entity. The header value is set to the entity id, represented as a string. **Only used in protocol 2.0** |
 | Response             | Location                  | indicates the URI of a new entity created in a collection.                                                                                                                                              | Location is set on response messages resulting from a successful POST request to create an entity. The header value is set to a URI referencing the newly created entity                |
 | Response             | Content-Type              |                                                                                                                                                                                                         | The Content-Type is always set to “application/json”                                                                                                                                    |
-| Request              | X-RestLi-Method           | Set whenever content is POSTed. Can be “GET\_ALL”, “GET”, “BATCH\_GET”, “CREATE”, “BATCH\_CREATE”, “UPDATE”, “PARTIAL\_UPDATE”, “DELETE”, “BATCH\_DELETE”, “ACTION”, “FINDER”, "BATCH_FINDER", “BATCH\_PARTIAL\_UPDATE” | Is only required for “BATCH\_CREATE”, “BATCH\_PARTIAL\_UPDATE”, all other method types can be inferred by a RestLi server from the URI string and HTTP Method.                          |
+| Request              | X-RestLi-Method           | Set whenever content is POSTed. Can be “get\_all”, “get”, “batch\_get”, “create”, “batch\_create”, “update”, “partial\_update”, “delete”, “batch\_delete”, “action”, “finder”, "batch\_finder", “batch\_partial\_update” | Is only required for “batch\_create”, “batch\_partial\_update”, all other method types can be inferred by a RestLi server from the URI string and HTTP Method.                          |
 | Request and Response | X-RestLi-Protocol-Version | Version of the Rest.li protocol used to generate the request or response. Example value: “2.0.0”                                                                                                        | The version that we get back in the response is dictated by the version sent in the request. They will always be the same.                                                              |
 
 ## Request Message Body
@@ -642,7 +642,7 @@ E.g.
 
     POST /widgets HTTP/1.1
     Content-Type: application/json
-    X-RestLi-Method: BATCH_CREATE
+    X-RestLi-Method: batch_create
     
     {
       "elements": [
@@ -683,7 +683,7 @@ on a 406 response code and was not assigned an id.
 
 Note: Batch create requests must include the HTTP Header:
 
-```X-RestLi-Method: BATCH_CREATE```
+```X-RestLi-Method: batch_create```
 
 ### Batch Update
 
@@ -697,7 +697,7 @@ E.g.
 
     PUT /widgets?ids=1&ids=2 HTTP/1.1
     Content-Type: application/json
-    X-RestLi-Method: BATCH_UPDATE
+    X-RestLi-Method: batch_update
     
     {
       "entities": {
@@ -783,7 +783,7 @@ E.g.
 
     POST /widgets?ids=1&ids=2 HTTP/1.1
     Content-Type: application/json
-    X-RestLi-Method: BATCH_PARTIAL_UPDATE
+    X-RestLi-Method: batch_partial_update
     
     {
       "entities": {
@@ -809,7 +809,7 @@ map keyed by param names. E.g.
     }
     
 
-The `X-RestLi-Method: ACTION` may optionally be included, but is not
+The `X-RestLi-Method: action` may optionally be included, but is not
 required because rest.li is able to determine the request is an action
 based on the “action” query param key.
 
