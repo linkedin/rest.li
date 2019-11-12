@@ -1,5 +1,10 @@
+28.0.3
+------
+
 28.0.2
 ------
+(RB=1876286)
+Expose some methods for use in pemberly-api
 
 28.0.1
 ------
