@@ -262,7 +262,7 @@ abstract class PdlBuilder
 
   /**
    * Serializes a pegasus Data binding type to JSON.
-   * Valid types: DataList, DataMap, String, Int, Long, Float, Double, Boolean, ByteArray
+   * Valid types: DataMap, DataList, String, Number, Boolean, ByteString, Null
    *
    * @param value the value to serialize to JSON.
    * @return a JSON serialized string representation of the data value.
@@ -279,10 +279,7 @@ abstract class PdlBuilder
     }
     else if (value instanceof String)
     {
-      // JSON also allows the '/' char to be written in strings both unescaped ("/") and escaped ("\/").
-      // StringEscapeUtils.escapeJson always escapes '/' so we deliberately use escapeJava instead, which
-      // is exactly like escapeJson but without the '/' escaping.
-      return "\"" + StringEscapeUtils.escapeJava((String) value) + "\"";
+      return escapeJsonString((String) value);
     }
     else if (value instanceof Number)
     {
@@ -294,16 +291,29 @@ abstract class PdlBuilder
     }
     else if (value instanceof ByteString)
     {
-      return ((ByteString) value).asAvroString();
+      return escapeJsonString(((ByteString) value).asAvroString());
     }
     else if (value instanceof Null)
     {
-      // some legacy PDSC use union[null, xxx] to represent an optional field
+      // Some legacy schemas use union[null, xxx] to represent an optional field
       return "null";
     }
     else
     {
       throw new IllegalArgumentException("Unsupported data type: " + value.getClass());
     }
+  }
+
+  /**
+   * JSON also allows the '/' char to be written in strings both unescaped ("/") and escaped ("\/").
+   * StringEscapeUtils.escapeJson always escapes '/' so we deliberately use escapeJava instead, which
+   * is exactly like escapeJson but without the '/' escaping.
+   *
+   * @param value unescaped string
+   * @return escaped and quoted JSON string
+   */
+  private String escapeJsonString(String value)
+  {
+    return "\"" + StringEscapeUtils.escapeJava(value) + "\"";
   }
 }

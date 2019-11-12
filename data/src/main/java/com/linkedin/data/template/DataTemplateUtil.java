@@ -314,7 +314,7 @@ public class DataTemplateUtil
     }
     if (parser.topLevelDataSchemas().size() != 1)
     {
-      throw new IllegalArgumentException("More than one top level schemas");
+      throw new IllegalArgumentException("More than one top level schema");
     }
 
     return parser.topLevelDataSchemas().get(0);

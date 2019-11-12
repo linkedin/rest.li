@@ -16,14 +16,11 @@
 
 package com.linkedin.pegasus.generator.test.pdl;
 
-import java.io.File;
-
-import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.template.DataTemplate;
-import com.linkedin.data.template.JacksonDataTemplateCodec;
 import com.linkedin.data.template.PrettyPrinterJacksonDataTemplateCodec;
+import java.io.File;
 import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 
@@ -49,7 +46,7 @@ abstract class GeneratorTest
     return readJsonToMap(mapToJson(complex));
   }
 
-  private static final File jsonPath = new File(System.getProperty("testDir") + "/json");
+  private static final File jsonPath = new File(System.getProperty("testDir", "src/test") + "/json");
 
   protected String load(String filename)
   {
