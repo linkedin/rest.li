@@ -76,6 +76,11 @@ public class SymbolTableBasedContentTypeProvider implements ContentTypeProvider
     return getContentType(rawMimeType, responseSymbolTable, true);
   }
 
+  public ContentType getBaseContentType()
+  {
+    return _baseContentType;
+  }
+
   private ContentType getContentType(String rawMimeType, SymbolTable symbolTable, boolean appendSymbolTable)
   {
     if (symbolTable == null)

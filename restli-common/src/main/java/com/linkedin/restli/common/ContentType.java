@@ -118,9 +118,7 @@ public class ContentType
    */
   public static ContentType createContentType(String headerKey, DataCodec codec, StreamDataCodec streamCodec)
   {
-    assert headerKey != null : "Header key for custom content type cannot be null";
-    assert codec != null : "Codec for custom content type cannot be null";
-    final ContentType contentType = new ContentType(headerKey, codec, streamCodec);
+    final ContentType contentType = getContentType(headerKey, codec, streamCodec);
     SUPPORTED_TYPE_PROVIDERS.put(headerKey, (rawMimeType, mimeType) -> contentType);
     return contentType;
   }
@@ -135,6 +133,21 @@ public class ContentType
     assert headerKey != null : "Header key for custom content type cannot be null";
     assert provider != null : "Provider for custom content type cannot be null";
     SUPPORTED_TYPE_PROVIDERS.put(headerKey.toLowerCase(), provider);
+  }
+
+  /**
+   * Helper method to create a custom content type without registering it as a supported type.
+   * @param headerKey Content-Type header base mime type value to associate this content type with.
+   * @param codec Codec to use for this content type.
+   * @param streamCodec An optional {@link StreamDataCodec} to use for this content type.
+   *
+   * @return The created content type
+   */
+  public static ContentType getContentType(String headerKey, DataCodec codec, StreamDataCodec streamCodec)
+  {
+    assert headerKey != null : "Header key for custom content type cannot be null";
+    assert codec != null : "Codec for custom content type cannot be null";
+    return new ContentType(headerKey, codec, streamCodec);
   }
 
   /**
@@ -219,7 +232,7 @@ public class ContentType
 
   /**
    * Constructable only through
-   * {@link ContentType#createContentType(String, DataCodec, StreamDataCodec)}
+   * {@link ContentType#getContentType(String, DataCodec, StreamDataCodec)}
    */
   private ContentType(String headerKey, DataCodec codec, StreamDataCodec streamCodec)
   {
