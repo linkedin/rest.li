@@ -80,6 +80,7 @@ public class RestLiConfig
   private String _internalErrorMessage = ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE;
   private RestliProtocolCheck _restliProtocolCheck = RestliProtocolCheck.STRICT;
   private List<RestLiDebugRequestHandler> _debugRequestHandlers = new ArrayList<>();
+  private List<NonResourceRequestHandler> _customRequestHandlers = new ArrayList<>();
   private final List<Filter> _filters = new ArrayList<>();
   private int _maxRequestsMultiplexed = DEFAULT_MAX_REQUESTS_MULTIPLEXED;
   private Set<String> _individualRequestHeaderWhitelist = Collections.emptySet();
@@ -248,6 +249,48 @@ public class RestLiConfig
   public void setDebugRequestHandlers(final List<RestLiDebugRequestHandler> handlers)
   {
     _debugRequestHandlers = new ArrayList<RestLiDebugRequestHandler>(handlers);
+  }
+
+  /**
+   * Gets the list of custom request handlers in this Rest.li config.
+   * @return the list of custom request handlers.
+   */
+  public List<NonResourceRequestHandler> getCustomRequestHandlers()
+  {
+    return _customRequestHandlers;
+  }
+
+  /**
+   * Adds a number of custom request handlers to this Rest.li config.
+   * @param handlers The custom request handlers to add.
+   */
+  public void addCustomRequestHandlers(final NonResourceRequestHandler... handlers)
+  {
+    _customRequestHandlers.addAll(Arrays.asList(handlers));
+  }
+
+  /**
+   * Adds a number of custom request handlers to this Rest.li config.
+   * @param handlers The custom request handlers to add.
+   */
+  public void addCustomRequestHandlers(final Collection<NonResourceRequestHandler> handlers)
+  {
+    _customRequestHandlers.addAll(handlers);
+  }
+
+  /**
+   * Sets the list of custom request handlers on this Rest.li config.
+   * @param handlers The custom request handlers to set.
+   */
+  public void setCustomRequestHandlers(final List<NonResourceRequestHandler> handlers)
+  {
+    if (handlers != null)
+    {
+      _customRequestHandlers = handlers;
+    } else
+    {
+      throw new IllegalArgumentException("Invalid custom request handlers. Handlers can not be null.");
+    }
   }
 
   /**

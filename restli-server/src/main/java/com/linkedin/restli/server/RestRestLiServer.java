@@ -80,6 +80,9 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
     config.getDebugRequestHandlers().stream()
         .map(handler -> new DelegatingDebugRequestHandler(handler, this))
         .forEach(_nonResourceRequestHandlers::add);
+
+    // Add custom request handlers
+    config.getCustomRequestHandlers().forEach(_nonResourceRequestHandlers::add);
   }
 
   List<NonResourceRequestHandler> getNonResourceRequestHandlers()

@@ -1,10 +1,15 @@
 28.0.11
 -------
-(RB=1851797)
-Optimize Jackson data decoder to create DataMaps with proper capacity.
+
 
 28.0.10
 -------
+(RB=1878207)
+Support to set up custom request handler in restli config
+
+(RB=1851797)
+Optimize Jackson data decoder to create DataMaps with proper capacity.
+
 (RB=1896607)
 Fix the failing AclAwareZookeeperTest
 

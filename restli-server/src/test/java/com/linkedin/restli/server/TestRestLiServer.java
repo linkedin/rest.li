@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
+import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.multipart.MultiPartMIMEReader;
 import com.linkedin.multipart.MultiPartMIMEStreamRequestFactory;
 import com.linkedin.multipart.MultiPartMIMEWriter;
@@ -29,6 +30,7 @@ import com.linkedin.multipart.utils.MIMETestUtils.MultiPartMIMEFullReaderCallbac
 import com.linkedin.multipart.utils.MIMETestUtils.SinglePartMIMEFullReaderCallback;
 import com.linkedin.parseq.Engine;
 import com.linkedin.r2.message.Messages;
+import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -45,6 +47,7 @@ import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.FullEntityReader;
 import com.linkedin.r2.message.stream.entitystream.Observer;
 import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
@@ -115,6 +118,7 @@ public class TestRestLiServer
   private static final String DEBUG_HANDLER_RESPONSE_B = "Response B";
 
   private static final String DOCUMENTATION_RESPONSE = "Documentation Response";
+  private static final String CUSTOM_HANDLER_RESPONSE = "Custom Response";
 
   private RestLiServer _server;
   private RestLiServer _serverWithFilters;
@@ -2119,6 +2123,7 @@ public class TestRestLiServer
         cb.onSuccess(new RestResponseBuilder().setEntity(toByteString(DOCUMENTATION_RESPONSE)).build());
       }
     });
+    config.addCustomRequestHandlers(new CustomRequestHandler());
     config.addDebugRequestHandlers(new DebugRequestHandler("a", DEBUG_HANDLER_RESPONSE_A),
         new DebugRequestHandler("b", DEBUG_HANDLER_RESPONSE_B));
 
@@ -2138,6 +2143,7 @@ public class TestRestLiServer
         new Object[] {new URI("profiles/__debug/a/1"), DEBUG_HANDLER_RESPONSE_A},
         new Object[] {new URI("profiles/__debug/b/1"), DEBUG_HANDLER_RESPONSE_B},
         new Object[] {new URI("profiles/restli/docs"), DOCUMENTATION_RESPONSE},
+        new Object[] {new URI("profiles/custom/"), CUSTOM_HANDLER_RESPONSE}
     };
   }
 
@@ -2230,6 +2236,24 @@ public class TestRestLiServer
 
       responseBuilder.setEntity(outputStream.toByteArray());
       callback.onSuccess(responseBuilder.build());
+    }
+  }
+
+  private class CustomRequestHandler implements NonResourceRequestHandler
+  {
+    private static final String CUSTOM_PREFIX = "custom";
+
+    @Override
+    public boolean shouldHandle(Request request) {
+      final String path = request.getURI().getRawPath();
+      final List<UriComponent.PathSegment> pathSegments = UriComponent.decodePath(path, true);
+
+      return (pathSegments.size() > 1 && CUSTOM_PREFIX.equals(pathSegments.get(1).getPath()));
+    }
+
+    @Override
+    public void handleRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback) {
+      callback.onSuccess(new RestResponseBuilder().setEntity(toByteString(CUSTOM_HANDLER_RESPONSE)).build());
     }
   }
 
