@@ -1,5 +1,8 @@
 28.0.4
 ------
+(RB=1878020)
+Fix NPE in URIElementParser and add more undecodable tests to TestURIElementParser
+
 (RB=1868606)
 defined SchemaAnnotationHandler interface for custom users to implement
 

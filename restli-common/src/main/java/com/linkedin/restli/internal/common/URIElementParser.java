@@ -100,7 +100,7 @@ public class URIElementParser
     assertExpectation(firstToken, GrammarMarker.MAP_START);
 
     Token nextToken = tokenQueue.peek();
-    if (!nextToken.grammarEquals(GrammarMarker.OBJ_END))
+    if (nextToken != null && !nextToken.grammarEquals(GrammarMarker.OBJ_END))
     {
       parseMapElements(tokenQueue, map);
     }
@@ -146,7 +146,7 @@ public class URIElementParser
     assertExpectation(firstToken, GrammarMarker.LIST_START);
 
     Token nextToken = tokenQueue.peek();
-    if (!nextToken.grammarEquals(GrammarMarker.OBJ_END))
+    if (nextToken != null && !nextToken.grammarEquals(GrammarMarker.OBJ_END))
     {
       parseListElements(tokenQueue, list);
     }

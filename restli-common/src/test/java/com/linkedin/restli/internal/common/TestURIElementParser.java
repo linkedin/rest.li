@@ -164,6 +164,9 @@ public class TestURIElementParser
       { "(a:b",       "unexpected end of input" },
       { "List(a",     "unexpected end of input" },
       { "List(a,",    "unexpected end of input" },
+      { "",           "unexpected end of input" },
+      { "List(",      "unexpected end of input" },
+      { "(a:(",       "unexpected end of input" },
       { ",hello",     "unexpected token: ',' (column 0) at start of element" },
       { "(,",         "expected string token, found grammar token: ',' (column 1)" },
       { "(a,b)",      "expected ':' but found ',' (column 2)" },
@@ -173,8 +176,7 @@ public class TestURIElementParser
       { "List(a,,b)", "unexpected token: ',' (column 7) at start of element" },
       { "(:b)",       "expected string token, found grammar token: ':' (column 1)" },
       { "(a:)",       "unexpected token: ')' (column 3) at start of element" },
-      { "(a::b)",     "unexpected token: ':' (column 3) at start of element" },
-      { "",           "unexpected end of input" },
+      { "(a::b)",     "unexpected token: ':' (column 3) at start of element" }
     };
   }
 
