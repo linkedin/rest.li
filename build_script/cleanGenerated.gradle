@@ -14,6 +14,11 @@
    limitations under the License.
 */
 
+/*
+ * This plugin is useful for cleaning "generated" directories in sub-projects without the Pegasus plugin.
+ * It should be applied to all sub-projects indiscriminately since it has its own logic for checking whether
+ * the Pegasus plugin has been applied after evaluation.
+ */
 afterEvaluate {
   if (!project.plugins.hasPlugin('pegasus'))
   {
@@ -21,6 +26,7 @@ afterEvaluate {
       final Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName('clean', 'GeneratedDir')) {
         doLast {
           project.delete(project.file(rootProject.ext.build.getDataTemplateOutDirPath(project, sourceSet)).parentFile)
+          project.delete(project.file(rootProject.ext.build.getAvroSchemaOutDirPath(project, sourceSet)).parentFile)
           project.delete(project.file(rootProject.ext.build.getRestModelOutDirPath(project, sourceSet)).parentFile)
         }
       }

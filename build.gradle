@@ -145,6 +145,7 @@ task wrapper(type: Wrapper) {
 subprojects {
   apply plugin: 'java'
   apply plugin: 'eclipse'
+  apply from: "${buildScriptDirPath}/cleanGenerated.gradle"
 
   afterEvaluate {
     if (project.plugins.hasPlugin('pegasus')) {
@@ -165,8 +166,6 @@ subprojects {
         pegasusPlugin project(':restli-tools')
         pegasusPlugin externalDependency.javaxAnnotation
       }
-    } else {
-      apply from: "${buildScriptDirPath}/cleanGenerated.gradle", to: it
     }
   }
 
