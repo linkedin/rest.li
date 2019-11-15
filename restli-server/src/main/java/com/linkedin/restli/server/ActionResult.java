@@ -18,6 +18,7 @@ package com.linkedin.restli.server;
 
 
 import com.linkedin.restli.common.HttpStatus;
+import java.util.Objects;
 
 
 /**
@@ -54,5 +55,26 @@ public class ActionResult<V>
   public HttpStatus getStatus()
   {
     return _status;
+  }
+
+  @Override
+  public boolean equals(Object o)
+  {
+    if (this == o)
+    {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass())
+    {
+      return false;
+    }
+    ActionResult<?> that = (ActionResult<?>) o;
+    return Objects.equals(_value, that._value) && _status == that._status;
+  }
+
+  @Override
+  public int hashCode()
+  {
+    return Objects.hash(_value, _status);
   }
 }

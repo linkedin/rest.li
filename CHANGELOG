@@ -1,5 +1,8 @@
 28.0.8
 ------
+(RB=1882082)
+Adds equality/hash methods for ActionResult class
+
 
 28.0.7
 ------
