@@ -519,8 +519,6 @@ public class PegasusPlugin implements Plugin<Project>
 
   public static final String DATA_TEMPLATE_FILE_SUFFIX = ".pdsc";
   public static final String PDL_FILE_SUFFIX = ".pdl";
-  // gradle property to opt in for PDL, by default it is disabled.
-  private static final String PDL_ENABLE = "enablePDL";
   // gradle property to opt in for destroying stale files from the build directory,
   // by default it is disabled, because it triggers hot-reload (even if it results in a no-op)
   private static final String DESTROY_STALE_FILES_ENABLE = "enableDestroyStaleFiles";
@@ -539,6 +537,9 @@ public class PegasusPlugin implements Plugin<Project>
   private static final String SUPPRESS_REST_CLIENT_RESTLI_1 = "rest.client.restli1.suppress";
 
   private static final String GENERATOR_CLASSLOADER_NAME = "pegasusGeneratorClassLoader";
+
+  private static final String CONVERT_TO_PDL_REVERSE = "convertToPdl.reverse";
+  private static final String CONVERT_TO_PDL_KEEP_ORIGINAL = "convertToPdl.keepOriginal";
 
   // Below variables are used to collect data across all pegasus projects (sub-projects) and then print information
   // to the user at the end after build is finished.
@@ -614,10 +615,7 @@ public class PegasusPlugin implements Plugin<Project>
         // gradle daemon enabled, the plugin class might not be loaded for every run.
         DATA_TEMPLATE_FILE_SUFFIXES.clear();
         DATA_TEMPLATE_FILE_SUFFIXES.add(DATA_TEMPLATE_FILE_SUFFIX);
-        if (isPropertyTrue(project, PDL_ENABLE))
-        {
-          DATA_TEMPLATE_FILE_SUFFIXES.add(PDL_FILE_SUFFIX);
-        }
+        DATA_TEMPLATE_FILE_SUFFIXES.add(PDL_FILE_SUFFIX);
 
         _restModelCompatMessage = new StringBuffer();
         _needCheckinFiles.clear();
@@ -789,11 +787,7 @@ public class PegasusPlugin implements Plugin<Project>
       // if it can fail, fail it early
       configureRestModelGeneration(project, sourceSet);
 
-      if (isPropertyTrue(project, PDL_ENABLE))
-      {
-        // TODO: Globally enable once https://rb.corp.linkedin.com/r/940808/ issues are resolved.
-        configureConversionUtilities(project, sourceSet);
-      }
+      configureConversionUtilities(project, sourceSet);
 
       configureDataTemplateGeneration(project, sourceSet);
 
@@ -1368,43 +1362,34 @@ public class PegasusPlugin implements Plugin<Project>
   protected void configureConversionUtilities(Project project, SourceSet sourceSet)
   {
     File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet));
-    File conversionBackupBuildDir = project.file(project.getBuildDir().getAbsolutePath()
-        + File.separatorChar + sourceSet.getName() + "ConversionBackup");
+    boolean reverse = isPropertyTrue(project, CONVERT_TO_PDL_REVERSE);
+    boolean keepOriginal = isPropertyTrue(project, CONVERT_TO_PDL_KEEP_ORIGINAL);
 
-    Task backup = project.getTasks()
-        .create(sourceSet.getTaskName("backup", "Pdsc"), Copy.class, task ->
-        {
-          task.from(dataSchemaDir, copySpec -> copySpec.include("**/*.pdsc"));
-          task.into(conversionBackupBuildDir);
-        });
-
-    project.getTasks()
-        .create(sourceSet.getTaskName("restore", "PdscBackup"), Copy.class, task ->
-        {
-          task.from(conversionBackupBuildDir, copySpec -> copySpec.include("**/*.pdsc"));
-          task.into(dataSchemaDir);
-        });
-
-    // Utility task for migrating from PDSC to PDL.
+    // Utility task for migrating between PDSC and PDL.
     project.getTasks().create(sourceSet.getTaskName("convert", "ToPdl"), TranslateSchemasTask.class, task ->
     {
-      task.dependsOn(backup);
       task.setInputDir(dataSchemaDir);
       task.setDestinationDir(dataSchemaDir);
       task.setResolverPath(getDataModelConfig(project, sourceSet));
       task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+      if (reverse)
+      {
+        task.setSourceFormat(SchemaFileType.PDL);
+        task.setDestinationFormat(SchemaFileType.PDSC);
+      }
+      else
+      {
+        task.setSourceFormat(SchemaFileType.PDSC);
+        task.setDestinationFormat(SchemaFileType.PDL);
+      }
+      task.setKeepOriginal(keepOriginal);
 
       task.onlyIf(t -> task.getInputDir().exists());
-
       task.doLast(new CacheableAction<>(t ->
       {
-        System.out.println("pdsc to pdl conversion complete.");
-        System.out.println("All pdsc files in " + dataSchemaDir + " have been replaced with pdl files");
-        System.out.println("The pdsc files have been backed up to: " + conversionBackupBuildDir.getAbsolutePath());
-        System.out.println("If this conversion needs to be undone run the 'restorePdscBackup' task to restore the backed up pdsc files.");
-        ConfigurableFileTree tree = project.fileTree(dataSchemaDir);
-        tree.include("**/*.pdsc");
-        tree.forEach(File::delete);
+        project.getLogger().lifecycle("Pegasus schema conversion complete.");
+        project.getLogger().lifecycle("All pegasus schema files in " + dataSchemaDir + " have been converted");
+        project.getLogger().lifecycle("You can use '-PconvertToPdl.reverse=true|false' to change the direction of conversion.");
       }));
     });
   }
@@ -1501,25 +1486,22 @@ public class PegasusPlugin implements Plugin<Project>
     dataTemplateJarDepends.add(compileTask);
     dataTemplateJarDepends.add(preparePdscSchemasForPublishTask);
 
-    if (isPropertyTrue(project, PDL_ENABLE))
-    {
-      // Convert all PDL files back to PDSC for publication
-      // TODO: Globally enable once https://rb.corp.linkedin.com/r/940808/ issues are resolved.
-      // TODO: Remove this conversion permanently when we're ready to publish PDL files directly into dataTemplate jars.
-      Task preparePdlSchemasForPublishTask = project.getTasks()
-          .create(sourceSet.getName() + "TranslateSchemas", TranslateSchemasTask.class, task ->
-          {
-            task.setInputDir(dataSchemaDir);
-            task.setDestinationDir(publishableSchemasBuildDir);
-            task.setResolverPath(getDataModelConfig(project, sourceSet));
-            task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
-            task.setSourceFormat(SchemaFileType.PDL);
-            task.setDestinationFormat(SchemaFileType.PDSC);
-          });
+    // Convert all PDL files back to PDSC for publication
+    // TODO: Remove this conversion permanently when we're ready to publish PDL files directly into dataTemplate jars.
+    Task preparePdlSchemasForPublishTask = project.getTasks()
+        .create(sourceSet.getName() + "TranslateSchemas", TranslateSchemasTask.class, task ->
+        {
+          task.setInputDir(dataSchemaDir);
+          task.setDestinationDir(publishableSchemasBuildDir);
+          task.setResolverPath(getDataModelConfig(project, sourceSet));
+          task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+          task.setSourceFormat(SchemaFileType.PDL);
+          task.setDestinationFormat(SchemaFileType.PDSC);
+          task.setKeepOriginal(true);
+        });
 
-      preparePdlSchemasForPublishTask.dependsOn(destroyStaleFiles);
-      dataTemplateJarDepends.add(preparePdlSchemasForPublishTask);
-    }
+    preparePdlSchemasForPublishTask.dependsOn(destroyStaleFiles);
+    dataTemplateJarDepends.add(preparePdlSchemasForPublishTask);
 
     // create data template jar file
     Jar dataTemplateJarTask = project.getTasks()

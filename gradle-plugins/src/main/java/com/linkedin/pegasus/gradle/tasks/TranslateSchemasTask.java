@@ -6,6 +6,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
@@ -26,6 +27,7 @@ public class TranslateSchemasTask extends DefaultTask {
   private File _destinationDir;
   private SchemaFileType _sourceFormat = SchemaFileType.PDSC;
   private SchemaFileType _destinationFormat = SchemaFileType.PDL;
+  private boolean _keepOriginal = false;
 
   @TaskAction
   public void translate()
@@ -43,6 +45,10 @@ public class TranslateSchemasTask extends DefaultTask {
       javaExecSpec.args(_sourceFormat.getFileExtension());
       javaExecSpec.args("--destination-format");
       javaExecSpec.args(_destinationFormat.getFileExtension());
+      if (_keepOriginal)
+      {
+        javaExecSpec.args("--keep-original");
+      }
       javaExecSpec.args(resolverPathStr);
       javaExecSpec.args(_inputDir.getAbsolutePath());
       javaExecSpec.args(_destinationDir.getAbsolutePath());
@@ -104,7 +110,7 @@ public class TranslateSchemasTask extends DefaultTask {
     _destinationDir = destinationDir;
   }
 
-  @Internal
+  @Input
   public SchemaFileType getSourceFormat()
   {
     return _sourceFormat;
@@ -115,7 +121,7 @@ public class TranslateSchemasTask extends DefaultTask {
     _sourceFormat = sourceFormat;
   }
 
-  @Internal
+  @Input
   public SchemaFileType getDestinationFormat()
   {
     return _destinationFormat;
@@ -124,5 +130,16 @@ public class TranslateSchemasTask extends DefaultTask {
   public void setDestinationFormat(SchemaFileType destinationFormat)
   {
     _destinationFormat = destinationFormat;
+  }
+
+  @Input
+  public boolean isKeepOriginal()
+  {
+    return _keepOriginal;
+  }
+
+  public void setKeepOriginal(boolean keepOriginal)
+  {
+    _keepOriginal = keepOriginal;
   }
 }

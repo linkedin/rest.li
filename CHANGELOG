@@ -3,6 +3,9 @@
 (RB=1903191)
 Allow incompatible rest model changes in restli-int-test-server
 
+(RB=1896169)
+PDL: Verify translated schemas by writing to temporary location and comparing them with source schemas. Enable option to keep source files or remove them.
+
 28.0.10
 -------
 (RB=1878207)
