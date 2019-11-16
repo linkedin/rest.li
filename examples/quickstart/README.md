@@ -6,7 +6,7 @@ https://github.com/linkedin/pegasus/wiki/Quickstart:-A-Tutorial-Introduction-to-
 
 Please execute all commands below in the examples/quickstart folder
 
-To build, use gradle 1.8 or greater.  If you need, you can run `../../gradlew wrapper` to generate a ./gradlew wrapper in this sample directory that will use gradle 1.8.  If you do
+To build, use gradle 4.6 or greater.  If you need, you can run `../../gradlew wrapper` to generate a ./gradlew wrapper in this sample directory that will use gradle 4.6.  If you do
 this, use `./gradlew` instead of `gradle` for the remainder of this README.
 
 ```
