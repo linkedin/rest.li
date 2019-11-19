@@ -480,6 +480,39 @@ public class TestQueryTunnel
     Assert.assertNull(decoded.getHeader(header), "Mixed case 'content-type' header failed to be decoded");
   }
 
+  @Test
+  public void testTunneledLongQueryWithRestLiSpecialEncodedCharactersInPath() throws Exception
+  {
+    // Make sure the URI path includes Rest.li special encoded characters, and create a true long query
+    StringBuilder query = new StringBuilder("q=queryString");
+    for (int i = 0; i < 10000; i++) {
+      query.append("&a=");
+      query.append(i);
+    }
+
+    // Special characters with their encoding:
+    // ',' - %2C
+    // '(' - %28
+    // ')' - %29
+    String uriPathKeyString = "/foo/(bar:biz%3Aabc%28%29,baz:xyz%3A%2C)";
+
+    RestRequest request = new RestRequestBuilder(new URI(("http://localhost:7279/" + uriPathKeyString + "?" + query.toString())))
+                                                .setMethod("GET").build();
+    RestRequest encoded = encode(request, 1);  // Set threshold to 1, so we force query tunneling
+
+    Assert.assertEquals(encoded.getMethod(), "POST");
+    Assert.assertEquals(request.getURI().getRawPath(), encoded.getURI().getRawPath());
+    Assert.assertTrue(encoded.getEntity().length() == query.length());
+    Assert.assertEquals(encoded.getHeader("Content-Type"), "application/x-www-form-urlencoded");
+    Assert.assertEquals(encoded.getHeader("Content-Length"), Integer.toString(query.length()));
+
+    RequestContext requestContext = new RequestContext();
+    RestRequest decoded = decode(encoded, requestContext);
+    Assert.assertEquals(decoded.getURI(), request.getURI());
+    Assert.assertEquals(decoded.getMethod(), "GET");
+    Assert.assertTrue((Boolean) requestContext.getLocalAttr(R2Constants.IS_QUERY_TUNNELED));
+  }
+
   private RestRequest encode(RestRequest request, int threshold) throws Exception
   {
     return encode(request, new RequestContext(), threshold);
@@ -574,8 +607,3 @@ public class TestQueryTunnel
     }
   }
 }
-
-
-
-
-
