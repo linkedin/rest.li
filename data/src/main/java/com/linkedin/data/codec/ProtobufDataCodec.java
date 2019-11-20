@@ -75,12 +75,21 @@ public class ProtobufDataCodec implements DataCodec
 
   public ProtobufDataCodec()
   {
-    this(null);
+    this((SymbolTable) null);
   }
 
   public ProtobufDataCodec(SymbolTable symbolTable)
   {
     _symbolTable = symbolTable;
+  }
+
+  /**
+   * @deprecated Use {@link #ProtobufDataCodec(SymbolTable)} instead. This constructor ignores its argument.
+   */
+  @Deprecated
+  public ProtobufDataCodec(String symbolTableName)
+  {
+    this((SymbolTable) null);
   }
 
   @Override

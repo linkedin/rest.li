@@ -54,7 +54,7 @@ public class JacksonLICORDataCodec extends AbstractJacksonDataCodec
 
   public JacksonLICORDataCodec(boolean useBinary)
   {
-    this(useBinary, null);
+    this(useBinary, (SymbolTable) null);
   }
 
   public JacksonLICORDataCodec(boolean useBinary, SymbolTable symbolTable)
@@ -62,6 +62,16 @@ public class JacksonLICORDataCodec extends AbstractJacksonDataCodec
     super(getFactory(useBinary));
 
     _symbolTable = symbolTable;
+  }
+
+  /**
+   * @deprecated Use {@link #JacksonLICORDataCodec(boolean, SymbolTable)} instead. This constructor ignores the
+   *             second argument.
+   */
+  @Deprecated
+  public JacksonLICORDataCodec(boolean useBinary, String symbolTableName)
+  {
+    this(useBinary);
   }
 
   @SuppressWarnings("unchecked")

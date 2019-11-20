@@ -124,6 +124,17 @@ public class ContentType
   }
 
   /**
+   * @deprecated Use {@link #createContentType(String, DataCodec, StreamDataCodec)} instead, as header-based codec
+   *             providers are no longer used.
+   */
+  @Deprecated
+  public static ContentType createContentType(String headerKey, DataCodec codec, StreamDataCodec streamCodec,
+      com.linkedin.data.codec.HeaderBasedCodecProvider headerBasedCodecProvider)
+  {
+    return createContentType(headerKey, codec, streamCodec);
+  }
+
+  /**
    * Helper method to create a custom content type and also register it as a supported type.
    * @param headerKey Content-Type header base mime type value to associate this content type with.
    * @param provider A {@link ContentTypeProvider} to provide the actual content type.
@@ -251,6 +262,15 @@ public class ContentType
     return _codec;
   }
 
+  /**
+   * @deprecated Use {@link #getCodec()} instead, as the headers are no longer read when getting the codec.
+   */
+  @Deprecated
+  public DataCodec getCodec(Map<String, String> requestHeaders)
+  {
+    return getCodec();
+  }
+
   public boolean supportsStreaming()
   {
     return _streamCodec != null;
@@ -259,6 +279,15 @@ public class ContentType
   public StreamDataCodec getStreamCodec()
   {
     return _streamCodec;
+  }
+
+  /**
+   * @deprecated Use {@link #getStreamCodec()} instead, as the headers are no longer read when getting the codec.
+   */
+  @Deprecated
+  public StreamDataCodec getStreamCodec(Map<String, String> requestHeaders)
+  {
+    return getStreamCodec();
   }
 
   @Override

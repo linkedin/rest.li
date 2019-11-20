@@ -53,7 +53,7 @@ public class JacksonLICORStreamDataCodec implements StreamDataCodec
 
   public JacksonLICORStreamDataCodec(int bufferSize, boolean useBinary)
   {
-    this(bufferSize, useBinary, null);
+    this(bufferSize, useBinary, (SymbolTable) null);
   }
 
   public JacksonLICORStreamDataCodec(int bufferSize, boolean useBinary, SymbolTable symbolTable)
@@ -61,6 +61,16 @@ public class JacksonLICORStreamDataCodec implements StreamDataCodec
     _bufferSize = bufferSize;
     _useBinary = useBinary;
     _symbolTable = symbolTable;
+  }
+
+  /**
+   * @deprecated Use {@link #JacksonLICORStreamDataCodec(int, boolean, SymbolTable)} instead. This constructor ignores
+   *             the third argument.
+   */
+  @Deprecated
+  public JacksonLICORStreamDataCodec(int bufferSize, boolean useBinary, String symbolTableName)
+  {
+    this(bufferSize, useBinary);
   }
 
   @SuppressWarnings("unchecked")

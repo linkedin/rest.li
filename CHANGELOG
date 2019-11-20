@@ -1,13 +1,14 @@
-28.0.6
-------
-
 28.0.5
 ------
-(RB=1870820)
-Reference symbol table provider and handler implementation to enable symmetric protocol for exchanging symbol tables between rest.li services
 
 28.0.4
 ------
+(RB=1885898)
+Add the HeaderBasedCodecProvider interface back
+
+(RB=1870820)
+Reference symbol table provider and handler implementation to enable symmetric protocol for exchanging symbol tables between rest.li services
+
 (RB=1878020)
 Fix NPE in URIElementParser and add more undecodable tests to TestURIElementParser
 
