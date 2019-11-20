@@ -98,18 +98,18 @@ public class RestLiSymbolTableRequestHandler implements NonResourceRequestHandle
     // which assumes JSON as the default, for efficiency reasons.
     //
     ContentType type;
+    String mimeType =
+        Optional.ofNullable(request.getHeader(RestConstants.HEADER_ACCEPT))
+            .orElse(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF);
     try
     {
-      String mimeType =
-          Optional.ofNullable(request.getHeader(RestConstants.HEADER_ACCEPT))
-              .orElse(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF);
       type =  ContentType.getContentType(mimeType).orElseThrow(() ->
           new MimeTypeParseException("Invalid accept type: " + mimeType));
     }
     catch (MimeTypeParseException e)
     {
       LOGGER.error("Could not handle accept type", e);
-      callback.onError(RestException.forError(HttpStatus.S_406_NOT_ACCEPTABLE.getCode(), "Invalid accept type"));
+      callback.onError(RestException.forError(HttpStatus.S_406_NOT_ACCEPTABLE.getCode(), "Invalid accept type: " + mimeType));
       return;
     }
 

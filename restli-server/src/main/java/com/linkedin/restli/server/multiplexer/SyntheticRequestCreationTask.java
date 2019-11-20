@@ -26,6 +26,7 @@ import com.linkedin.parseq.promise.Promises;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.internal.common.DataMapConverter;
@@ -93,9 +94,16 @@ import javax.activation.MimeTypeParseException;
   {
     URI uri = URI.create(individualRequest.getRelativeUrl());
     ByteString entity = getBodyAsByteString(individualRequest);
+
+    //
+    // For mux, remove accept header, and use the default accept type aka JSON for the individual requests. If we don't
+    // do this and use a codec that relies on field ordering for the overall mux response, then the overall response
+    // can break, on account of individual responses inheriting that accept header and ordering their responses.
+    //
     return new RestRequestBuilder(uri)
       .setMethod(individualRequest.getMethod())
       .setHeaders(individualRequest.getHeaders())
+      .removeHeader(RestConstants.HEADER_ACCEPT)
       .setCookies(envelopeRequest.getCookies())
       .setEntity(entity)
       .build();

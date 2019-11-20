@@ -1,5 +1,8 @@
 28.0.6
 ------
+(RB=1887898)
+Remove accept header for individual mux requests
+
 (RB=1864201)
 Support for data template schema field string literals in PDL
 

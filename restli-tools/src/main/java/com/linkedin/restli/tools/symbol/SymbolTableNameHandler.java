@@ -73,6 +73,13 @@ class SymbolTableNameHandler
   Tuple3<String, String, Boolean> extractTableInfo(String fullName)
   {
     String[] parts = fullName.split(HOSTNAME_PORT_TABLENAME_SEPARATOR_REGEX, 2);
+
+    // If we only got the table name, we assume its a local table.
+    if (parts.length == 1)
+    {
+      return new Tuple3<>(_hostNameWithPort, parts[0], true);
+    }
+
     if (parts.length != 2)
     {
       throw new RuntimeException("Unexpected name format for name: " + fullName);
