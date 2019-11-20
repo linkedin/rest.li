@@ -538,6 +538,20 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private void writeReferenceOrInline(DataSchema dataSchema, boolean originallyInlined) throws IOException
   {
     TypeRepresentation representation = selectTypeRepresentation(dataSchema, originallyInlined);
+    encodeNamedInnerSchema(dataSchema, representation);
+  }
+
+  /**
+   * Writes a data schema type to .pdl code, either as a by-name reference, or as an inlined declaration.
+   *
+   *
+   * @param dataSchema provides the data schema to write.
+   * @param representation if it is declared_inline, the original schema inlined this type declaration, otherwise it is a by-name
+   *                         reference.
+   * @throws IllegalArgumentException if the typeRepresentation is by-name reference and dataSchema type is not NamedDataSchema.
+   */
+  protected void encodeNamedInnerSchema(DataSchema dataSchema, TypeRepresentation representation) throws IOException
+  {
     if (representation == TypeRepresentation.DECLARED_INLINE)
     {
       boolean requiresNewlineLayout = requiresNewlineLayout(dataSchema);
