@@ -2,6 +2,9 @@
 ------
 [pegasus] Disable SymlinkAwareZooKeeperTest temporarily
 
+(RB=1889124)
+Add configuration to disable generating deprecated protocol version 1.0.0 request builders.
+
 28.0.6
 ------
 (RB=1887898)

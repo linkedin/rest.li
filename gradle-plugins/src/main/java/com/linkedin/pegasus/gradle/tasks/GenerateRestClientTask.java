@@ -43,6 +43,7 @@ public class GenerateRestClientTask extends DefaultTask
   private FileCollection _runtimeClasspath;
   private FileCollection _codegenClasspath;
   private File _destinationDir;
+  private boolean _restli1FormatSuppressed;
   private boolean _restli2FormatSuppressed;
   private boolean _restli1BuildersDeprecated = true;
 
@@ -100,8 +101,10 @@ public class GenerateRestClientTask extends DefaultTask
 
       String restModelFilePath = _inputDir.toString() + File.separatorChar + clientItem.restModelFileName;
 
-      version1Files.computeIfAbsent(defaultPackage, key -> new ArrayList<>())
-          .add(restModelFilePath);
+      if (!_restli1FormatSuppressed)
+      {
+        version1Files.computeIfAbsent(defaultPackage, key -> new ArrayList<>()).add(restModelFilePath);
+      }
 
       if (!_restli2FormatSuppressed)
       {
@@ -254,6 +257,17 @@ public class GenerateRestClientTask extends DefaultTask
   public void setRestli2FormatSuppressed(boolean restli2FormatSuppressed)
   {
     _restli2FormatSuppressed = restli2FormatSuppressed;
+  }
+
+  @Internal
+  public boolean isRestli1FormatSuppressed()
+  {
+    return _restli1FormatSuppressed;
+  }
+
+  public void setRestli1FormatSuppressed(boolean restli1FormatSuppressed)
+  {
+    _restli1FormatSuppressed = restli1FormatSuppressed;
   }
 
   /**

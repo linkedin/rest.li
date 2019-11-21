@@ -536,6 +536,7 @@ public class PegasusPlugin implements Plugin<Project>
   private static final String IDL_NO_PUBLISH = "rest.idl.noPublish";
   private static final String SKIP_IDL_CHECK = "rest.idl.skipCheck";
   private static final String SUPPRESS_REST_CLIENT_RESTLI_2 = "rest.client.restli2.suppress";
+  private static final String SUPPRESS_REST_CLIENT_RESTLI_1 = "rest.client.restli1.suppress";
 
   private static final String GENERATOR_CLASSLOADER_NAME = "pegasusGeneratorClassLoader";
 
@@ -1648,6 +1649,7 @@ public class PegasusPlugin implements Plugin<Project>
           task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
           task.setDestinationDir(generatedRestClientDir);
           task.setRestli2FormatSuppressed(project.hasProperty(SUPPRESS_REST_CLIENT_RESTLI_2));
+          task.setRestli1FormatSuppressed(project.hasProperty(SUPPRESS_REST_CLIENT_RESTLI_1));
         });
 
     if (dataTemplateJarTask != null)
