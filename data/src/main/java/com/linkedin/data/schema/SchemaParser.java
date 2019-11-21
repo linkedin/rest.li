@@ -16,12 +16,10 @@
 
 package com.linkedin.data.schema;
 
-
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataLocation;
-import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.UnionDataSchema.Member;
 import java.io.InputStream;
 import java.io.Reader;
@@ -71,7 +69,7 @@ public class SchemaParser extends AbstractSchemaParser
    */
   public SchemaParser(DataSchemaResolver resolver)
   {
-    super(resolver == null ? new DefaultDataSchemaResolver() : resolver);
+    super(resolver);
   }
 
   /**

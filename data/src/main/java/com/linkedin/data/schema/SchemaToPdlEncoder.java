@@ -19,6 +19,7 @@ package com.linkedin.data.schema;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Collections;
 import java.util.HashSet;
@@ -39,6 +40,32 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 {
   // Unions with at least this many members will be written onto multiple lines to improve readability
   private static final int UNION_MULTILINE_THRESHOLD = 5;
+
+  /**
+   * Encode a {@link DataSchema} to a PDL encoded string.
+   *
+   * @param schema is the {@link DataSchema} to build a PDL encoded output for.
+   * @param encodingStyle is the encoding style.
+   * @return the PDL encoded string representing the {@link DataSchema}.
+   */
+  public static String schemaToPdl(DataSchema schema, EncodingStyle encodingStyle)
+  {
+    StringWriter writer = new StringWriter();
+
+    SchemaToPdlEncoder encoder = new SchemaToPdlEncoder(writer);
+    encoder.setEncodingStyle(encodingStyle);
+
+    try
+    {
+      encoder.encode(schema);
+    }
+    catch (IOException e)
+    {
+      throw new IllegalStateException(e);
+    }
+
+    return writer.toString();
+  }
 
   /**
    * Encoding style for PDL.

@@ -65,12 +65,15 @@ class CompactPdlBuilder extends PdlBuilder
   @Override
   PdlBuilder write(String text) throws IOException
   {
-    final boolean writeWhitespaceBuffer = isIdentifierCharacter(text.charAt(0));
-    processWhitespaceBuffer(writeWhitespaceBuffer);
+    if (text != null && !text.isEmpty())
+    {
+      final boolean writeWhitespaceBuffer = isIdentifierCharacter(text.charAt(0));
+      processWhitespaceBuffer(writeWhitespaceBuffer);
 
-    super.write(text);
+      super.write(text);
 
-    _needsWhitespacePadding = isIdentifierCharacter(text.charAt(text.length() - 1));
+      _needsWhitespacePadding = isIdentifierCharacter(text.charAt(text.length() - 1));
+    }
 
     return this;
   }

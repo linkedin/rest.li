@@ -24,7 +24,7 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.SchemaParserFactory;
+import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
@@ -281,6 +281,8 @@ public class DataTemplateUtil
   /**
    * Parse data schema in JSON format to obtain a {@link DataSchema}.
    *
+   * TODO: deprecate this later, since current use cases still use this in generated data templates.
+   *
    * @param schemaText provides the data schema in JSON format.
    * @return the {@link DataSchema} parsed from the data schema in JSON format.
    * @throws IllegalArgumentException if the data schema in JSON format is invalid or
@@ -288,7 +290,7 @@ public class DataTemplateUtil
    */
   public static DataSchema parseSchema(String schemaText) throws IllegalArgumentException
   {
-    return parseSchema(schemaText, null);
+    return parseSchema(schemaText, null, SchemaFormatType.PDSC);
   }
 
   /**
@@ -299,10 +301,42 @@ public class DataTemplateUtil
    * @return the {@link DataSchema} parsed from the data schema in JSON format.
    * @throws IllegalArgumentException if the data schema in JSON format is invalid or
    *                                  there is more than one top level schema.
+   * @deprecated This method assumes the data schema is encoded in {@link SchemaFormatType#PDSC},
+   *             use {@link #parseSchema(String, DataSchemaResolver, SchemaFormatType)} instead.
    */
+  @Deprecated
   public static DataSchema parseSchema(String schemaText, DataSchemaResolver schemaResolver) throws IllegalArgumentException
   {
-    PegasusSchemaParser parser = SchemaParserFactory.instance().create(schemaResolver);
+    return parseSchema(schemaText, schemaResolver, SchemaFormatType.PDSC);
+  }
+
+  /**
+   * Parse data schema encoded in any format to obtain a {@link DataSchema}.
+   *
+   * @param schemaText the encoded data schema.
+   * @param schemaFormatType the format in which the schema is encoded.
+   * @return the {@link DataSchema} parsed from the encoded data schema.
+   * @throws IllegalArgumentException if the encoded data schema is invalid or there is more than one top-level schema.
+   */
+  public static DataSchema parseSchema(String schemaText, SchemaFormatType schemaFormatType) throws IllegalArgumentException
+  {
+    return parseSchema(schemaText, null, schemaFormatType);
+  }
+
+  /**
+   * Parse data schema encoded in any format to obtain a {@link DataSchema}.
+   *
+   * @param schemaText the encoded data schema.
+   * @param schemaFormatType the format in which the schema is encoded.
+   * @param schemaResolver resolver for resolving referenced schemas.
+   * @return the {@link DataSchema} parsed from the encoded data schema.
+   * @throws IllegalArgumentException if the encoded data schema is invalid or there is more than one top-level schema.
+   */
+  public static DataSchema parseSchema(String schemaText, DataSchemaResolver schemaResolver,
+      SchemaFormatType schemaFormatType) throws IllegalArgumentException
+  {
+    final PegasusSchemaParser parser = schemaFormatType.getSchemaParserFactory().create(schemaResolver);
+
     parser.parse(schemaText);
     if (parser.hasError())
     {

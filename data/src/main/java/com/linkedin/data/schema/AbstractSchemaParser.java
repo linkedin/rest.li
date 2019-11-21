@@ -26,6 +26,7 @@ import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.message.MessageUtil;
 
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
+import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
@@ -55,17 +56,17 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
   /**
    * Constructor with resolver.
    *
-   * @param resolver to be used to find {@link DataSchema}'s.
+   * @param resolver to be used to find {@link DataSchema}s.
    */
   protected AbstractSchemaParser(DataSchemaResolver resolver)
   {
-    _resolver = resolver;
+    _resolver = resolver == null ? new DefaultDataSchemaResolver() : resolver;
   }
 
   /**
    * Get the {@link DataSchemaResolver}.
    *
-   * @return the resolver to used to find {@link DataSchema}'s, may be null
+   * @return the resolver to used to find {@link DataSchema}s, may be null
    *         if no resolver has been provided to parser.
    */
   public DataSchemaResolver getResolver()
@@ -74,12 +75,12 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
   }
 
   /**
-   * Return the top level {@link DataSchema}'s.
+   * Return the top level {@link DataSchema}s.
    *
    * The top level DataSchema's represent the types
    * that are not defined within other types.
    *
-   * @return the list of top level {@link DataSchema}'s in the
+   * @return the list of top level {@link DataSchema}s in the
    *         order that are defined.
    */
   public List<DataSchema> topLevelDataSchemas()
@@ -796,7 +797,7 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
   /**
    * Set the current location for the source of input to the parser.
    *
-   * This current location is will be used to annotate {@link NamedDataSchema}'s
+   * This current location is will be used to annotate {@link NamedDataSchema}s
    * generated from parsing.
    *
    * @param location of the input source.

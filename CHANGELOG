@@ -1,5 +1,7 @@
 28.0.6
 ------
+(RB=1864201)
+Support for data template schema field string literals in PDL
 
 28.0.5
 ------

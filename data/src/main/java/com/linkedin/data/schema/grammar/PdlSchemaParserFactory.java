@@ -20,8 +20,9 @@ import com.linkedin.data.schema.AbstractSchemaParser;
 import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 
+
 /**
- *  DataSchemaParserFactory for the Pegasus data language (.pdl).
+ *  {@link DataSchemaParserFactory} for the Pegasus data language (.pdl).
  *
  *  @author Joe Betz
  */

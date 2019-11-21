@@ -25,6 +25,7 @@ import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.PegasusSchemaParser;
+import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringArray;
@@ -340,7 +341,7 @@ public class RestLiResourceRelationship
 
       private void visitInlineSchema(VisitContext visitContext, String schemaString)
       {
-        DataSchema schema = DataTemplateUtil.parseSchema(schemaString, _schemaResolver);
+        DataSchema schema = DataTemplateUtil.parseSchema(schemaString, _schemaResolver, SchemaFormatType.PDSC);
         if (schema instanceof ArrayDataSchema)
         {
           DataSchema itemSchema = ((ArrayDataSchema)schema).getItems();

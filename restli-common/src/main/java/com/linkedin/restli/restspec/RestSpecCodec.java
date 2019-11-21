@@ -27,6 +27,7 @@ import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.JacksonDataTemplateCodec;
 import com.linkedin.restli.common.RestConstants;
@@ -114,7 +115,7 @@ public class RestSpecCodec
       typeText = "\"" + typeText + "\"";
     }
 
-    return DataTemplateUtil.parseSchema(typeText, schemaResolver);
+    return DataTemplateUtil.parseSchema(typeText, schemaResolver, SchemaFormatType.PDSC);
   }
 
   private void fixupLegacyRestspec(DataMap data) throws IOException

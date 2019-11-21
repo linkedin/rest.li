@@ -28,7 +28,9 @@ import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
+import com.linkedin.data.schema.SchemaToPdlEncoder;
 import com.linkedin.data.template.BooleanArray;
 import com.linkedin.data.template.BooleanMap;
 import com.linkedin.data.template.BytesArray;
@@ -65,10 +67,11 @@ import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
 import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
 import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
 
+import com.sun.codemodel.JFieldRef;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -135,7 +138,14 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
   }
 
-  private static final int MAX_SCHEMA_FIELD_JSON_LENGTH = 32000;
+  /*
+   * When the original schema format type cannot be determined, encode the generated schema field in this format.
+   * This is primarily to handle data templates generated from IDLs, which are not in a particular schema format.
+   *
+   * TODO: once the PDL migration is done, switch this to PDL
+   */
+  private static final SchemaFormatType DEFAULT_SCHEMA_FORMAT_TYPE = SchemaFormatType.PDSC;
+
   private static final int DEFAULT_DATAMAP_INITIAL_CAPACITY = 16; // From HashMap's default initial capacity
   private static final Logger _log = LoggerFactory.getLogger(JavaDataTemplateGenerator.class);
   //
@@ -152,6 +162,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   private final JClass _wrappingMapBaseClass;
   private final JClass _directArrayBaseClass;
   private final JClass _directMapBaseClass;
+  private final JClass _schemaFormatTypeClass;
 
   private final boolean _recordFieldAccessorWithMode;
   private final boolean _recordFieldRemove;
@@ -174,6 +185,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     _wrappingMapBaseClass = getCodeModel().ref(WrappingMapTemplate.class);
     _directArrayBaseClass = getCodeModel().ref(DirectArrayTemplate.class);
     _directMapBaseClass = getCodeModel().ref(DirectMapTemplate.class);
+    _schemaFormatTypeClass = getCodeModel().ref(SchemaFormatType.class);
 
     _recordFieldAccessorWithMode = recordFieldAccessorWithMode;
     _recordFieldRemove = recordFieldRemove;
@@ -492,7 +504,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     /** see {@link #schemaForArrayItemsOrMapValues} */
     final DataSchema bareSchema = new ArrayDataSchema(schemaForArrayItemsOrMapValues(arrayDataTemplateSpec.getCustomInfo(), arrayDataTemplateSpec.getSchema().getItems()));
-    final JVar schemaField = generateSchemaField(arrayClass, bareSchema);
+    final JVar schemaField = generateSchemaField(arrayClass, bareSchema, arrayDataTemplateSpec.getSourceFileFormat());
 
     generateConstructorWithNoArg(arrayClass, _dataListClass);
     generateConstructorWithInitialCapacity(arrayClass, _dataListClass);
@@ -524,7 +536,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     setDeprecatedAnnotationAndJavadoc(enumSpec.getSchema(), enumClass);
 
-    generateSchemaField(enumClass, enumSpec.getSchema());
+    generateSchemaField(enumClass, enumSpec.getSchema(), enumSpec.getSourceFileFormat());
 
     for (String value : enumSpec.getSchema().getSymbols())
     {
@@ -555,7 +567,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     fixedClass._extends(FixedTemplate.class);
 
-    final JVar schemaField = generateSchemaField(fixedClass, fixedSpec.getSchema());
+    final JVar schemaField = generateSchemaField(fixedClass, fixedSpec.getSchema(), fixedSpec.getSourceFileFormat());
 
     final JMethod bytesConstructor = fixedClass.constructor(JMod.PUBLIC);
     final JVar param = bytesConstructor.param(ByteString.class, "value");
@@ -585,7 +597,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
 
     final DataSchema bareSchema = new MapDataSchema(schemaForArrayItemsOrMapValues(mapSpec.getCustomInfo(), mapSpec.getSchema().getValues()));
-    final JVar schemaField = generateSchemaField(mapClass, bareSchema);
+    final JVar schemaField = generateSchemaField(mapClass, bareSchema, mapSpec.getSourceFileFormat());
 
     generateConstructorWithNoArg(mapClass, _dataMapClass);
     generateConstructorWithInitialCapacity(mapClass, _dataMapClass);
@@ -655,7 +667,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       generatePathSpecMethodsForRecord(recordSpec.getFields(), templateClass);
     }
 
-    final JFieldVar schemaFieldVar = generateSchemaField(templateClass, recordSpec.getSchema());
+    final JFieldVar schemaFieldVar = generateSchemaField(templateClass, recordSpec.getSchema(), recordSpec.getSourceFileFormat());
     generateDataMapConstructor(templateClass, schemaFieldVar, recordSpec.getFields().size(), recordSpec.getWrappedFields().size());
     generateConstructorWithArg(templateClass, schemaFieldVar, _dataMapClass);
 
@@ -891,7 +903,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     typerefClass._extends(TyperefInfo.class);
 
-    final JVar schemaField = generateSchemaField(typerefClass, typerefSpec.getSchema());
+    final JVar schemaField = generateSchemaField(typerefClass, typerefSpec.getSchema(), typerefSpec.getSourceFileFormat());
 
     generateCustomClassInitialization(typerefClass, typerefSpec.getCustomInfo());
 
@@ -904,7 +916,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   {
     extendUnionBaseClass(unionClass);
 
-    final JVar schemaField = generateSchemaField(unionClass, unionSpec.getSchema());
+    final JVar schemaField = generateSchemaField(unionClass, unionSpec.getSchema(), unionSpec.getSourceFileFormat());
 
     // Default union datamap size to 1 (last arg) as union can have at-most one element.
     // We don't need cache for unions, so pass in -1 for cache size to ignore size param.
@@ -1073,27 +1085,40 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
   }
 
-  private JFieldVar generateSchemaField(JDefinedClass templateClass, DataSchema schema)
+  private JFieldVar generateSchemaField(JDefinedClass templateClass, DataSchema schema, SchemaFormatType sourceFormatType)
   {
+    // If format is indeterminable (e.g. from IDL), then use default format
+    final SchemaFormatType schemaFormatType = Optional.ofNullable(sourceFormatType).orElse(DEFAULT_SCHEMA_FORMAT_TYPE);
+
+    final JFieldRef schemaFormatTypeRef = _schemaFormatTypeClass.staticRef(schemaFormatType.name());
     final JFieldVar schemaField = templateClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, schema.getClass(), DataTemplateUtil.SCHEMA_FIELD_NAME);
-    final String schemaJson = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.COMPACT);
-    final JInvocation parseSchemaInvocation;
-    if (schemaJson.length() < MAX_SCHEMA_FIELD_JSON_LENGTH)
+
+    // Compactly encode the schema text
+    String schemaText;
+    switch (schemaFormatType)
     {
-      parseSchemaInvocation = _dataTemplateUtilClass.staticInvoke("parseSchema").arg(schemaJson);
+      case PDSC:
+        schemaText = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.COMPACT);
+        break;
+      case PDL:
+        schemaText = SchemaToPdlEncoder.schemaToPdl(schema, SchemaToPdlEncoder.EncodingStyle.COMPACT);
+        break;
+      default:
+        // This should never happen if all enum values are handled
+        throw new IllegalStateException(String.format("Unrecognized schema format type '%s'", schemaFormatType));
     }
-    else
+
+    // Generate the method invocation to parse the schema text
+    final JInvocation parseSchemaInvocation = _dataTemplateUtilClass.staticInvoke("parseSchema")
+        .arg(getSizeBoundStringLiteral(schemaText));
+
+    // TODO: Eventually use new interface for all formats, postponing adoption for PDSC to avoid build failures.
+    if (schemaFormatType != SchemaFormatType.PDSC)
     {
-      JInvocation stringBuilderInvocation = JExpr._new(_stringBuilderClass);
-      for (int index = 0; index < schemaJson.length(); index += MAX_SCHEMA_FIELD_JSON_LENGTH)
-      {
-        stringBuilderInvocation = stringBuilderInvocation.
-            invoke("append").
-            arg(schemaJson.substring(index, Math.min(schemaJson.length(), index + MAX_SCHEMA_FIELD_JSON_LENGTH)));
-      }
-      stringBuilderInvocation = stringBuilderInvocation.invoke("toString");
-      parseSchemaInvocation = _dataTemplateUtilClass.staticInvoke("parseSchema").arg(stringBuilderInvocation);
+      parseSchemaInvocation.arg(schemaFormatTypeRef);
     }
+
+    // Generate the schema field initialization
     schemaField.init(JExpr.cast(getCodeModel()._ref(schema.getClass()), parseSchemaInvocation));
 
     return schemaField;

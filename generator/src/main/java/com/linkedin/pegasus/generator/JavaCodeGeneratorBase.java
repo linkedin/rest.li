@@ -20,12 +20,16 @@ package com.linkedin.pegasus.generator;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.Custom;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.GetMode;
 import com.linkedin.data.template.SetMode;
 
+import com.sun.codemodel.JExpr;
+import com.sun.codemodel.JExpression;
+import com.sun.codemodel.JInvocation;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -55,7 +59,9 @@ public class JavaCodeGeneratorBase
   protected static final String SUPER = "super";
   protected static final String THIS = "this";
 
-  private static final Set<String> _reserved = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+  private static final int MAX_STRING_LITERAL_LENGTH = 32000;
+
+  private static final Set<String> _reserved = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
       "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class",
       "const", "continue", "default", "do", "double", "else", "enum", "extends", "final",
       "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int",
@@ -144,5 +150,31 @@ public class JavaCodeGeneratorBase
   protected JPackage getPackage(String namespace)
   {
     return namespace.isEmpty() ? getPackage() : _codeModel._package(namespace);
+  }
+
+  /**
+   * Generates an expression that's semantically equivalent to a string literal, yet avoids generating string literals
+   * that exceed some predefined size bound. This is needed to ensure compiler string literal size limits are not hit.
+   *
+   * @param text string literal text
+   * @return expression which is semantically equivalent to a string literal
+   */
+  protected JExpression getSizeBoundStringLiteral(String text)
+  {
+    if (text.length() < MAX_STRING_LITERAL_LENGTH)
+    {
+      return JExpr.lit(text);
+    }
+    else
+    {
+      JInvocation stringBuilderInvocation = JExpr._new(_stringBuilderClass);
+      for (int index = 0; index < text.length(); index += MAX_STRING_LITERAL_LENGTH)
+      {
+        stringBuilderInvocation = stringBuilderInvocation.
+            invoke("append").
+            arg(text.substring(index, Math.min(text.length(), index + MAX_STRING_LITERAL_LENGTH)));
+      }
+      return stringBuilderInvocation.invoke("toString");
+    }
   }
 }

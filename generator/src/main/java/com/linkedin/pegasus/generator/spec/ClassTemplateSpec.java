@@ -24,6 +24,7 @@ import com.linkedin.data.schema.FixedDataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
@@ -183,5 +184,18 @@ public class ClassTemplateSpec implements BindingInfo
     final int dotIndex = fullName.lastIndexOf('.');
     _namespace = dotIndex == -1 ? null : fullName.substring(0, dotIndex);
     _className = fullName.substring(dotIndex + 1);
+  }
+
+  /**
+   * Returns the schema format in which this template's type was originally encoded, or null if it's indeterminable.
+   * @return schema format type or null
+   */
+  public SchemaFormatType getSourceFileFormat()
+  {
+    if (_enclosingClass != null)
+    {
+      return _enclosingClass.getSourceFileFormat();
+    }
+    return SchemaFormatType.fromFilename(_location);
   }
 }

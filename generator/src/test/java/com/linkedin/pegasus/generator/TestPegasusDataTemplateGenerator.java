@@ -16,24 +16,30 @@
 
 package com.linkedin.pegasus.generator;
 
+import com.linkedin.data.schema.SchemaFormatType;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
-
 
 public class TestPegasusDataTemplateGenerator
 {
   private static final String FS = File.separator;
-  private static final String testDir = System.getProperty("testDir");
-  private static final String pegasusDir = testDir + FS + "resources" + FS + "generator";
+  private static final String testDir = System.getProperty("testDir", new File("src/test").getAbsolutePath());
+  private static final String resourcesDir = "resources" + FS + "generator";
+  private static final String pegasusDir = testDir + FS + resourcesDir;
 
   private File _tempDir;
 
@@ -58,40 +64,81 @@ public class TestPegasusDataTemplateGenerator
   @DataProvider(name = "withoutResolverCases")
   private Object[][] createWithoutResolverCases()
   {
-    return new String[][] {
-        new String[] {"WithoutResolverExample.pdsc", "WithoutResolverExample.java", "WithoutResolverExample"},
-        new String[] {"WithoutResolverExample.pdl", "WithoutResolverExample.java", "WithoutResolverExample"}
+    return new Object[][]
+    {
+        { "WithoutResolverExample.pdsc", new String[] { "WithoutResolverExample", "InlineRecord" }},
+        { "WithoutResolverExample.pdl", new String[] { "WithoutResolverExample", "InlineRecord" }}
     };
   }
 
   @Test(dataProvider = "withoutResolverCases")
-  public void testRunGeneratorWithoutResolver(String pegasusFilename, String generatedFilename,
-      String pegasusTypeName) throws Exception
+  public void testRunGeneratorWithoutResolver(String pegasusFilename, String[] expectedTypeNames)
+      throws Exception
   {
-    File generated = generatePegasusDataTemplate(pegasusFilename, generatedFilename);
-    assertTrue(generated.exists());
-    String generatedSource = FileUtils.readFileToString(generated);
-    assertTrue(generatedSource.contains("class " + pegasusTypeName));
-    assertTrue(generatedSource.contains("Generated from " + pegasusDir + FS + pegasusFilename));
+    testRunGenerator(pegasusFilename, expectedTypeNames, pegasusDir);
   }
 
   @Test(dataProvider = "withoutResolverCases")
-  public void testRunGeneratorWithoutResolverWithRootPath(String pegasusFilename, String generatedFilename,
-      String pegasusTypeName) throws Exception
+  public void testRunGeneratorWithoutResolverWithRootPath(String pegasusFilename, String[] expectedTypeNames)
+      throws Exception
   {
     System.setProperty("root.path", testDir);
-
-    File generated = generatePegasusDataTemplate(pegasusFilename, generatedFilename);
-    String generatedSource = FileUtils.readFileToString(generated);
-    assertTrue(generatedSource.contains("class " + pegasusTypeName));
-    assertTrue(generatedSource.contains("Generated from resources" + FS + "generator" + FS + pegasusFilename));
+    testRunGenerator(pegasusFilename, expectedTypeNames, resourcesDir);
   }
 
-  private File generatePegasusDataTemplate(String pegasusFilename, String generatedFilename) throws IOException
+  private void testRunGenerator(String pegasusFilename, String[] expectedTypeNames, String expectedGeneratedDir)
+      throws Exception
+  {
+    SchemaFormatType schemaFormatType = SchemaFormatType.fromFilename(pegasusFilename);
+    Assert.assertNotNull(schemaFormatType, "Indeterminable schema format type.");
+
+    Map<String, File> generatedFiles = generatePegasusDataTemplates(pegasusFilename);
+    Assert.assertEquals(generatedFiles.keySet(), new HashSet<>(Arrays.asList(expectedTypeNames)),
+        "Set of generated files does not match what's expected.");
+
+    for (Map.Entry<String, File> entry : generatedFiles.entrySet())
+    {
+      String pegasusTypeName = entry.getKey();
+      File generated = entry.getValue();
+
+      Assert.assertTrue(generated.exists());
+      String generatedSource = FileUtils.readFileToString(generated);
+      Assert.assertTrue(generatedSource.contains("class " + pegasusTypeName),
+          "Incorrect generated class name.");
+      Assert.assertTrue(generatedSource.contains("Generated from " + expectedGeneratedDir + FS + pegasusFilename),
+          "Incorrect @Generated annotation.");
+
+      // TODO: Collapse into one assertion once the codegen logic uses #parseSchema(String, SchemaFormatType) for PDSC.
+      if (schemaFormatType == SchemaFormatType.PDSC)
+      {
+        Assert.assertFalse(generatedSource.contains("SchemaFormatType.PDSC"),
+            "Expected no reference to 'SchemaFormatType.PDSC' in schema field initialization.");
+      }
+      else
+      {
+        Assert.assertTrue(generatedSource.contains("SchemaFormatType." + schemaFormatType.name()),
+            String.format("Expected reference to 'SchemaFormatType.%s' in schema field initialization.",
+                schemaFormatType.name()));
+      }
+    }
+  }
+
+  /**
+   * Given a source schema filename, generate Java data templates for all types within this schema.
+   * @param pegasusFilename source schema filename
+   * @return mapping from generated type name to generated file
+   */
+  private Map<String, File> generatePegasusDataTemplates(String pegasusFilename) throws IOException
   {
     String tempDirectoryPath = _tempDir.getAbsolutePath();
     File pegasusFile = new File(pegasusDir + FS + pegasusFilename);
     PegasusDataTemplateGenerator.main(new String[] {tempDirectoryPath, pegasusFile.getAbsolutePath()});
-    return new File(tempDirectoryPath, generatedFilename);
+
+    File[] generatedFiles = _tempDir.listFiles((File dir, String name) -> name.endsWith(".java"));
+    Assert.assertNotNull(generatedFiles, "Found no generated Java files.");
+    return Arrays.stream(generatedFiles)
+        .collect(Collectors.toMap(
+            file -> file.getName().replace(".java", ""),
+            Function.identity()));
   }
 }
