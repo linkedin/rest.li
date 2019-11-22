@@ -36,7 +36,7 @@ import javax.activation.MimeTypeParseException;
 public class TestContentType
 {
   private static final String TEST_REQUEST_SYMBOL_TABLE_NAME = "HahaRequest";
-  private static final String TEST_RESPONSE_SYMBOL_TABLE_NAME = "HahaResponse";
+  private static final String TEST_RESPONSE_SYMBOL_TABLE_NAME = "abc.linkedin.com:123|HahaResponse";
   private static final URI TEST_URI = URI.create("https://www.linkedin.com");
 
   @BeforeClass
@@ -164,6 +164,6 @@ public class TestContentType
   {
     ContentType contentType =
         ContentType.getResponseContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF, TEST_URI, Collections.emptyMap()).get();
-    Assert.assertEquals("application/x-protobuf; symbol-table=HahaResponse", contentType.getHeaderKey());
+    Assert.assertEquals("application/x-protobuf; symbol-table=\"abc.linkedin.com:123|HahaResponse\"", contentType.getHeaderKey());
   }
 }

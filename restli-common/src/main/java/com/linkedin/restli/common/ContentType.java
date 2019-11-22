@@ -33,6 +33,8 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -43,6 +45,7 @@ import javax.activation.MimeTypeParseException;
  */
 public class ContentType
 {
+  private static final Logger LOG = LoggerFactory.getLogger(ContentType.class);
   private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();
   private static final JacksonStreamDataCodec JACKSON_STREAM_DATA_CODEC = new JacksonStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
   private static final JacksonLICORDataCodec LICOR_TEXT_DATA_CODEC = new JacksonLICORDataCodec(false);
@@ -176,7 +179,7 @@ public class ContentType
     {
       return Optional.of(JSON);
     }
-    MimeType parsedMimeType = new MimeType(contentTypeHeaderValue);
+    MimeType parsedMimeType = parseMimeType(contentTypeHeaderValue);
     ContentTypeProvider provider = SUPPORTED_TYPE_PROVIDERS.get(parsedMimeType.getBaseType().toLowerCase());
     if (provider == null)
     {
@@ -201,7 +204,7 @@ public class ContentType
     {
       return Optional.of(JSON);
     }
-    MimeType parsedMimeType = new MimeType(rawMimeType);
+    MimeType parsedMimeType = parseMimeType(rawMimeType);
     ContentTypeProvider provider = SUPPORTED_TYPE_PROVIDERS.get(parsedMimeType.getBaseType().toLowerCase());
     if (provider == null)
     {
@@ -228,13 +231,26 @@ public class ContentType
     {
       return Optional.of(JSON);
     }
-    MimeType parsedMimeType = new MimeType(rawMimeType);
+    MimeType parsedMimeType = parseMimeType(rawMimeType);
     ContentTypeProvider provider = SUPPORTED_TYPE_PROVIDERS.get(parsedMimeType.getBaseType().toLowerCase());
     if (provider == null)
     {
       return Optional.empty();
     }
     return Optional.of(provider.getResponseContentType(rawMimeType, parsedMimeType, requestUri, requestHeaders));
+  }
+
+  private static MimeType parseMimeType(String rawMimeType) throws MimeTypeParseException
+  {
+    try
+    {
+      return new MimeType(rawMimeType);
+    }
+    catch (MimeTypeParseException e)
+    {
+      LOG.error("Exception parsing mime type: " + rawMimeType, e);
+      throw e;
+    }
   }
 
   private final String _headerKey;

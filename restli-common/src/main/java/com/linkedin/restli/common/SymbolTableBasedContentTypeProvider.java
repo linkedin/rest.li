@@ -57,7 +57,12 @@ public class SymbolTableBasedContentTypeProvider implements ContentTypeProvider
 
     final SymbolTable symbolTable =
         SymbolTableProviderHolder.INSTANCE.getSymbolTableProvider().getSymbolTable(symbolTableName);
-    return getContentType(rawMimeType, symbolTable, false);
+    if (symbolTable == null)
+    {
+      return _baseContentType;
+    }
+
+    return _symbolTableMapper.apply(rawMimeType, symbolTable);
   }
 
   @Override
@@ -65,7 +70,7 @@ public class SymbolTableBasedContentTypeProvider implements ContentTypeProvider
   {
     final SymbolTable requestSymbolTable =
         SymbolTableProviderHolder.INSTANCE.getSymbolTableProvider().getRequestSymbolTable(requestUri);
-    return getContentType(rawMimeType, requestSymbolTable, true);
+    return getContentType(mimeType, requestSymbolTable);
   }
 
   @Override
@@ -73,7 +78,7 @@ public class SymbolTableBasedContentTypeProvider implements ContentTypeProvider
       Map<String, String> requestHeaders) {
     final SymbolTable responseSymbolTable =
         SymbolTableProviderHolder.INSTANCE.getSymbolTableProvider().getResponseSymbolTable(requestUri, requestHeaders);
-    return getContentType(rawMimeType, responseSymbolTable, true);
+    return getContentType(mimeType, responseSymbolTable);
   }
 
   public ContentType getBaseContentType()
@@ -81,18 +86,14 @@ public class SymbolTableBasedContentTypeProvider implements ContentTypeProvider
     return _baseContentType;
   }
 
-  private ContentType getContentType(String rawMimeType, SymbolTable symbolTable, boolean appendSymbolTable)
+  private ContentType getContentType(MimeType mimeType, SymbolTable symbolTable)
   {
     if (symbolTable == null)
     {
       return _baseContentType;
     }
 
-    if (appendSymbolTable)
-    {
-      rawMimeType = rawMimeType + "; " + RestConstants.CONTENT_TYPE_PARAM_SYMBOL_TABLE + "=" + symbolTable.getName();
-    }
-
-    return _symbolTableMapper.apply(rawMimeType, symbolTable);
+    mimeType.setParameter(RestConstants.CONTENT_TYPE_PARAM_SYMBOL_TABLE, symbolTable.getName());
+    return _symbolTableMapper.apply(mimeType.toString(), symbolTable);
   }
 }
