@@ -194,6 +194,78 @@ public class TestPathSpec
     checkPathSpec(MapTest.fields().unionMap().values().FixedMD5(), "/unionMap/*/com.linkedin.pegasus.generator.test.FixedMD5");
   }
 
+  @Test
+  public void testValidatePathSpecString()
+  {
+    Object[][] testStrings = new Object[][]
+        {
+            {
+                "/field1/field2",
+                true,
+            },
+            {
+                "/field1",
+                true,
+            },
+            {
+                "/field1/*/field2", //field inside map
+                true,
+            },
+            {
+                "/field1/$key", // map key field
+                true,
+            },
+            {
+                "/field1/*", // array items
+                true,
+            },
+            {
+                "/intArray?start=10&count=5", // array pathSpec with range
+                true,
+            },
+            {
+                "/field1/*/$key", //nested map
+                true,
+            },
+            {
+                "",
+                false,
+            },
+            {
+                "/",
+                false,
+            },
+            {
+                "field1",
+                false,
+            },
+            {
+                "field1/",
+                false,
+            },
+            {
+                "/field1/",
+                false,
+            },
+            {
+                "field1/field2",
+                false,
+            },
+            {
+                "field1/field2/",
+                false,
+            },
+            {
+                "/field1//field2",
+                false,
+            },
+        };
+    for (Object[] validationPairs: testStrings)
+    {
+      Assert.assertEquals(validationPairs[1], PathSpec.validatePathSpecString((String) validationPairs[0]));
+    }
+  }
+
   private void checkPathSpec(PathSpec p, String expected)
   {
     Assert.assertEquals(p.toString(), expected);

@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 
 /**
@@ -143,6 +144,17 @@ public class PathSpec
     return rep.toString();
   }
 
+  /**
+   * Test whether a string match the syntax pattern of {@link PathSpec#toString()}
+   *
+   * @param pathSpecStr string under validation
+   * @return whether it is valid
+   */
+  public static boolean validatePathSpecString(String pathSpecStr)
+  {
+    return PATHSPEC_PATTERN.matcher(pathSpecStr).matches();
+  }
+
   @Override
   public boolean equals(Object obj)
   {
@@ -184,4 +196,5 @@ public class PathSpec
   private static final char ATTR_SEPARATOR = '&';
   private static final char PATH_ATTR_SEPARATOR = '?';
   private static final char ATTR_KEY_VALUE_SEPARATOR = '=';
+  private static final Pattern PATHSPEC_PATTERN = Pattern.compile(String.format("^(%s[^%<s\\s]+)+", SEPARATOR));
 }

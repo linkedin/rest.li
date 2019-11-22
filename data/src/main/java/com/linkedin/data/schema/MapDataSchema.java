@@ -34,7 +34,7 @@ public final class MapDataSchema extends ComplexDataSchema
    *
    * @param values is the {@link DataSchema} of values in the map.
    */
-  void setValues(DataSchema values)
+  public void setValues(DataSchema values)
   {
     if (values == null)
     {
@@ -55,6 +55,38 @@ public final class MapDataSchema extends ComplexDataSchema
   public DataSchema getValues()
   {
     return _values;
+  }
+
+  /**
+   * Return the {@link DataSchema} for the map's key.
+   *
+   * @return the {@link DataSchema} for the map's key, which is only {@link StringDataSchema}
+   *
+   */
+  public StringDataSchema getKey()
+  {
+    return _key;
+  }
+
+  /**
+   * Use this setter function to set a {@link StringDataSchema} as the key schema for this {@link MapDataSchema}.
+   * By default the key dataSchema would be the constant StringDataSchema {@link DataSchemaConstants#STRING_DATA_SCHEMA}
+   *
+   * @param key the StringDataSchema that should be set as the map key schema, for example, a StringDataSchema object that
+   *            have non-empty properties.
+   *
+   */
+  public void setKey(StringDataSchema key)
+  {
+    if (key == null)
+    {
+      _key = DataSchemaConstants.STRING_DATA_SCHEMA;
+      setHasError();
+    }
+    else
+    {
+      _key = key;
+    }
   }
 
   /**
@@ -91,7 +123,7 @@ public final class MapDataSchema extends ComplexDataSchema
     if (object != null && object.getClass() == MapDataSchema.class)
     {
       MapDataSchema other = (MapDataSchema) object;
-      return super.equals(other) && _values.equals(other._values);
+      return super.equals(other) && _values.equals(other._values) && _key.equals(other._key);
     }
     return false;
   }
@@ -99,9 +131,10 @@ public final class MapDataSchema extends ComplexDataSchema
   @Override
   public int hashCode()
   {
-    return super.hashCode() ^ _values.hashCode();
+    return super.hashCode() ^ _values.hashCode() ^ _key.hashCode();
   }
 
   private DataSchema _values = DataSchemaConstants.NULL_DATA_SCHEMA;
+  private StringDataSchema _key = DataSchemaConstants.STRING_DATA_SCHEMA;
   private boolean _valuesDeclaredInline = false;
 }

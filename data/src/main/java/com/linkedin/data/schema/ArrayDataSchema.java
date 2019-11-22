@@ -34,7 +34,7 @@ public final class ArrayDataSchema extends ComplexDataSchema
    *
    * @param items is the {@link DataSchema} of items in the array.
    */
-  void setItems(DataSchema items)
+  public void setItems(DataSchema items)
   {
     if (items == null)
     {

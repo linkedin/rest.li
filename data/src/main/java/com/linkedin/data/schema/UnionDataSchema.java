@@ -39,7 +39,7 @@ public final class UnionDataSchema extends ComplexDataSchema
   /**
    * Class for representing a member inside a Union
    */
-  public static class Member
+  public static class Member implements Cloneable
   {
     /**
      * Constructor
@@ -235,6 +235,12 @@ public final class UnionDataSchema extends ComplexDataSchema
           _doc.hashCode() ^
           _properties.hashCode() ^
           (_hasError ? 0xAAAAAAAA : 0x55555555);
+    }
+
+    @Override
+    public Member clone() throws CloneNotSupportedException
+    {
+      return (Member) super.clone();
     }
 
     private String _alias = null;

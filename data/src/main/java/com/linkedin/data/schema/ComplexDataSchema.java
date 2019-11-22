@@ -54,13 +54,17 @@ public abstract class ComplexDataSchema extends DataSchema
     return _properties;
   }
 
+
   @Override
   public boolean equals(Object object)
   {
     if (object != null && object instanceof ComplexDataSchema)
     {
       ComplexDataSchema other = (ComplexDataSchema) object;
-      return getType() == other.getType() && _hasError == other._hasError && _properties.equals(other._properties);
+      return getType() == other.getType()
+             && _hasError == other._hasError
+             && _properties.equals(other._properties)
+             && _resolvedProperties.equals(other._resolvedProperties);
     }
     return false;
   }
@@ -68,7 +72,7 @@ public abstract class ComplexDataSchema extends DataSchema
   @Override
   public int hashCode()
   {
-    return getType().hashCode() ^ _properties.hashCode();
+    return getType().hashCode() ^ _properties.hashCode() ^ _resolvedProperties.hashCode();
   }
 
   private boolean _hasError;

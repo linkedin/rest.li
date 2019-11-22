@@ -68,7 +68,9 @@ abstract public class PrimitiveDataSchema extends DataSchema
     if (object != null && object.getClass() == getClass())
     {
       PrimitiveDataSchema other = (PrimitiveDataSchema) object;
-      return (getType() == other.getType()) && (_name.equals(other._name));
+      return (getType() == other.getType()) &&
+             (_name.equals(other._name)) &&
+             (_resolvedProperties.equals(other.getResolvedProperties()));
     }
     return false;
   }
@@ -76,7 +78,7 @@ abstract public class PrimitiveDataSchema extends DataSchema
   @Override
   public int hashCode()
   {
-    return getType().hashCode() ^ _name.hashCode();
+    return getType().hashCode() ^ _name.hashCode() ^ _resolvedProperties.hashCode();
   }
 
   private final String _name;

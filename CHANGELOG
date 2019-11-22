@@ -5,6 +5,9 @@
 (RB=1889124)
 Add configuration to disable generating deprecated protocol version 1.0.0 request builders.
 
+(RB=1851420)
+add clone method, resolvedProperties to DataSchema methods, changes to MapDataSchema PathSpec to have key fields reference, Add pathSpec format validation function
+
 28.0.6
 ------
 (RB=1887898)

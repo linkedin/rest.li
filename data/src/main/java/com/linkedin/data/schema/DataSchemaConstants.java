@@ -46,6 +46,7 @@ public class DataSchemaConstants
   public static final String SYMBOLS_KEY = "symbols";
   public static final String TYPE_KEY = "type";
   public static final String VALUES_KEY = "values";
+  public static final String MAP_KEY_REF= "$key";
 
   public static final String NULL_TYPE = "null";
   public static final String BOOLEAN_TYPE = "boolean";

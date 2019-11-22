@@ -16,6 +16,7 @@
 
 package com.linkedin.data.schema;
 
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -24,7 +25,7 @@ import java.util.Map;
  *
  * @author slim
  */
-public abstract class DataSchema
+public abstract class DataSchema implements Cloneable
 {
   /**
    * Possible types for a DataSchema.
@@ -126,6 +127,28 @@ public abstract class DataSchema
   public abstract Map<String, Object> getProperties();
 
   /**
+   * Return the resolved properties of the {@link DataSchema}
+   *
+   * The DataSchema can have some properties associated with it,
+   * but other schema who refer to this dataSchema might want to override them by using the annotations.
+   * This field is for storing the resulted properties, after resolved those overrides to this schema
+   *
+   * also see {@link com.linkedin.data.schema.annotation.SchemaAnnotationProcessor}
+   * also see {@link com.linkedin.data.schema.annotation.SchemaAnnotationHandler}
+   *
+   * @return the properties after resolution for current {@link DataSchema}
+   */
+  public Map<String, Object> getResolvedProperties()
+  {
+    return _resolvedProperties;
+  }
+
+  public void setResolvedProperties(Map<String, Object> resolvedProperties)
+  {
+    _resolvedProperties = new HashMap<>(resolvedProperties);
+  }
+
+  /**
    * Return the default union member key for this {@link DataSchema}.
    *
    * This key can be used to identify union members following the Avro specification but for unions
@@ -152,5 +175,14 @@ public abstract class DataSchema
   @Override
   public abstract int hashCode();
 
+  @Override
+  public DataSchema clone() throws CloneNotSupportedException
+  {
+    DataSchema dataSchema = (DataSchema) super.clone();
+    dataSchema._resolvedProperties = new HashMap<>();
+    return dataSchema;
+  }
+
   private final Type _type;
+  Map<String, Object> _resolvedProperties = new HashMap<>();
 }

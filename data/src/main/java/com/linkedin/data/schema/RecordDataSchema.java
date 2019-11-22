@@ -46,7 +46,7 @@ public final class RecordDataSchema extends NamedDataSchema
    *
    * @author slim
    */
-  public static class Field
+  public static class Field implements Cloneable
   {
 
     public static enum Order
@@ -258,6 +258,18 @@ public final class RecordDataSchema extends NamedDataSchema
     }
 
     /**
+     * Return the resolved properties of the field.
+     *
+     * also see {@link DataSchema#getResolvedProperties}
+     *
+     * @return the resolved properties of the field.
+     */
+    public Map<String, Object> getResolvedProperties()
+    {
+      return _resolvedProperties;
+    }
+
+    /**
      * Return the aliases of the field.
      *
      * @return the aliases of the field.
@@ -350,7 +362,8 @@ public final class RecordDataSchema extends NamedDataSchema
                  _optional == other._optional &&
                  _order == other._order &&
                  _aliases.equals(other._aliases) &&
-                 _properties.equals(other._properties);
+                 _properties.equals(other._properties) &&
+                 _resolvedProperties.equals(other._resolvedProperties);
       }
       else
       {
@@ -371,7 +384,14 @@ public final class RecordDataSchema extends NamedDataSchema
              (_optional ? 0xAAAAAAAA : 0x55555555) ^
              _order.hashCode() ^
              _aliases.hashCode() ^
-             _properties.hashCode();
+             _properties.hashCode() ^
+             _resolvedProperties.hashCode();
+    }
+
+    @Override
+    public Field clone() throws CloneNotSupportedException
+    {
+      return (Field) super.clone();
     }
 
     /**
@@ -395,6 +415,7 @@ public final class RecordDataSchema extends NamedDataSchema
     private RecordDataSchema _record = null;
     private List<String> _aliases = _emptyAliases;
     private Map<String, Object> _properties = _emptyProperties;
+    private Map<String, Object> _resolvedProperties = new HashMap<>();
     private boolean _declaredInline = false;
 
     static private final Map<String, Object> _emptyProperties = Collections.emptyMap();
