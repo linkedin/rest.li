@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
  * @author Ang Xu
  * @version $Revision: $
  */
+@Test(enabled = false)
 public class SymlinkAwareZooKeeperTest
 {
   private ZKConnection  _zkClient;

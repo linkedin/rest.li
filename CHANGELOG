@@ -1,5 +1,6 @@
 28.0.7
 ------
+[pegasus] Disable SymlinkAwareZooKeeperTest temporarily
 
 28.0.6
 ------
@@ -184,8 +185,12 @@ Revert "LastSeenLoadBalancer: adding support for custom d2ServicePath on ZK. Add
 
 27.6.6
 ------
+<<<<<<< HEAD
 (RB=1809448)
 LastSeenLoadBalancer: adding support for custom d2ServicePath on ZK. Add support for BackupStoreFilePath to LastSeen
+=======
+(RB=1890675)
+Disable SymlinkAwareZooKeeperTest temporarily
 
 27.6.5
 ------
