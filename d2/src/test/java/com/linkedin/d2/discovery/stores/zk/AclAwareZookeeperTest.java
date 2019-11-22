@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -52,7 +50,12 @@ public class AclAwareZookeeperTest
   {
     _zkServer = new ZKServer(ZK_PORT);
     _zkServer.startup();
-    _verificationZKClient = new VanillaZooKeeperAdapter("localhost:" + ZK_PORT, ZK_TIMEOUT, new TestWatcher());
+    final ZKConnection zkconnection = new ZKConnectionBuilder("localhost:" + ZK_PORT)
+      .setTimeout(ZK_TIMEOUT)
+      .setWaitForConnected(true)
+      .build();
+    zkconnection.start();
+    _verificationZKClient = zkconnection.getZooKeeper();
   }
 
   @AfterMethod
@@ -79,7 +82,7 @@ public class AclAwareZookeeperTest
     return new ACL(perm, userId);
   }
 
-  @Test(enabled = false)
+  @Test
   public void TestAclApply() throws IOException, KeeperException, InterruptedException
   {
     List<ACL> acls = new ArrayList<>();
@@ -109,7 +112,7 @@ public class AclAwareZookeeperTest
     Assert.assertTrue(retrievedAcls.equals(ZooDefs.Ids.OPEN_ACL_UNSAFE));
   }
 
-  // @Test - Disabled due to consistently passing on local but failing in TMC.
+  @Test
   public void TestAclNoApply() throws IOException, KeeperException, InterruptedException
   {
     List<ACL> acls = new ArrayList<>();

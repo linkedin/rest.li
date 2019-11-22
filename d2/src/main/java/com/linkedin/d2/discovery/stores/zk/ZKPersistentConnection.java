@@ -160,8 +160,14 @@ public class ZKPersistentConnection
   public ZKPersistentConnection(String connect, int timeout, Collection<? extends EventListener> listeners,
                                 boolean shutdownAsynchronously, boolean isSymlinkAware)
   {
+    this(connect, timeout, listeners, shutdownAsynchronously, isSymlinkAware, false);
+  }
+
+  public ZKPersistentConnection(String connect, int timeout, Collection<? extends EventListener> listeners,
+                                boolean shutdownAsynchronously, boolean isSymlinkAware, boolean waitForConnected)
+  {
     this(new ZKConnectionBuilder(connect).setTimeout(timeout)
-      .setShutdownAsynchronously(shutdownAsynchronously).setIsSymlinkAware(isSymlinkAware));
+      .setShutdownAsynchronously(shutdownAsynchronously).setIsSymlinkAware(isSymlinkAware).setWaitForConnected(waitForConnected));
     addListeners(listeners);
   }
 

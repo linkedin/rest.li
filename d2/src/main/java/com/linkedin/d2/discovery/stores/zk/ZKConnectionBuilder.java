@@ -35,6 +35,7 @@ public class ZKConnectionBuilder
   private ScheduledExecutorService _retryScheduler = null;
   private long _initInterval = 0;
   private Function<ZooKeeper, ZooKeeper> _zkDecorator = null;
+  private boolean _isWaitForConnected = false;
 
   /**
    * @param connectString comma separated host:port pairs, each corresponding to a zk
@@ -66,6 +67,7 @@ public class ZKConnectionBuilder
     _retryScheduler = builder._retryScheduler;
     _initInterval = builder._initInterval;
     _zkDecorator = builder._zkDecorator;
+    _isWaitForConnected = builder._isWaitForConnected;
   }
 
   /**
@@ -141,10 +143,19 @@ public class ZKConnectionBuilder
     return this;
   }
 
+  /**
+   * @param waitForConnected should #start block until the connection establishes
+   */
+  public ZKConnectionBuilder setWaitForConnected(boolean waitForConnected)
+  {
+    _isWaitForConnected = waitForConnected;
+    return this;
+  }
+
   public ZKConnection build()
   {
     return new ZKConnection(_connectString, _sessionTimeout, _retryLimit, _exponentialBackoff,
-      _retryScheduler, _initInterval, _shutdownAsynchronously, _isSymlinkAware, _zkDecorator);
+                            _retryScheduler, _initInterval, _shutdownAsynchronously, _isSymlinkAware, _zkDecorator, _isWaitForConnected);
   }
 
   @Override
@@ -160,13 +171,13 @@ public class ZKConnectionBuilder
         && _retryLimit == that._retryLimit && _isSymlinkAware == that._isSymlinkAware
         && _exponentialBackoff == that._exponentialBackoff && _initInterval == that._initInterval && Objects.equals(
         _connectString, that._connectString) && Objects.equals(_retryScheduler, that._retryScheduler) && Objects.equals(
-        _zkDecorator, that._zkDecorator);
+        _zkDecorator, that._zkDecorator) && _isWaitForConnected == that._isWaitForConnected;
   }
 
   @Override
   public int hashCode() {
 
     return Objects.hash(_connectString, _sessionTimeout, _shutdownAsynchronously, _retryLimit, _isSymlinkAware,
-        _exponentialBackoff, _retryScheduler, _initInterval, _zkDecorator);
+                        _exponentialBackoff, _retryScheduler, _initInterval, _zkDecorator, _isWaitForConnected);
   }
 }

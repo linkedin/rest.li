@@ -26,7 +26,6 @@ import org.apache.zookeeper.data.Stat;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -40,14 +39,13 @@ import java.util.concurrent.TimeUnit;
  * @author Ang Xu
  * @version $Revision: $
  */
-@Ignore("Test is too flaky and blocks the release process, doesn't wait for the connection to be established.")
 public class SymlinkAwareZooKeeperTest
 {
   private ZKConnection  _zkClient;
   private ZKServer      _zkServer;
   private int           _port;
 
-  @BeforeSuite(enabled = false)
+  @BeforeSuite
   public void setup() throws InterruptedException, ExecutionException, IOException
   {
     _port = 11830;
@@ -56,7 +54,11 @@ public class SymlinkAwareZooKeeperTest
     {
       _zkServer = new ZKServer(_port);
       _zkServer.startup();
-      _zkClient = new ZKConnection("localhost:" + _port, 5001, 0, false, null, 0, false, true);
+      _zkClient = new ZKConnectionBuilder("localhost:" + _port)
+        .setTimeout(5001)
+        .setIsSymlinkAware(true)
+        .setWaitForConnected(true)
+        .build();
       _zkClient.start();
     }
     catch (IOException e)
@@ -67,7 +69,7 @@ public class SymlinkAwareZooKeeperTest
   }
 
 
-  @AfterSuite(enabled = false)
+  @AfterSuite
   public void tearDown() throws IOException, InterruptedException
   {
     _zkClient.shutdown();

@@ -73,7 +73,8 @@ public class ZKConnection
   private final boolean _shutdownAsynchronously;
   private final boolean _isSymlinkAware;
   private final Function<ZooKeeper, ZooKeeper> _zkDecorator;
-  private PropertySerializer<String> _symlinkSerializer = new SymlinkAwareZooKeeper.DefaultSerializer();;
+  private PropertySerializer<String> _symlinkSerializer = new SymlinkAwareZooKeeper.DefaultSerializer();
+  private final boolean _isWaitForConnected;
 
   // _countDownLatch signals when _zkRef is ready to be used
   private final CountDownLatch _zkRefLatch = new CountDownLatch(1);
@@ -138,12 +139,20 @@ public class ZKConnection
                       boolean isSymlinkAware)
   {
     this(connectString, timeout, retryLimit, exponentialBackoff, scheduler, initInterval, shutdownAsynchronously,
-      isSymlinkAware, null);
+      isSymlinkAware, null, false);
   }
 
   public ZKConnection(String connectString, int timeout, int retryLimit, boolean exponentialBackoff,
                       ScheduledExecutorService scheduler, long initInterval, boolean shutdownAsynchronously,
                       boolean isSymlinkAware, Function<ZooKeeper,ZooKeeper> zkDecorator)
+  {
+    this(connectString, timeout, retryLimit, exponentialBackoff, scheduler, initInterval, shutdownAsynchronously,
+         isSymlinkAware, zkDecorator, false);
+  }
+
+  public ZKConnection(String connectString, int timeout, int retryLimit, boolean exponentialBackoff,
+                      ScheduledExecutorService scheduler, long initInterval, boolean shutdownAsynchronously,
+                      boolean isSymlinkAware, Function<ZooKeeper,ZooKeeper> zkDecorator, boolean isWaitForConnected)
   {
     _connectString = connectString;
     _timeout = timeout;
@@ -153,6 +162,7 @@ public class ZKConnection
     _initInterval = initInterval;
     _shutdownAsynchronously = shutdownAsynchronously;
     _isSymlinkAware = isSymlinkAware;
+    _isWaitForConnected = isWaitForConnected;
     if (zkDecorator == null)
     {
       // if null, just return itself
@@ -166,6 +176,19 @@ public class ZKConnection
     if (_zkRef.get() != null)
     {
       throw new IllegalStateException("Already started");
+    }
+
+    final CountDownLatch connectionLatch = new CountDownLatch(1);
+    StateListener connectionListener = state -> {
+      if (state == Watcher.Event.KeeperState.SyncConnected || state == Watcher.Event.KeeperState.ConnectedReadOnly)
+      {
+        connectionLatch.countDown();
+      }
+    };
+
+    if (_isWaitForConnected)
+    {
+      addStateListener(connectionListener);
     }
 
     // We take advantage of the fact that the default watcher is always
@@ -224,6 +247,26 @@ public class ZKConnection
     }
     LOG.debug("counting down");
     _zkRefLatch.countDown();
+
+    // wait for connection establishes.
+    if (_isWaitForConnected)
+    {
+      try
+      {
+        if (!connectionLatch.await(_timeout, TimeUnit.MILLISECONDS))
+        {
+          LOG.error("Error: Timeout waiting for zk connection");
+        }
+      }
+      catch (InterruptedException e)
+      {
+        LOG.warn("Error: interrupted while waiting for zookeeper connecting", e);
+      }
+      finally
+      {
+        removeStateListener(connectionListener);
+      }
+    }
   }
 
   public void shutdown() throws InterruptedException
@@ -333,6 +376,14 @@ public class ZKConnection
     synchronized (_mutex)
     {
       _listeners.add(listener);
+    }
+  }
+
+  public void removeStateListener(StateListener listener)
+  {
+    synchronized (_mutex)
+    {
+      _listeners.remove(listener);
     }
   }
 

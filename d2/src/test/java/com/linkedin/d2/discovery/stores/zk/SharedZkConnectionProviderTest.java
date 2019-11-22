@@ -102,8 +102,8 @@ public class SharedZkConnectionProviderTest {
       fail("unable to instantiate real zk server on port " + ZK_PORT);
     }
 
-    ZKConnection serviceZkConn = new ZKConnectionBuilder("localhost:" + ZK_PORT).setTimeout(5000).build();
-    ZKConnection clusterZkConn = new ZKConnectionBuilder("localhost:" + ZK_PORT).setTimeout(5000).build();
+    ZKConnection serviceZkConn = new ZKConnectionBuilder("localhost:" + ZK_PORT).setTimeout(5000).setWaitForConnected(true).build();
+    ZKConnection clusterZkConn = new ZKConnectionBuilder("localhost:" + ZK_PORT).setTimeout(5000).setWaitForConnected(true).build();
 
     _serviceRegistry =
         new ZooKeeperPermanentStore<ServiceProperties>(serviceZkConn, new ServicePropertiesJsonSerializer(),
