@@ -43,7 +43,7 @@ import java.util.jar.JarFile;
 
 import org.testng.annotations.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.easymock.EasyMock;
 
 

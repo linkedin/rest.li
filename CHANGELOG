@@ -3,16 +3,20 @@
 
 28.0.7
 ------
+(RB=1892519)
+Bump TestNG to enable @Ignore annotation
+
 (RB=1891356)
 Log the mime types that failed to parse with error log level before propagating exception. Fix bugs in encoding symbol table names with special characters
 
-[pegasus] Disable SymlinkAwareZooKeeperTest temporarily
+(RB=1851420)
+add clone method, resolvedProperties to DataSchema methods, changes to MapDataSchema PathSpec to have key fields reference, Add pathSpec format validation function
 
 (RB=1889124)
 Add configuration to disable generating deprecated protocol version 1.0.0 request builders.
 
-(RB=1851420)
-add clone method, resolvedProperties to DataSchema methods, changes to MapDataSchema PathSpec to have key fields reference, Add pathSpec format validation function
+(RB=1890675)
+Disable SymlinkAwareZooKeeperTest temporarily
 
 28.0.6
 ------

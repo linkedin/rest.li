@@ -16,8 +16,9 @@
 
 package com.linkedin.restli.tools.symbol;
 
-import com.google.common.collect.ImmutableList;
 import com.linkedin.parseq.function.Tuple3;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -31,7 +32,7 @@ public class TestSymbolTableNameHandler
   @Test
   public void testGenerateName()
   {
-    List<String> symbols = ImmutableList.of("Haha", "Hehe");
+    List<String> symbols = Collections.unmodifiableList(Arrays.asList("Haha", "Hehe"));
     String name = SYMBOL_TABLE_NAME_HANDLER.generateName(symbols);
     Assert.assertEquals(name, "Host:100|Prefix-" + symbols.hashCode());
   }

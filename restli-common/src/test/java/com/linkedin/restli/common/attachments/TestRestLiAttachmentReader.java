@@ -24,7 +24,7 @@ import com.linkedin.multipart.SinglePartMIMEReaderCallback;
 
 import org.testng.annotations.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;

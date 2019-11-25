@@ -37,7 +37,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 import test.r2.integ.clientserver.providers.AbstractServiceTest;

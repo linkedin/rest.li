@@ -16,7 +16,6 @@
 
 package com.linkedin.data.codec.symbol;
 
-import com.google.common.collect.ImmutableList;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.codec.BsonDataCodec;
 import com.linkedin.data.codec.DataCodec;
@@ -26,6 +25,8 @@ import com.linkedin.data.codec.JacksonSmileDataCodec;
 import com.linkedin.data.codec.ProtobufDataCodec;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import org.testng.Assert;
@@ -59,7 +60,8 @@ public class TestSymbolTableSerializer
   @Test(dataProvider = "data")
   public void testRoundtrip(DataCodec codec, boolean useRenamer) throws IOException
   {
-    SymbolTable symbolTable = new InMemorySymbolTable("TestName", ImmutableList.of("Haha", "Hehe", "Hoho"));
+    SymbolTable symbolTable = new InMemorySymbolTable("TestName",
+        Collections.unmodifiableList(Arrays.asList("Haha", "Hehe", "Hoho")));
     ByteString serialized = SymbolTableSerializer.toByteString(codec, symbolTable);
     Function<String, String> renamer = useRenamer ? TestSymbolTableSerializer::rename : null;
     SymbolTable deserialized = SymbolTableSerializer.fromByteString(serialized, codec, renamer);

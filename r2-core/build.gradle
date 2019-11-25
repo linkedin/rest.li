@@ -8,6 +8,7 @@ dependencies {
   testCompile project(':r2-testutils')
   testCompile project(':test-util')
   testCompile externalDependency.testng
+  testCompile externalDependency.junit
   testCompile externalDependency.easymock
   testCompile externalDependency.mockito
 }

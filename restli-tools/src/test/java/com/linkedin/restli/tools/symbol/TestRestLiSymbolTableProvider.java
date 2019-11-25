@@ -16,8 +16,6 @@
 
 package com.linkedin.restli.tools.symbol;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.linkedin.data.codec.symbol.InMemorySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTableSerializer;
@@ -33,6 +31,7 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.server.ResourceDefinition;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -60,7 +59,7 @@ public class TestRestLiSymbolTableProvider
     doAnswer(invocation -> {
       Set<DataSchema> schemas = (Set<DataSchema>) invocation.getArguments()[0];
       EnumDataSchema schema = new EnumDataSchema(new Name("TestEnum"));
-      schema.setSymbols(ImmutableList.of("Symbol1", "Symbol2"), new StringBuilder());
+      schema.setSymbols(Collections.unmodifiableList(Arrays.asList("Symbol1", "Symbol2")), new StringBuilder());
       schemas.add(schema);
       return null;
     }).when(_resourceDefinition).collectReferencedDataSchemas(any(Set.class));
@@ -75,7 +74,7 @@ public class TestRestLiSymbolTableProvider
   @Test
   public void testGetResponseSymbolTableAfterInit()
   {
-    _provider.onInitialized(ImmutableMap.of("TestResourceName", _resourceDefinition));
+    _provider.onInitialized(Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
 
     SymbolTable symbolTable = _provider.getResponseSymbolTable(URI.create("https://www.linkedin.com"), Collections.emptyMap());
     Assert.assertNotNull(symbolTable);
@@ -86,7 +85,7 @@ public class TestRestLiSymbolTableProvider
   @Test
   public void testGetValidLocalSymbolTable()
   {
-    _provider.onInitialized(ImmutableMap.of("TestResourceName", _resourceDefinition));
+    _provider.onInitialized(Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
     SymbolTable symbolTable = _provider.getSymbolTable("Host:100|Test--332004310");
     Assert.assertNotNull(symbolTable);
   }
@@ -94,7 +93,7 @@ public class TestRestLiSymbolTableProvider
   @Test(expectedExceptions = IllegalStateException.class)
   public void testGetMissingLocalSymbolTable()
   {
-    _provider.onInitialized(ImmutableMap.of("TestResourceName", _resourceDefinition));
+    _provider.onInitialized(Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
     _provider.getSymbolTable("Host:100|Blah-100");
   }
 
@@ -104,7 +103,7 @@ public class TestRestLiSymbolTableProvider
     RestResponseBuilder builder = new RestResponseBuilder();
     builder.setStatus(200);
     SymbolTable symbolTable = new InMemorySymbolTable("OtherHost:100|Test--332004310",
-        ImmutableList.of("Haha", "Hehe"));
+        Collections.unmodifiableList(Arrays.asList("Haha", "Hehe")));
     builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF.getCodec(), symbolTable));
     builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF.getHeaderKey());
     when(_client.restRequest(eq(new RestRequestBuilder(URI.create("https://OtherHost:100/symbolTable/Test--332004310")).build())))
@@ -138,7 +137,7 @@ public class TestRestLiSymbolTableProvider
     RestResponseBuilder builder = new RestResponseBuilder();
     builder.setStatus(200);
     SymbolTable symbolTable = new InMemorySymbolTable("OtherHost:100|Test--332004310",
-        ImmutableList.of("Haha", "Hehe"));
+        Collections.unmodifiableList(Arrays.asList("Haha", "Hehe")));
     builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF.getCodec(), symbolTable));
     builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF.getHeaderKey());
     when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://someservice/symbolTable")).build())))

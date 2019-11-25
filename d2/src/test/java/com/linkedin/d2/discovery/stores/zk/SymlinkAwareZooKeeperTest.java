@@ -26,6 +26,7 @@ import org.apache.zookeeper.data.Stat;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -39,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  * @author Ang Xu
  * @version $Revision: $
  */
-@Test(enabled = false)
+@Ignore("Test is too flaky and blocks the release process, doesn't wait for the connection to be established.")
 public class SymlinkAwareZooKeeperTest
 {
   private ZKConnection  _zkClient;

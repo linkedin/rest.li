@@ -12,6 +12,7 @@ dependencies {
   testCompile project(':data-testutils')
   testCompile externalDependency.commonsIo
   testCompile externalDependency.testng
+  testCompile externalDependency.junit
 
   antlr externalDependency.antlr
 }

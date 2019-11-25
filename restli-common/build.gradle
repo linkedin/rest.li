@@ -13,6 +13,7 @@ dependencies {
   testCompile project(path: ':multipart-mime', configuration: 'testArtifacts')
   testCompile project(':li-jersey-uri')
   testCompile externalDependency.testng
+  testCompile externalDependency.junit
   testCompile externalDependency.mockito
 }
 

@@ -49,6 +49,7 @@ import java.util.Map;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.testng.internal.junit.ArrayAsserts;
 
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
@@ -376,7 +377,7 @@ public class TestCollectionArgumentBuilder
     RestLiArgumentBuilder argumentBuilder = new CollectionArgumentBuilder();
     RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, null);
     Object[] args = argumentBuilder.buildArguments(requestData, routingResult);
-    assertEquals(args, expectedArgs);
+    ArrayAsserts.assertArrayEquals(args, expectedArgs);
 
     verify(descriptor, context, routingResult, request);
   }
@@ -437,7 +438,7 @@ public class TestCollectionArgumentBuilder
     RestLiArgumentBuilder argumentBuilder = new CollectionArgumentBuilder();
     RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, null);
     Object[] args = argumentBuilder.buildArguments(requestData, routingResult);
-    assertEquals(args, expectedArgs);
+    ArrayAsserts.assertArrayEquals(args, expectedArgs);
 
     verify(descriptor, context, routingResult, request);
   }

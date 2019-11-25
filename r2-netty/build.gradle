@@ -18,6 +18,7 @@ dependencies {
   testCompile externalDependency.jettyUtil
   testCompile externalDependency.servletApi
   testCompile externalDependency.testng
+  testCompile externalDependency.junit
   testCompile project (':test-util')
   testCompile project (':r2-testutils')
 }

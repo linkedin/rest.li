@@ -15,6 +15,7 @@ dependencies {
   compile externalDependency.parseq
   testCompile project(path: ':restli-internal-testutils', configuration: 'testArtifacts')
   testCompile externalDependency.testng
+  testCompile externalDependency.junit
   testCompile externalDependency.easymock
   testRuntime project(':restli-server-extras')
   tracevis externalDependency.parseq_tracevis

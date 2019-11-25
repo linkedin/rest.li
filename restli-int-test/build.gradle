@@ -23,6 +23,7 @@ dependencies {
   testCompile project(path: ':restli-client', configuration: 'testArtifacts')
   testCompile project(path: ':restli-client-parseq')
   testCompile externalDependency.testng
+  testCompile externalDependency.junit
   testCompile externalDependency.mockito
   testCompile externalDependency.httpclient
   testCompile externalDependency.parseq_restClient

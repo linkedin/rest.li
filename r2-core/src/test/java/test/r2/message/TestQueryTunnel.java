@@ -54,7 +54,7 @@ public class TestQueryTunnel
   }
 
   @DataProvider
-  public Object[][] requestType()
+  public static Object[][] requestType()
   {
     return new Object[][] {{"Rest"}, {"Stream"}};
   }

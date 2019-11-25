@@ -20,6 +20,7 @@ dependencies {
   compile externalDependency.zero_allocation_hashing
   compile externalDependency.xchart
   testCompile externalDependency.testng
+  testCompile externalDependency.junit
   testCompile externalDependency.commonsIo
   testCompile externalDependency.easymock
   testCompile externalDependency.mockito

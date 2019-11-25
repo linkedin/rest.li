@@ -16,6 +16,7 @@ dependencies {
   testCompile project(path: ':multipart-mime', configuration: 'testArtifacts')
   testCompile externalDependency.guava
   testCompile externalDependency.testng
+  testCompile externalDependency.junit
   testCompile externalDependency.easymock
   testCompile externalDependency.commonsHttpClient
   testCompile externalDependency.mockito

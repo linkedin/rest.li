@@ -18,6 +18,7 @@ dependencies {
 
   testCompile externalDependency.mockito
   testCompile externalDependency.testng
+  testCompile externalDependency.junit
   testCompile externalDependency.commonsHttpClient
 }
 
