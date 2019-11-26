@@ -3,6 +3,9 @@
 
 28.0.7
 ------
+(RB=1894377)
+Disable setup and teardown for SymlinkAwareZooKeeperTest
+
 (RB=1892519)
 Bump TestNG to enable @Ignore annotation
 

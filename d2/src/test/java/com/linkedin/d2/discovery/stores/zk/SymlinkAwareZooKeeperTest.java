@@ -47,7 +47,7 @@ public class SymlinkAwareZooKeeperTest
   private ZKServer      _zkServer;
   private int           _port;
 
-  @BeforeSuite
+  @BeforeSuite(enabled = false)
   public void setup() throws InterruptedException, ExecutionException, IOException
   {
     _port = 11830;
@@ -67,7 +67,7 @@ public class SymlinkAwareZooKeeperTest
   }
 
 
-  @AfterSuite
+  @AfterSuite(enabled = false)
   public void tearDown() throws IOException, InterruptedException
   {
     _zkClient.shutdown();
