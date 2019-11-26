@@ -155,13 +155,13 @@ public class RequestFinalizerDispatcher implements TransportDispatcher
         @Override
         public void onDone()
         {
-          _manager.finalizeRequest(streamResponse, error);
+          finalizeRequest(streamResponse, error);
         }
 
         @Override
         public void onError(Throwable e)
         {
-          _manager.finalizeRequest(streamResponse,  e);
+          finalizeRequest(streamResponse,  e);
         }
       });
     }
@@ -170,9 +170,25 @@ public class RequestFinalizerDispatcher implements TransportDispatcher
     {
       final boolean finalized = _manager.finalizeRequest(response, error);
 
-      if (!finalized)
+      if (finalized)
       {
-        LOG.warn("Request has already been finalized, but we expect this to be the first time.");
+        if (LOG.isDebugEnabled())
+        {
+          LOG.debug("Finalized request for the first time.", new RuntimeException("First server request finalizer."));
+        }
+      }
+      else
+      {
+        final String message = "Request has already been finalized, but we expect this to be the first time.";
+
+        if (LOG.isDebugEnabled())
+        {
+          LOG.debug(message, new RuntimeException("Server request finalizer warning."));
+        }
+        else
+        {
+          LOG.warn(message);
+        }
       }
     }
   }
