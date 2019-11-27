@@ -37,6 +37,7 @@ import com.linkedin.restli.server.symbol.RestLiSymbolTableRequestHandler;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -80,7 +81,6 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
    * Default timeout in milliseconds to use when fetching symbols from other services.
    */
   private static final long DEFAULT_TIMEOUT_MILLIS = 100;
-  private static final String HTTPS_PREFIX = "https://";
 
   private final Client _client;
   private final String _uriPrefix;
@@ -95,21 +95,20 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
    *
    * @param client             The {@link Client} to use to make requests to remote services to fetch their symbol tables.
    * @param uriPrefix          The URI prefix to use when invoking remote services by name (and not by hostname:port)
-   * @param symbolTablePrefix  The prefix to use for symbol tables vended by this instance.
    * @param cacheSize          The size of the caches used to store symbol tables.
-   * @param serverHostName     The hostname of the machine on which the current server is running.
-   * @param serverPort         The https port on which the current server is running.
+   * @param symbolTablePrefix  The prefix to use for symbol tables vended by this instance.
+   * @param serverNodeUri      The URI on which the current service is running. This should also include the context
+   *                           and servlet path (if applicable).
    */
   public RestLiSymbolTableProvider(Client client,
       String uriPrefix,
-      String symbolTablePrefix,
       int cacheSize,
-      String serverHostName,
-      int serverPort)
+      String symbolTablePrefix,
+      String serverNodeUri)
   {
     _client = client;
     _uriPrefix = uriPrefix;
-    _symbolTableNameHandler = new SymbolTableNameHandler(symbolTablePrefix, serverHostName, serverPort);
+    _symbolTableNameHandler = new SymbolTableNameHandler(symbolTablePrefix, serverNodeUri);
     _serviceNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
     _symbolTableNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
   }
@@ -120,7 +119,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
     try
     {
       Tuple3<String, String, Boolean> tuple = _symbolTableNameHandler.extractTableInfo(symbolTableName);
-      String hostNameAndPort = tuple._1();
+      String serverNodeUri = tuple._1();
       String tableName = tuple._2();
       boolean isLocal = tuple._3();
 
@@ -143,10 +142,9 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
         throw new IllegalStateException("Unable to fetch symbol table with name: " + symbolTableName);
       }
 
-      // Ok, we didn't find it in the cache, let's go query the host the table was served from.
-      URI symbolTableUri = new URI(
-          HTTPS_PREFIX + hostNameAndPort + RestLiSymbolTableRequestHandler.SYMBOL_TABLE_URI_PATH + "/" + tableName);
-      symbolTable = fetchRemoteSymbolTable(symbolTableUri);
+      // Ok, we didn't find it in the cache, let's go query the service the table was served from.
+      URI symbolTableUri = new URI(serverNodeUri + "/" + RestLiSymbolTableRequestHandler.SYMBOL_TABLE_URI_PATH + "/" + tableName);
+      symbolTable = fetchRemoteSymbolTable(symbolTableUri, Collections.emptyMap());
 
       if (symbolTable != null)
       {
@@ -175,11 +173,14 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
       return symbolTable;
     }
 
-    // Ok, we didn't find it in the cache, let's go query the other service.
+    // Ok, we didn't find it in the cache, let's go query the other service using the URI prefix. In this case, we
+    // make sure to set the {@link RestConstants#HEADER_SERVICE_SCOPED_PATH} header to true to indicate that this
+    // path, post resolution must be interpreted as a service scoped path.
     try
     {
-      URI symbolTableUri = new URI(_uriPrefix + serviceName + RestLiSymbolTableRequestHandler.SYMBOL_TABLE_URI_PATH);
-      symbolTable = fetchRemoteSymbolTable(symbolTableUri);
+      URI symbolTableUri = new URI(_uriPrefix + serviceName + "/" + RestLiSymbolTableRequestHandler.SYMBOL_TABLE_URI_PATH);
+      symbolTable = fetchRemoteSymbolTable(symbolTableUri,
+          Collections.singletonMap(RestConstants.HEADER_SERVICE_SCOPED_PATH, Boolean.TRUE.toString()));
 
       if (symbolTable != null)
       {
@@ -214,11 +215,11 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
     _defaultResponseSymbolTableName = _symbolTableNameHandler.extractTableInfo(_defaultResponseSymbolTable.getName())._2();
   }
 
-  SymbolTable fetchRemoteSymbolTable(URI symbolTableUri)
+  SymbolTable fetchRemoteSymbolTable(URI symbolTableUri, Map<String, String> requestHeaders)
   {
     try
     {
-      Future<RestResponse> future = _client.restRequest(new RestRequestBuilder(symbolTableUri).build());
+      Future<RestResponse> future = _client.restRequest(new RestRequestBuilder(symbolTableUri).setHeaders(requestHeaders).build());
       RestResponse restResponse = future.get(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
       int status = restResponse.getStatus();
       if (status == HttpStatus.S_200_OK.getCode())
@@ -233,8 +234,8 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
             ContentType.getContentType(restResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE))
                 .orElseThrow(() -> new IOException("Could not parse response content type"));
 
-        // Deserialize, and rename to replace hostname with current hostname.
-        return SymbolTableSerializer.fromByteString(byteString, contentType.getCodec(), _symbolTableNameHandler::replaceHostName);
+        // Deserialize, and rename to replace url prefix with current url prefix.
+        return SymbolTableSerializer.fromByteString(byteString, contentType.getCodec(), _symbolTableNameHandler::replaceServerNodeUri);
       }
 
       throw new IOException("Unexpected response status: " + status);

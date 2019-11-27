@@ -27,21 +27,21 @@ import org.testng.annotations.Test;
 public class TestSymbolTableNameHandler
 {
   private static final SymbolTableNameHandler SYMBOL_TABLE_NAME_HANDLER =
-      new SymbolTableNameHandler("Prefix", "Host", 100);
+      new SymbolTableNameHandler("Prefix", "https://Host:100/service");
 
   @Test
   public void testGenerateName()
   {
     List<String> symbols = Collections.unmodifiableList(Arrays.asList("Haha", "Hehe"));
     String name = SYMBOL_TABLE_NAME_HANDLER.generateName(symbols);
-    Assert.assertEquals(name, "Host:100|Prefix-" + symbols.hashCode());
+    Assert.assertEquals(name, "https://Host:100/service|Prefix-" + symbols.hashCode());
   }
 
   @Test
   public void testExtractTableInfoLocalTable()
   {
-    Tuple3<String, String, Boolean> tuple = SYMBOL_TABLE_NAME_HANDLER.extractTableInfo("Host:100|Prefix-1000");
-    Assert.assertEquals(tuple._1(), "Host:100");
+    Tuple3<String, String, Boolean> tuple = SYMBOL_TABLE_NAME_HANDLER.extractTableInfo("https://Host:100/service|Prefix-1000");
+    Assert.assertEquals(tuple._1(), "https://Host:100/service");
     Assert.assertEquals(tuple._2(), "Prefix-1000");
     Assert.assertTrue(tuple._3());
   }
@@ -49,17 +49,17 @@ public class TestSymbolTableNameHandler
   @Test
   public void testExtractTableInfoNonLocalTable()
   {
-    Tuple3<String, String, Boolean> tuple = SYMBOL_TABLE_NAME_HANDLER.extractTableInfo("OtherHost:100|Prefix-1000");
-    Assert.assertEquals(tuple._1(), "OtherHost:100");
+    Tuple3<String, String, Boolean> tuple = SYMBOL_TABLE_NAME_HANDLER.extractTableInfo("https://OtherHost:100/service|Prefix-1000");
+    Assert.assertEquals(tuple._1(), "https://OtherHost:100/service");
     Assert.assertEquals(tuple._2(), "Prefix-1000");
     Assert.assertFalse(tuple._3());
   }
 
   @Test
-  public void testReplaceHostName()
+  public void testReplaceServerNodeUri()
   {
-    String name = "SomeOldHostName:100|Prefix-1000";
-    String replacedName = SYMBOL_TABLE_NAME_HANDLER.replaceHostName(name);
-    Assert.assertEquals(replacedName, "Host:100|Prefix-1000");
+    String name = "https://SomeOldHostName:100/SomeOtherService|SomeOtherPrefix-1000";
+    String replacedName = SYMBOL_TABLE_NAME_HANDLER.replaceServerNodeUri(name);
+    Assert.assertEquals(replacedName, "https://Host:100/service|SomeOtherPrefix-1000");
   }
 }

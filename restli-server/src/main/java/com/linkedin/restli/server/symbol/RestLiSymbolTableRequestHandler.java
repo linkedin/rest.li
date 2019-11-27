@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RestLiSymbolTableRequestHandler implements NonResourceRequestHandler
 {
-  public static final String SYMBOL_TABLE_URI_PATH = "/symbolTable";
+  public static final String SYMBOL_TABLE_URI_PATH = "symbolTable";
   private static final Logger LOGGER = LoggerFactory.getLogger(RestLiSymbolTableRequestHandler.class);
   private static final int DEFAULT_CACHE_SIZE = 100;
 
@@ -76,10 +76,32 @@ public class RestLiSymbolTableRequestHandler implements NonResourceRequestHandle
   @Override
   public boolean shouldHandle(Request request)
   {
-    final String path = request.getURI().getRawPath();
-
     // we don't check the method here because we want to return 405 if it is anything but GET
-    return path != null && path.startsWith(SYMBOL_TABLE_URI_PATH);
+    final String path = request.getURI().getRawPath();
+    if (path == null)
+    {
+      return false;
+    }
+
+    final List<UriComponent.PathSegment> pathSegments = UriComponent.decodePath(path, true);
+    if (pathSegments.size() < 2)
+    {
+      return false;
+    }
+
+    //
+    // When path is service scoped, URI is in the form of /<SERVICE>/symbolTable, else it
+    // is in the form of /symbolTable or /symbolTable/<TABLENAME>
+    //
+    boolean isServiceScopedPath = request.getHeaders().containsKey(RestConstants.HEADER_SERVICE_SCOPED_PATH);
+    if (isServiceScopedPath)
+    {
+      return (pathSegments.size() == 3 && pathSegments.get(2).getPath().equals(SYMBOL_TABLE_URI_PATH));
+    }
+    else
+    {
+      return ((pathSegments.size() == 2 || pathSegments.size() == 3) && pathSegments.get(1).getPath().equals(SYMBOL_TABLE_URI_PATH));
+    }
   }
 
   @Override
@@ -117,22 +139,24 @@ public class RestLiSymbolTableRequestHandler implements NonResourceRequestHandle
     final List<UriComponent.PathSegment> pathSegments = UriComponent.decodePath(path, true);
 
     final SymbolTableProvider provider = SymbolTableProviderHolder.INSTANCE.getSymbolTableProvider();
-    SymbolTable symbolTable;
+    SymbolTable symbolTable = null;
     try
     {
-      if (pathSegments.size() == 2)
+      boolean isServiceScopedPath = request.getHeaders().containsKey(RestConstants.HEADER_SERVICE_SCOPED_PATH);
+      if (isServiceScopedPath)
       {
         symbolTable = provider.getResponseSymbolTable(request.getURI(), request.getHeaders());
       }
-      else if (pathSegments.size() == 3)
-      {
-        symbolTable = provider.getSymbolTable(pathSegments.get(2).getPath());
-      }
       else
       {
-        LOGGER.error("Invalid path " + path);
-        callback.onError(RestException.forError(HttpStatus.S_400_BAD_REQUEST.getCode(), "Invalid path"));
-        return;
+        if (pathSegments.size() == 2)
+        {
+          symbolTable = provider.getResponseSymbolTable(request.getURI(), request.getHeaders());
+        }
+        else if (pathSegments.size() == 3)
+        {
+          symbolTable = provider.getSymbolTable(pathSegments.get(2).getPath());
+        }
       }
     }
     catch (IllegalStateException e)

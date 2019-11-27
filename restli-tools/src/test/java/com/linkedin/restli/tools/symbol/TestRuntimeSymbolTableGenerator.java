@@ -31,7 +31,7 @@ public class TestRuntimeSymbolTableGenerator
   public void testSymbolTableGenerator()
   {
     DataSchema schema = DataTemplateUtil.getSchema(SimpleGreeting.class);
-    SymbolTableNameHandler handler = new SymbolTableNameHandler("Haha", "localhost", 1000);
+    SymbolTableNameHandler handler = new SymbolTableNameHandler("Haha", "https://localhost:1000/service");
     InMemorySymbolTable symbolTable = RuntimeSymbolTableGenerator.generate(handler, Collections.singleton(schema));
     Assert.assertEquals(37, symbolTable.size());
   }

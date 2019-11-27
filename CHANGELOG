@@ -1,5 +1,11 @@
+28.0.12
+-------
+
 28.0.11
 -------
+(RB=1896287)
+Make symbol table path handling more robust to handle D2 URIs
+
 (RB=1903191)
 Allow incompatible rest model changes in restli-int-test-server
 

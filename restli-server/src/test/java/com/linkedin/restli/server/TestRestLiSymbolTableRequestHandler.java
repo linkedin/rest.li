@@ -66,28 +66,43 @@ public class TestRestLiSymbolTableRequestHandler
   @Test
   public void testShouldNotHandleEmptyPath()
   {
-    RestRequest request = new RestRequestBuilder(URI.create("d2://service")).build();
+    RestRequest request = new RestRequestBuilder(URI.create("/")).build();
     Assert.assertFalse(_requestHandler.shouldHandle(request));
   }
 
   @Test
   public void testShouldNotHandleNonSymbolTablePath()
   {
-    RestRequest request = new RestRequestBuilder(URI.create("d2://service/someResource")).build();
+    RestRequest request = new RestRequestBuilder(URI.create("/someResource")).build();
     Assert.assertFalse(_requestHandler.shouldHandle(request));
   }
 
   @Test
   public void testShouldHandleSymbolTablePath()
   {
-    RestRequest request = new RestRequestBuilder(URI.create("d2://service/symbolTable")).build();
+    RestRequest request = new RestRequestBuilder(URI.create("/symbolTable")).build();
     Assert.assertTrue(_requestHandler.shouldHandle(request));
+  }
+
+  @Test
+  public void testShouldHandleServiceScopedSymbolTablePathWhenHeaderSet()
+  {
+    RestRequest request = new RestRequestBuilder(URI.create("/service/symbolTable"))
+        .setHeaders(Collections.singletonMap(RestConstants.HEADER_SERVICE_SCOPED_PATH, "true")).build();
+    Assert.assertTrue(_requestHandler.shouldHandle(request));
+  }
+
+  @Test
+  public void testShouldNotHandleServiceScopedSymbolTablePathWhenNoHeaderSet()
+  {
+    RestRequest request = new RestRequestBuilder(URI.create("/service/symbolTable")).build();
+    Assert.assertFalse(_requestHandler.shouldHandle(request));
   }
 
   @Test
   public void testNonGetRequest405()
   {
-    RestRequest request = new RestRequestBuilder(URI.create("d2://service/symbolTable"))
+    RestRequest request = new RestRequestBuilder(URI.create("/symbolTable"))
         .setMethod(HttpMethod.POST.name()).build();
 
     CompletableFuture<RestResponse> future = new CompletableFuture<>();
@@ -111,7 +126,7 @@ public class TestRestLiSymbolTableRequestHandler
   @Test
   public void testInvalidAcceptTypeRequest406()
   {
-    RestRequest request = new RestRequestBuilder(URI.create("d2://service/symbolTable"))
+    RestRequest request = new RestRequestBuilder(URI.create("/symbolTable"))
         .setHeader(RestConstants.HEADER_ACCEPT, "application/randomType").build();
 
     CompletableFuture<RestResponse> future = new CompletableFuture<>();
@@ -134,7 +149,7 @@ public class TestRestLiSymbolTableRequestHandler
   @Test
   public void testSelfSymbolTableNotFound404()
   {
-    RestRequest request = new RestRequestBuilder(URI.create("d2://service/symbolTable")).build();
+    RestRequest request = new RestRequestBuilder(URI.create("/symbolTable")).build();
 
     CompletableFuture<RestResponse> future = new CompletableFuture<>();
     _requestHandler.handleRequest(request, mock(RequestContext.class), new Callback<RestResponse>() {
@@ -156,7 +171,7 @@ public class TestRestLiSymbolTableRequestHandler
   @Test
   public void testOtherSymbolTableNotFound404()
   {
-    RestRequest request = new RestRequestBuilder(URI.create("d2://service/symbolTable/SomeName")).build();
+    RestRequest request = new RestRequestBuilder(URI.create("/symbolTable/SomeName")).build();
 
     CompletableFuture<RestResponse> future = new CompletableFuture<>();
     _requestHandler.handleRequest(request, mock(RequestContext.class), new Callback<RestResponse>() {
@@ -180,9 +195,40 @@ public class TestRestLiSymbolTableRequestHandler
   {
     SymbolTable symbolTable =
         new InMemorySymbolTable("TestName", ImmutableList.of("Haha", "Hehe", "Hoho"));
-    URI uri = URI.create("d2://service/symbolTable");
+    URI uri = URI.create("/symbolTable");
     RestRequest request = new RestRequestBuilder(uri).build();
     when(_symbolTableProvider.getResponseSymbolTable(eq(uri), eq(Collections.emptyMap()))).thenReturn(symbolTable);
+
+    CompletableFuture<RestResponse> future = new CompletableFuture<>();
+    _requestHandler.handleRequest(request, mock(RequestContext.class), new Callback<RestResponse>() {
+      @Override
+      public void onError(Throwable e) {
+        future.completeExceptionally(e);
+      }
+
+      @Override
+      public void onSuccess(RestResponse result) {
+        future.complete(result);
+      }
+    });
+
+    Assert.assertFalse(future.isCompletedExceptionally());
+    Assert.assertTrue(future.isDone());
+
+    RestResponse response = future.get();
+    Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
+    Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), ContentType.PROTOBUF.getHeaderKey());
+    Assert.assertEquals(symbolTable, SymbolTableSerializer.fromByteString(response.getEntity(), ContentType.PROTOBUF.getCodec()));
+  }
+
+  @Test
+  public void testReturnSelfSymbolTableWhenCalledWithServiceScope() throws Exception
+  {
+    SymbolTable symbolTable =
+        new InMemorySymbolTable("TestName", ImmutableList.of("Haha", "Hehe", "Hoho"));
+    URI uri = URI.create("/service/symbolTable");
+    RestRequest request = new RestRequestBuilder(uri).setHeader(RestConstants.HEADER_SERVICE_SCOPED_PATH, "true").build();
+    when(_symbolTableProvider.getResponseSymbolTable(eq(uri), eq(Collections.singletonMap(RestConstants.HEADER_SERVICE_SCOPED_PATH, "true")))).thenReturn(symbolTable);
 
     CompletableFuture<RestResponse> future = new CompletableFuture<>();
     _requestHandler.handleRequest(request, mock(RequestContext.class), new Callback<RestResponse>() {
@@ -211,7 +257,7 @@ public class TestRestLiSymbolTableRequestHandler
   {
     SymbolTable symbolTable =
         new InMemorySymbolTable("TestName", ImmutableList.of("Haha", "Hehe", "Hoho"));
-    URI uri = URI.create("d2://service/symbolTable/OtherTable");
+    URI uri = URI.create("/symbolTable/OtherTable");
     RestRequest request = new RestRequestBuilder(uri).build();
     when(_symbolTableProvider.getSymbolTable(eq("OtherTable"))).thenReturn(symbolTable);
 
@@ -242,7 +288,7 @@ public class TestRestLiSymbolTableRequestHandler
   {
     SymbolTable symbolTable =
         new InMemorySymbolTable("TestName", ImmutableList.of("Haha", "Hehe", "Hoho"));
-    URI uri = URI.create("d2://service/symbolTable/OtherTable");
+    URI uri = URI.create("/symbolTable/OtherTable");
     RestRequest request =
         new RestRequestBuilder(uri).setHeader(RestConstants.HEADER_ACCEPT, ContentType.JSON.getHeaderKey()).build();
     when(_symbolTableProvider.getSymbolTable(eq("OtherTable"))).thenReturn(symbolTable);
