@@ -1,5 +1,10 @@
+28.0.10
+-------
+
 28.0.9
 ------
+(RB=1885019)
+Fix a bug in query tunneling affecting URIs containing keys with encoded reserved Rest.li protocol 2.0.0 characters
 
 28.0.8
 ------

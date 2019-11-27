@@ -145,15 +145,17 @@ public class QueryTunnelUtil
   {
 
     RestRequestBuilder requestBuilder = new RestRequestBuilder(request);
+
+    // Reconstruct URI without query. Use the URI(String) constructor to preserve any Rest.li specific encoding of the
+    // URI path keys.
     URI uri = request.getURI();
-    // reconstruct URI without query
-    URI newUri = new URI(uri.getScheme(),
-        uri.getUserInfo(),
-        uri.getHost(),
-        uri.getPort(),
-        uri.getPath(),
-        null,
-        uri.getFragment());
+    String uriString = uri.toString();
+    int queryIndex = uriString.indexOf('?');
+    if (queryIndex > 0)
+    {
+      uriString = uriString.substring(0, queryIndex);
+    }
+    URI newUri = new URI(uriString);
 
     // If there's no existing body, just pass the request as x-www-form-urlencoded
     ByteString entity = request.getEntity();
