@@ -50,12 +50,7 @@ public class AclAwareZookeeperTest
   {
     _zkServer = new ZKServer(ZK_PORT);
     _zkServer.startup();
-    final ZKConnection zkconnection = new ZKConnectionBuilder("localhost:" + ZK_PORT)
-      .setTimeout(ZK_TIMEOUT)
-      .setWaitForConnected(true)
-      .build();
-    zkconnection.start();
-    _verificationZKClient = zkconnection.getZooKeeper();
+    _verificationZKClient = getZookeeperClient();
   }
 
   @AfterMethod
@@ -64,13 +59,23 @@ public class AclAwareZookeeperTest
     _zkServer.shutdown();
   }
 
+  private ZooKeeper getZookeeperClient() throws IOException
+  {
+    final ZKConnection zkconnection = new ZKConnectionBuilder("localhost:" + ZK_PORT)
+      .setTimeout(ZK_TIMEOUT)
+      .setWaitForConnected(true)
+      .build();
+    zkconnection.start();
+    return zkconnection.getZooKeeper();
+  }
+
   private ZooKeeper getAclAwareZookeeper(List<ACL> providedAcls, byte[] authInfo, String scheme) throws IOException
   {
     MockAclProvider aclProvider = new MockAclProvider();
     aclProvider.setAcl(providedAcls);
     aclProvider.setAuthScheme(scheme);
     aclProvider.setAuthInfo(authInfo);
-    ZooKeeper newSession = new VanillaZooKeeperAdapter("localhost:" + ZK_PORT, ZK_TIMEOUT, new TestWatcher());
+    ZooKeeper newSession = getZookeeperClient();
     ZooKeeper retryZk = new RetryZooKeeper(newSession, ZK_RETRY_LIMIT);
     ZooKeeper aclAwareZk = new AclAwareZookeeper(retryZk, aclProvider);
     return aclAwareZk;
