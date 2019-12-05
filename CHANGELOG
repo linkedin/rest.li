@@ -1,6 +1,7 @@
 28.0.11
 -------
-
+(RB=1903191)
+Allow incompatible rest model changes in restli-int-test-server
 
 28.0.10
 -------
@@ -25,11 +26,11 @@ Add debug logging to client/server request finalizers.
 
 28.0.7
 ------
-(RB=1882082)
-Adds equality/hash methods for ActionResult class
-
 (RB=1891665)
 Allow waiting until zookeeper connection establishes before ZKconnection#start returns
+
+(RB=1882082)
+Adds equality/hash methods for ActionResult class
 
 (RB=1894377)
 Disable setup and teardown for SymlinkAwareZooKeeperTest
