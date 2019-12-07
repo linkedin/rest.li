@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2019 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.restli.tools.data;
 
 import com.linkedin.data.schema.AbstractSchemaEncoder;
@@ -32,6 +48,8 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.linkedin.restli.tools.data.ScmUtil.DESTINATION;
+import static com.linkedin.restli.tools.data.ScmUtil.SOURCE;
 
 /**
  * Command line tool to translate files between .pdl and .pdsc schema formats.
@@ -58,6 +76,10 @@ public class SchemaFormatTranslator
     OPTIONS.addOption(OptionBuilder.withLongOpt("keep-original")
         .withDescription("Keep the original files after translation (deleted by default)")
         .create('o'));
+
+    OPTIONS.addOption(OptionBuilder.withLongOpt("preserve-source").hasArg()
+        .withDescription("Preserve source history command, use '" + SOURCE + "' as the source filename and use '" + DESTINATION + "' as the destination filename.")
+        .create('p'));
   }
 
   public static void main(String[] args) throws Exception
@@ -76,6 +98,7 @@ public class SchemaFormatTranslator
       String sourceFormat = cl.getOptionValue('s', SchemaParser.FILETYPE).trim();
       String destFormat = cl.getOptionValue('d', PdlSchemaParser.FILETYPE).trim();
       boolean keepOriginal = cl.hasOption('o');
+      String preserveSourceCmd = cl.getOptionValue('p');
 
       String[] cliArgs = cl.getArgs();
       if (cliArgs.length != 3)
@@ -105,7 +128,7 @@ public class SchemaFormatTranslator
       }
 
       SchemaFormatTranslator translator =
-          new SchemaFormatTranslator(resolverPaths, sourceDir, destDir, sourceFormat, destFormat, keepOriginal);
+          new SchemaFormatTranslator(resolverPaths, sourceDir, destDir, sourceFormat, destFormat, keepOriginal, preserveSourceCmd);
       translator.translateFiles();
     }
     catch (ParseException e)
@@ -122,9 +145,10 @@ public class SchemaFormatTranslator
   private String _sourceFormat;
   private String _destFormat;
   private boolean _keepOriginal;
+  private String _preserveSourceCmd;
 
   SchemaFormatTranslator(String resolverPath, File sourceDir, File destDir, String sourceFormat, String destFormat,
-      boolean keepOriginal)
+      boolean keepOriginal, String preserveSourceCmd)
   {
     _resolverPath = resolverPath;
     _sourceDir = sourceDir;
@@ -132,16 +156,17 @@ public class SchemaFormatTranslator
     _sourceFormat = sourceFormat;
     _destFormat = destFormat;
     _keepOriginal = keepOriginal;
+    _preserveSourceCmd = preserveSourceCmd;
   }
 
-  private void translateFiles() throws IOException
+  private void translateFiles() throws IOException, InterruptedException
   {
     LOGGER.info("Translating files. Source dir: {}, sourceFormat: {}, destDir: {}, destFormat: {}, keepOriginal: {}",
         _sourceDir, _sourceFormat, _destDir, _destFormat, _keepOriginal);
     Map<String, SchemaInfo> topLevelSchemas = getTopLevelSchemaToTranslatedSchemaMap();
     verifyTranslatedSchemas(topLevelSchemas);
     // Write the destination files. Source files are deleted for this step unless keepOriginal flag is set.
-    writeTranslatedSchemasToDirectory(topLevelSchemas, _destDir, !_keepOriginal);
+    writeTranslatedSchemasToDirectory(topLevelSchemas, _destDir, !_keepOriginal, _preserveSourceCmd);
   }
 
   /**
@@ -172,13 +197,13 @@ public class SchemaFormatTranslator
     return topLevelSchemas;
   }
 
-  private void verifyTranslatedSchemas(Map<String, SchemaInfo> topLevelSchemas) throws IOException
+  private void verifyTranslatedSchemas(Map<String, SchemaInfo> topLevelSchemas) throws IOException, InterruptedException
   {
     File tempDir = new File(FileUtils.getTempDirectory(), "tmpPegasus");
     FileUtils.deleteDirectory(tempDir);
     assert tempDir.mkdirs();
     // Write the schemas to temp directory for validation. Source files are not deleted/moved for this.
-    writeTranslatedSchemasToDirectory(topLevelSchemas, tempDir, false);
+    writeTranslatedSchemasToDirectory(topLevelSchemas, tempDir, false, null);
 
     // Now try loading the schemas from the temp directory and compare with source schema.
     StringTokenizer paths = new StringTokenizer(_resolverPath, File.pathSeparator);
@@ -228,7 +253,7 @@ public class SchemaFormatTranslator
   }
 
   private void writeTranslatedSchemasToDirectory(
-      Map<String, SchemaInfo> topLevelSchemas, File outputDir, boolean moveSource) throws IOException
+      Map<String, SchemaInfo> topLevelSchemas, File outputDir, boolean moveSource, String preserveSourceCmd) throws IOException, InterruptedException
   {
     for (SchemaInfo schemaInfo : topLevelSchemas.values())
     {
@@ -246,7 +271,7 @@ public class SchemaFormatTranslator
       LOGGER.debug("Writing " + destinationFile.getAbsolutePath());
       if (moveSource)
       {
-        FileUtils.moveFile(schemaInfo.getSourceFile(), destinationFile);
+        ScmUtil.tryUpdateSourceHistory(preserveSourceCmd, schemaInfo.getSourceFile(), destinationFile);
       }
       FileUtils.writeStringToFile(destinationFile, schemaInfo.getDestEncodedSchemaString());
     }

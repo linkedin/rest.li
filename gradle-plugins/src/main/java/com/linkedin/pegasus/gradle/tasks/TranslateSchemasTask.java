@@ -9,6 +9,7 @@ import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
@@ -28,6 +29,7 @@ public class TranslateSchemasTask extends DefaultTask {
   private SchemaFileType _sourceFormat = SchemaFileType.PDSC;
   private SchemaFileType _destinationFormat = SchemaFileType.PDL;
   private boolean _keepOriginal = false;
+  private String _preserveSourceCmd;
 
   @TaskAction
   public void translate()
@@ -48,6 +50,11 @@ public class TranslateSchemasTask extends DefaultTask {
       if (_keepOriginal)
       {
         javaExecSpec.args("--keep-original");
+      }
+      if (_preserveSourceCmd != null)
+      {
+        javaExecSpec.args("--preserve-source");
+        javaExecSpec.args(_preserveSourceCmd);
       }
       javaExecSpec.args(resolverPathStr);
       javaExecSpec.args(_inputDir.getAbsolutePath());
@@ -141,5 +148,17 @@ public class TranslateSchemasTask extends DefaultTask {
   public void setKeepOriginal(boolean keepOriginal)
   {
     _keepOriginal = keepOriginal;
+  }
+
+  @Input
+  @Optional
+  public String getPreserveSourceCmd()
+  {
+    return _preserveSourceCmd;
+  }
+
+  public void setPreserveSourceCmd(String preserveSourceCmd)
+  {
+    _preserveSourceCmd = preserveSourceCmd;
   }
 }
