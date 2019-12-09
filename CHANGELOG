@@ -5,6 +5,8 @@
 ------
 (RB=1913804)
 Lower latency instrumentation logs from warn to debug
+(RB=1879153)
+add DataSchemaRichContextTraverser, introduce DataSchemaRichContextTraverser.SchemaVisitor interface
 
 28.1.1
 ------
