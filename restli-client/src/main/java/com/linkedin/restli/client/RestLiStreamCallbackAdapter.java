@@ -20,9 +20,13 @@ package com.linkedin.restli.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.Messages;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.stream.StreamException;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingCallback;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.internal.client.ExceptionUtil;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 
@@ -37,16 +41,30 @@ public class RestLiStreamCallbackAdapter<T> implements Callback<StreamResponse>
 {
   private final Callback<Response<T>> _wrappedCallback;
   private final RestResponseDecoder<T> _decoder;
+  private final RequestContext _requestContext;
 
   public RestLiStreamCallbackAdapter(RestResponseDecoder<T> decoder, Callback<Response<T>> wrappedCallback)
   {
-    _decoder = decoder;
+    this(decoder, wrappedCallback, new RequestContext());
+  }
+
+  public RestLiStreamCallbackAdapter(RestResponseDecoder<T> decoder, Callback<Response<T>> wrappedCallback,
+      RequestContext requestContext)
+  {
     _wrappedCallback = wrappedCallback;
+    _decoder = decoder;
+    _requestContext = requestContext;
   }
 
   @Override
   public void onError(Throwable e)
   {
+    Callback<Response<T>> callback = new TimingCallback.Builder<>(_wrappedCallback, _requestContext)
+        .addEndTimingKey(FrameworkTimingKeys.CLIENT_RESPONSE_RESTLI_ERROR_DESERIALIZATION.key())
+        .build();
+    TimingContextUtil.beginTiming(_requestContext, FrameworkTimingKeys.CLIENT_RESPONSE_RESTLI_ERROR_DESERIALIZATION
+        .key());
+
     //Default behavior as specified by ExceptionUtil.java. Convert the StreamException into a RestException
     //to work with rest.li client exception handling. Eventually when RestException is removed, the complete
     //exception handling system in rest.li client will change to move to StreamException.
@@ -58,13 +76,13 @@ public class RestLiStreamCallbackAdapter<T> implements Callback<StreamResponse>
         public void onError(Throwable e)
         {
           //Should never happen.
-          _wrappedCallback.onError(e);
+          callback.onError(e);
         }
 
         @Override
         public void onSuccess(RestException result)
         {
-          _wrappedCallback.onError(ExceptionUtil.exceptionForThrowable(result, _decoder));
+          callback.onError(ExceptionUtil.exceptionForThrowable(result, _decoder));
         }
       });
       return;
@@ -72,19 +90,23 @@ public class RestLiStreamCallbackAdapter<T> implements Callback<StreamResponse>
 
     if (e instanceof RemoteInvocationException)
     {
-      _wrappedCallback.onError(e);
+      callback.onError(e);
       return;
     }
 
-    _wrappedCallback.onError(new RemoteInvocationException(e));
+    callback.onError(new RemoteInvocationException(e));
   }
 
   @Override
   public void onSuccess(StreamResponse result)
   {
+    Callback<Response<T>> callback = new TimingCallback.Builder<>(_wrappedCallback, _requestContext)
+        .addEndTimingKey(FrameworkTimingKeys.CLIENT_RESPONSE_RESTLI_DESERIALIZATION.key())
+        .build();
+    TimingContextUtil.beginTiming(_requestContext, FrameworkTimingKeys.CLIENT_RESPONSE_RESTLI_DESERIALIZATION.key());
     try
     {
-      _decoder.decodeResponse(result, _wrappedCallback);
+      _decoder.decodeResponse(result, callback);
     }
     catch(Exception exception)
     {

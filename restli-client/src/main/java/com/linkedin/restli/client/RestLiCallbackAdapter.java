@@ -19,7 +19,10 @@ package com.linkedin.restli.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.CallbackAdapter;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.internal.client.ExceptionUtil;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
 
@@ -31,22 +34,37 @@ import com.linkedin.restli.internal.client.RestResponseDecoder;
 public class RestLiCallbackAdapter<T> extends CallbackAdapter<Response<T>, RestResponse>
 {
   private final RestResponseDecoder<T> _decoder;
+  private final RequestContext _requestContext;
 
   public RestLiCallbackAdapter(RestResponseDecoder<T> decoder, Callback<Response<T>> callback)
   {
+    this(decoder, callback, new RequestContext());
+  }
+
+  public RestLiCallbackAdapter(RestResponseDecoder<T> decoder, Callback<Response<T>> callback,
+      RequestContext requestContext)
+  {
     super(callback);
     _decoder = decoder;
+    _requestContext = requestContext;
   }
 
   @Override
   protected Response<T> convertResponse(RestResponse response) throws Exception
   {
-    return _decoder.decodeResponse(response);
+    TimingContextUtil.beginTiming(_requestContext, FrameworkTimingKeys.CLIENT_RESPONSE_RESTLI_DESERIALIZATION.key());
+    Response<T> convertedResponse = _decoder.decodeResponse(response);
+    TimingContextUtil.endTiming(_requestContext, FrameworkTimingKeys.CLIENT_RESPONSE_RESTLI_DESERIALIZATION.key());
+    return convertedResponse;
   }
 
   @Override
   protected Throwable convertError(Throwable error)
   {
-    return ExceptionUtil.exceptionForThrowable(error, _decoder);
+    TimingContextUtil.beginTiming(_requestContext, FrameworkTimingKeys.CLIENT_RESPONSE_RESTLI_ERROR_DESERIALIZATION
+        .key());
+    Throwable throwable = ExceptionUtil.exceptionForThrowable(error, _decoder);
+    TimingContextUtil.endTiming(_requestContext, FrameworkTimingKeys.CLIENT_RESPONSE_RESTLI_ERROR_DESERIALIZATION.key());
+    return throwable;
   }
 }

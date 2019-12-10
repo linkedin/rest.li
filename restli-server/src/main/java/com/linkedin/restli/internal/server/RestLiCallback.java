@@ -18,6 +18,9 @@ package com.linkedin.restli.internal.server;
 
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
 import com.linkedin.restli.server.filter.FilterRequestContext;
@@ -33,6 +36,7 @@ public class RestLiCallback implements Callback<Object>
   private final RestLiFilterChain _filterChain;
   private final FilterRequestContext _filterRequestContext;
   private final RestLiFilterResponseContextFactory _filterResponseContextFactory;
+  private final RequestContext _requestContext;
 
   public RestLiCallback(final FilterRequestContext filterRequestContext,
                         final RestLiFilterResponseContextFactory filterResponseContextFactory,
@@ -41,10 +45,12 @@ public class RestLiCallback implements Callback<Object>
     _filterResponseContextFactory = filterResponseContextFactory;
     _filterChain = filterChain;
     _filterRequestContext = filterRequestContext;
+    _requestContext = filterResponseContextFactory.getRequestContext();
   }
 
   public void onSuccess(final Object result)
   {
+    markPreTimings();
     final FilterResponseContext responseContext;
     try
     {
@@ -58,6 +64,8 @@ public class RestLiCallback implements Callback<Object>
       onError(e);
       return;
     }
+    markPostTimings();
+
     // Now kick off the responses in the filter chain. Same note as above; we assume that the application code has
     // absorbed any request attachments present in the request.
     _filterChain.onResponse(_filterRequestContext, responseContext);
@@ -65,9 +73,23 @@ public class RestLiCallback implements Callback<Object>
 
   public void onError(final Throwable e)
   {
+    markPreTimings();
     final FilterResponseContext responseContext = _filterResponseContextFactory.fromThrowable(e);
+    markPostTimings();
 
     // Now kick off the response filters with error
     _filterChain.onError(e, _filterRequestContext, responseContext);
+  }
+
+  private void markPreTimings()
+  {
+    TimingContextUtil.endTiming(_requestContext, FrameworkTimingKeys.RESOURCE.key());
+    TimingContextUtil.beginTiming(_requestContext, FrameworkTimingKeys.SERVER_RESPONSE.key());
+    TimingContextUtil.beginTiming(_requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI.key());
+  }
+
+  private void markPostTimings()
+  {
+    TimingContextUtil.beginTiming(_requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_FILTER_CHAIN.key());
   }
 }

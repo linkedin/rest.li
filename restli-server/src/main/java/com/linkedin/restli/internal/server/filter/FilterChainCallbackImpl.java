@@ -18,6 +18,9 @@ package com.linkedin.restli.internal.server.filter;
 
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
@@ -60,6 +63,7 @@ public class FilterChainCallbackImpl implements FilterChainCallback
   @Override
   public void onResponseSuccess(final RestLiResponseData<?> responseData)
   {
+    markOnResponseTimings(_method.getContext().getRawRequestContext());
     RestLiResponse partialResponse;
     try
     {
@@ -78,9 +82,9 @@ public class FilterChainCallbackImpl implements FilterChainCallback
   @Override
   public void onError(Throwable th, final RestLiResponseData<?> responseData)
   {
+    markOnResponseTimings(_method.getContext().getRawRequestContext());
     // The Throwable passed in is not used at all. However, before every invocation, the throwable is wrapped inside
     // the RestLiResponseData parameter. This can potentially be refactored.
-
     Throwable error;
     try
     {
@@ -117,4 +121,8 @@ public class FilterChainCallbackImpl implements FilterChainCallback
         .build();
   }
 
+  private static void markOnResponseTimings(RequestContext requestContext)
+  {
+    TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_FILTER_CHAIN.key());
+  }
 }

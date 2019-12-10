@@ -44,6 +44,9 @@ import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.adapter.EntityStreamAdapters;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingCallback;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.client.multiplexer.MultiplexedCallback;
 import com.linkedin.restli.client.multiplexer.MultiplexedRequest;
 import com.linkedin.restli.client.multiplexer.MultiplexedResponse;
@@ -247,13 +250,24 @@ public class RestClient implements Client {
     ScatterGatherStrategy strategy = getScatterGatherStrategy(requestContext);
     if (needScatterGather(request, requestContext, strategy))
     {
+      // Disable latency instrumentation altogether for scatter-gather requests
+      // TODO: Remove this once instrumentation is supported for scatter-gather
+      requestContext.putLocalAttr(TimingContextUtil.TIMINGS_DISABLED_KEY_NAME, true);
+
       // scatter gather case
       handleScatterGatherRequest(request, requestContext, strategy, callback);
     }
     else
     {
+      TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST.key());
+      TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI.key());
+      final Callback<Response<T>> wrappedCallback = new TimingCallback.Builder<>(callback, requestContext)
+          .addEndTimingKey(FrameworkTimingKeys.CLIENT_RESPONSE_RESTLI.key())
+          .addEndTimingKey(FrameworkTimingKeys.CLIENT_RESPONSE.key())
+          .build();
+
       // default non scatter-gather case
-      sendRequestNoScatterGather(request, requestContext, callback);
+      sendRequestNoScatterGather(request, requestContext, wrappedCallback);
     }
   }
 
@@ -276,11 +290,11 @@ public class RestClient implements Client {
     if (_restLiClientConfig.isUseStreaming() || request.getStreamingAttachments() != null || request.getRequestOptions().getAcceptResponseAttachments())
     {
       //Set content type and accept type correctly and use StreamRequest/StreamResponse
-      sendStreamRequest(request, requestContext, new RestLiStreamCallbackAdapter<T>(request.getResponseDecoder(), callback));
+      sendStreamRequest(request, requestContext, new RestLiStreamCallbackAdapter<>(request.getResponseDecoder(), callback, requestContext));
     }
     else
     {
-      sendRestRequest(request, requestContext, new RestLiCallbackAdapter<T>(request.getResponseDecoder(), callback));
+      sendRestRequest(request, requestContext, new RestLiCallbackAdapter<>(request.getResponseDecoder(), callback, requestContext));
     }
   }
 
@@ -289,7 +303,7 @@ public class RestClient implements Client {
                                      Callback<StreamResponse> callback)
   {
     RecordTemplate input = request.getInputRecord();
-    getProtocolVersionForService(request, new Callback<ProtocolVersion>()
+    getProtocolVersionForService(request, requestContext, new Callback<ProtocolVersion>()
     {
       @Override
       public void onError(Throwable e)
@@ -300,7 +314,10 @@ public class RestClient implements Client {
       @Override
       public void onSuccess(ProtocolVersion protocolVersion)
       {
+        TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_URI_ENCODE.key());
         URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
+        TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_URI_ENCODE.key());
+
         final ResourceMethod method = request.getMethod();
         final String methodName = request.getMethodName();
         addDisruptContext(request.getBaseUriTemplate(), method, methodName, requestContext);
@@ -347,7 +364,7 @@ public class RestClient implements Client {
     }
 
     RecordTemplate input = request.getInputRecord();
-    getProtocolVersionForService(request, new Callback<ProtocolVersion>()
+    getProtocolVersionForService(request, requestContext, new Callback<ProtocolVersion>()
     {
       @Override
       public void onError(Throwable e)
@@ -358,7 +375,9 @@ public class RestClient implements Client {
       @Override
       public void onSuccess(ProtocolVersion protocolVersion)
       {
+        TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_URI_ENCODE.key());
         URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
+        TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_URI_ENCODE.key());
 
         final ResourceMethod method = request.getMethod();
         final String methodName = request.getMethodName();
@@ -377,8 +396,10 @@ public class RestClient implements Client {
 
   }
 
-  /*package private*/ void getProtocolVersionForService(final Request<?> request, Callback<ProtocolVersion> callback) {
-
+  /*package private*/ void getProtocolVersionForService(final Request<?> request, final RequestContext requestContext,
+      Callback<ProtocolVersion> callback)
+  {
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_GET_PROTOCOL.key());
     ProtocolVersionOption versionOption = request.getRequestOptions().getProtocolVersionOption();
     ProtocolVersion announcedProtocolVersion = null;
     // fetch server announced version only for 'ProtocolVersionOption.USE_LATEST_IF_AVAILABLE'
@@ -392,13 +413,15 @@ public class RestClient implements Client {
           _client.getMetadata(new URI(_uriPrefix + serviceName), Callbacks.handle(metadata -> {
             ProtocolVersion announcedVersion = getAnnouncedVersion(metadata);
             _announcedProtocolVersionCache.put(serviceName, announcedVersion);
-            callback.onSuccess(getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
+            final ProtocolVersion protocolVersion = getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
                 AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
                 AllProtocolVersions.LATEST_PROTOCOL_VERSION,
                 AllProtocolVersions.NEXT_PROTOCOL_VERSION,
                 announcedVersion,
                 versionOption,
-                _forceUseNextVersionOverride));
+                _forceUseNextVersionOverride);
+            TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_GET_PROTOCOL.key());
+            callback.onSuccess(protocolVersion);
           }, callback));
         } catch (URISyntaxException e) {
           throw new RuntimeException("Failed to create a valid URI to fetch properties for!");
@@ -734,14 +757,25 @@ public class RestClient implements Client {
   {
     try
     {
+      TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_SERIALIZATION.key());
       RestRequest request =
           buildRestRequest(uri, method, dataMap, headers, cookies, protocolVersion, requestOptions.getContentType(),
                            requestOptions.getAcceptTypes(), false);
+      TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_SERIALIZATION.key());
+
       String operation = OperationNameGenerator.generate(method, methodName);
       requestContext.putLocalAttr(R2Constants.OPERATION, operation);
       requestContext.putLocalAttr(R2Constants.REQUEST_COMPRESSION_OVERRIDE, requestOptions.getRequestCompressionOverride());
       requestContext.putLocalAttr(R2Constants.RESPONSE_COMPRESSION_OVERRIDE, requestOptions.getResponseCompressionOverride());
-      _client.restRequest(request, requestContext, callback);
+
+      TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI.key());
+      TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_R2.key());
+      final Callback<RestResponse> wrappedCallback = new TimingCallback.Builder<>(callback, requestContext)
+          .addEndTimingKey(FrameworkTimingKeys.CLIENT_RESPONSE_R2.key())
+          .addBeginTimingKey(FrameworkTimingKeys.CLIENT_RESPONSE_RESTLI.key())
+          .build();
+
+      _client.restRequest(request, requestContext, wrappedCallback);
     }
     catch (Exception e)
     {
@@ -781,16 +815,27 @@ public class RestClient implements Client {
   {
     try
     {
+      TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_SERIALIZATION.key());
       final StreamRequest request =
           buildStreamRequest(uri, method, dataMap, headers, cookies, protocolVersion, requestOptions.getContentType(),
                              requestOptions.getAcceptTypes(), requestOptions.getAcceptResponseAttachments(),
                              streamingAttachments);
+      TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_SERIALIZATION.key());
+
       String operation = OperationNameGenerator.generate(method, methodName);
       requestContext.putLocalAttr(R2Constants.OPERATION, operation);
       requestContext.putLocalAttr(R2Constants.REQUEST_COMPRESSION_OVERRIDE, requestOptions.getRequestCompressionOverride());
       requestContext.putLocalAttr(R2Constants.RESPONSE_COMPRESSION_OVERRIDE,
                                   requestOptions.getResponseCompressionOverride());
-      _client.streamRequest(request, requestContext, callback);
+
+      TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI.key());
+      TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_R2.key());
+      final Callback<StreamResponse> wrappedCallback = new TimingCallback.Builder<>(callback, requestContext)
+          .addEndTimingKey(FrameworkTimingKeys.CLIENT_RESPONSE_R2.key())
+          .addBeginTimingKey(FrameworkTimingKeys.CLIENT_RESPONSE_RESTLI.key())
+          .build();
+
+      _client.streamRequest(request, requestContext, wrappedCallback);
     }
     catch (Exception e)
     {
@@ -1003,7 +1048,7 @@ public class RestClient implements Client {
       final ScatterGatherStrategy strategy,
       final Callback<Response<T>> callback)
   {
-    getProtocolVersionForService(request, new Callback<ProtocolVersion>()
+    getProtocolVersionForService(request, requestContext, new Callback<ProtocolVersion>()
     {
       @Override
       public void onError(Throwable e)

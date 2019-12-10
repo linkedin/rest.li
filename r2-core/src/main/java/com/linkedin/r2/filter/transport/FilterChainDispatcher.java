@@ -20,11 +20,15 @@ package com.linkedin.r2.filter.transport;
 
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.Response;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 
 import java.util.Map;
@@ -66,7 +70,8 @@ public class FilterChainDispatcher implements TransportDispatcher
   public void handleRestRequest(RestRequest req, Map<String, String> wireAttrs,
                                        RequestContext requestContext, TransportCallback<RestResponse> callback)
   {
-    ResponseFilter.registerCallback(callback, requestContext);
+    ResponseFilter.registerCallback(createWrappedServerTimingCallback(requestContext, callback), requestContext);
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_R2_FILTER_CHAIN.key());
     _filters.onRestRequest(req, requestContext, wireAttrs);
   }
 
@@ -75,7 +80,26 @@ public class FilterChainDispatcher implements TransportDispatcher
                                 RequestContext requestContext,
                                 TransportCallback<StreamResponse> callback)
   {
-    ResponseFilter.registerCallback(callback, requestContext);
+    ResponseFilter.registerCallback(createWrappedServerTimingCallback(requestContext, callback), requestContext);
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_R2_FILTER_CHAIN.key());
     _filters.onStreamRequest(req, requestContext, wireAttrs);
+  }
+
+  /**
+   * Creates a thin wrapper around the given callback which simply marks the end of the R2 server response filter chain
+   * before executing the wrapped callback.
+   *
+   * @param requestContext request context
+   * @param callback callback to wrap
+   * @param <T> callback value type (rest or stream response)
+   * @return wrapped callback
+   */
+  private static <T extends Response> TransportCallback<T> createWrappedServerTimingCallback(RequestContext requestContext,
+      TransportCallback<T> callback)
+  {
+    return (TransportResponse<T> response) -> {
+      TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_R2_FILTER_CHAIN.key());
+      callback.onResponse(response);
+    };
   }
 }

@@ -1,5 +1,8 @@
 28.0.13
 -------
+(RB=1745918)
+Add support for framework latency instrumentation
+
 (RB=1874221)
 Mark data schema directories as resource roots
 

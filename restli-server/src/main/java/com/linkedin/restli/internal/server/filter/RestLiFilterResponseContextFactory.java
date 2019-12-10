@@ -18,6 +18,7 @@ package com.linkedin.restli.internal.server.filter;
 
 
 import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
@@ -30,6 +31,7 @@ import com.linkedin.restli.server.filter.FilterResponseContext;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 
@@ -102,5 +104,10 @@ public class RestLiFilterResponseContextFactory
         return responseData;
       }
     };
+  }
+
+  public RequestContext getRequestContext()
+  {
+    return _method.getContext().getRawRequestContext();
   }
 }

@@ -26,6 +26,8 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.BaseConnector;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.Observer;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.transport.common.MessageType;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
@@ -84,6 +86,8 @@ public class HttpDispatcher
                             RequestContext context,
                             TransportCallback<RestResponse> callback)
   {
+    markOnRequestTimings(context);
+
     final Map<String, String> headers = new HashMap<String, String>(req.getHeaders());
     final Map<String, String> wireAttrs = WireAttributeHelper.removeWireAttributes(headers);
 
@@ -131,6 +135,8 @@ public class HttpDispatcher
                             RequestContext context,
                             final TransportCallback<StreamResponse> callback)
   {
+    markOnRequestTimings(context);
+
     final Map<String, String> headers = new HashMap<String, String>(req.getHeaders());
     final Map<String, String> wireAttrs = WireAttributeHelper.removeWireAttributes(headers);
 
@@ -196,5 +202,11 @@ public class HttpDispatcher
       connector.cancel();
       callback.onResponse(TransportResponseImpl.<StreamResponse>error(e, Collections.<String, String>emptyMap()));
     }
+  }
+
+  private static void markOnRequestTimings(RequestContext requestContext)
+  {
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST.key());
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_R2.key());
   }
 }

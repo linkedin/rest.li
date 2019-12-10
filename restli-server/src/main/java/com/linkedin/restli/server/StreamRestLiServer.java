@@ -18,6 +18,8 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.StreamResponseBuilder;
 import com.linkedin.r2.message.stream.entitystream.DrainReader;
 import com.linkedin.r2.message.stream.entitystream.adapter.EntityStreamAdapters;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpMethod;
@@ -241,8 +243,11 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
 
     if (_useStreamCodec && reqCodec != null && respCodec != null)
     {
+      final RequestContext requestContext = routingResult.getContext().getRawRequestContext();
+      TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI_DESERIALIZATION.key());
       reqCodec.decodeMap(EntityStreamAdapters.toGenericEntityStream(request.getEntityStream()))
           .handle((dataMap, e) -> {
+            TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI_DESERIALIZATION.key());
             Throwable error = null;
             if (e == null)
             {
@@ -305,17 +310,20 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
       RoutingResult routingResult,
       ContentType contentType)
   {
-    return new StreamToRestLiResponseCallbackAdapter(callback, contentType);
+    return new StreamToRestLiResponseCallbackAdapter(callback, contentType, routingResult);
   }
 
   static class StreamToRestLiResponseCallbackAdapter extends CallbackAdapter<StreamResponse, RestLiResponse>
   {
     private final ContentType _contentType;
+    protected final RoutingResult _routingResult;
 
-    StreamToRestLiResponseCallbackAdapter(Callback<StreamResponse> callback, ContentType contentType)
+    StreamToRestLiResponseCallbackAdapter(Callback<StreamResponse> callback, ContentType contentType,
+        RoutingResult routingResult)
     {
       super(callback);
       _contentType = contentType;
+      _routingResult = routingResult;
     }
 
     @Override
@@ -326,6 +334,9 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
           .setHeaders(restLiResponse.getHeaders())
           .setCookies(CookieUtil.encodeSetCookies(restLiResponse.getCookies()))
           .setStatus(restLiResponse.getStatus().getCode());
+
+      final RequestContext requestContext = _routingResult.getContext().getRawRequestContext();
+      TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_SERIALIZATION.key());
 
       EntityStream<ByteString> entityStream;
       if (restLiResponse.hasData())
@@ -338,7 +349,10 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
         entityStream = EntityStreams.emptyStream();
       }
 
-      return responseBuilder.build(EntityStreamAdapters.fromGenericEntityStream(entityStream));
+      final StreamResponse streamResponse = responseBuilder.build(EntityStreamAdapters.fromGenericEntityStream(entityStream));
+
+      TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_SERIALIZATION.key());
+      return streamResponse;
     }
 
     @Override
@@ -346,8 +360,14 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
     {
       if (e instanceof RestLiResponseException)
       {
+        final RequestContext requestContext = _routingResult.getContext().getRawRequestContext();
+        TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_ERROR_SERIALIZATION.key());
+
         RestLiResponseException responseException = (RestLiResponseException) e;
-        return ResponseUtils.buildStreamException(responseException, _contentType.getStreamCodec());
+        final Throwable throwable = ResponseUtils.buildStreamException(responseException, _contentType.getStreamCodec());
+
+        TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_ERROR_SERIALIZATION.key());
+        return throwable;
       }
       else
       {

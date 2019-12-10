@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.internal.server.filter;
 
-
 import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
@@ -76,7 +75,7 @@ public class RestLiFilterChain
    * @param requestContext
    *          {@link FilterRequestContext}
    * @param responseContext
- *          {@link FilterResponseContext}
+   *          {@link FilterResponseContext}
    */
   public void onError(Throwable th, FilterRequestContext requestContext, FilterResponseContext responseContext)
   {

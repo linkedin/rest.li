@@ -29,10 +29,8 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.entitystream.EntityStream;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
 import com.linkedin.r2.message.timing.TimingContextUtil;
-import com.linkedin.r2.message.timing.TimingKey;
-import com.linkedin.r2.message.timing.TimingImportance;
-import com.linkedin.r2.message.timing.TimingNameConstants;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
@@ -71,10 +69,6 @@ public class ResourceContextImpl implements ServerResourceContext
 {
   // Capacity based on guessumption that custom data count in most cases is either zero or one
   private static final int INITIAL_CUSTOM_REQUEST_CONTEXT_CAPACITY = 1;
-
-  // Timing key to track the duration of Rest.li 2.0.0 URI parsing
-  private static final TimingKey URI_PARSE_2_0_0_TIMING_KEY = TimingKey.registerNewKey(
-      ResourceContextImpl.class.getSimpleName() + "." + TimingNameConstants.RESTLI_URI_PARSING, TimingImportance.LOW);
 
   private final MutablePathKeys                     _pathKeys;
   private final Request                             _request;
@@ -159,15 +153,21 @@ public class ResourceContextImpl implements ServerResourceContext
     {
       if (_protocolVersion.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
       {
-        TimingContextUtil.markTiming(requestContext, URI_PARSE_2_0_0_TIMING_KEY);
+        TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI_URI_PARSE_2.key());
+
         Map<String, List<String>> queryParameters = UriComponent.decodeQuery(_request.getURI(), false);
         _parameters = URIParamUtils.parseUriParams(queryParameters);
-        TimingContextUtil.markTiming(requestContext, URI_PARSE_2_0_0_TIMING_KEY);
+
+        TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI_URI_PARSE_2.key());
       }
       else
       {
+        TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI_URI_PARSE_1.key());
+
         Map<String, List<String>> queryParameters = ArgumentUtils.getQueryParameters(_request.getURI());
         _parameters = QueryParamsDataMap.parseDataMapKeys(queryParameters);
+
+        TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI_URI_PARSE_1.key());
       }
     }
     catch (PathSegmentSyntaxException e)
@@ -175,6 +175,8 @@ public class ResourceContextImpl implements ServerResourceContext
       throw new RestLiSyntaxException("Invalid query parameters syntax: "
           + _request.getURI().toString(), e);
     }
+
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI_PROJECTION_DECODE.key());
 
     if (_parameters.containsKey(RestConstants.FIELDS_PARAM))
     {
@@ -202,6 +204,8 @@ public class ResourceContextImpl implements ServerResourceContext
     {
       _pagingProjectionMask = null;
     }
+
+    TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI_PROJECTION_DECODE.key());
 
     _batchKeyErrors = new HashMap<>();
 

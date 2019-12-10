@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.internal.common;
 
-
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -28,8 +27,8 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
-
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.net.URI;
 import java.util.regex.Pattern;
 
 

@@ -30,6 +30,8 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.BaseConnector;
 import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
+import com.linkedin.r2.message.timing.TimingContextUtil;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import java.util.HashMap;
@@ -62,6 +64,7 @@ public class DispatcherRequestFilter implements StreamFilter, RestFilter
                             Map<String, String> wireAttrs,
                             NextFilter<RestRequest, RestResponse> nextFilter)
   {
+    markOnRequestTimings(requestContext);
     try
     {
       _dispatcher.handleRestRequest(req, wireAttrs, requestContext,
@@ -79,6 +82,7 @@ public class DispatcherRequestFilter implements StreamFilter, RestFilter
       final NextFilter<REQ, RES> nextFilter)
   {
     return res -> {
+      markOnResponseTimings(requestContext);
       final Map<String, String> wireAttrs = res.getWireAttributes();
       if (res.hasError())
       {
@@ -96,6 +100,7 @@ public class DispatcherRequestFilter implements StreamFilter, RestFilter
                             Map<String, String> wireAttrs,
                             NextFilter<StreamRequest, StreamResponse> nextFilter)
   {
+    markOnRequestTimings(requestContext);
     Connector connector = null;
     try
     {
@@ -124,6 +129,7 @@ public class DispatcherRequestFilter implements StreamFilter, RestFilter
     return res -> {
       if (responded.compareAndSet(false, true))
       {
+        markOnResponseTimings(requestContext);
         final Map<String, String> wireAttrs = res.getWireAttributes();
         if (res.hasError())
         {
@@ -135,6 +141,20 @@ public class DispatcherRequestFilter implements StreamFilter, RestFilter
         }
       }
     };
+  }
+
+  private static void markOnRequestTimings(RequestContext requestContext)
+  {
+    TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_R2_FILTER_CHAIN.key());
+    TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_R2.key());
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI.key());
+  }
+
+  private static void markOnResponseTimings(RequestContext requestContext)
+  {
+    TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI.key());
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_R2.key());
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_R2_FILTER_CHAIN.key());
   }
 
   private static class Connector extends BaseConnector

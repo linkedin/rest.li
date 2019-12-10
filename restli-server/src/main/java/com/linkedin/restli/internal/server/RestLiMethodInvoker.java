@@ -23,6 +23,9 @@ import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.parseq.promise.PromiseListener;
 import com.linkedin.parseq.promise.Promises;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.common.ConfigValue;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
@@ -89,6 +92,11 @@ public class RestLiMethodInvoker
       final Object... arguments) throws IllegalAccessException
   {
     final Method method = descriptor.getMethod();
+
+    final RequestContext requestContext = resourceContext.getRawRequestContext();
+    TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI.key());
+    TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST.key());
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.RESOURCE.key());
 
     try
     {
@@ -305,8 +313,8 @@ public class RestLiMethodInvoker
       ResourceMethodConfig resourceMethodConfig = invokableMethod.getResourceMethodConfig();
       Object resource = _resourceFactory.create(resourceMethodDescriptor.getResourceModel().getResourceClass());
 
-      //Acquire a handle on the ResourceContext when setting it in order to obtain any response attachments that need to
-      //be streamed back.
+      // Acquire a handle on the ResourceContext when setting it in order to obtain any response attachments that need to
+      // be streamed back.
       final ServerResourceContext resourceContext = invokableMethod.getContext();
       if (BaseResource.class.isAssignableFrom(resource.getClass()))
       {

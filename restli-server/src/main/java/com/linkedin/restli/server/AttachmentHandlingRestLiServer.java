@@ -335,14 +335,11 @@ class AttachmentHandlingRestLiServer extends StreamRestLiServer
 
   private static class AttachmentHandlingStreamToRestLiResponseCallbackAdapter extends StreamToRestLiResponseCallbackAdapter
   {
-    private final RoutingResult _routingResult;
-
     AttachmentHandlingStreamToRestLiResponseCallbackAdapter(Callback<StreamResponse> callback,
         RoutingResult routingResult,
         com.linkedin.restli.common.ContentType contentType)
     {
-      super(callback, contentType);
-      _routingResult = routingResult;
+      super(callback, contentType, routingResult);
     }
 
     @Override

@@ -26,6 +26,8 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.Observer;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
@@ -76,12 +78,14 @@ public class RequestFinalizerDispatcher implements TransportDispatcher
   {
     private final RequestFinalizerManagerImpl _manager;
     private final TransportCallback<T> _transportCallback;
+    private final RequestContext _requestContext;
 
     public RequestFinalizerTransportCallback(TransportCallback<T> transportCallback, RequestContext requestContext,
         Request request)
     {
       _manager = addRequestFinalizerManager(request, requestContext);
       _transportCallback = transportCallback;
+      _requestContext = requestContext;
     }
 
     private RequestFinalizerManagerImpl addRequestFinalizerManager(Request request, RequestContext requestContext)
@@ -164,6 +168,9 @@ public class RequestFinalizerDispatcher implements TransportDispatcher
 
     private void finalizeRequest(Response response, Throwable error)
     {
+      TimingContextUtil.endTiming(_requestContext, FrameworkTimingKeys.SERVER_RESPONSE_R2.key());
+      TimingContextUtil.endTiming(_requestContext, FrameworkTimingKeys.SERVER_RESPONSE.key());
+
       final boolean finalized = _manager.finalizeRequest(response, error);
 
       if (!finalized)

@@ -35,6 +35,10 @@ public class TimingContextUtil
   private static final Logger LOG = LoggerFactory.getLogger(TimingContextUtil.class);
 
   public static final String TIMINGS_KEY_NAME = "timings";
+  public static final String TIMING_IMPORTANCE_THRESHOLD_KEY_NAME = "timingImportanceThreshold";
+
+  // Used to temporarily disable latency instrumentation for scatter-gather requests
+  public static final String TIMINGS_DISABLED_KEY_NAME = "timingsDisabled";
 
   /**
    * Looks for all timing records in the RequestContext, initiate one if not present.
@@ -66,6 +70,11 @@ public class TimingContextUtil
    */
   public static void markTiming(RequestContext requestContext, TimingKey timingKey)
   {
+    if (areTimingsDisabled(requestContext))
+    {
+      return;
+    }
+
     Map<TimingKey, TimingContext> timings = getTimingsMap(requestContext);
     if (timings.containsKey(timingKey))
     {
@@ -73,7 +82,10 @@ public class TimingContextUtil
     }
     else
     {
-      timings.put(timingKey, new TimingContext(timingKey));
+      if (checkTimingImportanceThreshold(requestContext, timingKey))
+      {
+        timings.put(timingKey, new TimingContext(timingKey));
+      }
     }
   }
 
@@ -87,14 +99,116 @@ public class TimingContextUtil
    */
   public static void markTiming(RequestContext requestContext, TimingKey timingKey, long durationNano)
   {
-    Map<TimingKey, TimingContext> timings = getTimingsMap(requestContext);
-    if (!timings.containsKey(timingKey))
+    if (areTimingsDisabled(requestContext))
     {
-      timings.put(timingKey, new TimingContext(timingKey, durationNano));
+      return;
+    }
+
+    Map<TimingKey, TimingContext> timings = getTimingsMap(requestContext);
+    if (timings.containsKey(timingKey))
+    {
+      logWarning("Could not mark timing for a key that already exists: " + timingKey);
     }
     else
     {
-      LOG.warn("Could not mark timing for a key that already exists: " + timingKey.getName());
+      if (checkTimingImportanceThreshold(requestContext, timingKey))
+      {
+        timings.put(timingKey, new TimingContext(timingKey, durationNano));
+      }
+    }
+  }
+
+  /**
+   * Similar to {@link #markTiming(RequestContext, TimingKey)}, except explicitly checks that the timing key being
+   * marked has not yet begun.
+   * @param requestContext Timing records will be saved to this request context
+   * @param timingKey Timing records will be identified by this key
+   */
+  public static void beginTiming(RequestContext requestContext, TimingKey timingKey)
+  {
+    if (areTimingsDisabled(requestContext))
+    {
+      return;
+    }
+
+    if (checkTimingImportanceThreshold(requestContext, timingKey))
+    {
+      Map<TimingKey, TimingContext> timings = getTimingsMap(requestContext);
+      if (timings.containsKey(timingKey))
+      {
+        logWarning("Cannot begin timing, timing has already begun for key: " + timingKey);
+      }
+      else
+      {
+        timings.put(timingKey, new TimingContext(timingKey));
+      }
+    }
+  }
+
+  /**
+   * Similar to {@link #markTiming(RequestContext, TimingKey)}, except explicitly checks that the timing key being
+   * marked has already begun and has not yet ended.
+   * @param requestContext Timing records will be saved to this request context
+   * @param timingKey Timing records will be identified by this key
+   */
+  public static void endTiming(RequestContext requestContext, TimingKey timingKey)
+  {
+    if (areTimingsDisabled(requestContext))
+    {
+      return;
+    }
+
+    Map<TimingKey, TimingContext> timings = getTimingsMap(requestContext);
+    if (timings.containsKey(timingKey))
+    {
+      timings.get(timingKey).complete();
+    }
+    else if (checkTimingImportanceThreshold(requestContext, timingKey))
+    {
+      // Although we attempt to end the timing regardless of timing importance, this should be conditionally logged
+      logWarning("Cannot end timing, timing hasn't begun yet for key: " + timingKey);
+    }
+  }
+
+  /**
+   * Determines whether the given {@link TimingKey} is included by the {@link TimingImportance} threshold indicated in
+   * the {@link RequestContext}.
+   * @param requestContext request context that may contain a timing importance threshold setting
+   * @param timingKey timing key being compared
+   * @return true if the timing importance threshold is null or if the timing key's importance is at least the threshold
+   */
+  static boolean checkTimingImportanceThreshold(RequestContext requestContext, TimingKey timingKey)
+  {
+    TimingImportance timingImportanceThreshold = (TimingImportance) requestContext.getLocalAttr(
+        TIMING_IMPORTANCE_THRESHOLD_KEY_NAME);
+    return timingImportanceThreshold == null || timingKey.getTimingImportance().isAtLeast(timingImportanceThreshold);
+  }
+
+  /**
+   * Determines whether latency instrumentation is disabled altogether for some {@link RequestContext}.
+   * @param requestContext request context that may contain a setting to disable timings
+   * @return true if timings are disabled for this request
+   */
+  private static boolean areTimingsDisabled(RequestContext requestContext)
+  {
+    final Object timingsDisabled = requestContext.getLocalAttr(TIMINGS_DISABLED_KEY_NAME);
+    return timingsDisabled instanceof Boolean && (boolean) timingsDisabled;
+  }
+
+  /**
+   * Logs a warning. If debug logging in enabled then it also logs the current stacktrace. This is done because
+   * we expect to encounter issues with this functionality and we want to have more info when it happens.
+   * @param message message to be logged.
+   */
+  private static void logWarning(String message)
+  {
+    if (LOG.isDebugEnabled())
+    {
+      LOG.debug(message, new RuntimeException(message));
+    }
+    else
+    {
+      LOG.warn(message);
     }
   }
 
@@ -142,14 +256,32 @@ public class TimingContextUtil
      */
     public void complete()
     {
-      if (_durationNano == -1)
-      {
-        _durationNano = System.nanoTime() - _startTimeNano;
-      }
-      else
+      if (isComplete())
       {
         LOG.debug("Trying to complete an already completed timing with key " + _timingKey.getName() + ". This call will have no effect.");
       }
+      else
+      {
+        _durationNano = System.nanoTime() - _startTimeNano;
+      }
+    }
+
+    /**
+     * Returns true if this record has completed.
+     * @return true if complete
+     */
+    public boolean isComplete()
+    {
+      return _durationNano != -1;
+    }
+
+    /**
+     * Returns the start time of this record in nanoseconds. Only intended to be used for unit testing.
+     * @return start time in nanoseconds
+     */
+    long getStartTimeNano()
+    {
+      return _startTimeNano;
     }
   }
 }

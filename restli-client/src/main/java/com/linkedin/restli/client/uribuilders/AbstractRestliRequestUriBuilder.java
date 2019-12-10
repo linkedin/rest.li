@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.client.uribuilders;
 
-
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.linkedin.data.DataMap;
@@ -28,7 +27,6 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.internal.client.QueryParamsUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
-
 import java.net.URI;
 
 

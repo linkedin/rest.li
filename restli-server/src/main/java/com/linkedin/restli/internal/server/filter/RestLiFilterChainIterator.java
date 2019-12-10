@@ -17,6 +17,8 @@
 package com.linkedin.restli.internal.server.filter;
 
 
+import com.linkedin.r2.message.timing.TimingContextUtil;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
@@ -77,6 +79,9 @@ public class RestLiFilterChainIterator
     }
     else
     {
+      TimingContextUtil.endTiming(filterResponseContextFactory.getRequestContext(),
+          FrameworkTimingKeys.SERVER_REQUEST_RESTLI_FILTER_CHAIN.key());
+
       // Now that all the filters have been invoked successfully, invoke onSuccess on the filter chain callback.
       _filterChainDispatcher.onRequestSuccess(requestContext.getRequestData(), restLiCallback);
     }

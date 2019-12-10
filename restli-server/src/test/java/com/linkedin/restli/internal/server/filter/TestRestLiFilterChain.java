@@ -1,7 +1,9 @@
 package com.linkedin.restli.internal.server.filter;
 
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
+import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.filter.testfilters.CountFilter;
@@ -96,6 +98,8 @@ public class TestRestLiFilterChain
         new CountFilter(),
         new CountFilter()
     };
+    when(_mockFilterResponseContextFactory.getRequestContext()).thenAnswer(invocation -> new RequestContext());
+    when(_method.getContext()).thenAnswer(invocation -> new ResourceContextImpl());
   }
 
   @AfterMethod

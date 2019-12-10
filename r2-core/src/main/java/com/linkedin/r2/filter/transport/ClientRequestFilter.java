@@ -27,6 +27,8 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
@@ -59,6 +61,8 @@ public class ClientRequestFilter implements StreamFilter, RestFilter
                             Map<String, String> wireAttrs,
                             final NextFilter<RestRequest, RestResponse> nextFilter)
   {
+    markOnRequestTimings(requestContext);
+
     try
     {
       _client.restRequest(req, requestContext, wireAttrs, createCallback(requestContext, nextFilter));
@@ -74,6 +78,8 @@ public class ClientRequestFilter implements StreamFilter, RestFilter
                             Map<String, String> wireAttrs,
                             final NextFilter<StreamRequest, StreamResponse> nextFilter)
   {
+    markOnRequestTimings(requestContext);
+
     try
     {
       _client.streamRequest(req, requestContext, wireAttrs, createCallback(requestContext, nextFilter));
@@ -89,6 +95,7 @@ public class ClientRequestFilter implements StreamFilter, RestFilter
           final NextFilter<REQ, RES> nextFilter)
   {
     return res -> {
+      markOnResponseTimings(requestContext);
       final Map<String, String> wireAttrs = res.getWireAttributes();
       if (res.hasError())
       {
@@ -99,5 +106,19 @@ public class ClientRequestFilter implements StreamFilter, RestFilter
         nextFilter.onResponse(res.getResponse(), requestContext, wireAttrs);
       }
     };
+  }
+
+  private static void markOnRequestTimings(RequestContext requestContext)
+  {
+    TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_R2_FILTER_CHAIN.key());
+    TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_R2.key());
+    TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST.key());
+  }
+
+  private static void markOnResponseTimings(RequestContext requestContext)
+  {
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_RESPONSE.key());
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_RESPONSE_R2.key());
+    TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_RESPONSE_R2_FILTER_CHAIN.key());
   }
 }

@@ -54,6 +54,12 @@ public class TimingKey
     return _name;
   }
 
+  @Override
+  public String toString()
+  {
+    return getName();
+  }
+
   public String getType()
   {
     return _type;

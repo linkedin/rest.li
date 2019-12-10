@@ -2,11 +2,11 @@ package com.linkedin.restli.server;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.codec.symbol.SymbolTableProvider;
-import com.linkedin.data.codec.symbol.SymbolTableProviderHolder;
 import com.linkedin.parseq.Engine;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -210,6 +210,9 @@ abstract class BaseRestLiServer
         argumentBuilder);
 
     RestLiFilterChain filterChain = new RestLiFilterChain(_filters, filterChainDispatcher, filterChainCallback);
+
+    TimingContextUtil.beginTiming(routingResult.getContext().getRawRequestContext(),
+        FrameworkTimingKeys.SERVER_REQUEST_RESTLI_FILTER_CHAIN.key());
 
     filterChain.onRequest(filterContext, filterResponseContextFactory);
   }

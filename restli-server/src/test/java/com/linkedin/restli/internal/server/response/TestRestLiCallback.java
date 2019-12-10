@@ -30,6 +30,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.HeaderUtil;
+import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.ResponseType;
 import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
@@ -63,6 +64,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -119,6 +121,7 @@ public class TestRestLiCallback
 
     _filterResponseContextFactory = new RestLiFilterResponseContextFactory(_restRequest, _routingResult,
                                                                                    _responseHandler);
+    when(_routingResult.getContext()).thenReturn(new ResourceContextImpl());
     ErrorResponseBuilder errorResponseBuilder = new ErrorResponseBuilder();
     FilterChainDispatcher filterChainDispatcher = new FilterChainDispatcherImpl(_routingResult,
         _methodInvoker, _argumentBuilder);
@@ -142,9 +145,10 @@ public class TestRestLiCallback
   }
 
   @AfterMethod
-  protected void resetMocks()
+  protected void resetMocks() throws Exception
   {
     reset(_filter, _filterRequestContext, _restRequest, _routingResult, _responseHandler, _callback);
+    when(_routingResult.getContext()).thenReturn(new ResourceContextImpl());
   }
 
   @Test
@@ -166,7 +170,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
     verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, result);
     verify(_callback).onSuccess(partialResponse);
-    verifyZeroInteractions(_restRequest, _routingResult);
+    verifyZeroInteractions(_restRequest);
     verifyNoMoreInteractions(_responseHandler, _callback);
   }
 
@@ -189,7 +193,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
     verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, result);
     verify(_callback).onSuccess(partialResponse);
-    verifyZeroInteractions(_restRequest, _routingResult);
+    verifyZeroInteractions(_restRequest);
     verifyNoMoreInteractions(_responseHandler, _callback);
   }
 
@@ -214,7 +218,7 @@ public class TestRestLiCallback
     ArgumentCaptor<RestLiResponseException> partialRestResponseExceptionCaptor =
         ArgumentCaptor.forClass(RestLiResponseException.class);
     verify(_callback).onError(partialRestResponseExceptionCaptor.capture());
-    verifyZeroInteractions(_restRequest, _routingResult);
+    verifyZeroInteractions(_restRequest);
     verifyNoMoreInteractions(_responseHandler, _callback);
 
     RestLiResponse restLiResponse = partialRestResponseExceptionCaptor.getValue().getRestLiResponse();
@@ -259,7 +263,6 @@ public class TestRestLiCallback
     assertEquals(exceptionCaptor.getValue().getCause(), ex);
     assertEquals(exceptionCaptor.getValue().getRestLiResponse(), partialResponse);
     verify(_restRequest, times(1)).getHeaders();
-    verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     Map<String, String> augErrorHeaders = augErrorHeadersCapture.getValue();
     assertNotNull(augErrorHeaders);
@@ -313,7 +316,6 @@ public class TestRestLiCallback
     assertEquals(exceptionCaptor.getValue().getCause(), wrappedEx);
     assertEquals(exceptionCaptor.getValue().getRestLiResponse(), partialResponse);
     verify(_restRequest, times(1)).getHeaders();
-    verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     RestLiServiceException restliEx = exCapture.getValue();
     assertNotNull(restliEx);
@@ -373,7 +375,6 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
     verify(_callback).onError(any(RestLiResponseException.class));
     verify(_restRequest).getHeaders();
-    verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
   }
 
@@ -459,7 +460,7 @@ public class TestRestLiCallback
     verify(_responseHandler).buildRestLiResponseData(_restRequest, _routingResult, result);
     verify(_responseHandler).buildPartialResponse(_routingResult, appResponseData);
     verify(_callback).onSuccess(partialResponse);
-    verifyZeroInteractions(_restRequest, _routingResult);
+    verifyZeroInteractions(_restRequest);
     verifyNoMoreInteractions(_responseHandler, _callback);
   }
 
@@ -532,7 +533,6 @@ public class TestRestLiCallback
     expectedHeaders.put("X-RestLi-Protocol-Version", "1.0.0");
     expectedHeaders.put("error-fixed", "second-filter");
 
-    verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_responseHandler, _callback);
     assertFalse(appResponseData.getResponseEnvelope().isErrorResponse());
     assertEquals(appResponseData.getResponseEnvelope().getRecord(), entityFromFilter);
@@ -612,7 +612,6 @@ public class TestRestLiCallback
     ArgumentCaptor<RestLiResponseException> partialRestResponseExceptionCaptor =
         ArgumentCaptor.forClass(RestLiResponseException.class);
     verify(_callback).onError(partialRestResponseExceptionCaptor.capture());
-    verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_responseHandler, _callback);
 
     RestLiResponseException restLiResponseException = partialRestResponseExceptionCaptor.getValue();
@@ -676,7 +675,6 @@ public class TestRestLiCallback
         ArgumentCaptor.forClass(RestLiResponseException.class);
     verify(_callback).onError(partialRestResponseExceptionCaptor.capture());
 
-    verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_responseHandler, _callback);
 
     RestLiResponseException restLiResponseException = partialRestResponseExceptionCaptor.getValue();
@@ -759,7 +757,6 @@ public class TestRestLiCallback
         ArgumentCaptor.forClass(RestLiResponseException.class);
     verify(_callback).onError(partialRestResponseExceptionCaptor.capture());
 
-    verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_responseHandler, _callback);
 
     RestLiResponseException restLiResponseException = partialRestResponseExceptionCaptor.getValue();
@@ -871,7 +868,6 @@ public class TestRestLiCallback
         ArgumentCaptor.forClass(RestLiResponseException.class);
     verify(_callback).onError(partialRestResponseExceptionCaptor.capture());
     verify(_restRequest, times(1)).getHeaders();
-    verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
 
     final RestLiServiceException restliEx1 = exCapture.getAllValues().get(0);
@@ -975,7 +971,6 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, responseData);
     verify(_callback).onSuccess(partialResponse);
     verify(_restRequest, times(1)).getHeaders();
-    verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     RestLiServiceException restliEx = exCapture.getValue();
     assertNotNull(restliEx);
@@ -1047,7 +1042,6 @@ public class TestRestLiCallback
         ArgumentCaptor.forClass(RestLiResponseException.class);
     verify(_callback).onError(partialRestResponseExceptionCaptor.capture());
     verify(_restRequest).getHeaders();
-    verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     assertNotNull(responseAppData);
     assertEquals(HttpStatus.S_402_PAYMENT_REQUIRED, responseAppData.getResponseEnvelope().getStatus());
@@ -1208,7 +1202,6 @@ public class TestRestLiCallback
     verify(_responseHandler).buildPartialResponse(_routingResult, responseAppData);
     verify(_callback).onSuccess(partialResponse);
     verify(_restRequest).getHeaders();
-    verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     assertNotNull(responseAppData);
     assertEquals(HttpStatus.S_402_PAYMENT_REQUIRED, responseAppData.getResponseEnvelope().getStatus());
@@ -1312,7 +1305,6 @@ public class TestRestLiCallback
         ArgumentCaptor.forClass(RestLiResponseException.class);
     verify(_callback).onError(partialRestResponseExceptionCaptor.capture());
     verify(_restRequest).getHeaders();
-    verifyZeroInteractions(_routingResult);
     verifyNoMoreInteractions(_restRequest, _responseHandler, _callback);
     assertNotNull(responseAppData);
     assertEquals(HttpStatus.S_500_INTERNAL_SERVER_ERROR, responseAppData.getResponseEnvelope().getStatus());

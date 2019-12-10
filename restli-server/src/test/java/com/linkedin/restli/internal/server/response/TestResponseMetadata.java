@@ -18,6 +18,7 @@ package com.linkedin.restli.internal.server.response;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.pegasus.generator.examples.Foo;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
@@ -97,6 +98,7 @@ public class TestResponseMetadata {
     when(mockResourceMethodDescriptor.getType()).thenReturn(resourceMethod);
     when(mockRoutingResult.getContext()).thenReturn(mockContext);
     when(mockContext.getRestliProtocolVersion()).thenReturn(mockProtocolVersion);
+    when(mockContext.getRawRequestContext()).thenReturn(new RequestContext());
 
 
     final RestLiResponseHandler responseHandler = new RestLiResponseHandler();

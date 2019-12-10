@@ -31,5 +31,4 @@ public class TimingNameConstants
 
   public static final String DNS_RESOLUTION = "dns_resolution";
   public static final String SSL_HANDSHAKE = "ssl_handshake";
-  public static final String RESTLI_URI_PARSING = "UriParse_2.0.0";
 }

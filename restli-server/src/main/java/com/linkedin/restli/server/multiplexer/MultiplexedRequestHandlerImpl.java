@@ -28,6 +28,7 @@ import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.transport.common.RestRequestHandler;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpMethod;
@@ -120,6 +121,10 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
       callback.onError(RestException.forError(HttpStatus.S_405_METHOD_NOT_ALLOWED.getCode(), "Invalid method"));
       return;
     }
+
+    // Disable server-side latency instrumentation for multiplexed requests
+    requestContext.putLocalAttr(TimingContextUtil.TIMINGS_DISABLED_KEY_NAME, true);
+
     IndividualRequestMap individualRequests;
     try
     {
