@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2019 LinkedIn Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.linkedin.pegasus.gradle;
 
 import com.linkedin.pegasus.gradle.PegasusOptions.IdlOptions;
@@ -50,7 +51,6 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
-import org.gradle.api.file.ConfigurableFileTree;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
@@ -805,6 +805,9 @@ public class PegasusPlugin implements Plugin<Project>
 
       // make clean depends on deleting the generated directories
       project.getTasks().getByName("clean").dependsOn(cleanGeneratedDirTask);
+
+      // Set data schema directories as resource roots
+      configureDataSchemaResourcesRoot(project, sourceSet);
     });
 
     project.getExtensions().getExtraProperties().set(GENERATOR_CLASSLOADER_NAME, getClass().getClassLoader());
@@ -1868,5 +1871,32 @@ public class PegasusPlugin implements Plugin<Project>
     Set<T> result = new HashSet<>(left);
     result.removeAll(right);
     return result;
+  }
+
+  /**
+   * Configures the given source set so that its data schema directory (usually 'pegasus') is marked as a resource root.
+   * The purpose of this is to improve the IDE experience. Makes sure to exclude this directory from being packaged in
+   * with the default Jar task.
+   */
+  private static void configureDataSchemaResourcesRoot(Project project, SourceSet sourceSet)
+  {
+    sourceSet.resources(sourceDirectorySet -> {
+      final String dataSchemaPath = getDataSchemaPath(project, sourceSet);
+      final File dataSchemaRoot = project.file(dataSchemaPath);
+      sourceDirectorySet.srcDir(dataSchemaPath);
+      project.getLogger().info("Adding resource root '{}'", dataSchemaPath);
+
+      // Exclude the data schema directory from being copied into the default Jar task
+      sourceDirectorySet.getFilter().exclude(fileTreeElement -> {
+        final File file = fileTreeElement.getFile();
+        // Traversal starts with the children of a resource root, so checking the direct parent is sufficient
+        final boolean exclude = dataSchemaRoot.equals(file.getParentFile());
+        if (exclude)
+        {
+          project.getLogger().info("Excluding resource directory '{}'", file);
+        }
+        return exclude;
+      });
+    });
   }
 }
