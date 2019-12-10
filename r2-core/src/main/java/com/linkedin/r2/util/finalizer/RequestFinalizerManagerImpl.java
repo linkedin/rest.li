@@ -21,7 +21,8 @@ import com.linkedin.r2.message.Response;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +39,17 @@ import org.slf4j.LoggerFactory;
 public class RequestFinalizerManagerImpl implements RequestFinalizerManager
 {
   private static final Logger LOG = LoggerFactory.getLogger(RequestFinalizerManagerImpl.class);
+  private static final AtomicInteger INSTANCE_COUNT = new AtomicInteger();
 
   private final Request _request;
   private final RequestContext _requestContext;
   private final List<RequestFinalizer> _requestFinalizers;
   private final AtomicBoolean _isFinalized;
+
+  // For debug logging.
+  private final int _id;
+  private final AtomicInteger _numFinalizations = new AtomicInteger();
+  private RuntimeException _firstFinalization;
 
   public RequestFinalizerManagerImpl(Request request, RequestContext requestContext)
   {
@@ -51,6 +58,8 @@ public class RequestFinalizerManagerImpl implements RequestFinalizerManager
 
     _requestFinalizers = new CopyOnWriteArrayList<>();
     _isFinalized = new AtomicBoolean();
+
+    _id = INSTANCE_COUNT.getAndIncrement();
   }
 
   @Override
@@ -79,6 +88,12 @@ public class RequestFinalizerManagerImpl implements RequestFinalizerManager
   {
     if (_isFinalized.compareAndSet(false, true))
     {
+      if (LOG.isDebugEnabled())
+      {
+        _numFinalizations.incrementAndGet();
+        _firstFinalization = new RuntimeException("Finalized at time: " + System.currentTimeMillis());
+      }
+
       for (RequestFinalizer requestFinalizer: _requestFinalizers)
       {
         try
@@ -92,6 +107,21 @@ public class RequestFinalizerManagerImpl implements RequestFinalizerManager
       }
       return true;
     }
-    return false;
+    else
+    {
+      if (LOG.isDebugEnabled())
+      {
+        final int numFinalizations = _numFinalizations.incrementAndGet();
+
+        if (numFinalizations == 2)
+        {
+          // Log the first finalization since we now know the request will be finalized at least twice.
+          LOG.debug("Request finalized the first time. FinalizerManager ID = " + _id, _firstFinalization);
+        }
+
+        LOG.debug("Request finalized " + numFinalizations + " times. FinalizerManager ID = " + _id, new RuntimeException());
+      }
+      return false;
+    }
   }
 }

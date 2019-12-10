@@ -1,5 +1,10 @@
+28.0.13
+-------
+
 28.0.12
 -------
+(RB=1905097)
+Improve debug logging in RequestFinalizers.
 
 28.0.11
 -------

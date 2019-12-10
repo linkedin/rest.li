@@ -146,25 +146,9 @@ public class ClientRequestFinalizerFilter implements RestFilter, StreamFilter
     {
       final boolean finalized = manager.finalizeRequest(response, ex);
 
-      if (finalized)
+      if (!finalized)
       {
-        if (LOG.isDebugEnabled())
-        {
-          LOG.debug("Finalized request for the first time.", new RuntimeException("First client request finalizer."));
-        }
-      }
-      else
-      {
-        final String message = "Request has already been finalized, but we expect this to be the first time.";
-
-        if (LOG.isDebugEnabled())
-        {
-          LOG.debug(message, new RuntimeException("Client request finalizer warning."));
-        }
-        else
-        {
-          LOG.warn(message);
-        }
+        LOG.warn("Request has already been finalized, but we expect this to be the first time.");
       }
     }
   }

@@ -75,16 +75,12 @@ public class RequestFinalizerDispatcher implements TransportDispatcher
   private class RequestFinalizerTransportCallback<T extends Response> implements TransportCallback<T>
   {
     private final RequestFinalizerManagerImpl _manager;
-    private final RequestContext _requestContext;
-    private final Request _request;
     private final TransportCallback<T> _transportCallback;
 
     public RequestFinalizerTransportCallback(TransportCallback<T> transportCallback, RequestContext requestContext,
         Request request)
     {
       _manager = addRequestFinalizerManager(request, requestContext);
-      _requestContext = requestContext;
-      _request = request;
       _transportCallback = transportCallback;
     }
 
@@ -170,25 +166,9 @@ public class RequestFinalizerDispatcher implements TransportDispatcher
     {
       final boolean finalized = _manager.finalizeRequest(response, error);
 
-      if (finalized)
+      if (!finalized)
       {
-        if (LOG.isDebugEnabled())
-        {
-          LOG.debug("Finalized request for the first time.", new RuntimeException("First server request finalizer."));
-        }
-      }
-      else
-      {
-        final String message = "Request has already been finalized, but we expect this to be the first time.";
-
-        if (LOG.isDebugEnabled())
-        {
-          LOG.debug(message, new RuntimeException("Server request finalizer warning."));
-        }
-        else
-        {
-          LOG.warn(message);
-        }
+        LOG.warn("Request has already been finalized, but we expect this to be the first time.");
       }
     }
   }
