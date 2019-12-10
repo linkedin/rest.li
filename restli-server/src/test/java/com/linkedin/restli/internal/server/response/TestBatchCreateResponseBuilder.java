@@ -27,6 +27,7 @@ import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.BatchCreateIdResponse;
@@ -275,6 +276,7 @@ public class TestBatchCreateResponseBuilder
     EasyMock.expect(mockContext.isReturnEntityRequested()).andReturn(isReturnEntityRequested);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(null);
+    EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
     EasyMock.replay(mockContext);
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
@@ -321,6 +323,7 @@ public class TestBatchCreateResponseBuilder
     EasyMock.expect(mockContext.isReturnEntityRequested()).andReturn(true);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
+    EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
     EasyMock.replay(mockContext);
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
@@ -398,6 +401,7 @@ public class TestBatchCreateResponseBuilder
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(null).atLeastOnce();
     Map<String, String> protocolVersionOnlyHeaders = Collections.singletonMap(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion().toString());
     EasyMock.expect(mockContext.getRequestHeaders()).andReturn(protocolVersionOnlyHeaders).atLeastOnce();
+    EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
 
     EasyMock.replay(mockContext);
     return mockContext;

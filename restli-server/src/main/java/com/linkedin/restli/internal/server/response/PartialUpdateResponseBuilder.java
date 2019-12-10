@@ -19,6 +19,8 @@ package com.linkedin.restli.internal.server.response;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.ResponseType;
@@ -81,7 +83,15 @@ public class PartialUpdateResponseBuilder implements RestLiResponseBuilder<RestL
       if (updateEntityResponse.hasEntity())
       {
         DataMap entityData = updateEntityResponse.getEntity().data();
+
+        TimingContextUtil.beginTiming(resourceContext.getRawRequestContext(),
+            FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+
         final DataMap data = RestUtils.projectFields(entityData, resourceContext.getProjectionMode(), resourceContext.getProjectionMask());
+
+        TimingContextUtil.endTiming(resourceContext.getRawRequestContext(),
+            FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+
         // Returned entity is to be added to the response envelope
         entityResponse = new EntityResponse<>(data, updateEntityResponse.getEntity().getClass());
       }

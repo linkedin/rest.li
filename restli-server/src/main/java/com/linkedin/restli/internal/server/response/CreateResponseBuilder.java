@@ -22,6 +22,8 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
@@ -117,7 +119,15 @@ public class CreateResponseBuilder implements RestLiResponseBuilder<RestLiRespon
       }
 
       DataMap entityData = entity.data();
+
+      TimingContextUtil.beginTiming(resourceContext.getRawRequestContext(),
+          FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+
       final DataMap data = RestUtils.projectFields(entityData, resourceContext.getProjectionMode(), resourceContext.getProjectionMask());
+
+      TimingContextUtil.endTiming(resourceContext.getRawRequestContext(),
+          FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+
       idResponse = new AnyRecord(data);
       // Ideally, we should set an IdEntityResponse to the envelope. But we are keeping AnyRecord
       // to make sure the runtime object is backwards compatible.

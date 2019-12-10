@@ -21,6 +21,8 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -122,6 +124,9 @@ public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? e
         RestUtils.buildMetadata(request.getURI(), resourceContext, routingResult.getResourceMethod(),
                                 elements, pageIncrement, totalResults);
 
+    TimingContextUtil.beginTiming(resourceContext.getRawRequestContext(),
+        FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+
     //PagingMetadata cannot be null at this point so we skip the null check. Notice here that we are using automatic
     //intentionally since resource methods cannot explicitly project paging. However, it should be noted that client
     //resource methods have the option of selectively setting the total to null. This happens if a client decides
@@ -164,6 +169,9 @@ public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? e
     {
       projectedCustomMetadata = null;
     }
+
+    TimingContextUtil.endTiming(resourceContext.getRawRequestContext(),
+        FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
 
     return buildResponseData(HttpStatus.S_200_OK, processedElements, projectedPaging, projectedCustomMetadata, headers, cookies);
   }

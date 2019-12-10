@@ -16,12 +16,13 @@
 
 package com.linkedin.restli.internal.server.response;
 
-
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.CreateIdStatus;
@@ -30,18 +31,16 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
-import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.BatchCreateKVResult;
 import com.linkedin.restli.server.BatchCreateResult;
-import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.CreateKVResponse;
+import com.linkedin.restli.server.CreateResponse;
+import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.server.ResourceContext;
-
-
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
@@ -122,6 +121,9 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
       }
       List<BatchCreateResponseEnvelope.CollectionCreateResponseItem> collectionCreateList = new ArrayList<>(list.getResults().size());
 
+      TimingContextUtil.beginTiming(routingResult.getContext().getRawRequestContext(),
+          FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+
       for (CreateKVResponse<?, ?> createKVResponse : list.getResults())
       {
         if (createKVResponse == null)
@@ -136,6 +138,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
           if (createKVResponse.getError() == null)
           {
             DataMap entityData = createKVResponse.getEntity() != null ? createKVResponse.getEntity().data() : null;
+
             final DataMap data = RestUtils.projectFields(entityData,
                                                          resourceContext.getProjectionMode(),
                                                          resourceContext.getProjectionMask());
@@ -156,6 +159,10 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
           }
         }
       }
+
+      TimingContextUtil.endTiming(routingResult.getContext().getRawRequestContext(),
+          FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+
       return new RestLiResponseDataImpl<>(new BatchCreateResponseEnvelope(HttpStatus.S_200_OK, collectionCreateList, true), headers, cookies);
     }
     else

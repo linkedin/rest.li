@@ -23,6 +23,7 @@ import com.linkedin.data.template.InvalidAlternativeKeyException;
 import com.linkedin.data.template.KeyCoercer;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.pegasus.generator.examples.Foo;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ErrorResponse;
@@ -178,8 +179,9 @@ public class TestBatchUpdateResponseBuilder
     Map<Object,RestLiServiceException> errors = new HashMap<>();
     RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_402_PAYMENT_REQUIRED);
     errors.put("foo", exception);
-    EasyMock.expect(context.hasParameter("altkey")).andReturn(false);
-    EasyMock.expect(context.getBatchKeyErrors()).andReturn(errors);
+    EasyMock.expect(context.hasParameter("altkey")).andReturn(false).anyTimes();
+    EasyMock.expect(context.getBatchKeyErrors()).andReturn(errors).anyTimes();
+    EasyMock.expect(context.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
     EasyMock.replay(context);
     RoutingResult routingResult = new RoutingResult(context, getMockResourceMethodDescriptor(null));
     RestLiResponseData<BatchUpdateResponseEnvelope> responseData = builder.buildRestLiResponseData(null,
@@ -327,6 +329,7 @@ public class TestBatchUpdateResponseBuilder
     {
       EasyMock.expect(mockContext.getParameter(RestConstants.ALT_KEY_PARAM)).andReturn(altKeyName).atLeastOnce();
     }
+    EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
     EasyMock.replay(mockContext);
     return mockContext;
   }

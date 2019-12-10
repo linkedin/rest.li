@@ -27,6 +27,7 @@ import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ErrorResponse;
@@ -202,8 +203,9 @@ public class TestBatchGetResponseBuilder
     Map<Object, RestLiServiceException> errors = new HashMap<>();
     RestLiServiceException exception = new RestLiServiceException(HttpStatus.S_402_PAYMENT_REQUIRED);
     errors.put("foo", exception);
-    EasyMock.expect(context.hasParameter("altkey")).andReturn(false);
-    EasyMock.expect(context.getBatchKeyErrors()).andReturn(errors);
+    EasyMock.expect(context.hasParameter("altkey")).andReturn(false).anyTimes();
+    EasyMock.expect(context.getBatchKeyErrors()).andReturn(errors).anyTimes();
+    EasyMock.expect(context.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
     EasyMock.replay(context);
     RoutingResult routingResult = new RoutingResult(context, null);
     RestLiResponseData<BatchGetResponseEnvelope> responseData = builder.buildRestLiResponseData(null,
@@ -387,6 +389,7 @@ public class TestBatchGetResponseBuilder
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
     EasyMock.expect(mockContext.getBatchKeyErrors()).andReturn(Collections.emptyMap()).once();
+    EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
     EasyMock.replay(mockContext);
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
@@ -425,6 +428,7 @@ public class TestBatchGetResponseBuilder
     {
       EasyMock.expect(mockContext.getParameter(RestConstants.ALT_KEY_PARAM)).andReturn(altKeyName).atLeastOnce();
     }
+    EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
     EasyMock.replay(mockContext);
     return mockContext;
   }

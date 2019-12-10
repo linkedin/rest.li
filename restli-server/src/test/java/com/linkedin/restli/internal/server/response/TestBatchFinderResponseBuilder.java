@@ -8,6 +8,7 @@ import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.CollectionMetadata;
@@ -213,6 +214,7 @@ public class TestBatchFinderResponseBuilder
     EasyMock.expect(mockContext.getProjectionMask()).andStubReturn(mockMask);
     EasyMock.expect(mockContext.getMetadataProjectionMask()).andStubReturn(mockMask);
     EasyMock.expect(mockContext.getMetadataProjectionMode()).andStubReturn(ProjectionMode.MANUAL);
+    EasyMock.expect(mockContext.getRawRequestContext()).andStubReturn(new RequestContext());
 
     EasyMock.replay(mockContext);
 

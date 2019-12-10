@@ -24,6 +24,7 @@ import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.CollectionMetadata;
@@ -298,6 +299,7 @@ public class TestCollectionResponseBuilder
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
     EasyMock.expect(mockContext.getParameter(EasyMock.<String>anyObject())).andReturn(null).times(2);
     EasyMock.expect(mockContext.getRequestHeaders()).andReturn(ResponseBuilderUtil.getHeaders()).once();
+    EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
 
     //Field Projection
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(dataProjectionMode).times(generateTestList().size());

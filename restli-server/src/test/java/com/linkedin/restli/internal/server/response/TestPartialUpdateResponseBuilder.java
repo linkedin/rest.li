@@ -20,6 +20,7 @@ import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.ResponseType;
@@ -171,6 +172,7 @@ public class TestPartialUpdateResponseBuilder
     when(mockServerResourceContext.getProjectionMode()).thenReturn(ProjectionMode.AUTOMATIC);
     when(mockServerResourceContext.getProjectionMask()).thenReturn(projectionMask);
     when(mockServerResourceContext.isReturnEntityRequested()).thenReturn(isReturnEntityRequested);
+    when(mockServerResourceContext.getRawRequestContext()).thenReturn(new RequestContext());
     ResourceMethodDescriptor mockResourceMethodDescriptor = mock(ResourceMethodDescriptor.class);
     return new RoutingResult(mockServerResourceContext, mockResourceMethodDescriptor);
   }

@@ -20,6 +20,8 @@ package com.linkedin.restli.internal.server.response;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
@@ -73,8 +75,15 @@ public class GetResponseBuilder implements RestLiResponseBuilder<RestLiResponseD
       status = HttpStatus.S_200_OK;
     }
     final ResourceContext resourceContext = routingResult.getContext();
+
+    TimingContextUtil.beginTiming(resourceContext.getRawRequestContext(),
+        FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+
     final DataMap data = RestUtils.projectFields(record.data(), resourceContext.getProjectionMode(),
                                                  resourceContext.getProjectionMask());
+
+    TimingContextUtil.endTiming(resourceContext.getRawRequestContext(),
+        FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
 
     return new RestLiResponseDataImpl<>(new GetResponseEnvelope(status, new AnyRecord(data)), headers, cookies);
   }

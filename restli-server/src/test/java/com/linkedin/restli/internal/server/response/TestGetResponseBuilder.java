@@ -24,6 +24,7 @@ import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
@@ -145,6 +146,7 @@ public class TestGetResponseBuilder
   private static ServerResourceContext getMockResourceContext(MaskTree maskTree, ProjectionMode projectionMode)
   {
     ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
+    EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(projectionMode).once();
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree).once();
     EasyMock.replay(mockContext);

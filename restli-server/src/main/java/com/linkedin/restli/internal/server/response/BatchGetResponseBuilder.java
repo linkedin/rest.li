@@ -16,25 +16,25 @@
 
 package com.linkedin.restli.internal.server.response;
 
-
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.SetMode;
 import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.internal.common.URIParamUtils;
-import com.linkedin.restli.internal.server.response.BatchResponseEnvelope.BatchResponseEntry;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
+import com.linkedin.restli.internal.server.response.BatchResponseEnvelope.BatchResponseEntry;
 import com.linkedin.restli.internal.server.util.RestUtils;
 import com.linkedin.restli.server.BatchResult;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
-
 import java.net.HttpCookie;
 import java.util.Collections;
 import java.util.HashMap;
@@ -163,6 +163,9 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder<RestLiResp
       // In this case it is OK to swallow this exception and proceed.
     }
 
+    TimingContextUtil.beginTiming(routingResult.getContext().getRawRequestContext(),
+        FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+
     Map<Object, BatchResponseEntry> batchResult = new HashMap<>(entities.size() + serviceErrors.size());
     for (Map.Entry<Object, RecordTemplate> entity : entities.entrySet())
     {
@@ -177,9 +180,13 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder<RestLiResp
       final DataMap projectedData = RestUtils.projectFields(entity.getValue().data(),
                                                             routingResult.getContext().getProjectionMode(),
                                                             routingResult.getContext().getProjectionMask());
+
       AnyRecord anyRecord = new AnyRecord(projectedData);
       batchResult.put(finalKey, new BatchResponseEntry(statuses.get(entity.getKey()), anyRecord));
     }
+
+    TimingContextUtil.endTiming(routingResult.getContext().getRawRequestContext(),
+        FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
 
     for (Map.Entry<Object, RestLiServiceException> entity : serviceErrors.entrySet())
     {

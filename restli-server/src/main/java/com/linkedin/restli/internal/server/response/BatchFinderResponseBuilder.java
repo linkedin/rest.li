@@ -21,6 +21,8 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.timing.FrameworkTimingKeys;
+import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
@@ -36,7 +38,6 @@ import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
-
 import java.net.HttpCookie;
 import java.net.URI;
 import java.util.ArrayList;
@@ -100,6 +101,10 @@ public class BatchFinderResponseBuilder
     List<BatchFinderEntry> collectionResponse = new ArrayList<>(criteriaParams.size());
 
     final ResourceContextImpl resourceContext = (ResourceContextImpl) routingResult.getContext();
+
+    TimingContextUtil.beginTiming(routingResult.getContext().getRawRequestContext(),
+        FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+
     for (Object criteriaParam : criteriaParams.values())
     {
       RecordTemplate criteria = new AnyRecord((DataMap) criteriaParam);
@@ -114,8 +119,10 @@ public class BatchFinderResponseBuilder
         //Process paging
         final CollectionMetadata projectedPaging =
             buildPaginationMetaData(routingResult, criteria, resourceContext, request, cr);
+
         //Process metadata
         final AnyRecord projectedCustomMetadata = buildMetaData(cr, resourceContext);
+
         entry = new BatchFinderEntry(elements, projectedPaging, projectedCustomMetadata);
       }
       else if (result.getErrors().containsKey(criteria))
@@ -130,6 +137,9 @@ public class BatchFinderResponseBuilder
 
       collectionResponse.add(entry);
     }
+
+    TimingContextUtil.endTiming(routingResult.getContext().getRawRequestContext(),
+        FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
 
     return new RestLiResponseDataImpl<>(new BatchFinderResponseEnvelope(HttpStatus.S_200_OK, collectionResponse),
                                         headers,

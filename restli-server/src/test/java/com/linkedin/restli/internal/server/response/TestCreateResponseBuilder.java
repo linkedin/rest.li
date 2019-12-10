@@ -27,6 +27,7 @@ import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.CompoundKey;
@@ -189,6 +190,7 @@ public class TestCreateResponseBuilder
     EasyMock.expect(mockContext.isReturnEntityRequested()).andReturn(isReturnEntityRequested);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(null);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
+    EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
     EasyMock.replay(mockContext);
     RoutingResult routingResult = new RoutingResult(mockContext, null);
 
@@ -256,6 +258,7 @@ public class TestCreateResponseBuilder
     EasyMock.expect(mockContext.isReturnEntityRequested()).andReturn(true);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
+    EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
     EasyMock.replay(mockContext);
     RoutingResult routingResult = new RoutingResult(mockContext, null);
 
