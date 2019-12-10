@@ -160,11 +160,14 @@ public class RestLiIntegrationTest
     {
       _scheduler.shutdownNow();
     }
-    for (Client client : _transportClients)
+    if (_transportClients != null)
     {
-      FutureCallback<None> callback = new FutureCallback<None>();
-      client.shutdown(callback);
-      callback.get();
+      for (Client client : _transportClients)
+      {
+        FutureCallback<None> callback = new FutureCallback<None>();
+        client.shutdown(callback);
+        callback.get();
+      }
     }
     if (_clientFactory != null)
     {

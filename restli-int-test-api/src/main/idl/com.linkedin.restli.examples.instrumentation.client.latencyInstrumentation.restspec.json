@@ -1,0 +1,30 @@
+{
+  "name" : "latencyInstrumentation",
+  "namespace" : "com.linkedin.restli.examples.instrumentation.client",
+  "path" : "/latencyInstrumentation",
+  "schema" : "com.linkedin.restli.examples.instrumentation.api.InstrumentationControl",
+  "doc" : "Resource used for testing framework latency instrumentation.\n\n The integration test using this resource queries {@link #create(InstrumentationControl)} (the \"upstream endpoint\"),\n which queries {@link #batchPartialUpdate(BatchPatchRequest)} (the \"downstream endpoint\"). The \"upstream endpoint\"\n collects all the client-side timing data after the downstream call has completed and packs it into the original\n server-side request context so that the integration test has access to all of it.\n\n The input entity itself indicates to the resource whether to use streaming or rest, whether to throw an exception at\n both endpoints, whether to use scatter-gather for the downstream request, and what its own hostname is so it can make\n the circular downstream request. The \"upstream endpoint\" sets a special header so that the integration test knows\n which request to analyze, this is done to avoid analyzing the protocol version fetch request.\n\ngenerated from: com.linkedin.restli.examples.instrumentation.server.LatencyInstrumentationResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "latencyInstrumentationId",
+      "type" : "long"
+    },
+    "supports" : [ "batch_partial_update", "create" ],
+    "methods" : [ {
+      "annotations" : {
+        "returnEntity" : { }
+      },
+      "method" : "create",
+      "doc" : "This is the \"upstream endpoint\" which is queried directly by the integration test.\n This endpoint makes a call to {@link #batchPartialUpdate(BatchPatchRequest)} (the \"downstream endpoint\"),\n then packs all the client-side timing data into the original server-side request context."
+    }, {
+      "annotations" : {
+        "returnEntity" : { }
+      },
+      "method" : "batch_partial_update",
+      "doc" : "This is the \"downstream endpoint\", queried by {@link #create(InstrumentationControl)} (the \"upstream endpoint\")."
+    } ],
+    "entity" : {
+      "path" : "/latencyInstrumentation/{latencyInstrumentationId}"
+    }
+  }
+}

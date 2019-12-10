@@ -41,8 +41,8 @@
     "namespace" : "com.linkedin.restli.examples.typeref.api",
     "ref" : "string",
     "java" : {
-      "coercerClass" : "com.linkedin.restli.examples.custom.types.UriCoercer",
-      "class" : "java.net.URI"
+      "class" : "java.net.URI",
+      "coercerClass" : "com.linkedin.restli.examples.custom.types.UriCoercer"
     }
   } ],
   "schema" : {

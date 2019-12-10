@@ -62,6 +62,7 @@ public class RestLiIntTestServer
   public static final String[] RESOURCE_PACKAGE_NAMES = {
       "com.linkedin.restli.examples.groups.server.rest.impl",
       "com.linkedin.restli.examples.greetings.server",
+      "com.linkedin.restli.examples.instrumentation.server",
       "com.linkedin.restli.examples.typeref.server"  };
 
   public static void main(String[] args) throws IOException

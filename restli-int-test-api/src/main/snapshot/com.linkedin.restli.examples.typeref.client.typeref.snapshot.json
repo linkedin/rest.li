@@ -22,8 +22,8 @@
       }
     },
     "java" : {
-      "coercerClass" : "com.linkedin.restli.examples.custom.types.CustomNonNegativeLongCoercer",
-      "class" : "com.linkedin.restli.examples.custom.types.CustomNonNegativeLong"
+      "class" : "com.linkedin.restli.examples.custom.types.CustomNonNegativeLong",
+      "coercerClass" : "com.linkedin.restli.examples.custom.types.CustomNonNegativeLongCoercer"
     }
   }, {
     "type" : "typeref",

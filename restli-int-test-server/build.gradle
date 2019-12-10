@@ -7,6 +7,7 @@ apply plugin: 'java'
 dependencies {
   compile project(':restli-int-test-api')
   compile project(path: ':restli-int-test-api', configuration: 'dataTemplate')
+  compile project(path: ':restli-int-test-api', configuration: 'restClient')
   compile project(':restli-server-standalone') // for task startServerStandaloneLauncher
   compile project(':data')
   compile project(':data-testutils')
@@ -118,6 +119,7 @@ clean.dependsOn(cleanGenerateGreetings)
 // Generate IDLs for ACL, Groups, and Greetings.
 pegasus.main.idlOptions.addIdlItem(['com.linkedin.restli.examples.groups.server'])
 pegasus.main.idlOptions.addIdlItem(['com.linkedin.restli.examples.greetings.server'])
+pegasus.main.idlOptions.addIdlItem(['com.linkedin.restli.examples.instrumentation.server'])
 pegasus.main.idlOptions.addIdlItem(['com.linkedin.restli.examples.typeref.server'])
 pegasus.test.idlOptions.addIdlItem(['com.linkedin.restli.restspec'])
 

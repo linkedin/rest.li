@@ -1,5 +1,11 @@
-28.0.13
--------
+28.1.1
+------
+
+28.1.0
+------
+(RB=1745931)
+Add integration testing for latency instrumentation
+
 (RB=1745924)
 Add instrumentation timing markers for projection mask application
 

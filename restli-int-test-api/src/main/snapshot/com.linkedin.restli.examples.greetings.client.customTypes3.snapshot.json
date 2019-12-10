@@ -41,8 +41,8 @@
     "namespace" : "com.linkedin.restli.examples.typeref.api",
     "ref" : "long",
     "java" : {
-      "coercerClass" : "com.linkedin.restli.examples.custom.types.DateCoercer",
-      "class" : "java.util.Date"
+      "class" : "java.util.Date",
+      "coercerClass" : "com.linkedin.restli.examples.custom.types.DateCoercer"
     }
   } ],
   "schema" : {

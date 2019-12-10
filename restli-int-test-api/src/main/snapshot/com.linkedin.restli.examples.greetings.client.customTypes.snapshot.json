@@ -33,8 +33,8 @@
     "namespace" : "com.linkedin.restli.examples.typeref.api",
     "ref" : "int",
     "java" : {
-      "coercerClass" : "com.linkedin.restli.examples.custom.types.CalendarCoercer",
-      "class" : "java.util.Calendar"
+      "class" : "java.util.Calendar",
+      "coercerClass" : "com.linkedin.restli.examples.custom.types.CalendarCoercer"
     }
   }, {
     "type" : "typeref",
@@ -50,8 +50,8 @@
     "namespace" : "com.linkedin.restli.examples.typeref.api",
     "ref" : "long",
     "java" : {
-      "coercerClass" : "com.linkedin.restli.examples.custom.types.DateCoercer",
-      "class" : "java.util.Date"
+      "class" : "java.util.Date",
+      "coercerClass" : "com.linkedin.restli.examples.custom.types.DateCoercer"
     }
   }, {
     "type" : "typeref",
@@ -59,8 +59,8 @@
     "namespace" : "com.linkedin.restli.examples.typeref.api",
     "ref" : "bytes",
     "java" : {
-      "coercerClass" : "com.linkedin.restli.examples.custom.types.IPAddressSimpleCoercer",
-      "class" : "java.net.InetAddress"
+      "class" : "java.net.InetAddress",
+      "coercerClass" : "com.linkedin.restli.examples.custom.types.IPAddressSimpleCoercer"
     }
   } ],
   "schema" : {
