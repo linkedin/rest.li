@@ -29,8 +29,7 @@ import java.util.List;
  */
 class SymbolTableNameHandler
 {
-  private static String SERVER_NODE_URI_PREFIX_TABLENAME_SEPARATOR = "|";
-  private static String SERVER_NODE_URI_PREFIX_TABLENAME_SEPARATOR_REGEX = "\\|";
+  private static char SERVER_NODE_URI_PREFIX_TABLENAME_SEPARATOR = '|';
   private static String PREFIX_HASH_SEPARATOR = "-";
 
   private final String _symbolTablePrefix;
@@ -71,22 +70,25 @@ class SymbolTableNameHandler
    */
   Tuple3<String, String, Boolean> extractTableInfo(String fullName)
   {
-    String[] parts = fullName.split(SERVER_NODE_URI_PREFIX_TABLENAME_SEPARATOR_REGEX, 2);
+    int index = fullName.indexOf(SERVER_NODE_URI_PREFIX_TABLENAME_SEPARATOR);
 
-    // If we only got the table name, we assume its a local table.
-    if (parts.length == 1)
+    // If no separator char was found, we assume it's a local table.
+    if (index == -1)
     {
-      return new Tuple3<>(_serverNodeUri, parts[0], true);
+      return new Tuple3<>(_serverNodeUri, fullName, true);
     }
 
-    if (parts.length != 2)
+    if (index == 0 || index == fullName.length() - 1)
     {
       throw new RuntimeException("Unexpected name format for name: " + fullName);
     }
 
+    String serverNodeUri = fullName.substring(0, index);
+    String tableName = fullName.substring(index + 1);
+
     // A table is local if the server node URI matches the current server node URI.
-    boolean isLocal = _serverNodeUri.equals(parts[0]);
-    return new Tuple3<>(parts[0], parts[1], isLocal);
+    boolean isLocal = _serverNodeUri.equals(serverNodeUri);
+    return new Tuple3<>(serverNodeUri, tableName, isLocal);
   }
 
   /**
@@ -98,12 +100,13 @@ class SymbolTableNameHandler
    */
   String replaceServerNodeUri(String existingTableName)
   {
-    String[] parts = existingTableName.split(SERVER_NODE_URI_PREFIX_TABLENAME_SEPARATOR_REGEX, 2);
-    if (parts.length != 2)
+    int index = existingTableName.indexOf(SERVER_NODE_URI_PREFIX_TABLENAME_SEPARATOR);
+
+    if (index == -1 || index == 0 || index == existingTableName.length() - 1)
     {
       throw new RuntimeException("Unexpected name format for name: " + existingTableName);
     }
 
-    return _serverNodeUri + SERVER_NODE_URI_PREFIX_TABLENAME_SEPARATOR + parts[1];
+    return _serverNodeUri + SERVER_NODE_URI_PREFIX_TABLENAME_SEPARATOR + existingTableName.substring(index + 1);
   }
 }

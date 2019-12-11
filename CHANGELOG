@@ -1,7 +1,13 @@
+28.1.2
+------
+
 28.1.1
 ------
 (RB=1904923)
 Update convertToPdl tool to preserve source history
+
+(RB=1911165)
+Minor performance optimization to use indexOf instead of split. Split internally uses indexOf but only if the regex length is 1. Since | has a special meaning in regex land, we need to escape it, meaning that we end up losing out on this internal optimization.
 
 28.1.0
 ------

@@ -69,9 +69,9 @@ import org.slf4j.LoggerFactory;
  * endpoint on the remote rest.li service. Results are cached by name to avoid unnecessary future invocations.</p>
  *
  * <br>
- * <p>The symbol table name used by this provider is prefixed with the hostname and port of the service on which
- * the symbol table is hosted. For remote symbol tables, this prefix is renamed to the prefix of the current host
- * before it is cached. The final symbol table name is in the form of FQDN,Prefix-SymbolListHashCode</p>
+ * <p>The symbol table name used by this provider is prefixed with the root URI of the service on which
+ * the symbol table is hosted. For remote symbol tables, this prefix is renamed to the prefix of the current service
+ * before it is cached. The final symbol table name is in the form of ServiceURI|Prefix-SymbolListHashCode</p>
  */
 public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceDefinitionListener
 {
