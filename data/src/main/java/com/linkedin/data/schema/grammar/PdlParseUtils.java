@@ -46,8 +46,8 @@ public class PdlParseUtils
   public static String extractMarkdown(String schemaDoc)
   {
     String trimmed = schemaDoc.trim();
-    String withoutMargin = stripMargin(trimmed.substring(3, trimmed.length() - 2).trim());
-    return unescapeDocstring(withoutMargin.trim());
+    String withoutMargin = stripMargin(trimmed.substring(3, trimmed.length() - 2));
+    return unescapeDocstring(withoutMargin);
   }
 
   /**
@@ -86,18 +86,35 @@ public class PdlParseUtils
   {
     char marginChar = '*';
     StringBuilder buf = new StringBuilder();
-    for (String lineWithoutSeparator : schemadoc.split(System.lineSeparator()))
+    String[] schemadocByLine = schemadoc.split(System.lineSeparator());
+    for (int i = 0; i < schemadocByLine.length; i++)
     {
+      String lineWithoutSeparator = schemadocByLine[i];
+
+      // Skip the first and last line if empty/whitespace.
+      if ((i == 0 || i == schemadocByLine.length - 1) && (lineWithoutSeparator.trim().isEmpty()))
+      {
+        continue;
+      }
+
       String line = lineWithoutSeparator + System.lineSeparator();
       int len = line.length();
       int index = 0;
+
+      // Iterate past the leading whitespace.
       while (index < len && line.charAt(index) <= ' ')
       {
         index++;
       }
 
+      // If at margin char, trim the leading whitespace
+      // and also trim the one extra space which is after the margin char.
       if (index < len && line.charAt(index) == marginChar)
       {
+        if (index + 1 < len && line.charAt(index + 1) == ' ')
+        {
+          index++;
+        }
         buf.append(line.substring(index + 1));
       }
       else
@@ -105,7 +122,13 @@ public class PdlParseUtils
         buf.append(line);
       }
     }
-    return buf.toString();
+    String withoutMargin = buf.toString();
+    // Trim the line separator in the last line.
+    if (withoutMargin.endsWith(System.lineSeparator()))
+    {
+      withoutMargin = withoutMargin.substring(0, withoutMargin.lastIndexOf(System.lineSeparator()));
+    }
+    return withoutMargin;
   }
 
   /**

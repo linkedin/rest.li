@@ -3,22 +3,19 @@ package com.linkedin.data.schema.grammar;
 import com.linkedin.data.grammar.PdlParser;
 import java.math.BigDecimal;
 import java.util.Arrays;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
 public class TestPdlParseUtils
 {
-  @Test
-  public void testExtractMarkdown()
+  @Test(dataProvider = "schemaDoc")
+  public void testExtractMarkdown(String schemaDoc, String expectedDoc)
   {
-    String extracted = PdlParseUtils.extractMarkdown(
-        "  /**\n" +
-        "   * The quick\n" +
-        "   * brown fox\n" +
-        "   */\n");
+    String extracted = PdlParseUtils.extractMarkdown(schemaDoc);
 
-    assertEquals(extracted, "The quick\n brown fox");
+    assertEquals(extracted, expectedDoc);
   }
 
   @Test
@@ -31,7 +28,7 @@ public class TestPdlParseUtils
         "   */\n");
     assertEquals(extracted,
         "<div>Some html</div>\n" +
-        " /* A comment */");
+        "/* A comment */");
   }
 
   @Test
@@ -48,8 +45,8 @@ public class TestPdlParseUtils
         "   * The quick\n" +
         "   * brown fox\n");
     assertEquals(docString,
-        " The quick\n" +
-        " brown fox\n");
+        "The quick\n" +
+        "brown fox");
   }
 
   @Test
@@ -87,5 +84,69 @@ public class TestPdlParseUtils
 
     Number n1_0e10 = PdlParseUtils.toNumber("1234567.1e1000");
     assertEquals(n1_0e10.getClass(), BigDecimal.class);
+  }
+
+  @DataProvider
+  private Object[][] schemaDoc() {
+    return new Object[][]{
+        {
+          "  /**\n" +
+          "   * The quick\n" +
+          "   * brown fox\n" +
+          "   */\n",
+          "The quick\nbrown fox"
+        },
+        {
+          "  /**\n" +
+          "   * The quick\n" +
+          "   * brown fox   \n" +
+          "   */\n",
+          "The quick\nbrown fox   "
+        },
+        {
+          "  /**\n" +
+          "   *   The quick\n" +
+          "   * brown fox\n" +
+          "   */\n",
+          "  The quick\nbrown fox"
+        },
+        {
+          "  /**\n" +
+          "   *   The quick\n" +
+          "   * brown fox   \n" +
+          "   */\n",
+          "  The quick\nbrown fox   "
+        },
+        {
+          "  /**\n" +
+          "   *          \n" +
+          "   * The quick\n" +
+          "   * brown fox\n" +
+          "   *          \n" +
+          "   */\n",
+          "         \nThe quick\nbrown fox\n         "
+        },
+        {
+          "  /**   The quick brown fox   */",
+          "   The quick brown fox   "
+        },
+        {
+          "  /**   The quick brown fox   \n" +
+          "   */",
+          "   The quick brown fox   "
+        },
+        {
+          "  /**\n" +
+          "   * The quick brown fox*/",
+          "The quick brown fox"
+        },
+        {
+          "  /**\n" +
+          "   * The quick  \n" +
+          "   *   brown fox\n" +
+          "   */\n",
+          "The quick  \n  brown fox"
+        }
+    };
   }
 }

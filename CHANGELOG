@@ -1,12 +1,15 @@
 28.1.3
 ------
+(RB=1913253)
+Fix convertToPdl tool validation issue when there is an extra whitespace in the beginning of a line in doc. 
+
+(RB=1879153)
+add DataSchemaRichContextTraverser, introduce DataSchemaRichContextTraverser.SchemaVisitor interface
 
 28.1.2
 ------
 (RB=1913804)
 Lower latency instrumentation logs from warn to debug
-(RB=1879153)
-add DataSchemaRichContextTraverser, introduce DataSchemaRichContextTraverser.SchemaVisitor interface
 
 28.1.1
 ------

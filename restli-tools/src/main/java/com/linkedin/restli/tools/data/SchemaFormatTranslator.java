@@ -163,10 +163,10 @@ public class SchemaFormatTranslator
   {
     LOGGER.info("Translating files. Source dir: {}, sourceFormat: {}, destDir: {}, destFormat: {}, keepOriginal: {}",
         _sourceDir, _sourceFormat, _destDir, _destFormat, _keepOriginal);
-    Map<String, SchemaInfo> topLevelSchemas = getTopLevelSchemaToTranslatedSchemaMap();
-    verifyTranslatedSchemas(topLevelSchemas);
+    Map<String, SchemaInfo> topLevelTranslatedSchemas = getTopLevelSchemaToTranslatedSchemaMap();
+    verifyTranslatedSchemas(topLevelTranslatedSchemas);
     // Write the destination files. Source files are deleted for this step unless keepOriginal flag is set.
-    writeTranslatedSchemasToDirectory(topLevelSchemas, _destDir, !_keepOriginal, _preserveSourceCmd);
+    writeTranslatedSchemasToDirectory(topLevelTranslatedSchemas, _destDir, !_keepOriginal, _preserveSourceCmd);
   }
 
   /**
@@ -175,7 +175,7 @@ public class SchemaFormatTranslator
    */
   private Map<String, SchemaInfo> getTopLevelSchemaToTranslatedSchemaMap() throws IOException
   {
-    Map<String, SchemaInfo> topLevelSchemas = new HashMap<>();
+    Map<String, SchemaInfo> topLevelTranslatedSchemas = new HashMap<>();
 
     Iterator<File> iter = FileUtils.iterateFiles(_sourceDir, new String[]{_sourceFormat}, true);
     while(iter.hasNext())
@@ -192,18 +192,18 @@ public class SchemaFormatTranslator
       parser.parse(new FileInputStream(sourceFile));
       LOGGER.debug("Loaded source schema: {}, from location: {}", schemaFullname, sourceFile.getAbsolutePath());
       NamedDataSchema schema = checkForErrorsAndGetTopLevelSchema(_resolverPath, sourceFile, schemaFullname, parser);
-      topLevelSchemas.put(schemaFullname, new SchemaInfo(schema, sourceFile, encode(schema, _destFormat)));
+      topLevelTranslatedSchemas.put(schemaFullname, new SchemaInfo(schema, sourceFile, encode(schema, _destFormat)));
     }
-    return topLevelSchemas;
+    return topLevelTranslatedSchemas;
   }
 
-  private void verifyTranslatedSchemas(Map<String, SchemaInfo> topLevelSchemas) throws IOException, InterruptedException
+  private void verifyTranslatedSchemas(Map<String, SchemaInfo> topLevelTranslatedSchemas) throws IOException, InterruptedException
   {
     File tempDir = new File(FileUtils.getTempDirectory(), "tmpPegasus");
     FileUtils.deleteDirectory(tempDir);
     assert tempDir.mkdirs();
     // Write the schemas to temp directory for validation. Source files are not deleted/moved for this.
-    writeTranslatedSchemasToDirectory(topLevelSchemas, tempDir, false, null);
+    writeTranslatedSchemasToDirectory(topLevelTranslatedSchemas, tempDir, false, null);
 
     // Now try loading the schemas from the temp directory and compare with source schema.
     StringTokenizer paths = new StringTokenizer(_resolverPath, File.pathSeparator);
@@ -224,7 +224,7 @@ public class SchemaFormatTranslator
     MultiFormatDataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(pathBuilder.toString());
     boolean hasError = false;
     List<SchemaInfo> failedSchemas = new ArrayList<>();
-    for (SchemaInfo schemaInfo : topLevelSchemas.values())
+    for (SchemaInfo schemaInfo : topLevelTranslatedSchemas.values())
     {
       NamedDataSchema sourceSchema = schemaInfo.getSourceSchema();
       String schemaName = sourceSchema.getFullName();
@@ -253,9 +253,9 @@ public class SchemaFormatTranslator
   }
 
   private void writeTranslatedSchemasToDirectory(
-      Map<String, SchemaInfo> topLevelSchemas, File outputDir, boolean moveSource, String preserveSourceCmd) throws IOException, InterruptedException
+      Map<String, SchemaInfo> topLevelTranslatedSchemas, File outputDir, boolean moveSource, String preserveSourceCmd) throws IOException, InterruptedException
   {
-    for (SchemaInfo schemaInfo : topLevelSchemas.values())
+    for (SchemaInfo schemaInfo : topLevelTranslatedSchemas.values())
     {
       NamedDataSchema sourceSchema = schemaInfo.getSourceSchema();
       File destinationFile = new File(outputDir,
