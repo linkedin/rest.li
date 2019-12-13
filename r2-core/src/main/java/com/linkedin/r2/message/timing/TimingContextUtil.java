@@ -198,18 +198,14 @@ public class TimingContextUtil
   /**
    * Logs a warning. If debug logging in enabled then it also logs the current stacktrace. This is done because
    * we expect to encounter issues with this functionality and we want to have more info when it happens.
+   *
+   * TODO: Make this a warning again once we figure out how to better handle timings when RestClient is absent
+   *
    * @param message message to be logged.
    */
   private static void logWarning(String message)
   {
-    if (LOG.isDebugEnabled())
-    {
-      LOG.debug(message, new RuntimeException(message));
-    }
-    else
-    {
-      LOG.warn(message);
-    }
+    LOG.debug(message, new RuntimeException(message));
   }
 
   /**

@@ -1,13 +1,18 @@
+28.1.3
+------
+
 28.1.2
 ------
+(RB=1913804)
+Lower latency instrumentation logs from warn to debug
 
 28.1.1
 ------
-(RB=1904923)
-Update convertToPdl tool to preserve source history
-
 (RB=1911165)
 Minor performance optimization to use indexOf instead of split. Split internally uses indexOf but only if the regex length is 1. Since | has a special meaning in regex land, we need to escape it, meaning that we end up losing out on this internal optimization.
+
+(RB=1904923)
+Update convertToPdl tool to preserve source history
 
 28.1.0
 ------
