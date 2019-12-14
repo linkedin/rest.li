@@ -1,0 +1,29 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+// more than one fields have a record which is cyclic-referencing
+// Also the annotation for the cyclic-referencing is from outside those schemas.
+record test {
+  a: record refRcd {
+    @customAnnotation = "aa"
+    aa: string
+
+    bb: refRcd
+
+    cc: refRcd
+  }
+
+  @customAnnotation = {
+    "/aa": "b:/aa"
+    "/bb/aa" : "b:/bb/aa"
+    "/bb/bb/aa" : "b:/bb/bb/aa"
+    // cc should not be copied due to no overrides i.e. /b/cc/aa : "aa", /b/bb/cc/aa:"aa", /b/bb/bb/cc/aa:"aa"
+  }
+  b: refRcd
+
+  @customAnnotation = {
+    "/aa": "c:/aa"
+    "/bb/aa" : "c:/bb/aa"
+    "/bb/bb/aa" : "c:/bb/bb/aa"
+    // cc should not be copied due to no overrides i.e. /c/cc/aa : "aa", /c/bb/cc/aa:"aa", /c/bb/bb/cc/aa:"aa"
+  }
+  c: refRcd
+}

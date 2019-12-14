@@ -1,0 +1,20 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+record UnionTest {
+  //union for array and maps
+    @customAnnotation={
+    "/int" : "NONE",
+    "/string" : [{"dataType":"MEMBER_ID", "format": "URN"}],
+    "/array/*" : {"dataType":"MEMBER_ID", "format": "URN"},
+    "/map/*":  [{"dataType":"MEMBER_ID", "format": "URN"}],
+    "/map/$key": [{"dataType":"MEMBER_ID", "format": "URN"}]
+  }
+  unionField: union[int, string, array[string], map[string, long]]
+
+  @customAnnotation = {
+    "/multipleChoice": "for multipleChoice"
+    "/shortAnswer": "for shortAnswer"
+    "/longAnswer": "for longAnswer"
+  }
+  answerFormat: union[ multipleChoice:int, shortAnswer: string, longAnswer: string ]
+}

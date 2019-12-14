@@ -1,0 +1,4 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+@customAnnotation="layer2"
+typeref typeref1_name=@customAnnotation="layer1"typeref typeref2_name=int

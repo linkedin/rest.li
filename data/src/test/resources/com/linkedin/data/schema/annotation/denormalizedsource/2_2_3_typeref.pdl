@@ -1,0 +1,34 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+record TestTypeRef {
+  primitive_field: @customAnnotation="TYPEREF1" typeref typeref1_name=@customAnnotation="TYPEREF2" typeref typeref2_name = int
+  primitive_field2: @customAnnotation="TYPEREF3" typeref typeref3_name= int
+  primitive_field3: @customAnnotation="TYPEREF4" typeref typeref4_name= int
+
+  @customAnnotation="TYPEREF5"
+  primitive_field4: typeref typeref5_name= int
+
+
+  a: @customAnnotation={"/*/a":"TYPEREF1"} typeref maptyperef1_name=@customAnnotation={"/*/a":"TYPEREF2"} typeref maptyperef2_name = map[string,
+    record nestedRecord { @customAnnotation="original_nested" a : int }]
+
+  b: nestedRecord // Should be "oroginal_nested"
+
+  @customAnnotation={
+    "/a": "b: overriden_nested in c"
+  }
+  c : nestedRecord // should be "b: overriden_nested in c"
+
+  d: typeref1_name // should be typeref1
+
+  e: typeref2_name // should be typeref2
+
+  @customAnnotation={
+    "/fa" : "fa",
+    "/fb" : "fb",
+  }
+  f: typeref typeref_to_record = record TypeRefedRcd {
+    fa: typeref nested_typeref = string
+    fb: string
+  }
+}

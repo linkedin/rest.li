@@ -1,0 +1,16 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource.invalid
+
+record Test {
+  a: record rcd {
+    @customAnnotation = {
+      "/rr1/r2" : "OVERRIDE1" //this is invalid because the annotation is defined in "rcd", but /rr1 points to a "rcd"
+    }
+    r1:  record rcd2 {
+      rr1: rcd
+      rr2: string
+    }
+
+    @customAnnotation = "none"
+    r2:string
+  }
+}

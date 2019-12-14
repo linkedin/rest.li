@@ -1,0 +1,11 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource.invalid
+
+@customAnnotation={
+  "/f1/f2": "thisWouldCauseCycle"
+}
+record A includes record innerRcd {
+  f1: A
+}
+{
+  f2:string
+}

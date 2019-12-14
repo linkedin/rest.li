@@ -1,0 +1,15 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+record Test {
+  @customAnnotation = {
+    "/name" : "OVERRIDE1"
+    "/employee/name" : "OVERRIDE2"
+    "/employee/employee/name" : "OVERRIDE3"
+  }
+  a: record employer {
+    employee: employer
+
+    @customAnnotation = "none"
+    name:string
+  }
+}

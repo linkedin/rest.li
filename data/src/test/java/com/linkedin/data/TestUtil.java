@@ -162,15 +162,33 @@ public class TestUtil
     return parser;
   }
 
-  public static DataSchema dataSchemaFromPdlString(String s) throws IOException
+  public static PdlSchemaParser pdlSchemaParserFromInputStream(InputStream is) throws UnsupportedEncodingException
   {
-    PdlSchemaParser parser = pdlSchemaParserFromString(s);
+    PdlSchemaParser parser = new PdlSchemaParser(new DefaultDataSchemaResolver());
+    parser.parse(is);
+    return parser;
+  }
+
+  public static DataSchema getTopLevelSchemaFromPdlParser(PdlSchemaParser parser)
+  {
     if (parser.hasError())
     {
       out.println("ERROR: " + parser.errorMessage());
       return null;
     }
     return parser.topLevelDataSchemas().get(parser.topLevelDataSchemas().size() - 1);
+  }
+
+  public static DataSchema dataSchemaFromPdlString(String s) throws IOException
+  {
+    PdlSchemaParser parser = pdlSchemaParserFromString(s);
+    return getTopLevelSchemaFromPdlParser(parser);
+  }
+
+  public static DataSchema dataSchemaFromPdlInputStream(InputStream is) throws IOException
+  {
+    PdlSchemaParser parser = pdlSchemaParserFromInputStream(is);
+    return getTopLevelSchemaFromPdlParser(parser);
   }
 
   private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();

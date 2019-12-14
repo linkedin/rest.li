@@ -1,0 +1,8 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+@customAnnotation="fruits"
+enum TestEnum {
+  APPLE,
+  BANANA,
+  ORANGE
+}

@@ -1,0 +1,25 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+record ArrayTest {
+
+  @customAnnotation = {"/*": [{"dataType":"ADDRESS"}]}
+  address: array[string]
+
+  @customAnnotation = {"/*": [{"dataType":"NONE"}]}
+  address2: array[string]
+
+  @customAnnotation = {"/*/*": [{"dataType":"ADDRESS"}]}
+  name: array[array[string]]
+
+  @customAnnotation = {"/*/*": [{"dataType":"NONE"}]}
+  name2: array[array[string]]
+
+  //Union Array case (an array of Union)
+  @customAnnotation = {
+    "/*/int": [{"dataType":"NAME"}]
+    "/*/string": [{"dataType":"NAME"}]
+  }
+  nickname: array[union[int, string]]
+
+
+}

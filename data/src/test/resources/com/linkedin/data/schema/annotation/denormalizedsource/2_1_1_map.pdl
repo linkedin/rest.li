@@ -1,0 +1,44 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+record TestMapRecord {
+  @customAnnotation = {
+    "/*": "NONE",
+    "/$key" : [{"data_type":"NAME"}]
+  }
+  a: map[string, int]
+
+  b: map[string, record rcd{bb: string}]
+
+  @customAnnotation = {
+    "/*/bb": "NONE",
+  }
+  c: map[string, rcd]
+
+  @customAnnotation = {
+    "/$key": "1st_key",
+    "/*/$key": "2nd_key",
+    "/*/*" : "2nd_value"
+  }
+  d: map[string, map[string, int]]
+
+  @customAnnotation = {
+    "/$key": "key_value",
+    "/*/*" : "array_value"
+  }
+  e: map[string, array[int]]
+
+  @customAnnotation = {
+    "/$key": "key_value",
+    "/*/int" : "union_int_value"
+    "/*/string" : "union_string_value"
+  }
+  f: map[string, union[int, string]]
+
+  @customAnnotation = {
+    "/map/$key": "key_value",
+    "/map/*" : "string_value"
+    "/int" : "union_int_value"
+  }
+  g: union[map[string, string], int]
+
+}

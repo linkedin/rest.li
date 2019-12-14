@@ -1,0 +1,67 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+record TestRecord {
+  //Level 1 annotation
+  @customAnnotation = {
+    "/a1": "Level1: a1",
+    "/a2/aa1/aaa1": "Level1: /a2/aa1/aaa1",
+    "/a2/aa1/aaa2": "Level1: /a2/aa1/aaa2",
+    "/a2/aa1/aaa3/*": "Level1: /a2/aa1/aaa3/*",
+    "/a2/aa1/aaa4/*/*": "Level1: /a2/aa1/aaa4/*/*",
+    "/a2/aa1/aaa5/$key": "Level1: /a2/aa1/aaa5/$key",
+    "/a2/aa1/aaa5/*": "Level1: /a2/aa1/aaa5/*",
+    "/a2/aa1/aaa6/$key": "Level1: /a2/aa1/aaa6/$key",
+    "/a2/aa1/aaa6/*/*": "Level1: /a2/aa1/aaa6/*/*",
+    "/a2/aa1/aaa7/array/*": "Level1: /a2/aa1/aaa7/array/*",
+    "/a2/aa1/aaa7/int": "Level1: /a2/aa1/aaa7/int",
+    "/a2/aa1/aaa8/map/$key": "Level1: /a2/aa1/aaa8/map/$key",
+    "/a2/aa1/aaa8/map/*": "Level1: /a2/aa1/aaa8/map/*",
+    "/a2/aa1/aaa8/int": "Level1: /a2/aa1/aaa8/int",
+    "/a3/bb1": "Level1: /a3/bb1",
+    "/a3/bb2": "Level1: /a3/bb2",
+  }
+  a: record TestRecordA {
+    a1: string
+
+    //Level 2 annotation
+    @customAnnotation = {
+      "/aa1/aaa1": "Level2: /aa1/aaa1"
+      "/aa1/aaa2": "Level2: /aa1/aaa2"
+    }
+    a2: record TestRecordAA {
+
+      //Level 3 annotation
+      @customAnnotation = {
+        "/aaa1": "Level3: /aaa1"
+        "/aaa2": "Level3: /aaa2"
+      }
+      aa1: record TestRecordAAA {
+        aaa1: string
+
+        aaa2: string
+
+        aaa3: array[string]
+
+        aaa4: array[array[string]]
+
+        aaa5: map[string, string]
+
+        aaa6: map[string, array[string]]
+
+        aaa7: union[array[string], int]
+
+        aaa8: union[map[string, string], int]
+
+      }
+
+    }
+    a3: record TestRecordBB {
+
+      bb1: string
+
+      bb2: string
+    }
+
+  }
+
+}

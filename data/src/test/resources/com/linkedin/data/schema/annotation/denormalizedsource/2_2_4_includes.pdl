@@ -1,0 +1,36 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+@customAnnotation={
+  "/a/aa":"/a/aa"
+  "/b":"NONE"
+//  "/c/cb":"upper" // invalid override to non-included fields
+//  "/c/cc":"NONE" // invalid override to non-included fields
+}
+record WithIncluded includes record includeRcd {
+  @customAnnotation={
+    "/aa": "/aa"
+    "/bb": "/bb"
+  }
+  a:  record nestedInclude {
+    aa: string
+    bb: string
+  }
+},
+typeref typerefToRecord = record includedRcd2 {
+  b: string
+}
+{
+  c: //cRcd has includes so it has properties to override includes
+    @customAnnotation={
+      "/ca": "includedRcd2"
+    }
+    record cRcd includes
+        record includedRcd3 {
+          ca: string
+          cb: string
+        }
+    {
+      cc: string
+    }
+  e: string
+}

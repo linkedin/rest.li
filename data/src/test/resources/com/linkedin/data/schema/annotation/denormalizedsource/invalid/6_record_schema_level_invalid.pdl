@@ -1,0 +1,6 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource.invalid
+
+@customAnnotation="InvalidAnnotation"
+record InvalidRecordLevelAnnotation {
+  a: int
+}

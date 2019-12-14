@@ -1,7 +1,13 @@
+28.1.5
+------
+
 28.1.4
 ------
 (RB=1921104)
 Clean up some javadocs to reduce javadoc warnings during build
+
+(RB=1888928)
+Add schemaAnnotationProcessor and other related schema annotation processing feature
 
 28.1.3
 ------

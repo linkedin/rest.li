@@ -1,0 +1,4 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+@customAnnotation="NONE"
+typeref typeref1_name=int

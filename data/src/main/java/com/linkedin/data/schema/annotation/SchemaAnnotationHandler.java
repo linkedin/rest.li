@@ -18,7 +18,9 @@ package com.linkedin.data.schema.annotation;
 import com.linkedin.data.message.Message;
 import com.linkedin.data.message.MessageList;
 import com.linkedin.data.schema.DataSchema;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -71,18 +73,19 @@ public interface SchemaAnnotationHandler
    *                              the second element is the overridden Object
    *                              overridden object can be an {@link com.linkedin.data.DataComplex}, or primitive type
    *                              For example, for the example schema below, the list would be
-   *                              {["/f1/f2", "2rd layer"], ["/f2", "1st layer"], ["", OriginalValue]}
+   *                              {["/f1/f2", "2nd layer"], ["/f2", "1st layer"], ["", OriginalValue]}
    *
-   * <p><pre>
-   * &#064;customAnnotation= {"/f1/f2" : "2rd layer" }
+   * <pre>{@code
+   * @customAnnotation= {"/f1/f2" : "2nd layer" }
    * f: record rcd {
-   *     &#064;customAnnotation= {"/f2" : "1rd layer" }
+   *     @customAnnotation= {"/f2" : "1st layer" }
    *     f1: record rcd2 {
-   *         &#064;customAnnotation = "OriginalValue"
+   *         @customAnnotation = "OriginalValue"
    *         f2: string
    *     }
    * }
-   * </pre></p>
+   * }
+   * </pre>
    *
    * @param resolutionMetadata : some metadata that can help handler resolve values.
    *
@@ -117,16 +120,30 @@ public interface SchemaAnnotationHandler
    *
    * Validation function to implement to validate on the DataSchema's resolvedProperties
    *
-   * @param paths SchemaPathSpec for the dataSchema under validation
    * @param resolvedProperties the resolvedProperties for the schema to be validated
-   * @param dataSchema the dataSchema under validation
    * @param metaData metaData to give to validator
-   * @return FieldAnnotationValidationResult
+   *                 also @see {@link ValidationMetaData}
+   * @return AnnotationValidationResult
    */
-  AnnotationValidationResult validate(List<String> paths,
-                                      Map<String, Object> resolvedProperties,
-                                      DataSchema dataSchema,
-                                      ValidationMetaData metaData);
+  AnnotationValidationResult validate(Map<String, Object> resolvedProperties, ValidationMetaData metaData);
+
+  /**
+   * Return an implementation of {@link DataSchemaRichContextTraverser.SchemaVisitor} this handler should work with.
+   *
+   * The {@link SchemaAnnotationProcessor} would invoke the implementation of the {@link DataSchemaRichContextTraverser.SchemaVisitor}
+   * to traverse the schema and handle the annotations handled by this handler.
+   *
+   * @return return an implementation of {@link DataSchemaRichContextTraverser.SchemaVisitor} that could get called by {@link SchemaAnnotationProcessor}
+   *
+   * also see {@link DataSchemaRichContextTraverser.SchemaVisitor}
+   * also see {@link PathSpecBasedSchemaAnnotationVisitor}
+   *
+   */
+  default DataSchemaRichContextTraverser.SchemaVisitor getVisitor()
+  {
+    return new PathSpecBasedSchemaAnnotationVisitor(this);
+  }
+
 
   /**
    * Result the {@link #resolve(List, ResolutionMetaData)} function should return after it is called
@@ -152,6 +169,11 @@ public interface SchemaAnnotationHandler
     public void setMessages(MessageList<Message> messages)
     {
       _messages = messages;
+    }
+
+    public void addMessages(Collection<? extends Message> messages)
+    {
+      _messages.addAll(messages);
     }
 
     public void addMessage(List<String> path, String format, Object... args)
@@ -186,7 +208,13 @@ public interface SchemaAnnotationHandler
   }
 
   /**
-   * Result the {@link #validate(List, Map, DataSchema, ValidationMetaData)} function should return after it is called
+   * Result the {@link #validate(Map, ValidationMetaData)} function should return after it is called
+   *
+   * if the {@link #isValid()} returns false, the error messages that {@link #getMessages()} returned will be aggregated
+   * and when aggregating, {@link SchemaAnnotationValidationVisitor} will add pathSpec of the iteration location to each message
+   * so ideally the message {@link #getMessages()} returns doesn't need to specify the location.
+   *
+   * also see {@link SchemaAnnotationValidationVisitor}
    *
    */
   class AnnotationValidationResult
@@ -226,42 +254,51 @@ public interface SchemaAnnotationHandler
       _messages.add(new Message(path.toArray(), format, args));
     }
 
+    public void addMessage(Message msg)
+    {
+      _messages.add(msg);
+    }
+
+    public void addMessages(Collection<? extends Message> messages)
+    {
+      _messages.addAll(messages);
+    }
+
     boolean _isValid = true;
     List<String> _paths = new ArrayList<>();
     MessageList<Message> _messages = new MessageList<>();
   }
 
   /**
-   * Metadata object used when each time the {@link #validate(List, Map, DataSchema, ValidationMetaData)} function is called
+   * Metadata object used when each time the {@link #validate(Map, ValidationMetaData)} function is called
    *
    */
   class ValidationMetaData
   {
-    public boolean isLeafDataSchema()
+    // the dataSchema whose resolved annotation needs to be validated.
+    DataSchema _dataSchema;
+    // the pathSpec component list to the dataSchema whose resolved annotation needs to be validated.
+    ArrayDeque<String> pathToSchema;
+
+    public DataSchema getDataSchema()
     {
-      return _isLeafDataSchema;
+      return _dataSchema;
     }
 
-    public void setIsLeafDataSchema(boolean leafDataSchema)
+    public void setDataSchema(DataSchema dataSchema)
     {
-      _isLeafDataSchema = leafDataSchema;
+      _dataSchema = dataSchema;
     }
 
-    /**
-     * A boolean to tell whether the {@link #validate(List, Map, DataSchema, ValidationMetaData)}
-     * function are called on a leaf data schema.
-     *
-     * a leaf DataSchema is a schema that doesn't have other types of DataSchema linked from it.
-     * Below types are leaf DataSchemas
-     * {@link com.linkedin.data.schema.PrimitiveDataSchema} ,
-     * {@link com.linkedin.data.schema.EnumDataSchema} ,
-     * {@link com.linkedin.data.schema.FixedDataSchema}
-     *
-     * Other dataSchema types, for example {@link com.linkedin.data.schema.TyperefDataSchema} could link to another DataSchema
-     * so it is not a leaf DataSchema
-     *
-     */
-    private boolean _isLeafDataSchema = false;
+    public ArrayDeque<String> getPathToSchema()
+    {
+      return pathToSchema;
+    }
+
+    public void setPathToSchema(ArrayDeque<String> pathToSchema)
+    {
+      this.pathToSchema = pathToSchema;
+    }
   }
 
   /**

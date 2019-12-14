@@ -1,0 +1,16 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+// a very base test case
+// two primitive type fields with different customAnnotation
+record Test {
+  a: record refRcd {
+    @customAnnotation = "NONE"
+    aa: string
+
+    @customAnnotation = [{"data_type":"NAME"}]
+    bb: string
+
+    cc: string
+  }
+
+  b: refRcd
+}

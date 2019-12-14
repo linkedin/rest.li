@@ -1,0 +1,59 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource.invalid
+
+@customAnnotation={
+  "/includeField":"annotationForIncludedField"
+  "/nonInlucdeField":"NONE"
+}
+record rcd includes record includeRcd {
+  @customAnnotation={
+    "/aa": "/aa"
+    "/bb": "/bb"
+  }
+  includeField:  record nestedInclude {
+    aa: string
+    bb: string
+  }
+}
+{
+  // primitive field shouldn't be annotated with map
+  f0: string
+
+  // override to a non-primitive field (path too short)
+  @customAnnotation = {
+    "/ff1":"NONE"
+  }
+  f1:  record rcd1 {
+    ff1: record rcd3 {
+      fff1: string
+    }
+  }
+
+
+  //path not found
+  @customAnnotation = {
+    "/ff00" : "NONE"
+  }
+  f2: record rcd2 {
+    ff21: string
+    ff22: int
+    ff23: int
+  }
+
+
+  // override to a unreachable field (path toolong)
+  @customAnnotation = {
+    "/ff1/fff1/fff2":"NONE"
+  }
+  f3: rcd1
+
+  // malform
+  @customAnnotation = {
+    "/$key/": "Should not end with /"
+  }
+  f4: map[string, string]
+
+  // annotation for complex type (take map as example)
+  // should be a overriding map
+  @customAnnotation = "NONE"
+  f5: map[string, string]
+}

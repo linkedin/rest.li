@@ -1,0 +1,11 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+record FruitBasket {
+  // Test customAnnotation added inside the enum schema
+  fruit: @customAnnotation="fruit1"
+  enum Fruits { APPLE, BANANA, ORANGE }
+
+  // Test overriding on the field of the enum schema
+  @customAnnotation="fruit2"
+  otherFruits: enum Fruits2 {WATERMELON, GRAPE}
+}

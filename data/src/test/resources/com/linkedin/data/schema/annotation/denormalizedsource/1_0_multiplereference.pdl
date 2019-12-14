@@ -1,0 +1,26 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+// two fields overrids same type of record
+record test {
+  a: record refRcd {
+    @customAnnotation = "NONE"
+    aa: string
+
+    @customAnnotation = "NONE"
+    bb: string
+  }
+
+  @customAnnotation = {
+    // inside refRcd, aa should use the original reference
+    "/bb": "12" // bb will be a copy
+  }
+  b: refRcd
+
+  @customAnnotation = {
+    "/aa": "21" // aa should be a copy
+    // bb should use the orignal reference
+  }
+  c: refRcd
+
+  //Should use the same reference as in a
+  d: refRcd
+}

@@ -1,0 +1,11 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+record Test {
+  @customAnnotation = {
+    "/f1/f2": "sth"
+  }
+  f0: record A {
+    f1: A
+    f2: string
+  }
+}

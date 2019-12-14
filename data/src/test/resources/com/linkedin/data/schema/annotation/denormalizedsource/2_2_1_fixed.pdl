@@ -1,0 +1,20 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+record TestFixed {
+  @customAnnotation = "NONE"
+  a: fixed Fixed16Ref 16
+
+  @customAnnotation = {
+    "/bb" : "b:bb"
+  }
+  b: record innerRcd {
+    bb: Fixed16Ref
+  }
+
+  @customAnnotation = {
+    "/bb" : "c:bb"
+  }
+  c: innerRcd
+
+  d: @customAnnotation="INNER" fixed AnotherFix 16
+}

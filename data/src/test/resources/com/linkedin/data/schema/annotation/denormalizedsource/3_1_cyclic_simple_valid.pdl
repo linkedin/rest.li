@@ -1,0 +1,13 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+/**
+ * No overrides thus no new copy generated
+ * Traverse should stop after seen cyclic referece
+ */
+record employer {
+
+  employee: employer
+
+  @customAnnotation = "none"
+  name:string
+}

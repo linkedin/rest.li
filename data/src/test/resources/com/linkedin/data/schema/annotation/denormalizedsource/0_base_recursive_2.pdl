@@ -1,0 +1,8 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+record Test {
+  f0: record A {
+    f1: A
+    f2: string
+  }
+}

@@ -1,0 +1,25 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+// make sure nested fields copy also works
+record test {
+  a: record refRcd {
+    @customAnnotation = "NONE"
+    aa: string
+
+    @customAnnotation = "NONE"
+    ab: string
+  }
+
+  b: record refRcd2 {
+    @customAnnotation = {
+      "/aa": "from_field_b",
+    }
+    bb : refRcd //use copy of refRcd, aa newed, ab original
+  }
+
+  c: refRcd2 // use same refRcd2 as above
+
+  @customAnnotation = {
+    "/bb/aa" : "from_field_d",
+  }
+  d: refRcd2 //use copy of refRcd2, bb newed, aa another newed, ab original
+}

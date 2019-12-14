@@ -1,0 +1,6 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+record Test {
+  f1: Test
+  f2: string
+}

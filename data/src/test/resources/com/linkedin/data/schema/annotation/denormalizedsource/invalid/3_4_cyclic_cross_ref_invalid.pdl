@@ -1,0 +1,17 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource.invalid
+
+record Test {
+  a: record A {
+    @customAnnotation = {
+      "/b2" : "test for b"
+    }
+    a1: record B {
+      @customAnnotation = {
+        "/a2" : "test for a"
+      }
+      b1: A
+      b2: string
+    }
+    a2: string
+  }
+}

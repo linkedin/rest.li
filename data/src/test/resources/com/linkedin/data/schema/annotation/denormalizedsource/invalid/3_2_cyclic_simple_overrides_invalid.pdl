@@ -1,0 +1,20 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource.invalid
+/**
+ * Annotations WITHIN recursive schema should not contain cyclic referencing otherwise it would never end
+ * As a user, one needs to manually expand the schema, instead of using cyclic reference, in this case.
+ *
+ * Reasoning: The moment applied recursive referencing in pathSpec, recursive records carried over
+ * this recursively. If we don't allow a cyclic pointer to form a loop, it will never end.
+ * If we form a loop, then inside the schema, resolved properties lost layer information (essentially fisrt layer equivalent to Nth layer)
+ */
+record employer {
+  @customAnnotation = {
+    "/name" : [{"dataType": "NAME"}] //This is invalid
+    "/employee/name" : [{"dataType": "NAME"}] //This is also invalid
+    "/employee/employee/name" : [{"dataType": "NAME"}] //This is invalid
+  }
+  employee: employer
+
+  @customAnnotation = "none"
+  name:string
+}

@@ -24,6 +24,7 @@ import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
@@ -167,13 +168,9 @@ public class DataSchemaRichContextTraverser
             doRecursiveTraversal(nextContext);
           }
           break;
-        case FIXED:
-          // treated similar to Primitive
-        case ENUM:
-          // treated similar to Primitive
-          break;
         default:
-          assert (schema.isPrimitive());
+          // will stop recursively traversing if the current schema is a leaf node.
+          assert isLeafSchema(schema);
           break;
       }
       _seenAncestorsDataSchema.remove(schema);
@@ -198,6 +195,25 @@ public class DataSchemaRichContextTraverser
     UNION_MEMBER,
     // child schema is referred from a typeref schema
     TYPEREF_REF
+  }
+
+  /**
+   * Returns true if the dataSchema is a leaf node.
+   *
+   * a leaf DataSchema is a schema that doesn't have other types of DataSchema linked from it.
+   * Below types are leaf DataSchemas
+   * {@link com.linkedin.data.schema.PrimitiveDataSchema} ,
+   * {@link com.linkedin.data.schema.EnumDataSchema} ,
+   * {@link com.linkedin.data.schema.FixedDataSchema}
+   *
+   * Other dataSchema types, for example {@link com.linkedin.data.schema.TyperefDataSchema} could link to another DataSchema
+   * so it is not a leaf DataSchema
+   */
+  public static boolean isLeafSchema(DataSchema dataSchema)
+  {
+    return (dataSchema instanceof PrimitiveDataSchema)
+           || (dataSchema.getType() == DataSchema.Type.FIXED)
+           || (dataSchema.getType() == DataSchema.Type.ENUM);
   }
 
   /**

@@ -1,0 +1,19 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+// simple case with simple overrides
+record test {
+  @customAnnotation = {
+    "/aa": [{"data_type":"NAME"}],
+    "/bb": "NONE"
+  }
+  a: record refRcd {
+    @customAnnotation = "NONE"
+    aa: string
+
+    @customAnnotation = [{"data_type":"NAME"}]
+    bb: string
+
+    cc: string
+  }
+
+  b: refRcd
+}

@@ -1,0 +1,60 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+/**
+ * No cyclic references
+ *
+ **/
+record Member {
+  @customAnnotation= [{ "dataType": "MEMBER_ID_INT", "isPurgeKey": "true" }]
+  memberId: int
+
+  @customAnnotation= {
+    "/details/firstName": [{"dataType": "MEMBER_FIRST_NAME"}],
+    "/details/lastName": [{"dataType": "MEMBER_LAST_NAME"}],
+    "/details/lastName": [{"dataType": "MEMBER_LAST_NAME"}],
+    "/details/otherNames/*/*/nickName": [{"dataType": "MEMBER_LAST_NAME"}],
+    "/details/otherNames/*/*/shortCutName": [{"dataType": "MEMBER_LAST_NAME"}],
+    "/education/string": "NONE",
+    "/education/array/*/graduate": [{"dataType": "MEMBER_GRADUATION"}],
+    "/phoneNumber": [{"dataType": "PHONE_NUMBER"}]
+  }
+  memberData: record PersonData {
+
+    @customAnnotation = {"/*/*": [{"dataType":"NAME"}]}
+    usedNames: array[array[string]]
+
+    @customAnnotation = "NONE"
+    phoneNumber: optional string
+
+    @customAnnotation = {"/*": [{"dataType":"ADDRESS"}]}
+    address: array[string]
+
+    @customAnnotation = {
+      "/$key" : "workinghistory-$key",
+      "/*": "workinghistory-value"
+    }
+    workingHistory: map[string, string]
+
+    @customAnnotation = {"/firstName": "NONE"}
+    details: optional record PersonName {
+
+      @customAnnotation = [{"dataType": "NAME"}]
+      firstName: string
+
+      @customAnnotation = [{"dataType": "NAME"}]
+      lastName: string
+
+      otherNames: array[array[record Names {
+        @customAnnotation = "NONE"
+        nickName: optional string
+        @customAnnotation = "NONE"
+        shortCutName: optional string
+      }]]
+    }
+
+    @customAnnotation = {"/string": "NONE"}
+    education: optional union[string, array[record Education {
+      @customAnnotation = "NONE"
+      graduate: string
+    }]]
+  }
+}

@@ -1,0 +1,4 @@
+namespace com.linkedin.data.schema.annotation.denormalizedsource
+
+@customAnnotation="fixed"
+fixed Fixed16Ref 16

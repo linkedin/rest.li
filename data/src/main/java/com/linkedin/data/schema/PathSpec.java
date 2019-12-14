@@ -192,7 +192,7 @@ public class PathSpec
   private final List<String> _path;
   private final Map<String, Object> _attributes = new HashMap<>();
   private static final PathSpec EMPTY_PATH_SPEC = new PathSpec();
-  private static final char SEPARATOR = '/';
+  public static final char SEPARATOR = '/';
   private static final char ATTR_SEPARATOR = '&';
   private static final char PATH_ATTR_SEPARATOR = '?';
   private static final char ATTR_KEY_VALUE_SEPARATOR = '=';
