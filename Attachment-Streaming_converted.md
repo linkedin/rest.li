@@ -14,7 +14,7 @@ team before using it.**
   - [Goals](#goals)
   - [Inspiration](#inspiration)
   - [New Wire Format](#new-wire-format)
-  - [PDSC Modeling](#pdsc-modeling)
+  - [Data Modeling](#data-modeling)
   - [Creating Attachments](#creating-attachments)
   - [Reading Attachments](#reading-attachments)
   - [Chaining (Proxying) Attachments Across Services](#chaining-proxying-attachments-across-services)
@@ -193,39 +193,34 @@ have two attachments. `Trebuchet` and `Slider`
 both point to the same attachment while `Gear` points to the
 other attachment.
 
-## PDSC Modeling
+## Data Modeling
 
-PDSC modeling is no different for streaming, with the exception of the
+Data modeling is no different for streaming, with the exception of the
 following recommendation. This recommendation is simply to serve as a
 visual cue and does not impact the generated RecordTemplates or the
 processing of a streaming request or response.
 
-Our recommendation is that anytime you have a field in a PDSC
-referencing an attachment, that a key value pair of
-`"attachment":true` is present. This should further be
-expanded to include documentation mentioning that this field represents
-a pointer to an attachment. Once again it is important to note that the
-purpose of these fields is simply to convey that an attachment could be
-present.
+Our recommendation is that anytime you have a field in a schema
+referencing an attachment, that an `@attachment` annotation is present.
+This should further be expanded to include documentation mentioning that
+this field represents a pointer to an attachment. Once again it is important
+to note that the purpose of these fields is simply to convey that an
+attachment could be present.
 
-```json
-{
-  "type" : "record",
-  "name" : "Greeting",
-  "namespace" : "com.linkedin.greetings.api",
-  "doc" : "A greeting",
-  "fields" : [
-    {
-      "name" : "id",
-      "type" : "long"
-    },
-    {
-      "name" : "content",
-      "type" : "string",
-      "attachment" : true,
-      "doc" : "Type 1 UUID representing a video attachment" 
-    }
-   ]
+```
+namespace com.linkedin.greetings.api
+
+/**
+ * A greeting
+ */
+record Greeting {
+  id: long
+
+  /**
+   * Type 1 UUID representing a video attachment
+   */
+  @attachment
+  content: string
 }
 ```
 

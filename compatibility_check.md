@@ -39,7 +39,7 @@ The compatibility checker generates `.snapshot.json` files.
 
 There are four levels of compatibility. From least permissive to most, they are:
 
-**equivalent** - If the check is run in equivalent mode, no changes to Resources or PDSCs will pass.
+**equivalent** - If the check is run in equivalent mode, no changes to Resources or schemas will pass.
 
 **backwards** - Changes that are considered backwards compatible will pass, otherwise, changes will fail.
 
