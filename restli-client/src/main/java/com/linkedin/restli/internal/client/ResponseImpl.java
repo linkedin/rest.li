@@ -50,7 +50,7 @@ import java.util.ArrayList;
 public class ResponseImpl<T> implements Response<T>
 {
   private int _status = 102;  // SC_PROCESSING
-  private final Map<String, String> _headers;
+  private final TreeMap<String, String> _headers;
   private final List<HttpCookie> _cookies;
   private T _entity;
   private RestLiResponseException _error;
@@ -126,7 +126,7 @@ public class ResponseImpl<T> implements Response<T>
   @Override
   public Map<String, String> getHeaders()
   {
-    return Collections.unmodifiableMap(_headers);
+    return Collections.unmodifiableSortedMap(_headers);
   }
 
   @Override

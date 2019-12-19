@@ -606,9 +606,9 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
 
   static protected Map<String, String> getReadOnlyHeaders(Map<String, String> headers)
   {
-    Map<String, String> copyHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    TreeMap<String, String> copyHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     copyHeaders.putAll(headers);
-    return Collections.unmodifiableMap(copyHeaders);
+    return Collections.unmodifiableSortedMap(copyHeaders);
   }
 
   static protected List<HttpCookie> getReadOnlyCookies(List<HttpCookie> cookies)

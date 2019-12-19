@@ -73,8 +73,8 @@ public class ResourceContextImpl implements ServerResourceContext
   private final MutablePathKeys                     _pathKeys;
   private final Request                             _request;
   private final DataMap                             _parameters;
-  private final Map<String, String>                 _requestHeaders;
-  private final Map<String, String>                 _responseHeaders;
+  private final TreeMap<String, String>             _requestHeaders;
+  private final TreeMap<String, String>             _responseHeaders;
   private final List<HttpCookie>                    _requestCookies;
   private final List<HttpCookie>                    _responseCookies;
   private final Map<Object, RestLiServiceException> _batchKeyErrors;
@@ -472,7 +472,7 @@ public class ResourceContextImpl implements ServerResourceContext
   @Override
   public Map<String, String> getResponseHeaders()
   {
-    return Collections.unmodifiableMap(_responseHeaders);
+    return Collections.unmodifiableSortedMap(_responseHeaders);
   }
 
   @Override

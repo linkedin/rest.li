@@ -43,10 +43,10 @@ public abstract class BaseMessage implements MessageHeaders
   {
     ArgumentUtil.notNull(headers, "headers");
     ArgumentUtil.notNull(cookies, "cookies");
-    Map<String, String> tmpHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    TreeMap<String, String> tmpHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     tmpHeaders.putAll(headers);
-    _headers = Collections.unmodifiableMap(tmpHeaders);
-    _cookies = Collections.unmodifiableList(new ArrayList<String>(cookies));
+    _headers = Collections.unmodifiableSortedMap(tmpHeaders);
+    _cookies = Collections.unmodifiableList(new ArrayList<>(cookies));
   }
 
   @Override

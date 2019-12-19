@@ -55,7 +55,7 @@ public class WireAttributeHelper
     {
       final Map.Entry<String, String> entry = it.next();
       final String key = entry.getKey();
-      if (key.toUpperCase().startsWith(WIRE_ATTR_PREFIX))
+      if (key.regionMatches(true, 0, WIRE_ATTR_PREFIX, 0, WIRE_ATTR_PREFIX.length()))
       {
         final String value = entry.getValue();
         final String newKey = key.substring(WIRE_ATTR_PREFIX.length());

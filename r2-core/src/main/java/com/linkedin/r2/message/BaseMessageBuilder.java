@@ -45,7 +45,7 @@ public abstract class BaseMessageBuilder<B extends BaseMessageBuilder<B>>
 
   private static final String CANONICAL_REPLACEMENT = " ";
 
-  private Map<String, String> _headers;
+  private TreeMap<String, String> _headers;
 
   private List<String> _cookies;
 
@@ -139,7 +139,7 @@ public abstract class BaseMessageBuilder<B extends BaseMessageBuilder<B>>
   @Override
   public Map<String, String> getHeaders()
   {
-    return Collections.unmodifiableMap(_headers);
+    return Collections.unmodifiableSortedMap(_headers);
   }
 
   @Override
