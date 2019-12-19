@@ -1,19 +1,19 @@
-// add rest.li's gradle plugins so they can be used throughout project
+// add Rest.li's gradle plugins so they can be used throughout project
 buildscript {
   repositories {
     mavenLocal()
     mavenCentral()
   }
   dependencies {
-    classpath 'com.linkedin.pegasus:gradle-plugins:19.0.3'
+    classpath 'com.linkedin.pegasus:gradle-plugins:27.7.18'
   }
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '2.12'
+  gradleVersion = '4.6'
 }
 
-final pegasusVersion = '19.0.3'
+final pegasusVersion = '27.7.18'
 ext.spec = [
   'product' : [
     'pegasus' : [

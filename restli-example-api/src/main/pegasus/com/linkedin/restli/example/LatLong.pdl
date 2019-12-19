@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.example
+
+record LatLong {
+  latitude: optional float
+  longitude: optional float
+}

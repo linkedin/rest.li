@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.example
+
+record EXIF {
+  isFlash: optional boolean = true
+  location: optional LatLong
+}

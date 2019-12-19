@@ -1,0 +1,13 @@
+namespace com.linkedin.restli.example
+
+/**
+ * A search criteria to filter photos.
+ */
+record PhotoCriteria {
+
+  /**
+   * title to filter on
+   */
+  title: string
+  format: PhotoFormats
+}

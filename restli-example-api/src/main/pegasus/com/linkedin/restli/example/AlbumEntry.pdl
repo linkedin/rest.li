@@ -1,0 +1,14 @@
+namespace com.linkedin.restli.example
+
+/**
+ * An album for Rest.li
+ */
+record AlbumEntry {
+  albumId: long
+  photoId: long
+
+  /**
+   * When the photo was added to the album
+   */
+  addTime: long
+}

@@ -1,0 +1,16 @@
+namespace com.linkedin.restli.example
+
+/**
+ * A photo for rest.li
+ */
+record Photo {
+  id: long
+  urn: string
+  title: string
+  format: PhotoFormats
+
+  /**
+   * Exchangeable image file format
+   */
+  exif: EXIF
+}

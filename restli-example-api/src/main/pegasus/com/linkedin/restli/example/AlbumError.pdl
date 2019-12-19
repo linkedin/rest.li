@@ -1,0 +1,8 @@
+namespace com.linkedin.restli.example
+
+/**
+ * An example error detail model
+ */
+record AlbumError {
+  id: long
+}

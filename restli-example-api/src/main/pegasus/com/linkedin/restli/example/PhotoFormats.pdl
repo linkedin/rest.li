@@ -1,0 +1,22 @@
+namespace com.linkedin.restli.example
+
+/**
+ * enum type for photo formats
+ */
+enum PhotoFormats {
+
+  /**
+   * Bitmap
+   */
+  BMP
+
+  /**
+   * Joint Photographic Experts Group
+   */
+  JPG
+
+  /**
+   * Portable Network Graphics
+   */
+  PNG
+}

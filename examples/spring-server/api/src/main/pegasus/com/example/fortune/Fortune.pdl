@@ -1,0 +1,12 @@
+namespace com.example.fortune
+
+/**
+ * Generate a fortune cookie
+ */
+record Fortune {
+
+  /**
+   * The Fortune cookie string
+   */
+  fortune: string
+}

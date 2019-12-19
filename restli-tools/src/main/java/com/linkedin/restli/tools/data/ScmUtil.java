@@ -60,13 +60,16 @@ public class ScmUtil
 
       if (executeWithStandardOutputAndError(command, stdout, stderr) != 0)
       {
-        LOGGER.error("Could not run preserve source command : {} successfully. Please check the error message : {}", command, stderr.toString());
+        LOGGER.error("Could not run preserve source history command : '{}' successfully. Please check the error message : {}", command, stderr.toString());
         FileUtils.moveFile(sourceFile, destinationFile);
       }
     }
     else
     {
-      LOGGER.info("Preserve source command : {} is invalid.", command);
+      if (command != null)
+      {
+        LOGGER.info("Invalid preserve source history command : '{}'", command);
+      }
       FileUtils.moveFile(sourceFile, destinationFile);
     }
   }

@@ -1,0 +1,4 @@
+# Ignore all files generated when using the gradle wrapper
+/*/gradle/
+/*/gradlew
+/*/gradlew.bat
