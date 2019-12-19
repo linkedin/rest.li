@@ -1,8 +1,8 @@
-28.1.4
-------
-
 28.1.3
 ------
+(RB=1920382)
+Revert "dark cluster schema and serializer changes"
+
 (RB=1919524)
 Use PDL in examples and restli-example-api
 

@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.properties;
 
-import com.linkedin.d2.DarkClusterConfigMap;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
@@ -26,10 +25,6 @@ import java.util.Set;
 
 public class ClusterProperties
 {
-  public static final float DARK_CLUSTER_DEFAULT_MULTIPLIER = 0.0f;
-  public static final int DARK_CLUSTER_DEFAULT_TARGET_RATE = 0;
-  public static final int DARK_CLUSTER_DEFAULT_MAX_RATE = 2147483647;
-
   private final String                _clusterName;
   private final Map<String, String>   _properties;
   private final PartitionProperties   _partitionProperties;
@@ -38,7 +33,6 @@ public class ClusterProperties
   private final Set<URI> _bannedUris;
   @Deprecated
   private final List<String>          _prioritizedSchemes;
-  private final DarkClusterConfigMap _darkClusters;
 
   public ClusterProperties(String clusterName)
   {
@@ -80,18 +74,6 @@ public class ClusterProperties
       Set<URI> bannedUris,
       PartitionProperties partitionProperties,
       List<String> sslSessionValidationStrings)
-  {
-    this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
-        null);
-  }
-
-  public ClusterProperties(String clusterName,
-      List<String> prioritizedSchemes,
-      Map<String, String> properties,
-      Set<URI> bannedUris,
-      PartitionProperties partitionProperties,
-      List<String> sslSessionValidationStrings,
-      DarkClusterConfigMap darkClusters)
 
   {
     _clusterName = clusterName;
@@ -103,7 +85,6 @@ public class ClusterProperties
     _partitionProperties = partitionProperties;
     _sslSessionValidationStrings = sslSessionValidationStrings == null ? Collections.emptyList() : Collections.unmodifiableList(
         sslSessionValidationStrings);
-    _darkClusters = darkClusters == null ? new DarkClusterConfigMap() : darkClusters;
   }
 
   public boolean isBanned(URI uri)
@@ -141,18 +122,13 @@ public class ClusterProperties
     return _sslSessionValidationStrings;
   }
 
-  public DarkClusterConfigMap getDarkClusters()
-  {
-    return _darkClusters;
-  }
-
   @Override
   public String toString()
   {
     return "ClusterProperties [_clusterName=" + _clusterName + ", _prioritizedSchemes="
         + _prioritizedSchemes + ", _properties=" + _properties + ", _bannedUris=" + _bannedUris
         + ", _partitionProperties=" + _partitionProperties + ", _sslSessionValidationStrings=" + _sslSessionValidationStrings
-        + ", _darkClusterConfigMap=" + _darkClusters + "]";
+        + "]";
   }
 
   @Override
@@ -168,7 +144,6 @@ public class ClusterProperties
     result = prime * result + ((_properties == null) ? 0 : _properties.hashCode());
     result = prime * result + ((_partitionProperties == null) ? 0 : _partitionProperties.hashCode());
     result = prime * result + ((_sslSessionValidationStrings == null) ? 0 : _sslSessionValidationStrings.hashCode());
-    result = prime * result + ((_darkClusters == null) ? 0 : _darkClusters.hashCode());
     return result;
   }
 
@@ -205,10 +180,6 @@ public class ClusterProperties
       return false;
     }
     if (!_partitionProperties.equals(other._partitionProperties))
-    {
-      return false;
-    }
-    if (!_darkClusters.equals(other._darkClusters))
     {
       return false;
     }

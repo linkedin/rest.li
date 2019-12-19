@@ -17,14 +17,11 @@
 package com.linkedin.d2.balancer.properties;
 
 
-import com.linkedin.d2.DarkClusterConfigMap;
-import com.linkedin.d2.balancer.config.DarkClustersConverter;
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
-import java.util.ArrayList;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,11 +151,6 @@ public class ClusterPropertiesJsonSerializer implements
       partitionProperties = NullPartitionProperties.getInstance();
     }
 
-    @SuppressWarnings("unchecked")
-    Map<String, Object> darkClusterProperty = (Map<String, Object>) map.get(PropertyKeys.DARK_CLUSTER_MAP);
-    DarkClusterConfigMap darkClusterConfigMap = DarkClustersConverter.toConfig(darkClusterProperty);
-
-    return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList,
-        darkClusterConfigMap);
+    return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList);
   }
 }
