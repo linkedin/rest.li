@@ -223,9 +223,9 @@ new ExampleBuilders(options).get()
   .build()
 ```
 
-Applies projection on a GET request to a resource where the “message”
-field of “RootRecord.pdsc” is a record type called “Message.pdsc”, and
-only the “id” fields of the message is being projected. The same logic
+Applies projection on a GET request to a resource where the `message`
+field of `RootRecord.pdl` is a record type called `Message.pdl`, and
+only the `id` fields of the message is being projected. The same logic
 can be applied to RecordTemplates within custom Metadata and Paging
 projection.
 

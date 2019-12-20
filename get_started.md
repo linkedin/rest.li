@@ -88,16 +88,16 @@ The client should successfully retrieve some "album" information from server and
 
 Throughout the examples, we can frequently see "photo" and "album" objects. These data schemas are defined in the [restli-example-api](https://github.com/linkedin/rest.li/tree/master/restli-example-api) module. API module are the interface modules with contents shared by or exchanged between the server and client. Generally speaking, we usually put 3 kinds of files in API:
 
-  - **Pegasus Data Schema (PDSC)** --- These files define the data schemas such as "photo" and "album" above. The syntax of pdsc resembles [Apache Avro](http://avro.apache.org/). Take a look at [Photo.pdsc](https://github.com/linkedin/rest.li/blob/master/restli-example-api/src/main/pegasus/com/linkedin/restli/example/Photo.pdsc), and the comments inside could be useful. For more information, see [DATA](/rest.li/DATA-Data-Schema-and-Templates).
-  - **restspc.json** --- These files are Rest.li [IDL](http://en.wikipedia.org/wiki/Interface_description_language) that defines the interface and protocol a Rest.li resource exposes. You can find the "photo" resource idl at [com.linkedin.restli.example.photos.photos.restspec.json](https://github.com/linkedin/rest.li/blob/master/restli-example-api/src/main/idl/com.linkedin.restli.example.photos.photos.restspec.json). For more information, check [Rest.li User Guide](/rest.li/user_guide/server_architecture).
+  - **Pegasus Data Schema** --- These files define data schemas such as "photo" and "album" above. The syntax of PDL is Java-like. Take a look at [Photo.pdl](https://github.com/linkedin/rest.li/blob/master/restli-example-api/src/main/pegasus/com/linkedin/restli/example/Photo.pdl), and the comments inside could be useful. For more information, see [Data](/rest.li/DATA-Data-Schema-and-Templates).
+  - **restspec.json** --- These files are Rest.li [IDLs](http://en.wikipedia.org/wiki/Interface_description_language) that define the interface and protocol a Rest.li resource exposes. You can find the "photo" resource IDL at [com.linkedin.restli.example.photos.photos.restspec.json](https://github.com/linkedin/rest.li/blob/master/restli-example-api/src/main/idl/com.linkedin.restli.example.photos.photos.restspec.json). For more information, check [Rest.li User Guide](/rest.li/user_guide/server_architecture).
   - **Common Java classes** --- Shared by server and client.
 
 ## Code Generator
 
 Pegasus comes with many code generators:
 
-  - **Schema (pdsc) binding generator** --- Java classes can be generated from all pdsc files. These generated classes come with methods and fields to interact with the underlying data object and provide native Java interop interface.
-  - **restspec.json generator** --- While pdsc files are usually handwritten, restspec.json files are generated from the resource class using [com.linkedin.restli.tools.idlgen.RestLiResourceModelExporterCmdLineApp](https://github.com/linkedin/rest.li/blob/master/restli-tools/src/main/java/com/linkedin/restli/tools/idlgen/RestLiResourceModelExporterCmdLineApp.java) class.
-  - **Builder generator** --- Java classes can also be generated from all .restspec.json files. These [builder](http://en.wikipedia.org/wiki/Builder_pattern) classes provide convenient method to construct Rest.li request with various parameters.
+  - **Schema (PDL) binding generator** --- Java classes can be generated from all data schema files. These generated classes come with methods and fields to interact with the underlying data object and provide native Java interop interface.
+  - **restspec.json generator** --- While schema files are usually handwritten, `restspec.json` files are generated from resource classes using the [com.linkedin.restli.tools.idlgen.RestLiResourceModelExporterCmdLineApp](https://github.com/linkedin/rest.li/blob/master/restli-tools/src/main/java/com/linkedin/restli/tools/idlgen/RestLiResourceModelExporterCmdLineApp.java) class.
+  - **Builder generator** --- Java classes can also be generated from all `.restspec.json` files. These [builder](http://en.wikipedia.org/wiki/Builder_pattern) classes provide convenient methods to construct Rest.li requests with various parameters.
 
 You can find example Gradle scripts of how to call the generators in the [build_script](https://github.com/linkedin/rest.li/tree/master/build_script) directory.

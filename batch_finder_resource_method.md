@@ -160,31 +160,30 @@ The batch finder method will have to accept a array of this criteria filter.
 
 Example:
 
-The resource owner need to define their own search criteria `GreetingCriteria.pdsc` file.
+The resource owner need to define their own search criteria `GreetingCriteria.pdl` file.
 
-```json
-{
- "type" : "record",
- "name" : "GreetingCriteria",
- "namespace" : "com.linkedin.restli.examples.greetings.api",
- "doc" : "A search criteria to filter greetings.",
- "fields" : [
-   {
-     "name" : "id",
-     "doc": "Greeting ID to filter on",
-     "type" : "long"
-   },
-   {
-     "name" : "tone",
-     "doc" : "Greeting tone to filter on",
-     "type" : "Tone"
-   }
- ]
+```
+namespace com.linkedin.restli.examples.greetings.api
+
+/**
+ * A search criteria to filter greetings.
+ */
+record GreetingCriteria {
+
+  /**
+   * Greeting ID to filter on
+   */
+  id: long
+
+  /**
+   * Greeting tone to filter on
+   */
+  tone: Tone
 }
 ```
 
-The "GreetingCriteria" class represent a criteria filter to filter by "id" or by "tone".
-This java class is auto-generated from the pdsc.
+The `GreetingCriteria` class represents a set of criteria (`id` and `tone`) by which to filter.
+This Java class is auto-generated from the schema.
 
 ```java
 public class GreetingCriteria extends RecordTemplate
@@ -269,16 +268,16 @@ Valid types for regular query parameters are:
 -   `long` / `Long`
 -   `float` / `Float`
 -   `double` / `Double`
--   A Pegasus Enum (any enum defined in a `.pdsc` schema)
+-   A Pegasus Enum (any enum defined in a `.pdl` schema)
 -   Custom types (see the bottom of this section)
 -   Record template types (any subclass of `RecordTemplate` generated
-   from a `.pdsc` schema)
+   from a `.pdl` schema)
 -   Arrays of one of the types above, e.g. `String[]`, `long[]`, ...
 
 Valid type for batch criteria parameter:
 
 - Can only be Arrays of Record template type, if have to use some other data types like Pegasus Enum, etc as the array item,
-need to wrap it into a Record Template (`.pdsc` schema)
+need to wrap it into a Record Template (`.pdl` schema)
   
 ### BatchFinderResult
 

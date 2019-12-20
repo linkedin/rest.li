@@ -46,7 +46,7 @@ com.linkedin.data.avro.SchemaTranslator.dataToAvroSchema(dataSchema, translation
 `EmbedSchemaMode` determines whether or not to embed the original Rest.li schema into the resulting Avro schema.  This can speed translation back (or make a translation back more accurate) to Rest.li format with the correct settings passed to the `avroToDataSchema` method. By default, this is set to `NONE`.
 
 `overrideNamespace` is a boolean flag indicating whether the namespaces of the translated Avro schemas should be overridden. If this flag is set to `true`, then the namespace of each translated Avro schema will be prepended with a special prefix,
-`"avro."` (e.g. `com.x.y` becomes `avro.com.x.y`). This is helpful in cases where PDSC schemas and their Avro counterparts are included in the same project, potentially causing namespace/package conflicts.
+`"avro."` (e.g. `com.x.y` becomes `avro.com.x.y`). This is helpful in cases where pegasus schemas and their Avro counterparts are included in the same project, potentially causing namespace/package conflicts.
 
 ## Converting Data
 The key class for converting data is the `DataTranslator` class.
@@ -66,7 +66,7 @@ com.linkedin.data.avro.DataTranslator(dataMap, dataSchema, avroSchema);
 
 ### Automatically generating avro schemas as part of a build
 
-Rest.li will generate avro schemas for all your pegasus schemas (.pdsc files) automatically if the build is configured to enable this.
+Rest.li will generate avro schemas for all your pegasus schemas (`.pdl` files) automatically if the build is configured to enable this.
 
 See [Gradle generateAvroSchema Task](setup/gradle#generateavroschema) for details on how to enable.
 
