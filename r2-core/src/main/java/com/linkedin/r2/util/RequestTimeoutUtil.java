@@ -20,7 +20,7 @@ package com.linkedin.r2.util;
 /**
  * Util class for handling request timeout
  *
- * @auther Alex Jing
+ * @author Alex Jing
  */
 public class RequestTimeoutUtil
 {

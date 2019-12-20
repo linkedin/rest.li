@@ -61,7 +61,6 @@ public class MockHttpServerFactory
    * Creates {@link RestLiConfig} to be used by a {@link RestLiServer}
    *
    * @param port the port the server will run on
-   * @return
    */
   private static RestLiConfig createConfig(int port)
   {
@@ -75,7 +74,6 @@ public class MockHttpServerFactory
    * Creates a {@link ResourceFactory} to inject dependencies into your Rest.li resource
    *
    * @param beans
-   * @return
    */
   private static ResourceFactory createResourceFactory(Map<String, ?> beans)
   {
@@ -104,8 +102,7 @@ public class MockHttpServerFactory
    * @param port the port the server will run on on localhost
    * @param resourceClasses the Rest.li resource classes
    * @param beans beans you want to inject into your Rest.li resource.
-   * @param enableAsync true if the server should be async , false otherwise
-   * @return
+   * @param enableAsync true if the server should be async, false otherwise
    */
   public static HttpServer create(int port,
                                   Set<Class<?>> resourceClasses,
@@ -166,8 +163,7 @@ public class MockHttpServerFactory
    * @param port the port the server will run on on localhost
    * @param config the {@link RestLiConfig} to be used by the {@link RestLiServer}
    * @param beans beans you want to inject into your Rest.li resource.
-   * @param enableAsync true if the server should be async , false otherwise
-   * @return
+   * @param enableAsync true if the server should be async, false otherwise
    */
   private static HttpServer create(int port, RestLiConfig config, Map<String, ?> beans, boolean enableAsync)
   {

@@ -758,8 +758,8 @@ public class DataTranslator implements DataTranslatorContext
    * Avro's optional fields are defined as an Union. This method can be used to extract the non-null type
    * embedded in the union. If the passed in avro schema is not a Union type, it is returned as is.
    *
-   * @param avroSchema
-   * @return
+   * @param avroSchema input schema
+   * @return extracted non-null type, or the input schema
    */
   protected Schema extractNonnullSchema(Schema avroSchema)
   {

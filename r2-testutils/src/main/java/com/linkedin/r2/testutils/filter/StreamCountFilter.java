@@ -9,7 +9,7 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import java.util.Map;
 
 /**
- * @auther Zhenkai Zhu
+ * @author Zhenkai Zhu
  */
 
 public class StreamCountFilter implements StreamFilter

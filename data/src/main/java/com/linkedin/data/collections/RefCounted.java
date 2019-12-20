@@ -187,7 +187,7 @@ class RefCounted<T extends Cloneable> implements Cloneable
   }
 
   /**
-   * Acquire a reference, which may cause a cloned {@Link RefCounted} to be returned.
+   * Acquire a reference, which may cause a cloned {@link RefCounted} to be returned.
    *
    * @return this or a cloned {@link RefCounted} depending on reference count.
    * @throws UnsupportedOperationException if this method cannot clone this {@link RefCounted}.

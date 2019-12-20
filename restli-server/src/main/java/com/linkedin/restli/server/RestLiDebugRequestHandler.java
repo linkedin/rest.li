@@ -26,12 +26,14 @@ import com.linkedin.r2.message.rest.RestResponse;
 /**
  * The interface for Rest.li debug request handlers. Debug request handlers are registered with {@link RestLiServer}
  * through {@link RestLiConfig}. Every debug request handler has a handler id which determines the uri
- * sub-path that {@link RestLiServer} will route the requests to that debug request handler
- * ({@see RestLiDebugRequestHandler#getHandlerId}). The Rest.li requests which have a
- * "/__debug/<Debug request handler id>" appended to their path will be routed to the corresponding debug request
- * handler ({@see RestLiDebugRequestHandler#handleRequest}). At that point, the debug request handler gets a chance
+ * sub-path that {@link RestLiServer} will route the requests to that debug request handler.
+ * The Rest.li requests which have a "/__debug/<Debug request handler id>" appended to their path will be routed to
+ * the corresponding debug request handler. At that point, the debug request handler gets a chance
  * to inspect the request, modify it, execute it through normal Rest.li method invocation pipeline, get the response
  * and shape it in any way it determines.
+ *
+ * @see RestLiDebugRequestHandler#getHandlerId()
+ * @see RestLiDebugRequestHandler#handleRequest(RestRequest, RequestContext, ResourceDebugRequestHandler, Callback)
  */
 public interface RestLiDebugRequestHandler
 {

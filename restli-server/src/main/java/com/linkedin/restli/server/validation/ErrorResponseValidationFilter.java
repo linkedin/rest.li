@@ -34,9 +34,9 @@ import java.util.concurrent.Future;
 /**
  * Rest.li validation filter that automatically validates outgoing error response,
  * and sends a HTTP 500 error response back to the client, if the service error hasn't been defined
- * on the RestLi resource or on the RestLi method through {@link @ServiceErrors} annotation.
+ * on the RestLi resource or on the RestLi method through {@link com.linkedin.restli.server.annotations.ServiceErrors} annotation.
  *
- * <p>Validation is based entirely on the {@link @ServiceErrors} annotation.
+ * <p>Validation is based entirely on the {@link com.linkedin.restli.server.annotations.ServiceErrors} annotation.
  *
  * <p>This filter will do following checks:
  * <ul>
@@ -155,7 +155,7 @@ public class ErrorResponseValidationFilter implements Filter
    *               and may be used as a CompletionStage, supporting dependent functions
    *               and actions that trigger upon its completion.
    * @param restLiServiceException The {@link RestLiServiceException} that caused the error response.
-   * @return {@link CompletableFuture<Void>} - future result of filter execution.
+   * @return {@link CompletableFuture}&#60;{@link Void}&#62; - future result of filter execution.
    */
   private CompletableFuture<Void> completeExceptionallyWithHttp500(CompletableFuture<Void> future,
       RestLiServiceException restLiServiceException)

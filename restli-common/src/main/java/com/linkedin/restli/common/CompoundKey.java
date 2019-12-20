@@ -334,7 +334,7 @@ public class CompoundKey
    * they will be coerced down to their base type before being placed into the map.
    *
    * @return a {@link DataMap} representation of this {@link CompoundKey}
-   * @see {@link com.linkedin.restli.internal.common.URIParamUtils#compoundKeyToDataMap(CompoundKey)}
+   * @see com.linkedin.restli.internal.common.URIParamUtils#compoundKeyToDataMap(CompoundKey)
    */
   public DataMap toDataMap()
   {

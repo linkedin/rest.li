@@ -118,7 +118,7 @@ public class DegraderLoadBalancerQuarantine
    * healthCheckNTimes responsible for checking the health of the transportClient multiple times
    * at the given interval.
    *
-   * @param n: repeat times
+   * @param n repeat times
    */
   private void healthCheckNTimes(int n)
   {
@@ -235,7 +235,7 @@ public class DegraderLoadBalancerQuarantine
   /**
    * When resetInterval set to true, reset the interval time to Update Interval time.
    * Otherwise reuse the existing interval time
-   * @param resetInterval:
+   * @param resetInterval
    */
   public void reset(boolean resetInterval)
   {

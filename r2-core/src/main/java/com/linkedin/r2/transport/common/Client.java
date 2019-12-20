@@ -133,7 +133,6 @@ public interface Client
    * The callback must be guaranteed to return after a certain time
    *
    * @param uri the URI to get metadata for
-   * @return metadata for the URI
    */
   default void getMetadata(URI uri, Callback<Map<String, Object>> callback)
   {
@@ -145,7 +144,7 @@ public interface Client
   /**
    * This method is deprecated but kept for backward compatibility.
    * We need a default implementation since every Client should implement the
-   * asynchronous version of this to fallback (@link {@link #getMetadata(URI, Callback)} )})
+   * asynchronous version of this to fallback {@link #getMetadata(URI, Callback)}
    * <p>
    * This method will be removed once all the use cases are moved to the async version
    *
@@ -153,6 +152,7 @@ public interface Client
    * the implementation of this method from inheriting classes
    *
    * @deprecated use #getMetadata(uri, callback) instead
+   * @return metadata for the URI
    */
   @Deprecated
   default Map<String, Object> getMetadata(URI uri){

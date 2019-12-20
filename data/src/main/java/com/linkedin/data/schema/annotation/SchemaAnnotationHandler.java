@@ -48,12 +48,10 @@ import org.apache.commons.lang3.tuple.Pair;
  *
  *   pdl:
  *   <pre>
- *   {@code
  *   ...
- *   @customAnnotation="None"
+ *   {@literal @}customAnnotation="None"
  *   exampleField:string
  *   ...
- *   }
  *   </pre>
  *
  *   "customAnnotation" is an annotation namespace whose annotation will be handled by the handler.
@@ -75,17 +73,16 @@ public interface SchemaAnnotationHandler
    *                              For example, for the example schema below, the list would be
    *                              {["/f1/f2", "2rd layer"], ["/f2", "1st layer"], ["", OriginalValue]}
    *
-   * <pre>{@code
-   * @customAnnotation= {"/f1/f2" : "2rd layer" }
+   * <p><pre>
+   * &#064;customAnnotation= {"/f1/f2" : "2rd layer" }
    * f: record rcd {
-   *     @customAnnotation= {"/f2" : "1rd layer" }
+   *     &#064;customAnnotation= {"/f2" : "1rd layer" }
    *     f1: record rcd2 {
-   *         @customAnnotation = "OriginalValue"
+   *         &#064;customAnnotation = "OriginalValue"
    *         f2: string
    *     }
    * }
-   * }
-   * </pre>
+   * </pre></p>
    *
    * @param resolutionMetadata : some metadata that can help handler resolve values.
    *
@@ -105,7 +102,7 @@ public interface SchemaAnnotationHandler
    *            ...
    *          }
    *
-   *          also see {@link ResolutionResult}
+   * @see ResolutionResult
    *
    */
   ResolutionResult resolve(List<Pair<String, Object>> propertiesOverrides, ResolutionMetaData resolutionMetadata);

@@ -217,11 +217,12 @@ public class DataSchemaRichContextTraverser
 
     /**
      * {@link SchemaVisitor} implements this method to return an initial {@link VisitorContext}
-     * {@link VisitorContext} will be stored inside {@link TraverserContext} and then passed to {@link SchemaVisitor} during recursive traversal
+     * {@link VisitorContext} will be stored inside {@link DataSchemaRichContextTraverser.TraverserContext} and then
+     * passed to {@link SchemaVisitor} during recursive traversal
      *
      * @return an initial {@link VisitorContext} that will be stored by {@link SchemaVisitor}
      *
-     * also @see {@link VisitorContext}
+     * @see VisitorContext
      */
     VisitorContext getInitialVisitorContext();
 
@@ -237,12 +238,12 @@ public class DataSchemaRichContextTraverser
    * A context that is defined and handled by {@link SchemaVisitor}
    *
    * The {@link DataSchemaRichContextTraverser} will get the initial context and then
-   * passing this as part of {@link TraverserContext}
+   * passing this as part of {@link DataSchemaRichContextTraverser.TraverserContext}
    *
    * {@link SchemaVisitor} implementations can store customized information that want to pass during recursive traversal here
-   * similar to how {@link TraverserContext} is used.
+   * similar to how {@link DataSchemaRichContextTraverser.TraverserContext} is used.
    *
-   * also @see {@link TraverserContext}
+   * @see DataSchemaRichContextTraverser.TraverserContext
    */
   public interface VisitorContext
   {
@@ -254,8 +255,10 @@ public class DataSchemaRichContextTraverser
    *
    * There are two kinds of error messages
    * (1) An error message with {@link Message} type, it will be collected to the {@link Message} list and formatted and
-   * outputted by the string builder, also @see {@link Message}.
+   * outputted by the string builder.
    * (2) User can also directly add string literal messages and output them using the string builder.
+   *
+   * @see Message
    */
   public static class VisitorTraversalResult
   {
@@ -295,7 +298,7 @@ public class DataSchemaRichContextTraverser
      *
      * @param traversalSuccessful the boolean value to represent whether the traversal is successful
      *
-     * also @see {@link #isTraversalSuccessful()}
+     * @see #isTraversalSuccessful()
      */
     private void setTraversalSuccessful(boolean traversalSuccessful)
     {
@@ -343,7 +346,7 @@ public class DataSchemaRichContextTraverser
      * @param format format of the message to show
      * @param args args for the format string
      *
-     * also @see {@link Message}
+     * @see Message
      */
     public void addMessage(ArrayDeque<String> path, String format, Object... args)
     {
@@ -358,7 +361,7 @@ public class DataSchemaRichContextTraverser
      * @param path path of the location where the messages are added
      * @param messages the message to add to the message list
      *
-     * also @see {@link Message}
+     * @see Message
      */
     public void addMessages(ArrayDeque<String> path, Collection<? extends Message> messages)
     {
@@ -437,12 +440,12 @@ public class DataSchemaRichContextTraverser
      * User can expect parentSchema is a {@link UnionDataSchema} and the {@link #_enclosingUnionMember} should be the
      * enclosing union member that stores the current schema.
      *
-     * also @see {@link CurrentSchemaEntryMode}
+     * @see CurrentSchemaEntryMode
      */
     CurrentSchemaEntryMode _currentSchemaEntryMode;
     /**
      * SchemaAnnotationVisitors can set customized context
-     * @see {@link VisitorContext}
+     * @see VisitorContext
      */
     VisitorContext _visitorContext;
 

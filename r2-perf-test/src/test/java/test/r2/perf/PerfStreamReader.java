@@ -6,7 +6,7 @@ import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
 
 /**
- * @auther Zhenkai Zhu
+ * @author Zhenkai Zhu
  */
 
 public class PerfStreamReader<T> implements Reader

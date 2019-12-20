@@ -142,12 +142,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
   /**
    * Given a Request, returns a TransportClient that can handle requests for the Request.
-   *
+   * The callback is given a client that can be called to retrieve data for the URN.
    *
    * @param request
    *          A request whose URI is a URL of the format "d2://&gt;servicename&lt;/optional/path".
    * @param requestContext context for this request
-   * @return A client that can be called to retrieve data for the URN.
    * @throws ServiceUnavailableException
    *           If the load balancer can't figure out how to reach a service for the given
    *           URN, an ServiceUnavailableException will be thrown.

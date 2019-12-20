@@ -18,7 +18,7 @@ package com.linkedin.restli.server.multiplexer;
 
 
 /**
- * MultiplexerRunMode specifies if all requests belonging to the {@link MultiplexedRequest} will
+ * MultiplexerRunMode specifies if all requests belonging to the multiplexed request will
  * be executed as a single ParSeq plan ({@link #SINGLE_PLAN}) or if each request that belongs to the
  * {@code MultiplexedRequest} will be executed as a separate ParSeq plan ({@link #MULTIPLE_PLANS}).
  * <p>

@@ -24,9 +24,6 @@ public class OperationNameGenerator
 {
   /**
    * Builds the operation string for a method
-   * @param method
-   * @param methodName
-   * @return
    */
   public static String generate(ResourceMethod method, String methodName)
   {

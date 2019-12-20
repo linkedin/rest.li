@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This is the return type of KepMapper.getAllPartitionsMultipleHosts
- * {@see com.linkedin.d2.balancer.util.HostToKeyMapper}
+ * This is the return type of {@link com.linkedin.d2.balancer.KeyMapper#getAllPartitionsMultipleHosts(URI, int)}.
  *
+ * @see com.linkedin.d2.balancer.util.HostToKeyMapper
  * @author Xialin Zhu
  */
 public interface HostSet

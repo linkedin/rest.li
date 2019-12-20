@@ -42,12 +42,11 @@ import java.util.regex.Pattern;
 /**
  * A utility class for creating URI parameters in the rest.li 2.0 URI style.
  *
- * @see {@link URIElementParser} for parsing 2.0 URI
+ * @see URIElementParser URIElementParser for parsing 2.0 URIs
  *
  * @author Moira Tagle
  * @version $Revision: $
  */
-
 public class URIParamUtils
 {
   private static final String[] _EMPTY_STRING_ARRAY = new String[0];
@@ -171,8 +170,6 @@ public class URIParamUtils
 
   /**
    * Universal function for serializing Keys to Strings.
-   * @see {@link #encodeKeyForUri(Object, com.linkedin.jersey.api.uri.UriComponent.Type, com.linkedin.restli.common.ProtocolVersion)},
-   *      {@link #encodeKeyForBody(Object, boolean, com.linkedin.restli.common.ProtocolVersion)}
    *
    * @param key the key
    * @param escaping determines if the resulting string should be URI escaped or not.
@@ -183,6 +180,9 @@ public class URIParamUtils
    *             be true.
    * @param version the protocol version.
    * @return a stringified version of the key, suitable for insertion into a URI or json body.
+   *
+   * @see #encodeKeyForUri(Object, com.linkedin.jersey.api.uri.UriComponent.Type, com.linkedin.restli.common.ProtocolVersion)
+   * @see #encodeKeyForBody(Object, boolean, com.linkedin.restli.common.ProtocolVersion)
    */
   public static String keyToString(Object key,
                                    URLEscaper.Escaping escaping,
@@ -509,7 +509,7 @@ public class URIParamUtils
    * field types when we need to do this transition internally. As a result, it may be slightly slower.
    *
    * @return a {@link DataMap} representation of this {@link CompoundKey}
-   * @see {@link CompoundKey#toDataMap(java.util.Map)}
+   * @see CompoundKey#toDataMap(java.util.Map)
    */
   public static DataMap compoundKeyToDataMap(CompoundKey compoundKey)
   {

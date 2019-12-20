@@ -168,7 +168,6 @@ public class AttachmentUtils
    * @param firstPartWriter Represents the contents of the first part, the json/pson portion.
    * @param firstPartContentType The content type of the first part, i.e json or pson.
    * @param streamingAttachments Any developer provided attachments to be added onto the outgoing request.
-   * @return
    */
   public static MultiPartMIMEWriter createMultiPartMIMEWriter(final Writer firstPartWriter,
                                                               final String firstPartContentType,

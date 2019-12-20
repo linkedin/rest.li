@@ -6,7 +6,7 @@ import com.linkedin.r2.message.stream.entitystream.WriteHandle;
 import com.linkedin.r2.message.stream.entitystream.Writer;
 
 /**
- * @auther Zhenkai Zhu
+ * @author Zhenkai Zhu
  */
 
 public class PerfStreamWriter implements Writer

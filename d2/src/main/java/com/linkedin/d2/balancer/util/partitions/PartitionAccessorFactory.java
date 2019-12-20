@@ -53,7 +53,7 @@ public class PartitionAccessorFactory
   }
 
   /**
-   * Create {@Link CustomizedPartitionAccessor}
+   * Create {@link CustomizedPartitionAccessor}
    *
    * There are several factors that can affect which PartitionAccessor is ultimately generated:
    *

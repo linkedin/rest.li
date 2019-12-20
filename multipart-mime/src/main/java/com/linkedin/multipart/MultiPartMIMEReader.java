@@ -1600,7 +1600,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
      * Returns the headers for this part. For parts that have no headers, this will return
      * {@link java.util.Collections#emptyMap()}
      *
-     * @return
+     * @return headers
      */
     @Override
     public Map<String, String> dataSourceHeaders()

@@ -38,7 +38,7 @@ import java.util.List;
  *
  * Extra effort is taken to avoid extra copying during streaming when there is a need to assemble multiple ByteStrings
  * into on ByteString (e.g. receiving request/responses via chunked transfer encoding).
- * When constructing the new larger ByteString with {@link Builder()}, we don't actually do the copy but simply keep
+ * When constructing the new larger ByteString with {@link Builder}, we don't actually do the copy but simply keep
  * reference to backing data of the smaller ByteStrings. As a result, for some important use cases,
  * e.g. asInputStream(), the extra copy can be avoided.
  * However, for some other use cases such as asString(), we still need to do the copy due to the fact that a single

@@ -35,7 +35,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 
 /**
- * Factory class to produce {@link AsyncPool<Channel>} for Http2 channels
+ * Factory class to produce {@link AsyncPool}&#060;{@link Channel}&#062; for Http2 channels
  * @author Sean Sheng
  * @author Nizar Mankulangara
  */

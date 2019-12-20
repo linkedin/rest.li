@@ -24,7 +24,7 @@ public class CollectionUtils
    * or a {@link java.util.concurrent.ConcurrentHashMap} to prevent resizing of the map.
    * @param numberOfItems the number of items which will be put into the map
    * @param loadFactor the load factor the map will be created with
-   * @return
+   * @return capacity value
    */
   public static int getMapInitialCapacity(int numberOfItems, float loadFactor)
   {

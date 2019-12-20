@@ -100,7 +100,6 @@ public abstract class MockAbstractResponseFutureBuilder<K, V extends RecordTempl
    * Set the entity
    *
    * @param entity
-   * @return
    */
   public MockAbstractResponseFutureBuilder<K, V> setEntity(V entity)
   {
@@ -112,7 +111,6 @@ public abstract class MockAbstractResponseFutureBuilder<K, V extends RecordTempl
    * Set the HTTP status code
    *
    * @param status
-   * @return
    */
   public MockAbstractResponseFutureBuilder<K, V> setStatus(int status)
   {
@@ -124,7 +122,6 @@ public abstract class MockAbstractResponseFutureBuilder<K, V extends RecordTempl
    * Set the headers
    *
    * @param headers
-   * @return
    * @throws IllegalArgumentException when trying to set {@link RestConstants#HEADER_ID} or {@link RestConstants#HEADER_RESTLI_ID}.
    */
   public MockAbstractResponseFutureBuilder<K, V> setHeaders(Map<String, String> headers)
@@ -165,7 +162,6 @@ public abstract class MockAbstractResponseFutureBuilder<K, V extends RecordTempl
    * Sets the Rest.li {@link ProtocolVersion}
    *
    * @param protocolVersion
-   * @return
    */
   public MockAbstractResponseFutureBuilder<K, V> setProtocolVersion(ProtocolVersion protocolVersion)
   {
@@ -187,7 +183,6 @@ public abstract class MockAbstractResponseFutureBuilder<K, V extends RecordTempl
    * @param exception the exception we want to throw for {@link java.util.concurrent.Future#get()} or
    *                  {@link Future#get(long, java.util.concurrent.TimeUnit)}
    * @param <T>
-   * @return
    */
   /*package private*/static <T> Future<Response<T>> buildFuture(final Response<T> response, final ExecutionException exception)
   {

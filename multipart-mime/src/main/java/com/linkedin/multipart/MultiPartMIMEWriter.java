@@ -70,7 +70,6 @@ public final class MultiPartMIMEWriter
      *
      * @param preamble non-null String to be placed before the multipart mime envelope according to the RFC.
      * @param epilogue non-null String to be placed after the multipart mime enveloped according to the RFC.
-     * @return the builder to continue building.
      */
     public Builder(final String preamble, final String epilogue)
     {

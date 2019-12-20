@@ -287,7 +287,6 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
    * method and setting that as the {@link RestliRequestOptions} for this method.
    *
    * @param options
-   * @return
    */
   public AbstractRequestBuilder<K, V, R> setRequestOptions(RestliRequestOptions options)
   {

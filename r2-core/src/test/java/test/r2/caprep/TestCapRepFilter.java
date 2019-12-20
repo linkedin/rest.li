@@ -24,7 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * @auther Zhenkai Zhu
+ * @author Zhenkai Zhu
  */
 public class TestCapRepFilter
 {

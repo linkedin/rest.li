@@ -13,7 +13,7 @@ import test.r2.perf.StringGenerator;
 
 
 /**
- * @auther Zhenkai Zhu
+ * @author Zhenkai Zhu
  */
 
 public class StreamRequestGenerator implements Generator<StreamRequest>

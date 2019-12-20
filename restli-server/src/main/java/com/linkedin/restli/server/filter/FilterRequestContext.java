@@ -177,7 +177,7 @@ public interface FilterRequestContext extends CustomRequestContext
   /**
    * Gets an immutable view of the expected service errors for the resource method, or null if errors aren't defined.
    *
-   * @return {@link List<ServiceError>} defined for the resource method
+   * @return {@link List}&#60;{@link ServiceError}&#62; defined for the resource method
    */
   List<ServiceError> getMethodServiceErrors();
 

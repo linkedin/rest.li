@@ -166,7 +166,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
   }
 
   /**
-   * Uses the link {@JsonParser} and parses its contents into a list of Data objects.
+   * Uses the {@link JsonParser} and parses its contents into a list of Data objects.
    *
    * @param jsonParser provides the {@link JsonParser}
    * @param mesg provides the {@link StringBuilder} to store validation error messages,

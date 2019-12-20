@@ -83,7 +83,7 @@ public interface FilterResourceModel
   /**
    * Gets an immutable view of the expected service errors for the resource, or null if errors aren't defined.
    *
-   * @return {@link List < ServiceError >}
+   * @return {@link List}&#60;{@link ServiceError}&#62;
    */
   List<ServiceError> getServiceErrors();
 }

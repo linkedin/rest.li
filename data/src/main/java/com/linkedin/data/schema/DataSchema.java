@@ -127,14 +127,14 @@ public abstract class DataSchema implements Cloneable
   public abstract Map<String, Object> getProperties();
 
   /**
-   * Return the resolved properties of the {@link DataSchema}
+   * <p>Return the resolved properties of the {@link DataSchema}
    *
-   * The DataSchema can have some properties associated with it,
+   * <p>The DataSchema can have some properties associated with it,
    * but other schema who refer to this dataSchema might want to override them by using the annotations.
    * This field is for storing the resulted properties, after resolved those overrides to this schema
    *
-   * also see {@link com.linkedin.data.schema.annotation.SchemaAnnotationProcessor}
-   * also see {@link com.linkedin.data.schema.annotation.SchemaAnnotationHandler}
+   * @see com.linkedin.data.schema.annotation.SchemaAnnotationProcessor
+   * @see com.linkedin.data.schema.annotation.SchemaAnnotationHandler
    *
    * @return the properties after resolution for current {@link DataSchema}
    */

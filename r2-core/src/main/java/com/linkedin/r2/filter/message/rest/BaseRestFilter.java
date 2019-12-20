@@ -13,7 +13,7 @@ import java.util.Map;
  *
  * Use {@code RestFilter} instead.
  *
- * @auther Zhenkai Zhu
+ * @author Zhenkai Zhu
  */
 public class BaseRestFilter implements RestFilter
 {

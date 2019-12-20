@@ -95,7 +95,7 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
    * Only the key part is used here, as the params are not, strictly speaking, a part of the resource identifier.
    *
    * This returns a v1 style serialized key. It should not be used structurally.
-   * @see {@link #toString(com.linkedin.restli.internal.common.URLEscaper.Escaping)}
+   * @see #toString(com.linkedin.restli.internal.common.URLEscaper.Escaping)
    * @deprecated the output of this function may change in the future, but it is still acceptable to use for
    *             logging purposes.
    *             If you need a stringified version of a key to extract information from a batch response,

@@ -52,7 +52,6 @@ public class MockBatchKVResponseFactory
    * @param errorResponses the data that will be returned for a call to {@link com.linkedin.restli.client.response.BatchKVResponse#getErrors()}
    * @param <K>
    * @param <V>
-   * @return
    */
   public static <K extends CompoundKey, V extends RecordTemplate> BatchKVResponse<K, V> createWithCompoundKey
       (Class<K> keyClass,
@@ -79,7 +78,6 @@ public class MockBatchKVResponseFactory
    *                       NOTE: the params part of the {@link ComplexResourceKey} is removed in this map. A new
    *                       instance of the params class is created with no data in it.
    * @param <V>
-   * @return
    */
   @SuppressWarnings("rawtypes")
   public static <KK extends RecordTemplate, KP extends RecordTemplate, V extends RecordTemplate> BatchKVResponse<ComplexResourceKey<KK, KP>, V> createWithComplexKey
@@ -114,7 +112,6 @@ public class MockBatchKVResponseFactory
    * @param errorResponses the data that will be returned for a call to {@link com.linkedin.restli.client.response.BatchKVResponse#getErrors()}
    * @param <K>
    * @param <V>
-   * @return
    */
   public static <K, V extends RecordTemplate> BatchKVResponse<K, V> createWithPrimitiveKey(Class<K> keyClass,
                                                                                            Class<V> valueClass,
@@ -137,7 +134,6 @@ public class MockBatchKVResponseFactory
    * @param <K>
    * @param <TK>
    * @param <V>
-   * @return
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
   public static <K, TK, V extends RecordTemplate> BatchKVResponse<K, V> createWithCustomTyperefKey(Class<K> keyClass,

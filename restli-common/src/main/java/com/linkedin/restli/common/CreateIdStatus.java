@@ -34,7 +34,7 @@ public class CreateIdStatus<K> extends CreateStatus
    * The id field of the dataMap should match the given key.
    * This method is for internal use only.  Others should use {@link com.linkedin.restli.common.CreateIdStatus#CreateIdStatus(int, Object, ErrorResponse, ProtocolVersion)}.
    *
-   * @see {@link com.linkedin.restli.internal.common.CreateIdStatusDecoder}
+   * @see com.linkedin.restli.internal.common.CreateIdStatusDecoder
    * @param dataMap the underlying DataMap of the CreateIdStatus response. This Data should fit the {@link com.linkedin.restli.common.CreateStatus} schema.
    * @param key The strongly typed key.  Can be null.
    */

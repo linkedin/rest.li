@@ -133,7 +133,6 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
    * {@link #setErrorResponse(com.linkedin.restli.common.ErrorResponse)} is called.
    *
    * @param entity the entity
-   * @return
    */
   @Override
   public MockFailedResponseFutureBuilder<K, V> setEntity(V entity)
@@ -151,7 +150,6 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
    * An {@link IllegalArgumentException} is thrown if the status lies in the range [200, 300)
    *
    * @param status the HTTP status
-   * @return
    */
   @Override
   public MockFailedResponseFutureBuilder<K, V> setStatus(int status)
@@ -175,7 +173,6 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
    * </ul>
    *
    * @param headers the headers to set
-   * @return
    */
   @Override
   public MockFailedResponseFutureBuilder<K, V> setHeaders(Map<String, String> headers)
@@ -195,7 +192,6 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
    * Sets the {@link ProtocolVersion}
    *
    * @param protocolVersion the {@link ProtocolVersion} we want to set
-   * @return
    */
   @Override
   public MockFailedResponseFutureBuilder<K, V> setProtocolVersion(ProtocolVersion protocolVersion)
@@ -211,8 +207,6 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
    * see how this {@link ErrorResponse} is used. In short, this is used to create a {@link RestLiResponseException}.
    *
    * If {@code errorResponse} does not have a status code then {@link #DEFAULT_HTTP_STATUS} will be used.
-   *
-   * @return
    */
   public MockFailedResponseFutureBuilder<K, V> setErrorResponse(ErrorResponse errorResponse)
   {
@@ -228,7 +222,6 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
    * Set how server errors are treated. Please see {@link ErrorHandlingBehavior} for more details.
    *
    * @param errorHandlingBehavior the {@link ErrorHandlingBehavior} we want to set.
-   * @return
    */
   public MockFailedResponseFutureBuilder<K, V> setErrorHandlingBehavior(ErrorHandlingBehavior errorHandlingBehavior)
   {
@@ -238,7 +231,7 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
 
   /**
    * Builds the {@link ResponseFuture}
-   * @return
+
    */
   @Override
   public ResponseFuture<V> build()

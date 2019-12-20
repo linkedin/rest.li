@@ -342,7 +342,6 @@ public class Request<T>
    * Checks if the old fields are equal
    *
    * @param other
-   * @return
    */
   private boolean areOldFieldsEqual(Request<?> other)
   {
@@ -365,7 +364,6 @@ public class Request<T>
    * Checks if the new fields are equal
    *
    * @param other
-   * @return
    */
   private boolean areNewFieldsEqual(Request<?> other)
   {
@@ -411,7 +409,6 @@ public class Request<T>
 
   /**
    * Computes the hashCode using the new fields
-   * @return
    */
   @Override
   public int hashCode()

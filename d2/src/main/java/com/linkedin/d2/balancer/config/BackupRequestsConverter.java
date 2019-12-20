@@ -31,7 +31,7 @@ import com.linkedin.data.schema.validation.ValidationOptions;
 
 
 /**
- * This class converts {@link BackupRequestsBackupRequestsConfigurationArray} into a List
+ * This class converts {@link BackupRequestsConfigurationArray} into a {@link List}
  * that can be stored in zookeeper and vice versa.
  *
  * @author Jaroslaw Odzga (jodzga@linkedin.com)

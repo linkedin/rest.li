@@ -60,8 +60,6 @@ public class D2MonitorBuilder
    * ClusterStats is not required to reset as the new snapshot can always overwrite the old one.
    * However it is necessary to clean uriInfoBuilderMap since we only want to keep track of the
    * unhealthy hosts in the past update interval.
-   *
-   * @return
    */
   public D2MonitorBuilder reset()
   {
@@ -76,7 +74,6 @@ public class D2MonitorBuilder
    * The interval is the duration between this build and previous build (or when D2MonitorBuilder is created).
    *
    * @param intervalMs since last emitting
-   * @return
    */
   public final D2Monitor build(long intervalMs)
   {

@@ -13,7 +13,7 @@ import java.util.Map;
  *
  * Use {@code StreamFilter} instead.
  *
- * @auther Zhenkai Zhu
+ * @author Zhenkai Zhu
  */
 public class BaseStreamFilter implements StreamFilter
 {

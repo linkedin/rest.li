@@ -33,7 +33,7 @@ public interface FilterRequestContextInternal extends FilterRequestContext
   /**
    * Set request data.
    *
-   * @return Request data.
+   * @param data Request data.
    * @deprecated Use {@link FilterRequestContextInternalImpl#FilterRequestContextInternalImpl(ServerResourceContext, ResourceMethodDescriptor, RestLiRequestData)}
    *             to pass <code>RestLiRequestData</code> to the constructor.
    */

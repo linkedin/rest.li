@@ -51,8 +51,6 @@ public class RestLiResponseAttachments
 
     /**
      * Create a RestLiResponseAttachments Builder.
-     *
-     * @return the builder to continue building.
      */
     public Builder()
     {

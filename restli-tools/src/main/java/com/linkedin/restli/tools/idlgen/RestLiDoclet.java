@@ -49,7 +49,7 @@ import java.util.Map;
  * This class is thread-safe. However, #generateJavadoc() will be synchronized.
  *
  * @author dellamag
- * @see {@link Main#execute(String, java.io.PrintWriter, java.io.PrintWriter, java.io.PrintWriter, String, String[])}
+ * @see Main#execute(String, java.io.PrintWriter, java.io.PrintWriter, java.io.PrintWriter, String, String[])
  */
 public class RestLiDoclet
 {

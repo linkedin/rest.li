@@ -61,7 +61,6 @@ public class MockResponseBuilder<K, V>
    * Set the entity
    *
    * @param entity the entity for the {@link Response}
-   * @return
    */
   public MockResponseBuilder<K, V> setEntity(V entity)
   {
@@ -73,7 +72,6 @@ public class MockResponseBuilder<K, V>
    * Set the HTTP status code for the {@link Response}
    *
    * @param status the status code for the {@link Response}
-   * @return
    */
   public MockResponseBuilder<K, V> setStatus(int status)
   {
@@ -85,7 +83,6 @@ public class MockResponseBuilder<K, V>
    * Set the headers for the {@link Response}
    *
    * @param headers the headers for the {@link Response}
-   * @return
    * @throws IllegalArgumentException when trying to set {@link RestConstants#HEADER_ID} or {@link RestConstants#HEADER_RESTLI_ID}.
    */
   public MockResponseBuilder<K, V> setHeaders(Map<String, String> headers)
@@ -109,7 +106,6 @@ public class MockResponseBuilder<K, V>
    * Set the {@link RestLiResponseException} for the {@link Response}
    *
    * @param restLiResponseException the {@link RestLiResponseException} for the {@link Response}
-   * @return
    */
   public MockResponseBuilder<K, V> setRestLiResponseException(RestLiResponseException restLiResponseException)
   {
@@ -121,7 +117,6 @@ public class MockResponseBuilder<K, V>
    * Set the {@link ProtocolVersion} for the {@link Response}
    *
    * @param protocolVersion the {@link ProtocolVersion} for the {@link Response}
-   * @return
    */
   public MockResponseBuilder<K, V> setProtocolVersion(ProtocolVersion protocolVersion)
   {
@@ -133,7 +128,6 @@ public class MockResponseBuilder<K, V>
    * Set the {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader} for the {@link Response}
    *
    * @param restLiAttachmentReader the {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader} for the {@link Response}
-   * @return
    */
   public MockResponseBuilder<K, V> setRestLiAttachmentReader(RestLiAttachmentReader restLiAttachmentReader)
   {

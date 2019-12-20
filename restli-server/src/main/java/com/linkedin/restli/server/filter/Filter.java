@@ -34,7 +34,7 @@ public interface Filter
    * method will be called. The default method returns a completed future, which upon being returned will cause the
    * filter chain to invoke the subsequent filter's onRequest() method.
    *
-   * Filters should return a {@link CompletableFuture<Void>} to indicate the completion status.
+   * Filters should return a {@link CompletableFuture}&#60;{@link Void}&#62; to indicate the completion status.
    * <ul>
    *   <li>Filters that execute synchronously should return a completed (successful or exceptionally) future.</li>
    *   <li>
@@ -52,7 +52,7 @@ public interface Filter
    * error response.
    *
    * @param requestContext the {@link FilterRequestContext} of the request.
-   * @return {@link CompletableFuture<Void>} - future result of filter execution.
+   * @return {@link CompletableFuture}&#60;{@link Void}&#62; - future result of filter execution.
    */
   default CompletableFuture<Void> onRequest(final FilterRequestContext requestContext)
   {
@@ -66,7 +66,7 @@ public interface Filter
    * default method will be called. The default method returns a completed future, which upon being returned will cause
    * the filter chain to invoke the subsequent filter's onResponse() method.
    *
-   * Filters should return a {@link CompletableFuture<Void>} to indicate the completion status.
+   * Filters should return a {@link CompletableFuture}&#60;{@link Void}&#62; to indicate the completion status.
    * <ul>
    *   <li>Filters that execute synchronously should return a completed (successful or exceptionally) future.</li>
    *   <li>
@@ -85,7 +85,7 @@ public interface Filter
    *
    * @param requestContext the {@link FilterRequestContext} of the request that led to this response.
    * @param responseContext the {@link FilterResponseContext} of this response.
-   * @return {@link CompletableFuture<Void>} - future result of filter execution.
+   * @return {@link CompletableFuture}&#60;{@link Void}&#62; - future result of filter execution.
    */
   default CompletableFuture<Void> onResponse(final FilterRequestContext requestContext,
                                              final FilterResponseContext responseContext)
@@ -100,7 +100,7 @@ public interface Filter
    * method will be called. The default method returns an exceptionally completed future, which upon being returned will
    * cause the filter chain to invoke the subsequent filter's onError() method.
    *
-   * Filters should return a {@link CompletableFuture<Void>} to indicate the completion status.
+   * Filters should return a {@link CompletableFuture}&#60;{@link Void}&#62; to indicate the completion status.
    * <ul>
    *   <li>Filters that execute synchronously should return a completed (successful or exceptionally) future.</li>
    *   <li>
@@ -125,7 +125,7 @@ public interface Filter
    * @param th the {@link Throwable} that caused the error.
    * @param requestContext the {@link FilterRequestContext} of the request.
    * @param responseContext the {@link FilterResponseContext} of the response.
-   * @return {@link CompletableFuture<Void>} - future result of filter execution.
+   * @return {@link CompletableFuture}&#60;{@link Void}&#62; - future result of filter execution.
    */
   default CompletableFuture<Void> onError(Throwable th, final FilterRequestContext requestContext,
                                           final FilterResponseContext responseContext)

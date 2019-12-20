@@ -142,7 +142,7 @@ public class ResponseImpl<T> implements Response<T>
    * and the key is a {@link ComplexResourceKey} or {@link CompoundKey}.
    *
    * @deprecated
-   * @see {@link com.linkedin.restli.client.Response#getId()}
+   * @see com.linkedin.restli.client.Response#getId()
    */
   @Override
   @Deprecated

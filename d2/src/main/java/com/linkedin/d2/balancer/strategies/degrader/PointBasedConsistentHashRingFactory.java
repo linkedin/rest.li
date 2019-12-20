@@ -115,7 +115,7 @@ public class PointBasedConsistentHashRingFactory<T> implements RingFactory<T>
    * is configurable from cfg2. Also POINTS_CLEANUP_MIN_UNUSED_ENTRY is used to make sure we do not waste
    * time on clean up when the total host number is small.
    *
-   * @param size: the size of new URI list
+   * @param size the size of new URI list
    */
   private void clearPoints(int size)
   {

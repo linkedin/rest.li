@@ -56,7 +56,7 @@ public class ConsistentHashRing<T> implements Ring<T>
 
   /**
    * Create a consistent hash ring with given points
-   * @param points: Point list;
+   * @param points Point list;
    *
    * Note: ConsistentHashRing takes over the ownership for points and assume no
    *       changes to the list from outside.

@@ -31,7 +31,7 @@ public interface PartitionAccessor extends BasePartitionAccessor
    * implementation here is used for backward compatibility purpose.
    * Will be deprecated after all the existing users get updated.
    *
-   * @param key: input key
+   * @param key input key
    * @return partitionId
    * @throws PartitionAccessException
    */

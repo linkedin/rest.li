@@ -250,7 +250,7 @@ public final class ValidationOptions
    * If Avro union mode is enabled, validate union default values according to Avro's rules.
    *
    * @return true if Avro union mode is enabled.
-   * @see {@link #setAvroUnionMode(boolean)}
+   * @see #setAvroUnionMode(boolean)
    */
   public boolean isAvroUnionMode()
   {

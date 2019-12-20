@@ -66,7 +66,7 @@ public interface HashRingProvider
    *
    * @param serviceName for which we want to retrieve the corresponding hashFunction
    * @return the hashFunction used to hash requests to the given service.
-   * @Throws ServiceUnavailableException - if the requested service is not available.
+   * @throws ServiceUnavailableException - if the requested service is not available.
    */
   HashFunction<Request> getRequestHashFunction(String serviceName) throws ServiceUnavailableException;
 

@@ -19,7 +19,7 @@ public class ResponseDecoderUtil
    * Helper method to assist BATCH_UPDATE, BATCH_PARTIAL_UPDATE, and BATCH_DELETE response decoder
    * {@link BatchUpdateResponseDecoder} in transforming the
    * raw payload data map received over-the-wire to a data map suitable for instantiation of a
-   * {@link BatchKVResponse<?, UpdateStatus>}
+   * {@link BatchKVResponse}&#60;?, {@link UpdateStatus}&#62;
    * @param dataMap received in the response payload (split results and errors in the data map)
    * @return data map suitable for {@link BatchKVResponse} (merged results in the data map)
    */

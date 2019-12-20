@@ -64,30 +64,30 @@ public class RestLiAttachmentReader implements RestLiDataSourceIterator
   }
 
   /**
-   * Reads through and drains the current new attachment (if applicable) and additionally all remaining attachments.
+   * <p>Reads through and drains the current new attachment (if applicable) and additionally all remaining attachments.
    *
-   * This API can be used in only the following scenarios:
+   * <p>This API can be used in only the following scenarios:
    *
-   * 1. Without registering a {@link com.linkedin.restli.common.attachments.RestLiAttachmentReaderCallback}.
+   * <p>1. Without registering a {@link com.linkedin.restli.common.attachments.RestLiAttachmentReaderCallback}.
    * Draining will begin and since no callback is registered, there will be no notification when it is completed.
    *
-   * 2. After registration using a {@link com.linkedin.restli.common.attachments.RestLiAttachmentReaderCallback}
+   * <p>2. After registration using a {@link com.linkedin.restli.common.attachments.RestLiAttachmentReaderCallback}
    * AND after an invocation on
-   * {@link RestLiAttachmentReaderCallback#onNewAttachment(com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader))}.
+   * {@link RestLiAttachmentReaderCallback#onNewAttachment(com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader)}.
    * Draining will begin and when it is complete, a call will be made to {@link RestLiAttachmentReaderCallback#onDrainComplete()}.
    *
-   * If this is called after registration and before an invocation on
-   * {@link RestLiAttachmentReaderCallback#onNewAttachment(com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader))},
+   * <p>If this is called after registration and before an invocation on
+   * {@link RestLiAttachmentReaderCallback#onNewAttachment(com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader)},
    * then a {@link com.linkedin.restli.common.attachments.RestLiAttachmentReaderException} will be thrown.
    *
-   * If this is used after registration, then this can ONLY be called if there is no attachment being actively read, meaning that
+   * <p>If this is used after registration, then this can ONLY be called if there is no attachment being actively read, meaning that
    * the current {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader} has not been initialized
    * with a {@link com.linkedin.restli.common.attachments.SingleRestLiAttachmentReaderCallback}. If this is violated, a
    * {@link com.linkedin.restli.common.attachments.RestLiAttachmentReaderException} will be thrown.
    *
-   * If the stream is finished, subsequent calls will throw {@link com.linkedin.restli.common.attachments.RestLiAttachmentReaderException}.
+   * <p>If the stream is finished, subsequent calls will throw {@link com.linkedin.restli.common.attachments.RestLiAttachmentReaderException}.
    *
-   * Since this is async and request queueing is not allowed, repetitive calls will result in
+   * <p>Since this is async and request queueing is not allowed, repetitive calls will result in
    * {@link com.linkedin.restli.common.attachments.RestLiAttachmentReaderException}.
    */
   public void drainAllAttachments()
@@ -112,18 +112,18 @@ public class RestLiAttachmentReader implements RestLiDataSourceIterator
   }
 
   /**
-   * Register to read using this RestLiAttachmentReader. Upon registration, at some point in the future, an invocation will be
+   * <p>Register to read using this RestLiAttachmentReader. Upon registration, at some point in the future, an invocation will be
    * made on {@link RestLiAttachmentReaderCallback#onNewAttachment(com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader)}.
    * From this point forward users may start consuming attachment data.
    *
-   * This can ONLY be called if there is no attachment being actively
+   * <p>This can ONLY be called if there is no attachment being actively
    * read meaning that the current {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader}
    * has not had a callback registered with it. Violation of this will throw a {@link com.linkedin.restli.common.attachments.RestLiAttachmentReaderException}.
    *
-   * This can even be set if no attachments in the stream have actually been consumed, i.e after the very first invocation of
-   * {@link RestLiAttachmentReaderCallback#onNewAttachment(com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader))}.
+   * <p>This can even be set if no attachments in the stream have actually been consumed, i.e after the very first invocation of
+   * {@link RestLiAttachmentReaderCallback#onNewAttachment(com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader)}.
    *
-   * Essentially users can register a new callback at the very beginning (to initiate the process) or users can register a new callback
+   * <p>Essentially users can register a new callback at the very beginning (to initiate the process) or users can register a new callback
    * any time when invoked on onNewAttachment(). When invoked on onNewAttachment() users can also register as many callbacks as they
    * like any number of times they like. Every time a callback is registered, an invocation will be made on onNewAttachment() on that
    * callback.

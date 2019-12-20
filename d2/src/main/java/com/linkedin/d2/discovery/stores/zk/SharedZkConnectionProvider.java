@@ -93,7 +93,7 @@ public class SharedZkConnectionProvider implements ZkConnectionProvider {
 
   /**
    * Since connections are shared, if registered users did not use the connection, the connection can't be closed unless we manually close it.
-   * @Throws InterruptedException
+   * @throws InterruptedException
    */
   public void ensureConnectionClosed() throws InterruptedException
   {

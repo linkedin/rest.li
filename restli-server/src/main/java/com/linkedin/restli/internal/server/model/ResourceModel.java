@@ -555,7 +555,7 @@ public class ResourceModel implements ResourceDefinition
 
   /**
    * Gets an immutable view of the expected service errors for this resource, or null if errors aren't defined.
-   * @return {@link List<ServiceError>}
+   * @return {@link List}&#60;{@link ServiceError}&#62;
    */
   public List<ServiceError> getServiceErrors()
   {
@@ -565,7 +565,7 @@ public class ResourceModel implements ResourceDefinition
   /**
    * Sets the list of expected service errors for this resource.
    * Note that a null list and an empty list are semantically different (see {@link ServiceErrors}).
-   * @param serviceErrors {@link List<ServiceError>}
+   * @param serviceErrors {@link List}&#60;{@link ServiceError}&#62;
    */
   public void setServiceErrors(final Collection<ServiceError> serviceErrors)
   {

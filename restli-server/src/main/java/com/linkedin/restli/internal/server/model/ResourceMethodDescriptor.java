@@ -554,7 +554,7 @@ public class ResourceMethodDescriptor
 
   /**
    * Gets an immutable view of the expected service errors for this resource method, or null if errors aren't defined.
-   * @return {@link List<ServiceError>}
+   * @return {@link List}&#60;{@link ServiceError}&#62;
    */
   public List<ServiceError> getServiceErrors()
   {
@@ -564,7 +564,7 @@ public class ResourceMethodDescriptor
   /**
    * Sets the list of expected service errors for this resource method.
    * Note that a null list and an empty list are semantically different (see {@link ServiceErrors}).
-   * @param serviceErrors {@link List<ServiceError>}
+   * @param serviceErrors {@link List}&#60;{@link ServiceError}&#62;
    */
   public void setServiceErrors(final Collection<ServiceError> serviceErrors)
   {
@@ -573,7 +573,7 @@ public class ResourceMethodDescriptor
 
   /**
    * Gets an immutable view of the expected success Http status codes for this resource method, or null if none are defined.
-   * @return {@link List<Integer>} list of expected success Http status codes
+   * @return {@link List}&#60;{@link Integer}&#62; list of expected success Http status codes
    */
   public List<HttpStatus> getSuccessStatuses()
   {
@@ -582,7 +582,7 @@ public class ResourceMethodDescriptor
 
   /**
    * Sets the list of expected success Http status codes for this resource method.
-   * @param successStatuses {@link List<Integer>}
+   * @param successStatuses {@link List}&#60;{@link Integer}&#62;
    */
   public void setSuccessStatuses(final Collection<HttpStatus> successStatuses)
   {

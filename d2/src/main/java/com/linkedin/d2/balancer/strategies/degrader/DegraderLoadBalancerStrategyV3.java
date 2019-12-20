@@ -62,7 +62,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 /**
  * Implementation of {@link LoadBalancerStrategy} with additional supports partitioning of services whereas
- * the the prior implmentations do not.
+ * the the prior implementations do not.
  *
  * @author David Hoa (dhoa@linkedin.com)
  * @author Oby Sumampouw (osumampouw@linkedin.com)
@@ -1064,8 +1064,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
   /**
    * this call returns the ring. Ring can be null depending whether the state has been initialized or not
-   * @param partitionId
-   * @return
+   * @param partitionId partition id
    */
   public Ring<URI> getRing(int partitionId)
   {
