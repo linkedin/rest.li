@@ -44,7 +44,7 @@ Rest.li validates using three types of rules:
     matching a string to a regular expression, etc)
 3.  Rest.li validation annotations (`@ReadOnly` and `@CreateOnly`)
 
-The first two rules are specified in the data schema (.pdsc file), and
+The first two rules are specified in the data schema (`.pdl` file), and
 the third one is specified in the resource implementation. This is
 because the first two rules only deal with information in the data
 itself, but the third rule also needs additional Rest.li context such as
@@ -73,23 +73,12 @@ For example, to use “strlen” to validate a string between 1 and 20 chars
 long, we add it to the “validate” map of the field in the schema, for
 example:
 
-```json
-{
-  "name": "Fortune",
-  "namespace": "com.example",
-  "type": "record",
-  "fields": [
-    {
-      "name": "message",
-      "type": "string",
-      "validate": {
-        "strlen": {
-          "min": 1,  
-          "max": 20
-        }
-      }
-    }
-  ]
+```
+namespace com.example
+
+record Fortune {
+  @validate.strlen = {"min": 1, "max": 20}
+  message: string
 }
 ```
 
@@ -182,28 +171,11 @@ can check the correct path for a field by getting its PathSpec and
 calling toString(). For example, if the ValidationDemo record contains
 an array field like this:
 
-```json
-{
-  "name": "ArrayWithInlineRecord",
-  "type": {
-    "type": "array",
-    "items": {
-      "type": "record",
-      "name": "myItem",
-      "fields": [
-        {
-          "name": "bar1",
-          "type": "string"
-        },
-        {
-          "name": "bar2",
-          "type": "string"
-        }
-      ]
-    }
-  },
-  "optional": true
-}
+```
+ArrayWithInlineRecord: optional array[record myItem {
+  bar1: string
+  bar2: string
+}]
 ```
 
 `ValidationDemo.fields().ArrayWithInlineRecord().items().bar1().toString()`
@@ -221,8 +193,8 @@ Because full paths are listed, different rules can be specified for
 records that have the same schema. For example, if the schema contains
 two Photos, you can make the id of photo1 ReadOnly and id of photo2
 non-ReadOnly. This is different from the optional/required distinction
-specified in pdscs, where if the id of photo1 is required, the id of
-photo2 will also be required.
+specified in data schemas, where if the id of photo1 is required, the
+id of photo2 will also be required.
 
 ## Using the Rest.li Data Validator For Servers
 

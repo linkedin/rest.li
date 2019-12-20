@@ -28,7 +28,7 @@ Adding the plugin is simple. First add a buildscript dependency on the `com.link
 
 As an example,  let's consider a simple Rest.li project with three modules:
 
-* An `/api` module containing pegasus schema definitions in the `src/main/pegasus` directory.  This is where java client bindings for the service will be generated. (The client-bindings are sometimes not a separate project, but they are put into the `/api` project along with the pdscs.)
+* An `/api` module containing pegasus schema definitions in the `src/main/pegasus` directory.  This is where java client bindings for the service will be generated. (The client-bindings are sometimes not a separate project, but they are put into the `/api` project along with the schemas.)
 * A `/server` module containing resources defined in java classes in the `src/main/java` directory under the `com.linkedin.restli.example.impl` namespace  (E.g., com.linkedin.restli.example.impl.RestLiExampleBasicServer.java).
 * An example java client that uses the client-bindings.
 
@@ -91,13 +91,20 @@ As an example,  let's consider a simple Rest.li project with three modules:
 
     apply plugin: 'pegasus'
 
-In `/api`,  Pegasus Data Schemas (.pdsc's) should be added under `/src/main/pegasus`.  E.g. `/src/main/pegasus/com/linkedin/restli/example/Hello.pdsc`.
+In `/api`, pegasus data schemas (`.pdl` files) should be added under `/src/main/pegasus`.  E.g.
+`/src/main/pegasus/com/linkedin/restli/example/Hello.pdl`.
 
-The pegasus plugin will detect the presence of .pdsc files and automatically use the `dataTemplateGenerator` task to generate java bindings for the .pdsc's.  In this example,  a `Hello.java` class would be generated.
+The pegasus plugin will detect the presence of `.pdl` files and automatically use the `dataTemplateGenerator` task to
+generate Java bindings for them.  In this example,  a `Hello.java` class would be generated.
 
-The `dataTemplateCompile` task automatically adds pegasus schemas that Hello.pdsc depends on,  in this case,  Hello.pdsc depends only on the core data libraries of pegasus,  but projects containing other .pdsc's could be depended on.
+The `dataTemplateCompile` task automatically adds pegasus schemas that `Hello.pdl` depends on, in this case, `Hello.pdl`
+depends only on the core data libraries of pegasus, but projects containing other `.pdl` files could be depended on.
 
-Pegasus will detect when a project contains interface definitions (called idl and located in .restspec.json files) in it's `/src/mainGeneratedRest/idl` directory (usually copied in from an idl extraction task from the server, see below) and will generate java bindings.   For example, `HelloBuilder.java` is generated from the idl of the hello resource (`/src/main/idl/com/linkedin/restli/example/impl/Hello.restspec.json) and it written to the `/src/mainGeneratedRest/java' directory of the `/api` project.
+Pegasus will detect when a project contains interface definitions (called IDL and located in `.restspec.json` files) in
+it's `/src/mainGeneratedRest/idl` directory (usually copied in from an idl extraction task from the server, see below)
+and will generate java bindings.   For example, `HelloBuilder.java` is generated from the idl of the hello resource
+(`/src/main/idl/com/linkedin/restli/example/impl/Hello.restspec.json) and it written to the
+`/src/mainGeneratedRest/java' directory of the `/api` project.
 
 ### build.gradle for Server project
 
@@ -115,13 +122,23 @@ Pegasus will detect when a project contains interface definitions (called idl an
       // ...
     }
 
-In `/server`, pegasus "Resource" java classes should be defined and should be in the package(s) referred to by `pegasus.main.idlOptions`.  E.g.  `/src/main/java/com/linkedin/restli/example/impl.HelloResource.java`.
+In `/server`, pegasus "Resource" java classes should be defined and should be in the package(s) referred to by
+`pegasus.main.idlOptions`.  E.g.  `/src/main/java/com/linkedin/restli/example/impl.HelloResource.java`.
 
-Pegasus will extract an interface definition (.restspec.json) from the resource class and write it to `/src/mainGeneratedRest/idl` directory.
+Pegasus will extract an interface definition (.restspec.json) from the resource class and write it to
+`/src/mainGeneratedRest/idl` directory.
 
-Once the idl has been generated, it will be copied to the project identified by `ext.apiProject`.  In this example, it will be copied to `/api/src/main/idl`.  Before it is copied, `api/src/main/idl` is scanned for pre-existing idl.  If any is found,  it is compared with the replacement idl that will be copied in and a compatibility checker is run that will return errors if the replacement idl is not backward compatible with the existing idl.  The compatibility checks can be disabled by setting (but be warned, compatibility errors mean that a server running the new interface definition is now incompatible with clients running older versions, and should not be pushed to production systems).  If the compatibility checks pass, the idl is copied into the client directories.  Once copied, new 'Client Bindings' may be generated for the client, see below.
+Once the idl has been generated, it will be copied to the project identified by `ext.apiProject`.  In this example, it
+will be copied to `/api/src/main/idl`.  Before it is copied, `api/src/main/idl` is scanned for pre-existing idl.  If any
+is found,  it is compared with the replacement idl that will be copied in and a compatibility checker is run that will
+return errors if the replacement idl is not backward compatible with the existing idl.  The compatibility checks can be
+disabled by setting (but be warned, compatibility errors mean that a server running the new interface definition is now
+incompatible with clients running older versions, and should not be pushed to production systems).  If the compatibility
+checks pass, the idl is copied into the client directories.  Once copied, new 'Client Bindings' may be generated for the
+client, see below.
 
-The compile dependency on `:api` is required if the HelloResource.java depends on Hello.pdsc and it's generated binding Hello.java.   Note that the dependency includes a 'configuration' identifying this as a 'dataTemplate' dependency.
+The compile dependency on `:api` is required if the HelloResource.java depends on `Hello.pdl` and it's generated binding
+Hello.java.   Note that the dependency includes a 'configuration' identifying this as a 'dataTemplate' dependency.
 
 ### build.gradle for Example Java Client
 
@@ -221,7 +238,10 @@ Once published, other projects may import the client bindings by depending on th
 
 ## Pegasus Plugin in Detail
 
-The gradle tasks for pegasus are provided by the 'pegasus' plugin.  The source for this plugin is in `PegasusGeneratorV2Plugin.groovy`.  This plugin defines custom of gradle `SourceDirectorySet`s for the 'idl', 'pegasus' source types and `tasks` for the rest.li code generators.  It also defines custom published artifact "configurations" and dependencies on between these custom published artifact "configurations".
+The gradle tasks for pegasus are provided by the 'pegasus' plugin.  The source for this plugin is in
+`PegasusGeneratorV2Plugin.groovy`.  This plugin defines custom of gradle `SourceDirectorySet`s for the 'idl', 'pegasus'
+source types and `tasks` for the rest.li code generators.  It also defines custom published artifact "configurations"
+and dependencies on between these custom published artifact "configurations".
 
 ### Source Directory Sets
 
@@ -233,9 +253,11 @@ In this section we below refers to gradle `sourceSets`.  The most common sourceS
 
 Used by 'api' modules.
 
-Contains data schemas (.pdsc) files.  If .pdsc files are present in this directory, the `generate{sourceSet}DataTemplate` tasks (e.g. `generateMainDataTemplate`) will generate java data templates (RecordTemplate java classes) in the `src/{sourceSet}GeneratedDataTemplate` directory.  
+Contains data schemas (`.pdl`) files.  If data schema files are present in this directory, the
+`generate{sourceSet}DataTemplate` tasks (e.g. `generateMainDataTemplate`) will generate java data templates
+(RecordTemplate java classes) in the `src/{sourceSet}GeneratedDataTemplate` directory.  
 
-The .pdsc files are published into a `*-data-template.jar` artifact.  If ivy is used this artifact is published with the module name and under the 'data-template' classification.
+The data schemas files are published into a `*-data-template.jar` artifact.  If ivy is used this artifact is published with the module name and under the 'data-template' classification.
 
 The generated java data templates (RecordTemplate java classes) are are published as a `-data-model.jar` artifact.   If ivy is used this artifact is published with the module name and under the 'data-model' classification.
 
@@ -243,7 +265,10 @@ The generated java data templates (RecordTemplate java classes) are are publishe
 
 Used by 'server' modules.
 
-These files are generated by the `generateRestModel` task, for modules containing {*Resource.java} files (which must be in a package referenced by `pegasus.{sourceSet}.idlOptions.addIdlItem(namespaces)`).   One important aspect of idl is that by convention they are generated by a 'server' module (and written to the `src/{sourceSet}GeneratedRest/idl`) and then are copied to the `/src/{sourceSet}/idl` directory of an api module (via the `ext.apiProject` property).  
+These files are generated by the `generateRestModel` task, for modules containing {*Resource.java} files (which must be
+in a package referenced by `pegasus.{sourceSet}.idlOptions.addIdlItem(namespaces)`).   One important aspect of idl is
+that by convention they are generated by a 'server' module (and written to the `src/{sourceSet}GeneratedRest/idl`) and
+then are copied to the `/src/{sourceSet}/idl` directory of an api module (via the `ext.apiProject` property).  
 
 No artifacts are published directly from the server for these files,  see `src/{sourceSet}/idl` for details on how they are published from the 'api' project.
 
@@ -251,7 +276,11 @@ No artifacts are published directly from the server for these files,  see `src/{
 
 Used by 'api' modules.
 
-Contains published idl (.restspec.json) files.  These files represent the interface definition of the rest.li resources provided by some service.   They should be checked in to source control.   They are copied into the idl directory from server module by the `publishRestliIdl` task.  For this copy to happen the server module must contain a `ext.apiProject` property referencing this 'api' module.  As part of this copy, idl compatibility validation will be run (see above for details).  
+Contains published idl (.restspec.json) files.  These files represent the interface definition of the rest.li resources
+provided by some service.   They should be checked in to source control.   They are copied into the idl directory from
+server module by the `publishRestliIdl` task.  For this copy to happen the server module must contain a `ext.apiProject`
+property referencing this 'api' module.  As part of this copy, idl compatibility validation will be run (see above for
+details).
 
 The idl is published as a `*-rest-model.jar` artifact.  If ivy is used this artifact is published with the module name and under the 'rest-model' classification.
 
@@ -259,19 +288,26 @@ The idl is published as a `*-rest-model.jar` artifact.  If ivy is used this arti
 
 Used by 'api' modules.
 
-Avro schema files (.avsc) generated from pegasus data schema files (.pdsc) by the `generateAvroSchema` task.
+Avro schema files (.avsc) generated from pegasus data schema files (`.pdl`) by the `generateAvroSchema` task.
 
 ### Generator Tasks
 
-All the following tasks are automatically added by the 'pegasus' gradle plugin into the gradle task dependency hierarchy.  They run automatically and in the correct order run as part of 'gradle build', 'gradle jar' and 'gradle compileJava' when the plugin detects that they are needed.
+All the following tasks are automatically added by the 'pegasus' gradle plugin into the gradle task dependency
+hierarchy.  They run automatically and in the correct order run as part of 'gradle build', 'gradle jar' and 'gradle
+compileJava' when the plugin detects that they are needed.
 
 #### `generateRestModel` 
 
-Generates .restspec.json files from java files annotated as rest.li resources in the namespaces that have been added to the idl list using `pegasus.{sourceSet}.idlOptions.addIdlItem()`.  Writes these .restspec.json files into the `src/{sourceSet}GeneratedRest/idl` directory.  This tasks is depended on by the publishRestliIdl task.
+Generates .restspec.json files from java files annotated as rest.li resources in the namespaces that have been added to
+the idl list using `pegasus.{sourceSet}.idlOptions.addIdlItem()`. Writes these `.restspec.json` files into the
+`src/{sourceSet}GeneratedRest/idl` directory.  This tasks is depended on by the `publishRestliIdl` task.
 
 #### `publishRestliIdl`
 
-Copies idl (restspec.json) from server to api project (or whatever the ext.apiProject property is set to).  These files are normally located in the `src/mainGeneratedRest/idl` directory in the server project and the `src/main/idl` direcotry in the api project.  This tasks runs compatibility validation (see above).  While not strictly a 'generate' task, it is a essential part of the generator flow.  It is depended on by the jar task.  
+Copies idl (restspec.json) from server to api project (or whatever the ext.apiProject property is set to).  These files
+are normally located in the `src/mainGeneratedRest/idl` directory in the server project and the `src/main/idl` direcotry
+in the api project.  This tasks runs compatibility validation (see above).  While not strictly a 'generate' task, it is
+a essential part of the generator flow.  It is depended on by the jar task.  
 
 #### `publishRestliSnapshot`
 
@@ -281,15 +317,22 @@ Snapshot files are used for compatibility checking whereas idl files are the for
 
 #### `generate{sourceSet}GeneratedRestRestClient`
 
-Generates java client bindings (`*Builders.java` classes) into the `src/{sourceSet}GeneratedRest/java`.  It depends on the .restspec.json  files in `src/{sourceSet}/idl` directory and the pegasus schemas (.pdsc files) in `src/{sourceSet}/pegasus` as well as from 'dataModel' dependencies (in ivy, these are dependencies from the "data-model" classification).   Depended on by the compileJava task.
+Generates java client bindings (`*Builders.java` classes) into the `src/{sourceSet}GeneratedRest/java`.  It depends on
+the .restspec.json  files in `src/{sourceSet}/idl` directory and the pegasus schemas (`.pdl` files) in
+`src/{sourceSet}/pegasus` as well as from 'dataModel' dependencies (in ivy, these are dependencies from the "data-model"
+classification).   Depended on by the compileJava task.
 
 #### `generateDataTemplate`
 
-Generates java data template bindings (RecordTemplate java classes).  It depends on the pegasus schemas (.pdsc files) in `src/{sourceSet}/pegasus` as well as from 'dataModel' dependencies (in ivy, these are dependencies from the "data-model" classification).  Depended on by the compileJava task.
+Generates java data template bindings (RecordTemplate java classes).  It depends on the pegasus schemas (`.pdl` files)
+in `src/{sourceSet}/pegasus` as well as from 'dataModel' dependencies (in ivy, these are dependencies from the
+"data-model" classification).  Depended on by the compileJava task.
 
 #### `generateAvroSchema`
 
-Generates avro schemas (.avsc files) from the pegasus schemas (.pdsc files) in `src/{sourceSet}/pegasus`.  Requires the same 'dataModel' dependencies as required by the pegasus schemas (in ivy, these are dependencies from the "data-model" classification).  Depended on by generateDataTemplate task.
+Generates avro schemas (.avsc files) from the pegasus schemas (`.pdl` files) in `src/{sourceSet}/pegasus`.  Requires the
+same 'dataModel' dependencies as required by the pegasus schemas (in ivy, these are dependencies from the "data-model"
+classification).  Depended on by generateDataTemplate task.
 
 To run this task, the `avroSchemaGenerator` "configuration" must be configured with rest.li's `data-avro-generator` artifact.  This is done by adding the follow dependency:
 
@@ -308,48 +351,54 @@ pegasus.main.generationModes = [PegasusGenerationMode.AVRO]
 
 ### `*-data-model.jar` artifact
 
-Contains .pdsc files, generated by the `generateDataModel` task.   This is only generated from a project if it contains one or more .pdsc files in it's `src/{sourceSet}/pegasus` directory.
+Contains data schema files, generated by the `generateDataModel` task.   This is only generated from a project if it contains one or more schema files in it's `src/{sourceSet}/pegasus` directory.
 
 * Ivy coordinates: use module's group, name and version, use 'data-model' as classification
 * Maven coordinates: use module's group and version.  Use whatever name was configured for the mavenInstaller, which by convention should be '{modulename}-data-model' (see above section about publish maven artifacts).
 
 #### `*-data-template.jar` artifact
 
-Contains java generated bindings (.class files) for accessing the pegasus schemas (.pdsc files) in the module's `src/{sourceSet}/pegasus` directory.  This artifact is generated by the `generateDataTemplate` task.  This artifact is only generated from a project if it contains one or more .pdsc files in it's `src/{sourceSet}/pegasus` directory.
+Contains java generated bindings (`.class` files) for accessing the pegasus schemas (`.pdl` files) in the module's
+`src/{sourceSet}/pegasus` directory.  This artifact is generated by the `generateDataTemplate` task.  This artifact is
+only generated from a project if it contains one or more schema files in it's `src/{sourceSet}/pegasus` directory.
 
-This artifact will also define dependencies in it's .pom or .ivy file to data-template artifacts it depends on (these are specified as `dataTemplate` dependencies in the module's build.gradle).
+This artifact will also define dependencies in its `.pom` or `.ivy` file to data-template artifacts it depends on (these are specified as `dataTemplate` dependencies in the module's build.gradle).
 
 * Ivy coordinates: use module's group, name and version, use 'data-template' as classification
 * Maven coordinates: use module's group and version.  Use whatever name was configured for the mavenInstaller, which by convention should be '{modulename}-data-template' (see above section about publish maven artifacts).
 
 #### `*-avro-schema.jar` artifact
 
-Contains .avro schema files for the pegasus schemas (.pdsc files) in this module's `src/{sourceSet}/pegasus` directory.  This .avro files are generated by the `generateAvroSchema` task.
+Contains .avro schema files for the pegasus schemas (`.pdl` files) in this module's `src/{sourceSet}/pegasus` directory.  This .avro files are generated by the `generateAvroSchema` task.
 
-This artifact will also define dependencies in it's .pom or .ivy file to avro-schemas artifacts it depends on (these are specified as `dataTemplate` dependencies in the module's build.gradle).
+This artifact will also define dependencies in it's `.pom` or `.ivy` file to avro-schemas artifacts it depends on (these are specified as `dataTemplate` dependencies in the module's build.gradle).
 
 * Ivy coordinates: use module's group, name and version, use 'avro-schema' as classification
 * Maven coordinates: use module's group and version.  Use whatever name was configured for the mavenInstaller, which by convention should be '{modulename}-avro-schema' (see above section about publish maven artifacts).
 
 #### `*-rest-model.jar` artifact
 
-Contains .idl (restspec.json) files for the idl in the module's `src/{sourceSet}/idl' directory.  These .idl files are generated by the generateRestModel task from a server then copied to an api project by the publishRestliIdl task (via the ext.apiProject property).  
+Contains .idl (`restspec.json`) files for the idl in the module's `src/{sourceSet}/idl' directory.  These .idl files are generated by the generateRestModel task from a server then copied to an api project by the publishRestliIdl task (via the ext.apiProject property).  
 
 * Ivy coordinates: use module's group, name and version, use 'rest-model' as classification
 * Maven coordinates: use module's group and version.  Use whatever name was configured for the mavenInstaller, which by convention should be '{modulename}-rest-model' (see above section about publish maven artifacts).
 
 #### `*-rest-client.jar`
 
-Contains rest client java bindings (*Builders.java classes) generated from the idl of the source module.
+Contains rest client java bindings (`*Builders.java` classes) generated from the idl of the source module.
 
-This artifact will also define dependencies in it's .pom or .ivy file to java data template binding artifacts (`*-data-model.jar`) it requires, including the one for the module itself and for any other pegasus schemas it depends on (these are specified as `dataModel` dependencies in the module's build.gradle).
+This artifact will also define dependencies in its `.pom` or `.ivy` file to java data template binding artifacts
+(`*-data-model.jar`) it requires, including the one for the module itself and for any other pegasus schemas it depends
+on (these are specified as `dataModel` dependencies in the module's build.gradle).
 
 * Ivy coordinates: use module's group, name and version, use 'rest-client' as classification
 * Maven coordinates: use module's group and version.  Use whatever name was configured for the mavenInstaller, which by convention should be '{modulename}-rest-client' (see above section about publish maven artifacts).
 
 ### Dependency types
 
-There are two types of pegasus plugin dependency types.  The first type is one required by the plugin for running code generators and compiling code.  The second type is those developers can use to define different sorts dependencies between the various source languages, primarily pegasus schemas (.pdsc files).
+There are two types of pegasus plugin dependency types.  The first type is one required by the plugin for running code
+generators and compiling code.  The second type is those developers can use to define different sorts dependencies
+between the various source languages, primarily pegasus schemas (`.pdl` files).
 
 #### Dependencies used by build tooling
 
@@ -375,7 +424,7 @@ Example build.gradle for an 'api' module:
 
 #### Pegasus Schema Dependencies
 
-`dataTemplate` - Adds a dependency on the pegasus schemas from another module or artifact.  This is required when the current module's pdsc files refer to schema types that reside in another module or artifact.
+`dataTemplate` - Adds a dependency on the pegasus schemas from another module or artifact.  This is required when the current module's data schema files refer to schema types that reside in another module or artifact.
 
 Example build.gradle:
 
@@ -393,7 +442,7 @@ This is provided for reference only.  A understanding of these classes is not re
 
 ### Avro Schema Generator
 
-Generate Avro avsc files from Pegasus Data Model schemas (.pdsc files):
+Generate Avro avsc files from Pegasus data schemas (`.pdl` files):
 
     java [-Dgenerator.resolver.path=<dataSchemaRelativePath>] \
       [-Dgenerator.avro.optional.default=<optionalDefault>] \
@@ -401,7 +450,7 @@ Generate Avro avsc files from Pegasus Data Model schemas (.pdsc files):
       -cp <CLASSPATH> com.linkedin.data.avro.generator.AvroSchemaGenerator \
       <outputDir> [<inputFileOrDir> ...]
 
-* dataSchemaRelativePath - Path to `.pdsc` files. (e.g., `/src/main/pegasus`).
+* dataSchemaRelativePath - Path to `.pdl` files. (e.g., `/src/main/pegasus`).
 * optionalDefault - Specifies how an optional field with a default value should be translated (see [Converting Rest.li to Avro](/rest.li/Rest_li_Avro_conversions#converting-restli-to-avro)).
 * overrideNamespace - If `true`, each translated `.avsc` file will have its namespace prepended with `"avro."` (see [Converting Rest.li to Avro](/rest.li/Rest_li_Avro_conversions#converting-restli-to-avro)).
 * CLASSPATH - `com.linkedin.pegasus:data:[CURRENT_VERSION]` AND `com.linkedin.pegasus:data-avro:[CURRENT_VERSION]` artifacts and all their dependencies.
@@ -412,13 +461,13 @@ Build integration: for builds requiring avro schemas, assembly (creation of jar)
 
 ### Pegasus Data Template Generator
 
-Generates Java data templates (.java files) from Pegasus Data Model schemas (.pdsc files):
+Generates Java data templates (`.java` files) from Pegasus Data Model schemas (`.pdl` files):
 
     java [-Dgenerator.resolver.path=<dataSchemaRelativePath>] -cp <CLASSPATH> \
       com.linkedin.pegasus.generator.PegasusDataTemplateGenerator \
       <outputDir> [<inputFileOrDir> ...]
 
-* dataSchemaRelativePath - Path to .pdsc files. (e.g.,  /src/main/pegasus).
+* dataSchemaRelativePath - Path to data schema files. (e.g., `/src/main/pegasus`).
 * CLASSPATH - `com.linkedin.pegasus:generator:[CURRENT_VERSION]` artifact and all its dependencies.
 * outputDir - output directory for generated java source files
 * inputFileOrDir - file name of a Pegasus data schema file, a directory containing Pegasus data schema files, or a fully qualified schema name
@@ -445,12 +494,16 @@ Copies IDL (.restspec.json) files to client module and check backwards compatibi
       com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker \
       [--compat OFF|IGNORE|BACKWARDS|EQUIVALENT] [pairs of <prevRestspecPath currRestspecPath>]
 
-* dataSchemaRelativePath - Path to .pdsc files required by the interface definition (e.g.  /src/main/pegasus).
+* dataSchemaRelativePath - Path to data schema files required by the interface definition (e.g.  /src/main/pegasus).
 * CLASSPATH - `com.linkedin.pegasus:restli-tools:[CURRENT_VERSION]` artifact and all it's dependencies.
 * prevRestspecPath - 
 * currRestspecPath - 
 
-Build integration: assembly (creation of jar) should depend on this task. If compatibility checker passes, all .restspec.json files should be copied from the server module to the module where client bindings are generated.  This task depends on the `Generate Rest Model IDL` task.  A property named `rest.model.compatibility` should be overridable by the developer (allowing them to set it to `ignore` or `backwards`) and should default to 'equivalent' if they do not provide it.
+Build integration: assembly (creation of jar) should depend on this task. If compatibility checker passes, all
+.restspec.json files should be copied from the server module to the module where client bindings are generated.  This
+task depends on the `Generate Rest Model IDL` task.  A property named `rest.model.compatibility` should be overridable
+by the developer (allowing them to set it to `ignore` or `backwards`) and should default to 'equivalent' if they do not
+provide it.
 
 ### Rest Client Generation
 Generates Java request builders from Rest.li idl:
@@ -460,7 +513,7 @@ Generates Java request builders from Rest.li idl:
       -cp <CLASSPATH> com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator \
       <targetDirectoryPath> [<sourceFileOrDir> ...]
 
-* dataSchemaRelativePath - Path to .pdsc files required by the interface definition.
+* dataSchemaRelativePath - Path to data schema files required by the interface definition.
 * generator.rest.generate.datatemplates - false unless task should also generate java data template bindings
 * CLASSPATH - `com.linkedin.pegasus:restli-tools:[CURRENT_VERSION]` artifact and all its dependencies.
 * targetDirectoryPath - path to target root java source directory

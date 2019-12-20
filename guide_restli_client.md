@@ -111,7 +111,7 @@ adding a <code>restClient</code> dependency, as the
 <code>restClient</code> should bring in the <code>dataTemplate</code>
 transitively.
 
-Note: If you are writing pegasus schemas (.pdsc files) and need to add a
+Note: If you are writing pegasus schemas (`.pdl` files) and need to add a
 dependency on other pegasus schemas, you need to add a
 <code>dataModel</code> dependency:
 
@@ -728,11 +728,10 @@ At a high level, the restspec contains the following information:
 -   a description of each subresource, containing the information
     described above
 
-Additional details on the Restspec format may be found in the [design
-documents](/rest.li/spec/restspec_format).
-The Restspec format is formally described by the .pdsc schema files in
-"com.linkedin.restli.restspec.* " distributed in the restli-common
-module.
+Additional details on the Restspec format may be found in the
+[design documents](/rest.li/spec/restspec_format).
+The Restspec format is formally described by the data schema schema files in
+"com.linkedin.restli.restspec.* " distributed in the restli-common module.
 
 <a id="IDLGeneratorTool"></a>
 
@@ -1131,7 +1130,7 @@ In addition, the generator recognizes the following system properties:
 
 -   `generator.rest.generate.datatemplates` - boolean property
     indicating whether the generator should generate Java RecordTemplate
-    classes for the .pdsc schemas referenced by the IDL file.
+    classes for the data schemas referenced by the IDL file.
 -   `generator.default.package` - the default package name for generated
     classes
 -   `generator.resolver.path` - a colon-separated list of filesystem

@@ -229,13 +229,13 @@ The key type for a collection resource must be one of:
 -   `Boolean`
 -   `Integer`
 -   `Long`
--   A Pegasus Enum (any enum defined in a `.pdsc` schema)
+-   A Pegasus Enum (any enum defined in a `.pdl` schema)
 -   Custom Type (see below for details)
 -   Complex Key (A pegasus record, any subclass of `RecordTemplate`
-    generated from a `.pdsc` schema)
+    generated from a `.pdl` schema)
 
 The value type for a collection resource must be a pegasus record, any
-subclass of `RecordTemplate` generated from a `.pdsc` schema.
+subclass of `RecordTemplate` generated from a `.pdl` schema.
 
 For convenience, collection resources may extend
 `CollectionResourceTemplate` rather than directly implementing the
@@ -394,27 +394,18 @@ dataModel spec.product.pegasus.restliCommon
 }
 ```
 
-where `WidgetKey.pdsc` is defined by the schema:
+where `WidgetKey` is defined by the schema:
 
-```json    
-{
-  "type": "record",
-  "name": "WidgetKey",
-  "namespace": "com.example.widget",
-  "fields": [
-    {"name": "number", "type": "string"},
-    {
-      "name": "thing", 
-      "type": {
-        "type": "record",
-        "name": "Thing",
-        "fields": [
-           {"name": "make", "type": "string"},
-           {"name": "model", "type": "string"}
-        ]
-      }
-    }
-  ]
+```    
+namespace com.example.widget
+
+record WidgetKey {
+  number: string
+
+  thing: record Thing {
+    make: string
+    model: string
+  }
 }
 ```
 
@@ -463,7 +454,7 @@ Classes annotated with `@RestLiSimpleResource` must implement the
 generic type parameter `V`, which is the value type for the resource
 (also known as, the entity type). The value type for a simple resource
 must be a pegasus record, any subclass of `RecordTemplate` generated
-from a `.pdsc` schema.
+from a `.pdl` schema.
 
 For convenience, simple resources may extend `SimpleResourceTemplate`
 rather than directly implementing the `SimpleResource` interface.
@@ -530,7 +521,7 @@ requires a single generic type parameter:
     type.
 
 The value type for an association resource must be a subclass of
-`RecordTemplate` generated from a `.pdsc` schema.
+`RecordTemplate` generated from a `.pdl` schema.
 
 Note that for association resources, they key type is always
 `CompoundKey`, with key parts as defined in the `assocKeys` parameter of
@@ -854,10 +845,10 @@ Valid types for query parameters are:
 -   `float` / `Float`
 -   `double` / `Double`
 -   `ByteString`
--   A Pegasus Enum (any enum defined in a `.pdsc` schema)
+-   A Pegasus Enum (any enum defined in a `.pdl` schema)
 -   Custom types (see the bottom of this section)
 -   Record template types (any subclass of `RecordTemplate` generated
-    from a `.pdsc` schema)
+    from a `.pdl` schema)
 -   Arrays of one of the types above, e.g. `String[]`, `long[]`, ...
 
 ```java
@@ -915,32 +906,21 @@ type of the custom Type and the location of the custom type's class,
 and, if necessary, the location of its coercer. The basic appearance of
 the typeref schema is shown below:
 
-```js
-{
-   "type" : "typeref",
-   "name" : "CustomObjectRef",
-   "namespace" : "com.linkedin.example", // namespace of the typeref
-   "ref" : "string", // underlying type that the coercer converts to/from
-   "java" : {
-      "class" : "com.linkedin.example.CustomObject", // location of the custom type class
-      "coercerClass" : "com.linkedin.example.CustomObjectCoercer", // only needed if the custom 
-                                                                  // type itself cannot contain
-                                                                  // the coercer as an internal class.
-   }
-}
+```
+namespace com.linkedin.example // namespace of the typeref
+
+@java.class = "com.linkedin.example.CustomObject" // location of the custom type class
+@java.coercerClass = "com.linkedin.example.CustomObjectCoercer" // only needed if the custom type itself cannot contain the coercer as an internal class.
+typeref CustomObjectRef = string // underlying type that the coercer converts to/from
 ```
 
 This typeref can then be referenced in other schemas:
 
-```js
-{
-  "type": "record",
-  "name": "ExampleRecord",
-   ...
-  "fields": [
-    {"name": "member", "type": "com.linkedin.example.CustomObjectRef"}
-    ...
-  ]
+```
+import com.linkedin.example.CustomObjectRef
+
+record ExampleRecord {
+  member: CustomObjectRef
 }
 ```
 
@@ -1767,7 +1747,7 @@ Valid parameter types and return types for action are:
 -   `float` / `Float`
 -   `double` / `Double`
 -   `ByteString`
--   A Pegasus Enum (any enum defined in a `.pdsc` schema)
+-   A Pegasus Enum (any enum defined in a `.pdl` schema)
 -   `RecordTemplate` or a subclass of `RecordTemplate` generated from a
     record schema
 -   `FixedTemplate` or a subclass of `FixedTemplate` generated from a
@@ -2351,7 +2331,7 @@ must be in the root Spring context.
 ## Online Documentation
 
 Rest.li has an on-line documentation generator that dynamically
-generates resource IDL and pdsc schemas hosted in the server. The
+generates resource IDL and PDL schemas hosted in the server. The
 documentation is available in both HTML and JSON formats, and there are
 three ways to access the documentation:
 

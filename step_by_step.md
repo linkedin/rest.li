@@ -215,30 +215,29 @@ define the data model in the `api/` directory, which serves to define
 the API or interface between the server and clients.
 
 All Rest.li data models are defined in Pegasus Data Schema files, which
-have a `.pdsc` suffix. We’ll define a Fortune data model in
-`Fortune.pdsc`. The location of this file is important. Be sure to place
+have a `.pdl` suffix. We’ll define a `Fortune` data model in
+`Fortune.pdl`. The location of this file is important. Be sure to place
 it in a path corresponding to your namespace, under
 `api/src/main/pegasus/`:
 
-##### file: example-standalone-app/api/src/main/pegasus/com/example/fortune/Fortune.pdsc
+##### file: example-standalone-app/api/src/main/pegasus/com/example/fortune/Fortune.pdl
 
-```json
-{
-  "type": "record",
-  "name": "Fortune",
-  "namespace": "com.example.fortune",
-  "doc": "Generate a fortune cookie",
-  "fields": [
-    {
-      "name": "fortune",
-      "type": "string",
-      "doc": "The Fortune cookie string"
-    }
-  ]
+```
+namespace com.example.fortune
+
+/**
+ * Generate a fortune cookie
+ */
+record Fortune {
+
+  /**
+   * The Fortune cookie string
+   */
+  fortune: string
 }
 ``` 
 
-`Fortune.pdsc` defines a record named Fortune, with an associated
+`Fortune.pdl` defines a record named Fortune, with an associated
 namespace. The record has one field, a string whose name is `fortune`.
 Fields as well as the record itself can have optional documentation
 strings. This is, of course, a very simple schema. See
@@ -247,7 +246,7 @@ details on the syntax and more complex examples.
 
 ### Step 2. Generate Java Bindings
 
-Rest.li uses the data model in `.pdsc` files to generate java versions
+Rest.li uses the data model in `.pdl` files to generate java versions
 of the model that can be used by the server. The easiest way to generate
 these classes is to use the Gradle integration provided as part of
 Rest.li. You will need a `build.gradle` file in the `api/` directory
@@ -259,14 +258,14 @@ that looks like this:
 apply plugin: 'pegasus'
 ```
 
-With `Fortune.pdsc` and `build.gradle` files in place, you can generate
-a java binding for the data model. This java version is what will
+With `Fortune.pdl` and `build.gradle` files in place, you can generate
+a Java binding for the data model. This Java version is what will
 actually be used by your server to return data to calling clients.
 Change into the `api/` directory and run the following command:
 
     $ gradle build
 
-The `pegasus` Gradle plugin will detect the presence of `Fortune.pdsc`
+The `pegasus` Gradle plugin will detect the presence of `Fortune.pdl`
 and use the *dataTemplateGenerator* to generate `Fortune.java`. The
 generated java classes will be placed under
 `api/src/mainGeneratedDataTemplate/` directory.
@@ -284,7 +283,7 @@ Your file system structure should now look like this:
     |     |     +- com/
     |     |        +- example/
     |     |           +- fortune/
-    |     |              +- Fortune.pdsc
+    |     |              +- Fortune.pdl
     |     +- mainGeneratedDataTemplate/
     |        +- java/
     |           +- com/
@@ -587,7 +586,7 @@ Just to verify that everything is in place, this is how your project’s
     |     |  |  +- com/
     |     |  |     +- example/
     |     |  |        +- fortune/
-    |     |  |           +- Fortune.pdsc
+    |     |  |           +- Fortune.pdl
     |     |  +- snapshot/
     |     |     +- com.example.fortune.fortunes.snapshot.json
     |     +- mainGeneratedDataTemplate/
@@ -829,7 +828,7 @@ We’ve now completed a quick tour of a few of the most basic features of
 Rest.li. Let’s review the steps we took to create a server and a
 corresponding client:
 
-1.  Define a data model (`Fortune.pdsc`)
+1.  Define a data model (`Fortune.pdl`)
 2.  Generate Java language bindings (`Fortune.java RecordTemplate class`)
 3.  Create a Resource that responds to REST requests
     (`FortuneResource.java`) by subclassing `CollectionResourceTemplate`
@@ -846,9 +845,9 @@ corresponding client:
 Notice that (ignoring Gradle build files) there are only three files in
 this example that you had to create:
 
-  - The original Pegasus Data Model file (Fortune.pdsc)
-  - The server resource file (FortunesResource.java)
-  - The client (RestLiFortuneClient.java)
+  - The original Pegasus Data Model file (`Fortune.pdl`)
+  - The server resource file (`FortunesResource.java`)
+  - The client (`RestLiFortuneClient.java`)
 
 Although Rest.li has many more features that can be leveraged when
 creating the server and client, most of your focus will usually be on

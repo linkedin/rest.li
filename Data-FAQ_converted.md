@@ -38,7 +38,7 @@ SchemaTranslator.dataToAvroSchema(pegasusSchema);
 String avsoSchemaInJson = avroSchema.toString();  
 ```
 
-From the command line, to create text files with Avro schema from pdsc
+From the command line, to create text files with Avro schema from PDSC
 files (version 0.17.1 or higher):
 
 ```
@@ -49,9 +49,9 @@ java -Dgenerator.resolver.path=src/main/pegasus com.linkedin.data.avro.generator
 java -Dgenerator.resolver.path=src/main/pegasus com.linkedin.data.avro.generator.AvroSchemaGenerator ../build/main/codegen/avro com.linkedin.foo.Foo
 ```
 
-Classpath must be setup to include data-avro.jar and its dependencies.
+Classpath must be setup to include `data-avro.jar` and its dependencies.
 
-## How do I use a data type embedded inside a pdsc file?
+## How do I use a data type embedded inside a data schema file?
 
 You may experience errors, such as the
     following:
@@ -61,17 +61,17 @@ You may experience errors, such as the
 when ```a.b.D```’s definition is embedded in another type, for
 example, ```a.b.C```.
 
-Embedded data types do not have their own pdsc file. As a result, such
-data type can only be referenced within the containing pdsc file. It can
+Embedded data types do not have their own data schema file. As a result, such
+data types can only be referenced within the containing data schema file; it can
 not be referenced externally. To change this behavior, pull out the
-definition of the internal type to a separate pdsc file.
+definition of the internal type to a separate data schema file.
 
 Internally, this behavior is due to reason that the schema parser
-references the data types by filenames. pdsc file for `a.b.C`
-should be expected at `pegasus/a/b/C.pdsc`. Since Rest.li
+references the data types by filenames. The schema file for `a.b.C`
+is expected to be found at `pegasus/a/b/C.pdl`. Since Rest.li
 does not prefix the containing data type’s name to the embedded type’s
-name, when code `a.b.D` is embedded in `C.pdsc`, the
-schema parser will not be able to find `pegasus/a/b/D.pdsc`.
+name, when type `a.b.D` is embedded inside `C.pdl`, the
+schema parser will not be able to find `pegasus/a/b/D.pdl`.
 
 ## Why is my Java 8 build generating all sorts of Javadoc warnings/errors due to doclint?
 
@@ -86,7 +86,7 @@ following:
 ```
 
 The root cause is incorrectly formatted string values for anything
-within the `doc` or `symbolDocs` attributes within your pdscs. Due to
+within the `doc` or `symbolDocs` (in `.pdsc` files) attributes within your data schemas. Due to
 the addition of doclint in JDK8, anything under the doc or symbolDocs
 attribute must be W3C HTML 4.01 compliant. This is because the contents
 of this string will appear as Javadocs in the generated Java ‘data
@@ -110,7 +110,7 @@ strict](http://stackoverflow.com/questions/22528767/jdk8-and-javadoc-has-become-
 
 More details on `doc` and `symbolDocs` are at [Data Schemas and Templates](/rest.li/DATA-Data-Schema-and-Templates).
 
-## How does rest.li full update method work with schema evolution?
+## How does Rest.li full update method work with schema evolution?
 
 There is a potential pitfall to be aware of. Consider the following
 scenario:
