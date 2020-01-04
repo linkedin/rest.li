@@ -46,7 +46,7 @@ Please check the following documentations for details.
 
 
 ## Record Type
-Records contain any number of fields, which can be primitive types, enums, unions, maps and arrays.
+Records contain any number of fields, which can be primitive types, enums, unions, maps arrays or other records.
 
 A basic record type can contain a few fields.
 
@@ -56,7 +56,6 @@ import org.example.time.DateTime
 
 record Example {
   field1: string
-  field2: optional int
   field3: DateTime
 }
 ```
@@ -71,6 +70,9 @@ namespace com.linkedin.pegasus.generator.examples
  */
 record Foo {
    field1: string
+   /**
+    * field2 is an optional field.
+    */
    field2: optional string
 }
 ```
@@ -90,7 +92,7 @@ record Foo {
 }
 ```
 
-A optional field may have default value.
+An optional field may have default value.
 
 For example: 
 ```
@@ -119,23 +121,21 @@ record WithInlineRecord {
 }
 ```
 
-Inline record can also contains default values.
+Default value can be set up for a field that defines the inline records.
 
 For example: 
 ```
 namespace com.linkedin.pegasus.generator.examples
 
-/**
- * A foo record
- */
-record Foo {
-   field1: string
-   /**
-    * A inline record
-    */
-   inlinedRecord: record Boo {
-      message: string = "Hello"
-   }
+record WithInlineRecord {
+
+    inline: record InlineRecord {
+      value: int
+    } = { "value" : 1 }
+
+    inlineOptional: optional record InlineOptionalRecord {
+      value: string
+    } = { "value" : "default-value" }
 }
 ```
 
@@ -228,7 +228,7 @@ In pegasus, field inclusion does not imply inheritance, it is merely a convenien
 
 
 ### Properties
-Properties can be used to present arbitrary datas and added to records, fields and enums.
+Properties can be used to present arbitrary data and added to records, fields and enums.
 
 For example: 
 ```
