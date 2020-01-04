@@ -19,7 +19,7 @@ excerpt: Rest.li PDL Syntax.
 
 ## PDL Schema Definition
 
-PDL is a Pegasus schema definition language, which is developer friendly and less verbose compare to JSON based schema format.
+PDL is a Pegasus schema definition language, which is developer friendly and less verbose than the JSON based schema format.
 
 ## Creating a Schema
 
