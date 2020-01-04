@@ -15,12 +15,26 @@ toc:
         url: /rest.li/Asynchronous-Servers-and-Clients-in-Rest_li
   - title: Modeling Resources
     subfolderitems:
-      - page: Data Schema and Templates
-        url: /rest.li/DATA-Data-Schema-and-Templates
       - page: Modeling Resources
         url: /rest.li/modeling/modeling
       - page: Snapshots and Resource Compatibility Checking
         url: /rest.li/modeling/compatibility_check
+  - title: Data Schemas
+    subfolderitems:
+      - page: PDL Syntax
+        url: /rest.li/PDL_syntax
+      - page: PDSC Syntax
+        url: /rest.li/PDSC_syntax
+      - page: Avro Translation
+        url: /rest.li/avro_translation
+      - page: Java Binding
+        url: /rest.li/java_binding
+  - title: Data
+    subfolderitems:
+      - page: How Data is Serialized for Transport
+        url: /rest.li/how_data_is_serialized_for_transport
+      - page: How Data is Represented in Memory
+        url: /rest.li/how_data_is_represented_in_memory    
   - title: Main concepts
     subfolderitems:
       - page: Filters
