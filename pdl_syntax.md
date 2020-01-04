@@ -406,39 +406,39 @@ Primitive arrays with default values:
 namespace com.linkedin.pegasus.generator.test.idl.arrays
 
 record WithPrimitivesArrayDefaults {
-  ints: array[int] = [1]
-  longs: array[long] = [3000000000]
-  floats: array[float] = [3.3]
-  doubles: array[double] = [4.4E38]
-  booleans: array[boolean] = [true]
+  ints: array[int] = [1, 2, 3]
+  longs: array[long] = [3000000000, 4000000000]
+  floats: array[float] = [3.3, 2.5]
+  doubles: array[double] = [4.4E38, 3.1E24]
+  booleans: array[boolean] = [true, false]
   strings: array[string] = ["hello"]
   bytes: array[bytes] = ["\u0007"]
 }
 ```
 
-Record arrays:
+Record or Enum arrays:
 ```
 namespace com.linkedin.pegasus.generator.test.idl.arrays
 
 import com.linkedin.pegasus.generator.test.idl.enums.Fruits
 import com.linkedin.pegasus.generator.test.idl.records.Empty
 
-record WithRecordArray {
+record WithRecordAndEnumArrays {
   empties: array[Empty]
   fruits: array[Fruits]
 }
 ```
 
-Record arrays with default values: 
+Record or Enum arrays with default values: 
 ```
 namespace com.linkedin.pegasus.generator.test.idl.arrays
 
 import com.linkedin.pegasus.generator.test.idl.enums.Fruits
 import com.linkedin.pegasus.generator.test.idl.records.Simple
 
-record WithRecordArrayDefaults {
+record WithRecordAndEnumDefaults {
   empties: array[Simple] = [{ "message": "defaults!" }]
-  fruits: array[Fruits] = ["APPLE"]
+  fruits: array[Fruits] = ["APPLE", "ORANGE"]
 }
 ```
 
@@ -467,12 +467,12 @@ Primitive maps with default values:
 namespace com.linkedin.pegasus.generator.test.idl.maps
 
 record WithPrimitivesMapDefaults {
-  ints: map[string, int] = { "int": 1 }
-  longs: map[string, long] = { "long": 3000000000 }
-  floats: map[string, float] = { "float": 3.3 }
-  doubles: map[string, double] = { "double": 4.4E38 }
-  booleans: map[string, boolean] = { "boolean": true }
-  strings: map[string, string] = { "string": "hello" }
+  ints: map[string, int] = { "int1": 1, "int2": 2, "int3": 3 }
+  longs: map[string, long] = { "long1": 3000000000, "long2": 4000000000 }
+  floats: map[string, float] = { "float1": 3.3, "float2": 2.1 }
+  doubles: map[string, double] = {"double1": 4.4E38, "double2": 3.1E24}
+  booleans: map[string, boolean] = { "boolean1": true, "boolean2": true, "boolean3": false }
+  strings: map[string, string] = { "string1": "hello", "string2": "world" }
   bytes: map[string, bytes] = { "bytes": "\u0007" }
 }
 ```
@@ -505,8 +505,7 @@ The key must always be "string".
 
 ## Union Type
 
-A union type may be defined with any number of member types. Each member may be any pegasus type except union type. 
-Each member can be primitive, record, enum, map or array type.
+A union type may be defined with any number of member types. Member type can be primitive, record, enum, map or array. Unions are not allowed as members inside an union.
 
 For example:
 ```
@@ -526,7 +525,30 @@ record Question {
   answerFormat: union[MultipleChoice, TextEntry]
 }
 ```
+```
+namespace com.linkedin.pegasus.generator.examples
 
+record MultipleChoice {
+  answer: string
+}
+```
+
+```
+namespace com.linkedin.pegasus.generator.examples
+
+record TextEntry {
+  text: string
+}
+```
+
+Union with default value:
+```
+namespace com.linkedin.pegasus.generator.examples
+
+record Question {
+  answerFormat: union[MultipleChoice, TextEntry] = {"MultipleChoice" : {"answer" : "A"}}
+}
+```
 ### Union with aliases
 Union members can optionally be given an alias. Aliases can be used to create unions with members of the same type or to give better naming for union members.
 
@@ -554,9 +576,9 @@ namespace com.linkedin.pegasus.generator.examples
 
 record QuestionDefault {
  answerFormat: union[   
-   multipleChoice: MultipleChoice,
    shortAnswer: string,
-   longAnswer: string
+   longAnswer: string,
+   multipleChoice: MultipleChoice
  ] = { "shortAnswer": "short answer." }
 }
 ```
@@ -780,6 +802,8 @@ The property value can be a string describing why the schema element is deprecat
 Deprecate record and field:
 
 ```
+namespace com.linkedin.pegasus.generator.examples
+
 @deprecated = "Use record X instead."
 record Example {
   @deprecated = "Use field x instead."
