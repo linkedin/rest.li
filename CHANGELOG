@@ -1,5 +1,10 @@
+28.1.7
+------
+
 28.1.6
 ------
+(RB=1918095)
+Add additional debug logging to RequestFinalizers.
 
 28.1.5
 ------
@@ -28,7 +33,7 @@ Dark cluster schema and serializer changes
 Use unmodifiableSortedMap instead of unModifiableMap when wrapping treemaps to ensure that bulk copy operations are faster when copied onto another TreeMap.
 
 (RB=1913253)
-Fix convertToPdl tool validation issue when there is an extra whitespace in the beginning of a line in doc. 
+Fix convertToPdl tool validation issue when there is an extra whitespace in the beginning of a line in doc.
 
 (RB=1879153)
 add DataSchemaRichContextTraverser, introduce DataSchemaRichContextTraverser.SchemaVisitor interface

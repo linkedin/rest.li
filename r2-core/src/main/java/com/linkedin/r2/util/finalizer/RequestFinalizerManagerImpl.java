@@ -50,6 +50,7 @@ public class RequestFinalizerManagerImpl implements RequestFinalizerManager
   private final int _id;
   private final AtomicInteger _numFinalizations = new AtomicInteger();
   private RuntimeException _firstFinalization;
+  private Response _firstResponse;
 
   public RequestFinalizerManagerImpl(Request request, RequestContext requestContext)
   {
@@ -92,6 +93,7 @@ public class RequestFinalizerManagerImpl implements RequestFinalizerManager
       {
         _numFinalizations.incrementAndGet();
         _firstFinalization = new RuntimeException("Finalized at time: " + System.currentTimeMillis());
+        _firstResponse = response;
       }
 
       for (RequestFinalizer requestFinalizer: _requestFinalizers)
@@ -116,10 +118,14 @@ public class RequestFinalizerManagerImpl implements RequestFinalizerManager
         if (numFinalizations == 2)
         {
           // Log the first finalization since we now know the request will be finalized at least twice.
-          LOG.debug("Request finalized the first time. FinalizerManager ID = " + _id, _firstFinalization);
+          LOG.debug(String.format("Request finalized the first time. FinalizerManager ID = %s\nRequest ID = %s\nRequest = %s\nRequestContext ID = %s"
+                                    + "\nRequestContext = %s\nResponse ID = %s\nResponse = %s", _id, System.identityHashCode(_request), _request,
+                                  System.identityHashCode(_requestContext), _requestContext, System.identityHashCode(_firstResponse), _firstResponse),
+                    _firstFinalization);
         }
 
-        LOG.debug("Request finalized " + numFinalizations + " times. FinalizerManager ID = " + _id, new RuntimeException());
+        LOG.debug(String.format("Request finalized %d times. FinalizerManager ID = %s\nResponse = %s", numFinalizations, _id, response),
+                  new RuntimeException());
       }
       return false;
     }

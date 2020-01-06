@@ -121,6 +121,16 @@ public class ClientRequestFinalizerFilter implements RestFilter, StreamFilter
       requestContext.putLocalAttr(R2Constants.CLIENT_REQUEST_FINALIZER_MANAGER_REQUEST_CONTEXT_KEY,
           new RequestFinalizerManagerImpl(request, requestContext));
     }
+    else
+    {
+      if (LOG.isDebugEnabled())
+      {
+        LOG.debug(String.format("A RequestFinalizerManager already exists in the RequestContext.\nRequest ID: %s\nRequest: %s\nRequestContext ID: %s"
+                                  + "\nRequestContext: %s",
+                                System.identityHashCode(request), request, System.identityHashCode(requestContext), requestContext),
+                  new RuntimeException());
+      }
+    }
 
     nextFilter.onRequest(request, requestContext, wireAttrs);
   }
@@ -148,6 +158,11 @@ public class ClientRequestFinalizerFilter implements RestFilter, StreamFilter
 
       if (!finalized)
       {
+        if (LOG.isDebugEnabled())
+        {
+          LOG.debug(String.format("Attempted to finalize request from RequestContext ID = %s\nRequestContext = %s",
+                                  System.identityHashCode(requestContext), requestContext));
+        }
         LOG.warn("Request has already been finalized, but we expect this to be the first time.");
       }
     }
