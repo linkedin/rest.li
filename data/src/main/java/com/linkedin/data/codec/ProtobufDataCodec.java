@@ -155,12 +155,12 @@ public class ProtobufDataCodec implements DataCodec
     return new ProtobufTraverseCallback(protoWriter, symbolTable);
   }
 
-  protected Object readUnknownValue(byte ordinal) throws IOException
+  protected Object readUnknownValue(byte ordinal, ProtoReader reader) throws IOException
   {
     throw new DataDecodingException("Unknown ordinal: " + ordinal);
   }
 
-  private DataList readList(ProtoReader reader) throws IOException
+  protected final DataList readList(ProtoReader reader) throws IOException
   {
     int size = reader.readInt32();
     DataList dataList = new DataList(size);
@@ -172,7 +172,7 @@ public class ProtobufDataCodec implements DataCodec
     return dataList;
   }
 
-  private DataMap readMap(ProtoReader reader) throws IOException
+  protected final DataMap readMap(ProtoReader reader) throws IOException
   {
     int size = reader.readInt32();
     DataMap dataMap = new DataMap(size);
@@ -184,7 +184,7 @@ public class ProtobufDataCodec implements DataCodec
     return dataMap;
   }
 
-  private String readStringReference(ProtoReader reader) throws IOException
+  protected final String readStringReference(ProtoReader reader) throws IOException
   {
     String value;
     if (_symbolTable == null || (value = _symbolTable.getSymbolName(reader.readInt32())) == null)
@@ -194,12 +194,12 @@ public class ProtobufDataCodec implements DataCodec
     return value;
   }
 
-  private String readStringLiteral(ProtoReader reader) throws IOException
+  protected final String readStringLiteral(ProtoReader reader) throws IOException
   {
     return reader.readString();
   }
 
-  private Object readValue(ProtoReader reader, Function<Byte, Boolean> matcher) throws IOException
+  protected final Object readValue(ProtoReader reader, Function<Byte, Boolean> matcher) throws IOException
   {
     byte ordinal = reader.readRawByte();
     if (matcher != null && !matcher.apply(ordinal))
@@ -223,7 +223,7 @@ public class ProtobufDataCodec implements DataCodec
       case NULL_ORDINAL: return Data.NULL;
     }
 
-    return readUnknownValue(ordinal);
+    return readUnknownValue(ordinal, reader);
   }
 
   protected boolean isString(byte ordinal)

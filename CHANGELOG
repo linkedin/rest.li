@@ -1,5 +1,10 @@
+28.1.8
+------
+
 28.1.7
 ------
+(RB=1925299)
+Expose some methods in the protobuf codec for inheritors to customize
 
 28.1.6
 ------

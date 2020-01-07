@@ -86,9 +86,9 @@ public abstract class ProtoReader
   }
 
   /**
-   * Disable construction/inheritance outside of this class.
+   * Enable construction via inheritance.
    */
-  private ProtoReader()
+  protected ProtoReader()
   {
   }
 
