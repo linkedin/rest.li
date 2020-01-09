@@ -8,24 +8,24 @@ excerpt: Rest.li PDL Syntax.
 # PDL Syntax
 
 ## Contents
--   [PDL Schema Definition](#pdl__schema_definition)
--   [Creating a Schema](#creating_a_schema)
--   [Record Type](#record_type)
--   [Primitive Types](#primitive_type)
--   [Array Type](#array_type)
--   [Map Type](#map_type)
--   [Union Type](#union_type)
--   [Enum Type](#enum_type)
--   [Fixed Type](#fixed_type)
+-   [PDL Schema Definition](#pdl-schema-definition)
+-   [Creating a Schema](#creating-a-schema)
+-   [Record Type](#record-type)
+-   [Primitive Types](#primitive-type)
+-   [Array Type](#array-type)
+-   [Map Type](#map-type)
+-   [Union Type](#union-type)
+-   [Enum Type](#enum-type)
+-   [Fixed Type](#fixed-type)
 -   [Typerefs](#typerefs)
--   [Namespace](#namespace\)
+-   [Namespace](#namespace)
 -   [Import](#import)
 -   [Deprecation](#deprecation)
 -   [Package](#package)
 
 ## PDL Schema Definition
 
-PDL is a Pegasus schema definition language, which is developer friendly and less verbose than the JSON based schema format.
+PDL is a Pegasus schema definition language, which is developer friendly and more concise than the JSON based schema format.
 
 ## Creating a Schema
 
@@ -41,7 +41,7 @@ appending a `.pdl` extension. This relative file name is appended to
 each path in the resolver path. The resolver opens each of these files
 until it finds a file that contains the named schema.
 
-Pegasus supports different types of schemas: [Records](#record_type), [Primitive types](#record_type), [Enums](#enum_type), [Arrays](#array_type), [Maps](#map_type), [Unions](#union_type), [Fixed](#fixed_type) and [Typerefs](#typerefs). 
+Pegasus supports different types of schemas: [Records](#record-type), [Primitive types](#primitive-type), [Enums](#enum-type), [Arrays](#array-type), [Maps](#map-type), [Unions](#union-type), [Fixed](#fixed-type) and [Typerefs](#typerefs). 
 Please check the following documentations for details.
 
 
@@ -63,7 +63,7 @@ Record fields can be optional.
 
 For example:
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 /**
  * A foo record
@@ -77,11 +77,11 @@ record Foo {
 }
 ```
 
-Record fields may have default values.
+Record fields may have default values. The default value for a field is represented as the JSON value for the field's type.
 
 For example:
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 /**
  * A foo record
@@ -96,54 +96,54 @@ An optional field may have default value.
 
 For example: 
 ```
-namespace com.linkedin.pegasus.generator.test.idl.records
+namespace com.example.models
 
 record WithOptionalPrimitiveDefault {
   intWithDefault: optional int = 1
 }
 ```
 
-### Inline Record
+### Inline Records
 
 A record can contain inline records.
 
 For example:
 ```
-namespace com.linkedin.pegasus.generator.test.idl.records
+namespace com.example.models
 
 record WithInlineRecord {
   inline: record InlineRecord {
-    value: int
+    someField: int
   }
   inlineOptional: optional record InlineOptionalRecord {
-    value: string
+    someField: string
   }
 }
 ```
 
-Default value can be set up for a field that defines the inline records.
+The default value of inlined records can be expressed using its serialized JSON representation.
 
 For example: 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record WithInlineRecord {
 
     inline: record InlineRecord {
-      value: int
-    } = { "value" : 1 }
+      someField: int
+    } = { "someField": 1 }
 
     inlineOptional: optional record InlineOptionalRecord {
-      value: string
-    } = { "value" : "default-value" }
+      someField: string
+    } = { "someField": "default-value" }
 }
 ```
 
-Inline records can aslo be union members.
+Inline records can also be union members.
 
 For example:
 ```
-namespace com.linkedin.pegasus.generator.test.idl.unions
+namespace ccom.example.models
 
 record UnionWithInlineRecord {
   value = union[
@@ -188,7 +188,7 @@ Record can include fields from one or more other records..
 For example: 
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 /**
  * Bar includes fields of Foo, Bar will have fields b1 from itself and f1 from Foo
@@ -198,7 +198,7 @@ record Bar includes Foo {
 }
 ```
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record Foo {
   f1: string
@@ -207,7 +207,7 @@ record Foo {
 
 Multiple includes example:
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 /**
  * Bar includes fields of Foo and Simple, Bar will have fields b1 from itself, f1 from Foo and s1 from Simple
@@ -217,7 +217,7 @@ record Bar includes Foo, Simple {
 }
 ```
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record Simple {
   s1: string
@@ -227,80 +227,13 @@ record Simple {
 In pegasus, field inclusion does not imply inheritance, it is merely a convenience to reduce duplication when writing schemas.
 
 
-### Properties
-Properties can be used to present arbitrary data and added to records, fields and enums.
-
-For example: 
-```
-@prop = "value"
-record Fruits {
-  @validate.regex.regex = "^(yes|no)$"
-  field: string
-}
-```
-#### Property values can be any valid JSON type:
-
-For example: 
-```
-@prop = 1
-```
-```
-@prop = "string"
-```
-```
-@prop = [1, 2, 3]
-```
-```
-@prop = { "a": 1", "b": { "c": true }}
-
-```
-#### Property values can also be empty: 
-
-If you don't indicate an explicity property value, it will resuilt in an implicity value of `true`.
-
-For example: 
-```
-namespace com.linkedin.pegasus.generator.examples
-
-@prop
-record Foo {
-  f1: string
-}
-```
-#### Property keys can be expressed as JSON:
-
-For example: 
-```
-@a = {
-  "b": {
-    "c": {
-      "d": {
-        "e": {
-          "f": false
-        }
-      }
-    }
-  }
-}
-```
-
-#### Property keys can be expressed as paths:
-
-The JSON style property key is complicated to write and read, so we provide a shorthand - the dot separate format to express the property keys.
-
-The following example is equivalent to the previous JSON example:
-
-```
-@a.b.c.d.e.f = false
-```
-
 ### Escaping
-There are some keywords which are reserved in Pegasus. If you have to use them to define any names, you need to put them in backticks : ` `.
+There are some keywords which are reserved in Pegasus. If you have to use them to define any names, you need to put them in backticks: ` `.
 
 #### Keyword Escaping
 
 ```
-namespace com.linkedin.pegasus.generator.test.idl.escaping
+namespace com.example.models
 
 record PdlKeywordEscaping {
   `namespace`: string
@@ -332,11 +265,12 @@ record NamespacePackageEscaping {
 
 #### Property key escaping 
 
-If you want Pegasus to treat property key name with dots as one string key, please use backticks to escape such string.
+If you want Pegasus to treat property key name with dots as one string key, please use backticks to escape such string. Escaping property keys can also be used to escape reserved keywords such as "namespace" or "record".
+
 For example: 
 
 ```
-namespace com.linkedin.pegasus.generator.test.idl.escaping
+namespace com.example.models
 
 record PropertyKeyEscaping {
   @`namespace` = "foo.bar"
@@ -349,11 +283,11 @@ record PropertyKeyEscaping {
 
 ## Primitive Types
 
-The Pegasus primitive types are : int, long, float, double, boolean, string and bytes.
+The Pegasus primitive types are: int, long, float, double, boolean, string and bytes.
 
 For Example:
 ```
-namespace com.linkedin.pegasus.generator.test.idl.records
+namespace com.example.models
 
 record WithPrimitives {
   intField: int
@@ -368,7 +302,7 @@ record WithPrimitives {
 
 Primitive types with default values:
 ```
-namespace com.linkedin.pegasus.generator.test.idl.records
+namespace com.example.models
 
 record WithPrimitiveDefaults {
   intWithDefault: int = 1
@@ -388,7 +322,7 @@ Pegasus Arrays are defined as a collection of a particular "items" type.
 
 For Example: 
 ```
-namespace com.linkedin.pegasus.generator.test.idl.arrays
+namespace com.example.models
 
 record WithPrimitivesArray {
   ints: array[int]
@@ -403,7 +337,7 @@ record WithPrimitivesArray {
 
 Primitive arrays with default values: 
 ```
-namespace com.linkedin.pegasus.generator.test.idl.arrays
+namespace com.example.models
 
 record WithPrimitivesArrayDefaults {
   ints: array[int] = [1, 2, 3]
@@ -445,11 +379,11 @@ record WithRecordAndEnumDefaults {
 
 ## Map Type
 
-Pegasus maps are defined with a values type and an optional key type.
+Maps are defined with a key type and a value type. The value type can be any valid PDL type, but currently only `string` is supported for the key type.
 
 For example: 
 ```
-namespace com.linkedin.pegasus.generator.test.idl.maps
+namespace com.example.models
 
 record WithPrimitivesMap {
   ints: map[string, int]
@@ -464,7 +398,7 @@ record WithPrimitivesMap {
 
 Primitive maps with default values: 
 ```
-namespace com.linkedin.pegasus.generator.test.idl.maps
+namespace com.example.models
 
 record WithPrimitivesMapDefaults {
   ints: map[string, int] = { "int1": 1, "int2": 2, "int3": 3 }
@@ -499,17 +433,13 @@ record WithComplexTypesMap {
 }
 ```
 
-**Note**: 
-The key must always be "string".
-
-
 ## Union Type
 
 A union type may be defined with any number of member types. Member type can be primitive, record, enum, map or array. Unions are not allowed as members inside an union.
 
 For example:
 ```
-namespace com.linkedin.pegasus.generator.test.idl.unions
+namespace com.example.models
 
 record WithPrimitivesUnion {
   value: union[int, long, float, double, boolean, string, bytes]
@@ -519,14 +449,14 @@ record WithPrimitivesUnion {
 The member type names also serve as the “member keys” (also called as “union tags”), and identify which union member type data holds.
 To define a field of a record containing a union of two other records, we would define:
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record Question {
   answerFormat: union[MultipleChoice, TextEntry]
 }
 ```
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record MultipleChoice {
   answer: string
@@ -534,7 +464,7 @@ record MultipleChoice {
 ```
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record TextEntry {
   text: string
@@ -543,39 +473,45 @@ record TextEntry {
 
 Union with default value:
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record Question {
-  answerFormat: union[MultipleChoice, TextEntry] = {"com.linkedin.pegasus.generator.examples.MultipleChoice" : {"answer" : "A"}}
+  answerFormat: union[MultipleChoice, TextEntry] = {"com.linkedin.pegasus.generator.examples.MultipleChoice": {"answer": "A"}}
 }
 ```
 ### Union with aliases
-Union members can optionally be given an alias. Aliases can be used to create unions with members of the same type or to give better naming for union members.
+Union members can optionally be given an alias. Aliases can be used to create unions with members of the same type or to give better naming for union members. Union with aliases is useful for cases where a union contains multiple different typerefs with the same underlying type. This use case is not supported with a non-aliased union.
 
-Aliased unions are defined as :
+Aliased unions are defined as:
 ```
 union [alias: type, ...]
 ```
 
 For example:
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record Question {
  answerFormat: union[   
    multipleChoice: MultipleChoice,
+   /**
+     * Doc for shortAnswer.
+     */
    shortAnswer: string,
+   @customProperty = "property for longAnswer."
    longAnswer: string
  ]
 }
 ```
+**Aliased union members can have doc strings and custom properties. This is not supported for non-aliased union members.**
+
 
 Union with aliases with default value:
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record QuestionDefault {
- answerFormat: union[   
+ answerFormat: union[ 
    shortAnswer: string,
    longAnswer: string,
    multipleChoice: MultipleChoice
@@ -585,6 +521,8 @@ record QuestionDefault {
 
 In the above example, the union answerFormat has three members, with two string type members differentiated using the aliases (shortAnswer and longAnswer). When aliases are used, the alias becomes the "member key" for the union members and will be used in the wire format. 
 
+**Note:**
+Either ALL union members must be aliased, or NONE at all.
 
 ## Enum Type
 
@@ -593,7 +531,7 @@ Enums types may contain any number of symbols.
 For example:
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 enum Fruits {
   APPLE
@@ -608,7 +546,7 @@ Enums can be referenced in other schemas by name.
 For example:
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record FruitBasket {
   fruit: Fruits
@@ -620,7 +558,7 @@ Enum can also be inline defined.
 For example:
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record FruitBasket {
   fruit: enum Fruits { APPLE, BANANA, ORANGE }
@@ -633,7 +571,7 @@ Doc comments, deprecation and properties can be added directly to enum symbols.
 For example:
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 /**
  * A fruit
@@ -661,7 +599,7 @@ To specify defaults, specify the enum value as string.
 For example:
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record FruitBasket {
   fruit: enum Fruits { APPLE, BANANA, ORANGE } = "APPLE"
@@ -672,7 +610,7 @@ record FruitBasket {
 The default value can also be defined as following exmaple:
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record FruitBasket {
   fruit: Fruits = "APPLE"
@@ -685,7 +623,7 @@ Fixed type is used to define schema with fixed size of bytes.
 
 For example:
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 fixed MD5 16
 ```
@@ -704,7 +642,7 @@ It is very useful, because unions, maps and arrays cannot be named directly like
 For example:
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 typeref AnswerTypes = union[MultipleChoice, TextEntry]
 
@@ -715,7 +653,7 @@ Typerefs can be referred to from any other type using the name.
 For example:
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record Question {
   answerFormat: AnswerTypes
@@ -728,7 +666,7 @@ record Question {
 For example:
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 typeref UnixTimestamp = long
 ```
@@ -737,7 +675,7 @@ typeref UnixTimestamp = long
 For example, Joda time has a convenient DateTime class. If we wish to use this class in Java to represent date times, all we need to do is define a pegasus custom type that binds to it:
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 @java.class = "org.joda.time.DateTime"
 @java.coercerClass = "com.linkedin.example.DateTimeCoercer"
@@ -750,7 +688,7 @@ Once a custom type is defined, it can be used in any type.
 For example, to use the DateTime custom type in a record:
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record Fortune {
   createdAt: DateTime
@@ -763,7 +701,7 @@ Namespace is used to qualify the namespace for the named schema.
 
 For example:
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 record Foo {}
 ```
@@ -794,15 +732,110 @@ fully qualified name.
 2. Importing types within the root namespace of the document.
 3. Declaring types that conflict with existing imports.
 
+## Properties
+Properties can be used to present arbitrary data and added to records, record fields, enums, enum symbols, aliased union members.
+
+Add properties to record and record field:
+```
+@prop = "value"
+record Fruits {
+  @validate.regex.regex = "^(yes|no)$"
+  field: string
+}
+```
+
+Add properties to enum and enum symbols:
+```
+@prop = "value"
+enum Fruits {
+  @color = "red"
+  APPLE
+
+  @color = "orange"
+  ORANGE
+
+  @color = "yellow"
+  BANANA
+}
+```
+
+Add properties to aliased union members:
+```
+record Question {
+ answerFormat: union[
+   @prop
+   multipleChoice: MultipleChoice,
+   shortAnswer: string,
+   longAnswer: string
+ ]
+}
+```
+
+### Property values can be any valid JSON type:
+
+For example:
+```
+@prop = 1
+```
+```
+@prop = "string"
+```
+```
+@prop = [1, 2, 3]
+```
+```
+@prop = { "a": 1", "b": { "c": true }}
+
+```
+### Property values can also be empty:
+
+If you don't indicate an explicit property value, it will resuilt in an implicit value of `true`.
+
+For example:
+```
+namespace com.linkedin.pegasus.generator.examples
+
+@prop
+record Foo {
+  f1: string
+}
+```
+### Property keys can be expressed as JSON:
+
+For example:
+```
+@a = {
+  "b": {
+    "c": {
+      "d": {
+        "e": {
+          "f": false
+        }
+      }
+    }
+  }
+}
+```
+
+### Property keys can be expressed as paths:
+
+The JSON style property key is complicated to write and read, so we provide a shorthand - the dot separate format to express the property keys.
+
+The following example is equivalent to the previous JSON example:
+
+```
+@a.b.c.d.e.f = false
+```
+
 ## Deprecation
 
-All types, enum symbols and record fields can be deprecated by adding @deprecated annotation.
+All types, enum symbols and record fields can be deprecated by adding `@deprecated` annotation.
 The property value can be a string describing why the schema element is deprecated or an alternative, or simply boolean `true`.
 
 Deprecate record and field:
 
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 @deprecated = "Use record X instead."
 record Example {
@@ -813,7 +846,7 @@ record Example {
 
 Deprecate enum symbols:
 ```
-namespace com.linkedin.pegasus.generator.examples
+namespace com.example.models
 
 enum Fruits {
 
