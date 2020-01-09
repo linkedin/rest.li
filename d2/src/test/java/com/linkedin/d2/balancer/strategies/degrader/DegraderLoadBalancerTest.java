@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.strategies.degrader;
 
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancerClient;
@@ -3562,7 +3563,6 @@ public class DegraderLoadBalancerTest
   public void DegraderLoadBalancerQuarantineTest()
   {
     DegraderLoadBalancerStrategyConfig config = new DegraderLoadBalancerStrategyConfig(1000);
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
     TestClock clock = new TestClock();
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(Collections.emptyMap());
     List<TrackerClient> trackerClients = createTrackerClient(3, clock, degraderConfig);
@@ -3640,6 +3640,34 @@ public class DegraderLoadBalancerTest
     Assert.assertTrue(restRequest.getMethod().equals("OPTIONS"));
   }
 
+  @Test
+  public void testHealthCheckRequestContextNotShared()
+  {
+    final DegraderLoadBalancerStrategyConfig config = new DegraderLoadBalancerStrategyConfig(1000);
+    final TestClock clock = new TestClock();
+    final DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(Collections.emptyMap());
+    final TrackerClient trackerClient = createTrackerClient(1, clock, degraderConfig).get(0);
+    final TestLoadBalancerClient testLoadBalancerClient = (TestLoadBalancerClient) trackerClient.getWrappedClient();
+    final TrackerClientUpdater trackerClientUpdater = new TrackerClientUpdater(trackerClient, DEFAULT_PARTITION_ID);
+
+    final DegraderLoadBalancerQuarantine quarantine = new DegraderLoadBalancerQuarantine(trackerClientUpdater, config, "abc0");
+    final TransportHealthCheck healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
+
+    healthCheck.checkHealth(Callbacks.empty());
+    final RequestContext requestContext1 = testLoadBalancerClient._requestContext;
+    final Map<String, String> wireAttrs1 = testLoadBalancerClient._wireAttrs;
+
+    healthCheck.checkHealth(Callbacks.empty());
+    final RequestContext requestContext2 = testLoadBalancerClient._requestContext;
+    final Map<String, String> wireAttrs2 = testLoadBalancerClient._wireAttrs;
+
+    Assert.assertEquals(requestContext1, requestContext2);
+    Assert.assertNotSame(requestContext1, requestContext2, "RequestContext should not be shared between requests.");
+
+    Assert.assertEquals(wireAttrs1, wireAttrs2);
+    Assert.assertNotSame(wireAttrs1, wireAttrs2, "Wire attributes should not be shared between requests.");
+  }
+
   /**
    * return the default old default degrader configs that the tests expect
    */
@@ -3702,10 +3730,17 @@ public class DegraderLoadBalancerTest
     return new TrackerClient(uri, partitionDataMap, new TestLoadBalancerClient(uri), clock, null);
   }
 
+  /**
+   * {@link LoadBalancerClient} decorator that captures the last values.
+   */
   public static class TestLoadBalancerClient implements LoadBalancerClient
   {
+    private final URI _uri;
 
-    private URI _uri;
+    private Request _request;
+    private RequestContext _requestContext;
+    private Map<String, String> _wireAttrs;
+    private TransportCallback<?> _callback;
 
     public TestLoadBalancerClient(URI uri)
     {
@@ -3724,7 +3759,7 @@ public class DegraderLoadBalancerTest
                             Map<String, String> wireAttrs,
                             TransportCallback<StreamResponse> callback)
     {
-      // Do nothing
+      captureValues(request, requestContext, wireAttrs, callback);
     }
 
     @Override
@@ -3733,7 +3768,15 @@ public class DegraderLoadBalancerTest
                      Map<String, String> wireAttrs,
                      TransportCallback<RestResponse> callback)
     {
+      captureValues(request, requestContext, wireAttrs, callback);
+    }
 
+    private void captureValues(Request request, RequestContext requestContext, Map<String, String> wireAttrs, TransportCallback<?> callback)
+    {
+      _request = request;
+      _requestContext = requestContext;
+      _wireAttrs = wireAttrs;
+      _callback = callback;
     }
 
     @Override

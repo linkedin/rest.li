@@ -64,9 +64,13 @@ public class HealthCheckClientBuilder
       operations = new HealthCheckOperations();
     }
 
-    return new TransportHealthCheck(_clock, _client.getWrappedClient(),
-        operations.buildRestRequest(_method, newUri), operations.buildRequestContext(),
-        operations.buildWireAttributes(), operations.buildResponseValidate(), _latency);
+    return new TransportHealthCheck(_clock,
+                                    _client.getWrappedClient(),
+                                    operations.buildRestRequest(_method, newUri),
+                                    operations.buildRequestContextSupplier(),
+                                    operations.buildWireAttributesSupplier(),
+                                    operations.buildResponseValidate(),
+                                    _latency);
   }
 
   public HealthCheckClientBuilder setHealthCheckOperations(HealthCheckOperations ops)

@@ -6,7 +6,7 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.function.Supplier;
 
 /**
  * HealthCheckRequestFactory provides parameters for health checking requests.
@@ -27,13 +27,37 @@ public class HealthCheckRequestFactory
     return requestBuilder.build();
   }
 
+  /**
+   * @deprecated Use {@link #buildRequestContextSupplier()} instead.
+   */
+  @Deprecated
   public RequestContext buildRequestContext()
   {
     return new RequestContext();
   }
 
+  /**
+   * @return RequestContext supplier.
+   */
+  public Supplier<RequestContext> buildRequestContextSupplier()
+  {
+    return RequestContext::new;
+  }
+
+  /**
+   * @deprecated Use {@link #buildWireAttributesSupplier()} instead.
+   */
+  @Deprecated
   public Map<String, String> buildWireAttributes()
   {
     return new HashMap<>();
+  }
+
+  /**
+   * @return Wire attributes supplier.
+   */
+  public Supplier<Map<String, String>> buildWireAttributesSupplier()
+  {
+    return HashMap::new;
   }
 }

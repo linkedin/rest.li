@@ -27,6 +27,8 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.util.clock.Clock;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,15 +44,14 @@ public class TransportHealthCheck implements HealthCheck
 {
   private static final Logger _log = LoggerFactory.getLogger(TransportHealthCheck.class);
 
-  // final private ScheduledExecutorService _executorService;
   final private Clock _clock;
 
   final private TransportClient _clientToCheck;
 
   // Request for healthChecking
   final private RestRequest _restRequest;
-  final private RequestContext _requestContext;
-  final private Map<String, String> _wireAttrs;
+  final private Supplier<RequestContext> _requestContextSupplier;
+  final private Supplier<Map<String, String>> _wireAttrsSupplier;
 
   final private HealthCheckResponseValidator _healthCheckResponseValidator;
 
@@ -59,14 +60,14 @@ public class TransportHealthCheck implements HealthCheck
 
 
   public TransportHealthCheck(Clock clock, TransportClient client, RestRequest request,
-      RequestContext requestContext, Map<String, String> wireAttrs,
-      HealthCheckResponseValidator healthCheckResponseValidator, long threshold)
+                              Supplier<RequestContext> requestContextSupplier, Supplier<Map<String, String>> wireAttrsSupplier,
+                              HealthCheckResponseValidator healthCheckResponseValidator, long threshold)
   {
     _clock = clock;
     _clientToCheck = client;
     _restRequest = request;
-    _requestContext = requestContext;
-    _wireAttrs = wireAttrs;
+    _requestContextSupplier = requestContextSupplier;
+    _wireAttrsSupplier = wireAttrsSupplier;
     _healthCheckResponseValidator = healthCheckResponseValidator;
     _responseTimeThreshold = threshold;
   }
@@ -105,13 +106,7 @@ public class TransportHealthCheck implements HealthCheck
       }
     };
 
-    _clientToCheck.restRequest(_restRequest, _requestContext, _wireAttrs, transportCallback);
-  }
-
-  // For testing only
-  public RequestContext getRequestContext()
-  {
-    return _requestContext;
+    _clientToCheck.restRequest(_restRequest, _requestContextSupplier.get(), _wireAttrsSupplier.get(), transportCallback);
   }
 
   public RestRequest getRestRequest()
