@@ -20,6 +20,7 @@ excerpt: Rest.li PDL Syntax.
 -   [Typerefs](#typerefs)
 -   [Namespace](#namespace)
 -   [Import](#import)
+-   [Properties](#properties)
 -   [Deprecation](#deprecation)
 -   [Package](#package)
 
@@ -77,7 +78,7 @@ record Foo {
 }
 ```
 
-Record fields may have default values. The default value for a field is represented as the JSON value for the field's type.
+Record fields may have default values. The default value for a field is expressed as a JSON value.
 
 For example:
 ```
@@ -789,16 +790,11 @@ For example:
 ```
 ### Property values can also be empty:
 
-If you don't indicate an explicit property value, it will resuilt in an implicit value of `true`.
+If you don't indicate an explicit property value, it will result in an implicit value of `true`.
 
 For example:
 ```
-namespace com.linkedin.pegasus.generator.examples
-
 @prop
-record Foo {
-  f1: string
-}
 ```
 ### Property keys can be expressed as JSON:
 
