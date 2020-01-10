@@ -24,7 +24,6 @@ import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
-import java.util.ArrayList;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -158,7 +156,12 @@ public class ClusterPropertiesJsonSerializer implements
     Map<String, Object> darkClusterProperty = (Map<String, Object>) map.get(PropertyKeys.DARK_CLUSTER_MAP);
     DarkClusterConfigMap darkClusterConfigMap = DarkClustersConverter.toConfig(darkClusterProperty);
 
+    boolean delegated = false;
+    if (map.containsKey(PropertyKeys.DELEGATED)) {
+      delegated = mapGet(map, PropertyKeys.DELEGATED);
+    }
+
     return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList,
-        darkClusterConfigMap);
+        darkClusterConfigMap, delegated);
   }
 }

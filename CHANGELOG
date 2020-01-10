@@ -3,6 +3,9 @@
 (RB=1946908)
 Support long for HTTP_IDLE_TIMEOUT and HTTP_SSL_IDLE_TIMEOUT
 
+(RB=1930512)
+Add support for delegated property in ClusterProperties, and new property keys for Dark Cluster multiplier
+
 28.1.13
 -------
 (RB=1952903)

@@ -39,6 +39,7 @@ public class ClusterProperties
   @Deprecated
   private final List<String>          _prioritizedSchemes;
   private final DarkClusterConfigMap _darkClusters;
+  private final boolean              _delegated;
 
   public ClusterProperties(String clusterName)
   {
@@ -92,7 +93,19 @@ public class ClusterProperties
       PartitionProperties partitionProperties,
       List<String> sslSessionValidationStrings,
       DarkClusterConfigMap darkClusters)
+  {
+    this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
+        darkClusters, false);
+  }
 
+  public ClusterProperties(String clusterName,
+      List<String> prioritizedSchemes,
+      Map<String, String> properties,
+      Set<URI> bannedUris,
+      PartitionProperties partitionProperties,
+      List<String> sslSessionValidationStrings,
+      DarkClusterConfigMap darkClusters,
+      boolean delegated)
   {
     _clusterName = clusterName;
     _prioritizedSchemes =
@@ -104,6 +117,7 @@ public class ClusterProperties
     _sslSessionValidationStrings = sslSessionValidationStrings == null ? Collections.emptyList() : Collections.unmodifiableList(
         sslSessionValidationStrings);
     _darkClusters = darkClusters == null ? new DarkClusterConfigMap() : darkClusters;
+    _delegated = delegated;
   }
 
   public boolean isBanned(URI uri)
@@ -146,13 +160,18 @@ public class ClusterProperties
     return _darkClusters;
   }
 
+  public boolean isDelegated()
+  {
+    return _delegated;
+  }
+
   @Override
   public String toString()
   {
     return "ClusterProperties [_clusterName=" + _clusterName + ", _prioritizedSchemes="
         + _prioritizedSchemes + ", _properties=" + _properties + ", _bannedUris=" + _bannedUris
         + ", _partitionProperties=" + _partitionProperties + ", _sslSessionValidationStrings=" + _sslSessionValidationStrings
-        + ", _darkClusterConfigMap=" + _darkClusters + "]";
+        + ", _darkClusterConfigMap=" + _darkClusters + ", _delegated=" + _delegated + "]";
   }
 
   @Override
@@ -169,6 +188,7 @@ public class ClusterProperties
     result = prime * result + ((_partitionProperties == null) ? 0 : _partitionProperties.hashCode());
     result = prime * result + ((_sslSessionValidationStrings == null) ? 0 : _sslSessionValidationStrings.hashCode());
     result = prime * result + ((_darkClusters == null) ? 0 : _darkClusters.hashCode());
+    result = prime * result + ((_delegated) ? 1 : 0);
     return result;
   }
 
@@ -209,6 +229,10 @@ public class ClusterProperties
       return false;
     }
     if (!_darkClusters.equals(other._darkClusters))
+    {
+      return false;
+    }
+    if (_delegated != other._delegated)
     {
       return false;
     }

@@ -232,6 +232,7 @@ public class ServicePropertiesJsonSerializer implements
     {
       metadataProperties.put(PropertyKeys.DEFAULT_ROUTING_TO_MASTER, defaultRoutingToMaster);
     }
+
     Map<String, Object> publishedMetadataProperties = mapGet(map, PropertyKeys.SERVICE_METADATA_PROPERTIES);
     if (publishedMetadataProperties != null)
     {

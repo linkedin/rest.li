@@ -120,6 +120,7 @@ public class PropertyKeys
   public static final String CLUSTER_PROPERTIES = "properties";
   public static final String SSL_VALIDATION_STRINGS = "sslSessionValidationStrings";
   public static final String DARK_CLUSTER_MAP = "darkClusters";
+  public static final String DELEGATED = "delegated";
 
   //used by transport client creation
   public static final String HTTP_POOL_WAITER_SIZE = HttpClientFactory.HTTP_POOL_WAITER_SIZE;
@@ -172,4 +173,9 @@ public class PropertyKeys
 
   // used by uri specific properties
   public static final String DO_NOT_SLOW_START = "doNotSlowStart";
+
+  // used by dark clusters
+  public static final String DARK_CLUSTER_MULTIPLIER = "multiplier";
+  public static final String DARK_CLUSTER_OUTBOUND_TARGET_RATE = "dispatcherOutboundTargetRate";
+  public static final String DARK_CLUSTER_OUTBOUND_MAX_RATE = "dispatcherOutboundMaxRate";
 }
