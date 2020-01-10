@@ -58,6 +58,16 @@ public class TransportHealthCheck implements HealthCheck
   // HealthChecking criteria
   long _responseTimeThreshold;
 
+  /**
+   * @deprecated Use {@link TransportHealthCheck#TransportHealthCheck(Clock, TransportClient, RestRequest, Supplier, Supplier, HealthCheckResponseValidator, long)} instead.
+   */
+  @Deprecated
+  public TransportHealthCheck(Clock clock, TransportClient client, RestRequest request,
+                              RequestContext requestContext, Map<String, String> wireAttrs,
+                              HealthCheckResponseValidator healthCheckResponseValidator, long threshold)
+  {
+    this(clock, client, request, () -> requestContext, () -> wireAttrs, healthCheckResponseValidator, threshold);
+  }
 
   public TransportHealthCheck(Clock clock, TransportClient client, RestRequest request,
                               Supplier<RequestContext> requestContextSupplier, Supplier<Map<String, String>> wireAttrsSupplier,
@@ -107,6 +117,12 @@ public class TransportHealthCheck implements HealthCheck
     };
 
     _clientToCheck.restRequest(_restRequest, _requestContextSupplier.get(), _wireAttrsSupplier.get(), transportCallback);
+  }
+
+  // For testing only
+  public RequestContext getRequestContext()
+  {
+    return _requestContextSupplier.get();
   }
 
   public RestRequest getRestRequest()
