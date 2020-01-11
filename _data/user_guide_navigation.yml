@@ -16,9 +16,9 @@ toc:
   - title: Data Schemas
     subfolderitems:
       - page: PDL Syntax
-        url: /rest.li/PDL_syntax
+        url: /rest.li/pdl_syntax
       - page: PDSC Syntax
-        url: /rest.li/PDSC_syntax
+        url: /rest.li/pdsc_syntax
       - page: Avro Translation
         url: /rest.li/avro_translation
       - page: Java Binding
