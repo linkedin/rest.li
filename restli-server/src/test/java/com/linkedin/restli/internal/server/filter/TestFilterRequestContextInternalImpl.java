@@ -41,6 +41,7 @@ import java.util.UUID;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -206,5 +207,17 @@ public class TestFilterRequestContextInternalImpl
     verify(context, times(1)).putCustomContextData("foo", "bar");
     verify(context, times(1)).getCustomContextData("foo");
     verify(context, times(1)).removeCustomContextData("foo");
+  }
+
+  @Test
+  public void testGetActionReturnType()
+  {
+    when(resourceMethod.getMethodType()).thenReturn(ResourceMethod.ACTION);
+    Mockito.doReturn(String.class).when(resourceMethod).getActionReturnType();
+    FilterRequestContext filterContext = new FilterRequestContextInternalImpl(context, resourceMethod, null);
+    Assert.assertEquals(filterContext.getActionReturnType(), String.class);
+
+    when(resourceMethod.getMethodType()).thenReturn(ResourceMethod.GET);
+    Assert.assertNull(filterContext.getActionReturnType());
   }
 }

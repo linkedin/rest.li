@@ -19,11 +19,13 @@ package com.linkedin.restli.internal.server.model;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.parseq.Task;
 import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
+import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
@@ -85,6 +87,7 @@ import java.util.Set;
  *
  * @author Evan Williams
  */
+@SuppressWarnings({"unused", "InnerClassMayBeStatic"})
 class SampleResources
 {
   /**
@@ -290,6 +293,75 @@ class SampleResources
     {
       return new EmptyRecord();
     }
+  }
+
+  @RestLiActions(name = "actionReturnTypeInteger")
+  class ActionReturnTypeIntegerResource
+  {
+    @Action(name = "int")
+    public int doInt()
+    {
+      return 1;
+    }
+
+    @Action(name = "actionResultInt")
+    public ActionResult<Integer> doActionResultInt()
+    {
+      return new ActionResult<>(1);
+    }
+
+    @Action(name = "taskActionResultInt")
+    public Task<ActionResult<Integer>> doTaskActionResultInt()
+    {
+      return Task.value(new ActionResult<>(1));
+    }
+
+    @Action(name = "taskInt")
+    public Task<Integer> doTaskInt()
+    {
+      return Task.value(1);
+    }
+
+    @Action(name = "promiseInt")
+    public Promise<Integer> doPromiseInt()
+    {
+      return null;
+    }
+
+    @Action(name = "callbackActionResultInt")
+    public void doCallbackActionResultInt(@CallbackParam Callback<ActionResult<Integer>> callback) {}
+  }
+
+  @RestLiActions(name = "actionReturnTypeRecord")
+  class ActionReturnTypeRecordResource
+  {
+    @Action(name = "record")
+    public EmptyRecord doRecord()
+    {
+      return new EmptyRecord();
+    }
+
+    @Action(name = "actionResultRecord")
+    public ActionResult<EmptyRecord> doActionResultRecord()
+    {
+      return new ActionResult<>(new EmptyRecord());
+    }
+
+    @Action(name = "taskActionResultRecord")
+    public Task<ActionResult<EmptyRecord>> doTaskActionResultRecord()
+    {
+      return Task.value(new ActionResult<>(new EmptyRecord()));
+    }
+
+    @Action(name = "callbackRecord")
+    public void doCallbackRecord(@CallbackParam Callback<EmptyRecord> callback) {}
+  }
+
+  @RestLiActions(name = "actionReturnTypeVoid")
+  class ActionReturnTypeVoidResource
+  {
+    @Action(name = "void")
+    public void doVoid() {}
   }
 
   /**

@@ -233,6 +233,16 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   }
 
   @Override
+  public Class<?> getActionReturnType()
+  {
+    if (_resourceMethod.getMethodType() == ResourceMethod.ACTION)
+    {
+      return _resourceMethod.getActionReturnType();
+    }
+    return null;
+  }
+
+  @Override
   public RecordDataSchema getActionRequestSchema()
   {
     return _resourceMethod.getRequestDataSchema();

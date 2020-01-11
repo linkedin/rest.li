@@ -217,6 +217,21 @@ public interface FilterRequestContext extends CustomRequestContext
   RecordDataSchema getCollectionCustomMetadataSchema();
 
   /**
+   * Obtain the logical return type of the action method being queried, or null if the method being queried is not an
+   * action method.
+   * <p>
+   * The type returned will be the "logical" return type in the sense that wrapper types such as
+   * {@link com.linkedin.restli.server.ActionResult} and {@link com.linkedin.parseq.Task} will not be present.
+   * For methods with a void return type, {@link Void#TYPE} will be returned.
+   * <p>
+   * For instance, this method will return {@code String} for a method with the return type
+   * {@code Task<ActionResult<String>>}.
+   *
+   * @return the action method's return type.
+   */
+  Class<?> getActionReturnType();
+
+  /**
    * Obtain the schema of the action request object.
    *
    * @return record template of the request object.

@@ -16,10 +16,12 @@
 
 package com.linkedin.restli.internal.server.model;
 
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.server.ResourceConfigException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.testng.Assert;
@@ -157,6 +159,43 @@ public class TestRestLiApiBuilder
       Assert.assertTrue(e.getMessage().contains(expectedPartialMessage),
           String.format("Expected %s with message containing \"%s\" but instead found message \"%s\"",
               ResourceConfigException.class.getSimpleName(), expectedPartialMessage, e.getMessage()));
+    }
+  }
+
+  @DataProvider(name = "actionReturnTypeData")
+  private Object[][] provideActionReturnTypeData()
+  {
+    return new Object[][]
+        {
+            { ActionReturnTypeVoidResource.class, Void.TYPE },
+            { ActionReturnTypeIntegerResource.class, Integer.class },
+            { ActionReturnTypeRecordResource.class, EmptyRecord.class }
+        };
+  }
+
+  /**
+   * Ensures that when action methods are processed, the correct return "logical" return type is identified.
+   * For instance, it should recognize that the "logical" return type for a method
+   * {@code Task<ActionResult<String>> doFoo();} is {@code String.class}.
+   *
+   * @param resourceClass resource used as an input
+   * @param expectedActionReturnType the expected action return type
+   */
+  @Test(dataProvider = "actionReturnTypeData")
+  public void testActionReturnType(Class<?> resourceClass, Class<?> expectedActionReturnType)
+  {
+    // Process the resource and collect the resource method descriptors
+    Map<String, ResourceModel> models = RestLiApiBuilder.buildResourceModels(Collections.singleton(resourceClass));
+    Assert.assertEquals(models.size(), 1);
+    ResourceModel model = models.get(models.keySet().iterator().next());
+    Assert.assertNotNull(model);
+    List<ResourceMethodDescriptor> resourceMethodDescriptors = model.getResourceMethodDescriptors();
+
+    // For each method, check that the action return type was correctly identified
+    for (ResourceMethodDescriptor resourceMethodDescriptor : resourceMethodDescriptors)
+    {
+      Class<?> logicalReturnType = resourceMethodDescriptor.getActionReturnType();
+      Assert.assertEquals(resourceMethodDescriptor.getActionReturnType(), expectedActionReturnType);
     }
   }
 }
