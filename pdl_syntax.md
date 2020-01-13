@@ -870,4 +870,4 @@ record Foo {
   intField: int
 }
 ```
-If package is not specified, language  binding class for the named schema will use `namespace` as its default namespace.
+If package is not specified, language binding class for the named schema will use `namespace` as its default namespace.
