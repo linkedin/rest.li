@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Generates symbol tables at runtime.
  */
-class RuntimeSymbolTableGenerator {
+public class RuntimeSymbolTableGenerator {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RuntimeSymbolTableGenerator.class);
 
@@ -84,11 +84,8 @@ class RuntimeSymbolTableGenerator {
     return new InMemorySymbolTable(symbolTableName, symbolList);
   }
 
-  private static void addFrameworkSymbols(Set<String> symbols)
+  public static void addFrameworkSymbols(Set<String> symbols)
   {
-    // Action Response
-    symbols.add(ActionResponse.VALUE_NAME);
-
     // Batch Request
     symbols.add(BatchRequest.ENTITIES);
 
@@ -122,7 +119,7 @@ class RuntimeSymbolTableGenerator {
     symbols.add(UpdateEntityStatus.ENTITY);
   }
 
-  private static void collectFrameworkSchemas(Set<DataSchema> resourceSchemas)
+  public static void collectFrameworkSchemas(Set<DataSchema> resourceSchemas)
   {
     Class<?>[] frameworkClasses = {
         ErrorResponse.class,
@@ -149,7 +146,7 @@ class RuntimeSymbolTableGenerator {
     }
   }
 
-  private static void expandAndCollectSymbols(DataSchema resourceSchema,
+  public static void expandAndCollectSymbols(DataSchema resourceSchema,
       Set<DataSchema> processedSchemas,
       Set<String> symbols)
   {

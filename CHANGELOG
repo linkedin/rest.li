@@ -1,5 +1,11 @@
+28.1.11
+-------
+
 28.1.10
 ------
+(RB=1932852)
+Expose some utility methods for use elsewhere
+
 (RB=1929668)
 Expose action return type in FilterRequestContext
 
