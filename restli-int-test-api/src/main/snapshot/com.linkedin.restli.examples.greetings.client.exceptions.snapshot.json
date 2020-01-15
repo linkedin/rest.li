@@ -59,6 +59,8 @@
         "name" : "errorResponseFormatMessageOnly"
       }, {
         "name" : "errorResponseFormatMinimal"
+      }, {
+        "name" : "errorWithEmptyStatus"
       } ],
       "entity" : {
         "path" : "/exceptions/{exceptionsId}"

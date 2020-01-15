@@ -322,6 +322,23 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     }
   }
 
+  @Test
+  public void testExceptionsWithNullStatus() throws Exception
+  {
+    ActionRequest<?> actionRequest = new ExceptionsBuilders().actionErrorWithEmptyStatus().build();
+
+    try
+    {
+      getClient().sendRequest(actionRequest).getResponse();
+    }
+    catch (RestLiResponseException e)
+    {
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
+      Assert.assertEquals(e.toString(),
+          "com.linkedin.restli.client.RestLiResponseException: Response status 500, serviceErrorMessage: This is an exception with no status!");
+    }
+  }
+
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
   public Object[][] exceptionHandlingModesDataProvider()
   {

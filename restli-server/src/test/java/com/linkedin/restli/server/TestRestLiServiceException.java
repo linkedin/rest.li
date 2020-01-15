@@ -18,6 +18,7 @@ package com.linkedin.restli.server;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.server.errors.ServiceError;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -71,5 +72,12 @@ public class TestRestLiServiceException
     Assert.assertNull(restLiServiceException.getErrorDetails());
     Assert.assertNull(restLiServiceException.getErrorDetailsRecord());
     Assert.assertEquals(restLiServiceException.getCause(), cause);
+  }
+
+  @Test
+  public void testNullStatus()
+  {
+    final RestLiServiceException restLiServiceException = new RestLiServiceException((HttpStatus) null);
+    Assert.assertTrue(restLiServiceException.toString().contains("[HTTP Status:null]"));
   }
 }

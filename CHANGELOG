@@ -3,6 +3,13 @@
 (RB=1885009)
 Add "validateSchemaAnnotationTask" gradle task for validating schema annotations
 
+(RB=1934338)
+Guard against NPE when RestLiServiceException is initialized with null status. Also updates server logic to handle null status cleanly.
+ This change should not affect clients based on the following points:
+  -> Today, if status is null, the framework code throws NPE when serializing the exception or converting to Response. This NPE is then handled as unknown error and returned as 500 error to client.
+  -> With this change, clients will still get 500 error, with the correct error details serialized in the body.
+  -> The Rest.Li filter chain will continue to see the actual exception (with null status), thus not affecting any custom filter behavior.
+
 28.1.10
 ------
 (RB=1932852)

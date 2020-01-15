@@ -136,7 +136,8 @@ public class ResponseUtils
     RestResponseBuilder responseBuilder = new RestResponseBuilder()
         .setHeaders(restLiResponse.getHeaders())
         .setCookies(CookieUtil.encodeSetCookies(restLiResponse.getCookies()))
-        .setStatus(restLiResponse.getStatus().getCode());
+        .setStatus(restLiResponse.getStatus() == null ? HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode()
+            : restLiResponse.getStatus().getCode());
 
     if (restLiResponse.hasData())
     {
@@ -156,7 +157,8 @@ public class ResponseUtils
     StreamResponseBuilder responseBuilder = new StreamResponseBuilder()
         .setHeaders(restLiResponse.getHeaders())
         .setCookies(CookieUtil.encodeSetCookies(restLiResponse.getCookies()))
-        .setStatus(restLiResponse.getStatus().getCode());
+        .setStatus(restLiResponse.getStatus() == null ? HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode()
+            : restLiResponse.getStatus().getCode());
 
     EntityStream<ByteString> entityStream = codec.encodeMap(restLiResponse.getDataMap());
     StreamResponse response = responseBuilder.build(EntityStreamAdapters.fromGenericEntityStream(entityStream));

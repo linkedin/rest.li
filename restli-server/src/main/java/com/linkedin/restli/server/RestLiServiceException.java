@@ -243,7 +243,7 @@ public class RestLiServiceException extends RuntimeException
   {
     StringBuilder sb = new StringBuilder();
     sb.append(getClass().getName());
-    sb.append(" [HTTP Status:").append(_status.getCode());
+    sb.append(" [HTTP Status:").append(_status == null ? "null" : _status.getCode());
 
     if (_serviceErrorCode != null)
     {

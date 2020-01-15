@@ -80,7 +80,7 @@ public final class ErrorResponseBuilder
   {
     ErrorResponse er = new ErrorResponse();
 
-    if (errorResponseFormat.showStatusCodeInBody())
+    if (errorResponseFormat.showStatusCodeInBody() && result.getStatus() != null)
     {
       er.setStatus(result.getStatus().getCode());
     }

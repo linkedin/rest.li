@@ -180,4 +180,14 @@ public class TestErrorResponseBuilder
     Assert.assertFalse(errorResponse.hasDocUrl());
     Assert.assertFalse(errorResponse.hasRequestId());
   }
+
+  @Test
+  public void testNullStatus()
+  {
+    RestLiServiceException exception = new RestLiServiceException((HttpStatus) null);
+    ErrorResponseBuilder builder = new ErrorResponseBuilder(ErrorResponseFormat.FULL);
+
+    ErrorResponse errorResponse = builder.buildErrorResponse(exception);
+    Assert.assertFalse(errorResponse.hasStatus());
+  }
 }

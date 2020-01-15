@@ -14,10 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.examples.greetings.server;
 
 
@@ -144,6 +140,12 @@ public class ExceptionsResource extends CollectionResourceTemplate<Long, Greetin
   public Void errorResponseFormatMessageAndDetails()
   {
     throw makeNewDummyException(ErrorResponseFormat.MESSAGE_AND_DETAILS);
+  }
+
+  @Action(name = "errorWithEmptyStatus")
+  public Void errorWithEmptyStatus()
+  {
+    throw new RestLiServiceException((HttpStatus) null, "This is an exception with no status!");
   }
 
   private static RestLiServiceException makeNewDummyException(ErrorResponseFormat errorResponseFormat)
