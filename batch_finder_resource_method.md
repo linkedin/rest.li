@@ -162,7 +162,7 @@ Example:
 
 The resource owner need to define their own search criteria `GreetingCriteria.pdl` file.
 
-```
+```pdl
 namespace com.linkedin.restli.examples.greetings.api
 
 /**

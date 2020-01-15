@@ -222,7 +222,7 @@ it in a path corresponding to your namespace, under
 
 ##### file: example-standalone-app/api/src/main/pegasus/com/example/fortune/Fortune.pdl
 
-```
+```pdl
 namespace com.example.fortune
 
 /**
