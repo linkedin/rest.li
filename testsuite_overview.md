@@ -68,9 +68,9 @@ Structure section of this document first.
 This documentation assumes a background in [Rest.li](https://github.com/linkedin/rest.li). Specifically, test developers should be familar with Rest.li data
 schema, IDL, and wire protocol format as demonstrated by the following links: 
 
-* Data schema (```.pdsc```) - https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates
-* IDL (```.restspec.json```) - https://github.com/linkedin/rest.li/wiki/Rest.li-.restspec.json-Format
-* Rest.li Wire Protocol - https://github.com/linkedin/rest.li/wiki/Rest.li-Protocol
+* Data schema (```.pdl```) - https://linkedin.github.io/rest.li/pdl_syntax
+* IDL (```.restspec.json```) - https://linkedin.github.io/rest.li/spec/restspec_format
+* Rest.li Wire Protocol - https://linkedin.github.io/rest.li/spec/protocol
 
 Implementers are encouraged to explore the
 test data and reference documentation in tandem to learn the details of Rest.li.

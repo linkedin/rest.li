@@ -20,7 +20,7 @@ index: 2
 
 ## Summary
 
-Rest.li applications are built around *Resources*. The key ingredient to creating a resource is _data model_, whose internal structure is defined by [Pegasus Data Schema](/rest.li/DATA-Data-Schema-and-Templates) in key-values style. A fundamental presumption was that such structure exists for every Rest.li data model. However, it's not the case for _unstructured_ data such as images or PDFs, which are usually consumed in raw binary forms without a containing data structure.
+Rest.li applications are built around *Resources*. The key ingredient to creating a resource is _data model_, whose internal structure is defined by [Pegasus Data Schema](/rest.li/pdl_syntax) in key-values style. A fundamental presumption was that such structure exists for every Rest.li data model. However, it's not the case for _unstructured_ data such as images or PDFs, which are usually consumed in raw binary forms without a containing data structure.
 
 This user guide is about working with _unstructured data_ in Rest.li framework. This is _not_ a comprehensive guide to building Rest.li resources in general, which is already covered in great details at [Writing Resources](/rest.li/user_guide/restli_server#writing-resources). This guide focuses on the differences of unstructured data resource.
 
