@@ -108,7 +108,7 @@ if (JavaVersion.current().isJava8Compatible()) {
 More details on doclint can be found here: [Javadoc has become very
 strict](http://stackoverflow.com/questions/22528767/jdk8-and-javadoc-has-become-very-strict)
 
-More details on `doc` and `symbolDocs` are at [Data Schemas and Templates](/rest.li/DATA-Data-Schema-and-Templates).
+More details on `doc` and `symbolDocs` are at [Data Schemas](/rest.li/pdl_syntax).
 
 ## How does Rest.li full update method work with schema evolution?
 

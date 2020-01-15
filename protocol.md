@@ -94,7 +94,7 @@ Consider the following functions:
 Rest.li objects defined using using pegasus data schemas are serialized
 in a JSON representation for transportation over the wire. For detailed
 transport serialization, please see
-[How Data is Serialized for Transport](/rest.li/DATA-Data-Schema-and-Templates#how-data-is-serialized-for-transport).
+[How Data is Serialized for Transport](/rest.li/how_data_is_serialized_for_transport).
 
 ### Rest.li Protocol 2.0 Object Representation
 
