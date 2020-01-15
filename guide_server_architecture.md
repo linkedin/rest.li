@@ -181,8 +181,7 @@ Flow</b><br><img src="/rest.li/images/RestLiCodeGen.png">
 Let's look at each step:
 
 -   **Step 1**. The first step in building a Rest.li application is to
-    define your data schema using [Pegasus Data Schemas](/rest.li/DATA-Data-Schema-and-Templates). The
-    Pegasus Data Schema format uses a simple Avro-like syntax.
+    define your data schema using [Pegasus Data Schemas](/rest.li/pdl_syntax).
 -   In **Step 2**, a Rest.li code generator creates Java classes that
     represent the data model defined in Step 1. These RecordTemplate
     classes serve as the Java representation of the data in both the

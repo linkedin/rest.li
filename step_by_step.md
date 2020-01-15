@@ -186,8 +186,7 @@ responds to GET requests.
 
 The basic steps you will follow to create a Rest.li server are:
 
-1.  Define data schema. Rest.li uses an Avro-like format known as
-    [Pegasus Data Schema](/rest.li/DATA-Data-Schema-and-Templates) to
+1.  Define data schema. Rest.li uses [Pegasus Data Schema](/rest.li/pdl_syntax) to
     define the resource data.
 
 2. Generate language bindings. Rest.li will generate java class
@@ -241,7 +240,7 @@ record Fortune {
 namespace. The record has one field, a string whose name is `fortune`.
 Fields as well as the record itself can have optional documentation
 strings. This is, of course, a very simple schema. See
-[Data Schema and Templates](/rest.li/DATA-Data-Schema-and-Templates) for
+[Data Schemas](/rest.li/pdl_syntax) for
 details on the syntax and more complex examples.
 
 ### Step 2. Generate Java Bindings

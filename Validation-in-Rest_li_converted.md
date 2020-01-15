@@ -58,9 +58,7 @@ because the modified entity will be missing that field. If there is a
 custom validation rule on the username field that it must be at least 3
 characters, a patch setting the username to “AA” is invalid.
 
-You can read more about required and optional fields in [Data Schema and
-Templates - Optional
-Fields](DATA-Data-Schema-and-Templates#optional-fields).
+You can read more about required and optional fields in [Data Schemas - PDL Syntax - Record Type](pdl_syntax#record-type).
 
 ## Custom Validation Rules
 
@@ -346,7 +344,7 @@ When validating data returned by the server, clients have to use the `ValidateDa
 When ReadOnly or CreateOnly annotations are used, Rest.li context
 (method type, request vs response) is necessary to validate the data.
 Otherwise the data and the schema information is enough. [Data to Schema
-Validation](DATA-Data-Schema-and-Templates#data-to-schema-validation)
+Validation](how_data_is_represented_in_memory#data-to-schema-validation)
 explains how to validate data using the `ValidateDataAgainstSchema`
 class. If it is used with `DataSchemaAnnotationValidator`, it will
 consider the first two types of rules out of three listed in
