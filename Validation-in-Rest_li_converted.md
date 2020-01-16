@@ -71,7 +71,7 @@ For example, to use “strlen” to validate a string between 1 and 20 chars
 long, we add it to the “validate” map of the field in the schema, for
 example:
 
-```
+```pdl
 namespace com.example
 
 record Fortune {
@@ -166,14 +166,17 @@ format used by
 "PathSpec":https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/PathSpec.java.
 Note that the first / character can be either specified or omitted. You
 can check the correct path for a field by getting its PathSpec and
-calling toString(). For example, if the ValidationDemo record contains
+calling toString(). For example, if the `ValidationDemo` record contains
 an array field like this:
 
-```
-ArrayWithInlineRecord: optional array[record myItem {
-  bar1: string
-  bar2: string
-}]
+```pdl
+record ValidationDemo {
+  ArrayWithInlineRecord: optional array[record myItem {
+    bar1: string,
+    bar2: string
+  }]
+  // ...
+}
 ```
 
 `ValidationDemo.fields().ArrayWithInlineRecord().items().bar1().toString()`
