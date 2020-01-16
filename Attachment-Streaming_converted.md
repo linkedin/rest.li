@@ -207,7 +207,7 @@ this field represents a pointer to an attachment. Once again it is important
 to note that the purpose of these fields is simply to convey that an
 attachment could be present.
 
-```
+```pdl
 namespace com.linkedin.greetings.api
 
 /**

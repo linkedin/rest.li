@@ -387,16 +387,16 @@ bindings are generated, as shown in the following example:
 
 `api/build.gradle`:
 
-```
+```gradle
 dependencies {
-...
-dataModel spec.product.pegasus.restliCommon
+  // ...
+  dataModel spec.product.pegasus.restliCommon
 }
 ```
 
 where `WidgetKey` is defined by the schema:
 
-```    
+```pdl
 namespace com.example.widget
 
 record WidgetKey {
@@ -906,7 +906,7 @@ type of the custom Type and the location of the custom type's class,
 and, if necessary, the location of its coercer. The basic appearance of
 the typeref schema is shown below:
 
-```
+```pdl
 namespace com.linkedin.example // namespace of the typeref
 
 @java.class = "com.linkedin.example.CustomObject" // location of the custom type class
@@ -916,7 +916,7 @@ typeref CustomObjectRef = string // underlying type that the coercer converts to
 
 This typeref can then be referenced in other schemas:
 
-```
+```pdl
 import com.linkedin.example.CustomObjectRef
 
 record ExampleRecord {

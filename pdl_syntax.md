@@ -52,7 +52,7 @@ Records contain any number of fields, which can be primitive types, enums, union
 A basic record type can contain a few fields.
 
 For example:
-```
+```pdl
 import org.example.time.DateTime
 
 record Example {
@@ -63,7 +63,7 @@ record Example {
 Record fields can be optional.
 
 For example:
-```
+```pdl
 namespace com.example.models
 
 /**
@@ -81,7 +81,7 @@ record Foo {
 Record fields may have default values. The default value for a field is expressed as a JSON value.
 
 For example:
-```
+```pdl
 namespace com.example.models
 
 /**
@@ -96,7 +96,7 @@ record Foo {
 An optional field may have default value.
 
 For example: 
-```
+```pdl
 namespace com.example.models
 
 record WithOptionalPrimitiveDefault {
@@ -109,7 +109,7 @@ record WithOptionalPrimitiveDefault {
 A record can contain inline records.
 
 For example:
-```
+```pdl
 namespace com.example.models
 
 record WithInlineRecord {
@@ -125,7 +125,7 @@ record WithInlineRecord {
 The default value of inlined records can be expressed using its serialized JSON representation.
 
 For example: 
-```
+```pdl
 namespace com.example.models
 
 record WithInlineRecord {
@@ -143,11 +143,11 @@ record WithInlineRecord {
 Inline records can also be union members.
 
 For example:
-```
-namespace ccom.example.models
+```pdl
+namespace com.example.models
 
 record UnionWithInlineRecord {
-  value = union[
+  value: union[
 
     record InlineRecord {
       value: optional int
@@ -163,16 +163,18 @@ record UnionWithInlineRecord {
 Types and fields may be documented using “doc strings”.
 
 For example: 
-```
+```pdl
 /**
  * Doc strings may be added to types. This doc should describe the purposes
  * of the Example type.
  */
 record Example {
-  /**
-   * Doc strings may also be added to fields.
-   */
+   /**
+    * Doc strings may also be added to fields.
+    */
    field1: string
+
+   // Non-doc string comments are treated as whitespace
 
    /** Doc strings can be single line.*/
    field2: int
@@ -180,15 +182,15 @@ record Example {
 ```
 
 **Note:**
-If you use Java comment style for doc string, e.g "// Doc String", those doc strings will not be stored in in-memory schema.
+If you use the Java comment style for doc strings, e.g "// Doc String", those doc strings will not be stored in the in-memory schema.
 
 ### Including fields
 
-Record can include fields from one or more other records..
+Records can include fields from one or more other records.
 
 For example: 
 
-```
+```pdl
 namespace com.example.models
 
 /**
@@ -198,7 +200,8 @@ record Bar includes Foo {
   b1: string
 }
 ```
-```
+
+```pdl
 namespace com.example.models
 
 record Foo {
@@ -206,8 +209,9 @@ record Foo {
 }
 ```
 
-Multiple includes example:
-```
+Multiple records can be included at once using an `includes` statement:
+
+```pdl
 namespace com.example.models
 
 /**
@@ -217,7 +221,8 @@ record Bar includes Foo, Simple {
   b1: string
 }
 ```
-```
+
+```pdl
 namespace com.example.models
 
 record Simple {
@@ -233,7 +238,7 @@ There are some keywords which are reserved in Pegasus. If you have to use them t
 
 #### Keyword Escaping
 
-```
+```pdl
 namespace com.example.models
 
 record PdlKeywordEscaping {
@@ -247,21 +252,15 @@ record PdlKeywordEscaping {
 
 #### Namespace/Package escaping
 
-```
-namespace com.linkedin.pegasus.generator.test.idl.escaping.`record`
-package com.linkedin.pegasus.generator.test.idl.escaping.override.`typeref`
+Reserved keywords also need to be escaped when used in namespace declarations, package declarations, and import statements.
 
-/**
- * Ensures that the namespace and package are properly escaped at the root as well as in scoped named-type declarations.
- */
-record NamespacePackageEscaping {
-  x: {
-    namespace com.x.y.z.`enum`
-    package com.a.b.c.`fixed`
+```pdl
+namespace com.example.models.`record`
+package com.example.models.`typeref`
 
-    record Foo {}
-  }
-}
+import com.example.models.`optional`
+
+record NamespacePackageEscaping { }
 ```
 
 #### Property key escaping 
@@ -270,7 +269,7 @@ If you want Pegasus to treat property key name with dots as one string key, plea
 
 For example: 
 
-```
+```pdl
 namespace com.example.models
 
 record PropertyKeyEscaping {
@@ -287,7 +286,7 @@ record PropertyKeyEscaping {
 The Pegasus primitive types are: int, long, float, double, boolean, string and bytes.
 
 For Example:
-```
+```pdl
 namespace com.example.models
 
 record WithPrimitives {
@@ -302,7 +301,7 @@ record WithPrimitives {
 ```
 
 Primitive types with default values:
-```
+```pdl
 namespace com.example.models
 
 record WithPrimitiveDefaults {
@@ -322,7 +321,7 @@ record WithPrimitiveDefaults {
 Pegasus Arrays are defined as a collection of a particular "items" type.
 
 For Example: 
-```
+```pdl
 namespace com.example.models
 
 record WithPrimitivesArray {
@@ -337,7 +336,7 @@ record WithPrimitivesArray {
 ```
 
 Primitive arrays with default values: 
-```
+```pdl
 namespace com.example.models
 
 record WithPrimitivesArrayDefaults {
@@ -352,11 +351,11 @@ record WithPrimitivesArrayDefaults {
 ```
 
 Record or Enum arrays:
-```
-namespace com.linkedin.pegasus.generator.test.idl.arrays
+```pdl
+namespace com.example.models
 
-import com.linkedin.pegasus.generator.test.idl.enums.Fruits
-import com.linkedin.pegasus.generator.test.idl.records.Empty
+import com.example.models.enums.Fruits
+import com.example.models.records.Empty
 
 record WithRecordAndEnumArrays {
   empties: array[Empty]
@@ -365,11 +364,11 @@ record WithRecordAndEnumArrays {
 ```
 
 Record or Enum arrays with default values: 
-```
-namespace com.linkedin.pegasus.generator.test.idl.arrays
+```pdl
+namespace com.example.models
 
-import com.linkedin.pegasus.generator.test.idl.enums.Fruits
-import com.linkedin.pegasus.generator.test.idl.records.Simple
+import com.example.models.enums.Fruits
+import com.example.models.records.Simple
 
 record WithRecordAndEnumDefaults {
   empties: array[Simple] = [{ "message": "defaults!" }]
@@ -377,13 +376,23 @@ record WithRecordAndEnumDefaults {
 }
 ```
 
+Types can be declared inline within an array definition:
+
+```pdl
+namespace com.example.models
+
+record InlineWithinArray {
+  vegetables: array[enum Vegetables { TOMATO, CARROT, CABBAGE }]
+}
+```
+
 
 ## Map Type
 
-Maps are defined with a key type and a value type. The value type can be any valid PDL type, but currently only `string` is supported for the key type.
+Maps are defined with a key type and a value type. The value type can be any valid PDL type, but currently `string` is the only supported key type.
 
 For example: 
-```
+```pdl
 namespace com.example.models
 
 record WithPrimitivesMap {
@@ -398,7 +407,7 @@ record WithPrimitivesMap {
 ```
 
 Primitive maps with default values: 
-```
+```pdl
 namespace com.example.models
 
 record WithPrimitivesMapDefaults {
@@ -412,14 +421,14 @@ record WithPrimitivesMapDefaults {
 }
 ```
 
-Complex Types Map:
-```
-namespace com.linkedin.pegasus.generator.test.idl.maps
+Complex types map, demonstrating how types can be declared inline within a map definition:
+```pdl
+namespace com.example.models
 
-import com.linkedin.pegasus.generator.test.idl.enums.Fruits
-import com.linkedin.pegasus.generator.test.idl.records.Empty
-import com.linkedin.pegasus.generator.test.idl.records.Simple
-import com.linkedin.pegasus.generator.test.idl.`fixed`.Fixed8
+import com.example.models.enums.Fruits
+import com.example.models.records.Empty
+import com.example.models.records.Simple
+import com.example.models.`fixed`.Fixed8
 
 record WithComplexTypesMap {
   empties: map[string, Empty]
@@ -439,7 +448,7 @@ record WithComplexTypesMap {
 A union type may be defined with any number of member types. Member type can be primitive, record, enum, map or array. Unions are not allowed as members inside an union.
 
 For example:
-```
+```pdl
 namespace com.example.models
 
 record WithPrimitivesUnion {
@@ -449,69 +458,78 @@ record WithPrimitivesUnion {
 
 The member type names also serve as the “member keys” (also called as “union tags”), and identify which union member type data holds.
 To define a field of a record containing a union of two other records, we would define:
-```
+
+```pdl
 namespace com.example.models
+
+import com.example.models.records.MultipleChoice
+import com.example.models.records.TextEntry
 
 record Question {
   answerFormat: union[MultipleChoice, TextEntry]
 }
 ```
-```
-namespace com.example.models
-
-record MultipleChoice {
-  answer: string
-}
-```
-
-```
-namespace com.example.models
-
-record TextEntry {
-  text: string
-}
-```
 
 Union with default value:
-```
+
+```pdl
 namespace com.example.models
+
+import com.example.models.records.MultipleChoice
+import com.example.models.records.TextEntry
 
 record Question {
   answerFormat: union[MultipleChoice, TextEntry] = {"com.linkedin.pegasus.generator.examples.MultipleChoice": {"answer": "A"}}
 }
 ```
+
+Types can be declared inline within a union definition:
+
+```pdl
+namespace com.example.models
+
+record InlineWithinUnion {
+  produce: union[enum Fruits { APPLE, ORANGE }, enum Vegetables { TOMATO, CARROT }]
+}
+```
+
 ### Union with aliases
-***Note:*** _Union with aliases is a recent feature in pegasus schema language and it might not be fully supported in non-java languages. Please check the support level on all languages you intend to use before using aliases_
+***Note:*** _Union with aliases is a recent feature in the pegasus schema language and it might not be fully supported in non-java languages. Please check the [support level]({% link testsuite_compatibility_matrix.md %}) on all languages you intend to use before using aliases_
 
 Union members can optionally be given an alias. Aliases can be used to create unions with members of the same type or to give better naming for union members. Union with aliases is useful for cases where a union contains multiple different typerefs with the same underlying type. This use case is not supported with a non-aliased union.
 
 Aliased unions are defined as:
-```
-union [alias: type, ...]
+```pdl
+union [alias: type, /* ... */]
 ```
 
 For example:
-```
+```pdl
 namespace com.example.models
 
 record Question {
  answerFormat: union[   
    multipleChoice: MultipleChoice,
+
    /**
-     * Doc for shortAnswer.
-     */
+    * Doc for shortAnswer.
+    */
    shortAnswer: string,
+
    @customProperty = "property for longAnswer."
    longAnswer: string
  ]
 }
 ```
+
 **Aliased union members can have doc strings and custom properties. This is not supported for non-aliased union members.**
 
 
 Union with aliases with default value:
-```
+```pdl
 namespace com.example.models
+
+import com.example.models.records.MultipleChoice
 
 record QuestionDefault {
  answerFormat: union[ 
@@ -533,7 +551,7 @@ Enums types may contain any number of symbols.
 
 For example:
 
-```
+```pdl
 namespace com.example.models
 
 enum Fruits {
@@ -544,11 +562,11 @@ enum Fruits {
 }
 ```
 
-Enums can be referenced in other schemas by name.
+Enums can be referenced by name in other schemas.
 
 For example:
 
-```
+```pdl
 namespace com.example.models
 
 record FruitBasket {
@@ -556,11 +574,11 @@ record FruitBasket {
 }
 ```
 
-Enum can also be inline defined.
+Enums can also be defined inline.
 
 For example:
 
-```
+```pdl
 namespace com.example.models
 
 record FruitBasket {
@@ -568,12 +586,13 @@ record FruitBasket {
 } 
 ```
 
-### Enum documentation, deprecation and properties
-Doc comments, deprecation and properties can be added directly to enum symbols. 
+### Enum documentation, deprecation, and properties
+
+Doc comments, deprecation, and properties can be added directly to individual enum symbols. 
 
 For example:
 
-```
+```pdl
 namespace com.example.models
 
 /**
@@ -597,11 +616,12 @@ enum Fruits {
 ```
 
 ### Enum defaults
-To specify defaults, specify the enum value as string.
+
+To specify the default value for an enum field, use a string.
 
 For example:
 
-```
+```pdl
 namespace com.example.models
 
 record FruitBasket {
@@ -609,10 +629,9 @@ record FruitBasket {
 } 
 ```
 
+The default value can also be defined as in the following example:
 
-The default value can also be defined as following exmaple:
-
-```
+```pdl
 namespace com.example.models
 
 record FruitBasket {
@@ -622,75 +641,75 @@ record FruitBasket {
 
 ## Fixed Type
 
-Fixed type is used to define schema with fixed size of bytes. 
+The Fixed type is used to define schemas with a fixed size in terms of number of bytes. 
 
 For example:
-```
+```pdl
 namespace com.example.models
 
 fixed MD5 16
 ```
-In the above example, `16` is the defined size of bytes for MD5 schema.
-
+In the example above, `16` is the defined size for the `MD5` schema.
 
 ## Typerefs
+
 Pegasus supports a new schema type known as a typeref. A typeref is like
-a typedef in C. It does not declare a new type but declares an alias to
+a typedef in C. It does not declare a new type but rather declares an alias to
 an existing type.
 
 ### Typerefs can be used to name anonymous types.
 
-It is very useful, because unions, maps and arrays cannot be named directly like records and enums.
+It is very useful, because unions, maps, and arrays cannot be named directly like records and enums.
 
 For example:
 
-```
+```pdl
 namespace com.example.models
 
 typeref AnswerTypes = union[MultipleChoice, TextEntry]
 
 ```
 
-Typerefs can be referred to from any other type using the name.
+Typerefs can be referred to by name from any other type.
 
 For example:
 
-```
+```pdl
 namespace com.example.models
 
 record Question {
   answerFormat: AnswerTypes
 }
 ```
-      
 
 ### Typerefs can provide additional clarity when using primitive types.
 
 For example:
 
-```
+```pdl
 namespace com.example.models
 
 typeref UnixTimestamp = long
 ```
 
 ### Typerefs can be used to specify custom types and coercers
-For example, Joda time has a convenient DateTime class. If we wish to use this class in Java to represent date times, all we need to do is define a pegasus custom type that binds to it:
 
-```
+For example, Joda time has a convenient `DateTime` Java class. If we wish to use this class in Java to represent date-times, all we need to do is define a pegasus custom type that binds to it:
+
+```pdl
 namespace com.example.models
 
 @java.class = "org.joda.time.DateTime"
 @java.coercerClass = "com.linkedin.example.DateTimeCoercer"
 typeref DateTime = string
 ```
-The coercer is responsible for converting the pegasus “referenced” type, in this case "string" to the Joda DateTime class:
+The coercer is responsible for converting the pegasus “referenced” type, in this case "string" to the Joda `DateTime` class:
 
 Once a custom type is defined, it can be used in any type. 
 
-For example, to use the DateTime custom type in a record:
+For example, to use the `DateTime` custom type in a record:
 
-```
+```pdl
 namespace com.example.models
 
 record Fortune {
@@ -703,7 +722,7 @@ record Fortune {
 Namespace is used to qualify the namespace for the named schema.
 
 For example:
-```
+```pdl
 namespace com.example.models
 
 record Foo {}
@@ -711,19 +730,32 @@ record Foo {}
 
 ## Import
 
-Imports are optional statements which allow you to avoid wirting the full qualified names, similar to in Java.
+Imports are optional statements which allow you to avoid writing fully-qualified names.
+They function similarly to imports in Java.
 
-For example:
+For example, the following record can be express _without_ imports like this:
+
+```pdl
+namespace com.example.models
+
+record ImportsExample {
+  x: com.example.models.records.Simple,
+  y: com.example.models.records.Simple,
+  z: array[com.example.models.records.Simple]
+}
 ```
-namespace com.linkedin.pegasus.generator.test.idl.imports
 
-import com.linkedin.pegasus.generator.test.idl.records.Simple
+Alternatively, the record can be expressed using imports, minimizing the need for repetitive code:
 
-record Example {
-  /**
-   * Requires an import since this type is outside the root namespace and is not declared in this file.
-   */
-  externalOutsideNS: Simple
+```pdl
+namespace com.example.models
+
+import com.example.models.records.Simple
+
+record ImportsExample {
+  x: Simple,
+  y: Simple,
+  z: array[Simple]
 }
 ```
 
@@ -739,7 +771,7 @@ fully qualified name.
 Properties can be used to present arbitrary data and added to records, record fields, enums, enum symbols, aliased union members.
 
 Add properties to record and record field:
-```
+```pdl
 @prop = "value"
 record Fruits {
   @validate.regex.regex = "^(yes|no)$"
@@ -748,7 +780,7 @@ record Fruits {
 ```
 
 Add properties to enum and enum symbols:
-```
+```pdl
 @prop = "value"
 enum Fruits {
   @color = "red"
@@ -763,7 +795,7 @@ enum Fruits {
 ```
 
 Add properties to aliased union members:
-```
+```pdl
 record Question {
  answerFormat: union[
    @prop
@@ -777,17 +809,17 @@ record Question {
 ### Property values can be any valid JSON type:
 
 For example:
-```
+```pdl
 @prop = 1
 ```
-```
+```pdl
 @prop = "string"
 ```
-```
+```pdl
 @prop = [1, 2, 3]
 ```
-```
-@prop = { "a": 1", "b": { "c": true }}
+```pdl
+@prop = { "a": 1, "b": { "c": true }}
 
 ```
 ### Property values can also be empty:
@@ -795,13 +827,13 @@ For example:
 If you don't indicate an explicit property value, it will result in an implicit value of `true`.
 
 For example:
-```
+```pdl
 @prop
 ```
 ### Property keys can be expressed as JSON:
 
 For example:
-```
+```pdl
 @a = {
   "b": {
     "c": {
@@ -821,7 +853,7 @@ The JSON style property key is complicated to write and read, so we provide a sh
 
 The following example is equivalent to the previous JSON example:
 
-```
+```pdl
 @a.b.c.d.e.f = false
 ```
 
@@ -832,7 +864,7 @@ The property value can be a string describing why the schema element is deprecat
 
 Deprecate record and field:
 
-```
+```pdl
 namespace com.example.models
 
 @deprecated = "Use record X instead."
@@ -843,7 +875,7 @@ record Example {
 ```
 
 Deprecate enum symbols:
-```
+```pdl
 namespace com.example.models
 
 enum Fruits {
@@ -863,7 +895,7 @@ enum Fruits {
 Package is used to qualify the language binding namespace for the named schema. 
 
 For example:
-```
+```pdl
 namespace com.linkedin.pegasus.generator.examples
 package com.linkedin.pegasus.generator.tests
 
