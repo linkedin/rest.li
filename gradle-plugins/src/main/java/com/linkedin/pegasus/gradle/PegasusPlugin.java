@@ -27,6 +27,7 @@ import com.linkedin.pegasus.gradle.tasks.GenerateRestClientTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateRestModelTask;
 import com.linkedin.pegasus.gradle.tasks.PublishRestModelTask;
 import com.linkedin.pegasus.gradle.tasks.TranslateSchemasTask;
+import com.linkedin.pegasus.gradle.tasks.ValidateSchemaAnnotationTask;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -519,6 +520,8 @@ public class PegasusPlugin implements Plugin<Project>
 
   public static final String DATA_TEMPLATE_FILE_SUFFIX = ".pdsc";
   public static final String PDL_FILE_SUFFIX = ".pdl";
+  // gradle property to opt OUT schema annotation validation, by default this feature is enabled.
+  private static final String DISABLE_SCHEMA_ANNOTATION_VALIDATION = "schema.annotation.validation.disable";
   // gradle property to opt in for destroying stale files from the build directory,
   // by default it is disabled, because it triggers hot-reload (even if it results in a no-op)
   private static final String DESTROY_STALE_FILES_ENABLE = "enableDestroyStaleFiles";
@@ -709,6 +712,12 @@ public class PegasusPlugin implements Plugin<Project>
     Configuration testDataTemplate = configurations.maybeCreate("testDataTemplate");
     testDataTemplate.extendsFrom(dataTemplate, testDataModel);
 
+    // configuration for processing and validating schema annotation during build time.
+    //
+    // The configuration contains dependencies to schema annotation handlers which would process schema annotations
+    // and validate.
+    Configuration schemaAnnotationHandler = configurations.maybeCreate("schemaAnnotationHandler");
+
     // configuration for publishing jars containing rest idl and generated client builders
     // to the project artifacts for including in the ivy.xml
     //
@@ -790,11 +799,16 @@ public class PegasusPlugin implements Plugin<Project>
 
       configureConversionUtilities(project, sourceSet);
 
-      configureDataTemplateGeneration(project, sourceSet);
+      GenerateDataTemplateTask generateDataTemplateTask = configureDataTemplateGeneration(project, sourceSet);
 
       configureAvroSchemaGeneration(project, sourceSet);
 
       configureRestClientGeneration(project, sourceSet);
+
+      if (!isPropertyTrue(project, DISABLE_SCHEMA_ANNOTATION_VALIDATION))
+      {
+        configureSchemaAnnotationValidation(project, sourceSet, generateDataTemplateTask);
+      }
 
       Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName("clean", "GeneratedDir"));
       cleanGeneratedDirTask.doLast(new CacheableAction<>(task ->
@@ -813,6 +827,35 @@ public class PegasusPlugin implements Plugin<Project>
 
     project.getExtensions().getExtraProperties().set(GENERATOR_CLASSLOADER_NAME, getClass().getClassLoader());
   }
+
+  protected void configureSchemaAnnotationValidation(Project project,
+                                                     SourceSet sourceSet,
+                                                     GenerateDataTemplateTask generateDataTemplatesTask)
+  {
+    // Task would execute based on the following order.
+    // generateDataTemplatesTask -> validateSchemaAnnotationTask
+
+    // Create ValidateSchemaAnnotation task
+    ValidateSchemaAnnotationTask validateSchemaAnnotationTask = project.getTasks()
+        .create(sourceSet.getTaskName("validate", "schemaAnnotation"), ValidateSchemaAnnotationTask.class, task ->
+                {
+                  task.setInputDir(generateDataTemplatesTask.getInputDir());
+                  task.setResolverPath(getDataModelConfig(project, sourceSet)); // same resolver path as generateDataTemplatesTask
+                  task.setClassPath(project.getConfigurations() .getByName("schemaAnnotationHandler")
+                                           .plus(project.getConfigurations().getByName("pegasusPlugin"))
+                                           .plus(project.getConfigurations().getByName("runtime")));
+                  task.setHandlerJarPath(project.getConfigurations() .getByName("schemaAnnotationHandler"));
+                }
+            );
+
+    // validateSchemaAnnotationTask depend on generateDataTemplatesTask
+    validateSchemaAnnotationTask.dependsOn(generateDataTemplatesTask);
+
+    // Check depends on validateSchemaAnnotationTask.
+    project.getTasks().getByName("check").dependsOn(validateSchemaAnnotationTask);
+  }
+
+
 
   protected void configureGeneratedSourcesAndJavadoc(Project project)
   {
@@ -1400,7 +1443,7 @@ public class PegasusPlugin implements Plugin<Project>
     });
   }
 
-  protected void configureDataTemplateGeneration(Project project, SourceSet sourceSet)
+  protected GenerateDataTemplateTask configureDataTemplateGeneration(Project project, SourceSet sourceSet)
   {
     File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet));
     File generatedDataTemplateDir = project.file(getGeneratedDirPath(project, sourceSet, DATA_TEMPLATE_GEN_TYPE)
@@ -1558,6 +1601,7 @@ public class PegasusPlugin implements Plugin<Project>
     }
 
     project.getTasks().getByName(sourceSet.getCompileJavaTaskName()).dependsOn(dataTemplateJarTask);
+    return generateDataTemplatesTask;
   }
 
   // Generate rest client from idl files generated from java source files in the specified source set.

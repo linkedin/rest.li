@@ -1,5 +1,7 @@
 28.1.11
 -------
+(RB=1885009)
+Add "validateSchemaAnnotationTask" gradle task for validating schema annotations
 
 28.1.10
 ------
