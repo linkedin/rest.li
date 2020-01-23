@@ -16,7 +16,7 @@
 
 package com.linkedin.restli.examples;
 
-
+import com.linkedin.data.DataMap;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.ActionRequestBuilder;
@@ -42,11 +42,16 @@ import com.linkedin.restli.examples.greetings.client.ExceptionsBuilders;
 import com.linkedin.restli.examples.greetings.client.ExceptionsRequestBuilders;
 import com.linkedin.restli.examples.greetings.server.ExceptionsResource;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.ErrorResponseFormat;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
-
+import java.io.IOException;
 import java.util.List;
-
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -336,6 +341,21 @@ public class TestExceptionsResource extends RestLiIntegrationTest
       Assert.assertEquals(e.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
       Assert.assertEquals(e.toString(),
           "com.linkedin.restli.client.RestLiResponseException: Response status 500, serviceErrorMessage: This is an exception with no status!");
+    }
+  }
+
+  @SuppressWarnings("deprecation")
+  @Test
+  public void testBadInputErrorResponse() throws IOException
+  {
+    HttpPost post = new HttpPost(URI_PREFIX + ExceptionsBuilders.getPrimaryResource());
+    post.setEntity(new StringEntity("{\"foo\",\"bar\"}"));
+    try (CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse response = httpClient.execute(post))
+    {
+      Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.S_400_BAD_REQUEST.getCode());
+      DataMap responseMap = DataMapUtils.readMap(response.getEntity().getContent());
+      Assert.assertEquals(responseMap.getString("message"), "Cannot parse request entity");
     }
   }
 

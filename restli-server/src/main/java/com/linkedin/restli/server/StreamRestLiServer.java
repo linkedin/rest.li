@@ -265,7 +265,9 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
             }
             else
             {
-              error = new RoutingException("Cannot parse request entity", HttpStatus.S_400_BAD_REQUEST.getCode(), e);
+              error = buildPreRoutingStreamException(
+                  new RoutingException("Cannot parse request entity", HttpStatus.S_400_BAD_REQUEST.getCode(), e),
+                  request);
             }
 
             if (error != null)

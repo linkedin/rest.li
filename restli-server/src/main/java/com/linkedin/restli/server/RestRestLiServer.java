@@ -219,7 +219,9 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
     {
       if (UnstructuredDataUtil.isUnstructuredDataRouting(routingResult))
       {
-        callback.onError(new RoutingException("Unstructured Data is not supported in non-streaming Rest.li server", HttpStatus.S_400_BAD_REQUEST.getCode()));
+        callback.onError(buildPreRoutingError(
+            new RoutingException("Unstructured Data is not supported in non-streaming Rest.li server",
+                HttpStatus.S_400_BAD_REQUEST.getCode()), request));
         return;
       }
       try
@@ -231,7 +233,9 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
       }
       catch (IOException e)
       {
-        callback.onError(new RoutingException("Cannot parse request entity", HttpStatus.S_400_BAD_REQUEST.getCode(), e));
+        callback.onError(buildPreRoutingError(
+            new RoutingException("Cannot parse request entity", HttpStatus.S_400_BAD_REQUEST.getCode(), e), request));
+        return;
       }
     }
 

@@ -1,5 +1,7 @@
 28.1.12
 -------
+(RB=1943306)
+Fix server error response for bad input entity, to return bad request in response
 
 28.1.11
 -------
