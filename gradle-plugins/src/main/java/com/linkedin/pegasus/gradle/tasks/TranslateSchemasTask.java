@@ -30,6 +30,7 @@ public class TranslateSchemasTask extends DefaultTask {
   private SchemaFileType _destinationFormat = SchemaFileType.PDL;
   private boolean _keepOriginal = false;
   private String _preserveSourceCmd;
+  private boolean _skipVerification = false;
 
   @TaskAction
   public void translate()
@@ -55,6 +56,10 @@ public class TranslateSchemasTask extends DefaultTask {
       {
         javaExecSpec.args("--preserve-source");
         javaExecSpec.args(_preserveSourceCmd);
+      }
+      if (_skipVerification)
+      {
+        javaExecSpec.args("--skip-verification");
       }
       javaExecSpec.args(resolverPathStr);
       javaExecSpec.args(_inputDir.getAbsolutePath());
@@ -104,7 +109,7 @@ public class TranslateSchemasTask extends DefaultTask {
   }
 
   /**
-   * Directory to write the translated files.
+   * Directory in which to write the translated files.
    */
   @OutputDirectory
   public File getDestinationDir()
@@ -160,5 +165,16 @@ public class TranslateSchemasTask extends DefaultTask {
   public void setPreserveSourceCmd(String preserveSourceCmd)
   {
     _preserveSourceCmd = preserveSourceCmd;
+  }
+
+  @Input
+  public boolean isSkipVerification()
+  {
+    return _skipVerification;
+  }
+
+  public void setSkipVerification(boolean skipVerification)
+  {
+    _skipVerification = skipVerification;
   }
 }

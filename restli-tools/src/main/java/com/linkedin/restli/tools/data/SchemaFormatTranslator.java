@@ -52,7 +52,8 @@ import static com.linkedin.restli.tools.data.ScmUtil.DESTINATION;
 import static com.linkedin.restli.tools.data.ScmUtil.SOURCE;
 
 /**
- * Command line tool to translate files between .pdl and .pdsc schema formats.
+ * Command line tool to translate files between .pdl and .pdsc schema formats. By default, the tool will abort if the
+ * translated schemas are not semantically equivalent to the original schemas.
  */
 public class SchemaFormatTranslator
 {
@@ -80,6 +81,10 @@ public class SchemaFormatTranslator
     OPTIONS.addOption(OptionBuilder.withLongOpt("preserve-source").hasArg()
         .withDescription("Preserve source history command, use '" + SOURCE + "' as the source filename and use '" + DESTINATION + "' as the destination filename.")
         .create('p'));
+
+    OPTIONS.addOption(OptionBuilder.withLongOpt("skip-verification")
+        .withDescription("Skip verification of the translated schemas. Be cautious, as incorrect translations will not be caught.")
+        .create('k'));
   }
 
   public static void main(String[] args) throws Exception
@@ -99,6 +104,7 @@ public class SchemaFormatTranslator
       String destFormat = cl.getOptionValue('d', PdlSchemaParser.FILETYPE).trim();
       boolean keepOriginal = cl.hasOption('o');
       String preserveSourceCmd = cl.getOptionValue('p');
+      boolean skipVerification = cl.hasOption('k');
 
       String[] cliArgs = cl.getArgs();
       if (cliArgs.length != 3)
@@ -127,8 +133,16 @@ public class SchemaFormatTranslator
         System.exit(1);
       }
 
-      SchemaFormatTranslator translator =
-          new SchemaFormatTranslator(resolverPaths, sourceDir, destDir, sourceFormat, destFormat, keepOriginal, preserveSourceCmd);
+      SchemaFormatTranslator translator = new SchemaFormatTranslator(
+          resolverPaths,
+          sourceDir,
+          destDir,
+          sourceFormat,
+          destFormat,
+          keepOriginal,
+          preserveSourceCmd,
+          skipVerification);
+
       translator.translateFiles();
     }
     catch (ParseException e)
@@ -146,9 +160,10 @@ public class SchemaFormatTranslator
   private String _destFormat;
   private boolean _keepOriginal;
   private String _preserveSourceCmd;
+  private boolean _skipVerification;
 
   SchemaFormatTranslator(String resolverPath, File sourceDir, File destDir, String sourceFormat, String destFormat,
-      boolean keepOriginal, String preserveSourceCmd)
+      boolean keepOriginal, String preserveSourceCmd, boolean skipVerification)
   {
     _resolverPath = resolverPath;
     _sourceDir = sourceDir;
@@ -157,14 +172,18 @@ public class SchemaFormatTranslator
     _destFormat = destFormat;
     _keepOriginal = keepOriginal;
     _preserveSourceCmd = preserveSourceCmd;
+    _skipVerification = skipVerification;
   }
 
   private void translateFiles() throws IOException, InterruptedException
   {
-    LOGGER.info("Translating files. Source dir: {}, sourceFormat: {}, destDir: {}, destFormat: {}, keepOriginal: {}",
-        _sourceDir, _sourceFormat, _destDir, _destFormat, _keepOriginal);
+    LOGGER.info("Translating files. Source dir: {}, sourceFormat: {}, destDir: {}, destFormat: {}, keepOriginal: {}, skipVerification: {}",
+        _sourceDir, _sourceFormat, _destDir, _destFormat, _keepOriginal, _skipVerification);
     Map<String, SchemaInfo> topLevelTranslatedSchemas = getTopLevelSchemaToTranslatedSchemaMap();
-    verifyTranslatedSchemas(topLevelTranslatedSchemas);
+    if (!_skipVerification)
+    {
+      verifyTranslatedSchemas(topLevelTranslatedSchemas);
+    }
     // Write the destination files. Source files are deleted for this step unless keepOriginal flag is set.
     writeTranslatedSchemasToDirectory(topLevelTranslatedSchemas, _destDir, !_keepOriginal, _preserveSourceCmd);
   }
@@ -205,7 +224,7 @@ public class SchemaFormatTranslator
     // Write the schemas to temp directory for validation. Source files are not deleted/moved for this.
     writeTranslatedSchemasToDirectory(topLevelTranslatedSchemas, tempDir, false, null);
 
-    // Now try loading the schemas from the temp directory and compare with source schema.
+    // Exclude the source models directory from the resolver path
     StringTokenizer paths = new StringTokenizer(_resolverPath, File.pathSeparator);
     StringBuilder pathBuilder = new StringBuilder();
     while (paths.hasMoreTokens())
@@ -221,6 +240,8 @@ public class SchemaFormatTranslator
     }
     // Include the directory with the generated models in the resolver path
     pathBuilder.append(tempDir.getPath());
+
+    // Now try loading the schemas from the temp directory and compare with source schema.
     MultiFormatDataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(pathBuilder.toString());
     boolean hasError = false;
     List<SchemaInfo> failedSchemas = new ArrayList<>();
@@ -229,16 +250,27 @@ public class SchemaFormatTranslator
       NamedDataSchema sourceSchema = schemaInfo.getSourceSchema();
       String schemaName = sourceSchema.getFullName();
       DataSchema destSchema = resolver.findDataSchema(schemaName, new StringBuilder());
-      LOGGER.debug("Loaded translated schema: {}, from location: {}", schemaName,
-          resolver.nameToDataSchemaLocations().get(schemaName).getSourceFile().getAbsolutePath());
 
-      if (!sourceSchema.equals(destSchema))
+      if (destSchema == null)
       {
-        LOGGER.error("Translation failed for schema: {}", schemaName);
-        LOGGER.error("Source format: {}, schema:\n{}", _sourceFormat, sourceSchema.toString());
-        LOGGER.error("Destination format: {}, schema:\n{}", _destFormat, destSchema.toString());
+        LOGGER.error("Unable to load translated schema: {}", schemaName);
         failedSchemas.add(schemaInfo);
         hasError = true;
+      }
+      else
+      {
+        LOGGER.debug("Loaded translated schema: {}, from location: {}", schemaName,
+            resolver.nameToDataSchemaLocations().get(schemaName).getSourceFile().getAbsolutePath());
+
+        // Verify that the source schema and the translated schema are semantically equivalent
+        if (!sourceSchema.equals(destSchema))
+        {
+          LOGGER.error("Translation failed for schema: {}", schemaName);
+          LOGGER.error("Source format: {}, schema:\n{}", _sourceFormat, sourceSchema.toString());
+          LOGGER.error("Destination format: {}, schema:\n{}", _destFormat, destSchema.toString());
+          failedSchemas.add(schemaInfo);
+          hasError = true;
+        }
       }
     }
     if (hasError)

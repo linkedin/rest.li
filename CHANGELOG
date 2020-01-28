@@ -1,5 +1,11 @@
+28.1.12
+-------
+
 28.1.11
 -------
+(RB=1943392)
+Publish all schemas as-is, temporarily publish translated PDSC schemas
+
 (RB=1946416)
 Suppress logging statement in ResolvedPropertiesReaderVisitor
 

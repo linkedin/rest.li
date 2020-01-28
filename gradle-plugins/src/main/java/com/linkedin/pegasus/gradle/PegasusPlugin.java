@@ -1450,6 +1450,8 @@ public class PegasusPlugin implements Plugin<Project>
         + File.separatorChar + "java");
     File publishableSchemasBuildDir = project.file(project.getBuildDir().getAbsolutePath()
         + File.separatorChar + sourceSet.getName() + "Schemas");
+    File publishableLegacySchemasBuildDir = project.file(project.getBuildDir().getAbsolutePath()
+        + File.separatorChar + sourceSet.getName() + "LegacySchemas");
 
     // generate data template source files from data schema
     GenerateDataTemplateTask generateDataTemplatesTask = project.getTasks()
@@ -1522,35 +1524,41 @@ public class PegasusPlugin implements Plugin<Project>
       destroyStaleFiles.doLast(new CacheableAction<>(task -> project.delete(publishableSchemasBuildDir)));
     }
 
-    // Copy all PDSC files directly over for publication
-    Task preparePdscSchemasForPublishTask = project.getTasks()
-        .create(sourceSet.getName() + "CopyPdscSchemas", Copy.class, task ->
+    // Dummy task to maintain backward compatibility, as this task was replaced by CopySchemas
+    // TODO: Delete this task once use cases have had time to reference the new task
+    Task copyPdscSchemasTask = project.getTasks().create(sourceSet.getName() + "CopyPdscSchemas");
+    copyPdscSchemasTask.dependsOn(destroyStaleFiles);
+
+    // Copy all schema files directly over for publication
+    Task prepareSchemasForPublishTask = project.getTasks()
+        .create(sourceSet.getName() + "CopySchemas", Copy.class, task ->
         {
-          task.from(dataSchemaDir, copySpec -> copySpec.include("**/*.pdsc"));
+          task.from(dataSchemaDir, copySpec -> DATA_TEMPLATE_FILE_SUFFIXES.forEach(suffix -> copySpec.include("**/*" + suffix)));
           task.into(publishableSchemasBuildDir);
         });
-    preparePdscSchemasForPublishTask.dependsOn(destroyStaleFiles);
+    prepareSchemasForPublishTask.dependsOn(copyPdscSchemasTask);
 
     Collection<Task> dataTemplateJarDepends = new ArrayList<>();
     dataTemplateJarDepends.add(compileTask);
-    dataTemplateJarDepends.add(preparePdscSchemasForPublishTask);
+    dataTemplateJarDepends.add(prepareSchemasForPublishTask);
 
     // Convert all PDL files back to PDSC for publication
-    // TODO: Remove this conversion permanently when we're ready to publish PDL files directly into dataTemplate jars.
-    Task preparePdlSchemasForPublishTask = project.getTasks()
+    // TODO: Remove this conversion permanently once translated PDSCs are no longer needed.
+    Task prepareLegacySchemasForPublishTask = project.getTasks()
         .create(sourceSet.getName() + "TranslateSchemas", TranslateSchemasTask.class, task ->
         {
           task.setInputDir(dataSchemaDir);
-          task.setDestinationDir(publishableSchemasBuildDir);
+          task.setDestinationDir(publishableLegacySchemasBuildDir);
           task.setResolverPath(getDataModelConfig(project, sourceSet));
           task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
           task.setSourceFormat(SchemaFileType.PDL);
           task.setDestinationFormat(SchemaFileType.PDSC);
           task.setKeepOriginal(true);
+          task.setSkipVerification(true);
         });
 
-    preparePdlSchemasForPublishTask.dependsOn(destroyStaleFiles);
-    dataTemplateJarDepends.add(preparePdlSchemasForPublishTask);
+    prepareLegacySchemasForPublishTask.dependsOn(destroyStaleFiles);
+    dataTemplateJarDepends.add(prepareLegacySchemasForPublishTask);
 
     // create data template jar file
     Jar dataTemplateJarTask = project.getTasks()
@@ -1558,9 +1566,16 @@ public class PegasusPlugin implements Plugin<Project>
         {
           task.dependsOn(dataTemplateJarDepends);
 
+          // Copy all schemas as-is into the root schema directory in the JAR
           task.from(publishableSchemasBuildDir, copySpec ->
             copySpec.eachFile(fileCopyDetails ->
               fileCopyDetails.setPath("pegasus" + File.separatorChar + fileCopyDetails.getPath())));
+
+          // Copy the translated PDSC schemas into a separate root directory in the JAR
+          // TODO: Remove this permanently once translated PDSCs are no longer needed.
+          task.from(publishableLegacySchemasBuildDir, copySpec ->
+              copySpec.eachFile(fileCopyDetails ->
+                  fileCopyDetails.setPath("legacyPegasusSchemas" + File.separatorChar + fileCopyDetails.getPath())));
 
           task.from(targetSourceSet.getOutput());
 
