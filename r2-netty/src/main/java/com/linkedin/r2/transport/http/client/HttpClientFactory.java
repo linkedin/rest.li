@@ -107,7 +107,9 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_MAX_RESPONSE_SIZE = "http.maxResponseSize";
   public static final String HTTP_POOL_SIZE = "http.poolSize";
   public static final String HTTP_POOL_WAITER_SIZE = "http.poolWaiterSize";
+  // Channel pool http idle time out
   public static final String HTTP_IDLE_TIMEOUT = "http.idleTimeout";
+  // Channel pool https idle time out
   public static final String HTTP_SSL_IDLE_TIMEOUT = "http.sslIdleTimeout";
   public static final String HTTP_SHUTDOWN_TIMEOUT = "http.shutdownTimeout";
   public static final String HTTP_GRACEFUL_SHUTDOWN_TIMEOUT = "http.gracefulShutdownTimeout";
@@ -136,8 +138,8 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_STREAMING_TIMEOUT = -1;
   public static final int DEFAULT_MINIMUM_STREAMING_TIMEOUT = 1000;
   public static final int DEFAULT_GRACEFUL_SHUTDOWN_TIMEOUT = 30000;
-  public static final int DEFAULT_IDLE_TIMEOUT = 25000;
-  public static final int DEFAULT_SSL_IDLE_TIMEOUT = (2 * 3600 + 60 * 55) * 1000; // 2h 55m
+  public static final long DEFAULT_IDLE_TIMEOUT = 25000;
+  public static final long DEFAULT_SSL_IDLE_TIMEOUT = (2 * 3600 + 60 * 55) * 1000; // 2h 55m
   public static final int DEFAULT_SHUTDOWN_TIMEOUT = 15000;
   public static final long DEFAULT_MAX_RESPONSE_SIZE = 1024 * 1024 * 2;
   public static final String DEFAULT_CLIENT_NAME = "noNameSpecifiedClient";
@@ -1242,8 +1244,8 @@ public class HttpClientFactory implements TransportClientFactory
     String poolStatsNamePrefix = chooseNewOverDefault((String) properties.get(HTTP_POOL_STATS_NAME_PREFIX), DEFAULT_POOL_STATS_NAME_PREFIX);
 
     Integer maxPoolSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_SIZE), DEFAULT_POOL_SIZE);
-    Integer idleTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_IDLE_TIMEOUT), DEFAULT_IDLE_TIMEOUT);
-    Integer sslIdleTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SSL_IDLE_TIMEOUT), DEFAULT_SSL_IDLE_TIMEOUT);
+    long idleTimeout = chooseNewOverDefault(getLongValue(properties, HTTP_IDLE_TIMEOUT), DEFAULT_IDLE_TIMEOUT);
+    long sslIdleTimeout = chooseNewOverDefault(getLongValue(properties, HTTP_SSL_IDLE_TIMEOUT), DEFAULT_SSL_IDLE_TIMEOUT);
     long maxResponseSize = chooseNewOverDefault(getLongValue(properties, HTTP_MAX_RESPONSE_SIZE), DEFAULT_MAX_RESPONSE_SIZE);
     Integer poolWaiterSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_WAITER_SIZE), DEFAULT_POOL_WAITER_SIZE);
     Integer poolMinSize = chooseNewOverDefault(getIntValue(properties, HTTP_POOL_MIN_SIZE), DEFAULT_POOL_MIN_SIZE);

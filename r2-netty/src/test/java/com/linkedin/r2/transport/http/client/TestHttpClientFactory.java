@@ -195,7 +195,9 @@ public class TestHttpClientFactory
     String requestTimeout = "7000";
     String poolSize = "10";
     String maxResponse = "3000";
-    String idleTimeout = "8000";
+    String idleTimeout = String.valueOf((long)Integer.MAX_VALUE + 1);
+    String sslIdleTimeout = String.valueOf((long)Integer.MAX_VALUE + 1);
+
     String shutdownTimeout = "14000";
     HttpClientFactory.MixedClient client;
 
@@ -206,6 +208,7 @@ public class TestHttpClientFactory
     properties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, requestTimeout);
     properties.put(HttpClientFactory.HTTP_POOL_SIZE, poolSize);
     properties.put(HttpClientFactory.HTTP_IDLE_TIMEOUT, idleTimeout);
+    properties.put(HttpClientFactory.HTTP_SSL_IDLE_TIMEOUT, sslIdleTimeout);
     properties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, maxResponse);
     properties.put(HttpClientFactory.HTTP_SHUTDOWN_TIMEOUT, shutdownTimeout);
     properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);

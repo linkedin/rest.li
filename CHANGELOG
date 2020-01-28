@@ -1,5 +1,7 @@
 28.1.14
 -------
+(RB=1946908)
+Support long for HTTP_IDLE_TIMEOUT and HTTP_SSL_IDLE_TIMEOUT
 
 28.1.13
 -------
