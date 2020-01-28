@@ -73,8 +73,8 @@ import org.slf4j.LoggerFactory;
  *
  * a leaf DataSchema is a schema that doesn't have other types of DataSchema linked from it.
  * Below types are leaf DataSchemas
- * {@link com.linkedin.data.schema.PrimitiveDataSchema} ,
- * {@link com.linkedin.data.schema.EnumDataSchema} ,
+ * {@link com.linkedin.data.schema.PrimitiveDataSchema},
+ * {@link com.linkedin.data.schema.EnumDataSchema},
  * {@link com.linkedin.data.schema.FixedDataSchema}
  *
  * Other dataSchema types, for example {@link com.linkedin.data.schema.TyperefDataSchema} could link to another DataSchema
@@ -103,7 +103,7 @@ public class ResolvedPropertiesReaderVisitor implements DataSchemaRichContextTra
 
       String mapStringified = resolvedProperties.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(
           Collectors.joining("&"));
-      LOG.info(String.format("/%s ::: %s", String.join("/", context.getSchemaPathSpec()), mapStringified));
+      LOG.debug(String.format("/%s ::: %s", String.join("/", context.getSchemaPathSpec()), mapStringified));
     }
   }
 
