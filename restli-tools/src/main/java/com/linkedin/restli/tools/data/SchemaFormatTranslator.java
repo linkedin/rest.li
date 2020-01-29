@@ -218,7 +218,7 @@ public class SchemaFormatTranslator
 
   private void verifyTranslatedSchemas(Map<String, SchemaInfo> topLevelTranslatedSchemas) throws IOException, InterruptedException
   {
-    File tempDir = new File(FileUtils.getTempDirectory(), "tmpPegasus");
+    File tempDir = new File(FileUtils.getTempDirectory(), "tmpPegasus" + _sourceDir.hashCode());
     FileUtils.deleteDirectory(tempDir);
     assert tempDir.mkdirs();
     // Write the schemas to temp directory for validation. Source files are not deleted/moved for this.
@@ -242,7 +242,9 @@ public class SchemaFormatTranslator
     pathBuilder.append(tempDir.getPath());
 
     // Now try loading the schemas from the temp directory and compare with source schema.
-    MultiFormatDataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(pathBuilder.toString());
+    String path = pathBuilder.toString();
+    LOGGER.debug("Creating resolver with path :{}", path);
+    MultiFormatDataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(path);
     boolean hasError = false;
     List<SchemaInfo> failedSchemas = new ArrayList<>();
     for (SchemaInfo schemaInfo : topLevelTranslatedSchemas.values())
@@ -273,6 +275,7 @@ public class SchemaFormatTranslator
         }
       }
     }
+    FileUtils.deleteDirectory(tempDir);
     if (hasError)
     {
       LOGGER.error("Found translation errors, aborting translation. Failed schemas:");

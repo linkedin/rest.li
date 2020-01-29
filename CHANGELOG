@@ -1,7 +1,13 @@
+28.1.13
+-------
+
 28.1.12
 -------
 (RB=1943306)
 Fix server error response for bad input entity, to return bad request in response
+
+(RB=1948470)
+Fix bug that would cause schema translator to fail if run on MPs with multiple modules containing PDSC files.
 
 28.1.11
 -------
