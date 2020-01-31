@@ -1,5 +1,10 @@
+28.1.14
+-------
+
 28.1.13
 -------
+(RB=1952903)
+Fix the logic in SchemaParser to match SchemaResolver when loading pegaus schemas from jar files.
 
 28.1.12
 -------

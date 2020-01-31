@@ -3,6 +3,7 @@ apply plugin: 'antlr'
 dependencies {
   compile project(':entity-stream')
   compile project(':li-protobuf')
+  compile project(':pegasus-common')
   compile externalDependency.antlrRuntime
   compile externalDependency.commonsLang3
   compile externalDependency.jacksonCore

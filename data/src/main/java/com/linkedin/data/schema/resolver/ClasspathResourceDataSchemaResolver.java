@@ -22,6 +22,7 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
 
+import com.linkedin.internal.common.InternalConstants;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,10 +35,6 @@ import java.io.InputStream;
  */
 public class ClasspathResourceDataSchemaResolver extends DefaultDataSchemaResolver
 {
-  /**
-   * The directory within the resource jar file that holds schema files.
-   */
-  private static final String DIR_IN_JAR = "pegasus";
   /**
    * The default file name extension is ".pdsc".
    */
@@ -65,7 +62,7 @@ public class ClasspathResourceDataSchemaResolver extends DefaultDataSchemaResolv
 
   private String getDataSchemaResourcePath(String schemaName)
   {
-    return DIR_IN_JAR + "/" + schemaName.replace('.', '/') + DEFAULT_EXTENSION;
+    return InternalConstants.PEGASUS_DIR_IN_JAR + "/" + schemaName.replace('.', '/') + DEFAULT_EXTENSION;
   }
 
   @Override

@@ -23,8 +23,8 @@ import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
-import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
+import com.linkedin.internal.common.InternalConstants;
 import com.linkedin.util.FileUtil;
 
 import java.io.File;
@@ -47,6 +47,7 @@ import java.util.jar.JarFile;
  * @author Joe Betz
  */
 public class FileFormatDataSchemaParser {
+  static final String SCHEMA_PATH_PREFIX = InternalConstants.PEGASUS_DIR_IN_JAR + "/";
   private final String _resolverPath;
   private final DataSchemaResolver _schemaResolver;
   private final DataSchemaParserFactory _schemaParserFactory;
@@ -88,7 +89,8 @@ public class FileFormatDataSchemaParser {
               while (entries.hasMoreElements())
               {
                 final JarEntry entry = entries.nextElement();
-                if (!entry.isDirectory() && entry.getName().endsWith(_schemaParserFactory.getLanguageExtension()))
+                if (!entry.isDirectory() && entry.getName().endsWith(_schemaParserFactory.getLanguageExtension()) &&
+                    entry.getName().startsWith(SCHEMA_PATH_PREFIX))
                 {
                   parseJarEntry(jarFile, entry, result);
                   result.getSourceFiles().add(sourceFile);

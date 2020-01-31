@@ -22,7 +22,7 @@ import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.grammar.PdlSchemaParser;
+import com.linkedin.internal.common.InternalConstants;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -241,7 +241,9 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
           StringBuilder builder = new StringBuilder();
           // within a JAR file, files are treated as resources. Thus, we should lookup using the resource separator
           // character, which is '/'
-          builder.append(DIR_IN_JAR).append('/').append(transformedName.replace(File.separatorChar, '/'));
+          builder.append(InternalConstants.PEGASUS_DIR_IN_JAR)
+              .append('/')
+              .append(transformedName.replace(File.separatorChar, '/'));
           return new InJarFileDataSchemaLocation(jarFile, builder.toString());
         }
         else
@@ -277,9 +279,4 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
    * The jar file extension is ".jar".
    */
   private static final String JAR_EXTENSION = ".jar";
-
-  /**
-   * The directory within the jar file that holds schema files.
-   */
-  private static final String DIR_IN_JAR = "pegasus";
 }

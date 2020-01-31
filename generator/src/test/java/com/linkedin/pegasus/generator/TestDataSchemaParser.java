@@ -22,6 +22,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -32,6 +35,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static com.linkedin.pegasus.generator.FileFormatDataSchemaParser.*;
 import static org.testng.Assert.*;
 
 
@@ -72,7 +76,8 @@ public class TestDataSchemaParser
     String jarFile = tempDirectoryPath + FS + "test.jar";
 
     String pegasusFile = pegasusDir + FS + pegasusFilename;
-    createTempJarFile(new String[] {pegasusFile}, jarFile);
+    String pegasusFileInJar = SCHEMA_PATH_PREFIX + pegasusFile;
+    createTempJarFile(Collections.singletonMap(pegasusFile, pegasusFileInJar), jarFile);
 
     DataSchemaParser parser = new DataSchemaParser(tempDirectoryPath);
     DataSchemaParser.ParseResult parseResult = parser.parseSources(new String[]{jarFile});
@@ -85,7 +90,38 @@ public class TestDataSchemaParser
     parseResult.getSchemaAndLocations().values().forEach(loc -> assertEquals(loc.getSourceFile().getAbsolutePath(), jarFile));
   }
 
-  private void createTempJarFile(String[] source, String target) throws  Exception
+  @Test
+  public void testParseFromJarFileWithTranslatedSchemas() throws Exception
+  {
+    String tempDirectoryPath = _tempDir.getAbsolutePath();
+    String jarFile = tempDirectoryPath + "/testWithTranslatedSchemas.jar";
+
+    Map<String, String> jarFiles = new HashMap<>();
+
+    // Add the source PDL file to the pegasus directory
+    String pdlFile = pegasusDir + FS + "WithoutResolverExample.pdl";
+    String pdlJarDestination = SCHEMA_PATH_PREFIX + "WithoutResolverExample.pdl";
+    jarFiles.put(pdlFile, pdlJarDestination);
+
+    // Translated PDSC files go to "legacyPegasusSchemas", which should be ignored by parser.
+    String translatedPegasusFile = pegasusDir + FS + "WithoutResolverExample.pdsc";
+    String translatedFileDestination = "legacyPegasusSchemas/WithoutResolverExample.pdsc";
+
+    jarFiles.put(translatedPegasusFile, translatedFileDestination);
+    createTempJarFile(jarFiles, jarFile);
+
+    DataSchemaParser parser = new DataSchemaParser(tempDirectoryPath);
+    DataSchemaParser.ParseResult parseResult = parser.parseSources(new String[]{jarFile});
+    // Two schemas, WithoutResolverExample and InlineRecord (defined inline in WithoutResolverExample)
+    assertEquals(parseResult.getSchemaAndLocations().size(), 2);
+    Set<String> schemaNames = parseResult.getSchemaAndLocations().keySet().stream().map(DataSchema::getUnionMemberKey).collect(
+        Collectors.toSet());
+    assertTrue(schemaNames.contains("WithoutResolverExample"));
+    assertTrue(schemaNames.contains("InlineRecord"));
+    parseResult.getSchemaAndLocations().values().forEach(loc -> assertEquals(loc.getSourceFile().getAbsolutePath(), jarFile));
+  }
+
+  private void createTempJarFile(Map<String, String> sourceFileToJarLocationMap, String target) throws Exception
   {
     // Create a buffer for reading the files
     byte[] buf = new byte[1024];
@@ -95,13 +131,13 @@ public class TestDataSchemaParser
     {
 
       // Compress the files
-      for (String aSource : source)
+      for (Map.Entry<String, String> sourceFileAndJarLocation : sourceFileToJarLocationMap.entrySet())
       {
-        try (FileInputStream in = new FileInputStream(aSource))
+        try (FileInputStream in = new FileInputStream(sourceFileAndJarLocation.getKey()))
         {
 
-          // Add ZIP entry to output stream.
-          out.putNextEntry(new ZipEntry(aSource));
+          // Add ZIP entry to output stream at the given location.
+          out.putNextEntry(new ZipEntry(sourceFileAndJarLocation.getValue()));
 
           // Transfer bytes from the file to the ZIP file
           int len;

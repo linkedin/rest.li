@@ -557,6 +557,8 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static final List<String> UNUSED_CONFIGURATIONS = Arrays.asList(
       "dataTemplateGenerator", "restTools", "avroSchemaGenerator");
+  // Directory in the dataTemplate jar that holds schemas translated from PDL to PDSC.
+  private static final String TRANSLATED_SCHEMAS_DIR = "legacyPegasusSchemas";
 
   @SuppressWarnings("unchecked")
   private Class<? extends Plugin<Project>> _thisPluginType = (Class<? extends Plugin<Project>>)
@@ -1575,7 +1577,7 @@ public class PegasusPlugin implements Plugin<Project>
           // TODO: Remove this permanently once translated PDSCs are no longer needed.
           task.from(publishableLegacySchemasBuildDir, copySpec ->
               copySpec.eachFile(fileCopyDetails ->
-                  fileCopyDetails.setPath("legacyPegasusSchemas" + File.separatorChar + fileCopyDetails.getPath())));
+                  fileCopyDetails.setPath(TRANSLATED_SCHEMAS_DIR + File.separatorChar + fileCopyDetails.getPath())));
 
           task.from(targetSourceSet.getOutput());
 
