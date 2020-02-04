@@ -29,7 +29,6 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.util.FastByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -128,7 +127,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     }
     finally
     {
-      closeQuietly(generator);
+      DataCodec.closeQuietly(generator);
     }
   }
 
@@ -161,7 +160,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     }
     finally
     {
-      closeQuietly(jsonParser);
+      DataCodec.closeQuietly(jsonParser);
     }
   }
 
@@ -191,7 +190,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     }
     finally
     {
-      closeQuietly(jsonParser);
+      DataCodec.closeQuietly(jsonParser);
     }
   }
 
@@ -643,21 +642,6 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
         _errorBuilder.append(", number type: ").append(type);
       }
       _errorBuilder.append(" not parsed.\n");
-    }
-  }
-
-  protected static void closeQuietly(Closeable closeable)
-  {
-    if (closeable != null)
-    {
-      try
-      {
-        closeable.close();
-      }
-      catch (IOException e)
-      {
-        // TODO: use Java 7 try-with-resources statement and Throwable.getSuppressed()
-      }
     }
   }
 

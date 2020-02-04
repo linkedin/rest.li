@@ -17,8 +17,10 @@
 package com.linkedin.data.codec;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -105,4 +107,47 @@ public interface DataCodec
    * @throws IOException if there is an error during de-serialization.
    */
   DataList readList(InputStream in) throws IOException;
+
+  /**
+   * Returns a {@link DataMap} from data consumed from the given {@link ByteString}.
+   *
+   * @param in the {@link ByteString} from which to read.
+   * @return a {@link DataMap} representation of read from the {@link ByteString}.
+   * @throws IOException if there is an error during de-serialization.
+   */
+  default DataMap readMap(ByteString in) throws IOException
+  {
+    return readMap(in.asInputStream());
+  }
+
+  /**
+   * Returns a {@link DataList} from data consumed from the given {@link ByteString}.
+   *
+   * @param in the {@link ByteString} from which to read.
+   * @return a {@link DataList} representation of read from the {@link ByteString}.
+   * @throws IOException if there is an error during de-serialization.
+   */
+  default DataList readList(ByteString in) throws IOException
+  {
+    return readList(in.asInputStream());
+  }
+
+  /**
+   * Close the given closeable, silently swallowing any {@link IOException} that arises as a result of
+   * invoking {@link Closeable#close()}.
+   */
+  static void closeQuietly(Closeable closeable)
+  {
+    if (closeable != null)
+    {
+      try
+      {
+        closeable.close();
+      }
+      catch (IOException e)
+      {
+        // TODO: use Java 7 try-with-resources statement and Throwable.getSuppressed()
+      }
+    }
+  }
 }

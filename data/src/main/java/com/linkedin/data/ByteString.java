@@ -19,10 +19,13 @@ package com.linkedin.data;
 
 
 import com.fasterxml.jackson.core.async.ByteArrayFeeder;
+import com.linkedin.data.protobuf.ProtoReader;
 import com.linkedin.data.protobuf.ProtoWriter;
+import com.linkedin.data.protobuf.Utf8Utils;
 import com.linkedin.util.ArgumentUtil;
 
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -431,6 +434,23 @@ public final class ByteString
   public InputStream asInputStream()
   {
     return new ByteArrayVectorInputStream(_byteArrays);
+  }
+
+  /**
+   * Return a {@link ProtoReader} to read the bytes in this {@link ByteString}.
+   *
+   * @return a {@link ProtoReader} to read the bytes in this {@link ByteString}
+   */
+  public ProtoReader asProtoReader()
+  {
+    // Shortcut to using the byte array reader if we have just 1 segment.
+    if (_byteArrays.getArraySize() == 1)
+    {
+      ByteArray byteArray = _byteArrays.get(0);
+      return ProtoReader.newInstance(byteArray.getArray(), byteArray.getOffset(), byteArray.getLength());
+    }
+
+    return new ByteArrayProtoReader(_byteArrays);
   }
 
   /**
@@ -1265,6 +1285,303 @@ public final class ByteString
       _arrayIndex = _byteArrays.locate(_pos, 0, _byteArrays.getArraySize());
       _arrayOffset = _pos - _byteArrays._accumulatedLens[_arrayIndex];
       return numBytes;
+    }
+  }
+
+  /**
+   * A {@link ProtoReader} that can read the contents of this ByteString.
+   */
+  private static class ByteArrayProtoReader extends ProtoReader
+  {
+    private final ByteArrayVector _byteArrays;
+    private int _localOffset;
+    private int _currentIndex;
+    private ByteArray _currentSegment;
+
+    private ByteArrayProtoReader(ByteArrayVector byteArrays)
+    {
+      _byteArrays = byteArrays;
+
+      // It is safe to call .get(0) without worrying about getting an ArrayIndexOutOfBoundsException, since every
+      // ByteString (even empty) is guaranteed to have at least one segment.
+      _currentSegment = byteArrays.get(0);
+      _localOffset = _currentSegment.getOffset();
+    }
+
+    @Override
+    public String readString() throws IOException
+    {
+      final int size = readInt32();
+      final byte[] bytes;
+      final int oldOffset = _localOffset;
+      final int tempOffset;
+
+      if (size < 0)
+      {
+        throw new IOException("Read negative size: " + size + ". Invalid string");
+      }
+      else if (size <= getCurrentRemaining())
+      {
+        // Fast path:  We already have the bytes in a contiguous buffer, so just copy directly from it.
+        bytes = _currentSegment.getArray();
+        _localOffset = oldOffset + size;
+        tempOffset = oldOffset;
+        return Utf8Utils.decode(bytes, tempOffset, size);
+      }
+      else if (size == 0)
+      {
+        return "";
+      }
+      else
+      {
+        // Slow path:  Build a string while reading byte by byte.
+        return Utf8Utils.decode(this, size);
+      }
+    }
+
+    @Override
+    public byte[] readByteArray() throws IOException
+    {
+      final int size = readInt32();
+      if (size < 0)
+      {
+        throw new IOException("Read negative size: " + size + ". Invalid byte array");
+      }
+      else if (size <= getCurrentRemaining())
+      {
+        // Fast path: We already have the bytes in a contiguous buffer, so just copy directly from it.
+        final byte[] result = Arrays.copyOfRange(_currentSegment.getArray(), _localOffset, _localOffset + size);
+        _localOffset += size;
+        return result;
+      }
+      else
+      {
+        // Slow path: Build a byte array first then copy it.
+        return readRawBytesSlowPath(size);
+      }
+    }
+
+    @Override
+    public int readInt32() throws IOException
+    {
+      // See implementation notes for readInt64
+      fastpath:
+      {
+        int tempOffset = _localOffset;
+
+        if (getCurrentRemaining() == 0)
+        {
+          break fastpath;
+        }
+
+        final byte[] buffer = _currentSegment.getArray();
+        int x;
+        if ((x = buffer[tempOffset++]) >= 0)
+        {
+          _localOffset = tempOffset;
+          return x;
+        }
+        else if (_currentSegment.getLength() - (tempOffset - _currentSegment.getOffset()) < 9)
+        {
+          break fastpath;
+        }
+        else if ((x ^= (buffer[tempOffset++] << 7)) < 0)
+        {
+          x ^= (~0 << 7);
+        }
+        else if ((x ^= (buffer[tempOffset++] << 14)) >= 0)
+        {
+          x ^= (~0 << 7) ^ (~0 << 14);
+        }
+        else if ((x ^= (buffer[tempOffset++] << 21)) < 0)
+        {
+          x ^= (~0 << 7) ^ (~0 << 14) ^ (~0 << 21);
+        }
+        else
+        {
+          int y = buffer[tempOffset++];
+          x ^= y << 28;
+          x ^= (~0 << 7) ^ (~0 << 14) ^ (~0 << 21) ^ (~0 << 28);
+          if (y < 0
+              && buffer[tempOffset++] < 0
+              && buffer[tempOffset++] < 0
+              && buffer[tempOffset++] < 0
+              && buffer[tempOffset++] < 0
+              && buffer[tempOffset++] < 0)
+          {
+            break fastpath; // Will throw malformedVarint()
+          }
+        }
+        _localOffset = tempOffset;
+        return x;
+      }
+      return (int) readRawVarint64SlowPath();
+    }
+
+    @Override
+    public long readInt64() throws IOException
+    {
+      // Implementation notes:
+      //
+      // Optimized for one-byte values, expected to be common.
+      // The particular code below was selected from various candidates
+      // empirically, by winning VarintBenchmark.
+      //
+      // Sign extension of (signed) Java bytes is usually a nuisance, but
+      // we exploit it here to more easily obtain the sign of bytes read.
+      // Instead of cleaning up the sign extension bits by masking eagerly,
+      // we delay until we find the final (positive) byte, when we clear all
+      // accumulated bits with one xor.  We depend on javac to constant fold.
+      fastpath:
+      {
+        int tempOffset = _localOffset;
+
+        if (getCurrentRemaining() == 0)
+        {
+          break fastpath;
+        }
+
+        final byte[] buffer = _currentSegment.getArray();
+        long x;
+        int y;
+        if ((y = buffer[tempOffset++]) >= 0)
+        {
+          _localOffset = tempOffset;
+          return y;
+        }
+        else if (_currentSegment.getLength() - (tempOffset - _currentSegment.getOffset()) < 9)
+        {
+          break fastpath;
+        }
+        else if ((y ^= (buffer[tempOffset++] << 7)) < 0)
+        {
+          x = y ^ (~0 << 7);
+        }
+        else if ((y ^= (buffer[tempOffset++] << 14)) >= 0)
+        {
+          x = y ^ ((~0 << 7) ^ (~0 << 14));
+        }
+        else if ((y ^= (buffer[tempOffset++] << 21)) < 0)
+        {
+          x = y ^ ((~0 << 7) ^ (~0 << 14) ^ (~0 << 21));
+        }
+        else if ((x = y ^ ((long) buffer[tempOffset++] << 28)) >= 0L)
+        {
+          x ^= (~0L << 7) ^ (~0L << 14) ^ (~0L << 21) ^ (~0L << 28);
+        }
+        else if ((x ^= ((long) buffer[tempOffset++] << 35)) < 0L)
+        {
+          x ^= (~0L << 7) ^ (~0L << 14) ^ (~0L << 21) ^ (~0L << 28) ^ (~0L << 35);
+        }
+        else if ((x ^= ((long) buffer[tempOffset++] << 42)) >= 0L)
+        {
+          x ^= (~0L << 7) ^ (~0L << 14) ^ (~0L << 21) ^ (~0L << 28) ^ (~0L << 35) ^ (~0L << 42);
+        }
+        else if ((x ^= ((long) buffer[tempOffset++] << 49)) < 0L)
+        {
+          x ^=
+              (~0L << 7)
+                  ^ (~0L << 14)
+                  ^ (~0L << 21)
+                  ^ (~0L << 28)
+                  ^ (~0L << 35)
+                  ^ (~0L << 42)
+                  ^ (~0L << 49);
+        }
+        else
+        {
+          x ^= ((long) buffer[tempOffset++] << 56);
+          x ^=
+              (~0L << 7)
+                  ^ (~0L << 14)
+                  ^ (~0L << 21)
+                  ^ (~0L << 28)
+                  ^ (~0L << 35)
+                  ^ (~0L << 42)
+                  ^ (~0L << 49)
+                  ^ (~0L << 56);
+          if (x < 0L)
+          {
+            if (buffer[tempOffset++] < 0L)
+            {
+              break fastpath; // Will throw malformedVarint()
+            }
+          }
+        }
+        _localOffset = tempOffset;
+        return x;
+      }
+      return readRawVarint64SlowPath();
+    }
+
+    @Override
+    public byte readRawByte() throws IOException
+    {
+      if (getCurrentRemaining() == 0)
+      {
+        readNextBuffer();
+      }
+
+      return _currentSegment.getArray()[_localOffset++];
+    }
+
+    private void readNextBuffer() throws IOException
+    {
+      if (_currentIndex >= _byteArrays.getArraySize())
+      {
+        throw new EOFException();
+      }
+
+      _currentSegment = _byteArrays.get(++_currentIndex);
+      _localOffset = _currentSegment.getOffset();
+    }
+
+    private long readRawVarint64SlowPath() throws IOException
+    {
+      long result = 0;
+      for (int shift = 0; shift < 64; shift += 7)
+      {
+        final byte b = readRawByte();
+        result |= (long) (b & 0x7F) << shift;
+        if ((b & 0x80) == 0)
+        {
+          return result;
+        }
+      }
+      throw new IOException("Malformed VarInt");
+    }
+
+    private byte[] readRawBytesSlowPath(int size) throws IOException
+    {
+      byte[] bytes = new byte[size];
+      int offset = 0;
+
+      // Copy over remaining bytes from current segment if any.
+      int length = getCurrentRemaining();
+      if (length > 0)
+      {
+        System.arraycopy(_currentSegment.getArray(), _localOffset, bytes, offset, length);
+        size -= length;
+        offset += length;
+        _localOffset += length;
+      }
+
+      while (size > 0)
+      {
+        readNextBuffer();
+        length = Math.min(size, _currentSegment.getLength());
+        System.arraycopy(_currentSegment.getArray(), _localOffset, bytes, offset, length);
+        size -= length;
+        offset += length;
+        _localOffset += length;
+      }
+
+      return bytes;
+    }
+
+    private int getCurrentRemaining()
+    {
+      return _currentSegment.getOffset() + _currentSegment.getLength() - _localOffset;
     }
   }
 }

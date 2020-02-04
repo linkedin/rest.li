@@ -404,6 +404,7 @@ public abstract class ProtoReader
         bytes = _buffer;
         _pos = oldPos + size;
         tempPos = oldPos;
+        return Utf8Utils.decode(bytes, tempPos, size);
       }
       else if (size == 0)
       {
@@ -415,14 +416,13 @@ public abstract class ProtoReader
         bytes = _buffer;
         tempPos = 0;
         _pos = tempPos + size;
+        return Utf8Utils.decode(bytes, tempPos, size);
       }
       else
       {
-        // Slow path:  Build a byte array first then copy it.
-        bytes = readRawBytesSlowPath(size);
-        tempPos = 0;
+        // Slow path:  Build a string while reading byte by byte.
+        return Utf8Utils.decode(this, size);
       }
-      return Utf8Utils.decode(bytes, tempPos, size);
     }
 
     @Override

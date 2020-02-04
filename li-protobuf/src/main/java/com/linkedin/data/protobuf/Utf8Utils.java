@@ -46,12 +46,56 @@
 
 package com.linkedin.data.protobuf;
 
+import java.io.IOException;
+
+
 /**
  * A set of low-level, high-performance static utility methods related to the UTF-8 character
  * encoding.
  */
 public class Utf8Utils
 {
+  /**
+   * UTF-8 lookup table.
+   *
+   * Bytes representing ASCII characters return 0.
+   * Bytes representing multibyte characters return the number of bytes they represent.
+   * Invalid UTF-8 bytes return -1.
+   */
+  private final static int[] UTF8_LOOKUP_TABLE;
+
+  static
+  {
+    final int[] table = new int[256];
+
+    for (int c = 128; c < 256; ++c)
+    {
+      int code;
+
+      // Store bytes needed for decoding.
+      if ((c & 0xE0) == 0xC0)
+      { // 2 bytes (0x0080 - 0x07FF)
+        code = 2;
+      }
+      else if ((c & 0xF0) == 0xE0)
+      { // 3 bytes (0x0800 - 0xFFFF)
+        code = 3;
+      }
+      else if ((c & 0xF8) == 0xF0)
+      {
+        // 4 bytes; double-char with surrogates.
+        code = 4;
+      }
+      else
+      {
+        // -1 for error marker.
+        code = -1;
+      }
+      table[c] = code;
+    }
+    UTF8_LOOKUP_TABLE = table;
+  }
+
   private static final IllegalArgumentException INVALID_UTF8_EXCEPTION = new IllegalArgumentException("Invalid UTF-8");
 
   /**
@@ -251,74 +295,73 @@ public class Utf8Utils
     char[] resultArr = new char[size];
     int resultPos = 0;
 
-    // Optimize for 100% ASCII (Hotspot loves small simple top-level loops like this).
-    // This simple loop stops when we encounter a byte >= 0x80 (i.e. non-ASCII).
-    while (offset < limit)
-    {
-      byte b = bytes[offset];
-      if (!DecodeUtil.isOneByte(b))
-      {
-        break;
-      }
-      offset++;
-      DecodeUtil.handleOneByte(b, resultArr, resultPos++);
-    }
-
     while (offset < limit)
     {
       byte byte1 = bytes[offset++];
-      if (DecodeUtil.isOneByte(byte1))
+      int value = byte1 & 0xff;
+      switch (UTF8_LOOKUP_TABLE[value])
       {
-        DecodeUtil.handleOneByte(byte1, resultArr, resultPos++);
-        // It's common for there to be multiple ASCII characters in a run mixed in, so add an
-        // extra optimized loop to take care of these runs.
-        while (offset < limit)
-        {
-          byte b = bytes[offset];
-          if (!DecodeUtil.isOneByte(b))
-          {
-            break;
-          }
-          offset++;
-          DecodeUtil.handleOneByte(b, resultArr, resultPos++);
-        }
-      }
-      else if (DecodeUtil.isTwoBytes(byte1))
-      {
-        if (offset >= limit)
-        {
+        case 0:
+          DecodeUtil.handleOneByte(byte1, resultArr, resultPos++);
+          break;
+        case 2:
+          DecodeUtil.handleTwoBytes(byte1, bytes[offset++], resultArr, resultPos++);
+          break;
+        case 3:
+          DecodeUtil.handleThreeBytes(byte1, bytes[offset++], bytes[offset++], resultArr, resultPos++);
+          break;
+        case 4:
+          DecodeUtil.handleFourBytes(byte1, bytes[offset++], bytes[offset++], bytes[offset++], resultArr, resultPos++);
+          // 4-byte case requires two chars.
+          resultPos++;
+          break;
+        default:
           throw INVALID_UTF8_EXCEPTION;
-        }
-        DecodeUtil.handleTwoBytes(byte1, /* byte2 */ bytes[offset++], resultArr, resultPos++);
       }
-      else if (DecodeUtil.isThreeBytes(byte1))
+    }
+
+    return new String(resultArr, 0, resultPos);
+  }
+
+  /**
+   * Decodes the given UTF-8 encoded section with the given size using the given {@link ProtoReader} into a
+   * {@link String}.
+   *
+   * @throws IllegalArgumentException if the input is not valid UTF-8.
+   */
+  public static String decode(ProtoReader protoReader, int size) throws IOException
+  {
+    // The longest possible resulting String is the same as the number of input bytes, when it is
+    // all ASCII. For other cases, this over-allocates and we will truncate in the end.
+    char[] resultArr = new char[size];
+    int resultPos = 0;
+
+    while (size > 0)
+    {
+      byte byte1 = protoReader.readRawByte();
+      int value = byte1 & 0xff;
+      switch (UTF8_LOOKUP_TABLE[value])
       {
-        if (offset >= limit - 1)
-        {
+        case 0:
+          DecodeUtil.handleOneByte(byte1, resultArr, resultPos++);
+          size--;
+          break;
+        case 2:
+          DecodeUtil.handleTwoBytes(byte1, protoReader.readRawByte(), resultArr, resultPos++);
+          size -= 2;
+          break;
+        case 3:
+          DecodeUtil.handleThreeBytes(byte1, protoReader.readRawByte(), protoReader.readRawByte(), resultArr, resultPos++);
+          size -= 3;
+          break;
+        case 4:
+          DecodeUtil.handleFourBytes(byte1, protoReader.readRawByte(), protoReader.readRawByte(), protoReader.readRawByte(), resultArr, resultPos++);
+          // 4-byte case requires two chars.
+          resultPos++;
+          size -= 4;
+          break;
+        default:
           throw INVALID_UTF8_EXCEPTION;
-        }
-        DecodeUtil.handleThreeBytes(
-            byte1,
-            /* byte2 */ bytes[offset++],
-            /* byte3 */ bytes[offset++],
-            resultArr,
-            resultPos++);
-      }
-      else
-      {
-        if (offset >= limit - 2)
-        {
-          throw INVALID_UTF8_EXCEPTION;
-        }
-        DecodeUtil.handleFourBytes(
-            byte1,
-            /* byte2 */ bytes[offset++],
-            /* byte3 */ bytes[offset++],
-            /* byte4 */ bytes[offset++],
-            resultArr,
-            resultPos++);
-        // 4-byte case requires two chars.
-        resultPos++;
       }
     }
 
@@ -327,36 +370,10 @@ public class Utf8Utils
 
   /**
    * Utility methods for decoding bytes into {@link String}. Callers are responsible for extracting
-   * bytes (possibly using Unsafe methods), and checking remaining bytes. All other UTF-8 validity
-   * checks and codepoint conversion happen in this class.
+   * bytes (possibly using Unsafe methods), and checking remaining bytes.
    */
   private static class DecodeUtil
   {
-
-    /**
-     * Returns whether this is a single-byte codepoint (i.e., ASCII) with the form '0XXXXXXX'.
-     */
-    private static boolean isOneByte(byte b)
-    {
-      return b >= 0;
-    }
-
-    /**
-     * Returns whether this is a two-byte codepoint with the form '10XXXXXX'.
-     */
-    private static boolean isTwoBytes(byte b)
-    {
-      return b < (byte) 0xE0;
-    }
-
-    /**
-     * Returns whether this is a three-byte codepoint with the form '110XXXXX'.
-     */
-    private static boolean isThreeBytes(byte b)
-    {
-      return b < (byte) 0xF0;
-    }
-
     private static void handleOneByte(byte byte1, char[] resultArr, int resultPos)
     {
       resultArr[resultPos] = (char) byte1;
@@ -370,6 +387,7 @@ public class Utf8Utils
       {
         throw INVALID_UTF8_EXCEPTION;
       }
+
       resultArr[resultPos] = (char) (((byte1 & 0x1F) << 6) | trailingByteValue(byte2));
     }
 
@@ -384,6 +402,7 @@ public class Utf8Utils
       {
         throw INVALID_UTF8_EXCEPTION;
       }
+
       resultArr[resultPos] =
           (char)
               (((byte1 & 0x0F) << 12) | (trailingByteValue(byte2) << 6) | trailingByteValue(byte3));
@@ -405,6 +424,7 @@ public class Utf8Utils
       {
         throw INVALID_UTF8_EXCEPTION;
       }
+
       int codepoint =
           ((byte1 & 0x07) << 18)
               | (trailingByteValue(byte2) << 12)

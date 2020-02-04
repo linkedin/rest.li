@@ -53,7 +53,7 @@ public class DataMapConverter
    */
   public static DataMap bytesToDataMap(Map<String, String> headers, ByteString bytes) throws MimeTypeParseException, IOException
   {
-    return getContentType(headers).getCodec().readMap(bytes.asInputStream());
+    return getContentType(headers).getCodec().readMap(bytes);
   }
 
   /**
@@ -79,7 +79,7 @@ public class DataMapConverter
    */
   public static DataMap bytesToDataMap(String contentTypeHeaderValue, ByteString bytes) throws MimeTypeParseException, IOException
   {
-    return getContentType(contentTypeHeaderValue).getCodec().readMap(bytes.asInputStream());
+    return getContentType(contentTypeHeaderValue).getCodec().readMap(bytes);
   }
 
   public static ContentType getContentType(Map<String, String> headers) throws MimeTypeParseException

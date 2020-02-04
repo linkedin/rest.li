@@ -1,5 +1,14 @@
+28.1.16
+-------
+
 28.1.15
 -------
+(RB=1955795)
+Provide an optional fast path for codecs to read ByteStrings directly, and provide an implementation utilizing this for Protobuf.
+Close the underlying stream sources when using the Protobuf codec
+Improve string decoding performance for Protobuf codec
+Add an option in symbol table provider to pass in a list of overridden symbols if clients don't want to use the RuntimeSymbolTableGenerator for some reason
+
 (RB=1958100)
 Emit method definitions in deterministic order
 

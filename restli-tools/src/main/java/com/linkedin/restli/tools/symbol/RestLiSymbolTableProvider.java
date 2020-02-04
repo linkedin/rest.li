@@ -20,6 +20,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.data.ByteString;
+import com.linkedin.data.codec.symbol.InMemorySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTableProvider;
 import com.linkedin.data.codec.symbol.SymbolTableSerializer;
@@ -39,6 +40,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -60,7 +62,8 @@ import org.slf4j.LoggerFactory;
  * <li>Use {@link com.linkedin.data.codec.symbol.SymbolTableProviderHolder#setSymbolTableProvider(SymbolTableProvider)} to
  * set the instance as the global provider instance.
  * <li>Use {@link com.linkedin.restli.server.RestLiConfig#addResourceDefinitionListener(ResourceDefinitionListener)} to add
- * the instance as a listener to build the server side symbol table from all resources on server startup.
+ * the instance as a listener to build the server side symbol table from all resources on server startup, or generate
+ * your own list of symbols and pass them in as a {@link List<String>} via the constructor.
  * </p>
  *
  * <br>
@@ -106,11 +109,39 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
       String symbolTablePrefix,
       String serverNodeUri)
   {
+    this(client, uriPrefix, cacheSize, symbolTablePrefix, serverNodeUri, null);
+  }
+
+  /**
+   * Constructor
+   *
+   * @param client             The {@link Client} to use to make requests to remote services to fetch their symbol tables.
+   * @param uriPrefix          The URI prefix to use when invoking remote services by name (and not by hostname:port)
+   * @param cacheSize          The size of the caches used to store symbol tables.
+   * @param symbolTablePrefix  The prefix to use for symbol tables vended by this instance.
+   * @param serverNodeUri      The URI on which the current service is running. This should also include the context
+   *                           and servlet path (if applicable).
+   * @param overriddenSymbols  The list of overridden symbols to use for the symbol table.
+   */
+  public RestLiSymbolTableProvider(Client client,
+      String uriPrefix,
+      int cacheSize,
+      String symbolTablePrefix,
+      String serverNodeUri,
+      List<String> overriddenSymbols)
+  {
     _client = client;
     _uriPrefix = uriPrefix;
     _symbolTableNameHandler = new SymbolTableNameHandler(symbolTablePrefix, serverNodeUri);
     _serviceNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
     _symbolTableNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
+
+    if (overriddenSymbols != null)
+    {
+      String symbolTableName = _symbolTableNameHandler.generateName(overriddenSymbols);
+      _defaultResponseSymbolTable = new InMemorySymbolTable(symbolTableName, overriddenSymbols);
+      _defaultResponseSymbolTableName = _symbolTableNameHandler.extractTableInfo(symbolTableName)._2();
+    }
   }
 
   @Override
@@ -209,6 +240,11 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
   @Override
   public void onInitialized(Map<String, ResourceDefinition> resourceDefinitions)
   {
+    // Do nothing if an overridden list of symbols was passed and the default response symbol table was already built.
+    if (_defaultResponseSymbolTable != null) {
+      return;
+    }
+
     Set<DataSchema> schemas = new HashSet<>();
     resourceDefinitions.values().forEach(resourceDefinition -> resourceDefinition.collectReferencedDataSchemas(schemas));
     _defaultResponseSymbolTable = RuntimeSymbolTableGenerator.generate(_symbolTableNameHandler, schemas);

@@ -21,12 +21,11 @@ import com.linkedin.data.Data;
 import com.linkedin.data.Data.TraverseCallback;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.protobuf.ProtoReader;
-import com.linkedin.data.protobuf.ProtoWriter;
 import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.collections.CheckedUtil;
+import com.linkedin.data.protobuf.ProtoReader;
+import com.linkedin.data.protobuf.ProtoWriter;
 import com.linkedin.util.FastByteArrayOutputStream;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -111,19 +110,33 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public void writeMap(DataMap map, OutputStream out) throws IOException
   {
-    ProtoWriter protoWriter = new ProtoWriter(out);
-    TraverseCallback callback = createTraverseCallback(protoWriter, _symbolTable);
-    Data.traverse(map, callback);
-    protoWriter.flush();
+    try
+    {
+      ProtoWriter protoWriter = new ProtoWriter(out);
+      TraverseCallback callback = createTraverseCallback(protoWriter, _symbolTable);
+      Data.traverse(map, callback);
+      protoWriter.flush();
+    }
+    finally
+    {
+      DataCodec.closeQuietly(out);
+    }
   }
 
   @Override
   public void writeList(DataList list, OutputStream out) throws IOException
   {
-    ProtoWriter protoWriter = new ProtoWriter(out);
-    TraverseCallback callback = createTraverseCallback(protoWriter, _symbolTable);
-    Data.traverse(list, callback);
-    protoWriter.flush();
+    try
+    {
+      ProtoWriter protoWriter = new ProtoWriter(out);
+      TraverseCallback callback = createTraverseCallback(protoWriter, _symbolTable);
+      Data.traverse(list, callback);
+      protoWriter.flush();
+    }
+    finally
+    {
+      DataCodec.closeQuietly(out);
+    }
   }
 
   @Override
@@ -141,13 +154,39 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public DataMap readMap(InputStream in) throws IOException
   {
-    return (DataMap) readValue(ProtoReader.newInstance(in), this::isMap);
+    try
+    {
+      return (DataMap) readValue(ProtoReader.newInstance(in), this::isMap);
+    }
+    finally
+    {
+      DataCodec.closeQuietly(in);
+    }
   }
 
   @Override
   public DataList readList(InputStream in) throws IOException
   {
-    return (DataList) readValue(ProtoReader.newInstance(in), this::isList);
+    try
+    {
+      return (DataList) readValue(ProtoReader.newInstance(in), this::isList);
+    }
+    finally
+    {
+      DataCodec.closeQuietly(in);
+    }
+  }
+
+  @Override
+  public DataMap readMap(ByteString in) throws IOException
+  {
+    return (DataMap) readValue(in.asProtoReader(), this::isMap);
+  }
+
+  @Override
+  public DataList readList(ByteString in) throws IOException
+  {
+    return (DataList) readValue(in.asProtoReader(), this::isList);
   }
 
   protected TraverseCallback createTraverseCallback(ProtoWriter protoWriter, SymbolTable symbolTable)

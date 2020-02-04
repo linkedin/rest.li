@@ -96,7 +96,7 @@ public class JacksonLICORDataCodec extends AbstractJacksonDataCodec
     }
     finally
     {
-      closeQuietly(jsonParser);
+      DataCodec.closeQuietly(jsonParser);
     }
   }
 

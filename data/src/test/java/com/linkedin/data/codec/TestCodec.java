@@ -16,6 +16,7 @@
 
 package com.linkedin.data.codec;
 
+import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
@@ -71,7 +72,7 @@ public class TestCodec
     byte[] outputStreamBytes = outputStream.toByteArray();
     assertEquals(outputStreamBytes, bytes);
 
-    // test readMap
+    // test readMap (InputStream)
 
     ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStreamBytes);
     DataMap map3 = codec.readMap(inputStream);
@@ -80,6 +81,15 @@ public class TestCodec
 
     TestUtil.assertEquivalent(map3, map);
     TestUtil.assertEquivalent(map3, map2);
+
+    // test readMap (ByteString)
+
+    DataMap map4 = codec.readMap(toByteString(outputStreamBytes));
+    StringBuilder sb4 = new StringBuilder();
+    Data.dump("map", map4, "", sb4);
+
+    TestUtil.assertEquivalent(map4, map);
+    TestUtil.assertEquivalent(map4, map2);
 
     if (codec instanceof TextDataCodec)
     {
@@ -91,10 +101,10 @@ public class TestCodec
 
       // test stringToMap
 
-      DataMap map4 = textCodec.stringToMap(string);
-      StringBuilder sb4 = new StringBuilder();
-      Data.dump("map", map4, "", sb4);
-      assertEquals(sb4.toString(), sb1.toString());
+      DataMap map5 = textCodec.stringToMap(string);
+      StringBuilder sb5 = new StringBuilder();
+      Data.dump("map", map5, "", sb5);
+      assertEquals(sb5.toString(), sb1.toString());
 
       // test writeMap
 
@@ -105,9 +115,9 @@ public class TestCodec
       // test readMap
 
       StringReader reader = new StringReader(string);
-      DataMap map5 = textCodec.readMap(reader);
-      StringBuilder sb5 = new StringBuilder();
-      Data.dump("map", map5, "", sb5);
+      DataMap map6 = textCodec.readMap(reader);
+      StringBuilder sb6 = new StringBuilder();
+      Data.dump("map", map6, "", sb6);
     }
   }
 
@@ -318,6 +328,26 @@ public class TestCodec
         collectSymbols(symbols, (DataList) element);
       }
     }
+  }
+
+  /**
+   * Breaks the input byte array into many chunks, each containing a maximum of 16 bytes. This is useful to
+   * test that parsing ByteStrings composed of multiple chunks works as expected.
+   */
+  private static ByteString toByteString(byte[] bytes)
+  {
+    ByteString.Builder builder = new ByteString.Builder();
+    int offset = 0;
+    final int maxChunkSize = 16;
+
+    while (offset < bytes.length)
+    {
+      int length = Math.min(maxChunkSize, bytes.length - offset);
+      builder.append(ByteString.unsafeWrap(bytes, offset, length));
+      offset += length;
+    }
+
+    return builder.build();
   }
 
   private static class JacksonLICORTextDataCodec extends JacksonLICORDataCodec
