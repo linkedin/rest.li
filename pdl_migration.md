@@ -55,11 +55,11 @@ gradle :<moduleName>:convertToPdl \
     [-PconvertToPdl.preserveSrcCmd]
 ```
 
-| Property | Type | Description
-|----------|------|------------
-| `convertToPdl.reverse` | boolean | If true, converts PDL schemas back to PDSC (and vice versa if false).
-| `convertToPdl.keepOriginal` | boolean | If true, keeps the source schemas (the source schemas are deleted by default).
-| `convertToPdl.preserveSrcCmd` | string | Command which is run for each file, useful for running special VCS logic. The command should be a template string containing `$src` and `$dst` as references to the source and destination filename, respectively (e.g. `gradle convertToPdl -PconvertToPdl.preserveSrcCmd "/usr/bin/svn mv $src $dst"`).
+| Property | Type | Since | Description
+|----------|------|-------|-------------
+| `convertToPdl.reverse` | boolean | `28.0.11` | If true, converts PDL schemas back to PDSC (and vice versa if false).
+| `convertToPdl.keepOriginal` | boolean | `28.0.11` | If true, keeps the source schemas (the source schemas are deleted by default).
+| `convertToPdl.preserveSrcCmd` | string | `28.1.1` | Command which is run for each file, useful for running special VCS logic. The command should be a template string containing `$src` and `$dst` as references to the source and destination filename, respectively (e.g. `gradle convertToPdl -PconvertToPdl.preserveSrcCmd "/usr/bin/svn mv $src $dst"`).
 
 ## Notable Differences Between PDSC and PDL
 
