@@ -16,6 +16,8 @@ excerpt: Guide for migrating from PDSC to PDL with a side-by-side comparison sho
     - [PDL is More Java-Like](#pdl-is-more-java-like)
     - [Import Statements](#import-statements)
     - [Shorthand for Custom Properties](#shorthand-for-custom-properties)
+    - [Cleaner Enum Declarations](#cleaner-enum-declarations)
+    - [Specifying Default Field Values](#specifying-default-field-values)
 
 ## Why Use PDL?
 
@@ -57,7 +59,7 @@ gradle :<moduleName>:convertToPdl \
 |----------|------|------------
 | `convertToPdl.reverse` | boolean | If true, converts PDL schemas back to PDSC (and vice versa if false).
 | `convertToPdl.keepOriginal` | boolean | If true, keeps the source schemas (the source schemas are deleted by default).
-| `convertToPdl.preserveSrcCmd` | string | Command which is run for each file, useful for running special VCS logic. The command should be a template string containing `$src` and `$dst` as references to the source and destination filename, respectively.
+| `convertToPdl.preserveSrcCmd` | string | Command which is run for each file, useful for running special VCS logic. The command should be a template string containing `$src` and `$dst` as references to the source and destination filename, respectively (e.g. `gradle convertToPdl -PconvertToPdl.preserveSrcCmd "/usr/bin/svn mv $src $dst"`).
 
 ## Notable Differences Between PDSC and PDL
 
@@ -78,17 +80,32 @@ writing PDL is like reading and writing a Java interface definition.
     <tr>
         <td><pre>
 {
-    "namespace": "com.example.models",
-    "type": "record",
-    "name": "Foo",
-    "doc": "Foo is a record.",
-    "fields": [
-        {
-            "name": "x",
-            "type": "int",
-            "default": 1
-        }
-    ]
+  "type" : "record",
+  "name" : "Foo",
+  "namespace" : "com.example.models",
+  "doc" : "Foo is a record.",
+  "fields" : [ {
+    "name" : "x",
+    "type" : "int",
+    "default" : 1
+  }, {
+    "name" : "y",
+    "type" : {
+      "type" : "map",
+      "values" : "long"
+    },
+    "doc" : "y is a field.",
+    "optional" : true
+  }, {
+    "name" : "z",
+    "type" : {
+      "type" : "enum",
+      "name" : "Fruits",
+      "symbols" : [ "APPLE", "BANANA", "PEAR" ]
+    },
+    "default" : "PEAR",
+    "someAnnotation" : 123
+  } ]
 }
         </pre></td>
         <td><pre>
@@ -98,7 +115,15 @@ namespace com.example.models
  * Foo is a record.
  */
 record Foo {
-    x: int = 1
+  x: int = 1,
+
+  /**
+   * y is a field.
+   */
+  y: optional map[string, long],
+
+  @someAnnotation = 123
+  z: enum Fruits{ APPLE, BANANA, PEAR } = "PEAR"
 }
         </pre></td>
     </tr>
@@ -250,6 +275,138 @@ namespace com.example.models
 
 @truthy
 record ImplicitProperty {}
+        </pre></td>
+    </tr>
+</table>
+
+### Cleaner Enum Declarations
+
+One major pain-point in PDSC is declaring enums with metadata such as doc strings, custom properties, and deprecation.
+In PDSC schemas, this metadata must all be specified in individual mappings which are separate from the main symbol list.
+In this way, defining complex enums in PDSC is unintuitive and can be hard to read and maintain.
+
+On the other hand, PDL's syntax for defining enum symbol metadata is quite intuitive. Each doc string, custom property, and
+deprecation annotation can be placed right alongside the symbol.
+
+<table>
+    <tr>
+        <th>PDSC</th>
+        <th>PDL</th>
+    </tr>
+    <tr>
+        <td><pre>
+{
+  "type" : "enum",
+  "name" : "Fruits",
+  "symbols" : [ "APPLE", "BANANA", "PEAR", "PLUM" ],
+  "symbolDocs" : {
+    "BANANA" : "Comment for the BANANA symbol.",
+    "PLUM" : "This symbol has been deprecated."
+  },
+  "deprecatedSymbols" : {
+    "PLUM" : true
+  },
+  "symbolProperties" : {
+    "PEAR" : {
+      "someAnnotation" : false
+    },
+    "BANANA" : {
+      "a" : {
+        "b" : {
+          "c" : 123
+        }
+      }
+    }
+  }
+}
+        </pre></td>
+        <td><pre>
+enum Fruits {
+  APPLE,
+
+  /**
+   * Comment for the BANANA symbol.
+   */
+  @a.b.c = 123
+  BANANA,
+
+  @someAnnotation = false
+  PEAR,
+
+  /**
+   * This symbol has been deprecated.
+   */
+  @deprecated
+  PLUM
+}
+        </pre></td>
+    </tr>
+</table>
+
+### Specifying Default Field Values
+
+Although this is more of a _similarity_ than a difference, it should be noted that specifying default values for record
+fields in PDL is the same as in PDSC. In both PDSC and PDL, default values are specified using the value's
+[serialized JSON representation](/rest.li/how_data_is_serialized_for_transport). This may be confusing at first
+because PDL is _not_ a JSON-like format, however field default values are still represented using JSON.
+
+<table>
+    <tr>
+        <th>PDSC</th>
+        <th>PDL</th>
+    </tr>
+    <tr>
+        <td><pre>
+{
+  "type" : "record",
+  "name" : "Defaults",
+  "namespace" : "com.example.models",
+  "fields" : [ {
+    "name" : "x",
+    "type" : {
+      "type" : "array",
+      "items" : "int"
+    },
+    "default" : [ 1, 2, 3 ]
+  }, {
+    "name" : "y",
+    "type" : {
+      "type" : "map",
+      "values" : "string"
+    },
+    "default" : {
+      "key" : "value"
+    }
+  }, {
+    "name" : "z",
+    "type" : "SomeRecord",
+    "default" : {
+      "fieldA" : 1,
+      "fieldB" : true
+    }
+  }, {
+    "name" : "a",
+    "type" : "SomeUnion",
+    "default" : {
+      "float" : 1.0
+    }
+  }, {
+    "name" : "b",
+    "type" : "SomeEnum",
+    "default" : "SYMBOL1"
+  } ]
+}
+        </pre></td>
+        <td><pre>
+namespace com.example.models
+
+record Defaults {
+  x: array[int] = [ 1, 2, 3 ],
+  y: map[string, string] = { "key": "value" },
+  z: SomeRecord = { "fieldA": 1, "fieldB": true },
+  a: SomeUnion = { "float": 1 },
+  b: SomeEnum = "SYMBOL1"
+}
         </pre></td>
     </tr>
 </table>
