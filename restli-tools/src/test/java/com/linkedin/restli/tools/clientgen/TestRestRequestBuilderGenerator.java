@@ -1,16 +1,19 @@
 package com.linkedin.restli.tools.clientgen;
 
 
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.body.MethodDeclaration;
 import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.tools.ExporterTestUtils;
-import com.linkedin.restli.tools.idlgen.TestRestLiResourceModelExporter;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.testng.Assert;
@@ -18,6 +21,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.testng.collections.Lists;
 
 /**
  * @author Keren Jin
@@ -37,6 +41,49 @@ public class TestRestRequestBuilderGenerator
   {
     ExporterTestUtils.rmdir(outdir);
     ExporterTestUtils.rmdir(outdir2);
+  }
+
+  /**
+   * <p>Verifies that REST method source code is emitted in natural order (the order in which the
+   * {@link com.linkedin.restli.common.ResourceMethod} enum constants are declared).
+   * <p>Natural enum order is deterministic.
+   */
+  @Test(dataProvider = "restliVersionsDataProvider")
+  public void testDeterministicMethodOrder(RestliVersion version) throws Exception
+  {
+    final String pegasusDir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
+    final String outPath = outdir.getPath();
+    RestRequestBuilderGenerator.run(pegasusDir,
+            null,
+            moduleDir,
+            true,
+            false,
+            version,
+            null,
+            outPath,
+            new String[] { moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "testSimple.restspec.json" });
+
+    final File builderFile = new File(outPath + FS + "com" + FS + "linkedin" + FS + "restli" + FS + "swift" + FS + "integration" + FS + "TestSimpleBuilders.java");
+    Assert.assertTrue(builderFile.exists());
+
+    final String builderFileContent = IOUtils.toString(new FileInputStream(builderFile));
+    Assert.assertTrue(builderFileContent.contains("Generated from " + RESOURCES_DIR + FS + "idls" + FS + "testSimple.restspec.json"));
+
+    List<String> actualMethodNames = StaticJavaParser.parse(builderFileContent)
+            .findAll(MethodDeclaration.class).stream()
+            .map(MethodDeclaration::getNameAsString)
+            .collect(Collectors.toList());
+    List<String> expectedMethodNames = Lists.newArrayList(
+            "getBaseUriTemplate",
+            "getRequestOptions",
+            "getPathComponents",
+            "assignRequestOptions",
+            "getPrimaryResource",
+            "options",
+            "get",
+            "update",
+            "delete");
+    Assert.assertEquals(actualMethodNames, expectedMethodNames, "Expected method names to be generated in explicit order.");
   }
 
   @Test(dataProvider = "arrayDuplicateDataProvider")
@@ -151,6 +198,12 @@ public class TestRestRequestBuilderGenerator
 
     oldStyleReader.close();
     newStyleReader.close();
+  }
+
+  @DataProvider
+  private static RestliVersion[] restliVersionsDataProvider()
+  {
+    return new RestliVersion[] { RestliVersion.RESTLI_1_0_0, RestliVersion.RESTLI_2_0_0  };
   }
 
   @DataProvider

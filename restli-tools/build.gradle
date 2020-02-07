@@ -20,6 +20,7 @@ dependencies {
   testCompile externalDependency.testng
   testCompile externalDependency.junit
   testCompile externalDependency.commonsHttpClient
+  testCompile externalDependency.javaparser
 }
 
 apply from: "${buildScriptDirPath}/restModel.gradle"

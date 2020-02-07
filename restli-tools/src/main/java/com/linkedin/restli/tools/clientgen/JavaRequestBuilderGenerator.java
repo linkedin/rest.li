@@ -109,6 +109,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -257,7 +259,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     _currentSourceFile = sourceFile;
     try
     {
-      return generateResourceFacade(resource, sourceFile, new HashMap<String, JClass>(), new HashMap<String, JClass>(), new HashMap<String, List<String>>(), rootPath);
+      return generateResourceFacade(resource, sourceFile, new TreeMap<>(), new TreeMap<>(), new TreeMap<>(), rootPath);
     }
     catch (JClassAlreadyExistsException e)
     {
@@ -288,7 +290,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       // this is an old-style IDL.
       final List<String> newPathKeys = new ArrayList<String>(pathKeys.size());
       final Map<String, String> assocToPathKeys = reverseMap(pathToAssocKeys);
-      final Set<String> prevRealPathKeys = new HashSet<String>();
+      final Set<String> prevRealPathKeys = new TreeSet<>();
       for (String currKey : pathKeys)
       {
         if (assocToPathKeys.containsKey(currKey))
@@ -1067,7 +1069,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
         finderMethod.body()._return(JExpr._new(finderBuilderClass).arg(baseUriExpr).arg(resourceSpecField).arg(requestOptionsExpr));
 
-        final Set<String> finderKeys = new HashSet<String>();
+        final Set<String> finderKeys = new TreeSet<>();
         if (finder.getAssocKey() != null)
         {
           finderKeys.add(finder.getAssocKey());
@@ -1140,7 +1142,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
         batchFinderMethod.body()._return(JExpr._new(batchFinderBuilderClass).arg(baseUriExpr).arg(resourceSpecField).arg(requestOptionsExpr));
 
-        final Set<String> batchFinderKeys = new HashSet<String>();
+        final Set<String> batchFinderKeys = new TreeSet<>();
         if (batchFinder.getAssocKey() != null)
         {
           batchFinderKeys.add(batchFinder.getAssocKey());
@@ -1466,7 +1468,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                     String rootPath)
       throws JClassAlreadyExistsException
   {
-    final Map<ResourceMethod, RestMethodSchema> schemaMap = new HashMap<ResourceMethod, RestMethodSchema>();
+    final Map<ResourceMethod, RestMethodSchema> schemaMap = new TreeMap<>();
     if (restMethods != null)
     {
       for (RestMethodSchema restMethod : restMethods)
@@ -1475,7 +1477,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       }
     }
 
-    final Map<ResourceMethod, Class<?>> crudBuilderClasses = new HashMap<ResourceMethod, Class<?>>();
+    final Map<ResourceMethod, Class<?>> crudBuilderClasses = new TreeMap<>();
     if (_version == RestliVersion.RESTLI_2_0_0)
     {
       crudBuilderClasses.put(ResourceMethod.CREATE, CreateIdRequestBuilderBase.class);
@@ -1630,7 +1632,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
   {
     final JDefinedClass typesafeKeyClass = facadeClass._class(JMod.PUBLIC | JMod.STATIC, "Key");
     typesafeKeyClass._extends(CompoundKey.class);
-    final Map<String, AssocKeyTypeInfo> assocKeyTypeInfos = new HashMap<String, AssocKeyTypeInfo>();
+    final Map<String, AssocKeyTypeInfo> assocKeyTypeInfos = new TreeMap<>();
     for (AssocKeySchema assocKey : associationSchema.getAssocKeys())
     {
       final String name = assocKey.getName();
