@@ -32,7 +32,9 @@ make their schemas more readable for others. See [below](#notable-differences-be
 If you have an existing project with PDSC schemas, converting everything to PDL is pretty straightforward.
 Rest.li's Gradle plugin provides a task `convert<sourceSet>ToPdl` which will automatically convert your schemas for you.
 It should be noted that this task verifies the converted schemas against the original schemas.
-If this verification is failed, then the whole conversion will be aborted.
+If this verification fails, then the whole conversion will be aborted.
+
+It's suggested to use at least version `28.1.3` when running this task.
 
 The following command will convert every PDSC schema in your project to PDL.
 
@@ -55,11 +57,11 @@ gradle :<moduleName>:convertToPdl \
     [-PconvertToPdl.preserveSrcCmd]
 ```
 
-| Property | Type | Since | Description
-|----------|------|-------|-------------
-| `convertToPdl.reverse` | boolean | `28.0.11` | If true, converts PDL schemas back to PDSC (and vice versa if false).
-| `convertToPdl.keepOriginal` | boolean | `28.0.11` | If true, keeps the source schemas (the source schemas are deleted by default).
-| `convertToPdl.preserveSrcCmd` | string | `28.1.1` | Command which is run for each file, useful for running special VCS logic. The command should be a template string containing `$src` and `$dst` as references to the source and destination filename, respectively (e.g. `gradle convertToPdl -PconvertToPdl.preserveSrcCmd "/usr/bin/svn mv $src $dst"`).
+| Property | Type | Description
+|----------|------|-------------
+| `convertToPdl.reverse` | boolean | If true, converts PDL schemas back to PDSC (and vice versa if false).
+| `convertToPdl.keepOriginal` | boolean | If true, keeps the source schemas (the source schemas are deleted by default).
+| `convertToPdl.preserveSrcCmd` | string | Command which is run for each file, useful for running special VCS logic. The command should be a template string containing `$src` and `$dst` as references to the source and destination filename, respectively (e.g. `gradle convertToPdl -PconvertToPdl.preserveSrcCmd "/usr/bin/svn mv $src $dst"`).
 
 ## Notable Differences Between PDSC and PDL
 
