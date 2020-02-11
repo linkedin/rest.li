@@ -149,7 +149,7 @@ abstract class PdlBuilder
       {
         // Favor @x.y.z = "value" property encoding style over @x = { "y": { "z": "value" } }
         DataMap dm = (DataMap) value;
-        if (!dm.isEmpty())
+        if (!dm.isEmpty() && dm.size() == 1)
         {
           // encode non-empty value property like @x.y.z = "value"
           writeProperties(pathParts, dm);
