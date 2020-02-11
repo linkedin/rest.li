@@ -103,7 +103,10 @@ public class ResolvedPropertiesReaderVisitor implements DataSchemaRichContextTra
 
       String mapStringified = resolvedProperties.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(
           Collectors.joining("&"));
-      LOG.debug(String.format("/%s ::: %s", String.join("/", context.getSchemaPathSpec()), mapStringified));
+      if (LOG.isDebugEnabled())
+      {
+        LOG.debug(String.format("/%s ::: %s", String.join("/", context.getSchemaPathSpec()), mapStringified));
+      }
     }
   }
 

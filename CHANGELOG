@@ -12,6 +12,9 @@ Add an option in symbol table provider to pass in a list of overridden symbols i
 (RB=1958100)
 Emit method definitions in deterministic order
 
+(RB=1965446)
+Enable debug logging only in DEBUG mode in ResolvedPropertiesReaderVisitor
+
 28.1.14
 -------
 (RB=1946908)
