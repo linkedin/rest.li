@@ -34,7 +34,8 @@ Rest.li's Gradle plugin provides a task `convert<sourceSet>ToPdl` which will aut
 It should be noted that this task verifies the converted schemas against the original schemas.
 If this verification fails, then the whole conversion will be aborted.
 
-It's suggested to use at least version `28.1.3` when running this task.
+The minimum required version for running this task is `28.1.3`, though it's always recommended to use the latest version
+so that all bug fixes and improvements are picked up.
 
 The following command will convert every PDSC schema in your project to PDL.
 
