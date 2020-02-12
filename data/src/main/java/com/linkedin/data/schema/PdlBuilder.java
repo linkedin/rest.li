@@ -129,8 +129,6 @@ abstract class PdlBuilder
   /**
    * Writes a set of schema properties that share a common prefix to .pdl.
    *
-   * TODO: Support configuration for preferring collapsed "map" style over expanded "path" style.
-   *
    * @param prefix provides the common prefix of all the properties.
    * @param properties provides the properties to write.
    */
@@ -149,14 +147,14 @@ abstract class PdlBuilder
       {
         // Favor @x.y.z = "value" property encoding style over @x = { "y": { "z": "value" } }
         DataMap dm = (DataMap) value;
-        if (!dm.isEmpty() && dm.size() == 1)
+        if (dm.size() == 1)
         {
           // encode non-empty value property like @x.y.z = "value"
           writeProperties(pathParts, dm);
         }
-        else if (!pathParts.isEmpty())
+        else
         {
-          // encode empty value property like @x.y = {}
+          // encode value property like @x.y = {jsonValue}
           writeProperty(pathParts, dm);
         }
       }

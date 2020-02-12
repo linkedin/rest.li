@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
-import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.junit.Assert.*;
@@ -32,28 +30,12 @@ import static org.junit.Assert.*;
 public class TestSchemaToPdlEncoder
 {
 
-  @DataProvider
-  private static Object[][] recordSchemaProvider()
-  {
-    DataMap properties1 = new DataMap();
-    properties1.put("empty", new DataMap());
-    DataMap properties2 = new DataMap();
-    properties2.put("validate", properties1);
-    DataMap properties3 = new DataMap();
-    DataMap nestedMap = new DataMap(properties2);
-    nestedMap.putAll(properties1);
-    properties3.put("nested", nestedMap);
-    return new Object[][]{{properties1, "namespace com.linkedin.test\n" + "\n" + "@empty = {}\nrecord RecordDataSchema {}"},
-        {properties2, "namespace com.linkedin.test\n" + "\n" + "@validate.empty = {}\n" + "@empty = {}\nrecord RecordDataSchema {}"},
-        {properties3, "namespace com.linkedin.test\n" + "\n" + "@nested = {\"validate\":{\"empty\":{}},\"empty\":{}}\n"
-            + "@empty = {}\n" + "record RecordDataSchema {}"}};
-  }
-
-  @Test(dataProvider = "recordSchemaProvider")
-  public void testEncodeRecordWithEmptyDataMapInProperty(Map<String, Object> properties, String pdlString) throws IOException
+  @Test
+  public void testEncodeRecordWithEmptyDataMapInProperty() throws IOException
   {
     RecordDataSchema source =
         new RecordDataSchema(new Name("com.linkedin.test.RecordDataSchema"), RecordDataSchema.RecordType.RECORD);
+    Map<String, Object> properties = new HashMap<>();
     properties.put("empty", new DataMap());
     source.setProperties(properties);
 
@@ -63,7 +45,6 @@ public class TestSchemaToPdlEncoder
     encoder.setTypeReferenceFormat(SchemaToPdlEncoder.TypeReferenceFormat.PRESERVE);
     encoder.encode(source);
 
-    Assert.assertEquals(pdlString, writer.toString());
     DataSchema encoded = TestUtil.dataSchemaFromPdlString(writer.toString());
     assertTrue(encoded instanceof RecordDataSchema);
     assertEquals(source.getProperties(), encoded.getProperties());
