@@ -8,6 +8,10 @@ dependencies {
   compile externalDependency.guava
   compile externalDependency.jacksonCoreAsl_1_4
   compile externalDependency.avro
+  compile externalDependency.avroUtil
   testCompile externalDependency.testng
   testCompile project(path: ':data', configuration: 'testArtifacts')
 }
+
+compileJava.options.compilerArgs += '-Xlint:-deprecation'
+compileTestJava.options.compilerArgs += '-Xlint:-deprecation'

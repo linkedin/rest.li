@@ -31,6 +31,7 @@ import com.linkedin.data.schema.FixedDataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.avro.compatibility.AvroCompatibilityHelper;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
@@ -486,7 +487,6 @@ public class DataTranslator implements DataTranslatorContext
   private static class DataMapToGenericRecordTranslator extends DataTranslator
   {
     private static final Object BAD_RESULT = CustomDataTranslator.AVRO_BAD_RESULT;
-    private final AvroAdapter _avroAdapter = AvroAdapterFinder.getAvroAdapter();
     private DataMapToGenericRecordTranslator(DataTranslationOptions options)
     {
       super(options);
@@ -544,7 +544,7 @@ public class DataTranslator implements DataTranslatorContext
             result = BAD_RESULT;
             break;
           }
-          result = _avroAdapter.createEnumSymbol(avroSchema, enumValue);
+          result = AvroCompatibilityHelper.newEnumSymbol(avroSchema, enumValue);
           break;
         case FIXED:
           byte[] bytes = translateBytes(value);
@@ -759,7 +759,7 @@ public class DataTranslator implements DataTranslatorContext
       }
 
       _path.add(DataSchemaConstants.DISCRIMINATOR_FIELD);
-      Object fieldDiscriminator = _avroAdapter.createEnumSymbol(avroDiscriminatorField.schema(), memberKey);
+      Object fieldDiscriminator = AvroCompatibilityHelper.newEnumSymbol(avroDiscriminatorField.schema(), memberKey);
       avroRecord.put(DataSchemaConstants.DISCRIMINATOR_FIELD, fieldDiscriminator);
       _path.removeLast();
 

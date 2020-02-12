@@ -97,7 +97,10 @@ project.ext.externalDependency = [
   'guice': 'com.google.inject:guice:3.0',
   'guiceServlet': 'com.google.inject.extensions:guice-servlet:3.0',
 
-  'jsr305': 'com.google.code.findbugs:jsr305:3.0.0'
+  'jsr305': 'com.google.code.findbugs:jsr305:3.0.0',
+
+  'avroUtil': 'com.linkedin.avroutil:avro-codegen:0.1.6'
+
 ];
 
 if (!project.ext.isDefaultEnvironment)
@@ -224,6 +227,9 @@ subprojects {
     repositories {
       mavenLocal()
       mavenCentral()
+      maven {
+        url  "https://dl.bintray.com/linkedin/maven"
+      }
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
