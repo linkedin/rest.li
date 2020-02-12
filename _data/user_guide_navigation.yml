@@ -19,6 +19,8 @@ toc:
         url: /rest.li/pdl_syntax
       - page: PDSC Syntax
         url: /rest.li/pdsc_syntax
+      - page: Migrating from PDSC to PDL
+        url: /rest.li/pdl_migration
       - page: Avro Translation
         url: /rest.li/avro_translation
       - page: Java Binding
