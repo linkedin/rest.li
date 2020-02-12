@@ -335,13 +335,21 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
 
   private static class Parser
   {
+    /**
+     * The Depth of our DataMap recursion (also the size of the HashMap),
+     * after which we no longer see gains from instantiating a smaller HashMap.
+     *
+     * This is based on the fact that default DataMaps instantiate to size 16,
+     * with load factor 0.75 and capacity will always be a power of 2.
+     * When you add the 7th entry, the capacity will grow to 16 from 8, so 6 is Max Recursive Depth
+     */
+    private static final int MAX_DATA_MAP_RECURSION_SIZE = 6;
+
     private StringBuilder _errorBuilder = null;
     private JsonParser _parser = null;
     private boolean _debug = false;
     private Deque<Object> _nameStack = null;
     private Map<Object, DataLocation> _locationMap = null;
-
-    private DataMapBuilder _currDataMapBuilder = new DataMapBuilder();
 
     Parser()
     {
@@ -459,6 +467,16 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
 
     private Object parse(DataComplex parent, String name, JsonToken token) throws IOException
     {
+      return parse(parent, name, token, true);
+    }
+
+    private Object parse(JsonToken token) throws IOException
+    {
+      return parse(null, null, token, false);
+    }
+
+    private Object parse(DataComplex parent, String name, JsonToken token, boolean shouldUpdateParent) throws IOException
+    {
       if (token == null)
       {
         throw new DataDecodingException("Missing token");
@@ -469,15 +487,21 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
       {
         case START_OBJECT:
           value = parseDataMap();
-          updateParent(parent, name, value);
+          if (shouldUpdateParent)
+          {
+            updateParent(parent, name, value);
+          }
           break;
         case START_ARRAY:
           value = parseDataList();
-          updateParent(parent, name, value);
+          if (shouldUpdateParent)
+          {
+            updateParent(parent, name, value);
+          }
           break;
         default:
           value = parsePrimitive(token);
-          if (value != null)
+          if (value != null && shouldUpdateParent)
           {
             updateParent(parent, name, value);
           }
@@ -489,11 +513,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
 
     private void updateParent(DataComplex parent, String name, Object value)
     {
-      if (parent instanceof DataMapBuilder)
-      {
-        ((DataMapBuilder) parent).addKVPair(name, value);
-      }
-      else if (parent instanceof DataMap)
+      if (parent instanceof DataMap)
       {
         Object replaced = CheckedUtil.putWithoutChecking((DataMap) parent, name, value);
         if (replaced != null)
@@ -572,34 +592,68 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
 
     private DataMap parseDataMap() throws IOException
     {
-      if (_currDataMapBuilder.inUse())
-      {
-        _currDataMapBuilder = new DataMapBuilder();
+      return parseDataMapRecursive(0);
+    }
+
+    /**
+     * This parses DataMap's recursively, keeping objects on the stack until the Map gets too large
+     * or we are done parsing the map.
+     * This prevents creating unnecessarily large DataMaps for a small number of k-v pairs.
+     *
+     * @param dataMapSize the current size of the DataMap
+     */
+    private DataMap parseDataMapRecursive(int dataMapSize) throws IOException {
+      if (_parser.nextToken() == JsonToken.END_OBJECT) {
+        return new DataMap(DataMapBuilder.getOptimumHashMapCapacityFromSize(dataMapSize));
+      // prevent stack from getting too deep
+      } else if (dataMapSize >= MAX_DATA_MAP_RECURSION_SIZE) {
+        return parseDataMapIterative();
       }
-      _currDataMapBuilder.setInUse(true);
-      DataMapBuilder mapBuilder = _currDataMapBuilder;
-      DataComplex map = _currDataMapBuilder;
-      while (_parser.nextToken() != JsonToken.END_OBJECT)
+      String key = _parser.getCurrentName();
+      if (_debug)
       {
-        String key = _parser.getCurrentName();
-        if (_debug)
-        {
-          _nameStack.addLast(key);
-        }
-        JsonToken token = _parser.nextToken();
-        parse(map, key, token);
-        if (mapBuilder != null && mapBuilder.smallHashMapThresholdReached())
-        {
-          map = mapBuilder.convertToDataMap();
-          mapBuilder = null;
-        }
-        if (_debug)
-        {
-          _nameStack.removeLast();
-        }
+        _nameStack.addLast(key);
       }
 
-      return mapBuilder != null ? mapBuilder.convertToDataMap() : (DataMap) map;
+      JsonToken token = _parser.nextToken();
+      Object value = parse(token);
+      DataMap map = parseDataMapRecursive(dataMapSize + 1);
+      if (value != null) {
+        updateParent(map, key, value);
+      }
+
+      if (_debug)
+      {
+        _nameStack.removeLast();
+      }
+      return map;
+    }
+
+    /**
+     * this should only be called from parseDataMapRecursive; it assumes the current token is a Map-Key.
+     */
+    private DataMap parseDataMapIterative() throws IOException {
+      DataMap map = new DataMap();
+      addToMap(map);
+      while (_parser.nextToken() != JsonToken.END_OBJECT)
+      {
+        addToMap(map);
+      }
+      return map;
+    }
+
+    private void addToMap(DataMap map) throws IOException {
+      String key = _parser.getCurrentName();
+      if (_debug)
+      {
+        _nameStack.addLast(key);
+      }
+      JsonToken token = _parser.nextToken();
+      parse(map, key, token);
+      if (_debug)
+      {
+        _nameStack.removeLast();
+      }
     }
 
     private DataList parseDataList() throws IOException
