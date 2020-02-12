@@ -494,7 +494,7 @@ record InlineWithinUnion {
 ```
 
 ### Union with aliases
-***Note:*** _Union with aliases is a recent feature in the pegasus schema language and it might not be fully supported in non-java languages. Please check the [support level]({% link testsuite_compatibility_matrix.md %}) on all languages you intend to use before using aliases_
+***Note:*** _Union with aliases is a recent feature in the pegasus schema language and it might not be fully supported in non-java languages. Please check the [support level](/rest.li/multi_language_compatibility_matrix) on all languages you intend to use before using aliases_
 
 Union members can optionally be given an alias. Aliases can be used to create unions with members of the same type or to give better naming for union members. Union with aliases is useful for cases where a union contains multiple different typerefs with the same underlying type. This use case is not supported with a non-aliased union.
 
