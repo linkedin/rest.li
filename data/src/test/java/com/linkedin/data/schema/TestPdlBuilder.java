@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2015 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.data.schema;
 
 import com.linkedin.data.DataMap;
@@ -9,8 +25,13 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-
-public class TestPdlBuilder {
+/**
+ * Unit tests for {@link PdlBuilder}.
+ *
+ * @author Aman Gupta
+ */
+public class TestPdlBuilder
+{
 
   @DataProvider
   private static Object[][] propertiesMapProvider()
@@ -19,18 +40,23 @@ public class TestPdlBuilder {
     properties1.put("empty", new DataMap());
     DataMap properties2 = new DataMap();
     properties2.put("validate", properties1);
-    DataMap properties3 = new DataMap();
-    DataMap nestedMap = new DataMap(properties2);
-    nestedMap.putAll(properties1);
-    properties3.put("nested", nestedMap);
-    return new Object[][]{{properties1, "@empty = {}\n"},
-        {properties2, "@validate.empty = {}\n"}
+    return new Object[][]
+        {
+            {
+              properties1,
+              "@empty = {}\n"
+            },
+            {
+              properties2,
+              "@validate.empty = {}\n"
+            }
         //TODO Add test case for multiple properties in a map level once iteration logic is fixed to be deterministic
-    };
+        };
   }
 
   @Test(dataProvider = "propertiesMapProvider")
-  public void testPropertiesWriter(Map<String, Object> properties, String pdlString) throws IOException
+  public void testWriteProperties(Map<String, Object> properties,
+                                  String pdlString) throws IOException
   {
     StringWriter writer = new StringWriter();
     PdlBuilder pdlBuilder = (new IndentedPdlBuilder.Provider()).newInstance(writer);

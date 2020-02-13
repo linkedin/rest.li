@@ -145,16 +145,16 @@ abstract class PdlBuilder
 
       if (value instanceof DataMap)
       {
-        // Favor @x.y.z = "value" property encoding style over @x = { "y": { "z": "value" } }
         DataMap dm = (DataMap) value;
+        // Decide encoding style based on map branches/size
         if (dm.size() == 1)
         {
-          // encode non-empty value property like @x.y.z = "value"
+          // encode value property like @x.y.z = "value"
           writeProperties(pathParts, dm);
         }
         else
         {
-          // encode value property like @x.y = {jsonValue}
+          // encode value property like @x = { "y": { "z": "value" } }
           writeProperty(pathParts, dm);
         }
       }
