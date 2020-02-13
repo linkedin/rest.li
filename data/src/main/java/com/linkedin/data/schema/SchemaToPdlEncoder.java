@@ -732,13 +732,13 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private Map<String, Name> computeImports(DataSchema schema, String rootNamespace)
   {
     Set<Name> encounteredTypes = new HashSet<>();
-    Set<Name> inlinedTypes = new HashSet<>();
+    Set<String> inlinedTypes = new HashSet<>();
     gatherTypes(schema, true, encounteredTypes, inlinedTypes);
 
     // Filter out types that shouldn't have an import and return as a mapping from simple name to typed name
     return encounteredTypes
         .stream()
-        .filter(name -> !name.getNamespace().equals(rootNamespace) && !inlinedTypes.contains(name))
+        .filter(name -> !name.getNamespace().equals(rootNamespace) && !inlinedTypes.contains(name.getName()))
         .collect(Collectors.toMap(
             Name::getName,
             Function.identity(),
@@ -756,7 +756,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    * @param inlinedTypes cumulative set of all inlined types in this schema (and its descendents).
    */
   private void gatherTypes(DataSchema schema, boolean isDeclaredInline, Set<Name> encounteredTypes,
-      Set<Name> inlinedTypes)
+      Set<String> inlinedTypes)
   {
     // If named type, add to the set of encountered types
     if (schema instanceof NamedDataSchema)
@@ -766,7 +766,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       // If declared inline, add to the set of inlined types
       if (isDeclaredInline)
       {
-        inlinedTypes.add(new Name(namedSchema.getFullName()));
+        inlinedTypes.add(namedSchema.getName());
       }
     }
 
@@ -782,7 +782,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         }
         for (NamedDataSchema include : recordSchema.getInclude())
         {
-          gatherTypes(include, true, encounteredTypes, inlinedTypes);
+          gatherTypes(include, recordSchema.isIncludeDeclaredInline(include), encounteredTypes, inlinedTypes);
         }
       }
       else if (schema instanceof TyperefDataSchema)
