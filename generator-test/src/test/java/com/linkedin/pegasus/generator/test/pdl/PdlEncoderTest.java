@@ -68,6 +68,8 @@ public class PdlEncoderTest extends GeneratorTest
             { "fixed.WithAliases" },
             { "imports.ConflictResolution" },
             { "imports.NamespaceOverrides" },
+            { "imports.Includes" },
+            { "imports.InlineTypeConflict" },
             { "maps.WithOrders" },
             { "maps.WithPrimitivesMap" },
             { "records.EmptyNamespace" },

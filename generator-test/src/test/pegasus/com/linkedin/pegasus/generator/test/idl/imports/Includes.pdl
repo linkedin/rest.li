@@ -1,0 +1,10 @@
+namespace com.linkedin.pegasus.generator.test.idl.imports
+
+import com.linkedin.pegasus.generator.test.idl.records.Simple
+
+/**
+ * Tests that types in includes list can be imported.
+ */
+record Includes includes Simple {
+  direct: int
+}
