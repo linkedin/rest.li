@@ -22,7 +22,7 @@ record InlineTypeConflict includes com.linkedin.pegasus.generator.test.idl.recor
   }
 
   /**
-   * This field reference a type (Note) that conflicts with Note defined inline, and thus must use fully qualified name.
+   * This field references a type (Note) that conflicts with Note defined inline, and thus must use fully qualified name.
    */
   note: com.linkedin.pegasus.generator.test.idl.records.Note
 }

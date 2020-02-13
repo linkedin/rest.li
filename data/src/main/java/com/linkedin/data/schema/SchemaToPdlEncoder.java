@@ -718,6 +718,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    * The following rules are used to determine whether a type should be imported:
    * (1) The type is outside the root namespace of the document.
    * (2) The type is declared outside the document (i.e. not inlined in this document).
+   * (3) The type's name does not conflict with name of an Inlined type.
    *
    * When multiple referenced types with the same unqualified name may be imported, the type with the alphabetically
    * first namespace is chosen. (e.g. "com.a.b.c.Foo" is chosen over "com.x.y.z.Foo")
@@ -732,13 +733,13 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private Map<String, Name> computeImports(DataSchema schema, String rootNamespace)
   {
     Set<Name> encounteredTypes = new HashSet<>();
-    Set<String> inlinedTypes = new HashSet<>();
-    gatherTypes(schema, true, encounteredTypes, inlinedTypes);
+    Set<String> inlinedTypeNames = new HashSet<>();
+    gatherTypes(schema, true, encounteredTypes, inlinedTypeNames);
 
     // Filter out types that shouldn't have an import and return as a mapping from simple name to typed name
     return encounteredTypes
         .stream()
-        .filter(name -> !name.getNamespace().equals(rootNamespace) && !inlinedTypes.contains(name.getName()))
+        .filter(name -> !name.getNamespace().equals(rootNamespace) && !inlinedTypeNames.contains(name.getName()))
         .collect(Collectors.toMap(
             Name::getName,
             Function.identity(),
@@ -753,10 +754,10 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    * @param isDeclaredInline true if the schema should be treated as an inline declaration, false if it should be
    *                         considered a by-name reference.
    * @param encounteredTypes cumulative set of all encountered types in this schema (and its descendents).
-   * @param inlinedTypes cumulative set of all inlined types in this schema (and its descendents).
+   * @param inlinedTypeNames cumulative set of simple names of all inlined types in this schema (and its descendents).
    */
   private void gatherTypes(DataSchema schema, boolean isDeclaredInline, Set<Name> encounteredTypes,
-      Set<String> inlinedTypes)
+      Set<String> inlinedTypeNames)
   {
     // If named type, add to the set of encountered types
     if (schema instanceof NamedDataSchema)
@@ -766,7 +767,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       // If declared inline, add to the set of inlined types
       if (isDeclaredInline)
       {
-        inlinedTypes.add(namedSchema.getName());
+        inlinedTypeNames.add(namedSchema.getName());
       }
     }
 
@@ -778,35 +779,35 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         RecordDataSchema recordSchema = (RecordDataSchema) schema;
         for (RecordDataSchema.Field field : recordSchema.getFields())
         {
-          gatherTypes(field.getType(), field.isDeclaredInline(), encounteredTypes, inlinedTypes);
+          gatherTypes(field.getType(), field.isDeclaredInline(), encounteredTypes, inlinedTypeNames);
         }
         for (NamedDataSchema include : recordSchema.getInclude())
         {
-          gatherTypes(include, recordSchema.isIncludeDeclaredInline(include), encounteredTypes, inlinedTypes);
+          gatherTypes(include, recordSchema.isIncludeDeclaredInline(include), encounteredTypes, inlinedTypeNames);
         }
       }
       else if (schema instanceof TyperefDataSchema)
       {
         TyperefDataSchema typerefSchema = (TyperefDataSchema) schema;
-        gatherTypes(typerefSchema.getRef(), typerefSchema.isRefDeclaredInline(), encounteredTypes, inlinedTypes);
+        gatherTypes(typerefSchema.getRef(), typerefSchema.isRefDeclaredInline(), encounteredTypes, inlinedTypeNames);
       }
       else if (schema instanceof UnionDataSchema)
       {
         UnionDataSchema unionSchema = (UnionDataSchema) schema;
         for (UnionDataSchema.Member member : unionSchema.getMembers())
         {
-          gatherTypes(member.getType(), member.isDeclaredInline(), encounteredTypes, inlinedTypes);
+          gatherTypes(member.getType(), member.isDeclaredInline(), encounteredTypes, inlinedTypeNames);
         }
       }
       else if (schema instanceof MapDataSchema)
       {
         MapDataSchema mapSchema = (MapDataSchema) schema;
-        gatherTypes(mapSchema.getValues(), mapSchema.isValuesDeclaredInline(), encounteredTypes, inlinedTypes);
+        gatherTypes(mapSchema.getValues(), mapSchema.isValuesDeclaredInline(), encounteredTypes, inlinedTypeNames);
       }
       else if (schema instanceof ArrayDataSchema)
       {
         ArrayDataSchema arraySchema = (ArrayDataSchema) schema;
-        gatherTypes(arraySchema.getItems(), arraySchema.isItemsDeclaredInline(), encounteredTypes, inlinedTypes);
+        gatherTypes(arraySchema.getItems(), arraySchema.isItemsDeclaredInline(), encounteredTypes, inlinedTypeNames);
       }
     }
   }
