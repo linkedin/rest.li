@@ -1,0 +1,15 @@
+namespace com.linkedin.pegasus.generator.test.idl.enums
+
+/**
+ * Reserved keywords should be escaped when used as enum symbols.
+ */
+enum EscapedSymbols {
+  ENUM,
+  `enum`,
+  RECORD,
+  `record`,
+  NAMESPACE,
+  `namespace`,
+  FOO,
+  foo
+}

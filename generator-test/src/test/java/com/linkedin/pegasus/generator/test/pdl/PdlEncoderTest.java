@@ -58,6 +58,7 @@ public class PdlEncoderTest extends GeneratorTest
             { "deprecated.DeprecatedRecord" },
             { "enums.Fruits" },
             { "enums.EnumProperties" },
+            { "enums.EscapedSymbols" },
             { "enums.DeprecatedSymbols" },
             { "enums.WithAliases" },
             { "escaping.record.NamespacePackageEscaping" },

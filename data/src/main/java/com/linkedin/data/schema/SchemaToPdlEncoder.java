@@ -411,7 +411,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       }
       writeDocAndProperties(docString, symbolProperties);
       _builder.indent()
-          .write(symbol)
+          .writeIdentifier(symbol)
           .newline();
     }
     _builder.decreaseIndent()
@@ -510,7 +510,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       }
       writeDocAndProperties(member.getDoc(), member.getProperties());
       _builder.indent()
-          .write(member.getAlias())
+          .writeIdentifier(member.getAlias())
           .write(":")
           .writeSpace();
     }

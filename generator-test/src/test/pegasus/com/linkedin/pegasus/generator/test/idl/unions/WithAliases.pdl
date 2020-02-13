@@ -40,5 +40,10 @@ record WithAliases {
       record Foo {}
 
     F: array[Message]
+
+    /**
+     * Reserved keywords used as aliases must be escaped.
+     */
+    `record`: long
   ]
 }
