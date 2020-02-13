@@ -29,6 +29,7 @@ import static org.junit.Assert.*;
 
 public class TestSchemaToPdlEncoder
 {
+
   @Test
   public void testEncodeRecordWithEmptyDataMapInProperty() throws IOException
   {
