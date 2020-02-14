@@ -16,6 +16,8 @@
 package com.linkedin.r2.message.rest;
 
 import com.linkedin.r2.message.Request;
+import java.net.URI;
+
 
 /**
  * An object that contains details of a REST request.
@@ -40,4 +42,12 @@ public interface RestRequest extends Request, RestMessage
    */
   @Override
   RestRequestBuilder builder();
+
+  /**
+   * @return A copy of this request with just the URI replaced.
+   */
+  default RestRequest copyWithURI(URI uri)
+  {
+    return builder().setURI(uri).build();
+  }
 }

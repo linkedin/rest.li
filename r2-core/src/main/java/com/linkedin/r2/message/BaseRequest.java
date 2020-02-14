@@ -18,11 +18,24 @@ public abstract class BaseRequest extends BaseMessage implements Request
 
   protected BaseRequest(Map<String, String> headers, List<String> cookies, URI uri, String method)
   {
-    super(headers, cookies);
-    ArgumentUtil.notNull(uri, "uri");
-    ArgumentUtil.notNull(method, "method");
-    _uri = uri;
-    _method = method;
+    this(headers, cookies, uri, method, true);
+  }
+
+  protected BaseRequest(Map<String, String> headers, List<String> cookies, URI uri, String method, boolean validateArgs)
+  {
+    super(headers, cookies, validateArgs);
+    if (validateArgs)
+    {
+      ArgumentUtil.notNull(uri, "uri");
+      ArgumentUtil.notNull(method, "method");
+      _uri = uri;
+      _method = method;
+    }
+    else
+    {
+      _uri = uri;
+      _method = method;
+    }
   }
 
   @Override
