@@ -1,0 +1,14 @@
+language: java
+
+# Skip testing for now, since this is experimental
+script: ./gradlew build -x test
+
+jdk:
+  - oraclejdk8
+
+dist: trusty
+
+# Below skips the installation step completely (https://docs.travis-ci.com/user/customizing-the-build/#Skipping-the-Installation-Step)
+# If we don't skip it, Travis runs unnecessary Gradle tasks like './gradlew assemble'
+install:
+  - true
