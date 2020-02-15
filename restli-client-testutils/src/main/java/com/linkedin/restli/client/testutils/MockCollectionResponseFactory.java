@@ -75,4 +75,24 @@ public class MockCollectionResponseFactory
     response.setPaging(metadata);
     return response;
   }
+
+  /**
+   * Creates a {@link CollectionResponse}
+   *
+   * @param entryClass the class of the objects being stored in the {@link CollectionResponse}
+   * @param recordTemplates the objects that will be stored in the {@link CollectionResponse}
+   * @param metadata the {@link CollectionMetadata} for this {@link CollectionResponse}
+   * @param customMetadata raw custom metadata for this {@link CollectionResponse}
+   * @param <T> the class of the objects being stored in the {@link CollectionResponse}
+   * @return a {@link CollectionResponse} with the above properties
+   */
+  public static <T extends RecordTemplate> CollectionResponse<T> create(Class<T> entryClass,
+      Collection<T> recordTemplates,
+      CollectionMetadata metadata,
+      DataMap customMetadata)
+  {
+    CollectionResponse<T> response = create(entryClass, recordTemplates, metadata);
+    response.setMetadataRaw(customMetadata);
+    return response;
+  }
 }
