@@ -80,7 +80,7 @@ abstract class BaseRestLiServer
         .map(ContentType::getHeaderKey)
         .collect(Collectors.toSet());
 
-    _router = new RestLiRouter(rootResources);
+    _router = new RestLiRouter(rootResources, config);
     resourceFactory.setRootResources(rootResources);
     _methodInvoker = new RestLiMethodInvoker(resourceFactory, engine, config.getInternalErrorMessage());
 

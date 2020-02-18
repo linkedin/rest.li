@@ -422,6 +422,7 @@ public class RestLiArgumentBuilderTestHelper
       expect(mockRoutingResult.getContext()).andReturn(context).anyTimes();
     }
     ResourceMethodConfig mockResourceMethodConfig = createMock(ResourceMethodConfig.class);
+    expect(mockResourceMethodConfig.shouldValidateResourceKeyParams()).andReturn(false).anyTimes();
     expect(mockRoutingResult.getResourceMethodConfig()).andReturn(mockResourceMethodConfig).anyTimes();
     replay(mockRoutingResult, mockResourceMethodConfig);
 

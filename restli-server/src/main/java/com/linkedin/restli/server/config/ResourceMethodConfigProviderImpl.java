@@ -29,12 +29,14 @@ class ResourceMethodConfigProviderImpl implements ResourceMethodConfigProvider
   private final ResourceMethodConfigTree<Long> _timeoutMs = new ResourceMethodConfigTree<>();
   private final ConcurrentMap<ResourceMethodConfigCacheKey, ResourceMethodConfig> _cache = new ConcurrentHashMap<>();
   private boolean _shouldValidateQueryParams;
+  private boolean _shouldValidateResourceKeyParams;
 
   public ResourceMethodConfigProviderImpl(RestLiMethodConfig config)
       throws ResourceMethodConfigParsingException
   {
     initialize(config);
     _shouldValidateQueryParams = config.shouldValidateQueryParams();
+    _shouldValidateResourceKeyParams = config.shouldValidateResourceKeyParams();
   }
 
   private void initialize(RestLiMethodConfig config) throws ResourceMethodConfigParsingException
@@ -85,19 +87,23 @@ class ResourceMethodConfigProviderImpl implements ResourceMethodConfigProvider
   }
 
   @Override
-  public ResourceMethodConfig apply(ResourceMethodDescriptor requestMethod) {
+  public ResourceMethodConfig apply(ResourceMethodDescriptor requestMethod)
+  {
     ResourceMethodConfigCacheKey cacheKey = new ResourceMethodConfigCacheKey(requestMethod);
     return _cache.computeIfAbsent(cacheKey, this::resolve);
   }
 
-  private ResourceMethodConfig resolve(ResourceMethodConfigCacheKey cacheKey) {
-    return new ResourceMethodConfigImpl(_timeoutMs.resolve(cacheKey), _shouldValidateQueryParams);
+  private ResourceMethodConfig resolve(ResourceMethodConfigCacheKey cacheKey)
+  {
+    return new ResourceMethodConfigImpl(_timeoutMs.resolve(cacheKey), _shouldValidateQueryParams,
+        _shouldValidateResourceKeyParams);
   }
 
   /**
    * Default configuration map must specify default values for all properties as last fallback in matching
    */
-  private static RestLiMethodConfig createDefaultConfig() {
+  private static RestLiMethodConfig createDefaultConfig()
+  {
     RestLiMethodConfigBuilder builder = new RestLiMethodConfigBuilder();
     builder.addTimeoutMs("*.*", DEFAULT_TIMEOUT);
     return builder.build();

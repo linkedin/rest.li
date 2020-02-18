@@ -90,6 +90,9 @@ public class RestLiConfig
   private final List<ResourceDefinitionListener> _resourceDefinitionListeners = new ArrayList<>();
   private boolean _useStreamCodec = false;
 
+  // configuration for whether to validate any type of resource keys
+  private boolean _validateResourceKeys = false;
+
   // resource method level configuration
   private RestLiMethodConfig _methodConfig;
 
@@ -529,5 +532,13 @@ public class RestLiConfig
   public void setMethodConfig(RestLiMethodConfig methodConfig)
   {
     _methodConfig = methodConfig;
+  }
+
+  public boolean shouldValidateResourceKeys() {
+    return _validateResourceKeys;
+  }
+
+  public void setValidateResourceKeys(boolean validateResourceKeys) {
+    _validateResourceKeys = validateResourceKeys;
   }
 }

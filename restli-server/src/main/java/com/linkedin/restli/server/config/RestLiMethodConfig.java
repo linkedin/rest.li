@@ -9,7 +9,6 @@ import java.util.Map;
  */
 public interface RestLiMethodConfig
 {
-
   /**
    * method-level timeout,
    */
@@ -19,4 +18,9 @@ public interface RestLiMethodConfig
    * Gets whether query parameter validation against its parameter data template is enabled
    */
   boolean shouldValidateQueryParams();
+
+  /**
+   * Gets whether resource/path keys validation against its parameter data template is enabled
+   */
+  boolean shouldValidateResourceKeyParams();
 }

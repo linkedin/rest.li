@@ -10,15 +10,17 @@ import java.util.Objects;
  *
  * @author mnchen
  */
-class ResourceMethodConfigImpl implements ResourceMethodConfig
+public class ResourceMethodConfigImpl implements ResourceMethodConfig
 {
   private final ConfigValue<Long> _timeoutMs;
   private boolean _validateQueryParams;
+  private boolean _validateResourceKeyParams;
 
-  ResourceMethodConfigImpl(ConfigValue<Long> timeoutMs, boolean validateQueryParams)
+  public ResourceMethodConfigImpl(ConfigValue<Long> timeoutMs, boolean validateQueryParams, boolean validateResourceKeyParams)
   {
     _timeoutMs = timeoutMs;
     _validateQueryParams = validateQueryParams;
+    _validateResourceKeyParams = validateResourceKeyParams;
   }
 
   public ConfigValue<Long> getTimeoutMs()
@@ -32,25 +34,36 @@ class ResourceMethodConfigImpl implements ResourceMethodConfig
   }
 
   @Override
-  public String toString()
-  {
-    return "ResourceMethodConfigImpl{" +
-            "_timeoutMs=" + _timeoutMs +
-            '}';
+  public boolean shouldValidateResourceKeyParams() {
+    return _validateResourceKeyParams;
   }
 
   @Override
-  public boolean equals(Object o)
-  {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+  public String toString() {
+    return "ResourceMethodConfigImpl{" +
+          "_timeoutMs=" + _timeoutMs +
+          ", _validateQueryParams=" + _validateQueryParams +
+          ", _validateResourceKeyParams=" + _validateResourceKeyParams +
+        "}";
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     ResourceMethodConfigImpl that = (ResourceMethodConfigImpl) o;
-    return Objects.equals(_timeoutMs, that._timeoutMs);
+    return _validateQueryParams == that._validateQueryParams && _validateResourceKeyParams
+        == that._validateResourceKeyParams
+        && _timeoutMs.equals(that._timeoutMs);
   }
 
   @Override
   public int hashCode()
   {
-    return Objects.hash(_timeoutMs);
+    return Objects.hash(_timeoutMs, _validateQueryParams, _validateResourceKeyParams);
   }
 }

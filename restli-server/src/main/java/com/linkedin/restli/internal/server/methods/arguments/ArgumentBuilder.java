@@ -26,6 +26,7 @@ import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator;
 import com.linkedin.data.template.AbstractArrayTemplate;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -39,6 +40,7 @@ import com.linkedin.entitystream.EntityStreams;
 import com.linkedin.entitystream.WriteHandle;
 import com.linkedin.entitystream.Writer;
 import com.linkedin.restli.common.BatchRequest;
+import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpStatus;
@@ -119,7 +121,15 @@ public class ArgumentBuilder
           Object value = context.getPathKeys().get(param.getName());
           if (value != null)
           {
-            arguments[i] = value;
+            if (DataTemplate.class.isAssignableFrom(param.getType()))
+            {
+              arguments[i] = buildDataTemplateArgument(value, param,
+                  resourceMethodConfig.shouldValidateResourceKeyParams());
+            }
+            else
+            {
+              arguments[i] = value;
+            }
             continue;
           }
         }
@@ -228,7 +238,8 @@ public class ArgumentBuilder
           Object value;
           if (DataTemplate.class.isAssignableFrom(param.getType()))
           {
-            value = buildDataTemplateArgument(context, param, resourceMethodConfig.shouldValidateQueryParams());
+            value = buildDataTemplateArgument(context.getStructuredParameter(param.getName()), param,
+                resourceMethodConfig.shouldValidateQueryParams());
           }
           else
           {
@@ -381,7 +392,7 @@ public class ArgumentBuilder
         {
           Array.set(convertedValue,
                     j++,
-                    ArgumentUtils.convertSimpleValue(itemStringValue, parameterSchema.getItems(), param.getItemType()));
+                    ArgumentUtils.convertSimpleValue(itemStringValue, parameterSchema.getItems(), param.getItemType(), false));
         }
         catch (NumberFormatException e)
         {
@@ -448,7 +459,7 @@ public class ArgumentBuilder
       {
         try
         {
-          convertedValue = ArgumentUtils.convertSimpleValue(value, param.getDataSchema(), param.getType());
+          convertedValue = ArgumentUtils.convertSimpleValue(value, param.getDataSchema(), param.getType(), false);
         }
         catch (NumberFormatException e)
         {
@@ -482,12 +493,11 @@ public class ArgumentBuilder
     return convertedValue;
   }
 
-  private static DataTemplate<?> buildDataTemplateArgument(final ResourceContext context,
+  private static DataTemplate<?> buildDataTemplateArgument(final Object paramValue,
                                                            final Parameter<?> param,
-                                                           final boolean validateRequestQueryParam)
+                                                           final boolean validateRequest)
 
   {
-    Object paramValue = context.getStructuredParameter(param.getName());
     DataTemplate<?> paramRecordTemplate;
 
     if (paramValue == null)
@@ -519,10 +529,12 @@ public class ArgumentBuilder
 
       // Validate against the class schema with FixupMode.STRING_TO_PRIMITIVE to parse the
       // strings into the corresponding primitive types.
+      DataSchemaAnnotationValidator validator = new DataSchemaAnnotationValidator(paramRecordTemplate.schema());
       ValidationResult result =
           ValidateDataAgainstSchema.validate(paramRecordTemplate.data(), paramRecordTemplate.schema(),
-              new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE));
-      if (validateRequestQueryParam && !result.isValid())
+              new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE),
+              validator);
+      if (validateRequest && !result.isValid())
       {
         throw new RoutingException(String.format("Argument parameter '%s' value '%s' is invalid, reason: %s", param.getName(),
             paramRecordTemplate.data(), result.getMessages()), HttpStatus.S_400_BAD_REQUEST.getCode());
@@ -635,24 +647,27 @@ public class ArgumentBuilder
       if (altKeyName != null)
       {
         return ArgumentUtils.translateFromAlternativeKey(
-            ArgumentUtils.parseAlternativeKey(stringKey, altKeyName, resourceModel, version),
+            ArgumentUtils.parseAlternativeKey(stringKey, altKeyName, resourceModel, version,
+                routingResult.getResourceMethodConfig().shouldValidateResourceKeyParams()),
             altKeyName, resourceModel);
       }
       else if (ComplexResourceKey.class.equals(primaryKey.getType()))
       {
-        return ComplexResourceKey.parseString(stringKey, resourceModel.getKeyKeyClass(),
-            resourceModel.getKeyParamsClass(), version);
+        return ComplexResourceKey.parseString(stringKey, ComplexKeySpec.forClassesMaybeNull(resourceModel.getKeyKeyClass(),
+            resourceModel.getKeyParamsClass()), version, routingResult.getResourceMethodConfig().shouldValidateResourceKeyParams());
       }
       else if (CompoundKey.class.equals(primaryKey.getType()))
       {
-        return ArgumentUtils.parseCompoundKey(stringKey, resourceModel.getKeys(), version);
+        return ArgumentUtils.parseCompoundKey(stringKey, resourceModel.getKeys(), version,
+            routingResult.getResourceMethodConfig().shouldValidateResourceKeyParams());
       }
       else
       {
         // The conversion of simple keys doesn't include URL decoding as the current version of Rest.li clients don't
         // encode simple keys which appear in the request body for BATCH UPDATE and BATCH PATCH requests.
         Key key = resourceModel.getPrimaryKey();
-        return ArgumentUtils.convertSimpleValue(stringKey, key.getDataSchema(), key.getType());
+        return ArgumentUtils.convertSimpleValue(stringKey, key.getDataSchema(), key.getType(),
+            routingResult.getResourceMethodConfig().shouldValidateResourceKeyParams());
       }
     }
     catch (InvalidAlternativeKeyException | AlternativeKeyCoercerException | PathSegment.PathSegmentSyntaxException | IllegalArgumentException e)
