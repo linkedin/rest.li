@@ -609,11 +609,9 @@ public class DataTranslator implements DataTranslatorContext
             Schema fieldAvroSchema = avroField.schema();
             Object fieldValue = map.get(fieldName);
             boolean isOptional = field.getOptional();
-            if (isOptional  || (
-                _dataTranslationOptions != null &&
-                ((DataMapToAvroRecordTranslationOptions) _dataTranslationOptions). getDefaultFieldDataTranslationMode()
-                    == PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE))
+            if (isOptional)
             {
+              // process optional fields
               if (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION)
               {
                 if (fieldValue == null)
@@ -621,6 +619,7 @@ public class DataTranslator implements DataTranslatorContext
                   fieldValue = Data.NULL;
                   fieldDataSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
                 }
+                // optional field will be represented as union in Avro
                 Map.Entry<String, Schema> fieldAvroEntry = findUnionMember(fieldDataSchema, fieldAvroSchema);
                 if (fieldAvroEntry == null)
                 {
@@ -642,10 +641,20 @@ public class DataTranslator implements DataTranslatorContext
             }
             else if (fieldValue == null)
             {
+              // if no fieldValue present, either NULL value or defaultValue will be assigned
               Object defaultValue = field.getDefault();
               if (defaultValue != null)
               {
-                fieldValue = defaultValue;
+                if (_dataTranslationOptions == null || ((DataMapToAvroRecordTranslationOptions) _dataTranslationOptions). getDefaultFieldDataTranslationMode()
+                                                           == PegasusToAvroDefaultFieldTranslationMode.TRANSLATE)
+                {
+                  fieldValue = defaultValue;
+                }
+                else
+                {
+                  fieldValue = Data.NULL;
+                  fieldDataSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
+                }
               }
               else
               {
