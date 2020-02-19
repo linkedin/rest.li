@@ -12,3 +12,7 @@ dist: trusty
 # If we don't skip it, Travis runs unnecessary Gradle tasks like './gradlew assemble'
 install:
   - true
+
+# Upload code coverage report
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
