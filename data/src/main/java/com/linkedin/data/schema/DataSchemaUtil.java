@@ -18,7 +18,6 @@ package com.linkedin.data.schema;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.element.DataElement;
-
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -36,6 +35,11 @@ public class DataSchemaUtil
   public static PrimitiveDataSchema classToPrimitiveDataSchema(Class<?> clazz)
   {
     return _JAVA_TYPE_TO_PRIMITIVE_DATA_SCHEMA_TYPE.get(clazz);
+  }
+
+  public static boolean isPrimitiveClass(Class<?> clazz)
+  {
+    return !(_JAVA_TYPE_TO_PRIMITIVE_DATA_SCHEMA_TYPE.get(clazz) == null);
   }
 
   public static PrimitiveDataSchema dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type type)
