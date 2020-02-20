@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
+import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
@@ -175,5 +176,10 @@ public class LastSeenLoadBalancerWithFacilities implements LoadBalancerWithFacil
   @Override
   public TransportClientFactory getClientFactory(String scheme) {
     return _loadBalancer.getClientFactory(scheme);
+  }
+
+  @Override
+  public ClusterInfoProvider getClusterInfoProvider() {
+    return _loadBalancer;
   }
 }

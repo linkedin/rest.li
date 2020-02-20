@@ -50,7 +50,7 @@ import java.util.Map;
  * @version $Revision: $
  */
 
-public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider, WarmUpService
+public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider, WarmUpService, ClusterInfoProvider
 {
   private final LoadBalancer _balancer;
   private final WarmUpService _warmUpService;
@@ -58,6 +58,7 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   private final PartitionInfoProvider _partitionInfoProvider;
   private final ClientFactoryProvider _clientFactoryProvider;
   private final TogglingPublisher<?>[] _toggles;
+  private final ClusterInfoProvider _clusterInfoProvider;
 
   public TogglingLoadBalancer(SimpleLoadBalancer balancer, TogglingPublisher<?>... toggles)
   {
@@ -67,6 +68,7 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
     _partitionInfoProvider = balancer;
     _clientFactoryProvider = balancer;
     _toggles = toggles;
+    _clusterInfoProvider = balancer;
   }
 
   public TogglingLoadBalancer(LoadBalancer balancer, TogglingPublisher<?>... toggles)
@@ -189,5 +191,10 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   public void warmUpService(String serviceName, Callback<None> callback)
   {
     _warmUpService.warmUpService(serviceName, callback);
+  }
+
+  @Override
+  public int getClusterCount(String clusterName, String scheme, int partitionId) throws ServiceUnavailableException {
+    return _clusterInfoProvider.getClusterCount(clusterName, scheme, partitionId);
   }
 }

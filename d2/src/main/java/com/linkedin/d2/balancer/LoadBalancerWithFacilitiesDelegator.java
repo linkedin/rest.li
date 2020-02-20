@@ -3,6 +3,7 @@ package com.linkedin.d2.balancer;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
@@ -53,6 +54,11 @@ public abstract class LoadBalancerWithFacilitiesDelegator implements LoadBalance
   public TransportClientFactory getClientFactory(String scheme)
   {
     return _loadBalancer.getClientFactory(scheme);
+  }
+
+  @Override
+  public ClusterInfoProvider getClusterInfoProvider() {
+    return _loadBalancer.getClusterInfoProvider();
   }
 
   @Override

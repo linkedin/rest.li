@@ -37,6 +37,7 @@ import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
+import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.KeysAndHosts;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
@@ -68,6 +69,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -79,7 +81,8 @@ import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
-public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider, WarmUpService
+public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider, WarmUpService,
+                                           ClusterInfoProvider
 {
   private static final Logger     _log =
                                            LoggerFactory.getLogger(SimpleLoadBalancer.class);
@@ -864,6 +867,30 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   {
     _serviceUnavailableStats.inc();
     callback.onError(new ServiceUnavailableException(serviceName, message));
+  }
+
+  @Override
+  public int getClusterCount(String clusterName, String scheme, int partitionId) throws ServiceUnavailableException
+  {
+    FutureCallback<Integer> clusterCountFutureCallback = new FutureCallback<>();
+    Runnable callback = () ->
+    {
+      Set<URI> uris = _state.getUriProperties(clusterName).getProperty().getUriBySchemeAndPartition(scheme, partitionId);
+      // the uris will be null if there are no Uris announced for this scheme and/or partition. Return zero in this case.
+      clusterCountFutureCallback.onSuccess((uris != null) ? uris.size() : 0);
+    };
+    _state.listenToCluster(clusterName, (type, name) -> callback.run());
+
+    try
+    {
+      return clusterCountFutureCallback.get(_timeout, _unit);
+    }
+    catch (ExecutionException | TimeoutException | InterruptedException e)
+    {
+      die("ClusterInfo", "PEGA_1017, unable to retrieve cluster count for cluster: " + clusterName +
+          ", scheme: " + scheme + ", partition: " + partitionId + ", exception: " + e.getMessage());
+      return -1;
+    }
   }
 
   public static class SimpleLoadBalancerCountDownCallback implements
