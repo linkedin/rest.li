@@ -1,4 +1,5 @@
 #!/bin/sh
+# The purpose of this script is to perform some checks before the release process
 
 remote="origin"
 branch="master"
@@ -38,7 +39,9 @@ if [ -z `git tag | grep $EXPECTED_TAG` ]
 then
     echo "Could not find tag $EXPECTED_TAG, please create it then run this command again."
     echo "This release process expects release tags to be manually created beforehand."
-    echo "Hint: 'git tag $EXPECTED_TAG && git push origin $EXPECTED_TAG'"
+    echo
+    echo "Use './prepare-release' to create and push a release tag."
+    echo "Optionally, use './prepare-release [TARGET]' to tag a particular commit."
     exit 1
 fi
 
