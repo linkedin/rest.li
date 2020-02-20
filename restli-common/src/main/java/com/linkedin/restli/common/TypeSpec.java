@@ -19,6 +19,7 @@ package com.linkedin.restli.common;
 
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
+import com.linkedin.data.template.Custom;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.TemplateRuntimeException;
 
@@ -69,7 +70,7 @@ public class TypeSpec<T>
   {
     // These are all the classes used for type specs that are "schema-less".
     if (type == CompoundKey.class || type == ComplexResourceKey.class || type == Void.class
-        || (!DataSchemaUtil.isPrimitiveClass(type) && DataTemplateUtil.hasCoercer(type)))
+        || Custom.isCustomType(type))
     {
       return null;
     }

@@ -16,6 +16,8 @@
 
 package com.linkedin.data.template;
 
+import com.linkedin.data.schema.DataSchemaUtil;
+
 
 /**
  * Custom Java class binding support.
@@ -148,5 +150,17 @@ public class Custom
   public static void initializeCustomClass(Class<?> customClass)
   {
     DataTemplateUtil.initializeClass(customClass);
+  }
+
+  /**
+   * Return whether the input class is a Custom type or not
+   * uses coercer map to identify as each custom type must register a coercer excluding the primitive types.
+   *
+   * @param clazz is the class to check.
+   * @return true if an object of the input class is a Custom type.
+   */
+  public static boolean isCustomType(Class<?> clazz)
+  {
+    return !DataSchemaUtil.isPrimitiveClass(clazz) && DataTemplateUtil.hasCoercer(clazz);
   }
 }
