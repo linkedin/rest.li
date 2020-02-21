@@ -1,7 +1,7 @@
 namespace com.linkedin.pegasus.generator.test.idl.imports
 
 /**
- * This record tests scenaris where two types with same simple name are used. One in the same namespace as the
+ * This record tests scenarios where two types with same simple name are used. One in the same namespace as the
  * surrounding and one from another namespace.
  * Using simple reference for the type matching surrounding namespace is preferred.
  * The external namespace type should not be imported as it would force the matching namespace type to be fully
