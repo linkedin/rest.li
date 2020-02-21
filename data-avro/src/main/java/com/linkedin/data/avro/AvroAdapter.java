@@ -31,7 +31,7 @@ import org.apache.avro.io.Encoder;
  *
  * <p>
  * @see AvroAdapterFinder
- * @deprecated use {@link com.linkedin.avro.compatibility.AvroCompatibilityHelper} instead.
+ * @deprecated use {@link com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper} instead.
  */
 @Deprecated
 public interface AvroAdapter

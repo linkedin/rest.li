@@ -27,7 +27,7 @@ import org.apache.avro.io.EncoderFactory;
 
 /**
  * Adapter for Avro 1.6
- * @deprecated use Use {@link com.linkedin.avro.compatibility.AvroCompatibilityHelper} instead.
+ * @deprecated use Use {@link com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper} instead.
  */
 @Deprecated
 public class AvroAdapter_1_6 implements AvroAdapter

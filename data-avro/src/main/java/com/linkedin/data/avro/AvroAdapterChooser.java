@@ -22,7 +22,7 @@ package com.linkedin.data.avro;
  * This class provides a way to override how an {@link AvroAdapter} is selected.
  * @see AvroAdapterFinder
  *
- * @deprecated use {@link com.linkedin.avro.compatibility.AvroCompatibilityHelper} instead.
+ * @deprecated use {@link com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper} instead.
  */
 @Deprecated
 interface AvroAdapterChooser
