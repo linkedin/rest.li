@@ -37,11 +37,6 @@ public class DataSchemaUtil
     return _JAVA_TYPE_TO_PRIMITIVE_DATA_SCHEMA_TYPE.get(clazz);
   }
 
-  public static boolean isPrimitiveClass(Class<?> clazz)
-  {
-    return !(_JAVA_TYPE_TO_PRIMITIVE_DATA_SCHEMA_TYPE.get(clazz) == null);
-  }
-
   public static PrimitiveDataSchema dataSchemaTypeToPrimitiveDataSchema(DataSchema.Type type)
   {
     return _DATA_SCHEMA_TYPE_TO_PRIMITIVE_DATA_SCHEMA_MAP.get(type);
