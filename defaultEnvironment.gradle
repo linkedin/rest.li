@@ -1,6 +1,9 @@
 subprojects {
   repositories {
     mavenCentral()
+    maven {
+      url  "https://dl.bintray.com/linkedin/maven"
+    }
   }
 
   project.buildDir = new File(project.rootProject.buildDir, project.name)

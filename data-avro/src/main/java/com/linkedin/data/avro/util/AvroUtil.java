@@ -16,10 +16,12 @@
 
 package com.linkedin.data.avro.util;
 
-import com.linkedin.avro.compatibility.AvroCompatibilityHelper;
+import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -33,7 +35,7 @@ public class AvroUtil
   {
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    Encoder jsonEncoder = AvroCompatibilityHelper.newJsonEncoder(record.getSchema(), outputStream);
+    Encoder jsonEncoder = AvroCompatibilityHelper.newJsonEncoder(record.getSchema(), outputStream, true);
     writer.setSchema(record.getSchema());
     writer.write(record, jsonEncoder);
     jsonEncoder.flush();
@@ -43,18 +45,20 @@ public class AvroUtil
   public static byte[] bytesFromGenericRecord(GenericRecord record) throws IOException
   {
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>();
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    Encoder binaryEncoder = AvroCompatibilityHelper.newBinaryEncoder(outputStream);
+    ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+    ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteOutputStream);
+    Encoder binaryEncoder = AvroCompatibilityHelper.newBinaryEncoder(objectOutputStream);
     writer.setSchema(record.getSchema());
     writer.write(record, binaryEncoder);
     binaryEncoder.flush();
-    return outputStream.toByteArray();
+    return byteOutputStream.toByteArray();
   }
 
   public static GenericRecord genericRecordFromBytes(byte[] bytes, Schema schema) throws IOException
   {
     GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>();
-    Decoder binaryDecoder = AvroCompatibilityHelper.newBinaryDecoder(new ByteArrayInputStream(bytes));
+    Decoder binaryDecoder = AvroCompatibilityHelper.newBinaryDecoder(
+        new ObjectInputStream(new ByteArrayInputStream(bytes)));
     reader.setSchema(schema);
     GenericRecord record = reader.read(null, binaryDecoder);
     return record;

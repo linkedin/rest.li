@@ -99,7 +99,7 @@ project.ext.externalDependency = [
 
   'jsr305': 'com.google.code.findbugs:jsr305:3.0.0',
 
-  'avroUtil': 'com.linkedin.avroutil:avro-codegen:0.1.6'
+  'avroUtil': 'com.linkedin.avroutil1:helper:0.1.7'
 
 ];
 
