@@ -26,7 +26,7 @@ record ReferenceTypeConflict {
    */
   inlineOverride: {
     namespace com.linkedin.pegasus.generator.test.idl.enums
-    record InlineOverride {
+    record InlineOverrideRecord {
       /**
        * The type of this field matches the overridden namespace. This is preferred to be a simple reference.
        */
