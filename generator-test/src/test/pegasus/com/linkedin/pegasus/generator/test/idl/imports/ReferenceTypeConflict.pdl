@@ -1,0 +1,42 @@
+namespace com.linkedin.pegasus.generator.test.idl.imports
+
+/**
+ * This record tests scenaris where two types with same simple name are used. One in the same namespace as the
+ * surrounding and one from another namespace.
+ * Using simple reference for the type matching surrounding namespace is preferred.
+ * The external namespace type should not be imported as it would force the matching namespace type to be fully
+ * qualified.
+ */
+record ReferenceTypeConflict {
+  /**
+   * This should be a simple reference as its namespace matches the surrounding(root) namespace.
+   */
+  simpleReference: Fruits
+
+  /**
+   * Reference from external namespace is fully qualified. This should not be in imports as it would conflict with
+   * the simpleReference field type above.
+   */
+  fqnReference: com.linkedin.pegasus.generator.test.idl.enums.Fruits
+
+  /**
+   * This field defines a namespace override. Within this overridden namespace, the same rule applies, ie, the type that
+   * matches surrounding namespace is referenced using simple name, while the type using root namespace is fully
+   * qualified.
+   */
+  inlineOverride: {
+    namespace com.linkedin.pegasus.generator.test.idl.enums
+    record InlineOverride {
+      /**
+       * The type of this field matches the overridden namespace. This is preferred to be a simple reference.
+       */
+      simpleReference: EscapedSymbols
+
+      /**
+       * Uses a fully qualified reference for the type that is outside the overridden namespace. This cannot be an
+       * import as it would conflict with EscapedSymbols type that uses simple reference above.
+       */
+      fqnReference: com.linkedin.pegasus.generator.test.idl.imports.dummy.EscapedSymbols
+    }
+  }
+}
