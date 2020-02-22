@@ -719,6 +719,8 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    * (1) The type is outside the root namespace of the document.
    * (2) The type is declared outside the document (i.e. not inlined in this document).
    * (3) The type's name does not conflict with name of an Inlined type.
+   * (4) Importing the type should not force using FQN for another type that is in the same namespace as its
+   *     surrounding.
    *
    * When multiple referenced types with the same unqualified name may be imported, the type with the alphabetically
    * first namespace is chosen. (e.g. "com.a.b.c.Foo" is chosen over "com.x.y.z.Foo")
@@ -733,13 +735,18 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private Map<String, Name> computeImports(DataSchema schema, String rootNamespace)
   {
     Set<Name> encounteredTypes = new HashSet<>();
-    Set<String> inlinedTypeNames = new HashSet<>();
-    gatherTypes(schema, true, encounteredTypes, inlinedTypeNames);
+    // Collects the set of simple names of types that can cause conflicts with imports because
+    // 1. They are defined inline or
+    // 2. They are in the same namespace as their surrounding context (including namespace overrides) and are
+    //    preferred use simple reference
+    Set<String> nonImportableTypeNames = new HashSet<>();
+    gatherTypes(schema, true, encounteredTypes, nonImportableTypeNames, rootNamespace);
 
     // Filter out types that shouldn't have an import and return as a mapping from simple name to typed name
     return encounteredTypes
         .stream()
-        .filter(name -> !name.getNamespace().equals(rootNamespace) && !inlinedTypeNames.contains(name.getName()))
+        .filter(name -> !name.getNamespace().equals(rootNamespace)
+            && !nonImportableTypeNames.contains(name.getName()))
         .collect(Collectors.toMap(
             Name::getName,
             Function.identity(),
@@ -749,25 +756,29 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   }
 
   /**
-   * Gather all types (both referenced and inlined) found in this schema and in all its descendents.
+   * Gather all types (both referenced and inlined) and names of types that should use simple reference from this schema
+   * and in all its descendents.
    * @param schema schema to traverse.
    * @param isDeclaredInline true if the schema should be treated as an inline declaration, false if it should be
    *                         considered a by-name reference.
    * @param encounteredTypes cumulative set of all encountered types in this schema (and its descendents).
-   * @param inlinedTypeNames cumulative set of simple names of all inlined types in this schema (and its descendents).
+   * @param nonImportableTypeNames cumulative set of simple names of all types in this schema (and its descendents)
+   *                              that can conflict with imports.
+   * @param currentNamespace namespace of the current scope.
    */
   private void gatherTypes(DataSchema schema, boolean isDeclaredInline, Set<Name> encounteredTypes,
-      Set<String> inlinedTypeNames)
+      Set<String> nonImportableTypeNames, String currentNamespace)
   {
     // If named type, add to the set of encountered types
     if (schema instanceof NamedDataSchema)
     {
       NamedDataSchema namedSchema = (NamedDataSchema) schema;
       encounteredTypes.add(new Name(namedSchema.getFullName()));
-      // If declared inline, add to the set of inlined types
-      if (isDeclaredInline)
+      // If declared inline or of the namespace matches the current namespace, add to the set of non-importable
+      // simple names.
+      if (isDeclaredInline || currentNamespace.equals(namedSchema.getNamespace()))
       {
-        inlinedTypeNames.add(namedSchema.getName());
+        nonImportableTypeNames.add(namedSchema.getName());
       }
     }
 
@@ -779,52 +790,63 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         RecordDataSchema recordSchema = (RecordDataSchema) schema;
         for (RecordDataSchema.Field field : recordSchema.getFields())
         {
-          gatherTypes(field.getType(), field.isDeclaredInline(), encounteredTypes, inlinedTypeNames);
+          gatherTypes(field.getType(), field.isDeclaredInline(), encounteredTypes, nonImportableTypeNames,
+              recordSchema.getNamespace());
         }
         for (NamedDataSchema include : recordSchema.getInclude())
         {
-          gatherTypes(include, recordSchema.isIncludeDeclaredInline(include), encounteredTypes, inlinedTypeNames);
+          gatherTypes(include, recordSchema.isIncludeDeclaredInline(include), encounteredTypes,
+              nonImportableTypeNames, recordSchema.getNamespace());
         }
       }
       else if (schema instanceof TyperefDataSchema)
       {
         TyperefDataSchema typerefSchema = (TyperefDataSchema) schema;
-        gatherTypes(typerefSchema.getRef(), typerefSchema.isRefDeclaredInline(), encounteredTypes, inlinedTypeNames);
+        gatherTypes(typerefSchema.getRef(), typerefSchema.isRefDeclaredInline(), encounteredTypes,
+            nonImportableTypeNames, typerefSchema.getNamespace());
       }
       else if (schema instanceof UnionDataSchema)
       {
         UnionDataSchema unionSchema = (UnionDataSchema) schema;
         for (UnionDataSchema.Member member : unionSchema.getMembers())
         {
-          gatherTypes(member.getType(), member.isDeclaredInline(), encounteredTypes, inlinedTypeNames);
+          gatherTypes(member.getType(), member.isDeclaredInline(), encounteredTypes, nonImportableTypeNames,
+              currentNamespace);
         }
       }
       else if (schema instanceof MapDataSchema)
       {
         MapDataSchema mapSchema = (MapDataSchema) schema;
-        gatherTypes(mapSchema.getValues(), mapSchema.isValuesDeclaredInline(), encounteredTypes, inlinedTypeNames);
+        gatherTypes(mapSchema.getValues(), mapSchema.isValuesDeclaredInline(), encounteredTypes,
+            nonImportableTypeNames, currentNamespace);
       }
       else if (schema instanceof ArrayDataSchema)
       {
         ArrayDataSchema arraySchema = (ArrayDataSchema) schema;
-        gatherTypes(arraySchema.getItems(), arraySchema.isItemsDeclaredInline(), encounteredTypes, inlinedTypeNames);
+        gatherTypes(arraySchema.getItems(), arraySchema.isItemsDeclaredInline(), encounteredTypes,
+            nonImportableTypeNames, currentNamespace);
       }
     }
   }
 
   /**
-   * Writes the .pdl escaped source identifier for the given named type.
-   * The simple name will be written if writing within the type's namespace or if this type has been imported, otherwise
-   * the fully qualified name will be written.
+   * Writes the .pdl escaped source identifier for the given named type. Writes either the simple or fully qualified
+   * name based on the imports in the document and current namespace.
    *
    * @param schema the named schema to get a .pdl escaped source identifier for.
    */
   private void writeReference(NamedDataSchema schema) throws IOException
   {
-    if (schema.getNamespace().equals(_namespace) ||
-        (_importsByLocalName.containsKey(schema.getName()) &&
-        _importsByLocalName.get(schema.getName()).getNamespace().equals(schema.getNamespace())))
+    // Imports take precedence over current namespace
+    if (_importsByLocalName.containsKey(schema.getName()) &&
+        _importsByLocalName.get(schema.getName()).getNamespace().equals(schema.getNamespace()))
     {
+      // Write only simple name if there is an import matching the schema.
+      _builder.writeIdentifier(schema.getName());
+    }
+    else if (_namespace.equals(schema.getNamespace()) && !_importsByLocalName.containsKey(schema.getName()))
+    {
+      // Write only simple name for schemas in the current namespace only if there are no conflicting imports.
       _builder.writeIdentifier(schema.getName());
     }
     else
