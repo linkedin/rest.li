@@ -739,14 +739,14 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     // 1. They are defined inline or
     // 2. They are in the same namespace as their surrounding context (including namespace overrides) and are
     //    preferred use simple reference
-    Set<String> typeNamesWithSimpleReference = new HashSet<>();
-    gatherTypes(schema, true, encounteredTypes, typeNamesWithSimpleReference, rootNamespace);
+    Set<String> nonImportableTypeNames = new HashSet<>();
+    gatherTypes(schema, true, encounteredTypes, nonImportableTypeNames, rootNamespace);
 
     // Filter out types that shouldn't have an import and return as a mapping from simple name to typed name
     return encounteredTypes
         .stream()
         .filter(name -> !name.getNamespace().equals(rootNamespace)
-            && !typeNamesWithSimpleReference.contains(name.getName()))
+            && !nonImportableTypeNames.contains(name.getName()))
         .collect(Collectors.toMap(
             Name::getName,
             Function.identity(),
