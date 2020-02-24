@@ -12,3 +12,9 @@ dist: trusty
 # If we don't skip it, Travis runs unnecessary Gradle tasks like './gradlew assemble'
 install:
   - true
+
+# Only build on master and release tags
+branches:
+  only:
+  - master
+  - /^v\d+\.\d+\.\d+$/

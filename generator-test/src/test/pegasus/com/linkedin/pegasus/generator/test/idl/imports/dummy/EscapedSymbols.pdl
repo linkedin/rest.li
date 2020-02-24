@@ -1,0 +1,8 @@
+namespace com.linkedin.pegasus.generator.test.idl.imports.dummy
+
+/**
+ * A dummy enum to test reference conflict between this and ..idl.enums.EscapedSymbols
+ */
+enum EscapedSymbols {
+  DUMMY
+}
