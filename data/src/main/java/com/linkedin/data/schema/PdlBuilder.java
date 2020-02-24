@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -51,6 +52,7 @@ abstract class PdlBuilder
       "record", "typeref", "union", "null", "true", "false"
   ));
   private static final char ESCAPE_CHAR = '`';
+  private static final Pattern NON_IDENTIFIER_CHARS = Pattern.compile(".*[^0-9a-zA-Z_-].*");
 
   /**
    * Each subclass must define a provider for creating new instances.
@@ -127,14 +129,17 @@ abstract class PdlBuilder
   abstract boolean writeDoc(String doc) throws IOException;
 
   /**
-   * Writes a set of schema properties that share a common prefix to .pdl.
+   * Writes a set of schema properties that share a common prefix to .pdl. Sorts the properties by key before writing.
    *
    * @param prefix provides the common prefix of all the properties.
    * @param properties provides the properties to write.
    */
   PdlBuilder writeProperties(List<String> prefix, Map<String, Object> properties) throws IOException
   {
-    for (Map.Entry<String, Object> entry : properties.entrySet())
+    for (Map.Entry<String, Object> entry :
+        properties.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .collect(Collectors.toList()))
     {
       String key = entry.getKey();
       Object value = entry.getValue();
@@ -195,9 +200,10 @@ abstract class PdlBuilder
 
   /**
    * Escape a property key for use in .pdl source code, for keys that would conflict with .pdl keywords or those with
-   * dots it returns key escaped with a back-tick '`' character.
+   * special characters like [/.$\*] it returns key escaped with a back-tick '`' character.
    * Eg, `namespace`
    *     `com.linkedin.validate.CustomValidator`
+   *     `/foo/*\/bar`
    *
    * @param propertyKey provides the property key to escape.
    * @return an escaped property key for use in .pdl source code.
@@ -205,7 +211,7 @@ abstract class PdlBuilder
   private static String escapePropertyKey(String propertyKey)
   {
     propertyKey = propertyKey.trim();
-    if (KEYWORDS.contains(propertyKey) || propertyKey.contains("."))
+    if (KEYWORDS.contains(propertyKey) || NON_IDENTIFIER_CHARS.matcher(propertyKey).matches())
     {
       return ESCAPE_CHAR + propertyKey + ESCAPE_CHAR;
     }

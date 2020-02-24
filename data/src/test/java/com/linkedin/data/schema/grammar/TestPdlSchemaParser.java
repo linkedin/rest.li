@@ -55,6 +55,8 @@ public class TestPdlSchemaParser
         + "@validate.`com.linkedin.namespace.CustomValidator`.low = 15\n"
         + "@validate.`com.linkedin.namespace.CustomValidator`.`union`.low.`record` = \"Date\"\n"
         + "@`com.linkedin.CustomValidator` = \"abc\"\n"
+        + "@pathProp.`/*`.`*/.$` = false\n"
+        + "@`/*.*/.$`\n"
         + "record RecordDataSchema {}";
 
     // construct expected data map
@@ -84,6 +86,14 @@ public class TestPdlSchemaParser
 
     expected.put("validate", validate);
     expected.put("com.linkedin.CustomValidator", "abc");
+
+    DataMap propertyWithPath = new DataMap();
+    DataMap propertyWithSpecialChars = new DataMap();
+    propertyWithPath.put("/*", propertyWithSpecialChars);
+    propertyWithSpecialChars.put("*/.$", false);
+    expected.put("pathProp", propertyWithPath);
+
+    expected.put("/*.*/.$", true);
 
     DataSchema encoded = TestUtil.dataSchemaFromPdlString(sourcePdl);
     Assert.assertNotNull(encoded);

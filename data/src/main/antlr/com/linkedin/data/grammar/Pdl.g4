@@ -236,5 +236,5 @@ ID: UNESCAPED_ID | ESCAPED_ID;
 // in source files, but they are treated as whitespace.
 WS: [ \t\n\r\f,]+ -> skip;
 
-// Property segment id escaped with ` to include dots in them.
-ESCAPED_PROP_ID: '`' UNESCAPED_ID (DOT UNESCAPED_ID)* '`';
+// Property segment id escaped with ` to include special characters in them.
+ESCAPED_PROP_ID: '`' (~[`])+ '`';
