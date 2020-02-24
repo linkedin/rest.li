@@ -22,6 +22,7 @@ package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.RetriableRequestException;
+import com.linkedin.r2.netty.common.SslHandlerUtil;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolLifecycleStats;
 import com.linkedin.r2.transport.http.client.PoolStats;
@@ -30,10 +31,14 @@ import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.group.ChannelGroup;
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import io.netty.util.AttributeKey;
+import io.netty.util.concurrent.Future;
 import java.net.ConnectException;
 import java.net.SocketAddress;
 import org.slf4j.Logger;
@@ -68,6 +73,7 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
   private static final AsyncPoolLifecycleStats DEFAULT_LIFECYCLE_STATS = new AsyncPoolLifecycleStats(0D, 0L, 0L, 0L);
 
   private final Clock _clock = SystemClock.instance();
+  public final static String CHANNELPOOL_SSL_CALLBACK_HANDLER = "channelPoolSslCallbackHandler";
 
   private final SocketAddress _remoteAddress;
   private final Bootstrap _bootstrap;
@@ -86,31 +92,54 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
   public void create(final Callback<Channel> channelCallback)
   {
     _bootstrap.connect(_remoteAddress).addListener((ChannelFutureListener) channelFuture -> {
-      if (channelFuture.isSuccess())
+      if (!channelFuture.isSuccess())
       {
-        Channel c = channelFuture.channel();
-        c.attr(CHANNEL_CREATION_TIME_KEY).set(_clock.currentTimeMillis());
-        if (_tcpNoDelay)
-        {
-          c.config().setOption(ChannelOption.TCP_NODELAY, true);
-        }
-        _channelGroup.add(c);
+        onError(channelCallback, channelFuture);
+        return;
+      }
+
+      Channel c = channelFuture.channel();
+      c.attr(CHANNEL_CREATION_TIME_KEY).set(_clock.currentTimeMillis());
+
+      if (_tcpNoDelay)
+      {
+        c.config().setOption(ChannelOption.TCP_NODELAY, true);
+      }
+      _channelGroup.add(c);
+
+      if (c.pipeline().get(SslHandlerUtil.PIPELINE_SSL_HANDLER) == null)
+      {
         channelCallback.onSuccess(c);
+        return;
       }
-      else
+
+      c.pipeline().addAfter(SslHandlerUtil.PIPELINE_SSL_HANDLER, CHANNELPOOL_SSL_CALLBACK_HANDLER, new ChannelDuplexHandler()
       {
-        Throwable cause = channelFuture.cause();
-        LOG.error("Failed to create channel, remote={}", _remoteAddress, cause);
-        if (cause instanceof ConnectException)
+        @Override
+        public void userEventTriggered(ChannelHandlerContext ctx, Object evt)
         {
-          channelCallback.onError(new RetriableRequestException(cause));
+          if(evt == SslHandshakeCompletionEvent.SUCCESS){
+            channelCallback.onSuccess(c);
+            c.pipeline().remove(CHANNELPOOL_SSL_CALLBACK_HANDLER);
+          }
+          ctx.fireUserEventTriggered(evt);
         }
-        else
-        {
-          channelCallback.onError(HttpNettyStreamClient.toException(cause));
-        }
-      }
+      });
     });
+  }
+
+  private void onError(Callback<Channel> channelCallback, Future<?> channelFuture)
+  {
+    Throwable cause = channelFuture.cause();
+    LOG.error("Failed to create channel, remote={}", _remoteAddress, cause);
+    if (cause instanceof ConnectException)
+    {
+      channelCallback.onError(new RetriableRequestException(cause));
+    }
+    else
+    {
+      channelCallback.onError(HttpNettyStreamClient.toException(cause));
+    }
   }
 
   @Override

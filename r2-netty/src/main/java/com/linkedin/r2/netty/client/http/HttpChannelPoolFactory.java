@@ -26,6 +26,7 @@ import com.linkedin.util.clock.SystemClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -51,6 +52,7 @@ public class HttpChannelPoolFactory implements ChannelPoolFactory
   private final ChannelGroup _allChannels;
   private final ScheduledExecutorService _scheduler;
   private final AsyncPoolImpl.Strategy _strategy;
+  private int _channelPoolWaiterTimeout;
 
   public HttpChannelPoolFactory(
       ScheduledExecutorService scheduler,
@@ -69,10 +71,13 @@ public class HttpChannelPoolFactory implements ChannelPoolFactory
       long idleTimeout,
       long maxContentLength,
       boolean tcpNoDelay,
-      boolean enableSSLSessionResumption)
+      boolean enableSSLSessionResumption,
+      int channelPoolWaiterTimeout,
+      int connectTimeout,
+      int sslHandShakeTimeout)
   {
     ChannelInitializer<NioSocketChannel> initializer = new HttpChannelInitializer(sslContext, sslParameters,
-        maxInitialLineLength, maxHeaderSize, maxChunkSize, maxContentLength, enableSSLSessionResumption);
+        maxInitialLineLength, maxHeaderSize, maxChunkSize, maxContentLength, enableSSLSessionResumption, sslHandShakeTimeout);
 
     _scheduler = scheduler;
     _allChannels = channelGroup;
@@ -83,8 +88,10 @@ public class HttpChannelPoolFactory implements ChannelPoolFactory
     _maxConcurrentConnectionInitializations = maxConcurrentConnectionInitializations;
     _idleTimeout = idleTimeout;
     _tcpNoDelay = tcpNoDelay;
+    _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
 
-    _bootstrap = new Bootstrap().group(eventLoopGroup).channel(NioSocketChannel.class).handler(initializer);
+    _bootstrap = new Bootstrap().group(eventLoopGroup).channel(NioSocketChannel.class).
+        option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).handler(initializer);
   }
 
   @Override
@@ -97,6 +104,7 @@ public class HttpChannelPoolFactory implements ChannelPoolFactory
             _tcpNoDelay),
         _maxPoolSize,
         _idleTimeout,
+        _channelPoolWaiterTimeout,
         _scheduler,
         _maxPoolWaiterSize,
         _strategy,

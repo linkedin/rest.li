@@ -20,6 +20,7 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.netty.common.SslHandlerUtil;
 import com.linkedin.r2.transport.http.client.AsyncPool;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
@@ -65,7 +66,9 @@ public class TestHttpsEarlyHandshake extends AbstractEchoServiceTest
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     ChannelPoolManagerFactoryImpl channelPoolManagerFactory =
-        new ChannelPoolManagerFactoryImpl(eventLoopGroup, scheduler, SSL_SESSION_RESUMPTION_ENABLED, _clientProvider.getUsePipelineV2());
+        new ChannelPoolManagerFactoryImpl(eventLoopGroup, scheduler, SSL_SESSION_RESUMPTION_ENABLED,
+            _clientProvider.getUsePipelineV2(), HttpClientFactory.DEFAULT_CHANNELPOOL_WAITER_TIMEOUT,
+            HttpClientFactory.DEFAULT_CONNECT_TIMEOUT, HttpClientFactory.DEFAULT_SSL_HANDSHAKE_TIMEOUT);
     SSLContext context = SslContextUtil.getContext();
 
     ChannelPoolManagerKey key = new ChannelPoolManagerKeyBuilder()

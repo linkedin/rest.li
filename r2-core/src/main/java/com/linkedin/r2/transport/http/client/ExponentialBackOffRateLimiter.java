@@ -173,24 +173,10 @@ public class ExponentialBackOffRateLimiter implements RateLimiter
   @Override
   public void submit(Task t)
   {
-    boolean runNow = false;
     synchronized (this)
     {
-      if (_period == 0 && _pending.isEmpty() && _runningTasks < _maxRunningTasks)
-      {
-        _runningTasks ++;
-        runNow = true;
-      }
-      else
-      {
-        _pending.add(t);
-        schedule();
-      }
-    }
-
-    if (runNow)
-    {
-      t.run(_doneCallback);
+      _pending.add(t);
+      schedule();
     }
   }
 
@@ -206,6 +192,11 @@ public class ExponentialBackOffRateLimiter implements RateLimiter
       }
       return cancelled;
     }
+  }
+
+  public int numberOfPendingTasks()
+  {
+    return _pending.size();
   }
 
   /**

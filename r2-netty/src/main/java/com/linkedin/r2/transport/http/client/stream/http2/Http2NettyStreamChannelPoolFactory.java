@@ -27,6 +27,7 @@ import com.linkedin.util.clock.SystemClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -63,12 +64,14 @@ public class Http2NettyStreamChannelPoolFactory implements ChannelPoolFactory
     long maxResponseSize,
     boolean enableSSLSessionResumption,
     EventLoopGroup eventLoopGroup,
-    ChannelGroup channelGroup)
+    ChannelGroup channelGroup, int connectTimeout, int sslHandShakeTimeout)
   {
     ChannelInitializer<NioSocketChannel> initializer = new Http2ClientPipelineInitializer(
-      sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize, gracefulShutdownTimeout, enableSSLSessionResumption);
+      sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize, gracefulShutdownTimeout,
+        enableSSLSessionResumption, sslHandShakeTimeout);
 
-    _bootstrap = new Bootstrap().group(eventLoopGroup).channel(NioSocketChannel.class).handler(initializer);
+    _bootstrap = new Bootstrap().group(eventLoopGroup).channel(NioSocketChannel.class).
+        option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).handler(initializer);
     _idleTimeout = idleTimeout;
     _maxPoolWaiterSize = maxPoolWaiterSize;
 
