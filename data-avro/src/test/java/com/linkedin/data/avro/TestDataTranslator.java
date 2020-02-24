@@ -52,8 +52,6 @@ import static org.testng.Assert.assertTrue;
 
 public class TestDataTranslator
 {
-  private static final Logger LOG = LoggerFactory.getLogger(TestDataTranslator.class);
-
   public static final PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.out));
 
   public static final String ONE_WAY = "ONE_WAY";
@@ -1160,13 +1158,13 @@ public class TestDataTranslator
   public Object[][] defaultToAvroOptionalTranslationProvider() {
     // These tests test DataMap translation under different PegasusToAvroDefaultFieldTranslationMode modes.
     // it will test whether the Avro map generated from expected AvroJsonString is as expected.
-    // Each object array contains eight element,
+    // Each object array contains eight elements,
     // 1. first element is the schema Text,
     // 2. second element is the schema translation mode
     // 3. third element is the expected schema translation outcome
     // 4. fourth element is the String representation of the data map
-    // 5. fifth element is the dataTranslationMode for the default field and
-    // 6. sixth element is is the expected AvroJsonString after translation
+    // 5. fifth element is the dataTranslationMode for the default field
+    // 6. sixth element is the expected AvroJsonString after translation
     // 7. seventh element is whether this is a valid case
     // 8. eighth element tells the error message if this is invalid
     return new Object[][] {

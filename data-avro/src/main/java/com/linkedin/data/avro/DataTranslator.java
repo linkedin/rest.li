@@ -645,7 +645,7 @@ public class DataTranslator implements DataTranslatorContext
               Object defaultValue = field.getDefault();
               if (defaultValue != null)
               {
-                if (_dataTranslationOptions == null || ((DataMapToAvroRecordTranslationOptions) _dataTranslationOptions). getDefaultFieldDataTranslationMode()
+                if (_dataTranslationOptions == null || ((DataMapToAvroRecordTranslationOptions) _dataTranslationOptions).getDefaultFieldDataTranslationMode()
                                                            == PegasusToAvroDefaultFieldTranslationMode.TRANSLATE)
                 {
                   fieldValue = defaultValue;
