@@ -56,7 +56,6 @@ import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.MD5Hash;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
-import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.discovery.PropertySerializer;
@@ -110,7 +109,7 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor.*;
+import static com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -167,20 +166,20 @@ public class SimpleLoadBalancerTest
   {
     return new Object[][] {
         // numHttp, numHttps, expectedNumHttp, expectedNumHttps, partitionIdForAdd, partitionIdForCheck
-        new Object[] {0, 3, 0, 3, 0, 0},
-        new Object[] {3, 0, 3, 0, 0, 0},
-        new Object[] {1, 1, 1, 1, 0, 0},
-        new Object[] {0, 0, 0, 0, 0, 0},
+        {0, 3, 0, 3, 0, 0},
+        {3, 0, 3, 0, 0, 0},
+        {1, 1, 1, 1, 0, 0},
+        {0, 0, 0, 0, 0, 0},
         // alter the partitions to check
-        new Object[] {0, 3, 0, 0, 0, 1},
-        new Object[] {3, 0, 0, 0, 0, 1},
-        new Object[] {1, 1, 0, 0, 0, 2},
-        new Object[] {0, 0, 0, 0, 0, 1},
+        {0, 3, 0, 0, 0, 1},
+        {3, 0, 0, 0, 0, 1},
+        {1, 1, 0, 0, 0, 2},
+        {0, 0, 0, 0, 0, 1},
         // alter the partitions to add and check to match
-        new Object[] {0, 3, 0, 3, 1, 1},
-        new Object[] {3, 0, 3, 0, 1, 1},
-        new Object[] {1, 1, 1, 1, 2, 2},
-        new Object[] {0, 0, 0, 0, 1, 1}
+        {0, 3, 0, 3, 1, 1},
+        {3, 0, 3, 0, 1, 1},
+        {1, 1, 1, 1, 2, 2},
+        {0, 0, 0, 0, 1, 1}
     };
   }
 

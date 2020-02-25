@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.util;
 
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 
 
 /**
@@ -28,7 +29,6 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 public interface ClusterInfoProvider
 {
   String HTTPS_SCHEME = "https";
-  int DEFAULT_PARTITION = 0;
 
   /**
    * Obtain d2 cluster count
@@ -41,6 +41,6 @@ public interface ClusterInfoProvider
    */
   default int getHttpsClusterCount(String clusterName) throws ServiceUnavailableException
   {
-    return getClusterCount(clusterName, HTTPS_SCHEME, DEFAULT_PARTITION);
+    return getClusterCount(clusterName, HTTPS_SCHEME, DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
   }
 }
