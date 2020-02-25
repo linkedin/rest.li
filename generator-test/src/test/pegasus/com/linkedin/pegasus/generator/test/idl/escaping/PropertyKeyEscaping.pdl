@@ -1,6 +1,7 @@
 namespace com.linkedin.pegasus.generator.test.idl.escaping
 
 record PropertyKeyEscaping {
+  @grammarChars.`foo[type=a.b.c].bar`.`{:=}` = "grammarChars"
   @`namespace` = "foo.bar"
   @path.`//`.`/*.*/`.`/** foo */`
   @path2.`/**`.`*/`
