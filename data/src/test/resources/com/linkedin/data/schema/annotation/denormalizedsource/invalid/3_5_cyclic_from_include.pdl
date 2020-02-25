@@ -1,5 +1,10 @@
 namespace com.linkedin.data.schema.annotation.denormalizedsource.invalid
 
+/**
+ * This schema does not need to be tested because it was invalid even when being parsed by the parser for following reason:
+ * ERROR: "com.linkedin.data.schema.annotation.denormalizedsource.invalid.A" cannot be parsed as it is part of circular reference involving includes. Record(s) with include in the cycle: [com.linkedin.data.schema.annotation.denormalizedsource.invalid.A, com.linkedin.data.schema.annotation.denormalizedsource.invalid.innerRcd]
+ */
+
 @customAnnotation={
   "/f1/f2": "thisWouldCauseCycle"
 }
