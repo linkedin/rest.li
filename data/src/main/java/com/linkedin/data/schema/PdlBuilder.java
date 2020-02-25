@@ -52,7 +52,7 @@ abstract class PdlBuilder
       "record", "typeref", "union", "null", "true", "false"
   ));
   private static final char ESCAPE_CHAR = '`';
-  private static final Pattern NON_IDENTIFIER_CHARS = Pattern.compile(".*[^0-9a-zA-Z_-].*");
+  private static final Pattern IDENTIFIER_CHARS = Pattern.compile("[0-9a-zA-Z_-]*");
 
   /**
    * Each subclass must define a provider for creating new instances.
@@ -136,10 +136,10 @@ abstract class PdlBuilder
    */
   PdlBuilder writeProperties(List<String> prefix, Map<String, Object> properties) throws IOException
   {
-    for (Map.Entry<String, Object> entry :
-        properties.entrySet().stream()
-            .sorted(Map.Entry.comparingByKey())
-            .collect(Collectors.toList()))
+    List<Map.Entry<String, Object>> orderedProperties =  properties.entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .collect(Collectors.toList());
+    for (Map.Entry<String, Object> entry : orderedProperties)
     {
       String key = entry.getKey();
       Object value = entry.getValue();
@@ -211,7 +211,7 @@ abstract class PdlBuilder
   private static String escapePropertyKey(String propertyKey)
   {
     propertyKey = propertyKey.trim();
-    if (KEYWORDS.contains(propertyKey) || NON_IDENTIFIER_CHARS.matcher(propertyKey).matches())
+    if (KEYWORDS.contains(propertyKey) || !IDENTIFIER_CHARS.matcher(propertyKey).matches())
     {
       return ESCAPE_CHAR + propertyKey + ESCAPE_CHAR;
     }
