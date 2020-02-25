@@ -611,15 +611,16 @@ public class DataTranslator implements DataTranslatorContext
             boolean isOptional = field.getOptional();
             if (isOptional)
             {
-              // process optional fields
               if (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION)
               {
+                // Translating from a non-union pegasus type to an embedded union type in Avro
                 if (fieldValue == null)
                 {
                   fieldValue = Data.NULL;
                   fieldDataSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
                 }
-                // optional field will be represented as union in Avro
+                // Since optional field will be represented as union in Avro
+                // Need to extract the Avro type corresponding to the pegasus type from the Avro union
                 Map.Entry<String, Schema> fieldAvroEntry = findUnionMember(fieldDataSchema, fieldAvroSchema);
                 if (fieldAvroEntry == null)
                 {
@@ -630,7 +631,7 @@ public class DataTranslator implements DataTranslatorContext
               }
               else
               {
-                // already a union
+                // already a union so translating from a pegasus union to an Avro union
                 if (fieldValue == null)
                 {
                   // field is not present
@@ -641,17 +642,19 @@ public class DataTranslator implements DataTranslatorContext
             }
             else if (fieldValue == null)
             {
-              // if no fieldValue present, either NULL value or defaultValue will be assigned
+              // Required field is missing, should assign default value
               Object defaultValue = field.getDefault();
               if (defaultValue != null)
               {
                 if (_dataTranslationOptions == null || ((DataMapToAvroRecordTranslationOptions) _dataTranslationOptions).getDefaultFieldDataTranslationMode()
                                                            == PegasusToAvroDefaultFieldTranslationMode.TRANSLATE)
                 {
+                  // assign default value if present
                   fieldValue = defaultValue;
                 }
                 else
                 {
+                  // Translate default value as null, depending on specified options
                   fieldValue = Data.NULL;
                   fieldDataSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
                 }
@@ -663,6 +666,7 @@ public class DataTranslator implements DataTranslatorContext
                 continue;
               }
             }
+            // Translate default value as null, depending on specified options
             Object fieldAvroValue = translate(fieldValue, fieldDataSchema, fieldAvroSchema);
             avroRecord.put(fieldName, fieldAvroValue);
             _path.removeLast();
