@@ -1,7 +1,11 @@
 namespace com.linkedin.pegasus.generator.test.idl.escaping
 
 record PropertyKeyEscaping {
+  @grammarChars.`foo[type=a.b.c].bar`.`{:=}` = "grammarChars"
   @`namespace` = "foo.bar"
+  @path.`//`.`/*.*/`.`/** foo */`
+  @path2.`/**`.`*/`
+  @shouldNotBeEscaped.ABC.1-2.a_b.ab124.000.ABC-123
   @`test.path` = 1
   @validate.`com.linkedin.CustomValidator` = "foo"
   aField: string
