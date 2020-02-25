@@ -16,18 +16,20 @@
 
 package com.linkedin.data.schema.resolver;
 
-
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
+import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
-import com.linkedin.data.schema.PegasusSchemaParser;
+import com.linkedin.data.schema.grammar.PdlSchemaParser;
+import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import java.io.ByteArrayInputStream;
@@ -68,7 +70,7 @@ public class TestDataSchemaResolver
 
   public static class MapDataSchemaResolver extends AbstractDataSchemaResolver
   {
-    public MapDataSchemaResolver(SchemaParserFactory parserFactory,
+    public MapDataSchemaResolver(DataSchemaParserFactory parserFactory,
                                  List<String> paths, String extension, Map<String, String> map)
     {
       super(parserFactory);
@@ -236,6 +238,7 @@ public class TestDataSchemaResolver
     {
         {
           "Two records including each other",
+            "pdsc",
             asMap(buildSystemIndependentPath("a1", "include1.pdsc"), "{ \"name\" : \"include1\", \"type\" : \"record\", \"include\": [\"include2\"], \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"string\" } ] }",
                   buildSystemIndependentPath("a1", "include2.pdsc"), "{ \"name\" : \"include2\", \"type\" : \"record\", \"include\": [\"include1\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }"
             ),
@@ -253,7 +256,27 @@ public class TestDataSchemaResolver
             }
         },
         {
+            "Two records including each other",
+            "pdl",
+            asMap(buildSystemIndependentPath("a1", "include1.pdl"), "record include1 includes include2 {\n member1: string\n}",
+                  buildSystemIndependentPath("a1", "include2.pdl"), "record include2 includes include1 {\n member2: string\n }"
+                 ),
+            new String[][]
+                {
+                    {
+                        "include1",
+                        ERROR,
+                        "circular reference involving includes"
+                    },
+                    { "include2",
+                        ERROR,
+                        "circular reference involving includes"
+                    }
+                }
+        },
+        {
             "Two records including each other using aliases",
+            "pdsc",
             asMap(buildSystemIndependentPath("a1", "include1.pdsc"), "{ \"name\" : \"include1\", \"aliases\" : [\"includeAlias1\"], \"type\" : \"record\", \"include\": [\"include2\"], \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"string\" } ] }",
                 buildSystemIndependentPath("a1", "include2.pdsc"), "{ \"name\" : \"include2\", \"type\" : \"record\", \"include\": [\"includeAlias1\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }"
             ),
@@ -267,7 +290,22 @@ public class TestDataSchemaResolver
                 }
         },
         {
+            "Two records including each other using aliases",
+            "pdl",
+            asMap(buildSystemIndependentPath("a1", "include1.pdl"), "@aliases = [\"includeAlias1\"] record include1 includes include2 { member1: string }",
+                  buildSystemIndependentPath("a1", "include2.pdl"), "record include2 includes includeAlias1 {member2: string}"),
+            new String[][]
+                {
+                    {
+                        "include1",
+                        ERROR,
+                        "circular reference involving includes"
+                    }
+                }
+        },
+        {
             "First record has a record field, and that record includes the first record",
+            "pdsc",
             asMap(buildSystemIndependentPath("a1", "record1.pdsc"), "{ \"name\" : \"record1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"include1\" } ] }",
                 buildSystemIndependentPath("a1", "include1.pdsc"), "{ \"name\" : \"include1\", \"type\" : \"record\", \"include\": [\"record1\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }"
             ),
@@ -286,7 +324,28 @@ public class TestDataSchemaResolver
             }
         },
         {
+            "First record has a record field, and that record includes the first record",
+            "pdl",
+            asMap(buildSystemIndependentPath("a1", "record1.pdl"), "record record1 { member1: include1 }",
+                  buildSystemIndependentPath("a1", "include1.pdl"), "record include1 includes record1 { member2: string } "
+                 ),
+            new String[][]
+                {
+                    {
+                        "record1",
+                        ERROR,
+                        "circular reference involving includes"
+                    },
+                    {
+                        "include1",
+                        ERROR,
+                        "circular reference involving includes"
+                    }
+                }
+        },
+        {
             "Circular reference involving only fields",
+            "pdsc",
             asMap(buildSystemIndependentPath("a1", "record1.pdsc"), "{ \"name\" : \"record1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"record2\" } ] }",
                 buildSystemIndependentPath("a1", "record2.pdsc"), "{ \"name\" : \"record2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"record1\" } ] }"
             ),
@@ -307,7 +366,30 @@ public class TestDataSchemaResolver
             }
         },
         {
+            "Circular reference involving only fields",
+            "pdl",
+            asMap(buildSystemIndependentPath("a1", "record1.pdl"), "record record1 { member1: record2 }",
+                  buildSystemIndependentPath("a1", "record2.pdl"), "record record2 { member2: record1 }"
+                 ),
+            new String[][]
+                {
+                    {
+                        "record1",
+                        FOUND,
+                        "\"name\" : \"record1\"",
+                        buildSystemIndependentPath("a1", "record1.pdl")
+                    },
+                    {
+                        "record2",
+                        FOUND,
+                        "\"name\" : \"record2\"",
+                        buildSystemIndependentPath("a1", "record2.pdl")
+                    }
+                }
+        },
+        {
             "Three records with one include in the cycle",
+            "pdsc",
             asMap(buildSystemIndependentPath("a1", "include1.pdsc"), "{ \"name\" : \"include1\", \"type\" : \"record\", \"include\": [\"record1\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }",
                 buildSystemIndependentPath("a1", "record1.pdsc"), "{ \"name\" : \"record1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"record2\" } ] }",
                 buildSystemIndependentPath("a1", "record2.pdsc"), "{ \"name\" : \"record2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"include1\" } ] }"
@@ -331,8 +413,36 @@ public class TestDataSchemaResolver
                     }
                 }
         },
+
+        {
+            "Three records with one include in the cycle",
+            "pdl",
+            asMap(buildSystemIndependentPath("a1", "include1.pdl"), "record include1 includes record1 { member2: string }",
+                  buildSystemIndependentPath("a1", "record1.pdl"), "record record1 { member1: record2 }",
+                  buildSystemIndependentPath("a1", "record2.pdl"), "record record2 { member1: include1 }"
+                 ),
+            new String[][]
+                {
+                    {
+                        "include1",
+                        ERROR,
+                        "circular reference involving includes"
+                    },
+                    {
+                        "record1",
+                        ERROR,
+                        "circular reference involving includes"
+                    },
+                    {
+                        "record2",
+                        ERROR,
+                        "circular reference involving includes"
+                    }
+                }
+        },
         {
             "Three records with one include not in the cycle",
+            "pdsc",
             asMap(buildSystemIndependentPath("a1", "include1.pdsc"), "{ \"name\" : \"include1\", \"type\" : \"record\", \"include\": [\"record1\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }",
                 buildSystemIndependentPath("a1", "record1.pdsc"), "{ \"name\" : \"record1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"record2\" } ] }",
                 buildSystemIndependentPath("a1", "record2.pdsc"), "{ \"name\" : \"record2\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"record1\" } ] }"
@@ -360,7 +470,37 @@ public class TestDataSchemaResolver
                 }
         },
         {
+            "Three records with one include not in the cycle",
+            "pdl",
+            asMap(buildSystemIndependentPath("a1", "include1.pdl"), "record include1 includes record1 { member2: string }",
+                  buildSystemIndependentPath("a1", "record1.pdl"), "record record1 { member1: record2 }",
+                  buildSystemIndependentPath("a1", "record2.pdl"), "record record2 { member1: record1 }"
+                 ),
+            new String[][]
+                {
+                    {
+                        "include1",
+                        FOUND,
+                        "\"name\" : \"include1\"",
+                        buildSystemIndependentPath("a1", "include1.pdl")
+                    },
+                    {
+                        "record1",
+                        FOUND,
+                        "\"name\" : \"record1\"",
+                        buildSystemIndependentPath("a1", "record1.pdl")
+                    },
+                    {
+                        "record2",
+                        FOUND,
+                        "\"name\" : \"record2\"",
+                        buildSystemIndependentPath("a1", "record2.pdl")
+                    }
+                }
+        },
+        {
             "Self including record",
+            "pdsc",
             asMap(buildSystemIndependentPath("a1", "include.pdsc"), "{ \"name\" : \"include\", \"type\" : \"record\", \"include\": [\"include\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }"
             ),
             new String[][]
@@ -373,7 +513,22 @@ public class TestDataSchemaResolver
                 }
         },
         {
+            "Self including record",
+            "pdl",
+            asMap(buildSystemIndependentPath("a1", "include.pdl"), "record include includes include { member2: string }"
+                 ),
+            new String[][]
+                {
+                    {
+                        "include",
+                        ERROR,
+                        "circular reference involving includes"
+                    }
+                }
+        },
+        {
             "Circular reference involving include, typeref and a record",
+            "pdsc",
             asMap(buildSystemIndependentPath("a1", "include1.pdsc"), "{ \"name\" : \"include1\", \"type\" : \"record\", \"include\": [\"record1\"], \"fields\" : [ { \"name\" : \"member2\", \"type\" : \"string\" } ] }",
                 buildSystemIndependentPath("a1", "record1.pdsc"), "{ \"name\" : \"record1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"typeref1\" } ] }",
                 buildSystemIndependentPath("a1", "typeref1.pdsc"), "{ \"name\" : \"typeref1\", \"type\" : \"typeref\", \"ref\" : \"include1\" }"
@@ -398,7 +553,34 @@ public class TestDataSchemaResolver
                 }
         },
         {
+            "Circular reference involving include, typeref and a record",
+            "pdl",
+            asMap(buildSystemIndependentPath("a1", "include1.pdl"), "record include1 includes record1 { member2: string }",
+                  buildSystemIndependentPath("a1", "record1.pdl"), "record record1 { member1: typeref1 }",
+                  buildSystemIndependentPath("a1", "typeref1.pdl"), "typeref typeref1 = include1"
+                 ),
+            new String[][]
+                {
+                    {
+                        "include1",
+                        ERROR,
+                        "circular reference involving includes"
+                    },
+                    {
+                        "typeref1",
+                        ERROR,
+                        "circular reference involving includes"
+                    },
+                    {
+                        "record1",
+                        ERROR,
+                        "circular reference involving includes"
+                    }
+                }
+        },
+        {
             "Circular reference involving typerefs",
+            "pdsc",
             asMap(buildSystemIndependentPath("a1", "typeref1.pdsc"), "{ \"name\" : \"typeref1\", \"type\" : \"typeref\", \"ref\": \"typeref2\" }",
                 buildSystemIndependentPath("a1", "typeref2.pdsc"), "{ \"name\" : \"typeref2\", \"type\" : \"typeref\", \"ref\" : \"typeref3\" }",
                 buildSystemIndependentPath("a1", "typeref3.pdsc"), "{ \"name\" : \"typeref3\", \"type\" : \"typeref\", \"ref\" : { \"type\" : \"array\", \"items\" : \"typeref1\" } }"
@@ -423,7 +605,34 @@ public class TestDataSchemaResolver
                 }
         },
         {
+            "Circular reference involving typerefs",
+            "pdl",
+            asMap(buildSystemIndependentPath("a1", "typeref1.pdl"), "typeref typeref1 = typeref2",
+                  buildSystemIndependentPath("a1", "typeref2.pdl"), "typeref typeref2 = typeref3",
+                  buildSystemIndependentPath("a1", "typeref3.pdl"), "typeref typeref3 = array[typeref1]"
+                 ),
+            new String[][]
+                {
+                    {
+                        "typeref1",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    },
+                    {
+                        "typeref2",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    },
+                    {
+                        "typeref3",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    }
+                }
+        },
+        {
             "Circular reference involving typerefs, with a record outside cycle",
+            "pdsc",
             asMap(buildSystemIndependentPath("a1", "record1.pdsc"), "{ \"name\" : \"record1\", \"type\" : \"record\", \"fields\" : [ { \"name\" : \"member1\", \"type\" : \"typeref1\" } ] }",
                 buildSystemIndependentPath("a1", "typeref1.pdsc"), "{ \"name\" : \"typeref1\", \"type\" : \"typeref\", \"ref\" : \"typeref2\" }",
                 buildSystemIndependentPath("a1", "typeref2.pdsc"), "{ \"name\" : \"typeref2\", \"type\" : \"typeref\", \"ref\" : \"typeref1\" }"
@@ -447,11 +656,54 @@ public class TestDataSchemaResolver
                     }
                 }
         },
+
+        {
+            "Circular reference involving typerefs, with a record outside cycle",
+            "pdl",
+            asMap(buildSystemIndependentPath("a1", "record1.pdl"), "record record1 { member1: typeref1 }",
+                  buildSystemIndependentPath("a1", "typeref1.pdl"), "typeref typeref1 = typeref2",
+                  buildSystemIndependentPath("a1", "typeref2.pdl"), "typeref typeref2 = typeref1"
+                 ),
+            new String[][]
+                {
+                    {
+                        "record1",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    },
+                    {
+                        "typeref1",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    },
+                    {
+                        "typeref2",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    }
+                }
+        },
         {
             "Circular reference involving typerefs, using alias",
+            "pdsc",
             asMap(buildSystemIndependentPath("a1", "typeref1.pdsc"), "{ \"name\" : \"typeref1\", \"aliases\" : [\"typerefAlias1\"], \"type\" : \"typeref\", \"ref\" : \"typeref2\" }",
                 buildSystemIndependentPath("a1", "typeref2.pdsc"), "{ \"name\" : \"typeref2\", \"type\" : \"typeref\", \"ref\" : \"typerefAlias1\" }"
             ),
+            new String[][]
+                {
+                    {
+                        "typeref1",
+                        ERROR,
+                        "typeref has a circular reference to itself"
+                    }
+                }
+        },
+        {
+            "Circular reference involving typerefs, using alias",
+            "pdl",
+            asMap(buildSystemIndependentPath("a1", "typeref1.pdl"), "@aliases = [\"typerefAlias1\"] typeref typeref1 = typeref2",
+                  buildSystemIndependentPath("a1", "typeref2.pdl"), "typeref typeref2 = typerefAlias1"
+                 ),
             new String[][]
                 {
                     {
@@ -465,17 +717,16 @@ public class TestDataSchemaResolver
   }
 
   @Test(dataProvider = "circularReferenceData")
-  public void testCircularReferences(String desc, Map<String, String> testSchemas, String[][] testLookupAndExpectedResults)
+  public void testCircularReferences(String desc, String extension, Map<String, String> testSchemas, String[][] testLookupAndExpectedResults)
   {
     boolean debug = false;
 
     for (String[] testLookupAndExpectedResult : testLookupAndExpectedResults)
     {
-      DataSchemaResolver resolver = new MapDataSchemaResolver(
-          SchemaParserFactory.instance(),
-          Arrays.asList(buildSystemIndependentPath("a1")),
-          ".pdsc", testSchemas);
-      lookup(resolver, new String[][] { testLookupAndExpectedResult}, File.separatorChar, debug);
+      DataSchemaResolver schemaResolver = new MapDataSchemaResolver(
+          extension.equals("pdsc") ? SchemaParserFactory.instance() : PdlSchemaParserFactory.instance(),
+          Arrays.asList(buildSystemIndependentPath("a1")), "." + extension, testSchemas);
+      lookup(schemaResolver, new String[][] { testLookupAndExpectedResult}, File.separatorChar, debug, extension);
     }
   }
 
@@ -581,7 +832,12 @@ public class TestDataSchemaResolver
 
   public void lookup(DataSchemaResolver resolver, String[][] lookups, char separator, boolean debug)
   {
-    PegasusSchemaParser parser = new SchemaParser(resolver);
+    lookup(resolver, lookups, separator, debug, "pdsc");
+  }
+
+  public void lookup(DataSchemaResolver resolver, String[][] lookups, char separator, boolean debug, String extension)
+  {
+    PegasusSchemaParser parser = extension.equals("pdsc") ? new SchemaParser(resolver): new PdlSchemaParser(resolver);
 
     for (String[] entry : lookups)
     {

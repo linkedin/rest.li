@@ -578,6 +578,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
       setDocAndProperties(context, schema);
       bindNameToSchema(name, schema.getAliases(), schema);
       DataSchema refSchema = toDataSchema(typeref.ref);
+      checkTyperefCycle(schema, refSchema);
       schema.setReferencedType(refSchema);
       schema.setRefDeclaredInline(isDeclaredInline(typeref.ref));
     }
@@ -1093,6 +1094,10 @@ public class PdlSchemaParser extends AbstractSchemaParser
     if (schema == null)
     {
       schema = getResolver().findDataSchema(fullName, errorMessageBuilder());
+      if (schema != null)
+      {
+        checkForCycleWithInclude(((NamedDataSchema) schema).getFullName());
+      }
     }
     return schema;
   }
