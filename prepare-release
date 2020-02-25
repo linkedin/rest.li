@@ -44,3 +44,10 @@ fi
 # Push release tag
 echo "Pushing tag $TAG_NAME..."
 git push $REMOTE $TAG_NAME
+
+if [ $? -ne 0 ]
+then
+  echo 'Push failed, clearing tag from local repo...'
+  git tag -d $TAG_NAME
+  exit 1
+fi
