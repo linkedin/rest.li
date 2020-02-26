@@ -20,10 +20,9 @@
 
 package com.linkedin.data.schema;
 
-import java.util.AbstractCollection;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -87,13 +86,13 @@ public class PathSpec
   }
 
   /**
-   * Construct a new {@link PathSpec} from {@link AbstractCollection} type
+   * Construct a new {@link PathSpec} from {@link java.util.Collection} type
    *
    * @param pathSpecCollection the collection that contains path segments.
    */
-  public PathSpec(AbstractCollection<String> pathSpecCollection)
+  public PathSpec(Collection<String> pathSpecCollection)
   {
-    _path = new ArrayList<>();
+    _path = new ArrayList<>(pathSpecCollection.size());
     _path.addAll(pathSpecCollection);
   }
 
