@@ -20,6 +20,7 @@
 
 package com.linkedin.d2.balancer;
 
+import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.r2.transport.common.TransportClientFactory;
@@ -62,4 +63,13 @@ public interface Facilities
    * @return TransportClientFactory for given scheme, or null if no factory is configured in d2
    */
   TransportClientFactory getClientFactory(String scheme);
+
+  /**
+   * Obtain a ClusterInfoProvider
+   * @return ClusterInfoProvider
+   */
+  default ClusterInfoProvider getClusterInfoProvider()
+  {
+    return (clusterName, scheme, partitionId) -> 0;
+  };
 }

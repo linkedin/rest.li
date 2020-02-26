@@ -56,7 +56,6 @@ import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.MD5Hash;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
-import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.discovery.PropertySerializer;
@@ -106,8 +105,10 @@ import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -115,6 +116,8 @@ import static org.testng.Assert.fail;
 
 public class SimpleLoadBalancerTest
 {
+  private static final String CLUSTER1_NAME = "cluster-1";
+
   private List<File> _dirsToDelete;
 
   private ScheduledExecutorService _d2Executor;
@@ -155,6 +158,86 @@ public class SimpleLoadBalancerTest
     }
   }
 
+  @DataProvider
+  public Object[][] provideKeys()
+  {
+    return new Object[][] {
+        // numHttp, numHttps, expectedNumHttp, expectedNumHttps, partitionIdForAdd, partitionIdForCheck
+        {0, 3, 0, 3, 0, 0},
+        {3, 0, 3, 0, 0, 0},
+        {1, 1, 1, 1, 0, 0},
+        {0, 0, 0, 0, 0, 0},
+        // alter the partitions to check
+        {0, 3, 0, 0, 0, 1},
+        {3, 0, 0, 0, 0, 1},
+        {1, 1, 0, 0, 0, 2},
+        {0, 0, 0, 0, 0, 1},
+        // alter the partitions to add and check to match
+        {0, 3, 0, 3, 1, 1},
+        {3, 0, 3, 0, 1, 1},
+        {1, 1, 1, 1, 2, 2},
+        {0, 0, 0, 0, 1, 1}
+    };
+  }
+
+  @Test(dataProvider = "provideKeys")
+  public void testClusterInfoProvider(int numHttp, int numHttps, int expectedNumHttp, int expectedNumHttps,
+      int partitionIdForAdd, int partitionIdForCheck)
+      throws InterruptedException, ExecutionException, ServiceUnavailableException
+  {
+    Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
+        new HashMap<>();
+    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
+
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+
+    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
+    clientFactories.put(PropertyKeys.HTTP_SCHEME, new DoNothingClientFactory());
+    clientFactories.put(PropertyKeys.HTTPS_SCHEME, new DoNothingClientFactory());
+
+    SimpleLoadBalancerState state =
+        new SimpleLoadBalancerState(new SynchronousExecutorService(),
+            uriRegistry,
+            clusterRegistry,
+            serviceRegistry,
+            clientFactories,
+            loadBalancerStrategyFactories);
+
+    SimpleLoadBalancer loadBalancer =
+        new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
+
+    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    loadBalancer.start(balancerCallback);
+    balancerCallback.get();
+
+    URI uri1 = URI.create("http://test.qa1.com:1234");
+    URI uri2 = URI.create("http://test.qa2.com:2345");
+    URI uri3 = URI.create("http://test.qa3.com:6789");
+
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
+    partitionData.put(partitionIdForAdd, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(numHttp);
+    Set<String> schemeSet = new HashSet<>();
+    schemeSet.add(PropertyKeys.HTTP_SCHEME);
+    schemeSet.add(PropertyKeys.HTTPS_SCHEME);
+    for (String scheme : schemeSet) {
+      for (int i = 0; i < (scheme.equals(PropertyKeys.HTTP_SCHEME) ? numHttp : numHttps); i++) {
+        uriData.put(URI.create(scheme + "://test.qa" + i + ".com:1234"), partitionData);
+      }
+    }
+
+    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME));
+
+    uriRegistry.put(CLUSTER1_NAME, new UriProperties(CLUSTER1_NAME, uriData));
+
+    Assert.assertEquals(loadBalancer.getClusterCount(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionIdForCheck), expectedNumHttp,
+        "Http cluster count for partitionId: " + partitionIdForCheck + " should be: " + expectedNumHttp);
+    Assert.assertEquals(loadBalancer.getClusterCount(CLUSTER1_NAME, PropertyKeys.HTTPS_SCHEME, partitionIdForCheck), expectedNumHttps,
+        "Https cluster count for partitionId: " + partitionIdForCheck + " should be: " + expectedNumHttps);
+  }
+
   @Test(groups = { "small", "back-end" })
   public void testLoadBalancerSmoke() throws URISyntaxException,
           ServiceUnavailableException,
@@ -177,7 +260,7 @@ public class SimpleLoadBalancerTest
       //loadBalancerStrategyFactories.put("rr", new RandomLoadBalancerStrategyFactory());
       loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
       // PrpcClientFactory();
-      clientFactories.put("http", new DoNothingClientFactory()); // new
+      clientFactories.put(PropertyKeys.HTTP_SCHEME, new DoNothingClientFactory()); // new
       // HttpClientFactory();
 
       SimpleLoadBalancerState state =
@@ -200,13 +283,13 @@ public class SimpleLoadBalancerTest
       URI uri3 = URI.create("http://test.qa3.com:6789");
 
       Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
-      partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+      partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
       Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(3);
       uriData.put(uri1, partitionData);
       uriData.put(uri2, partitionData);
       uriData.put(uri3, partitionData);
 
-      prioritizedSchemes.add("http");
+      prioritizedSchemes.add(PropertyKeys.HTTP_SCHEME);
 
       clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
 
@@ -238,7 +321,7 @@ public class SimpleLoadBalancerTest
                                                    new RequestContext());
 
         assertTrue(expectedUris.contains(client.getUri()));
-        assertEquals(client.getUri().getScheme(), "http");
+        assertEquals(client.getUri().getScheme(), PropertyKeys.HTTP_SCHEME);
       }
 
       final CountDownLatch latch = new CountDownLatch(1);
@@ -279,7 +362,7 @@ public class SimpleLoadBalancerTest
     ScheduledExecutorService executorService = new SynchronousExecutorService();
 
     loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
-    clientFactories.put("http", new DoNothingClientFactory());
+    clientFactories.put(PropertyKeys.HTTP_SCHEME, new DoNothingClientFactory());
 
     SimpleLoadBalancerState state =
         new SimpleLoadBalancerState(executorService,
@@ -299,12 +382,12 @@ public class SimpleLoadBalancerTest
     URI uri1Banned = URI.create("http://test.qd.com:1234");
     URI uri2Usable = URI.create("http://test.qd.com:5678");
     Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
-    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
     Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(2);
     uriData.put(uri1Banned, partitionData);
     uriData.put(uri2Usable, partitionData);
 
-    prioritizedSchemes.add("http");
+    prioritizedSchemes.add(PropertyKeys.HTTP_SCHEME);
 
     Set<URI> bannedSet = new HashSet<>();
     bannedSet.add(uri1Banned);
@@ -355,7 +438,7 @@ public class SimpleLoadBalancerTest
     //loadBalancerStrategyFactories.put("rr", new RandomLoadBalancerStrategyFactory());
     loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
     // PrpcClientFactory();
-    clientFactories.put("https", new DoNothingClientFactory()); // new
+    clientFactories.put(PropertyKeys.HTTPS_SCHEME, new DoNothingClientFactory()); // new
     // HttpClientFactory();
 
     SimpleLoadBalancerState state =
@@ -374,10 +457,10 @@ public class SimpleLoadBalancerTest
     balancerCallback.get(5, TimeUnit.SECONDS);
 
     Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
-    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
     Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(3);
 
-    prioritizedSchemes.add("https");
+    prioritizedSchemes.add(PropertyKeys.HTTPS_SCHEME);
 
     clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
 
@@ -441,7 +524,7 @@ public class SimpleLoadBalancerTest
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<LoadBalancerState.SchemeStrategyPair>();
     LoadBalancerStrategy strategy = new TestLoadBalancerStrategy(partitionDescriptions);
 
-    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", strategy));
+    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair(PropertyKeys.HTTP_SCHEME, strategy));
 
     //setup the partition accessor which can only map keys from 1 - 3.
     PartitionAccessor accessor = new TestPartitionAccessor();
@@ -537,8 +620,8 @@ public class SimpleLoadBalancerTest
 
     // Prioritize HTTPS over HTTP
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<>();
-    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("https", SSLStrategy));
-    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", plainStrategy));
+    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair(PropertyKeys.HTTPS_SCHEME, SSLStrategy));
+    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair(PropertyKeys.HTTP_SCHEME, plainStrategy));
 
     // setup the partition accessor which can only map keys from 1 - 3.
     PartitionAccessor accessor = new TestPartitionAccessor();
@@ -632,7 +715,7 @@ public class SimpleLoadBalancerTest
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<LoadBalancerState.SchemeStrategyPair>();
     LoadBalancerStrategy strategy = new TestLoadBalancerStrategy(partitionDescriptions);
 
-    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", strategy));
+    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair(PropertyKeys.HTTP_SCHEME, strategy));
 
     //setup the partition accessor which is used to get partitionId -> keys
     PartitionAccessor accessor = new TestPartitionAccessor();
@@ -695,7 +778,7 @@ public class SimpleLoadBalancerTest
       ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
       loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
 
-      clientFactories.put("http", new DoNothingClientFactory());
+      clientFactories.put(PropertyKeys.HTTP_SCHEME, new DoNothingClientFactory());
 
       SimpleLoadBalancerState state =
           new SimpleLoadBalancerState(executorService,
@@ -738,7 +821,7 @@ public class SimpleLoadBalancerTest
       partitionDesc.put(uri2, server2);
       partitionDesc.put(uri3, server3);
 
-      prioritizedSchemes.add("http");
+      prioritizedSchemes.add(PropertyKeys.HTTP_SCHEME);
 
       int partitionMethod = tryAgain % 4;
       switch (partitionMethod)
@@ -1414,7 +1497,7 @@ public class SimpleLoadBalancerTest
       //loadBalancerStrategyFactories.put("rr", new RandomLoadBalancerStrategyFactory());
       loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
       // PrpcClientFactory();
-      clientFactories.put("http", new DoNothingClientFactory()); // new
+      clientFactories.put(PropertyKeys.HTTP_SCHEME, new DoNothingClientFactory()); // new
       // HttpClientFactory();
 
       SimpleLoadBalancerState state =
@@ -1437,13 +1520,13 @@ public class SimpleLoadBalancerTest
       URI uri3 = URI.create("http://test.qa3.com:6789");
 
       Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
-      partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+      partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
       Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(3);
       uriData.put(uri1, partitionData);
       uriData.put(uri2, partitionData);
       uriData.put(uri3, partitionData);
 
-      prioritizedSchemes.add("http");
+      prioritizedSchemes.add(PropertyKeys.HTTP_SCHEME);
 
       clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
 
@@ -1479,14 +1562,14 @@ public class SimpleLoadBalancerTest
           RewriteClient rewriteClient = (RewriteClient) client.getDecoratedClient();
           assertTrue(rewriteClient.getDecoratedClient() instanceof TrackerClient);
           TrackerClient tClient = (TrackerClient) rewriteClient.getDecoratedClient();
-          DegraderImpl degrader = (DegraderImpl)tClient.getDegrader(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+          DegraderImpl degrader = (DegraderImpl)tClient.getDegrader(DEFAULT_PARTITION_ID);
           DegraderImpl.Config cfg = new DegraderImpl.Config(degrader.getConfig());
           // Change DropRate to 0.0 at the rate of 1/3
           cfg.setOverrideDropRate((random.nextInt(2) == 0) ? 1.0 : 0.0);
           degrader.setConfig(cfg);
 
           assertTrue(expectedUris.contains(client.getUri()));
-          assertEquals(client.getUri().getScheme(), "http");
+          assertEquals(client.getUri().getScheme(), PropertyKeys.HTTP_SCHEME);
         }
         catch (ServiceUnavailableException e)
         {
