@@ -1,14 +1,17 @@
 package com.linkedin.pegasus.gradle.tasks;
 
+import com.linkedin.pegasus.gradle.PathingJarUtil;
 import com.linkedin.pegasus.gradle.PegasusOptions;
 import com.linkedin.pegasus.gradle.PegasusPlugin;
 import com.linkedin.pegasus.gradle.SharedFileUtils;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
@@ -115,10 +118,19 @@ public class GenerateRestClientTask extends DefaultTask
 
     String deprecatedVersion = _restli1BuildersDeprecated ? "2.0.0" : null;
 
+    FileCollection _pathedCodegenClasspath;
+    try {
+      _pathedCodegenClasspath = PathingJarUtil.generatePathingJar(getProject(), getName(),
+      _runtimeClasspath.plus(_codegenClasspath), false);
+    }
+    catch (IOException e)
+    {
+      throw new GradleException("Error occurred generating pathing JAR.", e);
+    }
     version1Files.forEach((defaultPackage, files) ->
       getProject().javaexec(javaExecSpec ->
       {
-        javaExecSpec.setClasspath(_runtimeClasspath.plus(_codegenClasspath));
+        javaExecSpec.setClasspath(_pathedCodegenClasspath);
         javaExecSpec.setMain("com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator");
         javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr); //RestRequestBuilderGenerator.run(resolverPath)
         javaExecSpec.jvmArgs("-Dgenerator.default.package=" + defaultPackage); //RestRequestBuilderGenerator.run(defaultPackage)
@@ -135,7 +147,7 @@ public class GenerateRestClientTask extends DefaultTask
     version2Files.forEach((defaultPackage, files) ->
       getProject().javaexec(javaExecSpec ->
       {
-        javaExecSpec.setClasspath(_runtimeClasspath.plus(_codegenClasspath));
+        javaExecSpec.setClasspath(_pathedCodegenClasspath);
         javaExecSpec.setMain("com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator");
         javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr); //RestRequestBuilderGenerator.run(resolverPath)
         javaExecSpec.jvmArgs("-Dgenerator.default.package=" + defaultPackage); //RestRequestBuilderGenerator.run(defaultPackage)
