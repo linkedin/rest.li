@@ -57,7 +57,6 @@ public class SchemaAnnotationValidationVisitor implements SchemaVisitor
     SchemaAnnotationHandler.ValidationMetaData metaData = new SchemaAnnotationHandler.ValidationMetaData();
     metaData.setDataSchema(context.getCurrentSchema());
     metaData.setPathToSchema(context.getTraversePath());
-    metaData.setTopLevelSchema(context.getOriginalTopLevelSchema());
     AnnotationValidationResult annotationValidationResult = _schemaAnnotationHandler.validate(schema.getResolvedProperties(),
                                                                                               metaData);
     if (!annotationValidationResult.isValid())

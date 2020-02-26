@@ -198,15 +198,9 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
             return;
           }
         }
-      }
-      catch (ClassNotFoundException e)
+      } catch (ClassNotFoundException e)
       {
         throw new IOException("Failed to load class while scanning classes", e);
-      }
-      catch (Exception | Error e)
-      {
-        getProject().getLogger()
-                    .info("Unexpected exceptions or errors found during scanning class, ok to skip", e);
       }
     }
   }
