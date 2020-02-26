@@ -48,7 +48,10 @@ import org.apache.avro.generic.GenericData;
  * If neither system property has been specified, then the default chooser
  * built into this class will be used to determine the appropriate
  * builti-in {@link AvroAdapter} to use.
+ *
+ * @deprecated use {@link com.linkedin.avro.compatibility.AvroCompatibilityHelper} instead.
  */
+@Deprecated
 public class AvroAdapterFinder
 {
   public static final String AVRO_ADAPTER_CHOOSER_PROPERTY = "com.linkedin.data.avro.AvroAdapterChooser";

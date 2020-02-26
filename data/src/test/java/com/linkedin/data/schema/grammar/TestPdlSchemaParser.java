@@ -55,11 +55,16 @@ public class TestPdlSchemaParser
         + "@validate.`com.linkedin.namespace.CustomValidator`.low = 15\n"
         + "@validate.`com.linkedin.namespace.CustomValidator`.`union`.low.`record` = \"Date\"\n"
         + "@`com.linkedin.CustomValidator` = \"abc\"\n"
+        + "@pathProp.`/*`.`*/.$` = false\n"
+        + "@`/*.*/.$`\n"
+        + "@grammarChars.`foo[type=a.b.c].bar` = \"grammarChars\"\n"
         + "record RecordDataSchema {}";
 
     // construct expected data map
     Map<String, Object> expected = new HashMap<>();
     DataMap validate = new DataMap();
+    // @validate.one.two.arrayOne = ["a", "b"]"
+    // @validate.one.two.arrayTwo = [1,2,3,4]"
     DataMap one = new DataMap();
     DataMap two = new DataMap();
     two.put("arrayOne", new DataList(Arrays.asList("a", "b")));
@@ -67,23 +72,40 @@ public class TestPdlSchemaParser
     one.put("two", two);
     validate.put("one", one);
 
+    // @validate.`com.linkedin.CustomValidator`.low = 5"
     DataMap customValidator = new DataMap();
     customValidator.put("low", 5);
     validate.put("com.linkedin.CustomValidator", customValidator);
 
+    // @validate.`com.linkedin.namespace.CustomValidator`.low = 15"
+    // @validate.`com.linkedin.namespace.CustomValidator`.`union`.low.`record` = "Date"
     DataMap customValidator2 = new DataMap();
     customValidator2.put("low", 15);
-
     DataMap unionMap = new DataMap();
     customValidator2.put("union", unionMap);
-
     DataMap lowMap = new DataMap();
     unionMap.put("low", lowMap);
     lowMap.put("record", "Date");
     validate.put("com.linkedin.namespace.CustomValidator", customValidator2);
-
     expected.put("validate", validate);
+
+    // @`com.linkedin.CustomValidator` = "abc"
     expected.put("com.linkedin.CustomValidator", "abc");
+
+    // @pathProp.`/*`.`*/.$` = false
+    DataMap propertyWithPath = new DataMap();
+    DataMap propertyWithSpecialChars = new DataMap();
+    propertyWithPath.put("/*", propertyWithSpecialChars);
+    propertyWithSpecialChars.put("*/.$", false);
+    expected.put("pathProp", propertyWithPath);
+
+    // @`/*.*/.$`
+    expected.put("/*.*/.$", true);
+
+    // "@grammarChars.`foo[type=a.b.c].bar` = "grammarChars"
+    DataMap grammarChars = new DataMap();
+    grammarChars.put("foo[type=a.b.c].bar", "grammarChars");
+    expected.put("grammarChars", grammarChars);
 
     DataSchema encoded = TestUtil.dataSchemaFromPdlString(sourcePdl);
     Assert.assertNotNull(encoded);

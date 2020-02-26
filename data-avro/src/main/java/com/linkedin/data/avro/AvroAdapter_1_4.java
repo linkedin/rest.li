@@ -28,6 +28,11 @@ import org.apache.avro.io.Encoder;
 import org.apache.avro.io.JsonDecoder;
 import org.apache.avro.io.JsonEncoder;
 
+
+/**
+ * @deprecated Use {@link com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper} instead.
+ */
+@Deprecated
 public class AvroAdapter_1_4 implements AvroAdapter
 {
   @Override
