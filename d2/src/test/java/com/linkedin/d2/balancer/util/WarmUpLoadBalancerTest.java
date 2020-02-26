@@ -510,5 +510,11 @@ public class WarmUpLoadBalancerTest
     {
       return null;
     }
+
+    @Override
+    public ClusterInfoProvider getClusterInfoProvider()
+    {
+      return null;
+    }
   }
 }

@@ -169,6 +169,11 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
     });
   }
 
+  @Override
+  public ClusterInfoProvider getClusterInfoProvider() {
+    return _loadBalancer.getClusterInfoProvider();
+  }
+
   private class WarmUpTask
   {
     private final AtomicInteger _requestCompletedCount;

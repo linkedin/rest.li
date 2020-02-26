@@ -1,0 +1,53 @@
+#!/bin/sh
+# The purpose of this script is to create and push a tag for the current version
+
+REMOTE='origin'
+
+if [ $# -eq 0 ]
+then
+    TARGET="HEAD"
+elif [ $# -eq 1 ]
+then
+    TARGET="$1"
+else
+  echo 'usage: ./prepare-release [TARGET_BRANCH_OR_COMMIT]'
+  exit 2
+fi
+
+# Determine and verify the target commit
+TARGET_COMMIT=`git rev-parse --verify $TARGET`
+if [ $? -ne 0 ]
+then
+  echo "Invalid target: $TARGET"
+  exit 1
+fi
+
+# Determine version to be released
+VERSION=`awk 'BEGIN { FS = "=" }; $1 == "version" { print $2 }' gradle.properties`
+if [ -z "$VERSION" ]
+then
+  echo 'Could not read the version from gradle.properties, please fix it and try again.'
+  exit 1
+fi
+
+# Create release tag
+TAG_NAME="v$VERSION"
+git tag -a $TAG_NAME $TARGET_COMMIT -m "$TAG_NAME"
+if [ $? -ne 0 ]
+then
+  echo "Could not create tag $TAG_NAME"
+  exit 1
+else
+  echo "Created tag $TAG_NAME at commit $TARGET_COMMIT ($TARGET)"
+fi
+
+# Push release tag
+echo "Pushing tag $TAG_NAME..."
+git push $REMOTE $TAG_NAME
+
+if [ $? -ne 0 ]
+then
+  echo 'Push failed, clearing tag from local repo...'
+  git tag -d $TAG_NAME
+  exit 1
+fi

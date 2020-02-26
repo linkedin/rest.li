@@ -8,6 +8,7 @@ dependencies {
   compile project(':data-avro')
   compile externalDependency.jacksonCoreAsl_1_8
   compile externalDependency.avro_1_6
+  compile externalDependency.avroUtil
   testCompile externalDependency.testng
   testCompile project(path: ':data-avro', configuration: 'testArtifacts')
   testCompile project(path: ':data-avro-generator', configuration: 'testArtifacts')
@@ -26,3 +27,6 @@ sourceSets.test.resources {
   final dataAvroProject = project.evaluationDependsOn(':data-avro')
   it.source(dataAvroProject.sourceSets.test.resources)
 }
+
+compileJava.options.compilerArgs += '-Xlint:-deprecation'
+compileTestJava.options.compilerArgs += '-Xlint:-deprecation'

@@ -17,6 +17,7 @@
 package com.linkedin.data.avro;
 
 
+import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
@@ -240,7 +241,7 @@ public class SchemaTranslator
   {
     String jsonAvroSchema = dataToAvroSchemaJson(dataSchema, new DataToAvroSchemaTranslationOptions());
     // Avro Schema parser does not validate default values !!!
-    return AvroAdapterFinder.getAvroAdapter().stringToAvroSchema(jsonAvroSchema);
+    return AvroCompatibilityHelper.parse(jsonAvroSchema);
   }
 
   /**
@@ -256,7 +257,7 @@ public class SchemaTranslator
   {
     String jsonAvroSchema = dataToAvroSchemaJson(dataSchema, options);
     // Avro Schema parser does not validate default values !!!
-    return AvroAdapterFinder.getAvroAdapter().stringToAvroSchema(jsonAvroSchema);
+    return AvroCompatibilityHelper.parse(jsonAvroSchema);
   }
 
   /**

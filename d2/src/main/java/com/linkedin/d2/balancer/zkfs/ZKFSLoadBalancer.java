@@ -31,6 +31,7 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
+import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.KeyMapperProvider;
@@ -76,7 +77,7 @@ import org.slf4j.LoggerFactory;
 
 public class ZKFSLoadBalancer
         implements LoadBalancerWithFacilities, DirectoryProvider, KeyMapperProvider, HashRingProvider, PartitionInfoProvider,
-        ClientFactoryProvider, WarmUpService
+                   ClientFactoryProvider, WarmUpService, ClusterInfoProvider
 {
   private static final Logger LOG = LoggerFactory.getLogger(ZKFSLoadBalancer.class);
 
@@ -102,6 +103,11 @@ public class ZKFSLoadBalancer
    * it has been successfully started, except the first time.
    */
   private volatile TogglingLoadBalancer _currentLoadBalancer;
+
+  @Override
+  public int getClusterCount(String clusterName, String scheme, int partitionId) throws ServiceUnavailableException {
+    return _currentLoadBalancer.getClusterCount(clusterName, scheme, partitionId);
+  }
 
   public interface TogglingLoadBalancerFactory
   {
@@ -420,6 +426,14 @@ public class ZKFSLoadBalancer
     }
   }
 
+  private void checkClusterInfoProvider()
+  {
+    if (_currentLoadBalancer == null || !(_currentLoadBalancer instanceof ClusterInfoProvider))
+    {
+      throw new IllegalStateException("No ClusterInfoProvider available to TogglingLoadBalancer - this could be because the load balancer " +
+                                          "is not yet initialized or the underlying load balancer doesn't support providing this info.");
+    }
+  }
   @Override
   public TransportClientFactory getClientFactory(String scheme)
   {
@@ -433,6 +447,12 @@ public class ZKFSLoadBalancer
                                               "support obtaining client factories");
     }
     return ((ClientFactoryProvider)_currentLoadBalancer).getClientFactory(scheme);
+  }
+
+  @Override
+  public ClusterInfoProvider getClusterInfoProvider() {
+    checkClusterInfoProvider();
+    return (ClusterInfoProvider)_currentLoadBalancer;
   }
 
   @Override
