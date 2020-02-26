@@ -1169,199 +1169,210 @@ public class TestDataTranslator
     // 8. eighth element tells the error message if this is invalid
     return new Object[][] {
         //  If the dataMap has customer set values, the mode should have no impact on the DataTranslator.
-        {
-            // required int with default value
-            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":\"int\",\"default\":42}]}",
-            "{\"bar\":1}",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"bar\":1}",
-            false,
-            "",
-        },
-        {
-            // required int with default value
-            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":\"int\",\"default\":42}]}",
-            "{\"bar\":1}",
-            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
-            "{\"bar\":1}",
-            false,
-            "",
-        },
-
+//        {
+//            // required int with default value
+//            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":\"int\",\"default\":42}]}",
+//            "{\"bar\":1}",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"bar\":1}",
+//            false,
+//            "",
+//        },
+//        {
+//            // required int with default value
+//            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":\"int\",\"default\":42}]}",
+//            "{\"bar\":1}",
+//            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+//            "{\"bar\":1}",
+//            false,
+//            "",
+//        },
+//
+//        {
+//            // required int with default value
+//            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+//            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\"],\"default\":null}]}",
+//            "{\"bar\":1}",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"bar\":{\"int\":1}}", // Json representation for Avro record
+//            false,
+//            "",
+//        },
+//
         {
             // required int with default value
             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
             PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
             "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\"],\"default\":null}]}",
             "{\"bar\":1}",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
             "{\"bar\":{\"int\":1}}", // Json representation for Avro record
             false,
             "",
         },
 
         {
-            // required int with default value
-            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
+          "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"arrayRequired\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : \"string\" } ##T_END, \"default\": [ ] } ] }",
             PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
-            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\"],\"default\":null}]}",
-            "{\"bar\":1}",
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"arrayRequired\",\"type\":[\"null\",{\"type\":\"array\",\"items\":\"string\"}],\"default\":null}]}",
+            "{\"arrayRequired\":[\"a\",\"b\"]}",
             PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
-            "{\"bar\":{\"int\":1}}", // Json representation for Avro record
+            "{\"arrayRequired\":null}", //read as optional from Avro true,
             false,
             "",
         },
-
-        // Test in different options, using int as example
-        {
-            // required int with default value
-            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":\"int\",\"default\":42}]}",
-            "{}",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"bar\":42}",
-            false,
-            "",
-        },
-        {
-            // required int with default value
-            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE, // this option translate to optional in Avro
-            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\"],\"default\":null}]}",
-            "{}",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"bar\":{\"int\":42}}",
-            false,
-            "",
-        },
-
-        {
-            // required int with default value
-            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE, // this option translate to optional in Avro
-            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\"],\"default\":null}]}",
-            "{}",
-            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
-            "{\"bar\":null}",
-            false,
-            "",
-        },
-
-        // Tests with union
-        {
-            // required Union of [int string] with default value
-            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"int\",\"string\"],\"default\":42}]}",
-            "{}",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"bar\":{\"int\":42}}", //  DataTranslator should translate to the default value in the schema
-            false,
-            "",
-        },
-        {
-            // required Union of [int string] with default value
-            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
-            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\",\"string\"],\"default\":null}]}",
-            "{}",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"bar\":{\"int\":42}}", //  DataTranslator should translate to the default value in the schema
-            false,
-            "",
-        },
-
-        {
-            // required Union of [int string] with default value
-            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
-            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\",\"string\"],\"default\":null}]}",
-            "{}",
-            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
-            "{\"bar\":null}", //read as optional from Avro
-            false,
-            "",
-        },
-
-        // Tests with Enum
-        {
-            // required enum with default value
-            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"enumRequired\", \"type\" : ##T_START { \"name\" : \"Fruits\", \"type\" : \"enum\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"default\": \"APPLE\" } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"enumRequired\",\"type\":{\"type\":\"enum\",\"name\":\"Fruits\",\"symbols\":[\"APPLE\",\"ORANGE\"]},\"default\":\"APPLE\"}]}",
-            "{}",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"enumRequired\":\"APPLE\"}", //read as optional from Avro
-            false,
-            "",
-        },
-
-        // The following case works under avro 1.4 but not avro 1.6, and is an invalid case
+//
+//        // Test in different options, using int as example
+//        {
+//            // required int with default value
+//            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":\"int\",\"default\":42}]}",
+//            "{}",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"bar\":42}",
+//            false,
+//            "",
+//        },
+//        {
+//            // required int with default value
+//            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE, // this option translate to optional in Avro
+//            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\"],\"default\":null}]}",
+//            "{}",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"bar\":{\"int\":42}}",
+//            false,
+//            "",
+//        },
+//
+//        {
+//            // required int with default value
+//            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE, // this option translate to optional in Avro
+//            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\"],\"default\":null}]}",
+//            "{}",
+//            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+//            "{\"bar\":null}",
+//            false,
+//            "",
+//        },
+//
+//        // Tests with union
+//        {
+//            // required Union of [int string] with default value
+//            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"int\",\"string\"],\"default\":42}]}",
+//            "{}",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"bar\":{\"int\":42}}", //  DataTranslator should translate to the default value in the schema
+//            false,
+//            "",
+//        },
+//        {
+//            // required Union of [int string] with default value
+//            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+//            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\",\"string\"],\"default\":null}]}",
+//            "{}",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"bar\":{\"int\":42}}", //  DataTranslator should translate to the default value in the schema
+//            false,
+//            "",
+//        },
+//
+//        {
+//            // required Union of [int string] with default value
+//            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+//            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\",\"string\"],\"default\":null}]}",
+//            "{}",
+//            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+//            "{\"bar\":null}", //read as optional from Avro
+//            false,
+//            "",
+//        },
+//
+//        // Tests with Enum
+//        {
+//            // required enum with default value
+//            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"enumRequired\", \"type\" : ##T_START { \"name\" : \"Fruits\", \"type\" : \"enum\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"default\": \"APPLE\" } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"enumRequired\",\"type\":{\"type\":\"enum\",\"name\":\"Fruits\",\"symbols\":[\"APPLE\",\"ORANGE\"]},\"default\":\"APPLE\"}]}",
+//            "{}",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"enumRequired\":\"APPLE\"}", //read as optional from Avro
+//            false,
+//            "",
+//        },
+//
+//        // The following case works under avro 1.4 but not avro 1.6, and is an invalid case
+////        {
+////            // required enum with default value
+////            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"enumRequired\", \"type\" : ##T_START { \"name\" : \"Fruits\", \"type\" : \"enum\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"default\": \"APPLE\" } ] }",
+////            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+////            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"enumRequired\",\"type\":[\"null\",{\"type\":\"enum\",\"name\":\"Fruits\",\"symbols\":[\"APPLE\",\"ORANGE\"]}],\"default\":null}]}",
+////            "{}",
+////            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+////            "{\"enumRequired\":{\"Fruits\":\"APPLE\"}}",
+////            false,
+////            "",
+////        },
+//
 //        {
 //            // required enum with default value
 //            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"enumRequired\", \"type\" : ##T_START { \"name\" : \"Fruits\", \"type\" : \"enum\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"default\": \"APPLE\" } ] }",
 //            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
 //            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"enumRequired\",\"type\":[\"null\",{\"type\":\"enum\",\"name\":\"Fruits\",\"symbols\":[\"APPLE\",\"ORANGE\"]}],\"default\":null}]}",
 //            "{}",
-//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-//            "{\"enumRequired\":{\"Fruits\":\"APPLE\"}}",
+//            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+//            "{\"enumRequired\":null}", //read as optional from Avro
 //            false,
 //            "",
 //        },
-
-        {
-            // required enum with default value
-            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"enumRequired\", \"type\" : ##T_START { \"name\" : \"Fruits\", \"type\" : \"enum\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"default\": \"APPLE\" } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
-            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"enumRequired\",\"type\":[\"null\",{\"type\":\"enum\",\"name\":\"Fruits\",\"symbols\":[\"APPLE\",\"ORANGE\"]}],\"default\":null}]}",
-            "{}",
-            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
-            "{\"enumRequired\":null}", //read as optional from Avro
-            false,
-            "",
-        },
-
-        // If the field in pegasus schema has been translated as required, its data cannot be translated as optional
-        {
-            // required int with default value
-            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":\"int\",\"default\":42}]}",
-            "{}",
-            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
-            "{\"bar\":null}",
-            true,
-            "null of int in field bar of foo",
-        },
-
-        {
-            // required Union of [int string] with default value
-            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"int\",\"string\"],\"default\":42}]}",
-            "{}",
-            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
-            "{\"bar\":null}", //read as optional from Avro
-            true,
-            "Not in union [\"int\",\"string\"]: null",
-        },
-
-        {
-            // required enum with default value
-            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"enumRequired\", \"type\" : ##T_START { \"name\" : \"Fruits\", \"type\" : \"enum\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"default\": \"APPLE\" } ] }",
-            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
-            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"enumRequired\",\"type\":{\"type\":\"enum\",\"name\":\"Fruits\",\"symbols\":[\"APPLE\",\"ORANGE\"]},\"default\":\"APPLE\"}]}",
-            "{}",
-            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
-            "{\"enumRequired\":null}", //read as optional from Avro
-            true,
-            "null of Fruits in field enumRequired of Foo"
-        },
+//
+//        // If the field in pegasus schema has been translated as required, its data cannot be translated as optional
+//        {
+//            // required int with default value
+//            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":\"int\",\"default\":42}]}",
+//            "{}",
+//            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+//            "{\"bar\":null}",
+//            true,
+//            "null of int in field bar of foo",
+//        },
+//
+//        {
+//            // required Union of [int string] with default value
+//            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"int\",\"string\"],\"default\":42}]}",
+//            "{}",
+//            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+//            "{\"bar\":null}", //read as optional from Avro
+//            true,
+//            "Not in union [\"int\",\"string\"]: null",
+//        },
+//
+//        {
+//            // required enum with default value
+//            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"enumRequired\", \"type\" : ##T_START { \"name\" : \"Fruits\", \"type\" : \"enum\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"default\": \"APPLE\" } ] }",
+//            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+//            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"enumRequired\",\"type\":{\"type\":\"enum\",\"name\":\"Fruits\",\"symbols\":[\"APPLE\",\"ORANGE\"]},\"default\":\"APPLE\"}]}",
+//            "{}",
+//            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+//            "{\"enumRequired\":null}", //read as optional from Avro
+//            true,
+//            "null of Fruits in field enumRequired of Foo"
+//        },
     };
   }
 
