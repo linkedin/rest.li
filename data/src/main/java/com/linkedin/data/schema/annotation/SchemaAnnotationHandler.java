@@ -278,7 +278,19 @@ public interface SchemaAnnotationHandler
     // the dataSchema whose resolved annotation needs to be validated.
     DataSchema _dataSchema;
     // the pathSpec component list to the dataSchema whose resolved annotation needs to be validated.
-    ArrayDeque<String> pathToSchema;
+    ArrayDeque<String> _pathToSchema;
+
+    DataSchema _topLevelSchema;
+
+    public DataSchema getTopLevelSchema()
+    {
+      return _topLevelSchema;
+    }
+
+    public void setTopLevelSchema(DataSchema topLevelSchema)
+    {
+      _topLevelSchema = topLevelSchema;
+    }
 
     public DataSchema getDataSchema()
     {
@@ -292,12 +304,12 @@ public interface SchemaAnnotationHandler
 
     public ArrayDeque<String> getPathToSchema()
     {
-      return pathToSchema;
+      return _pathToSchema;
     }
 
     public void setPathToSchema(ArrayDeque<String> pathToSchema)
     {
-      this.pathToSchema = pathToSchema;
+      this._pathToSchema = pathToSchema;
     }
   }
 

@@ -73,7 +73,7 @@ public class DataSchemaRichContextTraverser
    * which could ensure the correctness of the traversal
    *
    */
-  private DataSchema _originalDataSchemaUnderTraversal;
+  private DataSchema _originalTopLevelSchemaUnderTraversal;
 
   public DataSchemaRichContextTraverser(SchemaVisitor schemaVisitor)
   {
@@ -82,8 +82,9 @@ public class DataSchemaRichContextTraverser
 
   public void traverse(DataSchema schema)
   {
-    _originalDataSchemaUnderTraversal = schema;
+    _originalTopLevelSchemaUnderTraversal = schema;
     TraverserContext traverserContext = new TraverserContext();
+    traverserContext.setOriginalTopLevelSchema(_originalTopLevelSchemaUnderTraversal);
     traverserContext.setCurrentSchema(schema);
     traverserContext.setVisitorContext(_schemaVisitor.getInitialVisitorContext());
     doRecursiveTraversal(traverserContext);
@@ -214,6 +215,11 @@ public class DataSchemaRichContextTraverser
     return (dataSchema instanceof PrimitiveDataSchema)
            || (dataSchema.getType() == DataSchema.Type.FIXED)
            || (dataSchema.getType() == DataSchema.Type.ENUM);
+  }
+
+  public DataSchema getOriginalTopLevelSchemaUnderTraversal()
+  {
+    return _originalTopLevelSchemaUnderTraversal;
   }
 
   /**
@@ -418,6 +424,7 @@ public class DataSchemaRichContextTraverser
      * This variable can be set to null if want default behavior.
      */
     Boolean _shouldContinue = null;
+    DataSchema _originalTopLevelSchema;
     DataSchema _parentSchema;
     DataSchema _currentSchema;
     /**
@@ -483,6 +490,7 @@ public class DataSchemaRichContextTraverser
                                     DataSchema nextSchema, CurrentSchemaEntryMode nextSchemaEntryMode)
     {
       TraverserContext nextContext = new TraverserContext();
+      nextContext.setOriginalTopLevelSchema(this.getOriginalTopLevelSchema());
       nextContext.setParentSchema(this.getCurrentSchema());
       nextContext.setSchemaPathSpec(new ArrayDeque<>(this.getSchemaPathSpec()));
       nextContext.setVisitorContext(this.getVisitorContext());
@@ -589,5 +597,16 @@ public class DataSchemaRichContextTraverser
     {
       _currentSchemaEntryMode = currentSchemaEntryMode;
     }
+
+    public DataSchema getOriginalTopLevelSchema()
+    {
+      return _originalTopLevelSchema;
+    }
+
+    public void setOriginalTopLevelSchema(DataSchema originalTopLevelSchema)
+    {
+      _originalTopLevelSchema = originalTopLevelSchema;
+    }
+
   }
 }
