@@ -16,6 +16,7 @@
 
 package com.linkedin.data.avro;
 
+import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
@@ -31,7 +32,6 @@ import com.linkedin.data.schema.FixedDataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
-import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
@@ -355,7 +355,9 @@ public class DataTranslator implements DataTranslatorContext
             boolean isOptional = field.getOptional();
             DataSchema fieldDataSchema = field.getType();
             Schema fieldAvroSchema = avroSchema.getField(fieldName).schema();
-            if (isOptional && (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION))
+            if (isOptional && (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION) ||
+                ((fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION) &&
+                 fieldAvroSchema.getType() == Schema.Type.UNION))
             {
               // Avro schema should be union with 2 types: null and the field's type.
               Map.Entry<String, Schema> fieldAvroEntry = findUnionMember(fieldDataSchema, fieldAvroSchema);
@@ -611,33 +613,10 @@ public class DataTranslator implements DataTranslatorContext
             boolean isOptional = field.getOptional();
             if (isOptional)
             {
-              if (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION)
+              if (fieldValue == null)
               {
-                // Translating from a non-union pegasus type to an embedded union type in Avro
-                if (fieldValue == null)
-                {
-                  fieldValue = Data.NULL;
-                  fieldDataSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
-                }
-                // Since optional field will be represented as union in Avro
-                // Need to extract the Avro type corresponding to the pegasus type from the Avro union
-                Map.Entry<String, Schema> fieldAvroEntry = findUnionMember(fieldDataSchema, fieldAvroSchema);
-                if (fieldAvroEntry == null)
-                {
-                  _path.removeLast();
-                  continue;
-                }
-                fieldAvroSchema = fieldAvroEntry.getValue();
-              }
-              else
-              {
-                // already a union so translating from a pegasus union to an Avro union
-                if (fieldValue == null)
-                {
-                  // field is not present
-                  fieldValue = Data.NULL;
-                  fieldDataSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
-                }
+                fieldValue = Data.NULL;
+                fieldDataSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
               }
             }
             else if (fieldValue == null)
@@ -666,6 +645,19 @@ public class DataTranslator implements DataTranslatorContext
                 continue;
               }
             }
+
+            if ((fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION) && fieldAvroSchema.getType() == Schema.Type.UNION) {
+              // Since optional field will be represented as union in Avro
+              // Need to extract the Avro type corresponding to the pegasus type from the Avro union
+              Map.Entry<String, Schema> fieldAvroEntry = findUnionMember(fieldDataSchema, fieldAvroSchema);
+              if (fieldAvroEntry == null)
+              {
+                _path.removeLast();
+                continue;
+              }
+              fieldAvroSchema = fieldAvroEntry.getValue();
+            }
+
             // Translate default value as null, depending on specified options
             Object fieldAvroValue = translate(fieldValue, fieldDataSchema, fieldAvroSchema);
             avroRecord.put(fieldName, fieldAvroValue);
