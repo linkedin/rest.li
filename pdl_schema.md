@@ -2,7 +2,7 @@
 layout: guide
 title: PDL Schema
 permalink: /pdl_schema
-redirect_from: "/pdl_syntax"
+redirect_from: /pdl_syntax
 excerpt: Rest.li PDL Schema.
 ---
 
@@ -65,7 +65,7 @@ the named schema.
 
 ## Record Type
 Records are the most common type of Pegasus schemas and usually the starting
-point when defining data models using pegasus. A record represents a Named
+point when defining data models using Pegasus. A record represents a Named
 entity with fields representing attributes of that entity. The fields can be
 primitive types, enums, unions, maps, arrays or other records.
 
@@ -110,11 +110,11 @@ The above example is defining a record called `User`:
 Pegasus supports additional features for defining the behavior of fields in a
 record.
 #### Record fields can be defined as optional.
-In pegasus, a field is required unless the field is explicitly declared as
+In Pegasus, a field is required unless the field is explicitly declared as
 optional using the `optional` keyword. An optional field may be present or
 absent in the in-memory data structure or serialized data.
 
-In the generated client bindings, pegasus provides has[Field] methods(eg,
+In the generated client bindings, Pegasus provides has[Field] methods(eg,
 `hasBirthDay()`) to determine if an optional field is present.
 
 For example:
@@ -163,7 +163,7 @@ The above example defines a boolean field `isActive`, which has a default value
 `true`.
 
 ### Inlined schemas
-In pegasus, records and other named schemas need not be top-level schemas. They
+In Pegasus, records and other named schemas need not be top-level schemas. They
 can be inlined within other record schemas.
 
 For example:
@@ -356,12 +356,12 @@ convenience to reduce duplication when writing schemas.
 
 ## Primitive Types
 The above examples already introduced `int`, `long`, `string` and `boolean`
-primitive types that are supported by pegasus.
-The full list of supported pegasus primitive types are: `int`, `long`, `float`,
+primitive types that are supported by Pegasus.
+The full list of supported Pegasus primitive types are: `int`, `long`, `float`,
 `double`, `boolean`, `string` and `bytes`.
 
 The actual types used for the primitives depends on the language specific
-binding implementation. For details on Java bindings for pegasus primitives, see
+binding implementation. For details on Java bindings for Pegasus primitives, see
 [Primitive Types] (https://linkedin.github.io/rest.li/java_binding#primitive-types)
 
 Primitive types cannot be named (except through [typerefs](#typerefs)) and thus
@@ -672,7 +672,7 @@ record User {
 ```
 
 ### Union with aliases
-***Note:*** _Union with aliases is a recent feature in the pegasus schema
+***Note:*** _Union with aliases is a recent feature in the Pegasus schema
 *language and it might not be fully supported in non-java languages. Please
 *check the [support level](/rest.li/multi_language_compatibility_matrix) on all
 *languages you intend to use before using aliases_
@@ -836,7 +836,7 @@ record Contacts {
 
 For example, Joda time has a convenient `DateTime` Java class. If we wish to use
 this class in Java to represent date-times, all we need to do is define a
-pegasus custom type that binds to it:
+Pegasus custom type that binds to it:
 
 ```pdl
 namespace com.example.models
@@ -845,7 +845,7 @@ namespace com.example.models
 @java.coercerClass = "com.example.time.DateTimeCoercer"
 typeref DateTime = string
 ```
-The coercer is responsible for converting the pegasus “referenced” type, in this
+The coercer is responsible for converting the Pegasus “referenced” type, in this
 case "string" to the Joda `DateTime` class.
 
 See [Java Binding]
