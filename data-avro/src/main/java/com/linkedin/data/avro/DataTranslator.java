@@ -31,6 +31,7 @@ import com.linkedin.data.schema.FixedDataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
@@ -486,7 +487,6 @@ public class DataTranslator implements DataTranslatorContext
   private static class DataMapToGenericRecordTranslator extends DataTranslator
   {
     private static final Object BAD_RESULT = CustomDataTranslator.AVRO_BAD_RESULT;
-    private final AvroAdapter _avroAdapter = AvroAdapterFinder.getAvroAdapter();
     private DataMapToGenericRecordTranslator(DataTranslationOptions options)
     {
       super(options);
@@ -544,7 +544,7 @@ public class DataTranslator implements DataTranslatorContext
             result = BAD_RESULT;
             break;
           }
-          result = _avroAdapter.createEnumSymbol(avroSchema, enumValue);
+          result = AvroCompatibilityHelper.newEnumSymbol(avroSchema, enumValue);
           break;
         case FIXED:
           byte[] bytes = translateBytes(value);
@@ -609,18 +609,18 @@ public class DataTranslator implements DataTranslatorContext
             Schema fieldAvroSchema = avroField.schema();
             Object fieldValue = map.get(fieldName);
             boolean isOptional = field.getOptional();
-            if (isOptional  || (
-                _dataTranslationOptions != null &&
-                ((DataMapToAvroRecordTranslationOptions) _dataTranslationOptions). getDefaultFieldDataTranslationMode()
-                    == PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE))
+            if (isOptional)
             {
               if (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION)
               {
+                // Translating from a non-union pegasus type to an embedded union type in Avro
                 if (fieldValue == null)
                 {
                   fieldValue = Data.NULL;
                   fieldDataSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
                 }
+                // Since optional field will be represented as union in Avro
+                // Need to extract the Avro type corresponding to the pegasus type from the Avro union
                 Map.Entry<String, Schema> fieldAvroEntry = findUnionMember(fieldDataSchema, fieldAvroSchema);
                 if (fieldAvroEntry == null)
                 {
@@ -631,7 +631,7 @@ public class DataTranslator implements DataTranslatorContext
               }
               else
               {
-                // already a union
+                // already a union so translating from a pegasus union to an Avro union
                 if (fieldValue == null)
                 {
                   // field is not present
@@ -642,10 +642,22 @@ public class DataTranslator implements DataTranslatorContext
             }
             else if (fieldValue == null)
             {
+              // Required field is missing, should assign default value
               Object defaultValue = field.getDefault();
               if (defaultValue != null)
               {
-                fieldValue = defaultValue;
+                if (_dataTranslationOptions == null || ((DataMapToAvroRecordTranslationOptions) _dataTranslationOptions).getDefaultFieldDataTranslationMode()
+                                                           == PegasusToAvroDefaultFieldTranslationMode.TRANSLATE)
+                {
+                  // assign default value if present
+                  fieldValue = defaultValue;
+                }
+                else
+                {
+                  // Translate default value as null, depending on specified options
+                  fieldValue = Data.NULL;
+                  fieldDataSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
+                }
               }
               else
               {
@@ -654,6 +666,7 @@ public class DataTranslator implements DataTranslatorContext
                 continue;
               }
             }
+            // Translate default value as null, depending on specified options
             Object fieldAvroValue = translate(fieldValue, fieldDataSchema, fieldAvroSchema);
             avroRecord.put(fieldName, fieldAvroValue);
             _path.removeLast();
@@ -746,7 +759,7 @@ public class DataTranslator implements DataTranslatorContext
       }
 
       _path.add(DataSchemaConstants.DISCRIMINATOR_FIELD);
-      Object fieldDiscriminator = _avroAdapter.createEnumSymbol(avroDiscriminatorField.schema(), memberKey);
+      Object fieldDiscriminator = AvroCompatibilityHelper.newEnumSymbol(avroDiscriminatorField.schema(), memberKey);
       avroRecord.put(DataSchemaConstants.DISCRIMINATOR_FIELD, fieldDiscriminator);
       _path.removeLast();
 

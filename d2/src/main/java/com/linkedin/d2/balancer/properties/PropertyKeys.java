@@ -178,4 +178,8 @@ public class PropertyKeys
   public static final String DARK_CLUSTER_MULTIPLIER = "multiplier";
   public static final String DARK_CLUSTER_OUTBOUND_TARGET_RATE = "dispatcherOutboundTargetRate";
   public static final String DARK_CLUSTER_OUTBOUND_MAX_RATE = "dispatcherOutboundMaxRate";
+
+  // used by ClusterInfoProvider
+  public static final String HTTP_SCHEME = "http";
+  public static final String HTTPS_SCHEME = "https";
 }
