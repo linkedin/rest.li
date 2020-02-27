@@ -82,7 +82,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ResolvedPropertiesReaderVisitor implements DataSchemaRichContextTraverser.SchemaVisitor
 {
-  private Map<String, Map<String, Object>> _leafFieldsPathSpecToResolvedPropertiesMap = new HashMap<>();
+  private Map<PathSpec, Map<String, Object>> _leafFieldsPathSpecToResolvedPropertiesMap = new HashMap<>();
   private static final Logger LOG = LoggerFactory.getLogger(ResolvedPropertiesReaderVisitor.class);
 
   @Override
@@ -99,12 +99,12 @@ public class ResolvedPropertiesReaderVisitor implements DataSchemaRichContextTra
     {
       Map<String, Object> resolvedProperties = currentSchema.getResolvedProperties();
       _leafFieldsPathSpecToResolvedPropertiesMap.put(
-          new PathSpec(context.getSchemaPathSpec().toArray(new String[0])).toString(), resolvedProperties);
+          new PathSpec(context.getSchemaPathSpec()), resolvedProperties);
 
-      String mapStringified = resolvedProperties.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(
-          Collectors.joining("&"));
       if (LOG.isDebugEnabled())
       {
+        String mapStringified = resolvedProperties.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(
+            Collectors.joining("&"));
         LOG.debug(String.format("/%s ::: %s", String.join("/", context.getSchemaPathSpec()), mapStringified));
       }
     }
@@ -122,7 +122,7 @@ public class ResolvedPropertiesReaderVisitor implements DataSchemaRichContextTra
     return null;
   }
 
-  public Map<String, Map<String, Object>> getLeafFieldsPathSpecToResolvedPropertiesMap()
+  public Map<PathSpec, Map<String, Object>> getLeafFieldsPathSpecToResolvedPropertiesMap()
   {
     return _leafFieldsPathSpecToResolvedPropertiesMap;
   }
