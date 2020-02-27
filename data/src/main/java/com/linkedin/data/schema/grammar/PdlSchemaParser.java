@@ -1082,26 +1082,6 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
   }
 
-  /**
-   * Look for {@link DataSchema} with the specified name.
-   *
-   * @param fullName to lookup.
-   * @return the {@link DataSchema} if lookup was successful else return null.
-   */
-  public DataSchema lookupName(String fullName)
-  {
-    DataSchema schema = DataSchemaUtil.typeStringToPrimitiveDataSchema(fullName);
-    if (schema == null)
-    {
-      schema = getResolver().findDataSchema(fullName, errorMessageBuilder());
-      if (schema != null)
-      {
-        checkForCycleWithInclude(((NamedDataSchema) schema).getFullName());
-      }
-    }
-    return schema;
-  }
-
   private DataSchema toDataSchema(TypeAssignmentContext typeAssignment) throws ParseException {
     TypeReferenceContext typeReference = typeAssignment.typeReference();
     if (typeReference != null)
