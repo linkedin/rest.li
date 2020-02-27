@@ -74,7 +74,7 @@ can also be configured in a similar way.
 ## Defining Data Models
 
 The first step in building a Rest.li application is to define your data
-schema using [Pegasus Data Schemas](/rest.li/pdl_syntax). The
+schema using [Pegasus Data Schemas](/rest.li/pdl_schema). The
 Pegasus Data Schema format uses a simple Avro-like syntax to define your
 data model in a language-independent way. Rest.li provides code
 generators to create Java classes that implement your data model.
@@ -882,7 +882,7 @@ Custom types can be any Java type, as long as it has a coercer and a
 typeref schema, even Java classes from libraries such as Date. To create
 a query parameter that uses a custom type, you will need to write a
 coercer and a typeref schema for the type you want to use. See the
-[typeref documentation](/rest.li/pdl_syntax#typerefs) for details.
+[typeref documentation](/rest.li/pdl_schema#typerefs) for details.
 
 First for the coercer, you will need to write an implementation of
 DirectCoercer that converts between your custom type and some simpler

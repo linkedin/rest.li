@@ -58,7 +58,7 @@ because the modified entity will be missing that field. If there is a
 custom validation rule on the username field that it must be at least 3
 characters, a patch setting the username to “AA” is invalid.
 
-You can read more about required and optional fields in [Data Schemas - PDL Syntax - Record Type](pdl_syntax#record-type).
+You can read more about required and optional fields in [Data Schemas - PDL Syntax - Record Type](pdl_schema#record-type).
 
 ## Custom Validation Rules
 
