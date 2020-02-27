@@ -30,7 +30,6 @@ import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
-import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import java.io.ByteArrayInputStream;
@@ -73,12 +72,11 @@ public class TestDataSchemaResolver
 
   public static class MapDataSchemaResolver extends AbstractDataSchemaResolver
   {
-    public MapDataSchemaResolver(DataSchemaParserFactory parserFactory,
-                                 List<String> paths, String extension, Map<String, String> map)
+    public MapDataSchemaResolver(DataSchemaParserFactory parserFactory, List<String> paths, Map<String, String> map)
     {
       super(parserFactory);
       _paths = paths;
-      _extension = extension;
+      _extension = "." + parserFactory.getLanguageExtension();
       _map = map;
     }
 
@@ -230,7 +228,7 @@ public class TestDataSchemaResolver
   {
     boolean debug = false;
 
-    DataSchemaResolver resolver = new MapDataSchemaResolver(SchemaParserFactory.instance(), _testPaths, ".pdsc", _testSchemas);
+    DataSchemaResolver resolver = new MapDataSchemaResolver(SchemaParserFactory.instance(), _testPaths, _testSchemas);
     lookup(resolver, _testLookupAndExpectedResults, File.separatorChar, debug);
   }
 
@@ -726,10 +724,10 @@ public class TestDataSchemaResolver
 
     for (String[] testLookupAndExpectedResult : testLookupAndExpectedResults)
     {
-      DataSchemaResolver schemaResolver = new MapDataSchemaResolver(
-          extension.equals(PDSC) ? SchemaParserFactory.instance() : PdlSchemaParserFactory.instance(),
-          Arrays.asList(buildSystemIndependentPath("a1")), "." + extension.toString().toLowerCase(), testSchemas);
-      lookup(schemaResolver, new String[][] { testLookupAndExpectedResult}, File.separatorChar, debug, extension);
+      DataSchemaResolver schemaResolver =
+          new MapDataSchemaResolver(extension.getSchemaParserFactory(), Arrays.asList(buildSystemIndependentPath("a1")),
+                                    testSchemas);
+      lookup(schemaResolver, new String[][]{testLookupAndExpectedResult}, File.separatorChar, debug, extension);
     }
   }
 
