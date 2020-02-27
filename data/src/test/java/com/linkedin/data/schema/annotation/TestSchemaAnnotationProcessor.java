@@ -345,7 +345,7 @@ public class TestSchemaAnnotationProcessor
     ResolvedPropertiesReaderVisitor resolvedPropertiesReaderVisitor = new ResolvedPropertiesReaderVisitor();
     DataSchemaRichContextTraverser traverser = new DataSchemaRichContextTraverser(resolvedPropertiesReaderVisitor);
     traverser.traverse(result.getResultSchema());
-    Map<PathSpec, Map<String, Object>> pathSpecToResolvedPropertiesMap = resolvedPropertiesReaderVisitor.getLeafFieldsPathSpecToResolvedPropertiesMap();
+    Map<PathSpec, Map<String, Object>> pathSpecToResolvedPropertiesMap = resolvedPropertiesReaderVisitor.getLeafFieldsPathSpecObjToResolvedPropertiesMap();
     Assert.assertEquals(pathSpecToResolvedPropertiesMap.entrySet().size(), expected.size());
 
     for (List<String> pair : expected)
