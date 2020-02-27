@@ -667,7 +667,8 @@ record User {
       USER_REQUESTED_DELETION
       REQUESTED_BY_ADMIN
     }
-  } = { "com.example.models.ActiveReason": "NEVER_SUSPENDED" }
+  ] = { "com.example.models.ActiveReason": "NEVER_SUSPENDED" }
+}
 ```
 
 ### Union with aliases
@@ -936,26 +937,26 @@ enum UserStatus {
   /**
    * Represents an active user.
    */
-  @stringFormat("active")
+  @stringFormat = "active"
   ACTIVE
 
   /**
    * Represents user suspended for some reason.
    */
-   @stringFormat("suspended")
+   @stringFormat = "suspended"
   SUSPENDED
 
   /**
    * Represents an user who had deleted/inactivated their account.
    */
   @deprecated = "Use INACTIVE for users pending deletion. Deleted users should not be in system"
-  @stringFormat("deleted")
+  @stringFormat = "deleted"
   DELETED
 
   /**
    * Represents users requested for deletion and in the process of being deleted.
    */
-   @stringFormat("not active")
+   @stringFormat = "not active"
    INACTIVE
 }
 ```
