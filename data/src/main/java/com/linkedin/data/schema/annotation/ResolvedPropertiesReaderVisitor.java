@@ -49,14 +49,14 @@ import org.slf4j.LoggerFactory;
  * One can expect following in the stored map
  * <pre>
  * {
- *   "/f0/f1/f1/f2": {
+ *   PathSpec of "/f0/f1/f1/f2": {
  *     "AnotherAnnotation" : "NONE"
  *   },
- *   "/f0/f1/f2": {
+ *   PathSpec of "/f0/f1/f2": {
  *     "AnotherAnnotation" : "NONE"
  *     "customAnnotation" : "sth"
  *   }
- *   "f0/f2" : {
+ *   PathSpec of "f0/f2" : {
  *     "AnotherAnnotation" : "NONE"
  *   }
  * }
@@ -68,7 +68,7 @@ import org.slf4j.LoggerFactory;
  * ResolvedPropertiesReaderVisitor resolvedPropertiesReaderVisitor = new ResolvedPropertiesReaderVisitor();
  * DataSchemaRichContextTraverser traverser = new DataSchemaRichContextTraverser(resolvedPropertiesReaderVisitor);
  * traverser.traverse(processedDataSchema);
- * Map<String, Map<String, Object>> = resolvedPropertiesReaderVisitor.getLeafFieldsPathSpecToResolvedPropertiesMap()
+ * Map<PathSpec, Map<String, Object>> = resolvedPropertiesReaderVisitor.getLeafFieldsToResolvedPropertiesMap()
  * </pre>
  *
  * a leaf DataSchema is a schema that doesn't have other types of DataSchema linked from it.
@@ -82,7 +82,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ResolvedPropertiesReaderVisitor implements DataSchemaRichContextTraverser.SchemaVisitor
 {
-  private Map<String, Map<String, Object>> _leafFieldsPathSpecToResolvedPropertiesMap = new HashMap<>();
+  private Map<PathSpec, Map<String, Object>> _leafFieldsToResolvedPropertiesMap = new HashMap<>();
   private static final Logger LOG = LoggerFactory.getLogger(ResolvedPropertiesReaderVisitor.class);
 
   @Override
@@ -98,13 +98,13 @@ public class ResolvedPropertiesReaderVisitor implements DataSchemaRichContextTra
          (currentSchema instanceof FixedDataSchema)))
     {
       Map<String, Object> resolvedProperties = currentSchema.getResolvedProperties();
-      _leafFieldsPathSpecToResolvedPropertiesMap.put(
-          new PathSpec(context.getSchemaPathSpec().toArray(new String[0])).toString(), resolvedProperties);
+      _leafFieldsToResolvedPropertiesMap.put(
+          new PathSpec(context.getSchemaPathSpec()), resolvedProperties);
 
-      String mapStringified = resolvedProperties.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(
-          Collectors.joining("&"));
       if (LOG.isDebugEnabled())
       {
+        String mapStringified = resolvedProperties.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(
+            Collectors.joining("&"));
         LOG.debug(String.format("/%s ::: %s", String.join("/", context.getSchemaPathSpec()), mapStringified));
       }
     }
@@ -122,8 +122,26 @@ public class ResolvedPropertiesReaderVisitor implements DataSchemaRichContextTra
     return null;
   }
 
+  /**
+   * This method is deprecated and should not be used due to performance consideration, because this method will generate string and use that as map keys,
+   * and it is not necessarily memory-efficient.
+   *
+   * User should use {@link #getLeafFieldsToResolvedPropertiesMap}, which use PathSpec object as map key.
+   * @return a map with {@link PathSpec} string points to leaf field as map key and the resolved properties as its value
+   *
+   */
+  @Deprecated
   public Map<String, Map<String, Object>> getLeafFieldsPathSpecToResolvedPropertiesMap()
   {
-    return _leafFieldsPathSpecToResolvedPropertiesMap;
+    return _leafFieldsToResolvedPropertiesMap.entrySet()
+                                               .stream()
+                                               .collect(Collectors.toMap(e -> e.getKey().toString(),
+                                                                                  Map.Entry::getValue));
+
+  }
+
+  public Map<PathSpec, Map<String, Object>> getLeafFieldsToResolvedPropertiesMap()
+  {
+    return _leafFieldsToResolvedPropertiesMap;
   }
 }
