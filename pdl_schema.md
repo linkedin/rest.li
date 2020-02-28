@@ -363,7 +363,7 @@ The full list of supported Pegasus primitive types are: `int`, `long`, `float`,
 
 The actual types used for the primitives depends on the language specific
 binding implementation. For details on Java bindings for Pegasus primitives, see
-[Primitive Types] (https://linkedin.github.io/rest.li/java_binding#primitive-types)
+[Primitive Types](https://linkedin.github.io/rest.li/java_binding#primitive-types)
 
 Primitive types cannot be named (except through [typerefs](#typerefs)) and thus
 cannot be defined as top-level schemas.
