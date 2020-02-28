@@ -10,7 +10,7 @@ elif [ $# -eq 1 ]
 then
     TARGET="$1"
 else
-  echo 'usage: ./prepare-release [TARGET_BRANCH_OR_COMMIT]'
+  echo 'usage: ./prepare-release [TARGET_COMMIT]'
   exit 2
 fi
 
@@ -22,6 +22,15 @@ then
   exit 1
 fi
 
+# Ensure that the target commit is an ancestor of master
+git merge-base --is-ancestor $TARGET_COMMIT master
+if [ $? -ne 0 ]
+then
+  echo "Invalid target: $TARGET"
+  echo 'Please select a target commit which is an ancestor of master.'
+  exit 1
+fi
+
 # Determine version to be released
 VERSION=`awk 'BEGIN { FS = "=" }; $1 == "version" { print $2 }' gradle.properties`
 if [ -z "$VERSION" ]
@@ -30,8 +39,18 @@ then
   exit 1
 fi
 
-# Create release tag
+# Ensure that release tag name wouldn't conflict with a local branch
 TAG_NAME="v$VERSION"
+git show-ref --verify refs/heads/$TAG_NAME >/dev/null 2>&1
+if [ $? -eq 0 ]
+then
+  echo "Cannot create tag $TAG_NAME, as it would conflict with a local branch of the same name."
+  echo 'Please delete this branch and avoid naming branches like this in the future.'
+  echo "Hint: 'git branch -D $TAG_NAME' (WARNING: you will lose all local changes on this branch)"
+  exit 1
+fi
+
+# Create release tag
 git tag -a $TAG_NAME $TARGET_COMMIT -m "$TAG_NAME"
 if [ $? -ne 0 ]
 then
@@ -51,3 +70,5 @@ then
   git tag -d $TAG_NAME
   exit 1
 fi
+
+echo 'Complete'

@@ -8,6 +8,13 @@
       "name" : "arrayPromise",
       "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
     }, {
+      "name" : "customTypeRef",
+      "parameters" : [ {
+        "name" : "customLong",
+        "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+      } ],
+      "returns" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+    }, {
       "name" : "echo",
       "parameters" : [ {
         "name" : "input",

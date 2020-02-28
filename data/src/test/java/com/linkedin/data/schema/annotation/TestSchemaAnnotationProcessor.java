@@ -75,13 +75,6 @@ public class TestSchemaAnnotationProcessor
             "Annotation resolution processing failed at at least one of the handlers.\n"
         },
         {
-            "denormalizedsource/invalid/3_5_cyclic_from_include.pdl",
-            "Annotation processing encountered errors during resolution in \"customAnnotation\" handler. \n" +
-            "ERROR :: /com.linkedin.data.schema.annotation.denormalizedsource.invalid.A/f1/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A :: Found overrides that forms a cyclic-referencing: Overrides entry in traverser path \"/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A\" with its pathSpec value \"/f1/f2\" is pointing to the field with traverser path \"/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A/f1/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A\" and schema name \"com.linkedin.data.schema.annotation.denormalizedsource.invalid.A\", this is causing cyclic-referencing.\n" +
-            "ERROR :: /com.linkedin.data.schema.annotation.denormalizedsource.invalid.A :: Overriding pathSpec defined /f1/f2 does not point to a valid primitive field\n" +
-            "Annotation resolution processing failed at at least one of the handlers.\n"
-        },
-        {
           "denormalizedsource/invalid/5_pathSpec_invalid.pdl",
             "Annotation processing encountered errors during resolution in \"customAnnotation\" handler. \n" +
             "ERROR :: /com.linkedin.data.schema.annotation.denormalizedsource.invalid.rcd :: Overrides entries in record schema properties should be pointing to fields in included record schemas only. The pathSpec defined /nonInlucdeField is not pointing to a included field.\n" +

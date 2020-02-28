@@ -51,7 +51,8 @@ import java.util.Map;
  */
 public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, ActionRequest<V>>
 {
-  private final TypeSpec<V>              _elementType;
+  private TypeSpec<V>                    _elementType;
+  private Class<V>                       _elementClass;
   private K                              _id;
   private String                         _name;
   private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>();
@@ -59,7 +60,8 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
 
   public ActionRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
   {
-    this(baseUriTemplate, new TypeSpec<V>(elementClass), resourceSpec, requestOptions);
+    super(baseUriTemplate, resourceSpec, requestOptions);
+    _elementClass = elementClass;
   }
 
   public ActionRequestBuilder(String baseUriTemplate, TypeSpec<V> elementType, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
@@ -193,7 +195,10 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     if (_resourceSpec.getRequestMetadata(_name) == null) // old builder code in use
     {
       requestDataSchema = DynamicRecordMetadata.buildSchema(_name, _actionParams.keySet());
-
+      if (_elementType == null)
+      {
+        _elementType = new TypeSpec<>(_elementClass);
+      }
       Collection<FieldDef<?>> responseFieldDefCollection;
       if (_elementType.getType() == Void.class)
       {
