@@ -27,9 +27,9 @@ excerpt: Rest.li PDL Schema.
 ## PDL Schema Definition
 
 Pegasus is a schema definition and serialization system developed as part of
-rest.li framework. It provides [multi-language
+the Rest.li framework. It provides [multi-language
 support](https://linkedin.github.io/rest.li/multi_language_compatibility_matrix)
-for services built using rest.li and handles seem-less serialization and
+for services built using Rest.li and handles seemless serialization and
 deserialization of data between server and clients.
 
 PDL is a schema definition language for Pegasus, developed
@@ -39,7 +39,7 @@ as a user friendly and concise format replacement for the older JSON based
 ## Creating a Schema
 
 Pegasus supports different types of schemas: [Records](#record-type),
-[Primitive types](#primitive-type), [Enums](#enum-type), [Arrays](#array-type),
+[Primitive types](#primitive-types), [Enums](#enum-type), [Arrays](#array-type),
 [Maps](#map-type), [Unions](#union-type), [Fixed](#fixed-type) and
 [Typerefs](#typerefs). Records, Enums and Typerefs have names (Named schemas)
 and thus can be defined as top-level schemas. Named schemas can specify an
@@ -67,7 +67,8 @@ the named schema.
 Records are the most common type of Pegasus schemas and usually the starting
 point when defining data models using Pegasus. A record represents a Named
 entity with fields representing attributes of that entity. The fields can be
-primitive types, enums, unions, maps, arrays or other records.
+primitive types, enums, unions, maps, arrays, other records or any valid Pegasus
+type.
 
 For example:
 ```pdl
@@ -94,15 +95,15 @@ import com.example.time.Date
 
 record User {
   firstName: string
-  birthDay: Date
+  birthday: Date
 }
 ```
 The above example is defining a record called `User`:
 * This record is using the namespace `com.example.models`. So the fully
  qualified name is `com.example.models.User`.
-* This record is defining two fields, `firstName` and `birthDay`.
+* This record is defining two fields, `firstName` and `birthday`.
  * `firstName` is a primitive field of type `string`.
- * `birthDay` references the type `com.example.time.Date` from the first example
+ * `birthday` references the type `com.example.time.Date` from the first example
 * PDL supports Java like `import` feature that allows you to define references
  to external types and then use them in the schema using their simple name.
 
@@ -125,10 +126,10 @@ import com.example.time.Date
 
 record User {
   firstName: string
-  birthDay: optional Date
+  birthday: optional Date
 }
 ```
-The above example defines the `birthDay` field as optional.
+The above example defines the `birthday` field as optional.
 
 #### Record fields may have default values.
 Pegasus supports specifying default values for fields. Though the definition
@@ -155,7 +156,7 @@ import org.example.time.Date
 
 record User {
   firstName: string
-  birthDay: optional Date
+  birthday: optional Date
   isActive: boolean = true
 }
 ```
@@ -174,7 +175,7 @@ import com.example.time.Date
 
 record User {
   firstName: string
-  birthDay: optional Date
+  birthday: optional Date
   isActive: boolean = true
   address: record Address {
     state: string
@@ -198,7 +199,7 @@ import com.example.time.Date
 
 record User {
   firstName: string
-  birthDay: optional Date
+  birthday: optional Date
   isActive: boolean = true
   address: {
     namespace com.example.models.address
@@ -240,7 +241,7 @@ record User {
   firstName: string
 
   /** User's birth day */
-  birthDay: optional Date
+  birthday: optional Date
 
   // TODO: Can this be an enum?
   /** Status of the user. */
@@ -267,10 +268,10 @@ import com.example.time.Date
 record User {
   firstName: string
 
-  @deprecated = "Use birthDay instead."
+  @deprecated = "Use birthday instead."
   birthYear: int
 
-  birthDay: Date  
+  birthday: Date  
 }
 ```
 Deprecate a record:
