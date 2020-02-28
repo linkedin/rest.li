@@ -1,5 +1,7 @@
 # Rest.li GitHub Pages 
 
+![Jekyll Deploy](https://github.com/linkedin/rest.li/workflows/Jekyll%20Deploy/badge.svg?branch=gh-pages-source&event=push)
+
 ## Install 
 
  - Install jekyll: https://jekyllrb.com/docs/installation/
