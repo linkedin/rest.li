@@ -4,8 +4,6 @@ import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -345,7 +343,7 @@ public class TestSchemaAnnotationProcessor
     ResolvedPropertiesReaderVisitor resolvedPropertiesReaderVisitor = new ResolvedPropertiesReaderVisitor();
     DataSchemaRichContextTraverser traverser = new DataSchemaRichContextTraverser(resolvedPropertiesReaderVisitor);
     traverser.traverse(result.getResultSchema());
-    Map<PathSpec, Map<String, Object>> pathSpecToResolvedPropertiesMap = resolvedPropertiesReaderVisitor.getLeafFieldsPathSpecObjToResolvedPropertiesMap();
+    Map<PathSpec, Map<String, Object>> pathSpecToResolvedPropertiesMap = resolvedPropertiesReaderVisitor.getLeafFieldsToResolvedPropertiesMap();
     Assert.assertEquals(pathSpecToResolvedPropertiesMap.entrySet().size(), expected.size());
 
     for (List<String> pair : expected)
