@@ -213,7 +213,7 @@ public class RestLiMethodInvoker
     if (config != null)
     {
       ConfigValue<Long> timeout = config.getTimeoutMs();
-      if (timeout.getValue() != null && timeout.getValue() > 0)
+      if (timeout != null && timeout.getValue() != null && timeout.getValue() > 0)
       {
         if (timeout.getSource().isPresent())
         {

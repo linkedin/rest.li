@@ -23,6 +23,8 @@ import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriComponent;
@@ -214,11 +216,10 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
    * @return {@link ComplexResourceKey} initialized with id and param values specified in
    *         the input DataMap
    */
-  public static ComplexResourceKey<RecordTemplate, RecordTemplate> buildFromDataMap(DataMap keyDataMap,
-                                                                                    Class<? extends RecordTemplate> keyKeyClass,
-                                                                                    Class<? extends RecordTemplate> keyParamsClass)
+  public static ComplexResourceKey<RecordTemplate, RecordTemplate> buildFromDataMap(DataMap keyDataMap, Class<? extends RecordTemplate> keyKeyClass,
+      Class<? extends RecordTemplate> keyParamsClass)
   {
-    return buildFromDataMap(keyDataMap, ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass));
+    return buildFromDataMap(keyDataMap, ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass), false);
   }
 
   /**
@@ -233,6 +234,23 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
   public static ComplexResourceKey<RecordTemplate, RecordTemplate> buildFromDataMap(DataMap keyDataMap,
                                                                                     ComplexKeySpec<?, ?> complexKeyType)
   {
+    return buildFromDataMap(keyDataMap, complexKeyType, false);
+  }
+
+  /**
+   * Build complex key instance from an untyped datamap representing a complex key as
+   * defined in {@link QueryParamsDataMap}
+   *
+   * @param keyDataMap untyped DataMap - all primitive values are represented as strings.
+   * @param complexKeyType type of {@link ComplexResourceKey}
+   * @param enforceValidation if set true throws IllegalArgumentException on validation failure
+   * @return {@link ComplexResourceKey} initialized with id and param values specified in
+   *         the input DataMap
+   */
+  public static ComplexResourceKey<RecordTemplate, RecordTemplate> buildFromDataMap(DataMap keyDataMap,
+                                                                                    ComplexKeySpec<?, ?> complexKeyType,
+                                                                                    boolean enforceValidation)
+  {
     // Copy in case the original is immutable
     keyDataMap = new DataMap(keyDataMap);
 
@@ -242,8 +260,8 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
     {
       paramsDataMap = new DataMap();
     }
-    RecordTemplate key = validateDataMap(keyDataMap, complexKeyType.getKeyType());
-    RecordTemplate params = validateDataMap(paramsDataMap, complexKeyType.getParamsType());
+    RecordTemplate key = validateDataMap(keyDataMap, complexKeyType.getKeyType(), enforceValidation);
+    RecordTemplate params = validateDataMap(paramsDataMap, complexKeyType.getParamsType(), enforceValidation);
 
     return new ComplexResourceKey<RecordTemplate, RecordTemplate>(key, params);
   }
@@ -270,7 +288,7 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
     Map<String, List<String>> queryParameters =
         UriComponent.decodeQuery(URI.create("?" + currentPathSegment), true);
     DataMap allParametersDataMap = QueryParamsDataMap.parseDataMapKeys(queryParameters);
-    return buildFromDataMap(allParametersDataMap, complexKeyType);
+    return buildFromDataMap(allParametersDataMap, complexKeyType, false);
   }
 
   /**
@@ -288,7 +306,7 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
                                                                                Class<? extends RecordTemplate> keyParamsClass,
                                                                                ProtocolVersion version) throws PathSegmentSyntaxException
   {
-    return parseString(str, ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass), version);
+    return parseString(str, ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass), version, false);
   }
 
   /**
@@ -306,10 +324,29 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
                                                                                ProtocolVersion version)
     throws PathSegmentSyntaxException
   {
+    return parseString(str, complexKeyType, version, false);
+  }
+
+  /**
+   * Parse the given {@link String} into a {@link ComplexResourceKey}.
+   *
+   * @param str the {@link String} to parse
+   * @param complexKeyType the {@link ComplexKeySpec} of the {@link ComplexResourceKey}
+   * @param version the {@link ProtocolVersion}
+   * @param throwErrorOnValidationFailure if set true throws IllegalArgumentException on validation failure for restli V2
+   * @return a {@link ComplexResourceKey}
+   * @throws PathSegmentSyntaxException
+   */
+  public static ComplexResourceKey<RecordTemplate, RecordTemplate> parseString(String str,
+      ComplexKeySpec<?, ?> complexKeyType,
+      ProtocolVersion version,
+      boolean throwErrorOnValidationFailure)
+      throws PathSegmentSyntaxException
+  {
     if (version.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
     {
       DataMap dataMap = (DataMap) URIElementParser.parse(str);
-      return buildFromDataMap(dataMap, complexKeyType);
+      return buildFromDataMap(dataMap, complexKeyType, throwErrorOnValidationFailure);
     }
     else
     {
@@ -319,16 +356,24 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
   }
 
   private static RecordTemplate validateDataMap(DataMap dataMap,
-                                                TypeSpec<? extends RecordTemplate> spec)
+                                                TypeSpec<? extends RecordTemplate> spec,
+                                                boolean enforceValidation)
   {
     RecordTemplate recordTemplate = wrapWithSchema(dataMap, spec);
     // Validate against the class schema with FixupMode.STRING_TO_PRIMITIVE to parse the
     // strings into the
     // corresponding primitive types.
-    ValidateDataAgainstSchema.validate(recordTemplate.data(),
-                                       recordTemplate.schema(),
-                                       new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
-                                                             CoercionMode.STRING_TO_PRIMITIVE));
+    DataSchemaAnnotationValidator validator = new DataSchemaAnnotationValidator(recordTemplate.schema());
+    ValidationResult validationResult =
+        ValidateDataAgainstSchema.validate(recordTemplate.data(), recordTemplate.schema(),
+            new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE),
+            validator);
+    if (enforceValidation && !validationResult.isValid())
+    {
+      throw new IllegalArgumentException(
+          String.format("Complex Key with value '%s' is invalid, reason: %s", recordTemplate.data(),
+              validationResult.getMessages()));
+    }
     return recordTemplate;
   }
 
