@@ -3,7 +3,7 @@ layout: guide
 title: PDL Schema
 permalink: /pdl_schema
 redirect_from: /pdl_syntax
-excerpt: Rest.li PDL Schema.
+excerpt: Documentation of Pegasus schemas and specification of the PDL syntax.
 ---
 
 # PDL Schema
@@ -17,9 +17,9 @@ excerpt: Rest.li PDL Schema.
 -   [Array Type](#array-type)
 -   [Map Type](#map-type)
 -   [Union Type](#union-type)
--   [Typerefs](#typerefs)
+-   [Typeref](#typeref)
 -   [Fixed Type](#fixed-type)
--   [Import](#import)
+-   [Imports](#imports)
 -   [Properties](#properties)
 -   [Package](#package)
 -   [Escaping](#escaping)
@@ -44,8 +44,8 @@ Pegasus supports different types of schemas: [Records](#record-type),
 [Typerefs](#typerefs). Records, Enums and Typerefs have names (Named schemas)
 and thus can be defined as top-level schemas. Named schemas can specify an
 optional namespace to avoid naming conflict between schemas with same name.
-The name prefixed with the namespace using the dot(.) separator becomes the
-fully qualified name(FQN) of the schema. Named schemas can be
+The name prefixed with the namespace using the dot(`.`) separator becomes the
+fully qualified name (FQN) of the schema. Named schemas can be
 referenced from other schemas using the fully qualified name.
 
 Each top-level schema should be stored in its own file with a `.pdl` extension.
@@ -57,8 +57,8 @@ loaders. If there is a reference to a named schema, the code generator will try
 to look for a file in the code generator’s resolver path. The resolver path is
 similar to a Java classpath. The fully qualified name of the named schema will
 be translated to a relative file name. The relative file name is computed by
-replacing dots (“.”) in the fully qualified name by the directory path separator
-(typically “/”) and appending a `.pdl` extension. This relative file name looked
+replacing dots (`.`) in the fully qualified name by the directory path separator
+(typically `/`) and appending a `.pdl` extension. This relative file name looked
 up using each location in the resolver path until it finds a file that contains
 the named schema.
 
@@ -759,7 +759,7 @@ record Contacts {
 }
 ```
 
-## Typerefs
+## Typeref
 
 Pegasus supports a new schema type known as a typeref. A typeref is like a
 typedef in C. It does not declare a new type but declares an alias to an
@@ -866,7 +866,7 @@ fixed MD5 16
 ```
 The example above defines a type called `MD5`, which has a size of `16 bytes`.
 
-## Import
+## Imports
 Imports are optional statements which allow you to avoid writing fully-qualified
 names. They function similarly to imports in Java.
 
@@ -898,6 +898,9 @@ record AuditStamp {
 **Note:**
 - Any type that is not imported and is not within the namespace from which it's
 referenced must be referenced by fully qualified name.
+- Imports take precedence when Pegasus resolves identifiers in a schema. So
+be careful when adding an import that conflicts with types in the same namespace
+of the root-document.
 - Using imports in the following ways will lead to PDL parser errors. You should
 avoid to do so.
 1. Importing types declared inside the document.
