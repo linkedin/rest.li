@@ -66,7 +66,7 @@ gradle :<moduleName>:convertToPdl \
 
 ## Notable Differences Between PDSC and PDL
 
-You can find in-depth documentation on [PDSC syntax](/rest.li/pdsc_syntax) and [PDL syntax](/rest.li/pdl_syntax) elsewhere,
+You can find in-depth documentation on [PDSC syntax](/rest.li/pdsc_syntax) and [PDL syntax](/rest.li/pdl_schema) elsewhere,
 but this section will point out notable differences between PDSC and PDL.
 
 ### PDL is More Java-Like

@@ -15,8 +15,8 @@ toc:
         url: /rest.li/Asynchronous-Servers-and-Clients-in-Rest_li
   - title: Data Schemas
     subfolderitems:
-      - page: PDL Syntax
-        url: /rest.li/pdl_syntax
+      - page: PDL Schema
+        url: /rest.li/pdl_schema
       - page: PDSC Syntax
         url: /rest.li/pdsc_syntax
       - page: Migrating from PDSC to PDL
@@ -24,7 +24,7 @@ toc:
       - page: Avro Translation
         url: /rest.li/avro_translation
       - page: Java Binding
-        url: /rest.li/java_binding      
+        url: /rest.li/java_binding
   - title: Modeling Resources
     subfolderitems:
       - page: Modeling Resources
@@ -36,7 +36,7 @@ toc:
       - page: How Data is Serialized for Transport
         url: /rest.li/how_data_is_serialized_for_transport
       - page: How Data is Represented in Memory
-        url: /rest.li/how_data_is_represented_in_memory    
+        url: /rest.li/how_data_is_represented_in_memory
   - title: Main concepts
     subfolderitems:
       - page: Filters
@@ -62,7 +62,7 @@ toc:
       - page: Writing Unit Tests
         url: /rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers
   - title: How to
-    subfolderitems:    
+    subfolderitems:
       - page: Send Request Query in the Body
         url: /rest.li/Send-Rest_li-Request-Query-In-Request-Body
       - page: Use Projections
@@ -80,7 +80,7 @@ toc:
       - page: Configure Service Errors in Java
         url: /rest.li/user_guide/service_errors_java
   - title: FAQ
-    subfolderitems:    
+    subfolderitems:
       - page: Rest.li - FAQ
         url: /rest.li/Data-FAQ
       - page: Test Suite - Troubleshooting
