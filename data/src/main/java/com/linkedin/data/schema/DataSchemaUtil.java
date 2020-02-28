@@ -18,7 +18,6 @@ package com.linkedin.data.schema;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.element.DataElement;
-
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
