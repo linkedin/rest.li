@@ -790,8 +790,11 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         RecordDataSchema recordSchema = (RecordDataSchema) schema;
         for (RecordDataSchema.Field field : recordSchema.getFields())
         {
-          gatherTypes(field.getType(), field.isDeclaredInline(), encounteredTypes, nonImportableTypeNames,
-              recordSchema.getNamespace());
+          // Process only fields that are part of this schema (ignore included fields).
+          if (field.getRecord().equals(schema)) {
+            gatherTypes(field.getType(), field.isDeclaredInline(), encounteredTypes, nonImportableTypeNames,
+                recordSchema.getNamespace());
+          }
         }
         for (NamedDataSchema include : recordSchema.getInclude())
         {
