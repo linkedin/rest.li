@@ -1,10 +1,17 @@
 namespace com.linkedin.pegasus.generator.test.idl.imports
 
+import com.linkedin.pegasus.generator.test.idl.enums.Fruits
 import com.linkedin.pegasus.generator.test.idl.records.Simple
 
 /**
- * Tests that types in includes list can be imported.
+ * Tests the following:
+ * - types in includes list can be imported.
+ * - types in includes list from same namespace are not imported.
+ * - types referenced by non-inlined included types(transitive) are not imported (Eg, Note from NamespaceOverrides).
+ * - types referenced by inlined included types (Fruits) are imported.
  */
-record Includes includes Simple {
+record Includes includes Simple, NamespaceOverrides, ConflictResolution, record InlineInclude {
+  fruits: Fruits
+} {
   direct: int
 }
