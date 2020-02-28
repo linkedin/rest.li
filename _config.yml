@@ -1,17 +1,21 @@
 title: rest.li
-description: >
-  A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs
-
+description: A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs
+baseurl: /rest.li
 sass:
     style: compressed
-
 toc:
   min_level: 2 # default: 1
   max_level: 5 # default: 6
 
 # Enables syntax highlighting
-highlighter:
-  rouge
+highlighter: rouge
 
 plugins:
   - jekyll-redirect-from
+
+# All source files read by Jekyll during build will be here
+source: ./src
+
+# Output all rendered files here, the GitHub action will push it all to gh-pages
+destination: ./build
+ 

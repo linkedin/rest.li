@@ -1,26 +1,8 @@
-.project
-.settings
-.classpath
-*.iml
-*.iws
-*.ipr
-.gradle/
-.idea/
-build/
-*/build/
-out/
-*/python/bin/
-*/python/lib/
-*/python/include/
-*/bin/
-codegen/
-*Generated*/
-test-output/
-examples/*/api/src/main/idl
-examples/*/api/src/main/snapshot
-ligradle/
-.DS_Store
-_site/
-.sass-cache/
-.jekyll-cache/
+# Rendered files should not be checked in
+/build/
+
+# Miscellaneous
+/.sass-cache/
+/.jekyll-cache/
+/.jekyll-metadata
 

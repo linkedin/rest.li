@@ -1,0 +1,21 @@
+name: Jekyll Deploy
+
+on:
+  push:
+    branches:
+      - gh-pages-source
+
+jobs:
+  job1:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v1
+      - name: Build source and push rendered files to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_ACTOR: ${{ github.actor }}
+        uses: BryanSchuetz/jekyll-deploy-gh-pages@master
+

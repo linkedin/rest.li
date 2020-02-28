@@ -1,0 +1,17 @@
+name: Jekyll Build Test
+
+on:
+  pull_request:
+    branches:
+      - gh-pages-source
+
+jobs:
+  job1:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v1
+      - name: Build source
+        uses: BryanSchuetz/jekyll-deploy-gh-pages/build@master
+
