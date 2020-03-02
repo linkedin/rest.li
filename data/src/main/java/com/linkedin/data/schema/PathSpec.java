@@ -65,6 +65,17 @@ public class PathSpec
   }
 
   /**
+   * Construct a new {@link PathSpec} from a list of path segments
+   *
+   * @param path provides a list of path segments
+   */
+  public PathSpec(List<String> path)
+  {
+    _path = new ArrayList<>(path.size());
+    _path.addAll(path);
+  }
+
+  /**
    * Construct a new {@link PathSpec} from just one segment.
    *
    * @param segment provides the only segment of the path.
