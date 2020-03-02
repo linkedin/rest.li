@@ -1168,7 +1168,7 @@ public class TestDataTranslator
     // 7. seventh element is whether this is a valid case
     // 8. eighth element tells the error message if this is invalid
     return new Object[][] {
-//          If the dataMap has customer set values, the mode should have no impact on the DataTranslator.
+        // 1. If the dataMap has customer set values, the mode should have no impact on the DataTranslator. Tests for Int
         {
             // required int with default value
             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
@@ -1216,6 +1216,37 @@ public class TestDataTranslator
             "",
         },
 
+        // 2. If the dataMap has customer set values, the mode should have no impact on the DataTranslator. Tests for Array
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"arrayRequired\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : \"string\" } ##T_END, \"default\": [ ] } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"arrayRequired\",\"type\":{\"type\":\"array\",\"items\":\"string\"},\"default\":[]}]}",
+            "{\"arrayRequired\":[\"a\",\"b\"]}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"arrayRequired\":[\"a\",\"b\"]}",
+            false,
+            "",
+        },
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"arrayRequired\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : \"string\" } ##T_END, \"default\": [ ] } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"arrayRequired\",\"type\":{\"type\":\"array\",\"items\":\"string\"},\"default\":[]}]}",
+            "{\"arrayRequired\":[\"a\",\"b\"]}",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"arrayRequired\":[\"a\",\"b\"]}",
+            false,
+            "",
+        },
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"arrayRequired\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : \"string\" } ##T_END, \"default\": [ ] } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"arrayRequired\",\"type\":[\"null\",{\"type\":\"array\",\"items\":\"string\"}],\"default\":null}]}",
+            "{\"arrayRequired\":[\"a\",\"b\"]}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"arrayRequired\":{\"array\":[\"a\",\"b\"]}}",//read as optional from Avro true,
+            false,
+            "",
+        },
         {
           "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"arrayRequired\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : \"string\" } ##T_END, \"default\": [ ] } ] }",
             PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
@@ -1227,7 +1258,210 @@ public class TestDataTranslator
             "",
         },
 
-        // Test in different options, using int as example
+
+        // 3. If the dataMap has customer set values, the mode should have no impact on the DataTranslator. Tests for Union
+        {
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"int\",\"string\"],\"default\":42}]}",
+            "{\"bar\":{\"int\":42}}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"bar\":{\"int\":42}}",
+            false,
+            "",
+        },
+        {
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"int\",\"string\"],\"default\":42}]}",
+            "{\"bar\":{\"int\":42}}",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"bar\":{\"int\":42}}",
+            false,
+            "",
+        },
+        {
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\",\"string\"],\"default\":null}]}",
+            "{\"bar\":{\"int\":42}}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"bar\":{\"int\":42}}",
+            false,
+            "",
+        },
+        {
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"foo\",\"fields\":[{\"name\":\"bar\",\"type\":[\"null\",\"int\",\"string\"],\"default\":null}]}",
+            "{\"bar\":{\"int\":42}}",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"bar\":{\"int\":42}}",
+            false,
+            "",
+        },
+
+        // 4. If the dataMap has customer set values, the mode should have no impact on the DataTranslator. Tests for Map
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"mapRequired\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : \"string\" } ##T_END, \"default\": {} } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"mapRequired\",\"type\":{\"type\":\"map\",\"values\":\"string\"},\"default\":{}}]}",
+            "{\"mapRequired\":{\"somekey\":\"somevalue\"}}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"mapRequired\":{\"somekey\":\"somevalue\"}}",
+            false,
+            "",
+        },
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"mapRequired\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : \"string\" } ##T_END, \"default\": {} } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"mapRequired\",\"type\":{\"type\":\"map\",\"values\":\"string\"},\"default\":{}}]}",
+            "{\"mapRequired\":{\"somekey\":\"somevalue\"}}",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"mapRequired\":{\"somekey\":\"somevalue\"}}",
+            false,
+            "",
+        },
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"mapRequired\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : \"string\" } ##T_END, \"default\": {} } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"mapRequired\",\"type\":[\"null\",{\"type\":\"map\",\"values\":\"string\"}],\"default\":null}]}",
+            "{\"mapRequired\":{\"somekey\":\"somevalue\"}}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"mapRequired\":{\"map\":{\"somekey\":\"somevalue\"}}}",
+            false,
+            "",
+        },
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"mapRequired\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : \"string\" } ##T_END, \"default\": {} } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"mapRequired\",\"type\":[\"null\",{\"type\":\"map\",\"values\":\"string\"}],\"default\":null}]}",
+            "{\"mapRequired\":{\"somekey\":\"somevalue\"}}",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"mapRequired\":{\"map\":{\"somekey\":\"somevalue\"}}}",
+            false,
+            "",
+        },
+
+        // 5. If the dataMap has customer set values, the mode should have no impact on the DataTranslator. Tests for  nested record
+        {
+            " { " +
+            "   \"type\" : \"record\", " +
+            "   \"name\" : \"Foo\", " +
+            "   \"fields\" : [ { " +
+            "     \"name\" : \"nestedField\", " +
+            "     \"type\" : { " +
+            "       \"type\" : \"record\", " +
+            "       \"name\" : \"nestedRecord\", " +
+            "       \"fields\" : [ { " +
+            "         \"name\" : \"field1\", " +
+            "         \"type\" : \"int\" " +
+            "       } ] " +
+            "     }, " +
+            "     \"default\": { \"field1\" : 1} " +
+            "   } ] " +
+            " } ",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"nestedField\",\"type\":{\"type\":\"record\",\"name\":\"nestedRecord\",\"fields\":[{\"name\":\"field1\",\"type\":\"int\"}]},\"default\":{\"field1\":1}}]}",
+            " { " +
+            "     \"nestedField\": { " +
+            "         \"field1\":42 " +
+            "     } " +
+            " } ",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"nestedField\":{\"field1\":42}}",
+            false,
+            "",
+        },
+        {
+            " { " +
+            "   \"type\" : \"record\", " +
+            "   \"name\" : \"Foo\", " +
+            "   \"fields\" : [ { " +
+            "     \"name\" : \"nestedField\", " +
+            "     \"type\" : { " +
+            "       \"type\" : \"record\", " +
+            "       \"name\" : \"nestedRecord\", " +
+            "       \"fields\" : [ { " +
+            "         \"name\" : \"field1\", " +
+            "         \"type\" : \"int\" " +
+            "       } ] " +
+            "     }, " +
+            "     \"default\": { \"field1\" : 1} " +
+            "   } ] " +
+            " } ",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"nestedField\",\"type\":{\"type\":\"record\",\"name\":\"nestedRecord\",\"fields\":[{\"name\":\"field1\",\"type\":\"int\"}]},\"default\":{\"field1\":1}}]}",
+            " { " +
+            "     \"nestedField\": { " +
+            "         \"field1\":42 " +
+            "     } " +
+            " } ",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"nestedField\":{\"field1\":42}}",
+            false,
+            "",
+        },
+        {
+            " { " +
+            "   \"type\" : \"record\", " +
+            "   \"name\" : \"Foo\", " +
+            "   \"fields\" : [ { " +
+            "     \"name\" : \"nestedField\", " +
+            "     \"type\" : { " +
+            "       \"type\" : \"record\", " +
+            "       \"name\" : \"nestedRecord\", " +
+            "       \"fields\" : [ { " +
+            "         \"name\" : \"field1\", " +
+            "         \"type\" : \"int\" " +
+            "       } ] " +
+            "     }, " +
+            "     \"default\": { \"field1\" : 1} " +
+            "   } ] " +
+            " } ",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"nestedField\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"nestedRecord\",\"fields\":[{\"name\":\"field1\",\"type\":\"int\"}]}],\"default\":null}]}",
+            " { " +
+            "     \"nestedField\": { " +
+            "         \"field1\":42 " +
+            "     } " +
+            " } ",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"nestedField\":{\"nestedRecord\":{\"field1\":42}}}",
+            false,
+            "",
+        },
+        {
+            " { " +
+            "   \"type\" : \"record\", " +
+            "   \"name\" : \"Foo\", " +
+            "   \"fields\" : [ { " +
+            "     \"name\" : \"nestedField\", " +
+            "     \"type\" : { " +
+            "       \"type\" : \"record\", " +
+            "       \"name\" : \"nestedRecord\", " +
+            "       \"fields\" : [ { " +
+            "         \"name\" : \"field1\", " +
+            "         \"type\" : \"int\" " +
+            "       } ] " +
+            "     }, " +
+            "     \"default\": { \"field1\" : 1} " +
+            "   } ] " +
+            " } ",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"nestedField\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"nestedRecord\",\"fields\":[{\"name\":\"field1\",\"type\":\"int\"}]}],\"default\":null}]}",
+            " { " +
+            "     \"nestedField\": { " +
+            "         \"field1\":42 " +
+            "     } " +
+            " } ",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"nestedField\":{\"nestedRecord\":{\"field1\":42}}}",
+            false,
+            "",
+        },
+
+        // 6. Test when input is missing, using int
         {
             // required int with default value
             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
@@ -1263,7 +1497,7 @@ public class TestDataTranslator
             "",
         },
 
-        // Tests with union
+        // 7. Test when input is missing, using union
         {
             // required Union of [int string] with default value
             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",
@@ -1299,7 +1533,147 @@ public class TestDataTranslator
             "",
         },
 
-        // Tests with Enum
+        // 8. Test when input is missing, using array
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"arrayRequired\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : \"string\" } ##T_END, \"default\": [ ] } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"arrayRequired\",\"type\":{\"type\":\"array\",\"items\":\"string\"},\"default\":[]}]}",
+            "{}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"arrayRequired\":[]}",
+            false,
+            "",
+        },
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"arrayRequired\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : \"string\" } ##T_END, \"default\": [ ] } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"arrayRequired\",\"type\":[\"null\",{\"type\":\"array\",\"items\":\"string\"}],\"default\":null}]}",
+            "{}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"arrayRequired\":{\"array\":[]}}",
+            false,
+            "",
+        },
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"arrayRequired\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : \"string\" } ##T_END, \"default\": [ ] } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"arrayRequired\",\"type\":[\"null\",{\"type\":\"array\",\"items\":\"string\"}],\"default\":null}]}",
+            "{}",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"arrayRequired\":null}",
+            false,
+            "",
+        },
+
+        // 9. Test when input is missing, using map
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"mapRequired\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : \"string\" } ##T_END, \"default\": {} } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"mapRequired\",\"type\":{\"type\":\"map\",\"values\":\"string\"},\"default\":{}}]}",
+            "{}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"mapRequired\":{}}",
+            false,
+            "",
+        },
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"mapRequired\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : \"string\" } ##T_END, \"default\": {} } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"mapRequired\",\"type\":[\"null\",{\"type\":\"map\",\"values\":\"string\"}],\"default\":null}]}",
+            "{}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"mapRequired\":{\"map\":{}}}",
+            false,
+            "",
+        },
+        {
+            "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"mapRequired\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : \"string\" } ##T_END, \"default\": {} } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"mapRequired\",\"type\":[\"null\",{\"type\":\"map\",\"values\":\"string\"}],\"default\":null}]}",
+            "{}",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"mapRequired\":null}",
+            false,
+            "",
+        },
+
+        {
+            " { " +
+            "   \"type\" : \"record\", " +
+            "   \"name\" : \"Foo\", " +
+            "   \"fields\" : [ { " +
+            "     \"name\" : \"nestedField\", " +
+            "     \"type\" : { " +
+            "       \"type\" : \"record\", " +
+            "       \"name\" : \"nestedRecord\", " +
+            "       \"fields\" : [ { " +
+            "         \"name\" : \"field1\", " +
+            "         \"type\" : \"int\" " +
+            "       } ] " +
+            "     }, " +
+            "     \"default\": { \"field1\" : 1} " +
+            "   } ] " +
+            " } ",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"nestedField\",\"type\":{\"type\":\"record\",\"name\":\"nestedRecord\",\"fields\":[{\"name\":\"field1\",\"type\":\"int\"}]},\"default\":{\"field1\":1}}]}",
+            "{}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"nestedField\":{\"field1\":1}}",
+            false,
+            "",
+        },
+        {
+            " { " +
+            "   \"type\" : \"record\", " +
+            "   \"name\" : \"Foo\", " +
+            "   \"fields\" : [ { " +
+            "     \"name\" : \"nestedField\", " +
+            "     \"type\" : { " +
+            "       \"type\" : \"record\", " +
+            "       \"name\" : \"nestedRecord\", " +
+            "       \"fields\" : [ { " +
+            "         \"name\" : \"field1\", " +
+            "         \"type\" : \"int\" " +
+            "       } ] " +
+            "     }, " +
+            "     \"default\": { \"field1\" : 1} " +
+            "   } ] " +
+            " } ",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"nestedField\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"nestedRecord\",\"fields\":[{\"name\":\"field1\",\"type\":\"int\"}]}],\"default\":null}]}",
+            "{}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"nestedField\":{\"nestedRecord\":{\"field1\":1}}}",
+            false,
+            "",
+        },
+        {
+            " { " +
+            "   \"type\" : \"record\", " +
+            "   \"name\" : \"Foo\", " +
+            "   \"fields\" : [ { " +
+            "     \"name\" : \"nestedField\", " +
+            "     \"type\" : { " +
+            "       \"type\" : \"record\", " +
+            "       \"name\" : \"nestedRecord\", " +
+            "       \"fields\" : [ { " +
+            "         \"name\" : \"field1\", " +
+            "         \"type\" : \"int\" " +
+            "       } ] " +
+            "     }, " +
+            "     \"default\": { \"field1\" : 1} " +
+            "   } ] " +
+            " } ",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"type\":\"record\",\"name\":\"Foo\",\"fields\":[{\"name\":\"nestedField\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"nestedRecord\",\"fields\":[{\"name\":\"field1\",\"type\":\"int\"}]}],\"default\":null}]}",
+            "{}",
+            PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
+            "{\"nestedField\":null}",
+            false,
+            "",
+        },
+
+        // 11. Test when input is missing, using enum
         {
             // required enum with default value
             "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"enumRequired\", \"type\" : ##T_START { \"name\" : \"Fruits\", \"type\" : \"enum\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"default\": \"APPLE\" } ] }",
@@ -1337,6 +1711,7 @@ public class TestDataTranslator
             "",
         },
 
+        // Below are test case example for invalid option combination:
         // If the field in pegasus schema has been translated as required, its data cannot be translated as optional
         {
             // required int with default value
