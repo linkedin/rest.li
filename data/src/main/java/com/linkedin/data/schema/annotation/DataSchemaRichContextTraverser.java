@@ -73,7 +73,7 @@ public class DataSchemaRichContextTraverser
    * which could ensure the correctness of the traversal
    *
    */
-  private DataSchema _originalDataSchemaUnderTraversal;
+  private DataSchema _originalTopLevelSchemaUnderTraversal;
 
   public DataSchemaRichContextTraverser(SchemaVisitor schemaVisitor)
   {
@@ -82,8 +82,9 @@ public class DataSchemaRichContextTraverser
 
   public void traverse(DataSchema schema)
   {
-    _originalDataSchemaUnderTraversal = schema;
+    _originalTopLevelSchemaUnderTraversal = schema;
     TraverserContext traverserContext = new TraverserContext();
+    traverserContext.setOriginalTopLevelSchema(_originalTopLevelSchemaUnderTraversal);
     traverserContext.setCurrentSchema(schema);
     traverserContext.setVisitorContext(_schemaVisitor.getInitialVisitorContext());
     doRecursiveTraversal(traverserContext);
@@ -411,7 +412,7 @@ public class DataSchemaRichContextTraverser
    * A new {@link TraverserContext} object will be created before entering child from parent.
    * In this way, we simulate {@link TraverserContext} as elements inside stack during recursive traversal.
    */
-  static class TraverserContext
+  public static class TraverserContext
   {
     /**
      * Use this flag to control whether DataSchemaRichContextTraverser should continue to traverse from parent to child.
@@ -420,6 +421,7 @@ public class DataSchemaRichContextTraverser
     Boolean _shouldContinue = null;
     DataSchema _parentSchema;
     DataSchema _currentSchema;
+    DataSchema _originalTopLevelSchema;
     /**
      * This traverse path is a very detailed path, and is same as the path used in {@link DataSchemaTraverse}
      * This path's every component corresponds to a move by traverser, and its components have TypeRef components and record name.
@@ -483,6 +485,7 @@ public class DataSchemaRichContextTraverser
                                     DataSchema nextSchema, CurrentSchemaEntryMode nextSchemaEntryMode)
     {
       TraverserContext nextContext = new TraverserContext();
+      nextContext.setOriginalTopLevelSchema(this.getOriginalTopLevelSchema());
       nextContext.setParentSchema(this.getCurrentSchema());
       nextContext.setSchemaPathSpec(new ArrayDeque<>(this.getSchemaPathSpec()));
       nextContext.setVisitorContext(this.getVisitorContext());
@@ -505,6 +508,16 @@ public class DataSchemaRichContextTraverser
       return nextContext;
     }
 
+    public DataSchema getOriginalTopLevelSchema()
+    {
+      return _originalTopLevelSchema;
+    }
+
+    void setOriginalTopLevelSchema(DataSchema originalTopLevelSchema)
+    {
+      _originalTopLevelSchema = originalTopLevelSchema;
+    }
+
     public Boolean shouldContinue()
     {
       return _shouldContinue;
@@ -520,7 +533,7 @@ public class DataSchemaRichContextTraverser
       _visitorContext = visitorContext;
     }
 
-    ArrayDeque<String> getSchemaPathSpec()
+    public ArrayDeque<String> getSchemaPathSpec()
     {
       return _schemaPathSpec;
     }
@@ -530,7 +543,7 @@ public class DataSchemaRichContextTraverser
       _schemaPathSpec = schemaPathSpec;
     }
 
-    DataSchema getCurrentSchema()
+    public DataSchema getCurrentSchema()
     {
       return _currentSchema;
     }
