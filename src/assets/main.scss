@@ -3,3 +3,8 @@
 ---
 
 @import "main";
+
+// Keeps tables containing multi-line code blocks from getting too bloated
+table figure.highlight {
+    margin: 0;
+}

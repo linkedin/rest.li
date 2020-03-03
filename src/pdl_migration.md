@@ -76,12 +76,13 @@ Whereas reading and writing PDSC is like reading and writing plain JSON, reading
 writing PDL is like reading and writing a Java interface definition.
 
 <table>
-    <tr>
-        <th>PDSC</th>
-        <th>PDL</th>
-    </tr>
-    <tr>
-        <td><pre>
+  <tr>
+    <th>PDSC</th>
+    <th>PDL</th>
+  </tr>
+  <tr>
+    <td>
+{% highlight json %}
 {
   "type" : "record",
   "name" : "Foo",
@@ -110,8 +111,10 @@ writing PDL is like reading and writing a Java interface definition.
     "someAnnotation" : 123
   } ]
 }
-        </pre></td>
-        <td><pre>
+{% endhighlight %}
+    </td>
+    <td>
+{% highlight pdl %}
 namespace com.example.models
 
 /**
@@ -128,8 +131,9 @@ record Foo {
   @someAnnotation = 123
   z: enum Fruits{ APPLE, BANANA, PEAR } = "PEAR"
 }
-        </pre></td>
-    </tr>
+{% endhighlight %}
+    </td>
+  </tr>
 </table>
 
 ### Import Statements
@@ -140,37 +144,36 @@ that can be referenced by their simple name rather than their full name. This ca
 redundant data written in schemas that refer to the same type numerous times.
 
 <table>
-    <tr>
-        <th>PDSC</th>
-        <th>PDL</th>
-    </tr>
-    <tr>
-        <td><pre>
+  <tr>
+    <th>PDSC</th>
+    <th>PDL</th>
+  </tr>
+  <tr>
+    <td>
+{% highlight json %}
 {
-    "namespace": "com.example.models",
-    "type": "record",
-    "name": "Redundancies",
-    "doc": "Imports help to reduce redundant FQNs.",
-    "fields": [
-        {
-            "name": "a",
-            "type": "org.external.types.SomeType"
-        },
-        {
-            "name": "b",
-            "type": "org.external.types.SomeType"
-        },
-        {
-            "name": "c",
-            "type": {
-                "type": "array",
-                "items": "org.external.types.SomeType"
-            }
-        }
-    ]
+  "namespace": "com.example.models",
+  "type": "record",
+  "name": "Redundancies",
+  "doc": "Imports help to reduce redundant FQNs.",
+  "fields": [ {
+    "name": "a",
+    "type": "org.external.types.SomeType"
+  }, {
+    "name": "b",
+    "type": "org.external.types.SomeType"
+  }, {
+    "name": "c",
+    "type": {
+      "type": "array",
+      "items": "org.external.types.SomeType"
+    }
+  } ]
 }
-        </pre></td>
-        <td><pre>
+{% endhighlight %}
+    </td>
+    <td>
+{% highlight pdl %}
 namespace com.example.models
 
 import org.external.types.SomeType
@@ -179,12 +182,13 @@ import org.external.types.SomeType
  * Imports help to reduce redundant FQNs.
  */
 record Redundancies {
-    a: SomeType,
-    b: SomeType,
-    c: array[SomeType]
+  a: SomeType,
+  b: SomeType,
+  c: array[SomeType]
 }
-        </pre></td>
-    </tr>
+{% endhighlight %}
+    </td>
+  </tr>
 </table>
 
 ### Shorthand for Custom Properties
@@ -193,28 +197,31 @@ Custom properties (also referred to as "annotations") were supported in PDSC as 
 In PDL, the syntax for custom properties is cleaner and more Java-like.
 
 <table>
-    <tr>
-        <th>PDSC</th>
-        <th>PDL</th>
-    </tr>
-    <tr>
-        <td><pre>
+  <tr>
+    <th>PDSC</th>
+    <th>PDL</th>
+  </tr>
+  <tr>
+    <td>
+{% highlight json %}
 {
-    "namespace": "com.example.models",
-    "type": "record",
-    "name": "CustomProperties",
-    "doc": "PDL has more flexible support for custom properties.",
-    "something": [ 1, 2, 3 ],
-    "fields": []
+  "namespace": "com.example.models",
+  "type": "record",
+  "name": "CustomProperties",
+  "something": [ 1, 2, 3 ],
+  "fields": []
 }
-        </pre></td>
-        <td><pre>
+{% endhighlight %}
+    </td>
+    <td>
+{% highlight pdl %}
 namespace com.example.models
 
 @something = [ 1, 2, 3 ]
 record CustomProperties {}
-        </pre></td>
-    </tr>
+{% endhighlight %}
+    </td>
+  </tr>
 </table>
 
 Furthermore, PDL supports a path-like shorthand, where dot-separated keys can be used to specify nested custom properties.
@@ -259,27 +266,31 @@ One can easily imagine a scenario in which this would really come in handy:
 Another interesting shorthand for custom properties is omission of an explicit value to indicate `true`:
 
 <table>
-    <tr>
-        <th>PDSC</th>
-        <th>PDL</th>
-    </tr>
-    <tr>
-        <td><pre>
+  <tr>
+    <th>PDSC</th>
+    <th>PDL</th>
+  </tr>
+  <tr>
+    <td>
+{% highlight json %}
 {
-    "namespace": "com.example.models",
-    "type": "record",
-    "name": "ImplicitProperty",
-    "truthy": true,
-    "fields": []
+  "namespace": "com.example.models",
+  "type": "record",
+  "name": "ImplicitProperty",
+  "truthy": true,
+  "fields": []
 }
-        </pre></td>
-        <td><pre>
+{% endhighlight %}
+    </td>
+    <td>
+{% highlight pdl %}
 namespace com.example.models
 
 @truthy
 record ImplicitProperty {}
-        </pre></td>
-    </tr>
+{% endhighlight %}
+    </td>
+  </tr>
 </table>
 
 ### Cleaner Enum Declarations
@@ -292,12 +303,13 @@ On the other hand, PDL's syntax for defining enum symbol metadata is quite intui
 deprecation annotation can be placed right alongside the symbol.
 
 <table>
-    <tr>
-        <th>PDSC</th>
-        <th>PDL</th>
-    </tr>
-    <tr>
-        <td><pre>
+  <tr>
+    <th>PDSC</th>
+    <th>PDL</th>
+  </tr>
+  <tr>
+    <td>
+{% highlight json %}
 {
   "type" : "enum",
   "name" : "Fruits",
@@ -322,8 +334,10 @@ deprecation annotation can be placed right alongside the symbol.
     }
   }
 }
-        </pre></td>
-        <td><pre>
+{% endhighlight %}
+    </td>
+    <td>
+{% highlight pdl %}
 enum Fruits {
   APPLE,
 
@@ -342,8 +356,9 @@ enum Fruits {
   @deprecated
   PLUM
 }
-        </pre></td>
-    </tr>
+{% endhighlight %}
+    </td>
+  </tr>
 </table>
 
 ### Specifying Default Field Values
@@ -354,12 +369,13 @@ fields in PDL is the same as in PDSC. In both PDSC and PDL, default values are s
 because PDL is _not_ a JSON-like format, however field default values are still represented using JSON.
 
 <table>
-    <tr>
-        <th>PDSC</th>
-        <th>PDL</th>
-    </tr>
-    <tr>
-        <td><pre>
+  <tr>
+    <th>PDSC</th>
+    <th>PDL</th>
+  </tr>
+  <tr>
+    <td>
+{% highlight json %}
 {
   "type" : "record",
   "name" : "Defaults",
@@ -399,8 +415,10 @@ because PDL is _not_ a JSON-like format, however field default values are still 
     "default" : "SYMBOL1"
   } ]
 }
-        </pre></td>
-        <td><pre>
+{% endhighlight %}
+    </td>
+    <td>
+{% highlight pdl %}
 namespace com.example.models
 
 record Defaults {
@@ -410,6 +428,7 @@ record Defaults {
   a: SomeUnion = { "float": 1 },
   b: SomeEnum = "SYMBOL1"
 }
-        </pre></td>
-    </tr>
+{% endhighlight %}
+    </td>
+  </tr>
 </table>
