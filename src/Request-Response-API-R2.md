@@ -22,7 +22,7 @@ R2 can be used independently, with D2 (our Dynamic Discovery system), or with bo
 ## Layers
 The following diagram shows the layers involved in the R2 system. Each layer will be described in detail below.
 
-<p><img src="/rest.li/images/r2.png"></p>
+<p><img src="{{ 'assets/images/r2.png' | relative_url }}"></p>
 
 ## Requests and Responses
 

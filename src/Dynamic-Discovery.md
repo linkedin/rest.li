@@ -158,7 +158,7 @@ The LazyClient is just a wrapper that does not actually create an r2 client unti
 
 <h4> Client Wrapper Diagram </h4>
 
-<center><img src="/rest.li/images/TransportClient.png"></center>
+<center><img src="{{ 'assets/images/TransportClient.png' | relative_url }}"></center>
 
 <h3> LoadBalancer </h3>
 
@@ -201,7 +201,7 @@ D2 currently support range-based and hash-based partitioning.
 
 <h3> Load Balancer Flow </h3>
 
-<center><img src="/rest.li/images/LoadBalancerFlow.png"></center>
+<center><img src="{{ 'assets/images/LoadBalancerFlow.png' | relative_url }}"></center>
 
 Here is an example of the code flow when a request comes in. For the sake of this example, we'll a fictional widget service. Let's also say that in order to get the data for a widget resource, we need to contact 3 different services: WidgetX, WidgetY, and WidgetZ backend.
 
@@ -253,7 +253,7 @@ In D2, a registry is a way to listen for properties. Registries allow you to reg
 
 By default, none of the stores in Dynamic Discovery are thread safe. To make the stores thread safe, a PropertyStoreMessenger can be used. The messenger is basically a wrapper around a store that forces all writes to go through a single thread. Reads still happen synchronously.
 
-<center><img src="/rest.li/images/LoadBalancer.png"></center>
+<center><img src="{{ 'assets/images/LoadBalancer.png' | relative_url }}"></center>
 
 
 ## Operations

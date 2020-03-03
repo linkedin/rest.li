@@ -1,0 +1,9 @@
+/*
+ * This file contains custom styling rules. If you need to tweak the styling for one particular
+ * use case, you should do so here.
+ */
+
+// Keeps tables containing multi-line code blocks from getting too bloated (see: /pdl_migration)
+table figure.highlight {
+    margin: 0;
+}
