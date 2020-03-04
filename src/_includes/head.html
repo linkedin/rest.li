@@ -15,28 +15,24 @@
     <title>{% if page.title %}{{ page.title | escape }}{% else %}{{ site.title | escape }}{% endif %}</title>
     <meta name="description" content="{{ page.excerpt | default: site.description | strip_html | normalize_whitespace | truncate: 160 | escape }}" />
 
-    <link rel="icon"
-      type="image/png"
-      href="/rest.li/images/icon_pegasus.png">
+    <link rel="icon" type="image/png" href="{{ 'assets/images/icon_pegasus.png' | relative_url }}">
   
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" media="screen,projection" href="{{ "/assets/materialize.css" | relative_url }}" />
-    <link rel="stylesheet" type="text/css" media="screen,projection" href="{{ "/assets/main.css" | relative_url }}">
-    <link rel="stylesheet" type="text/css" media="screen,projection" href="{{ "/assets/syntax-highlight-tango.css" | relative_url }}">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="{{ 'assets/css/main.css' | relative_url }}">
     <link rel="canonical" href="{{ page.url | replace:'index.html','' | absolute_url }}" />
-    <link rel="alternate" type="application/rss+xml" title="{{ site.title | escape }}" href="{{ "/feed.xml" | relative_url }}" />
+    <link rel="alternate" type="application/rss+xml" title="{{ site.title | escape }}" href="{{ 'feed.xml' | relative_url }}" />
 
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
 
     <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
-    <script src="{{ "js/lunr.min.js" | relative_url }}"></script>
-    <script src="{{ "js/lunr-feed.js" | relative_url }}"></script>
+    <script src="{{ 'assets/js/lunr.min.js' | relative_url }}"></script>
+    <script src="{{ 'assets/js/lunr-feed.js' | relative_url }}"></script>
     {% if page.title == "Search" %}
-    <script src="{{ "js/search.js" | relative_url }}"></script>
+      <script src="{{ 'assets/js/search.js' | relative_url }}"></script>
     {% endif %}
 
     {% if jekyll.environment == 'production' and site.google_analytics %}
-    {% include google-analytics.html %}
+      {% include google-analytics.html %}
     {% endif %}
     <script>
        $(function() {

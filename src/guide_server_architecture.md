@@ -60,7 +60,7 @@ classes:
 
 <center>
 <b>Data and Control Flow Between a Rest.li Server and
-Client</b><br><img src="/rest.li/images/RestLiClientServerFlow.png">
+Client</b><br><img src="{{ 'assets/images/RestLiClientServerFlow.png' | relative_url }}">
 
 </center>
 <a id="wiki-ServerDataFlow"></a>
@@ -175,7 +175,7 @@ allow a server and clients to exchange data.
 
 <center>
 <b>Rest.li Development
-Flow</b><br><img src="/rest.li/images/RestLiCodeGen.png">
+Flow</b><br><img src="{{ 'assets/images/RestLiCodeGen.png' | relative_url }}">
 
 </center>
 Let's look at each step:

@@ -879,7 +879,7 @@ client/server interaction. The call may fail at any point during this
 flow, as described below.
 
 <center>
-<b>Rest.li Request Flow</b><br><img src="/rest.li/images/RequestFlow.png">
+<b>Rest.li Request Flow</b><br><img src="{{ 'assets/images/RequestFlow.png' | relative_url }}">
 </center>
 
 The following list describes the failures scenarios as observed by a

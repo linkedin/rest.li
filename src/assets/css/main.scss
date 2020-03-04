@@ -1,0 +1,14 @@
+---
+# Only the main Sass file needs front matter (the dashes are enough).
+# Imports from Sass files located in "/_sass"
+---
+
+// General styling (third party)
+@import "general";
+@import "materialize/materialize";
+
+// Special styling
+@import "syntax-highlight-tango";
+
+// All tweaks should be done here
+@import "custom";
