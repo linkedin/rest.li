@@ -352,12 +352,9 @@ public class DataTranslator implements DataTranslatorContext
             {
               continue;
             }
-            boolean isOptional = field.getOptional();
             DataSchema fieldDataSchema = field.getType();
             Schema fieldAvroSchema = avroSchema.getField(fieldName).schema();
-            if (isOptional && (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION) ||
-                ((fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION) &&
-                 fieldAvroSchema.getType() == Schema.Type.UNION))
+            if (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION && fieldAvroSchema.getType() == Schema.Type.UNION)
             {
               // Avro schema should be union with 2 types: null and the field's type.
               Map.Entry<String, Schema> fieldAvroEntry = findUnionMember(fieldDataSchema, fieldAvroSchema);
@@ -646,8 +643,9 @@ public class DataTranslator implements DataTranslatorContext
               }
             }
 
-            if ((fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION) && fieldAvroSchema.getType() == Schema.Type.UNION) {
-              // Since optional field will be represented as union in Avro
+            if (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION &&
+                fieldAvroSchema.getType() == Schema.Type.UNION)
+            {
               // Need to extract the Avro type corresponding to the pegasus type from the Avro union
               Map.Entry<String, Schema> fieldAvroEntry = findUnionMember(fieldDataSchema, fieldAvroSchema);
               if (fieldAvroEntry == null)
@@ -658,7 +656,6 @@ public class DataTranslator implements DataTranslatorContext
               fieldAvroSchema = fieldAvroEntry.getValue();
             }
 
-            // Translate default value as null, depending on specified options
             Object fieldAvroValue = translate(fieldValue, fieldDataSchema, fieldAvroSchema);
             avroRecord.put(fieldName, fieldAvroValue);
             _path.removeLast();
