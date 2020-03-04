@@ -83,14 +83,14 @@ public class DataSchemaRichContextTraverser
   public void traverse(DataSchema schema)
   {
     _originalTopLevelSchemaUnderTraversal = schema;
-    TraverserContext traverserContext = new TraverserContext();
+    TraverserContextImpl traverserContext = new TraverserContextImpl();
     traverserContext.setOriginalTopLevelSchema(_originalTopLevelSchemaUnderTraversal);
     traverserContext.setCurrentSchema(schema);
     traverserContext.setVisitorContext(_schemaVisitor.getInitialVisitorContext());
     doRecursiveTraversal(traverserContext);
   }
 
-  private void doRecursiveTraversal(TraverserContext context)
+  private void doRecursiveTraversal(TraverserContextImpl context)
   {
 
     // Add full name to the context's TraversePath
@@ -117,7 +117,7 @@ public class DataSchemaRichContextTraverser
       _seenAncestorsDataSchema.put(schema, Boolean.TRUE);
 
       // Pass new context in every recursion
-      TraverserContext nextContext = null;
+      TraverserContextImpl nextContext = null;
 
       switch (schema.getType())
       {
@@ -266,6 +266,240 @@ public class DataSchemaRichContextTraverser
   {
   }
 
+
+  /**
+   * Context defined by {@link DataSchemaRichContextTraverser} that will be updated and handled during traversal
+   *
+   * A new {@link TraverserContext} object will be created before entering child from parent.
+   * In this way, we simulate {@link TraverserContext} as elements inside stack during recursive traversal.
+   */
+  public interface TraverserContext
+  {
+    /**
+     * Use this flag to control whether DataSchemaRichContextTraverser should continue to traverse from parent to child.
+     * This variable can be set to null if want default behavior.
+     */
+    void setShouldContinue(Boolean shouldContinue);
+
+    /**
+     * SchemaAnnotationVisitors can set customized context
+     * @see VisitorContext
+     */
+    VisitorContext getVisitorContext();
+
+    void setVisitorContext(VisitorContext visitorContext);
+
+    /**
+     * Return the top level schema the traverser is traversing on.
+     * @return top level schema;
+     */
+    DataSchema getTopLevelSchema();
+
+    /**
+     * During traversal, the {@link TraverserContext} can return the current schema under traversal
+     * @return the current schema under traversal
+     */
+    DataSchema getCurrentSchema();
+
+    /**
+     * During traversal, the {@link TraverserContext} can return the parent schema of the current schema under traversal
+     * @return the parent schema of the current schema.
+     */
+    DataSchema getParentSchema();
+
+    /**
+     * If the context is passing down from a {@link RecordDataSchema}, this attribute will be set with the enclosing
+     * {@link RecordDataSchema.Field}
+     */
+    RecordDataSchema.Field getEnclosingField();
+    /**
+     * If the context is passing down from a {@link UnionDataSchema}, this attribute will be set with the enclosing
+     * {@link UnionDataSchema.Member}
+     */
+    UnionDataSchema.Member getEnclosingUnionMember();
+    /**
+     * This traverse path is a very detailed path, and is same as the path used in {@link DataSchemaTraverse}
+     * This path's every component corresponds to a move by traverser, and its components have TypeRef components and record name.
+     * Example:
+     * <pre>
+     * record Test {
+     *   f1: record Nested {
+     *     f2: typeref TypeRef_Name=int
+     *   }
+     * }
+     * </pre>
+     * The traversePath to the f2 field would be as detailed as "/Test/f1/Nested/f2/TypeRef_Name/int"
+     * Meanwhile its schema pathSpec is as simple as "/f1/f2"
+     *
+     */
+    ArrayDeque<String> getTraversePath();
+    /**
+     * This is the path components corresponds to {@link PathSpec}, it would not have TypeRef component inside its component list, also it would only contain field's name
+     */
+    ArrayDeque<String> getSchemaPathSpec();
+    /**
+     * This attribute tells how currentSchema stored in the context is linked from its parentSchema
+     * For example, if the {@link CurrentSchemaEntryMode} specify the currentSchema is an union member of parent Schema,
+     * User can expect parentSchema is a {@link UnionDataSchema} and the {@link #getEnclosingUnionMember} should return the
+     * enclosing union member that stores the current schema.
+     *
+     * @see CurrentSchemaEntryMode
+     */
+    CurrentSchemaEntryMode getCurrentSchemaEntryMode();
+  }
+
+  private static class TraverserContextImpl implements TraverserContext
+  {
+    private Boolean _shouldContinue = null;
+    private DataSchema _parentSchema;
+    private DataSchema _currentSchema;
+    private DataSchema _originalTopLevelSchema;
+    private ArrayDeque<String> _traversePath = new ArrayDeque<>();
+    private ArrayDeque<String> _schemaPathSpec = new ArrayDeque<>();
+    private RecordDataSchema.Field _enclosingField;
+    private UnionDataSchema.Member _enclosingUnionMember;
+    private CurrentSchemaEntryMode _currentSchemaEntryMode;
+    private VisitorContext _visitorContext;
+
+    @Override
+    public VisitorContext getVisitorContext()
+    {
+      return _visitorContext;
+    }
+
+    /**
+     * Generate a new {@link TraverserContext} for next recursion in {@link DataSchemaRichContextTraverser#doRecursiveTraversal(TraverserContextImpl)}
+     *
+     * @param nextTraversePathComponent pathComponent of the traverse path of the next dataSchema to be traversed
+     * @param nextSchemaPathSpecComponent pathComponent of the schema path of the next dataSchema to be traversed
+     * @param nextSchema the next dataSchema to be traversed
+     * @param nextSchemaEntryMode how next dataSchema is linked from current dataSchema.
+     * @return a new {@link TraverserContext} generated for next recursion
+     */
+    private TraverserContextImpl getNextContext(String nextTraversePathComponent, String nextSchemaPathSpecComponent,
+                                    DataSchema nextSchema, CurrentSchemaEntryMode nextSchemaEntryMode)
+    {
+      TraverserContextImpl nextContext = new TraverserContextImpl();
+      nextContext.setOriginalTopLevelSchema(this.getTopLevelSchema());
+      nextContext.setParentSchema(this.getCurrentSchema());
+      nextContext.setSchemaPathSpec(new ArrayDeque<>(this.getSchemaPathSpec()));
+      nextContext.setVisitorContext(this.getVisitorContext());
+      nextContext.setEnclosingField(this.getEnclosingField());
+      nextContext.setEnclosingUnionMember(this.getEnclosingUnionMember());
+
+      // Need to make a copy so if it is modified in next recursion
+      // it won't affect this recursion
+      nextContext.setTraversePath(new ArrayDeque<>(this.getTraversePath()));
+      nextContext.getTraversePath().add(nextTraversePathComponent);
+      // Same as traversePath, we need to make a copy.
+      nextContext.setSchemaPathSpec(new ArrayDeque<>(this.getSchemaPathSpec()));
+      // SchemaPathSpecComponent could be null if nextSchema is a TypeRefDataSchema
+      if (nextSchemaPathSpecComponent != null)
+      {
+        nextContext.getSchemaPathSpec().add(nextSchemaPathSpecComponent);
+      }
+      nextContext.setCurrentSchema(nextSchema);
+      nextContext.setCurrentSchemaEntryMode(nextSchemaEntryMode);
+      return nextContext;
+    }
+
+    private void setOriginalTopLevelSchema(DataSchema originalTopLevelSchema)
+    {
+      _originalTopLevelSchema = originalTopLevelSchema;
+    }
+
+    public Boolean shouldContinue()
+    {
+      return _shouldContinue;
+    }
+
+    public void setShouldContinue(Boolean shouldContinue)
+    {
+      this._shouldContinue = shouldContinue;
+    }
+
+    public void setVisitorContext(VisitorContext visitorContext)
+    {
+      _visitorContext = visitorContext;
+    }
+
+    @Override
+    public DataSchema getTopLevelSchema()
+    {
+      return _originalTopLevelSchema;
+    }
+
+    public ArrayDeque<String> getSchemaPathSpec()
+    {
+      return _schemaPathSpec;
+    }
+
+    private void setSchemaPathSpec(ArrayDeque<String> schemaPathSpec)
+    {
+      _schemaPathSpec = schemaPathSpec;
+    }
+
+    public DataSchema getCurrentSchema()
+    {
+      return _currentSchema;
+    }
+
+    private void setCurrentSchema(DataSchema currentSchema)
+    {
+      _currentSchema = currentSchema;
+    }
+
+    public ArrayDeque<String> getTraversePath()
+    {
+      return _traversePath;
+    }
+
+    private void setTraversePath(ArrayDeque<String> traversePath)
+    {
+      this._traversePath = traversePath;
+    }
+
+    public DataSchema getParentSchema()
+    {
+      return _parentSchema;
+    }
+
+    private void setParentSchema(DataSchema parentSchema)
+    {
+      _parentSchema = parentSchema;
+    }
+
+    public RecordDataSchema.Field getEnclosingField()
+    {
+      return _enclosingField;
+    }
+
+    private void setEnclosingField(RecordDataSchema.Field enclosingField)
+    {
+      _enclosingField = enclosingField;
+    }
+
+    public UnionDataSchema.Member getEnclosingUnionMember()
+    {
+      return _enclosingUnionMember;
+    }
+
+    private void setEnclosingUnionMember(UnionDataSchema.Member enclosingUnionMember)
+    {
+      _enclosingUnionMember = enclosingUnionMember;
+    }
+
+    public CurrentSchemaEntryMode getCurrentSchemaEntryMode()
+    {
+      return _currentSchemaEntryMode;
+    }
+
+    private void setCurrentSchemaEntryMode(CurrentSchemaEntryMode currentSchemaEntryMode)
+    {
+      _currentSchemaEntryMode = currentSchemaEntryMode;
+    }
+  }
+
   /**
    * The traversal result stores states of the traversal result for each visitor.
    * It should tell whether the traversal is successful and stores error messages if not
@@ -403,204 +637,6 @@ public class DataSchemaRichContextTraverser
     public String formatToErrorMessage()
     {
       return getMessageBuilder().toString();
-    }
-  }
-
-  /**
-   * Context defined by {@link DataSchemaRichContextTraverser} that will be updated and handled during traversal
-   *
-   * A new {@link TraverserContext} object will be created before entering child from parent.
-   * In this way, we simulate {@link TraverserContext} as elements inside stack during recursive traversal.
-   */
-  public static class TraverserContext
-  {
-    /**
-     * Use this flag to control whether DataSchemaRichContextTraverser should continue to traverse from parent to child.
-     * This variable can be set to null if want default behavior.
-     */
-    Boolean _shouldContinue = null;
-    DataSchema _parentSchema;
-    DataSchema _currentSchema;
-    DataSchema _originalTopLevelSchema;
-    /**
-     * This traverse path is a very detailed path, and is same as the path used in {@link DataSchemaTraverse}
-     * This path's every component corresponds to a move by traverser, and its components have TypeRef components and record name.
-     * Example:
-     * <pre>
-     * record Test {
-     *   f1: record Nested {
-     *     f2: typeref TypeRef_Name=int
-     *   }
-     * }
-     * </pre>
-     * The traversePath to the f2 field would be as detailed as "/Test/f1/Nested/f2/TypeRef_Name/int"
-     * Meanwhile its schema pathSpec is as simple as "/f1/f2"
-     *
-     */
-    ArrayDeque<String> _traversePath = new ArrayDeque<>();
-    /**
-     * This is the path components corresponds to {@link PathSpec}, it would not have TypeRef component inside its component list, also it would only contain field's name
-     */
-    ArrayDeque<String> _schemaPathSpec = new ArrayDeque<>();
-    /**
-     * If the context is passing down from a {@link RecordDataSchema}, this attribute will be set with the enclosing
-     * {@link RecordDataSchema.Field}
-     */
-    RecordDataSchema.Field _enclosingField;
-    /**
-     * If the context is passing down from a {@link UnionDataSchema}, this attribute will be set with the enclosing
-     * {@link UnionDataSchema.Member}
-     */
-    UnionDataSchema.Member _enclosingUnionMember;
-    /**
-     * This attribute tells how {@link #_currentSchema} stored in the context is linked from its parentSchema
-     * For example, if the {@link CurrentSchemaEntryMode} specify the {@link #_currentSchema} is an union member of parent Schema,
-     * User can expect parentSchema is a {@link UnionDataSchema} and the {@link #_enclosingUnionMember} should be the
-     * enclosing union member that stores the current schema.
-     *
-     * @see CurrentSchemaEntryMode
-     */
-    CurrentSchemaEntryMode _currentSchemaEntryMode;
-    /**
-     * SchemaAnnotationVisitors can set customized context
-     * @see VisitorContext
-     */
-    VisitorContext _visitorContext;
-
-    VisitorContext getVisitorContext()
-    {
-      return _visitorContext;
-    }
-
-    /**
-     * Generate a new {@link TraverserContext} for next recursion in {@link #doRecursiveTraversal(TraverserContext)}
-     *
-     * @param nextTraversePathComponent pathComponent of the traverse path of the next dataSchema to be traversed
-     * @param nextSchemaPathSpecComponent pathComponent of the schema path of the next dataSchema to be traversed
-     * @param nextSchema the next dataSchema to be traversed
-     * @param nextSchemaEntryMode how next dataSchema is linked from current dataSchema.
-     * @return a new {@link TraverserContext} generated for next recursion
-     */
-    TraverserContext getNextContext(String nextTraversePathComponent, String nextSchemaPathSpecComponent,
-                                    DataSchema nextSchema, CurrentSchemaEntryMode nextSchemaEntryMode)
-    {
-      TraverserContext nextContext = new TraverserContext();
-      nextContext.setOriginalTopLevelSchema(this.getOriginalTopLevelSchema());
-      nextContext.setParentSchema(this.getCurrentSchema());
-      nextContext.setSchemaPathSpec(new ArrayDeque<>(this.getSchemaPathSpec()));
-      nextContext.setVisitorContext(this.getVisitorContext());
-      nextContext.setEnclosingField(this.getEnclosingField());
-      nextContext.setEnclosingUnionMember(this.getEnclosingUnionMember());
-
-      // Need to make a copy so if it is modified in next recursion
-      // it won't affect this recursion
-      nextContext.setTraversePath(new ArrayDeque<>(this.getTraversePath()));
-      nextContext.getTraversePath().add(nextTraversePathComponent);
-      // Same as traversePath, we need to make a copy.
-      nextContext.setSchemaPathSpec(new ArrayDeque<>(this.getSchemaPathSpec()));
-      // SchemaPathSpecComponent could be null if nextSchema is a TypeRefDataSchema
-      if (nextSchemaPathSpecComponent != null)
-      {
-        nextContext.getSchemaPathSpec().add(nextSchemaPathSpecComponent);
-      }
-      nextContext.setCurrentSchema(nextSchema);
-      nextContext.setCurrentSchemaEntryMode(nextSchemaEntryMode);
-      return nextContext;
-    }
-
-    public DataSchema getOriginalTopLevelSchema()
-    {
-      return _originalTopLevelSchema;
-    }
-
-    void setOriginalTopLevelSchema(DataSchema originalTopLevelSchema)
-    {
-      _originalTopLevelSchema = originalTopLevelSchema;
-    }
-
-    public Boolean shouldContinue()
-    {
-      return _shouldContinue;
-    }
-
-    public void setShouldContinue(Boolean shouldContinue)
-    {
-      this._shouldContinue = shouldContinue;
-    }
-
-    void setVisitorContext(VisitorContext visitorContext)
-    {
-      _visitorContext = visitorContext;
-    }
-
-    public ArrayDeque<String> getSchemaPathSpec()
-    {
-      return _schemaPathSpec;
-    }
-
-    void setSchemaPathSpec(ArrayDeque<String> schemaPathSpec)
-    {
-      _schemaPathSpec = schemaPathSpec;
-    }
-
-    public DataSchema getCurrentSchema()
-    {
-      return _currentSchema;
-    }
-
-    void setCurrentSchema(DataSchema currentSchema)
-    {
-      _currentSchema = currentSchema;
-    }
-
-    ArrayDeque<String> getTraversePath()
-    {
-      return _traversePath;
-    }
-
-    void setTraversePath(ArrayDeque<String> traversePath)
-    {
-      this._traversePath = traversePath;
-    }
-
-    DataSchema getParentSchema()
-    {
-      return _parentSchema;
-    }
-
-    void setParentSchema(DataSchema parentSchema)
-    {
-      _parentSchema = parentSchema;
-    }
-
-    RecordDataSchema.Field getEnclosingField()
-    {
-      return _enclosingField;
-    }
-
-    void setEnclosingField(RecordDataSchema.Field enclosingField)
-    {
-      _enclosingField = enclosingField;
-    }
-
-    UnionDataSchema.Member getEnclosingUnionMember()
-    {
-      return _enclosingUnionMember;
-    }
-
-    void setEnclosingUnionMember(UnionDataSchema.Member enclosingUnionMember)
-    {
-      _enclosingUnionMember = enclosingUnionMember;
-    }
-
-    CurrentSchemaEntryMode getCurrentSchemaEntryMode()
-    {
-      return _currentSchemaEntryMode;
-    }
-
-    void setCurrentSchemaEntryMode(CurrentSchemaEntryMode currentSchemaEntryMode)
-    {
-      _currentSchemaEntryMode = currentSchemaEntryMode;
     }
   }
 }
