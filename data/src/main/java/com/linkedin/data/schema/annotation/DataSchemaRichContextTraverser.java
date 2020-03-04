@@ -413,6 +413,7 @@ public class DataSchemaRichContextTraverser
       return _shouldContinue;
     }
 
+    @Override
     public void setShouldContinue(Boolean shouldContinue)
     {
       this._shouldContinue = shouldContinue;
@@ -429,6 +430,7 @@ public class DataSchemaRichContextTraverser
       return _originalTopLevelSchema;
     }
 
+    @Override
     public ArrayDeque<String> getSchemaPathSpec()
     {
       return _schemaPathSpec;
@@ -439,6 +441,7 @@ public class DataSchemaRichContextTraverser
       _schemaPathSpec = schemaPathSpec;
     }
 
+    @Override
     public DataSchema getCurrentSchema()
     {
       return _currentSchema;
@@ -449,6 +452,7 @@ public class DataSchemaRichContextTraverser
       _currentSchema = currentSchema;
     }
 
+    @Override
     public ArrayDeque<String> getTraversePath()
     {
       return _traversePath;
@@ -459,6 +463,7 @@ public class DataSchemaRichContextTraverser
       this._traversePath = traversePath;
     }
 
+    @Override
     public DataSchema getParentSchema()
     {
       return _parentSchema;
@@ -469,6 +474,7 @@ public class DataSchemaRichContextTraverser
       _parentSchema = parentSchema;
     }
 
+    @Override
     public RecordDataSchema.Field getEnclosingField()
     {
       return _enclosingField;
@@ -479,6 +485,7 @@ public class DataSchemaRichContextTraverser
       _enclosingField = enclosingField;
     }
 
+    @Override
     public UnionDataSchema.Member getEnclosingUnionMember()
     {
       return _enclosingUnionMember;
@@ -489,6 +496,7 @@ public class DataSchemaRichContextTraverser
       _enclosingUnionMember = enclosingUnionMember;
     }
 
+    @Override
     public CurrentSchemaEntryMode getCurrentSchemaEntryMode()
     {
       return _currentSchemaEntryMode;
