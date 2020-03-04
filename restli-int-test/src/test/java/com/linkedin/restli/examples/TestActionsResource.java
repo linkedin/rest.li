@@ -30,6 +30,7 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.MessageArray;
 import com.linkedin.restli.examples.greetings.api.Tone;
@@ -89,6 +90,15 @@ public class TestActionsResource extends RestLiIntegrationTest
     Request<String> request = builders.<String>action("Get").build();
     String value = getClient().sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(value, "Hello, World");
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testActionCustomTyperefGet(RootBuilderWrapper<?, ?> builders) throws RemoteInvocationException
+  {
+    Request<CustomLong> customTypeRef =
+        builders.<CustomLong>action("CustomTypeRef").setActionParam("customLong", new CustomLong(1L)).build();
+    CustomLong customLong = getClient().sendRequest(customTypeRef).getResponse().getEntity();
+    Assert.assertEquals(customLong.toLong().longValue(), 1L);
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")

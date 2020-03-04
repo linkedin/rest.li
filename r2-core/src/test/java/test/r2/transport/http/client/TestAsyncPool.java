@@ -26,13 +26,22 @@ import com.linkedin.common.stats.LongTracking;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.common.util.None;
+import com.linkedin.r2.transport.http.client.ExponentialBackOffRateLimiter;
 import com.linkedin.r2.transport.http.client.NoopRateLimiter;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.util.Cancellable;
+import com.linkedin.test.util.AssertionMethods;
+import com.linkedin.test.util.ClockedExecutor;
 import com.linkedin.util.clock.SettableClock;
 import com.linkedin.util.clock.Time;
+import java.util.LinkedList;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -338,11 +347,12 @@ public class TestAsyncPool
     final int PUT_BAD = 3;
     final int DISPOSE = 4;
     final int TIMEOUT = 100;
+    final int WAITER_TIMEOUT = 200;
     final int DELAY = 1200;
 
     final UnreliableLifecycle lifecycle = new UnreliableLifecycle();
     final AsyncPool<AtomicBoolean> pool = new AsyncPoolImpl<AtomicBoolean>(
-        "object pool", lifecycle, POOL_SIZE, TIMEOUT, _executor, MAX_WAITER_SIZE, AsyncPoolImpl.Strategy.MRU,
+        "object pool", lifecycle, POOL_SIZE, TIMEOUT, WAITER_TIMEOUT, _executor, MAX_WAITER_SIZE, AsyncPoolImpl.Strategy.MRU,
         MIN_SIZE, new NoopRateLimiter(), clock, waitTimeTracker);
     PoolStats stats;
     final List<AtomicBoolean> objects = new ArrayList<AtomicBoolean>();
@@ -357,6 +367,7 @@ public class TestAsyncPool
     Assert.assertEquals(stats.getTotalDestroyErrors(), 0);
     Assert.assertEquals(stats.getCheckedOut(), 0);
     Assert.assertEquals(stats.getTotalTimedOut(), 0);
+    Assert.assertEquals(stats.getTotalWaiterTimedOut(), 0);
     Assert.assertEquals(stats.getTotalBadDestroyed(), 0);
     Assert.assertEquals(stats.getMaxPoolSize(), POOL_SIZE);
     Assert.assertEquals(stats.getMinPoolSize(), 0);
@@ -532,9 +543,7 @@ public class TestAsyncPool
     }
     stats = pool.getStats();
     Assert.assertEquals(stats.getCheckedOut(), GET - PUT_BAD - DISPOSE);
-    // When the each create fails, it will retry and cancel the waiter,
-    // resulting in a second create error.
-    Assert.assertEquals(stats.getTotalCreateErrors(), 2*CREATE_BAD);
+    Assert.assertEquals(stats.getTotalCreateErrors(), CREATE_BAD);
   }
 
   /**
@@ -568,6 +577,368 @@ public class TestAsyncPool
 
     stats = pool.getStats();
     Assert.assertEquals(stats.getWaitTimeAvg(), DELAY, DELTA * DELAY);
+  }
+
+  /***
+   * This test case verifies that if more request object creation requests are submitted to the rate limiter, it only
+   * creates the absolute required maximum (see below example)
+   *
+   *  Assumption: the channel pool max size is always bigger than the requested checkout size
+   *
+   *|----------A------------|---------------B---------------|---------------C--------------|-------------D--------------
+   *  A = In Phase A , N number of object checkout request to the pool when there are no tasks pending in the
+   *      rate limiter. A's Expected result = channel pool will create N number of new objects and check them out
+   *  B = In Phase B, N number of object checkout request again sent to the channel pool when the pool has already
+   *      checkout N number of objects, In this phase, the object creation inside the pool is blocked and the
+   *      rate limiter will Queue the creation requests once it reached its maximum concurrency configured.
+   *  C = Ih Phase C, N number of objects are returned to the pool which are created in Phase A, this will make
+   *      the number of idle objects in the pool as N.
+   *  D = In Phase D, All the object creation blocked in Phase B will get un blocked and create number of new objects
+   *      that are equal to the rate limiter concurrency. When rate limiter executes the queued creation requests - it
+   *      should ignore the creation requests as there are no object waiters in the pool and thus effectively only
+   *      creating the absolute minimum required count (N+Concurrency)
+   *
+   * @param numberOfCheckouts the N number of checkout operations that will be performed in phase A & B
+   * @param poolSize the maximum Object Pool Size
+   * @param concurrency the maximum allowed concurrent object creation
+   */
+  @Test(dataProvider = "channelStateRandomDataProvider")
+  public void testObjectsAreNotCreatedWhenThereAreNoWaiters(int numberOfCheckouts, int poolSize, int concurrency)
+      throws Exception
+  {
+    CreationBlockableSynchronousLifecycle blockableObjectCreator =
+        new CreationBlockableSynchronousLifecycle(numberOfCheckouts, concurrency);
+    ScheduledExecutorService executor = Executors.newScheduledThreadPool(500);
+    ExponentialBackOffRateLimiter rateLimiter = new ExponentialBackOffRateLimiter(0, 5000,
+        10, executor, concurrency);
+
+    final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
+        blockableObjectCreator,
+        poolSize,
+        Integer.MAX_VALUE,
+        _executor,
+        Integer.MAX_VALUE,
+        AsyncPoolImpl.Strategy.MRU,
+        0, rateLimiter
+    );
+
+    pool.start();
+
+    // Phase A:Checking out object 'numberOfCheckout' times!
+    List<Object> checkedOutObjects = performCheckout(numberOfCheckouts, pool);
+
+    // Phase B:Blocking object creation and performing the checkout 'numberOfCheckout' times again
+    blockableObjectCreator.blockCreation();
+    Future<None> future = performUnblockingCheckout(numberOfCheckouts, numberOfCheckouts, pool);
+    blockableObjectCreator.waitUntilAllBlocked();
+
+    // Phase C:Returning the checkedOut objects from Phase A back to the object pool
+    for (Object checkedOutObject : checkedOutObjects)
+    {
+      pool.put(checkedOutObject);
+    }
+
+    // Phase D:All the object creation in phase B gets unblocked now
+    blockableObjectCreator.unblockCreation();
+    try
+    {
+      // Wait for all object creation to be unblocked
+      future.get(5, TimeUnit.SECONDS);
+    }
+    catch (Exception e)
+    {
+      Assert.fail("Did not complete unblocked object creations on time, Unexpected interruption", e);
+    }
+
+    // Making sure the rate limiter pending tasks are submitted to the executor
+    AssertionMethods.assertWithTimeout(5000, ()->
+        Assert.assertEquals(rateLimiter.numberOfPendingTasks(),0,"Number of tasks has to drop to 0"));
+
+    // Wait for all the tasks in the rate limiter executor to finish
+    executor.shutdown();
+    try
+    {
+      if (!executor.awaitTermination(10, TimeUnit.SECONDS))
+      {
+        Assert.fail("Executor took too long to shutdown");
+      }
+    }
+    catch (Exception ex)
+    {
+      Assert.fail("Unexpected interruption while shutting down executor", ex);
+    }
+
+    // Verify all the expectations
+    PoolStats stats = pool.getStats();
+    Assert.assertEquals(stats.getTotalCreationIgnored(), numberOfCheckouts-concurrency);
+    Assert.assertEquals(stats.getCheckedOut(), numberOfCheckouts);
+    Assert.assertEquals(stats.getIdleCount(), concurrency);
+    Assert.assertEquals(stats.getTotalCreated(), numberOfCheckouts+concurrency);
+    Assert.assertEquals(stats.getPoolSize(), numberOfCheckouts+concurrency);
+    Assert.assertEquals(stats.getTotalDestroyed(), 0);
+    Assert.assertEquals(stats.getTotalBadDestroyed(), 0);
+    Assert.assertEquals(stats.getTotalTimedOut(), 0);
+  }
+
+  /***
+   * This test case verifies that the correct number of waiters are timed out while waiting for object from the pool
+   *
+   *     Assumption: the channel pool max size is always bigger than the requested checkout size
+   *
+   *|----------A------------|---------------B---------------|---------------C--------------|-------------D--------------
+   *   A = In Phase A , N number of object checkout request to the pool when there are no tasks pending in the rate
+   *       limiter. A's Expected result = channel pool will create N number of new objects and check them out
+   *   B = In Phase B, O number of object checkout request again sent to the channel pool when the pool has already
+   *       checkout N number of objects, In this phase, the object creation inside the pool is blocked
+   *       and the rate limiter will Queue the creation requests once it reached its maximum concurrency configured.
+   *   C = Ih Phase C, P number of objects are returned to the pool which are created in Phase A, this will make
+   *       the number of waiter queue size to be O-P
+   *   D = In Phase D, A delay will be introduced to timeout the waiters and all the O-P waiters should be timed out.
+   *       After the delay the object creation will be unblocked and it should create aleast the concurrency number of
+   *       objects even though the waiters are timedout.
+   *
+   * @param numberOfCheckoutsInPhaseA the N number of checkout operations that will be performed in phase A
+   * @param numberOfCheckoutsInPhaseB the O number of checkout operations that will be performed in Phase B
+   * @param numbOfObjectsToBeReturnedInPhaseC the numeber of objects returned in Phase C
+   * @param poolSize size of the pool,
+   * @param concurrency concurrency of the rate limiter
+   */
+  @Test(dataProvider = "waiterTimeoutDataProvider")
+  public void testWaiterTimeout(int numberOfCheckoutsInPhaseA, int numberOfCheckoutsInPhaseB,
+      int numbOfObjectsToBeReturnedInPhaseC,
+      int poolSize, int concurrency, int waiterTimeout) throws Exception
+  {
+    CreationBlockableSynchronousLifecycle blockableObjectCreator =
+        new CreationBlockableSynchronousLifecycle(numberOfCheckoutsInPhaseB, concurrency);
+    ScheduledExecutorService executor = Executors.newScheduledThreadPool(500);
+    ExponentialBackOffRateLimiter rateLimiter = new ExponentialBackOffRateLimiter(0, 5000,
+        10, executor, concurrency);
+
+    ClockedExecutor clockedExecutor = new ClockedExecutor();
+
+    final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
+        blockableObjectCreator,
+        poolSize,
+        Integer.MAX_VALUE,
+        waiterTimeout,
+        clockedExecutor,
+        Integer.MAX_VALUE,
+        AsyncPoolImpl.Strategy.MRU,
+        0, rateLimiter, clockedExecutor, new LongTracking()
+    );
+
+    pool.start();
+
+    // Phase A : Checking out object 'numberOfCheckoutsInPhaseA' times !
+    List<Object> checkedOutObjects = performCheckout(numberOfCheckoutsInPhaseA, pool);
+
+    // Phase B : Blocking object creation and performing the checkout 'numberOfCheckoutsInPhaseB' times again
+    blockableObjectCreator.blockCreation();
+    Future<None> future = performUnblockingCheckout(numberOfCheckoutsInPhaseB,
+        0, pool);
+
+    blockableObjectCreator.waitUntilAllBlocked();
+
+    // Phase C : Returning the checkedOut objects from Phase A back to the object pool
+    for (int i = 0; i < numbOfObjectsToBeReturnedInPhaseC; i++)
+    {
+      pool.put(checkedOutObjects.remove(0));
+    }
+
+    clockedExecutor.runFor(waiterTimeout);
+
+    // Phase D : All the object creation in phase B gets unblocked now
+    blockableObjectCreator.unblockCreation();
+    try
+    {
+      future.get(5, TimeUnit.SECONDS);
+    }
+    catch (Exception e)
+    {
+      Assert.fail("Did not complete unblocked object creations on time, Unexpected interruption", e);
+    }
+
+    // Making sure the rate limiter pending tasks are submitted to the executor
+    AssertionMethods.assertWithTimeout(5000, () ->
+        Assert.assertEquals(rateLimiter.numberOfPendingTasks(),0,"Number of tasks has to drop to 0"));
+
+    executor.shutdown();
+
+    try
+    {
+      if (!executor.awaitTermination(10, TimeUnit.SECONDS))
+      {
+        Assert.fail("Executor took too long to shutdown");
+      }
+    }
+    catch (Exception ex)
+    {
+      Assert.fail("Unexpected interruption while shutting down executor", ex);
+    }
+
+    PoolStats stats = pool.getStats();
+    Assert.assertEquals(stats.getTotalCreationIgnored(), numberOfCheckoutsInPhaseB - concurrency);
+    Assert.assertEquals(stats.getCheckedOut(), numberOfCheckoutsInPhaseA);
+    Assert.assertEquals(stats.getIdleCount(), concurrency);
+    Assert.assertEquals(stats.getTotalCreated(), numberOfCheckoutsInPhaseA + concurrency);
+    Assert.assertEquals(stats.getPoolSize(), numberOfCheckoutsInPhaseA + concurrency);
+    Assert.assertEquals(stats.getTotalWaiterTimedOut(), numberOfCheckoutsInPhaseB - numbOfObjectsToBeReturnedInPhaseC);
+  }
+
+  @DataProvider
+  public Object[][] channelStateRandomDataProvider()
+  {
+    // 500 represent a good sample for the randomized data.
+    // This has been verified against 100K test cases in local
+    int numberOfTestCases = 500;
+    Random randomNumberGenerator = ThreadLocalRandom.current();
+
+    Object[][] data = new Object[numberOfTestCases][3];
+    for (int i = 0; i < numberOfTestCases; i++)
+    {
+      int checkout = randomNumberGenerator.nextInt(200)+1;
+      int poolSize = randomNumberGenerator.nextInt(checkout)+checkout*2;
+      int concurrency = randomNumberGenerator.nextInt(Math.min(checkout,499))+1;
+      data[i][0] = checkout;
+      data[i][1] = poolSize;
+      data[i][2] = concurrency;
+    }
+
+    return data;
+  }
+
+  @DataProvider
+  public Object[][] waiterTimeoutDataProvider()
+  {
+    // 500 represent a good sample for the randomized data.
+    // This has been verified against 100K test cases in local
+    int numberOfTestCases = 500;
+    Random randomNumberGenerator = new Random();
+
+    Object[][] data = new Object[numberOfTestCases][6];
+    for (int i = 0; i < numberOfTestCases; i++)
+    {
+      int numberOfCheckoutsInPhaseA = randomNumberGenerator.nextInt(100)+1;
+      int numberOfCheckoutsInPhaseB = randomNumberGenerator.nextInt(numberOfCheckoutsInPhaseA)+1;
+      numberOfCheckoutsInPhaseB = Math.min(numberOfCheckoutsInPhaseA, numberOfCheckoutsInPhaseB);
+      int numbOfObjectsToBeReturnedInPhaseC = randomNumberGenerator.nextInt(numberOfCheckoutsInPhaseB);
+      int poolSize = randomNumberGenerator.nextInt(numberOfCheckoutsInPhaseA)+numberOfCheckoutsInPhaseA*2;
+      int concurrency = randomNumberGenerator.nextInt(Math.min(numberOfCheckoutsInPhaseB,499))+1;
+      concurrency = Math.min(concurrency, numberOfCheckoutsInPhaseB);
+
+      data[i][0] = numberOfCheckoutsInPhaseA;
+      data[i][1] = numberOfCheckoutsInPhaseB;
+      data[i][2] = numbOfObjectsToBeReturnedInPhaseC;
+      data[i][3] = poolSize;
+      data[i][4] = concurrency;
+      data[i][5] = randomNumberGenerator.nextInt(500)+100;
+    }
+
+    return data;
+  }
+
+  private List<Object> performCheckout(int numberOfCheckouts, AsyncPool<Object> pool)
+  {
+    List<Object> checkedOutObjects = new ArrayList<>(numberOfCheckouts);
+
+    ScheduledExecutorService checkoutExecutor = Executors.newScheduledThreadPool(50);
+    CountDownLatch checkoutLatch = new CountDownLatch(numberOfCheckouts);
+    Runnable checkoutTask = getCheckoutTask(pool, checkedOutObjects, new Object(), checkoutLatch, new CountDownLatch(numberOfCheckouts));
+
+    for (int i = 0; i < numberOfCheckouts; i++)
+    {
+      checkoutExecutor.execute(checkoutTask);
+    }
+
+    try
+    {
+      checkoutLatch.await(5, TimeUnit.SECONDS);
+      checkoutExecutor.shutdownNow();
+    }
+    catch (Exception ex)
+    {
+      Assert.fail("Too long to perform checkout operation");
+    }
+
+    return checkedOutObjects;
+  }
+
+  private Future<None> performUnblockingCheckout(int numberOfCheckoutRequests, int numberOfCheckouts, AsyncPool<Object> pool)
+  {
+    ScheduledExecutorService checkoutExecutor = Executors.newScheduledThreadPool(500);
+
+    CountDownLatch checkoutLatch = new CountDownLatch(numberOfCheckouts);
+    CountDownLatch requestLatch = new CountDownLatch(numberOfCheckoutRequests);
+    Runnable checkoutTask = getCheckoutTask(pool, new LinkedList<>(), new Object(), checkoutLatch,
+        requestLatch);
+
+    for (int i = 0; i < numberOfCheckoutRequests; i++)
+    {
+      checkoutExecutor.execute(checkoutTask);
+    }
+
+    try
+    {
+      requestLatch.await(5, TimeUnit.SECONDS);
+    }
+    catch (Exception ex)
+    {
+      Assert.fail("Too long to perform checkout operation");
+    }
+
+    return new DelayedFutureCallback<>(checkoutLatch, checkoutExecutor);
+  }
+
+  private class DelayedFutureCallback<T> extends FutureCallback<T>
+  {
+    private CountDownLatch _checkoutLatch;
+    private ScheduledExecutorService _checkoutExecutor;
+
+    public DelayedFutureCallback(CountDownLatch checkoutLatch, ScheduledExecutorService checkoutExecutor)
+    {
+      _checkoutLatch = checkoutLatch;
+      _checkoutExecutor = checkoutExecutor;
+    }
+
+    @Override
+    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+      _checkoutLatch.await(timeout, unit);
+      _checkoutExecutor.shutdownNow();
+      return null;
+    }
+
+    @Override
+    public T get() throws InterruptedException, ExecutionException {
+      throw new ExecutionException(new Exception("Not Implemented"));
+    }
+  }
+
+  private Runnable getCheckoutTask(AsyncPool<Object> pool, List<Object> checkedOutObjects, Object sync, CountDownLatch latch,
+      CountDownLatch requestLatch)
+  {
+    return new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        FutureCallback<Object> cb = new FutureCallback<>();
+        pool.get(cb);
+        requestLatch.countDown();
+        try
+        {
+          Object checkedOutObject = cb.get();
+          synchronized (sync)
+          {
+            checkedOutObjects.add(checkedOutObject);
+          }
+          latch.countDown();
+        }
+        catch (Exception e)
+        {
+          Assert.fail("Unexpected failure", e);
+        }
+      }
+    };
   }
 
   public static class SynchronousLifecycle implements AsyncPool.Lifecycle<Object>
@@ -619,6 +990,53 @@ public class TestAsyncPool
     public int getLive()
     {
       return _live;
+    }
+  }
+
+  public static class CreationBlockableSynchronousLifecycle extends SynchronousLifecycle
+  {
+    private CountDownLatch _blockersDoneLatch;
+    private int _totalBlockers;
+
+    public CreationBlockableSynchronousLifecycle(int checkout, int concurrency) {
+      _blockersDoneLatch = new CountDownLatch(checkout);
+      _totalBlockers = concurrency;
+    }
+
+    private CountDownLatch _doneLatch = new CountDownLatch(0);
+
+    public void unblockCreation()
+    {
+      _doneLatch.countDown();
+    }
+
+    public void blockCreation()
+    {
+      _doneLatch = new CountDownLatch(1);
+      _blockersDoneLatch = new CountDownLatch(_totalBlockers);
+    }
+
+    public void waitUntilAllBlocked() throws InterruptedException
+    {
+      _blockersDoneLatch.await();
+    }
+
+    @Override
+    public void create(Callback<Object> callback)
+    {
+      long latch;
+      try
+      {
+        latch = _blockersDoneLatch.getCount();
+        _blockersDoneLatch.countDown();
+        _doneLatch.await();
+      }
+      catch (Exception ex)
+      {
+        latch = -1;
+      }
+
+      callback.onSuccess(latch);
     }
   }
 

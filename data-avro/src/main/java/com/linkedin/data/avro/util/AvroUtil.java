@@ -20,8 +20,6 @@ import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -46,8 +44,7 @@ public class AvroUtil
   {
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>();
     ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-    ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteOutputStream);
-    Encoder binaryEncoder = AvroCompatibilityHelper.newBinaryEncoder(objectOutputStream);
+    Encoder binaryEncoder = AvroCompatibilityHelper.newBinaryEncoder(byteOutputStream, false, null);
     writer.setSchema(record.getSchema());
     writer.write(record, binaryEncoder);
     binaryEncoder.flush();
@@ -58,7 +55,7 @@ public class AvroUtil
   {
     GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>();
     Decoder binaryDecoder = AvroCompatibilityHelper.newBinaryDecoder(
-        new ObjectInputStream(new ByteArrayInputStream(bytes)));
+        new ByteArrayInputStream(bytes), false, null);
     reader.setSchema(schema);
     GenericRecord record = reader.read(null, binaryDecoder);
     return record;

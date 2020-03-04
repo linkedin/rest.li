@@ -19,7 +19,15 @@
       },
       "doc" : "tone"
     } ]
-  }, "com.linkedin.restli.examples.greetings.api.Tone" ],
+  }, "com.linkedin.restli.examples.greetings.api.Tone", {
+    "type" : "typeref",
+    "name" : "CustomLongRef",
+    "namespace" : "com.linkedin.restli.examples.typeref.api",
+    "ref" : "long",
+    "java" : {
+      "class" : "com.linkedin.restli.examples.custom.types.CustomLong"
+    }
+  } ],
   "schema" : {
     "name" : "actions",
     "namespace" : "com.linkedin.restli.examples.greetings.client",
@@ -29,6 +37,13 @@
       "actions" : [ {
         "name" : "arrayPromise",
         "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
+      }, {
+        "name" : "customTypeRef",
+        "parameters" : [ {
+          "name" : "customLong",
+          "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
+        } ],
+        "returns" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
       }, {
         "name" : "echo",
         "parameters" : [ {

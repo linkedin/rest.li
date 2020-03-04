@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.common;
 
-
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.TemplateRuntimeException;
@@ -67,7 +66,10 @@ public class TypeSpec<T>
   private static DataSchema backfillSchemaIfPossible(Class<?> type)
   {
     // These are all the classes used for type specs that are "schema-less".
-    if(type == CompoundKey.class || type == ComplexResourceKey.class || type == Void.class) return null;
+    if (type == CompoundKey.class || type == ComplexResourceKey.class || type == Void.class)
+    {
+      return null;
+    }
 
     try
     {

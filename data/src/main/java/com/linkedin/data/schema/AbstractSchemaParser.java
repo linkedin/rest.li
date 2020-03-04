@@ -191,7 +191,7 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
     return schema;
   }
 
-  private void checkForCycleWithInclude(String fullName)
+  protected void checkForCycleWithInclude(String fullName)
   {
     LinkedHashMap<String, Boolean> pendingSchemas = getResolver().getPendingSchemas();
     // Return if there is no cycle.

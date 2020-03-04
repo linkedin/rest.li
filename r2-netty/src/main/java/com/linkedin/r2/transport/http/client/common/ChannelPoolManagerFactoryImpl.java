@@ -53,6 +53,9 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
   private final ScheduledExecutorService _scheduler;
   private final boolean _enableSSLSessionResumption;
   private final boolean _usePipelineV2;
+  private final int _channelPoolWaiterTimeout;
+  private final int _connectTimeout;
+  private final int _sslHandShakeTimeout;
 
   /**
    * @param eventLoopGroup The NioEventLoopGroup; it is the caller's responsibility to
@@ -63,12 +66,16 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
    * @param usePipelineV2 Use unified new code.
    */
   public ChannelPoolManagerFactoryImpl(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
-      boolean enableSSLSessionResumption, boolean usePipelineV2)
+      boolean enableSSLSessionResumption, boolean usePipelineV2, int channelPoolWaiterTimeout,
+      int connectTimeout, int sslHandShakeTimeout)
   {
     _eventLoopGroup = eventLoopGroup;
     _scheduler = scheduler;
     _enableSSLSessionResumption = enableSSLSessionResumption;
     _usePipelineV2 = usePipelineV2;
+    _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
+    _connectTimeout = connectTimeout;
+    _sslHandShakeTimeout = sslHandShakeTimeout;
   }
 
   @Override
@@ -101,7 +108,10 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
         _scheduler,
         channelPoolManagerKey.getMaxConcurrentConnectionInitializations(),
         _enableSSLSessionResumption,
-        channelGroup),
+        channelGroup,
+        _channelPoolWaiterTimeout,
+        _connectTimeout,
+        _sslHandShakeTimeout),
       channelPoolManagerKey.getName(),
       channelGroup,
       _scheduler);
@@ -131,7 +141,10 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
           channelPoolManagerKey.getIdleTimeout(),
           channelPoolManagerKey.getMaxResponseSize(),
           channelPoolManagerKey.isTcpNoDelay(),
-          _enableSSLSessionResumption);
+          _enableSSLSessionResumption,
+          _channelPoolWaiterTimeout,
+          _connectTimeout,
+          _sslHandShakeTimeout);
     }
     else
     {
@@ -151,7 +164,10 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
           channelPoolManagerKey.getMaxResponseSize(),
           _enableSSLSessionResumption,
           _eventLoopGroup,
-          channelGroup);
+          channelGroup,
+          _channelPoolWaiterTimeout,
+          _connectTimeout,
+          _sslHandShakeTimeout);
     }
     return new ChannelPoolManagerImpl(
         channelPoolFactory,
@@ -184,7 +200,9 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
           channelPoolManagerKey.getIdleTimeout(),
           channelPoolManagerKey.getMaxResponseSize(),
           channelPoolManagerKey.isTcpNoDelay(),
-          _enableSSLSessionResumption);
+          _enableSSLSessionResumption,
+          _connectTimeout,
+          _sslHandShakeTimeout);
     }
     else
     {
@@ -202,7 +220,9 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
           channelPoolManagerKey.getMaxResponseSize(),
           _enableSSLSessionResumption,
           _eventLoopGroup,
-          channelGroup);
+          channelGroup,
+          _connectTimeout,
+          _sslHandShakeTimeout);
     }
 
     return new ChannelPoolManagerImpl(

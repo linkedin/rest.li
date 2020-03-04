@@ -65,10 +65,12 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
   public static final AttributeKey<Http2Connection.PropertyKey> CHANNEL_POOL_HANDLE_ATTR_KEY
       = AttributeKey.valueOf("Handle");
   private final boolean _enableSSLSessionResumption;
+  private final int _sslHandShakeTimeout;
 
   public Http2ClientPipelineInitializer(SSLContext sslContext, SSLParameters sslParameters,
                                         int maxHeaderSize, int maxChunkSize, long maxResponseSize,
-                                        long gracefulShutdownTimeout, boolean enableSSLSessionResumption)
+                                        long gracefulShutdownTimeout, boolean enableSSLSessionResumption,
+                                        int sslHandShakeTimeout)
   {
     // Check if requested parameters are present in the supported params of the context.
     // Log warning for those not present. Throw an exception if none present.
@@ -102,6 +104,7 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
     _maxResponseSize = maxResponseSize;
     _gracefulShutdownTimeout = gracefulShutdownTimeout;
     _enableSSLSessionResumption = enableSSLSessionResumption;
+    _sslHandShakeTimeout = sslHandShakeTimeout;
   }
 
   @Override
@@ -179,7 +182,7 @@ class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel
       .gracefulShutdownTimeoutMillis(_gracefulShutdownTimeout)
       .build();
 
-    Http2AlpnHandler alpnHandler = new Http2AlpnHandler(context, http2Codec, _enableSSLSessionResumption);
+    Http2AlpnHandler alpnHandler = new Http2AlpnHandler(context, http2Codec, _enableSSLSessionResumption, _sslHandShakeTimeout);
     Http2SchemeHandler schemeHandler = new Http2SchemeHandler(HttpScheme.HTTPS.toString());
     Http2StreamResponseHandler responseHandler = new Http2StreamResponseHandler();
 

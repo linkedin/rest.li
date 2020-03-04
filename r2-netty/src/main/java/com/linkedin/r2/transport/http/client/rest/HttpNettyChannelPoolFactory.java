@@ -28,6 +28,7 @@ import com.linkedin.util.clock.SystemClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -54,19 +55,24 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
   private final ChannelGroup _allChannels;
   private final ScheduledExecutorService _scheduler;
   private final int _maxConcurrentConnectionInitializations;
+  private final int _channelPoolWaiterTimeout;
 
   public HttpNettyChannelPoolFactory(int maxPoolSize, long idleTimeout, int maxPoolWaiterSize, AsyncPoolImpl.Strategy strategy,
                                      int minPoolSize, EventLoopGroup eventLoopGroup, SSLContext sslContext, SSLParameters sslParameters, int maxHeaderSize,
                                      int maxChunkSize, int maxResponseSize, ScheduledExecutorService scheduler, int maxConcurrentConnectionInitializations,
-                                     boolean enableSSLSessionResumption, ChannelGroup allChannels)
+                                     boolean enableSSLSessionResumption, ChannelGroup allChannels, int channelPoolWaiterTimeout,
+                                     int connectTimeout, int sslHandShakeTimeout)
   {
 
     _allChannels = allChannels;
     _scheduler = scheduler;
     _maxConcurrentConnectionInitializations = maxConcurrentConnectionInitializations;
+    _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
     Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup)
       .channel(NioSocketChannel.class)
-      .handler(new HttpClientPipelineInitializer(sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize, enableSSLSessionResumption));
+      .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
+      .handler(new HttpClientPipelineInitializer(sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize,
+          enableSSLSessionResumption, sslHandShakeTimeout));
 
     _bootstrap = bootstrap;
     _maxPoolSize = maxPoolSize;
@@ -86,6 +92,7 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
         false),
       _maxPoolSize,
       _idleTimeout,
+      _channelPoolWaiterTimeout,
       _scheduler,
       _maxPoolWaiterSize,
       _strategy,
@@ -112,6 +119,7 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
     private final int _maxChunkSize;
     private final int _maxResponseSize;
     private final boolean _enableSSLSessionResumption;
+    private final int _sslSessionTimeout;
 
     /**
      * Creates new instance. If sslParameters is present the PipelineInitializer
@@ -127,12 +135,14 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
      * @param enableSSLSessionResumption
      */
     public HttpClientPipelineInitializer(SSLContext sslContext, SSLParameters sslParameters, int maxHeaderSize,
-                                         int maxChunkSize, int maxResponseSize, boolean enableSSLSessionResumption)
+                                         int maxChunkSize, int maxResponseSize, boolean enableSSLSessionResumption,
+                                         int sslSessionTimeout)
     {
       _maxHeaderSize = maxHeaderSize;
       _maxChunkSize = maxChunkSize;
       _maxResponseSize = maxResponseSize;
       _enableSSLSessionResumption = enableSSLSessionResumption;
+      _sslSessionTimeout = sslSessionTimeout;
       SslHandlerUtil.validateSslParameters(sslContext, sslParameters);
       _sslContext = sslContext;
       _sslParameters = sslParameters;
@@ -144,7 +154,7 @@ public class HttpNettyChannelPoolFactory implements ChannelPoolFactory
       if (_sslContext != null)
       {
         ch.pipeline().addLast(SessionResumptionSslHandler.PIPELINE_SESSION_RESUMPTION_HANDLER,
-          new SessionResumptionSslHandler(_sslContext, _sslParameters, _enableSSLSessionResumption));
+          new SessionResumptionSslHandler(_sslContext, _sslParameters, _enableSSLSessionResumption, _sslSessionTimeout));
       }
       ch.pipeline().addLast("codec", new HttpClientCodec(4096, _maxHeaderSize, _maxChunkSize));
       ch.pipeline().addLast("dechunker", new HttpObjectAggregator(_maxResponseSize));

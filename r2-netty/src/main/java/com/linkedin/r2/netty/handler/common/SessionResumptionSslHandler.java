@@ -17,13 +17,17 @@
 package com.linkedin.r2.netty.handler.common;
 
 import com.linkedin.r2.netty.common.SslHandlerUtil;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.AttributeKey;
+import io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 
@@ -46,14 +50,18 @@ import javax.net.ssl.SSLParameters;
 public class SessionResumptionSslHandler extends ChannelOutboundHandlerAdapter
 {
   public static final String PIPELINE_SESSION_RESUMPTION_HANDLER = "SessionResumptionSslHandler";
+  public static final AttributeKey<SessionResumptionSslHandler> CHANNEL_SESSION_RESUMPTION_HANDLER =
+      AttributeKey.valueOf("sslSessionResumptionHandler");
 
   private final SslHandlerGenerator _hostPortToSslHandler;
+  private final int _sslHandShakeTimeout;
 
   /**
    * @param sslContext note that the type is SslContext (netty implementation) and not SSLContext (JDK implementation)
    */
-  public SessionResumptionSslHandler(SslContext sslContext, boolean enableResumption)
+  public SessionResumptionSslHandler(SslContext sslContext, boolean enableResumption, int sslHandShakeTimeout)
   {
+    _sslHandShakeTimeout = sslHandShakeTimeout;
     _hostPortToSslHandler = enableResumption ?
       (ctx, host, port) -> sslContext.newHandler(ctx.alloc(), host, port) :
       (ctx, host, port) -> sslContext.newHandler(ctx.alloc());
@@ -63,8 +71,10 @@ public class SessionResumptionSslHandler extends ChannelOutboundHandlerAdapter
   /**
    * @param sslContext note that the type is SSLContext (JDK implementation) and not SslContext (netty implementation)
    */
-  public SessionResumptionSslHandler(SSLContext sslContext, SSLParameters sslParameters, boolean enableResumption)
+  public SessionResumptionSslHandler(SSLContext sslContext, SSLParameters sslParameters,
+      boolean enableResumption, int sslHandShakeTimeout)
   {
+    _sslHandShakeTimeout = sslHandShakeTimeout;
     _hostPortToSslHandler = enableResumption ?
       (ctx, host, port) -> SslHandlerUtil.getClientSslHandler(sslContext, sslParameters, host, port) :
       (ctx, host, port) -> SslHandlerUtil.getSslHandler(sslContext, sslParameters, true);
@@ -76,6 +86,7 @@ public class SessionResumptionSslHandler extends ChannelOutboundHandlerAdapter
   {
     final InetSocketAddress address = ((InetSocketAddress) remoteAddress);
     final SslHandler sslHandler = _hostPortToSslHandler.create(ctx, address.getHostName(), address.getPort());
+    sslHandler.setHandshakeTimeout(_sslHandShakeTimeout, TimeUnit.MILLISECONDS);
 
     ctx.pipeline().addAfter(PIPELINE_SESSION_RESUMPTION_HANDLER, SslHandlerUtil.PIPELINE_SSL_HANDLER, sslHandler);
     ctx.pipeline().addAfter(SslHandlerUtil.PIPELINE_SSL_HANDLER, SslHandshakeTimingHandler.SSL_HANDSHAKE_TIMING_HANDLER,

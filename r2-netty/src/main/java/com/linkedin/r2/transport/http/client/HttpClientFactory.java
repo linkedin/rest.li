@@ -148,6 +148,9 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_POOL_MIN_SIZE = 0;
   public static final int DEFAULT_MAX_HEADER_SIZE = 8 * 1024;
   public static final int DEFAULT_MAX_CHUNK_SIZE = 8 * 1024;
+  public static final int DEFAULT_CONNECT_TIMEOUT = 30000;
+  public static final int DEFAULT_SSL_HANDSHAKE_TIMEOUT = 10000;
+  public static final int DEFAULT_CHANNELPOOL_WAITER_TIMEOUT = Integer.MAX_VALUE;
   /**
    * Helper constant to allow specify which version of pipeline v2 the code is running on. Since it is a feature in active development,
    * we want to be able to enable the pipeline through configs, only for clients that have loaded a specific version of code
@@ -187,6 +190,9 @@ public class HttpClientFactory implements TransportClientFactory
   private final CompressionConfig          _defaultRequestCompressionConfig;
   /** List of ExecutorServices created in the builder that needs to be shutdown*/
   private final List<ExecutorService> _executorsToShutDown;
+  private final int _connectTimeout;
+  private final int _sslHandShakeTimeout;
+  private final int _channelPoolWaiterTimeout;
   /** Request compression config for each http service. */
   private final Map<String, CompressionConfig> _requestCompressionConfigs;
   /** Response compression config for each http service. */
@@ -587,6 +593,32 @@ public class HttpClientFactory implements TransportClientFactory
   }
 
   private HttpClientFactory(FilterChain filters,
+      NioEventLoopGroup eventLoopGroup,
+      boolean shutdownFactory,
+      ScheduledExecutorService executor,
+      boolean shutdownExecutor,
+      ExecutorService callbackExecutorGroup,
+      boolean shutdownCallbackExecutor,
+      AbstractJmxManager jmxManager,
+      final int requestCompressionThresholdDefault,
+      final Map<String, CompressionConfig> requestCompressionConfigs,
+      final Map<String, CompressionConfig> responseCompressionConfigs,
+      Executor compressionExecutor,
+      HttpProtocolVersion defaultHttpVersion,
+      boolean shareConnection,
+      EventProviderRegistry eventProviderRegistry,
+      boolean enableSSLSessionResumption,
+      boolean usePipelineV2,
+      List<ExecutorService> executorsToShutDown)
+  {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
+        shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
+        responseCompressionConfigs, compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry,
+        enableSSLSessionResumption, usePipelineV2, executorsToShutDown, DEFAULT_CONNECT_TIMEOUT,
+        DEFAULT_SSL_HANDSHAKE_TIMEOUT, DEFAULT_CHANNELPOOL_WAITER_TIMEOUT);
+  }
+
+  private HttpClientFactory(FilterChain filters,
                             NioEventLoopGroup eventLoopGroup,
                             boolean shutdownFactory,
                             ScheduledExecutorService executor,
@@ -603,7 +635,10 @@ public class HttpClientFactory implements TransportClientFactory
                             EventProviderRegistry eventProviderRegistry,
                             boolean enableSSLSessionResumption,
                             boolean usePipelineV2,
-                            List<ExecutorService> executorsToShutDown)
+                            List<ExecutorService> executorsToShutDown,
+                            int connectTimeout,
+                            int sslHandShakeTimeout,
+                            int channelPoolWaiterTimeout)
   {
     _filters = filters;
     _eventLoopGroup = eventLoopGroup;
@@ -616,6 +651,9 @@ public class HttpClientFactory implements TransportClientFactory
     _jmxManager = jmxManager;
     _defaultRequestCompressionConfig = new CompressionConfig(requestCompressionThresholdDefault);
     _executorsToShutDown = executorsToShutDown;
+    _connectTimeout = connectTimeout;
+    _sslHandShakeTimeout = sslHandShakeTimeout;
+    _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
     if (requestCompressionConfigs == null)
     {
       throw new IllegalArgumentException("requestCompressionConfigs should not be null.");
@@ -630,7 +668,8 @@ public class HttpClientFactory implements TransportClientFactory
     _useClientCompression = _compressionExecutor != null;
     _defaultHttpVersion = defaultHttpVersion;
     _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(
-        _eventLoopGroup, _executor, enableSSLSessionResumption,_usePipelineV2);
+        _eventLoopGroup, _executor, enableSSLSessionResumption,_usePipelineV2, _channelPoolWaiterTimeout,
+        _connectTimeout, _sslHandShakeTimeout);
 
     if (eventProviderRegistry != null)
     {
@@ -666,6 +705,9 @@ public class HttpClientFactory implements TransportClientFactory
     private HttpProtocolVersion _defaultHttpVersion = HttpProtocolVersion.HTTP_1_1;
     private EventProviderRegistry _eventProviderRegistry = null;
     private boolean _enableSSLSessionResumption = true;
+    private int _connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+    private int _sslHandShakeTimeout = DEFAULT_SSL_HANDSHAKE_TIMEOUT;
+    private int _channelPoolWaiterTimeout = DEFAULT_CHANNELPOOL_WAITER_TIMEOUT;
 
     /**
      * @param nioEventLoopGroup the {@link NioEventLoopGroup} that all Clients created by this
@@ -806,6 +848,24 @@ public class HttpClientFactory implements TransportClientFactory
       return this;
     }
 
+    public Builder setConnectTimeout(int connectTimeout)
+    {
+      _connectTimeout = connectTimeout;
+      return this;
+    }
+
+    public Builder setSslHandShakeTimeout(int sslHandShakeTimeout)
+    {
+      _sslHandShakeTimeout = sslHandShakeTimeout;
+      return this;
+    }
+
+    public Builder setChannelPoolWaiterTimeout(int channelPoolWaiterTimeout)
+    {
+      _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
+      return this;
+    }
+
     public Builder setUsePipelineV2(boolean usePipelineV2)
     {
       _usePipelineV2 = usePipelineV2;
@@ -867,7 +927,7 @@ public class HttpClientFactory implements TransportClientFactory
         _shutdownExecutor, callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
         _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
         compressionExecutor, _defaultHttpVersion, _shareConnection, eventProviderRegistry, _enableSSLSessionResumption,
-          _usePipelineV2, executorsToShutDown);
+          _usePipelineV2, executorsToShutDown, _connectTimeout, _sslHandShakeTimeout, _channelPoolWaiterTimeout);
     }
 
   }
