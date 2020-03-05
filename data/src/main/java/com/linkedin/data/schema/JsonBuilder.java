@@ -23,12 +23,16 @@ import com.linkedin.data.template.JacksonDataTemplateCodec;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.PrettyPrinter;
+import java.util.stream.Collectors;
 
 
 /**
@@ -282,7 +286,10 @@ public class JsonBuilder
   {
     if (value.isEmpty() == false)
     {
-      for (Map.Entry<String, ?> entry : value.entrySet())
+      List<Map.Entry<String, ?>> orderedProperties =  value.entrySet().stream()
+                                                                     .sorted(Map.Entry.comparingByKey())
+                                                                     .collect(Collectors.toList());
+        for (Map.Entry<String, ?> entry : orderedProperties)
       {
         _jsonGenerator.writeFieldName(entry.getKey());
         writeData(entry.getValue());

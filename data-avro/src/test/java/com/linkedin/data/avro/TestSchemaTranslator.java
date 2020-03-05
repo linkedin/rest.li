@@ -1238,7 +1238,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"default\" : { \"failure\" : null, \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\" } } ] }",
               emptyFooSchema,
               emptyFooValue,
               "{\"result\": {\"success\": \"Union with aliases.\", \"failure\": null, \"fieldDiscriminator\": ##Q_STARTsuccess##Q_END}}"
@@ -1261,7 +1261,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"failure\" : null, \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\" } } ] }",
               emptyFooSchema,
               emptyFooValue,
               "{\"result\": {\"success\": \"Union with aliases.\", \"failure\": null, \"fieldDiscriminator\": ##Q_STARTsuccess##Q_END}}"
@@ -1308,7 +1308,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"null\", \"success\" : null, \"failure\" : null } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"failure\" : null, \"fieldDiscriminator\" : \"null\", \"success\" : null } } ] }",
               emptyFooSchema,
               emptyFooValue,
               "{\"result\": {\"success\": null, \"failure\": null, \"fieldDiscriminator\": ##Q_STARTnull##Q_END}}"
@@ -1657,6 +1657,46 @@ public class TestSchemaTranslator
                   "}",
               allModes,
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
+              null,
+              null,
+              null
+          },
+          {
+              " { " +
+              "   \"type\" : \"record\", " +
+              "   \"name\" : \"Foo\", " +
+              "   \"fields\" : [ { " +
+              "     \"name\" : \"field1\", " +
+              "     \"type\" : \"int\", " +
+              "     \"b_customerAnnotation\" : \"f1\", " +
+              "     \"c_customerAnnotation\" : \"f1\", " +
+              "     \"a_customerAnnotation\" : \"f1\" " +
+              "   } ] " +
+              " } ",
+              allModes,
+              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"field1\", \"type\" : \"int\", \"a_customerAnnotation\" : \"f1\", \"b_customerAnnotation\" : \"f1\", \"c_customerAnnotation\" : \"f1\" } ] }",
+              null,
+              null,
+              null
+          },
+          {
+              " { " +
+              "   \"type\" : \"record\", " +
+              "   \"name\" : \"Foo\", " +
+              "   \"fields\" : [ { " +
+              "     \"name\" : \"field1\", " +
+              "     \"type\" : \"int\", " +
+              "     \"c_customerAnnotation\" : { " +
+              "       \"b_nested\" : \"a\", " +
+              "       \"a_nested\" : \"a\", " +
+              "       \"c_nested\" : \"a\" " +
+              "     }, " +
+              "     \"a_customerAnnotation\" : \"f1\", " +
+              "     \"b_customerAnnotation\" : \"f1\" " +
+              "   } ] " +
+              " } ",
+              allModes,
+              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"field1\", \"type\" : \"int\", \"a_customerAnnotation\" : \"f1\", \"b_customerAnnotation\" : \"f1\", \"c_customerAnnotation\" : { \"a_nested\" : \"a\", \"b_nested\" : \"a\", \"c_nested\" : \"a\" } } ] }",
               null,
               null,
               null

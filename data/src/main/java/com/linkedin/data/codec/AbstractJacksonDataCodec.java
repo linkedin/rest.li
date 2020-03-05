@@ -297,10 +297,18 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     }
 
     @Override
+    public Iterable<Map.Entry<String, Object>> orderMap(DataMap map)
+    {
+      return Data.orderMapEntries(map);
+    }
+
+    @Override
     public void key(String key) throws IOException
     {
       _generator.writeFieldName(key);
     }
+
+
 
     @Override
     public void endMap() throws IOException
