@@ -808,7 +808,7 @@ For example:
 ```pdl
 namespace com.example.models
 
-typeref PhoneNumber = union[
+typeref PhoneContact = union[
   /** A mobile phone number */
   mobile: PhoneNumber,
 
@@ -828,8 +828,8 @@ Typerefs can then be referred to by name from any other type:
 namespace com.example.models
 
 record Contacts {
-  primaryPhone: PhoneNumber
-  secondaryPhone: PhoneNumber
+  primaryPhone: PhoneContact
+  secondaryPhone: PhoneContact
 }
 ```
 
