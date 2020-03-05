@@ -106,15 +106,15 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath 'com.linkedin.pegasus:gradle-plugins:11.0.17'
+    classpath 'com.linkedin.pegasus:gradle-plugins:27.7.18'
   }
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '4.1'
+  gradleVersion = '4.6'
 }
 
-final pegasusVersion = '11.0.17'
+final pegasusVersion = '27.7.18'
 ext.spec = [
   'product' : [
     'pegasus' : [
@@ -136,6 +136,8 @@ allprojects {
   apply plugin: 'idea'
   apply plugin: 'eclipse'
 }
+
+ext.enablePDL=true
 
 subprojects {
   apply plugin: 'maven'
@@ -468,7 +470,6 @@ like this:
     
 
 Now you can build the server from the `server/` directory with:
-
     $ gradle build
 
 **Note:** If prompted, run the build command a second time. The first build
