@@ -969,7 +969,7 @@ Add properties to aliased union members:
 ```pdl
 namespace com.example.models
 
-typeref PhoneNumber = union[
+typeref PhoneContact = union[
   /** A mobile phone number */
   @allowText = true
   mobile: PhoneNumber,
