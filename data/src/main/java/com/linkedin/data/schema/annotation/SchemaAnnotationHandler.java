@@ -128,18 +128,18 @@ public interface SchemaAnnotationHandler
   AnnotationValidationResult validate(Map<String, Object> resolvedProperties, ValidationMetaData metaData);
 
   /**
-   * Return an implementation of {@link DataSchemaRichContextTraverser.SchemaVisitor} this handler should work with.
+   * Return an implementation of {@link SchemaVisitor} this handler should work with.
    *
-   * The {@link SchemaAnnotationProcessor} would invoke the implementation of the {@link DataSchemaRichContextTraverser.SchemaVisitor}
+   * The {@link SchemaAnnotationProcessor} would invoke the implementation of the {@link SchemaVisitor}
    * to traverse the schema and handle the annotations handled by this handler.
    *
-   * @return return an implementation of {@link DataSchemaRichContextTraverser.SchemaVisitor} that could get called by {@link SchemaAnnotationProcessor}
+   * @return return an implementation of {@link SchemaVisitor} that could get called by {@link SchemaAnnotationProcessor}
    *
-   * also see {@link DataSchemaRichContextTraverser.SchemaVisitor}
+   * also see {@link SchemaVisitor}
    * also see {@link PathSpecBasedSchemaAnnotationVisitor}
    *
    */
-  default DataSchemaRichContextTraverser.SchemaVisitor getVisitor()
+  default SchemaVisitor getVisitor()
   {
     return new PathSpecBasedSchemaAnnotationVisitor(this);
   }

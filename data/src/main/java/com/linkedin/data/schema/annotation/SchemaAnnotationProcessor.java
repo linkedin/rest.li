@@ -23,7 +23,6 @@ import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
-import com.linkedin.data.schema.annotation.DataSchemaRichContextTraverser.SchemaVisitor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * This SchemaAnnotationProcessor is for processing annotations in {@link DataSchema}.
  *
  * The processor is expected to take {@link SchemaAnnotationHandler} as arguments, use them with {@link SchemaVisitor} to
- * traverse the schema and call the {@link SchemaVisitor#callbackOnContext(DataSchemaRichContextTraverser.TraverserContext, DataSchemaTraverse.Order)}
+ * traverse the schema and call the {@link SchemaVisitor#callbackOnContext(TraverserContext, DataSchemaTraverse.Order)}
  * on the {@link SchemaAnnotationHandler}
  *
  * If the schema annotation is annotated using syntax rule that uses pathSpec as path for overriding fields,
@@ -97,7 +96,7 @@ public class SchemaAnnotationProcessor
         throw new IllegalStateException(String.format("Annotation resolution processing failed at \"%s\" handler",
                                                       schemaAnnotationHandler.getAnnotationNamespace()), e);
       }
-      DataSchemaRichContextTraverser.VisitorTraversalResult handlerTraverseResult = visitor.getVisitorTraversalResult();
+      SchemaVisitorTraversalResult handlerTraverseResult = visitor.getSchemaVisitorTraversalResult();
       if (!handlerTraverseResult.isTraversalSuccessful())
       {
         hasResolveError = true;
@@ -141,7 +140,7 @@ public class SchemaAnnotationProcessor
         throw new IllegalStateException(String.format("Annotation validation failed in \"%s\" handler.",
                                                       schemaAnnotationHandler.getAnnotationNamespace()), e);
       }
-      DataSchemaRichContextTraverser.VisitorTraversalResult handlerTraverseResult = validationVisitor.getVisitorTraversalResult();
+      SchemaVisitorTraversalResult handlerTraverseResult = validationVisitor.getSchemaVisitorTraversalResult();
       if (!handlerTraverseResult.isTraversalSuccessful())
       {
         hasValidationError = true;

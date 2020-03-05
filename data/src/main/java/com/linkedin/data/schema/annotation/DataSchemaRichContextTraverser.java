@@ -15,9 +15,6 @@
 */
 package com.linkedin.data.schema.annotation;
 
-import com.linkedin.data.message.Message;
-import com.linkedin.data.message.MessageList;
-import com.linkedin.data.message.MessageUtil;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
@@ -29,11 +26,7 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.stream.Collectors;
 
 
 /**
@@ -217,137 +210,6 @@ public class DataSchemaRichContextTraverser
            || (dataSchema.getType() == DataSchema.Type.ENUM);
   }
 
-  /**
-   * Interface for SchemaVisitor, which will be called by {@link DataSchemaRichContextTraverser}.
-   */
-  public interface SchemaVisitor
-  {
-    /**
-     * The callback function that will be called by {@link DataSchemaRichContextTraverser} visiting the dataSchema under traversal.
-     * This function will be called TWICE within {@link DataSchemaRichContextTraverser}, during two {@link DataSchemaTraverse.Order}s
-     * {@link DataSchemaTraverse.Order#PRE_ORDER} and {@link DataSchemaTraverse.Order#POST_ORDER} respectively.
-     *
-     * @param context
-     * @param order the order given by {@link DataSchemaRichContextTraverser} to tell whether this call happens during pre order or post order
-     */
-    void callbackOnContext(TraverserContext context, DataSchemaTraverse.Order order);
-
-    /**
-     * {@link SchemaVisitor} implements this method to return an initial {@link VisitorContext}
-     * {@link VisitorContext} will be stored inside {@link DataSchemaRichContextTraverser.TraverserContext} and then
-     * passed to {@link SchemaVisitor} during recursive traversal
-     *
-     * @return an initial {@link VisitorContext} that will be stored by {@link SchemaVisitor}
-     *
-     * @see VisitorContext
-     */
-    VisitorContext getInitialVisitorContext();
-
-    /**
-     * The visitor should store a {@link VisitorTraversalResult} which stores this visitor's traversal result.
-     *
-     * @return traversal result after the visitor traversed the schema
-     */
-    VisitorTraversalResult getVisitorTraversalResult();
-  }
-
-  /**
-   * A context that is defined and handled by {@link SchemaVisitor}
-   *
-   * The {@link DataSchemaRichContextTraverser} will get the initial context and then
-   * passing this as part of {@link DataSchemaRichContextTraverser.TraverserContext}
-   *
-   * {@link SchemaVisitor} implementations can store customized information that want to pass during recursive traversal here
-   * similar to how {@link DataSchemaRichContextTraverser.TraverserContext} is used.
-   *
-   * @see DataSchemaRichContextTraverser.TraverserContext
-   */
-  public interface VisitorContext
-  {
-  }
-
-
-  /**
-   * Context defined by {@link DataSchemaRichContextTraverser} that will be updated and handled during traversal
-   *
-   * A new {@link TraverserContext} object will be created before entering child from parent.
-   * In this way, we simulate {@link TraverserContext} as elements inside stack during recursive traversal.
-   */
-  public interface TraverserContext
-  {
-    /**
-     * Use this flag to control whether DataSchemaRichContextTraverser should continue to traverse from parent to child.
-     * This variable can be set to null if want default behavior.
-     */
-    void setShouldContinue(Boolean shouldContinue);
-
-    /**
-     * SchemaAnnotationVisitors can set customized context
-     * @see VisitorContext
-     */
-    VisitorContext getVisitorContext();
-
-    void setVisitorContext(VisitorContext visitorContext);
-
-    /**
-     * Return the top level schema the traverser is traversing on.
-     * @return top level schema;
-     */
-    DataSchema getTopLevelSchema();
-
-    /**
-     * During traversal, the {@link TraverserContext} can return the current schema under traversal
-     * @return the current schema under traversal
-     */
-    DataSchema getCurrentSchema();
-
-    /**
-     * During traversal, the {@link TraverserContext} can return the parent schema of the current schema under traversal
-     * @return the parent schema of the current schema.
-     */
-    DataSchema getParentSchema();
-
-    /**
-     * If the context is passing down from a {@link RecordDataSchema}, this attribute will be set with the enclosing
-     * {@link RecordDataSchema.Field}
-     */
-    RecordDataSchema.Field getEnclosingField();
-    /**
-     * If the context is passing down from a {@link UnionDataSchema}, this attribute will be set with the enclosing
-     * {@link UnionDataSchema.Member}
-     */
-    UnionDataSchema.Member getEnclosingUnionMember();
-    /**
-     * This traverse path is a very detailed path, and is same as the path used in {@link DataSchemaTraverse}
-     * This path's every component corresponds to a move by traverser, and its components have TypeRef components and record name.
-     * Example:
-     * <pre>
-     * record Test {
-     *   f1: record Nested {
-     *     f2: typeref TypeRef_Name=int
-     *   }
-     * }
-     * </pre>
-     * The traversePath to the f2 field would be as detailed as "/Test/f1/Nested/f2/TypeRef_Name/int"
-     * Meanwhile its schema pathSpec is as simple as "/f1/f2"
-     *
-     */
-    ArrayDeque<String> getTraversePath();
-    /**
-     * This is the path components corresponds to {@link PathSpec}, it would not have TypeRef component inside its component list, also it would only contain field's name
-     */
-    ArrayDeque<String> getSchemaPathSpec();
-    /**
-     * This attribute tells how currentSchema stored in the context is linked from its parentSchema
-     * For example, if the {@link CurrentSchemaEntryMode} specify the currentSchema is an union member of parent Schema,
-     * User can expect parentSchema is a {@link UnionDataSchema} and the {@link #getEnclosingUnionMember} should return the
-     * enclosing union member that stores the current schema.
-     *
-     * @see CurrentSchemaEntryMode
-     */
-    CurrentSchemaEntryMode getCurrentSchemaEntryMode();
-  }
-
   private static class TraverserContextImpl implements TraverserContext
   {
     private Boolean _shouldContinue = null;
@@ -359,10 +221,10 @@ public class DataSchemaRichContextTraverser
     private RecordDataSchema.Field _enclosingField;
     private UnionDataSchema.Member _enclosingUnionMember;
     private CurrentSchemaEntryMode _currentSchemaEntryMode;
-    private VisitorContext _visitorContext;
+    private SchemaVisitor.VisitorContext _visitorContext;
 
     @Override
-    public VisitorContext getVisitorContext()
+    public SchemaVisitor.VisitorContext getVisitorContext()
     {
       return _visitorContext;
     }
@@ -419,7 +281,7 @@ public class DataSchemaRichContextTraverser
       this._shouldContinue = shouldContinue;
     }
 
-    public void setVisitorContext(VisitorContext visitorContext)
+    public void setVisitorContext(SchemaVisitor.VisitorContext visitorContext)
     {
       _visitorContext = visitorContext;
     }
@@ -505,146 +367,6 @@ public class DataSchemaRichContextTraverser
     private void setCurrentSchemaEntryMode(CurrentSchemaEntryMode currentSchemaEntryMode)
     {
       _currentSchemaEntryMode = currentSchemaEntryMode;
-    }
-  }
-
-  /**
-   * The traversal result stores states of the traversal result for each visitor.
-   * It should tell whether the traversal is successful and stores error messages if not
-   *
-   * There are two kinds of error messages
-   * (1) An error message with {@link Message} type, it will be collected to the {@link Message} list and formatted and
-   * outputted by the string builder.
-   * (2) User can also directly add string literal messages and output them using the string builder.
-   *
-   * @see Message
-   */
-  public static class VisitorTraversalResult
-  {
-
-    boolean _isTraversalSuccessful = true;
-    MessageList<Message> _messages = new MessageList<>();
-    StringBuilder _messageBuilder = new StringBuilder();
-    /**
-     * The {@link SchemaVisitor} should not mutate the original {@link DataSchema} that {@link DataSchemaRichContextTraverser} is traversing,
-     * instead it needs to construct a new one if it needs to update the original schema.
-     * This is useful if the new updated {@link DataSchema} is needed for later reuse.
-     * If no update on the original schema is needed, this variable should remain null.
-     */
-    DataSchema _constructedSchema = null;
-
-    public DataSchema getConstructedSchema()
-    {
-      return _constructedSchema;
-    }
-
-    public void setConstructedSchema(DataSchema constructedSchema)
-    {
-      _constructedSchema = constructedSchema;
-    }
-
-    /**
-     * Return whether there are errors detected during the traversal.
-     * @return boolean to tell whether the traversal is successful or not
-     */
-    public boolean isTraversalSuccessful()
-    {
-      return _isTraversalSuccessful;
-    }
-
-    /**
-     * private method for setting whether the traversal is successful.
-     *
-     * @param traversalSuccessful the boolean value to represent whether the traversal is successful
-     *
-     * @see #isTraversalSuccessful()
-     */
-    private void setTraversalSuccessful(boolean traversalSuccessful)
-    {
-      _isTraversalSuccessful = traversalSuccessful;
-    }
-
-    /**
-     * Getter for messages lists
-     * @return collection of messages gather during traversal
-     */
-    public Collection<Message> getMessages()
-    {
-      return _messages;
-    }
-
-    /**
-     * Setter for message lists
-     * @param messages
-     */
-    public void setMessages(MessageList<Message> messages)
-    {
-      _messages = messages;
-      if (messages != null && messages.size() > 0)
-      {
-        setTraversalSuccessful(false);
-      }
-    }
-
-    /**
-     * Add a message to the message list and the string builder
-     * @param message
-     */
-    public void addMessage(Message message)
-    {
-      _messages.add(message);
-      MessageUtil.appendMessages(getMessageBuilder(), Arrays.asList(message));
-      setTraversalSuccessful(false);
-    }
-
-    /**
-     * Add a {@link Message} to the message list using constructor of the {@link Message}
-     * and also add to the string builder
-     *
-     * @param path path to show in the message
-     * @param format format of the message to show
-     * @param args args for the format string
-     *
-     * @see Message
-     */
-    public void addMessage(ArrayDeque<String> path, String format, Object... args)
-    {
-      Message msg = new Message(path.toArray(), format, args);
-      addMessage(msg);
-    }
-
-    /**
-     * Add multiple {@link Message}s to the message list and the string builder
-     * These message added shows same path
-     *
-     * @param path path of the location where the messages are added
-     * @param messages the message to add to the message list
-     *
-     * @see Message
-     */
-    public void addMessages(ArrayDeque<String> path, Collection<? extends Message> messages)
-    {
-      List<Message> msgs = messages.stream()
-                                   .map(msg -> new Message(path.toArray(), ((Message) msg).toString()))
-                                   .collect(Collectors.toList());
-      _messages.addAll(msgs);
-      MessageUtil.appendMessages(getMessageBuilder(), msgs);
-      setTraversalSuccessful(false);
-    }
-
-    public StringBuilder getMessageBuilder()
-    {
-      return _messageBuilder;
-    }
-
-    /**
-     * Output the string builder content as a string
-     *
-     * @return a string output by the string builder
-     */
-    public String formatToErrorMessage()
-    {
-      return getMessageBuilder().toString();
     }
   }
 }

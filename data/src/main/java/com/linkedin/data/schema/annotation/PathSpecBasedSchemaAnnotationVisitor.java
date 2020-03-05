@@ -25,9 +25,6 @@ import com.linkedin.data.schema.StringDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.schema.annotation.DataSchemaRichContextTraverser.CurrentSchemaEntryMode;
-import com.linkedin.data.schema.annotation.DataSchemaRichContextTraverser.TraverserContext;
-import com.linkedin.data.schema.annotation.DataSchemaRichContextTraverser.VisitorContext;
-import com.linkedin.data.schema.annotation.DataSchemaRichContextTraverser.VisitorTraversalResult;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,7 +44,7 @@ import static java.util.stream.Collectors.toList;
 
 
 /**
- * {@link PathSpecBasedSchemaAnnotationVisitor} is a {@link DataSchemaRichContextTraverser.SchemaVisitor} implementation
+ * {@link PathSpecBasedSchemaAnnotationVisitor} is a {@link SchemaVisitor} implementation
  * that check and parse PathSpec overrides during Schema traverse.
  *
  * For a schema that has fields that were annotated with certain annotation namespace, schema writers can override field's annotation
@@ -77,10 +74,10 @@ import static java.util.stream.Collectors.toList;
  *
  * also @see {@link SchemaAnnotationHandler}
  */
-public class PathSpecBasedSchemaAnnotationVisitor implements DataSchemaRichContextTraverser.SchemaVisitor
+public class PathSpecBasedSchemaAnnotationVisitor implements SchemaVisitor
 {
   private final SchemaAnnotationHandler _handler;
-  private final VisitorTraversalResult _visitorTraversalResult = new VisitorTraversalResult();
+  private final SchemaVisitorTraversalResult _schemaVisitorTraversalResult = new SchemaVisitorTraversalResult();
   final String OVERRIDE_PATH_ERROR_MSG_TEMPLATE_MAL_FORMATTED_KEY = "MalFormatted key as PathSpec found: %s";
   final String OVERRIDE_PATH_ERROR_MSG_ENTRIES_NOT_IN_MAP = "Overrides entries should be key-value pairs that form a map";
   final String OVERRIDE_PATH_ERROR_MSG_ENTRIES_NOT_FOR_INCLUDED =
@@ -233,9 +230,9 @@ public class PathSpecBasedSchemaAnnotationVisitor implements DataSchemaRichConte
   }
 
   @Override
-  public VisitorTraversalResult getVisitorTraversalResult()
+  public SchemaVisitorTraversalResult getSchemaVisitorTraversalResult()
   {
-    return _visitorTraversalResult;
+    return _schemaVisitorTraversalResult;
   }
 
   @Override
@@ -261,7 +258,7 @@ public class PathSpecBasedSchemaAnnotationVisitor implements DataSchemaRichConte
 
       if (context.getParentSchema() == null)
       {
-        getVisitorTraversalResult().setConstructedSchema(_schemaConstructed);
+        getSchemaVisitorTraversalResult().setConstructedSchema(_schemaConstructed);
       }
       return;
     }
@@ -340,14 +337,14 @@ public class PathSpecBasedSchemaAnnotationVisitor implements DataSchemaRichConte
         if (detectCycle(overrideStartSchemaName, currentSchemaFullName))
         {
           //If cycles found, report errors
-          getVisitorTraversalResult().addMessage(context.getTraversePath(),
+          getSchemaVisitorTraversalResult().addMessage(context.getTraversePath(),
                                                  "Found overrides that forms a cyclic-referencing: Overrides entry in " +
                                                  "traverser path \"%s\" with its pathSpec value \"%s\" is pointing to the field " +
                                                  "with traverser path \"%s\" and schema name \"%s\", this is causing cyclic-referencing.",
-                                                 new PathSpec(annotationEntry.getPathToAnnotatedTarget().toArray(new String[0])).toString(),
-                                                 annotationEntry.getOverridePathSpecStr(),
-                                                 new PathSpec(context.getTraversePath().toArray(new String[0])).toString(),
-                                                 currentSchemaFullName);
+                                                       new PathSpec(annotationEntry.getPathToAnnotatedTarget().toArray(new String[0])).toString(),
+                                                       annotationEntry.getOverridePathSpecStr(),
+                                                       new PathSpec(context.getTraversePath().toArray(new String[0])).toString(),
+                                                       currentSchemaFullName);
           context.setShouldContinue(Boolean.FALSE);
           newVisitorContext.setAnnotationEntriesFromParentSchema(currentAnnotationEntries);
           context.setVisitorContext(newVisitorContext);
@@ -438,9 +435,9 @@ public class PathSpecBasedSchemaAnnotationVisitor implements DataSchemaRichConte
   private void markAnnotationEntryInvalid(AnnotationEntry annotationEntry, OverridePathErrorMsg overridePathErrorMsg)
   {
     annotationEntry.setOverridePathValidStatus(AnnotationEntry.OverridePathValidStatus.INVALID);
-    getVisitorTraversalResult().addMessage(annotationEntry.getPathToAnnotatedTarget(),
-                                           overridePathErrorMsg.toString(),
-                                           annotationEntry.getOverridePathSpecStr());
+    getSchemaVisitorTraversalResult().addMessage(annotationEntry.getPathToAnnotatedTarget(),
+                                                 overridePathErrorMsg.toString(),
+                                                 annotationEntry.getOverridePathSpecStr());
   }
 
   private List<AnnotationEntry> generateAnnotationEntryFromInclude(DataSchema dataSchema,
@@ -456,8 +453,8 @@ public class PathSpecBasedSchemaAnnotationVisitor implements DataSchemaRichConte
     {
       if (dataSchema.getProperties().get(getAnnotationNamespace()) != null)
       {
-        getVisitorTraversalResult().addMessage(pathToAnnotatedTarget,
-                                               RECORD_SCHEMA_LEVEL_ANNOTATION_NOT_ALLOWED, getAnnotationNamespace());
+        getSchemaVisitorTraversalResult().addMessage(pathToAnnotatedTarget,
+                                                     RECORD_SCHEMA_LEVEL_ANNOTATION_NOT_ALLOWED, getAnnotationNamespace());
         return new ArrayList<>();
       }
     }
@@ -481,9 +478,9 @@ public class PathSpecBasedSchemaAnnotationVisitor implements DataSchemaRichConte
       if (!(includedFieldsNames.contains(annotationEntry.getRemainingPaths().peekFirst())))
       {
         annotationEntry.setOverridePathValidStatus(AnnotationEntry.OverridePathValidStatus.INVALID);
-        getVisitorTraversalResult().addMessage(annotationEntry.getPathToAnnotatedTarget(),
-                                               OVERRIDE_PATH_ERROR_MSG_ENTRIES_NOT_FOR_INCLUDED,// NOT POINTING TO A INCLUDED SCHEMA!!
-                                               annotationEntry.getOverridePathSpecStr());
+        getSchemaVisitorTraversalResult().addMessage(annotationEntry.getPathToAnnotatedTarget(),
+                                                     OVERRIDE_PATH_ERROR_MSG_ENTRIES_NOT_FOR_INCLUDED,// NOT POINTING TO A INCLUDED SCHEMA!!
+                                                     annotationEntry.getOverridePathSpecStr());
       }
     }
     return overridesForIncludes;
@@ -595,7 +592,7 @@ public class PathSpecBasedSchemaAnnotationVisitor implements DataSchemaRichConte
     Object properties = schemaProperties.getOrDefault(getAnnotationNamespace(), Collections.emptyMap());
     if (!(properties instanceof Map))
     {
-      getVisitorTraversalResult().addMessage(pathToAnnotatedTarget, OVERRIDE_PATH_ERROR_MSG_ENTRIES_NOT_IN_MAP);
+      getSchemaVisitorTraversalResult().addMessage(pathToAnnotatedTarget, OVERRIDE_PATH_ERROR_MSG_ENTRIES_NOT_IN_MAP);
       return new ArrayList<>();
     }
 
@@ -606,7 +603,7 @@ public class PathSpecBasedSchemaAnnotationVisitor implements DataSchemaRichConte
     {
       if (!PathSpec.validatePathSpecString(entry.getKey()))
       {
-        getVisitorTraversalResult().addMessage(pathToAnnotatedTarget, OVERRIDE_PATH_ERROR_MSG_TEMPLATE_MAL_FORMATTED_KEY, entry.getKey());
+        getSchemaVisitorTraversalResult().addMessage(pathToAnnotatedTarget, OVERRIDE_PATH_ERROR_MSG_TEMPLATE_MAL_FORMATTED_KEY, entry.getKey());
       }
       else
       {
@@ -736,10 +733,10 @@ public class PathSpecBasedSchemaAnnotationVisitor implements DataSchemaRichConte
         _handler.resolve(propertiesOverridesPairs, new SchemaAnnotationHandler.ResolutionMetaData());
     if (result.isError())
     {
-      getVisitorTraversalResult().addMessage(pathSpecComponents,
-                                             "Annotations override resolution failed in handlers for %s",
-                                             getAnnotationNamespace());
-      getVisitorTraversalResult().addMessages(pathSpecComponents, result.getMessages());
+      getSchemaVisitorTraversalResult().addMessage(pathSpecComponents,
+                                                   "Annotations override resolution failed in handlers for %s",
+                                                   getAnnotationNamespace());
+      getSchemaVisitorTraversalResult().addMessages(pathSpecComponents, result.getMessages());
     }
     return result.getResolvedResult();
   }
