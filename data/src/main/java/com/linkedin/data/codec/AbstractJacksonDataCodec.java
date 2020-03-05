@@ -308,8 +308,6 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
       _generator.writeFieldName(key);
     }
 
-
-
     @Override
     public void endMap() throws IOException
     {

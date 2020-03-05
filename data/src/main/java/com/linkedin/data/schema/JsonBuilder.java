@@ -16,22 +16,16 @@
 
 package com.linkedin.data.schema;
 
-
-import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.template.DataTemplate;
-import com.linkedin.data.template.JacksonDataTemplateCodec;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.PrettyPrinter;
+import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.template.DataTemplate;
+import com.linkedin.data.template.JacksonDataTemplateCodec;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
