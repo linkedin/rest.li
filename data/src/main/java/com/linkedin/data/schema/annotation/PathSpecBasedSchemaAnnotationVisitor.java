@@ -24,7 +24,6 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.StringDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
-import com.linkedin.data.schema.annotation.DataSchemaRichContextTraverser.CurrentSchemaEntryMode;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
