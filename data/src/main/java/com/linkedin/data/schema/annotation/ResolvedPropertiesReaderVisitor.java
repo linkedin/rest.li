@@ -80,13 +80,13 @@ import org.slf4j.LoggerFactory;
  * Other dataSchema types, for example {@link com.linkedin.data.schema.TyperefDataSchema} could link to another DataSchema
  * so it is not a leaf DataSchema
  */
-public class ResolvedPropertiesReaderVisitor implements DataSchemaRichContextTraverser.SchemaVisitor
+public class ResolvedPropertiesReaderVisitor implements SchemaVisitor
 {
   private Map<PathSpec, Map<String, Object>> _leafFieldsToResolvedPropertiesMap = new HashMap<>();
   private static final Logger LOG = LoggerFactory.getLogger(ResolvedPropertiesReaderVisitor.class);
 
   @Override
-  public void callbackOnContext(DataSchemaRichContextTraverser.TraverserContext context, DataSchemaTraverse.Order order)
+  public void callbackOnContext(TraverserContext context, DataSchemaTraverse.Order order)
   {
     if (order == DataSchemaTraverse.Order.POST_ORDER)
     {
@@ -111,13 +111,13 @@ public class ResolvedPropertiesReaderVisitor implements DataSchemaRichContextTra
   }
 
   @Override
-  public DataSchemaRichContextTraverser.VisitorContext getInitialVisitorContext()
+  public VisitorContext getInitialVisitorContext()
   {
-    return new DataSchemaRichContextTraverser.VisitorContext(){};
+    return new VisitorContext(){};
   }
 
   @Override
-  public DataSchemaRichContextTraverser.VisitorTraversalResult getVisitorTraversalResult()
+  public SchemaVisitorTraversalResult getSchemaVisitorTraversalResult()
   {
     return null;
   }
