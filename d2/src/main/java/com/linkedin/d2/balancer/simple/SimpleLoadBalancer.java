@@ -20,6 +20,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerState;
@@ -899,6 +900,36 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       die("ClusterInfo", "PEGA_1017, unable to retrieve cluster count for cluster: " + clusterName +
           ", scheme: " + scheme + ", partition: " + partitionId + ", exception: " + e);
       return -1;
+    }
+  }
+
+  @Override
+  public DarkClusterConfigMap getDarkClusterConfigMap(String clusterName) throws ServiceUnavailableException
+  {
+    FutureCallback<DarkClusterConfigMap> clusterCountFutureCallback = new FutureCallback<>();
+
+    _state.listenToCluster(clusterName, (type, name) ->
+    {
+      ClusterProperties clusterProperties = _state.getClusterProperties(clusterName).getProperty();
+      if (clusterProperties != null)
+      {
+        clusterCountFutureCallback.onSuccess(clusterProperties.getDarkClusters());
+      }
+      else
+      {
+        // there won't be a DarkClusterConfigMap if there is no such cluster. Return empty structure in this case.
+        clusterCountFutureCallback.onSuccess(new DarkClusterConfigMap());
+      }
+    });
+
+    try
+    {
+      return clusterCountFutureCallback.get(_timeout, _unit);
+    }
+    catch (ExecutionException | TimeoutException | IllegalStateException | InterruptedException e )
+    {
+      die("ClusterInfo", "PEGA_1018, unable to retrieve dark cluster info for cluster: " + clusterName  + ", exception: " + e);
+      return new DarkClusterConfigMap();
     }
   }
 

@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.util;
 
+import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
@@ -42,5 +43,10 @@ public interface ClusterInfoProvider
   default int getHttpsClusterCount(String clusterName) throws ServiceUnavailableException
   {
     return getClusterCount(clusterName, PropertyKeys.HTTPS_SCHEME, DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+  }
+
+  default DarkClusterConfigMap getDarkClusterConfigMap(String clusterName) throws ServiceUnavailableException
+  {
+    return new DarkClusterConfigMap();
   }
 }

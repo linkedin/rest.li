@@ -20,6 +20,8 @@ package com.linkedin.d2.balancer.simple;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.DarkClusterConfig;
+import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerTestState;
@@ -117,6 +119,7 @@ import static org.testng.Assert.fail;
 public class SimpleLoadBalancerTest
 {
   private static final String CLUSTER1_NAME = "cluster-1";
+  private static final String DARK_CLUSTER1_NAME = CLUSTER1_NAME + "-dark";
 
   private List<File> _dirsToDelete;
 
@@ -158,6 +161,32 @@ public class SimpleLoadBalancerTest
     }
   }
 
+  private SimpleLoadBalancer setupLoadBalancer(LoadBalancerState state, MockStore<ServiceProperties> serviceRegistry,
+      MockStore<ClusterProperties> clusterRegistry, MockStore<UriProperties> uriRegistry)
+      throws ExecutionException, InterruptedException {
+    Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
+        new HashMap<>();
+    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
+    LoadBalancerState loadBalancerState = state;
+
+    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
+    clientFactories.put(PropertyKeys.HTTP_SCHEME, new DoNothingClientFactory());
+    clientFactories.put(PropertyKeys.HTTPS_SCHEME, new DoNothingClientFactory());
+
+    if (loadBalancerState == null) {
+      loadBalancerState =
+          new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
+              clientFactories, loadBalancerStrategyFactories);
+    }
+    SimpleLoadBalancer loadBalancer =
+        new SimpleLoadBalancer(loadBalancerState, 5, TimeUnit.SECONDS, _d2Executor);
+
+    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    loadBalancer.start(balancerCallback);
+    balancerCallback.get();
+    return loadBalancer;
+  }
+
   @DataProvider
   public Object[][] provideKeys()
   {
@@ -185,57 +214,81 @@ public class SimpleLoadBalancerTest
       int partitionIdForAdd, int partitionIdForCheck)
       throws InterruptedException, ExecutionException, ServiceUnavailableException
   {
-    Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        new HashMap<>();
-    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
-
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
     MockStore<UriProperties> uriRegistry = new MockStore<>();
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
 
-    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
-    clientFactories.put(PropertyKeys.HTTP_SCHEME, new DoNothingClientFactory());
-    clientFactories.put(PropertyKeys.HTTPS_SCHEME, new DoNothingClientFactory());
+    populateUriRegistry(numHttp, numHttps, partitionIdForAdd, uriRegistry);
+    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME));
 
-    SimpleLoadBalancerState state =
-        new SimpleLoadBalancerState(new SynchronousExecutorService(),
-            uriRegistry,
-            clusterRegistry,
-            serviceRegistry,
-            clientFactories,
-            loadBalancerStrategyFactories);
+    Assert.assertEquals(loadBalancer.getClusterCount(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionIdForCheck), expectedNumHttp,
+        "Http cluster count for partitionId: " + partitionIdForCheck + " should be: " + expectedNumHttp);
+    Assert.assertEquals(loadBalancer.getClusterCount(CLUSTER1_NAME, PropertyKeys.HTTPS_SCHEME, partitionIdForCheck), expectedNumHttps,
+        "Https cluster count for partitionId: " + partitionIdForCheck + " should be: " + expectedNumHttps);
+  }
 
-    SimpleLoadBalancer loadBalancer =
-        new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
-
-    FutureCallback<None> balancerCallback = new FutureCallback<None>();
-    loadBalancer.start(balancerCallback);
-    balancerCallback.get();
-
-    URI uri1 = URI.create("http://test.qa1.com:1234");
-    URI uri2 = URI.create("http://test.qa2.com:2345");
-    URI uri3 = URI.create("http://test.qa3.com:6789");
-
+  private void populateUriRegistry(int numHttp, int numHttps, int partitionIdForAdd, MockStore<UriProperties> uriRegistry)
+  {
     Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(partitionIdForAdd, new PartitionData(1d));
     Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(numHttp);
     Set<String> schemeSet = new HashSet<>();
     schemeSet.add(PropertyKeys.HTTP_SCHEME);
     schemeSet.add(PropertyKeys.HTTPS_SCHEME);
-    for (String scheme : schemeSet) {
+    for (String scheme : schemeSet)
+    {
       for (int i = 0; i < (scheme.equals(PropertyKeys.HTTP_SCHEME) ? numHttp : numHttps); i++) {
         uriData.put(URI.create(scheme + "://test.qa" + i + ".com:1234"), partitionData);
       }
     }
-
-    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME));
-
     uriRegistry.put(CLUSTER1_NAME, new UriProperties(CLUSTER1_NAME, uriData));
+  }
+  @Test
+  public void testClusterInfoProviderGetDarkClusters()
+      throws InterruptedException, ExecutionException, ServiceUnavailableException
+  {
+    int numHttp = 3;
+    int numHttps = 4;
+    int partitionIdForAdd = 0;
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
 
-    Assert.assertEquals(loadBalancer.getClusterCount(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionIdForCheck), expectedNumHttp,
-        "Http cluster count for partitionId: " + partitionIdForCheck + " should be: " + expectedNumHttp);
-    Assert.assertEquals(loadBalancer.getClusterCount(CLUSTER1_NAME, PropertyKeys.HTTPS_SCHEME, partitionIdForCheck), expectedNumHttps,
-        "Https cluster count for partitionId: " + partitionIdForCheck + " should be: " + expectedNumHttps);
+    DarkClusterConfig darkClusterConfig = new DarkClusterConfig().setMultiplier(1.0f);
+    DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
+    darkClusterConfigMap.put(DARK_CLUSTER1_NAME, darkClusterConfig);
+
+    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
+        Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(), darkClusterConfigMap));
+
+    populateUriRegistry(numHttp, numHttps, partitionIdForAdd, uriRegistry);
+
+    DarkClusterConfigMap returnedDarkClusterConfigMap = loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME);
+    Assert.assertEquals(returnedDarkClusterConfigMap, darkClusterConfigMap, "dark cluster configs should be equal");
+    Assert.assertEquals(returnedDarkClusterConfigMap.get(DARK_CLUSTER1_NAME).getMultiplier(), 1.0f, "multiplier should match");
+  }
+
+  @Test
+  public void testClusterInfoProviderGetDarkClustersNoUris()
+      throws InterruptedException, ExecutionException, ServiceUnavailableException
+  {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+
+    DarkClusterConfig darkClusterConfig = new DarkClusterConfig().setMultiplier(1.0f);
+    DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
+    darkClusterConfigMap.put(DARK_CLUSTER1_NAME, darkClusterConfig);
+
+    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
+        Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(), darkClusterConfigMap));
+
+    DarkClusterConfigMap returnedDarkClusterConfigMap = loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME);
+    Assert.assertEquals(returnedDarkClusterConfigMap, darkClusterConfigMap, "dark cluster configs should be equal");
+    Assert.assertEquals(returnedDarkClusterConfigMap.get(DARK_CLUSTER1_NAME).getMultiplier(), 1.0f, "multiplier should match");
   }
 
   @Test(groups = { "small", "back-end" })
