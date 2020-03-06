@@ -16,20 +16,8 @@
 
 package com.linkedin.data.schema.resolver;
 
-import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaParserFactory;
-import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.Name;
-import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.SchemaParser;
-import com.linkedin.data.schema.SchemaParserFactory;
-import com.linkedin.data.schema.grammar.PdlSchemaParser;
-import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -40,23 +28,8 @@ import java.util.Map;
  * own file format specific parsers, can be combined into a single resolver able to look up
  * schemas of either file format.
  */
-public class MultiFormatDataSchemaResolver implements DataSchemaResolver
+public class MultiFormatDataSchemaResolver extends AbstractMultiFormatDataSchemaResolver
 {
-  /**
-   * File extensions for all builtin parsers: PDSC, PDL.
-   */
-  public static final String[] BUILTIN_EXTENSIONS = new String[] {SchemaParser.FILE_EXTENSION, PdlSchemaParser.FILE_EXTENSION
-  };
-
-  private final List<DataSchemaResolver> resolvers;
-
-  public static List<DataSchemaParserFactory> BUILTIN_FORMAT_PARSER_FACTORIES;
-  static {
-    BUILTIN_FORMAT_PARSER_FACTORIES = new ArrayList<>(2);
-    BUILTIN_FORMAT_PARSER_FACTORIES.add(SchemaParserFactory.instance());
-    BUILTIN_FORMAT_PARSER_FACTORIES.add(PdlSchemaParserFactory.instance());
-  }
-
   /**
    * Create a MultiFormatDataSchemaResolver able to resolve all builtin file formats (.pdsc and .pdl).
    */
@@ -77,122 +50,11 @@ public class MultiFormatDataSchemaResolver implements DataSchemaResolver
       String resolverPath,
       List<DataSchemaParserFactory> parsersForFormats)
   {
-    resolvers = new ArrayList<>();
     for (DataSchemaParserFactory parserForFormat: parsersForFormats)
     {
       FileDataSchemaResolver resolver = new FileDataSchemaResolver(parserForFormat, resolverPath, this);
       resolver.setExtension("." + parserForFormat.getLanguageExtension());
-      resolvers.add(resolver);
+      addResolver(resolver);
     }
-  }
-
-  @Override
-  public Map<String, NamedDataSchema> bindings()
-  {
-    Map<String, NamedDataSchema> results = new HashMap<>();
-    for (DataSchemaResolver resolver: resolvers)
-    {
-      results.putAll(resolver.bindings());
-    }
-    return results;
-  }
-
-  @Override
-  public Map<String, DataSchemaLocation> nameToDataSchemaLocations()
-  {
-    Map<String, DataSchemaLocation> results = new HashMap<>();
-    for (DataSchemaResolver resolver: resolvers)
-    {
-      results.putAll(resolver.nameToDataSchemaLocations());
-    }
-    return results;
-  }
-
-  @Override
-  public NamedDataSchema findDataSchema(String name, StringBuilder errorMessageBuilder)
-  {
-    for (DataSchemaResolver resolver: resolvers)
-    {
-      NamedDataSchema result = resolver.findDataSchema(name, errorMessageBuilder);
-      if (result != null)
-      {
-        return result;
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public void bindNameToSchema(Name name, NamedDataSchema schema, DataSchemaLocation location)
-  {
-    for (DataSchemaResolver resolver: resolvers)
-    {
-      resolver.bindNameToSchema(name, schema, location);
-    }
-
-  }
-
-  @Override
-  public NamedDataSchema existingDataSchema(String name)
-  {
-    for (DataSchemaResolver resolver: resolvers)
-    {
-      NamedDataSchema result = resolver.existingDataSchema(name);
-      if (result != null)
-      {
-        return result;
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public boolean locationResolved(DataSchemaLocation location)
-  {
-    for (DataSchemaResolver resolver: resolvers)
-    {
-      if (resolver.locationResolved(location))
-      {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public void addPendingSchema(String name)
-  {
-    for (DataSchemaResolver resolver : resolvers)
-    {
-      resolver.addPendingSchema(name);
-    }
-  }
-
-  @Override
-  public void updatePendingSchema(String name, Boolean isParsingInclude) {
-    for (DataSchemaResolver resolver : resolvers)
-    {
-      resolver.updatePendingSchema(name, isParsingInclude);
-    }
-  }
-
-  @Override
-  public void removePendingSchema(String name)
-  {
-    for (DataSchemaResolver resolver: resolvers)
-    {
-      resolver.removePendingSchema(name);
-    }
-  }
-
-  @Override
-  public LinkedHashMap<String, Boolean> getPendingSchemas()
-  {
-    LinkedHashMap<String, Boolean> results = new LinkedHashMap<>();
-    for (DataSchemaResolver resolver: resolvers)
-    {
-      results.putAll(resolver.getPendingSchemas());
-    }
-    return results;
   }
 }

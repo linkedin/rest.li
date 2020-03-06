@@ -815,10 +815,11 @@ public class TestDataSchemaResolver
   @Test
   public void testClasspathResourceDataSchemaResolver()
   {
-    final ClasspathResourceDataSchemaResolver resolver = new ClasspathResourceDataSchemaResolver(SchemaParserFactory.instance());
+    final ClasspathResourceDataSchemaResolver resolver = new ClasspathResourceDataSchemaResolver();
     final PegasusSchemaParser parser = new SchemaParser(resolver);
 
     final String existingSchemaName = "com.linkedin.data.schema.ValidationDemo";
+    final String existingPdlSchemaName = "com.linkedin.restli.example.Album";
     final String nonExistSchemaName = "Non-Existing Schema";
 
     final DataSchema existSchema = parser.lookupName(existingSchemaName);
@@ -826,9 +827,13 @@ public class TestDataSchemaResolver
     assertTrue(existSchema instanceof RecordDataSchema);
     assertEquals(((RecordDataSchema) existSchema).getFullName(), existingSchemaName);
 
+    final DataSchema existPdlSchema = parser.lookupName(existingPdlSchemaName);
+    assertNotNull(existPdlSchema);
+    assertTrue(existPdlSchema instanceof RecordDataSchema);
+    assertEquals(((RecordDataSchema) existPdlSchema).getFullName(), existingPdlSchemaName);
+
     final DataSchema nonExistSchema = parser.lookupName(nonExistSchemaName);
     assertNull(nonExistSchema);
-    assertTrue(parser.errorMessage().contains(nonExistSchemaName));
   }
 
   public void lookup(DataSchemaResolver resolver, String[][] lookups, char separator, boolean debug)
