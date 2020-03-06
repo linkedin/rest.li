@@ -40,7 +40,7 @@ public interface TraverserContext
   /**
    * {@link SchemaVisitor} should not modify other parts of {@link TraverserContext}.
    * But if {@link SchemaVisitor}s want to set customized context inside {@link TraverserContext} and retrieve from it,
-   * {@link SchemaVisitor.VisitorContext} is how {@link SchemaVisitor} should use to
+   * {@link SchemaVisitor.VisitorContext} is what {@link SchemaVisitor} should use to
    * persist that customized data during traversal. In detail, when the {@link DataSchemaRichContextTraverser} traverses through schema,
    * new {@link TraverserContext} could be created, but {@link SchemaVisitor.VisitorContext} will be passed from old {@link TraverserContext} to
    * newly created one.
@@ -69,7 +69,7 @@ public interface TraverserContext
 
   /**
    * During traversal, the {@link TraverserContext} can return the parent schema of the current schema under traversal
-   * If the current schema under traversal happens to be the top level schema, then this method returns null
+   * If the current schema under traversal happens to be the top level schema, this method returns null
    * @return the parent schema of the current schema.
    */
   DataSchema getParentSchema();
