@@ -17,6 +17,12 @@
       "optional": true
     },
     {
+      "name": "streamingTimeout",
+      "type": "long",
+      "doc": "Streaming Timeout in ms for this transport client. Disabled by default (-1)",
+      "optional": true
+    },
+    {
       "name": "maxResponseSize",
       "type": "long",
       "doc": "Max payload that this transport client can carry in bytes. Defaults to 2MB.",
