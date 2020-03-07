@@ -36,11 +36,14 @@ import java.util.Map;
  * Combines multiple file format specific resolvers (and respective file format specific parsers)
  * into a single resolver.
  *
+ * Concrete implementations should initialize the list of resolvers to use by calling
+ * {@link #addResolver(DataSchemaResolver)}
+ *
  * E.g. a resolver for the ".pdsc" file format and the ".pdl" file format, each with their
  * own file format specific parsers, can be combined into a single resolver able to look up
  * schemas of either file format.
  */
-public class AbstractMultiFormatDataSchemaResolver implements DataSchemaResolver
+public abstract class AbstractMultiFormatDataSchemaResolver implements DataSchemaResolver
 {
   /**
    * File extensions for all builtin parsers: PDSC, PDL.

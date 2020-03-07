@@ -51,7 +51,7 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
    */
   public ClasspathResourceDataSchemaResolver()
   {
-    this(null, Thread.currentThread().getContextClassLoader());
+    this(Thread.currentThread().getContextClassLoader());
   }
 
   /**
@@ -81,6 +81,7 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
     }
     _classLoader = classLoader;
   }
+
   /**
    * Construct a new instance that uses the specified {@link ClassLoader}.
    *
@@ -96,6 +97,13 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
 
   private class SingleFormatClasspathSchemaResolver extends DefaultDataSchemaResolver
   {
+    private String _extension = SchemaParser.FILE_EXTENSION;
+
+    void setExtension(String extension)
+    {
+      this._extension = extension;
+    }
+
     /**
      * Construct a new instance that uses the {@link Thread#getContextClassLoader()} for the current thread.
      */
@@ -128,12 +136,5 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
       }
       return schema;
     }
-
-    void setExtension(String extension)
-    {
-      this._extension = extension;
-    }
-
-    private String _extension = SchemaParser.FILE_EXTENSION;
   }
 }
