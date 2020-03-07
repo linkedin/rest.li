@@ -55,6 +55,10 @@ public class TransportClientPropertiesConverter
     {
       prop.put(PropertyKeys.HTTP_REQUEST_TIMEOUT, config.getRequestTimeout().toString());
     }
+    if (config.hasStreamingTimeout())
+    {
+      prop.put(PropertyKeys.HTTP_STREAMING_TIMEOUT, config.getStreamingTimeout().toString());
+    }
     if (config.hasMaxResponseSize())
     {
       prop.put(PropertyKeys.HTTP_MAX_RESPONSE_SIZE, config.getMaxResponseSize().toString());
@@ -152,6 +156,10 @@ public class TransportClientPropertiesConverter
     if (properties.containsKey(PropertyKeys.HTTP_REQUEST_TIMEOUT))
     {
       config.setRequestTimeout(coerce(properties.get(PropertyKeys.HTTP_REQUEST_TIMEOUT), Long.class));
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_STREAMING_TIMEOUT))
+    {
+      config.setStreamingTimeout(coerce(properties.get(PropertyKeys.HTTP_STREAMING_TIMEOUT), Long.class));
     }
     if (properties.containsKey(PropertyKeys.HTTP_MAX_RESPONSE_SIZE))
     {
