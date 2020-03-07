@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.example
+
+enum FruitsPdl {
+  APPLE
+  ORANGE
+}

@@ -1,0 +1,16 @@
+{
+  "type" : "record",
+  "name" : "RecordWithPdlReference",
+  "namespace" : "com.linkedin.data.schema",
+  "fields" : [
+    {
+      "name": "stringA",
+      "type": "string"
+    },
+    {
+      "name": "fruitsPdl",
+      "type": "com.linkedin.restli.example.FruitsPdl",
+      "optional": true
+    }
+  ]
+}

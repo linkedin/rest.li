@@ -102,7 +102,7 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
      */
     public SingleFormatClasspathSchemaResolver(DataSchemaParserFactory parserFactory)
     {
-      super(parserFactory);
+      super(parserFactory, ClasspathResourceDataSchemaResolver.this);
       this._extension = "." + parserFactory.getLanguageExtension();
     }
 

@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -818,19 +819,19 @@ public class TestDataSchemaResolver
     final ClasspathResourceDataSchemaResolver resolver = new ClasspathResourceDataSchemaResolver();
     final PegasusSchemaParser parser = new SchemaParser(resolver);
 
-    final String existingSchemaName = "com.linkedin.data.schema.ValidationDemo";
-    final String existingPdlSchemaName = "com.linkedin.restli.example.Album";
+    final List<String> existingSchemas = new ArrayList<>();
+    Collections.addAll(existingSchemas, "com.linkedin.data.schema.ValidationDemo",
+        "com.linkedin.restli.example.Album",
+        "com.linkedin.restli.example.FruitsPdl",
+        "com.linkedin.data.schema.RecordWithPdlReference");
     final String nonExistSchemaName = "Non-Existing Schema";
 
-    final DataSchema existSchema = parser.lookupName(existingSchemaName);
-    assertNotNull(existSchema);
-    assertTrue(existSchema instanceof RecordDataSchema);
-    assertEquals(((RecordDataSchema) existSchema).getFullName(), existingSchemaName);
-
-    final DataSchema existPdlSchema = parser.lookupName(existingPdlSchemaName);
-    assertNotNull(existPdlSchema);
-    assertTrue(existPdlSchema instanceof RecordDataSchema);
-    assertEquals(((RecordDataSchema) existPdlSchema).getFullName(), existingPdlSchemaName);
+    for (String existingSchemaName : existingSchemas)
+    {
+      final DataSchema existSchema = parser.lookupName(existingSchemaName);
+      assertNotNull(existSchema, "Failed parsing : " + existingSchemaName);
+      assertEquals(((NamedDataSchema) existSchema).getFullName(), existingSchemaName);
+    }
 
     final DataSchema nonExistSchema = parser.lookupName(nonExistSchemaName);
     assertNull(nonExistSchema);
