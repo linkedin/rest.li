@@ -75,9 +75,7 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
   {
     for (DataSchemaParserFactory parserForFormat: BUILTIN_FORMAT_PARSER_FACTORIES)
     {
-      SingleFormatClasspathSchemaResolver resolver = new SingleFormatClasspathSchemaResolver(parserForFormat);
-      resolver.setExtension("." + parserForFormat.getLanguageExtension());
-      addResolver(resolver);
+      addResolver(new SingleFormatClasspathSchemaResolver(parserForFormat));
     }
     _classLoader = classLoader;
   }
@@ -97,12 +95,7 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
 
   private class SingleFormatClasspathSchemaResolver extends DefaultDataSchemaResolver
   {
-    private String _extension = SchemaParser.FILE_EXTENSION;
-
-    void setExtension(String extension)
-    {
-      this._extension = extension;
-    }
+    private final String _extension;
 
     /**
      * Construct a new instance that uses the {@link Thread#getContextClassLoader()} for the current thread.
@@ -110,6 +103,7 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
     public SingleFormatClasspathSchemaResolver(DataSchemaParserFactory parserFactory)
     {
       super(parserFactory);
+      this._extension = "." + parserFactory.getLanguageExtension();
     }
 
     private String getDataSchemaResourcePath(String schemaName)
