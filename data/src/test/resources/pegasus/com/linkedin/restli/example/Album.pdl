@@ -8,8 +8,5 @@ record Album {
   urn: string
   title: string
 
-  /**
-   * When this album was created
-   */
-  creationTime: long
+  pdscRef: com.linkedin.data.schema.ValidationDemo
 }

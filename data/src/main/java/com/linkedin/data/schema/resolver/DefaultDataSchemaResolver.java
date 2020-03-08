@@ -19,6 +19,7 @@ package com.linkedin.data.schema.resolver;
 
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaParserFactory;
+import com.linkedin.data.schema.DataSchemaResolver;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.Iterator;
@@ -39,6 +40,11 @@ public class DefaultDataSchemaResolver extends AbstractDataSchemaResolver
   public DefaultDataSchemaResolver(DataSchemaParserFactory parserFactory)
   {
     super(parserFactory);
+  }
+
+  public DefaultDataSchemaResolver(DataSchemaParserFactory parserFactory, DataSchemaResolver schemaResolver)
+  {
+    super(parserFactory, schemaResolver);
   }
 
   private static final Iterator<DataSchemaLocation> _it = Collections.<DataSchemaLocation>emptyList().iterator();
