@@ -267,11 +267,24 @@ public class JsonBuilder
    */
   public void writeData(Object object) throws IOException
   {
-    _jacksonDataCodec.objectToJsonGenerator(object, _jsonGenerator);
+    _jacksonDataCodec.objectToJsonGenerator(object, _jsonGenerator, false);
   }
 
   /**
+   * Write Data object. But if the Data Object contains DataMap, the output would have the map keys ordered.
+   *
+   * @param object is the Data object to write.
+   */
+  public void writeOrderedData(Object object) throws IOException
+  {
+    _jacksonDataCodec.objectToJsonGenerator(object, _jsonGenerator,true);
+  }
+
+
+  /**
    * Write properties by adding each property as a field to current JSON object.
+   * The property would be key value pair with keys sorted
+   * Of the property's value contains Data Map, its output would have those map keys sorted as well
    *
    * @param value provides the properties to be written.
    * @throws IOException if there is an error writing.
@@ -286,7 +299,7 @@ public class JsonBuilder
         for (Map.Entry<String, ?> entry : orderedProperties)
       {
         _jsonGenerator.writeFieldName(entry.getKey());
-        writeData(entry.getValue());
+        writeOrderedData(entry.getValue());
       }
     }
   }
