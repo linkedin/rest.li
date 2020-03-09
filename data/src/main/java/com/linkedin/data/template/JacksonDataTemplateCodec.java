@@ -87,7 +87,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
     }
     else
     {
-      objectToJsonGenerator(data, generator, false);
+      objectToJsonGenerator(data, generator);
     }
   }
 
