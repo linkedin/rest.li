@@ -278,7 +278,7 @@ public class JsonBuilder
    */
   public void writeDataWithMapEntriesSorted(Object object) throws IOException
   {
-    _jacksonDataCodec.objectToJsonGenerator(object, _jsonGenerator,true);
+    _jacksonDataCodec.objectToJsonGenerator(object, _jsonGenerator, true);
   }
 
 
