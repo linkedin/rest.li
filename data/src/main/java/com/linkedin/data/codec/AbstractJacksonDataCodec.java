@@ -137,14 +137,15 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
   }
 
   /**
-   * Create {@link JacksonTraverseCallback} instance for Data object traverse
-   * @param generator JsonGenerator
+   * Create {@link Data.TraverseCallback} interface instance for Data object traverse
+   * @param generator JsonGenerator used during traverse
    * @param traverseMapBySortedKeyOrder indicate whether want the callBack to traverse the data map within data object using the sorted map key order
    * @return
    */
   protected Data.TraverseCallback createTraverseCallback(JsonGenerator generator, boolean traverseMapBySortedKeyOrder)
   {
-    return traverseMapBySortedKeyOrder? new JacksonTraverseCallbackMapKeyOrdered(generator): new JacksonTraverseCallback(generator);
+    return traverseMapBySortedKeyOrder ? new JacksonTraverseCallbackMapKeyOrdered(generator)
+        : new JacksonTraverseCallback(generator);
   }
 
   @Override
@@ -224,17 +225,22 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     return parse(_factory.createParser(in), mesg, locationMap);
   }
 
+  public void objectToJsonGenerator(Object object, JsonGenerator generator) throws IOException
+  {
+    objectToJsonGenerator(object, generator, false);
+  }
+
   /**
    * Convert an object to Json format representation.
    * @param object the object that needs to be converted
    * @param generator the generator that could generate Json output based on the object
-   * @param mapKeyOrdered if the object contains map element (which could be nested map), can set this flag to order the
-   *                      map entries in the output according to sorted map key.
+   * @param orderMapByKey if true, map elements in the object (can be the object itself or its nested elements)
+   *                      will have their entries sorted by keys in the generated Json.
    * @throws IOException
    */
-  public void objectToJsonGenerator(Object object, JsonGenerator generator, boolean mapKeyOrdered) throws IOException
+  public void objectToJsonGenerator(Object object, JsonGenerator generator, boolean orderMapByKey) throws IOException
   {
-    Data.TraverseCallback callback = createTraverseCallback(generator, mapKeyOrdered);
+    Data.TraverseCallback callback = createTraverseCallback(generator, orderMapByKey);
     Data.traverse(object, callback);
   }
 

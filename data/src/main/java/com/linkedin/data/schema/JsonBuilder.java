@@ -271,7 +271,8 @@ public class JsonBuilder
   }
 
   /**
-   * Write Data object. But if the Data Object contains DataMap, the result would output the map entries using sorted key order.
+   * Write Data object. But if the Data Object contains DataMap or itself is a DataMap,
+   * the result would output the map entries using sorted key order.
    *
    * @param object is the Data object to write.
    */
