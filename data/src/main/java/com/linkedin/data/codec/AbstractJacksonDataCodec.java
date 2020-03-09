@@ -144,8 +144,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
    */
   protected Data.TraverseCallback createTraverseCallback(JsonGenerator generator, boolean traverseMapBySortedKeyOrder)
   {
-    return traverseMapBySortedKeyOrder ? new JacksonTraverseCallbackMapKeyOrdered(generator)
-        : new JacksonTraverseCallback(generator);
+    return new JacksonTraverseCallback(generator, traverseMapBySortedKeyOrder);
   }
 
   @Override
@@ -244,28 +243,20 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     Data.traverse(object, callback);
   }
 
-  public static class JacksonTraverseCallbackMapKeyOrdered extends JacksonTraverseCallback
-  {
-
-    protected JacksonTraverseCallbackMapKeyOrdered(JsonGenerator generator)
-    {
-      super(generator);
-    }
-
-    @Override
-    public Iterable<Map.Entry<String, Object>> orderMap(DataMap map)
-    {
-      return Data.orderMapEntries(map);
-    }
-  }
-
   public static class JacksonTraverseCallback implements Data.TraverseCallback
   {
     protected final JsonGenerator _generator;
+    private final boolean _orderMapEntriesByKey;
 
     protected JacksonTraverseCallback(JsonGenerator generator)
     {
+      this(generator, false);
+    }
+
+    protected JacksonTraverseCallback(JsonGenerator generator, boolean orderMapEntriesByKey)
+    {
       _generator = generator;
+      _orderMapEntriesByKey = orderMapEntriesByKey;
     }
 
     @Override
@@ -340,6 +331,19 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     public void key(String key) throws IOException
     {
       _generator.writeFieldName(key);
+    }
+
+    @Override
+    public Iterable<Map.Entry<String, Object>> orderMap(DataMap map)
+    {
+      if (_orderMapEntriesByKey)
+      {
+        return Data.orderMapEntries(map);
+      }
+      else
+      {
+        return map.entrySet();
+      }
     }
 
     @Override
