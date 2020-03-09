@@ -267,7 +267,7 @@ public class JsonBuilder
    */
   public void writeData(Object object) throws IOException
   {
-    _jacksonDataCodec.objectToJsonGenerator(object, _jsonGenerator, false);
+    _jacksonDataCodec.objectToJsonGenerator(object, _jsonGenerator);
   }
 
   /**
