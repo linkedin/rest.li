@@ -16,6 +16,8 @@
 
 package com.linkedin.data.schema;
 
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import java.io.IOException;
 import java.io.Writer;
 import org.apache.commons.lang3.StringUtils;
@@ -71,13 +73,7 @@ class IndentedPdlBuilder extends PdlBuilder
   @Override
   PdlBuilder indent() throws IOException
   {
-    final int numSpaces = _indentDepth * DEFAULT_INDENT_WIDTH;
-    final StringBuilder sb = new StringBuilder(numSpaces);
-    for (int i = 0; i < numSpaces; i++)
-    {
-      sb.append(" ");
-    }
-    write(sb.toString());
+    write(getIndentSpaces());
     return this;
   }
 
@@ -124,6 +120,15 @@ class IndentedPdlBuilder extends PdlBuilder
     return false;
   }
 
+  @Override
+  PdlBuilder writeJson(Object value) throws IOException
+  {
+    DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter();
+    prettyPrinter.indentObjectsWith(new DefaultIndenter(" ", DefaultIndenter.SYS_LF + getIndentSpaces()));
+    _jsonCodec.setPrettyPrinter(prettyPrinter);
+    return super.writeJson(value);
+  }
+
   /**
    * Write an intended line of .pdl code.
    * The code will be prefixed by the current indentation and suffixed with a newline.
@@ -132,5 +137,15 @@ class IndentedPdlBuilder extends PdlBuilder
   private void writeLine(String code) throws IOException
   {
     indent().write(code).newline();
+  }
+
+  private String getIndentSpaces() {
+    final int numSpaces = _indentDepth * DEFAULT_INDENT_WIDTH;
+    final StringBuilder sb = new StringBuilder(numSpaces);
+    for (int i = 0; i < numSpaces; i++)
+    {
+      sb.append(" ");
+    }
+    return sb.toString();
   }
 }

@@ -44,8 +44,6 @@ import org.apache.commons.lang3.StringEscapeUtils;
  */
 abstract class PdlBuilder
 {
-  private static final JacksonDataCodec JSON_CODEC = new JacksonDataCodec();
-
   // TODO: Put these in a unified "PDL constants" file
   private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
       "array", "enum", "fixed", "import", "includes", "map", "namespace", "optional", "package",
@@ -63,6 +61,7 @@ abstract class PdlBuilder
   }
 
   private final Writer _writer;
+  final JacksonDataCodec _jsonCodec = new JacksonDataCodec();
 
   PdlBuilder(Writer writer)
   {
@@ -275,11 +274,11 @@ abstract class PdlBuilder
   {
     if (value instanceof DataMap)
     {
-      return JSON_CODEC.mapToString((DataMap) value);
+      return _jsonCodec.mapToString((DataMap) value);
     }
     else if (value instanceof DataList)
     {
-      return JSON_CODEC.listToString((DataList) value);
+      return _jsonCodec.listToString((DataList) value);
     }
     else if (value instanceof String)
     {

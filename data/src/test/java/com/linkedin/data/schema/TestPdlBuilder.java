@@ -16,9 +16,11 @@
 
 package com.linkedin.data.schema;
 
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import org.testng.Assert;
@@ -37,18 +39,20 @@ public class TestPdlBuilder
   private static Object[][] propertiesMapProvider()
   {
     DataMap properties1 = new DataMap();
-    properties1.put("empty", new DataMap());
+    properties1.put("empty", new DataList(Arrays.asList(1, 2, 3)));
     DataMap properties2 = new DataMap();
     properties2.put("validate", properties1);
     return new Object[][]
         {
             {
               properties1,
-              "@empty = {}\n"
+              "@empty = [ 1, 2, 3 ]\n",
+              "@empty=[1,2,3]"
             },
             {
               properties2,
-              "@validate.empty = {}\n"
+              "@validate.empty = [ 1, 2, 3 ]\n",
+              "@validate.empty=[1,2,3]"
             }
         //TODO Add test case for multiple properties in a map level once iteration logic is fixed to be deterministic
         };
@@ -56,12 +60,18 @@ public class TestPdlBuilder
 
   @Test(dataProvider = "propertiesMapProvider")
   public void testWriteProperties(Map<String, Object> properties,
-                                  String pdlString) throws IOException
+                                  String indentPdlString,
+                                  String compactPdlString) throws IOException
   {
-    StringWriter writer = new StringWriter();
-    PdlBuilder pdlBuilder = (new IndentedPdlBuilder.Provider()).newInstance(writer);
-    pdlBuilder.writeProperties(Collections.emptyList(), properties);
+    StringWriter indentWriter = new StringWriter();
+    PdlBuilder indentPdlBuilder = (new IndentedPdlBuilder.Provider()).newInstance(indentWriter);
+    indentPdlBuilder.writeProperties(Collections.emptyList(), properties);
 
-    Assert.assertEquals(pdlString, writer.toString());
+    StringWriter compactWriter = new StringWriter();
+    PdlBuilder compactPdlBuilder = (new CompactPdlBuilder.Provider()).newInstance(compactWriter);
+    compactPdlBuilder.writeProperties(Collections.emptyList(), properties);
+
+    Assert.assertEquals(indentPdlString, indentWriter.toString());
+    Assert.assertEquals(compactPdlString, compactWriter.toString());
   }
 }
