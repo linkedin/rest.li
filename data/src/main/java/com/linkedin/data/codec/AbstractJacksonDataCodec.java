@@ -139,12 +139,12 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
   /**
    * Create {@link JacksonTraverseCallback} instance for Data object traverse
    * @param generator JsonGenerator
-   * @param mapKeyOrdered whether want the callBack to traverse the data map with map key sorted order
+   * @param traverseMapBySortedKeyOrder indicate whether want the callBack to traverse the data map within data object using the sorted map key order
    * @return
    */
-  protected Data.TraverseCallback createTraverseCallback(JsonGenerator generator, boolean mapKeyOrdered)
+  protected Data.TraverseCallback createTraverseCallback(JsonGenerator generator, boolean traverseMapBySortedKeyOrder)
   {
-    return mapKeyOrdered? new JacksonTraverseCallbackMapKeyOrdered(generator): new JacksonTraverseCallback(generator);
+    return traverseMapBySortedKeyOrder? new JacksonTraverseCallbackMapKeyOrdered(generator): new JacksonTraverseCallback(generator);
   }
 
   @Override

@@ -271,11 +271,11 @@ public class JsonBuilder
   }
 
   /**
-   * Write Data object. But if the Data Object contains DataMap, the output would have the map keys ordered.
+   * Write Data object. But if the Data Object contains DataMap, the result would output the map entries using sorted key order.
    *
    * @param object is the Data object to write.
    */
-  public void writeOrderedData(Object object) throws IOException
+  public void writeDataWithMapEntriesSorted(Object object) throws IOException
   {
     _jacksonDataCodec.objectToJsonGenerator(object, _jsonGenerator,true);
   }
@@ -299,7 +299,7 @@ public class JsonBuilder
         for (Map.Entry<String, ?> entry : orderedProperties)
       {
         _jsonGenerator.writeFieldName(entry.getKey());
-        writeOrderedData(entry.getValue());
+        writeDataWithMapEntriesSorted(entry.getValue());
       }
     }
   }
