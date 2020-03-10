@@ -73,7 +73,7 @@ public class PegasusSchemaAnnotationHandlerImpl implements SchemaAnnotationHandl
   }
 
   @Override
-  public DataSchemaRichContextTraverser.SchemaVisitor getVisitor()
+  public SchemaVisitor getVisitor()
   {
     return new PathSpecBasedSchemaAnnotationVisitor(this);
   }

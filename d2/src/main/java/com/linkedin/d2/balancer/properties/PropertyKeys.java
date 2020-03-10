@@ -125,6 +125,7 @@ public class PropertyKeys
   //used by transport client creation
   public static final String HTTP_POOL_WAITER_SIZE = HttpClientFactory.HTTP_POOL_WAITER_SIZE;
   public static final String HTTP_REQUEST_TIMEOUT = HttpClientFactory.HTTP_REQUEST_TIMEOUT;
+  public static final String HTTP_STREAMING_TIMEOUT = HttpClientFactory.HTTP_STREAMING_TIMEOUT;
   public static final String HTTP_MAX_RESPONSE_SIZE = HttpClientFactory.HTTP_MAX_RESPONSE_SIZE;
   public static final String HTTP_POOL_SIZE = HttpClientFactory.HTTP_POOL_SIZE;
   public static final String HTTP_IDLE_TIMEOUT = HttpClientFactory.HTTP_IDLE_TIMEOUT;

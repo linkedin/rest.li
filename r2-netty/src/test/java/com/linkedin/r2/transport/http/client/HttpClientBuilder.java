@@ -59,7 +59,8 @@ public class HttpClientBuilder
     _channelPoolManagerKeyBuilder = new ChannelPoolManagerKeyBuilder();
     _sslChannelPoolManagerKeyBuilder = new ChannelPoolManagerKeyBuilder();
     _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler,
-        SSL_SESSION_RESUMPTION_ENABLED, NEW_PIPELINE_ENABLED);
+        SSL_SESSION_RESUMPTION_ENABLED, NEW_PIPELINE_ENABLED, HttpClientFactory.DEFAULT_CHANNELPOOL_WAITER_TIMEOUT,
+        HttpClientFactory.DEFAULT_CONNECT_TIMEOUT, HttpClientFactory.DEFAULT_SSL_HANDSHAKE_TIMEOUT);
   }
 
   public HttpClientBuilder setCallbackExecutors(ExecutorService callbackExecutors)

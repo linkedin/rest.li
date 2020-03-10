@@ -17,10 +17,6 @@ package com.linkedin.data.schema.annotation;
 
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaTraverse;
-import com.linkedin.data.schema.annotation.DataSchemaRichContextTraverser.SchemaVisitor;
-import com.linkedin.data.schema.annotation.DataSchemaRichContextTraverser.TraverserContext;
-import com.linkedin.data.schema.annotation.DataSchemaRichContextTraverser.VisitorContext;
-import com.linkedin.data.schema.annotation.DataSchemaRichContextTraverser.VisitorTraversalResult;
 import com.linkedin.data.schema.annotation.SchemaAnnotationHandler.AnnotationValidationResult;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -36,7 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SchemaAnnotationValidationVisitor implements SchemaVisitor
 {
-  private final VisitorTraversalResult _visitorTraversalResult = new VisitorTraversalResult();
+  private final SchemaVisitorTraversalResult _schemaVisitorTraversalResult = new SchemaVisitorTraversalResult();
   private final SchemaAnnotationHandler _schemaAnnotationHandler;
   private static final Logger LOGGER = LoggerFactory.getLogger(SchemaAnnotationValidationVisitor.class);
 
@@ -62,20 +58,20 @@ public class SchemaAnnotationValidationVisitor implements SchemaVisitor
     if (!annotationValidationResult.isValid())
     {
       // merge messages
-      getVisitorTraversalResult().addMessages(context.getSchemaPathSpec(), annotationValidationResult.getMessages());
+      getSchemaVisitorTraversalResult().addMessages(context.getSchemaPathSpec(), annotationValidationResult.getMessages());
     }
   }
 
   @Override
-  public DataSchemaRichContextTraverser.VisitorContext getInitialVisitorContext()
+  public VisitorContext getInitialVisitorContext()
   {
     return new VisitorContext(){};
   }
 
   @Override
-  public VisitorTraversalResult getVisitorTraversalResult()
+  public SchemaVisitorTraversalResult getSchemaVisitorTraversalResult()
   {
-    return _visitorTraversalResult;
+    return _schemaVisitorTraversalResult;
   }
 
 
