@@ -61,7 +61,7 @@ abstract class PdlBuilder
   }
 
   private final Writer _writer;
-  final JacksonDataCodec _jsonCodec = new JacksonDataCodec();
+  protected final JacksonDataCodec _jsonCodec = new JacksonDataCodec();
 
   PdlBuilder(Writer writer)
   {
