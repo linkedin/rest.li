@@ -44,8 +44,6 @@ import org.apache.commons.lang3.StringEscapeUtils;
  */
 abstract class PdlBuilder
 {
-  private static final JacksonDataCodec JSON_CODEC = new JacksonDataCodec();
-
   // TODO: Put these in a unified "PDL constants" file
   private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
       "array", "enum", "fixed", "import", "includes", "map", "namespace", "optional", "package",
@@ -258,11 +256,7 @@ abstract class PdlBuilder
    *
    * @param value JSON object to write
    */
-  PdlBuilder writeJson(Object value) throws IOException
-  {
-    write(toJson(value));
-    return this;
-  }
+  abstract PdlBuilder writeJson(Object value) throws IOException;
 
   /**
    * Serializes a pegasus Data binding type to JSON.
@@ -271,15 +265,15 @@ abstract class PdlBuilder
    * @param value the value to serialize to JSON.
    * @return a JSON serialized string representation of the data value.
    */
-  private String toJson(Object value) throws IOException
+  protected String toJson(Object value, JacksonDataCodec jsonCodec) throws IOException
   {
     if (value instanceof DataMap)
     {
-      return JSON_CODEC.mapToString((DataMap) value);
+      return jsonCodec.mapToString((DataMap) value);
     }
     else if (value instanceof DataList)
     {
-      return JSON_CODEC.listToString((DataList) value);
+      return jsonCodec.listToString((DataList) value);
     }
     else if (value instanceof String)
     {

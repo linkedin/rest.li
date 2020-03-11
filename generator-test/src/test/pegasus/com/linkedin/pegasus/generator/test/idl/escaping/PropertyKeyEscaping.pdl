@@ -2,7 +2,7 @@ namespace com.linkedin.pegasus.generator.test.idl.escaping
 
 record PropertyKeyEscaping {
   @grammarChars.`foo[type=a.b.c].bar`.`{:=}` = "grammarChars"
-  @`namespace` = "foo.bar"
+  @`namespace` = [ 1, 2, 3 ]
   @path.`//`.`/*.*/`.`/** foo */`
   @path2.`/**`.`*/`
   @shouldNotBeEscaped.ABC.1-2.a_b.ab124.000.ABC-123

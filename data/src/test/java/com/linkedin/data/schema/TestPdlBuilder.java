@@ -16,9 +16,11 @@
 
 package com.linkedin.data.schema;
 
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import org.testng.Assert;
@@ -36,32 +38,57 @@ public class TestPdlBuilder
   @DataProvider
   private static Object[][] propertiesMapProvider()
   {
-    DataMap properties1 = new DataMap();
-    properties1.put("empty", new DataMap());
-    DataMap properties2 = new DataMap();
-    properties2.put("validate", properties1);
+    DataMap emptyProperty = new DataMap();
+    emptyProperty.put("empty", new DataMap());
+    DataMap arrayValueProperty = new DataMap();
+    arrayValueProperty.put("array", new DataList(Arrays.asList(1, 2, 3)));
+    DataMap flattenProperty = new DataMap();
+    flattenProperty.put("flatten", arrayValueProperty);
+    DataMap multipleProp = new DataMap();
+    multipleProp.putAll(emptyProperty);
+    multipleProp.putAll(arrayValueProperty);
+    DataMap jsonValueProp = new DataMap();
+    jsonValueProp.put("nested", multipleProp);
     return new Object[][]
         {
             {
-              properties1,
-              "@empty = {}\n"
+              emptyProperty,
+              "@empty = { }\n",
+              "@empty={}"
             },
             {
-              properties2,
-              "@validate.empty = {}\n"
-            }
-        //TODO Add test case for multiple properties in a map level once iteration logic is fixed to be deterministic
+              arrayValueProperty,
+              "@`array` = [ 1, 2, 3 ]\n",
+              "@`array`=[1,2,3]"
+            },
+            {
+              flattenProperty,
+              "@flatten.`array` = [ 1, 2, 3 ]\n",
+              "@flatten.`array`=[1,2,3]"
+            },
+            /* TODO Add test case for multiple properties in a map level once iteration logic is fixed to be deterministic
+            {
+              jsonValueProp,
+              "@nested = {\n  \"array\" : [ 1, 2, 3 ],\n  \"empty\" : { }\n}\n",
+              "@nested={\"array\":[1,2,3],\"empty\":{}}"
+            }*/
         };
   }
 
   @Test(dataProvider = "propertiesMapProvider")
   public void testWriteProperties(Map<String, Object> properties,
-                                  String pdlString) throws IOException
+                                  String indentPdlString,
+                                  String compactPdlString) throws IOException
   {
-    StringWriter writer = new StringWriter();
-    PdlBuilder pdlBuilder = (new IndentedPdlBuilder.Provider()).newInstance(writer);
-    pdlBuilder.writeProperties(Collections.emptyList(), properties);
+    StringWriter indentWriter = new StringWriter();
+    PdlBuilder indentPdlBuilder = (new IndentedPdlBuilder.Provider()).newInstance(indentWriter);
+    indentPdlBuilder.writeProperties(Collections.emptyList(), properties);
 
-    Assert.assertEquals(pdlString, writer.toString());
+    StringWriter compactWriter = new StringWriter();
+    PdlBuilder compactPdlBuilder = (new CompactPdlBuilder.Provider()).newInstance(compactWriter);
+    compactPdlBuilder.writeProperties(Collections.emptyList(), properties);
+
+    Assert.assertEquals(indentPdlString, indentWriter.toString());
+    Assert.assertEquals(compactPdlString, compactWriter.toString());
   }
 }
