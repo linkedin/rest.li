@@ -73,7 +73,7 @@ class IndentedPdlBuilder extends PdlBuilder
   @Override
   PdlBuilder indent() throws IOException
   {
-    write(getIndentSpaces());
+    write(getIndentSpaces(_indentDepth));
     return this;
   }
 
@@ -124,7 +124,8 @@ class IndentedPdlBuilder extends PdlBuilder
   PdlBuilder writeJson(Object value) throws IOException
   {
     DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter();
-    prettyPrinter.indentObjectsWith(new DefaultIndenter(" ", DefaultIndenter.SYS_LF + getIndentSpaces()));
+    prettyPrinter.indentObjectsWith(
+        new DefaultIndenter(getIndentSpaces(1), DefaultIndenter.SYS_LF + getIndentSpaces(_indentDepth)));
     _jsonCodec.setPrettyPrinter(prettyPrinter);
     return super.writeJson(value);
   }
@@ -139,8 +140,9 @@ class IndentedPdlBuilder extends PdlBuilder
     indent().write(code).newline();
   }
 
-  private String getIndentSpaces() {
-    final int numSpaces = _indentDepth * DEFAULT_INDENT_WIDTH;
+  private String getIndentSpaces(int indentDepth)
+  {
+    final int numSpaces = indentDepth * DEFAULT_INDENT_WIDTH;
     final StringBuilder sb = new StringBuilder(numSpaces);
     for (int i = 0; i < numSpaces; i++)
     {

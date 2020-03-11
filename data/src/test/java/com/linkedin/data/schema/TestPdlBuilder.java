@@ -38,23 +38,40 @@ public class TestPdlBuilder
   @DataProvider
   private static Object[][] propertiesMapProvider()
   {
-    DataMap properties1 = new DataMap();
-    properties1.put("empty", new DataList(Arrays.asList(1, 2, 3)));
-    DataMap properties2 = new DataMap();
-    properties2.put("validate", properties1);
+    DataMap emptyProperty = new DataMap();
+    emptyProperty.put("empty", new DataMap());
+    DataMap arrayValueProperty = new DataMap();
+    arrayValueProperty.put("array", new DataList(Arrays.asList(1, 2, 3)));
+    DataMap flattenProperty = new DataMap();
+    flattenProperty.put("flatten", arrayValueProperty);
+    DataMap multipleProp = new DataMap();
+    multipleProp.putAll(emptyProperty);
+    multipleProp.putAll(arrayValueProperty);
+    DataMap jsonValueProp = new DataMap();
+    jsonValueProp.put("nested", multipleProp);
     return new Object[][]
         {
             {
-              properties1,
-              "@empty = [ 1, 2, 3 ]\n",
-              "@empty=[1,2,3]"
+              emptyProperty,
+              "@empty = { }\n",
+              "@empty={}"
             },
             {
-              properties2,
-              "@validate.empty = [ 1, 2, 3 ]\n",
-              "@validate.empty=[1,2,3]"
-            }
-        //TODO Add test case for multiple properties in a map level once iteration logic is fixed to be deterministic
+              arrayValueProperty,
+              "@`array` = [ 1, 2, 3 ]\n",
+              "@`array`=[1,2,3]"
+            },
+            {
+              flattenProperty,
+              "@flatten.`array` = [ 1, 2, 3 ]\n",
+              "@flatten.`array`=[1,2,3]"
+            },
+            /* TODO Add test case for multiple properties in a map level once iteration logic is fixed to be deterministic
+            {
+              jsonValueProp,
+              "@nested = {\n  \"array\" : [ 1, 2, 3 ],\n  \"empty\" : { }\n}\n",
+              "@nested={\"array\":[1,2,3],\"empty\":{}}"
+            }*/
         };
   }
 
