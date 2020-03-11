@@ -61,7 +61,6 @@ abstract class PdlBuilder
   }
 
   private final Writer _writer;
-  protected final JacksonDataCodec _jsonCodec = new JacksonDataCodec();
 
   PdlBuilder(Writer writer)
   {
@@ -257,11 +256,7 @@ abstract class PdlBuilder
    *
    * @param value JSON object to write
    */
-  PdlBuilder writeJson(Object value) throws IOException
-  {
-    write(toJson(value));
-    return this;
-  }
+  abstract PdlBuilder writeJson(Object value) throws IOException;
 
   /**
    * Serializes a pegasus Data binding type to JSON.
@@ -270,15 +265,15 @@ abstract class PdlBuilder
    * @param value the value to serialize to JSON.
    * @return a JSON serialized string representation of the data value.
    */
-  private String toJson(Object value) throws IOException
+  protected String toJson(Object value, JacksonDataCodec jsonCodec) throws IOException
   {
     if (value instanceof DataMap)
     {
-      return _jsonCodec.mapToString((DataMap) value);
+      return jsonCodec.mapToString((DataMap) value);
     }
     else if (value instanceof DataList)
     {
-      return _jsonCodec.listToString((DataList) value);
+      return jsonCodec.listToString((DataList) value);
     }
     else if (value instanceof String)
     {
