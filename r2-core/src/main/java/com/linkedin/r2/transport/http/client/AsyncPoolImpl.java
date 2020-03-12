@@ -64,6 +64,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private final int _maxWaiters;
   private final long _idleTimeout;
   private final long _waiterTimeout;
+  private final long _creationTimeout;
   private final ScheduledExecutorService _timeoutExecutor;
   private final int _minSize;
   private volatile ScheduledFuture<?> _objectTimeoutFuture;
@@ -71,6 +72,8 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
 
   public static final int MIN_WAITER_TIMEOUT = 300;
   public static final int MAX_WAITER_TIMEOUT = 3000;
+  public static final int DEFAULT_OBJECT_CREATION_TIMEOUT = 2000;
+
 
   private enum State { NOT_YET_STARTED, RUNNING, SHUTTING_DOWN, STOPPED }
 
@@ -232,6 +235,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     _maxSize = maxSize;
     _idleTimeout = idleTimeout;
     _waiterTimeout = waiterTimeout;
+    _creationTimeout = DEFAULT_OBJECT_CREATION_TIMEOUT; // TODO: currently hard coded to 2 seconds. Expose this as a parameter !
     _timeoutExecutor = timeoutExecutor;
     _maxWaiters = maxWaiters;
     _strategy = strategy;
@@ -646,8 +650,10 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           return;
         }
 
-        _lifecycle.create(new Callback<T>()
-        {
+        // Lets not trust the _lifecycle to timely return a response here.
+        // Embedding the callback inside a timeout callback (ObjectCreationTimeoutCallback)
+        // to force a response within creationTimeout deadline to reclaim the object slot in the pool
+        _lifecycle.create(new TimeoutCallback<>(_timeoutExecutor, _creationTimeout, TimeUnit.MILLISECONDS, new Callback<T>() {
           @Override
           public void onSuccess(T t)
           {
@@ -663,7 +669,6 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           @Override
           public void onError(final Throwable e)
           {
-            _rateLimiter.incrementPeriod();
             // Note we drain all waiters and cancel all pending creates if a create fails.
             // When a create fails, rate-limiting logic will be applied.  In this case,
             // we may be initiating creations at a lower rate than incoming requests.  While
@@ -677,7 +682,8 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
             {
               _statsTracker.incrementCreateErrors();
               _lastCreateError = e;
-              create = objectDestroyed(1 + cancelledCreate.size());
+
+              // Cancel all waiters in the rate limiter
               if (!_waiters.isEmpty())
               {
                 waitersDenied = cancelWaiters();
@@ -686,7 +692,12 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
               {
                 waitersDenied = Collections.<Callback<T>>emptyList();
               }
+
+              // reclaim the slot in the pool
+              create = objectDestroyed(1 + cancelledCreate.size());
             }
+
+            // lets fail all the waiters with the object creation error
             for (Callback<T> denied : waitersDenied)
             {
               try
@@ -698,6 +709,13 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
                 LOG.error("Encountered error while invoking error waiter callback", ex);
               }
             }
+
+            // Now after cancelling all the pending tasks, lets make sure to back off on the creation
+            _rateLimiter.incrementPeriod();
+
+            // if we still need to create a new object, lets initiate that now
+            // since all waiters are cancelled, the only condition that makes this true is when the pool is below
+            // the min poolSize
             if (create)
             {
               create();
@@ -705,10 +723,10 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
             LOG.debug(_poolName + ": object creation failed", e);
             callback.onDone();
           }
-        });
+        }, new ObjectCreationTimeoutException(
+            "Exceeded creation timeout of " + _creationTimeout + "ms: in Pool: "+ _poolName)));
       }
     });
-
   }
 
   private void timeoutObjects()

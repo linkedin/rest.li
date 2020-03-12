@@ -39,7 +39,7 @@ public class TimeoutCallback<T> implements Callback<T>
   public TimeoutCallback(ScheduledExecutorService executor, long timeout, TimeUnit timeoutUnit,
                                final Callback<T> callback)
   {
-    this(executor, timeout, timeoutUnit, callback, null);
+    this(executor, timeout, timeoutUnit, callback, "");
   }
 
   /**
@@ -55,9 +55,23 @@ public class TimeoutCallback<T> implements Callback<T>
   public TimeoutCallback(ScheduledExecutorService executor, long timeout, TimeUnit timeoutUnit,
                                final Callback<T> callback, final String timeoutMessage)
   {
-    _timeout = new SingleTimeout<>(executor, timeout, timeoutUnit, callback, () -> callback.onError(
-      new TimeoutException(
-        "Exceeded request timeout of " + timeoutUnit.toMillis(timeout) + "ms: " + timeoutMessage)));
+    this(executor, timeout, timeoutUnit, callback, new TimeoutException(
+        "Exceeded request timeout of " + timeoutUnit.toMillis(timeout) + "ms: " + timeoutMessage));
+  }
+
+  /**
+   * Construct a new instance.
+   *
+   * @param executor the {@link ScheduledExecutorService} used to schedule the timeout
+   * @param timeout the timeout delay, in the specified {@link TimeUnit}.
+   * @param timeoutUnit the {@link TimeUnit} for the timeout parameter.
+   * @param callback the {@link Callback} to be invoked on success or error.
+   * @param timeoutThrowable the custom exception that will be used during the timeout
+   */
+  public TimeoutCallback(ScheduledExecutorService executor, long timeout, TimeUnit timeoutUnit,
+      final Callback<T> callback, final Throwable timeoutThrowable)
+  {
+    _timeout = new SingleTimeout<>(executor, timeout, timeoutUnit, callback, () -> callback.onError(timeoutThrowable));
   }
 
   @Override

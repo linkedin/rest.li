@@ -28,6 +28,7 @@ import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.ExponentialBackOffRateLimiter;
 import com.linkedin.r2.transport.http.client.NoopRateLimiter;
+import com.linkedin.r2.transport.http.client.ObjectCreationTimeoutException;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.test.util.AssertionMethods;
@@ -785,6 +786,83 @@ public class TestAsyncPool
     Assert.assertEquals(stats.getTotalWaiterTimedOut(), numberOfCheckoutsInPhaseB - numbOfObjectsToBeReturnedInPhaseC);
   }
 
+
+  @Test(dataProvider = "creationTimeoutDataProvider")
+  public void testCreationTimeout(int poolSize, int concurrency) throws Exception
+  {
+    // this object creation life cycle simulate the creation limbo state
+    ObjectCreatorThatNeverCreates objectCreatorThatNeverCreates = new ObjectCreatorThatNeverCreates();
+    ClockedExecutor clockedExecutor = new ClockedExecutor();
+    ExponentialBackOffRateLimiter rateLimiter = new ExponentialBackOffRateLimiter(0, 5000,
+        10, clockedExecutor, concurrency);
+    final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
+        objectCreatorThatNeverCreates,
+        poolSize,
+        Integer.MAX_VALUE,
+        Integer.MAX_VALUE,
+        clockedExecutor,
+        Integer.MAX_VALUE,
+        AsyncPoolImpl.Strategy.MRU,
+        0, rateLimiter, clockedExecutor, new LongTracking()
+    );
+
+    pool.start();
+
+    List<FutureCallback<Object>> checkoutCallbacks = new ArrayList<>();
+
+    // Lets try to checkout more than the max Pool Size times when the object creator is in limbo state
+    for (int i = 0; i < poolSize * 2 ; i++) {
+      FutureCallback<Object> cb = new FutureCallback<>();
+      checkoutCallbacks.add(cb);
+
+      // Reset the exponential back off due to creation timeout error
+      rateLimiter.setPeriod(0);
+
+      pool.get(cb);
+
+      // run for the duration of default creation timeout
+      // TODO: parameterize the creation duration when the default creation gets parameterized
+      clockedExecutor.runFor(2000);
+    }
+
+    // drain all the pending tasks
+    clockedExecutor.runFor(2000);
+
+    // Make sure that all the creations are failed with CreationTimeout
+    // since the object creator went to limbo state
+    for(FutureCallback<Object> cb : checkoutCallbacks)
+    {
+      try
+      {
+        cb.get(100, TimeUnit.MILLISECONDS);
+      }
+      catch (Exception ex)
+      {
+        Assert.assertTrue(ex.getCause() instanceof ObjectCreationTimeoutException);
+      }
+    }
+
+    // Lets make sure the channel pool stats are at expected state
+    PoolStats stats = pool.getStats();
+    // Lets make sure all the limbo creations are timed out as expected
+    Assert.assertEquals(stats.getTotalCreateErrors(), poolSize * 2);
+
+    // No checkout should have happened due to object creator in limbo
+    Assert.assertEquals(stats.getCheckedOut(), 0);
+    // No Idle objects in the pool
+    Assert.assertEquals(stats.getIdleCount(), 0);
+
+    // Lets make sure that all the slots in the pool are reclaimed even if the object creation is in limbo
+    Assert.assertEquals(stats.getPoolSize(), 0);
+
+    // Since the max pending creation request reached the max pool size,
+    // we should have reached the maPool Size at least once
+    Assert.assertEquals(stats.getMaxPoolSize(), poolSize);
+
+    // Since no object is successfully created, expecting idle objects to be zero
+    Assert.assertEquals(stats.getIdleCount(), 0);
+  }
+
   @DataProvider
   public Object[][] channelStateRandomDataProvider()
   {
@@ -832,6 +910,28 @@ public class TestAsyncPool
       data[i][3] = poolSize;
       data[i][4] = concurrency;
       data[i][5] = randomNumberGenerator.nextInt(500)+100;
+    }
+
+    return data;
+  }
+
+  @DataProvider
+  public Object[][] creationTimeoutDataProvider()
+  {
+    // 500 represent a good sample for the randomized data.
+    // This has been verified against 500K test cases in local
+    int numberOfTestCases = 1000;
+    Random randomNumberGenerator = new Random();
+
+    Object[][] data = new Object[numberOfTestCases][2];
+    for (int i = 0; i < numberOfTestCases; i++)
+    {
+      int poolSize = randomNumberGenerator.nextInt(200)+1;
+      int concurrency = randomNumberGenerator.nextInt(poolSize)+1;
+      concurrency = Math.min(poolSize, concurrency);
+
+      data[i][0] = poolSize;
+      data[i][1] = concurrency;
     }
 
     return data;
@@ -992,6 +1092,16 @@ public class TestAsyncPool
       return _live;
     }
   }
+
+  public static class ObjectCreatorThatNeverCreates extends SynchronousLifecycle
+  {
+    @Override
+    public void create(Callback<Object> callback)
+    {
+      // just don't call the callback to simulate the creation limbo state
+    }
+  }
+
 
   public static class CreationBlockableSynchronousLifecycle extends SynchronousLifecycle
   {
