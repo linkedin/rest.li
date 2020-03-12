@@ -45,6 +45,14 @@ public interface ClusterInfoProvider
     return getClusterCount(clusterName, PropertyKeys.HTTPS_SCHEME, DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
   }
 
+  /**
+   * Get the DarkClusterConfigMap for a particular d2 cluster. This is needed to iterate through the dark clusters that correspond
+   * to a regular d2 cluster.
+   *
+   * @param clusterName
+   * @return
+   * @throws ServiceUnavailableException
+   */
   default DarkClusterConfigMap getDarkClusterConfigMap(String clusterName) throws ServiceUnavailableException
   {
     return new DarkClusterConfigMap();

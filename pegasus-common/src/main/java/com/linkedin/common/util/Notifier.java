@@ -18,6 +18,10 @@ package com.linkedin.common.util;
 
 import java.util.function.Supplier;
 
+/**
+ * The Notifier allows different implementations to determine how errors/exceptions are reported, such as logging, throwing exceptions,
+ * ignore, or rate limiting.
+ */
 public interface Notifier
 {
   /**

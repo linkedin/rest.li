@@ -16,17 +16,13 @@
 
 package com.linkedin.darkcluster.api;
 
-import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.d2.DarkClusterConfig;
 
 /**
- * Dummy implementation of DarkClusterDispatcher for NoOp cases like unrelated tests and unsupported cases.
+ * The DarkClusterStrategyFactory is responsible for creating and maintaining the strategies needed for dark clusters. This involves refreshing
+ * when darkClusterConfig changes are detected. This hides the lifecycle and maintenance of DarkClusterStrategies from users.
  */
-public class NoOpDarkClusterManagerImpl implements DarkClusterManager
+public interface DarkClusterStrategyFactory
 {
-  @Override
-  public boolean sendDarkRequest(RestRequest request, RequestContext requestContext)
-  {
-    return false;
-  }
+  DarkClusterStrategy getOrCreate(String darkClusterName, DarkClusterConfig darkClusterConfig);
 }

@@ -20,16 +20,13 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 
 /**
- * DarkClusterStrategy controls if a request should be duplicated to the dark canary clusters, and how, if any, traffic shaping should take place.
+ * Dummy implementation of DarkClusterStrategy. This can be used in tests safely.
  */
-public interface DarkClusterStrategy
+public class NoOpDarkClusterStrategyImpl implements DarkClusterStrategy
 {
-  /**
-   * Send request to dark canary according to strategy. This may include not sending the request, or sending it multiple times.
-   * @param originalRequest incoming request
-   * @param darkRequest dark request to send
-   * @param requestContext requestContext for the request
-   * @return  true if handled successfully else false
-   */
-  boolean handleRequest(final RestRequest originalRequest, final RestRequest darkRequest, final RequestContext requestContext);
+  @Override
+  public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
+  {
+    return false;
+  }
 }

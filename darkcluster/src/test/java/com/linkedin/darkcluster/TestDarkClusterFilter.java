@@ -16,20 +16,27 @@
 
 package com.linkedin.darkcluster;
 
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import com.linkedin.common.util.Notifier;
 import com.linkedin.d2.balancer.LoadBalancerTestState;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterManager;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
+import com.linkedin.darkcluster.api.DarkClusterStrategyFactory;
+import com.linkedin.darkcluster.api.DarkClusterVerifier;
+import com.linkedin.darkcluster.api.NoOpDarkClusterVerifierImpl;
 import com.linkedin.darkcluster.impl.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.filter.DarkClusterFilter;
 import com.linkedin.darkcluster.impl.DarkClusterManagerImpl;
+import com.linkedin.darkcluster.impl.DarkClusterStrategyFactoryImpl;
 import com.linkedin.darkcluster.impl.DefaultDarkClusterDispatcherImpl;
-import com.linkedin.darkcluster.impl.RelativeTrafficDarkCanaryStrategy;
+import com.linkedin.darkcluster.impl.RelativeTrafficDarkCanaryStrategyImpl;
 
 import org.testng.annotations.Test;
 
@@ -41,18 +48,27 @@ public class TestDarkClusterFilter
     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcherImpl(new MockClient());
     ClusterInfoProvider clusterInfoProvider = new SimpleLoadBalancer(new LoadBalancerTestState(), scheduledExecutorService);
+    Notifier notifier = new DoNothingNotifier();
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
+    String sourceClusterName = "MyCluster";
+    DarkClusterVerifier darkClusterVerifier = new NoOpDarkClusterVerifierImpl();
+    Random random = new Random();
+
     BaseDarkClusterDispatcher baseDarkClusterDispatcher = new BaseDarkClusterDispatcher("myDarkCluster",
                                                                                         darkClusterDispatcher,
-                                                                                        new DoNothingNotifier(),
-                                                                                        null,
+                                                                                        notifier,
+                                                                                        darkClusterVerifier,
                                                                                         scheduledExecutorService);
-    DarkClusterStrategy darkClusterStrategy = new RelativeTrafficDarkCanaryStrategy(clusterInfoProvider,
-                                                                                    "MyCluster",
-                                                                                    baseDarkClusterDispatcher);
-    DarkClusterManager darkClusterManager = new DarkClusterManagerImpl(scheduledExecutorService,
+    DarkClusterStrategyFactory darkClusterStrategyFactory = new DarkClusterStrategyFactoryImpl(clusterInfoProvider, sourceClusterName,
+                                                                                               baseDarkClusterDispatcher,
+                                                                                               notifier,
+                                                                                               executorService, random);
+
+    DarkClusterManager darkClusterManager = new DarkClusterManagerImpl(sourceClusterName,
+                                                                       clusterInfoProvider,
+                                                                       darkClusterStrategyFactory,
                                                                        "", "",
-                                                                       new DoNothingNotifier(),
-                                                                       darkClusterStrategy, null);
-    DarkClusterFilter darkClusterFilter = new DarkClusterFilter(darkClusterManager);
+                                                                       notifier);
+    DarkClusterFilter darkClusterFilter = new DarkClusterFilter(darkClusterManager, darkClusterVerifier, executorService);
   }
 }

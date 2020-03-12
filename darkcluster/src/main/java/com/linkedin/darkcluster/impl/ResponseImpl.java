@@ -19,7 +19,7 @@ package com.linkedin.darkcluster.impl;
 import com.linkedin.darkcluster.api.DarkClusterVerifier;
 import com.linkedin.r2.message.rest.RestResponse;
 
-class ResponseImpl implements DarkClusterVerifier.Response
+public class ResponseImpl implements DarkClusterVerifier.Response
 {
   private final RestResponse _response;
   private final Throwable _ex;
@@ -30,16 +30,19 @@ class ResponseImpl implements DarkClusterVerifier.Response
     _ex = ex;
   }
 
+  @Override
   public boolean hasError()
   {
     return _ex != null;
   }
 
+  @Override
   public Throwable getError()
   {
     return _ex;
   }
 
+  @Override
   public RestResponse getResponse()
   {
     return _response;
@@ -75,6 +78,7 @@ class ResponseImpl implements DarkClusterVerifier.Response
       _darkClusterName = darkClusterName;
     }
 
+    @Override
     public String getDarkClusterName()
     {
       return _darkClusterName;

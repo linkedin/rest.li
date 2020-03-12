@@ -20,6 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.annotation.Nonnull;
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.Notifier;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
@@ -33,7 +35,8 @@ import com.linkedin.r2.message.rest.RestResponse;
  * The BaseDarkClusterDispatcher handles the basic operations of dispatching a dark request. It takes in a custom dispatcher, handles errors,
  * gathers metrics, and calls the verifier if needed.
  *
- * Note that it is the custom dispatcher's job to send the request on a different executor if that's desired.
+ * Note that it is the custom dispatcher's job to send the request on a different executor if that's desired. The verifier is always executed on
+ * a separate executor, and that is handled by this class.
  */
 public class BaseDarkClusterDispatcher
 {
@@ -49,8 +52,8 @@ public class BaseDarkClusterDispatcher
   private final AtomicInteger _exceptionCount = new AtomicInteger(0);
   private final ConcurrentHashMap<String, AtomicInteger> _exceptionCountMap = new ConcurrentHashMap<String, AtomicInteger>();
 
-  public BaseDarkClusterDispatcher(String darkClusterName, final DarkClusterDispatcher dispatcher, final Notifier notifier,
-                                   final DarkClusterVerifier verifier, final ExecutorService dispatcherExecutor)
+  public BaseDarkClusterDispatcher(@Nonnull String darkClusterName, @Nonnull final DarkClusterDispatcher dispatcher, @Nonnull final Notifier notifier,
+                                   @Nonnull final DarkClusterVerifier verifier, @Nonnull final ExecutorService dispatcherExecutor)
   {
     _darkClusterName = darkClusterName;
     _dispatcher = dispatcher;
@@ -59,7 +62,7 @@ public class BaseDarkClusterDispatcher
     _dispatcherExecutor = dispatcherExecutor;
   }
 
-  public void sendRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext, int numRequestDuplicates)
+  void sendRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext, int numRequestDuplicates)
   {
     // Result of request is discarded unless _verifier is not null
     Callback<RestResponse> callback = new Callback<RestResponse>()
@@ -68,7 +71,7 @@ public class BaseDarkClusterDispatcher
       public void onSuccess(RestResponse result)
       {
         _successCount.incrementAndGet();
-        if (_verifier != null)
+        if (_verifier.isEnabled())
         {
           _dispatcherExecutor.execute(() -> _verifier.onDarkResponse(originalRequest,
                                                                      ResponseImpl.darkSuccess(result, _darkClusterName)));
@@ -94,7 +97,7 @@ public class BaseDarkClusterDispatcher
         {
           oldCount.incrementAndGet();
         }
-        if (_verifier != null)
+        if (_verifier.isEnabled())
         {
           _dispatcherExecutor.execute(
             () -> _verifier.onDarkResponse(originalRequest, ResponseImpl.darkError(e, _darkClusterName)));

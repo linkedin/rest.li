@@ -19,23 +19,35 @@ package com.linkedin.darkcluster.api;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 
+/**
+ * Implementations of DarkClusterVerifier can compare the real response with that of the dark canaries. It is left up to the
+ * implementations to decide what to do with that (emit metrics, logs, etc).
+ *
+ * @author Zhenkai Zhu
+ * @author David Hoa
+ */
 public interface DarkClusterVerifier
 {
   /**
-   * Invoked when request has been forwarded to dark canary server(s) and response or error from real server arrives
+   * Invoked when the request has been forwarded to dark canary server(s) and the response or error from the real server arrives
    * @param request original request
    * @param response the response or error from real server
    */
   void onResponse(RestRequest request, Response response);
 
   /**
-   * Invoked when response or error from dark canary server arrives.
+   * Invoked when the response or error from the dark canary server arrives.
    * This could be invoked multiple times for the same request if the request is forwarded
    * to multiple dark canary servers.
    * @param request original request
    * @param darkResponse dark canary response
    */
   void onDarkResponse(RestRequest request, DarkResponse darkResponse);
+
+  /**
+   * whether this verifier should be used to verify responses.
+   */
+  boolean isEnabled();
 
   /**
    * An object that represents the union of response or error.
@@ -66,12 +78,11 @@ public interface DarkClusterVerifier
     Throwable getError();
   }
 
+  /**
+   * Marker interface for Dark Cluster Response.
+   */
   interface DarkResponse extends Response
   {
-    /**
-     * Returns the property of the dark canary that generated the response/error
-     * @return the property of the dark canary that generated the response/error
-     */
-    //DarkCanaryProperty getDarkCanaryProperty();
+    String getDarkClusterName();
   }
 }

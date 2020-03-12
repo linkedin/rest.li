@@ -16,6 +16,8 @@
 
 package com.linkedin.darkcluster.impl;
 
+import javax.annotation.Nonnull;
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.r2.message.RequestContext;
@@ -31,7 +33,7 @@ public class DefaultDarkClusterDispatcherImpl implements DarkClusterDispatcher
 {
   private final Client _client;
 
-  public DefaultDarkClusterDispatcherImpl(final Client client)
+  public DefaultDarkClusterDispatcherImpl(@Nonnull final Client client)
   {
     _client = client;
   }
