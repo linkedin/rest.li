@@ -722,7 +722,7 @@ public class TestHttpNettyClient
         new SettableClock(),
         new LongTracking()
      );
-    HttpNettyClient client = new HttpNettyClient(address -> testPool, _scheduler, 500, 500);
+    HttpNettyClient client = new HttpNettyClient(address -> testPool, _scheduler, MAX_RATE_LIMITING_PERIOD * 2, 500);
 
     final RestRequest r = new RestRequestBuilder(URI.create("http://localhost:8080/")).setMethod("GET").build();
     final ExecutorService executor = Executors.newSingleThreadExecutor();
