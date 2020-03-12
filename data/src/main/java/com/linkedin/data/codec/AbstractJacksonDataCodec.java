@@ -117,7 +117,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
   {
     try
     {
-      Data.TraverseCallback callback = createTraverseCallback(generator, false);
+      Data.TraverseCallback callback = createTraverseCallback(generator);
       Data.traverse(object, callback);
       generator.flush();
     }
@@ -133,18 +133,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
 
   protected Data.TraverseCallback createTraverseCallback(JsonGenerator generator)
   {
-    return createTraverseCallback(generator, false);
-  }
-
-  /**
-   * Create {@link Data.TraverseCallback} interface instance for Data object traverse
-   * @param generator JsonGenerator used during traverse
-   * @param traverseMapBySortedKeyOrder indicate whether want the callBack to traverse the data map within data object using the sorted map key order
-   * @return
-   */
-  protected Data.TraverseCallback createTraverseCallback(JsonGenerator generator, boolean traverseMapBySortedKeyOrder)
-  {
-    return new JacksonTraverseCallback(generator, traverseMapBySortedKeyOrder);
+    return new JacksonTraverseCallback(generator);
   }
 
   @Override
@@ -226,37 +215,17 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
 
   public void objectToJsonGenerator(Object object, JsonGenerator generator) throws IOException
   {
-    objectToJsonGenerator(object, generator, false);
-  }
-
-  /**
-   * Convert an object to Json format representation.
-   * @param object the object that needs to be converted
-   * @param generator the generator that could generate Json output based on the object
-   * @param orderMapByKey if true, map elements in the object (can be the object itself or its nested elements)
-   *                      will have their entries sorted by keys in the generated Json.
-   * @throws IOException
-   */
-  public void objectToJsonGenerator(Object object, JsonGenerator generator, boolean orderMapByKey) throws IOException
-  {
-    Data.TraverseCallback callback = createTraverseCallback(generator, orderMapByKey);
+    Data.TraverseCallback callback = createTraverseCallback(generator);
     Data.traverse(object, callback);
   }
 
   public static class JacksonTraverseCallback implements Data.TraverseCallback
   {
     protected final JsonGenerator _generator;
-    private final boolean _orderMapEntriesByKey;
 
     protected JacksonTraverseCallback(JsonGenerator generator)
     {
-      this(generator, false);
-    }
-
-    protected JacksonTraverseCallback(JsonGenerator generator, boolean orderMapEntriesByKey)
-    {
       _generator = generator;
-      _orderMapEntriesByKey = orderMapEntriesByKey;
     }
 
     @Override
@@ -331,19 +300,6 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     public void key(String key) throws IOException
     {
       _generator.writeFieldName(key);
-    }
-
-    @Override
-    public Iterable<Map.Entry<String, Object>> orderMap(DataMap map)
-    {
-      if (_orderMapEntriesByKey)
-      {
-        return Data.orderMapEntries(map);
-      }
-      else
-      {
-        return map.entrySet();
-      }
     }
 
     @Override
