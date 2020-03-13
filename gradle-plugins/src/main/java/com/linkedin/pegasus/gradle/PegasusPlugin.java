@@ -53,6 +53,7 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.logging.LogLevel;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -545,9 +546,15 @@ public class PegasusPlugin implements Plugin<Project>
   private static final String CONVERT_TO_PDL_KEEP_ORIGINAL = "convertToPdl.keepOriginal";
   private static final String CONVERT_TO_PDL_PRESERVE_SOURCE_CMD = "convertToPdl.preserveSourceCmd";
 
+  private static final StringBuffer PDSC_DEPRECATION_WARNING =
+      new StringBuffer("\n\nPDL is now GA ! Rest.li replaces PDSC with PDL (go/pdl)")
+          .append("\nWe found that the project is still using PDSC, request owners to help migrate to PDL.")
+          .append("\nPlease reach out to ask_SI@, #pdl-support-questions\n\n");
+
   // Below variables are used to collect data across all pegasus projects (sub-projects) and then print information
   // to the user at the end after build is finished.
   private static StringBuffer _restModelCompatMessage = new StringBuffer();
+  private static StringBuffer _pdscWarningMessage = new StringBuffer();
   private static final Collection<String> _needCheckinFiles = new ArrayList<>();
   private static final Collection<String> _needBuildFolders = new ArrayList<>();
   private static final Collection<String> _possibleMissingFilesInEarlierCommit = new ArrayList<>();
@@ -624,6 +631,7 @@ public class PegasusPlugin implements Plugin<Project>
         DATA_TEMPLATE_FILE_SUFFIXES.add(PDL_FILE_SUFFIX);
 
         _restModelCompatMessage = new StringBuffer();
+        _pdscWarningMessage = new StringBuffer();
         _needCheckinFiles.clear();
         _needBuildFolders.clear();
         _possibleMissingFilesInEarlierCommit.clear();
@@ -649,6 +657,11 @@ public class PegasusPlugin implements Plugin<Project>
           if (endOfBuildMessage.length() > 0)
           {
             result.getGradle().getRootProject().getLogger().quiet(endOfBuildMessage.toString());
+          }
+
+          if (_pdscWarningMessage.length() > 0)
+          {
+            result.getGradle().getRootProject().getLogger().log(LogLevel.WARN, _pdscWarningMessage.toString());
           }
         });
 
@@ -1477,6 +1490,12 @@ public class PegasusPlugin implements Plugin<Project>
 
             return false;
           });
+
+          if (dataSchemaDir.exists() && !SharedFileUtils.getSuffixedFiles(project, dataSchemaDir,
+              SchemaFileType.PDSC._fileExtension).isEmpty())
+          {
+            _pdscWarningMessage = PDSC_DEPRECATION_WARNING;
+          }
 
           task.doFirst(new CacheableAction<>(t -> deleteGeneratedDir(project, sourceSet, DATA_TEMPLATE_GEN_TYPE)));
         });
