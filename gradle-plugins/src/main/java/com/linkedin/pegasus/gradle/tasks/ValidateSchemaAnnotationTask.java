@@ -173,7 +173,7 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
    * This method will check the java class annotation on the class instantiated by a className;
    * It will search if that class has an annotation matching {@link SCHEMA_HANDLER_JAVA_ANNOTATION},
    * if found, this class name will be added to "foundClasses" list.
-   * if exceptions or error detected during instantiation of the class, this method will return without doing anything.
+   * if exceptions or errors detected during instantiation of the class, this method will return without doing anything.
    *
    * @param name the name of class to be search annotation from.
    * @param foundClasses a list of class names of the classes that contains {@link SCHEMA_HANDLER_JAVA_ANNOTATION}
