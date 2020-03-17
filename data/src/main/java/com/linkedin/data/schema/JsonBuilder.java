@@ -16,17 +16,19 @@
 
 package com.linkedin.data.schema;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.PrettyPrinter;
+
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.JacksonDataTemplateCodec;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.PrettyPrinter;
 
 
 /**
@@ -271,21 +273,7 @@ public class JsonBuilder
   }
 
   /**
-   * Write Data object. But if the Data Object contains DataMap or itself is a DataMap,
-   * the result would output the map entries using sorted key order.
-   *
-   * @param object is the Data object to write.
-   */
-  public void writeDataWithMapEntriesSorted(Object object) throws IOException
-  {
-    _jacksonDataCodec.objectToJsonGenerator(object, _jsonGenerator, true);
-  }
-
-
-  /**
    * Write properties by adding each property as a field to current JSON object.
-   * The property would be key value pair with keys sorted
-   * Of the property's value contains Data Map, its output would have those map keys sorted as well
    *
    * @param value provides the properties to be written.
    * @throws IOException if there is an error writing.
@@ -294,13 +282,10 @@ public class JsonBuilder
   {
     if (value.isEmpty() == false)
     {
-      List<Map.Entry<String, ?>> orderedProperties =  value.entrySet().stream()
-                                                                     .sorted(Map.Entry.comparingByKey())
-                                                                     .collect(Collectors.toList());
-        for (Map.Entry<String, ?> entry : orderedProperties)
+      for (Map.Entry<String, ?> entry : value.entrySet())
       {
         _jsonGenerator.writeFieldName(entry.getKey());
-        writeDataWithMapEntriesSorted(entry.getValue());
+        writeData(entry.getValue());
       }
     }
   }

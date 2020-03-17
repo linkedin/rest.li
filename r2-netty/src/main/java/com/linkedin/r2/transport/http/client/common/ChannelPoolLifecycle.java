@@ -94,7 +94,7 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
     _bootstrap.connect(_remoteAddress).addListener((ChannelFutureListener) channelFuture -> {
       if (!channelFuture.isSuccess())
       {
-        onError(channelCallback, channelFuture);
+        onError(channelCallback, channelFuture.cause());
         return;
       }
 
@@ -118,9 +118,15 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt)
         {
-          if(evt == SslHandshakeCompletionEvent.SUCCESS){
+          if(evt == SslHandshakeCompletionEvent.SUCCESS)
+          {
             channelCallback.onSuccess(c);
             c.pipeline().remove(CHANNELPOOL_SSL_CALLBACK_HANDLER);
+          }
+          else if (evt instanceof SslHandshakeCompletionEvent)
+          {
+            Throwable sslException = ((SslHandshakeCompletionEvent) evt).cause();
+            onError(channelCallback, sslException);
           }
           ctx.fireUserEventTriggered(evt);
         }
@@ -128,9 +134,8 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
     });
   }
 
-  private void onError(Callback<Channel> channelCallback, Future<?> channelFuture)
+  private void onError(Callback<Channel> channelCallback, Throwable cause)
   {
-    Throwable cause = channelFuture.cause();
     LOG.error("Failed to create channel, remote={}", _remoteAddress, cause);
     if (cause instanceof ConnectException)
     {
