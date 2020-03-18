@@ -123,7 +123,7 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
     // if the number of found handlers doesn't match number of configured modules, will throw exception
     if (foundClassNames.size() != expectedHandlersNumber)
     {
-      String errorMsg = String.format("Encountered errors when searching for annotation handlers: total %s configured, but %s handlers found: [%s].",
+      String errorMsg = String.format("Encountered errors when searching for annotation handlers: total %s dependencies configured, but %s handlers found: [%s].",
                                       expectedHandlersNumber,
                                       foundClassNames.size(),
                                       String.join(",", foundClassNames));
@@ -207,8 +207,8 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
         clazz = classForName(clazzName);
       } catch (Exception | Error e)
       {
-        getProject().getLogger().info("During search for annotation handler, encountered unexpected exception or error [{}] during instantiating the class, " +
-                                      "will skip this class: [{}]", e.getClass(), clazzName);
+        getProject().getLogger().info("During search for annotation handlers, encountered an unexpected exception or error [{}] when instantiating the class, " +
+                                      "will skip checking this class: [{}]", e.getClass(), clazzName);
         getProject().getLogger().debug("Unexpected exceptions or errors found during instantiating the class [{}], detailed error: ", clazzName, e);
         return;
       }
