@@ -60,7 +60,7 @@ public class SchemaFormatTranslator
 {
   private static final Logger LOGGER = LoggerFactory.getLogger(SchemaFormatTranslator.class);
 
-  private static final Pattern LINE_END_SPACES = Pattern.compile(" +$", Pattern.MULTILINE);
+  private static final Pattern LINE_END_SPACES = Pattern.compile("\\s+$", Pattern.MULTILINE);
 
   private static final Options OPTIONS = new Options();
   static
@@ -287,8 +287,8 @@ public class SchemaFormatTranslator
           FileUtils.writeStringToFile(sourceFile, SchemaToJsonEncoder.schemaToJson(sourceSchema, JsonBuilder.Pretty.INDENTED));
           File destFile = new File(errorSchemasDir, sourceSchema.getName() + "_" + _destFormat);
           FileUtils.writeStringToFile(destFile, SchemaToJsonEncoder.schemaToJson(destSchema, JsonBuilder.Pretty.INDENTED));
-          LOGGER.error("To see the difference between source and tanslated schemas, run: ");
-          LOGGER.error("diff {} {}", sourceFile.getAbsolutePath(), destFile.getAbsolutePath());
+          LOGGER.error("To see the difference between source and tanslated schemas, run: \ndiff {} {}",
+              sourceFile.getAbsolutePath(), destFile.getAbsolutePath());
           failedSchemas.add(schemaInfo);
           hasError = true;
         }
