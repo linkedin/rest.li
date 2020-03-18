@@ -19,6 +19,8 @@ package com.linkedin.restli.internal.server;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.config.ResourceMethodConfig;
+import com.linkedin.restli.server.config.ResourceMethodConfigImpl;
+
 
 public class RoutingResult
 {
@@ -34,7 +36,7 @@ public class RoutingResult
    */
   public RoutingResult(ServerResourceContext context, ResourceMethodDescriptor methodDescriptor)
   {
-    this(context, methodDescriptor, null);
+    this(context, methodDescriptor, new ResourceMethodConfigImpl(null, false, false));
   }
 
   /**
