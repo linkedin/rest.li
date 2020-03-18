@@ -543,6 +543,7 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static final String CONVERT_TO_PDL_REVERSE = "convertToPdl.reverse";
   private static final String CONVERT_TO_PDL_KEEP_ORIGINAL = "convertToPdl.keepOriginal";
+  private static final String CONVERT_TO_PDL_SKIP_VERIFICATION = "convertToPdl.skipVerification";
   private static final String CONVERT_TO_PDL_PRESERVE_SOURCE_CMD = "convertToPdl.preserveSourceCmd";
 
   // Below variables are used to collect data across all pegasus projects (sub-projects) and then print information
@@ -1413,6 +1414,7 @@ public class PegasusPlugin implements Plugin<Project>
     File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet));
     boolean reverse = isPropertyTrue(project, CONVERT_TO_PDL_REVERSE);
     boolean keepOriginal = isPropertyTrue(project, CONVERT_TO_PDL_KEEP_ORIGINAL);
+    boolean skipVerification = isPropertyTrue(project, CONVERT_TO_PDL_SKIP_VERIFICATION);
     String preserveSourceCmd = getNonEmptyProperty(project, CONVERT_TO_PDL_PRESERVE_SOURCE_CMD);
 
     // Utility task for migrating between PDSC and PDL.
@@ -1434,6 +1436,7 @@ public class PegasusPlugin implements Plugin<Project>
         task.setDestinationFormat(SchemaFileType.PDL);
       }
       task.setKeepOriginal(keepOriginal);
+      task.setSkipVerification(skipVerification);
 
       task.onlyIf(t -> task.getInputDir().exists());
       task.doLast(new CacheableAction<>(t ->
