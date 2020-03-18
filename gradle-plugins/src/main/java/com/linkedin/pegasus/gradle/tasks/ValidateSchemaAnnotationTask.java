@@ -30,7 +30,9 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.artifacts.configurations.DefaultConfiguration;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.InputDirectory;
@@ -89,6 +91,15 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
 
     getProject().getLogger().info("started schema annotation validation");
 
+    int expectedHandlersNumber = ((DefaultConfiguration) _handlerJarPath).getAllDependencies().size();
+    // skip if no handlers configured
+    if (expectedHandlersNumber == 0)
+    {
+      getProject().getLogger()
+                  .info("no schema annotation handlers configured, will skip schema annotation validation.");
+      return;
+    }
+
     List<URL> handlerJarPathUrls = new ArrayList<>();
 
     for (File f : _handlerJarPath)
@@ -108,12 +119,16 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
       scanHandlersInClassPathJar(f, foundClassNames, scannedClass);
     }
 
-    // skip if no handlers configured or found
-    if (handlerJarPathUrls.size() == 0 || foundClassNames.size() == 0)
+    // For now, every schema annotation handler should be in its own module
+    // if the number of found handlers doesn't match number of configured modules, will throw exception
+    if (foundClassNames.size() != expectedHandlersNumber)
     {
-      getProject().getLogger()
-                  .info("no schema annotation handlers configured or found, will skip schema annotation validation.");
-      return;
+      String errorMsg = String.format("Encountered errors when searching for annotation handlers: total %s configured, but %s handlers found: [%s].",
+                                      expectedHandlersNumber,
+                                      foundClassNames.size(),
+                                      String.join(",", foundClassNames));
+      getProject().getLogger().error(errorMsg);
+      throw new GradleException("ValidationSchemaAnnotation task failed during search for annotation handlers.");
     }
 
     getProject().getLogger()
@@ -192,7 +207,8 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
         clazz = classForName(clazzName);
       } catch (Exception | Error e)
       {
-        getProject().getLogger().info("Unexpected exceptions or errors [{}] found during instantiating the class, will skip this class: [{}]", e.getClass(), clazzName);
+        getProject().getLogger().info("During search for annotation handler, encountered unexpected exception or error [{}] during instantiating the class, " +
+                                      "will skip this class: [{}]", e.getClass(), clazzName);
         getProject().getLogger().debug("Unexpected exceptions or errors found during instantiating the class [{}], detailed error: ", clazzName, e);
         return;
       }
