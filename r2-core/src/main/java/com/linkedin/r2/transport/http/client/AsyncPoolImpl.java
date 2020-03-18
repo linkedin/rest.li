@@ -72,7 +72,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
 
   public static final int MIN_WAITER_TIMEOUT = 300;
   public static final int MAX_WAITER_TIMEOUT = 3000;
-  public static final int DEFAULT_OBJECT_CREATION_TIMEOUT = 2000;
+  public static final int DEFAULT_OBJECT_CREATION_TIMEOUT = 10000;
 
 
   private enum State { NOT_YET_STARTED, RUNNING, SHUTTING_DOWN, STOPPED }
@@ -235,7 +235,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     _maxSize = maxSize;
     _idleTimeout = idleTimeout;
     _waiterTimeout = waiterTimeout;
-    _creationTimeout = DEFAULT_OBJECT_CREATION_TIMEOUT; // TODO: currently hard coded to 2 seconds. Expose this as a parameter !
+    _creationTimeout = DEFAULT_OBJECT_CREATION_TIMEOUT; // TODO: expose this through cfg2
     _timeoutExecutor = timeoutExecutor;
     _maxWaiters = maxWaiters;
     _strategy = strategy;
