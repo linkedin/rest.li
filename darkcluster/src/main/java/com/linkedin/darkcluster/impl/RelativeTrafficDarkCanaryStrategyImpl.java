@@ -22,12 +22,13 @@ import javax.annotation.Nonnull;
 
 import com.linkedin.common.util.Notifier;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
+import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 
 /**
- * RelativeTrafficDarkCanaryStrategyImpl figures out how many dark requests to send. It uses the ClusterInfoProvider to determine the number of
+ * RelativeTrafficDarkCanaryStrategyImpl figures out how many dark requests to send. It uses the {@link ClusterInfoProvider} to determine the number of
  * instances in both the source and target cluster, and uses that to calculate the number of request to send in order to make the level of traffic
  * proportional to itself on any instance in the dark cluster (accounting for multiplier), assuming all hosts in the source cluster send traffic.
  */
@@ -36,20 +37,17 @@ public class RelativeTrafficDarkCanaryStrategyImpl implements DarkClusterStrateg
   private final String _originalClusterName;
   private final String _darkClusterName;
   private final Float _multiplier;
-  private final ClusterInfoProvider _clusterInfoProvider;
   private final BaseDarkClusterDispatcher _baseDarkClusterDispatcher;
   private final Notifier _notifier;
   private final Random _random;
 
   public RelativeTrafficDarkCanaryStrategyImpl(@Nonnull String originalClusterName, @Nonnull String darkClusterName, @Nonnull Float multiplier,
-                                               @Nonnull ClusterInfoProvider clusterInfoProvider,
                                                @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
                                                @Nonnull Notifier notifier, @Nonnull Random random)
   {
     _originalClusterName = originalClusterName;
     _darkClusterName = darkClusterName;
     _multiplier = multiplier;
-    _clusterInfoProvider = clusterInfoProvider;
     _baseDarkClusterDispatcher = baseDarkClusterDispatcher;
     _notifier = notifier;
     _random = random;

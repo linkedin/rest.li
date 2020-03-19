@@ -21,6 +21,7 @@ import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.SimpleCallback;
 import com.linkedin.common.util.MapUtil;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.clients.TrackerClient;
@@ -135,6 +136,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
    * This is a lazily-populated cache of the results from getStrategiesForService()
    */
   private final Map<String, List<SchemeStrategyPair>>                                   _serviceStrategiesCache;
+
+  /**
+   * List of listeners that want to be notified when cluster changes happen.
+   */
+  private final List<LoadBalancerClusterListener>                                    _clusterListeners;
 
   private final SSLContext    _sslContext;
   private final SSLParameters _sslParameters;
@@ -296,6 +302,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _sslParameters = sslParameters;
     _isSSLEnabled = isSSLEnabled;
     _sslSessionValidatorFactory = sessionValidatorFactory;
+    _clusterListeners =
+      Collections.synchronizedList(new ArrayList<LoadBalancerClusterListener>());
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -322,6 +330,36 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       public void innerRun()
       {
         _listeners.remove(listener);
+      }
+    });
+  }
+
+  @Override
+  public void registerClusterListener(final LoadBalancerClusterListener listener)
+  {
+    trace(_log, "register listener: ", listener);
+
+    _executor.execute(new PropertyEvent("add cluster listener for state")
+    {
+      @Override
+      public void innerRun()
+      {
+        _clusterListeners.add(listener);
+      }
+    });
+  }
+
+  @Override
+  public void unregisterClusterListener(final LoadBalancerClusterListener listener)
+  {
+    trace(_log, "unregister listener: ", listener);
+
+    _executor.execute(new PropertyEvent("remove cluster listener for state")
+    {
+      @Override
+      public void innerRun()
+      {
+        _clusterListeners.remove(listener);
       }
     });
   }
@@ -394,6 +432,15 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                 listener.onClientRemoved(serviceStrategy.getKey(), client);
               }
             }
+          }
+        }
+
+        // When SimpleLoadBalancerStateis shutdown, all the cluster listener also need to be notified.
+        for (LoadBalancerClusterListener clusterListener : _clusterListeners)
+        {
+          for (String clusterName : _clusterInfo.keySet())
+          {
+            clusterListener.onClusterRemoved(clusterName);
           }
         }
       }
@@ -1147,4 +1194,25 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     void onClientRemoved(String serviceName, TrackerClient client);
   }
 
+  /**
+   * ClusterLoadBalancerSubscriber will call this on handlePut
+   */
+  void notifyClusterListenersOnAdd(String clusterName)
+  {
+    for (LoadBalancerClusterListener clusterListener : _clusterListeners)
+    {
+      clusterListener.onClusterAdded(clusterName);
+    }
+  }
+
+  /**
+   * ClusterLoadBalancerSubscriber will call this on handleRemove
+   */
+  void notifyClusterListenersOnRemove(String clusterName)
+  {
+    for (LoadBalancerClusterListener clusterListener : _clusterListeners)
+    {
+      clusterListener.onClusterRemoved(clusterName);
+    }
+  }
 }

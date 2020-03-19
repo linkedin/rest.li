@@ -25,6 +25,9 @@ import com.linkedin.r2.message.rest.RestRequest;
  */
 public interface DarkClusterManager
 {
+  /**
+   * This header key indicates that the request method was converted from another method, such as GET to POST
+   */
   String HEADER_METHOD_OVERRIDE = "X-HTTP-Method-Override";
 
   /**
@@ -34,5 +37,5 @@ public interface DarkClusterManager
    * @param oldRequestContext requestContext
    * @return true if request is sent at least once.
    */
-  boolean sendDarkRequest(final RestRequest oldRequest, final RequestContext oldRequestContext);
+  boolean handleDarkRequest(final RestRequest oldRequest, final RequestContext oldRequestContext);
 }

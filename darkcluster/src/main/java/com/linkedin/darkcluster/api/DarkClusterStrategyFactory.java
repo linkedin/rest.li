@@ -20,9 +20,17 @@ import com.linkedin.d2.DarkClusterConfig;
 
 /**
  * The DarkClusterStrategyFactory is responsible for creating and maintaining the strategies needed for dark clusters. This involves refreshing
- * when darkClusterConfig changes are detected. This hides the lifecycle and maintenance of DarkClusterStrategies from users.
+ * when darkClusterConfig changes are detected. This hides the lifecycle and maintenance of {@link DarkClusterStrategy} from users.
  */
 public interface DarkClusterStrategyFactory
 {
+  /**
+   * getOrCreate retrieves the {@link DarkClusterStrategy} corresponding to the darkClusterName. If it doesn't exist, create it
+   * and return the new strategy. The darkClusterConfig is passed in so that it can be easily stored if needed, because retrieving
+   * it requires iterating through the source cluster's darkClusters, not the dark cluster's darkClusters map.
+   * @param darkClusterName darkClusterName to look up
+   * @param darkClusterConfig darkClusterConfig to store, if needed.
+   * @return {@link DarkClusterStrategy}
+   */
   DarkClusterStrategy getOrCreate(String darkClusterName, DarkClusterConfig darkClusterConfig);
 }

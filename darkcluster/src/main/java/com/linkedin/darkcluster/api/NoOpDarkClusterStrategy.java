@@ -16,28 +16,16 @@
 
 package com.linkedin.darkcluster.api;
 
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 
 /**
- * This is a NoOp implementation of DarkClusterVerifier. It is safe to use this in all cases, for testing and production, and avoids having to
- * check if the verifier is null.
+ * Dummy implementation of DarkClusterStrategy. This can be used in tests safely.
  */
-public class NoOpDarkClusterVerifierImpl implements DarkClusterVerifier
+public class NoOpDarkClusterStrategy implements DarkClusterStrategy
 {
   @Override
-  public void onResponse(RestRequest request, Response response)
-  {
-
-  }
-
-  @Override
-  public void onDarkResponse(RestRequest request, DarkResponse darkResponse)
-  {
-
-  }
-
-  @Override
-  public boolean isEnabled()
+  public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
     return false;
   }

@@ -20,12 +20,12 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 
 /**
- * Dummy implementation of DarkClusterStrategy. This can be used in tests safely.
+ * Dummy implementation of DarkClusterManager for NoOp cases like unrelated tests and unsupported cases.
  */
-public class NoOpDarkClusterStrategyImpl implements DarkClusterStrategy
+public class NoOpDarkClusterManager implements DarkClusterManager
 {
   @Override
-  public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
+  public boolean handleDarkRequest(RestRequest request, RequestContext requestContext)
   {
     return false;
   }

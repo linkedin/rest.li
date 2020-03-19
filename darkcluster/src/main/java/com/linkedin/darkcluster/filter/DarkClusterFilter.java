@@ -23,6 +23,7 @@ import javax.annotation.Nonnull;
 
 import com.linkedin.darkcluster.api.DarkClusterManager;
 import com.linkedin.darkcluster.api.DarkClusterVerifier;
+import com.linkedin.darkcluster.api.DarkClusterVerifierManager;
 import com.linkedin.darkcluster.impl.ResponseImpl;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
@@ -35,7 +36,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * DarkClusterFilter can be added to the Restli filter chain on either the server or client side, to tee off requests to a
- * dark cluster. It delegates to the DarkClusterManager for sending the dark request and verifying the dark response
+ * dark cluster. It delegates to the {@link DarkClusterManager} for sending the dark request and verifying the dark response
  * against the original response, if that is configured.
  *
  * Future enhancements might be to make it a Stream Filter as well.
@@ -43,34 +44,26 @@ import org.slf4j.LoggerFactory;
 public class DarkClusterFilter implements RestFilter
 {
   private static final Logger _log = LoggerFactory.getLogger(DarkClusterFilter.class);
-  private static final String ORIGINAL_REQUEST = DarkClusterFilter.class.getName() + "_originalRequest";
+  private static final String ORIGINAL_REQUEST_KEY = DarkClusterFilter.class.getName() + "_originalRequest";
 
   private final DarkClusterManager _darkClusterManager;
-  private final DarkClusterVerifier _darkClusterVerifier;
-  private final ExecutorService _executorService;
+  private final DarkClusterVerifierManager _darkClusterVerifierManager;
 
-  public DarkClusterFilter(@Nonnull DarkClusterManager darkClusterManager, @Nonnull DarkClusterVerifier darkClusterVerifier,
-                           @Nonnull ExecutorService executorService)
+  public DarkClusterFilter(@Nonnull DarkClusterManager darkClusterManager, @Nonnull DarkClusterVerifierManager darkClusterVerifierManager)
   {
     _darkClusterManager = darkClusterManager;
-    _darkClusterVerifier = darkClusterVerifier;
-    _executorService = executorService;
+    _darkClusterVerifierManager = darkClusterVerifierManager;
   }
 
   @Override
   public void onRestRequest(RestRequest req, RequestContext requestContext, Map<String, String> wireAttrs,
                             NextFilter<RestRequest, RestResponse> nextFilter)
   {
-    // use a copy of request & request context to make sure what we do in dispatcher won't affect the processing
-    // of the original request
-    RestRequest reqCopy = req.builder().build();
-    RequestContext newRequestContext = new RequestContext(requestContext);
-
-    boolean verifyResponse = _darkClusterManager.sendDarkRequest(reqCopy, newRequestContext);
+    boolean verifyResponse = _darkClusterManager.handleDarkRequest(req, requestContext);
 
     if (verifyResponse)
     {
-      requestContext.putLocalAttr(ORIGINAL_REQUEST, req);
+      requestContext.putLocalAttr(ORIGINAL_REQUEST_KEY, req);
     }
 
     nextFilter.onRequest(req, requestContext, wireAttrs);
@@ -80,14 +73,10 @@ public class DarkClusterFilter implements RestFilter
   public void onRestResponse(RestResponse res, RequestContext requestContext, Map<String, String> wireAttrs,
                              NextFilter<RestRequest, RestResponse> nextFilter)
   {
-    Object request = requestContext.getLocalAttr(ORIGINAL_REQUEST);
+    Object request = requestContext.getLocalAttr(ORIGINAL_REQUEST_KEY);
     if (request instanceof RestRequest)
     {
-      //this method does not throw exceptions
-      if (_darkClusterVerifier.isEnabled())
-      {
-        _executorService.execute(() -> _darkClusterVerifier.onResponse((RestRequest) request, ResponseImpl.success(res)));
-      }
+      _darkClusterVerifierManager.onResponse((RestRequest) request, res);
     }
 
     nextFilter.onResponse(res, requestContext, wireAttrs);
@@ -98,14 +87,11 @@ public class DarkClusterFilter implements RestFilter
                           NextFilter<RestRequest, RestResponse> nextFilter)
   {
 
-    Object request = requestContext.getLocalAttr(ORIGINAL_REQUEST);
+    Object request = requestContext.getLocalAttr(ORIGINAL_REQUEST_KEY);
+
     if (request instanceof RestRequest)
     {
-      // this method does not throw exception
-      if (_darkClusterVerifier.isEnabled())
-      {
-        _executorService.execute(() -> _darkClusterVerifier.onResponse((RestRequest) request, ResponseImpl.error(ex)));
-      }
+      _darkClusterVerifierManager.onError((RestRequest)request, ex);
     }
     nextFilter.onError(ex, requestContext, wireAttrs);
   }

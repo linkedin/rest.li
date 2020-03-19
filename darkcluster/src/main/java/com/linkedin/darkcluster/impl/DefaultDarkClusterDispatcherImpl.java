@@ -27,7 +27,7 @@ import com.linkedin.r2.transport.common.Client;
 
 /**
  * Default implementation of DarkClusterDispatcher
- * TODO: requests should be offloaded to an executor.
+ * requests should probably be offloaded to an executor.
  */
 public class DefaultDarkClusterDispatcherImpl implements DarkClusterDispatcher
 {
@@ -37,10 +37,12 @@ public class DefaultDarkClusterDispatcherImpl implements DarkClusterDispatcher
   {
     _client = client;
   }
+
   @Override
-  public void sendRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext,
+  public boolean sendRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext,
                           Callback<RestResponse> callback)
   {
     _client.restRequest(darkRequest, requestContext, callback);
+    return true;
   }
 }

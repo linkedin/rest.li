@@ -56,11 +56,15 @@ class ClusterLoadBalancerSubscriber extends
       _simpleLoadBalancerState.getClusterInfo().put(listenTo,
         new ClusterInfoItem(_simpleLoadBalancerState, discoveryProperties, null));
     }
+
+    // notify the cluster listeners
+    _simpleLoadBalancerState.notifyClusterListenersOnAdd(listenTo);
   }
 
   @Override
   protected void handleRemove(final String listenTo)
   {
     _simpleLoadBalancerState.getClusterInfo().remove(listenTo);
+    _simpleLoadBalancerState.notifyClusterListenersOnRemove(listenTo);
   }
 }

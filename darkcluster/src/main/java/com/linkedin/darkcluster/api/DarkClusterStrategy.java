@@ -28,8 +28,8 @@ public interface DarkClusterStrategy
    * Send request to dark canary according to strategy. This may include not sending the request, or sending it multiple times.
    * @param originalRequest incoming request
    * @param darkRequest dark request to send
-   * @param requestContext requestContext for the request
-   * @return  true if handled successfully else false
+   * @param requestContext requestContext for the dark request. The requestContext should be duplicated for each dark request sent.
+   * @return  true if at least one request was sent.
    */
   boolean handleRequest(final RestRequest originalRequest, final RestRequest darkRequest, final RequestContext requestContext);
 }

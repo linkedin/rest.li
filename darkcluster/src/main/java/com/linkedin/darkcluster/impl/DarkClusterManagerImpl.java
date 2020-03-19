@@ -33,6 +33,7 @@ import com.linkedin.d2.balancer.util.URIRewriter;
 import com.linkedin.darkcluster.api.DarkClusterManager;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.darkcluster.api.DarkClusterStrategyFactory;
+import com.linkedin.darkcluster.api.DarkClusterVerifierManager;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpMethod;
@@ -51,7 +52,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
   private final Pattern _blackListRegEx;
   private final Notifier _notifier;
   private final ClusterInfoProvider _clusterInfoProvider;
-  private String _clusterName;
+  private final String _clusterName;
   private final DarkClusterStrategyFactory _darkClusterStrategyFactory;
   private Map<String, AtomicReference<URIRewriter>> _uriRewriterMap;
 
@@ -69,11 +70,8 @@ public class DarkClusterManagerImpl implements DarkClusterManager
   }
 
   @Override
-  public boolean sendDarkRequest(RestRequest request, RequestContext requestContext)
+  public boolean handleDarkRequest(RestRequest request, RequestContext requestContext)
   {
-    // the request is already immutable, and a new requestContext will be created in BaseDarkClusterDispatcher.
-    // We don't need to copy them here, but doing it just for safety.
-    RequestContext newRequestContext = new RequestContext(requestContext);
     String uri = request.getURI().toString();
     boolean darkRequestSent = false;
     try
@@ -82,17 +80,20 @@ public class DarkClusterManagerImpl implements DarkClusterManager
       final boolean blackedListed = _blackListRegEx != null && _blackListRegEx.matcher(uri).matches();
       if ((isSafe(request) || whiteListed) && !blackedListed)
       {
-
+        // the request is already immutable, and a new requestContext will be created in BaseDarkClusterDispatcher.
+        // We don't need to copy them here, but doing it just for safety.
+        RestRequest reqCopy = request.builder().build();
+        RequestContext newRequestContext = new RequestContext(requestContext);
         DarkClusterConfigMap configMap = _clusterInfoProvider.getDarkClusterConfigMap(_clusterName);
         for (Map.Entry<String, DarkClusterConfig> darkClusterConfigEntry : configMap.entrySet())
         {
           String darkClusterName = darkClusterConfigEntry.getKey();
           DarkClusterConfig darkClusterConfig = darkClusterConfigEntry.getValue();
 
-          RestRequest newD2Request = rewriteRequest(request, darkClusterName);
+          RestRequest newD2Request = rewriteRequest(reqCopy, darkClusterName);
           // now find the strategy appropriate for each dark cluster
           DarkClusterStrategy strategy = _darkClusterStrategyFactory.getOrCreate(darkClusterName, darkClusterConfig);
-          darkRequestSent = strategy.handleRequest(newD2Request, request, newRequestContext);
+          darkRequestSent = strategy.handleRequest(newD2Request, reqCopy, newRequestContext);
         }
 
       }
@@ -104,6 +105,12 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     return darkRequestSent;
   }
 
+  /**
+   * isSafe returns true if the underlying HttpMethod has the expectation of only doing retrieval with no side effects. For further details,
+   * see {@link HttpMethod}
+   * @param req
+   * @return
+   */
   private boolean isSafe(RestRequest req)
   {
     try
@@ -137,11 +144,16 @@ public class DarkClusterManagerImpl implements DarkClusterManager
    */
   private RestRequest rewriteRequest(RestRequest originalRequest, String darkServiceName)
   {
-    _uriRewriterMap.computeIfAbsent(darkServiceName, k -> {
-      URI configuredURI = URI.create("d2://" + darkServiceName);
-      URIRewriter rewriter = new D2URIRewriter(configuredURI);
-      return new AtomicReference<>(rewriter);
-    });
+    // computeIfAbsent has performance problems in Java 7/8. Check the Map first
+    if (!_uriRewriterMap.containsKey(darkServiceName))
+    {
+      _uriRewriterMap.computeIfAbsent(darkServiceName, k -> {
+        URI configuredURI = URI.create("d2://" + darkServiceName);
+        URIRewriter rewriter = new D2URIRewriter(configuredURI);
+        return new AtomicReference<>(rewriter);
+      });
+    }
+
     URIRewriter rewriter = _uriRewriterMap.get(darkServiceName).get();
     return originalRequest.builder().setURI(rewriter.rewriteURI(originalRequest.getURI())).build();
   }

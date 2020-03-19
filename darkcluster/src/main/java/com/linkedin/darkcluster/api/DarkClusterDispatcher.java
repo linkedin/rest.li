@@ -27,6 +27,15 @@ import com.linkedin.r2.message.rest.RestResponse;
  */
 public interface DarkClusterDispatcher
 {
-  void sendRequest(final RestRequest originalRequest, final RestRequest darkRequest,
+  /**
+   * Sends the request to the dark cluster.
+   *
+   * @param originalRequest a copy of the original request
+   * @param darkRequest the request that should be sent
+   * @param requestContext the requestContext corresponding to the darkRequest
+   * @param callback the callback to invoke on receiving the dark response
+   * @return true if request was sent, false otherwise
+   */
+  boolean sendRequest(final RestRequest originalRequest, final RestRequest darkRequest,
                    final RequestContext requestContext, Callback<RestResponse> callback);
 }

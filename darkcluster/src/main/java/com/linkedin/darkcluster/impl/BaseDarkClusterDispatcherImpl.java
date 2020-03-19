@@ -17,15 +17,15 @@
 package com.linkedin.darkcluster.impl;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.Notifier;
+import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
-import com.linkedin.darkcluster.api.DarkClusterVerifier;
+import com.linkedin.darkcluster.api.DarkClusterVerifierManager;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -38,44 +38,42 @@ import com.linkedin.r2.message.rest.RestResponse;
  * Note that it is the custom dispatcher's job to send the request on a different executor if that's desired. The verifier is always executed on
  * a separate executor, and that is handled by this class.
  */
-public class BaseDarkClusterDispatcher
+public class BaseDarkClusterDispatcherImpl implements BaseDarkClusterDispatcher
 {
   private final String _darkClusterName;
   private final DarkClusterDispatcher _dispatcher;
   private final Notifier _notifier;
-  private final DarkClusterVerifier _verifier;
-  private final ExecutorService _dispatcherExecutor;
 
   // Fields keeping track of statistics
   private final AtomicInteger _requestCount = new AtomicInteger(0);
   private final AtomicInteger _successCount = new AtomicInteger(0);
   private final AtomicInteger _exceptionCount = new AtomicInteger(0);
   private final ConcurrentHashMap<String, AtomicInteger> _exceptionCountMap = new ConcurrentHashMap<String, AtomicInteger>();
+  private final DarkClusterVerifierManager _verifierManager;
 
-  public BaseDarkClusterDispatcher(@Nonnull String darkClusterName, @Nonnull final DarkClusterDispatcher dispatcher, @Nonnull final Notifier notifier,
-                                   @Nonnull final DarkClusterVerifier verifier, @Nonnull final ExecutorService dispatcherExecutor)
+  public BaseDarkClusterDispatcherImpl(@Nonnull String darkClusterName,
+                                       @Nonnull final DarkClusterDispatcher dispatcher,
+                                       @Nonnull final Notifier notifier,
+                                       @Nonnull DarkClusterVerifierManager verifierManager)
   {
     _darkClusterName = darkClusterName;
     _dispatcher = dispatcher;
     _notifier = notifier;
-    _verifier = verifier;
-    _dispatcherExecutor = dispatcherExecutor;
+    _verifierManager = verifierManager;
   }
 
-  void sendRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext, int numRequestDuplicates)
+  public boolean sendRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext, int numRequestDuplicates)
   {
-    // Result of request is discarded unless _verifier is not null
+    boolean requestSent = false;
+
     Callback<RestResponse> callback = new Callback<RestResponse>()
     {
       @Override
       public void onSuccess(RestResponse result)
       {
         _successCount.incrementAndGet();
-        if (_verifier.isEnabled())
-        {
-          _dispatcherExecutor.execute(() -> _verifier.onDarkResponse(originalRequest,
-                                                                     ResponseImpl.darkSuccess(result, _darkClusterName)));
-        }
+        // Result of request is discarded if verifier is not enabled
+        _verifierManager.onDarkResponse(originalRequest, result, _darkClusterName);
       }
 
       @Override
@@ -97,11 +95,7 @@ public class BaseDarkClusterDispatcher
         {
           oldCount.incrementAndGet();
         }
-        if (_verifier.isEnabled())
-        {
-          _dispatcherExecutor.execute(
-            () -> _verifier.onDarkResponse(originalRequest, ResponseImpl.darkError(e, _darkClusterName)));
-        }
+        _verifierManager.onDarkError(originalRequest, e, _darkClusterName);
       }
     };
 
@@ -114,8 +108,12 @@ public class BaseDarkClusterDispatcher
       {
         darkContext.putLocalAttr(R2Constants.FORCE_QUERY_TUNNEL, true);
       }
-      _dispatcher.sendRequest(originalRequest, darkRequest, requestContext, callback);
+      if (_dispatcher.sendRequest(originalRequest, darkRequest, requestContext, callback))
+      {
+        requestSent = true;
+      }
     }
+    return requestSent;
   }
 
   public int getRequestCount()
