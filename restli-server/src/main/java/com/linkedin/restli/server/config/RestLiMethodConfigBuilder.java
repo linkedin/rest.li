@@ -14,7 +14,6 @@ public class RestLiMethodConfigBuilder
 
   // Whether to validate parameter in the query parameters.
   private boolean shouldValidateQueryParams = false;
-  private boolean shouldValidateResourceKeys = false;
 
   public RestLiMethodConfigBuilder()
   {
@@ -31,24 +30,16 @@ public class RestLiMethodConfigBuilder
     {
       addTimeoutMsConfigMap(config.getTimeoutMsConfig());
       withShouldValidateQueryParams(config.shouldValidateQueryParams());
-      withShouldValidateResourceKeys(config.shouldValidateResourceKey());
     }
   }
 
   public RestLiMethodConfig build()
   {
-    return new RestLiMethodConfigImpl(_timeoutMsConfig, shouldValidateQueryParams, shouldValidateResourceKeys);
+    return new RestLiMethodConfigImpl(_timeoutMsConfig, shouldValidateQueryParams);
   }
 
-  public RestLiMethodConfigBuilder withShouldValidateQueryParams(boolean shouldValidateQueryParams)
-  {
+  public RestLiMethodConfigBuilder withShouldValidateQueryParams(boolean shouldValidateQueryParams) {
     this.shouldValidateQueryParams = shouldValidateQueryParams;
-    return this;
-  }
-
-  public RestLiMethodConfigBuilder withShouldValidateResourceKeys(boolean shouldValidateResourceKeys)
-  {
-    this.shouldValidateResourceKeys = shouldValidateResourceKeys;
     return this;
   }
 

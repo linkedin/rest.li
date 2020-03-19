@@ -21,9 +21,4 @@ public interface ResourceMethodConfig
    * Config for whether this method will need to validate query parameters.
    */
   boolean shouldValidateQueryParams();
-
-  /**
-   * Config for whether this method will need to validate path/resource keys.
-   */
-  boolean shouldValidateResourceKeys();
 }

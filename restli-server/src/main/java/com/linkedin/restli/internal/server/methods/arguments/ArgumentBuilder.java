@@ -21,6 +21,11 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
+import com.linkedin.data.schema.validation.CoercionMode;
+import com.linkedin.data.schema.validation.RequiredMode;
+import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
+import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.template.AbstractArrayTemplate;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -28,13 +33,12 @@ import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.InvalidAlternativeKeyException;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
+import com.linkedin.internal.common.util.CollectionUtils;
+import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.entitystream.EntityStreams;
 import com.linkedin.entitystream.WriteHandle;
 import com.linkedin.entitystream.Writer;
-import com.linkedin.internal.common.util.CollectionUtils;
-import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.BatchRequest;
-import com.linkedin.restli.common.ComplexKeySpec;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpStatus;
@@ -224,12 +228,11 @@ public class ArgumentBuilder
           Object value;
           if (DataTemplate.class.isAssignableFrom(param.getType()))
           {
-            value = buildDataTemplateArgument(context.getStructuredParameter(param.getName()), param,
-                resourceMethodConfig.shouldValidateQueryParams());
+            value = buildDataTemplateArgument(context, param, resourceMethodConfig.shouldValidateQueryParams());
           }
           else
           {
-            value = buildRegularArgument(context, param, resourceMethodConfig.shouldValidateQueryParams());
+            value = buildRegularArgument(context, param);
           }
 
           if (value != null)
@@ -331,8 +334,7 @@ public class ArgumentBuilder
    * @return argument value in the correct type
    */
   private static Object buildArrayArgument(final ResourceContext context,
-                                           final Parameter<?> param,
-                                           boolean validateParam)
+                                           final Parameter<?> param)
   {
     final Object convertedValue;
     if (DataTemplate.class.isAssignableFrom(param.getItemType()))
@@ -344,7 +346,11 @@ public class ArgumentBuilder
       {
         final DataTemplate<?> itemsElem = DataTemplateUtil.wrap(paramData, param.getItemType().asSubclass(DataTemplate.class));
 
-        ArgumentUtils.validateDataAgainstSchema(itemsElem.data(), itemsElem.schema(), validateParam);
+        ValidateDataAgainstSchema.validate(itemsElem.data(),
+                                           itemsElem.schema(),
+                                           new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT,
+                                                                 CoercionMode.STRING_TO_PRIMITIVE));
+
         Array.set(convertedValue, j++, itemsElem);
       }
     }
@@ -375,7 +381,7 @@ public class ArgumentBuilder
         {
           Array.set(convertedValue,
                     j++,
-                    ArgumentUtils.convertSimpleValue(itemStringValue, parameterSchema.getItems(), param.getItemType(), false));
+                    ArgumentUtils.convertSimpleValue(itemStringValue, parameterSchema.getItems(), param.getItemType()));
         }
         catch (NumberFormatException e)
         {
@@ -418,8 +424,7 @@ public class ArgumentBuilder
    * @return argument value in the correct type
    */
   private static Object buildRegularArgument(final ResourceContext context,
-                                             final Parameter<?> param,
-                                             boolean validateParam)
+                                             final Parameter<?> param)
   {
     if (!context.hasParameter(param.getName()))
     {
@@ -429,7 +434,7 @@ public class ArgumentBuilder
     final Object convertedValue;
     if (param.isArray())
     {
-      convertedValue = buildArrayArgument(context, param, validateParam);
+      convertedValue = buildArrayArgument(context, param);
     }
     else
     {
@@ -443,8 +448,7 @@ public class ArgumentBuilder
       {
         try
         {
-          convertedValue =
-              ArgumentUtils.convertSimpleValue(value, param.getDataSchema(), param.getType(), validateParam);
+          convertedValue = ArgumentUtils.convertSimpleValue(value, param.getDataSchema(), param.getType());
         }
         catch (NumberFormatException e)
         {
@@ -478,11 +482,12 @@ public class ArgumentBuilder
     return convertedValue;
   }
 
-  private static DataTemplate<?> buildDataTemplateArgument(final Object paramValue,
+  private static DataTemplate<?> buildDataTemplateArgument(final ResourceContext context,
                                                            final Parameter<?> param,
-                                                           final boolean validateParams)
+                                                           final boolean validateRequestQueryParam)
 
   {
+    Object paramValue = context.getStructuredParameter(param.getName());
     DataTemplate<?> paramRecordTemplate;
 
     if (paramValue == null)
@@ -512,7 +517,17 @@ public class ArgumentBuilder
         paramRecordTemplate = DataTemplateUtil.wrap(paramValue, paramType);
       }
 
-      ArgumentUtils.validateDataAgainstSchema(paramRecordTemplate.data(), paramRecordTemplate.schema(), validateParams);
+      // Validate against the class schema with FixupMode.STRING_TO_PRIMITIVE to parse the
+      // strings into the corresponding primitive types.
+      ValidationResult result =
+          ValidateDataAgainstSchema.validate(paramRecordTemplate.data(), paramRecordTemplate.schema(),
+              new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE));
+      if (validateRequestQueryParam && !result.isValid())
+      {
+        throw new RoutingException(String.format("Argument parameter '%s' value '%s' is invalid, reason: %s", param.getName(),
+            paramRecordTemplate.data(), result.getMessages()), HttpStatus.S_400_BAD_REQUEST.getCode());
+      }
+
       return paramRecordTemplate;
     }
   }
@@ -620,27 +635,24 @@ public class ArgumentBuilder
       if (altKeyName != null)
       {
         return ArgumentUtils.translateFromAlternativeKey(
-            ArgumentUtils.parseAlternativeKey(stringKey, altKeyName, resourceModel, version,
-                routingResult.getResourceMethodConfig().shouldValidateResourceKeys()),
+            ArgumentUtils.parseAlternativeKey(stringKey, altKeyName, resourceModel, version),
             altKeyName, resourceModel);
       }
       else if (ComplexResourceKey.class.equals(primaryKey.getType()))
       {
-        return ComplexResourceKey.parseString(stringKey, ComplexKeySpec.forClassesMaybeNull(resourceModel.getKeyKeyClass(),
-            resourceModel.getKeyParamsClass()), version, routingResult.getResourceMethodConfig().shouldValidateResourceKeys());
+        return ComplexResourceKey.parseString(stringKey, resourceModel.getKeyKeyClass(),
+            resourceModel.getKeyParamsClass(), version);
       }
       else if (CompoundKey.class.equals(primaryKey.getType()))
       {
-        return ArgumentUtils.parseCompoundKey(stringKey, resourceModel.getKeys(), version,
-            routingResult.getResourceMethodConfig().shouldValidateResourceKeys());
+        return ArgumentUtils.parseCompoundKey(stringKey, resourceModel.getKeys(), version);
       }
       else
       {
         // The conversion of simple keys doesn't include URL decoding as the current version of Rest.li clients don't
         // encode simple keys which appear in the request body for BATCH UPDATE and BATCH PATCH requests.
         Key key = resourceModel.getPrimaryKey();
-        return ArgumentUtils.convertSimpleValue(stringKey, key.getDataSchema(), key.getType(),
-            routingResult.getResourceMethodConfig().shouldValidateResourceKeys());
+        return ArgumentUtils.convertSimpleValue(stringKey, key.getDataSchema(), key.getType());
       }
     }
     catch (InvalidAlternativeKeyException | AlternativeKeyCoercerException | PathSegment.PathSegmentSyntaxException | IllegalArgumentException e)

@@ -43,10 +43,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.easymock.EasyMock;
 
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.mockito.Matchers.*;
 
 
 /**
@@ -402,8 +404,6 @@ public class RestLiArgumentBuilderTestHelper
       expect(mockRoutingResult.getContext()).andReturn(context).times(getContextCount);
     }
     ResourceMethodConfig mockResourceMethodConfig = createMock(ResourceMethodConfig.class);
-    expect(mockResourceMethodConfig.shouldValidateResourceKeys()).andReturn(false).anyTimes();
-    expect(mockResourceMethodConfig.shouldValidateQueryParams()).andReturn(false).anyTimes();
     expect(mockRoutingResult.getResourceMethodConfig()).andReturn(mockResourceMethodConfig).anyTimes();
     replay(mockRoutingResult, mockResourceMethodConfig);
     return mockRoutingResult;
@@ -422,7 +422,6 @@ public class RestLiArgumentBuilderTestHelper
       expect(mockRoutingResult.getContext()).andReturn(context).anyTimes();
     }
     ResourceMethodConfig mockResourceMethodConfig = createMock(ResourceMethodConfig.class);
-    expect(mockResourceMethodConfig.shouldValidateResourceKeys()).andReturn(false).anyTimes();
     expect(mockRoutingResult.getResourceMethodConfig()).andReturn(mockResourceMethodConfig).anyTimes();
     replay(mockRoutingResult, mockResourceMethodConfig);
 

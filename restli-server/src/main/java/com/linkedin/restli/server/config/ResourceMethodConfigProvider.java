@@ -1,6 +1,8 @@
 package com.linkedin.restli.server.config;
 
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.server.RestLiConfig;
+
 import java.util.function.Function;
 
 /**
