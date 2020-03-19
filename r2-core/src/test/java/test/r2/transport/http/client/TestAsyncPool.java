@@ -822,11 +822,11 @@ public class TestAsyncPool
 
       // run for the duration of default creation timeout
       // TODO: parameterize the creation duration when the default creation gets parameterized
-      clockedExecutor.runFor(2000);
+      clockedExecutor.runFor(AsyncPoolImpl.DEFAULT_OBJECT_CREATION_TIMEOUT);
     }
 
     // drain all the pending tasks
-    clockedExecutor.runFor(2000);
+    clockedExecutor.runFor(AsyncPoolImpl.DEFAULT_OBJECT_CREATION_TIMEOUT);
 
     // Make sure that all the creations are failed with CreationTimeout
     // since the object creator went to limbo state
