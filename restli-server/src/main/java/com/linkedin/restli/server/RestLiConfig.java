@@ -20,7 +20,6 @@ import com.linkedin.data.codec.DataCodec;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.config.RestLiMethodConfig;
-import com.linkedin.restli.server.config.RestLiMethodConfigBuilder;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.multiplexer.MultiplexerRunMode;
 import com.linkedin.restli.server.multiplexer.MultiplexerSingletonFilter;
@@ -90,9 +89,6 @@ public class RestLiConfig
   private final List<ContentType> _customContentTypes = new LinkedList<>();
   private final List<ResourceDefinitionListener> _resourceDefinitionListeners = new ArrayList<>();
   private boolean _useStreamCodec = false;
-
-  // configuration for whether to validate any type of resource entity keys Ex. path keys or keys in batch request
-  private boolean _validateResourceKeys = false;
 
   // resource method level configuration
   private RestLiMethodConfig _methodConfig;
@@ -533,23 +529,5 @@ public class RestLiConfig
   public void setMethodConfig(RestLiMethodConfig methodConfig)
   {
     _methodConfig = methodConfig;
-  }
-
-  /**
-   * Get whether resource key validation is enabled or not.
-   */
-  public boolean shouldValidateResourceKeys()
-  {
-    return _validateResourceKeys;
-  }
-
-  /**
-   * Sets whether or not to enable resource key validation.
-   */
-  public void setValidateResourceKeys(boolean validateResourceKeys)
-  {
-    _validateResourceKeys = validateResourceKeys;
-    setMethodConfig(
-        new RestLiMethodConfigBuilder(getMethodConfig()).withShouldValidateResourceKeys(_validateResourceKeys).build());
   }
 }

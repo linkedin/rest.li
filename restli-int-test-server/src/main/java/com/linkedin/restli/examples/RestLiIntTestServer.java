@@ -64,7 +64,6 @@ public class RestLiIntTestServer
       "com.linkedin.restli.examples.greetings.server",
       "com.linkedin.restli.examples.instrumentation.server",
       "com.linkedin.restli.examples.typeref.server"  };
-  public static final String VALIDATE_KEYS_PROPERTY_NAME = "test.validateResourceKeys";
 
   public static void main(String[] args) throws IOException
   {
@@ -136,7 +135,6 @@ public class RestLiIntTestServer
       config.addDebugRequestHandlers(new ParseqTraceDebugRequestHandler());
     }
     config.setFilters(filters);
-    config.setValidateResourceKeys(Boolean.parseBoolean(System.getProperty(VALIDATE_KEYS_PROPERTY_NAME, Boolean.FALSE.toString())));
     config.setUseStreamCodec(Boolean.parseBoolean(System.getProperty("test.useStreamCodecServer", "false")));
 
     GroupMembershipMgr membershipMgr = new HashGroupMembershipMgr();

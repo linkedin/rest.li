@@ -22,7 +22,6 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 public class TestComplexResourceKey
@@ -127,47 +126,26 @@ public class TestComplexResourceKey
     }
   }
 
-  @DataProvider
-  public Object[][] keySchemaValidation() {
-    return new Object[][]
-        {
-            {11, false, false},
-            {1, false, false},
-            {11, true, false},
-            {1, true, true}
-        };
-  }
-
-  @Test(dataProvider = "keySchemaValidation")
-  public void testKeySchema(int fieldValue, boolean enforceValidation, boolean validationFailure)
+  @Test
+  public void testKeySchema()
   {
     RecordDataSchema schema = OmniRecord.schema;
     TypeSpec<OmniRecord> keyType = new TypeSpec<OmniRecord>(OmniRecord.class, schema);
     TypeSpec<OmniRecord> paramsType = new TypeSpec<OmniRecord>(OmniRecord.class, schema);
     ComplexKeySpec<OmniRecord, OmniRecord> keySpec = new ComplexKeySpec<OmniRecord, OmniRecord>(keyType, paramsType);
-    DataMap paramsData = new DataMap();
-    paramsData.put("int", fieldValue);
-    DataMap data = new DataMap();
-    data.put("int", fieldValue);
-    data.put("$params", paramsData);
 
-    try
-    {
-      ComplexResourceKey<RecordTemplate, RecordTemplate> key =
-          ComplexResourceKey.buildFromDataMap(data, keySpec, enforceValidation);
-      Assert.assertEquals(key.getKey().schema(), schema);
-      Assert.assertEquals(key.getParams().schema(), schema);
-      Assert.assertFalse(validationFailure);
-    }
-    catch (IllegalArgumentException ex)
-    {
-      Assert.assertTrue(validationFailure, "Unexpected validation failure");
-    }
+    DataMap data = new DataMap();
+    data.put("int", 1);
+
+    ComplexResourceKey<RecordTemplate, RecordTemplate> key = ComplexResourceKey.buildFromDataMap(data, keySpec);
+
+    Assert.assertEquals(key.getKey().schema(), schema);
+    Assert.assertEquals(key.getParams().schema(), schema);
   }
 
   public static class OmniRecord extends RecordTemplate {
     private static RecordDataSchema schema =
-            (RecordDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"record\", \"name\" : \"omni\", \"fields\" : [ { \"name\" : \"int\", \"type\" : \"int\", \"validate\": { \"regex\": { \"regex\": \"[0-9][0-9]\" } } } ] }");
+            (RecordDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"record\", \"name\" : \"omni\", \"fields\" : [ { \"name\" : \"int\", \"type\" : \"int\" } ] }");
 
     public OmniRecord(DataMap map)
     {
