@@ -188,7 +188,7 @@ public class SchemaFormatTranslator
       verifyTranslatedSchemas(topLevelTranslatedSchemas);
     }
     // Write the destination files. Source files are deleted for this step unless keepOriginal flag is set.
-    writeTranslatedSchemasToDirectory(topLevelTranslatedSchemas, _destDir, !_keepOriginal, _preserveSourceCmd);
+    writeTranslatedSchemasToDirectory(topLevelTranslatedSchemas, _destDir, !_keepOriginal, _preserveSourceCmd, true);
   }
 
   /**
@@ -236,7 +236,8 @@ public class SchemaFormatTranslator
     FileUtils.deleteDirectory(errorSchemasDir);
     assert tempDir.mkdirs();
     // Write the schemas to temp directory for validation. Source files are not deleted/moved for this.
-    writeTranslatedSchemasToDirectory(topLevelTranslatedSchemas, tempDir, false, null);
+    writeTranslatedSchemasToDirectory(
+        topLevelTranslatedSchemas, tempDir, false, null, false);
 
     // Exclude the source models directory from the resolver path
     StringTokenizer paths = new StringTokenizer(_resolverPath, File.pathSeparator);
@@ -307,7 +308,8 @@ public class SchemaFormatTranslator
   }
 
   private void writeTranslatedSchemasToDirectory(
-      Map<String, SchemaInfo> topLevelTranslatedSchemas, File outputDir, boolean moveSource, String preserveSourceCmd) throws IOException, InterruptedException
+      Map<String, SchemaInfo> topLevelTranslatedSchemas, File outputDir, boolean moveSource, String preserveSourceCmd,
+      boolean trimFile) throws IOException, InterruptedException
   {
     for (SchemaInfo schemaInfo : topLevelTranslatedSchemas.values())
     {
@@ -327,7 +329,10 @@ public class SchemaFormatTranslator
       {
         ScmUtil.tryUpdateSourceHistory(preserveSourceCmd, schemaInfo.getSourceFile(), destinationFile);
       }
-      FileUtils.writeStringToFile(destinationFile, schemaInfo.getDestEncodedSchemaString());
+      String fileContent = (trimFile && _destFormat.equals(PdlSchemaParser.FILETYPE)) ?
+          schemaInfo.getTrimmedDestEncodedSchemaString() :
+          schemaInfo.getDestEncodedSchemaString();
+      FileUtils.writeStringToFile(destinationFile, fileContent);
     }
   }
 
@@ -379,7 +384,7 @@ public class SchemaFormatTranslator
       SchemaToPdlEncoder encoder = new SchemaToPdlEncoder(writer);
       encoder.setTypeReferenceFormat(AbstractSchemaEncoder.TypeReferenceFormat.PRESERVE);
       encoder.encode(schema);
-      return stripLineEndSpaces(writer.toString());
+      return writer.toString();
     }
     else if (format.equals(SchemaParser.FILETYPE))
     {
@@ -448,6 +453,11 @@ public class SchemaFormatTranslator
     String getDestEncodedSchemaString()
     {
       return _destEncodedSchemaString;
+    }
+
+    String getTrimmedDestEncodedSchemaString()
+    {
+      return stripLineEndSpaces(_destEncodedSchemaString);
     }
   }
 }
