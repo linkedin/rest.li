@@ -32,7 +32,7 @@ project.ext.externalDependency = [
   'antlrRuntime': 'org.antlr:antlr4-runtime:4.5',
   'avro': 'org.apache.avro:avro:1.4.0',
   'avro_1_6': 'org.apache.avro:avro:1.6.3',
-   // avro compatibility layer 
+   // avro compatibility layer
   'avroUtil': 'com.linkedin.avroutil1:helper-all:0.1.8',
   'caffeine': 'com.github.ben-manes.caffeine:caffeine:2.7.0',
   'cglib': 'cglib:cglib-nodep:2.2',
@@ -85,7 +85,7 @@ project.ext.externalDependency = [
   'testng': 'org.testng:testng:6.13.1',
   'velocity': 'org.apache.velocity:velocity:1.5',
   'zero_allocation_hashing': 'net.openhft:zero-allocation-hashing:0.7',
-  'zookeeper': 'org.apache.zookeeper:zookeeper:3.4.6',
+  'zookeeper': 'org.apache.zookeeper:zookeeper:3.4.13',
   'hdrhistogram': 'org.hdrhistogram:HdrHistogram:2.1.9',
   'xchart': 'org.knowm.xchart:xchart:3.2.2',
 
