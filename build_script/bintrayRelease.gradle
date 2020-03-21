@@ -1,0 +1,89 @@
+/*
+   Copyright (c) 2020 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+/**
+ * The purpose of this script is to configure the following tasks for a sub-project:
+ * - generatePomFileForRelease: generates the "release" Maven publication (.pom)
+ * - bintrayUpload: uploads, signs, and publishes all artifacts
+ */
+apply plugin: 'maven-publish'
+apply plugin: 'java-library'
+apply plugin: 'com.jfrog.bintray'
+
+def pomConfig = {
+  name project.name // sub-project name
+  packaging 'jar'
+  description 'Rest.li is a framework for building robust, scalable service architectures using dynamic discovery and simple asychronous type-checked REST + JSON APIs.'
+  url 'https://rest.li'
+  scm {
+    url 'git@github.com:linkedin/rest.li.git'
+    connection 'scm:git:git@github.com:linkedin/rest.li.git'
+    developerConnection 'scm:git:git@github.com:linkedin/rest.li.git'
+  }
+  licenses {
+    license {
+      name 'The Apache Software License, Version 2.0'
+      url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+      distribution 'repo'
+    }
+  }
+  developers {
+    // TODO: add developers
+  }
+}
+
+publishing {
+  publications {
+    release(MavenPublication) {
+      from components.java
+      artifact sourcesJar
+      artifact javadocJar
+      groupId project.group
+      artifactId project.name // sub-project name
+      version project.version
+      pom.withXml {
+        def root = asNode()
+        root.children().last() + pomConfig
+      }
+    }
+  }
+}
+
+bintray {
+  user = System.getenv('BINTRAY_USERNAME')
+  key = System.getenv('BINTRAY_API_KEY')
+  publications = ['release']
+  publish = true
+  pkg {
+    userOrg = 'linkedin'
+    repo = 'test-repo'
+    name = 'pegasus'
+    licenses = ['Apache-2.0']
+    websiteUrl = 'https://rest.li'
+    issueTrackerUrl = 'https://github.com/linkedin/rest.li/issues'
+    vcsUrl = 'https://github.com/linkedin/rest.li.git'
+    githubRepo = 'linkedin/rest.li'
+    licenses = ['Apache-2.0']
+    version {
+      name = project.version
+      released = new Date()
+      vcsTag = "v${project.version}"
+      gpg {
+        sign = true
+      }
+    }
+  }
+}

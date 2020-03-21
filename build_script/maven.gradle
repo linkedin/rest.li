@@ -1,4 +1,5 @@
 //Configures maven plugin in a standard way
+// TODO: this isn't currently being used, delete when we're sure that we don't need it
 project.plugins.withType(MavenPlugin) {
   project.afterEvaluate {
     def installer = install.repositories.mavenInstaller

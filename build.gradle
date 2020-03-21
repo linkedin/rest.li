@@ -14,6 +14,15 @@
    limitations under the License.
 */
 
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7'
+  }
+}
+
 project.ext.buildScriptDirPath = "${projectDir.path}/build_script"
 project.ext.isDefaultEnvironment = !project.hasProperty('overrideBuildEnvironment')
 
@@ -215,19 +224,12 @@ subprojects {
     testRuntime project(':log-test-config')
   }
 
-  if (isDefaultEnvironment)
-  {
-    apply plugin: 'maven'
-    apply from: "${buildScriptDirPath}/maven.gradle"
-    apply plugin: 'signing'
-
-    project.group = 'com.linkedin.pegasus'
-
+  if (isDefaultEnvironment) {
     repositories {
       mavenLocal()
       mavenCentral()
       maven {
-        url  "https://dl.bintray.com/linkedin/maven"
+        url "https://dl.bintray.com/linkedin/maven"
       }
     }
 
@@ -247,102 +249,8 @@ subprojects {
       archives javadocJar
     }
 
-    signing {
-      required = { gradle.taskGraph.hasTask("uploadArchives") }
-      sign configurations.archives
-    }
-
-    uploadArchives {
-      repositories {
-        mavenDeployer {
-          beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-          repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-            authentication(userName: sonatypeUsername, password: sonatypePassword)
-          }
-
-          pom.project {
-            name project.name
-            packaging 'jar'
-            description 'Pegasus is a framework for building robust, scalable service architectures using dynamic discovery and simple asychronous type-checked REST + JSON APIs.'
-            url 'http://github.com/linkedin/pegasus'
-
-            scm {
-              url 'git@github.com:linkedin/pegasus.git'
-              connection 'scm:git:git@github.com:linkedin/pegasus.git'
-              developerConnection 'scm:git:git@github.com:linkedin/pegasus.git'
-            }
-
-             licenses {
-               license {
-                 name 'The Apache Software License, Version 2.0'
-                 url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                 distribution 'repo'
-               }
-             }
-
-             developers {
-               developer {
-                 id 'sweeboonlim'
-                 name 'Swee Lim'
-               }
-               developer {
-                 id 'sihde'
-                 name 'Steve Ihde'
-               }
-               developer {
-                 id 'mtagle'
-                 name 'Moira Tagle'
-               }
-               developer {
-                 id 'adublinkedin'
-                 name 'Alex Dubman'
-               }
-               developer {
-                 id 'CrendKing'
-                 name 'Keren Jin'
-               }
-               developer {
-                 id 'DuglsYoung'
-                 name 'Doug Young'
-               }
-               developer {
-                 id 'osumampouw'
-                 name 'Oby Sumampouw'
-               }
-               developer {
-                 id 'davidhoa'
-                 name 'David Hoa'
-               }
-               developer {
-                 id 'cpettitt'
-                 name 'Chris Pettitt'
-               }
-               developer {
-                 id 'chikit'
-                 name 'Chi Kit Chan'
-               }
-               developer {
-                 id 'apy101'
-                 name 'Angelika Clayton'
-               }
-               developer {
-                 id 'jpbetz'
-                 name 'Joe Betz'
-               }
-               developer {
-                 id 'karanparikh'
-                 name 'Karan Parikh'
-               }
-               developer {
-                 id 'nishanthshankaran'
-                 name 'Nishanth Shankaran'
-               }
-            }
-          }
-        }
-      }
-    }
+    // Configure the Bintray release task
+    apply from: "${buildScriptDirPath}/bintrayRelease.gradle"
   }
 
   task testJar(type: Jar) {
