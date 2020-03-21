@@ -1,8 +1,11 @@
 package com.linkedin.pegasus.gradle.tasks;
 
+import com.linkedin.pegasus.gradle.PathingJarUtil;
 import com.linkedin.pegasus.gradle.SchemaFileType;
 import java.io.File;
+import java.io.IOException;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
@@ -40,9 +43,18 @@ public class TranslateSchemasTask extends DefaultTask {
 
     String resolverPathStr = _resolverPath.plus(getProject().files(_inputDir)).getAsPath();
 
+    FileCollection _pathedCodegenClasspath;
+    try {
+      _pathedCodegenClasspath = PathingJarUtil.generatePathingJar(getProject(), getName(),
+          _codegenClasspath, false);
+    }
+    catch (IOException e) {
+      throw new GradleException("Error occurred generating pathing JAR.", e);
+    }
+
     getProject().javaexec(javaExecSpec -> {
       javaExecSpec.setMain("com.linkedin.restli.tools.data.SchemaFormatTranslator");
-      javaExecSpec.setClasspath(_codegenClasspath);
+      javaExecSpec.setClasspath(_pathedCodegenClasspath);
       javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr);
       javaExecSpec.args("--source-format");
       javaExecSpec.args(_sourceFormat.getFileExtension());
