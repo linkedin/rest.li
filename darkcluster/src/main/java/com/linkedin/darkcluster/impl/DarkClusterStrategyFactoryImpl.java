@@ -1,9 +1,8 @@
 package com.linkedin.darkcluster.impl;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nonnull;
@@ -46,7 +45,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     _clusterInfoProvider = clusterInfoProvider;
     _sourceClusterName = clusterName;
     _notifier = notifier;
-    _darkStrategyMap = new HashMap<>();
+    _darkStrategyMap = new ConcurrentHashMap<>();
     _random = random;
     _darkClusterDispatcher = darkClusterDispatcher;
     _verifierManager = verifierManager;
