@@ -819,7 +819,7 @@ public class PegasusPlugin implements Plugin<Project>
         configureSchemaAnnotationValidation(project, sourceSet, generateDataTemplateTask);
       }
 
-      configureExtensionSchemaValidation(project, sourceSet);
+      configureExtensionSchemaValidationAndPublishTasks(project, sourceSet);
 
       Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName("clean", "GeneratedDir"));
       cleanGeneratedDirTask.doLast(new CacheableAction<>(task ->
@@ -921,7 +921,7 @@ public class PegasusPlugin implements Plugin<Project>
     }
   }
 
-  protected void configureExtensionSchemaValidation(Project project, SourceSet sourceSet)
+  protected void configureExtensionSchemaValidationAndPublishTasks(Project project, SourceSet sourceSet)
   {
     // extension schema  directory
     File extensionSchemaDir = project.file(getExtensionSchemaPath(project, sourceSet));

@@ -41,7 +41,7 @@ import static com.linkedin.pegasus.gradle.SharedFileUtils.*;
  *
  * To use this plugin, add these three lines to your build.gradle:
  * <pre>
- * apply plugin: 'li-pegasus2'
+ * apply plugin: 'li-pegasus'
  * </pre>
  *
  * The plugin will scan the source set's pegasus directory, e.g. "src/main/extensions"
