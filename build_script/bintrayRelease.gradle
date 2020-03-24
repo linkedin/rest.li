@@ -16,8 +16,10 @@
 
 /**
  * The purpose of this script is to configure the following tasks for a sub-project:
- * - generatePomFileForRelease: generates the "release" Maven publication (.pom)
- * - bintrayUpload: uploads, signs, and publishes all artifacts
+ * - bintrayUpload: uploads, signs, and publishes all artifacts; depends on...
+ *   - generatePomFileForReleasePublication: generates the "release" Maven publication (.pom)
+ *   - assertArtifactsExist: asserts that the required JAR artifacts are present
+ *   - assertBintrayCredentialsExist: asserts that Bintray credentials are present as environment variables
  */
 apply plugin: 'maven-publish'
 apply plugin: 'java-library'
