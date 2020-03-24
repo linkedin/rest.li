@@ -77,7 +77,7 @@ bintray {
   publish = true
   pkg {
     userOrg = 'linkedin'
-    repo = 'test-repo'
+    repo = 'maven'
     name = 'pegasus'
     websiteUrl = 'https://rest.li'
     issueTrackerUrl = 'https://github.com/linkedin/rest.li/issues'
