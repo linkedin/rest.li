@@ -27,6 +27,7 @@ import com.linkedin.pegasus.gradle.tasks.GenerateRestClientTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateRestModelTask;
 import com.linkedin.pegasus.gradle.tasks.PublishRestModelTask;
 import com.linkedin.pegasus.gradle.tasks.TranslateSchemasTask;
+import com.linkedin.pegasus.gradle.tasks.ValidateExtensionSchemaTask;
 import com.linkedin.pegasus.gradle.tasks.ValidateSchemaAnnotationTask;
 import java.io.File;
 import java.io.IOException;
@@ -721,6 +722,11 @@ public class PegasusPlugin implements Plugin<Project>
     // and validate.
     Configuration schemaAnnotationHandler = configurations.maybeCreate("schemaAnnotationHandler");
 
+    // configuration for parsing and validating extension schemas during build time.
+    //
+    // publish extension schemas into extension schema Jar once the validation passes.
+    Configuration extensionSchema = configurations.maybeCreate("extensionSchema");
+
     // configuration for publishing jars containing rest idl and generated client builders
     // to the project artifacts for including in the ivy.xml
     //
@@ -812,6 +818,8 @@ public class PegasusPlugin implements Plugin<Project>
       {
         configureSchemaAnnotationValidation(project, sourceSet, generateDataTemplateTask);
       }
+
+      configureExtensionSchemaValidation(project, sourceSet, generateDataTemplateTask);
 
       Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName("clean", "GeneratedDir"));
       cleanGeneratedDirTask.doLast(new CacheableAction<>(task ->
@@ -913,6 +921,41 @@ public class PegasusPlugin implements Plugin<Project>
     }
   }
 
+  protected void configureExtensionSchemaValidation(Project project, SourceSet sourceSet, GenerateDataTemplateTask generateDataTemplateTask)
+  {
+    // extension schema  directory
+    File extensionSchemaDir = project.file(getExtensionSchemaPath(project, sourceSet));
+
+    if (SharedFileUtils.getSuffixedFiles(project, extensionSchemaDir, PDL_FILE_SUFFIX).isEmpty())
+    {
+      return;
+    }
+
+    ValidateExtensionSchemaTask validateExtensionSchemaTask =  project.getTasks()
+        .create(sourceSet.getTaskName("validate", "ExtensionSchema"), ValidateExtensionSchemaTask.class, task -> {
+          task.setInputDir(extensionSchemaDir);
+          task.setResolverPath(getDataModelConfig(project, sourceSet).plus(project.files(getDataSchemaPath(project, sourceSet))));
+          task.setClassPath(project.getConfigurations().getByName("pegasusPlugin"));
+        });
+
+    project.getTasks().getByName("check").dependsOn(validateExtensionSchemaTask);
+
+    // Publish Extension Schemas into extensionSchema Jar
+    Task extensionSchemaJarTask = project.getTasks().create(sourceSet.getName() + "ExtensionSchemaJar", Jar.class, task ->
+    {
+      task.from(extensionSchemaDir, copySpec ->
+      {
+        copySpec.eachFile(fileCopyDetails -> project.getLogger()
+            .info("Add extensionSchema file: {}", fileCopyDetails));
+        copySpec.setIncludes(Collections.singletonList('*' + PDL_FILE_SUFFIX));
+      });
+      task.setDescription("Generate extensionSchema jar");
+    });
+    extensionSchemaJarTask.dependsOn(validateExtensionSchemaTask);
+
+    project.getArtifacts().add("extensionSchema", extensionSchemaJarTask);
+  }
+
   private static void deleteGeneratedDir(Project project, SourceSet sourceSet, String dirType)
   {
     String generatedDirPath = getGeneratedDirPath(project, sourceSet, dirType);
@@ -1007,6 +1050,19 @@ public class PegasusPlugin implements Plugin<Project>
     if (override == null)
     {
       return "src" + File.separatorChar + sourceSet.getName() + File.separatorChar + "pegasus";
+    }
+    else
+    {
+      return override;
+    }
+  }
+
+  private static String getExtensionSchemaPath(Project project, SourceSet sourceSet)
+  {
+    String override = getOverridePath(project, sourceSet, "overrideExtensionSchemaDir");
+    if(override == null)
+    {
+      return "src" + File.separatorChar + sourceSet.getName() + File.separatorChar + "extensions";
     }
     else
     {
