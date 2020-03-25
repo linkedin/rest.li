@@ -1,0 +1,115 @@
+/*
+   Copyright (c) 2020 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+/**
+ * The purpose of this script is to configure the following tasks for a sub-project:
+ * - bintrayUpload: uploads, signs, and publishes all artifacts; depends on...
+ *   - generatePomFileForReleasePublication: generates the "release" Maven publication (.pom)
+ *   - assertArtifactsExist: asserts that the required JAR artifacts are present
+ *   - assertBintrayCredentialsExist: asserts that Bintray credentials are present as environment variables
+ */
+apply plugin: 'maven-publish'
+apply plugin: 'java-library'
+apply plugin: 'com.jfrog.bintray'
+
+final String bintrayUserEnv = 'BINTRAY_USER'
+final String bintrayKeyEnv = 'BINTRAY_KEY'
+
+def bintrayUser = System.getenv(bintrayUserEnv)
+def bintrayKey = System.getenv(bintrayKeyEnv)
+
+def pomConfig = {
+  name project.name // sub-project name
+  packaging 'jar'
+  description 'Rest.li is a framework for building robust, scalable service architectures using dynamic discovery and simple asychronous type-checked REST + JSON APIs.'
+  url 'https://rest.li'
+  scm {
+    url 'git@github.com:linkedin/rest.li.git'
+    connection 'scm:git:git@github.com:linkedin/rest.li.git'
+    developerConnection 'scm:git:git@github.com:linkedin/rest.li.git'
+  }
+  licenses {
+    license {
+      name 'The Apache Software License, Version 2.0'
+      url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+      distribution 'repo'
+    }
+  }
+  developers {
+    // TODO: add developers
+  }
+}
+
+publishing {
+  publications {
+    release(MavenPublication) {
+      from components.java
+      artifact sourcesJar
+      artifact javadocJar
+      groupId project.group
+      artifactId project.name // sub-project name
+      version project.version
+      pom.withXml {
+        def root = asNode()
+        root.children().last() + pomConfig
+      }
+    }
+  }
+}
+
+bintray {
+  user = bintrayUser
+  key = bintrayKey
+  publications = ['release']
+  publish = true
+  pkg {
+    userOrg = 'linkedin'
+    repo = 'maven'
+    name = 'pegasus'
+    websiteUrl = 'https://rest.li'
+    issueTrackerUrl = 'https://github.com/linkedin/rest.li/issues'
+    vcsUrl = 'https://github.com/linkedin/rest.li.git'
+    githubRepo = 'linkedin/rest.li'
+    licenses = ['Apache-2.0']
+    version {
+      vcsTag = "v${project.version}"
+      gpg {
+        sign = true
+      }
+    }
+  }
+}
+
+task assertArtifactsExist() {
+  doLast {
+    final Set<File> missingArtifacts = configurations.archives.allArtifacts.file.findAll { !it.exists() }
+    if (missingArtifacts) {
+      throw new GradleException(
+          "Cannot perform Bintray upload. The project likely hasn't been built. Missing artifacts ${missingArtifacts}")
+    }
+  }
+}
+
+task assertBintrayCredentialsExist() {
+  doLast {
+    if (!bintrayUser || !bintrayKey) {
+      throw new GradleException(
+          "Cannot perform Bintray upload. Missing '${bintrayUserEnv}' or '${bintrayKeyEnv}' environment variable.")
+    }
+  }
+}
+
+bintrayUpload.dependsOn assertArtifactsExist, assertBintrayCredentialsExist, "generatePomFileForReleasePublication"
