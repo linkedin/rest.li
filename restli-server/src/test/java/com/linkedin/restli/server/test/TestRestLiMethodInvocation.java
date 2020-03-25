@@ -100,6 +100,7 @@ import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.combined.CombinedResources;
 import com.linkedin.restli.server.combined.CombinedTestDataModels;
 import com.linkedin.restli.server.config.ResourceMethodConfig;
+import com.linkedin.restli.server.config.ResourceMethodConfigImpl;
 import com.linkedin.restli.server.config.ResourceMethodConfigProvider;
 import com.linkedin.restli.server.config.RestLiMethodConfig;
 import com.linkedin.restli.server.config.RestLiMethodConfigBuilder;
@@ -5241,7 +5242,7 @@ public class TestRestLiMethodInvocation
                                final RestLiResponseAttachments expectedResponseAttachments)
           throws Exception
   {
-    checkInvocation(resource, requestContext, resourceMethodDescriptor, null, httpMethod, version,
+    checkInvocation(resource, requestContext, resourceMethodDescriptor, new ResourceMethodConfigImpl(null , false, false), httpMethod, version,
             uri, entityBody, pathkeys, callback, isDebugMode, expectRoutingException, expectedRequestAttachments, expectedResponseAttachments);
   }
 

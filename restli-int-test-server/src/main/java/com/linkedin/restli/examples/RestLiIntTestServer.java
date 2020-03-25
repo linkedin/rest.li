@@ -95,10 +95,20 @@ public class RestLiIntTestServer
                                         boolean useAsyncServletApi,
                                         int asyncTimeOut)
   {
+    return createServer(engine, port, supportedCompression, useAsyncServletApi, asyncTimeOut, new RestLiConfig());
+  }
+
+  public static HttpServer createServer(final Engine engine,
+                                        int port,
+                                        String supportedCompression,
+                                        boolean useAsyncServletApi,
+                                        int asyncTimeOut,
+                                        RestLiConfig config)
+  {
     final FilterChain fc = FilterChains.empty().addLastRest(new ServerCompressionFilter(supportedCompression,
                                                                                         new CompressionConfig(0)))
         .addLastRest(new SimpleLoggingFilter());
-    return createServer(engine, port, useAsyncServletApi, asyncTimeOut, null, fc, true);
+    return createServer(engine, port, useAsyncServletApi, asyncTimeOut, null, fc, true, true, true, config);
   }
 
   public static HttpServer createServer(Engine engine,
@@ -123,7 +133,21 @@ public class RestLiIntTestServer
                                         boolean useDocumentHandler,
                                         boolean useDebugHandler)
   {
-    RestLiConfig config = new RestLiConfig();
+    return createServer(engine, port, useAsyncServletApi, asyncTimeOut, filters, filterChain, restOverStream,
+        useDocumentHandler, useDebugHandler, new RestLiConfig());
+  }
+
+  public static HttpServer createServer(Engine engine,
+                                        int port,
+                                        boolean useAsyncServletApi,
+                                        int asyncTimeOut,
+                                        List<? extends Filter> filters,
+                                        FilterChain filterChain,
+                                        boolean restOverStream,
+                                        boolean useDocumentHandler,
+                                        boolean useDebugHandler,
+                                        RestLiConfig config)
+  {
     config.addResourcePackageNames(RESOURCE_PACKAGE_NAMES);
     config.setServerNodeUri(URI.create("http://localhost:" + port));
     if (useDocumentHandler)

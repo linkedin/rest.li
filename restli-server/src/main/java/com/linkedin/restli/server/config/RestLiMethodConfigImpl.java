@@ -6,11 +6,13 @@ class RestLiMethodConfigImpl implements RestLiMethodConfig
 {
   private final Map<String, Long> _timeoutMsConfig;
   private boolean _validateQueryParams;
+  private boolean _validateResourceKeys;
 
-  public RestLiMethodConfigImpl(Map<String, Long> timeoutMsConfig, boolean validateQueryParams)
-  {
+  public RestLiMethodConfigImpl(Map<String, Long> timeoutMsConfig, boolean validateQueryParams,
+      boolean validateResourceKeys) {
     _timeoutMsConfig = timeoutMsConfig;
     _validateQueryParams = validateQueryParams;
+    _validateResourceKeys = validateResourceKeys;
   }
 
   @Override
@@ -20,11 +22,14 @@ class RestLiMethodConfigImpl implements RestLiMethodConfig
   }
 
   @Override
-  public boolean shouldValidateQueryParams() {
+  public boolean shouldValidateQueryParams()
+  {
     return _validateQueryParams;
   }
 
-  public void setValidateQueryParams(boolean validateQueryParams) {
-    _validateQueryParams = validateQueryParams;
+  @Override
+  public boolean shouldValidateResourceKey()
+  {
+    return _validateResourceKeys;
   }
 }

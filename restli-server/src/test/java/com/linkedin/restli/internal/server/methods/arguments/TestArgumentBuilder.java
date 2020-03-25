@@ -77,9 +77,10 @@ public class TestArgumentBuilder
     return resourceMethodDescriptor;
   }
 
-  private ResourceMethodConfig getMockResourceMethodConfig(boolean shouldValidateQueryParams) {
+  private ResourceMethodConfig getMockResourceMethodConfig(boolean shouldValidateParams) {
     ResourceMethodConfig mockResourceMethodConfig = EasyMock.createMock(ResourceMethodConfig.class);
-    EasyMock.expect(mockResourceMethodConfig.shouldValidateQueryParams()).andReturn(shouldValidateQueryParams);
+    EasyMock.expect(mockResourceMethodConfig.shouldValidateResourceKeys()).andReturn(shouldValidateParams).anyTimes();
+    EasyMock.expect(mockResourceMethodConfig.shouldValidateQueryParams()).andReturn(shouldValidateParams).anyTimes();
     EasyMock.replay(mockResourceMethodConfig);
     return mockResourceMethodConfig;
   }
@@ -185,7 +186,8 @@ public class TestArgumentBuilder
     ResourceMethodDescriptor mockResourceMethodDescriptor = getMockResourceMethod(parameters);
 
     ResourceMethodConfig mockResourceMethodConfig = EasyMock.createMock(ResourceMethodConfig.class);
-    EasyMock.expect(mockResourceMethodConfig.shouldValidateQueryParams()).andReturn(false).times(4);
+    EasyMock.expect(mockResourceMethodConfig.shouldValidateResourceKeys()).andReturn(true).times(5);
+    EasyMock.expect(mockResourceMethodConfig.shouldValidateQueryParams()).andReturn(false).times(5);
     EasyMock.replay(mockResourceMethodConfig);
 
     //easy mock for processing param1
@@ -829,7 +831,7 @@ public class TestArgumentBuilder
                 TestRecord.class,
                 recordParamValue,
                 false,
-                "Argument parameter 'recParam' value '{longField=5, intField=5}' is invalid, reason: ERROR :: /floatField :: field is required but not found and has no default value\n" +
+                "Input field validation failure, reason: ERROR :: /floatField :: field is required but not found and has no default value\n" +
                     "ERROR :: /doubleField :: field is required but not found and has no default value\n"
 
             },
@@ -838,7 +840,7 @@ public class TestArgumentBuilder
                 TestRecord.class,
                 recordParamValue2,
                 false,
-                "Argument parameter 'recParam' value '{floatField=invalidValue, longField=5, doubleField=5.0, intField=5}' is invalid, reason: ERROR :: /floatField :: invalidValue cannot be coerced to Float\n"
+                "Input field validation failure, reason: ERROR :: /floatField :: invalidValue cannot be coerced to Float\n"
             },
             {
                 recordParamKey,
@@ -860,8 +862,8 @@ public class TestArgumentBuilder
         false, null, Parameter.ParamType.QUERY, false, AnnotationSet.EMPTY);
 
     ServerResourceContext mockResourceContext = EasyMock.createMock(ServerResourceContext.class);
-    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
-    EasyMock.expect(mockResourceContext.getStructuredParameter(paramKey)).andReturn(paramValue);
+    EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null).anyTimes();
+    EasyMock.expect(mockResourceContext.getStructuredParameter(paramKey)).andReturn(paramValue).anyTimes();
     EasyMock.replay(mockResourceContext);
 
     List<Parameter<?>> parameters = Collections.singletonList(param);

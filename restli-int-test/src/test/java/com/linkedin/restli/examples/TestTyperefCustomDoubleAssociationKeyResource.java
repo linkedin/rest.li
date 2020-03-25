@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.examples;
 
-
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
@@ -26,8 +25,10 @@ import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.GetRequestBuilder;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.examples.custom.types.CustomDouble;
@@ -35,14 +36,13 @@ import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.typeref.api.CustomDoubleRef;
 import com.linkedin.restli.examples.typeref.api.UriRef;
 import com.linkedin.restli.internal.common.TestConstants;
-
+import com.linkedin.restli.server.RestLiConfig;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -69,7 +69,9 @@ public class TestTyperefCustomDoubleAssociationKeyResource extends RestLiIntegra
   @BeforeClass
   public void initClass() throws Exception
   {
-    super.init();
+    RestLiConfig config = new RestLiConfig();
+    config.setValidateResourceKeys(true);
+    super.init(false, config);
   }
 
   @AfterClass
@@ -109,5 +111,19 @@ public class TestTyperefCustomDoubleAssociationKeyResource extends RestLiIntegra
     Assert.assertEquals(result.getId(), "100.0->www.linkedin.com");
     Assert.assertEquals(result.getMessage(),
                         String.format("I need some $20. Array contents %s.", Arrays.asList(stringArray)));
+
+    // key validation failure scenario
+    try
+    {
+      req = getBuilder.id(
+          new CompoundKey().append("src", new CustomDouble(100.02)).append("dest", new URI("http://www.linkedin.com/")))
+          .setReqParam("array", stringArray).build();
+      REST_CLIENT.sendRequest(req).getResponse();
+    }
+    catch (RestLiResponseException ex)
+    {
+      Assert.assertEquals(ex.getServiceErrorMessage(), "Input field validation failure, reason: ERROR ::  :: \"100.02\" does not match [0-9]*\\.[0-9]\n");
+      Assert.assertEquals(ex.getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode());
+    }
   }
 }
