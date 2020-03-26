@@ -1447,6 +1447,7 @@ public class PegasusPlugin implements Plugin<Project>
       }));
     });
 
+    // Helper task for reformatting existing PDL schemas by generating them again.
     project.getTasks().create(sourceSet.getTaskName("reformat", "Pdl"), TranslateSchemasTask.class, task ->
     {
       task.setInputDir(dataSchemaDir);
