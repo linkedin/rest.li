@@ -45,7 +45,7 @@ public class TestDarkClusterFilter
   public void testDarkClusterAssembly()
   {
     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-    DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcherImpl(new MockClient());
+    DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcherImpl(new MockClient(false));
     ClusterInfoProvider clusterInfoProvider = new SimpleLoadBalancer(new LoadBalancerTestState(), scheduledExecutorService);
     Notifier notifier = new DoNothingNotifier();
     ExecutorService executorService = Executors.newSingleThreadExecutor();

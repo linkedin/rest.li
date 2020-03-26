@@ -26,8 +26,7 @@ public interface DarkClusterStrategyFactory
 {
   /**
    * getOrCreate retrieves the {@link DarkClusterStrategy} corresponding to the darkClusterName. If it doesn't exist, create it
-   * and return the new strategy. The darkClusterConfig is passed in so that it can be easily stored if needed, because retrieving
-   * it requires iterating through the source cluster's darkClusters, not the dark cluster's darkClusters map.
+   * and return the new strategy. The darkClusterConfig is passed in so that it can be easily stored if needed.
    * @param darkClusterName darkClusterName to look up
    * @param darkClusterConfig darkClusterConfig to store, if needed.
    * @return {@link DarkClusterStrategy}

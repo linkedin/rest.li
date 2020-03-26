@@ -25,7 +25,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 public class NoOpDarkClusterManager implements DarkClusterManager
 {
   @Override
-  public boolean handleDarkRequest(RestRequest request, RequestContext requestContext)
+  public boolean handleDarkRequest(RestRequest originalRequest, RequestContext originalRequestContext)
   {
     return false;
   }

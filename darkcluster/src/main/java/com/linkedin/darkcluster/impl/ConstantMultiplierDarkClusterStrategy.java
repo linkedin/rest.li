@@ -28,11 +28,11 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 
 /**
- * RelativeTrafficDarkCanaryStrategyImpl figures out how many dark requests to send. It uses the {@link ClusterInfoProvider} to determine the number of
+ * ConstantMultiplierDarkClusterStrategy figures out how many dark requests to send. It uses the {@link ClusterInfoProvider} to determine the number of
  * instances in both the source and target cluster, and uses that to calculate the number of request to send in order to make the level of traffic
  * proportional to itself on any instance in the dark cluster (accounting for multiplier), assuming all hosts in the source cluster send traffic.
  */
-public class RelativeTrafficDarkCanaryStrategyImpl implements DarkClusterStrategy
+public class ConstantMultiplierDarkClusterStrategy implements DarkClusterStrategy
 {
   private final String _originalClusterName;
   private final String _darkClusterName;
@@ -41,7 +41,7 @@ public class RelativeTrafficDarkCanaryStrategyImpl implements DarkClusterStrateg
   private final Notifier _notifier;
   private final Random _random;
 
-  public RelativeTrafficDarkCanaryStrategyImpl(@Nonnull String originalClusterName, @Nonnull String darkClusterName, @Nonnull Float multiplier,
+  public ConstantMultiplierDarkClusterStrategy(@Nonnull String originalClusterName, @Nonnull String darkClusterName, @Nonnull Float multiplier,
                                                @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
                                                @Nonnull Notifier notifier, @Nonnull Random random)
   {
@@ -56,12 +56,8 @@ public class RelativeTrafficDarkCanaryStrategyImpl implements DarkClusterStrateg
   @Override
   public boolean handleRequest(RestRequest originalRequest,RestRequest darkRequest, RequestContext requestContext)
   {
-    boolean darkRequestSent = false;
     int numRequestDuplicates = getNumDuplicateRequests(_darkClusterName, _originalClusterName, _multiplier, _random.nextFloat());
-
-    _baseDarkClusterDispatcher.sendRequest(originalRequest, darkRequest, requestContext, numRequestDuplicates);
-    darkRequestSent = true;
-    return darkRequestSent;
+    return _baseDarkClusterDispatcher.sendRequest(originalRequest, darkRequest, requestContext, numRequestDuplicates);
   }
 
   private int getNumDuplicateRequests(String darkClusterName, String originalClusterName, Float multiplier, float randomNum)
@@ -71,5 +67,11 @@ public class RelativeTrafficDarkCanaryStrategyImpl implements DarkClusterStrateg
     //        int numRequestDuplicates = randomNum < multiplierDecimalPart ? (int) multiplier + 1 : (int) multiplier;
     // Not yet implemented
     return 1;
+  }
+
+  // for testing purposes, but ok to expose publicly on implementation.
+  public Float getMultiplier()
+  {
+    return _multiplier;
   }
 }

@@ -23,6 +23,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.KeyMapper;
+import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerTestState;
 import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
@@ -120,6 +121,7 @@ public class SimpleLoadBalancerTest
 {
   private static final String CLUSTER1_NAME = "cluster-1";
   private static final String DARK_CLUSTER1_NAME = CLUSTER1_NAME + "-dark";
+  private static final String NONEXISTENT_CLUSTER = "nonexistent_cluster";
 
   private List<File> _dirsToDelete;
 
@@ -289,6 +291,72 @@ public class SimpleLoadBalancerTest
     DarkClusterConfigMap returnedDarkClusterConfigMap = loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME);
     Assert.assertEquals(returnedDarkClusterConfigMap, darkClusterConfigMap, "dark cluster configs should be equal");
     Assert.assertEquals(returnedDarkClusterConfigMap.get(DARK_CLUSTER1_NAME).getMultiplier(), 1.0f, "multiplier should match");
+  }
+
+  @Test
+  public void testClusterInfoProviderGetDarkClustersNoCluster()
+    throws InterruptedException, ExecutionException, ServiceUnavailableException
+  {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+
+    DarkClusterConfigMap returnedDarkClusterConfigMap = loadBalancer.getDarkClusterConfigMap(NONEXISTENT_CLUSTER);
+    Assert.assertEquals(returnedDarkClusterConfigMap.size(), 0, "expected empty map");
+  }
+
+  @Test
+  /**
+   * The Register cluster Listener code is already tested in SimpleLoadBalancerStateTest, this is here for testing the
+   * SimpleLoadBalancer API exposing this.
+   */
+  public void testClusterInfoProviderRegisterClusterListener()
+    throws InterruptedException, ExecutionException, ServiceUnavailableException
+  {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    loadBalancer.start(balancerCallback);
+    balancerCallback.get();
+    TestClusterListener testClusterListener = new TestClusterListener();
+    loadBalancer.registerClusterListener(testClusterListener);
+    loadBalancer.listenToCluster(CLUSTER1_NAME, false, new LoadBalancerState.NullStateListenerCallback());
+    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
+                                                             Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
+                                                             new DarkClusterConfigMap()));
+    Assert.assertEquals(testClusterListener.addCount, 1, "expected add count of 1");
+    Assert.assertEquals(testClusterListener.removeCount, 0, "expected remove count of 0");
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    PropertyEventShutdownCallback callback = () -> latch.countDown();
+    loadBalancer.shutdown(callback);
+    if (!latch.await(60, TimeUnit.SECONDS))
+    {
+      fail("unable to shutdown state");
+    }
+    Assert.assertEquals(testClusterListener.addCount, 1, "expected add count of 1");
+    Assert.assertEquals(testClusterListener.removeCount, 1, "expected remove count of 1");
+  }
+
+  private static class TestClusterListener implements LoadBalancerClusterListener
+  {
+    int addCount = 0;
+    int removeCount = 0;
+
+    @Override
+    public void onClusterAdded(String clusterName)
+    {
+      addCount++;
+    }
+
+    @Override
+    public void onClusterRemoved(String clusterName)
+    {
+      removeCount++;
+    }
   }
 
   @Test(groups = { "small", "back-end" })

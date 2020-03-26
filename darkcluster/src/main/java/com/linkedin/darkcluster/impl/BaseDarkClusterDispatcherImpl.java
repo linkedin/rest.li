@@ -35,8 +35,7 @@ import com.linkedin.r2.message.rest.RestResponse;
  * The BaseDarkClusterDispatcher handles the basic operations of dispatching a dark request. It takes in a custom dispatcher, handles errors,
  * gathers metrics, and calls the verifier if needed.
  *
- * Note that it is the custom dispatcher's job to send the request on a different executor if that's desired. The verifier is always executed on
- * a separate executor, and that is handled by this class.
+ * Note that it is the custom dispatcher's job to send the request on a different executor if that's desired.
  */
 public class BaseDarkClusterDispatcherImpl implements BaseDarkClusterDispatcher
 {

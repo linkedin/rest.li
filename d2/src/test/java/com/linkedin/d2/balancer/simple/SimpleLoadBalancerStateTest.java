@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.simple;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallback;
 import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
@@ -69,6 +70,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -76,6 +78,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import org.testng.Assert;
@@ -108,6 +113,8 @@ public class SimpleLoadBalancerStateTest
           throw new SslSessionNotTrustedException("no validation string");
         }
       };
+  private static final String CLUSTER1_CLUSTER_NAME = "cluster-1";
+  private static final String CLUSTER2_CLUSTER_NAME = "cluster-2";
 
   public static void main(String[] args) throws Exception
   {
@@ -1608,6 +1615,166 @@ public class SimpleLoadBalancerStateTest
     assertFalse(updatedClient.getParttitionDataMap().isEmpty());
     assertEquals(updatedClient.getParttitionDataMap(), partitionDataMap);
 
+  }
+
+  @Test
+  public void testRegisterClusterListener()
+  {
+    reset();
+
+    TestClusterListener clusterListener = new TestClusterListener();
+    _state.registerClusterListener(clusterListener);
+    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 0, "expected zero count");
+
+    // first add a cluster
+    _state.listenToCluster(CLUSTER1_CLUSTER_NAME, new NullStateListenerCallback());
+    _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
+
+    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
+
+    // then update the cluster
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 2, "expected 2 calls");
+  }
+
+  @Test
+  public void testUnregisterClusterListener()
+  {
+    reset();
+
+    TestClusterListener clusterListener = new TestClusterListener();
+    _state.registerClusterListener(clusterListener);
+    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 0, "expected zero count");
+
+    // first add a cluster
+    _state.listenToCluster(CLUSTER1_CLUSTER_NAME, new NullStateListenerCallback());
+    _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
+
+    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
+
+    _state.unregisterClusterListener(clusterListener);
+    _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
+    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call, same as before");
+  }
+
+  @Test
+  public void testOnRemoveCluster()
+  {
+    reset();
+
+    TestClusterListener clusterListener = new TestClusterListener();
+    _state.registerClusterListener(clusterListener);
+    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 0, "expected zero count");
+
+    // first add a cluster
+    _state.listenToCluster(CLUSTER1_CLUSTER_NAME, new NullStateListenerCallback());
+    _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
+    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
+
+    _clusterRegistry.remove(CLUSTER1_CLUSTER_NAME);
+    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 2, "expected count of 2");
+  }
+
+  @Test
+  public void testRegisterClusterListenerDuplicates()
+  {
+    reset();
+
+    TestClusterListener clusterListener = new TestClusterListener();
+    _state.registerClusterListener(clusterListener);
+    _state.registerClusterListener(clusterListener);
+    _state.listenToCluster(CLUSTER1_CLUSTER_NAME, new NullStateListenerCallback());
+    _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
+    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
+
+  }
+
+  @Test
+  public void testRegisterMultipleClusterListener()
+  {
+    reset();
+
+    TestClusterListener clusterListener1 = new TestClusterListener();
+    _state.registerClusterListener(clusterListener1);
+    TestClusterListener clusterListener2 = new TestClusterListener();
+    _state.registerClusterListener(clusterListener2);
+    _state.listenToCluster(CLUSTER1_CLUSTER_NAME, new NullStateListenerCallback());
+    _state.listenToCluster(CLUSTER2_CLUSTER_NAME, new NullStateListenerCallback());
+    _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
+    _clusterRegistry.put(CLUSTER2_CLUSTER_NAME, new ClusterProperties(CLUSTER2_CLUSTER_NAME));
+    _clusterRegistry.put(CLUSTER2_CLUSTER_NAME, new ClusterProperties(CLUSTER2_CLUSTER_NAME));
+    assertEquals(clusterListener1.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
+    assertEquals(clusterListener2.getCount(CLUSTER2_CLUSTER_NAME), 2, "expected 2 call");
+  }
+
+  @Test
+  public void testShutdownWithClusterListener() throws URISyntaxException,
+                                                       InterruptedException
+  {
+    reset();
+    TestClusterListener clusterListener1 = new TestClusterListener();
+    _state.registerClusterListener(clusterListener1);
+    TestClusterListener clusterListener2 = new TestClusterListener();
+    _state.registerClusterListener(clusterListener2);
+
+    _state.listenToCluster(CLUSTER1_CLUSTER_NAME, new NullStateListenerCallback());
+    _state.listenToCluster(CLUSTER2_CLUSTER_NAME, new NullStateListenerCallback());
+
+    assertEquals(clusterListener1.getCount(CLUSTER1_CLUSTER_NAME), 0, "expected 0 call");
+    assertEquals(clusterListener1.getCount(CLUSTER2_CLUSTER_NAME), 0, "expected 0 call");
+    TestShutdownCallback callback = new TestShutdownCallback();
+
+    _state.shutdown(callback);
+
+    if (!callback.await(10, TimeUnit.SECONDS))
+    {
+      fail("unable to shut down state");
+    }
+
+    assertEquals(clusterListener1.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
+    assertEquals(clusterListener1.getCount(CLUSTER2_CLUSTER_NAME), 1, "expected 1 call");
+  }
+
+  public static class TestClusterListener implements LoadBalancerClusterListener
+  {
+    // Store if notified on both add and remove
+    private Map<String, AtomicInteger> notificationCounter = new ConcurrentHashMap<>();
+
+    @Override
+    public void onClusterAdded(String clusterName)
+    {
+      incrementCount(clusterName);
+    }
+
+    @Override
+    public void onClusterRemoved(String clusterName)
+    {
+      incrementCount(clusterName);
+    }
+
+    public int getCount(String clusterName)
+    {
+      if (clusterName != null)
+      {
+        return notificationCounter.getOrDefault(clusterName, new AtomicInteger(0)).intValue();
+      }
+      return 0;
+    }
+
+    private void incrementCount(String clusterName)
+    {
+      AtomicInteger count = notificationCounter.get(clusterName);
+      if (count == null)
+      {
+        count = new AtomicInteger();
+        AtomicInteger curCount = notificationCounter.putIfAbsent(clusterName, count);
+        if (curCount != null)
+        {
+          count = curCount;
+        }
+      }
+      count.incrementAndGet();
+    }
   }
 
   private static class TestShutdownCallback implements PropertyEventShutdownCallback

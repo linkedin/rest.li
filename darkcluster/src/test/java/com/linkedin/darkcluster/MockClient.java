@@ -27,6 +27,13 @@ import com.linkedin.r2.transport.common.Client;
 
 public class MockClient implements Client
 {
+  private final boolean _failRequests;
+
+  public MockClient(boolean failRequests)
+  {
+    _failRequests = failRequests;
+  }
+
   @Override
   public Future<RestResponse> restRequest(RestRequest request)
   {
@@ -42,13 +49,20 @@ public class MockClient implements Client
   @Override
   public void restRequest(RestRequest request, Callback<RestResponse> callback)
   {
-
+    callback.onSuccess(new TestRestResponse());
   }
 
   @Override
   public void restRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
   {
-
+    if (_failRequests)
+    {
+      callback.onError(new RuntimeException("test"));
+    }
+    else
+    {
+      callback.onSuccess(new TestRestResponse());
+    }
   }
 
   @Override

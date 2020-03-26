@@ -905,25 +905,19 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   @Override
   public DarkClusterConfigMap getDarkClusterConfigMap(String clusterName) throws ServiceUnavailableException
   {
-    FutureCallback<DarkClusterConfigMap> clusterCountFutureCallback = new FutureCallback<>();
+    FutureCallback<DarkClusterConfigMap> darkClusterConfigMapFutureCallback = new FutureCallback<>();
 
     _state.listenToCluster(clusterName, (type, name) ->
     {
       ClusterProperties clusterProperties = _state.getClusterProperties(clusterName).getProperty();
-      if (clusterProperties != null)
-      {
-        clusterCountFutureCallback.onSuccess(clusterProperties.getDarkClusters());
-      }
-      else
-      {
-        // there won't be a DarkClusterConfigMap if there is no such cluster. Return empty structure in this case.
-        clusterCountFutureCallback.onSuccess(new DarkClusterConfigMap());
-      }
+      DarkClusterConfigMap darkClusterConfigMap = clusterProperties != null ?
+        clusterProperties.getDarkClusters() : new DarkClusterConfigMap();
+      darkClusterConfigMapFutureCallback.onSuccess(darkClusterConfigMap);
     });
 
     try
     {
-      return clusterCountFutureCallback.get(_timeout, _unit);
+      return darkClusterConfigMapFutureCallback.get(_timeout, _unit);
     }
     catch (ExecutionException | TimeoutException | IllegalStateException | InterruptedException e )
     {

@@ -344,7 +344,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       @Override
       public void innerRun()
       {
-        _clusterListeners.add(listener);
+        if (!_clusterListeners.contains(listener))
+        {
+          // don't allow duplicates, there's no need for a cluster listener to be registered twice.
+          _clusterListeners.add(listener);
+        }
       }
     });
   }

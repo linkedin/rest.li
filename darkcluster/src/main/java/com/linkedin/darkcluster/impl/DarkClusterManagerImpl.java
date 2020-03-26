@@ -33,11 +33,11 @@ import com.linkedin.d2.balancer.util.URIRewriter;
 import com.linkedin.darkcluster.api.DarkClusterManager;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.darkcluster.api.DarkClusterStrategyFactory;
-import com.linkedin.darkcluster.api.DarkClusterVerifierManager;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.restli.common.HttpMethod;
 
+import static com.linkedin.r2.message.QueryTunnelUtil.HEADER_METHOD_OVERRIDE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,20 +70,20 @@ public class DarkClusterManagerImpl implements DarkClusterManager
   }
 
   @Override
-  public boolean handleDarkRequest(RestRequest request, RequestContext requestContext)
+  public boolean handleDarkRequest(RestRequest originalRequest, RequestContext originalRequestContext)
   {
-    String uri = request.getURI().toString();
+    String uri = originalRequest.getURI().toString();
     boolean darkRequestSent = false;
     try
     {
       final boolean whiteListed = _whiteListRegEx != null && _whiteListRegEx.matcher(uri).matches();
       final boolean blackedListed = _blackListRegEx != null && _blackListRegEx.matcher(uri).matches();
-      if ((isSafe(request) || whiteListed) && !blackedListed)
+      if ((isSafe(originalRequest) || whiteListed) && !blackedListed)
       {
         // the request is already immutable, and a new requestContext will be created in BaseDarkClusterDispatcher.
         // We don't need to copy them here, but doing it just for safety.
-        RestRequest reqCopy = request.builder().build();
-        RequestContext newRequestContext = new RequestContext(requestContext);
+        RestRequest reqCopy = originalRequest.builder().build();
+        RequestContext newRequestContext = new RequestContext(originalRequestContext);
         DarkClusterConfigMap configMap = _clusterInfoProvider.getDarkClusterConfigMap(_clusterName);
         for (Map.Entry<String, DarkClusterConfig> darkClusterConfigEntry : configMap.entrySet())
         {
