@@ -60,7 +60,7 @@ public class SchemaFormatTranslator
 {
   private static final Logger LOGGER = LoggerFactory.getLogger(SchemaFormatTranslator.class);
 
-  private static final Pattern LINE_END_SPACES = Pattern.compile("\\s+$", Pattern.MULTILINE);
+  private static final Pattern LINE_END_SPACES = Pattern.compile(" +$", Pattern.MULTILINE);
 
   private static final Options OPTIONS = new Options();
   static
