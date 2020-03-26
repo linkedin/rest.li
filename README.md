@@ -11,6 +11,7 @@
    - `git checkout --track origin/gh-pages-source`
  - Run `jekyll serve -P [PORT]`
  - Open a browser `http://127.0.0.1:4000/rest.li`
+ - Optional: If you want to your site open for other hosts in your network, use `jekyll serve -P [PORT] -H 0.0.0.0`
 
 ## Contribute
 

@@ -751,7 +751,7 @@ The syntax for array representation is the following:
 will be represented as:
 
 ```
-array_field:($*:(field1,field2),$start=10,$count=15)
+array_field:($*:(field1,field2),$start:10,$count:15)
 ```
 
 ### Map
