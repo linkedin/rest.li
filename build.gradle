@@ -94,7 +94,7 @@ project.ext.externalDependency = [
   'testng': 'org.testng:testng:6.13.1',
   'velocity': 'org.apache.velocity:velocity:1.5',
   'zero_allocation_hashing': 'net.openhft:zero-allocation-hashing:0.7',
-  'zookeeper': 'org.apache.zookeeper:zookeeper:3.4.13',
+  'zookeeper': 'org.apache.zookeeper:zookeeper:3.4.14',
   'hdrhistogram': 'org.hdrhistogram:HdrHistogram:2.1.9',
   'xchart': 'org.knowm.xchart:xchart:3.2.2',
 
