@@ -20,9 +20,12 @@ import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -42,6 +45,8 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
   private boolean _watchChildNodes = false;
   private boolean _useNewWatcher = false;
   private String _fsD2DirPathForBackup = null;
+  private ScheduledExecutorService executorService;
+  private int readWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
   private List<Consumer<ZooKeeperEphemeralStore<T>>> _onBuildListeners = new ArrayList<>();
 
   @Override
@@ -89,6 +94,18 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
     return this;
   }
 
+  public ZooKeeperEphemeralStoreBuilder<T> setExecutorService(ScheduledExecutorService executorService)
+  {
+    this.executorService = executorService;
+    return this;
+  }
+
+  public ZooKeeperEphemeralStoreBuilder<T> setReadWindowMs(int readWindowMs)
+  {
+    this.readWindowMs = readWindowMs;
+    return this;
+  }
+
   @Override
   public ZooKeeperEphemeralStoreBuilder<T> addOnBuildListener(Consumer<ZooKeeperEphemeralStore<T>> onBuildListener)
   {
@@ -105,7 +122,8 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
     }
 
     ZooKeeperEphemeralStore<T> zooKeeperEphemeralStore =
-      new ZooKeeperEphemeralStore<>(_client, _serializer, _merger, _path, _watchChildNodes, _useNewWatcher, backupStoreFilePath);
+      new ZooKeeperEphemeralStore<>(_client, _serializer, _merger, _path, _watchChildNodes, _useNewWatcher,
+                                    backupStoreFilePath, executorService, readWindowMs);
 
     for (Consumer<ZooKeeperEphemeralStore<T>> onBuildListener : _onBuildListeners)
     {
