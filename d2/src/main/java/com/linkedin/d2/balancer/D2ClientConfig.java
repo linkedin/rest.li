@@ -28,6 +28,7 @@ import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpJmxManager;
 import com.linkedin.r2.transport.common.TransportClientFactory;
@@ -71,6 +72,7 @@ public class D2ClientConfig
   int retryLimit = DEAULT_RETRY_LIMIT;
   boolean warmUp = false;
   int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
+  int readWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
   int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
   DownstreamServicesFetcher downstreamServicesFetcher = null;
   boolean backupRequestsEnabled = true;
@@ -136,7 +138,8 @@ public class D2ClientConfig
                  ZKPersistentConnection zkConnection,
                  ScheduledExecutorService startUpExecutorService,
                  JmxManager jmxManager,
-                 String d2JmxManagerPrefix)
+                 String d2JmxManagerPrefix,
+                 int readWindowMs)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -181,5 +184,6 @@ public class D2ClientConfig
     this.startUpExecutorService = startUpExecutorService;
     this.jmxManager = jmxManager;
     this.d2JmxManagerPrefix = d2JmxManagerPrefix;
+    this.readWindowMs = readWindowMs;
   }
 }

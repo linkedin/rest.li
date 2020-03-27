@@ -91,7 +91,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.partitionAccessorRegistry,
                                                    config.enableSaveUriDataOnDisk,
                                                    config.sslSessionValidatorFactory,
-                                                   d2ClientJmxManager
+                                                   d2ClientJmxManager,
+                                                   config.readWindowMs
     );
   }
 }
