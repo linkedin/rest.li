@@ -16,20 +16,20 @@
 
 package com.linkedin.darkcluster;
 
-import java.util.concurrent.Callable;
+import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.util.None;
 import com.linkedin.darkcluster.api.DarkClusterVerifier;
 import com.linkedin.darkcluster.api.DarkClusterVerifierManager;
 import com.linkedin.darkcluster.impl.DarkClusterVerifierManagerImpl;
 import com.linkedin.darkcluster.impl.SafeDarkClusterVerifier;
 import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.rest.RestResponseBuilder;
 
 import static org.testng.Assert.fail;
 import org.testng.Assert;
@@ -46,11 +46,11 @@ public class TestDarkClusterVerifierManager
     TestVerifier verifier = new TestVerifier(true);
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     DarkClusterVerifierManager verifierManager = new DarkClusterVerifierManagerImpl(verifier, executorService);
-    RestRequest req = new TestRestRequest();
-    RestResponse res = new TestRestResponse();
-    verifierManager.onDarkResponse(req, res, DARK_CLUSTER1_NAME);
-    verifierManager.onDarkResponse(req, res, DARK_CLUSTER1_NAME);
-    verifierManager.onResponse(req, res);
+    RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("foo")).build();
+    RestResponse res = new RestResponseBuilder().build();
+    verifierManager.onDarkResponse(dummyRestRequest, res, DARK_CLUSTER1_NAME);
+    verifierManager.onDarkResponse(dummyRestRequest, res, DARK_CLUSTER1_NAME);
+    verifierManager.onResponse(dummyRestRequest, res);
 
     // because it takes some time execute the previous three tasks on the executor, add a 4th one
     // that can signal we are done, given the executor is single threaded and will process them in order.
@@ -72,8 +72,8 @@ public class TestDarkClusterVerifierManager
     TestVerifier verifier = new TestVerifier(false);
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     DarkClusterVerifierManager verifierManager = new DarkClusterVerifierManagerImpl(verifier, executorService);
-    RestRequest req = new TestRestRequest();
-    RestResponse res = new TestRestResponse();
+    RestRequest req = new RestRequestBuilder(URI.create("foo")).build();
+    RestResponse res = new RestResponseBuilder().build();
     verifierManager.onDarkResponse(req, res, DARK_CLUSTER1_NAME);
     verifierManager.onDarkResponse(req, res, DARK_CLUSTER1_NAME);
     verifierManager.onResponse(req, res);
@@ -98,8 +98,7 @@ public class TestDarkClusterVerifierManager
     TestVerifier verifier = new TestVerifier(true);
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     DarkClusterVerifierManager verifierManager = new DarkClusterVerifierManagerImpl(verifier, executorService);
-    RestRequest req = new TestRestRequest();
-    RestResponse res = new TestRestResponse();
+    RestRequest req = new RestRequestBuilder(URI.create("foo")).build();
     verifierManager.onDarkError(req, new Throwable(), DARK_CLUSTER1_NAME);
     verifierManager.onDarkError(req, new Throwable(), DARK_CLUSTER1_NAME);
     verifierManager.onError(req, new Throwable());
@@ -124,8 +123,8 @@ public class TestDarkClusterVerifierManager
     DarkClusterVerifier verifier = new SafeDarkClusterVerifier(new TestThrowingVerifier());
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     DarkClusterVerifierManager verifierManager = new DarkClusterVerifierManagerImpl(verifier, executorService);
-    RestRequest req = new TestRestRequest();
-    RestResponse res = new TestRestResponse();
+    RestRequest req = new RestRequestBuilder(URI.create("foo")).build();
+    RestResponse res = new RestResponseBuilder().build();
     verifierManager.onDarkResponse(req, res, DARK_CLUSTER1_NAME);
     verifierManager.onDarkResponse(req, res, DARK_CLUSTER1_NAME);
     verifierManager.onResponse(req, res);
@@ -144,8 +143,8 @@ public class TestDarkClusterVerifierManager
     // now retry without the SafeDarkClusterVerifier
     DarkClusterVerifier verifier2 = new TestThrowingVerifier();
     DarkClusterVerifierManager verifierManager2 = new DarkClusterVerifierManagerImpl(verifier2, executorService);
-    RestRequest req2 = new TestRestRequest();
-    RestResponse res2 = new TestRestResponse();
+    RestRequest req2 = new RestRequestBuilder(URI.create("foo")).build();
+    RestResponse res2 = new RestResponseBuilder().build();
     try
     {
       verifierManager2.onDarkResponse(req2, res2, DARK_CLUSTER1_NAME);

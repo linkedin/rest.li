@@ -16,18 +16,25 @@
 
 package com.linkedin.darkcluster;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.Client;
+
+import org.apache.commons.lang.NotImplementedException;
 
 public class MockClient implements Client
 {
   private final boolean _failRequests;
+  public final Map<String, AtomicInteger> requestAuthorityMap = new ConcurrentHashMap<>();
 
   public MockClient(boolean failRequests)
   {
@@ -37,31 +44,45 @@ public class MockClient implements Client
   @Override
   public Future<RestResponse> restRequest(RestRequest request)
   {
-    return null;
+    throw new NotImplementedException();
   }
 
   @Override
   public Future<RestResponse> restRequest(RestRequest request, RequestContext requestContext)
   {
-    return null;
+    throw new NotImplementedException();
   }
 
   @Override
   public void restRequest(RestRequest request, Callback<RestResponse> callback)
   {
-    callback.onSuccess(new TestRestResponse());
+    restRequest(request, new RequestContext(), callback);
   }
 
   @Override
   public void restRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
   {
+    if (request != null && request.getURI() != null)
+    {
+      String authority = request.getURI().getAuthority();
+      if (authority != null)
+      {
+        // only store the authority if the requestURI has one.
+        if (!requestAuthorityMap.containsKey(authority))
+        {
+          requestAuthorityMap.putIfAbsent(authority, new AtomicInteger());
+        }
+        requestAuthorityMap.get(authority).incrementAndGet();
+      }
+    }
+
     if (_failRequests)
     {
       callback.onError(new RuntimeException("test"));
     }
     else
     {
-      callback.onSuccess(new TestRestResponse());
+      callback.onSuccess(new RestResponseBuilder().build());
     }
   }
 

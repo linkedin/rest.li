@@ -52,11 +52,11 @@ public class DarkClusterManagerImpl implements DarkClusterManager
   private final Pattern _blackListRegEx;
   private final Notifier _notifier;
   private final ClusterInfoProvider _clusterInfoProvider;
-  private final String _clusterName;
+  private final String _sourceClusterName;
   private final DarkClusterStrategyFactory _darkClusterStrategyFactory;
   private Map<String, AtomicReference<URIRewriter>> _uriRewriterMap;
 
-  public DarkClusterManagerImpl(@Nonnull String clusterName, @Nonnull ClusterInfoProvider clusterInfoProvider,
+  public DarkClusterManagerImpl(@Nonnull String sourceClusterName, @Nonnull ClusterInfoProvider clusterInfoProvider,
                                 @Nonnull DarkClusterStrategyFactory strategyFactory, String whiteListRegEx,
                                 String blackListRegEx, @Nonnull Notifier notifier)
   {
@@ -64,7 +64,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     _blackListRegEx = blackListRegEx == null ? null : Pattern.compile(blackListRegEx);
     _notifier = notifier;
     _clusterInfoProvider = clusterInfoProvider;
-    _clusterName = clusterName;
+    _sourceClusterName = sourceClusterName;
     _darkClusterStrategyFactory = strategyFactory;
     _uriRewriterMap = new HashMap<>();
   }
@@ -84,7 +84,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
         // We don't need to copy them here, but doing it just for safety.
         RestRequest reqCopy = originalRequest.builder().build();
         RequestContext newRequestContext = new RequestContext(originalRequestContext);
-        DarkClusterConfigMap configMap = _clusterInfoProvider.getDarkClusterConfigMap(_clusterName);
+        DarkClusterConfigMap configMap = _clusterInfoProvider.getDarkClusterConfigMap(_sourceClusterName);
         for (Map.Entry<String, DarkClusterConfig> darkClusterConfigEntry : configMap.entrySet())
         {
           String darkClusterName = darkClusterConfigEntry.getKey();
@@ -93,7 +93,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
           RestRequest newD2Request = rewriteRequest(reqCopy, darkClusterName);
           // now find the strategy appropriate for each dark cluster
           DarkClusterStrategy strategy = _darkClusterStrategyFactory.getOrCreate(darkClusterName, darkClusterConfig);
-          darkRequestSent = strategy.handleRequest(newD2Request, reqCopy, newRequestContext);
+          darkRequestSent = strategy.handleRequest(reqCopy, newD2Request, newRequestContext);
         }
 
       }

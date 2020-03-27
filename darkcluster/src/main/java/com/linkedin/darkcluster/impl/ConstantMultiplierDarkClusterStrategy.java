@@ -54,7 +54,7 @@ public class ConstantMultiplierDarkClusterStrategy implements DarkClusterStrateg
   }
 
   @Override
-  public boolean handleRequest(RestRequest originalRequest,RestRequest darkRequest, RequestContext requestContext)
+  public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
     int numRequestDuplicates = getNumDuplicateRequests(_darkClusterName, _originalClusterName, _multiplier, _random.nextFloat());
     return _baseDarkClusterDispatcher.sendRequest(originalRequest, darkRequest, requestContext, numRequestDuplicates);

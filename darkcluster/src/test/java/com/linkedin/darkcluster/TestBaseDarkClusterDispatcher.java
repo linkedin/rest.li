@@ -16,10 +16,14 @@
 
 package com.linkedin.darkcluster;
 
+import java.net.URI;
+
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.darkcluster.impl.BaseDarkClusterDispatcherImpl;
 import com.linkedin.darkcluster.impl.DefaultDarkClusterDispatcherImpl;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -56,7 +60,8 @@ public class TestBaseDarkClusterDispatcher
                                                                                  darkClusterDispatcher,
                                                                                  new DoNothingNotifier(),
                                                                                  new CountingVerifierManager());
-    boolean result = baseDispatcher.sendRequest(new TestRestRequest(), new TestRestRequest(), new RequestContext(), numDuplicates);
+    RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("foo")).build();
+    boolean result = baseDispatcher.sendRequest(dummyRestRequest, dummyRestRequest, new RequestContext(), numDuplicates);
     Assert.assertEquals(result, requestSent, "expected: " + requestSent);
     Assert.assertEquals(baseDispatcher.getSuccessCount(), expectedSuccessCount, "unexpected successCount");
     Assert.assertEquals(baseDispatcher.getRequestCount(), expectedRequestCount, "unexpected requestCount");

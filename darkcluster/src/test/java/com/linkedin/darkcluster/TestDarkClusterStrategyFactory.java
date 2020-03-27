@@ -1,9 +1,22 @@
+/*
+   Copyright (c) 2020 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.darkcluster;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.URI;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -11,9 +24,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.linkedin.d2.DarkClusterConfig;
-import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
@@ -23,6 +34,8 @@ import com.linkedin.darkcluster.impl.ConstantMultiplierDarkClusterStrategy;
 import com.linkedin.darkcluster.impl.DarkClusterStrategyFactoryImpl;
 import com.linkedin.darkcluster.impl.DefaultDarkClusterDispatcherImpl;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 
 import static org.testng.Assert.fail;
 import org.testng.Assert;
@@ -30,9 +43,9 @@ import org.testng.annotations.Test;
 
 public class TestDarkClusterStrategyFactory
 {
-  private static final String SOURCE_CLUSTER_NAME = "FooCluster";
-  private static final String DARK_CLUSTER_NAME = "FooCluster-dark";
-  private static final int SEED = 2;
+  static final String SOURCE_CLUSTER_NAME = "FooCluster";
+  static final String DARK_CLUSTER_NAME = "FooCluster-dark";
+  static final int SEED = 2;
 
   @Test
   public void testCreateStrategiesWithNoDarkClusters()
@@ -46,7 +59,8 @@ public class TestDarkClusterStrategyFactory
                                                                                     new Random(SEED),
                                                                                     new CountingVerifierManager());
     DarkClusterStrategy strategy = strategyFactory.getOrCreate(DARK_CLUSTER_NAME, new DarkClusterConfig());
-    boolean requestSent = strategy.handleRequest(new TestRestRequest(), new TestRestRequest(), new RequestContext());
+    RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("foo")).build();
+    boolean requestSent = strategy.handleRequest(dummyRestRequest, dummyRestRequest, new RequestContext());
     Assert.assertTrue(strategy instanceof NoOpDarkClusterStrategy);
     Assert.assertFalse(requestSent, "default empty strategy should not send request");
   }
@@ -84,8 +98,9 @@ public class TestDarkClusterStrategyFactory
     Assert.assertEquals(((ConstantMultiplierDarkClusterStrategy)strategy3).getMultiplier(), 0.1f, "expected 0.1f multiplier");
 
     // if someone has a handle to old strategies, those should still be usable.
-    strategy.handleRequest(new TestRestRequest(), new TestRestRequest(), new RequestContext());
-    strategy2.handleRequest(new TestRestRequest(), new TestRestRequest(), new RequestContext());
+    RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("foo")).build();
+    strategy.handleRequest(dummyRestRequest, dummyRestRequest, new RequestContext());
+    strategy2.handleRequest(dummyRestRequest, dummyRestRequest, new RequestContext());
   }
 
   @Test
@@ -143,66 +158,6 @@ public class TestDarkClusterStrategyFactory
     }
 
 
-  }
-  private static class MockClusterInfoProvider implements ClusterInfoProvider
-  {
-    Map<String, DarkClusterConfigMap> lookupMap = new HashMap<>();
-    List<LoadBalancerClusterListener> clusterListeners = new ArrayList<>();
-
-    @Override
-    public int getClusterCount(String clusterName, String scheme, int partitionId)
-      throws ServiceUnavailableException
-    {
-      return 0;
-    }
-
-    @Override
-    public int getHttpsClusterCount(String clusterName)
-      throws ServiceUnavailableException
-    {
-      return 0;
-    }
-
-    @Override
-    public DarkClusterConfigMap getDarkClusterConfigMap(String clusterName)
-      throws ServiceUnavailableException
-    {
-      return lookupMap.get(clusterName);
-    }
-
-    @Override
-    public void registerClusterListener(LoadBalancerClusterListener clusterListener)
-    {
-      clusterListeners.add(clusterListener);
-    }
-
-    /**
-     * add the ability to add a dark cluster to a source cluster's darkClusterConfigMap
-     */
-    void addDarkClusterConfig(String sourceClusterName, String darkClusterName, DarkClusterConfig darkClusterConfig)
-    {
-      DarkClusterConfigMap darkClusterConfigMap = (lookupMap.containsKey(sourceClusterName)) ? lookupMap.get(sourceClusterName) :
-        new DarkClusterConfigMap();
-
-      darkClusterConfigMap.put(darkClusterName, darkClusterConfig);
-      lookupMap.put(sourceClusterName, darkClusterConfigMap);
-    }
-
-    void triggerClusterRefresh(String clusterName)
-    {
-      for (LoadBalancerClusterListener listener : clusterListeners)
-      {
-        listener.onClusterAdded(clusterName);
-      }
-    }
-
-    void triggerClusterRemove(String clusterName)
-    {
-      for (LoadBalancerClusterListener listener : clusterListeners)
-      {
-        listener.onClusterRemoved(clusterName);
-      }
-    }
   }
 
   private static class DeletingClusterListener implements LoadBalancerClusterListener

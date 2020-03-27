@@ -1,5 +1,6 @@
 package com.linkedin.darkcluster;
 
+import java.net.URI;
 import java.util.Random;
 
 import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
@@ -8,6 +9,8 @@ import com.linkedin.darkcluster.impl.BaseDarkClusterDispatcherImpl;
 import com.linkedin.darkcluster.impl.ConstantMultiplierDarkClusterStrategy;
 import com.linkedin.darkcluster.impl.DefaultDarkClusterDispatcherImpl;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -54,7 +57,8 @@ public class TestConstantMultiplierDarkClusterStrategy
                                                                                                new Random(SEED));
     for (int i=0; i < numIterations; i++)
     {
-      strategy.handleRequest(new TestRestRequest(), new TestRestRequest(), new RequestContext());
+      RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("foo")).build();
+      strategy.handleRequest(dummyRestRequest, dummyRestRequest, new RequestContext());
     }
     int expectedCount = (int) (numIterations * multiplier);
     int actualCount = baseDispatcher.getRequestCount();
