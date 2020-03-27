@@ -67,7 +67,7 @@ public class ExtensionSchemaValidation
       String[] cliArgs = cl.getArgs();
       if (cliArgs.length != 2)
       {
-        _logger.error("Wrong argument given");
+        _logger.error("Invalid arguments");
         help();
         System.exit(1);
       }
@@ -116,7 +116,7 @@ public class ExtensionSchemaValidation
       DataSchema topLevelDataSchema = topLevelDataSchemas.get(0);
       if (!(topLevelDataSchema instanceof NamedDataSchema))
       {
-        _logger.error("Invalid extension schema : " + inputFile.getAbsolutePath());
+        _logger.error("Invalid extension schema : [{}], the schema is not a named schema.", inputFile.getAbsolutePath());
         System.exit(1);
       }
       if (!((NamedDataSchema) topLevelDataSchema).getFullName().endsWith("Extensions"))
@@ -125,13 +125,12 @@ public class ExtensionSchemaValidation
         System.exit(1);
       }
 
-      List<NamedDataSchema> includes = ((RecordDataSchema)topLevelDataSchema).getInclude();
+      List<NamedDataSchema> includes = ((RecordDataSchema) topLevelDataSchema).getInclude();
       // TODO: Check includes schemas can only be the resource schemas
 
-      List<RecordDataSchema.Field> extensionSchemaFields = ((RecordDataSchema)topLevelDataSchema).getFields().
-          stream().
-          filter(
-              f -> !((RecordDataSchema) topLevelDataSchema).isFieldFromIncludes(f))
+      List<RecordDataSchema.Field> extensionSchemaFields = ((RecordDataSchema) topLevelDataSchema).getFields()
+          .stream()
+          .filter(f -> !((RecordDataSchema) topLevelDataSchema).isFieldFromIncludes(f))
           .collect(Collectors.toList());
       // TODO : Call annotation process to validate each field's annotation, need to create schemaVisitor and handler for extension annotation.
     }
