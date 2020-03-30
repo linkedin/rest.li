@@ -17,14 +17,11 @@
 package com.linkedin.darkcluster.filter;
 
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 import javax.annotation.Nonnull;
 
 import com.linkedin.darkcluster.api.DarkClusterManager;
-import com.linkedin.darkcluster.api.DarkClusterVerifier;
 import com.linkedin.darkcluster.api.DarkClusterVerifierManager;
-import com.linkedin.darkcluster.impl.ResponseImpl;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.RequestContext;

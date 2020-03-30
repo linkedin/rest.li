@@ -1633,7 +1633,7 @@ public class SimpleLoadBalancerStateTest
     assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
 
     // then update the cluster
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+    _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
     assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 2, "expected 2 calls");
   }
 

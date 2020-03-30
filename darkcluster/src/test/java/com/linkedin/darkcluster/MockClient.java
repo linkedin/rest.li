@@ -31,6 +31,9 @@ import com.linkedin.r2.transport.common.Client;
 
 import org.apache.commons.lang.NotImplementedException;
 
+/**
+ * MockClient that allows failing requests and recording url authority
+ */
 public class MockClient implements Client
 {
   private final boolean _failRequests;

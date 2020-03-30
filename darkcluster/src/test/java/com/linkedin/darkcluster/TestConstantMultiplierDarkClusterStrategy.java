@@ -3,7 +3,6 @@ package com.linkedin.darkcluster;
 import java.net.URI;
 import java.util.Random;
 
-import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.darkcluster.impl.BaseDarkClusterDispatcherImpl;
 import com.linkedin.darkcluster.impl.ConstantMultiplierDarkClusterStrategy;

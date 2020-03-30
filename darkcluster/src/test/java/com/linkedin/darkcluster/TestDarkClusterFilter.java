@@ -16,6 +16,9 @@
 
 package com.linkedin.darkcluster;
 
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,6 +39,12 @@ import com.linkedin.darkcluster.impl.DarkClusterManagerImpl;
 import com.linkedin.darkcluster.impl.DarkClusterStrategyFactoryImpl;
 import com.linkedin.darkcluster.impl.DarkClusterVerifierManagerImpl;
 import com.linkedin.darkcluster.impl.DefaultDarkClusterDispatcherImpl;
+import com.linkedin.r2.filter.NextFilter;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.message.rest.RestRequest;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
+import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.rest.RestResponseBuilder;
 
 import org.testng.annotations.Test;
 
@@ -65,5 +74,31 @@ public class TestDarkClusterFilter
                                                                        "", "",
                                                                        notifier);
     DarkClusterFilter darkClusterFilter = new DarkClusterFilter(darkClusterManager, verifierManager);
+
+    RestRequest restRequest = new RestRequestBuilder(URI.create("foo")).build();
+    darkClusterFilter.onRestRequest(restRequest, new RequestContext(), new HashMap<>(), new DummyNextFilter());
+    darkClusterFilter.onRestError(new RuntimeException("test"), new RequestContext(), new HashMap<>(), new DummyNextFilter());
+    darkClusterFilter.onRestResponse(new RestResponseBuilder().build(), new RequestContext(), new HashMap<>(), new DummyNextFilter());
+  }
+
+  private static class DummyNextFilter implements NextFilter<RestRequest, RestResponse>
+  {
+    @Override
+    public void onRequest(RestRequest restRequest, RequestContext requestContext, Map<String, String> wireAttrs)
+    {
+
+    }
+
+    @Override
+    public void onResponse(RestResponse restResponse, RequestContext requestContext, Map<String, String> wireAttrs)
+    {
+
+    }
+
+    @Override
+    public void onError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs)
+    {
+
+    }
   }
 }

@@ -20,6 +20,9 @@ import com.linkedin.darkcluster.api.DarkClusterVerifierManager;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 
+/**
+ * Test class to count verifier invocations
+ */
 class CountingVerifierManager implements DarkClusterVerifierManager
 {
   public int darkResponseCount;

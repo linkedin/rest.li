@@ -104,7 +104,7 @@ public class TestDarkClusterStrategyFactory
   }
 
   @Test
-  public void testRacingStrategies()
+  public void testStrategyRaceCondition()
   {
     int noopStrategyCount = 0;
     MockClusterInfoProvider clusterInfoProvider = new MockClusterInfoProvider();
@@ -165,7 +165,7 @@ public class TestDarkClusterStrategyFactory
     // handle to MockClusterInfoProvider so it can call triggerCluster actions.
     private final MockClusterInfoProvider mockClusterInfoProvider;
 
-    public DeletingClusterListener(MockClusterInfoProvider mockProvider)
+    DeletingClusterListener(MockClusterInfoProvider mockProvider)
     {
       mockClusterInfoProvider = mockProvider;
     }

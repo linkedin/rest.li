@@ -105,7 +105,8 @@ public class ZKFSLoadBalancer
   private volatile TogglingLoadBalancer _currentLoadBalancer;
 
   @Override
-  public int getClusterCount(String clusterName, String scheme, int partitionId) throws ServiceUnavailableException {
+  public int getClusterCount(String clusterName, String scheme, int partitionId) throws ServiceUnavailableException
+  {
     return _currentLoadBalancer.getClusterCount(clusterName, scheme, partitionId);
   }
 
