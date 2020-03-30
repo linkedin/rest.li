@@ -1446,6 +1446,22 @@ public class PegasusPlugin implements Plugin<Project>
         project.getLogger().lifecycle("You can use '-PconvertToPdl.reverse=true|false' to change the direction of conversion.");
       }));
     });
+
+    // Helper task for reformatting existing PDL schemas by generating them again.
+    project.getTasks().create(sourceSet.getTaskName("reformat", "Pdl"), TranslateSchemasTask.class, task ->
+    {
+      task.setInputDir(dataSchemaDir);
+      task.setDestinationDir(dataSchemaDir);
+      task.setResolverPath(getDataModelConfig(project, sourceSet));
+      task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+      task.setSourceFormat(SchemaFileType.PDL);
+      task.setDestinationFormat(SchemaFileType.PDL);
+      task.setKeepOriginal(true);
+      task.setSkipVerification(true);
+
+      task.onlyIf(t -> task.getInputDir().exists());
+      task.doLast(new CacheableAction<>(t -> project.getLogger().lifecycle("PDL reformat complete.")));
+    });
   }
 
   protected GenerateDataTemplateTask configureDataTemplateGeneration(Project project, SourceSet sourceSet)
