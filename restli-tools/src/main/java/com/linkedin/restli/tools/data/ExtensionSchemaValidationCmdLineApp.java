@@ -39,9 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class ExtensionSchemaValidation
+public class ExtensionSchemaValidationCmdLineApp
 {
-  private static final Logger _logger = LoggerFactory.getLogger(ExtensionSchemaValidation.class);
+  private static final Logger _logger = LoggerFactory.getLogger(ExtensionSchemaValidationCmdLineApp.class);
   private static final Options _options = new Options();
   private static final String _pdl = "pdl";
 
@@ -140,7 +140,7 @@ public class ExtensionSchemaValidation
   {
     final HelpFormatter formatter = new HelpFormatter();
     formatter.printHelp(120,
-        ExtensionSchemaValidation.class.getSimpleName(),
+        ExtensionSchemaValidationCmdLineApp.class.getSimpleName(),
         "[resolverPath], [inputPath]",
          _options,
         "",

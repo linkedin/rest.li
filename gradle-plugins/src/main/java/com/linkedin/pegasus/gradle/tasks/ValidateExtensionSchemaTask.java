@@ -124,7 +124,7 @@ public class ValidateExtensionSchemaTask extends DefaultTask
     }
 
     getProject().javaexec(javaExecSpec -> {
-      javaExecSpec.setMain("com.linkedin.restli.tools.data.ExtensionSchemaValidation");
+      javaExecSpec.setMain("com.linkedin.restli.tools.data.ExtensionSchemaValidationCmdLineApp");
       javaExecSpec.setClasspath(_pathedClasspath);
       javaExecSpec.args(resolverPathStr);
       javaExecSpec.args(_inputDir.getAbsolutePath());
