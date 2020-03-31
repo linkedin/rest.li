@@ -163,7 +163,7 @@ public class D2ClientBuilder
                   _config.startUpExecutorService,
                   _config.jmxManager,
                   _config.d2JmxManagerPrefix,
-                  _config.readWindowMs);
+                  _config.zookeeperReadWindowMs);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -407,8 +407,8 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setReadWindowMs(int readWindowMs){
-    _config.readWindowMs = readWindowMs;
+  public D2ClientBuilder setZookeeperReadWindowMs(int zookeeperReadWindowMs){
+    _config.zookeeperReadWindowMs = zookeeperReadWindowMs;
     return this;
   }
 

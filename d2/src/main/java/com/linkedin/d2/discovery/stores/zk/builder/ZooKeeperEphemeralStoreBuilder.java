@@ -46,7 +46,7 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
   private boolean _useNewWatcher = false;
   private String _fsD2DirPathForBackup = null;
   private ScheduledExecutorService executorService;
-  private int readWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
+  private int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
   private List<Consumer<ZooKeeperEphemeralStore<T>>> _onBuildListeners = new ArrayList<>();
 
   @Override
@@ -100,9 +100,9 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
     return this;
   }
 
-  public ZooKeeperEphemeralStoreBuilder<T> setReadWindowMs(int readWindowMs)
+  public ZooKeeperEphemeralStoreBuilder<T> setZookeeperReadWindowMs(int zookeeperReadWindowMs)
   {
-    this.readWindowMs = readWindowMs;
+    this.zookeeperReadWindowMs = zookeeperReadWindowMs;
     return this;
   }
 
@@ -123,7 +123,7 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
 
     ZooKeeperEphemeralStore<T> zooKeeperEphemeralStore =
       new ZooKeeperEphemeralStore<>(_client, _serializer, _merger, _path, _watchChildNodes, _useNewWatcher,
-                                    backupStoreFilePath, executorService, readWindowMs);
+                                    backupStoreFilePath, executorService, zookeeperReadWindowMs);
 
     for (Consumer<ZooKeeperEphemeralStore<T>> onBuildListener : _onBuildListeners)
     {

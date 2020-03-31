@@ -146,14 +146,14 @@ public class ZooKeeperEphemeralStoreChildrenDelayedWatcherTest
   }
 
   @Test(dataProvider = "dataNumOfChildrenReadWindow")
-  public void testChildNodeAdded(int numberOfAdditionalChildren, int readWindowMs)
+  public void testChildNodeAdded(int numberOfAdditionalChildren, int zookeeperReadWindowMs)
     throws Exception
   {
 
     ZKConnection client = getZookeeperConnection();
     client.start();
 
-    final ZooKeeperEphemeralStore<Set<String>> publisher = getEphemeralStorePublisher(readWindowMs, client);
+    final ZooKeeperEphemeralStore<Set<String>> publisher = getEphemeralStorePublisher(zookeeperReadWindowMs, client);
 
     final CountDownLatch initLatch = new CountDownLatch(1);
     final CountDownLatch addLatch = new CountDownLatch(1);
@@ -222,11 +222,11 @@ public class ZooKeeperEphemeralStoreChildrenDelayedWatcherTest
     {
       addNodeInZookeeper("/bucket/child-" + i, Integer.toString(i));
       childrenAddedToZookeeper.put("/bucket/child-" + i, Integer.toString(i));
-      _clockedExecutor.runFor(readWindowMs);
+      _clockedExecutor.runFor(zookeeperReadWindowMs);
     }
 
     AssertionMethods.assertWithTimeout(5000, () -> {
-      _clockedExecutor.runFor(readWindowMs);
+      _clockedExecutor.runFor(zookeeperReadWindowMs);
       Assert.assertEquals(addLatch.getCount(), 0, "didn't get notified for the new node");
     });
 
@@ -236,13 +236,13 @@ public class ZooKeeperEphemeralStoreChildrenDelayedWatcherTest
   }
 
   @Test(dataProvider = "dataNumOfchildrenToAddToRemoveReadWindow")
-  public void testChildNodeRemoved(int numberOfAdditionalChildren, int numberOfRemove, int readWindowMs)
+  public void testChildNodeRemoved(int numberOfAdditionalChildren, int numberOfRemove, int zookeeperReadWindowMs)
     throws Exception
   {
     ZKConnection client = getZookeeperConnection();
     client.start();
 
-    final ZooKeeperEphemeralStore<Set<String>> publisher = getEphemeralStorePublisher(readWindowMs, client);
+    final ZooKeeperEphemeralStore<Set<String>> publisher = getEphemeralStorePublisher(zookeeperReadWindowMs, client);
 
     final CountDownLatch initLatch = new CountDownLatch(1);
     final CountDownLatch addLatch = new CountDownLatch(1);
@@ -318,11 +318,11 @@ public class ZooKeeperEphemeralStoreChildrenDelayedWatcherTest
     {
       addNodeInZookeeper("/bucket/child-" + i, Integer.toString(i));
       childrenAddedToZookeeper.put("/bucket/child-" + i, Integer.toString(i));
-      _clockedExecutor.runFor(readWindowMs);
+      _clockedExecutor.runFor(zookeeperReadWindowMs);
     }
 
     AssertionMethods.assertWithTimeout(5000, () -> {
-      _clockedExecutor.runFor(readWindowMs);
+      _clockedExecutor.runFor(zookeeperReadWindowMs);
       Assert.assertEquals(addLatch.getCount(), 0, "didn't get notified for the new node");
     });
 
@@ -336,11 +336,11 @@ public class ZooKeeperEphemeralStoreChildrenDelayedWatcherTest
       childrenAddedToZookeeper.remove(childName);
       callback.get();
 
-      _clockedExecutor.runFor(readWindowMs);
+      _clockedExecutor.runFor(zookeeperReadWindowMs);
     }
 
     AssertionMethods.assertWithTimeout(5000, () -> {
-      _clockedExecutor.runFor(readWindowMs);
+      _clockedExecutor.runFor(zookeeperReadWindowMs);
       Assert.assertEquals(removeLatch.getCount(), 0, "didn't get notified for the removed nodes");
     });
 
@@ -354,11 +354,11 @@ public class ZooKeeperEphemeralStoreChildrenDelayedWatcherTest
     return new ZKConnection("localhost:" + _port, 5000);
   }
 
-  private ZooKeeperEphemeralStore<Set<String>> getEphemeralStorePublisher(int readWindowMs, ZKConnection client)
+  private ZooKeeperEphemeralStore<Set<String>> getEphemeralStorePublisher(int zookeeperReadWindowMs, ZKConnection client)
     throws IOException
   {
     String tmpDataPath = LoadBalancerUtil.createTempDirectory("EphemeralStoreFileStore").getAbsolutePath();
     return new ZooKeeperEphemeralStore<>(client, new PropertySetStringSerializer(), new PropertySetStringMerger(), "/", false, true, tmpDataPath,
-                                         _clockedExecutor, readWindowMs);
+                                         _clockedExecutor, zookeeperReadWindowMs);
   }
 }

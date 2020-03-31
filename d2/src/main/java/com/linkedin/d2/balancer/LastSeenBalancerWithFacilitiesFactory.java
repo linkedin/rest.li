@@ -77,19 +77,19 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     // init all the stores
     LastSeenZKStore<ClusterProperties> lsClusterStore =
       getClusterPropertiesLastSeenZKStore(config, zkPersistentConnection, d2ClientJmxManager,
-                                          config._executorService, config.readWindowMs);
+                                          config._executorService, config.zookeeperReadWindowMs);
     PropertyEventBus<ClusterProperties> clusterBus = new PropertyEventBusImpl<>(config._executorService);
     clusterBus.setPublisher(lsClusterStore);
 
     LastSeenZKStore<ServiceProperties> lsServiceStore =
       getServicePropertiesLastSeenZKStore(config, zkPersistentConnection, d2ClientJmxManager,
-                                          config._executorService, config.readWindowMs);
+                                          config._executorService, config.zookeeperReadWindowMs);
     PropertyEventBus<ServiceProperties> serviceBus = new PropertyEventBusImpl<>(config._executorService);
     serviceBus.setPublisher(lsServiceStore);
 
     LastSeenZKStore<UriProperties> lsUrisStore =
       getUriPropertiesLastSeenZKStore(config, zkPersistentConnection, d2ClientJmxManager,
-                                      config._executorService, config.readWindowMs);
+                                      config._executorService, config.zookeeperReadWindowMs);
     PropertyEventBus<UriProperties> uriBus = new PropertyEventBusImpl<>(config._executorService);
     uriBus.setPublisher(lsUrisStore);
 
@@ -112,13 +112,13 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
 
   private LastSeenZKStore<UriProperties> getUriPropertiesLastSeenZKStore(
     D2ClientConfig config, ZKPersistentConnection zkPersistentConnection, D2ClientJmxManager d2ClientJmxManager,
-    ScheduledExecutorService executorService, int readWindowMs)
+    ScheduledExecutorService executorService, int zookeeperReadWindowMs)
   {
     ZooKeeperEphemeralStoreBuilder<UriProperties> zkUrisStoreBuilder = new ZooKeeperEphemeralStoreBuilder<UriProperties>()
       .setSerializer(new UriPropertiesJsonSerializer()).setPath(ZKFSUtil.uriPath(config.basePath)).setMerger(new UriPropertiesMerger())
       .setUseNewWatcher(config.useNewEphemeralStoreWatcher)
       .setExecutorService(executorService)
-      .setReadWindowMs(readWindowMs)
+      .setZookeeperReadWindowMs(zookeeperReadWindowMs)
       // register jmx every time the object is created
       .addOnBuildListener(d2ClientJmxManager::setZkUriRegistry);
 
@@ -141,13 +141,13 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
 
   private LastSeenZKStore<ServiceProperties> getServicePropertiesLastSeenZKStore(
     D2ClientConfig config, ZKPersistentConnection zkPersistentConnection, D2ClientJmxManager d2ClientJmxManager,
-    ScheduledExecutorService executorService, int readWindowMs)
+    ScheduledExecutorService executorService, int zookeeperReadWindowMs)
   {
     ZooKeeperPermanentStoreBuilder<ServiceProperties> zkServiceStoreBuilder = new ZooKeeperPermanentStoreBuilder<ServiceProperties>()
       .setSerializer(new ServicePropertiesJsonSerializer(config.clientServicesConfig))
       .setPath(ZKFSUtil.servicePath(config.basePath, config.d2ServicePath))
       .setExecutorService(executorService)
-      .setReadWindowMs(readWindowMs)
+      .setZookeeperReadWindowMs(zookeeperReadWindowMs)
       // register jmx every time the object is created
       .addOnBuildListener(d2ClientJmxManager::setZkServiceRegistry);
 
@@ -165,12 +165,12 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
 
   private LastSeenZKStore<ClusterProperties> getClusterPropertiesLastSeenZKStore(
     D2ClientConfig config, ZKPersistentConnection zkPersistentConnection, D2ClientJmxManager d2ClientJmxManager,
-    ScheduledExecutorService executorService, int readWindowMs)
+    ScheduledExecutorService executorService, int zookeeperReadWindowMs)
   {
     ZooKeeperPermanentStoreBuilder<ClusterProperties> zkClusterStoreBuilder = new ZooKeeperPermanentStoreBuilder<ClusterProperties>()
       .setSerializer(new ClusterPropertiesJsonSerializer()).setPath(ZKFSUtil.clusterPath(config.basePath))
       .setExecutorService(executorService)
-      .setReadWindowMs(readWindowMs)
+      .setZookeeperReadWindowMs(zookeeperReadWindowMs)
       // register jmx every time the object is created
       .addOnBuildListener(d2ClientJmxManager::setZkClusterRegistry);
 

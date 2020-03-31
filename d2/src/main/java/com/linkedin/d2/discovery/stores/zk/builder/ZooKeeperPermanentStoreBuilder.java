@@ -23,7 +23,6 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
@@ -38,7 +37,7 @@ public class ZooKeeperPermanentStoreBuilder<T> implements ZooKeeperStoreBuilder<
   private PropertySerializer<T> serializer;
   private String path;
   private ScheduledExecutorService executorService;
-  private int readWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
+  private int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
   private List<Consumer<ZooKeeperPermanentStore<T>>> _onBuildListeners = new ArrayList<>();
 
   public void setZkConnection(ZKConnection client)
@@ -64,9 +63,9 @@ public class ZooKeeperPermanentStoreBuilder<T> implements ZooKeeperStoreBuilder<
     return this;
   }
 
-  public ZooKeeperPermanentStoreBuilder<T> setReadWindowMs(int readWindowMs)
+  public ZooKeeperPermanentStoreBuilder<T> setZookeeperReadWindowMs(int zookeeperReadWindowMs)
   {
-    this.readWindowMs = readWindowMs;
+    this.zookeeperReadWindowMs = zookeeperReadWindowMs;
     return this;
   }
 
@@ -81,7 +80,7 @@ public class ZooKeeperPermanentStoreBuilder<T> implements ZooKeeperStoreBuilder<
   public ZooKeeperPermanentStore<T> build()
   {
     ZooKeeperPermanentStore<T> zooKeeperPermanentStore =
-      new ZooKeeperPermanentStore<>(client, serializer, path, executorService, readWindowMs);
+      new ZooKeeperPermanentStore<>(client, serializer, path, executorService, zookeeperReadWindowMs);
 
     for (Consumer<ZooKeeperPermanentStore<T>> onBuildListener : _onBuildListeners)
     {

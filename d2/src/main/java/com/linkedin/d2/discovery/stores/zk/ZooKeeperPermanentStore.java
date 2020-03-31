@@ -40,7 +40,7 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
 
   private final ZKStoreWatcher _zkStoreWatcher = new ZKStoreWatcher();
   private final ScheduledExecutorService _executorService;
-  private int _readWindowMs;
+  private int _zookeeperReadWindowMs;
 
   public ZooKeeperPermanentStore(ZKConnection client,
                                  PropertySerializer<T> serializer,
@@ -51,11 +51,11 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
 
   public ZooKeeperPermanentStore(ZKConnection client,
                                  PropertySerializer<T> serializer,
-                                 String path, ScheduledExecutorService executorService, int readWindowMs)
+                                 String path, ScheduledExecutorService executorService, int zookeeperReadWindowMs)
   {
     super(client, serializer, path);
     _executorService = executorService;
-    _readWindowMs = readWindowMs;
+    _zookeeperReadWindowMs = zookeeperReadWindowMs;
   }
 
   @Override
@@ -159,10 +159,10 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
     protected void processWatch(String propertyName, WatchedEvent watchedEvent)
     {
       // Reset the watch
-      if (_readWindowMs > 0 && _executorService != null)
+      if (_zookeeperReadWindowMs > 0 && _executorService != null)
       {
         // for the static config we can spread the read across the read Window
-        int delay = ThreadLocalRandom.current().nextInt(_readWindowMs);
+        int delay = ThreadLocalRandom.current().nextInt(_zookeeperReadWindowMs);
         _executorService.schedule(() -> _zk.getData(watchedEvent.getPath(), this, this, false),
                                   delay, TimeUnit.MILLISECONDS);
       }

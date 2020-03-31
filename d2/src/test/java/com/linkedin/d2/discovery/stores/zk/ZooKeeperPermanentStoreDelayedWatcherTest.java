@@ -125,14 +125,14 @@ public class ZooKeeperPermanentStoreDelayedWatcherTest
   }
 
   @Test(dataProvider = "dataNumOfChangesReadWindow")
-  public void testNodeValueChangedWatchUpdates(int numberOfDataChanges, int readWindowMs)
+  public void testNodeValueChangedWatchUpdates(int numberOfDataChanges, int zookeeperReadWindowMs)
     throws Exception
   {
 
     ZKConnection client = getZookeeperConnection();
     client.start();
 
-    final ZooKeeperPermanentStore<String> publisher = getPermanentStorePublisher(readWindowMs, client);
+    final ZooKeeperPermanentStore<String> publisher = getPermanentStorePublisher(zookeeperReadWindowMs, client);
 
     final CountDownLatch initLatch = new CountDownLatch(1);
     final CountDownLatch addLatch = new CountDownLatch(1);
@@ -199,11 +199,11 @@ public class ZooKeeperPermanentStoreDelayedWatcherTest
     {
       updateNodeData("/bucket", Integer.toString(i));
       valueUpdatedInZookeeper = Integer.toString(i);
-      _clockedExecutor.runFor(readWindowMs);
+      _clockedExecutor.runFor(zookeeperReadWindowMs);
     }
 
     AssertionMethods.assertWithTimeout(5000, () -> {
-      _clockedExecutor.runFor(readWindowMs);
+      _clockedExecutor.runFor(zookeeperReadWindowMs);
       Assert.assertEquals(addLatch.getCount(), 0, "didn't get notified for the updated node");
     });
 
@@ -217,7 +217,7 @@ public class ZooKeeperPermanentStoreDelayedWatcherTest
     return new ZKConnection("localhost:" + _port, 5000);
   }
 
-  private ZooKeeperPermanentStore<String> getPermanentStorePublisher(int readWindowMs, ZKConnection client)
+  private ZooKeeperPermanentStore<String> getPermanentStorePublisher(int zookeeperReadWindowMs, ZKConnection client)
     throws IOException
   {
     PropertySerializer<String> stringPropertySerializer = new PropertySerializer<String>()
@@ -241,6 +241,6 @@ public class ZooKeeperPermanentStoreDelayedWatcherTest
       }
     };
 
-    return new ZooKeeperPermanentStore<>(client, stringPropertySerializer, "/", _clockedExecutor, readWindowMs);
+    return new ZooKeeperPermanentStore<>(client, stringPropertySerializer, "/", _clockedExecutor, zookeeperReadWindowMs);
   }
 }

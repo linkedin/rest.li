@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -85,7 +84,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private final ZKStoreWatcher _zkStoreWatcher = new ZKStoreWatcher();
   private final boolean _useNewWatcher;
   private final ScheduledExecutorService _executorService;
-  private final int _readWindowMs;
+  private final int _zookeeperReadWindowMs;
 
   public ZooKeeperEphemeralStore(ZKConnection client,
                                  PropertySerializer<T> serializer,
@@ -145,7 +144,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
                                  boolean useNewWatcher,
                                  String ephemeralNodesFilePath,
                                  ScheduledExecutorService executorService,
-                                 int readWindowMs)
+                                 int zookeeperReadWindowMs)
   {
     super(client, serializer, path);
 
@@ -171,7 +170,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     _useNewWatcher = useNewWatcher;
     _ephemeralNodesFilePath = ephemeralNodesFilePath;
     _executorService = executorService;
-    _readWindowMs = readWindowMs;
+    _zookeeperReadWindowMs = zookeeperReadWindowMs;
   }
 
   @Override
@@ -638,10 +637,10 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     protected void processWatch(String propertyName, WatchedEvent event)
     {
       // Reset the watch
-      if (_readWindowMs > 0 && _executorService != null)
+      if (_zookeeperReadWindowMs > 0 && _executorService != null)
       {
         // Delay setting the watch based on configured _readWindowMs
-        int midPoint = _readWindowMs / 2;
+        int midPoint = _zookeeperReadWindowMs / 2;
         int delay = midPoint + ThreadLocalRandom.current().nextInt(midPoint);
         _executorService.schedule(() -> _zk.getChildren(getPath(propertyName), this, this, false),
             delay, TimeUnit.MILLISECONDS);

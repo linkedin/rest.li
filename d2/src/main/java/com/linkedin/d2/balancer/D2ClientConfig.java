@@ -72,7 +72,7 @@ public class D2ClientConfig
   int retryLimit = DEAULT_RETRY_LIMIT;
   boolean warmUp = false;
   int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
-  int readWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
+  int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
   int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
   DownstreamServicesFetcher downstreamServicesFetcher = null;
   boolean backupRequestsEnabled = true;
@@ -139,7 +139,7 @@ public class D2ClientConfig
                  ScheduledExecutorService startUpExecutorService,
                  JmxManager jmxManager,
                  String d2JmxManagerPrefix,
-                 int readWindowMs)
+                 int zookeeperReadWindowMs)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -184,6 +184,6 @@ public class D2ClientConfig
     this.startUpExecutorService = startUpExecutorService;
     this.jmxManager = jmxManager;
     this.d2JmxManagerPrefix = d2JmxManagerPrefix;
-    this.readWindowMs = readWindowMs;
+    this.zookeeperReadWindowMs = zookeeperReadWindowMs;
   }
 }

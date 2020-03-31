@@ -78,7 +78,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> _loadBalancerStrategyFactories;
   private boolean _enableSaveUriDataOnDisk;
   private final D2ClientJmxManager _d2ClientJmxManager;
-  private final int _readWindowMs;
+  private final int _zookeeperReadWindowMs;
   private final String _d2ServicePath;
   private final SSLContext _sslContext;
   private final SSLParameters _sslParameters;
@@ -173,7 +173,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              boolean enableSaveUriDataOnDisk,
                                              SslSessionValidatorFactory sslSessionValidatorFactory,
                                              D2ClientJmxManager d2ClientJmxManager,
-                                             int readWindowMs)
+                                             int zookeeperReadWindowMs)
   {
     _factory = factory;
     _lbTimeout = timeout;
@@ -192,7 +192,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _partitionAccessorRegistry = partitionAccessorRegistry;
     _sslSessionValidatorFactory = sslSessionValidatorFactory;
     _d2ClientJmxManager = d2ClientJmxManager;
-    _readWindowMs = readWindowMs;
+    _zookeeperReadWindowMs = zookeeperReadWindowMs;
   }
 
   @Override
@@ -200,13 +200,13 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   {
     _log.info("Using d2ServicePath: " + _d2ServicePath);
     ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry = createPermanentStore(
-            zkConnection, ZKFSUtil.clusterPath(_baseZKPath),
-            new ClusterPropertiesJsonSerializer(), executorService, _readWindowMs);
+      zkConnection, ZKFSUtil.clusterPath(_baseZKPath),
+      new ClusterPropertiesJsonSerializer(), executorService, _zookeeperReadWindowMs);
     _d2ClientJmxManager.setZkClusterRegistry(zkClusterRegistry);
 
     ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry = createPermanentStore(
-            zkConnection, ZKFSUtil.servicePath(_baseZKPath, _d2ServicePath),
-            new ServicePropertiesJsonSerializer(_clientServicesConfig), executorService, _readWindowMs);
+      zkConnection, ZKFSUtil.servicePath(_baseZKPath, _d2ServicePath),
+      new ServicePropertiesJsonSerializer(_clientServicesConfig), executorService, _zookeeperReadWindowMs);
     _d2ClientJmxManager.setZkServiceRegistry(zkServiceRegistry);
 
     String backupStoreFilePath = null;
@@ -217,7 +217,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
 
     ZooKeeperEphemeralStore<UriProperties> zkUriRegistry =  createEphemeralStore(
       zkConnection, ZKFSUtil.uriPath(_baseZKPath), new UriPropertiesJsonSerializer(),
-      new UriPropertiesMerger(), _useNewEphemeralStoreWatcher, backupStoreFilePath, executorService, _readWindowMs);
+      new UriPropertiesMerger(), _useNewEphemeralStoreWatcher, backupStoreFilePath, executorService, _zookeeperReadWindowMs);
     _d2ClientJmxManager.setZkUriRegistry(zkUriRegistry);
 
     FileStore<ClusterProperties> fsClusterStore = createFileStore(FileSystemDirectory.getClusterDirectory(_fsd2DirPath), new ClusterPropertiesJsonSerializer());
@@ -278,10 +278,10 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   protected <T> ZooKeeperPermanentStore<T> createPermanentStore(ZKConnection zkConnection, String nodePath,
                                                                 PropertySerializer<T> serializer,
                                                                 ScheduledExecutorService executorService,
-                                                                int readWindowMs)
+                                                                int zookeeperReadWindowMs)
   {
     ZooKeeperPermanentStore<T> store = new ZooKeeperPermanentStore<T>(zkConnection, serializer, nodePath,
-                                                                      executorService, readWindowMs);
+                                                                      executorService, zookeeperReadWindowMs);
     return store;
   }
 
