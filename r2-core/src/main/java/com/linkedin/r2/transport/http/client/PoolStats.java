@@ -74,6 +74,20 @@ public interface PoolStats
   int getTotalTimedOut();
 
   /**
+   * Get the total number of timed out pool waiters between the
+   * starting of the Pool and the call to getStats().
+   * @return The total number of timed out objects
+   */
+  int getTotalWaiterTimedOut();
+
+  /**
+   * Get the total number of times the creation of objects ignored between the
+   * starting of the Pool and the call to getStats().
+   * @return The total number of times the object creation ignored
+   */
+  int getTotalCreationIgnored();
+
+  /**
    * Get the number of pool objects checked out at the time of
    * the call to getStats().
    * @return The number of checked out pool objects

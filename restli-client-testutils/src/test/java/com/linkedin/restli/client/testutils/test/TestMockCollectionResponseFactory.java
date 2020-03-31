@@ -17,6 +17,7 @@
 package com.linkedin.restli.client.testutils.test;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.restli.client.testutils.MockCollectionResponseFactory;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
@@ -40,13 +41,16 @@ public class TestMockCollectionResponseFactory
 
     List<Greeting> greetings = Arrays.asList(g1, g2);
 
-    CollectionMetadata metadata = new CollectionMetadata().setCount(2).setStart(0).setTotal(2);
+    CollectionMetadata pagingMetadata = new CollectionMetadata().setCount(2).setStart(0).setTotal(2);
 
-    CollectionResponse<Greeting> collectionResponse = MockCollectionResponseFactory.create(Greeting.class,
-                                                                                           greetings,
-                                                                                           metadata);
+    DataMap customMetadata = new DataMap();
+    customMetadata.put("foo", "bar");
+
+    CollectionResponse<Greeting> collectionResponse =
+        MockCollectionResponseFactory.create(Greeting.class, greetings, pagingMetadata, customMetadata);
 
     Assert.assertEquals(collectionResponse.getElements(), greetings);
-    Assert.assertEquals(collectionResponse.getPaging(), metadata);
+    Assert.assertEquals(collectionResponse.getPaging(), pagingMetadata);
+    Assert.assertEquals(collectionResponse.getMetadataRaw(), customMetadata);
   }
 }

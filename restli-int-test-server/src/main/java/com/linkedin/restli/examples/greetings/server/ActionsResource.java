@@ -21,6 +21,8 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
+import com.linkedin.restli.examples.custom.types.CustomLong;
+import com.linkedin.restli.examples.typeref.api.CustomLongRef;
 import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.server.ActionResult;
@@ -117,6 +119,12 @@ public class ActionsResource
   public Tone[] echoToneArray(@ActionParam("tones") final Tone[] tones)
   {
     return tones;
+  }
+
+  @Action(name = "customTypeRef", returnTyperef= CustomLongRef.class)
+  public CustomLong customTypeRef(@ActionParam(value="customLong", typeref=CustomLongRef.class) CustomLong customLong)
+  {
+    return customLong;
   }
 
   @Action(name = "timeout")

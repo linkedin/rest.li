@@ -100,7 +100,7 @@ public class TestExamplesGenerator
                                                                      SimpleResourceUnderCollectionResource.class,
                                                                      CustomTypesResource.class);
     final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.loadOrCreateResourceSchema(resources);
-    final DataSchemaResolver schemaResolver = new ClasspathResourceDataSchemaResolver(SchemaParserFactory.instance());
+    final DataSchemaResolver schemaResolver = new ClasspathResourceDataSchemaResolver();
     final ValidationOptions valOptions = new ValidationOptions(RequiredMode.MUST_BE_PRESENT);
     ExampleRequestResponse capture;
     ValidationResult valRet;

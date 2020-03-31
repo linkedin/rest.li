@@ -16,6 +16,7 @@
 
 package com.linkedin.data.schema;
 
+import com.linkedin.data.codec.JacksonDataCodec;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.regex.Pattern;
@@ -33,7 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 class CompactPdlBuilder extends PdlBuilder
 {
   private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("[A-Za-z0-9_\\-`]");
-
+  private static final JacksonDataCodec JSON_CODEC = new JacksonDataCodec();
   /**
    * See {@link PdlBuilder.Provider}.
    */
@@ -189,5 +190,12 @@ class CompactPdlBuilder extends PdlBuilder
       return true;
     }
     return false;
+  }
+
+  @Override
+  PdlBuilder writeJson(Object value) throws IOException
+  {
+    write(toJson(value, JSON_CODEC));
+    return this;
   }
 }

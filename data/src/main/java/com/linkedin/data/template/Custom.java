@@ -16,7 +16,6 @@
 
 package com.linkedin.data.template;
 
-
 /**
  * Custom Java class binding support.
  */

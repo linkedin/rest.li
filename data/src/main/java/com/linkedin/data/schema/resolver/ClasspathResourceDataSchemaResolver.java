@@ -18,6 +18,7 @@ package com.linkedin.data.schema.resolver;
 
 
 import com.linkedin.data.schema.DataSchemaLocation;
+import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
@@ -33,20 +34,36 @@ import java.io.InputStream;
  *
  * @author Min Chen
  */
-public class ClasspathResourceDataSchemaResolver extends DefaultDataSchemaResolver
+public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatDataSchemaResolver
 {
   /**
    * The default file name extension is ".pdsc".
+   * @deprecated Do not use.
    */
+  @Deprecated
   public static final String DEFAULT_EXTENSION = SchemaParser.FILE_EXTENSION;
+
+  private final ClassLoader _classLoader;
+
 
   /**
    * Construct a new instance that uses the {@link Thread#getContextClassLoader()} for the current thread.
    */
+  public ClasspathResourceDataSchemaResolver()
+  {
+    this(Thread.currentThread().getContextClassLoader());
+  }
+
+  /**
+   * Construct a new instance that uses the {@link Thread#getContextClassLoader()} for the current thread.
+   *
+   * @deprecated The parserFactory is not needed as this class now uses builtin parsers. Use
+   * {@link #ClasspathResourceDataSchemaResolver()} instead
+   */
+  @Deprecated
   public ClasspathResourceDataSchemaResolver(SchemaParserFactory parserFactory)
   {
-    super(parserFactory);
-    _classLoader = Thread.currentThread().getContextClassLoader();
+    this(Thread.currentThread().getContextClassLoader());
   }
 
   /**
@@ -54,40 +71,64 @@ public class ClasspathResourceDataSchemaResolver extends DefaultDataSchemaResolv
    *
    * @param classLoader provides the {@link ClassLoader}.
    */
-  public ClasspathResourceDataSchemaResolver(SchemaParserFactory parserFactory, ClassLoader classLoader)
+  public ClasspathResourceDataSchemaResolver(ClassLoader classLoader)
   {
-    super(parserFactory);
+    for (DataSchemaParserFactory parserForFormat: BUILTIN_FORMAT_PARSER_FACTORIES)
+    {
+      addResolver(new SingleFormatClasspathSchemaResolver(parserForFormat));
+    }
     _classLoader = classLoader;
   }
 
-  private String getDataSchemaResourcePath(String schemaName)
+  /**
+   * Construct a new instance that uses the specified {@link ClassLoader}.
+   *
+   * @deprecated The parserFactory is not needed as this class now uses builtin parsers. Use
+   * {@link #ClasspathResourceDataSchemaResolver(ClassLoader)} instead
+   * @param classLoader provides the {@link ClassLoader}.
+   */
+  @Deprecated
+  public ClasspathResourceDataSchemaResolver(SchemaParserFactory parserFactory, ClassLoader classLoader)
   {
-    return InternalConstants.PEGASUS_DIR_IN_JAR + "/" + schemaName.replace('.', '/') + DEFAULT_EXTENSION;
+    this(classLoader);
   }
 
-  @Override
-  protected NamedDataSchema locateDataSchema(String schemaName, StringBuilder errorMessageBuilder)
+  private class SingleFormatClasspathSchemaResolver extends DefaultDataSchemaResolver
   {
-    NamedDataSchema schema = null;
-    final String schemaResourcePath = getDataSchemaResourcePath(schemaName);
-    try (InputStream stream = _classLoader.getResourceAsStream(schemaResourcePath))
-    {
-      if (stream == null)
-      {
-        errorMessageBuilder.append(String.format("Unable to find data schema file \"%s\" in classpath.", schemaResourcePath));
-      }
-      else
-      {
-        DataSchemaLocation location = new FileDataSchemaLocation(new File(schemaResourcePath));
-        schema = parse(stream, location, schemaName, errorMessageBuilder);
-      }
-    }
-    catch (IOException e)
-    {
-      errorMessageBuilder.append(String.format("Failed to read/close data schema file \"%s\" in classpath: \"%s\"", schemaResourcePath, e.getMessage()));
-    }
-    return schema;
-  }
+    private final String _extension;
 
-  private final ClassLoader _classLoader;
+    /**
+     * Construct a new instance that uses the {@link Thread#getContextClassLoader()} for the current thread.
+     */
+    public SingleFormatClasspathSchemaResolver(DataSchemaParserFactory parserFactory)
+    {
+      super(parserFactory, ClasspathResourceDataSchemaResolver.this);
+      this._extension = "." + parserFactory.getLanguageExtension();
+    }
+
+    private String getDataSchemaResourcePath(String schemaName)
+    {
+      return InternalConstants.PEGASUS_DIR_IN_JAR + "/" + schemaName.replace('.', '/') + _extension;
+    }
+
+    @Override
+    protected NamedDataSchema locateDataSchema(String schemaName, StringBuilder errorMessageBuilder)
+    {
+      NamedDataSchema schema = null;
+      final String schemaResourcePath = getDataSchemaResourcePath(schemaName);
+      try (InputStream stream = _classLoader.getResourceAsStream(schemaResourcePath))
+      {
+        if (stream != null)
+        {
+          DataSchemaLocation location = new FileDataSchemaLocation(new File(schemaResourcePath));
+          schema = parse(stream, location, schemaName, errorMessageBuilder);
+        }
+      }
+      catch (IOException e)
+      {
+        errorMessageBuilder.append(String.format("Failed to read/close data schema file \"%s\" in classpath: \"%s\"", schemaResourcePath, e.getMessage()));
+      }
+      return schema;
+    }
+  }
 }

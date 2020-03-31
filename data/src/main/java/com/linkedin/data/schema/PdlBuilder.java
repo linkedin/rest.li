@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -43,14 +44,13 @@ import org.apache.commons.lang3.StringEscapeUtils;
  */
 abstract class PdlBuilder
 {
-  private static final JacksonDataCodec JSON_CODEC = new JacksonDataCodec();
-
   // TODO: Put these in a unified "PDL constants" file
   private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
       "array", "enum", "fixed", "import", "includes", "map", "namespace", "optional", "package",
       "record", "typeref", "union", "null", "true", "false"
   ));
   private static final char ESCAPE_CHAR = '`';
+  private static final Pattern IDENTIFIER_CHARS = Pattern.compile("[0-9a-zA-Z_-]*");
 
   /**
    * Each subclass must define a provider for creating new instances.
@@ -127,16 +127,17 @@ abstract class PdlBuilder
   abstract boolean writeDoc(String doc) throws IOException;
 
   /**
-   * Writes a set of schema properties that share a common prefix to .pdl.
-   *
-   * TODO: Support configuration for preferring collapsed "map" style over expanded "path" style.
+   * Writes a set of schema properties that share a common prefix to .pdl. Sorts the properties by key before writing.
    *
    * @param prefix provides the common prefix of all the properties.
    * @param properties provides the properties to write.
    */
   PdlBuilder writeProperties(List<String> prefix, Map<String, Object> properties) throws IOException
   {
-    for (Map.Entry<String, Object> entry : properties.entrySet())
+    List<Map.Entry<String, Object>> orderedProperties =  properties.entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .collect(Collectors.toList());
+    for (Map.Entry<String, Object> entry : orderedProperties)
     {
       String key = entry.getKey();
       Object value = entry.getValue();
@@ -147,16 +148,16 @@ abstract class PdlBuilder
 
       if (value instanceof DataMap)
       {
-        // Favor @x.y.z = "value" property encoding style over @x = { "y": { "z": "value" } }
         DataMap dm = (DataMap) value;
-        if (!dm.isEmpty())
+        // Decide encoding style based on map branches/size
+        if (dm.size() == 1)
         {
-          // encode non-empty value property like @x.y.z = "value"
+          // encode value property like @x.y.z = "value"
           writeProperties(pathParts, dm);
         }
-        else if (!pathParts.isEmpty())
+        else
         {
-          // encode empty value property like @x.y = {}
+          // encode value property like @x = { "y": { "z": "value" } }
           writeProperty(pathParts, dm);
         }
       }
@@ -197,9 +198,10 @@ abstract class PdlBuilder
 
   /**
    * Escape a property key for use in .pdl source code, for keys that would conflict with .pdl keywords or those with
-   * dots it returns key escaped with a back-tick '`' character.
+   * special characters like [/.$\*] it returns key escaped with a back-tick '`' character.
    * Eg, `namespace`
    *     `com.linkedin.validate.CustomValidator`
+   *     `/foo/*\/bar`
    *
    * @param propertyKey provides the property key to escape.
    * @return an escaped property key for use in .pdl source code.
@@ -207,7 +209,7 @@ abstract class PdlBuilder
   private static String escapePropertyKey(String propertyKey)
   {
     propertyKey = propertyKey.trim();
-    if (KEYWORDS.contains(propertyKey) || propertyKey.contains("."))
+    if (KEYWORDS.contains(propertyKey) || !IDENTIFIER_CHARS.matcher(propertyKey).matches())
     {
       return ESCAPE_CHAR + propertyKey + ESCAPE_CHAR;
     }
@@ -254,11 +256,7 @@ abstract class PdlBuilder
    *
    * @param value JSON object to write
    */
-  PdlBuilder writeJson(Object value) throws IOException
-  {
-    write(toJson(value));
-    return this;
-  }
+  abstract PdlBuilder writeJson(Object value) throws IOException;
 
   /**
    * Serializes a pegasus Data binding type to JSON.
@@ -267,15 +265,15 @@ abstract class PdlBuilder
    * @param value the value to serialize to JSON.
    * @return a JSON serialized string representation of the data value.
    */
-  private String toJson(Object value) throws IOException
+  protected String toJson(Object value, JacksonDataCodec jsonCodec) throws IOException
   {
     if (value instanceof DataMap)
     {
-      return JSON_CODEC.mapToString((DataMap) value);
+      return jsonCodec.mapToString((DataMap) value);
     }
     else if (value instanceof DataList)
     {
-      return JSON_CODEC.listToString((DataList) value);
+      return jsonCodec.listToString((DataList) value);
     }
     else if (value instanceof String)
     {

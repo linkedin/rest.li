@@ -19,6 +19,7 @@ package com.linkedin.r2.transport.http.client.stream.http2;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.testutils.server.HttpServerBuilder;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
@@ -51,7 +52,6 @@ public class TestEarlyUpgrade
   private ScheduledExecutorService _scheduler;
   private final boolean _newPipelineEnabled;
 
-
   @Factory(dataProvider = "pipelines")
   public TestEarlyUpgrade(boolean newPipelineEnabled)
   {
@@ -81,7 +81,8 @@ public class TestEarlyUpgrade
   {
     ChannelPoolManagerFactoryImpl channelPoolManagerFactory =
         new ChannelPoolManagerFactoryImpl(_eventLoopGroup, _scheduler,
-            SSL_SESSION_RESUMPTION_ENABLED, _newPipelineEnabled);
+            SSL_SESSION_RESUMPTION_ENABLED, _newPipelineEnabled, HttpClientFactory.DEFAULT_CHANNELPOOL_WAITER_TIMEOUT,
+            HttpClientFactory.DEFAULT_CONNECT_TIMEOUT, HttpClientFactory.DEFAULT_SSL_HANDSHAKE_TIMEOUT);
 
     ChannelPoolManagerKey key = new ChannelPoolManagerKeyBuilder()
       // min pool set to one in such a way a connection is opened before the request

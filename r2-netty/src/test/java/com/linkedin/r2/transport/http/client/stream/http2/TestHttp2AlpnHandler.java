@@ -39,7 +39,7 @@ public class TestHttp2AlpnHandler
     SslContext sslContext = Mockito.mock(SslContext.class);
     Http2StreamCodec http2StreamCodec = Mockito.mock(Http2StreamCodec.class);
 
-    Http2AlpnHandler handler = new Http2AlpnHandler(sslContext, http2StreamCodec, true);
+    Http2AlpnHandler handler = new Http2AlpnHandler(sslContext, http2StreamCodec, true, Integer.MAX_VALUE);
     EmbeddedChannel channel = new EmbeddedChannel(handler);
 
     // Write should not succeed before negotiation completes
@@ -54,7 +54,7 @@ public class TestHttp2AlpnHandler
     SslContext sslContext = Mockito.mock(SslContext.class);
     Http2StreamCodec http2StreamCodec = Mockito.mock(Http2StreamCodec.class);
 
-    Http2AlpnHandler handler = new Http2AlpnHandler(sslContext, http2StreamCodec, true);
+    Http2AlpnHandler handler = new Http2AlpnHandler(sslContext, http2StreamCodec, true, Integer.MAX_VALUE);
     EmbeddedChannel channel = new EmbeddedChannel(handler);
 
     RequestWithCallback request = Mockito.mock(RequestWithCallback.class);

@@ -2,9 +2,8 @@ package com.linkedin.data.schema.annotation;
 
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -73,13 +72,6 @@ public class TestSchemaAnnotationProcessor
             "Annotation processing encountered errors during resolution in \"customAnnotation\" handler. \n" +
             "ERROR :: /com.linkedin.data.schema.annotation.denormalizedsource.invalid.Test/a/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A/a1/com.linkedin.data.schema.annotation.denormalizedsource.invalid.B/b1/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A :: Found overrides that forms a cyclic-referencing: Overrides entry in traverser path \"/com.linkedin.data.schema.annotation.denormalizedsource.invalid.Test/a/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A/a1/com.linkedin.data.schema.annotation.denormalizedsource.invalid.B/b1\" with its pathSpec value \"/a2\" is pointing to the field with traverser path \"/com.linkedin.data.schema.annotation.denormalizedsource.invalid.Test/a/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A/a1/com.linkedin.data.schema.annotation.denormalizedsource.invalid.B/b1/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A\" and schema name \"com.linkedin.data.schema.annotation.denormalizedsource.invalid.A\", this is causing cyclic-referencing.\n" +
             "ERROR :: /com.linkedin.data.schema.annotation.denormalizedsource.invalid.Test/a/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A/a1/com.linkedin.data.schema.annotation.denormalizedsource.invalid.B/b1 :: Overriding pathSpec defined /a2 does not point to a valid primitive field\n" +
-            "Annotation resolution processing failed at at least one of the handlers.\n"
-        },
-        {
-            "denormalizedsource/invalid/3_5_cyclic_from_include.pdl",
-            "Annotation processing encountered errors during resolution in \"customAnnotation\" handler. \n" +
-            "ERROR :: /com.linkedin.data.schema.annotation.denormalizedsource.invalid.A/f1/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A :: Found overrides that forms a cyclic-referencing: Overrides entry in traverser path \"/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A\" with its pathSpec value \"/f1/f2\" is pointing to the field with traverser path \"/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A/f1/com.linkedin.data.schema.annotation.denormalizedsource.invalid.A\" and schema name \"com.linkedin.data.schema.annotation.denormalizedsource.invalid.A\", this is causing cyclic-referencing.\n" +
-            "ERROR :: /com.linkedin.data.schema.annotation.denormalizedsource.invalid.A :: Overriding pathSpec defined /f1/f2 does not point to a valid primitive field\n" +
             "Annotation resolution processing failed at at least one of the handlers.\n"
         },
         {
@@ -344,7 +336,7 @@ public class TestSchemaAnnotationProcessor
     ResolvedPropertiesReaderVisitor resolvedPropertiesReaderVisitor = new ResolvedPropertiesReaderVisitor();
     DataSchemaRichContextTraverser traverser = new DataSchemaRichContextTraverser(resolvedPropertiesReaderVisitor);
     traverser.traverse(result.getResultSchema());
-    Map<String, Map<String, Object>> pathSpecToResolvedPropertiesMap = resolvedPropertiesReaderVisitor.getLeafFieldsPathSpecToResolvedPropertiesMap();
+    Map<PathSpec, Map<String, Object>> pathSpecToResolvedPropertiesMap = resolvedPropertiesReaderVisitor.getLeafFieldsToResolvedPropertiesMap();
     Assert.assertEquals(pathSpecToResolvedPropertiesMap.entrySet().size(), expected.size());
 
     for (List<String> pair : expected)

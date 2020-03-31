@@ -1,0 +1,56 @@
+#!/bin/sh
+# The purpose of this script is to perform some checks before the release process
+
+REMOTE="origin"
+BRANCH="master"
+if [ $# -eq 2 ]
+then
+    REMOTE=$1
+    BRANCH=$2
+fi
+
+# Determine version to be released
+VERSION=`awk 'BEGIN { FS = "=" }; $1 == "version" { print $2 }' gradle.properties`
+echo "Running pre-release job for version $VERSION..."
+
+# Check that there are no uncommitted changes
+DIRTY=`git status --porcelain --untracked-files=no 2>&1 || echo FAIL`
+if [ -n "$DIRTY" ]
+then
+    echo "Dirty index or working tree. Use git status to check."
+    echo "After resolution, run this command again."
+    exit 1
+fi
+
+# Ensure that the current branch is consistent with the remote target
+INCONSISTENT=`git diff --quiet $REMOTE/$BRANCH >/dev/null 2>&1 ; echo $?`
+if [ $INCONSISTENT -ne 0 ]
+then
+    echo "$REMOTE/$BRANCH and current branch are inconsistent."
+    echo "Use git diff $REMOTE/$BRANCH to see changes."
+    echo "Rebase or push, as appropriate, and run this command again."
+    exit 1
+fi
+
+# Ensure that a tag exists for this version
+EXPECTED_TAG="v$VERSION"
+if [ -z `git tag | grep $EXPECTED_TAG` ]
+then
+    echo "Could not find tag $EXPECTED_TAG, please create it then run this command again."
+    echo "This release process expects release tags to be manually created beforehand."
+    echo
+    echo "Use './prepare-release' to create and push a release tag."
+    echo "Optionally, use './prepare-release [TARGET_COMMIT]' to tag a particular commit."
+    exit 1
+fi
+
+# We want to release from this tag, so check it out
+echo "Found tag $EXPECTED_TAG, checking out..."
+git checkout --quiet $EXPECTED_TAG
+if [ $? -ne 0 ]
+then
+    echo "Unable to check out tag $EXPECTED_TAG"
+    exit 1
+fi
+
+echo "All pre-release checks passed, ready to build and release..."

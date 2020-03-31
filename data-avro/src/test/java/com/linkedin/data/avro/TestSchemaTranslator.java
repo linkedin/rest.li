@@ -1660,6 +1660,46 @@ public class TestSchemaTranslator
               null,
               null,
               null
+          },
+          {
+              " { " +
+              "   \"type\" : \"record\", " +
+              "   \"name\" : \"Foo\", " +
+              "   \"fields\" : [ { " +
+              "     \"name\" : \"field1\", " +
+              "     \"type\" : \"int\", " +
+              "     \"b_customAnnotation\" : \"f1\", " +
+              "     \"c_customAnnotation\" : \"f1\", " +
+              "     \"a_customAnnotation\" : \"f1\" " +
+              "   } ] " +
+              " } ",
+              allModes,
+              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"field1\", \"type\" : \"int\", \"a_customAnnotation\" : \"f1\", \"b_customAnnotation\" : \"f1\", \"c_customAnnotation\" : \"f1\" } ] }",
+              null,
+              null,
+              null
+          },
+          {
+              " { " +
+              "   \"type\" : \"record\", " +
+              "   \"name\" : \"Foo\", " +
+              "   \"fields\" : [ { " +
+              "     \"name\" : \"field1\", " +
+              "     \"type\" : \"int\", " +
+              "     \"c_customAnnotation\" : { " +
+              "       \"b_nested\" : \"a\", " +
+              "       \"a_nested\" : \"a\", " +
+              "       \"c_nested\" : \"a\" " +
+              "     }, " +
+              "     \"a_customAnnotation\" : \"f1\", " +
+              "     \"b_customAnnotation\" : \"f1\" " +
+              "   } ] " +
+              " } ",
+              allModes,
+              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"field1\", \"type\" : \"int\", \"a_customAnnotation\" : \"f1\", \"b_customAnnotation\" : \"f1\", \"c_customAnnotation\" : { \"a_nested\" : \"a\", \"b_nested\" : \"a\", \"c_nested\" : \"a\" } } ] }",
+              null,
+              null,
+              null
           }
       };
 

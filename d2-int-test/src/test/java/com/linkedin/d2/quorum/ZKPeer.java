@@ -98,7 +98,7 @@ public class ZKPeer
     NIOServerCnxnFactory cnxnFactory = new NIOServerCnxnFactory();
     cnxnFactory.configure(new InetSocketAddress("127.0.0.1", _clientPort), _maxClientCnxns);
 
-    _peer = new QuorumPeer();
+    _peer = QuorumPeer.testingQuorumPeer();
     _peer.setClientPortAddress(new InetSocketAddress("127.0.0.1", _clientPort));
     _peer.setTxnFactory(fts);
     _peer.setQuorumPeers(peersView);

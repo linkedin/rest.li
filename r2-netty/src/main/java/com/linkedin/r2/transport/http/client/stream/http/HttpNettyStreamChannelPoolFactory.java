@@ -27,6 +27,7 @@ import com.linkedin.util.clock.SystemClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -51,6 +52,7 @@ public class HttpNettyStreamChannelPoolFactory implements ChannelPoolFactory
   private final ChannelGroup _allChannels;
   private final ScheduledExecutorService _scheduler;
   private final int _maxConcurrentConnectionInitializations;
+  private final int _channelPoolWaiterTimeout;
 
   public HttpNettyStreamChannelPoolFactory(int maxPoolSize,
                                            long idleTimeout,
@@ -67,13 +69,18 @@ public class HttpNettyStreamChannelPoolFactory implements ChannelPoolFactory
                                            long maxResponseSize,
                                            boolean enableSSLSessionResumption,
                                            EventLoopGroup eventLoopGroup,
-                                           ChannelGroup channelGroup)
+                                           ChannelGroup channelGroup,
+                                           int channelPoolWaiterTimeout,
+                                           int connectTimeout,
+                                           int sslHandShakeTimeout)
   {
     ChannelInitializer<NioSocketChannel> initializer =
-      new RAPStreamClientPipelineInitializer(sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize, enableSSLSessionResumption);
+      new RAPStreamClientPipelineInitializer(sslContext, sslParameters, maxHeaderSize, maxChunkSize, maxResponseSize,
+          enableSSLSessionResumption, sslHandShakeTimeout);
 
     Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup)
       .channel(NioSocketChannel.class)
+      .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
       .handler(initializer);
 
     _bootstrap = bootstrap;
@@ -86,6 +93,7 @@ public class HttpNettyStreamChannelPoolFactory implements ChannelPoolFactory
     _allChannels = channelGroup;
     _scheduler = scheduler;
     _maxConcurrentConnectionInitializations = maxConcurrentConnectionInitializations;
+    _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
   }
 
   @Override
@@ -98,6 +106,7 @@ public class HttpNettyStreamChannelPoolFactory implements ChannelPoolFactory
         _tcpNoDelay),
       _maxPoolSize,
       _idleTimeout,
+      _channelPoolWaiterTimeout,
       _scheduler,
       _maxPoolWaiterSize,
       _strategy,

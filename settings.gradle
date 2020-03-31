@@ -1,3 +1,6 @@
+// Project name must be explicitly set, otherwise it's set to the containing directory (e.g. "rest.li")
+rootProject.name = 'pegasus'
+
 include 'data'
 include 'data-avro'
 include 'data-avro-generator'

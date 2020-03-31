@@ -681,6 +681,15 @@ public final class RecordDataSchema extends NamedDataSchema
     }
   }
 
+  /**
+   * Check the given field is from Includes or not.
+   * @param field
+   * @return boolean
+   */
+  public boolean isFieldFromIncludes(Field field) {
+    return field.getRecord() != this;
+  }
+
   private List<NamedDataSchema> _include = _emptyNamedSchemas;
   private List<Field> _fields = _emptyFields;
   private Map<String, Integer> _fieldNameToIndexMap = _emptyFieldNameToIndexMap;

@@ -51,11 +51,11 @@ public class RateLimitedLogger implements Logger
   }
 
   @Override
-  public void trace(String format, Object[] argArray)
+  public void trace(String format, Object... arguments)
   {
     if (logAllowed())
     {
-      _loggerImpl.trace(format, argArray);
+      _loggerImpl.trace(format, arguments);
     }
   }
 
@@ -120,11 +120,11 @@ public class RateLimitedLogger implements Logger
   }
 
   @Override
-  public void trace(Marker marker, String format, Object[] argArray)
+  public void trace(Marker marker, String format, Object... arguments)
   {
     if (logAllowed())
     {
-      _loggerImpl.trace(marker, format, argArray);
+      _loggerImpl.trace(marker, format, arguments);
     }
   }
 
@@ -153,11 +153,11 @@ public class RateLimitedLogger implements Logger
   }
 
   @Override
-  public void debug(String format, Object[] argArray)
+  public void debug(String format, Object... arguments)
   {
     if (logAllowed())
     {
-      _loggerImpl.debug(format, argArray);
+      _loggerImpl.debug(format, arguments);
     }
   }
 
@@ -223,11 +223,11 @@ public class RateLimitedLogger implements Logger
   }
 
   @Override
-  public void debug(Marker marker, String format, Object[] argArray)
+  public void debug(Marker marker, String format, Object... arguments)
   {
     if (logAllowed())
     {
-      _loggerImpl.debug(marker, format, argArray);
+      _loggerImpl.debug(marker, format, arguments);
     }
   }
 
@@ -257,11 +257,11 @@ public class RateLimitedLogger implements Logger
   }
 
   @Override
-  public void info(String format, Object[] argArray)
+  public void info(String format, Object... arguments)
   {
     if (logAllowed())
     {
-      _loggerImpl.info(format, argArray);
+      _loggerImpl.info(format, arguments);
     }
   }
 
@@ -327,11 +327,11 @@ public class RateLimitedLogger implements Logger
   }
 
   @Override
-  public void info(Marker marker, String format, Object[] argArray)
+  public void info(Marker marker, String format, Object... arguments)
   {
     if (logAllowed())
     {
-      _loggerImpl.info(marker, format, argArray);
+      _loggerImpl.info(marker, format, arguments);
     }
   }
 
@@ -361,11 +361,11 @@ public class RateLimitedLogger implements Logger
   }
 
   @Override
-  public void warn(String format, Object[] argArray)
+  public void warn(String format, Object... arguments)
   {
     if (logAllowed())
     {
-      _loggerImpl.warn(format, argArray);
+      _loggerImpl.warn(format, arguments);
     }
   }
 
@@ -431,11 +431,11 @@ public class RateLimitedLogger implements Logger
   }
 
   @Override
-  public void warn(Marker marker, String format, Object[] argArray)
+  public void warn(Marker marker, String format, Object... arguments)
   {
     if (logAllowed())
     {
-      _loggerImpl.warn(marker, format, argArray);
+      _loggerImpl.warn(marker, format, arguments);
     }
   }
 
@@ -465,11 +465,11 @@ public class RateLimitedLogger implements Logger
   }
 
   @Override
-  public void error(String format, Object[] argArray)
+  public void error(String format, Object... arguments)
   {
     if (logAllowed())
     {
-      _loggerImpl.error(format, argArray);
+      _loggerImpl.error(format, arguments);
     }
   }
 
@@ -534,11 +534,11 @@ public class RateLimitedLogger implements Logger
   }
 
   @Override
-  public void error(Marker marker, String format, Object[] argArray)
+  public void error(Marker marker, String format, Object... arguments)
   {
     if (logAllowed())
     {
-      _loggerImpl.error(marker, format, argArray);
+      _loggerImpl.error(marker, format, arguments);
     }
   }
 

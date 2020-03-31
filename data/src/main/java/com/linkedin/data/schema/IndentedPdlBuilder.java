@@ -16,6 +16,9 @@
 
 package com.linkedin.data.schema;
 
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.linkedin.data.codec.JacksonDataCodec;
 import java.io.IOException;
 import java.io.Writer;
 import org.apache.commons.lang3.StringUtils;
@@ -71,13 +74,7 @@ class IndentedPdlBuilder extends PdlBuilder
   @Override
   PdlBuilder indent() throws IOException
   {
-    final int numSpaces = _indentDepth * DEFAULT_INDENT_WIDTH;
-    final StringBuilder sb = new StringBuilder(numSpaces);
-    for (int i = 0; i < numSpaces; i++)
-    {
-      sb.append(" ");
-    }
-    write(sb.toString());
+    write(getIndentSpaces(_indentDepth));
     return this;
   }
 
@@ -124,6 +121,18 @@ class IndentedPdlBuilder extends PdlBuilder
     return false;
   }
 
+  @Override
+  PdlBuilder writeJson(Object value) throws IOException
+  {
+    JacksonDataCodec jsonCodec = new JacksonDataCodec();
+    DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter();
+    prettyPrinter.indentObjectsWith(
+        new DefaultIndenter(getIndentSpaces(1), DefaultIndenter.SYS_LF + getIndentSpaces(_indentDepth)));
+    jsonCodec.setPrettyPrinter(prettyPrinter);
+    write(toJson(value, jsonCodec));
+    return this;
+  }
+
   /**
    * Write an intended line of .pdl code.
    * The code will be prefixed by the current indentation and suffixed with a newline.
@@ -132,5 +141,16 @@ class IndentedPdlBuilder extends PdlBuilder
   private void writeLine(String code) throws IOException
   {
     indent().write(code).newline();
+  }
+
+  private String getIndentSpaces(int indentDepth)
+  {
+    final int numSpaces = indentDepth * DEFAULT_INDENT_WIDTH;
+    final StringBuilder sb = new StringBuilder(numSpaces);
+    for (int i = 0; i < numSpaces; i++)
+    {
+      sb.append(" ");
+    }
+    return sb.toString();
   }
 }

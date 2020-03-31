@@ -14,6 +14,15 @@
    limitations under the License.
 */
 
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7'
+  }
+}
+
 project.ext.buildScriptDirPath = "${projectDir.path}/build_script"
 project.ext.isDefaultEnvironment = !project.hasProperty('overrideBuildEnvironment')
 
@@ -32,6 +41,8 @@ project.ext.externalDependency = [
   'antlrRuntime': 'org.antlr:antlr4-runtime:4.5',
   'avro': 'org.apache.avro:avro:1.4.0',
   'avro_1_6': 'org.apache.avro:avro:1.6.3',
+   // avro compatibility layer
+  'avroUtil': 'com.linkedin.avroutil1:helper-all:0.1.8',
   'caffeine': 'com.github.ben-manes.caffeine:caffeine:2.7.0',
   'cglib': 'cglib:cglib-nodep:2.2',
   'codemodel': 'com.sun.codemodel:codemodel:2.2',
@@ -77,13 +88,13 @@ project.ext.externalDependency = [
   'parseq_tracevis': 'com.linkedin.parseq:parseq-tracevis:2.6.31',
   'parseq_restClient': 'com.linkedin.parseq:parseq-restli-client:2.6.31',
   'servletApi': 'javax.servlet:javax.servlet-api:3.1.0',
-  'slf4jApi': 'org.slf4j:slf4j-api:1.6.2',
+  'slf4jApi': 'org.slf4j:slf4j-api:1.7.30',
   'slf4jLog4j2': 'org.apache.logging.log4j:log4j-slf4j-impl:2.0.2',
   'snappy': 'org.iq80.snappy:snappy:0.4',
   'testng': 'org.testng:testng:6.13.1',
   'velocity': 'org.apache.velocity:velocity:1.5',
   'zero_allocation_hashing': 'net.openhft:zero-allocation-hashing:0.7',
-  'zookeeper': 'org.apache.zookeeper:zookeeper:3.4.6',
+  'zookeeper': 'org.apache.zookeeper:zookeeper:3.4.14',
   'hdrhistogram': 'org.hdrhistogram:HdrHistogram:2.1.9',
   'xchart': 'org.knowm.xchart:xchart:3.2.2',
 
@@ -213,17 +224,13 @@ subprojects {
     testRuntime project(':log-test-config')
   }
 
-  if (isDefaultEnvironment)
-  {
-    apply plugin: 'maven'
-    apply from: "${buildScriptDirPath}/maven.gradle"
-    apply plugin: 'signing'
-
-    project.group = 'com.linkedin.pegasus'
-
+  if (isDefaultEnvironment) {
     repositories {
       mavenLocal()
       mavenCentral()
+      maven {
+        url "https://dl.bintray.com/linkedin/maven"
+      }
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
@@ -242,102 +249,8 @@ subprojects {
       archives javadocJar
     }
 
-    signing {
-      required = { gradle.taskGraph.hasTask("uploadArchives") }
-      sign configurations.archives
-    }
-
-    uploadArchives {
-      repositories {
-        mavenDeployer {
-          beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-          repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-            authentication(userName: sonatypeUsername, password: sonatypePassword)
-          }
-
-          pom.project {
-            name project.name
-            packaging 'jar'
-            description 'Pegasus is a framework for building robust, scalable service architectures using dynamic discovery and simple asychronous type-checked REST + JSON APIs.'
-            url 'http://github.com/linkedin/pegasus'
-
-            scm {
-              url 'git@github.com:linkedin/pegasus.git'
-              connection 'scm:git:git@github.com:linkedin/pegasus.git'
-              developerConnection 'scm:git:git@github.com:linkedin/pegasus.git'
-            }
-
-             licenses {
-               license {
-                 name 'The Apache Software License, Version 2.0'
-                 url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                 distribution 'repo'
-               }
-             }
-
-             developers {
-               developer {
-                 id 'sweeboonlim'
-                 name 'Swee Lim'
-               }
-               developer {
-                 id 'sihde'
-                 name 'Steve Ihde'
-               }
-               developer {
-                 id 'mtagle'
-                 name 'Moira Tagle'
-               }
-               developer {
-                 id 'adublinkedin'
-                 name 'Alex Dubman'
-               }
-               developer {
-                 id 'CrendKing'
-                 name 'Keren Jin'
-               }
-               developer {
-                 id 'DuglsYoung'
-                 name 'Doug Young'
-               }
-               developer {
-                 id 'osumampouw'
-                 name 'Oby Sumampouw'
-               }
-               developer {
-                 id 'davidhoa'
-                 name 'David Hoa'
-               }
-               developer {
-                 id 'cpettitt'
-                 name 'Chris Pettitt'
-               }
-               developer {
-                 id 'chikit'
-                 name 'Chi Kit Chan'
-               }
-               developer {
-                 id 'apy101'
-                 name 'Angelika Clayton'
-               }
-               developer {
-                 id 'jpbetz'
-                 name 'Joe Betz'
-               }
-               developer {
-                 id 'karanparikh'
-                 name 'Karan Parikh'
-               }
-               developer {
-                 id 'nishanthshankaran'
-                 name 'Nishanth Shankaran'
-               }
-            }
-          }
-        }
-      }
-    }
+    // Configure the Bintray release task
+    apply from: "${buildScriptDirPath}/bintrayRelease.gradle"
   }
 
   task testJar(type: Jar) {

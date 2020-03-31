@@ -16,12 +16,8 @@
 
 package com.linkedin.data.avro;
 
-import com.linkedin.data.schema.DataSchema;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.io.Decoder;
@@ -31,7 +27,9 @@ import org.apache.avro.io.EncoderFactory;
 
 /**
  * Adapter for Avro 1.6
+ * @deprecated use Use {@link com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper} instead.
  */
+@Deprecated
 public class AvroAdapter_1_6 implements AvroAdapter
 {
   private final DecoderFactory _decoderFactory = DecoderFactory.get();

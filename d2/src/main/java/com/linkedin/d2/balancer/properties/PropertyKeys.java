@@ -125,6 +125,7 @@ public class PropertyKeys
   //used by transport client creation
   public static final String HTTP_POOL_WAITER_SIZE = HttpClientFactory.HTTP_POOL_WAITER_SIZE;
   public static final String HTTP_REQUEST_TIMEOUT = HttpClientFactory.HTTP_REQUEST_TIMEOUT;
+  public static final String HTTP_STREAMING_TIMEOUT = HttpClientFactory.HTTP_STREAMING_TIMEOUT;
   public static final String HTTP_MAX_RESPONSE_SIZE = HttpClientFactory.HTTP_MAX_RESPONSE_SIZE;
   public static final String HTTP_POOL_SIZE = HttpClientFactory.HTTP_POOL_SIZE;
   public static final String HTTP_IDLE_TIMEOUT = HttpClientFactory.HTTP_IDLE_TIMEOUT;
@@ -178,4 +179,8 @@ public class PropertyKeys
   public static final String DARK_CLUSTER_MULTIPLIER = "multiplier";
   public static final String DARK_CLUSTER_OUTBOUND_TARGET_RATE = "dispatcherOutboundTargetRate";
   public static final String DARK_CLUSTER_OUTBOUND_MAX_RATE = "dispatcherOutboundMaxRate";
+
+  // used by ClusterInfoProvider
+  public static final String HTTP_SCHEME = "http";
+  public static final String HTTPS_SCHEME = "https";
 }

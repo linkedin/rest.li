@@ -1,0 +1,12 @@
+namespace com.linkedin.pegasus.generator.test.idl.imports
+
+/**
+ * An enum dedicated to the finest of the food groups.
+ */
+enum Fruits {
+  APPLE
+
+  BANANA
+  ORANGE
+  PINEAPPLE
+}

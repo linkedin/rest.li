@@ -95,7 +95,7 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
 
   private void initializeRenderers()
   {
-    final DataSchemaResolver schemaResolver = new ClasspathResourceDataSchemaResolver(SchemaParserFactory.instance());
+    final DataSchemaResolver schemaResolver = new ClasspathResourceDataSchemaResolver();
     final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.loadOrCreateResourceSchema(_rootResources);
     final RestLiResourceRelationship relationships = new RestLiResourceRelationship(resourceSchemas, schemaResolver);
 

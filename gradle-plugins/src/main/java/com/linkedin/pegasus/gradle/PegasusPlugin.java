@@ -27,6 +27,7 @@ import com.linkedin.pegasus.gradle.tasks.GenerateRestClientTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateRestModelTask;
 import com.linkedin.pegasus.gradle.tasks.PublishRestModelTask;
 import com.linkedin.pegasus.gradle.tasks.TranslateSchemasTask;
+import com.linkedin.pegasus.gradle.tasks.ValidateExtensionSchemaTask;
 import com.linkedin.pegasus.gradle.tasks.ValidateSchemaAnnotationTask;
 import java.io.File;
 import java.io.IOException;
@@ -543,6 +544,7 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static final String CONVERT_TO_PDL_REVERSE = "convertToPdl.reverse";
   private static final String CONVERT_TO_PDL_KEEP_ORIGINAL = "convertToPdl.keepOriginal";
+  private static final String CONVERT_TO_PDL_SKIP_VERIFICATION = "convertToPdl.skipVerification";
   private static final String CONVERT_TO_PDL_PRESERVE_SOURCE_CMD = "convertToPdl.preserveSourceCmd";
 
   // Below variables are used to collect data across all pegasus projects (sub-projects) and then print information
@@ -720,6 +722,11 @@ public class PegasusPlugin implements Plugin<Project>
     // and validate.
     Configuration schemaAnnotationHandler = configurations.maybeCreate("schemaAnnotationHandler");
 
+    // configuration for parsing and validating extension schemas during build time.
+    //
+    // publish extension schemas into extension schema Jar once the validation passes.
+    Configuration extensionSchema = configurations.maybeCreate("extensionSchema");
+
     // configuration for publishing jars containing rest idl and generated client builders
     // to the project artifacts for including in the ivy.xml
     //
@@ -811,6 +818,8 @@ public class PegasusPlugin implements Plugin<Project>
       {
         configureSchemaAnnotationValidation(project, sourceSet, generateDataTemplateTask);
       }
+
+      configureExtensionSchemaValidationAndPublishTasks(project, sourceSet);
 
       Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName("clean", "GeneratedDir"));
       cleanGeneratedDirTask.doLast(new CacheableAction<>(task ->
@@ -912,6 +921,41 @@ public class PegasusPlugin implements Plugin<Project>
     }
   }
 
+  protected void configureExtensionSchemaValidationAndPublishTasks(Project project, SourceSet sourceSet)
+  {
+    // extension schema  directory
+    File extensionSchemaDir = project.file(getExtensionSchemaPath(project, sourceSet));
+
+    if (SharedFileUtils.getSuffixedFiles(project, extensionSchemaDir, PDL_FILE_SUFFIX).isEmpty())
+    {
+      return;
+    }
+
+    ValidateExtensionSchemaTask validateExtensionSchemaTask =  project.getTasks()
+        .create(sourceSet.getTaskName("validate", "ExtensionSchema"), ValidateExtensionSchemaTask.class, task -> {
+          task.setInputDir(extensionSchemaDir);
+          task.setResolverPath(getDataModelConfig(project, sourceSet).plus(project.files(getDataSchemaPath(project, sourceSet))));
+          task.setClassPath(project.getConfigurations().getByName("pegasusPlugin"));
+        });
+
+    project.getTasks().getByName("check").dependsOn(validateExtensionSchemaTask);
+
+    // Publish Extension Schemas into extensionSchema Jar
+    Task extensionSchemaJarTask = project.getTasks().create(sourceSet.getName() + "ExtensionSchemaJar", Jar.class, task ->
+    {
+      task.from(extensionSchemaDir, copySpec ->
+      {
+        copySpec.eachFile(fileCopyDetails -> project.getLogger()
+            .info("Add extensionSchema file: {}", fileCopyDetails));
+        copySpec.setIncludes(Collections.singletonList('*' + PDL_FILE_SUFFIX));
+      });
+      task.setDescription("Generate extensionSchema jar");
+    });
+    extensionSchemaJarTask.dependsOn(validateExtensionSchemaTask);
+
+    project.getArtifacts().add("extensionSchema", extensionSchemaJarTask);
+  }
+
   private static void deleteGeneratedDir(Project project, SourceSet sourceSet, String dirType)
   {
     String generatedDirPath = getGeneratedDirPath(project, sourceSet, dirType);
@@ -1006,6 +1050,19 @@ public class PegasusPlugin implements Plugin<Project>
     if (override == null)
     {
       return "src" + File.separatorChar + sourceSet.getName() + File.separatorChar + "pegasus";
+    }
+    else
+    {
+      return override;
+    }
+  }
+
+  private static String getExtensionSchemaPath(Project project, SourceSet sourceSet)
+  {
+    String override = getOverridePath(project, sourceSet, "overrideExtensionSchemaDir");
+    if(override == null)
+    {
+      return "src" + File.separatorChar + sourceSet.getName() + File.separatorChar + "extensions";
     }
     else
     {
@@ -1413,6 +1470,7 @@ public class PegasusPlugin implements Plugin<Project>
     File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet));
     boolean reverse = isPropertyTrue(project, CONVERT_TO_PDL_REVERSE);
     boolean keepOriginal = isPropertyTrue(project, CONVERT_TO_PDL_KEEP_ORIGINAL);
+    boolean skipVerification = isPropertyTrue(project, CONVERT_TO_PDL_SKIP_VERIFICATION);
     String preserveSourceCmd = getNonEmptyProperty(project, CONVERT_TO_PDL_PRESERVE_SOURCE_CMD);
 
     // Utility task for migrating between PDSC and PDL.
@@ -1434,6 +1492,7 @@ public class PegasusPlugin implements Plugin<Project>
         task.setDestinationFormat(SchemaFileType.PDL);
       }
       task.setKeepOriginal(keepOriginal);
+      task.setSkipVerification(skipVerification);
 
       task.onlyIf(t -> task.getInputDir().exists());
       task.doLast(new CacheableAction<>(t ->
@@ -1442,6 +1501,22 @@ public class PegasusPlugin implements Plugin<Project>
         project.getLogger().lifecycle("All pegasus schema files in " + dataSchemaDir + " have been converted");
         project.getLogger().lifecycle("You can use '-PconvertToPdl.reverse=true|false' to change the direction of conversion.");
       }));
+    });
+
+    // Helper task for reformatting existing PDL schemas by generating them again.
+    project.getTasks().create(sourceSet.getTaskName("reformat", "Pdl"), TranslateSchemasTask.class, task ->
+    {
+      task.setInputDir(dataSchemaDir);
+      task.setDestinationDir(dataSchemaDir);
+      task.setResolverPath(getDataModelConfig(project, sourceSet));
+      task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+      task.setSourceFormat(SchemaFileType.PDL);
+      task.setDestinationFormat(SchemaFileType.PDL);
+      task.setKeepOriginal(true);
+      task.setSkipVerification(true);
+
+      task.onlyIf(t -> task.getInputDir().exists());
+      task.doLast(new CacheableAction<>(t -> project.getLogger().lifecycle("PDL reformat complete.")));
     });
   }
 

@@ -49,6 +49,7 @@ public class DelegatingFacilities implements Facilities
   private final ClientFactoryProvider _clientFactoryProvider;
   private final PartitionInfoProvider _partitionInfoProvider;
   private final HashRingProvider _hashRingProvider;
+  private final ClusterInfoProvider _clusterInfoProvider;
 
   @Deprecated
   public DelegatingFacilities(DirectoryProvider directoryProvider,
@@ -92,17 +93,29 @@ public class DelegatingFacilities implements Facilities
     });
   }
 
+  @Deprecated
   public DelegatingFacilities(DirectoryProvider directoryProvider,
                               KeyMapperProvider keyMapperProvider,
                               ClientFactoryProvider clientFactoryProvider,
                               PartitionInfoProvider partitionInfoProvider,
                               HashRingProvider hashRingProvider)
   {
+    this(directoryProvider, keyMapperProvider, clientFactoryProvider, partitionInfoProvider, hashRingProvider,
+        (clusterName, scheme, partitionId) -> 0);
+  }
+  public DelegatingFacilities(DirectoryProvider directoryProvider,
+      KeyMapperProvider keyMapperProvider,
+      ClientFactoryProvider clientFactoryProvider,
+      PartitionInfoProvider partitionInfoProvider,
+      HashRingProvider hashRingProvider,
+      ClusterInfoProvider clusterInfoProvider)
+  {
     _directoryProvider = directoryProvider;
     _keyMapperProvider = keyMapperProvider;
     _clientFactoryProvider = clientFactoryProvider;
     _partitionInfoProvider = partitionInfoProvider;
     _hashRingProvider = hashRingProvider;
+    _clusterInfoProvider = clusterInfoProvider;
   }
 
   @Override
@@ -133,5 +146,10 @@ public class DelegatingFacilities implements Facilities
   public TransportClientFactory getClientFactory(String scheme)
   {
     return _clientFactoryProvider.getClientFactory(scheme);
+  }
+
+  @Override
+  public ClusterInfoProvider getClusterInfoProvider() {
+    return _clusterInfoProvider;
   }
 }

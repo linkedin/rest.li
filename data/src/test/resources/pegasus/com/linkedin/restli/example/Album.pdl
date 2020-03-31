@@ -1,0 +1,12 @@
+namespace com.linkedin.restli.example
+
+/**
+ * An album for Rest.li
+ */
+record Album {
+  id: long
+  urn: string
+  title: string
+
+  pdscRef: com.linkedin.data.schema.ValidationDemo
+}

@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -58,6 +59,8 @@ import static com.linkedin.restli.tools.data.ScmUtil.SOURCE;
 public class SchemaFormatTranslator
 {
   private static final Logger LOGGER = LoggerFactory.getLogger(SchemaFormatTranslator.class);
+
+  private static final Pattern LINE_END_SPACES = Pattern.compile(" +$", Pattern.MULTILINE);
 
   private static final Options OPTIONS = new Options();
   static
@@ -185,7 +188,7 @@ public class SchemaFormatTranslator
       verifyTranslatedSchemas(topLevelTranslatedSchemas);
     }
     // Write the destination files. Source files are deleted for this step unless keepOriginal flag is set.
-    writeTranslatedSchemasToDirectory(topLevelTranslatedSchemas, _destDir, !_keepOriginal, _preserveSourceCmd);
+    writeTranslatedSchemasToDirectory(topLevelTranslatedSchemas, _destDir, !_keepOriginal, _preserveSourceCmd, true);
   }
 
   /**
@@ -197,6 +200,7 @@ public class SchemaFormatTranslator
     Map<String, SchemaInfo> topLevelTranslatedSchemas = new HashMap<>();
 
     Iterator<File> iter = FileUtils.iterateFiles(_sourceDir, new String[]{_sourceFormat}, true);
+    StringBuilder errorMessages = new StringBuilder();
     while(iter.hasNext())
     {
       File sourceFile = iter.next();
@@ -210,8 +214,16 @@ public class SchemaFormatTranslator
       PegasusSchemaParser parser = AbstractSchemaParser.parserForFileExtension(_sourceFormat, resolver);
       parser.parse(new FileInputStream(sourceFile));
       LOGGER.debug("Loaded source schema: {}, from location: {}", schemaFullname, sourceFile.getAbsolutePath());
-      NamedDataSchema schema = checkForErrorsAndGetTopLevelSchema(_resolverPath, sourceFile, schemaFullname, parser);
-      topLevelTranslatedSchemas.put(schemaFullname, new SchemaInfo(schema, sourceFile, encode(schema, _destFormat)));
+      NamedDataSchema schema = checkForErrorsAndGetTopLevelSchema(sourceFile, schemaFullname, parser, errorMessages);
+      if (schema != null)
+      {
+        topLevelTranslatedSchemas.put(schemaFullname, new SchemaInfo(schema, sourceFile, encode(schema, _destFormat)));
+      }
+    }
+    if (errorMessages.length() > 0)
+    {
+      LOGGER.error(errorMessages.toString());
+      System.exit(1);
     }
     return topLevelTranslatedSchemas;
   }
@@ -219,10 +231,13 @@ public class SchemaFormatTranslator
   private void verifyTranslatedSchemas(Map<String, SchemaInfo> topLevelTranslatedSchemas) throws IOException, InterruptedException
   {
     File tempDir = new File(FileUtils.getTempDirectory(), "tmpPegasus" + _sourceDir.hashCode());
+    File errorSchemasDir = new File(FileUtils.getTempDirectory(), "tmpPegasusErrors" + _sourceDir.hashCode());
     FileUtils.deleteDirectory(tempDir);
+    FileUtils.deleteDirectory(errorSchemasDir);
     assert tempDir.mkdirs();
     // Write the schemas to temp directory for validation. Source files are not deleted/moved for this.
-    writeTranslatedSchemasToDirectory(topLevelTranslatedSchemas, tempDir, false, null);
+    writeTranslatedSchemasToDirectory(
+        topLevelTranslatedSchemas, tempDir, false, null, false);
 
     // Exclude the source models directory from the resolver path
     StringTokenizer paths = new StringTokenizer(_resolverPath, File.pathSeparator);
@@ -268,8 +283,13 @@ public class SchemaFormatTranslator
         if (!sourceSchema.equals(destSchema))
         {
           LOGGER.error("Translation failed for schema: {}", schemaName);
-          LOGGER.error("Source format: {}, schema:\n{}", _sourceFormat, sourceSchema.toString());
-          LOGGER.error("Destination format: {}, schema:\n{}", _destFormat, destSchema.toString());
+          // Write the translated schema to temp dir.
+          File sourceFile = new File(errorSchemasDir, sourceSchema.getName() + "_" + _sourceFormat);
+          FileUtils.writeStringToFile(sourceFile, SchemaToJsonEncoder.schemaToJson(sourceSchema, JsonBuilder.Pretty.INDENTED));
+          File destFile = new File(errorSchemasDir, sourceSchema.getName() + "_" + _destFormat);
+          FileUtils.writeStringToFile(destFile, SchemaToJsonEncoder.schemaToJson(destSchema, JsonBuilder.Pretty.INDENTED));
+          LOGGER.error("To see the difference between source and tanslated schemas, run: \ndiff {} {}",
+              sourceFile.getAbsolutePath(), destFile.getAbsolutePath());
           failedSchemas.add(schemaInfo);
           hasError = true;
         }
@@ -288,7 +308,8 @@ public class SchemaFormatTranslator
   }
 
   private void writeTranslatedSchemasToDirectory(
-      Map<String, SchemaInfo> topLevelTranslatedSchemas, File outputDir, boolean moveSource, String preserveSourceCmd) throws IOException, InterruptedException
+      Map<String, SchemaInfo> topLevelTranslatedSchemas, File outputDir, boolean moveSource, String preserveSourceCmd,
+      boolean trimFile) throws IOException, InterruptedException
   {
     for (SchemaInfo schemaInfo : topLevelTranslatedSchemas.values())
     {
@@ -308,35 +329,49 @@ public class SchemaFormatTranslator
       {
         ScmUtil.tryUpdateSourceHistory(preserveSourceCmd, schemaInfo.getSourceFile(), destinationFile);
       }
-      FileUtils.writeStringToFile(destinationFile, schemaInfo.getDestEncodedSchemaString());
+      String fileContent = (trimFile && _destFormat.equals(PdlSchemaParser.FILETYPE)) ?
+          schemaInfo.getTrimmedDestEncodedSchemaString() :
+          schemaInfo.getDestEncodedSchemaString();
+      FileUtils.writeStringToFile(destinationFile, fileContent);
     }
   }
 
   private static NamedDataSchema checkForErrorsAndGetTopLevelSchema(
-      String resolverPath, File file, String schemaFullname, PegasusSchemaParser parser)
+      File file, String schemaFullname, PegasusSchemaParser parser, StringBuilder errorMessages)
   {
     StringBuilder errorMessageBuilder = parser.errorMessageBuilder();
     if (errorMessageBuilder.length() > 0)
     {
-      LOGGER.error(
-          "Failed to parse schema: " + file.getAbsolutePath() + "\nfullname: " + schemaFullname + "\nerrors: " + errorMessageBuilder.toString() + "\nresolverPath: " + resolverPath);
-      System.exit(1);
+      errorMessages.append("Failed to parse schema: ")
+          .append(file.getAbsolutePath())
+          .append("\nfullname: ")
+          .append(schemaFullname)
+          .append("\nerrors: ")
+          .append(errorMessageBuilder.toString())
+          .append("\n");
+      return null;
     }
     List<DataSchema> topLevelSchemas = parser.topLevelDataSchemas();
     if (topLevelSchemas.size() != 1)
     {
-      LOGGER.error("Expected one top level schema for: " + file.getAbsolutePath() + " but got " + topLevelSchemas.size()
-        + " schemas.");
-      System.exit(1);
+      errorMessages.append("Expected one top level schema for: ")
+          .append(file.getAbsolutePath())
+          .append(" but got ")
+          .append(topLevelSchemas.size())
+          .append(" schemas.")
+          .append("\n");
+      return  null;
     }
     DataSchema sourceSchema = topLevelSchemas.get(0);
     if (!(sourceSchema instanceof NamedDataSchema) ||
         !((NamedDataSchema) sourceSchema).getFullName().equals(schemaFullname))
     {
-      LOGGER.error(
-          "Parsed top-level schema does not match the schema file name. File: " + file.getAbsolutePath()
-              + "\n parsedSchemaName: " + sourceSchema.getUnionMemberKey());
-      System.exit(1);
+      errorMessages.append("Parsed top-level schema does not match the schema file name. File: ")
+          .append(file.getAbsolutePath())
+          .append("\n parsedSchemaName: ")
+          .append(sourceSchema.getUnionMemberKey())
+          .append("\n");
+      return null;
     }
     return (NamedDataSchema) sourceSchema;
   }
@@ -370,6 +405,11 @@ public class SchemaFormatTranslator
     {
       throw new IllegalArgumentException("Unsupported format: " + format);
     }
+  }
+
+  public static String stripLineEndSpaces(String str)
+  {
+    return LINE_END_SPACES.matcher(str).replaceAll("");
   }
 
   private static String trimFileExtension(String path)
@@ -413,6 +453,11 @@ public class SchemaFormatTranslator
     String getDestEncodedSchemaString()
     {
       return _destEncodedSchemaString;
+    }
+
+    String getTrimmedDestEncodedSchemaString()
+    {
+      return stripLineEndSpaces(_destEncodedSchemaString);
     }
   }
 }

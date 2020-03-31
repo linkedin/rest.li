@@ -73,11 +73,13 @@ class HttpChannelInitializer extends ChannelInitializer<NioSocketChannel>
   private final int _maxHeaderSize;
   private final int _maxChunkSize;
   private final int _maxContentLength;
+  private final int _sslHandShakeTimeout;
   private final boolean _ssl;
   private final boolean _enableSSLSessionResumption;
 
   HttpChannelInitializer(SSLContext sslContext, SSLParameters sslParameters, int maxInitialLineLength,
-      int maxHeaderSize, int maxChunkSize, long maxContentLength, boolean enableSSLSessionResumption)
+      int maxHeaderSize, int maxChunkSize, long maxContentLength, boolean enableSSLSessionResumption,
+      int sslHandShakeTimeout)
   {
     _sslContext = sslContext;
     _sslParameters = sslParameters;
@@ -85,6 +87,7 @@ class HttpChannelInitializer extends ChannelInitializer<NioSocketChannel>
     _maxHeaderSize = maxHeaderSize;
     _maxChunkSize = maxChunkSize;
     _maxContentLength = maxContentLength > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxContentLength;
+    _sslHandShakeTimeout = sslHandShakeTimeout;
     _ssl = _sslContext != null && _sslParameters != null;
     _enableSSLSessionResumption = enableSSLSessionResumption;
   }
@@ -95,7 +98,7 @@ class HttpChannelInitializer extends ChannelInitializer<NioSocketChannel>
     if (_ssl)
     {
       channel.pipeline().addLast(SessionResumptionSslHandler.PIPELINE_SESSION_RESUMPTION_HANDLER,
-          new SessionResumptionSslHandler(_sslContext, _sslParameters, _enableSSLSessionResumption));
+          new SessionResumptionSslHandler(_sslContext, _sslParameters, _enableSSLSessionResumption, _sslHandShakeTimeout));
     }
 
     channel.pipeline().addLast("codec", new HttpClientCodec(_maxInitialLineLength, _maxHeaderSize, _maxChunkSize));
