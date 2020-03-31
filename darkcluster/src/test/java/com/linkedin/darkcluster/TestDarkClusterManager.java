@@ -62,6 +62,8 @@ public class TestDarkClusterManager
                                                                        whitelist,
                                                                        blacklist,
                                                                        new DoNothingNotifier());
+
+    // This configuration will choose the ConstantMultiplierDarkClusterStrategy
     DarkClusterConfig darkClusterConfig = new DarkClusterConfig()
       .setMultiplier(1.0f);
     clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig);

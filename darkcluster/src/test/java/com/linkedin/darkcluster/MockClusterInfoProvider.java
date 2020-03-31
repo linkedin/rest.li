@@ -31,6 +31,7 @@ class MockClusterInfoProvider implements ClusterInfoProvider
 {
   Map<String, DarkClusterConfigMap> lookupMap = new HashMap<>();
   List<LoadBalancerClusterListener> clusterListeners = new ArrayList<>();
+  Map<String, Integer> clusterHttpsCount = new HashMap<>();
 
   @Override
   public int getClusterCount(String clusterName, String scheme, int partitionId)
@@ -43,7 +44,7 @@ class MockClusterInfoProvider implements ClusterInfoProvider
   public int getHttpsClusterCount(String clusterName)
     throws ServiceUnavailableException
   {
-    return 0;
+    return clusterHttpsCount.getOrDefault(clusterName, 1);
   }
 
   @Override
@@ -85,5 +86,14 @@ class MockClusterInfoProvider implements ClusterInfoProvider
     {
       listener.onClusterRemoved(clusterName);
     }
+  }
+
+  /**
+   * add the ability to return httpsClusterCounts for a clusterName
+   */
+  void putHttpsClusterCount(String clusterName, Integer httpsCount)
+  {
+    // overwrites if anything is already there for this clusterName
+    clusterHttpsCount.put(clusterName, httpsCount);
   }
 }

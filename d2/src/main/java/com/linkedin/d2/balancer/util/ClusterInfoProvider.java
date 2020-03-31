@@ -47,7 +47,7 @@ public interface ClusterInfoProvider
   }
 
   /**
-   * Get the DarkClusterConfigMap for a particular d2 cluster. This is needed to iterate through the dark clusters that correspond
+   * Get the DarkClusterConfigMap for a particular d2 cluster. This is needed to to find the dark clusters that correspond
    * to a regular d2 cluster.
    *
    * @param clusterName

@@ -19,6 +19,10 @@ package com.linkedin.darkcluster.impl;
 import com.linkedin.darkcluster.api.DarkClusterVerifier;
 import com.linkedin.r2.message.rest.RestResponse;
 
+/**
+ * Response for a dark REST request. This allows us to distinguish between the original
+ * response/error and the dark response/error.
+ */
 public class ResponseImpl implements DarkClusterVerifier.Response
 {
   private final RestResponse _response;

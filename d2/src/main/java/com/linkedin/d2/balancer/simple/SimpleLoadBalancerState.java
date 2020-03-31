@@ -140,7 +140,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   /**
    * List of listeners that want to be notified when cluster changes happen.
    */
-  private final List<LoadBalancerClusterListener>                                    _clusterListeners;
+  private final List<LoadBalancerClusterListener>                                       _clusterListeners;
 
   private final SSLContext    _sslContext;
   private final SSLParameters _sslParameters;

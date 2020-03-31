@@ -93,7 +93,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
       BaseDarkClusterDispatcher baseDarkClusterDispatcher = new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher,
                                                                                               _notifier, _verifierManager);
       return new ConstantMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
-                                                       baseDarkClusterDispatcher, _notifier, _random);
+                                                       baseDarkClusterDispatcher, _notifier, _clusterInfoProvider, _random);
     }
     else
     {
@@ -135,11 +135,18 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
         }
         catch (ServiceUnavailableException e)
         {
-          _notifier.notify(() -> new RuntimeException("PEGA_0019 unable to refresh DarkClusterConfigMap for source cluster: " + _sourceClusterName + ", darkClusterName: " + darkClusterName));
+          _notifier.notify(() -> new RuntimeException("PEGA_0019 unable to refresh DarkClusterConfigMap for source cluster: "
+                                                        + _sourceClusterName + ", darkClusterName: " + darkClusterName));
         }
       }
     }
 
+    /**
+     * The only thing we can do on onClusterRemoved is to remove the cluster that got triggered. Theoretically we should never see the source
+     * cluster being removed if we still have strategies for it's dark clusters. If there is any case where the source cluster
+     * could be removed while we still have strategies for the dark cluster, we should reevaluate this cluster listener. For now, there is no
+     * need to take any additional action.
+     */
     @Override
     public void onClusterRemoved(String clusterName)
     {
