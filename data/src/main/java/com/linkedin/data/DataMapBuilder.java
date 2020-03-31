@@ -68,7 +68,9 @@ public class DataMapBuilder implements DataComplex {
   public void setInUse(boolean v) { _inUse = v; }
 
   private int optimumCapacityFromSize() {
-    return getOptimumHashMapCapacityFromSize(_dataMapContents.size());
+    // Pass in size / 2 since we calculate size based on num pairs
+    // Should be a clean division since we add to the list in pairs
+    return getOptimumHashMapCapacityFromSize(_dataMapContents.size() / 2);
   }
 
   /**
