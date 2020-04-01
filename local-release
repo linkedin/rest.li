@@ -1,0 +1,22 @@
+#!/bin/sh
+# The purpose of this script is to publish artifacts to ~/local-repo
+
+LOCAL_REPO="${HOME}/local-repo"
+
+if [ ! -d $LOCAL_REPO ]; then
+  # If this error is encountered, then (1) $HOME is not set correctly or (2) ~/local-repo doesn't exist
+  echo "Cannot perform local release, '$LOCAL_REPO' is not a valid directory"
+  exit 1
+fi
+
+VERSION=$(awk 'BEGIN { FS = "=" }; $1 == "version" { print $2 }' gradle.properties)
+echo "Publishing pegasus $VERSION to $LOCAL_REPO"
+
+./gradlew -Dmaven.repo.local=$LOCAL_REPO publishReleasePublicationToMavenLocal
+
+if [ $? -eq 0 ]; then
+  echo "Published pegasus $VERSION to $LOCAL_REPO"
+else
+  exit 1
+fi
+
