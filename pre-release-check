@@ -10,7 +10,7 @@ then
 fi
 
 # Determine version to be released
-VERSION=`awk 'BEGIN { FS = "=" }; $1 == "version" { print $2 }' gradle.properties`
+VERSION=`awk 'BEGIN { FS = "=" }; $1 == "version" { print $2 }' gradle.properties | awk '{ print $1 }'`
 echo "Running pre-release job for version $VERSION..."
 
 # Check that there are no uncommitted changes
