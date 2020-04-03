@@ -1,0 +1,9 @@
+namespace com.linkedin.pegasus.generator.test.idl.arrays
+
+import com.linkedin.pegasus.generator.test.idl.records.Empty
+
+record WithArrayProperties {
+  empties:
+    @custom = "foo"
+    array[Empty]
+}

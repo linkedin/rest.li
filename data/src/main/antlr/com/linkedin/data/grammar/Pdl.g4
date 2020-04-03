@@ -47,7 +47,7 @@ typeReference returns [String value]: NULL_LITERAL { $value = "null"; } | typeNa
 
 typeDeclaration: scopedNamedTypeDeclaration | namedTypeDeclaration | anonymousTypeDeclaration;
 
-// Only named declarations support schemadoc and properties.
+// Named declarations support schemadoc and properties.
 namedTypeDeclaration: doc=schemadoc? props+=propDeclaration*
   (recordDeclaration | enumDeclaration | typerefDeclaration | fixedDeclaration);
 
@@ -56,8 +56,8 @@ namedTypeDeclaration: doc=schemadoc? props+=propDeclaration*
 // even if they are inline declarations.
 scopedNamedTypeDeclaration: OPEN_BRACE namespaceDeclaration? packageDeclaration? namedTypeDeclaration CLOSE_BRACE;
 
-
-anonymousTypeDeclaration: unionDeclaration | arrayDeclaration | mapDeclaration;
+// Anonymous type declarations support properties.
+anonymousTypeDeclaration: props+=propDeclaration* (unionDeclaration | arrayDeclaration | mapDeclaration);
 
 typeAssignment: typeReference | typeDeclaration;
 
