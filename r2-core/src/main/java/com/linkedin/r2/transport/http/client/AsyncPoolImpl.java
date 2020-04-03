@@ -71,7 +71,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private final RateLimiter _rateLimiter;
 
   public static final int MIN_WAITER_TIMEOUT = 300;
-  public static final int MAX_WAITER_TIMEOUT = 3000;
+  public static final int MAX_WAITER_TIMEOUT = 1000;
   public static final int DEFAULT_OBJECT_CREATION_TIMEOUT = 10000;
 
 
@@ -352,7 +352,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     boolean create = false;
     boolean reject = false;
     final LinkedDeque.Node<Callback<T>> node;
-    final TimeTrackingCallback<T> callbackWithTracking = new TimeTrackingCallback<T>(callback);
+    Callback<T> callbackWithTracking = new TimeTrackingCallback<T>(callback);
     for (;;)
     {
       TimedObject<T> obj = null;
@@ -374,8 +374,12 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           {
             if (_waiters.size() < _maxWaiters)
             {
+              if (isWaiterTimeoutWithinFastFailThreshold())
+              {
+                callbackWithTracking = new WaiterTimeoutCallback(callbackWithTracking);
+              }
               // No objects available and the waiter list is not full; add to waiter list and break out of loop
-              node = _waiters.addLastNode(new WaiterTimeoutCallback(callbackWithTracking));
+              node = _waiters.addLastNode(callbackWithTracking);
               create = shouldCreate();
             }
             else
@@ -438,6 +442,11 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
         }
       }
     };
+  }
+
+  private boolean isWaiterTimeoutWithinFastFailThreshold()
+  {
+    return _waiterTimeout >= MIN_WAITER_TIMEOUT && _waiterTimeout <= MAX_WAITER_TIMEOUT;
   }
 
   @Override
