@@ -374,7 +374,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           {
             if (_waiters.size() < _maxWaiters)
             {
-              if (isWaiterTimeoutWithinFastFailThreshold())
+              if (isWaiterTimeoutEnabled())
               {
                 callbackWithTracking = new WaiterTimeoutCallback(callbackWithTracking);
               }
@@ -444,8 +444,9 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     };
   }
 
-  private boolean isWaiterTimeoutWithinFastFailThreshold()
+  private boolean isWaiterTimeoutEnabled()
   {
+    // Do not enable waiter timeout if the configured value is not within the fail fast threshold
     return _waiterTimeout >= MIN_WAITER_TIMEOUT && _waiterTimeout <= MAX_WAITER_TIMEOUT;
   }
 
@@ -849,7 +850,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
 
     private WaiterTimeoutCallback(final Callback<T> callback)
     {
-      _timeout = new SingleTimeout<>(_timeoutExecutor, _waiterTimeout, TimeUnit.MILLISECONDS, callback, () -> {
+      _timeout = new SingleTimeout<>(_timeoutExecutor, _waiterTimeout, TimeUnit.MILLISECONDS, callback, (callback1) -> {
 
         synchronized (_lock)
         {
@@ -857,7 +858,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           _statsTracker.incrementWaiterTimedOut();
         }
         LOG.debug("{}: failing waiter due to waiter timeout", _poolName);
-        callback.onError(
+        callback1.onError(
             new WaiterTimeoutException(
                 "Exceeded waiter timeout of " + _waiterTimeout + "ms: in Pool: "+ _poolName));
       });
