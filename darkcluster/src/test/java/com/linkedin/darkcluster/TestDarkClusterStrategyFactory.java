@@ -24,6 +24,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.linkedin.d2.DarkClusterConfig;
+import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
@@ -51,13 +52,15 @@ public class TestDarkClusterStrategyFactory
   public void testCreateStrategiesWithNoDarkClusters()
   {
     ClusterInfoProvider clusterInfoProvider = new MockClusterInfoProvider();
+    Facilities facilities = new MockFacilities(clusterInfoProvider);
     DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcherImpl(new MockClient(false));
-    DarkClusterStrategyFactory strategyFactory = new DarkClusterStrategyFactoryImpl(clusterInfoProvider,
+    DarkClusterStrategyFactory strategyFactory = new DarkClusterStrategyFactoryImpl(facilities,
                                                                                     SOURCE_CLUSTER_NAME,
                                                                                     darkClusterDispatcher,
                                                                                     new DoNothingNotifier(),
                                                                                     new Random(SEED),
                                                                                     new CountingVerifierManager());
+    strategyFactory.start();
     DarkClusterStrategy strategy = strategyFactory.getOrCreate(DARK_CLUSTER_NAME, new DarkClusterConfig());
     RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("foo")).build();
     boolean requestSent = strategy.handleRequest(dummyRestRequest, dummyRestRequest, new RequestContext());
@@ -69,10 +72,12 @@ public class TestDarkClusterStrategyFactory
   public void testChangingStrategiesWithDarkClusters()
   {
     MockClusterInfoProvider clusterInfoProvider = new MockClusterInfoProvider();
+    Facilities facilities = new MockFacilities(clusterInfoProvider);
     DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcherImpl(new MockClient(false));
     DarkClusterStrategyFactory strategyFactory =
-      new DarkClusterStrategyFactoryImpl(clusterInfoProvider, SOURCE_CLUSTER_NAME, darkClusterDispatcher, new DoNothingNotifier(), new Random(SEED),
+      new DarkClusterStrategyFactoryImpl(facilities, SOURCE_CLUSTER_NAME, darkClusterDispatcher, new DoNothingNotifier(), new Random(SEED),
                                          new CountingVerifierManager());
+    strategyFactory.start();
     DarkClusterConfig darkClusterConfig1 = new DarkClusterConfig()
       .setMultiplier(0.5f);
     DarkClusterConfig darkClusterConfig2 = new DarkClusterConfig()
@@ -104,14 +109,46 @@ public class TestDarkClusterStrategyFactory
   }
 
   @Test
+  public void testChangingStrategiesAfterStoppingListener()
+  {
+    MockClusterInfoProvider clusterInfoProvider = new MockClusterInfoProvider();
+    Facilities facilities = new MockFacilities(clusterInfoProvider);
+    DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcherImpl(new MockClient(false));
+    DarkClusterStrategyFactory strategyFactory =
+      new DarkClusterStrategyFactoryImpl(facilities, SOURCE_CLUSTER_NAME, darkClusterDispatcher, new DoNothingNotifier(), new Random(SEED),
+                                         new CountingVerifierManager());
+    strategyFactory.start();
+    DarkClusterConfig darkClusterConfig1 = new DarkClusterConfig()
+      .setMultiplier(0.5f);
+    DarkClusterConfig darkClusterConfig2 = new DarkClusterConfig()
+      .setMultiplier(0.1f);
+    clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
+    DarkClusterStrategy strategy = strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
+    Assert.assertTrue(strategy instanceof ConstantMultiplierDarkClusterStrategy);
+    Assert.assertEquals(((ConstantMultiplierDarkClusterStrategy)strategy).getMultiplier(), 0.5f, "expected 0.5f multiplier");
+
+    strategyFactory.shutdown();
+
+    // now trigger a refresh on the dark cluster. Note that darkClusterConfig1 is ignored since there should already be an entry for this
+    // dark cluster, and we should get the strategy associated with darkClusterConfig2 back.
+    clusterInfoProvider.triggerClusterRefresh(DARK_CLUSTER_NAME);
+    // Nothing should have been changed, since we should be ignoring source cluster changes.
+    DarkClusterStrategy strategy2 = strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
+    Assert.assertTrue(strategy2 instanceof ConstantMultiplierDarkClusterStrategy);
+    Assert.assertEquals(((ConstantMultiplierDarkClusterStrategy)strategy2).getMultiplier(), 0.5f, "expected 0.5f multiplier");
+  }
+
+  @Test
   public void testStrategyRaceCondition()
   {
     int noopStrategyCount = 0;
     MockClusterInfoProvider clusterInfoProvider = new MockClusterInfoProvider();
+    Facilities facilities = new MockFacilities(clusterInfoProvider);
     DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcherImpl(new MockClient(false));
     DarkClusterStrategyFactory strategyFactory =
-      new DarkClusterStrategyFactoryImpl(clusterInfoProvider, SOURCE_CLUSTER_NAME, darkClusterDispatcher, new DoNothingNotifier(), new Random(SEED),
+      new DarkClusterStrategyFactoryImpl(facilities, SOURCE_CLUSTER_NAME, darkClusterDispatcher, new DoNothingNotifier(), new Random(SEED),
                                          new CountingVerifierManager());
+    strategyFactory.start();
     DarkClusterConfig darkClusterConfig1 = new DarkClusterConfig().setMultiplier(0.5f);
     clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
     DarkClusterStrategy strategy = strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);

@@ -26,9 +26,9 @@ import javax.annotation.Nonnull;
 import com.linkedin.common.util.Notifier;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
+import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
@@ -39,10 +39,13 @@ import com.linkedin.darkcluster.api.NoOpDarkClusterStrategy;
 /**
  * DarkClusterStrategyFactoryImpl creates and maintains the strategies needed for dark clusters. This involves refreshing
  * when darkClusterConfig changes are detected, by way of a {@link LoadBalancerClusterListener}
+ * start() must be called in order to register the ClusterListener.
  */
 public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactory
 {
-  private final ClusterInfoProvider _clusterInfoProvider;
+  // ClusterInfoProvider isn't available until the D2 client is started, so it can't be
+  // populated during construction time.
+  private final Facilities _facilities;
   private final String _sourceClusterName;
   private final DarkClusterDispatcher _darkClusterDispatcher;
   private final Notifier _notifier;
@@ -51,14 +54,14 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   private final LoadBalancerClusterListener _clusterListener;
   private final DarkClusterVerifierManager _verifierManager;
 
-  public DarkClusterStrategyFactoryImpl(@Nonnull ClusterInfoProvider clusterInfoProvider,
+  public DarkClusterStrategyFactoryImpl(@Nonnull Facilities facilities,
                                         @Nonnull String sourceClusterName,
                                         @Nonnull DarkClusterDispatcher darkClusterDispatcher,
                                         @Nonnull Notifier notifier,
                                         @Nonnull Random random,
                                         @Nonnull DarkClusterVerifierManager verifierManager)
   {
-    _clusterInfoProvider = clusterInfoProvider;
+    _facilities = facilities;
     _sourceClusterName = sourceClusterName;
     _notifier = notifier;
     _darkStrategyMap = new ConcurrentHashMap<>();
@@ -66,9 +69,21 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     _darkClusterDispatcher = darkClusterDispatcher;
     _verifierManager = verifierManager;
     _clusterListener = new DarkClusterListener();
-
-    _clusterInfoProvider.registerClusterListener(_clusterListener);
   }
+
+  @Override
+  public void start()
+  {
+    _facilities.getClusterInfoProvider().registerClusterListener(_clusterListener);
+  }
+
+  @Override
+  public void shutdown()
+  {
+    _facilities.getClusterInfoProvider().unregisterClusterListener(_clusterListener);
+  }
+
+
 
   @Override
   public DarkClusterStrategy getOrCreate(@Nonnull String darkClusterName, @Nonnull DarkClusterConfig darkClusterConfig)
@@ -93,7 +108,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
       BaseDarkClusterDispatcher baseDarkClusterDispatcher = new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher,
                                                                                               _notifier, _verifierManager);
       return new ConstantMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
-                                                       baseDarkClusterDispatcher, _notifier, _clusterInfoProvider, _random);
+                                                       baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(), _random);
     }
     else
     {
@@ -125,7 +140,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
         String darkClusterName = updatedClusterName;
         try
         {
-          DarkClusterConfigMap darkConfigMap = _clusterInfoProvider.getDarkClusterConfigMap(_sourceClusterName);
+          DarkClusterConfigMap darkConfigMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
           if (darkConfigMap.containsKey(darkClusterName))
           {
             // just update the dark cluster that changed

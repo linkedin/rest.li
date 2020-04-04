@@ -32,4 +32,14 @@ public interface DarkClusterStrategyFactory
    * @return {@link DarkClusterStrategy}
    */
   DarkClusterStrategy getOrCreate(String darkClusterName, DarkClusterConfig darkClusterConfig);
+
+  /**
+   * Do any actions necessary to start the DarkClusterStrategyFactory.
+   */
+  void start();
+
+  /**
+   * Do any actions necessary to stop the DarkClusterStrategyFactory.
+   */
+  void shutdown();
 }

@@ -37,5 +37,5 @@ public interface DarkClusterDispatcher
    * @return true if request was sent, false otherwise
    */
   boolean sendRequest(final RestRequest originalRequest, final RestRequest darkRequest,
-                   final RequestContext requestContext, Callback<RestResponse> callback);
+                   final RequestContext requestContext, String darkClusterName, Callback<RestResponse> callback);
 }

@@ -27,7 +27,7 @@ import javax.annotation.Nonnull;
 import com.linkedin.common.util.Notifier;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
-import com.linkedin.d2.balancer.util.ClusterInfoProvider;
+import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.util.D2URIRewriter;
 import com.linkedin.d2.balancer.util.URIRewriter;
 import com.linkedin.darkcluster.api.DarkClusterManager;
@@ -51,19 +51,19 @@ public class DarkClusterManagerImpl implements DarkClusterManager
   private final Pattern _whiteListRegEx;
   private final Pattern _blackListRegEx;
   private final Notifier _notifier;
-  private final ClusterInfoProvider _clusterInfoProvider;
+  private final Facilities _facilities;
   private final String _sourceClusterName;
   private final DarkClusterStrategyFactory _darkClusterStrategyFactory;
   private Map<String, AtomicReference<URIRewriter>> _uriRewriterMap;
 
-  public DarkClusterManagerImpl(@Nonnull String sourceClusterName, @Nonnull ClusterInfoProvider clusterInfoProvider,
+  public DarkClusterManagerImpl(@Nonnull String sourceClusterName, @Nonnull Facilities facilities,
                                 @Nonnull DarkClusterStrategyFactory strategyFactory, String whiteListRegEx,
                                 String blackListRegEx, @Nonnull Notifier notifier)
   {
     _whiteListRegEx = whiteListRegEx == null ? null : Pattern.compile(whiteListRegEx);
     _blackListRegEx = blackListRegEx == null ? null : Pattern.compile(blackListRegEx);
     _notifier = notifier;
-    _clusterInfoProvider = clusterInfoProvider;
+    _facilities = facilities;
     _sourceClusterName = sourceClusterName;
     _darkClusterStrategyFactory = strategyFactory;
     _uriRewriterMap = new HashMap<>();
@@ -84,7 +84,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
         // We don't need to copy them here, but doing it just for safety.
         RestRequest reqCopy = originalRequest.builder().build();
         RequestContext newRequestContext = new RequestContext(originalRequestContext);
-        DarkClusterConfigMap configMap = _clusterInfoProvider.getDarkClusterConfigMap(_sourceClusterName);
+        DarkClusterConfigMap configMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
         for (Map.Entry<String, DarkClusterConfig> darkClusterConfigEntry : configMap.entrySet())
         {
           String darkClusterName = darkClusterConfigEntry.getKey();

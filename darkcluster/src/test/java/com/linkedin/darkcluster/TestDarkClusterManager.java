@@ -5,7 +5,7 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.linkedin.d2.DarkClusterConfig;
-import com.linkedin.d2.balancer.util.ClusterInfoProvider;
+import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterManager;
 import com.linkedin.darkcluster.api.DarkClusterStrategyFactory;
@@ -48,21 +48,23 @@ public class TestDarkClusterManager
   public void testBasic(String whitelist, String blacklist, String httpMethod, int expectedWhiteCount, int expectedBlackCount)
   {
     MockClusterInfoProvider clusterInfoProvider = new MockClusterInfoProvider();
+    Facilities facilities = new MockFacilities(clusterInfoProvider);
     MockClient mockClient = new MockClient(false);
     DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcherImpl(mockClient);
-    DarkClusterStrategyFactory strategyFactory = new DarkClusterStrategyFactoryImpl(clusterInfoProvider,
+    DarkClusterStrategyFactory strategyFactory = new DarkClusterStrategyFactoryImpl(facilities,
                                                                                     SOURCE_CLUSTER_NAME,
                                                                                     darkClusterDispatcher,
                                                                                     new DoNothingNotifier(),
                                                                                     new Random(SEED),
                                                                                     new CountingVerifierManager());
     DarkClusterManager darkClusterManager = new DarkClusterManagerImpl(SOURCE_CLUSTER_NAME,
-                                                                       clusterInfoProvider,
+                                                                       facilities,
                                                                        strategyFactory,
                                                                        whitelist,
                                                                        blacklist,
                                                                        new DoNothingNotifier());
 
+    strategyFactory.start();
     // This configuration will choose the ConstantMultiplierDarkClusterStrategy
     DarkClusterConfig darkClusterConfig = new DarkClusterConfig()
       .setMultiplier(1.0f);

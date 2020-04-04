@@ -65,4 +65,11 @@ public interface ClusterInfoProvider
   default void registerClusterListener(LoadBalancerClusterListener clusterListener)
   {
   }
+
+  /**
+   * Unregister a cluster listener.
+   */
+  default void unregisterClusterListener(LoadBalancerClusterListener clusterListener)
+  {
+  }
 }

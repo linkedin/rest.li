@@ -932,6 +932,12 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     _state.registerClusterListener(clusterListener);
   }
 
+  @Override
+  public void unregisterClusterListener(LoadBalancerClusterListener clusterListener)
+  {
+    _state.unregisterClusterListener(clusterListener);
+  }
+
   public static class SimpleLoadBalancerCountDownCallback implements
     LoadBalancerStateListenerCallback
   {

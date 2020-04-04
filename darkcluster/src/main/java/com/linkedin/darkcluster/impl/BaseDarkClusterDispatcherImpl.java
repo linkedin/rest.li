@@ -107,7 +107,7 @@ public class BaseDarkClusterDispatcherImpl implements BaseDarkClusterDispatcher
       {
         darkContext.putLocalAttr(R2Constants.FORCE_QUERY_TUNNEL, true);
       }
-      if (_dispatcher.sendRequest(originalRequest, darkRequest, requestContext, callback))
+      if (_dispatcher.sendRequest(originalRequest, darkRequest, requestContext, _darkClusterName, callback))
       {
         requestSent = true;
       }

@@ -40,7 +40,7 @@ public class DefaultDarkClusterDispatcherImpl implements DarkClusterDispatcher
 
   @Override
   public boolean sendRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext,
-                          Callback<RestResponse> callback)
+                             String darkClusterName, Callback<RestResponse> callback)
   {
     _client.restRequest(darkRequest, requestContext, callback);
     return true;

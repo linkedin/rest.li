@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import com.linkedin.common.util.Notifier;
+import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.LoadBalancerTestState;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
@@ -56,6 +57,7 @@ public class TestDarkClusterFilter
     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcherImpl(new MockClient(false));
     ClusterInfoProvider clusterInfoProvider = new SimpleLoadBalancer(new LoadBalancerTestState(), scheduledExecutorService);
+    Facilities facilities = new MockFacilities(clusterInfoProvider);
     Notifier notifier = new DoNothingNotifier();
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     String sourceClusterName = "MyCluster";
@@ -63,18 +65,19 @@ public class TestDarkClusterFilter
     DarkClusterVerifierManager verifierManager = new DarkClusterVerifierManagerImpl(darkClusterVerifier, executorService);
     Random random = new Random();
 
-    DarkClusterStrategyFactory darkClusterStrategyFactory = new DarkClusterStrategyFactoryImpl(clusterInfoProvider, sourceClusterName,
+    DarkClusterStrategyFactory darkClusterStrategyFactory = new DarkClusterStrategyFactoryImpl(facilities, sourceClusterName,
                                                                                                darkClusterDispatcher,
                                                                                                notifier, random,
                                                                                                verifierManager);
 
     DarkClusterManager darkClusterManager = new DarkClusterManagerImpl(sourceClusterName,
-                                                                       clusterInfoProvider,
+                                                                       facilities,
                                                                        darkClusterStrategyFactory,
                                                                        "", "",
                                                                        notifier);
     DarkClusterFilter darkClusterFilter = new DarkClusterFilter(darkClusterManager, verifierManager);
 
+    darkClusterStrategyFactory.start();
     RestRequest restRequest = new RestRequestBuilder(URI.create("foo")).build();
     darkClusterFilter.onRestRequest(restRequest, new RequestContext(), new HashMap<>(), new DummyNextFilter());
     darkClusterFilter.onRestError(new RuntimeException("test"), new RequestContext(), new HashMap<>(), new DummyNextFilter());

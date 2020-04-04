@@ -27,7 +27,7 @@ import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 
-class MockClusterInfoProvider implements ClusterInfoProvider
+public class MockClusterInfoProvider implements ClusterInfoProvider
 {
   Map<String, DarkClusterConfigMap> lookupMap = new HashMap<>();
   List<LoadBalancerClusterListener> clusterListeners = new ArrayList<>();
@@ -58,6 +58,12 @@ class MockClusterInfoProvider implements ClusterInfoProvider
   public void registerClusterListener(LoadBalancerClusterListener clusterListener)
   {
     clusterListeners.add(clusterListener);
+  }
+
+  @Override
+  public void unregisterClusterListener(LoadBalancerClusterListener clusterListener)
+  {
+    clusterListeners.remove(clusterListener);
   }
 
   /**
