@@ -850,7 +850,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
 
     private WaiterTimeoutCallback(final Callback<T> callback)
     {
-      _timeout = new SingleTimeout<>(_timeoutExecutor, _waiterTimeout, TimeUnit.MILLISECONDS, callback, (callback1) -> {
+      _timeout = new SingleTimeout<>(_timeoutExecutor, _waiterTimeout, TimeUnit.MILLISECONDS, callback, (callbackIfTimeout) -> {
 
         synchronized (_lock)
         {
@@ -858,7 +858,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
           _statsTracker.incrementWaiterTimedOut();
         }
         LOG.debug("{}: failing waiter due to waiter timeout", _poolName);
-        callback1.onError(
+        callbackIfTimeout.onError(
             new WaiterTimeoutException(
                 "Exceeded waiter timeout of " + _waiterTimeout + "ms: in Pool: "+ _poolName));
       });
