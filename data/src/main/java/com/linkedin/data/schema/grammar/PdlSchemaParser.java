@@ -49,6 +49,7 @@ import com.linkedin.data.grammar.PdlParser.UnionMemberAliasContext;
 import com.linkedin.data.grammar.PdlParser.UnionMemberDeclarationContext;
 import com.linkedin.data.schema.AbstractSchemaParser;
 import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.data.schema.ComplexDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.DataSchemaResolver;
@@ -414,23 +415,26 @@ public class PdlSchemaParser extends AbstractSchemaParser
   }
 
   private DataSchema parseAnonymousType(AnonymousTypeDeclarationContext anon) throws ParseException {
+    ComplexDataSchema complexDataSchema;
     if (anon.unionDeclaration() != null)
     {
-      return parseUnion(anon.unionDeclaration(), false);
+      complexDataSchema =  parseUnion(anon.unionDeclaration(), false);
     }
     else if (anon.mapDeclaration() != null)
     {
-      return parseMap(anon.mapDeclaration());
+      complexDataSchema = parseMap(anon.mapDeclaration());
     }
     else if (anon.arrayDeclaration() != null)
     {
-      return parseArray(anon.arrayDeclaration());
+      complexDataSchema = parseArray(anon.arrayDeclaration());
     }
     else
     {
       throw new ParseException(anon,
         "Unrecognized type parse node: " + anon.getText());
     }
+    setProperties(anon, complexDataSchema);
+    return complexDataSchema;
   }
 
   private NamedDataSchema parseNamedType(
@@ -754,6 +758,26 @@ public class PdlSchemaParser extends AbstractSchemaParser
 
     target.setProperties(properties);
     return properties;
+  }
+
+  /**
+   * Sets properties on the provided {@link ComplexDataSchema} using data parsed from the provided
+   * {@link AnonymousTypeDeclarationContext}.
+   *
+   * @param source source to read properties from
+   * @param target target on which to set properties
+   */
+  private void setProperties(AnonymousTypeDeclarationContext source, ComplexDataSchema target)
+      throws ParseException
+  {
+    Map<String, Object> properties = new HashMap<>(target.getProperties());
+
+    for (PropDeclarationContext prop: source.props)
+    {
+      addPropertiesAtPath(properties, prop);
+    }
+
+    target.setProperties(properties);
   }
 
   /**

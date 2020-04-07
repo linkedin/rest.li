@@ -1,0 +1,10 @@
+namespace com.linkedin.pegasus.generator.test.idl.unions
+
+record WithUnionProperties {
+  `union`:
+    @customProperty = "test"
+    union[
+      @java.class = "com.linkedin.pegasus.generator.test.pdl.fixtures.CustomInt"
+      typeref IntCustomType2 = int
+    ]
+}
