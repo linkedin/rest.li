@@ -1,0 +1,7 @@
+namespace com.linkedin.pegasus.generator.test.idl.maps
+
+record WithMapProperties {
+  ints:
+    @validate.minSize = 1
+    map[string, int]
+}
