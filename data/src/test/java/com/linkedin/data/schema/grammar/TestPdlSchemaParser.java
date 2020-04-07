@@ -247,15 +247,18 @@ public class TestPdlSchemaParser
     DataMap validate = new DataMap();
     validate.put("minSize", 1);
     expectedProperty.put("validate", validate);
+    Assert.assertTrue(arrayField.getProperties().isEmpty());
     Assert.assertEquals(arrayField.getType().getProperties(), expectedProperty);
 
     RecordDataSchema.Field mapField = mainRecordSchema.getField("mapField");
     Assert.assertNotNull(mapField);
+    Assert.assertTrue(mapField.getProperties().isEmpty());
     Assert.assertFalse(mapField.getType().getProperties().isEmpty());
     Assert.assertEquals(mapField.getType().getProperties(), expectedProperty);
 
     RecordDataSchema.Field unionField = mainRecordSchema.getField("unionField");
     Assert.assertNotNull(unionField);
+    Assert.assertTrue(unionField.getProperties().isEmpty());
     Assert.assertFalse(unionField.getType().getProperties().isEmpty());
     validate.clear();
     validate.put("minValue", 0);
