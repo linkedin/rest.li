@@ -38,111 +38,84 @@ import org.testng.annotations.Test;
 public class TestDarkClusterVerifierManager
 {
   private static final String DARK_CLUSTER1_NAME = "darkCluster1";
+  private ExecutorService _executorService;
+  private DarkClusterVerifierManager _verifierManager;
+  private TestVerifier _verifier;
+
+  private void setup(boolean verifierEnabled)
+  {
+    _verifier = new TestVerifier(verifierEnabled);
+    _executorService = Executors.newSingleThreadExecutor();
+    _verifierManager = new DarkClusterVerifierManagerImpl(_verifier, _executorService);
+  }
 
   @Test
-  void testVerifierEnabled()
+  public void testVerifierEnabled()
     throws InterruptedException
   {
-    TestVerifier verifier = new TestVerifier(true);
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-    DarkClusterVerifierManager verifierManager = new DarkClusterVerifierManagerImpl(verifier, executorService);
+    setup(true);
     RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("foo")).build();
     RestResponse res = new RestResponseBuilder().build();
-    verifierManager.onDarkResponse(dummyRestRequest, res, DARK_CLUSTER1_NAME);
-    verifierManager.onDarkResponse(dummyRestRequest, res, DARK_CLUSTER1_NAME);
-    verifierManager.onResponse(dummyRestRequest, res);
+    _verifierManager.onDarkResponse(dummyRestRequest, res, DARK_CLUSTER1_NAME);
+    _verifierManager.onDarkResponse(dummyRestRequest, res, DARK_CLUSTER1_NAME);
+    _verifierManager.onResponse(dummyRestRequest, res);
 
-    // because it takes some time execute the previous three tasks on the executor, add a 4th one
-    // that can signal we are done, given the executor is single threaded and will process them in order.
-    final CountDownLatch latch = new CountDownLatch(1);
-    Runnable myCallable = latch::countDown;
-    executorService.submit(myCallable);
-    if (!latch.await(30, TimeUnit.SECONDS))
-    {
-      fail("unable to execute task on executor");
-    }
-    Assert.assertEquals(verifier.onResponseCount, 1, "expected on response count of 1");
-    Assert.assertEquals(verifier.onDarkResponseCount, 2, "expected on dark response count of 2");
+    waitForLatch();
+    Assert.assertEquals(_verifier.onResponseCount, 1, "expected on response count of 1");
+    Assert.assertEquals(_verifier.onDarkResponseCount, 2, "expected on dark response count of 2");
   }
 
   @Test
   void testVerifierDisabled()
     throws InterruptedException
   {
-    TestVerifier verifier = new TestVerifier(false);
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-    DarkClusterVerifierManager verifierManager = new DarkClusterVerifierManagerImpl(verifier, executorService);
+    setup(false);
     RestRequest req = new RestRequestBuilder(URI.create("foo")).build();
     RestResponse res = new RestResponseBuilder().build();
-    verifierManager.onDarkResponse(req, res, DARK_CLUSTER1_NAME);
-    verifierManager.onDarkResponse(req, res, DARK_CLUSTER1_NAME);
-    verifierManager.onResponse(req, res);
+    _verifierManager.onDarkResponse(req, res, DARK_CLUSTER1_NAME);
+    _verifierManager.onDarkResponse(req, res, DARK_CLUSTER1_NAME);
+    _verifierManager.onResponse(req, res);
 
-    // because it takes some time execute the previous three tasks on the executor, add a 4th one
-    // that can signal we are done, given the executor is single threaded and will process them in order.
-    final CountDownLatch latch = new CountDownLatch(1);
-    Runnable myCallable = latch::countDown;
-    executorService.submit(myCallable);
-    if (!latch.await(30, TimeUnit.SECONDS))
-    {
-      fail("unable to execute task on executor");
-    }
-    Assert.assertEquals(verifier.onResponseCount, 0, "expected on response count of 0");
-    Assert.assertEquals(verifier.onDarkResponseCount, 0, "expected on dark response count of 0");
+    waitForLatch();
+    Assert.assertEquals(_verifier.onResponseCount, 0, "expected on response count of 0");
+    Assert.assertEquals(_verifier.onDarkResponseCount, 0, "expected on dark response count of 0");
   }
 
   @Test
   void testVerifierErrorHandling()
     throws InterruptedException
   {
-    TestVerifier verifier = new TestVerifier(true);
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-    DarkClusterVerifierManager verifierManager = new DarkClusterVerifierManagerImpl(verifier, executorService);
+    setup(true);
     RestRequest req = new RestRequestBuilder(URI.create("foo")).build();
-    verifierManager.onDarkError(req, new Throwable(), DARK_CLUSTER1_NAME);
-    verifierManager.onDarkError(req, new Throwable(), DARK_CLUSTER1_NAME);
-    verifierManager.onError(req, new Throwable());
+    _verifierManager.onDarkError(req, new Throwable(), DARK_CLUSTER1_NAME);
+    _verifierManager.onDarkError(req, new Throwable(), DARK_CLUSTER1_NAME);
+    _verifierManager.onError(req, new Throwable());
 
-    // because it takes some time execute the previous three tasks on the executor, add a 4th one
-    // that can signal we are done, given the executor is single threaded and will process them in order.
-    final CountDownLatch latch = new CountDownLatch(1);
-    Runnable myCallable = latch::countDown;
-    executorService.submit(myCallable);
-    if (!latch.await(30, TimeUnit.SECONDS))
-    {
-      fail("unable to execute task on executor");
-    }
-    Assert.assertEquals(verifier.onResponseCount, 1, "expected on response count of 1");
-    Assert.assertEquals(verifier.onDarkResponseCount, 2, "expected on dark response count of 2");
+    waitForLatch();
+    Assert.assertEquals(_verifier.onResponseCount, 1, "expected on response count of 1");
+    Assert.assertEquals(_verifier.onDarkResponseCount, 2, "expected on dark response count of 2");
   }
 
   @Test
   void testSafeVerifier()
     throws InterruptedException
   {
+    // only use this to set up the executor service.
+    setup(false);
     DarkClusterVerifier verifier = new SafeDarkClusterVerifier(new TestThrowingVerifier());
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-    DarkClusterVerifierManager verifierManager = new DarkClusterVerifierManagerImpl(verifier, executorService);
+    DarkClusterVerifierManager verifierManager = new DarkClusterVerifierManagerImpl(verifier, _executorService);
     RestRequest req = new RestRequestBuilder(URI.create("foo")).build();
     RestResponse res = new RestResponseBuilder().build();
     verifierManager.onDarkResponse(req, res, DARK_CLUSTER1_NAME);
     verifierManager.onDarkResponse(req, res, DARK_CLUSTER1_NAME);
     verifierManager.onResponse(req, res);
 
-    // because it takes some time execute the previous three tasks on the executor, add a 4th one
-    // that can signal we are done, given the executor is single threaded and will process them in order.
-    final CountDownLatch latch = new CountDownLatch(1);
-    Runnable myCallable = latch::countDown;
-    executorService.submit(myCallable);
-    if (!latch.await(30, TimeUnit.SECONDS))
-    {
-      fail("unable to execute task on executor");
-    }
+    waitForLatch();
     // if we got here, we successfully caught the exceptions
 
     // now retry without the SafeDarkClusterVerifier
     DarkClusterVerifier verifier2 = new TestThrowingVerifier();
-    DarkClusterVerifierManager verifierManager2 = new DarkClusterVerifierManagerImpl(verifier2, executorService);
+    DarkClusterVerifierManager verifierManager2 = new DarkClusterVerifierManagerImpl(verifier2, _executorService);
     RestRequest req2 = new RestRequestBuilder(URI.create("foo")).build();
     RestResponse res2 = new RestResponseBuilder().build();
     try
@@ -151,15 +124,7 @@ public class TestDarkClusterVerifierManager
       verifierManager2.onDarkResponse(req2, res2, DARK_CLUSTER1_NAME);
       verifierManager2.onResponse(req2, res2);
 
-      // because it takes some time execute the previous three tasks on the executor, add a 4th one
-      // that can signal we are done, given the executor is single threaded and will process them in order.
-      final CountDownLatch latch2 = new CountDownLatch(1);
-      Runnable myRunnable2 = latch2::countDown;
-      executorService.submit(myRunnable2);
-      if (!latch2.await(30, TimeUnit.SECONDS))
-      {
-        fail("unable to execute task on executor");
-      }
+      waitForLatch();
       // we shouldn't get here, should have thrown exception
       fail("shouldn't have gotten here");
     }
@@ -168,6 +133,20 @@ public class TestDarkClusterVerifierManager
       // expected, because we aren't using the SafeDarkClusterVerifier here
     }
 
+  }
+
+  private void waitForLatch()
+    throws InterruptedException
+  {
+    // because it takes some time execute the previous three tasks on the executor, add a 4th one
+    // that can signal we are done, given the executor is single threaded and will process them in order.
+    final CountDownLatch latch = new CountDownLatch(1);
+    Runnable myCallable = latch::countDown;
+    _executorService.submit(myCallable);
+    if (!latch.await(30, TimeUnit.SECONDS))
+    {
+      fail("unable to execute task on executor");
+    }
   }
 
   static class TestVerifier implements DarkClusterVerifier

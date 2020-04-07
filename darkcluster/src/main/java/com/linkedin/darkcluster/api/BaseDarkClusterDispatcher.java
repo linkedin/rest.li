@@ -35,5 +35,14 @@ import com.linkedin.r2.message.rest.RestRequest;
  */
 public interface BaseDarkClusterDispatcher
 {
-  boolean sendRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext, int numRequestDuplicates);
+  /**
+   * sends the request to the dark cluster the specified number of times. The original request is passed for convenience if
+   * needed for reference.
+   * @param originalRequest original request that the source cluster received
+   * @param darkRequest dark request to send to dark cluster
+   * @param originalRequestContext request context of original request. Should not be modified.
+   * @param numRequestDuplicates number of times to send this dark request
+   * @return true if request sent, false otherwise.
+   */
+  boolean sendRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext originalRequestContext, int numRequestDuplicates);
 }

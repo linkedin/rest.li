@@ -30,12 +30,13 @@ public interface DarkClusterDispatcher
   /**
    * Sends the request to the dark cluster.
    *
-   * @param originalRequest a copy of the original request
+   * @param originalRequest the original request
    * @param darkRequest the request that should be sent
-   * @param requestContext the requestContext corresponding to the darkRequest
+   * @param originalRequestContext the original Request Context corresponding to the original request
+   * @param darkClusterName the dark cluster this request is being sent to
    * @param callback the callback to invoke on receiving the dark response
    * @return true if request was sent, false otherwise
    */
-  boolean sendRequest(final RestRequest originalRequest, final RestRequest darkRequest,
-                   final RequestContext requestContext, String darkClusterName, Callback<RestResponse> callback);
+  boolean sendRequest(RestRequest originalRequest, RestRequest darkRequest,
+                      RequestContext originalRequestContext, String darkClusterName, Callback<RestResponse> callback);
 }

@@ -26,7 +26,6 @@ import com.linkedin.common.util.Notifier;
 import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterVerifierManager;
-import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -61,7 +60,7 @@ public class BaseDarkClusterDispatcherImpl implements BaseDarkClusterDispatcher
     _verifierManager = verifierManager;
   }
 
-  public boolean sendRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext, int numRequestDuplicates)
+  public boolean sendRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext originalRequestContext, int numRequestDuplicates)
   {
     boolean requestSent = false;
 
@@ -101,13 +100,7 @@ public class BaseDarkClusterDispatcherImpl implements BaseDarkClusterDispatcher
     for (int i = 0; i < numRequestDuplicates; i++)
     {
       _requestCount.incrementAndGet();
-      final RequestContext darkContext = new RequestContext();
-      Object requestWasTunneled = requestContext.getLocalAttr(R2Constants.IS_QUERY_TUNNELED);
-      if (requestWasTunneled != null && (Boolean) requestWasTunneled)
-      {
-        darkContext.putLocalAttr(R2Constants.FORCE_QUERY_TUNNEL, true);
-      }
-      if (_dispatcher.sendRequest(originalRequest, darkRequest, requestContext, _darkClusterName, callback))
+      if (_dispatcher.sendRequest(originalRequest, darkRequest, originalRequestContext, _darkClusterName, callback))
       {
         requestSent = true;
       }

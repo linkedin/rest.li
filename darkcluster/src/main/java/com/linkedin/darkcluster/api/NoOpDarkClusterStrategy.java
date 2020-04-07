@@ -24,9 +24,26 @@ import com.linkedin.r2.message.rest.RestRequest;
  */
 public class NoOpDarkClusterStrategy implements DarkClusterStrategy
 {
+  /**
+   * status is what this class should return on each invocation of handleRequest. Tests
+   * may want to pretend that a strategy was returned, but if this get's used in production,
+   * a status of false (request not sent) is more correct.
+   */
+  private final boolean _status;
+
+  public NoOpDarkClusterStrategy()
+  {
+    this(false);
+  }
+
+  public NoOpDarkClusterStrategy(boolean status)
+  {
+    _status = status;
+  }
+
   @Override
   public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
-    return false;
+    return _status;
   }
 }

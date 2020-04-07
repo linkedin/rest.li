@@ -78,7 +78,7 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
     lookupMap.put(sourceClusterName, darkClusterConfigMap);
   }
 
-  void triggerClusterRefresh(String clusterName)
+  void notifyListenersClusterAdded(String clusterName)
   {
     for (LoadBalancerClusterListener listener : clusterListeners)
     {
@@ -86,7 +86,7 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
     }
   }
 
-  void triggerClusterRemove(String clusterName)
+  void notifyListenersClusterRemoved(String clusterName)
   {
     for (LoadBalancerClusterListener listener : clusterListeners)
     {

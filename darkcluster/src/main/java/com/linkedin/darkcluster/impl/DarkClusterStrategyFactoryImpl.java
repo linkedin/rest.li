@@ -43,6 +43,8 @@ import com.linkedin.darkcluster.api.NoOpDarkClusterStrategy;
  */
 public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactory
 {
+  private static final AtomicReference<DarkClusterStrategy> NO_OP_DARK_CLUSTER_STRATEGY = new AtomicReference<>(new NoOpDarkClusterStrategy());
+
   // ClusterInfoProvider isn't available until the D2 client is started, so it can't be
   // populated during construction time.
   private final Facilities _facilities;
@@ -94,8 +96,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     }
     // it's theoretically possible for the Listener to remove the entry after the containsKey but before we retrieve it. Rather
     // than adding synchronization between accessors of _darkStrategyMap, we will make each put or get resilient
-    //return _darkStrategyMap.get(darkClusterName).get();
-    return _darkStrategyMap.getOrDefault(darkClusterName, new AtomicReference<DarkClusterStrategy>(new NoOpDarkClusterStrategy())).get();
+    return _darkStrategyMap.getOrDefault(darkClusterName, NO_OP_DARK_CLUSTER_STRATEGY).get();
   }
 
   /**
@@ -107,8 +108,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     {
       BaseDarkClusterDispatcher baseDarkClusterDispatcher = new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher,
                                                                                               _notifier, _verifierManager);
-      return new ConstantMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
-                                                       baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(), _random);
+      return new RelativeTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
+                                                              baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(), _random);
     }
     else
     {

@@ -29,11 +29,12 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 
 /**
- * ConstantMultiplierDarkClusterStrategy figures out how many dark requests to send. It uses the {@link ClusterInfoProvider} to determine the number of
- * instances in both the source and target cluster, and uses that to calculate the number of request to send in order to make the level of traffic
- * proportional to itself on any instance in the dark cluster (accounting for multiplier), assuming all hosts in the source cluster send traffic.
+ * RelativeTrafficMultiplierDarkClusterStrategy figures out how many dark requests to send. It uses the {@link ClusterInfoProvider} to determine
+ * the number ofinstances in both the source and target cluster, and uses that to calculate the number of request to send in order to make the
+ * level of traffic proportional to itself on any instance in the dark cluster (accounting for multiplier), assuming all hosts in the source cluster
+ * send traffic.
  */
-public class ConstantMultiplierDarkClusterStrategy implements DarkClusterStrategy
+public class RelativeTrafficMultiplierDarkClusterStrategy implements DarkClusterStrategy
 {
   private final String _originalClusterName;
   private final String _darkClusterName;
@@ -43,11 +44,11 @@ public class ConstantMultiplierDarkClusterStrategy implements DarkClusterStrateg
   private final Random _random;
   private final ClusterInfoProvider _clusterInfoProvider;
 
-  public ConstantMultiplierDarkClusterStrategy(@Nonnull String originalClusterName, @Nonnull String darkClusterName, @Nonnull Float multiplier,
-                                               @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
-                                               @Nonnull Notifier notifier,
-                                               @Nonnull ClusterInfoProvider clusterInfoProvider,
-                                               @Nonnull Random random)
+  public RelativeTrafficMultiplierDarkClusterStrategy(@Nonnull String originalClusterName, @Nonnull String darkClusterName, @Nonnull Float multiplier,
+                                                      @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
+                                                      @Nonnull Notifier notifier,
+                                                      @Nonnull ClusterInfoProvider clusterInfoProvider,
+                                                      @Nonnull Random random)
   {
     _originalClusterName = originalClusterName;
     _darkClusterName = darkClusterName;

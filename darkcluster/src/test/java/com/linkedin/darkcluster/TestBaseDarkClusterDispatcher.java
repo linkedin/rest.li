@@ -20,7 +20,7 @@ import java.net.URI;
 
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.darkcluster.impl.BaseDarkClusterDispatcherImpl;
-import com.linkedin.darkcluster.impl.DefaultDarkClusterDispatcherImpl;
+import com.linkedin.darkcluster.impl.DefaultDarkClusterDispatcher;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -55,7 +55,7 @@ public class TestBaseDarkClusterDispatcher
   public void testBaseDispatcher(int numDuplicates, boolean failRequests, boolean requestSent, int expectedSuccessCount,
                             int expectedRequestCount, int expectedExceptionCount)
   {
-    DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcherImpl(new MockClient(failRequests));
+    DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcher(new MockClient(failRequests));
     BaseDarkClusterDispatcherImpl baseDispatcher = new BaseDarkClusterDispatcherImpl(DARK_CLUSTER_NAME,
                                                                                  darkClusterDispatcher,
                                                                                  new DoNothingNotifier(),

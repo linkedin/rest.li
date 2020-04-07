@@ -19,7 +19,6 @@ package com.linkedin.d2.balancer.simple;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
-import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallback;
 import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
@@ -70,7 +69,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -78,7 +76,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -1621,19 +1618,19 @@ public class SimpleLoadBalancerStateTest
   {
     reset();
 
-    TestClusterListener clusterListener = new TestClusterListener();
+    MockClusterListener clusterListener = new MockClusterListener();
     _state.registerClusterListener(clusterListener);
-    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 0, "expected zero count");
+    assertEquals(clusterListener.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 0, "expected zero count since no action has been triggered");
 
     // first add a cluster
     _state.listenToCluster(CLUSTER1_CLUSTER_NAME, new NullStateListenerCallback());
     _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
 
-    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
+    assertEquals(clusterListener.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call after clusterRegistry put");
 
     // then update the cluster
     _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
-    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 2, "expected 2 calls");
+    assertEquals(clusterListener.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 2, "expected 2 calls after additional clusterRegistry put");
   }
 
   @Test
@@ -1641,19 +1638,19 @@ public class SimpleLoadBalancerStateTest
   {
     reset();
 
-    TestClusterListener clusterListener = new TestClusterListener();
+    MockClusterListener clusterListener = new MockClusterListener();
     _state.registerClusterListener(clusterListener);
-    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 0, "expected zero count");
+    assertEquals(clusterListener.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 0, "expected zero count");
 
     // first add a cluster
     _state.listenToCluster(CLUSTER1_CLUSTER_NAME, new NullStateListenerCallback());
     _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
 
-    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
+    assertEquals(clusterListener.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call after put");
 
     _state.unregisterClusterListener(clusterListener);
     _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
-    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call, same as before");
+    assertEquals(clusterListener.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call, since we shouldn't have seen the latest put");
   }
 
   @Test
@@ -1661,17 +1658,19 @@ public class SimpleLoadBalancerStateTest
   {
     reset();
 
-    TestClusterListener clusterListener = new TestClusterListener();
+    MockClusterListener clusterListener = new MockClusterListener();
     _state.registerClusterListener(clusterListener);
-    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 0, "expected zero count");
+    assertEquals(clusterListener.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 0, "expected zero count");
 
     // first add a cluster
     _state.listenToCluster(CLUSTER1_CLUSTER_NAME, new NullStateListenerCallback());
     _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
-    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
+    assertEquals(clusterListener.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call after put");
+    assertEquals(clusterListener.getClusterRemovedCount(CLUSTER1_CLUSTER_NAME), 0, "expected nothing yet");
 
     _clusterRegistry.remove(CLUSTER1_CLUSTER_NAME);
-    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 2, "expected count of 2");
+    assertEquals(clusterListener.getClusterRemovedCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 after remove");
+    assertEquals(clusterListener.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 1, "Nothing more should have been added to the added count");
   }
 
   @Test
@@ -1679,12 +1678,12 @@ public class SimpleLoadBalancerStateTest
   {
     reset();
 
-    TestClusterListener clusterListener = new TestClusterListener();
+    MockClusterListener clusterListener = new MockClusterListener();
     _state.registerClusterListener(clusterListener);
     _state.registerClusterListener(clusterListener);
     _state.listenToCluster(CLUSTER1_CLUSTER_NAME, new NullStateListenerCallback());
     _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
-    assertEquals(clusterListener.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
+    assertEquals(clusterListener.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call since duplicates are not allowed");
 
   }
 
@@ -1693,17 +1692,20 @@ public class SimpleLoadBalancerStateTest
   {
     reset();
 
-    TestClusterListener clusterListener1 = new TestClusterListener();
+    MockClusterListener clusterListener1 = new MockClusterListener();
     _state.registerClusterListener(clusterListener1);
-    TestClusterListener clusterListener2 = new TestClusterListener();
+    MockClusterListener clusterListener2 = new MockClusterListener();
     _state.registerClusterListener(clusterListener2);
+
     _state.listenToCluster(CLUSTER1_CLUSTER_NAME, new NullStateListenerCallback());
     _state.listenToCluster(CLUSTER2_CLUSTER_NAME, new NullStateListenerCallback());
+
     _clusterRegistry.put(CLUSTER1_CLUSTER_NAME, new ClusterProperties(CLUSTER1_CLUSTER_NAME));
     _clusterRegistry.put(CLUSTER2_CLUSTER_NAME, new ClusterProperties(CLUSTER2_CLUSTER_NAME));
     _clusterRegistry.put(CLUSTER2_CLUSTER_NAME, new ClusterProperties(CLUSTER2_CLUSTER_NAME));
-    assertEquals(clusterListener1.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
-    assertEquals(clusterListener2.getCount(CLUSTER2_CLUSTER_NAME), 2, "expected 2 call");
+
+    assertEquals(clusterListener1.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call for cluster1");
+    assertEquals(clusterListener2.getClusterAddedCount(CLUSTER2_CLUSTER_NAME), 2, "expected 2 call for cluster 2");
   }
 
   @Test
@@ -1711,16 +1713,16 @@ public class SimpleLoadBalancerStateTest
                                                        InterruptedException
   {
     reset();
-    TestClusterListener clusterListener1 = new TestClusterListener();
+    MockClusterListener clusterListener1 = new MockClusterListener();
     _state.registerClusterListener(clusterListener1);
-    TestClusterListener clusterListener2 = new TestClusterListener();
+    MockClusterListener clusterListener2 = new MockClusterListener();
     _state.registerClusterListener(clusterListener2);
 
     _state.listenToCluster(CLUSTER1_CLUSTER_NAME, new NullStateListenerCallback());
     _state.listenToCluster(CLUSTER2_CLUSTER_NAME, new NullStateListenerCallback());
 
-    assertEquals(clusterListener1.getCount(CLUSTER1_CLUSTER_NAME), 0, "expected 0 call");
-    assertEquals(clusterListener1.getCount(CLUSTER2_CLUSTER_NAME), 0, "expected 0 call");
+    assertEquals(clusterListener1.getClusterRemovedCount(CLUSTER1_CLUSTER_NAME), 0, "expected 0 call");
+    assertEquals(clusterListener1.getClusterRemovedCount(CLUSTER2_CLUSTER_NAME), 0, "expected 0 call");
     TestShutdownCallback callback = new TestShutdownCallback();
 
     _state.shutdown(callback);
@@ -1730,50 +1732,8 @@ public class SimpleLoadBalancerStateTest
       fail("unable to shut down state");
     }
 
-    assertEquals(clusterListener1.getCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call");
-    assertEquals(clusterListener1.getCount(CLUSTER2_CLUSTER_NAME), 1, "expected 1 call");
-  }
-
-  public static class TestClusterListener implements LoadBalancerClusterListener
-  {
-    // Store if notified on both add and remove
-    private Map<String, AtomicInteger> notificationCounter = new ConcurrentHashMap<>();
-
-    @Override
-    public void onClusterAdded(String clusterName)
-    {
-      incrementCount(clusterName);
-    }
-
-    @Override
-    public void onClusterRemoved(String clusterName)
-    {
-      incrementCount(clusterName);
-    }
-
-    public int getCount(String clusterName)
-    {
-      if (clusterName != null)
-      {
-        return notificationCounter.getOrDefault(clusterName, new AtomicInteger(0)).intValue();
-      }
-      return 0;
-    }
-
-    private void incrementCount(String clusterName)
-    {
-      AtomicInteger count = notificationCounter.get(clusterName);
-      if (count == null)
-      {
-        count = new AtomicInteger();
-        AtomicInteger curCount = notificationCounter.putIfAbsent(clusterName, count);
-        if (curCount != null)
-        {
-          count = curCount;
-        }
-      }
-      count.incrementAndGet();
-    }
+    assertEquals(clusterListener1.getClusterRemovedCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call indicating removal on shutdown");
+    assertEquals(clusterListener1.getClusterRemovedCount(CLUSTER2_CLUSTER_NAME), 1, "expected 1 call indicating removal on shutdown");
   }
 
   private static class TestShutdownCallback implements PropertyEventShutdownCallback

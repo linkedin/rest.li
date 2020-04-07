@@ -165,7 +165,8 @@ public class SimpleLoadBalancerTest
 
   private SimpleLoadBalancer setupLoadBalancer(LoadBalancerState state, MockStore<ServiceProperties> serviceRegistry,
       MockStore<ClusterProperties> clusterRegistry, MockStore<UriProperties> uriRegistry)
-      throws ExecutionException, InterruptedException {
+      throws ExecutionException, InterruptedException
+  {
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
         new HashMap<>();
     Map<String, TransportClientFactory> clientFactories = new HashMap<>();
@@ -175,7 +176,8 @@ public class SimpleLoadBalancerTest
     clientFactories.put(PropertyKeys.HTTP_SCHEME, new DoNothingClientFactory());
     clientFactories.put(PropertyKeys.HTTPS_SCHEME, new DoNothingClientFactory());
 
-    if (loadBalancerState == null) {
+    if (loadBalancerState == null)
+    {
       loadBalancerState =
           new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
               clientFactories, loadBalancerStrategyFactories);
@@ -306,11 +308,11 @@ public class SimpleLoadBalancerTest
     Assert.assertEquals(returnedDarkClusterConfigMap.size(), 0, "expected empty map");
   }
 
-  @Test
   /**
    * The Register cluster Listener code is already tested in SimpleLoadBalancerStateTest, this is here for testing the
    * SimpleLoadBalancer API exposing this.
    */
+  @Test
   public void testClusterInfoProviderRegisterClusterListener()
     throws InterruptedException, ExecutionException, ServiceUnavailableException
   {
@@ -321,32 +323,32 @@ public class SimpleLoadBalancerTest
     FutureCallback<None> balancerCallback = new FutureCallback<None>();
     loadBalancer.start(balancerCallback);
     balancerCallback.get();
-    TestClusterListener testClusterListener = new TestClusterListener();
+    MockClusterListener testClusterListener = new MockClusterListener();
     loadBalancer.registerClusterListener(testClusterListener);
     loadBalancer.listenToCluster(CLUSTER1_NAME, false, new LoadBalancerState.NullStateListenerCallback());
     clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
                                                              Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
                                                              new DarkClusterConfigMap()));
-    Assert.assertEquals(testClusterListener.addCount, 1, "expected add count of 1");
-    Assert.assertEquals(testClusterListener.removeCount, 0, "expected remove count of 0");
+    Assert.assertEquals(testClusterListener.getClusterAddedCount(CLUSTER1_NAME), 1, "expected add count of 1");
+    Assert.assertEquals(testClusterListener.getClusterRemovedCount(CLUSTER1_NAME), 0, "expected remove count of 0");
 
     final CountDownLatch latch = new CountDownLatch(1);
-    PropertyEventShutdownCallback callback = () -> latch.countDown();
+    PropertyEventShutdownCallback callback = latch::countDown;
     loadBalancer.shutdown(callback);
     if (!latch.await(60, TimeUnit.SECONDS))
     {
       fail("unable to shutdown state");
     }
-    Assert.assertEquals(testClusterListener.addCount, 1, "expected add count of 1");
-    Assert.assertEquals(testClusterListener.removeCount, 1, "expected remove count of 1");
+    Assert.assertEquals(testClusterListener.getClusterAddedCount(CLUSTER1_NAME), 1, "expected add count of 1 after shutdown");
+    Assert.assertEquals(testClusterListener.getClusterRemovedCount(CLUSTER1_NAME), 1, "expected remove count of 1 after shutdown");
 
     // now unregister, and we don't expect the counts to change.
     loadBalancer.unregisterClusterListener(testClusterListener);
     clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
                                                              Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
                                                              new DarkClusterConfigMap()));
-    Assert.assertEquals(testClusterListener.addCount, 1, "expected add count of 1");
-    Assert.assertEquals(testClusterListener.removeCount, 0, "expected remove count of 0");
+    Assert.assertEquals(testClusterListener.getClusterAddedCount(CLUSTER1_NAME), 1, "expected add count of 1");
+    Assert.assertEquals(testClusterListener.getClusterRemovedCount(CLUSTER1_NAME), 0, "expected remove count of 0");
 
   }
 
@@ -361,41 +363,22 @@ public class SimpleLoadBalancerTest
     FutureCallback<None> balancerCallback = new FutureCallback<None>();
     loadBalancer.start(balancerCallback);
     balancerCallback.get();
-    TestClusterListener testClusterListener = new TestClusterListener();
+    MockClusterListener testClusterListener = new MockClusterListener();
     loadBalancer.registerClusterListener(testClusterListener);
     loadBalancer.listenToCluster(CLUSTER1_NAME, false, new LoadBalancerState.NullStateListenerCallback());
     clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
                                                              Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
                                                              new DarkClusterConfigMap()));
-    Assert.assertEquals(testClusterListener.addCount, 1, "expected add count of 1");
-    Assert.assertEquals(testClusterListener.removeCount, 0, "expected remove count of 0");
+    Assert.assertEquals(testClusterListener.getClusterAddedCount(CLUSTER1_NAME), 1, "expected add count of 1");
+    Assert.assertEquals(testClusterListener.getClusterRemovedCount(CLUSTER1_NAME), 0, "expected remove count of 0");
 
     // now unregister, and we don't expect the counts to change.
     loadBalancer.unregisterClusterListener(testClusterListener);
     clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
                                                              Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
                                                              new DarkClusterConfigMap()));
-    Assert.assertEquals(testClusterListener.addCount, 1, "expected add count of 1");
-    Assert.assertEquals(testClusterListener.removeCount, 0, "expected remove count of 0");
-
-  }
-
-  private static class TestClusterListener implements LoadBalancerClusterListener
-  {
-    int addCount = 0;
-    int removeCount = 0;
-
-    @Override
-    public void onClusterAdded(String clusterName)
-    {
-      addCount++;
-    }
-
-    @Override
-    public void onClusterRemoved(String clusterName)
-    {
-      removeCount++;
-    }
+    Assert.assertEquals(testClusterListener.getClusterAddedCount(CLUSTER1_NAME), 1, "expected unchanged add count of 1 because unregistered ");
+    Assert.assertEquals(testClusterListener.getClusterRemovedCount(CLUSTER1_NAME), 0, "expected unchanged remove count of 0 because unregistered");
   }
 
   @Test(groups = { "small", "back-end" })
