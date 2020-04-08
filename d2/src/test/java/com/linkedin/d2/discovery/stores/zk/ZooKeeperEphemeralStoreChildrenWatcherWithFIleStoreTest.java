@@ -25,6 +25,7 @@ import com.linkedin.d2.discovery.event.PropertyEventSubscriber;
 import com.linkedin.d2.discovery.stores.PropertySetStringMerger;
 import com.linkedin.d2.discovery.stores.PropertySetStringSerializer;
 import com.linkedin.test.util.AssertionMethods;
+import com.linkedin.test.util.ClockedExecutor;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
@@ -35,6 +36,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.zookeeper.CreateMode;
@@ -58,7 +60,7 @@ public class ZooKeeperEphemeralStoreChildrenWatcherWithFIleStoreTest
   private ZKConnection _zkClient;
   private ZKServer _zkServer;
   private int _port;
-  private ExecutorService _executor = Executors.newSingleThreadExecutor();
+  private ScheduledExecutorService _executor = Executors.newSingleThreadScheduledExecutor();
   private Map<String, String> _testData;
 
   /**
@@ -114,7 +116,6 @@ public class ZooKeeperEphemeralStoreChildrenWatcherWithFIleStoreTest
   @Test
   public void testRecreatingNodeListening() throws Exception
   {
-
     Set<String> outputDataWithFileStore = new ConcurrentHashSet<>();
     Set<String> outputDataWithoutFileStore = new ConcurrentHashSet<>();
     String tmpDataPath = LoadBalancerUtil.createTempDirectory("EphemeralStoreFileStore").getAbsolutePath();
@@ -135,6 +136,7 @@ public class ZooKeeperEphemeralStoreChildrenWatcherWithFIleStoreTest
     callback.get(5, TimeUnit.SECONDS);
 
     addNode("/bucket/child-6", "6");
+
     retryCheckSame(outputDataWithFileStore, outputDataWithoutFileStore);
     retryCheckSame(outputDataWithFileStore, new HashSet<>(_testData.values()));
 
@@ -219,7 +221,9 @@ public class ZooKeeperEphemeralStoreChildrenWatcherWithFIleStoreTest
 
   private void retryCheckSame(Set<String> outputData, Set<String> outputData2) throws Exception
   {
-    AssertionMethods.assertWithTimeout(5000, () -> Assert.assertEquals(outputData, outputData2));
+    AssertionMethods.assertWithTimeout(5000, () ->{
+      Assert.assertEquals(outputData, outputData2);
+    });
   }
 
   /**
@@ -233,7 +237,8 @@ public class ZooKeeperEphemeralStoreChildrenWatcherWithFIleStoreTest
 
     final ZooKeeperEphemeralStore<Set<String>> publisher =
       new ZooKeeperEphemeralStore<>(client, new PropertySetStringSerializer(),
-        new PropertySetStringMerger(), "/", false, true, tmpFileStoreDataPath);
+        new PropertySetStringMerger(), "/", false, true, tmpFileStoreDataPath,
+          _executor, 500);
     final PropertyEventSubscriber<Set<String>> subscriber = new SubscriberToOutputData(outputData);
 
     publisher.start(new Callback<None>()

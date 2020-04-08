@@ -19,8 +19,11 @@ package com.linkedin.d2.discovery.stores.zk.builder;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
 /**
@@ -33,6 +36,8 @@ public class ZooKeeperPermanentStoreBuilder<T> implements ZooKeeperStoreBuilder<
   private ZKConnection client;
   private PropertySerializer<T> serializer;
   private String path;
+  private ScheduledExecutorService executorService;
+  private int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
   private List<Consumer<ZooKeeperPermanentStore<T>>> _onBuildListeners = new ArrayList<>();
 
   public void setZkConnection(ZKConnection client)
@@ -52,6 +57,18 @@ public class ZooKeeperPermanentStoreBuilder<T> implements ZooKeeperStoreBuilder<
     return this;
   }
 
+  public ZooKeeperPermanentStoreBuilder<T> setExecutorService(ScheduledExecutorService executorService)
+  {
+    this.executorService = executorService;
+    return this;
+  }
+
+  public ZooKeeperPermanentStoreBuilder<T> setZookeeperReadWindowMs(int zookeeperReadWindowMs)
+  {
+    this.zookeeperReadWindowMs = zookeeperReadWindowMs;
+    return this;
+  }
+
   @Override
   public ZooKeeperPermanentStoreBuilder<T> addOnBuildListener(Consumer<ZooKeeperPermanentStore<T>> onBuildListener)
   {
@@ -62,7 +79,8 @@ public class ZooKeeperPermanentStoreBuilder<T> implements ZooKeeperStoreBuilder<
   @Override
   public ZooKeeperPermanentStore<T> build()
   {
-    ZooKeeperPermanentStore<T> zooKeeperPermanentStore = new ZooKeeperPermanentStore<>(client, serializer, path);
+    ZooKeeperPermanentStore<T> zooKeeperPermanentStore =
+      new ZooKeeperPermanentStore<>(client, serializer, path, executorService, zookeeperReadWindowMs);
 
     for (Consumer<ZooKeeperPermanentStore<T>> onBuildListener : _onBuildListeners)
     {

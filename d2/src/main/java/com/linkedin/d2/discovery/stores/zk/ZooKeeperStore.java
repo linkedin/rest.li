@@ -42,8 +42,9 @@ public abstract class ZooKeeperStore<T> extends AbstractPropertyStoreAsync<T>
     PropertyEventPublisher<T>,
     PropertyStore<T>
 {
-  private static final Logger           _log =
-                                                 LoggerFactory.getLogger(ZooKeeperStore.class);
+  private static final Logger           _log = LoggerFactory.getLogger(ZooKeeperStore.class);
+
+  public static final int DEFAULT_READ_WINDOW_MS = -1; //disabled by default
 
   protected PropertyEventBus<T>         _eventBus;
   protected final ZKConnection          _zkConn;

@@ -16,6 +16,10 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.discovery.PropertySerializationException;
@@ -35,13 +39,23 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
                                                                         LoggerFactory.getLogger(ZooKeeperPermanentStore.class);
 
   private final ZKStoreWatcher _zkStoreWatcher = new ZKStoreWatcher();
+  private final ScheduledExecutorService _executorService;
+  private int _zookeeperReadWindowMs;
 
   public ZooKeeperPermanentStore(ZKConnection client,
                                  PropertySerializer<T> serializer,
                                  String path)
   {
-    super(client, serializer, path);
+    this(client, serializer, path, null, DEFAULT_READ_WINDOW_MS);
+  }
 
+  public ZooKeeperPermanentStore(ZKConnection client,
+                                 PropertySerializer<T> serializer,
+                                 String path, ScheduledExecutorService executorService, int zookeeperReadWindowMs)
+  {
+    super(client, serializer, path);
+    _executorService = executorService;
+    _zookeeperReadWindowMs = zookeeperReadWindowMs;
   }
 
   @Override
@@ -144,8 +158,19 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
     @Override
     protected void processWatch(String propertyName, WatchedEvent watchedEvent)
     {
+      // Reset the watch
+      if (_zookeeperReadWindowMs > 0 && _executorService != null)
+      {
+        // for the static config we can spread the read across the read Window
+        int delay = ThreadLocalRandom.current().nextInt(_zookeeperReadWindowMs);
+        _executorService.schedule(() -> _zk.getData(watchedEvent.getPath(), this, this, false),
+                                  delay, TimeUnit.MILLISECONDS);
+      }
+      else
+      {
         // Reset the watch and read the data
         _zk.getData(watchedEvent.getPath(), this, this, false);
+      }
     }
 
     /**

@@ -35,6 +35,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.zookeeper.AsyncCallback;
@@ -80,6 +83,8 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   //TODO: remove the following members after everybody has migrated to use EphemeralStoreWatcher.
   private final ZKStoreWatcher _zkStoreWatcher = new ZKStoreWatcher();
   private final boolean _useNewWatcher;
+  private final ScheduledExecutorService _executorService;
+  private final int _zookeeperReadWindowMs;
 
   public ZooKeeperEphemeralStore(ZKConnection client,
                                  PropertySerializer<T> serializer,
@@ -113,13 +118,33 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
    * @param ephemeralNodesFilePath if a FS path is specified, children nodes are considered unmodifiable,
    *                               and a local cache for children nodes is enabled
    */
+  @Deprecated
+  public ZooKeeperEphemeralStore(ZKConnection client,
+      PropertySerializer<T> serializer,
+      ZooKeeperPropertyMerger<T> merger,
+      String path,
+      boolean watchChildNodes,
+      boolean useNewWatcher,
+      String ephemeralNodesFilePath)
+  {
+    this (client, serializer, merger, path, watchChildNodes, useNewWatcher, ephemeralNodesFilePath,
+        null, DEFAULT_READ_WINDOW_MS);
+  }
+
+  /**
+   * @param watchChildNodes        if true, a watcher for each children node will be set (this have a large cost)
+   * @param ephemeralNodesFilePath if a FS path is specified, children nodes are considered unmodifiable,
+   *                               and a local cache for children nodes is enabled
+   */
   public ZooKeeperEphemeralStore(ZKConnection client,
                                  PropertySerializer<T> serializer,
                                  ZooKeeperPropertyMerger<T> merger,
                                  String path,
                                  boolean watchChildNodes,
                                  boolean useNewWatcher,
-                                 String ephemeralNodesFilePath)
+                                 String ephemeralNodesFilePath,
+                                 ScheduledExecutorService executorService,
+                                 int zookeeperReadWindowMs)
   {
     super(client, serializer, path);
 
@@ -144,6 +169,8 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     _watchChildNodes = watchChildNodes;
     _useNewWatcher = useNewWatcher;
     _ephemeralNodesFilePath = ephemeralNodesFilePath;
+    _executorService = executorService;
+    _zookeeperReadWindowMs = zookeeperReadWindowMs;
   }
 
   @Override
@@ -610,7 +637,19 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     protected void processWatch(String propertyName, WatchedEvent event)
     {
       // Reset the watch
-      _zk.getChildren(getPath(propertyName), this, this, false);
+      if (_zookeeperReadWindowMs > 0 && _executorService != null)
+      {
+        // Delay setting the watch based on configured _readWindowMs
+        int midPoint = _zookeeperReadWindowMs / 2;
+        int delay = midPoint + ThreadLocalRandom.current().nextInt(midPoint);
+        _executorService.schedule(() -> _zk.getChildren(getPath(propertyName), this, this, false),
+            delay, TimeUnit.MILLISECONDS);
+      }
+      else
+      {
+        // Set watch Immediately
+        _zk.getChildren(getPath(propertyName), this, this, false);
+      }
     }
 
     /**

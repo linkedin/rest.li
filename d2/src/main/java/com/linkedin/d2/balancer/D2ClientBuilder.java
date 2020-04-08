@@ -162,7 +162,8 @@ public class D2ClientBuilder
                   _config.zkConnectionToUseForLB,
                   _config.startUpExecutorService,
                   _config.jmxManager,
-                  _config.d2JmxManagerPrefix);
+                  _config.d2JmxManagerPrefix,
+                  _config.zookeeperReadWindowMs);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -403,6 +404,11 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setWarmUpTimeoutSeconds(int warmUpTimeoutSeconds){
     _config.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
+    return this;
+  }
+
+  public D2ClientBuilder setZookeeperReadWindowMs(int zookeeperReadWindowMs){
+    _config.zookeeperReadWindowMs = zookeeperReadWindowMs;
     return this;
   }
 
