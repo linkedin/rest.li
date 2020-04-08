@@ -1,0 +1,19 @@
+namespace com.linkedin.data.schema.grammar
+
+
+/**
+ * Record to ensure that complex types (Array, Map and Union) can have properties.
+ */
+record ComplexTypeWithProperties {
+  arrayField:
+    @validate.minSize = 1
+    array[int]
+
+  mapField:
+    @validate.minSize = 1
+    map[string, int]
+
+  unionField:
+    @validate.minValue = 0
+    union[float, int]
+}

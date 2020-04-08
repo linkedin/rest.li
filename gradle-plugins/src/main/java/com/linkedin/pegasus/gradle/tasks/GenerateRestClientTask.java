@@ -7,6 +7,7 @@ import com.linkedin.pegasus.gradle.SharedFileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
@@ -22,6 +24,9 @@ import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
+
+import static com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator.createArgFile;
+import static com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator.getArgFileSyntax;
 
 
 /**
@@ -49,6 +54,7 @@ public class GenerateRestClientTask extends DefaultTask
   private boolean _restli1FormatSuppressed;
   private boolean _restli2FormatSuppressed;
   private boolean _restli1BuildersDeprecated = true;
+  private boolean _enableArgFile;
 
   @TaskAction
   public void generate()
@@ -130,6 +136,10 @@ public class GenerateRestClientTask extends DefaultTask
     version1Files.forEach((defaultPackage, files) ->
       getProject().javaexec(javaExecSpec ->
       {
+        List<String> sources = files;
+        if (isEnableArgFile()) {
+          sources = Collections.singletonList(getArgFileSyntax(createArgFile("v1_" + defaultPackage, files, getTemporaryDir())));
+        }
         javaExecSpec.setClasspath(_pathedCodegenClasspath);
         javaExecSpec.setMain("com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator");
         javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr); //RestRequestBuilderGenerator.run(resolverPath)
@@ -140,13 +150,17 @@ public class GenerateRestClientTask extends DefaultTask
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.deprecated.version=" + deprecatedVersion); //RestRequestBuilderGenerator.run(deprecatedByVersion)
         javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
         javaExecSpec.args(_destinationDir.getAbsolutePath());
-        javaExecSpec.args(files);
+        javaExecSpec.args(sources);
       }).assertNormalExitValue()
     );
 
     version2Files.forEach((defaultPackage, files) ->
       getProject().javaexec(javaExecSpec ->
       {
+        List<String> sources = files;
+        if (isEnableArgFile()) {
+          sources = Collections.singletonList(getArgFileSyntax(createArgFile("v2_" + defaultPackage, files, getTemporaryDir())));
+        }
         javaExecSpec.setClasspath(_pathedCodegenClasspath);
         javaExecSpec.setMain("com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator");
         javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr); //RestRequestBuilderGenerator.run(resolverPath)
@@ -156,10 +170,11 @@ public class GenerateRestClientTask extends DefaultTask
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.version=2.0.0"); //RestRequestBuilderGenerator.run(version)
         javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
         javaExecSpec.args(_destinationDir.getAbsolutePath());
-        javaExecSpec.args(files);
+        javaExecSpec.args(sources);
       }).assertNormalExitValue()
     );
   }
+
 
   @InputDirectory
   @SkipWhenEmpty
@@ -205,6 +220,17 @@ public class GenerateRestClientTask extends DefaultTask
   public void setCodegenClasspath(FileCollection codegenClasspath)
   {
     _codegenClasspath = codegenClasspath;
+  }
+
+  @Input
+  public boolean isEnableArgFile()
+  {
+    return _enableArgFile;
+  }
+
+  public void setEnableArgFile(boolean enable)
+  {
+    _enableArgFile = enable;
   }
 
   @OutputDirectory

@@ -21,6 +21,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +50,7 @@ public class SingleTimeout<T>
    * @param item the item to be retrieved.
    * @param timeoutAction the action to be executed in case of timeout.
    */
-  public SingleTimeout(ScheduledExecutorService executor, long timeout, TimeUnit timeoutUnit, T item, Runnable timeoutAction)
+  public SingleTimeout(ScheduledExecutorService executor, long timeout, TimeUnit timeoutUnit, T item, Consumer<T> timeoutAction)
   {
     ArgumentUtil.ensureNotNull(item,"item");
     ArgumentUtil.ensureNotNull(timeoutAction,"timeoutAction");
@@ -60,7 +62,7 @@ public class SingleTimeout<T>
       {
         try
         {
-          timeoutAction.run();
+          timeoutAction.accept(item1);
         } catch (Throwable e)
         {
           LOG.error("Failed to execute timeout action", e);

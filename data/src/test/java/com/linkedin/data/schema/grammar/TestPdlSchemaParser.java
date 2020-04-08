@@ -16,7 +16,6 @@
 
 package com.linkedin.data.schema.grammar;
 
-import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
@@ -235,6 +234,35 @@ public class TestPdlSchemaParser
     assertFieldTypesEqual(refsRecord, mainRecordSchema, "fixedField");
     assertFieldTypesEqual(refsRecord, mainRecordSchema, "enumField");
 
+  }
+
+  @Test
+  public void testComplexTypeWithProperties()
+  {
+    RecordDataSchema mainRecordSchema = (RecordDataSchema) parsePdlSchema("ComplexTypeWithProperties.pdl");
+    RecordDataSchema.Field arrayField = mainRecordSchema.getField("arrayField");
+    Assert.assertNotNull(arrayField);
+    Assert.assertFalse(arrayField.getType().getProperties().isEmpty());
+    DataMap expectedProperty  = new DataMap();
+    DataMap validate = new DataMap();
+    validate.put("minSize", 1);
+    expectedProperty.put("validate", validate);
+    Assert.assertTrue(arrayField.getProperties().isEmpty());
+    Assert.assertEquals(arrayField.getType().getProperties(), expectedProperty);
+
+    RecordDataSchema.Field mapField = mainRecordSchema.getField("mapField");
+    Assert.assertNotNull(mapField);
+    Assert.assertTrue(mapField.getProperties().isEmpty());
+    Assert.assertFalse(mapField.getType().getProperties().isEmpty());
+    Assert.assertEquals(mapField.getType().getProperties(), expectedProperty);
+
+    RecordDataSchema.Field unionField = mainRecordSchema.getField("unionField");
+    Assert.assertNotNull(unionField);
+    Assert.assertTrue(unionField.getProperties().isEmpty());
+    Assert.assertFalse(unionField.getType().getProperties().isEmpty());
+    validate.clear();
+    validate.put("minValue", 0);
+    Assert.assertEquals(unionField.getType().getProperties(), expectedProperty);
   }
 
   /**

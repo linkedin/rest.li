@@ -19,7 +19,6 @@ package com.linkedin.restli.tools.clientgen;
 
 import com.linkedin.common.Version;
 import com.linkedin.data.schema.generator.AbstractGenerator;
-import com.linkedin.data.template.GetMode;
 import com.linkedin.pegasus.generator.CodeUtil;
 import com.linkedin.pegasus.generator.DefaultGeneratorResult;
 import com.linkedin.pegasus.generator.GeneratorResult;
@@ -27,6 +26,7 @@ import com.linkedin.pegasus.generator.JavaCodeGeneratorBase;
 import com.linkedin.pegasus.generator.JavaCodeUtil;
 import com.linkedin.pegasus.generator.PegasusDataTemplateGenerator;
 import com.linkedin.restli.internal.common.RestliVersion;
+import com.linkedin.restli.internal.tools.ArgumentFileProcessor;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.util.FileUtil;
@@ -51,23 +51,38 @@ import org.slf4j.LoggerFactory;
  */
 public class RestRequestBuilderGenerator
 {
-  private static final String GENERATOR_REST_GENERATE_DATATEMPLATES = "generator.rest.generate.datatemplates";
-  private static final String GENERATOR_REST_GENERATE_VERSION = "generator.rest.generate.version";
+  static final String GENERATOR_REST_GENERATE_DATATEMPLATES = "generator.rest.generate.datatemplates";
+  static final String GENERATOR_REST_GENERATE_VERSION = "generator.rest.generate.version";
   private static final String GENERATOR_REST_GENERATE_DEPRECATED_VERSION = "generator.rest.generate.deprecated.version";
   private static final Logger _log = LoggerFactory.getLogger(RestRequestBuilderGenerator.class);
 
   /**
    * @param args Usage: RestRequestBuilderGenerator targetDirectoryPath sourceFilePaths
    *
+   * TODO refactor arg processing to eliminate use of sysprops in favor of proper CLI arguments;
+   *  possibly using commons-cli or jcommander
+   *
    * @throws IOException if there are problems opening or deleting files
    */
   public static void main(String[] args)
       throws IOException
   {
+    String[] sources = new String[0];
+
     if (args.length < 2)
     {
       _log.error("Usage: RestRequestBuilderGenerator targetDirectoryPath [sourceFile or sourceDirectory]+");
       System.exit(1);
+    }
+    else if (args.length == 2 && ArgumentFileProcessor.isArgFile(args[1]))
+    {
+      // The second argument is an argFile, prefixed with '@' and containing one absolute path per line
+      // Consume the argFile and populate the sources array
+      sources = ArgumentFileProcessor.getContentsAsArray(args[1]);
+    }
+    else
+    {
+      sources = Arrays.copyOfRange(args, 1, args.length);
     }
 
     final String generateImported = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED);
@@ -89,7 +104,7 @@ public class RestRequestBuilderGenerator
                                     version,
                                     deprecatedByVersion,
                                     args[0],
-                                    Arrays.copyOfRange(args, 1, args.length));
+                                    sources);
   }
 
   public static RestliVersion findDeprecatedVersion()

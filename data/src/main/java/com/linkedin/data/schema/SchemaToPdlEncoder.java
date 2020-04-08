@@ -444,6 +444,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writeMap(MapDataSchema schema) throws IOException
   {
+    writeProperties(schema.getProperties());
     _builder.write("map[string")
         .writeComma()
         .writeSpace();
@@ -453,6 +454,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writeArray(ArrayDataSchema schema) throws IOException
   {
+    writeProperties(schema.getProperties());
     _builder.write("array[");
     writeReferenceOrInline(schema.getItems(), schema.isItemsDeclaredInline());
     _builder.write("]");
@@ -464,6 +466,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    */
   private void writeUnion(UnionDataSchema schema) throws IOException
   {
+    writeProperties(schema.getProperties());
     _builder.write("union[");
     final boolean useMultilineFormat = schema.areMembersAliased() || schema.getMembers().size() >= UNION_MULTILINE_THRESHOLD;
     if (useMultilineFormat)
@@ -618,6 +621,10 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     {
       NamedDataSchema named = (NamedDataSchema) dataSchema;
       return StringUtils.isNotBlank(named.getDoc()) || !named.getProperties().isEmpty() || !named.getAliases().isEmpty();
+    }
+    else if (dataSchema instanceof ComplexDataSchema)
+    {
+      return !dataSchema.getProperties().isEmpty();
     }
     return false;
   }

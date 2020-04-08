@@ -902,6 +902,9 @@ public class TestAsyncPool
       int numbOfObjectsToBeReturnedInPhaseC = randomNumberGenerator.nextInt(numberOfCheckoutsInPhaseB);
       int poolSize = randomNumberGenerator.nextInt(numberOfCheckoutsInPhaseA)+numberOfCheckoutsInPhaseA*2;
       int concurrency = randomNumberGenerator.nextInt(Math.min(numberOfCheckoutsInPhaseB,499))+1;
+      int waiterTimeout = randomNumberGenerator.nextInt(AsyncPoolImpl.MAX_WAITER_TIMEOUT);
+      waiterTimeout = Math.max(waiterTimeout, AsyncPoolImpl.MIN_WAITER_TIMEOUT);
+
       concurrency = Math.min(concurrency, numberOfCheckoutsInPhaseB);
 
       data[i][0] = numberOfCheckoutsInPhaseA;
@@ -909,7 +912,7 @@ public class TestAsyncPool
       data[i][2] = numbOfObjectsToBeReturnedInPhaseC;
       data[i][3] = poolSize;
       data[i][4] = concurrency;
-      data[i][5] = randomNumberGenerator.nextInt(500)+100;
+      data[i][5] = waiterTimeout;
     }
 
     return data;

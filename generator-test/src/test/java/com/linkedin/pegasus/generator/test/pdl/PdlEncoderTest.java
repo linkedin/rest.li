@@ -53,6 +53,7 @@ public class PdlEncoderTest extends GeneratorTest
         {
             { "arrays.AnonArray" },
             { "arrays.WithPrimitivesArray" },
+            { "arrays.WithArrayProperties" },
             { "denormalized.WithNamespacedDeclarations" },
             { "denormalized.WithIncludeDeclaration" },
             { "deprecated.DeprecatedRecord" },
@@ -73,6 +74,7 @@ public class PdlEncoderTest extends GeneratorTest
             { "imports.ReferenceTypeConflict" },
             { "maps.WithOrders" },
             { "maps.WithPrimitivesMap" },
+            { "maps.WithMapProperties" },
             { "records.EmptyNamespace" },
             { "records.Note" },
             { "records.RecursivelyDefinedRecord" },
@@ -91,7 +93,8 @@ public class PdlEncoderTest extends GeneratorTest
             { "typerefs.IntTyperef" },
             { "typerefs.WithAliases" },
             { "unions.WithPrimitivesUnion" },
-            { "unions.WithAliases" }
+            { "unions.WithAliases" },
+            { "unions.WithUnionProperties" }
         };
   }
 

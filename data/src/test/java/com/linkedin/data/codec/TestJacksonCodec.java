@@ -120,6 +120,16 @@ public class TestJacksonCodec extends TestCodec
   }
 
   @Test
+  public void testDuplicateMapValuesCreateError() throws IOException
+  {
+    JacksonDataCodec codec = new JacksonDataCodec();
+
+    String json = "{ \"foo\": 1, \"foo\": 2}";
+    DataMap dataMap = codec.stringToMap(json);
+    assertEquals(dataMap.getError(), "1,21: \"foo\" defined more than once.\n");
+  }
+
+  @Test
   public void testLongValues() throws IOException
   {
     JacksonDataCodec codec = new JacksonDataCodec();
