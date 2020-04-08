@@ -946,7 +946,10 @@ public class PegasusPlugin implements Plugin<Project>
         .create(sourceSet.getTaskName("validate", "ExtensionSchema"), ValidateExtensionSchemaTask.class, task -> {
           task.setInputDir(extensionSchemaDir);
           task.setResolverPath(getDataModelConfig(project, sourceSet).plus(project.files(getDataSchemaPath(project, sourceSet))));
-          task.setClassPath(project.getConfigurations().getByName("pegasusPlugin"));
+          task.setClassPath(project.getConfigurations().getByName("extensionSchema")
+              .plus(project.getConfigurations().getByName("pegasusPlugin"))
+              .plus(project.getConfigurations().getByName("runtime")));
+          task.setHandlerJarPath(project.getConfigurations().getByName("extensionSchema"));
           if (isPropertyTrue(project, ENABLE_ARG_FILE))
           {
             task.setEnableArgFile(true);

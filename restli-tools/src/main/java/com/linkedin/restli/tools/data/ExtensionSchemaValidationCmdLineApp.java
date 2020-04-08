@@ -19,15 +19,19 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.annotation.SchemaAnnotationHandler;
+import com.linkedin.data.schema.annotation.SchemaAnnotationProcessor;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
-import com.linkedin.internal.tools.ArgumentFileProcessor;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
+import com.linkedin.restli.tools.annotation.schemaAnnotationHandlerUtil;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -46,6 +50,7 @@ public class ExtensionSchemaValidationCmdLineApp
   private static final Logger _logger = LoggerFactory.getLogger(ExtensionSchemaValidationCmdLineApp.class);
   private static final Options _options = new Options();
   private static final String _pdl = "pdl";
+  private static final String _extension_annotation_namespace = "extension";
 
   static
   {
@@ -67,7 +72,7 @@ public class ExtensionSchemaValidationCmdLineApp
       }
 
       String[] cliArgs = cl.getArgs();
-      if (cliArgs.length != 2)
+      if (cliArgs.length != 4)
       {
         _logger.error("Invalid arguments");
         help();
@@ -75,7 +80,9 @@ public class ExtensionSchemaValidationCmdLineApp
       }
       int i = 0;
       String resolverPath = RestLiToolsUtils.readArgFromFileIfNeeded(cliArgs[i++]);
-      String inputPath = cliArgs[i];
+      String inputPath = cliArgs[i++];
+      String handlerJarPaths = cliArgs[i++];
+      String handlerClassNames = cliArgs[i];
 
       File inputDir = new File(inputPath);
 
@@ -84,7 +91,7 @@ public class ExtensionSchemaValidationCmdLineApp
         System.exit(1);
       }
 
-      parseAndValidateExtensionSchemas(resolverPath, inputDir);
+      parseAndValidateExtensionSchemas(resolverPath, inputDir, handlerJarPaths, handlerClassNames);
     }
     catch (ParseException e)
     {
@@ -93,7 +100,7 @@ public class ExtensionSchemaValidationCmdLineApp
     }
   }
 
-  private static void parseAndValidateExtensionSchemas(String resolverPath, File inputDir) throws IOException
+  private static void parseAndValidateExtensionSchemas(String resolverPath, File inputDir, String handlerJarPaths, String handlerClassNames) throws IOException
   {
     // Parse each extension schema and validate it
     Iterator<File> iterator = FileUtils.iterateFiles(inputDir, new String[]{_pdl}, true);
@@ -134,7 +141,29 @@ public class ExtensionSchemaValidationCmdLineApp
           .stream()
           .filter(f -> !((RecordDataSchema) topLevelDataSchema).isFieldFromIncludes(f))
           .collect(Collectors.toList());
-      // TODO : Call annotation process to validate each field's annotation, need to create schemaVisitor and handler for extension annotation.
+
+      for (RecordDataSchema.Field field : extensionSchemaFields) {
+        Map<String, Object> properties = field.getProperties();
+
+        if (properties.isEmpty() || properties.keySet().size() != 1 || !properties.containsKey(
+            _extension_annotation_namespace)) {
+          _logger.error("The field [{}] of extension schema must and only be annotated with 'extension'", field.getName());
+          System.exit(1);
+        }
+      }
+
+      // Using annotation framework to check the annotations of fields in extension schema.
+      List<SchemaAnnotationHandler> handlers = schemaAnnotationHandlerUtil.getSchemaAnnotationHandlers(handlerJarPaths, handlerClassNames);
+
+      SchemaAnnotationProcessor.SchemaAnnotationProcessResult result =
+          SchemaAnnotationProcessor.process(handlers, topLevelDataSchema, new SchemaAnnotationProcessor.AnnotationProcessOption());
+      if (result.hasError())
+      {
+        _logger.error("Annotation processing for schema [{}] failed, detailed error: \n",
+            ((RecordDataSchema) topLevelDataSchema).getFullName());
+        _logger.error(result.getErrorMsgs());
+        System.exit(1);
+      }
     }
   }
 
@@ -143,7 +172,7 @@ public class ExtensionSchemaValidationCmdLineApp
     final HelpFormatter formatter = new HelpFormatter();
     formatter.printHelp(120,
         ExtensionSchemaValidationCmdLineApp.class.getSimpleName(),
-        "[resolverPath], [inputPath]",
+        "[resolverPath], [inputPath], [handlerJarPaths], [handlerClassNames]",
          _options,
         "",
         true);

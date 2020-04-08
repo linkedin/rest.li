@@ -116,35 +116,7 @@ public class SchemaAnnotationValidatorCmdLineApp
       System.exit(1);
     }
 
-    List<String> handlerJarPathsArray = parsePaths(handlerJarPaths);
-    // Use Jar Paths to initiate URL class loaders.
-    ClassLoader classLoader = new URLClassLoader(handlerJarPathsArray.stream().map(str -> {
-                                                                                     try
-                                                                                     {
-                                                                                       return Paths.get(str).toUri().toURL();
-                                                                                     } catch (Exception e)
-                                                                                     {
-                                                                                       _log.error("URL {} parsing failed", str, e);
-                                                                                     }
-                                                                                     return null;
-                                                                                   }).filter(Objects::nonNull).toArray(URL[]::new));
-    List<SchemaAnnotationHandler> handlers = new ArrayList<>();
-    for (String className: parsePaths(handlerClassNames))
-    {
-      try
-      {
-        Class<?> handlerClass = Class.forName(className, false, classLoader);
-        SchemaAnnotationHandler handler = (SchemaAnnotationHandler) handlerClass.newInstance();
-        handlers.add(handler);
-        _log.info("added handler {} for annotation namespace \"{}\"", className, handler.getAnnotationNamespace());
-      }
-      catch (Exception e)
-      {
-        _log.error("Error instantiating handler class {} ", className, e);
-        // fail even just one handler fails
-        throw new IllegalStateException("ValidateSchemaAnnotation task failed");
-      }
-    }
+    List<SchemaAnnotationHandler> handlers = schemaAnnotationHandlerUtil.getSchemaAnnotationHandlers(handlerJarPaths, handlerClassNames);
 
     boolean hasError = false;
     List<String> schemaWithFailures = new ArrayList<>();
@@ -174,20 +146,6 @@ public class SchemaAnnotationValidatorCmdLineApp
       // Throw exception at the end if any of
       throw new IllegalStateException("ValidateSchemaAnnotation task failed");
     }
-  }
-
-  private static List<String> parsePaths(String pathAsStr)
-  {
-    List<String> list = new ArrayList<>();
-    if (pathAsStr != null)
-    {
-      StringTokenizer tokenizer = new StringTokenizer(pathAsStr, DEFAULT_PATH_SEPARATOR);
-      while (tokenizer.hasMoreTokens())
-      {
-        list.add(tokenizer.nextToken());
-      }
-    }
-    return list;
   }
 
   private static List<DataSchema> parseSchemas(String resolverPath, String modelsLocation) throws IOException

@@ -18,6 +18,7 @@ package com.linkedin.data.schema.annotation;
 import com.linkedin.data.message.Message;
 import com.linkedin.data.message.MessageList;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -279,6 +280,8 @@ public interface SchemaAnnotationHandler
     DataSchema _dataSchema;
     // the pathSpec component list to the dataSchema whose resolved annotation needs to be validated.
     ArrayDeque<String> pathToSchema;
+    // The field of the dataSchema whose resolved annotation needs to be validated.
+    private RecordDataSchema.Field _enclosingField;
 
     public DataSchema getDataSchema()
     {
@@ -298,6 +301,16 @@ public interface SchemaAnnotationHandler
     public void setPathToSchema(ArrayDeque<String> pathToSchema)
     {
       this.pathToSchema = pathToSchema;
+    }
+
+    public RecordDataSchema.Field getEnclosingField()
+    {
+      return _enclosingField;
+    }
+
+    public void setEnclosingField(RecordDataSchema.Field enclosingField)
+    {
+      _enclosingField = enclosingField;
     }
   }
 
