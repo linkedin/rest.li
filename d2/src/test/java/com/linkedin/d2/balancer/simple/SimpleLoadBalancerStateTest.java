@@ -1705,7 +1705,9 @@ public class SimpleLoadBalancerStateTest
     _clusterRegistry.put(CLUSTER2_CLUSTER_NAME, new ClusterProperties(CLUSTER2_CLUSTER_NAME));
 
     assertEquals(clusterListener1.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call for cluster1");
-    assertEquals(clusterListener2.getClusterAddedCount(CLUSTER2_CLUSTER_NAME), 2, "expected 2 call for cluster 2");
+    assertEquals(clusterListener2.getClusterAddedCount(CLUSTER2_CLUSTER_NAME), 2, "expected 2 call for cluster2");
+    assertEquals(clusterListener1.getClusterAddedCount(CLUSTER2_CLUSTER_NAME), 2, "expected 1 call for cluster2");
+    assertEquals(clusterListener2.getClusterAddedCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call for cluster1");
   }
 
   @Test

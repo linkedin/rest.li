@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 public class DarkClusterFilter implements RestFilter
 {
   private static final Logger _log = LoggerFactory.getLogger(DarkClusterFilter.class);
-  private static final String ORIGINAL_REQUEST_KEY = DarkClusterFilter.class.getName() + "_originalRequest";
+  private static final String ORIGINAL_REQUEST_KEY = DarkClusterFilter.class.getSimpleName() + "_originalRequest";
 
   private final DarkClusterManager _darkClusterManager;
   private final DarkClusterVerifierManager _darkClusterVerifierManager;

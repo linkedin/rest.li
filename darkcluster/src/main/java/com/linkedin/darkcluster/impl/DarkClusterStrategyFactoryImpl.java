@@ -29,6 +29,7 @@ import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
 import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
@@ -39,7 +40,8 @@ import com.linkedin.darkcluster.api.NoOpDarkClusterStrategy;
 /**
  * DarkClusterStrategyFactoryImpl creates and maintains the strategies needed for dark clusters. This involves refreshing
  * when darkClusterConfig changes are detected, by way of a {@link LoadBalancerClusterListener}
- * start() must be called in order to register the ClusterListener.
+ * start() must be called in order to register the ClusterListener. For instance, the same mechanism that starts the d2 load balancer
+ * {@link ZKFSLoadBalancer} should also start this class.
  */
 public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactory
 {
@@ -113,6 +115,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     }
     else
     {
+      // Falling into this clause means that the user does not want traffic to be sent to the dark cluster, temporary or otherwise.
       return new NoOpDarkClusterStrategy();
     }
   }

@@ -341,15 +341,6 @@ public class SimpleLoadBalancerTest
     }
     Assert.assertEquals(testClusterListener.getClusterAddedCount(CLUSTER1_NAME), 1, "expected add count of 1 after shutdown");
     Assert.assertEquals(testClusterListener.getClusterRemovedCount(CLUSTER1_NAME), 1, "expected remove count of 1 after shutdown");
-
-    // now unregister, and we don't expect the counts to change.
-    loadBalancer.unregisterClusterListener(testClusterListener);
-    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
-                                                             Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
-                                                             new DarkClusterConfigMap()));
-    Assert.assertEquals(testClusterListener.getClusterAddedCount(CLUSTER1_NAME), 1, "expected add count of 1");
-    Assert.assertEquals(testClusterListener.getClusterRemovedCount(CLUSTER1_NAME), 0, "expected remove count of 0");
-
   }
 
   @Test

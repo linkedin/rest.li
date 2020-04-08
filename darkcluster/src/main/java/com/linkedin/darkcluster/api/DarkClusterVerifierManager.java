@@ -4,8 +4,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 
 /**
- * DarkClusterVerifierManager handles checking if the verifier is enabled and doing the verification on a
- * separate thread.
+ * DarkClusterVerifierManager manages dark request verification using {@link DarkClusterVerifier}
  */
 public interface DarkClusterVerifierManager
 {

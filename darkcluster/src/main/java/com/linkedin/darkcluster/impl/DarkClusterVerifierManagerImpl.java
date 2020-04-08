@@ -31,8 +31,7 @@ public class DarkClusterVerifierManagerImpl implements DarkClusterVerifierManage
   private final ExecutorService _executorService;
 
   public DarkClusterVerifierManagerImpl(@Nonnull DarkClusterVerifier verifier,
-                                        @Nonnull
-                                          ExecutorService executorService)
+                                        @Nonnull ExecutorService executorService)
   {
     _verifier = verifier;
     _executorService = executorService;

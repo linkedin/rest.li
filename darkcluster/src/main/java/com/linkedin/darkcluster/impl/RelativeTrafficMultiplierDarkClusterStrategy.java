@@ -29,8 +29,11 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 
 /**
- * RelativeTrafficMultiplierDarkClusterStrategy figures out how many dark requests to send. It uses the {@link ClusterInfoProvider} to determine
- * the number ofinstances in both the source and target cluster, and uses that to calculate the number of request to send in order to make the
+ * RelativeTrafficMultiplierDarkClusterStrategy figures out how many dark requests to send. The high level goal of this strategy is to
+ * keep the incoming QPS per source host equal to the incoming QPS for dark hosts.
+ *
+ * It uses the {@link ClusterInfoProvider} to determine
+ * the number of instances in both the source and target cluster, and uses that to calculate the number of request to send in order to make the
  * level of traffic proportional to itself on any instance in the dark cluster (accounting for multiplier), assuming all hosts in the source cluster
  * send traffic.
  */
@@ -62,11 +65,14 @@ public class RelativeTrafficMultiplierDarkClusterStrategy implements DarkCluster
   @Override
   public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
-    int numRequestDuplicates = getNumDuplicateRequests(_random.nextFloat());
+    int numRequestDuplicates = getNumDuplicateRequests();
     return _baseDarkClusterDispatcher.sendRequest(originalRequest, darkRequest, requestContext, numRequestDuplicates);
   }
 
   /**
+   * The high level goal of this strategy is to keep the incoming QPS per source host equal to the incoming QPS for
+   * dark hosts.
+   *
    * The formula to keep traffic proportional to the sending cluster is
    * Avg#DarkRequests = ((# instances in dark cluster) * multiplier) / (# instances in source cluster)
    *
@@ -84,9 +90,8 @@ public class RelativeTrafficMultiplierDarkClusterStrategy implements DarkCluster
    * 10 dark instances, 10 source instances, multiplier = 1.5. Avg#DarkRequests = (10 * 1.5)/10 = 1.5. In this case at least
    * 1 request will be sent, with a 50% probability another request will be sent as well.
    */
-  private int getNumDuplicateRequests(float randomNum)
+  private int getNumDuplicateRequests()
   {
-
     try
     {
       // Only support https for now. http support can be added later if truly needed, but would be non-ideal
@@ -97,7 +102,7 @@ public class RelativeTrafficMultiplierDarkClusterStrategy implements DarkCluster
       {
         float avgNumDarkRequests = (numDarkClusterInstances * _multiplier) / numSourceClusterInstances;
         float avgDarkDecimalPart = avgNumDarkRequests % 1;
-        return randomNum < avgDarkDecimalPart ? ((int)avgNumDarkRequests) + 1 : (int)avgNumDarkRequests;
+        return _random.nextFloat() < avgDarkDecimalPart ? ((int)avgNumDarkRequests) + 1 : (int)avgNumDarkRequests;
       }
 
       return 0;

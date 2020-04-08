@@ -21,29 +21,30 @@ import com.linkedin.r2.message.rest.RestRequest;
 
 /**
  * Dummy implementation of DarkClusterStrategy. This can be used in tests safely.
+ * requestSent is what this class should return on each invocation of handleRequest. Tests
+ * may want to pretend that a strategy was returned, but if this get's used in production,
+ * a requestSent value of false is more correct.
  */
 public class NoOpDarkClusterStrategy implements DarkClusterStrategy
 {
   /**
-   * status is what this class should return on each invocation of handleRequest. Tests
-   * may want to pretend that a strategy was returned, but if this get's used in production,
-   * a status of false (request not sent) is more correct.
+   *
    */
-  private final boolean _status;
+  private final boolean _requestSent;
 
   public NoOpDarkClusterStrategy()
   {
     this(false);
   }
 
-  public NoOpDarkClusterStrategy(boolean status)
+  public NoOpDarkClusterStrategy(boolean requestSent)
   {
-    _status = status;
+    _requestSent = requestSent;
   }
 
   @Override
   public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
-    return _status;
+    return _requestSent;
   }
 }

@@ -31,13 +31,15 @@ public class MockClusterListener implements LoadBalancerClusterListener
   @Override
   public void onClusterAdded(String clusterName)
   {
-    incrementClusterAddedCount(clusterName);
+    AtomicInteger counter = clusterAddedCounter.computeIfAbsent(clusterName, (name) -> new AtomicInteger());
+    counter.incrementAndGet();
   }
 
   @Override
   public void onClusterRemoved(String clusterName)
   {
-    incrementClusterRemovedCount(clusterName);
+    AtomicInteger counter = clusterRemovedCounter.computeIfAbsent(clusterName, (name) -> new AtomicInteger());
+    counter.incrementAndGet();
   }
 
   public int getClusterAddedCount(String clusterName)
@@ -48,17 +50,5 @@ public class MockClusterListener implements LoadBalancerClusterListener
   public int getClusterRemovedCount(String clusterName)
   {
     return clusterRemovedCounter.getOrDefault(clusterName, new AtomicInteger(0)).intValue();
-  }
-
-  private void incrementClusterAddedCount(String clusterName)
-  {
-    AtomicInteger counter = clusterAddedCounter.computeIfAbsent(clusterName, (name) -> new AtomicInteger());
-    counter.incrementAndGet();
-  }
-
-  private void incrementClusterRemovedCount(String clusterName)
-  {
-    AtomicInteger counter = clusterRemovedCounter.computeIfAbsent(clusterName, (name) -> new AtomicInteger());
-    counter.incrementAndGet();
   }
 }

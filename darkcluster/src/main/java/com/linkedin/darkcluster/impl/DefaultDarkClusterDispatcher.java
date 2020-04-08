@@ -28,7 +28,6 @@ import com.linkedin.r2.transport.common.Client;
 
 /**
  * Default implementation of DarkClusterDispatcher
- * requests should probably be offloaded to an executor.
  */
 public class DefaultDarkClusterDispatcher implements DarkClusterDispatcher
 {
