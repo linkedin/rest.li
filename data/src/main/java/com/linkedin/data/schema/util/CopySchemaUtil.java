@@ -1,4 +1,4 @@
-package com.linkedin.data.schema.annotation;
+package com.linkedin.data.schema.util;
 
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
@@ -13,7 +13,7 @@ import com.linkedin.data.schema.UnionDataSchema;
 /**
  * Util for making data schema copies
  */
-class CopySchemaUtil
+public class CopySchemaUtil
 {
   /**
    * Create a skeleton schema from the given schema
@@ -24,7 +24,7 @@ class CopySchemaUtil
    * @return
    * @throws CloneNotSupportedException
    */
-  static DataSchema buildSkeletonSchema(DataSchema schema) throws CloneNotSupportedException
+  public static DataSchema buildSkeletonSchema(DataSchema schema) throws CloneNotSupportedException
   {
     switch (schema.getType())
     {
@@ -102,7 +102,7 @@ class CopySchemaUtil
    * @param fieldSchemaToReplace the field's schema that this field should contain
    * @return a copy of the originalField
    */
-  static RecordDataSchema.Field copyField(RecordDataSchema.Field originalField, DataSchema fieldSchemaToReplace)
+  public static RecordDataSchema.Field copyField(RecordDataSchema.Field originalField, DataSchema fieldSchemaToReplace)
   {
     RecordDataSchema.Field newField = new RecordDataSchema.Field(fieldSchemaToReplace);
     if (originalField.getAliases() != null)
@@ -140,7 +140,7 @@ class CopySchemaUtil
    * @param newSkeletonSchema the dataSchema that this member object should contain
    * @return a new copy of the member object
    */
-  static UnionDataSchema.Member copyUnionMember(UnionDataSchema.Member member, DataSchema newSkeletonSchema)
+  public static UnionDataSchema.Member copyUnionMember(UnionDataSchema.Member member, DataSchema newSkeletonSchema)
   {
     UnionDataSchema.Member newMember = new UnionDataSchema.Member(newSkeletonSchema);
     if (member.hasAlias())

@@ -1,4 +1,4 @@
-package com.linkedin.data.schema.annotation;
+package com.linkedin.data.schema.util;
 
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.ArrayDataSchema;
@@ -11,6 +11,7 @@ import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.data.schema.util.CopySchemaUtil;
 import java.util.Objects;
 import org.testng.Assert;
 import org.testng.annotations.Test;
