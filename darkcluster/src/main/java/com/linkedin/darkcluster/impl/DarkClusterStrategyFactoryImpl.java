@@ -53,6 +53,9 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   private final String _sourceClusterName;
   private final DarkClusterDispatcher _darkClusterDispatcher;
   private final Notifier _notifier;
+
+  // Wrapping the DarkClusterStrategy enforces the value is threadsafe, even if the
+  // implementation is not.
   private final Map<String, AtomicReference<DarkClusterStrategy>> _darkStrategyMap;
   private final Random _random;
   private final LoadBalancerClusterListener _clusterListener;
@@ -92,6 +95,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   @Override
   public DarkClusterStrategy getOrCreate(@Nonnull String darkClusterName, @Nonnull DarkClusterConfig darkClusterConfig)
   {
+    // pre jdk9 computeIfAbsent has a performance issue. In the future, this contain/put could be rewritten to
+    // _darkStrategyMap.computeIfAbsent(darkClusterName, k -> createStrategy(darkClusterName, darkClusterConfig));
     if (!_darkStrategyMap.containsKey(darkClusterName))
     {
       _darkStrategyMap.putIfAbsent(darkClusterName, new AtomicReference<>(createStrategy(darkClusterName, darkClusterConfig)));
