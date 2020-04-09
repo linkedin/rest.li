@@ -36,7 +36,7 @@ public class SchemaAnnotationValidationVisitor implements SchemaVisitor
   private final SchemaAnnotationHandler _schemaAnnotationHandler;
   private static final Logger LOGGER = LoggerFactory.getLogger(SchemaAnnotationValidationVisitor.class);
 
-  private boolean _useProperties = false;
+  private boolean _useProperties;
 
   public SchemaAnnotationValidationVisitor(SchemaAnnotationHandler schemaAnnotationHandler)
   {
@@ -64,7 +64,9 @@ public class SchemaAnnotationValidationVisitor implements SchemaVisitor
     metaData.setEnclosingField(context.getEnclosingField());
 
     // Pass the enclosingField's properties in the validate(), if useProperies flag is on for extension schema annotation case.
-    AnnotationValidationResult annotationValidationResult = _useProperties ? _schemaAnnotationHandler.validate(schema.getProperties(), metaData)
+    AnnotationValidationResult annotationValidationResult = _useProperties
+        ? _schemaAnnotationHandler.validate(context.getEnclosingField() != null
+        ? context.getEnclosingField().getProperties() : schema.getProperties(), metaData)
         : _schemaAnnotationHandler.validate(schema.getResolvedProperties(), metaData);
 
     if (!annotationValidationResult.isValid())
