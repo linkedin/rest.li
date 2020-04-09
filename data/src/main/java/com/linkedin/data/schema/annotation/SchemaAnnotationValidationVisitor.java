@@ -36,7 +36,7 @@ public class SchemaAnnotationValidationVisitor implements SchemaVisitor
   private final SchemaAnnotationHandler _schemaAnnotationHandler;
   private static final Logger LOGGER = LoggerFactory.getLogger(SchemaAnnotationValidationVisitor.class);
 
-  private boolean _useProperties = true;
+  private boolean _useProperties = false;
 
   public SchemaAnnotationValidationVisitor(SchemaAnnotationHandler schemaAnnotationHandler)
   {
