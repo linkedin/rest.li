@@ -27,6 +27,7 @@ import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.SchemaToPdlEncoder;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
+import com.linkedin.internal.tools.ArgumentFileProcessor;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -134,6 +135,12 @@ public class SchemaFormatTranslator
       {
         LOGGER.error("Destination directory does not exist or cannot be written to: " + destDir.getAbsolutePath());
         System.exit(1);
+      }
+      if (ArgumentFileProcessor.isArgFile(resolverPaths))
+      {
+        // The resolver path is an arg file, prefixed with '@' and containing the actual resolverPath
+        String[] argFileContents = ArgumentFileProcessor.getContentsAsArray(resolverPaths);
+        resolverPaths = argFileContents.length > 0 ? argFileContents[0] : "";
       }
 
       SchemaFormatTranslator translator = new SchemaFormatTranslator(

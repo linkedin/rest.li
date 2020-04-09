@@ -14,11 +14,12 @@
    limitations under the License.
 */
 
-package com.linkedin.restli.internal.tools;
+package com.linkedin.internal.tools;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+
 
 public class ArgumentFileProcessor
 {

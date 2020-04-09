@@ -1493,6 +1493,7 @@ public class PegasusPlugin implements Plugin<Project>
       }
       task.setKeepOriginal(keepOriginal);
       task.setSkipVerification(skipVerification);
+      task.setEnableArgFile(true);
 
       task.onlyIf(t -> task.getInputDir().exists());
       task.doLast(new CacheableAction<>(t ->
@@ -1514,6 +1515,7 @@ public class PegasusPlugin implements Plugin<Project>
       task.setDestinationFormat(SchemaFileType.PDL);
       task.setKeepOriginal(true);
       task.setSkipVerification(true);
+      task.setEnableArgFile(true);
 
       task.onlyIf(t -> task.getInputDir().exists());
       task.doLast(new CacheableAction<>(t -> project.getLogger().lifecycle("PDL reformat complete.")));
@@ -1538,6 +1540,7 @@ public class PegasusPlugin implements Plugin<Project>
           task.setDestinationDir(generatedDataTemplateDir);
           task.setResolverPath(getDataModelConfig(project, sourceSet));
           task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+          task.setEnableArgFile(true);
 
           task.onlyIf(t ->
           {
@@ -1632,6 +1635,7 @@ public class PegasusPlugin implements Plugin<Project>
           task.setDestinationFormat(SchemaFileType.PDSC);
           task.setKeepOriginal(true);
           task.setSkipVerification(true);
+          task.setEnableArgFile(true);
         });
 
     prepareLegacySchemasForPublishTask.dependsOn(destroyStaleFiles);

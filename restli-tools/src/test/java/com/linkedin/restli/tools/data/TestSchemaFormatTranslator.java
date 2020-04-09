@@ -7,6 +7,7 @@ import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.util.FileUtil;
 import java.io.File;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -51,6 +52,20 @@ public class TestSchemaFormatTranslator
     MultiFormatDataSchemaResolver sourceResolver = MultiFormatDataSchemaResolver.withBuiltinFormats(RESOLVER_DIR);
     MultiFormatDataSchemaResolver translatedResolver =
         MultiFormatDataSchemaResolver.withBuiltinFormats(temp + File.pathSeparator + EXTERNAL_RESOURCES);
+    assertSameSchemas(packageName + "." + className, sourceResolver, translatedResolver);
+  }
+
+  @Test(dataProvider = "fullClassName")
+  public void testTranslatorWorksWithArgFile(String packageName, String className) throws Exception
+  {
+    File tempDir = Files.createTempDirectory("restli").toFile();
+    File argFile = new File(tempDir, "resolverPath");
+    Files.write(argFile.toPath(), Collections.singletonList(RESOLVER_DIR));
+    SchemaFormatTranslator.main(
+        new String[]{"-o", String.format("@%s", argFile.toPath()), SOURCE_ROOT, tempDir.getAbsolutePath()});
+    MultiFormatDataSchemaResolver sourceResolver = MultiFormatDataSchemaResolver.withBuiltinFormats(RESOLVER_DIR);
+    MultiFormatDataSchemaResolver translatedResolver =
+        MultiFormatDataSchemaResolver.withBuiltinFormats(tempDir.getAbsolutePath() + File.pathSeparator + EXTERNAL_RESOURCES);
     assertSameSchemas(packageName + "." + className, sourceResolver, translatedResolver);
   }
 

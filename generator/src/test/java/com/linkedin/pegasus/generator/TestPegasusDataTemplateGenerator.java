@@ -17,23 +17,27 @@
 package com.linkedin.pegasus.generator;
 
 import com.linkedin.data.schema.SchemaFormatType;
+import com.linkedin.data.schema.generator.AbstractGenerator;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-
+@Test(singleThreaded = true)
 public class TestPegasusDataTemplateGenerator
 {
   private static final String FS = File.separator;
@@ -42,6 +46,23 @@ public class TestPegasusDataTemplateGenerator
   private static final String pegasusDir = testDir + FS + resourcesDir;
 
   private File _tempDir;
+  private String _resolverPath;
+
+  @BeforeClass
+  public void setUp()
+  {
+    _resolverPath = System.clearProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
+  }
+
+  @AfterClass
+  public void tearDown()
+  {
+    System.clearProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
+    if (_resolverPath != null)
+    {
+      System.setProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH, _resolverPath);
+    }
+  }
 
   @AfterTest
   public void afterTest()
@@ -64,36 +85,73 @@ public class TestPegasusDataTemplateGenerator
   @DataProvider(name = "withoutResolverCases")
   private Object[][] createWithoutResolverCases()
   {
+    Map<String, String> expectedTypeNamesToSourceFileMap = new HashMap<>();
+    expectedTypeNamesToSourceFileMap.put("WithoutResolverExample", "WithoutResolverExample.pdsc");
+    expectedTypeNamesToSourceFileMap.put("InlineRecord", "WithoutResolverExample.pdsc");
+
+    Map<String, String> expectedTypeNamesToSourceFileMapPdl = new HashMap<>();
+    expectedTypeNamesToSourceFileMapPdl.put("WithoutResolverExamplePdl", "WithoutResolverExamplePdl.pdl");
+    expectedTypeNamesToSourceFileMapPdl.put("InlineRecord", "WithoutResolverExamplePdl.pdl");
+
     return new Object[][]
     {
-        { "WithoutResolverExample.pdsc", new String[] { "WithoutResolverExample", "InlineRecord" }},
-        { "WithoutResolverExample.pdl", new String[] { "WithoutResolverExample", "InlineRecord" }}
+        { "WithoutResolverExample.pdsc", expectedTypeNamesToSourceFileMap },
+        { "WithoutResolverExamplePdl.pdl", expectedTypeNamesToSourceFileMapPdl }
     };
   }
 
   @Test(dataProvider = "withoutResolverCases")
-  public void testRunGeneratorWithoutResolver(String pegasusFilename, String[] expectedTypeNames)
-      throws Exception
+  public void testRunGeneratorWithoutResolver(
+      String pegasusFilename, Map<String, String> expectedTypeNamesToSourceFileMap) throws Exception
   {
-    testRunGenerator(pegasusFilename, expectedTypeNames, pegasusDir);
+    testRunGenerator(pegasusFilename, expectedTypeNamesToSourceFileMap, pegasusDir);
   }
 
   @Test(dataProvider = "withoutResolverCases")
-  public void testRunGeneratorWithoutResolverWithRootPath(String pegasusFilename, String[] expectedTypeNames)
-      throws Exception
+  public void testRunGeneratorWithoutResolverWithRootPath(String pegasusFilename,
+      Map<String, String> expectedTypeNamesToSourceFileMap) throws Exception
   {
     System.setProperty("root.path", testDir);
-    testRunGenerator(pegasusFilename, expectedTypeNames, resourcesDir);
+    testRunGenerator(pegasusFilename, expectedTypeNamesToSourceFileMap, resourcesDir);
   }
 
-  private void testRunGenerator(String pegasusFilename, String[] expectedTypeNames, String expectedGeneratedDir)
+  @DataProvider(name = "withResolverCases")
+  private Object[][] createWithResolverCases()
+  {
+    Map<String, String> expectedTypeNamesToSourceFileMap = new HashMap<>();
+    expectedTypeNamesToSourceFileMap.put("WithoutResolverExamplePdl", "WithoutResolverExamplePdl.pdl");
+    expectedTypeNamesToSourceFileMap.put("InlineRecord", "WithoutResolverExamplePdl.pdl");
+    expectedTypeNamesToSourceFileMap.put("WithResolverExample", "WithResolverExample.pdl");
+    return new Object[][]
+        {
+            { "WithResolverExample.pdl", expectedTypeNamesToSourceFileMap }
+        };
+  }
+
+  @Test(dataProvider = "withResolverCases")
+  public void testRunGeneratorWithResolver(String pegasusFilename, Map<String, String> expectedTypeNamesToSourceFileMap)
       throws Exception
   {
-    SchemaFormatType schemaFormatType = SchemaFormatType.fromFilename(pegasusFilename);
-    Assert.assertNotNull(schemaFormatType, "Indeterminable schema format type.");
+    System.setProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH, pegasusDir);
+    testRunGenerator(pegasusFilename, expectedTypeNamesToSourceFileMap, pegasusDir);
+  }
 
+  @Test(dataProvider = "withResolverCases")
+  public void testRunGeneratorWithResolverUsingArgFile(String pegasusFilename,
+      Map<String, String> expectedTypeNamesToSourceFileMap) throws Exception
+  {
+    File tempDir = Files.createTempDirectory("restli").toFile();
+    File argFile = new File(tempDir, "resolverPath");
+    Files.write(argFile.toPath(), Collections.singletonList(pegasusDir));
+    System.setProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH, String.format("@%s", argFile.toPath()));
+    testRunGenerator(pegasusFilename, expectedTypeNamesToSourceFileMap, pegasusDir);
+  }
+
+  private void testRunGenerator(String pegasusFilename, Map<String, String> expectedTypeNamesToSourceFileMap,
+      String expectedGeneratedDir) throws Exception
+  {
     Map<String, File> generatedFiles = generatePegasusDataTemplates(pegasusFilename);
-    Assert.assertEquals(generatedFiles.keySet(), new HashSet<>(Arrays.asList(expectedTypeNames)),
+    Assert.assertEquals(generatedFiles.keySet(), expectedTypeNamesToSourceFileMap.keySet(),
         "Set of generated files does not match what's expected.");
 
     for (Map.Entry<String, File> entry : generatedFiles.entrySet())
@@ -105,8 +163,14 @@ public class TestPegasusDataTemplateGenerator
       String generatedSource = FileUtils.readFileToString(generated);
       Assert.assertTrue(generatedSource.contains("class " + pegasusTypeName),
           "Incorrect generated class name.");
-      Assert.assertTrue(generatedSource.contains("Generated from " + expectedGeneratedDir + FS + pegasusFilename),
-          "Incorrect @Generated annotation.");
+      String expectedGeneratedAnnotation = "Generated from " + expectedGeneratedDir + FS
+          + expectedTypeNamesToSourceFileMap.get(pegasusTypeName);
+      Assert.assertTrue(generatedSource.contains(expectedGeneratedAnnotation),
+          "Incorrect @Generated annotation, expected: " + expectedGeneratedAnnotation);
+
+      SchemaFormatType schemaFormatType = SchemaFormatType.fromFilename(
+          expectedTypeNamesToSourceFileMap.get(pegasusTypeName));
+      Assert.assertNotNull(schemaFormatType, "Indeterminable schema format type.");
 
       // TODO: Collapse into one assertion once the codegen logic uses #parseSchema(String, SchemaFormatType) for PDSC.
       if (schemaFormatType == SchemaFormatType.PDSC)
