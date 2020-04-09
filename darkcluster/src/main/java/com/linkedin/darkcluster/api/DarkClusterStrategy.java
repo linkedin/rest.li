@@ -21,6 +21,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 
 /**
  * DarkClusterStrategy controls if a request should be duplicated to the dark canary clusters, and how, if any, traffic shaping should take place.
+ * Implementations should be threadsafe, as there will be concurrent access.
  */
 public interface DarkClusterStrategy
 {

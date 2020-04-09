@@ -45,7 +45,7 @@ import com.linkedin.darkcluster.api.NoOpDarkClusterStrategy;
  */
 public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactory
 {
-  private static final AtomicReference<DarkClusterStrategy> NO_OP_DARK_CLUSTER_STRATEGY = new AtomicReference<>(new NoOpDarkClusterStrategy());
+  private static final DarkClusterStrategy NO_OP_DARK_CLUSTER_STRATEGY = new NoOpDarkClusterStrategy();
 
   // ClusterInfoProvider isn't available until the D2 client is started, so it can't be
   // populated during construction time.
@@ -54,9 +54,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   private final DarkClusterDispatcher _darkClusterDispatcher;
   private final Notifier _notifier;
 
-  // Wrapping the DarkClusterStrategy enforces the value is threadsafe, even if the
-  // implementation is not.
-  private final Map<String, AtomicReference<DarkClusterStrategy>> _darkStrategyMap;
+  private final Map<String, DarkClusterStrategy> _darkStrategyMap;
   private final Random _random;
   private final LoadBalancerClusterListener _clusterListener;
   private final DarkClusterVerifierManager _verifierManager;
@@ -99,11 +97,11 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     // _darkStrategyMap.computeIfAbsent(darkClusterName, k -> createStrategy(darkClusterName, darkClusterConfig));
     if (!_darkStrategyMap.containsKey(darkClusterName))
     {
-      _darkStrategyMap.putIfAbsent(darkClusterName, new AtomicReference<>(createStrategy(darkClusterName, darkClusterConfig)));
+      _darkStrategyMap.putIfAbsent(darkClusterName, createStrategy(darkClusterName, darkClusterConfig));
     }
     // it's theoretically possible for the Listener to remove the entry after the containsKey but before we retrieve it. Rather
     // than adding synchronization between accessors of _darkStrategyMap, we will make each put or get resilient
-    return _darkStrategyMap.getOrDefault(darkClusterName, NO_OP_DARK_CLUSTER_STRATEGY).get();
+    return _darkStrategyMap.getOrDefault(darkClusterName, NO_OP_DARK_CLUSTER_STRATEGY);
   }
 
   /**
@@ -153,8 +151,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
           if (darkConfigMap.containsKey(darkClusterName))
           {
             // just update the dark cluster that changed
-            _darkStrategyMap.put(darkClusterName, new AtomicReference<>(createStrategy(darkClusterName,
-                                                                                          darkConfigMap.get(darkClusterName))));
+            _darkStrategyMap.put(darkClusterName, createStrategy(darkClusterName,
+                                                                 darkConfigMap.get(darkClusterName)));
           }
         }
         catch (ServiceUnavailableException e)
