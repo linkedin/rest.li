@@ -111,9 +111,11 @@ public class RestLiResourceModelCompatibilityChecker
     }
 
     String resolverPath = null;
-    try {
+    try
+    {
       resolverPath = RestLiToolsUtils.getResolverPathFromSystemProperty();
-    } catch (IOException e) {
+    } catch (IOException e)
+    {
       System.err.println("Cannot read resolver path: " + e.getMessage());
       System.exit(255);
     }

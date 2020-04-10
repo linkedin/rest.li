@@ -25,8 +25,6 @@ import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
 
-import static com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator.*;
-
 
 /**
  * Generate the idl file from the annotated java classes. This also requires access to the
@@ -236,9 +234,11 @@ public class GenerateRestModelTask extends DefaultTask
   private void executeSnapshotExporter(String name, List<String> inputDirs, List<String> packages, String destinationPath,
                                        boolean additionalDocProviders)
   {
-    getProject().javaexec(javaExecSpec -> {
+    getProject().javaexec(javaExecSpec ->
+    {
       String resolverPathArg = _resolverPath.getAsPath();
-      if (isEnableArgFile()) {
+      if (isEnableArgFile())
+      {
         resolverPathArg = ArgumentFileGenerator.getArgFileSyntax(ArgumentFileGenerator.createArgFile(
             "generateRestModel_resolverPath", Collections.singletonList(resolverPathArg), getTemporaryDir()));
       }
@@ -272,7 +272,8 @@ public class GenerateRestModelTask extends DefaultTask
   private void executeResourceExporter(String name, List<String> inputDirs, List<String> packages, String destinationPath,
                                        boolean additionalDocProviders)
   {
-    getProject().javaexec(javaExecSpec -> {
+    getProject().javaexec(javaExecSpec ->
+    {
       javaExecSpec.setMain("com.linkedin.restli.tools.idlgen.RestLiResourceModelExporterCmdLineApp");
       javaExecSpec.setClasspath(_pathedCodegenClasspath);
       javaExecSpec.systemProperty("scala.usejavacp", "true");

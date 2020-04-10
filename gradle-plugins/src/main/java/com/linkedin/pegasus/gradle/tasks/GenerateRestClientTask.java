@@ -139,7 +139,8 @@ public class GenerateRestClientTask extends DefaultTask
       {
         List<String> sources = files;
         String resolverPathArg = resolverPathStr;
-        if (isEnableArgFile()) {
+        if (isEnableArgFile())
+        {
           sources = Collections.singletonList(getArgFileSyntax(createArgFile("v1_" + defaultPackage, files, getTemporaryDir())));
           resolverPathArg = ArgumentFileGenerator.getArgFileSyntax(ArgumentFileGenerator.createArgFile(
               "generateRestClient_resolverPath_v1", Collections.singletonList(resolverPathArg), getTemporaryDir()));
@@ -163,7 +164,8 @@ public class GenerateRestClientTask extends DefaultTask
       {
         List<String> sources = files;
         String resolverPathArg = resolverPathStr;
-        if (isEnableArgFile()) {
+        if (isEnableArgFile())
+        {
           sources = Collections.singletonList(getArgFileSyntax(createArgFile("v2_" + defaultPackage, files, getTemporaryDir())));
           resolverPathArg = ArgumentFileGenerator.getArgFileSyntax(ArgumentFileGenerator.createArgFile(
               "generateRestClient_resolverPath_v2", Collections.singletonList(resolverPathArg), getTemporaryDir()));
