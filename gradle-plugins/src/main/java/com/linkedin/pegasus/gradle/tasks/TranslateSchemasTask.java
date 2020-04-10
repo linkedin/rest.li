@@ -2,8 +2,10 @@ package com.linkedin.pegasus.gradle.tasks;
 
 import com.linkedin.pegasus.gradle.PathingJarUtil;
 import com.linkedin.pegasus.gradle.SchemaFileType;
+import com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
@@ -11,7 +13,6 @@ import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.PathSensitive;
@@ -34,6 +35,7 @@ public class TranslateSchemasTask extends DefaultTask {
   private boolean _keepOriginal = false;
   private String _preserveSourceCmd;
   private boolean _skipVerification = false;
+  private boolean _enableArgFile;
 
   @TaskAction
   public void translate()
@@ -44,18 +46,26 @@ public class TranslateSchemasTask extends DefaultTask {
     String resolverPathStr = _resolverPath.plus(getProject().files(_inputDir)).getAsPath();
 
     FileCollection _pathedCodegenClasspath;
-    try {
+    try
+    {
       _pathedCodegenClasspath = PathingJarUtil.generatePathingJar(getProject(), getName(),
           _codegenClasspath, false);
     }
-    catch (IOException e) {
+    catch (IOException e)
+    {
       throw new GradleException("Error occurred generating pathing JAR.", e);
     }
 
-    getProject().javaexec(javaExecSpec -> {
+    getProject().javaexec(javaExecSpec ->
+    {
+      String resolverPathArg = resolverPathStr;
+      if (isEnableArgFile())
+      {
+        resolverPathArg = ArgumentFileGenerator.getArgFileSyntax(ArgumentFileGenerator.createArgFile(
+            "translateSchemas_resolverPath", Collections.singletonList(resolverPathArg), getTemporaryDir()));
+      }
       javaExecSpec.setMain("com.linkedin.restli.tools.data.SchemaFormatTranslator");
       javaExecSpec.setClasspath(_pathedCodegenClasspath);
-      javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr);
       javaExecSpec.args("--source-format");
       javaExecSpec.args(_sourceFormat.getFileExtension());
       javaExecSpec.args("--destination-format");
@@ -73,7 +83,7 @@ public class TranslateSchemasTask extends DefaultTask {
       {
         javaExecSpec.args("--skip-verification");
       }
-      javaExecSpec.args(resolverPathStr);
+      javaExecSpec.args(resolverPathArg);
       javaExecSpec.args(_inputDir.getAbsolutePath());
       javaExecSpec.args(_destinationDir.getAbsolutePath());
     });
@@ -188,5 +198,16 @@ public class TranslateSchemasTask extends DefaultTask {
   public void setSkipVerification(boolean skipVerification)
   {
     _skipVerification = skipVerification;
+  }
+
+  @Input
+  public boolean isEnableArgFile()
+  {
+    return _enableArgFile;
+  }
+
+  public void setEnableArgFile(boolean enable)
+  {
+    _enableArgFile = enable;
   }
 }

@@ -1,0 +1,3 @@
+record WithResolverExample {
+  reference: WithoutResolverExamplePdl
+}

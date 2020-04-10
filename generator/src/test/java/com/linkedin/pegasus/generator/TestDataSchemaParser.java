@@ -62,15 +62,15 @@ public class TestDataSchemaParser
   @DataProvider(name = "inputFiles")
   private Object[][] createWithoutResolverCases()
   {
-    return new String[][]
+    return new Object[][]
         {
-            {"WithoutResolverExample.pdsc"},
-            {"WithoutResolverExample.pdl"}
+            {"WithoutResolverExample.pdsc", new String[] {"WithoutResolverExample", "InlineRecord" }},
+            {"WithoutResolverExamplePdl.pdl", new String[] {"WithoutResolverExamplePdl", "InlineRecord" }}
         };
   }
 
   @Test(dataProvider = "inputFiles")
-  public void testParseFromJarFile(String pegasusFilename) throws Exception
+  public void testParseFromJarFile(String pegasusFilename, String[] expectedSchemas) throws Exception
   {
     String tempDirectoryPath = _tempDir.getAbsolutePath();
     String jarFile = tempDirectoryPath + FS + "test.jar";
@@ -85,8 +85,10 @@ public class TestDataSchemaParser
     assertEquals(parseResult.getSchemaAndLocations().size(), 2);
     Set<String> schemaNames = parseResult.getSchemaAndLocations().keySet().stream().map(DataSchema::getUnionMemberKey).collect(
         Collectors.toSet());
-    assertTrue(schemaNames.contains("WithoutResolverExample"));
-    assertTrue(schemaNames.contains("InlineRecord"));
+    for (String schema : expectedSchemas)
+    {
+      assertTrue(schemaNames.contains(schema));
+    }
     parseResult.getSchemaAndLocations().values().forEach(loc -> assertEquals(loc.getSourceFile().getAbsolutePath(), jarFile));
   }
 
@@ -99,8 +101,8 @@ public class TestDataSchemaParser
     Map<String, String> jarFiles = new HashMap<>();
 
     // Add the source PDL file to the pegasus directory
-    String pdlFile = pegasusDir + FS + "WithoutResolverExample.pdl";
-    String pdlJarDestination = SCHEMA_PATH_PREFIX + "WithoutResolverExample.pdl";
+    String pdlFile = pegasusDir + FS + "WithoutResolverExamplePdl.pdl";
+    String pdlJarDestination = SCHEMA_PATH_PREFIX + "WithoutResolverExamplePdl.pdl";
     jarFiles.put(pdlFile, pdlJarDestination);
 
     // Translated PDSC files go to "legacyPegasusSchemas", which should be ignored by parser.
@@ -116,7 +118,7 @@ public class TestDataSchemaParser
     assertEquals(parseResult.getSchemaAndLocations().size(), 2);
     Set<String> schemaNames = parseResult.getSchemaAndLocations().keySet().stream().map(DataSchema::getUnionMemberKey).collect(
         Collectors.toSet());
-    assertTrue(schemaNames.contains("WithoutResolverExample"));
+    assertTrue(schemaNames.contains("WithoutResolverExamplePdl"));
     assertTrue(schemaNames.contains("InlineRecord"));
     parseResult.getSchemaAndLocations().values().forEach(loc -> assertEquals(loc.getSourceFile().getAbsolutePath(), jarFile));
   }

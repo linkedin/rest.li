@@ -19,6 +19,7 @@ package com.linkedin.pegasus.generator;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.generator.AbstractGenerator;
+import com.linkedin.internal.tools.ArgumentFileProcessor;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.util.FileUtil;
 import com.sun.codemodel.JCodeModel;
@@ -97,7 +98,15 @@ public class PegasusDataTemplateGenerator
 
     final String generateImportedProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED);
     final boolean generateImported = generateImportedProperty == null ? true : Boolean.parseBoolean(generateImportedProperty);
-    PegasusDataTemplateGenerator.run(System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH),
+    String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
+    if (resolverPath != null && ArgumentFileProcessor.isArgFile(resolverPath))
+    {
+      // The resolver path is an arg file, prefixed with '@' and containing the actual resolverPath
+      String[] argFileContents = ArgumentFileProcessor.getContentsAsArray(resolverPath);
+      resolverPath = argFileContents.length > 0 ? argFileContents[0] : null;
+    }
+    _log.debug("Resolver Path: " + resolverPath);
+    PegasusDataTemplateGenerator.run(resolverPath,
                                      System.getProperty(JavaCodeGeneratorBase.GENERATOR_DEFAULT_PACKAGE),
                                      System.getProperty(JavaCodeGeneratorBase.ROOT_PATH),
                                      generateImported,
