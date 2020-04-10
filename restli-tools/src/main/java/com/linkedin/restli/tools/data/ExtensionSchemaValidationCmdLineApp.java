@@ -21,6 +21,8 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
+import com.linkedin.internal.tools.ArgumentFileProcessor;
+import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -72,7 +74,7 @@ public class ExtensionSchemaValidationCmdLineApp
         System.exit(1);
       }
       int i = 0;
-      String resolverPath = cliArgs[i++];
+      String resolverPath = RestLiToolsUtils.readArgFromFileIfNeeded(cliArgs[i++]);
       String inputPath = cliArgs[i];
 
       File inputDir = new File(inputPath);

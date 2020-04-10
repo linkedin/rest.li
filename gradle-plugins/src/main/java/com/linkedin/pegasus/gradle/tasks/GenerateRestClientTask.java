@@ -4,6 +4,7 @@ import com.linkedin.pegasus.gradle.PathingJarUtil;
 import com.linkedin.pegasus.gradle.PegasusOptions;
 import com.linkedin.pegasus.gradle.PegasusPlugin;
 import com.linkedin.pegasus.gradle.SharedFileUtils;
+import com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -137,12 +138,15 @@ public class GenerateRestClientTask extends DefaultTask
       getProject().javaexec(javaExecSpec ->
       {
         List<String> sources = files;
+        String resolverPathArg = resolverPathStr;
         if (isEnableArgFile()) {
           sources = Collections.singletonList(getArgFileSyntax(createArgFile("v1_" + defaultPackage, files, getTemporaryDir())));
+          resolverPathArg = ArgumentFileGenerator.getArgFileSyntax(ArgumentFileGenerator.createArgFile(
+              "generateRestClient_resolverPath_v1", Collections.singletonList(resolverPathArg), getTemporaryDir()));
         }
         javaExecSpec.setClasspath(_pathedCodegenClasspath);
         javaExecSpec.setMain("com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator");
-        javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr); //RestRequestBuilderGenerator.run(resolverPath)
+        javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathArg); //RestRequestBuilderGenerator.run(resolverPath)
         javaExecSpec.jvmArgs("-Dgenerator.default.package=" + defaultPackage); //RestRequestBuilderGenerator.run(defaultPackage)
         javaExecSpec.jvmArgs("-Dgenerator.generate.imported=false"); //RestRequestBuilderGenerator.run(generateImported)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.datatemplates=false"); //RestRequestBuilderGenerator.run(generateDataTemplates)
@@ -158,12 +162,15 @@ public class GenerateRestClientTask extends DefaultTask
       getProject().javaexec(javaExecSpec ->
       {
         List<String> sources = files;
+        String resolverPathArg = resolverPathStr;
         if (isEnableArgFile()) {
           sources = Collections.singletonList(getArgFileSyntax(createArgFile("v2_" + defaultPackage, files, getTemporaryDir())));
+          resolverPathArg = ArgumentFileGenerator.getArgFileSyntax(ArgumentFileGenerator.createArgFile(
+              "generateRestClient_resolverPath_v2", Collections.singletonList(resolverPathArg), getTemporaryDir()));
         }
         javaExecSpec.setClasspath(_pathedCodegenClasspath);
         javaExecSpec.setMain("com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator");
-        javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathStr); //RestRequestBuilderGenerator.run(resolverPath)
+        javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathArg); //RestRequestBuilderGenerator.run(resolverPath)
         javaExecSpec.jvmArgs("-Dgenerator.default.package=" + defaultPackage); //RestRequestBuilderGenerator.run(defaultPackage)
         javaExecSpec.jvmArgs("-Dgenerator.generate.imported=false"); //RestRequestBuilderGenerator.run(generateImported)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.datatemplates=false"); //RestRequestBuilderGenerator.run(generateDataTemplates)

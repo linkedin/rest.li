@@ -22,6 +22,7 @@ import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.generator.AbstractGenerator;
+import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.tools.compatibility.CompatibilityInfoMap;
 import com.linkedin.restli.tools.compatibility.CompatibilityReport;
 import com.linkedin.restli.tools.compatibility.CompatibilityUtil;
@@ -109,7 +110,13 @@ public class RestLiSnapshotCompatibilityChecker
       return;
     }
 
-    final String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
+    String resolverPath = null;
+    try {
+      resolverPath = RestLiToolsUtils.getResolverPathFromSystemProperty();
+    } catch (IOException e) {
+      System.err.println("Cannot read resolver path: " + e.getMessage());
+      System.exit(255);
+    }
     final RestLiSnapshotCompatibilityChecker checker = new RestLiSnapshotCompatibilityChecker();
     checker.setResolverPath(resolverPath);
 

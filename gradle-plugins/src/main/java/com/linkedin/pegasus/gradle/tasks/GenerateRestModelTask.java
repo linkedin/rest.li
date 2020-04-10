@@ -2,9 +2,11 @@ package com.linkedin.pegasus.gradle.tasks;
 
 import com.linkedin.pegasus.gradle.PathingJarUtil;
 import com.linkedin.pegasus.gradle.PegasusOptions;
+import com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,6 +16,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
@@ -21,6 +24,8 @@ import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
+
+import static com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator.*;
 
 
 /**
@@ -50,6 +55,7 @@ public class GenerateRestModelTask extends DefaultTask
   private File _snapshotDestinationDir;
   private PegasusOptions.IdlOptions _idlOptions;
   private FileCollection _pathedCodegenClasspath;
+  private boolean _enableArgFile;
 
   // we make a separation between watched and unwatched variables to create a stricter definition for incremental builds.
   // In this case, the unwatched directories and classes include all of the main source sets for the application. This
@@ -210,6 +216,18 @@ public class GenerateRestModelTask extends DefaultTask
     _inputDirs = inputDirs;
   }
 
+  @Input
+  public boolean isEnableArgFile()
+  {
+    return _enableArgFile;
+  }
+
+  public void setEnableArgFile(boolean enable)
+  {
+    _enableArgFile = enable;
+  }
+
+
   private void executeSnapshotExporter(List<String> inputDirs, String destinationPath, boolean additionalDocProviders)
   {
     executeSnapshotExporter(null, inputDirs, null, destinationPath, additionalDocProviders);
@@ -219,9 +237,15 @@ public class GenerateRestModelTask extends DefaultTask
                                        boolean additionalDocProviders)
   {
     getProject().javaexec(javaExecSpec -> {
+      String resolverPathArg = _resolverPath.getAsPath();
+      if (isEnableArgFile()) {
+        resolverPathArg = ArgumentFileGenerator.getArgFileSyntax(ArgumentFileGenerator.createArgFile(
+            "generateRestModel_resolverPath", Collections.singletonList(resolverPathArg), getTemporaryDir()));
+      }
+
       javaExecSpec.setMain("com.linkedin.restli.tools.snapshot.gen.RestLiSnapshotExporterCmdLineApp");
       javaExecSpec.setClasspath(_pathedCodegenClasspath);
-      javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + _resolverPath.getAsPath());
+      javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathArg);
       javaExecSpec.systemProperty("scala.usejavacp", "true");
       if (name != null)
       {

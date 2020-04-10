@@ -17,8 +17,10 @@ package com.linkedin.pegasus.gradle.tasks;
 
 import com.linkedin.pegasus.gradle.PathingJarUtil;
 import com.linkedin.pegasus.gradle.PegasusPlugin;
+import com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -28,6 +30,7 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
@@ -53,6 +56,7 @@ public class ValidateExtensionSchemaTask extends DefaultTask
   private File _inputDir;
   private FileCollection _resolverPath;
   private FileCollection _classPath;
+  private boolean _enableArgFile;
 
   /**
    * Directory containing the extension schema files.
@@ -95,6 +99,17 @@ public class ValidateExtensionSchemaTask extends DefaultTask
     _classPath = classPath;
   }
 
+  @Input
+  public boolean isEnableArgFile()
+  {
+    return _enableArgFile;
+  }
+
+  public void setEnableArgFile(boolean enable)
+  {
+    _enableArgFile = enable;
+  }
+
   @TaskAction
   public void validateExtensionSchema() throws IOException
   {
@@ -124,9 +139,15 @@ public class ValidateExtensionSchemaTask extends DefaultTask
     }
 
     getProject().javaexec(javaExecSpec -> {
+      String resolverPathArg = resolverPathStr;
+      if (isEnableArgFile())
+      {
+        resolverPathArg = ArgumentFileGenerator.getArgFileSyntax(ArgumentFileGenerator.createArgFile(
+            "validateExtensionSchema_resolverPath", Collections.singletonList(resolverPathArg), getTemporaryDir()));
+      }
       javaExecSpec.setMain("com.linkedin.restli.tools.data.ExtensionSchemaValidationCmdLineApp");
       javaExecSpec.setClasspath(_pathedClasspath);
-      javaExecSpec.args(resolverPathStr);
+      javaExecSpec.args(resolverPathArg);
       javaExecSpec.args(_inputDir.getAbsolutePath());
     });
 

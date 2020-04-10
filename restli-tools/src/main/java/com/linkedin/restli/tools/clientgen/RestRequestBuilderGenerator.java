@@ -27,6 +27,7 @@ import com.linkedin.pegasus.generator.JavaCodeGeneratorBase;
 import com.linkedin.pegasus.generator.JavaCodeUtil;
 import com.linkedin.pegasus.generator.PegasusDataTemplateGenerator;
 import com.linkedin.restli.internal.common.RestliVersion;
+import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.util.FileUtil;
@@ -95,8 +96,9 @@ public class RestRequestBuilderGenerator
     }
 
     final RestliVersion deprecatedByVersion = findDeprecatedVersion();
+    String resolverPath = RestLiToolsUtils.getResolverPathFromSystemProperty();
 
-    RestRequestBuilderGenerator.run(System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH),
+    RestRequestBuilderGenerator.run(resolverPath,
                                     System.getProperty(JavaCodeGeneratorBase.GENERATOR_DEFAULT_PACKAGE),
                                     System.getProperty(JavaCodeGeneratorBase.ROOT_PATH),
                                     generateImported == null ? true : Boolean.parseBoolean(generateImported),

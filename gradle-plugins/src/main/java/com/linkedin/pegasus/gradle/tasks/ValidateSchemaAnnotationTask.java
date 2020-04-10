@@ -15,6 +15,7 @@
 */
 package com.linkedin.pegasus.gradle.tasks;
 
+import com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -24,6 +25,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,6 +37,7 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.artifacts.configurations.DefaultConfiguration;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
@@ -66,6 +69,8 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
   private static final char PACKAGE_SEPARATOR = '.';
   private static final String CLASS_SUFFIX = ".class";
   private ClassLoader _classLoader;
+  private boolean _enableArgFile;
+
   /**
    * Pass in parameters:
    * _inputDir: Directory containing the data schema file. This value can be got from GenerateDataTemplateTask
@@ -136,6 +141,12 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
 
     getProject().javaexec(javaExecSpec ->
                           {
+                            String resolverPathArg = _resolverPath.getAsPath();
+                            if (isEnableArgFile())
+                            {
+                              resolverPathArg = ArgumentFileGenerator.getArgFileSyntax(ArgumentFileGenerator.createArgFile(
+                                  "validateSchemaAnnotation_resolverPath", Collections.singletonList(resolverPathArg), getTemporaryDir()));
+                            }
                             javaExecSpec.setMain(
                                 "com.linkedin.restli.tools.annotation.SchemaAnnotationValidatorCmdLineApp");
                             javaExecSpec.setClasspath(_classPath);
@@ -145,7 +156,7 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
                             javaExecSpec.args("--handler-classnames");
                             javaExecSpec.args(String.join(DEFAULT_PATH_SEPARATOR, foundClassNames));
                             javaExecSpec.args("--resolverPath");
-                            javaExecSpec.args(_resolverPath.getAsPath());
+                            javaExecSpec.args(resolverPathArg);
                           });
   }
 
@@ -284,4 +295,14 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
     _resolverPath = resolverPath;
   }
 
+  @Input
+  public boolean isEnableArgFile()
+  {
+    return _enableArgFile;
+  }
+
+  public void setEnableArgFile(boolean enable)
+  {
+    _enableArgFile = enable;
+  }
 }

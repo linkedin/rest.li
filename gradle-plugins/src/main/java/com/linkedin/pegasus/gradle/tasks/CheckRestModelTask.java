@@ -1,9 +1,11 @@
 package com.linkedin.pegasus.gradle.tasks;
 
 import com.linkedin.pegasus.gradle.IOUtil;
+import com.linkedin.pegasus.gradle.PathingJarUtil;
 import com.linkedin.pegasus.gradle.PegasusPlugin;
 import com.linkedin.pegasus.gradle.internal.CompatibilityLogChecker;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -64,10 +66,21 @@ public class CheckRestModelTask extends DefaultTask
 
     CompatibilityLogChecker logChecker = new CompatibilityLogChecker();
 
+    FileCollection _pathedCodegenClasspath;
+    try
+    {
+      _pathedCodegenClasspath = PathingJarUtil.generatePathingJar(getProject(), getName(),
+          _codegenClasspath, false);
+    }
+    catch (IOException e)
+    {
+      throw new GradleException("Error occurred generating pathing JAR.", e);
+    }
+
     getProject().javaexec(javaExecSpec ->
     {
       javaExecSpec.setMain("com.linkedin.restli.tools.snapshot.check.RestLiSnapshotCompatibilityChecker");
-      javaExecSpec.setClasspath(_codegenClasspath);
+      javaExecSpec.setClasspath(_pathedCodegenClasspath);
       javaExecSpec.args("--compat", _modelCompatLevel.toLowerCase());
       javaExecSpec.args("--report");
       javaExecSpec.args(argFiles);

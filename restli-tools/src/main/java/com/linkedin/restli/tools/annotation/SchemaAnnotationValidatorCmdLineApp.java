@@ -22,6 +22,7 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.annotation.SchemaAnnotationHandler;
 import com.linkedin.data.schema.annotation.SchemaAnnotationProcessor;
 import com.linkedin.pegasus.generator.DataSchemaParser;
+import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -102,7 +103,7 @@ public class SchemaAnnotationValidatorCmdLineApp
         help();
         System.exit(1);
       }
-      resolverPath = cl.getOptionValue('r');
+      resolverPath =  RestLiToolsUtils.readArgFromFileIfNeeded(cl.getOptionValue('r'));;
       handlerJarPaths = cl.getOptionValue('j');
       handlerClassNames = cl.getOptionValue('c');
       inputDir = cliArgs[0];
