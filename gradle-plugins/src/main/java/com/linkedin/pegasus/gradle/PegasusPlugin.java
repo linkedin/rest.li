@@ -562,7 +562,7 @@ public class PegasusPlugin implements Plugin<Project>
   // Directory in the dataTemplate jar that holds schemas translated from PDL to PDSC.
   private static final String TRANSLATED_SCHEMAS_DIR = "legacyPegasusSchemas";
   // Enable the use of argFiles for the tasks that support them
-  private static final String ENABLE_ARG_FILE = "enableArgFile";
+  private static final String ENABLE_ARG_FILE = "pegasusPlugin.enableArgFile";
 
   @SuppressWarnings("unchecked")
   private Class<? extends Plugin<Project>> _thisPluginType = (Class<? extends Plugin<Project>>)
