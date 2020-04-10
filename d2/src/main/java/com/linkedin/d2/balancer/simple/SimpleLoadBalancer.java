@@ -20,8 +20,10 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
+import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallback;
 import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
@@ -35,7 +37,6 @@ import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
@@ -44,7 +45,6 @@ import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
-import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
@@ -900,6 +900,42 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           ", scheme: " + scheme + ", partition: " + partitionId + ", exception: " + e);
       return -1;
     }
+  }
+
+  @Override
+  public DarkClusterConfigMap getDarkClusterConfigMap(String clusterName) throws ServiceUnavailableException
+  {
+    FutureCallback<DarkClusterConfigMap> darkClusterConfigMapFutureCallback = new FutureCallback<>();
+
+    _state.listenToCluster(clusterName, (type, name) ->
+    {
+      ClusterProperties clusterProperties = _state.getClusterProperties(clusterName).getProperty();
+      DarkClusterConfigMap darkClusterConfigMap = clusterProperties != null ?
+        clusterProperties.getDarkClusters() : new DarkClusterConfigMap();
+      darkClusterConfigMapFutureCallback.onSuccess(darkClusterConfigMap);
+    });
+
+    try
+    {
+      return darkClusterConfigMapFutureCallback.get(_timeout, _unit);
+    }
+    catch (ExecutionException | TimeoutException | IllegalStateException | InterruptedException e )
+    {
+      die("ClusterInfo", "PEGA_1018, unable to retrieve dark cluster info for cluster: " + clusterName  + ", exception: " + e);
+      return new DarkClusterConfigMap();
+    }
+  }
+
+  @Override
+  public void registerClusterListener(LoadBalancerClusterListener clusterListener)
+  {
+    _state.registerClusterListener(clusterListener);
+  }
+
+  @Override
+  public void unregisterClusterListener(LoadBalancerClusterListener clusterListener)
+  {
+    _state.unregisterClusterListener(clusterListener);
   }
 
   public static class SimpleLoadBalancerCountDownCallback implements

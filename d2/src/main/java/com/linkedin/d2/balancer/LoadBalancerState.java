@@ -90,6 +90,21 @@ public interface LoadBalancerState
   List<SchemeStrategyPair> getStrategiesForService(String serviceName,
                                                     List<String> prioritizedSchemes);
 
+  /**
+   * This registers the LoadBalancerClusterListener with the LoadBalancerState, so that
+   * the user can receive updates.
+   */
+  default void registerClusterListener(LoadBalancerClusterListener clusterListener)
+  {
+  }
+
+  /**
+   * Unregister the LoadBalancerClusterListener.
+   */
+  default void unregisterClusterListener(LoadBalancerClusterListener clusterListener)
+  {
+  }
+
   public static interface LoadBalancerStateListenerCallback
   {
     public static int SERVICE = 0;

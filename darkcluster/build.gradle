@@ -1,0 +1,9 @@
+dependencies {
+  compile project(':r2-core')
+  compile project(':d2')
+  compile project(':restli-common')
+  compile project(':restli-client')
+  compile project(':pegasus-common')
+  testCompile externalDependency.testng
+  testCompile project(':d2').sourceSets.test.output
+}

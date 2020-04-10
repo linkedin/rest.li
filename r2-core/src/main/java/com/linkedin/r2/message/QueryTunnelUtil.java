@@ -77,7 +77,7 @@ import java.util.Map;
  */
 public class QueryTunnelUtil
 {
-  private static final String HEADER_METHOD_OVERRIDE = "X-HTTP-Method-Override";
+  public static final String HEADER_METHOD_OVERRIDE = "X-HTTP-Method-Override";
   private static final String HEADER_CONTENT_TYPE = "Content-Type";
   private static final String FORM_URL_ENCODED = "application/x-www-form-urlencoded";
   private static final String MULTIPART = "multipart/mixed";
