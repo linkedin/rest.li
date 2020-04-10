@@ -29,31 +29,49 @@ import org.slf4j.LoggerFactory;
 import static com.linkedin.data.schema.resolver.FileDataSchemaResolver.*;
 
 
-public class schemaAnnotationHandlerUtil
+/**
+ * Schema Annotation Handler utility
+ */
+public class SchemaAnnotationHandlerUtil
 {
-  private static final Logger _logger = LoggerFactory.getLogger(schemaAnnotationHandlerUtil.class);
+  private static final Logger _logger = LoggerFactory.getLogger(SchemaAnnotationHandlerUtil.class);
 
-  public static List<SchemaAnnotationHandler> getSchemaAnnotationHandlers(String handlerJarPaths, String handlerClassNames) {
+  /**
+   * Based on the handlerJarPaths and handlerClassNames to provide a list of schema annotation handlers.
+   * @param handlerJarPaths String
+   * @param handlerClassNames String
+   * @return a list of schema annotation handlers
+   */
+  public static List<SchemaAnnotationHandler> getSchemaAnnotationHandlers(String handlerJarPaths, String handlerClassNames)
+  {
     List<SchemaAnnotationHandler> handlers = new ArrayList<>();
 
     List<String> handlerJarPathsArray = parsePaths(handlerJarPaths);
     // Use Jar Paths to initiate URL class loaders.
-    ClassLoader classLoader = new URLClassLoader(handlerJarPathsArray.stream().map(str -> {
-      try {
+    ClassLoader classLoader = new URLClassLoader(handlerJarPathsArray.stream().map(str ->
+    {
+      try
+      {
         return Paths.get(str).toUri().toURL();
-      } catch (Exception e) {
+      }
+      catch (Exception e)
+      {
         _logger.error("URL {} parsing failed", str, e);
       }
       return null;
     }).filter(Objects::nonNull).toArray(URL[]::new));
 
-    for (String className : parsePaths(handlerClassNames)) {
-      try {
+    for (String className : parsePaths(handlerClassNames))
+    {
+      try
+      {
         Class<?> handlerClass = Class.forName(className, false, classLoader);
         SchemaAnnotationHandler handler = (SchemaAnnotationHandler) handlerClass.newInstance();
         handlers.add(handler);
         _logger.info("added handler {} for annotation namespace \"{}\"", className, handler.getAnnotationNamespace());
-      } catch (Exception e) {
+      }
+      catch (Exception | Error e)
+      {
         _logger.error("Error instantiating handler class {} ", className, e);
         // fail even just one handler fails
         throw new IllegalStateException("Error instantiating handler class " + className);

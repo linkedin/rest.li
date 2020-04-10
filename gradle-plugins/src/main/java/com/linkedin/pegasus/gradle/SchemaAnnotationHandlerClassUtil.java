@@ -36,11 +36,11 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 
 /**
- * Utilities for getting SchemaAnnotationHandler classes.
+ * A utility for getting SchemaAnnotationHandler classes.
  */
-public class SchemaAnnotationHandlerUtil
+public class SchemaAnnotationHandlerClassUtil
 {
-  private final static Logger LOGGER = Logging.getLogger(SchemaAnnotationHandlerUtil.class);
+  private final static Logger LOGGER = Logging.getLogger(SchemaAnnotationHandlerClassUtil.class);
   private static final String SCHEMA_HANDLER_JAVA_ANNOTATION = "RestLiSchemaAnnotationHandler";
   private static final char FILE_SEPARATOR = File.separatorChar;
   private static final char UNIX_FILE_SEPARATOR = '/';
@@ -48,6 +48,14 @@ public class SchemaAnnotationHandlerUtil
   private static final String CLASS_SUFFIX = ".class";
   private static ClassLoader _classLoader;
 
+  /**
+   * Based on the handlerJarPath, provide a list of schema annotation handler names.
+   * @param handlerJarPath FileCollection
+   * @param expectedHandlersNumber int
+   * @param taskClassLoader ClassLoader
+   * @return list of schema annotation handler names.
+   * @throws IOException
+   */
   public static List<String> getSchemaAnnotationHandlerClassNames(FileCollection handlerJarPath, int expectedHandlersNumber, ClassLoader taskClassLoader)
       throws IOException {
     List<URL> handlerJarPathUrls = new ArrayList<>();

@@ -43,6 +43,9 @@ public class SchemaAnnotationValidationVisitor implements SchemaVisitor
     _schemaAnnotationHandler = schemaAnnotationHandler;
   }
 
+  /**
+   *  This constructor is used to set up useProperties flag to true, which can be used for extension schema annotation validation
+   */
   public SchemaAnnotationValidationVisitor(SchemaAnnotationHandler schemaAnnotationHandler, boolean useProperties)
   {
     _schemaAnnotationHandler = schemaAnnotationHandler;
@@ -63,11 +66,17 @@ public class SchemaAnnotationValidationVisitor implements SchemaVisitor
     metaData.setPathToSchema(context.getTraversePath());
     metaData.setEnclosingField(context.getEnclosingField());
 
+    AnnotationValidationResult annotationValidationResult = null;
+
     // Pass the enclosingField's properties in the validate(), if useProperies flag is on for extension schema annotation case.
-    AnnotationValidationResult annotationValidationResult = _useProperties
-        ? _schemaAnnotationHandler.validate(context.getEnclosingField() != null
-        ? context.getEnclosingField().getProperties() : schema.getProperties(), metaData)
-        : _schemaAnnotationHandler.validate(schema.getResolvedProperties(), metaData);
+    if (_useProperties && context.getEnclosingField() != null)
+    {
+      annotationValidationResult = _schemaAnnotationHandler.validate(context.getEnclosingField().getProperties(), metaData);
+    }
+    else
+    {
+      annotationValidationResult = _schemaAnnotationHandler.validate(schema.getResolvedProperties(), metaData);
+    }
 
     if (!annotationValidationResult.isValid())
     {

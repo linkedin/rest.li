@@ -24,8 +24,7 @@ import com.linkedin.data.schema.annotation.SchemaAnnotationProcessor;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
-import com.linkedin.restli.tools.annotation.schemaAnnotationHandlerUtil;
-
+import com.linkedin.restli.tools.annotation.SchemaAnnotationHandlerUtil;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -144,22 +143,21 @@ public class ExtensionSchemaValidationCmdLineApp
 
       for (RecordDataSchema.Field field : extensionSchemaFields) {
         Map<String, Object> properties = field.getProperties();
-
-        if (properties.isEmpty() || properties.keySet().size() != 1 || !properties.containsKey(
-            _extension_annotation_namespace)) {
+        if (properties.isEmpty() || properties.keySet().size() != 1 || !properties.containsKey(_extension_annotation_namespace))
+        {
           _logger.error("The field [{}] of extension schema must and only be annotated with 'extension'", field.getName());
           System.exit(1);
         }
       }
 
       // Using annotation framework to check the annotations of fields in extension schema.
-      List<SchemaAnnotationHandler> handlers = schemaAnnotationHandlerUtil.getSchemaAnnotationHandlers(handlerJarPaths, handlerClassNames);
+      List<SchemaAnnotationHandler> handlers = SchemaAnnotationHandlerUtil.getSchemaAnnotationHandlers(handlerJarPaths, handlerClassNames);
 
       SchemaAnnotationProcessor.SchemaAnnotationProcessResult result =
           SchemaAnnotationProcessor.process(handlers, topLevelDataSchema, new SchemaAnnotationProcessor.AnnotationProcessOption());
       if (result.hasError())
       {
-        _logger.error("Annotation processing for schema [{}] failed, detailed error: \n",
+        _logger.error("Annotation validation for schema [{}] failed, detailed error: \n",
             ((RecordDataSchema) topLevelDataSchema).getFullName());
         _logger.error(result.getErrorMsgs());
         System.exit(1);

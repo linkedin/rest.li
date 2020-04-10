@@ -16,7 +16,7 @@
 package com.linkedin.pegasus.gradle.tasks;
 
 import com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator;
-import com.linkedin.pegasus.gradle.SchemaAnnotationHandlerUtil;
+import com.linkedin.pegasus.gradle.SchemaAnnotationHandlerClassUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -86,7 +86,7 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
                   .info("no schema annotation handlers configured, will skip schema annotation validation.");
       return;
     }
-    List<String> foundClassNames = SchemaAnnotationHandlerUtil.getSchemaAnnotationHandlerClassNames(_handlerJarPath, expectedHandlersNumber, getClass().getClassLoader());
+    List<String> foundClassNames = SchemaAnnotationHandlerClassUtil.getSchemaAnnotationHandlerClassNames(_handlerJarPath, expectedHandlersNumber, getClass().getClassLoader());
 
     getProject().javaexec(javaExecSpec ->
                           {

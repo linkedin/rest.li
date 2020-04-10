@@ -25,14 +25,9 @@ import com.linkedin.pegasus.generator.DataSchemaParser;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -116,7 +111,7 @@ public class SchemaAnnotationValidatorCmdLineApp
       System.exit(1);
     }
 
-    List<SchemaAnnotationHandler> handlers = schemaAnnotationHandlerUtil.getSchemaAnnotationHandlers(handlerJarPaths, handlerClassNames);
+    List<SchemaAnnotationHandler> handlers = SchemaAnnotationHandlerUtil.getSchemaAnnotationHandlers(handlerJarPaths, handlerClassNames);
 
     boolean hasError = false;
     List<String> schemaWithFailures = new ArrayList<>();

@@ -18,7 +18,7 @@ package com.linkedin.pegasus.gradle.tasks;
 import com.linkedin.pegasus.gradle.PathingJarUtil;
 import com.linkedin.pegasus.gradle.PegasusPlugin;
 import com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator;
-import com.linkedin.pegasus.gradle.SchemaAnnotationHandlerUtil;
+import com.linkedin.pegasus.gradle.SchemaAnnotationHandlerClassUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -146,7 +146,7 @@ public class ValidateExtensionSchemaTask extends DefaultTask
     {
       throw new GradleException("no schema annotation handlers configured, extension schema validation failed!");
     }
-    List<String> foundClassNames = SchemaAnnotationHandlerUtil.getSchemaAnnotationHandlerClassNames(_handlerJarPath, expectedHandlersNumber, getClass().getClassLoader());
+    List<String> foundClassNames = SchemaAnnotationHandlerClassUtil.getSchemaAnnotationHandlerClassNames(_handlerJarPath, expectedHandlersNumber, getClass().getClassLoader());
 
     String resolverPathStr = _resolverPath.plus(getProject().files(_inputDir)).getAsPath();
 
