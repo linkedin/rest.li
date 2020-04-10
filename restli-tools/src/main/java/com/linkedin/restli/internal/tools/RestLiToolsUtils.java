@@ -114,7 +114,8 @@ public class RestLiToolsUtils
    * Reads and returns the resolver path from system property {@link AbstractGenerator#GENERATOR_RESOLVER_PATH}.
    * If the value points to an arg file, reads the contents of the file and returns it.
    */
-  public static String getResolverPathFromSystemProperty() throws IOException {
+  public static String getResolverPathFromSystemProperty() throws IOException
+  {
     String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
     return readArgFromFileIfNeeded(resolverPath);
   }
@@ -122,7 +123,8 @@ public class RestLiToolsUtils
   /**
    * If argValue points to an arg file, reads the contents of the file and returns it.
    */
-  public static String readArgFromFileIfNeeded(String argValue) throws IOException {
+  public static String readArgFromFileIfNeeded(String argValue) throws IOException
+  {
     if (argValue != null && ArgumentFileProcessor.isArgFile(argValue))
     {
       // The arg value is an arg file, prefixed with '@' and containing the actual value
