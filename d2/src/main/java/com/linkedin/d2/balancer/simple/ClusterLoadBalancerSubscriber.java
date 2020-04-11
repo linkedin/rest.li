@@ -49,6 +49,9 @@ class ClusterLoadBalancerSubscriber extends
         new ClusterInfoItem(_simpleLoadBalancerState, discoveryProperties,
           PartitionAccessorFactory.getPartitionAccessor(discoveryProperties.getClusterName(),
               _partitionAccessorRegistry, discoveryProperties.getPartitionProperties())));
+      // notify the cluster listeners only when discoveryProperties is not null, because we don't
+      // want to count initialization (just because listenToCluster is called)
+      _simpleLoadBalancerState.notifyClusterListenersOnAdd(listenTo);
     }
     else
     {
@@ -62,5 +65,6 @@ class ClusterLoadBalancerSubscriber extends
   protected void handleRemove(final String listenTo)
   {
     _simpleLoadBalancerState.getClusterInfo().remove(listenTo);
+    _simpleLoadBalancerState.notifyClusterListenersOnRemove(listenTo);
   }
 }

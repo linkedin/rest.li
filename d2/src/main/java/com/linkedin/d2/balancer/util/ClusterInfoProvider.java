@@ -16,8 +16,10 @@
 
 package com.linkedin.d2.balancer.util;
 
+import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 
 
@@ -42,5 +44,32 @@ public interface ClusterInfoProvider
   default int getHttpsClusterCount(String clusterName) throws ServiceUnavailableException
   {
     return getClusterCount(clusterName, PropertyKeys.HTTPS_SCHEME, DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+  }
+
+  /**
+   * Get the DarkClusterConfigMap for a particular d2 cluster. This is needed to to find the dark clusters that correspond
+   * to a regular d2 cluster.
+   *
+   * @param clusterName
+   * @return
+   * @throws ServiceUnavailableException
+   */
+  default DarkClusterConfigMap getDarkClusterConfigMap(String clusterName) throws ServiceUnavailableException
+  {
+    return new DarkClusterConfigMap();
+  }
+
+  /**
+   * Register a listener for Cluster changes. Listeners can refresh any internal state/cache after getting triggered.
+   */
+  default void registerClusterListener(LoadBalancerClusterListener clusterListener)
+  {
+  }
+
+  /**
+   * Unregister a cluster listener.
+   */
+  default void unregisterClusterListener(LoadBalancerClusterListener clusterListener)
+  {
   }
 }
