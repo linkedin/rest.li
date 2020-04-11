@@ -1,12 +1,16 @@
 package com.linkedin.pegasus.gradle.tasks;
 
 import com.linkedin.pegasus.gradle.IOUtil;
+import com.linkedin.pegasus.gradle.PathingJarUtil;
 import com.linkedin.pegasus.gradle.PegasusPlugin;
+import com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator;
 import com.linkedin.pegasus.gradle.internal.CompatibilityLogChecker;
 import com.linkedin.pegasus.gradle.internal.FileExtensionFilter;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,6 +46,7 @@ public class CheckIdlTask extends DefaultTask
   private boolean _restSpecCompatible = true;
   private boolean _equivalent = true;
   private String _wholeMessage = "";
+  private boolean _enableArgFile;
 
   @TaskAction
   public void check()
@@ -50,11 +55,28 @@ public class CheckIdlTask extends DefaultTask
     List<String> errorFilePairs = findErrorFilePairs();
     CompatibilityLogChecker logChecker = new CompatibilityLogChecker();
 
+    FileCollection _pathedCodegenClasspath;
+    try
+    {
+      _pathedCodegenClasspath = PathingJarUtil.generatePathingJar(getProject(), getName(),
+          _codegenClasspath, false);
+    }
+    catch (IOException e)
+    {
+      throw new GradleException("Error occurred generating pathing JAR.", e);
+    }
+
     getProject().javaexec(javaExecSpec ->
     {
+      String resolverPathArg = _resolverPath.getAsPath();
+      if (isEnableArgFile())
+      {
+        resolverPathArg = ArgumentFileGenerator.getArgFileSyntax(ArgumentFileGenerator.createArgFile(
+            "checkIdl_resolverPath", Collections.singletonList(resolverPathArg), getTemporaryDir()));
+      }
       javaExecSpec.setMain("com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker");
-      javaExecSpec.setClasspath(_codegenClasspath);
-      javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + _resolverPath.getAsPath());
+      javaExecSpec.setClasspath(_pathedCodegenClasspath);
+      javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathArg);
       javaExecSpec.args("--compat", _idlCompatLevel);
       javaExecSpec.args("--report");
       javaExecSpec.args(errorFilePairs);
@@ -250,6 +272,17 @@ public class CheckIdlTask extends DefaultTask
   public String getWholeMessage()
   {
     return _wholeMessage;
+  }
+
+  @Input
+  public boolean isEnableArgFile()
+  {
+    return _enableArgFile;
+  }
+
+  public void setEnableArgFile(boolean enable)
+  {
+    _enableArgFile = enable;
   }
 
   private List<String> findErrorFilePairs()

@@ -21,6 +21,8 @@ import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
+import com.linkedin.internal.tools.ArgumentFileProcessor;
+import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.tools.compatibility.CompatibilityInfoMap;
@@ -108,11 +110,21 @@ public class RestLiResourceModelCompatibilityChecker
       return;
     }
 
+    String resolverPath = null;
+    try
+    {
+      resolverPath = RestLiToolsUtils.getResolverPathFromSystemProperty();
+    } catch (IOException e)
+    {
+      System.err.println("Cannot read resolver path: " + e.getMessage());
+      System.exit(255);
+    }
+
     final StringBuilder allSummaries = new StringBuilder();
     final RestLiResourceModelCompatibilityChecker checker = new RestLiResourceModelCompatibilityChecker();
     for (int i = 1; i < targets.length; i += 2)
     {
-      checker.setResolverPath(System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH));
+      checker.setResolverPath(resolverPath);
 
       String prevTarget = targets[i - 1];
       String currTarget = targets[i];

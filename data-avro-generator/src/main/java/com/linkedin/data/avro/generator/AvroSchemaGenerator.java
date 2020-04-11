@@ -29,6 +29,7 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
+import com.linkedin.internal.tools.ArgumentFileProcessor;
 import com.linkedin.util.FileUtil;
 
 import java.io.File;
@@ -112,7 +113,14 @@ public class AvroSchemaGenerator extends AbstractGenerator
       System.exit(1);
     }
 
-    run(System.getProperty(GENERATOR_RESOLVER_PATH),
+    String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
+    if (resolverPath != null && ArgumentFileProcessor.isArgFile(resolverPath))
+    {
+      // The resolver path is an arg file, prefixed with '@' and containing the actual resolverPath
+      String[] argFileContents = ArgumentFileProcessor.getContentsAsArray(resolverPath);
+      resolverPath = argFileContents.length > 0 ? argFileContents[0] : null;
+    }
+    run(resolverPath,
         System.getProperty(GENERATOR_AVRO_TRANSLATE_OPTIONAL_DEFAULT),
         System.getProperty(GENERATOR_AVRO_TYPEREF_PROPERTY_EXCLUDE),
         Boolean.parseBoolean(System.getProperty(GENERATOR_AVRO_NAMESPACE_OVERRIDE)),

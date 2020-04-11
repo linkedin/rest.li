@@ -17,7 +17,10 @@
 package com.linkedin.restli.internal.tools;
 
 
+import com.linkedin.data.schema.generator.AbstractGenerator;
+import com.linkedin.internal.tools.ArgumentFileProcessor;
 import com.linkedin.restli.restspec.ParameterSchema;
+import java.io.IOException;
 
 
 public class RestLiToolsUtils
@@ -105,5 +108,29 @@ public class RestLiToolsUtils
   {
     boolean optional = param.isOptional() == null ? false : param.isOptional();
     return optional || param.hasDefault();
+  }
+
+  /**
+   * Reads and returns the resolver path from system property {@link AbstractGenerator#GENERATOR_RESOLVER_PATH}.
+   * If the value points to an arg file, reads the contents of the file and returns it.
+   */
+  public static String getResolverPathFromSystemProperty() throws IOException
+  {
+    String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
+    return readArgFromFileIfNeeded(resolverPath);
+  }
+
+  /**
+   * If argValue points to an arg file, reads the contents of the file and returns it.
+   */
+  public static String readArgFromFileIfNeeded(String argValue) throws IOException
+  {
+    if (argValue != null && ArgumentFileProcessor.isArgFile(argValue))
+    {
+      // The arg value is an arg file, prefixed with '@' and containing the actual value
+      String[] argFileContents = ArgumentFileProcessor.getContentsAsArray(argValue);
+      argValue = argFileContents.length > 0 ? argFileContents[0] : null;
+    }
+    return argValue;
   }
 }

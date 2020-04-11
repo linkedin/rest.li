@@ -54,10 +54,9 @@ public class TestRestRequestBuilderGeneratorEntryPoint
     outdir = ExporterTestUtils.createTmpDir();
     outdir2 = ExporterTestUtils.createTmpDir();
     moduleDir = System.getProperty("user.dir");
-    String pegasusDir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
 
     // backup original system properties
-    originalGeneratorResolverPath = backupOriginalValueAndOverride(AbstractGenerator.GENERATOR_RESOLVER_PATH, pegasusDir);
+    originalGeneratorResolverPath = backupOriginalValueAndOverride(AbstractGenerator.GENERATOR_RESOLVER_PATH, "");
     originalGenerateImported = backupOriginalValueAndOverride(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED, "true");
     originalGenerateDataTemplates = backupOriginalValueAndOverride(RestRequestBuilderGenerator.GENERATOR_REST_GENERATE_DATATEMPLATES, "false");
     originalVersionString = System.clearProperty(RestRequestBuilderGenerator.GENERATOR_REST_GENERATE_VERSION);
@@ -99,19 +98,24 @@ public class TestRestRequestBuilderGeneratorEntryPoint
   @Test(dataProvider = "oldNewStyleDataProvider")
   public void testMainEntryPointCanHandleArgFile(String version, String AssocKeysPathBuildersName, String SubBuildersName, String SubGetBuilderName) throws Exception
   {
+    String pegasusDir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
+
     final String outPath = outdir.getPath();
     final String outPath2 = outdir2.getPath();
     final File argFileDir = Files.createTempDirectory("").toFile(); //new File(moduleDir + FS + "argFile");
     final File oldStyleArgFile = new File(argFileDir, "oldStyle.txt");
     final File newStyleArgFile = new File(argFileDir, "newStyle.txt");
+    final File resolverPathArgFile = new File(argFileDir, "resolverPath.txt");
 
     Files.write(oldStyleArgFile.toPath(), Collections.singletonList(moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "oldStyleAssocKeysPath.restspec.json"));
     Files.write(newStyleArgFile.toPath(), Collections.singletonList(moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + "newStyleAssocKeysPath.restspec.json"));
+    Files.write(resolverPathArgFile.toPath(), Collections.singletonList(pegasusDir));
 
     final String[] oldStyleMainArgs = {outPath, String.format("@%s", oldStyleArgFile.getAbsolutePath())};
     final String[] newStyleMainArgs = {outPath2, String.format("@%s", newStyleArgFile.getAbsolutePath())};
 
     System.setProperty(RestRequestBuilderGenerator.GENERATOR_REST_GENERATE_VERSION, version);
+    System.setProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH, String.format("@%s", resolverPathArgFile.getAbsolutePath()));
 
     RestRequestBuilderGenerator.main(oldStyleMainArgs);
     RestRequestBuilderGenerator.main(newStyleMainArgs);

@@ -561,6 +561,8 @@ public class PegasusPlugin implements Plugin<Project>
       "dataTemplateGenerator", "restTools", "avroSchemaGenerator");
   // Directory in the dataTemplate jar that holds schemas translated from PDL to PDSC.
   private static final String TRANSLATED_SCHEMAS_DIR = "legacyPegasusSchemas";
+  // Enable the use of argFiles for the tasks that support them
+  private static final String ENABLE_ARG_FILE = "pegasusPlugin.enableArgFile";
 
   @SuppressWarnings("unchecked")
   private Class<? extends Plugin<Project>> _thisPluginType = (Class<? extends Plugin<Project>>)
@@ -856,6 +858,10 @@ public class PegasusPlugin implements Plugin<Project>
                                            .plus(project.getConfigurations().getByName("pegasusPlugin"))
                                            .plus(project.getConfigurations().getByName("runtime")));
                   task.setHandlerJarPath(project.getConfigurations() .getByName("schemaAnnotationHandler"));
+                  if (isPropertyTrue(project, ENABLE_ARG_FILE))
+                  {
+                    task.setEnableArgFile(true);
+                  }
                 }
             );
 
@@ -936,6 +942,10 @@ public class PegasusPlugin implements Plugin<Project>
           task.setInputDir(extensionSchemaDir);
           task.setResolverPath(getDataModelConfig(project, sourceSet).plus(project.files(getDataSchemaPath(project, sourceSet))));
           task.setClassPath(project.getConfigurations().getByName("pegasusPlugin"));
+          if (isPropertyTrue(project, ENABLE_ARG_FILE))
+          {
+            task.setEnableArgFile(true);
+          }
         });
 
     project.getTasks().getByName("check").dependsOn(validateExtensionSchemaTask);
@@ -1203,6 +1213,10 @@ public class PegasusPlugin implements Plugin<Project>
             task.setIdlOptions(pegasusOptions.get(sourceSet.getName()).idlOptions);
 
             task.setResolverPath(restModelResolverPath);
+            if (isPropertyTrue(project, ENABLE_ARG_FILE))
+            {
+              task.setEnableArgFile(true);
+            }
 
             task.doFirst(new CacheableAction<>(t -> deleteGeneratedDir(project, sourceSet, REST_GEN_TYPE)));
           });
@@ -1226,7 +1240,6 @@ public class PegasusPlugin implements Plugin<Project>
             task.setPreviousIdlDirectory(apiIdlDir);
             task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
             task.setModelCompatLevel(PropertyUtil.findCompatLevel(project, FileCompatibilityType.SNAPSHOT));
-
             task.onlyIf(t -> !isPropertyTrue(project, SKIP_IDL_CHECK));
 
             task.doLast(new CacheableAction<>(t ->
@@ -1258,6 +1271,11 @@ public class PegasusPlugin implements Plugin<Project>
             task.setResolverPath(restModelResolverPath);
             task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
             task.setIdlCompatLevel(PropertyUtil.findCompatLevel(project, FileCompatibilityType.IDL));
+            if (isPropertyTrue(project, ENABLE_ARG_FILE))
+            {
+              task.setEnableArgFile(true);
+            }
+
 
             task.onlyIf(t -> !isPropertyTrue(project, SKIP_IDL_CHECK)
                 && !"OFF".equals(PropertyUtil.findCompatLevel(project, FileCompatibilityType.IDL)));
@@ -1419,6 +1437,10 @@ public class PegasusPlugin implements Plugin<Project>
           task.setDestinationDir(avroDir);
           task.setResolverPath(getDataModelConfig(project, sourceSet));
           task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+          if (isPropertyTrue(project, ENABLE_ARG_FILE))
+          {
+            task.setEnableArgFile(true);
+          }
 
           task.onlyIf(t ->
           {
@@ -1493,6 +1515,10 @@ public class PegasusPlugin implements Plugin<Project>
       }
       task.setKeepOriginal(keepOriginal);
       task.setSkipVerification(skipVerification);
+      if (isPropertyTrue(project, ENABLE_ARG_FILE))
+      {
+        task.setEnableArgFile(true);
+      }
 
       task.onlyIf(t -> task.getInputDir().exists());
       task.doLast(new CacheableAction<>(t ->
@@ -1514,6 +1540,10 @@ public class PegasusPlugin implements Plugin<Project>
       task.setDestinationFormat(SchemaFileType.PDL);
       task.setKeepOriginal(true);
       task.setSkipVerification(true);
+      if (isPropertyTrue(project, ENABLE_ARG_FILE))
+      {
+        task.setEnableArgFile(true);
+      }
 
       task.onlyIf(t -> task.getInputDir().exists());
       task.doLast(new CacheableAction<>(t -> project.getLogger().lifecycle("PDL reformat complete.")));
@@ -1538,6 +1568,10 @@ public class PegasusPlugin implements Plugin<Project>
           task.setDestinationDir(generatedDataTemplateDir);
           task.setResolverPath(getDataModelConfig(project, sourceSet));
           task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+          if (isPropertyTrue(project, ENABLE_ARG_FILE))
+          {
+            task.setEnableArgFile(true);
+          }
 
           task.onlyIf(t ->
           {
@@ -1632,6 +1666,10 @@ public class PegasusPlugin implements Plugin<Project>
           task.setDestinationFormat(SchemaFileType.PDSC);
           task.setKeepOriginal(true);
           task.setSkipVerification(true);
+          if (isPropertyTrue(project, ENABLE_ARG_FILE))
+          {
+            task.setEnableArgFile(true);
+          }
         });
 
     prepareLegacySchemasForPublishTask.dependsOn(destroyStaleFiles);
@@ -1774,6 +1812,10 @@ public class PegasusPlugin implements Plugin<Project>
           task.setDestinationDir(generatedRestClientDir);
           task.setRestli2FormatSuppressed(project.hasProperty(SUPPRESS_REST_CLIENT_RESTLI_2));
           task.setRestli1FormatSuppressed(project.hasProperty(SUPPRESS_REST_CLIENT_RESTLI_1));
+          if (isPropertyTrue(project, ENABLE_ARG_FILE))
+          {
+            task.setEnableArgFile(true);
+          }
         });
 
     if (dataTemplateJarTask != null)

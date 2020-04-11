@@ -18,11 +18,11 @@ package com.linkedin.restli.tools.snapshot.gen;
 
 
 import com.linkedin.data.schema.generator.AbstractGenerator;
-import com.linkedin.restli.internal.server.model.ResourceModelEncoder;
+import com.linkedin.internal.tools.ArgumentFileProcessor;
 import com.linkedin.restli.internal.tools.AdditionalDocProvidersUtil;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.linkedin.restli.internal.tools.RestLiToolsUtils;
+import java.io.IOException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -97,7 +97,15 @@ public class RestLiSnapshotExporterCmdLineApp
       System.exit(0);
     }
 
-    final String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
+    String resolverPath = null;
+    try
+    {
+      resolverPath = RestLiToolsUtils.getResolverPathFromSystemProperty();
+    } catch (IOException e)
+    {
+      System.err.println("Cannot read resolver path: " + e.getMessage());
+      System.exit(255);
+    }
 
     try
     {
