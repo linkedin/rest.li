@@ -23,6 +23,7 @@ import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.element.DataElement;
 import com.linkedin.data.message.Message;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
@@ -44,7 +45,9 @@ import static com.linkedin.data.TestUtil.asMap;
 import static com.linkedin.data.TestUtil.dataMapFromString;
 import static com.linkedin.data.TestUtil.dataSchemaFromString;
 import static com.linkedin.data.TestUtil.out;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 
@@ -289,7 +292,7 @@ public class TestValidator
                             Map<String, Class<? extends Validator>> validatorClassMap,
                             String[] validatorCheckStrings,
                             int tests)
-    throws IOException, InstantiationException
+    throws IOException
   {
     DataSchema schema = dataSchemaFromString(schemaText);
     DataSchemaAnnotationValidator annotationValidator = new DataSchemaAnnotationValidator();
@@ -427,6 +430,32 @@ public class TestValidator
       "  } " +
       "}";
 
+  private static final String fooProjectedSchemaText =
+      "{ " +
+          "  \"type\" : \"record\", " +
+          "  \"name\" : \"Foo\", " +
+          "  \"fields\" : [ " +
+          "    { " +
+          "      \"name\" : \"digits\", " +
+          "      \"type\" : " +
+          "      { " +
+          "        \"name\" : \"Digits\", " +
+          "        \"type\" : \"typeref\", " +
+          "        \"ref\"  : \"string\", " +
+          "        \"validate\" : " +
+          "        { " +
+          "          \"regex\" : { \"regex\" : \"[0-9]+\" } "+
+          "        } " +
+          "      }, " +
+          "      \"optional\" : true " +
+          "    } " +
+          "  ], " +
+          "  \"validate\" : " +
+          "  { " +
+          "    \"projectionAwareFooValidator\" : { } " +
+          "  } " +
+          "}";
+
   String[] _fooSchemaValidatorCheckStrings =
   {
     "StrLen10",
@@ -435,7 +464,7 @@ public class TestValidator
     "Foo"
   };
 
-  public void testFooSchemaValidator(Object[][] input) throws IOException, InstantiationException
+  public void testFooSchemaValidator(Object[][] input) throws IOException
   {
     testValidator(fooSchemaText, input, _validatorClassMap, _fooSchemaValidatorCheckStrings, ALL_VALIDATORS);
   }
@@ -811,6 +840,27 @@ public class TestValidator
   }
 
   @Test
+  public void testCustomValidatorWithProjectedSchema() throws IOException {
+    DataMap dataMap = dataMapFromString(fooSchemaText);
+    DataSchema projectedDataSchema = dataSchemaFromString(fooProjectedSchemaText);
+    DataSchemaAnnotationValidator dataSchemaAnnotationValidator = new DataSchemaAnnotationValidator();
+
+    Validator validator = context -> {
+      assertNotNull(context.dataSchema());
+      assertEquals(context.dataSchema(), projectedDataSchema);
+    };
+
+    Map<String, Class<? extends Validator>> validatorClassMap = new HashMap<>();
+    validatorClassMap.put("projectionAwareFooValidator", validator.getClass());
+
+    dataSchemaAnnotationValidator.init(projectedDataSchema, validatorClassMap);
+
+    ValidationResult validationResult =
+        ValidateDataAgainstSchema.validate(dataMap, projectedDataSchema, new ValidationOptions(), dataSchemaAnnotationValidator);
+    assertTrue(validationResult.isValid());
+  }
+
+  @Test
   public void testValidatorPriority() throws IOException
   {
     Map<String, Class<? extends Validator>> validatorClassMap = new HashMap<String, Class<? extends Validator>>();
@@ -1116,4 +1166,3 @@ public class TestValidator
     }
   }
 }
-

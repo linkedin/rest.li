@@ -16,9 +16,9 @@
 
 package com.linkedin.data.schema.validator;
 
-
 import com.linkedin.data.element.DataElement;
 import com.linkedin.data.message.Message;
+import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 
 
@@ -40,6 +40,17 @@ public interface ValidatorContext
    * @return the {@link DataElement} providing the value to be validated.
    */
   DataElement dataElement();
+
+  /**
+   * The schema to validate against.
+   * This is important when REST.li projections are present, because not all fields in the original schema could be present.
+   * The default is null for backwards compatibility.
+   *
+   * @return the {@link DataSchema} after the REST.li projection has been applied
+   */
+  default DataSchema dataSchema() {
+    return null;
+  }
 
   /**
    * Add a {@link Message} to the result.

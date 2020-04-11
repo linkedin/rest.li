@@ -241,6 +241,7 @@ public final class ValidateDataAgainstSchema
            validatorElement = new SimpleDataElement(fixed, element.getName(), schema, element.getParent());
         }
         _context._dataElement = validatorElement;
+        _context._dataSchema = schema;
         _validator.validate(_context);
       }
       return fixed;
@@ -836,11 +837,17 @@ public final class ValidateDataAgainstSchema
     private class Context implements ValidatorContext
     {
       private DataElement _dataElement;
+      private DataSchema _dataSchema;
 
       @Override
       public DataElement dataElement()
       {
         return _dataElement;
+      }
+
+      @Override
+      public DataSchema dataSchema() {
+        return _dataSchema;
       }
 
       @Override
