@@ -36,20 +36,9 @@ public class SchemaAnnotationValidationVisitor implements SchemaVisitor
   private final SchemaAnnotationHandler _schemaAnnotationHandler;
   private static final Logger LOGGER = LoggerFactory.getLogger(SchemaAnnotationValidationVisitor.class);
 
-  private boolean _useProperties;
-
   public SchemaAnnotationValidationVisitor(SchemaAnnotationHandler schemaAnnotationHandler)
   {
     _schemaAnnotationHandler = schemaAnnotationHandler;
-  }
-
-  /**
-   *  This constructor is used to set up useProperties flag to true, which can be used for extension schema annotation validation
-   */
-  public SchemaAnnotationValidationVisitor(SchemaAnnotationHandler schemaAnnotationHandler, boolean useProperties)
-  {
-    _schemaAnnotationHandler = schemaAnnotationHandler;
-    _useProperties = useProperties;
   }
 
   @Override
@@ -64,20 +53,8 @@ public class SchemaAnnotationValidationVisitor implements SchemaVisitor
     SchemaAnnotationHandler.ValidationMetaData metaData = new SchemaAnnotationHandler.ValidationMetaData();
     metaData.setDataSchema(context.getCurrentSchema());
     metaData.setPathToSchema(context.getTraversePath());
-    metaData.setEnclosingField(context.getEnclosingField());
-
-    AnnotationValidationResult annotationValidationResult = null;
-
-    // Pass the enclosingField's properties in the validate(), if useProperies flag is on for extension schema annotation case.
-    if (_useProperties && context.getEnclosingField() != null)
-    {
-      annotationValidationResult = _schemaAnnotationHandler.validate(context.getEnclosingField().getProperties(), metaData);
-    }
-    else
-    {
-      annotationValidationResult = _schemaAnnotationHandler.validate(schema.getResolvedProperties(), metaData);
-    }
-
+    AnnotationValidationResult annotationValidationResult = _schemaAnnotationHandler.validate(schema.getResolvedProperties(),
+                                                                                              metaData);
     if (!annotationValidationResult.isValid())
     {
       // merge messages

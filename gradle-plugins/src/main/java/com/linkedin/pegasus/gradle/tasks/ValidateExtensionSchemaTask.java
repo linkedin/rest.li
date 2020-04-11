@@ -18,7 +18,6 @@ package com.linkedin.pegasus.gradle.tasks;
 import com.linkedin.pegasus.gradle.PathingJarUtil;
 import com.linkedin.pegasus.gradle.PegasusPlugin;
 import com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator;
-import com.linkedin.pegasus.gradle.SchemaAnnotationHandlerClassUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -29,7 +28,6 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
-import org.gradle.api.internal.artifacts.configurations.DefaultConfiguration;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
@@ -59,7 +57,7 @@ public class ValidateExtensionSchemaTask extends DefaultTask
   private FileCollection _resolverPath;
   private FileCollection _classPath;
   private boolean _enableArgFile;
-  private FileCollection _handlerJarPath;
+
   /**
    * Directory containing the extension schema files.
    */
@@ -112,17 +110,6 @@ public class ValidateExtensionSchemaTask extends DefaultTask
     _enableArgFile = enable;
   }
 
-  @Classpath
-  public FileCollection getHandlerJarPath()
-  {
-    return _handlerJarPath;
-  }
-
-  public void setHandlerJarPath(FileCollection handlerJarPath)
-  {
-    _handlerJarPath = handlerJarPath;
-  }
-
   @TaskAction
   public void validateExtensionSchema() throws IOException
   {
@@ -139,14 +126,6 @@ public class ValidateExtensionSchemaTask extends DefaultTask
       return;
     }
     getProject().getLogger().info("Verifying extension schemas ...");
-
-    int expectedHandlersNumber = ((DefaultConfiguration) _handlerJarPath).getAllDependencies().size();
-    // skip if no handlers configured
-    if (expectedHandlersNumber == 0)
-    {
-      throw new GradleException("no schema annotation handlers configured, extension schema validation failed!");
-    }
-    List<String> foundClassNames = SchemaAnnotationHandlerClassUtil.getSchemaAnnotationHandlerClassNames(_handlerJarPath, expectedHandlersNumber, getClass().getClassLoader());
 
     String resolverPathStr = _resolverPath.plus(getProject().files(_inputDir)).getAsPath();
 
@@ -170,8 +149,6 @@ public class ValidateExtensionSchemaTask extends DefaultTask
       javaExecSpec.setClasspath(_pathedClasspath);
       javaExecSpec.args(resolverPathArg);
       javaExecSpec.args(_inputDir.getAbsolutePath());
-      javaExecSpec.args(_handlerJarPath.getAsPath());
-      javaExecSpec.args(String.join(File.pathSeparator, foundClassNames));
     });
   }
 }

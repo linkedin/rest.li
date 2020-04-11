@@ -15,16 +15,22 @@
 */
 package com.linkedin.restli.tools.data;
 
+import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.annotation.SchemaAnnotationHandler;
-import com.linkedin.data.schema.annotation.SchemaAnnotationProcessor;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
-import com.linkedin.restli.tools.annotation.SchemaAnnotationHandlerUtil;
+import com.linkedin.data.schema.validation.CoercionMode;
+import com.linkedin.data.schema.validation.RequiredMode;
+import com.linkedin.data.schema.validation.UnrecognizedFieldMode;
+import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
+import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.restli.common.ExtensionSchemaAnnotation;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -44,12 +50,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+/**
+ * This class is used to validate extension schema, the validation covers following parts:
+ * 1. The extension schema is a validate schema.
+ * 2. The extension schema's fields should only be annotated by "extension" namespace.
+ * 3. The extension schema's fields annotations should be {@link ExtensionSchemaAnnotation}.
+ * 4. The extension schema's field's schema only be annotated by "resourceKey" namespace.
+ *
+ *
+ * @author Yingjie Bi
+ */
 public class ExtensionSchemaValidationCmdLineApp
 {
   private static final Logger _logger = LoggerFactory.getLogger(ExtensionSchemaValidationCmdLineApp.class);
   private static final Options _options = new Options();
-  private static final String _pdl = "pdl";
-  private static final String _extension_annotation_namespace = "extension";
+  private static final String PDL = "pdl";
+  private static final String EXTENSION_ANNOTATION_NAMESPACE= "extension";
+  private static final String RESOURCE_KEY_ANNOTATION_NAMESPACE = "resourceKey";
 
   static
   {
@@ -71,7 +88,7 @@ public class ExtensionSchemaValidationCmdLineApp
       }
 
       String[] cliArgs = cl.getArgs();
-      if (cliArgs.length != 4)
+      if (cliArgs.length != 2)
       {
         _logger.error("Invalid arguments");
         help();
@@ -79,9 +96,7 @@ public class ExtensionSchemaValidationCmdLineApp
       }
       int i = 0;
       String resolverPath = RestLiToolsUtils.readArgFromFileIfNeeded(cliArgs[i++]);
-      String inputPath = cliArgs[i++];
-      String handlerJarPaths = cliArgs[i++];
-      String handlerClassNames = cliArgs[i];
+      String inputPath = cliArgs[i];
 
       File inputDir = new File(inputPath);
 
@@ -90,7 +105,7 @@ public class ExtensionSchemaValidationCmdLineApp
         System.exit(1);
       }
 
-      parseAndValidateExtensionSchemas(resolverPath, inputDir, handlerJarPaths, handlerClassNames);
+      parseAndValidateExtensionSchemas(resolverPath, inputDir);
     }
     catch (ParseException e)
     {
@@ -99,10 +114,10 @@ public class ExtensionSchemaValidationCmdLineApp
     }
   }
 
-  private static void parseAndValidateExtensionSchemas(String resolverPath, File inputDir, String handlerJarPaths, String handlerClassNames) throws IOException
+  private static void parseAndValidateExtensionSchemas(String resolverPath, File inputDir) throws IOException
   {
     // Parse each extension schema and validate it
-    Iterator<File> iterator = FileUtils.iterateFiles(inputDir, new String[]{_pdl}, true);
+    Iterator<File> iterator = FileUtils.iterateFiles(inputDir, new String[]{PDL}, true);
     while(iterator.hasNext())
     {
       File inputFile = iterator.next();
@@ -141,28 +156,72 @@ public class ExtensionSchemaValidationCmdLineApp
           .filter(f -> !((RecordDataSchema) topLevelDataSchema).isFieldFromIncludes(f))
           .collect(Collectors.toList());
 
-      for (RecordDataSchema.Field field : extensionSchemaFields) {
-        Map<String, Object> properties = field.getProperties();
-        if (properties.isEmpty() || properties.keySet().size() != 1 || !properties.containsKey(_extension_annotation_namespace))
+      checkExtensionSchemaFields(extensionSchemaFields);
+    }
+  }
+
+  private static void checkExtensionSchemaFields(List<RecordDataSchema.Field> extensionSchemaFields)
+  {
+    for (RecordDataSchema.Field field : extensionSchemaFields)
+    {
+      // check extension schema field annotation
+      Map<String, Object> properties = field.getProperties();
+      if (properties.isEmpty() || properties.keySet().size() != 1 || !properties.containsKey(EXTENSION_ANNOTATION_NAMESPACE))
+      {
+        _logger.error("The field [{}] of extension schema must and only be annotated with 'extension'", field.getName());
+        System.exit(1);
+      }
+      Object dataElement = properties.get(EXTENSION_ANNOTATION_NAMESPACE);
+
+      ValidationOptions validationOptions =
+          new ValidationOptions(RequiredMode.MUST_BE_PRESENT, CoercionMode.STRING_TO_PRIMITIVE, UnrecognizedFieldMode.DISALLOW);
+      try
+      {
+        if (!(dataElement instanceof DataMap))
         {
-          _logger.error("The field [{}] of extension schema must and only be annotated with 'extension'", field.getName());
+          _logger.error("extension schema annotation is not a datamap!");
+          System.exit(1);
+        }
+        DataSchema extensionSchemaAnnotationSchema = new ExtensionSchemaAnnotation().schema();
+        ValidationResult result = ValidateDataAgainstSchema.validate(dataElement, extensionSchemaAnnotationSchema, validationOptions);
+        if (!result.isValid())
+        {
+          _logger.error("extension schema annotation is not valid: " + result.getMessages());
           System.exit(1);
         }
       }
-
-      // Using annotation framework to check the annotations of fields in extension schema.
-      List<SchemaAnnotationHandler> handlers = SchemaAnnotationHandlerUtil.getSchemaAnnotationHandlers(handlerJarPaths, handlerClassNames);
-
-      SchemaAnnotationProcessor.SchemaAnnotationProcessResult result =
-          SchemaAnnotationProcessor.process(handlers, topLevelDataSchema, new SchemaAnnotationProcessor.AnnotationProcessOption());
-      if (result.hasError())
+      catch (Exception e)
       {
-        _logger.error("Annotation validation for schema [{}] failed, detailed error: \n",
-            ((RecordDataSchema) topLevelDataSchema).getFullName());
-        _logger.error(result.getErrorMsgs());
+        _logger.error("Error while checking extension schema field annotation: " + e.getMessage());
         System.exit(1);
       }
+      checkExtensionSchemaFieldSchema(field.getType());
     }
+  }
+
+  private static void checkExtensionSchemaFieldSchema(DataSchema fieldSchema)
+  {
+    if (!isAnnotatedWithResourceKey(fieldSchema) && !isArrayAndItemIsAnnotatedWithResourceKey(fieldSchema))
+    {
+        _logger.error("Field schema: [{}] is not annotated with 'resourceKey'", fieldSchema.toString());
+        System.exit(1);
+    }
+  }
+
+  private static boolean isArrayAndItemIsAnnotatedWithResourceKey(DataSchema schema)
+  {
+    if (schema.getType() == DataSchema.Type.ARRAY)
+    {
+      DataSchema itemSchema = ((ArrayDataSchema) schema).getItems();
+      return isAnnotatedWithResourceKey(itemSchema);
+    }
+    return false;
+  }
+
+  private static boolean isAnnotatedWithResourceKey(DataSchema fieldSchema)
+  {
+    Map<String, Object> fieldAnnotation = fieldSchema.getProperties();
+    return !fieldAnnotation.isEmpty() && fieldAnnotation.containsKey(RESOURCE_KEY_ANNOTATION_NAMESPACE);
   }
 
   private static void help()
@@ -170,7 +229,7 @@ public class ExtensionSchemaValidationCmdLineApp
     final HelpFormatter formatter = new HelpFormatter();
     formatter.printHelp(120,
         ExtensionSchemaValidationCmdLineApp.class.getSimpleName(),
-        "[resolverPath], [inputPath], [handlerJarPaths], [handlerClassNames]",
+        "[resolverPath], [inputPath]",
          _options,
         "",
         true);
