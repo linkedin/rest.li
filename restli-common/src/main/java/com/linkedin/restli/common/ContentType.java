@@ -55,6 +55,7 @@ public class ContentType
   private static final JacksonLICORStreamDataCodec
       LICOR_BINARY_STREAM_DATA_CODEC = new JacksonLICORStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, true);
   private static final ProtobufDataCodec PROTOBUF_DATA_CODEC = new ProtobufDataCodec();
+  private static final ProtobufDataCodec PROTOBUF2_DATA_CODEC = new ProtobufDataCodec(null, true);
   private static final PsonDataCodec PSON_DATA_CODEC = new PsonDataCodec();
   private static final JacksonSmileDataCodec SMILE_DATA_CODEC = new JacksonSmileDataCodec();
   private static final JacksonSmileStreamDataCodec SMILE_STREAM_DATA_CODEC = new JacksonSmileStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
@@ -71,8 +72,24 @@ public class ContentType
           LICOR_BINARY_STREAM_DATA_CODEC);
   public static final ContentType SMILE =
       new ContentType(RestConstants.HEADER_VALUE_APPLICATION_SMILE, SMILE_DATA_CODEC, SMILE_STREAM_DATA_CODEC);
+
+  /**
+   * Legacy version of the Protocol buffers codec.
+   *
+   * @deprecated Use {@link #PROTOBUF2} instead.
+   */
+  @Deprecated
   public static final ContentType PROTOBUF =
       new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF, PROTOBUF_DATA_CODEC, null);
+
+  /**
+   * Protocol buffers codec that supports marking ASCII only strings separately, as a hint to decoders
+   * to use a faster decoding path in such instances. This is now recommended for use instead of the deprecated
+   * {@link #PROTOBUF} codec.
+   */
+  public static final ContentType PROTOBUF2 =
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF2, PROTOBUF2_DATA_CODEC, null);
+
   // Content type to be used only as an accept type.
   public static final ContentType ACCEPT_TYPE_ANY =
       new ContentType(RestConstants.HEADER_VALUE_ACCEPT_ANY, JACKSON_DATA_CODEC, null);
@@ -86,7 +103,10 @@ public class ContentType
     SUPPORTED_TYPE_PROVIDERS.put(SMILE.getHeaderKey(), (rawMimeType, mimeType) -> SMILE);
     SUPPORTED_TYPE_PROVIDERS.put(PROTOBUF.getHeaderKey(),
         new SymbolTableBasedContentTypeProvider(PROTOBUF,
-            (rawMimeType, symbolTable) -> new ContentType(rawMimeType, new ProtobufDataCodec(symbolTable), null)));
+            (rawMimeType, symbolTable) -> new ContentType(rawMimeType, new ProtobufDataCodec(symbolTable, false), null)));
+    SUPPORTED_TYPE_PROVIDERS.put(PROTOBUF2.getHeaderKey(),
+        new SymbolTableBasedContentTypeProvider(PROTOBUF2,
+            (rawMimeType, symbolTable) -> new ContentType(rawMimeType, new ProtobufDataCodec(symbolTable, true), null)));
     SUPPORTED_TYPE_PROVIDERS.put(LICOR_TEXT.getHeaderKey(),
         new SymbolTableBasedContentTypeProvider(LICOR_TEXT,
             (rawMimeType, symbolTable) -> new ContentType(rawMimeType,

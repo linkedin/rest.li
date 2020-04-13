@@ -217,8 +217,8 @@ public class TestRestLiSymbolTableRequestHandler
 
     RestResponse response = future.get();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
-    Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), ContentType.PROTOBUF.getHeaderKey());
-    Assert.assertEquals(symbolTable, SymbolTableSerializer.fromByteString(response.getEntity(), ContentType.PROTOBUF.getCodec()));
+    Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), ContentType.PROTOBUF2.getHeaderKey());
+    Assert.assertEquals(symbolTable, SymbolTableSerializer.fromByteString(response.getEntity(), ContentType.PROTOBUF2.getCodec()));
   }
 
   @Test
@@ -248,8 +248,8 @@ public class TestRestLiSymbolTableRequestHandler
 
     RestResponse response = future.get();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
-    Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), ContentType.PROTOBUF.getHeaderKey());
-    Assert.assertEquals(symbolTable, SymbolTableSerializer.fromByteString(response.getEntity(), ContentType.PROTOBUF.getCodec()));
+    Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), ContentType.PROTOBUF2.getHeaderKey());
+    Assert.assertEquals(symbolTable, SymbolTableSerializer.fromByteString(response.getEntity(), ContentType.PROTOBUF2.getCodec()));
   }
 
   @Test
@@ -279,8 +279,8 @@ public class TestRestLiSymbolTableRequestHandler
 
     RestResponse response = future.get();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
-    Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), ContentType.PROTOBUF.getHeaderKey());
-    Assert.assertEquals(symbolTable, SymbolTableSerializer.fromByteString(response.getEntity(), ContentType.PROTOBUF.getCodec()));
+    Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), ContentType.PROTOBUF2.getHeaderKey());
+    Assert.assertEquals(symbolTable, SymbolTableSerializer.fromByteString(response.getEntity(), ContentType.PROTOBUF2.getCodec()));
   }
 
   @Test

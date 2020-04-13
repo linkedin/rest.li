@@ -274,191 +274,320 @@ public class Utf8Utils
   }
 
   /**
+   * Decodes the given ASCII encoded byte array slice into a {@link String}.
+   */
+  public static String decodeASCII(byte[] bytes, int index, int size, TextBuffer textBuffer)
+  {
+    int offset = index;
+    final int limit = offset + size;
+
+    // Reuse buffers to avoid thrashing due to transient allocs.
+    char[] resultArr = null;
+    try
+    {
+      resultArr = textBuffer.getBuf(size);
+      int resultPos = 0;
+      while (offset < limit) {
+        resultArr[resultPos++] = (char) bytes[offset++];
+      }
+      return new String(resultArr, 0, size);
+    }
+    finally
+    {
+      textBuffer.returnBuf(resultArr);
+    }
+  }
+
+  /**
+   * Decodes a long ASCII encoded byte source that spans multiple byte array chunks into a {@link String}.
+   */
+  public static String decodeLongASCII(LongDecoderState state, int size, TextBuffer textBuffer) throws IOException
+  {
+    // Reuse buffers to avoid thrashing due to transient allocs.
+    char[] resultArr = null;
+    try
+    {
+      resultArr = textBuffer.getBuf(size);
+      int resultPos = 0;
+
+      byte[] buffer = state._buffer;
+      int position = state._position;
+      int limit = state._offset + state._bufferSize;
+
+      while (resultPos < size)
+      {
+        if (position >= limit)
+        {
+          state.readNextChunk();
+          buffer = state._buffer;
+          position = state._position;
+          limit = state._offset + state._bufferSize;
+        }
+
+        while (position < limit && resultPos < size)
+        {
+          resultArr[resultPos++] = (char) buffer[position++];
+        }
+      }
+
+      state._position = position;
+      return new String(resultArr, 0, resultPos);
+    }
+    finally
+    {
+      textBuffer.returnBuf(resultArr);
+    }
+  }
+
+  /**
+   * Decodes the given UTF-8 encoded byte array slice into a {@link String}.
+   *
+   * @throws IllegalArgumentException if the input is not valid UTF-8.
+   *
+   * @deprecated Use {@link #decode(byte[], int, int, TextBuffer)} instead, re-using the same TextBuffer between
+   * invocations, as much as possible.
+   */
+  @Deprecated
+  public static String decode(byte[] bytes, int index, int size)
+  {
+    return decode(bytes, index, size, new TextBuffer(ProtoReader.DEFAULT_TEXT_BUFFER_SIZE));
+  }
+
+  /**
    * Decodes the given UTF-8 encoded byte array slice into a {@link String}.
    *
    * @throws IllegalArgumentException if the input is not valid UTF-8.
    */
-  public static String decode(byte[] bytes, int index, int size)
+  public static String decode(byte[] bytes, int index, int size, TextBuffer textBuffer)
   {
-    // Bitwise OR combines the sign bits so any negative value fails the check.
-    if ((index | size | bytes.length - index - size) < 0)
-    {
-      throw new ArrayIndexOutOfBoundsException(
-          String.format("buffer length=%d, index=%d, size=%d", bytes.length, index, size));
-    }
-
     int offset = index;
     final int limit = offset + size;
 
     // The longest possible resulting String is the same as the number of input bytes, when it is
-    // all ASCII. For other cases, this over-allocates and we will truncate in the end.
-    char[] resultArr = new char[size];
-    int resultPos = 0;
+    // all ASCII. For other cases, this over-allocates and we will truncate in the end. Use a pooled
+    // buffer here to avoid thrashing due to transient allocs.
+    char[] resultArr = null;
 
-    while (offset < limit)
+    try
     {
-      byte byte1 = bytes[offset++];
-      int value = byte1 & 0xff;
-      switch (UTF8_LOOKUP_TABLE[value])
-      {
-        case 0:
-          DecodeUtil.handleOneByte(byte1, resultArr, resultPos++);
-          break;
-        case 2:
-          DecodeUtil.handleTwoBytes(byte1, bytes[offset++], resultArr, resultPos++);
-          break;
-        case 3:
-          DecodeUtil.handleThreeBytes(byte1, bytes[offset++], bytes[offset++], resultArr, resultPos++);
-          break;
-        case 4:
-          DecodeUtil.handleFourBytes(byte1, bytes[offset++], bytes[offset++], bytes[offset++], resultArr, resultPos++);
-          // 4-byte case requires two chars.
-          resultPos++;
-          break;
-        default:
-          throw INVALID_UTF8_EXCEPTION;
-      }
-    }
+      resultArr = textBuffer.getBuf(size);
+      int resultPos = 0;
 
-    return new String(resultArr, 0, resultPos);
+      while (offset < limit)
+      {
+        int i = bytes[offset++] & 0xff;
+        switch (UTF8_LOOKUP_TABLE[i])
+        {
+          case 0:
+            // ASCII. Nothing to do, since byte is same as char.
+            break;
+          case 2:
+            // 2 byte unicode
+            i = ((i & 0x1F) << 6) | (bytes[offset++] & 0x3F);
+            break;
+          case 3:
+            // 3 byte unicode
+            i = ((i & 0x0F) << 12) | ((bytes[offset++] & 0x3F) << 6) | (bytes[offset++] & 0x3F);
+            break;
+          case 4:
+            // 4 byte unicode
+            i = ((i & 0x07) << 18) | ((bytes[offset++] & 0x3F) << 12) | ((bytes[offset++] & 0x3F) << 6) | (bytes[offset++] & 0x3F);
+            // Split the codepoint
+            i -= 0x10000;
+            resultArr[resultPos++] = (char) (0xD800 | (i >> 10));
+            i = 0xDC00 | (i & 0x3FF);
+            break;
+          default:
+            throw new IllegalArgumentException("Invalid UTF-8. UTF-8 character cannot be " + UTF8_LOOKUP_TABLE[i] + "bytes");
+        }
+        resultArr[resultPos++] = (char) i;
+      }
+
+      return new String(resultArr, 0, resultPos);
+    }
+    catch (ArrayIndexOutOfBoundsException e)
+    {
+      throw new IllegalArgumentException("Invalid UTF-8. Unterminated multi-byte sequence", e);
+    }
+    finally
+    {
+      textBuffer.returnBuf(resultArr);
+    }
   }
 
   /**
-   * Decodes the given UTF-8 encoded section with the given size using the given {@link ProtoReader} into a
+   * Decodes the given long UTF-8 encoded byte source that spans across multiple byte array chunks into a
    * {@link String}.
+   *
+   * <p>The loops in the multi-byte sections are intentionally hand unrolled here for performance reasons.</p>
    *
    * @throws IllegalArgumentException if the input is not valid UTF-8.
    */
-  public static String decode(ProtoReader protoReader, int size) throws IOException
+  public static String decodeLong(LongDecoderState state, int size, TextBuffer textBuffer) throws IOException
   {
     // The longest possible resulting String is the same as the number of input bytes, when it is
-    // all ASCII. For other cases, this over-allocates and we will truncate in the end.
-    char[] resultArr = new char[size];
-    int resultPos = 0;
+    // all ASCII. For other cases, this over-allocates and we will truncate in the end. Use a pooled
+    // buffer here to avoid thrashing due to transient allocs.
+    char[] resultArr = null;
 
-    while (size > 0)
+    try
     {
-      byte byte1 = protoReader.readRawByte();
-      int value = byte1 & 0xff;
-      switch (UTF8_LOOKUP_TABLE[value])
-      {
-        case 0:
-          DecodeUtil.handleOneByte(byte1, resultArr, resultPos++);
-          size--;
-          break;
-        case 2:
-          DecodeUtil.handleTwoBytes(byte1, protoReader.readRawByte(), resultArr, resultPos++);
-          size -= 2;
-          break;
-        case 3:
-          DecodeUtil.handleThreeBytes(byte1, protoReader.readRawByte(), protoReader.readRawByte(), resultArr, resultPos++);
-          size -= 3;
-          break;
-        case 4:
-          DecodeUtil.handleFourBytes(byte1, protoReader.readRawByte(), protoReader.readRawByte(), protoReader.readRawByte(), resultArr, resultPos++);
-          // 4-byte case requires two chars.
-          resultPos++;
-          size -= 4;
-          break;
-        default:
-          throw INVALID_UTF8_EXCEPTION;
-      }
-    }
+      resultArr = textBuffer.getBuf(size);
+      int resultPos = 0;
 
-    return new String(resultArr, 0, resultPos);
+      byte[] buffer = state._buffer;
+      int position = state._position;
+      int limit = state._offset + state._bufferSize;
+      int totalBytesRead = 0;
+
+      while (totalBytesRead < size)
+      {
+        if (position >= limit)
+        {
+          state.readNextChunk();
+          buffer = state._buffer;
+          position = state._position;
+          limit = state._offset + state._bufferSize;
+        }
+
+        int i = buffer[position++] & 0xff;
+        switch (UTF8_LOOKUP_TABLE[i])
+        {
+          case 0:
+            // ASCII. Nothing to do, since byte is same as char.
+            totalBytesRead++;
+            break;
+          case 2:
+            // 2 byte unicode
+            if (position >= limit)
+            {
+              state.readNextChunk();
+              buffer = state._buffer;
+              position = state._position;
+              limit = state._offset + state._bufferSize;
+            }
+            i = ((i & 0x1F) << 6) | (buffer[position++] & 0x3F);
+            totalBytesRead += 2;
+            break;
+          case 3:
+            // 3 byte unicode
+            if (position < limit -1)
+            {
+              i = ((i & 0x0F) << 12) | ((buffer[position++] & 0x3F) << 6) | (buffer[position++] & 0x3F);
+            }
+            else
+            {
+              byte byte2, byte3;
+              if (position >= limit)
+              {
+                state.readNextChunk();
+                buffer = state._buffer;
+                position = state._position;
+                limit = state._offset + state._bufferSize;
+              }
+              byte2 = buffer[position++];
+
+              if (position >= limit)
+              {
+                state.readNextChunk();
+                buffer = state._buffer;
+                position = state._position;
+                limit = state._offset + state._bufferSize;
+              }
+              byte3 = buffer[position++];
+              i = ((i & 0x0F) << 12) | ((byte2 & 0x3F) << 6) | (byte3 & 0x3F);
+            }
+            totalBytesRead += 3;
+            break;
+          case 4:
+            // 4 byte unicode
+            if (position < limit - 2)
+            {
+              i = ((i & 0x07) << 18) | ((buffer[position++] & 0x3F) << 12) | ((buffer[position++] & 0x3F) << 6) | (buffer[position++] & 0x3F);
+            }
+            else
+            {
+              byte byte2, byte3, byte4;
+              if (position >= limit)
+              {
+                state.readNextChunk();
+                buffer = state._buffer;
+                position = state._position;
+                limit = state._offset + state._bufferSize;
+              }
+              byte2 = buffer[position++];
+
+              if (position >= limit)
+              {
+                state.readNextChunk();
+                buffer = state._buffer;
+                position = state._position;
+                limit = state._offset + state._bufferSize;
+              }
+              byte3 = buffer[position++];
+
+              if (position >= limit)
+              {
+                state.readNextChunk();
+                buffer = state._buffer;
+                position = state._position;
+                limit = state._offset + state._bufferSize;
+              }
+              byte4 = buffer[position++];
+
+              i = ((i & 0x07) << 18) | ((byte2 & 0x3F) << 12) | ((byte3 & 0x3F) << 6) | (byte4 & 0x3F);
+            }
+            // Split the codepoint
+            i -= 0x10000;
+            resultArr[resultPos++] = (char) (0xD800 | (i >> 10));
+            i = 0xDC00 | (i & 0x3FF);
+            totalBytesRead += 4;
+            break;
+          default:
+            throw new IllegalArgumentException("Invalid UTF-8. UTF-8 character cannot be " + UTF8_LOOKUP_TABLE[i] + "bytes");
+        }
+        resultArr[resultPos++] = (char) i;
+      }
+
+      state._position = position;
+      return new String(resultArr, 0, resultPos);
+    }
+    finally
+    {
+      textBuffer.returnBuf(resultArr);
+    }
   }
 
   /**
-   * Utility methods for decoding bytes into {@link String}. Callers are responsible for extracting
-   * bytes (possibly using Unsafe methods), and checking remaining bytes.
+   * Class to maintain state when decoding a {@link String} from a byte source spanning multiple byte array chunks.
    */
-  private static class DecodeUtil
+  public static abstract class LongDecoderState
   {
-    private static void handleOneByte(byte byte1, char[] resultArr, int resultPos)
+    protected byte[] _buffer;
+    protected int _offset;
+    protected int _position;
+    protected int _bufferSize;
+
+    public abstract void readNextChunk() throws IOException;
+
+    public byte[] getBuffer()
     {
-      resultArr[resultPos] = (char) byte1;
+      return _buffer;
     }
 
-    private static void handleTwoBytes(byte byte1, byte byte2, char[] resultArr, int resultPos)
+    public int getOffset()
     {
-      // Simultaneously checks for illegal trailing-byte in leading position (<= '11000000') and
-      // overlong 2-byte, '11000001'.
-      if (byte1 < (byte) 0xC2 || isNotTrailingByte(byte2))
-      {
-        throw INVALID_UTF8_EXCEPTION;
-      }
-
-      resultArr[resultPos] = (char) (((byte1 & 0x1F) << 6) | trailingByteValue(byte2));
+      return _offset;
     }
 
-    private static void handleThreeBytes(byte byte1, byte byte2, byte byte3, char[] resultArr, int resultPos)
+    public int getPosition()
     {
-      if (isNotTrailingByte(byte2)
-          // overlong? 5 most significant bits must not all be zero
-          || (byte1 == (byte) 0xE0 && byte2 < (byte) 0xA0)
-          // check for illegal surrogate codepoints
-          || (byte1 == (byte) 0xED && byte2 >= (byte) 0xA0)
-          || isNotTrailingByte(byte3))
-      {
-        throw INVALID_UTF8_EXCEPTION;
-      }
-
-      resultArr[resultPos] =
-          (char)
-              (((byte1 & 0x0F) << 12) | (trailingByteValue(byte2) << 6) | trailingByteValue(byte3));
+      return _position;
     }
 
-    private static void handleFourBytes(byte byte1, byte byte2, byte byte3, byte byte4, char[] resultArr, int resultPos)
+    public int getBufferSize()
     {
-      if (isNotTrailingByte(byte2)
-          // Check that 1 <= plane <= 16.  Tricky optimized form of:
-          //   valid 4-byte leading byte?
-          // if (byte1 > (byte) 0xF4 ||
-          //   overlong? 4 most significant bits must not all be zero
-          //     byte1 == (byte) 0xF0 && byte2 < (byte) 0x90 ||
-          //   codepoint larger than the highest code point (U+10FFFF)?
-          //     byte1 == (byte) 0xF4 && byte2 > (byte) 0x8F)
-          || (((byte1 << 28) + (byte2 - (byte) 0x90)) >> 30) != 0
-          || isNotTrailingByte(byte3)
-          || isNotTrailingByte(byte4))
-      {
-        throw INVALID_UTF8_EXCEPTION;
-      }
-
-      int codepoint =
-          ((byte1 & 0x07) << 18)
-              | (trailingByteValue(byte2) << 12)
-              | (trailingByteValue(byte3) << 6)
-              | trailingByteValue(byte4);
-      resultArr[resultPos] = DecodeUtil.highSurrogate(codepoint);
-      resultArr[resultPos + 1] = DecodeUtil.lowSurrogate(codepoint);
-    }
-
-    /**
-     * Returns whether the byte is not a valid continuation of the form '10XXXXXX'.
-     */
-    private static boolean isNotTrailingByte(byte b)
-    {
-      return b > (byte) 0xBF;
-    }
-
-    /**
-     * Returns the actual value of the trailing byte (removes the prefix '10') for composition.
-     */
-    private static int trailingByteValue(byte b)
-    {
-      return b & 0x3F;
-    }
-
-    private static char highSurrogate(int codePoint)
-    {
-      return (char)
-          ((Character.MIN_HIGH_SURROGATE - (Character.MIN_SUPPLEMENTARY_CODE_POINT >>> 10)) + (codePoint >>> 10));
-    }
-
-    private static char lowSurrogate(int codePoint)
-    {
-      return (char) (Character.MIN_LOW_SURROGATE + (codePoint & 0x3ff));
+      return _bufferSize;
     }
   }
 }

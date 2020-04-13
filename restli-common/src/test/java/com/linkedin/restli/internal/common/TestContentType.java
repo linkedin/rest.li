@@ -79,7 +79,7 @@ public class TestContentType
   @Test
   public void testPSONContentType() throws MimeTypeParseException
   {
-    ContentType contentType = ContentType.getContentType("application/x-pson; charset=utf-8").get();
+    ContentType contentType = ContentType.getContentType("application/x-pson").get();
     Assert.assertEquals(contentType, ContentType.PSON);
 
     ContentType contentTypeWithParameter = ContentType.getContentType("application/x-pson; charset=utf-8").get();
@@ -89,11 +89,21 @@ public class TestContentType
   @Test
   public void testProtobufContentType() throws MimeTypeParseException
   {
-    ContentType contentType = ContentType.getContentType("application/x-protobuf; charset=utf-8").get();
+    ContentType contentType = ContentType.getContentType("application/x-protobuf").get();
     Assert.assertEquals(contentType, ContentType.PROTOBUF);
 
     ContentType contentTypeWithParameter = ContentType.getContentType("application/x-protobuf; charset=utf-8").get();
     Assert.assertEquals(contentTypeWithParameter, ContentType.PROTOBUF);
+  }
+
+  @Test
+  public void testProtobuf2ContentType() throws MimeTypeParseException
+  {
+    ContentType contentType = ContentType.getContentType("application/x-protobuf2").get();
+    Assert.assertEquals(contentType, ContentType.PROTOBUF2);
+
+    ContentType contentTypeWithParameter = ContentType.getContentType("application/x-protobuf2; charset=utf-8").get();
+    Assert.assertEquals(contentTypeWithParameter, ContentType.PROTOBUF2);
   }
 
   @Test
@@ -136,11 +146,11 @@ public class TestContentType
   }
 
   @Test
-  public void testGetRequestProtobufContentType() throws MimeTypeParseException
+  public void testGetRequestProtobuf2ContentType() throws MimeTypeParseException
   {
     ContentType contentType =
-        ContentType.getRequestContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF, TEST_URI).get();
-    Assert.assertEquals("application/x-protobuf; symbol-table=HahaRequest", contentType.getHeaderKey());
+        ContentType.getRequestContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF2, TEST_URI).get();
+    Assert.assertEquals("application/x-protobuf2; symbol-table=HahaRequest", contentType.getHeaderKey());
   }
 
   @Test
@@ -160,10 +170,10 @@ public class TestContentType
   }
 
   @Test
-  public void testGetResponseProtobufContentType() throws MimeTypeParseException
+  public void testGetResponseProtobuf2ContentType() throws MimeTypeParseException
   {
     ContentType contentType =
-        ContentType.getResponseContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF, TEST_URI, Collections.emptyMap()).get();
-    Assert.assertEquals("application/x-protobuf; symbol-table=\"abc.linkedin.com:123|HahaResponse\"", contentType.getHeaderKey());
+        ContentType.getResponseContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF2, TEST_URI, Collections.emptyMap()).get();
+    Assert.assertEquals("application/x-protobuf2; symbol-table=\"abc.linkedin.com:123|HahaResponse\"", contentType.getHeaderKey());
   }
 }

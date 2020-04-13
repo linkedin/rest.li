@@ -116,13 +116,13 @@ public class RestLiSymbolTableRequestHandler implements NonResourceRequestHandle
 
     //
     // Determine response content type based on accept header.
-    // Assume protobuf if no accept header is specified. Note that this is a deviation from the rest of rest.li
+    // Assume protobuf2 if no accept header is specified. Note that this is a deviation from the rest of rest.li
     // which assumes JSON as the default, for efficiency reasons.
     //
     ContentType type;
     String mimeType =
         Optional.ofNullable(request.getHeader(RestConstants.HEADER_ACCEPT))
-            .orElse(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF);
+            .orElse(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF2);
     try
     {
       type =  ContentType.getContentType(mimeType).orElseThrow(() ->

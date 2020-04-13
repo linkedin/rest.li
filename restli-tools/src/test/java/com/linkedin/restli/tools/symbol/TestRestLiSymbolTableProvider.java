@@ -104,8 +104,8 @@ public class TestRestLiSymbolTableProvider
     builder.setStatus(200);
     SymbolTable symbolTable = new InMemorySymbolTable("https://OtherHost:100/service|Test--332004310",
         Collections.unmodifiableList(Arrays.asList("Haha", "Hehe")));
-    builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF.getCodec(), symbolTable));
-    builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF.getHeaderKey());
+    builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF2.getCodec(), symbolTable));
+    builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF2.getHeaderKey());
     when(_client.restRequest(eq(new RestRequestBuilder(URI.create("https://OtherHost:100/service/symbolTable/Test--332004310")).build())))
         .thenReturn(CompletableFuture.completedFuture(builder.build()));
 
@@ -138,8 +138,8 @@ public class TestRestLiSymbolTableProvider
     builder.setStatus(200);
     SymbolTable symbolTable = new InMemorySymbolTable("https://OtherHost:100/service|Test--332004310",
         Collections.unmodifiableList(Arrays.asList("Haha", "Hehe")));
-    builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF.getCodec(), symbolTable));
-    builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF.getHeaderKey());
+    builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF2.getCodec(), symbolTable));
+    builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF2.getHeaderKey());
     when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://someservice/symbolTable"))
         .setHeaders(Collections.singletonMap(RestConstants.HEADER_SERVICE_SCOPED_PATH, "true")).build())))
         .thenReturn(CompletableFuture.completedFuture(builder.build()));

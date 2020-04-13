@@ -22,10 +22,10 @@ import org.testng.annotations.Test;
 
 public class TestProtobufCodec extends TestCodec
 {
-  @Test(dataProvider = "codecData", dataProviderClass = CodecDataProviders.class)
-  public void testProtobufDataCodec(String testName, DataComplex dataComplex) throws IOException
+  @Test(dataProvider = "protobufCodecData", dataProviderClass = CodecDataProviders.class)
+  public void testProtobufDataCodec(String testName, DataComplex dataComplex, boolean supportASCIIOnlyStrings) throws IOException
   {
-    ProtobufDataCodec codec = new ProtobufDataCodec();
+    ProtobufDataCodec codec = new ProtobufDataCodec(null, supportASCIIOnlyStrings);
     testDataCodec(codec, dataComplex);
   }
 }

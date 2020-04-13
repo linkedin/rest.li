@@ -176,6 +176,7 @@ public class RestClientTest
     LICOR_TEXT(ContentType.LICOR_TEXT),
     LICOR_BINARY(ContentType.LICOR_BINARY),
     PROTOBUF(ContentType.PROTOBUF),
+    PROTOBUF2(ContentType.PROTOBUF2),
     PSON(ContentType.PSON),
     SMILE(ContentType.SMILE);
 

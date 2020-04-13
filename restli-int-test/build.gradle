@@ -37,6 +37,8 @@ test {
   systemProperties['test.projectDir'] = project.projectDir.path
 }
 
+compileTestJava.options.compilerArgs += '-Xlint:-deprecation'
+
 task serverStreamCodecTest(type: Test) {
   maxHeapSize = '4g'
   systemProperties['test.projectDir'] = project.projectDir.path
