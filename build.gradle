@@ -201,6 +201,10 @@ subprojects {
     configurations.testArtifacts.visible = true
   }
 
+  if (it.name == 'darkcluster') {
+    configurations.testArtifacts.visible = true
+  }
+
   if (!(it.name in ['data-avro', 'restli-int-test'])) {
     configurations {
       // Prevent Guava from creeping in to avoid incompatibilities in multiple classloader environments.
