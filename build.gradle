@@ -248,9 +248,6 @@ subprojects {
       archives sourcesJar
       archives javadocJar
     }
-
-    // Configure the Bintray release task
-    apply from: "${buildScriptDirPath}/bintrayRelease.gradle"
   }
 
   task testJar(type: Jar) {
@@ -260,6 +257,11 @@ subprojects {
 
   artifacts {
     testArtifacts testJar
+  }
+
+  if (isDefaultEnvironment) {
+    // Configure the Bintray release task
+    apply from: "${buildScriptDirPath}/bintrayRelease.gradle"
   }
 
   // Configure the IDEA plugin to (1) add the codegen as source dirs and (2) work around
