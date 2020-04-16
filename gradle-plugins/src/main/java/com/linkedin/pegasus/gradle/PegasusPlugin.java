@@ -874,6 +874,7 @@ public class PegasusPlugin implements Plugin<Project>
 
 
 
+  @SuppressWarnings("deprecation")
   protected void configureGeneratedSourcesAndJavadoc(Project project)
   {
     _generateJavadocTask = project.getTasks().create("generateJavadoc", Javadoc.class);
@@ -892,6 +893,7 @@ public class PegasusPlugin implements Plugin<Project>
       _generateSourcesJarTask = project.getTasks().create("generateSourcesJar", Jar.class, jarTask -> {
         jarTask.setGroup(JavaBasePlugin.DOCUMENTATION_GROUP);
         jarTask.setDescription("Generates a jar file containing the sources for the generated Java classes.");
+        // FIXME change to #getArchiveClassifier().set("sources"); breaks backwards-compatibility before 5.1
         jarTask.setClassifier("sources");
       });
 
@@ -913,6 +915,7 @@ public class PegasusPlugin implements Plugin<Project>
         jarTask.dependsOn(_generateJavadocTask);
         jarTask.setGroup(JavaBasePlugin.DOCUMENTATION_GROUP);
         jarTask.setDescription("Generates a jar file containing the Javadoc for the generated Java classes.");
+        // FIXME change to #getArchiveClassifier().set("sources"); breaks backwards-compatibility before 5.1
         jarTask.setClassifier("javadoc");
         jarTask.from(_generateJavadocTask.getDestinationDir());
       });
@@ -1424,6 +1427,7 @@ public class PegasusPlugin implements Plugin<Project>
     });
   }
 
+  @SuppressWarnings("deprecation")
   protected void configureAvroSchemaGeneration(Project project, SourceSet sourceSet)
   {
     File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet));
@@ -1473,6 +1477,7 @@ public class PegasusPlugin implements Plugin<Project>
         copySpec.eachFile(fileCopyDetails ->
             fileCopyDetails.setPath("avro" + File.separatorChar + fileCopyDetails.getPath())));
 
+      // FIXME change to #getArchiveAppendix().set(...); breaks backwards-compatibility before 5.1
       task.setAppendix(getAppendix(sourceSet, "avro-schema"));
       task.setDescription("Generate an avro schema jar");
     });
@@ -1550,6 +1555,7 @@ public class PegasusPlugin implements Plugin<Project>
     });
   }
 
+  @SuppressWarnings("deprecation")
   protected GenerateDataTemplateTask configureDataTemplateGeneration(Project project, SourceSet sourceSet)
   {
     File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet));
@@ -1694,6 +1700,7 @@ public class PegasusPlugin implements Plugin<Project>
 
           task.from(targetSourceSet.getOutput());
 
+          // FIXME change to #getArchiveAppendix().set(...); breaks backwards-compatibility before 5.1
           task.setAppendix(getAppendix(sourceSet, "data-template"));
           task.setDescription("Generate a data template jar");
         });
@@ -1717,6 +1724,7 @@ public class PegasusPlugin implements Plugin<Project>
         getDataModelConfig(project, sourceSet),
         project.getConfigurations().getByName("dataTemplateCompile"));
 
+    // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
     project.getDependencies().add(compileConfigName, project.files(dataTemplateJarTask.getArchivePath()));
 
     if (debug)
@@ -1741,6 +1749,7 @@ public class PegasusPlugin implements Plugin<Project>
   // It also compiles the rest client source files into classes, and creates both the
   // rest model and rest client jar files.
   //
+  @SuppressWarnings("deprecation")
   protected void configureRestClientGeneration(Project project, SourceSet sourceSet)
   {
     // idl directory for api project
@@ -1773,6 +1782,7 @@ public class PegasusPlugin implements Plugin<Project>
         System.out.println("sourceSet " + sourceSet.getName() + " has generated sourceSet " + dataTemplateSourceSetName);
       }
       dataTemplateJarTask = (Jar) project.getTasks().getByName(sourceSet.getName() + "DataTemplateJar");
+      // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
       dataModels = dataModelConfig.plus(project.files(dataTemplateJarTask.getArchivePath()));
     }
     else
@@ -1848,6 +1858,7 @@ public class PegasusPlugin implements Plugin<Project>
             .info("Add idl file: {}", fileCopyDetails));
         copySpec.setIncludes(Collections.singletonList('*' + IDL_FILE_SUFFIX));
       });
+      // FIXME change to #getArchiveAppendix().set(...); breaks backwards-compatibility before 5.1
       task.setAppendix(getAppendix(sourceSet, "rest-model"));
       task.setDescription("Generate rest model jar");
     });
@@ -1865,6 +1876,7 @@ public class PegasusPlugin implements Plugin<Project>
             copySpec.setIncludes(Collections.singletonList('*' + IDL_FILE_SUFFIX));
           });
           task.from(targetSourceSet.getOutput());
+          // FIXME change to #getArchiveAppendix().set(...); breaks backwards-compatibility before 5.1
           task.setAppendix(getAppendix(sourceSet, "rest-client"));
           task.setDescription("Generate rest client jar");
         });
