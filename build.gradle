@@ -52,7 +52,7 @@ project.ext.externalDependency = [
   'commonsHttpClient': 'commons-httpclient:commons-httpclient:3.1',
   'commonsIo': 'commons-io:commons-io:2.4',
   'commonsLang': 'commons-lang:commons-lang:2.6',
-  'commonsLang3': 'org.apache.commons:commons-lang3:3.4',
+  'commonsText': 'org.apache.commons:commons-text:1.8',
   'disruptor': 'com.lmax:disruptor:3.2.0',
   'easymock': 'org.easymock:easymock:4.0.2',
   'mockito': 'org.mockito:mockito-all:1.9.5',

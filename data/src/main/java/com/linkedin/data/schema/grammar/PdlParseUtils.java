@@ -21,8 +21,8 @@ import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 
 /**
