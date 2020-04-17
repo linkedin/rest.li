@@ -21,6 +21,7 @@ import com.linkedin.data.Data;
 import com.linkedin.data.Data.TraverseCallback;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.symbol.EmptySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.protobuf.ProtoReader;
@@ -29,8 +30,6 @@ import com.linkedin.util.FastByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 
@@ -44,6 +43,11 @@ import java.util.function.Function;
  */
 public class ProtobufDataCodec implements DataCodec
 {
+  //
+  // List of protobuf type ordinals. 12-19 and 30-127 are reserved for custom ordinals that extenders of this codec
+  // may choose to use. 0-11 and 20-29 are reserved for use by this codec.
+  //
+
   private static final byte MAP_ORDINAL = 0;
   private static final byte LIST_ORDINAL = 1;
   private static final byte STRING_LITERAL_ORDINAL = 2;
@@ -56,21 +60,11 @@ public class ProtobufDataCodec implements DataCodec
   private static final byte BOOLEAN_FALSE_ORDINAL = 9;
   private static final byte RAW_BYTES_ORDINAL = 10;
   private static final byte NULL_ORDINAL = 11;
-
-  private static final Map<Class<?>, Byte> ORDINAL_MAP = new HashMap<>();
-  static {
-    ORDINAL_MAP.put(DataMap.class, MAP_ORDINAL);
-    ORDINAL_MAP.put(DataList.class, LIST_ORDINAL);
-    ORDINAL_MAP.put(String.class, STRING_LITERAL_ORDINAL);
-    ORDINAL_MAP.put(Integer.class, INTEGER_ORDINAL);
-    ORDINAL_MAP.put(Long.class, LONG_ORDINAL);
-    ORDINAL_MAP.put(Float.class, FLOAT_ORDINAL);
-    ORDINAL_MAP.put(Double.class,DOUBLE_ORDINAL);
-    ORDINAL_MAP.put(Boolean.class, BOOLEAN_FALSE_ORDINAL);
-    ORDINAL_MAP.put(ByteString.class, RAW_BYTES_ORDINAL);
-  }
+  private static final byte ASCII_STRING_LITERAL_ORDINAL = 20;
 
   protected final SymbolTable _symbolTable;
+
+  protected final boolean _supportsASCIIOnlyStrings;
 
   public ProtobufDataCodec()
   {
@@ -79,7 +73,13 @@ public class ProtobufDataCodec implements DataCodec
 
   public ProtobufDataCodec(SymbolTable symbolTable)
   {
-    _symbolTable = symbolTable;
+    this(symbolTable, false);
+  }
+
+  public ProtobufDataCodec(SymbolTable symbolTable, boolean supportsASCIIOnlyStrings)
+  {
+    _symbolTable = symbolTable == null ? EmptySymbolTable.SHARED : symbolTable;
+    _supportsASCIIOnlyStrings = supportsASCIIOnlyStrings;
   }
 
   /**
@@ -226,11 +226,16 @@ public class ProtobufDataCodec implements DataCodec
   protected final String readStringReference(ProtoReader reader) throws IOException
   {
     String value;
-    if (_symbolTable == null || (value = _symbolTable.getSymbolName(reader.readInt32())) == null)
+    if ((value = _symbolTable.getSymbolName(reader.readInt32())) == null)
     {
       throw new DataDecodingException("Error decoding string reference");
     }
     return value;
+  }
+
+  protected final String readASCIIStringLiteral(ProtoReader reader) throws IOException
+  {
+    return reader.readASCIIString();
   }
 
   protected final String readStringLiteral(ProtoReader reader) throws IOException
@@ -250,6 +255,7 @@ public class ProtobufDataCodec implements DataCodec
     {
       case MAP_ORDINAL: return readMap(reader);
       case LIST_ORDINAL: return readList(reader);
+      case ASCII_STRING_LITERAL_ORDINAL: return readASCIIStringLiteral(reader);
       case STRING_LITERAL_ORDINAL: return readStringLiteral(reader);
       case STRING_REFERENCE_ORDINAL: return readStringReference(reader);
       case INTEGER_ORDINAL: return reader.readInt32();
@@ -267,7 +273,9 @@ public class ProtobufDataCodec implements DataCodec
 
   protected boolean isString(byte ordinal)
   {
-    return ordinal == STRING_LITERAL_ORDINAL || ordinal == STRING_REFERENCE_ORDINAL;
+    return ordinal == STRING_LITERAL_ORDINAL
+        || ordinal == ASCII_STRING_LITERAL_ORDINAL
+        || ordinal == STRING_REFERENCE_ORDINAL;
   }
 
   protected boolean isList(byte ordinal)
@@ -284,11 +292,18 @@ public class ProtobufDataCodec implements DataCodec
   {
     protected final ProtoWriter _protoWriter;
     protected final SymbolTable _symbolTable;
+    protected final boolean _supportsASCIIOnlyStrings;
 
     public ProtobufTraverseCallback(ProtoWriter protoWriter, SymbolTable symbolTable)
     {
+      this(protoWriter, symbolTable, false);
+    }
+
+    public ProtobufTraverseCallback(ProtoWriter protoWriter, SymbolTable symbolTable, boolean supportsASCIIOnlyStrings)
+    {
       _protoWriter = protoWriter;
       _symbolTable = symbolTable;
+      _supportsASCIIOnlyStrings =  supportsASCIIOnlyStrings;
     }
 
     public void nullValue() throws IOException
@@ -365,15 +380,16 @@ public class ProtobufDataCodec implements DataCodec
     public void stringValue(String value) throws IOException
     {
       int symbolId;
-      if (_symbolTable != null && (symbolId = _symbolTable.getSymbolId(value)) != SymbolTable.UNKNOWN_SYMBOL_ID)
+      if ((symbolId = _symbolTable.getSymbolId(value)) != SymbolTable.UNKNOWN_SYMBOL_ID)
       {
         _protoWriter.writeByte(STRING_REFERENCE_ORDINAL);
         _protoWriter.writeUInt32(symbolId);
       }
       else
       {
-        _protoWriter.writeByte(STRING_LITERAL_ORDINAL);
-        _protoWriter.writeString(value);
+        // If the byte length is the same as the string length, then this is an ASCII-only string.
+        _protoWriter.writeString(value, byteLength ->
+            (_supportsASCIIOnlyStrings && value.length() == byteLength) ? ASCII_STRING_LITERAL_ORDINAL : STRING_LITERAL_ORDINAL);
       }
     }
 

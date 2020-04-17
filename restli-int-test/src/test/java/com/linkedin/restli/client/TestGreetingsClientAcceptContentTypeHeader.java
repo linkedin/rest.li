@@ -139,6 +139,11 @@ public class TestGreetingsClientAcceptContentTypeHeader extends RestLiIntegratio
             new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
                 ContentType.PROTOBUF)).build())),
             RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF
+        },
+        {
+            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
+                ContentType.PROTOBUF2)).build())),
+            RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF2
         }
     };
   }

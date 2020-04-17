@@ -450,7 +450,7 @@ public final class ByteString
       return ProtoReader.newInstance(byteArray.getArray(), byteArray.getOffset(), byteArray.getLength());
     }
 
-    return new ByteArrayProtoReader(_byteArrays);
+    return new ByteStringProtoReader(_byteArrays);
   }
 
   /**
@@ -1291,42 +1291,45 @@ public final class ByteString
   /**
    * A {@link ProtoReader} that can read the contents of this ByteString.
    */
-  private static class ByteArrayProtoReader extends ProtoReader
+  private static class ByteStringProtoReader extends ProtoReader
   {
     private final ByteArrayVector _byteArrays;
-    private int _localOffset;
+    private int _currentArrayOffset;
     private int _currentIndex;
     private ByteArray _currentSegment;
 
-    private ByteArrayProtoReader(ByteArrayVector byteArrays)
+    private ByteStringProtoReader(ByteArrayVector byteArrays)
     {
       _byteArrays = byteArrays;
 
       // It is safe to call .get(0) without worrying about getting an ArrayIndexOutOfBoundsException, since every
       // ByteString (even empty) is guaranteed to have at least one segment.
       _currentSegment = byteArrays.get(0);
-      _localOffset = _currentSegment.getOffset();
+      _currentArrayOffset = _currentSegment.getOffset();
     }
 
     @Override
-    public String readString() throws IOException
-    {
+    public String readASCIIString() throws IOException {
       final int size = readInt32();
-      final byte[] bytes;
-      final int oldOffset = _localOffset;
-      final int tempOffset;
-
-      if (size < 0)
+      if (size > 0)
       {
-        throw new IOException("Read negative size: " + size + ". Invalid string");
-      }
-      else if (size <= getCurrentRemaining())
-      {
-        // Fast path:  We already have the bytes in a contiguous buffer, so just copy directly from it.
-        bytes = _currentSegment.getArray();
-        _localOffset = oldOffset + size;
-        tempOffset = oldOffset;
-        return Utf8Utils.decode(bytes, tempOffset, size);
+        if (size <= getCurrentRemaining())
+        {
+          // If we can read from the current chunk, read directly.
+          String value = Utf8Utils.decodeASCII(_currentSegment.getArray(), _currentArrayOffset, size, _textBuffer);
+          _currentArrayOffset += size;
+          return value;
+        }
+        else
+        {
+          ByteStringLongDecoderState state = new ByteStringLongDecoderState(_byteArrays, _currentIndex,
+              _currentArrayOffset);
+          String value = Utf8Utils.decodeLongASCII(state, size, _textBuffer);
+          _currentIndex = state.getCurrentIndex();
+          _currentSegment = _byteArrays.get(_currentIndex);
+          _currentArrayOffset = state.getPosition();
+          return value;
+        }
       }
       else if (size == 0)
       {
@@ -1334,8 +1337,41 @@ public final class ByteString
       }
       else
       {
-        // Slow path:  Build a string while reading byte by byte.
-        return Utf8Utils.decode(this, size);
+        throw new IOException("Read negative size: " + size + ". Invalid string");
+      }
+    }
+
+    @Override
+    public String readString() throws IOException
+    {
+      final int size = readInt32();
+      if (size > 0)
+      {
+        if (size <= getCurrentRemaining())
+        {
+          // If we can read from the current chunk, read directly.
+          String value = Utf8Utils.decode(_currentSegment.getArray(), _currentArrayOffset, size, _textBuffer);
+          _currentArrayOffset += size;
+          return value;
+        }
+        else
+        {
+          ByteStringLongDecoderState state = new ByteStringLongDecoderState(_byteArrays, _currentIndex,
+              _currentArrayOffset);
+          String value = Utf8Utils.decodeLong(state, size, _textBuffer);
+          _currentIndex = state.getCurrentIndex();
+          _currentSegment = _byteArrays.get(_currentIndex);
+          _currentArrayOffset = state.getPosition();
+          return value;
+        }
+      }
+      else if (size == 0)
+      {
+        return "";
+      }
+      else
+      {
+        throw new IOException("Read negative size: " + size + ". Invalid string");
       }
     }
 
@@ -1350,8 +1386,8 @@ public final class ByteString
       else if (size <= getCurrentRemaining())
       {
         // Fast path: We already have the bytes in a contiguous buffer, so just copy directly from it.
-        final byte[] result = Arrays.copyOfRange(_currentSegment.getArray(), _localOffset, _localOffset + size);
-        _localOffset += size;
+        final byte[] result = Arrays.copyOfRange(_currentSegment.getArray(), _currentArrayOffset, _currentArrayOffset + size);
+        _currentArrayOffset += size;
         return result;
       }
       else
@@ -1367,7 +1403,7 @@ public final class ByteString
       // See implementation notes for readInt64
       fastpath:
       {
-        int tempOffset = _localOffset;
+        int tempOffset = _currentArrayOffset;
 
         if (getCurrentRemaining() == 0)
         {
@@ -1378,7 +1414,7 @@ public final class ByteString
         int x;
         if ((x = buffer[tempOffset++]) >= 0)
         {
-          _localOffset = tempOffset;
+          _currentArrayOffset = tempOffset;
           return x;
         }
         else if (_currentSegment.getLength() - (tempOffset - _currentSegment.getOffset()) < 9)
@@ -1412,7 +1448,7 @@ public final class ByteString
             break fastpath; // Will throw malformedVarint()
           }
         }
-        _localOffset = tempOffset;
+        _currentArrayOffset = tempOffset;
         return x;
       }
       return (int) readRawVarint64SlowPath();
@@ -1434,7 +1470,7 @@ public final class ByteString
       // accumulated bits with one xor.  We depend on javac to constant fold.
       fastpath:
       {
-        int tempOffset = _localOffset;
+        int tempOffset = _currentArrayOffset;
 
         if (getCurrentRemaining() == 0)
         {
@@ -1446,7 +1482,7 @@ public final class ByteString
         int y;
         if ((y = buffer[tempOffset++]) >= 0)
         {
-          _localOffset = tempOffset;
+          _currentArrayOffset = tempOffset;
           return y;
         }
         else if (_currentSegment.getLength() - (tempOffset - _currentSegment.getOffset()) < 9)
@@ -1508,7 +1544,7 @@ public final class ByteString
             }
           }
         }
-        _localOffset = tempOffset;
+        _currentArrayOffset = tempOffset;
         return x;
       }
       return readRawVarint64SlowPath();
@@ -1522,7 +1558,7 @@ public final class ByteString
         readNextBuffer();
       }
 
-      return _currentSegment.getArray()[_localOffset++];
+      return _currentSegment.getArray()[_currentArrayOffset++];
     }
 
     private void readNextBuffer() throws IOException
@@ -1533,7 +1569,7 @@ public final class ByteString
       }
 
       _currentSegment = _byteArrays.get(++_currentIndex);
-      _localOffset = _currentSegment.getOffset();
+      _currentArrayOffset = _currentSegment.getOffset();
     }
 
     private long readRawVarint64SlowPath() throws IOException
@@ -1560,20 +1596,20 @@ public final class ByteString
       int length = getCurrentRemaining();
       if (length > 0)
       {
-        System.arraycopy(_currentSegment.getArray(), _localOffset, bytes, offset, length);
+        System.arraycopy(_currentSegment.getArray(), _currentArrayOffset, bytes, offset, length);
         size -= length;
         offset += length;
-        _localOffset += length;
+        _currentArrayOffset += length;
       }
 
       while (size > 0)
       {
         readNextBuffer();
         length = Math.min(size, _currentSegment.getLength());
-        System.arraycopy(_currentSegment.getArray(), _localOffset, bytes, offset, length);
+        System.arraycopy(_currentSegment.getArray(), _currentArrayOffset, bytes, offset, length);
         size -= length;
         offset += length;
-        _localOffset += length;
+        _currentArrayOffset += length;
       }
 
       return bytes;
@@ -1581,7 +1617,51 @@ public final class ByteString
 
     private int getCurrentRemaining()
     {
-      return _currentSegment.getOffset() + _currentSegment.getLength() - _localOffset;
+      return _currentSegment.getOffset() + _currentSegment.getLength() - _currentArrayOffset;
+    }
+  }
+
+  /**
+   * Maintains the current state of the decoder when parsing a {@link String} across
+   * multiple {@link ByteArray} instances.
+   */
+  private static class ByteStringLongDecoderState extends Utf8Utils.LongDecoderState
+  {
+    private final ByteArrayVector _byteArrays;
+
+    private int _currentIndex;
+
+    ByteStringLongDecoderState(ByteArrayVector byteArrays, int currentIndex, int currentArrayOffset)
+    {
+      _byteArrays =  byteArrays;
+      _currentIndex = currentIndex;
+      updateState();
+      _position = currentArrayOffset;
+    }
+
+    @Override
+    public void readNextChunk() throws IOException
+    {
+      if (++_currentIndex >= _byteArrays.getArraySize())
+      {
+        throw new EOFException();
+      }
+
+      updateState();
+    }
+
+    int getCurrentIndex()
+    {
+      return _currentIndex;
+    }
+
+    private void updateState()
+    {
+      ByteArray array = _byteArrays.get(_currentIndex);
+      _buffer = array.getArray();
+      _offset = array.getOffset();
+      _position = array.getOffset();
+      _bufferSize = array.getLength();
     }
   }
 }

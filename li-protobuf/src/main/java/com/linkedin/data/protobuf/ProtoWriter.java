@@ -49,6 +49,8 @@ package com.linkedin.data.protobuf;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.function.Function;
+
 
 /**
  * Utility class for writing Protocol Buffers encoded binary data.
@@ -261,10 +263,21 @@ public class ProtoWriter
   }
 
   /**
-   * Write a String.
+   * Write a String without any leading ordinal.
    */
   public void writeString(String value) throws IOException
   {
+    writeString(value, null);
+  }
+
+  /**
+   * Write a String.
+   */
+  public void writeString(String value, Function<Integer, Byte> leadingOrdinalGenerator) throws IOException
+  {
+    // Based on whether a leading ordinal generator is provided or not, we need to budget 0 or 1 byte.
+    final int leadingOrdinalLength = (leadingOrdinalGenerator == null) ? 0 : 1;
+
     // UTF-8 byte length of the string is at least its UTF-16 code unit length (value.length()),
     // and at most 3 times of it. We take advantage of this in both branches below.
     final int maxLength = value.length() * 3;
@@ -272,7 +285,7 @@ public class ProtoWriter
 
     // If we are streaming and the potential length is too big to fit in our buffer, we take the
     // slower path.
-    if (maxLengthVarIntSize + maxLength > _limit)
+    if (maxLengthVarIntSize + maxLength + leadingOrdinalLength > _limit)
     {
       // Allocate a byte[] that we know can fit the string and encode into it. String.getBytes()
       // does the same internally and then does *another copy* to return a byte[] of exactly the
@@ -280,13 +293,19 @@ public class ProtoWriter
       // UTF-8 encoded bytes.
       final byte[] encodedBytes = new byte[maxLength];
       int actualLength = Utf8Utils.encode(value, encodedBytes, 0, maxLength);
+
+      if (leadingOrdinalGenerator != null)
+      {
+        writeByte(leadingOrdinalGenerator.apply(actualLength));
+      }
+
       writeUInt32(actualLength);
       writeBytes(encodedBytes, 0, actualLength);
       return;
     }
 
     // Fast path: we have enough space available in our buffer for the string...
-    if (maxLengthVarIntSize + maxLength > _limit - _position)
+    if (maxLengthVarIntSize + maxLength + leadingOrdinalLength > _limit - _position)
     {
       // Flush to free up space.
       flush();
@@ -301,18 +320,30 @@ public class ProtoWriter
 
       if (minLengthVarIntSize == maxLengthVarIntSize)
       {
-        _position = oldPosition + minLengthVarIntSize;
+        _position = oldPosition + leadingOrdinalLength + minLengthVarIntSize;
         int newPosition = Utf8Utils.encode(value, _buffer, _position, _limit - _position);
         // Since this class is stateful and tracks the position, we rewind and store the state,
         // prepend the length, then reset it back to the end of the string.
         _position = oldPosition;
-        int length = newPosition - oldPosition - minLengthVarIntSize;
+        int length = newPosition - oldPosition - leadingOrdinalLength - minLengthVarIntSize;
+
+        if (leadingOrdinalGenerator != null)
+        {
+          buffer(leadingOrdinalGenerator.apply(length));
+        }
+
         bufferUInt32(length);
         _position = newPosition;
       }
       else
       {
         int length = Utf8Utils.encodedLength(value);
+
+        if (leadingOrdinalGenerator != null)
+        {
+          buffer(leadingOrdinalGenerator.apply(length));
+        }
+
         bufferUInt32(length);
         _position = Utf8Utils.encode(value, _buffer, _position, length);
       }

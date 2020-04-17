@@ -18,3 +18,7 @@ dependencies {
 }
 
 apply from: "${buildScriptDirPath}/dataTemplate.gradle"
+
+testCompileDataTemplate.options.compilerArgs += '-Xlint:-deprecation'
+compileTestJava.options.compilerArgs += '-Xlint:-deprecation'
+

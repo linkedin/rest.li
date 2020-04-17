@@ -50,6 +50,19 @@ public class CodecDataProviders
   }
 
   @DataProvider
+  public static Object[][] protobufCodecData()
+  {
+    List<Object[]> list = new ArrayList<>();
+    for (Map.Entry<String, DataComplex> entry : codecDataInputs().entrySet())
+    {
+      list.add(new Object[] {entry.getKey(), entry.getValue(), true});
+      list.add(new Object[] {entry.getKey(), entry.getValue(), false});
+    }
+
+    return list.toArray(new Object[][] {});
+  }
+
+  @DataProvider
   public static Object[][] codecData()
   {
     return codecDataInputs().entrySet().stream()

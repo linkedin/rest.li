@@ -44,7 +44,13 @@ public interface RestConstants
   String HEADER_VALUE_APPLICATION_LICOR_TEXT = "application/licor";
   String HEADER_VALUE_APPLICATION_LICOR_BINARY = "application/x-licor";
   String HEADER_VALUE_APPLICATION_PSON = "application/x-pson";
+
+  /**
+   * @deprecated Use {@link #HEADER_VALUE_APPLICATION_PROTOBUF2} instead.
+   */
+  @Deprecated
   String HEADER_VALUE_APPLICATION_PROTOBUF = "application/x-protobuf";
+  String HEADER_VALUE_APPLICATION_PROTOBUF2 = "application/x-protobuf2";
   String HEADER_VALUE_APPLICATION_SMILE = "application/x-smile";
   String HEADER_VALUE_MULTIPART_RELATED = "multipart/related";
   String HEADER_VALUE_ACCEPT_ANY = "*/*";
@@ -59,6 +65,7 @@ public interface RestConstants
           HEADER_VALUE_APPLICATION_LICOR_BINARY,
           HEADER_VALUE_APPLICATION_SMILE,
           HEADER_VALUE_APPLICATION_PROTOBUF,
+          HEADER_VALUE_APPLICATION_PROTOBUF2,
           HEADER_VALUE_APPLICATION_PSON,
           HEADER_VALUE_APPLICATION_JSON));
 
