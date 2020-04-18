@@ -23,6 +23,8 @@ import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
+import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.jersey.api.uri.UriComponent;
@@ -199,6 +201,22 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
     }
   }
 
+  /**
+   * Validates the key and params if present against corresponding schema. Noop if schema is null.
+   * Throws Routing exception with HTTP status code 400 if there is a validation failure.
+   */
+  public void validate()
+  {
+    if (key.schema() != null)
+    {
+      validateDataAgainstSchema(key.data(), key.schema());
+    }
+    if (params != null && params.schema() != null)
+    {
+      validateDataAgainstSchema(params.data(), params.schema());
+    }
+  }
+
   protected final K           key;
   protected final P           params;
 
@@ -336,6 +354,18 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
   {
     Class<? extends RecordTemplate> clazz = spec.getType();
     return DataTemplateUtil.wrap(dataMap, clazz);
+  }
+
+  private static void validateDataAgainstSchema(DataMap value, DataSchema schema)
+  {
+    DataSchemaAnnotationValidator validator = new DataSchemaAnnotationValidator(schema);
+    ValidationResult validationResult = ValidateDataAgainstSchema.validate(value, schema,
+        new ValidationOptions(RequiredMode.CAN_BE_ABSENT_IF_HAS_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE), validator);
+    if (!validationResult.isValid())
+    {
+      throw new IllegalArgumentException(
+          String.format("value '%s' is invalid, reason: %s", value, validationResult.getMessages()));
+    }
   }
 
   /** @see java.lang.Object#hashCode() */

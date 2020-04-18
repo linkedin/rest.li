@@ -35,6 +35,7 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.util.RestLiClientConfig;
+import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.filter.Filter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -76,6 +77,11 @@ public class RestLiIntegrationTest
 
   public void init(boolean async) throws IOException
   {
+    init(async, new RestLiConfig());
+  }
+
+  public void init(boolean async, RestLiConfig restLiConfig) throws IOException
+  {
     initSchedulerAndEngine();
     int asyncTimeout = async ? 5000 : -1;
     _server =
@@ -83,7 +89,8 @@ public class RestLiIntegrationTest
                                          RestLiIntTestServer.DEFAULT_PORT,
                                          RestLiIntTestServer.supportedCompression,
                                          async,
-                                         asyncTimeout);
+                                         asyncTimeout,
+                                         restLiConfig);
     _server.start();
     initClient(URI_PREFIX);
   }

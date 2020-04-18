@@ -6,7 +6,12 @@
   [
     {
       "name": "a",
-      "type": "string"
+      "type": "string",
+      "validate": {
+        "strlen": {
+          "min": 2
+        }
+      }
     },
     {
       "name": "b",

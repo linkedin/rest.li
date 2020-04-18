@@ -39,6 +39,7 @@ import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.PathKeys;
+import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.combined.CombinedResources;
 import com.linkedin.restli.server.twitter.CustomStatusCollectionResource;
@@ -94,7 +95,7 @@ public class TestRestLiRouting
   public void testRoutingDetailsCollectionGet(ProtocolVersion version, String uri) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(StatusCollectionResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     // #1 simple GET
     RestRequest request = createRequest(uri, "GET", version);
@@ -130,7 +131,7 @@ public class TestRestLiRouting
   public void testRoutingDetailsAssociationGet(ProtocolVersion version, String uri) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(FollowsAssociativeResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     RestRequest request = createRequest(uri, "GET", version);
 
@@ -155,7 +156,7 @@ public class TestRestLiRouting
   public void testRoutingDetailsCollectionUpdate(ProtocolVersion version, String uri) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(StatusCollectionResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     RestRequest request = createRequest(uri, "PUT", version);
 
@@ -180,7 +181,7 @@ public class TestRestLiRouting
   public void testRoutingDetailsCollectionDelete(ProtocolVersion version, String uri) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(StatusCollectionResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     RestRequest request = createRequest(uri, "DELETE", version);
 
@@ -215,7 +216,7 @@ public class TestRestLiRouting
   public void testRoutingDetailsAssociationBatchGet(ProtocolVersion version, String uri) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(FollowsAssociativeResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     RestRequest request = createRequest(uri, "GET", version);
 
@@ -268,7 +269,7 @@ public class TestRestLiRouting
   public void testRoutingDetailsSimpleGet(ProtocolVersion version, String uri) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TrendingResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     RestRequest request = createRequest(uri, "GET", version);
 
@@ -292,7 +293,7 @@ public class TestRestLiRouting
   public void testRoutingDetailsSimpleUpdate(ProtocolVersion version, String uri) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TrendingResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     RestRequest request = createRequest(uri, "PUT", version);
 
@@ -316,7 +317,7 @@ public class TestRestLiRouting
   public void testRoutingDetailsSimplePartialUpdate(ProtocolVersion version, String uri) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TrendingResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     RestRequest request = createRequest(uri, "POST", version);
 
@@ -340,7 +341,7 @@ public class TestRestLiRouting
   public void testRoutingDetailsSimpleDelete(ProtocolVersion version, String uri) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TrendingResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     RestRequest request = createRequest(uri, "DELETE", version);
 
@@ -505,7 +506,7 @@ public class TestRestLiRouting
   {
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri, version, httpMethod, restliMethod, method, StatusCollectionResource.class, methodName, true);
     checkBatchKeys(uri, version, httpMethod, keys);
@@ -692,7 +693,7 @@ public class TestRestLiRouting
   {
 
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(StatusCollectionResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri, version, httpMethod, restliMethod, method, StatusCollectionResource.class, methodName, true);
     checkBatchKeys(uri, version, httpMethod, expectedKeys);
@@ -735,7 +736,7 @@ public class TestRestLiRouting
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class,
                           RepliesCollectionResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri, version, httpMethod, restliMethod, method, RepliesCollectionResource.class, methodName, true);
     checkBatchKeys(uri, version, httpMethod, keys);
@@ -814,7 +815,7 @@ public class TestRestLiRouting
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(TrendingResource.class,
                           TrendRegionsCollectionResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri, version, httpMethod, restliMethod, method, TrendRegionsCollectionResource.class, methodName, true);
     checkBatchKeys(uri, version, httpMethod, keys);
@@ -908,7 +909,7 @@ public class TestRestLiRouting
                                           Set<CompoundKey> compoundKeys) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(FollowsAssociativeResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri, version, httpMethod, restliMethod, method, FollowsAssociativeResource.class, methodName, true);
     checkBatchKeys(uri, version, httpMethod, compoundKeys);
@@ -1016,7 +1017,7 @@ public class TestRestLiRouting
                                                                 TwitterTestDataModels.DiscoveredItemKeyParams>> compoundKeys) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(DiscoveredItemsResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri, version, httpMethod, restliMethod, method, DiscoveredItemsResource.class, methodName, true);
     checkBatchKeys(uri, version, httpMethod, compoundKeys);
@@ -1342,7 +1343,7 @@ public class TestRestLiRouting
   {
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri, version, httpMethod, restliMethod, method, StatusCollectionResource.class, methodName, false, pathKeys);
   }
@@ -1563,7 +1564,7 @@ public class TestRestLiRouting
   {
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri, version, httpMethod, restliMethod, method, StatusCollectionResource.class, methodName, false, pathKeys);
   }
@@ -1652,7 +1653,7 @@ public class TestRestLiRouting
       buildResourceModels(StatusCollectionResource.class,
                           RepliesCollectionResource.class,
                           LocationResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri, version, httpMethod, method, resourceClass, methodName, false, "statusID");
   }
@@ -1786,7 +1787,7 @@ public class TestRestLiRouting
   public void testRoutingAssociation(String uri, ProtocolVersion version, String httpMethod, ResourceMethod method, String methodName, String[] pathKeys) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(FollowsAssociativeResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri, version, httpMethod, method, FollowsAssociativeResource.class, methodName, false, pathKeys);
   }
@@ -1953,7 +1954,7 @@ public class TestRestLiRouting
                                     boolean hasKeys) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(DiscoveredItemsResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri, version, httpMethod, restliMethod, method, DiscoveredItemsResource.class, methodName, false, hasKeys? new String[]{"discoveredItemId"} : new String[0]);
   }
@@ -2027,7 +2028,7 @@ public class TestRestLiRouting
   {
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(TrendingResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult("/trending", version, httpMethod, restliMethod, method, TrendingResource.class, methodName, false);
   }
@@ -2142,7 +2143,7 @@ public class TestRestLiRouting
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(TrendingResource.class,
                           TrendRegionsCollectionResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri, version, httpMethod, method, TrendRegionsCollectionResource.class, methodName, false, pathKeys);
   }
@@ -2421,7 +2422,7 @@ public class TestRestLiRouting
                           FollowsAssociativeResource.class,
                           RepliesCollectionResource.class);
 
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     expectRoutingExceptionWithStatus(uri, version, httpMethod, restliMethod, HttpStatus.S_400_BAD_REQUEST);
   }
@@ -2503,7 +2504,7 @@ public class TestRestLiRouting
             FollowsAssociativeResource.class,
             RepliesCollectionResource.class);
 
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     expectRoutingExceptionWithStatus(uri, version, httpMethod, restliMethod, HttpStatus.S_400_BAD_REQUEST);
   }
@@ -2601,7 +2602,7 @@ public class TestRestLiRouting
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(
       CombinedResources.CombinedNKeyAssociationResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri,
                 version,
@@ -2657,7 +2658,7 @@ public class TestRestLiRouting
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(
       CombinedResources.CombinedNKeyAssociationResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     checkResult(uri,
                 version,
@@ -2684,7 +2685,7 @@ public class TestRestLiRouting
   public void testActionRootRouting(ProtocolVersion version, String uri) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TwitterAccountsResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     RestRequest request = createRequest(uri, "POST", version);
     ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
@@ -2711,7 +2712,7 @@ public class TestRestLiRouting
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class,
                           RepliesCollectionResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     RestRequest request = createRequest(uri, "POST", version);
     ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
@@ -2739,7 +2740,7 @@ public class TestRestLiRouting
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(StatusCollectionResource.class,
                           LocationResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     RestRequest request = createRequest(uri, "POST", version);
     ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, new RequestContext());
@@ -2934,7 +2935,7 @@ public class TestRestLiRouting
                           TrendRegionsCollectionResource.class,
                           TrendingResource.class,
                           TwitterAccountsResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     expectRoutingExceptionWithStatus(uri, version, httpMethod, null, status);
   }
@@ -3086,7 +3087,7 @@ public class TestRestLiRouting
     Map<String, ResourceModel> pathRootResourceMap =
       buildResourceModels(CombinedResources.CombinedCollectionWithSubresources.class,
                           CombinedResources.SubCollectionResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     RestRequest request;
 
@@ -3156,7 +3157,7 @@ public class TestRestLiRouting
                                            RestLiAttachmentReader requestAttachments) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TrendingResource.class);
-    _router = new RestLiRouter(pathRootResourceMap);
+    _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
 
     final RestRequestBuilder requestBuilder = new RestRequestBuilder(new URI(uri)).setMethod("GET")
         .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
