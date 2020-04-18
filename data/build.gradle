@@ -5,7 +5,7 @@ dependencies {
   compile project(':li-protobuf')
   compile project(':pegasus-common')
   compile externalDependency.antlrRuntime
-  compile externalDependency.commonsLang3
+  compile externalDependency.commonsText
   compile externalDependency.jacksonCore
   compile externalDependency.jacksonSmile
   runtime externalDependency.javaxAnnotation
