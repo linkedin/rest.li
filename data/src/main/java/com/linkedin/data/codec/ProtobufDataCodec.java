@@ -21,6 +21,7 @@ import com.linkedin.data.Data;
 import com.linkedin.data.Data.TraverseCallback;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.codec.symbol.EmptySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.collections.CheckedUtil;
@@ -214,7 +215,7 @@ public class ProtobufDataCodec implements DataCodec
   protected final DataMap readMap(ProtoReader reader) throws IOException
   {
     int size = reader.readInt32();
-    DataMap dataMap = new DataMap(size);
+    DataMap dataMap = new DataMap(DataMapBuilder.getOptimumHashMapCapacityFromSize(size));
     for (int i = 0; i < size; i++)
     {
       CheckedUtil.putWithoutChecking(dataMap, (String) readValue(reader, this::isString), readValue(reader, null));
