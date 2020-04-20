@@ -16,9 +16,6 @@
 
 package com.linkedin.d2.balancer.properties;
 
-
-import com.linkedin.d2.DarkClusterConfigMap;
-import com.linkedin.d2.balancer.config.DarkClustersConverter;
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
@@ -154,7 +151,6 @@ public class ClusterPropertiesJsonSerializer implements
 
     @SuppressWarnings("unchecked")
     Map<String, Object> darkClusterProperty = (Map<String, Object>) map.get(PropertyKeys.DARK_CLUSTER_MAP);
-    DarkClusterConfigMap darkClusterConfigMap = DarkClustersConverter.toConfig(darkClusterProperty);
 
     boolean delegated = false;
     if (map.containsKey(PropertyKeys.DELEGATED)) {
@@ -162,6 +158,6 @@ public class ClusterPropertiesJsonSerializer implements
     }
 
     return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList,
-        darkClusterConfigMap, delegated);
+        darkClusterProperty, delegated);
   }
 }

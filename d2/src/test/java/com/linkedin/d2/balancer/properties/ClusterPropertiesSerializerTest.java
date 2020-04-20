@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.properties;
 
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
+import com.linkedin.d2.balancer.config.DarkClustersConverter;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -78,7 +79,7 @@ public class ClusterPropertiesSerializerTest
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
 
     property = new ClusterProperties("test", schemes, supProperties, new HashSet<URI>(), NullPartitionProperties.getInstance(),
-        Arrays.asList("principal1", "principal2"));
+        Arrays.asList("principal1", "principal2"), (Map<String, Object>)null, false);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
 
     try
@@ -101,7 +102,7 @@ public class ClusterPropertiesSerializerTest
     DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
     darkClusterConfigMap.put(DARK_CLUSTER1_KEY, darkCluster1);
     ClusterProperties property = new ClusterProperties("test", new ArrayList<String>(), Collections.emptyMap(), new HashSet<URI>(), NullPartitionProperties.getInstance(),
-        Arrays.asList("principal1", "principal2"), darkClusterConfigMap);
+        Arrays.asList("principal1", "principal2"), DarkClustersConverter.toProperties(darkClusterConfigMap), false);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
   }
 
@@ -121,8 +122,10 @@ public class ClusterPropertiesSerializerTest
         .setDispatcherOutboundTargetRate(50)
         .setMultiplier(0);
     darkClusterConfigMap.put(DARK_CLUSTER2_KEY, darkCluster2);
-    ClusterProperties property = new ClusterProperties("test", new ArrayList<String>(), new HashMap<String, String>(), new HashSet<URI>(), NullPartitionProperties.getInstance(),
-        Arrays.asList("principal1", "principal2"), darkClusterConfigMap);
+    ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), new HashMap<>(), new HashSet<>(),
+                                                       NullPartitionProperties.getInstance(),
+                                                       Arrays.asList("principal1", "principal2"),
+                                                       DarkClustersConverter.toProperties(darkClusterConfigMap), false);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
   }
 
@@ -133,8 +136,10 @@ public class ClusterPropertiesSerializerTest
 
 
     DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
-    ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), new HashMap<>(), new HashSet<URI>(), NullPartitionProperties.getInstance(),
-        Arrays.asList("principal1", "principal2"), darkClusterConfigMap);
+    ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), new HashMap<>(), new HashSet<>(),
+                                                       NullPartitionProperties.getInstance(),
+                                                       Arrays.asList("principal1", "principal2"),
+                                                       DarkClustersConverter.toProperties(darkClusterConfigMap), false);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
   }
 
@@ -143,7 +148,8 @@ public class ClusterPropertiesSerializerTest
   {
     ClusterPropertiesJsonSerializer jsonSerializer = new ClusterPropertiesJsonSerializer();
     ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), new HashMap<>(), new HashSet<URI>(), NullPartitionProperties.getInstance(),
-        Arrays.asList("principal1", "principal2"), null);
+                                                       Arrays.asList("principal1", "principal2"),
+                                                       (Map<String, Object>) null, false);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
   }
 }

@@ -95,7 +95,10 @@ public class StaticLoadBalancerState implements LoadBalancerState
             TEST_SERVICE_DEGRADER_PROPERTIES, TEST_SERVICE_PRIORITIZED_SCHEMES, TEST_SERVICE_BANNED_URIS,
             TEST_SERVICE_META_PROPERTIES, TEST_SERVICE_BACKUP_REQUEST_PROPERTIES));
 
-    _clusterPropertie.put(TEST_CLUSTER, new ClusterProperties(TEST_CLUSTER, TEST_SERVICE_PRIORITIZED_SCHEMES, TEST_CLUSTER_PROPERTIES, TEST_CLUSTER_BANNED_URIS, TEST_CLUSTER_PARTITION_PROPERTIES, TEST_CLUSTER_SSL_VALIDATION_STRINGS));
+    _clusterPropertie.put(TEST_CLUSTER, new ClusterProperties(TEST_CLUSTER, TEST_SERVICE_PRIORITIZED_SCHEMES, TEST_CLUSTER_PROPERTIES,
+                                                              TEST_CLUSTER_BANNED_URIS, TEST_CLUSTER_PARTITION_PROPERTIES,
+                                                              TEST_CLUSTER_SSL_VALIDATION_STRINGS,
+                                                              (Map<String, Object>)null, false));
     _uriProperties.put(TEST_CLUSTER, new UriProperties(TEST_CLUSTER, TEST_URIS_PARTITIONDESCRIPTIONS, TEST_URI_PROPERTIES));
   }
 
@@ -109,7 +112,10 @@ public class StaticLoadBalancerState implements LoadBalancerState
             TEST_SERVICE_LB_STRATEGY_PROPERTIES, TEST_SERVICE_TRANSPORT_CLIENT_PROPERTIES,
             TEST_SERVICE_DEGRADER_PROPERTIES, TEST_SERVICE_PRIORITIZED_SCHEMES, TEST_SERVICE_BANNED_URIS,
             TEST_SERVICE_META_PROPERTIES, TEST_SERVICE_BACKUP_REQUEST_PROPERTIES));
-    _clusterPropertie.replace(TEST_CLUSTER, new ClusterProperties(TEST_CLUSTER, TEST_SERVICE_PRIORITIZED_SCHEMES, TEST_CLUSTER_PROPERTIES, TEST_CLUSTER_BANNED_URIS, TEST_CLUSTER_PARTITION_PROPERTIES, TEST_CLUSTER_SSL_VALIDATION_STRINGS));
+    _clusterPropertie.replace(TEST_CLUSTER, new ClusterProperties(TEST_CLUSTER, TEST_SERVICE_PRIORITIZED_SCHEMES, TEST_CLUSTER_PROPERTIES,
+                                                                  TEST_CLUSTER_BANNED_URIS, TEST_CLUSTER_PARTITION_PROPERTIES,
+                                                                  TEST_CLUSTER_SSL_VALIDATION_STRINGS,
+                                                                  (Map<String, Object>)null, false));
     _uriProperties.replace(TEST_CLUSTER, new UriProperties(TEST_CLUSTER, TEST_URIS_PARTITIONDESCRIPTIONS, TEST_URI_PROPERTIES));
   }
 

@@ -31,6 +31,7 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.RewriteClient;
 import com.linkedin.d2.balancer.clients.RewriteLoadBalancerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.config.DarkClustersConverter;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.HashBasedPartitionProperties;
@@ -265,7 +266,8 @@ public class SimpleLoadBalancerTest
     darkClusterConfigMap.put(DARK_CLUSTER1_NAME, darkClusterConfig);
 
     clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
-        Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(), darkClusterConfigMap));
+                                                             Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
+                                                             DarkClustersConverter.toProperties(darkClusterConfigMap), false));
 
     populateUriRegistry(numHttp, numHttps, partitionIdForAdd, uriRegistry);
 
@@ -288,7 +290,8 @@ public class SimpleLoadBalancerTest
     darkClusterConfigMap.put(DARK_CLUSTER1_NAME, darkClusterConfig);
 
     clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
-        Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(), darkClusterConfigMap));
+        Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
+                                                             DarkClustersConverter.toProperties(darkClusterConfigMap), false));
 
     DarkClusterConfigMap returnedDarkClusterConfigMap = loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME);
     Assert.assertEquals(returnedDarkClusterConfigMap, darkClusterConfigMap, "dark cluster configs should be equal");
@@ -328,7 +331,7 @@ public class SimpleLoadBalancerTest
     loadBalancer.listenToCluster(CLUSTER1_NAME, false, new LoadBalancerState.NullStateListenerCallback());
     clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
                                                              Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
-                                                             new DarkClusterConfigMap()));
+                                                             new HashMap<>(), false));
     Assert.assertEquals(testClusterListener.getClusterAddedCount(CLUSTER1_NAME), 1, "expected add count of 1");
     Assert.assertEquals(testClusterListener.getClusterRemovedCount(CLUSTER1_NAME), 0, "expected remove count of 0");
 
@@ -359,7 +362,7 @@ public class SimpleLoadBalancerTest
     loadBalancer.listenToCluster(CLUSTER1_NAME, false, new LoadBalancerState.NullStateListenerCallback());
     clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
                                                              Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
-                                                             new DarkClusterConfigMap()));
+                                                             new HashMap<>(), false));
     Assert.assertEquals(testClusterListener.getClusterAddedCount(CLUSTER1_NAME), 1, "expected add count of 1");
     Assert.assertEquals(testClusterListener.getClusterRemovedCount(CLUSTER1_NAME), 0, "expected remove count of 0");
 
@@ -367,7 +370,7 @@ public class SimpleLoadBalancerTest
     loadBalancer.unregisterClusterListener(testClusterListener);
     clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
                                                              Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
-                                                             new DarkClusterConfigMap()));
+                                                             new HashMap<>(), false));
     Assert.assertEquals(testClusterListener.getClusterAddedCount(CLUSTER1_NAME), 1, "expected unchanged add count of 1 because unregistered ");
     Assert.assertEquals(testClusterListener.getClusterRemovedCount(CLUSTER1_NAME), 0, "expected unchanged remove count of 0 because unregistered");
   }

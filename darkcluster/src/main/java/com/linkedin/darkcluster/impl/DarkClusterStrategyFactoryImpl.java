@@ -19,13 +19,13 @@ package com.linkedin.darkcluster.impl;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nonnull;
 
 import com.linkedin.common.util.Notifier;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
+import com.linkedin.d2.MultiplierStrategyTypeArray;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
@@ -36,6 +36,9 @@ import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.darkcluster.api.DarkClusterStrategyFactory;
 import com.linkedin.darkcluster.api.DarkClusterVerifierManager;
 import com.linkedin.darkcluster.api.NoOpDarkClusterStrategy;
+
+import static com.linkedin.d2.multiplierStrategyType.CONSTANT_QPS;
+import static com.linkedin.d2.multiplierStrategyType.RELATIVE_TRAFFIC;
 
 /**
  * DarkClusterStrategyFactoryImpl creates and maintains the strategies needed for dark clusters. This involves refreshing
@@ -109,18 +112,39 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
    */
   private DarkClusterStrategy createStrategy(String darkClusterName, DarkClusterConfig darkClusterConfig)
   {
-    if (darkClusterConfig.hasMultiplier() && darkClusterConfig.getMultiplier() > 0)
+    if (darkClusterConfig.hasMultiplierStrategyList())
     {
-      BaseDarkClusterDispatcher baseDarkClusterDispatcher = new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher,
-                                                                                              _notifier, _verifierManager);
-      return new RelativeTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
-                                                              baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(), _random);
+      MultiplierStrategyTypeArray strategyList = darkClusterConfig.getMultiplierStrategyList();
+      for (com.linkedin.d2.multiplierStrategyType multiplierStrategyType : strategyList)
+      {
+        if (RELATIVE_TRAFFIC.equals(multiplierStrategyType) && darkClusterConfig.getMultiplier() > 0)
+        {
+          if (darkClusterConfig.getMultiplier() <= 0)
+          {
+            // it is a valid case to set RELATIVE_TRAFFIC but set the multiplier to zero to
+            // temporarily set the traffic to zero; don't log anything.
+            return new NoOpDarkClusterStrategy();
+          }
+          BaseDarkClusterDispatcher baseDarkClusterDispatcher =
+            new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
+          return new RelativeTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
+                                                                  baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(),
+                                                                  _random);
+        }
+        else if (CONSTANT_QPS.equals(multiplierStrategyType))
+        {
+          // the constant qps strategy is not yet implemented, return the NoOpDarkClusterStrategy
+          return new NoOpDarkClusterStrategy();
+        }
+        else
+        {
+          // Falling into this clause means that the user does not want traffic to be sent to the dark cluster, temporary or otherwise.
+          return new NoOpDarkClusterStrategy();
+        }
+      }
     }
-    else
-    {
-      // Falling into this clause means that the user does not want traffic to be sent to the dark cluster, temporary or otherwise.
-      return new NoOpDarkClusterStrategy();
-    }
+    // Reaching here means that the user has not specified a strategy. return the NoOp Strategy.
+    return new NoOpDarkClusterStrategy();
   }
 
   /**
