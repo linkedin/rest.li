@@ -1,6 +1,0 @@
-{
-  "type" : "typeref",
-  "name" : "GroupMembershipQueryParamArrayRef",
-  "namespace" : "com.linkedin.restli.examples.groups.api",
-  "ref" : { "type" : "array", "items" : "GroupMembershipQueryParam" }
-}

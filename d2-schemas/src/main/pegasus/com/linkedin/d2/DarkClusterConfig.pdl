@@ -1,0 +1,22 @@
+namespace com.linkedin.d2
+
+/**
+ * Configuration for a dark canary cluster. Dark Canaries are instances of a service that have production traffic tee'd off to them, but the results are ignored. These are used for early validation of code, configs, and A/B ramps.
+ */
+record DarkClusterConfig {
+
+  /**
+   * Constant multiplier. The dispatcher(s) will send a multiple of the original requests
+   */
+  multiplier: float = 0.0
+
+  /**
+   * Desired query rate to be maintained to dark canaries. Measured in qps.
+   */
+  dispatcherOutboundTargetRate: int = 0
+
+  /**
+   * Max rate dispatcher can send to dark canary. Measured in qps. Will act as upper bound to protect canaries in case of traffic spikes
+   */
+  dispatcherOutboundMaxRate: int = 2147483647
+}

@@ -1,0 +1,12 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Schema representing an actions set resource.
+ */
+record ActionsSetSchema includes ServiceErrorsSchema {
+
+  /**
+   * list of actions supported by this action set
+   */
+  actions: array[ActionSchema]
+}

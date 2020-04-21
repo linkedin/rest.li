@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.common.multiplexer
+
+/**
+ * Represents content that may be in the body of an individual request / response
+ */
+record IndividualBody {}

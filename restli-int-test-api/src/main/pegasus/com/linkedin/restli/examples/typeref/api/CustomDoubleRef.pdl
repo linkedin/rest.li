@@ -1,0 +1,5 @@
+namespace com.linkedin.restli.examples.`typeref`.api
+
+@java.class = "com.linkedin.restli.examples.custom.types.CustomDouble"
+@validate.regex.regex = "[0-9]*\\.[0-9]"
+typeref CustomDoubleRef = double

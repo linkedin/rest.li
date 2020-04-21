@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.examples.groups.api
+
+enum MembershipSortOrder {
+  LAST_NAME_ASC
+  LAST_TRANSITION_ON_DESC
+}

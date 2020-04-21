@@ -1,0 +1,12 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Custom annotation for idl
+ */
+record CustomAnnotationSchema {
+
+  /**
+   * custom annotation data
+   */
+  annotations: optional map[string, CustomAnnotationContentSchema]
+}

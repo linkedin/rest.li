@@ -1,0 +1,4 @@
+namespace com.linkedin.restli.common.test
+
+@java.class = "com.linkedin.restli.common.MyCustomString"
+typeref MyCustomStringRef = string

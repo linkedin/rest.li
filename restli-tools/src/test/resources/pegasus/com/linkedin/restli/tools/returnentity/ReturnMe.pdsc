@@ -1,6 +1,0 @@
-{
-  "type" : "record",
-  "name" : "ReturnMe",
-  "namespace" : "com.linkedin.restli.tools.returnentity",
-  "fields" : [ ]
-}

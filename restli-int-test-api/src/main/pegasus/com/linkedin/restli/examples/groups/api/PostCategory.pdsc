@@ -1,6 +1,0 @@
-{
-  "type" : "enum",
-  "name" : "PostCategory",
-  "namespace" : "com.linkedin.restli.examples.groups.api",
-  "symbols" : [ "DISCUSSION", "JOB", "PROMOTION" ]
-}

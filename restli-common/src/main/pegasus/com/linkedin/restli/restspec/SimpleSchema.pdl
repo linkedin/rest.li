@@ -1,0 +1,27 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Schema representing a simple resource.
+ */
+record SimpleSchema includes ServiceErrorsSchema {
+
+  /**
+   * basic rest.li methods supported by this resource, e.g. get, update, delete
+   */
+  supports: array[string]
+
+  /**
+   * details on rest methods supported by this simple resource
+   */
+  methods: optional array[RestMethodSchema]
+
+  /**
+   * list of actions supported by this simple resource
+   */
+  actions: optional array[ActionSchema]
+
+  /**
+   * details of the entity provided by this simple resource
+   */
+  entity: EntitySchema
+}

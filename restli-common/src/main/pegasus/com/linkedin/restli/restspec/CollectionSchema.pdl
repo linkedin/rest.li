@@ -1,0 +1,47 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Schema representing a collection resource.
+ */
+record CollectionSchema includes ServiceErrorsSchema {
+
+  /**
+   * details of the identifier (key) for this collection
+   */
+  identifier: IdentifierSchema
+
+  /**
+   * alternative keys
+   */
+  alternativeKeys: optional array[AlternativeKeySchema]
+
+  /**
+   * basic rest.li methods supported by this resource, e.g., create, get, update, delete, batch_get
+   */
+  supports: array[string]
+
+  /**
+   * details on rest methods supported by this collection
+   */
+  methods: optional array[RestMethodSchema]
+
+  /**
+   * list of finders supported by this collection
+   */
+  finders: optional array[FinderSchema]
+
+  /**
+   * list of batch finders supported by this collection
+   */
+  batchFinders: optional array[BatchFinderSchema]
+
+  /**
+   * list of actions supported by this collection
+   */
+  actions: optional array[ActionSchema]
+
+  /**
+   * details of the entity provided by this collection
+   */
+  entity: EntitySchema
+}

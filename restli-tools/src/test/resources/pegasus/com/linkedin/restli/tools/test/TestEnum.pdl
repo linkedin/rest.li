@@ -1,0 +1,18 @@
+namespace com.linkedin.restli.tools.test
+
+/**
+ * Doc for the enum
+ */
+enum TestEnum {
+
+  /**
+   * Doc for 1
+   */
+  SYMBOL_1
+  SYMBOL_2
+
+  /**
+   * Doc for 3
+   */
+  SYMBOL_3
+}

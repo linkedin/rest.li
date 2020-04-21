@@ -1,0 +1,19 @@
+namespace com.linkedin.restli.restspec
+
+record EntitySchema {
+
+  /**
+   * URI template for accessing this entity
+   */
+  path: string
+
+  /**
+   * list of actions supported by this entity
+   */
+  actions: optional array[ActionSchema]
+
+  /**
+   * list of subresources accessible via this entity
+   */
+  subresources: optional array[ResourceSchema]
+}

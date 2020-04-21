@@ -1,0 +1,22 @@
+namespace com.linkedin.restli.common
+
+/**
+ * A atom:link-inspired link
+ */
+record Link {
+
+  /**
+   * The link relation e.g. 'self' or 'next'
+   */
+  rel: string
+
+  /**
+   * The link URI
+   */
+  href: string
+
+  /**
+   * The type (media type) of the resource
+   */
+  type: string
+}

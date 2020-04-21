@@ -1,0 +1,7 @@
+namespace com.linkedin.restli.examples.`typeref`.api
+
+@java = {
+  "coercerClass" : "com.linkedin.restli.examples.custom.types.IPAddressSimpleCoercer",
+  "class" : "java.net.InetAddress"
+}
+typeref IPAddressSimple = bytes

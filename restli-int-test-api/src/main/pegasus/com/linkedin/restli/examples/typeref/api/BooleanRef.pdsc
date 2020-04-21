@@ -1,6 +1,0 @@
-{
-  "type" : "typeref",
-  "name" : "BooleanRef",
-  "namespace" : "com.linkedin.restli.examples.typeref.api",
-  "ref" : "boolean"
-}

@@ -1,0 +1,9 @@
+namespace com.linkedin.restli.common
+
+/**
+ * A rest.li update status.
+ */
+record UpdateStatus {
+  status: int
+  error: optional ErrorResponse
+}

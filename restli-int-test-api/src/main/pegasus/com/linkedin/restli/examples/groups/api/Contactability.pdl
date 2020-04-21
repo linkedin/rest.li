@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.examples.groups.api
+
+enum Contactability {
+  CONTACTABLE
+  NON_CONTACTABLE
+}

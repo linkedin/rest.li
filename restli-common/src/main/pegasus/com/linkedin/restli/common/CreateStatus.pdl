@@ -1,0 +1,17 @@
+namespace com.linkedin.restli.common
+
+/**
+ * A rest.li create status.
+ */
+record CreateStatus {
+  status: int
+
+  @deprecated = "The serialized form of the returned key. You can get a strongly-typed form of the key by casting CreateStatus to CreateIdStatus and calling .getKey()"
+  id: optional string
+
+  /**
+   * The location url to retrieve the newly created entity
+   */
+  location: optional string
+  error: optional ErrorResponse
+}

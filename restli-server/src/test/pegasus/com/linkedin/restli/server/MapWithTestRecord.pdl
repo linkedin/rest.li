@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.server
+
+record MapWithTestRecord {
+
+  mapA: map[string, typeref myTestRecord = TestRecord]
+}

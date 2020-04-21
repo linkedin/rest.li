@@ -1,0 +1,8 @@
+namespace com.linkedin.restli.common.test
+
+record MyComplexKey {
+
+  @validate.strlen.min = 2
+  a: string
+  b: long
+}

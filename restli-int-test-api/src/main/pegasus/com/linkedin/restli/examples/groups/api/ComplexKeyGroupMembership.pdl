@@ -1,0 +1,59 @@
+namespace com.linkedin.restli.examples.groups.api
+
+/**
+ * A GroupMembership entity
+ */
+record ComplexKeyGroupMembership {
+
+  /**
+   * Complex key consisting of groupID and memberID
+   */
+  id: GroupMembershipKey
+  membershipLevel: MembershipLevel
+  contactEmail: string
+  isPublicized: boolean
+  allowMessagesFromMembers: boolean
+
+  /**
+   * This field is read-only.
+   */
+  joinedTime: long
+
+  /**
+   * This field is read-only.
+   */
+  resignedTime: long
+
+  /**
+   * This field is read-only.
+   */
+  lastModifiedStateTime: long
+  emailDigestFrequency: EmailDigestFrequency
+
+  /**
+   * This field is read-only.
+   */
+  creationTime: long
+
+  /**
+   * This field is read-only.
+   */
+  lastModifiedTime: long
+  emailAnnouncementsFromManagers: boolean
+  emailForEveryNewPost: boolean
+
+  /**
+   * This field can only be accessed by moderators of the group
+   */
+  writeLevel: WriteLevel
+
+  /**
+   * Denormalized from members
+   */
+  firstName: string
+
+  /**
+   * Denormalized from members
+   */
+  lastName: string
+}

@@ -1,0 +1,12 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Extension schema allowing method schemas to define success statuses.
+ */
+record SuccessStatusesSchema {
+
+  /**
+   * Success statuses for this resource method.
+   */
+  success: optional array[int]
+}

@@ -1,0 +1,15 @@
+namespace com.linkedin.restli.tools
+
+/**
+ * A dummy error detail format to be used by restli-tools tests.
+ */
+record DummyErrorDetails {
+
+  messages: array[
+    /**
+     * Individual dummy error detail message.
+     */
+    record DummyErrorDetailMessage {
+      message: string
+    }]
+}

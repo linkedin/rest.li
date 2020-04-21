@@ -1,0 +1,8 @@
+namespace com.linkedin.restli.examples.groups.api
+
+enum WriteLevel {
+  NONE
+  PREMODERATED
+  DEFAULT
+  FULL
+}

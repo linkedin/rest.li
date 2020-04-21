@@ -1,0 +1,12 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Extension schema allowing resource and method schemas to define service errors.
+ */
+record ServiceErrorsSchema {
+
+  /**
+   * Service errors for this resource or resource method.
+   */
+  serviceErrors: optional array[ServiceErrorSchema]
+}

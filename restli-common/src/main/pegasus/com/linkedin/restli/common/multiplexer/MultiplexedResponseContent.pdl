@@ -1,0 +1,12 @@
+namespace com.linkedin.restli.common.multiplexer
+
+/**
+ * Represents multiple HTTP responses to send as a single multiplexed HTTP response
+ */
+record MultiplexedResponseContent {
+
+  /**
+   * Individual HTTP responses, where the key is Id of the corresponding individual request.
+   */
+  responses: map[string, IndividualResponse]
+}

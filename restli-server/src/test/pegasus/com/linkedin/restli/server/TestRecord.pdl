@@ -1,0 +1,8 @@
+namespace com.linkedin.restli.server
+
+record TestRecord {
+  intField: int
+  longField: long
+  floatField: float
+  doubleField: double
+}

@@ -1,6 +1,0 @@
-{
-  "type" : "typeref",
-  "name" : "FloatRef",
-  "namespace" : "com.linkedin.restli.examples.typeref.api",
-  "ref" : "float"
-}

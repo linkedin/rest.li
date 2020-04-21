@@ -1,0 +1,7 @@
+namespace com.linkedin.restli.tools.twitter
+
+enum StatusType {
+  RETWEET
+  REPLY
+  STATUS
+}

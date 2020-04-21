@@ -1,0 +1,117 @@
+namespace com.linkedin.restli.examples.groups.api
+
+/**
+ * A Group record
+ */
+record Group {
+
+  /**
+   * This field is read-only, and will be automatically assigned when the group is POSTed.
+   */
+  id: int
+  vanityUrl: string
+
+  /**
+   * Parent group references
+   */
+  parentGroupId: int
+
+  /**
+   * Cannot be changed by owner/managers once set (only CS can change it)
+   */
+  name: string
+  shortDescription: string
+  description: string
+  rules: string
+  contactEmail: string
+  category: int
+  otherCategory: int
+  badge: Badge
+  homeSiteUrl: string
+  smallLogoMediaUrl: string
+  largeLogoMediaUrl: string
+
+  /**
+   * An inlined Location struct
+   */
+  location: Location
+  locale: string
+
+  /**
+   * System-generated, read-only
+   */
+  sharingKey: string
+  visibility: Visibility
+  state: State = "ACTIVE"
+
+  /**
+   * This field is read-only. TODO Timestamp representation
+   */
+  createdTimestamp: long
+
+  /**
+   * This field is read-only.
+   */
+  lastModifiedTimestamp: long
+  isOpenToNonMembers: boolean
+
+  /**
+   * TODO This is really a bitset with each bit mapped to a setting enum. See ANetApprovalMode
+   */
+  approvalModes: int
+  contactability: Contactability
+  directoryPresence: DirectoryPresence
+  hasMemberInvites: boolean
+
+  /**
+   * System-maintained, read-only
+   */
+  numIdentityChanges: int
+
+  /**
+   * CS-editable only
+   */
+  maxIdentityChanges: int
+
+  /**
+   * CS-editable only
+   */
+  maxMembers: int
+
+  /**
+   * CS-editable only
+   */
+  maxModerators: int
+
+  /**
+   * CS-editable only
+   */
+  maxSubgroups: int
+
+  /**
+   * CS-editable only
+   */
+  maxFeeds: int
+  hasEmailExport: boolean
+  categoriesEnabled: PostCategory
+  hasNetworkUpdates: boolean
+  hasMemberRoster: boolean
+  hasSettings: boolean
+  hideSubgroups: boolean
+  categoriesForModeratorsOnly: PostCategory
+  numMemberFlagsToDelete: int
+  newsFormat: NewsFormat
+  preModeration: PreModerationType
+  preModerationCategories: PostCategory
+  nonMemberPermissions: NonMemberPermissions
+  openedToNonMembersTimestamp: long
+  preModerateNewMembersPeriodInDays: int
+  preModerateMembersWithLowConnections: boolean
+
+  preApprovedEmailDomains: array[string]
+
+  /**
+   * Required when creating a group, not returned as part of the default representation (must be explicitly requested via 'fields'
+   */
+  owner: GroupMembership
+}

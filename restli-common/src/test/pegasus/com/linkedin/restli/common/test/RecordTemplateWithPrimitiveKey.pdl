@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.common.test
+
+record RecordTemplateWithPrimitiveKey {
+  id: long
+  body: string
+}

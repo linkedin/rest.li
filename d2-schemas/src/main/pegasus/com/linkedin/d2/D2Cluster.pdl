@@ -1,0 +1,42 @@
+namespace com.linkedin.d2
+
+/**
+ * A cluster as represented in D2
+ */
+record D2Cluster includes D2ChangeTimeStamps {
+
+  /**
+   * The name of the cluster
+   */
+  name: string
+
+  /**
+   * The services that this cluster can provide
+   */
+  services: array[string] = [ ]
+
+  /**
+   * The URIs of machines that belong to this cluster
+   */
+  uris: array[D2Uri] = [ ]
+
+  /**
+   * banned Uris for this cluster
+   */
+  bannedUris: array[string] = [ ]
+
+  /**
+   * If this cluster has partitioning, then this is the partition config of this cluster
+   */
+  partitionConfiguration: optional D2ClusterPartitionConfiguration
+
+  /**
+   * List of validation strings. SSL session validator use this information to verify the host it connects to. The name is generically defined because it can be used by any type SSLSessionValidator in open source world.
+   */
+  sslSessionValidationStrings: array[string] = [ ]
+
+  /**
+   * Holds the configuration for this cluster's dark canary clusters, if any. The map is keyed by the dark canary name.
+   */
+  darkClusters: map[string, DarkClusterConfig] = { }
+}

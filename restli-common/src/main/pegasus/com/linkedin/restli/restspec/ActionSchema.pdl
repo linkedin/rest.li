@@ -1,0 +1,32 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Schema representing an action resource method.
+ */
+record ActionSchema includes CustomAnnotationSchema, ServiceErrorsSchema, SuccessStatusesSchema {
+
+  /**
+   * name of this action
+   */
+  name: string
+
+  /**
+   * Documentation for this action
+   */
+  doc: optional string
+
+  /**
+   * parameters for this action
+   */
+  parameters: optional array[ParameterSchema]
+
+  /**
+   * avro type of this action's return value
+   */
+  returns: optional string
+
+  /**
+   * list of exception types thrown by this action
+   */
+  throws: optional array[string]
+}

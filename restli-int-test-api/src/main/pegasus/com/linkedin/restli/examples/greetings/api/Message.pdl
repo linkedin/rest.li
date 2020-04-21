@@ -1,0 +1,14 @@
+namespace com.linkedin.restli.examples.greetings.api
+
+/**
+ * A message
+ */
+record Message {
+  id: string
+  message: string
+
+  /**
+   * tone
+   */
+  tone: Tone
+}

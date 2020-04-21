@@ -1,0 +1,8 @@
+namespace com.linkedin.restli.examples.groups.api
+
+enum State {
+  ACTIVE
+  LOCKED
+  INACTIVE
+  PROPOSED
+}

@@ -1,0 +1,19 @@
+namespace com.linkedin.restli.client.util.test
+
+record PatchTreeTestModel {
+  fooRequired: long
+  fooOptional: optional long
+
+  fooUnion: optional union[int, long]
+  fooByteString: optional bytes
+
+  fooEnum: enum FooEnum {
+    A
+    B
+  }
+
+  fooRecordTemplate: record FooRecordTemplate {
+    bar: long
+    baz: optional boolean
+  }
+}

@@ -1,0 +1,19 @@
+namespace com.linkedin.restli.restspec
+
+record IdentifierSchema {
+
+  /**
+   * name of the identifier
+   */
+  name: string
+
+  /**
+   * avro type of the identifier
+   */
+  type: string
+
+  /**
+   * avro type of the identifier parameters
+   */
+  params: optional string
+}

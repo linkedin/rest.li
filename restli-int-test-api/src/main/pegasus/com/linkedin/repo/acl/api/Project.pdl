@@ -1,0 +1,8 @@
+namespace com.linkedin.repo.acl.api
+
+/**
+ * A project
+ */
+record Project {
+  project_name: string
+}

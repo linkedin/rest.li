@@ -1,0 +1,79 @@
+namespace com.linkedin.d2
+
+/**
+ * Partitioning configuration for D2 clusters
+ */
+record D2ClusterPartitionConfiguration {
+
+  /**
+   * The type of partitioning. We support HASH, RANGE, NONE.
+   */
+  @symbolDocs = {
+    "CUSTOM" : "Partitioning base on the customized function provided by the service",
+    "NONE" : "No Partitioning.",
+    "HASH" : "Partitioning based on hash.",
+    "RANGE" : "partitioning based on range e.g. Id 1-1000 goes to bucket A, Id 1001-2000 goes to bucket B, etc."
+  }
+  type: enum PartitionTypeEnum {
+    HASH
+    RANGE
+    CUSTOM
+    NONE
+  }
+
+  /**
+   * The regular expression to extract the partition key from a request URI.
+   */
+  partitionKeyRegex: optional string
+
+  /**
+   * The number of partitions this cluster has.
+   */
+  partitionCount: optional int
+
+  /**
+   * If the partition type is RANGE, then we have RangedPartitionProperties. If it's type HASH, we should have a HashAlgorithm. If it is type CUSTOM, we have PartitionAccessorList. Otherwise we won't have any extra data in this field
+   */
+  partitionTypeSpecificData: optional union[record RangedPartitionProperties {
+
+    /**
+     * The size of each partition. Used only for RANGE based partition. Not used for HASH based partition
+     */
+    partitionSize: long
+
+    /**
+     * The starting point for RANGE partitioning. Not used for HASH based partition.
+     */
+    keyRangeStart: long
+  },
+    /**
+     * The hashing algorithm used in HASH based partitioning. Supported algorithms are: MODULO or MD5. Not used for RANGE based partition.
+     */
+    enum HashAlgorithm {
+
+      /**
+       * Mod the key with partitionCount to get the partitionKey
+       */
+      MODULO
+
+      /**
+       * Hash the key and mod it with partitionCount to get the partitionKey
+       */
+      MD5
+
+      /**
+       * Hash the key with xxhash and mod it with partitionCount to get the partitionKey
+       */
+      XXHASH
+    },
+    /**
+     * The list of class names that implement BasePartitionAccessor. D2 goes through the list and uses the first one that is registered to PartitionAccessorRegistry. This list is used when the service needs to provide/deploy multiple versions of implementation.
+     */
+    record PartitionAccessorList {
+
+      /**
+       * Class names for the implemented BasePartitionAccessor
+       */
+      classNames: array[string]
+    }]
+}

@@ -1,0 +1,4 @@
+namespace com.linkedin.restli.server
+
+@java.class = "com.linkedin.restli.server.custom.types.NoCoercerCustomString"
+typeref NoCoercerCustomStringRef = string
