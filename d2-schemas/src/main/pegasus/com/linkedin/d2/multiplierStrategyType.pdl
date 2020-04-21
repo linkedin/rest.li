@@ -1,0 +1,19 @@
+namespace com.linkedin.d2
+
+/**
+ * There are 2 types of strategy: RELATIVE_TRAFFIC, CONSTANT_QPS. These can be specified in prioritized order and
+ * will be picked in that order depending on availability.
+ */
+enum multiplierStrategyType {
+
+  /**
+   * This strategy will try to keep the level of traffic on a dark cluster instance relative to the dispatching instance,
+   * as indicated by the multiplier.
+   */
+  RELATIVE_TRAFFIC
+
+  /**
+   * This strategy will try to maintain a certain queries per second, as specified by dispatcherOutboundTargetRate.
+   */
+  CONSTANT_QPS
+}
