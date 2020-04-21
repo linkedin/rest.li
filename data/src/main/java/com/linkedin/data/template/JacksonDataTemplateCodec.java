@@ -60,10 +60,10 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
   /**
    * Serialize the provided {@link java.lang.Object} to JSON and, if order is set to true, sort and order the output
    * using {@link com.linkedin.data.template.JacksonDataTemplateCodec.SchemaOrderTraverseCallback} with the specified
-   * {@link com.linkedin.data.schema.DataSchema}. The output is then written using the provided
-   * {@link com.fasterxml.jackson.core.JsonGenerator}. The most typical use case of this method is to
    * feed a {@link com.linkedin.data.template.DataTemplate} into a {@link com.fasterxml.jackson.core.JsonGenerator}.
    *
+   * {@link com.linkedin.data.schema.DataSchema}. The output is then written using the provided
+   * {@link com.fasterxml.jackson.core.JsonGenerator}. The most typical use case of this method is to
    * <p><i>Note</i> that the provided {@link com.fasterxml.jackson.core.JsonGenerator} will NOT close its underlying output,
    * whether its a {@link java.io.Writer} or an {@link java.io.OutputStream}, after the completion of this
    * method.

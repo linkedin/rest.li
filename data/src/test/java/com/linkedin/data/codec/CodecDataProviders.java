@@ -55,10 +55,8 @@ public class CodecDataProviders
     List<Object[]> list = new ArrayList<>();
     for (Map.Entry<String, DataComplex> entry : codecDataInputs().entrySet())
     {
-      list.add(new Object[] {entry.getKey(), entry.getValue(), true, true});
-      list.add(new Object[] {entry.getKey(), entry.getValue(), false, false});
-      list.add(new Object[] {entry.getKey(), entry.getValue(), true, false});
-      list.add(new Object[] {entry.getKey(), entry.getValue(), false, true});
+      list.add(new Object[] {entry.getKey(), entry.getValue(), true});
+      list.add(new Object[] {entry.getKey(), entry.getValue(), false});
     }
 
     return list.toArray(new Object[][] {});
