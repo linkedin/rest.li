@@ -133,8 +133,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
         }
         else if (CONSTANT_QPS.equals(multiplierStrategyType))
         {
-          // the constant qps strategy is not yet implemented, return the NoOpDarkClusterStrategy
-          return new NoOpDarkClusterStrategy();
+          // the constant qps strategy is not yet implemented, continue to the next strategy if it exists
         }
         else
         {
