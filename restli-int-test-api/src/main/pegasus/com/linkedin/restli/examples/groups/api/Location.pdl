@@ -1,0 +1,17 @@
+namespace com.linkedin.restli.examples.groups.api
+
+/**
+ * A Location record. TODO HIGH This should be in common.linkedin
+ */
+record Location {
+  countryCode: string
+  postalCode: string
+  geoPostalCode: string
+  regionCode: int
+  latitude: float
+  longitude: float
+
+  geoPlaceCodes: array[string]
+  gmtOffset: float
+  usesDaylightSavings: boolean
+}

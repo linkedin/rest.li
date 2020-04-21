@@ -1,0 +1,52 @@
+namespace com.linkedin.restli.server.errors
+
+/**
+ * Describes an input validation error.
+ */
+record MockInputError {
+
+  /**
+   * The error code, e.g. FIELD_VALUE_TOO_LOW.
+   */
+  code: string
+
+  /**
+   * A path leading to a field in the request that failed the validation.
+   */
+  inputPath: string
+
+  /**
+   * The provided value in the client request.
+   */
+  value: optional string
+
+  /**
+   * The key or an index of an entity in the request for batch operations.
+   */
+  key: optional string
+
+  /**
+   * A description of why the request element is bad.
+   */
+  description: optional string
+
+  /**
+   * The minimum allowed length for the input field.
+   */
+  minLength: int
+
+  /**
+   * The maximum allowed length for the input field.
+   */
+  maxLength: optional int
+
+  /**
+   * The minimum value that is allowed for an input field.
+   */
+  minValue: optional int
+
+  /**
+   * The maximum value that is allowed for an input field.
+   */
+  maxValue: optional int
+}

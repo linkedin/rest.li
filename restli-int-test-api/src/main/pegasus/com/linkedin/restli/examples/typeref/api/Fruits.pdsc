@@ -1,6 +1,0 @@
-{
-  "type" : "enum",
-  "name" : "Fruits",
-  "namespace" : "com.linkedin.restli.examples.typeref.api",
-  "symbols" : [ "APPLE", "ORANGE" ]
-}

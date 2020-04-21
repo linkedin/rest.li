@@ -1,0 +1,22 @@
+namespace com.linkedin.restli.common.multiplexer
+
+/**
+ * Individual HTTP response within a multiplexed response
+ */
+record IndividualResponse {
+
+  /**
+   * HTTP status code
+   */
+  status: int
+
+  /**
+   * HTTP headers
+   */
+  headers: map[string, string] = { }
+
+  /**
+   * Response body
+   */
+  body: optional IndividualBody
+}

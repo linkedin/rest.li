@@ -1,0 +1,17 @@
+namespace com.linkedin.restli.examples.groups.api
+
+/**
+ * Request for transferOwnership RPC method
+ */
+record TransferOwnershipRequest {
+
+  /**
+   * The new owner
+   */
+  newOwnerMemberID: int
+
+  /**
+   * The new owner's email
+   */
+  newOwnerContactEmail: string
+}

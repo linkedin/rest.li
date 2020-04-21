@@ -1,0 +1,24 @@
+namespace com.linkedin.restli.common
+
+/**
+ * Metadata and pagination links for this collection
+ */
+record CollectionMetadata {
+
+  /**
+   * The start index of this collection
+   */
+  start: int
+
+  /**
+   * The number of elements in this collection segment
+   */
+  count: int
+
+  /**
+   * The total number of elements in the entire collection (not just this segment)
+   */
+  total: int = 0
+
+  links: array[Link]
+}

@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.examples.greetings.api
+
+record TwoPartKey {
+  major: string
+  minor: string
+}

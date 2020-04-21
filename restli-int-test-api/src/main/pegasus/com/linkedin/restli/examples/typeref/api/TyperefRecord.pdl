@@ -1,0 +1,18 @@
+namespace com.linkedin.restli.examples.`typeref`.api
+
+record TyperefRecord {
+  int: optional IntRef
+  long: optional LongRef
+  float: optional FloatRef
+  double: optional DoubleRef
+  boolean: optional BooleanRef
+  string: optional StringRef
+  bytes: optional BytesRef
+  intArray: optional IntArrayRef
+  intMap: optional IntMapRef
+  fixed16: optional Fixed16Ref
+  fruits: optional FruitsRef
+  `union`: optional Union
+  union2: optional UnionRef
+  point: optional PointRef
+}

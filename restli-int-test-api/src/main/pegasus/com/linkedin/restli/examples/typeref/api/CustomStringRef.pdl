@@ -1,0 +1,4 @@
+namespace com.linkedin.restli.examples.`typeref`.api
+
+@java.class = "com.linkedin.restli.examples.custom.types.CustomString"
+typeref CustomStringRef = string

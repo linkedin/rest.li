@@ -1,0 +1,7 @@
+namespace com.linkedin.restli.examples.groups.api
+
+enum PreModerationType {
+  NONE
+  COMMENTS
+  ALL
+}

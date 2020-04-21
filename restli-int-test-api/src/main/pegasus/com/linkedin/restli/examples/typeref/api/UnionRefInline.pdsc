@@ -1,6 +1,0 @@
-{
-  "type" : "typeref",
-  "name" : "UnionRefInline",
-  "namespace" : "com.linkedin.restli.examples.typeref.api",
-  "ref" : ["int", "string"]
-}

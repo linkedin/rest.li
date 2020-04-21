@@ -1,6 +1,0 @@
-{
-  "type" : "enum",
-  "name" : "NewsFormat",
-  "namespace" : "com.linkedin.restli.examples.groups.api",
-  "symbols" : [ "RECENT", "CLUSTERED" ]
-}

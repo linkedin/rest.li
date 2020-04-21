@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.server
+
+record LinkedListNode {
+  intField: int
+  next: optional LinkedListNode
+}

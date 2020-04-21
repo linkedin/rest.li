@@ -1,0 +1,9 @@
+namespace com.linkedin.restli.restspec
+
+record MetadataSchema {
+
+  /**
+   * pegasus type of the metadata
+   */
+  type: string
+}

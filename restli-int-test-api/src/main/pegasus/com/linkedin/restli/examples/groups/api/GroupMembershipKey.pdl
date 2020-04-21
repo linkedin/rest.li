@@ -1,0 +1,17 @@
+namespace com.linkedin.restli.examples.groups.api
+
+/**
+ * A GroupMembership entity key
+ */
+record GroupMembershipKey {
+
+  /**
+   * This field is read-only.
+   */
+  memberID: int
+
+  /**
+   * This field is read-only.
+   */
+  groupID: int
+}

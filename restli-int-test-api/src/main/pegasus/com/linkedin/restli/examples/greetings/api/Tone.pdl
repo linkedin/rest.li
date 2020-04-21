@@ -1,0 +1,7 @@
+namespace com.linkedin.restli.examples.greetings.api
+
+enum Tone {
+  FRIENDLY
+  SINCERE
+  INSULTING
+}

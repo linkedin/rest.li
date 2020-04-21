@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Unstructured record that represents arbitrary custom annotations for idl. Actual content is always a map with annotation's overridable member name as key and member value as value
+ */
+record CustomAnnotationContentSchema {}

@@ -1,0 +1,7 @@
+namespace com.linkedin.restli.examples.`typeref`.api
+
+@java = {
+  "coercerClass" : "com.linkedin.restli.examples.custom.types.CalendarCoercer",
+  "class" : "java.util.Calendar"
+}
+typeref CalendarRef = int

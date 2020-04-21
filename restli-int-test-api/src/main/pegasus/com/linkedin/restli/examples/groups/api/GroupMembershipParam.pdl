@@ -1,0 +1,9 @@
+namespace com.linkedin.restli.examples.groups.api
+
+/**
+ * A GroupMembership entity parameters
+ */
+record GroupMembershipParam {
+  intParameter: int
+  stringParameter: string
+}

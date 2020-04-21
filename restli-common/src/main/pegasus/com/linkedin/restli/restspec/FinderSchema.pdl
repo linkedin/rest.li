@@ -1,0 +1,42 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Schema representing a finder resource method.
+ */
+record FinderSchema includes CustomAnnotationSchema, ServiceErrorsSchema, SuccessStatusesSchema {
+
+  /**
+   * name of this finder - not required if this is the default finder
+   */
+  name: optional string
+
+  /**
+   * Documentation for this finder
+   */
+  doc: optional string
+
+  /**
+   * list of query parameters for this finder
+   */
+  parameters: optional array[ParameterSchema]
+
+  /**
+   * describes the collection-level metadata returned by this finder
+   */
+  metadata: optional MetadataSchema
+
+  /**
+   * association key for this finder - only present if this finder takes a single association key
+   */
+  assocKey: optional string
+
+  /**
+   * list of association keys for this finder - only present if this finder takes multiple association keys
+   */
+  assocKeys: optional array[string]
+
+  /**
+   * Indicates if this finder method has paging support using the start and count parameters
+   */
+  pagingSupported: optional boolean
+}

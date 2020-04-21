@@ -1,0 +1,32 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Describes a service error that may be returned by some resource or resource method.
+ */
+record ServiceErrorSchema {
+
+  /**
+   * The HTTP status code.
+   */
+  status: int
+
+  /**
+   * The canonical error code, e.g. for '400 Bad Request' it can be 'INPUT_VALIDATION_FAILED'. Only predefined codes should be used.
+   */
+  code: string
+
+  /**
+   * A human-readable explanation of the error.
+   */
+  message: optional string
+
+  /**
+   * The type of the error detail model, e.g. com.example.api.BadRequest. Error detail records returned to the client should conform to this schema.
+   */
+  errorDetailType: optional string
+
+  /**
+   * Resource method parameters for which this service error applies, if any. Allowed only for method-level service errors.
+   */
+  parameters: optional array[string]
+}

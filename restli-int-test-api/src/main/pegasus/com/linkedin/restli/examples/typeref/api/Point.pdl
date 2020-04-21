@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.examples.`typeref`.api
+
+record Point {
+  x: double
+  y: double
+}

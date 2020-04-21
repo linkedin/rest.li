@@ -1,0 +1,12 @@
+namespace com.linkedin.restli.common.multiplexer
+
+/**
+ * Represents multiple HTTP requests to send as a single multiplexed HTTP request
+ */
+record MultiplexedRequestContent {
+
+  /**
+   * Individual HTTP requests executed in parallel.  Keys of the requests are used to correlate responses with requests. They should be unique within the multiplexed request
+   */
+  requests: map[string, IndividualRequest]
+}

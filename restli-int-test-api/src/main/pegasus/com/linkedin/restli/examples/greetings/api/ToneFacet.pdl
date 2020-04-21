@@ -1,0 +1,9 @@
+namespace com.linkedin.restli.examples.greetings.api
+
+/**
+ * metadata for greetings search results
+ */
+record ToneFacet {
+  tone: Tone
+  count: int
+}

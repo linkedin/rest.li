@@ -1,0 +1,8 @@
+namespace com.linkedin.common
+
+/**
+ * A common greeting record
+ */
+record GreetingCommon {
+  id: long
+}

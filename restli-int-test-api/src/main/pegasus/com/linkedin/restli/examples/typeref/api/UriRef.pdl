@@ -1,0 +1,7 @@
+namespace com.linkedin.restli.examples.`typeref`.api
+
+@java = {
+  "coercerClass" : "com.linkedin.restli.examples.custom.types.UriCoercer",
+  "class" : "java.net.URI"
+}
+typeref UriRef = string

@@ -1,7 +1,0 @@
-{
-  "type": "record",
-  "name": "PegasusSchema",
-  "namespace": "com.linkedin.restli.common",
-  "doc": "A \"marker\" data schema for data that is itself a data schema (a \"PDSC for PDSCs\"). Because PDSC is not expressive enough to describe it's own format, this is only a marker, and has no fields. Despite having no fields, it is required that data marked with this schema be non-empty. Specifically, is required that data marked as using this schema fully conform to the PDSC format (https://github.com/linkedin/rest.li/wiki/DATA-Data-Schema-and-Templates#schema-definition).",
-  "fields": []
-}

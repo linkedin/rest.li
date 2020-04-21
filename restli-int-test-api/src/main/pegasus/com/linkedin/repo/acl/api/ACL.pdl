@@ -1,0 +1,10 @@
+namespace com.linkedin.repo.acl.api
+
+/**
+ * An ACL
+ */
+record ACL {
+  acl_name: string
+
+  paths: array[string]
+}

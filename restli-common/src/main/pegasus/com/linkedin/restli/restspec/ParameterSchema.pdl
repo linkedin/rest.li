@@ -1,0 +1,34 @@
+namespace com.linkedin.restli.restspec
+
+record ParameterSchema includes CustomAnnotationSchema {
+
+  /**
+   * name of this parameter
+   */
+  name: string
+
+  /**
+   * avro type of this parameter
+   */
+  type: string
+
+  /**
+   * type of individual items, if this is an array parameter (used for finder parameters)
+   */
+  items: optional string
+
+  /**
+   * indicates whether this parameter is optional.  omitted for required parameters
+   */
+  `optional`: optional boolean
+
+  /**
+   * indicates the default value for this parameter
+   */
+  default: optional string
+
+  /**
+   * Documentation for this parameter
+   */
+  doc: optional string
+}

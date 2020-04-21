@@ -1,6 +1,0 @@
-{
-  "type" : "typeref",
-  "name" : "MyLongRef",
-  "namespace": "com.linkedin.restli.common.test",
-  "ref"  : "long"
-}

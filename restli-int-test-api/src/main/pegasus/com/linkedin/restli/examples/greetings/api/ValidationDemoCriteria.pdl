@@ -1,0 +1,9 @@
+namespace com.linkedin.restli.examples.greetings.api
+
+/**
+ * A search criteria to filter validation demo.
+ */
+record ValidationDemoCriteria {
+  intA: int
+  stringB: string
+}

@@ -1,0 +1,58 @@
+namespace com.linkedin.restli.common
+
+/**
+ * A generic ErrorResponse
+ */
+record ErrorResponse {
+
+  /**
+   * The HTTP status code.
+   */
+  status: optional int
+
+  /**
+   * A service-specific error code.
+   */
+  @deprecated = "Deprecated - use the code field instead."
+  serviceErrorCode: optional int
+
+  /**
+   * The canonical error code, e.g. for '400 Bad Request' it can be 'INPUT_VALIDATION_FAILED'. Only predefined codes should be used.
+   */
+  code: optional string
+
+  /**
+   * A human-readable explanation of the error.
+   */
+  message: optional string
+
+  /**
+   * URL to a page that describes this particular error in more detail.
+   */
+  docUrl: optional string
+
+  /**
+   * The unique identifier that would identify this error. For example, it can be used to identify requests in the service's logs.
+   */
+  requestId: optional string
+
+  /**
+   * The FQCN of the exception thrown by the server.
+   */
+  exceptionClass: optional string
+
+  /**
+   * The full stack trace of the exception thrown by the server.
+   */
+  stackTrace: optional string
+
+  /**
+   * The type of the error detail model, e.g. com.example.api.BadRequest. Clients can use this field to identify the actual error detail schema.
+   */
+  errorDetailType: optional string
+
+  /**
+   * This field should be used for communicating extra error details to clients.
+   */
+  errorDetails: optional record ErrorDetails {}
+}

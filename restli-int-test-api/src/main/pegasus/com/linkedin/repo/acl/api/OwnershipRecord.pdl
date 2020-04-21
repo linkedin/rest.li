@@ -1,0 +1,10 @@
+namespace com.linkedin.repo.acl.api
+
+/**
+ * An ownership record
+ */
+record OwnershipRecord {
+  owner_name: string
+
+  acls: array[ACL]
+}

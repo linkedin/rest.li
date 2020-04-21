@@ -1,0 +1,7 @@
+namespace com.linkedin.restli.server
+
+record TestPathRecord {
+  intField: int
+  intField2: int
+  longField: long
+}

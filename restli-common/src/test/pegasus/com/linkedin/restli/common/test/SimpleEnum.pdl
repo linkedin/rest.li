@@ -1,0 +1,7 @@
+namespace com.linkedin.restli.common.test
+
+enum SimpleEnum {
+  A
+  B
+  C
+}

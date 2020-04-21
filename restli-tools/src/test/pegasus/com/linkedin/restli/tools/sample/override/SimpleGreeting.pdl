@@ -1,0 +1,10 @@
+namespace com.linkedin.restli.tools.sample.override
+package com.linkedin.restli.tools.sample
+
+/**
+ * A simple greeting
+ */
+record SimpleGreeting {
+  id: long
+  message: string
+}

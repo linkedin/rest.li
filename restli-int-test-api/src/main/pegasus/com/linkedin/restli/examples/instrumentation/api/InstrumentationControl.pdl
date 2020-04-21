@@ -1,0 +1,27 @@
+namespace com.linkedin.restli.examples.instrumentation.api
+
+/**
+ * A record containing control information for latency instrumentation testing.
+ */
+record InstrumentationControl {
+
+  /**
+   * URI prefix of the service running the instrumentation resource.
+   */
+  serviceUriPrefix: string
+
+  /**
+   * Whether the resource should use streaming for its downstream service calls.
+   */
+  useStreaming: boolean
+
+  /**
+   * Whether the resource should throw service exceptions.
+   */
+  forceException: boolean
+
+  /**
+   * Whether the resource should use scatter-gather for its downstream service calls.
+   */
+  useScatterGather: boolean
+}

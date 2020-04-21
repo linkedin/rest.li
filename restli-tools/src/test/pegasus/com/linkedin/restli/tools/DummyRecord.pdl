@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.tools
+
+/**
+ * A dummy record to be used by restli-tools tests.
+ */
+record DummyRecord {}
