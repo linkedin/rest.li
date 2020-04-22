@@ -40,6 +40,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -74,6 +75,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private static final Logger                                      _log =
                                                                          LoggerFactory.getLogger(ZooKeeperEphemeralStore.class);
   private static final Pattern PATH_PATTERN    = Pattern.compile("(.*)/(.*)$");
+  public static final String DEFAULT_PREFIX = "ephemoral";
 
   private final ZooKeeperPropertyMerger<T>                      _merger;
   private final ConcurrentMap<String, EphemeralStoreWatcher> _ephemeralStoreWatchers = new ConcurrentHashMap<>();
@@ -85,6 +87,8 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private final boolean _useNewWatcher;
   private final ScheduledExecutorService _executorService;
   private final int _zookeeperReadWindowMs;
+  private final ZookeeperChildFilter _zookeeperChildFilter;
+  private final ZookeeperEphemeralPrefixGenerator _prefixGenerator;
 
   public ZooKeeperEphemeralStore(ZKConnection client,
                                  PropertySerializer<T> serializer,
@@ -92,6 +96,17 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
                                  String path)
   {
     this(client, serializer, merger, path, false, false, null);
+  }
+
+  public ZooKeeperEphemeralStore(ZKConnection client,
+                                 PropertySerializer<T> serializer,
+                                 ZooKeeperPropertyMerger<T> merger,
+                                 String path,
+                                 ZookeeperChildFilter zookeeperChildFilter,
+                                 ZookeeperEphemeralPrefixGenerator prefixGenerator)
+  {
+    this(client, serializer, merger, path, false, false, null,
+         null, DEFAULT_READ_WINDOW_MS, zookeeperChildFilter, prefixGenerator);
   }
 
   public ZooKeeperEphemeralStore(ZKConnection client,
@@ -131,6 +146,20 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         null, DEFAULT_READ_WINDOW_MS);
   }
 
+  public ZooKeeperEphemeralStore(ZKConnection client,
+      PropertySerializer<T> serializer,
+      ZooKeeperPropertyMerger<T> merger,
+      String path,
+      boolean watchChildNodes,
+      boolean useNewWatcher,
+      String ephemeralNodesFilePath,
+      ScheduledExecutorService executorService,
+      int zookeeperReadWindowMs)
+  {
+    this (client, serializer, merger, path, watchChildNodes, useNewWatcher, ephemeralNodesFilePath,
+        executorService, zookeeperReadWindowMs, null, null);
+  }
+
   /**
    * @param watchChildNodes        if true, a watcher for each children node will be set (this have a large cost)
    * @param ephemeralNodesFilePath if a FS path is specified, children nodes are considered unmodifiable,
@@ -144,7 +173,9 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
                                  boolean useNewWatcher,
                                  String ephemeralNodesFilePath,
                                  ScheduledExecutorService executorService,
-                                 int zookeeperReadWindowMs)
+                                 int zookeeperReadWindowMs,
+                                 ZookeeperChildFilter zookeeperChildFilter,
+                                 ZookeeperEphemeralPrefixGenerator prefixGenerator)
   {
     super(client, serializer, path);
 
@@ -165,6 +196,8 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       useNewWatcher = true;
     }
 
+    _zookeeperChildFilter = zookeeperChildFilter == null ? (children -> children) : zookeeperChildFilter;
+    _prefixGenerator = prefixGenerator == null ? (() -> DEFAULT_PREFIX) : prefixGenerator;
     _merger = merger;
     _watchChildNodes = watchChildNodes;
     _useNewWatcher = useNewWatcher;
@@ -186,7 +219,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       @Override
       public void onSuccess(None none)
       {
-        final String ephemeralPath = path + "/ephemoral-";
+        final String ephemeralPath = path + "/" + _prefixGenerator.generatePrefix() + "-";
 
         AsyncCallback.StringCallback stringCallback = new AsyncCallback.StringCallback()
         {
@@ -288,6 +321,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         switch (code)
         {
           case OK:
+            children = _zookeeperChildFilter.filter(children);
             if (children.size() > 0)
             {
               ChildCollector collector = new ChildCollector(children.size(), childrenCallback);
@@ -330,7 +364,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
             break;
 
           case OK:
-            getMergedChildren(path, children, null, callback);
+            getMergedChildren(path, _zookeeperChildFilter.filter(children), null, callback);
             break;
 
           default:

@@ -21,6 +21,8 @@ import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
+import com.linkedin.d2.discovery.stores.zk.ZookeeperChildFilter;
+import com.linkedin.d2.discovery.stores.zk.ZookeeperEphemeralPrefixGenerator;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -45,8 +47,10 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
   private boolean _watchChildNodes = false;
   private boolean _useNewWatcher = false;
   private String _fsD2DirPathForBackup = null;
-  private ScheduledExecutorService executorService;
-  private int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
+  private ScheduledExecutorService _executorService;
+  private int _zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
+  private ZookeeperChildFilter _zookeeperChildFilter = null;
+  private ZookeeperEphemeralPrefixGenerator _zookeeperEphemeralPrefixGenerator = null;
   private List<Consumer<ZooKeeperEphemeralStore<T>>> _onBuildListeners = new ArrayList<>();
 
   @Override
@@ -96,13 +100,25 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
 
   public ZooKeeperEphemeralStoreBuilder<T> setExecutorService(ScheduledExecutorService executorService)
   {
-    this.executorService = executorService;
+    this._executorService = executorService;
     return this;
   }
 
   public ZooKeeperEphemeralStoreBuilder<T> setZookeeperReadWindowMs(int zookeeperReadWindowMs)
   {
-    this.zookeeperReadWindowMs = zookeeperReadWindowMs;
+    this._zookeeperReadWindowMs = zookeeperReadWindowMs;
+    return this;
+  }
+
+  public ZooKeeperEphemeralStoreBuilder<T> setZookeeperChildFilter(ZookeeperChildFilter zookeeperChildFilter)
+  {
+    this._zookeeperChildFilter = zookeeperChildFilter;
+    return this;
+  }
+
+  public ZooKeeperEphemeralStoreBuilder<T> setZookeeperEphemeralPrefixGenerator(ZookeeperEphemeralPrefixGenerator zookeeperEphemeralPrefixGenerator)
+  {
+    this._zookeeperEphemeralPrefixGenerator = zookeeperEphemeralPrefixGenerator;
     return this;
   }
 
@@ -123,7 +139,7 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
 
     ZooKeeperEphemeralStore<T> zooKeeperEphemeralStore =
       new ZooKeeperEphemeralStore<>(_client, _serializer, _merger, _path, _watchChildNodes, _useNewWatcher,
-                                    backupStoreFilePath, executorService, zookeeperReadWindowMs);
+                                    backupStoreFilePath, _executorService, _zookeeperReadWindowMs, _zookeeperChildFilter, _zookeeperEphemeralPrefixGenerator);
 
     for (Consumer<ZooKeeperEphemeralStore<T>> onBuildListener : _onBuildListeners)
     {
