@@ -7,8 +7,9 @@ namespace com.linkedin.d2
 enum multiplierStrategyType {
 
   /**
-   * This strategy will try to keep the level of traffic on a dark cluster instance relative to the dispatching instance,
-   * as indicated by the multiplier.
+   * This strategy aims to maintain a proportional amount of incoming QPS at the host level between the source and dark clusters.
+   * Configured with "multiplier". For example a multiplier of 1 would mean the average incoming QPS for a source host equals that
+   * of a dark host. A multiplier of 2 means on average a dark host will receive 2x more traffic than a source host.
    */
   RELATIVE_TRAFFIC
 
