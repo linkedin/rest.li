@@ -26,10 +26,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.linkedin.d2.DarkClusterConfig;
-import com.linkedin.d2.MultiplierStrategyTypeArray;
+import com.linkedin.d2.DarkClusterStrategyNameArray;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
-import com.linkedin.d2.multiplierStrategyType;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.darkcluster.api.DarkClusterStrategyFactory;
@@ -41,8 +40,8 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 
-import static com.linkedin.d2.multiplierStrategyType.CONSTANT_QPS;
-import static com.linkedin.d2.multiplierStrategyType.RELATIVE_TRAFFIC;
+import static com.linkedin.d2.DarkClusterStrategyName.CONSTANT_QPS;
+import static com.linkedin.d2.DarkClusterStrategyName.RELATIVE_TRAFFIC;
 import static com.linkedin.darkcluster.DarkClusterTestUtil.createRelativeTrafficMultiplierConfig;
 import static org.testng.Assert.fail;
 import org.testng.Assert;
@@ -200,9 +199,9 @@ public class TestDarkClusterStrategyFactory
   public void testStrategyFallThru()
   {
     DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0.5f);
-    MultiplierStrategyTypeArray multiplierStrategyList = new MultiplierStrategyTypeArray();
-    multiplierStrategyList.addAll(Arrays.asList(CONSTANT_QPS, RELATIVE_TRAFFIC));
-    darkClusterConfig1.setMultiplierStrategyList(multiplierStrategyList);
+    DarkClusterStrategyNameArray darkClusterStrategyList = new DarkClusterStrategyNameArray();
+    darkClusterStrategyList.addAll(Arrays.asList(CONSTANT_QPS, RELATIVE_TRAFFIC));
+    darkClusterConfig1.setMultiplierStrategyList(darkClusterStrategyList);
 
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
@@ -216,10 +215,10 @@ public class TestDarkClusterStrategyFactory
   public void testStrategyFallThruWithNoFallback()
   {
     DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0.5f);
-    MultiplierStrategyTypeArray multiplierStrategyList = new MultiplierStrategyTypeArray();
+    DarkClusterStrategyNameArray darkClusterStrategyList = new DarkClusterStrategyNameArray();
     // Only ConstantQPS strategy is present, with no alternative.
-    multiplierStrategyList.addAll(Collections.singletonList(CONSTANT_QPS));
-    darkClusterConfig1.setMultiplierStrategyList(multiplierStrategyList);
+    darkClusterStrategyList.addAll(Collections.singletonList(CONSTANT_QPS));
+    darkClusterConfig1.setMultiplierStrategyList(darkClusterStrategyList);
 
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
@@ -232,9 +231,9 @@ public class TestDarkClusterStrategyFactory
   public void testStrategyZeroMultiplier()
   {
     DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0f);
-    MultiplierStrategyTypeArray multiplierStrategyList = new MultiplierStrategyTypeArray();
-    multiplierStrategyList.addAll(Collections.singletonList(RELATIVE_TRAFFIC));
-    darkClusterConfig1.setMultiplierStrategyList(multiplierStrategyList);
+    DarkClusterStrategyNameArray darkClusterStrategyList = new DarkClusterStrategyNameArray();
+    darkClusterStrategyList.addAll(Collections.singletonList(RELATIVE_TRAFFIC));
+    darkClusterConfig1.setMultiplierStrategyList(darkClusterStrategyList);
 
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);

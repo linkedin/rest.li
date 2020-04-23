@@ -19,10 +19,10 @@ package com.linkedin.d2.balancer.config;
 import com.linkedin.d2.D2TransportClientProperties;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
-import com.linkedin.d2.MultiplierStrategyTypeArray;
+import com.linkedin.d2.DarkClusterStrategyName;
+import com.linkedin.d2.DarkClusterStrategyNameArray;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
-import com.linkedin.d2.multiplierStrategyType;
 import com.linkedin.data.DataList;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.validation.CoercionMode;
@@ -82,9 +82,9 @@ public class DarkClustersConverter
 
         if (darkClusterConfig.hasMultiplierStrategyList())
         {
-          MultiplierStrategyTypeArray myArray = darkClusterConfig.getMultiplierStrategyList();
+          DarkClusterStrategyNameArray myArray = darkClusterConfig.getMultiplierStrategyList();
           List<String> strategyList = new ArrayList<>();
-          for (multiplierStrategyType type : myArray)
+          for (DarkClusterStrategyName type : myArray)
           {
             strategyList.add(type.toString());
           }
@@ -155,8 +155,8 @@ public class DarkClustersConverter
 
         // note that unknown strategyTypes can be added here. This can happen for new strategies as they are rolling
         // out, or for bad strategy types. The converter and client code should be resilient to these.
-        MultiplierStrategyTypeArray multiplierStrategyTypeArray = new MultiplierStrategyTypeArray(dataList);
-        darkClusterConfig.setMultiplierStrategyList(multiplierStrategyTypeArray);
+        DarkClusterStrategyNameArray darkClusterStrategyNameArray = new DarkClusterStrategyNameArray(dataList);
+        darkClusterConfig.setMultiplierStrategyList(darkClusterStrategyNameArray);
 
       }
       if (props.containsKey(PropertyKeys.DARK_CLUSTER_TRANSPORT_CLIENT_PROPERTIES))

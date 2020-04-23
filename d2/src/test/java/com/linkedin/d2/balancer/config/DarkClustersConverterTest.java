@@ -25,9 +25,9 @@ import java.util.Objects;
 import com.linkedin.d2.D2TransportClientProperties;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
-import com.linkedin.d2.MultiplierStrategyTypeArray;
+import com.linkedin.d2.DarkClusterStrategyName;
+import com.linkedin.d2.DarkClusterStrategyNameArray;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
-import com.linkedin.d2.multiplierStrategyType;
 
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -111,8 +111,8 @@ public class DarkClustersConverterTest
   public void testEntriesInClusterConfig()
   {
     DarkClusterConfigMap configMap = new DarkClusterConfigMap();
-    MultiplierStrategyTypeArray multiplierStrategyTypeArray = new MultiplierStrategyTypeArray();
-    multiplierStrategyTypeArray.add(multiplierStrategyType.RELATIVE_TRAFFIC);
+    DarkClusterStrategyNameArray multiplierStrategyTypeArray = new DarkClusterStrategyNameArray();
+    multiplierStrategyTypeArray.add(DarkClusterStrategyName.RELATIVE_TRAFFIC.RELATIVE_TRAFFIC);
     D2TransportClientProperties transportClientProperties = new D2TransportClientProperties()
       .setRequestTimeout(1000);
     DarkClusterConfig config = new DarkClusterConfig()
@@ -135,7 +135,7 @@ public class DarkClustersConverterTest
     Assert.assertEquals((int)darkClusterConfig.getDispatcherOutboundTargetRate(), 454, "unexpected target rate");
     Assert.assertEquals((int)darkClusterConfig.getDispatcherOutboundMaxRate(), 1234566, "unexpected maxRate");
     Assert.assertEquals(darkClusterConfig.getMultiplierStrategyList().size(), 1, "there should be one strategy");
-    Assert.assertEquals(darkClusterConfig.getMultiplierStrategyList().get(0), multiplierStrategyType.RELATIVE_TRAFFIC,
+    Assert.assertEquals(darkClusterConfig.getMultiplierStrategyList().get(0), DarkClusterStrategyName.RELATIVE_TRAFFIC,
                         "expected RELATIVE_TRAFFIC strategy");
     Assert.assertTrue(darkClusterConfig.hasTransportClientProperties());
     D2TransportClientProperties returnedTransportClientProperties = darkClusterConfig.getTransportClientProperties();
@@ -150,9 +150,9 @@ public class DarkClustersConverterTest
   public void testMultipleStrategies()
   {
     DarkClusterConfigMap configMap = new DarkClusterConfigMap();
-    MultiplierStrategyTypeArray multiplierStrategyTypeArray = new MultiplierStrategyTypeArray();
-    multiplierStrategyTypeArray.add(multiplierStrategyType.RELATIVE_TRAFFIC);
-    multiplierStrategyTypeArray.add(multiplierStrategyType.CONSTANT_QPS);
+    DarkClusterStrategyNameArray multiplierStrategyTypeArray = new DarkClusterStrategyNameArray();
+    multiplierStrategyTypeArray.add(DarkClusterStrategyName.RELATIVE_TRAFFIC);
+    multiplierStrategyTypeArray.add(DarkClusterStrategyName.CONSTANT_QPS);
     DarkClusterConfig config = new DarkClusterConfig()
       .setMultiplierStrategyList(multiplierStrategyTypeArray);
 
@@ -168,9 +168,9 @@ public class DarkClustersConverterTest
     expectedConfigMap.put(DARK_CLUSTER_KEY, expectedConfig);
     DarkClusterConfigMap resultConfigMap = DarkClustersConverter.toConfig(DarkClustersConverter.toProperties(configMap));
     Assert.assertEquals(resultConfigMap, expectedConfigMap);
-    Assert.assertEquals(resultConfigMap.get(DARK_CLUSTER_KEY).getMultiplierStrategyList().get(0), multiplierStrategyType.RELATIVE_TRAFFIC,
+    Assert.assertEquals(resultConfigMap.get(DARK_CLUSTER_KEY).getMultiplierStrategyList().get(0), DarkClusterStrategyName.RELATIVE_TRAFFIC,
                         "expected first strategy to be RELATIVE_TRAFFIC");
-    Assert.assertEquals(resultConfigMap.get(DARK_CLUSTER_KEY).getMultiplierStrategyList().get(1), multiplierStrategyType.CONSTANT_QPS,
+    Assert.assertEquals(resultConfigMap.get(DARK_CLUSTER_KEY).getMultiplierStrategyList().get(1), DarkClusterStrategyName.CONSTANT_QPS,
                         "expected first strategy to be CONSTANT_QPS");
   }
 
@@ -186,11 +186,11 @@ public class DarkClustersConverterTest
     darkClusterMap.put(PropertyKeys.DARK_CLUSTER_MULTIPLIER_STRATEGY_LIST, myStrategyList);
     props.put(DARK_CLUSTER_KEY, darkClusterMap);
     DarkClusterConfigMap configMap = DarkClustersConverter.toConfig(props);
-    MultiplierStrategyTypeArray strategyList = configMap.get(DARK_CLUSTER_KEY).getMultiplierStrategyList();
-    Assert.assertEquals(strategyList.get(0), multiplierStrategyType.RELATIVE_TRAFFIC, "first strategy should be RELATIVE_TRAFFIC");
+    DarkClusterStrategyNameArray strategyList = configMap.get(DARK_CLUSTER_KEY).getMultiplierStrategyList();
+    Assert.assertEquals(strategyList.get(0), DarkClusterStrategyName.RELATIVE_TRAFFIC, "first strategy should be RELATIVE_TRAFFIC");
 
     // the bad strategy BLAH_BLAH gets converted to unknown on access
-    Assert.assertEquals(strategyList.get(1), multiplierStrategyType.$UNKNOWN, "second strategy should be unknown");
+    Assert.assertEquals(strategyList.get(1), DarkClusterStrategyName.$UNKNOWN, "second strategy should be unknown");
   }
 }
 

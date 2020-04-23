@@ -25,7 +25,7 @@ import javax.annotation.Nonnull;
 import com.linkedin.common.util.Notifier;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
-import com.linkedin.d2.MultiplierStrategyTypeArray;
+import com.linkedin.d2.DarkClusterStrategyNameArray;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
@@ -36,9 +36,6 @@ import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.darkcluster.api.DarkClusterStrategyFactory;
 import com.linkedin.darkcluster.api.DarkClusterVerifierManager;
 import com.linkedin.darkcluster.api.NoOpDarkClusterStrategy;
-
-import static com.linkedin.d2.multiplierStrategyType.CONSTANT_QPS;
-import static com.linkedin.d2.multiplierStrategyType.RELATIVE_TRAFFIC;
 
 /**
  * DarkClusterStrategyFactoryImpl creates and maintains the strategies needed for dark clusters. This involves refreshing
@@ -114,8 +111,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   {
     if (darkClusterConfig.hasMultiplierStrategyList())
     {
-      MultiplierStrategyTypeArray strategyList = darkClusterConfig.getMultiplierStrategyList();
-      for (com.linkedin.d2.multiplierStrategyType multiplierStrategyType : strategyList)
+      DarkClusterStrategyNameArray strategyList = darkClusterConfig.getMultiplierStrategyList();
+      for (com.linkedin.d2.DarkClusterStrategyName multiplierStrategyType : strategyList)
       {
         switch(multiplierStrategyType)
         {

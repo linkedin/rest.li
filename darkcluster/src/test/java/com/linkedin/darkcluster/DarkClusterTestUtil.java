@@ -17,8 +17,8 @@
 package com.linkedin.darkcluster;
 
 import com.linkedin.d2.DarkClusterConfig;
-import com.linkedin.d2.MultiplierStrategyTypeArray;
-import com.linkedin.d2.multiplierStrategyType;
+import com.linkedin.d2.DarkClusterStrategyName;
+import com.linkedin.d2.DarkClusterStrategyNameArray;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
 
 /**
@@ -32,10 +32,10 @@ public class DarkClusterTestUtil
    */
   public static DarkClusterConfig createRelativeTrafficMultiplierConfig(float multiplier)
   {
-    MultiplierStrategyTypeArray multiplierStrategyArray = new MultiplierStrategyTypeArray();
-    multiplierStrategyArray.add(multiplierStrategyType.RELATIVE_TRAFFIC);
+    DarkClusterStrategyNameArray darkClusterStrategyArray = new DarkClusterStrategyNameArray();
+    darkClusterStrategyArray.add(DarkClusterStrategyName.RELATIVE_TRAFFIC);
     return new DarkClusterConfig()
-      .setMultiplierStrategyList(multiplierStrategyArray)
+      .setMultiplierStrategyList(darkClusterStrategyArray)
       .setMultiplier(multiplier);
   }
 }

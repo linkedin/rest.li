@@ -21,9 +21,11 @@ record DarkClusterConfig {
   dispatcherOutboundMaxRate: int = 2147483647
 
   /**
-   * Prioritized order of dark cluster multiplier strategies.
+   * Prioritized order of dark cluster multiplier strategies. This is a list to support adding new strategies and having the strategy users
+   * pick it up as they upgrade code versions, versus waiting for all strategy users to upgrade first. This is the same reason
+   * DegraderLoadBalancerStrategyName was replaced by DegraderLoadBalancerStrategyList.
    */
-  multiplierStrategyList: array[multiplierStrategyType] = ["RELATIVE_TRAFFIC"]
+  multiplierStrategyList: array[DarkClusterStrategyName] = ["RELATIVE_TRAFFIC"]
 
   /**
    * The transport client properties to use for this dark cluster
