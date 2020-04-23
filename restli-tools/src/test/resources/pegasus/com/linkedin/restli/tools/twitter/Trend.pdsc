@@ -1,6 +1,0 @@
-{
-  "type" : "record",
-  "name" : "Trend",
-  "namespace" : "com.linkedin.restli.tools.twitter",
-  "fields" : [ ]
-}

@@ -1,7 +1,0 @@
-{
-  "type" : "record",
-  "name" : "Followed",
-  "namespace" : "com.linkedin.restli.tools.twitter",
-  "include" : [ "Status" ],
-  "fields" : [ ]
-}

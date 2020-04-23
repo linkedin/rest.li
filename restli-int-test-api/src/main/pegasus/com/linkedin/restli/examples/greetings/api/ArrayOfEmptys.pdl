@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.examples.greetings.api
+
+/**
+ * The name of this file is intentionally chosen to not follow naming convention and test if generator will correctly process
+ */
+typeref ArrayOfEmptys = array[Empty]

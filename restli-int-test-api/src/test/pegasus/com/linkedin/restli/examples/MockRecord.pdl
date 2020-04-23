@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.examples
+
+/**
+ * A mock record with no contents.
+ */
+record MockRecord {}

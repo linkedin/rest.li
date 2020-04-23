@@ -1,7 +1,0 @@
-{
-  "type": "record",
-  "name": "IndividualBody",
-  "namespace": "com.linkedin.restli.common.multiplexer",
-  "doc": "Represents content that may be in the body of an individual request / response",
-  "fields": []
-}

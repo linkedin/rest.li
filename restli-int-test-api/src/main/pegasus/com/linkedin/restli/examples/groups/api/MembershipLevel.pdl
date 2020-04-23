@@ -1,0 +1,11 @@
+namespace com.linkedin.restli.examples.groups.api
+
+enum MembershipLevel {
+  BLOCKED
+  NON_MEMBER
+  REQUESTING_TO_JOIN
+  MEMBER
+  MODERATOR
+  MANAGER
+  OWNER
+}

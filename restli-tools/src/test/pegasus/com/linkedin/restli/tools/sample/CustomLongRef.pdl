@@ -1,0 +1,4 @@
+namespace com.linkedin.restli.tools.sample
+
+@java.class = "com.linkedin.restli.tools.sample.CustomLong"
+typeref CustomLongRef = long

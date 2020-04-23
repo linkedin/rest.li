@@ -1,0 +1,173 @@
+namespace com.linkedin.d2
+
+/**
+ * Load balancer properties for a particular D2 service
+ */
+record D2LoadBalancerStrategyProperties {
+
+  /**
+   * The step down function's delta size when adjusting the drop rate. Should be between 0.0 - 1.0. Defaults to 0.2.
+   */
+  globalStepDown: optional double
+
+  /**
+   * The step up function's delta size when adjusting the drop rate. Should be between 0.0 - 1.0. Defaults to 0.2.
+   */
+  globalStepUp: optional double
+
+  /**
+   * When a node is completely degraded, this config is used to determine the starting recovery weight for that node. Should be between 0.0 - 1.0. Defaults to 0.01.
+   */
+  initialRecoveryLevel: optional double
+
+  /**
+   * How fast should load balancer ramp up node that has been 100% degraded and is being recovered. This is used with initialRecoveryLevel to recover the traffic of a node. Defaults to 1.0.
+   */
+  ringRampFactor: optional double
+
+  /**
+   * If average ms latency for the entire service is over this number then we consider the service is in a bad state. Defaults to 3000ms.
+   */
+  highWaterMark: optional double
+
+  /**
+   * If average ms latency for the entire service is lower than this number then we consider the service is in a good state. Defaults to 500ms.
+   */
+  lowWaterMark: optional double
+
+  /**
+   * The number of points per weight given for a particular node in a hash ring. Defaults to 100.
+   */
+  pointsPerWeight: optional int
+
+  /**
+   * Interval in ms between each round of load balancer calculation. Defaults to 5000ms.
+   */
+  updateIntervalMs: optional long
+
+  /**
+   * If call count for the cluster for this service is over this number then we can use the statistics to calculate drop rate. Defaults to 10.
+   */
+  minCallCountHighWaterMark: optional long
+
+  /**
+   * If call count for the cluster for this service is below this number then we will not use the statistics to calculate drop rate. Defaults to 5.
+   */
+  minCallCountLowWaterMark: optional long
+
+  /**
+   * What hashing method used to hash incoming request. Used to determine which node should serve the request. Choices are Random, UriRegex
+   */
+  @symbolDocs = {
+    "URI_REGEX" : "Extract a key from URI and use it to hash",
+    "RANDOM" : "The default fall back value"
+  }
+  hashMethod: optional enum hashMethodEnum {
+    RANDOM
+    URI_REGEX
+  }
+
+  /**
+   * Configuration used to supplement the hash method.
+   */
+  hashConfig: optional record hashConfigType {
+
+    /**
+     * List of Regex to match against the URI of incoming request and compute hash value. The hash value is computed based on the contents of the first capture group of the first expression that matches the request URI
+     */
+    uriRegexes: optional array[string]
+
+    /**
+     * Optional config value. if true, fail if no regex matches, otherwise fall back to random.
+     */
+    failOnNoMatch: boolean = false
+
+    /**
+     *  Optional config value. if false, don't warn on falling back to random if the uri doesn't match the regex
+     */
+    warnOnNoMatch: boolean = true
+  }
+
+  /**
+   * Whether to update load balancer strategy state only at each update interval.
+   */
+  updateOnlyAtInterval: boolean = false
+
+  /**
+   * The highest ratio of unused entries over the total entries of the Ring points that d2 maintains.
+   */
+  hashRingPointCleanupRate: optional double
+
+  /**
+   * Consistent hash algorithm the d2 load balancer should use. Defaults to POINT_BASED.
+   */
+  consistentHashAlgorithm: optional enum ConsistentHashAlgorithmEnum {
+
+    /**
+     * Point-based consistent hash ring. The more points the ring has, the more balanced it is.
+     */
+    POINT_BASED
+
+    /**
+     * Multi-probe consistent hash. The more probes to use, the more balanced the ring is.
+     */
+    MULTI_PROBE
+
+    /**
+     * Use points of hosts to build a distribution and make randomized host selection. NOTE: this algorithm DOES NOT support sticky routing
+     */
+    DISTRIBUTION_BASED
+  }
+
+  /**
+   * The number of probes used to look up a key in consistent hash ring. Defaults to 21.
+   */
+  numberOfProbes: optional int
+
+  /**
+   * The number of points on MultiProbe hash ring for each host. Defaults to 1.
+   */
+  numberOfPointsPerHost: optional int
+
+  /**
+   * The balancing factor that enables the bounded-load feature, which is a decorator of consistent hashing algorithms. No single server is allowed to have a load more than this factor times the average load among all servers. A value of -1 disables the feature. Otherwise, it is a factor greater than 1. Defaults to -1.
+   */
+  boundedLoadBalancingFactor: double = -1.0
+
+  quarantineCfg: optional
+    /**
+     * Config info for d2 quarantine feature
+     */
+    record quarantineInfo {
+
+      /**
+       * The percentage of the hosts that can be quarantined at the same time. It is also the switch to turn on Quarantine feature.
+       */
+      quarantineMaxPercent: double
+
+      /**
+       * Config the health checking method for quarantine. Format: <METHOD>:<FULL_PATH>. Default to OPTIONS method.
+       */
+      quarantineMethod: optional string
+
+      /**
+       * The latency threshold (in milliseconds) for health checking response. Responding time longer than this threshold is considered as unhealthy.
+       */
+      quarantineLatency: optional long
+    }
+
+  /**
+   * Regular expression to match the status code indicates a server-side error.
+   */
+  errorStatusRegex: optional string
+
+  /**
+   * Low emitting interval (in ms) for D2Monitor events. Generally used when abnormal events present in D2Monitor that need higher emitting frequency.
+   */
+  lowEmittingInterval: optional int
+
+  /**
+   * High emitting interval (in ms) for D2Monitor events. Used for normal D2Monitor Event emitting.
+   */
+  highEmittingInterval: optional int
+}

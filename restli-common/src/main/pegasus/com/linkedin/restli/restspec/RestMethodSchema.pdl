@@ -1,0 +1,32 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Schema representing a basic REST resource method.
+ */
+record RestMethodSchema includes CustomAnnotationSchema, ServiceErrorsSchema, SuccessStatusesSchema {
+
+  /**
+   * Method type for this rest method
+   */
+  method: string
+
+  /**
+   * Documentation for this rest method
+   */
+  doc: optional string
+
+  /**
+   * list of query parameters for this method
+   */
+  parameters: optional array[ParameterSchema]
+
+  /**
+   * Describes the collection level metadata returned by this method. This is usually set only for GET_ALL method type.
+   */
+  metadata: optional MetadataSchema
+
+  /**
+   * Indicates if this rest method has paging support using the start and count parameters
+   */
+  pagingSupported: optional boolean
+}

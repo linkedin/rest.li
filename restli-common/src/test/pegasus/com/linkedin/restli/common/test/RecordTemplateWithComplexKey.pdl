@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.common.test
+
+record RecordTemplateWithComplexKey {
+  id: MyComplexKey
+  body: string
+}

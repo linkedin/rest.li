@@ -1,0 +1,9 @@
+namespace com.linkedin.restli.examples.groups.api
+
+enum Badge {
+  OFFICIAL
+  SPONSORED
+  FEATURED
+  FOR_GOOD
+  NONE
+}

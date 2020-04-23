@@ -1,0 +1,32 @@
+namespace com.linkedin.restli.common.multiplexer
+
+/**
+ * Individual HTTP request within a multiplexed request. For security reasons, cookies are not allowed to be specified in the IndividualRequest. Instead, it MUST be specified in the top level envelope request.
+ */
+record IndividualRequest {
+
+  /**
+   * HTTP method name
+   */
+  method: string
+
+  /**
+   * HTTP headers specific to the individual request. All common headers should be specified in the top level envelope request. If IndividualRequest headers contain a header that is also specified in the top level envelope request, the header in the IndividualRequest will be used. In additions, for security reasons, headers in IndividualRequest are whitelisted. Only headers within the whitelist can be specified here.
+   */
+  headers: map[string, string] = { }
+
+  /**
+   * Relative URL of the request
+   */
+  relativeUrl: string
+
+  /**
+   * Request body
+   */
+  body: optional IndividualBody
+
+  /**
+   * Requests that should be executed after the current request is processed (sequential ordering). Dependent requests are executed in parallel. Keys of the dependent requests are used to correlate responses with requests. They should be unique within the multiplexed request
+   */
+  dependentRequests: map[string, IndividualRequest] = { }
+}

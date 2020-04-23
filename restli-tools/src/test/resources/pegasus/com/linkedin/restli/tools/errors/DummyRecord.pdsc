@@ -1,6 +1,0 @@
-{
-  "type" : "record",
-  "name" : "DummyRecord",
-  "namespace" : "com.linkedin.restli.tools.errors",
-  "fields" : [ ]
-}

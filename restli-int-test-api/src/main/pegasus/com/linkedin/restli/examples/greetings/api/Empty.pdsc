@@ -1,6 +1,0 @@
-{
-  "type": "record",
-  "name": "Empty",
-  "namespace": "com.linkedin.restli.examples.greetings.api",
-  "fields": []
-}

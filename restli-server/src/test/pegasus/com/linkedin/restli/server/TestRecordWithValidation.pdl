@@ -1,0 +1,7 @@
+namespace com.linkedin.restli.server
+
+record TestRecordWithValidation {
+
+  @validate.`com.linkedin.data.schema.validator.StrlenValidator`.max = 10
+  stringField: string
+}

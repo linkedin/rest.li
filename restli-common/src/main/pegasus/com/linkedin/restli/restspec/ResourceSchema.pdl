@@ -1,0 +1,68 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Schema representing a Rest.li resource.
+ */
+record ResourceSchema includes CustomAnnotationSchema {
+
+  /**
+   * name of the resource
+   */
+  name: string
+
+  /**
+   * namespace of the resource
+   */
+  `namespace`: optional string
+
+  /**
+   * URI template for accessing the resource
+   */
+  path: string
+
+  /**
+   * Java-style fully-qualified class name for record entities of this resource. This is only present when the entity type is STRUCTURED_DATA
+   */
+  schema: optional string
+
+  /**
+   * The type of entity this resource produces. This is not the record schema type, which is specified in the 'schema' field
+   */
+  entityType: enum ResourceEntityType {
+
+    /**
+     * This resource produces structured data that is defined by schema
+     */
+    STRUCTURED_DATA
+
+    /**
+     * This resource produces unstructured data that has no schema
+     */
+    UNSTRUCTURED_DATA
+  } = "STRUCTURED_DATA"
+
+  /**
+   * Documentation for this resource
+   */
+  doc: optional string
+
+  /**
+   * details of collection, if this resource is a collection
+   */
+  collection: optional CollectionSchema
+
+  /**
+   * details of association, if this resource is an association
+   */
+  association: optional AssociationSchema
+
+  /**
+   * details of action set, if this resource is an action set
+   */
+  actionsSet: optional ActionsSetSchema
+
+  /**
+   * details of simple resource, if this resource is a simple resource
+   */
+  simple: optional SimpleSchema
+}

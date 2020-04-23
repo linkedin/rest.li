@@ -1,9 +1,0 @@
-{
-  "type" : "record",
-  "name" : "ComplexArray",
-  "namespace" : "com.linkedin.restli.examples.greetings.api",
-  "fields" : [
-    {"name":"next", "type":"ComplexArray", "optional": true},
-    {"name":"array", "type":{"type":"array", "items":"long"}}
-  ]
-}

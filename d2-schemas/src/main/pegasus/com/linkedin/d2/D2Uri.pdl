@@ -1,0 +1,22 @@
+namespace com.linkedin.d2
+
+/**
+ * A URI resource as represented in D2
+ */
+record D2Uri {
+
+  /**
+   * URI for this machine.
+   */
+  URI: string
+
+  /**
+   * The cluster where this URI belongs.
+   */
+  clusterName: string
+
+  /**
+   * partitionId key to weight
+   */
+  partitionDescription: map[string, double]
+}

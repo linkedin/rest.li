@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.test
+
+record RecordTemplateWithDefaultValue {
+  id: long
+  message: string = "message"
+}

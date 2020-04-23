@@ -1,8 +1,0 @@
-{
-  "type": "record",
-  "name": "TwoPartKey",
-  "namespace": "com.linkedin.restli.examples.greetings.api",
-  "fields": [ {"name": "major", "type": "string"},
-              {"name": "minor", "type": "string"}
-            ]
-}

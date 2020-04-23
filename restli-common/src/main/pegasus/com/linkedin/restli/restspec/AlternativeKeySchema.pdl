@@ -1,0 +1,24 @@
+namespace com.linkedin.restli.restspec
+
+record AlternativeKeySchema {
+
+  /**
+   * Name of the alternative key
+   */
+  name: string
+
+  /**
+   * Documentation for the alternative key
+   */
+  doc: optional string
+
+  /**
+   * the avro type of the alternative key
+   */
+  type: string
+
+  /**
+   * the keyCoercer class for this alternative key
+   */
+  keyCoercer: string
+}

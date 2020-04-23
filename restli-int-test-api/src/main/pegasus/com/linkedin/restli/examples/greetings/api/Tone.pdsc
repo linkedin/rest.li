@@ -1,6 +1,0 @@
-{
-  "type" : "enum",
-  "name" : "Tone",
-  "namespace" : "com.linkedin.restli.examples.greetings.api",
-  "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
-}

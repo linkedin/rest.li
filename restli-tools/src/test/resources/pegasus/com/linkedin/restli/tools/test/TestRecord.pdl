@@ -1,0 +1,9 @@
+namespace com.linkedin.restli.tools.test
+
+/**
+ * A greeting
+ */
+record TestRecord {
+  id: long
+  message: string
+}

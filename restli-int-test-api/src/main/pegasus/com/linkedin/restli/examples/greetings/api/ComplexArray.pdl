@@ -1,0 +1,7 @@
+namespace com.linkedin.restli.examples.greetings.api
+
+record ComplexArray {
+  next: optional ComplexArray
+
+  `array`: array[long]
+}

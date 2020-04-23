@@ -1,0 +1,144 @@
+namespace com.linkedin.d2
+
+/**
+ * The properties that is applied when creating transport client to talk to this particular D2 service
+ */
+record D2TransportClientProperties {
+
+  /**
+   * The minimum size of GET requests parameters before we start converting it to POST request.
+   */
+  queryPostThreshold: optional int
+
+  /**
+   * Timeout in ms for this transport client. Defaults to 10s.
+   */
+  requestTimeout: optional long
+
+  /**
+   * Streaming Timeout in ms for this transport client. Disabled by default (-1)
+   */
+  streamingTimeout: optional long
+
+  /**
+   * Max payload that this transport client can carry in bytes. Defaults to 2MB.
+   */
+  maxResponseSize: optional long
+
+  /**
+   * Maximum size, in bytes, of all headers for a single HTTP request/response. Defaults to 8KB.
+   */
+  maxHeaderSize: optional int
+
+  /**
+   * Maximum chunk size, in bytes, of HTTP chunked encoding. Defaults to 8KB.
+   */
+  maxChunkSize: optional int
+
+  /**
+   * Maximum size of the underlying HTTP connection pool. Defaults to 200.
+   */
+  poolSize: optional int
+
+  /**
+   * Maximum waiters waiting on the HTTP connection pool.
+   */
+  poolWaiterSize: optional int
+
+  /**
+   * Custom prefix of the name of the pool stats.
+   */
+  poolStatsNamePrefix: optional string
+
+  /**
+   * Flag to enable/disable Nagle's algorithm. Defaults to true
+   */
+  tcpNoDelay: boolean = true
+
+  /**
+   * The strategy HTTP connection pool uses to select connections. Defaults to MRU.
+   */
+  poolStrategy: optional enum poolStrategyType {
+
+    /**
+     * Select most recently used connection
+     */
+    MRU
+
+    /**
+     * Select least recently used connection
+     */
+    LRU
+  }
+
+  /**
+   * Minimum size of the HTTP connection pool
+   */
+  minPoolSize: optional int
+
+  /**
+   * Maximum connection requests this transport client can send to an endpoint concurrently.
+   */
+  maxConcurrentConnections: optional int
+
+  /**
+   * interval after which idle connections will be automatically closed. Defaults to 25s.
+   */
+  idleTimeout: optional long
+
+  /**
+   * interval after which idle SSL connections will be automatically closed. Defaults to 2h 55m.
+   */
+  sslIdleTimeout: optional long
+
+  /**
+   * timeout, in ms, the client should wait after shutdown is initiated before terminating outstanding requests. Defaults to 5s
+   */
+  shutdownTimeout: optional long
+
+  /**
+   * timeout, in ms, the client should wait for exiting http2 streams before shutting down the connection. Defaults to 30s
+   */
+  gracefulShutdownTimeout: long = 30000
+
+  /**
+   * operations where compression should be used
+   */
+  responseCompressionOperations: optional array[string]
+
+  /**
+   * preferred content encodings for responses, used to construct Accept-Encoding header
+   */
+  responseContentEncodings: optional array[string]
+
+  /**
+   * supported content encodings for requests
+   */
+  requestContentEncodings: optional array[string]
+
+  /**
+   * whether to enable response compression or not
+   */
+  useResponseCompression: boolean = false
+
+  /**
+   * a list of keys in D2TransportClientProperties which client can override
+   */
+  allowedClientOverrideKeys: array[string] = [ ]
+
+  /**
+   * service desired transport client protocol version e.g. HTTP/1.1, HTTP/2
+   */
+  protocolVersion: optional enum HttpProtocolVersionType {
+
+    /**
+     * HTTP/1.1
+     */
+    HTTP_1_1
+
+    /**
+     * HTTP/2
+     */
+    HTTP_2
+  }
+}

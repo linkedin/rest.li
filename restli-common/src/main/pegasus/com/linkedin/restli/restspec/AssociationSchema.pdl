@@ -1,0 +1,52 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Schema representing an association resource.
+ */
+record AssociationSchema includes ServiceErrorsSchema {
+
+  /**
+   * name of the identifier (key) for this collection
+   */
+  identifier: optional string
+
+  /**
+   * list of association keys for this association
+   */
+  assocKeys: array[AssocKeySchema]
+
+  /**
+   * alternative keys
+   */
+  alternativeKeys: optional array[AlternativeKeySchema]
+
+  /**
+   * list of rest.li methods supported by this association, e.g., get, update, delete, batch_get
+   */
+  supports: array[string]
+
+  /**
+   * details on rest methods supported by this association
+   */
+  methods: optional array[RestMethodSchema]
+
+  /**
+   * list of finders supported by this association
+   */
+  finders: optional array[FinderSchema]
+
+  /**
+   * list of batch finders supported by this association
+   */
+  batchFinders: optional array[BatchFinderSchema]
+
+  /**
+   * list of actions supported by this association
+   */
+  actions: optional array[ActionSchema]
+
+  /**
+   * details on the entities contained in this association
+   */
+  entity: EntitySchema
+}

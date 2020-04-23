@@ -1,0 +1,7 @@
+namespace com.linkedin.restli.examples.`typeref`.api
+
+@java = {
+  "coercerClass" : "com.linkedin.restli.examples.custom.types.DateCoercer",
+  "class" : "java.util.Date"
+}
+typeref DateRef = long

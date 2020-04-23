@@ -1,6 +1,0 @@
-{
-  "type" : "typeref",
-  "name" : "BytesRef",
-  "namespace" : "com.linkedin.restli.examples.typeref.api",
-  "ref" : "bytes"
-}

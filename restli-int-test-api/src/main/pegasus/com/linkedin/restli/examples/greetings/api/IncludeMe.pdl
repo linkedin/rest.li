@@ -1,0 +1,11 @@
+namespace com.linkedin.restli.examples.greetings.api
+
+record IncludeMe {
+
+  @validate.strlen = {
+    "max" : 10,
+    "min" : 1
+  }
+  includedA: optional string
+  includedB: optional string
+}

@@ -1,0 +1,12 @@
+namespace com.linkedin.restli.server.errors
+
+/**
+ * Describes input validation failures in a client request.
+ */
+record MockBadRequest {
+
+  /**
+   * Describes input validation failures.
+   */
+  inputErrors: array[MockInputError] = [ ]
+}

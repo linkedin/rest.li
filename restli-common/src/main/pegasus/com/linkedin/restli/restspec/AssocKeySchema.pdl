@@ -1,0 +1,14 @@
+namespace com.linkedin.restli.restspec
+
+record AssocKeySchema {
+
+  /**
+   * name of association key
+   */
+  name: string
+
+  /**
+   * avro type of association key
+   */
+  type: string
+}

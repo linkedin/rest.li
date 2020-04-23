@@ -1,7 +1,0 @@
-{
-  "type" : "record",
-  "name" : "MockRecord",
-  "namespace" : "com.linkedin.restli.examples",
-  "doc" : "A mock record with no contents.",
-  "fields" : [ ]
-}

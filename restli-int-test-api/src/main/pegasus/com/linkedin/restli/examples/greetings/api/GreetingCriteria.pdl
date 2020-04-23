@@ -1,0 +1,17 @@
+namespace com.linkedin.restli.examples.greetings.api
+
+/**
+ * A search criteria to filter greetings.
+ */
+record GreetingCriteria {
+
+  /**
+   * Greeting ID to filter on
+   */
+  id: long
+
+  /**
+   * Greeting tone to filter on
+   */
+  tone: Tone
+}

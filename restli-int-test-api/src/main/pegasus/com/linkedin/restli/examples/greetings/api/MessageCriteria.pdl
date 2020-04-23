@@ -1,0 +1,13 @@
+namespace com.linkedin.restli.examples.greetings.api
+
+/**
+ * A search criteria to filter messages.
+ */
+record MessageCriteria {
+  message: string
+
+  /**
+   * Message tone to filter on
+   */
+  tone: Tone
+}

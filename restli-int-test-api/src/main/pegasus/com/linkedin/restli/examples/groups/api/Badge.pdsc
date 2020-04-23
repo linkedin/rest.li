@@ -1,6 +1,0 @@
-{
-  "type" : "enum",
-  "name" : "Badge",
-  "namespace" : "com.linkedin.restli.examples.groups.api",
-  "symbols" : [ "OFFICIAL", "SPONSORED", "FEATURED", "FOR_GOOD", "NONE" ]
-}

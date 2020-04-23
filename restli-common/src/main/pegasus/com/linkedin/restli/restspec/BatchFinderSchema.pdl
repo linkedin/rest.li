@@ -1,0 +1,12 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Schema representing a batch finder resource method.
+ */
+record BatchFinderSchema includes FinderSchema {
+
+  /**
+   * Indicates the parameter name that contains the criteria list
+   */
+  batchParam: string
+}

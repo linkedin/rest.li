@@ -1,0 +1,44 @@
+namespace com.linkedin.restli.examples.groups.api
+
+/**
+ * A contact associated with this group. Managers upload contact to manage pre-approval/blacklists + invite members
+ */
+record GroupContact {
+
+  /**
+   * Surrogate ID for this contact. This field is read-only.
+   */
+  contactID: int
+
+  /**
+   * The group that owns this contact
+   */
+  groupID: int
+
+  /**
+   * The member associated with this contact record (null if this is a contact is not a LinkedIn member)
+   */
+  memberID: optional int
+
+  /**
+   * Contact's first name
+   */
+  firstName: string
+
+  /**
+   * Contact's last name
+   */
+  lastName: string
+
+  /**
+   * True if this contact is pre-approved to join the group
+   */
+  isPreapproved: boolean
+
+  /**
+   * True if this contact has been invited
+   */
+  isInvited: boolean
+  createdAt: long
+  updatedAt: long
+}
