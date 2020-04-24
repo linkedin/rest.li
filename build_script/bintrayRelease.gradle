@@ -108,16 +108,18 @@ publishing {
     release(MavenPublication) {
       from components.java
 
-      // Add all extra archives (sources, javadoc, any custom archives e.g. all)
-      project.configurations.archives.allArtifacts.forEach {
-        if (it.classifier) {
-          artifact it
+      afterEvaluate {
+        // Add all extra archives (sources, javadoc, any custom archives e.g. all)
+        project.configurations.archives.allArtifacts.forEach {
+          if (it.classifier) {
+            artifact it
+          }
         }
-      }
-      // Add test artifacts for sub-projects that explicitly make them visible
-      if (project.configurations.testArtifacts.visible) {
-        project.configurations.testArtifacts.allArtifacts.forEach {
-          artifact it
+        // Add test artifacts for sub-projects that explicitly make them visible
+        if (project.configurations.testArtifacts.visible) {
+          project.configurations.testArtifacts.allArtifacts.forEach {
+            artifact it
+          }
         }
       }
 
