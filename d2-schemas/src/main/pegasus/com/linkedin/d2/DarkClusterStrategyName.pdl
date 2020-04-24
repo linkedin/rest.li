@@ -3,6 +3,8 @@ namespace com.linkedin.d2
 /**
  * There are 2 types of strategy: RELATIVE_TRAFFIC, CONSTANT_QPS. These can be specified in prioritized order and
  * will be picked in that order depending on availability.
+ * A strategy may not be available when a new strategy is introduced but the client has not upgraded to a code version
+ * that supports that strategy.
  */
 enum DarkClusterStrategyName {
 

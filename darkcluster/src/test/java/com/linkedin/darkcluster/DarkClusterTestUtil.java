@@ -35,7 +35,7 @@ public class DarkClusterTestUtil
     DarkClusterStrategyNameArray darkClusterStrategyArray = new DarkClusterStrategyNameArray();
     darkClusterStrategyArray.add(DarkClusterStrategyName.RELATIVE_TRAFFIC);
     return new DarkClusterConfig()
-      .setMultiplierStrategyList(darkClusterStrategyArray)
+      .setDarkClusterStrategyPrioritizedList(darkClusterStrategyArray)
       .setMultiplier(multiplier);
   }
 }

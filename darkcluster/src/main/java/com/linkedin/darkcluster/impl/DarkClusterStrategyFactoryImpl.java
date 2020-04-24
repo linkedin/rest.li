@@ -109,34 +109,31 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
    */
   private DarkClusterStrategy createStrategy(String darkClusterName, DarkClusterConfig darkClusterConfig)
   {
-    if (darkClusterConfig.hasMultiplierStrategyList())
+    if (darkClusterConfig.hasDarkClusterStrategyPrioritizedList())
     {
-      DarkClusterStrategyNameArray strategyList = darkClusterConfig.getMultiplierStrategyList();
-      for (com.linkedin.d2.DarkClusterStrategyName multiplierStrategyType : strategyList)
+      DarkClusterStrategyNameArray strategyList = darkClusterConfig.getDarkClusterStrategyPrioritizedList();
+      for (com.linkedin.d2.DarkClusterStrategyName darkClusterStrategyName : strategyList)
       {
-        switch(multiplierStrategyType)
+        switch(darkClusterStrategyName)
         {
           case RELATIVE_TRAFFIC:
-            if (darkClusterConfig.getMultiplier() <= 0)
+            if (RelativeTrafficMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig))
             {
-              // it is a valid case to set RELATIVE_TRAFFIC but set the multiplier to zero to
-              // temporarily set the traffic to zero; don't log anything.
-              return new NoOpDarkClusterStrategy();
+              BaseDarkClusterDispatcher baseDarkClusterDispatcher =
+                new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
+              return new RelativeTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
+                                                                      baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(),
+                                                                      _random);
             }
-            BaseDarkClusterDispatcher baseDarkClusterDispatcher =
-              new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
-            return new RelativeTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
-                                                                    baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(),
-                                                                    _random);
+            break;
           case CONSTANT_QPS:
             // the constant qps strategy is not yet implemented, continue to the next strategy if it exists
             break;
           default:
-            return new NoOpDarkClusterStrategy();
+            break;
         }
       }
     }
-    // Reaching here means that the user has not specified a strategy. return the NoOp Strategy.
     return new NoOpDarkClusterStrategy();
   }
 

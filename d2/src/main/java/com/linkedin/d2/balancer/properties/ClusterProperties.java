@@ -27,6 +27,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * ClusterProperties is the serialized cluster object that is stored in zookeeper.
+ *
+ * Most likely you want POJO's here, and not include pegasus generated objects, because
+ * certain objects, like transportClientProperties, are serialized differently than
+ * how Jackson would serialize the object (for instance, using different key names), and
+ * that will cause problems in serialization/deserialization. This is the reason _darkClusters
+ * is a Map<String, Object> and not DarkClusterConfigMap. For simple objects that won't ever be
+ * expanded it may be ok to reuse the pegasus objects.
+ */
 public class ClusterProperties
 {
   public static final float DARK_CLUSTER_DEFAULT_MULTIPLIER = 0.0f;

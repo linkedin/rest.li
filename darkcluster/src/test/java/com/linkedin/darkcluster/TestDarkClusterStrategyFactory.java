@@ -201,7 +201,7 @@ public class TestDarkClusterStrategyFactory
     DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0.5f);
     DarkClusterStrategyNameArray darkClusterStrategyList = new DarkClusterStrategyNameArray();
     darkClusterStrategyList.addAll(Arrays.asList(CONSTANT_QPS, RELATIVE_TRAFFIC));
-    darkClusterConfig1.setMultiplierStrategyList(darkClusterStrategyList);
+    darkClusterConfig1.setDarkClusterStrategyPrioritizedList(darkClusterStrategyList);
 
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
@@ -218,7 +218,7 @@ public class TestDarkClusterStrategyFactory
     DarkClusterStrategyNameArray darkClusterStrategyList = new DarkClusterStrategyNameArray();
     // Only ConstantQPS strategy is present, with no alternative.
     darkClusterStrategyList.addAll(Collections.singletonList(CONSTANT_QPS));
-    darkClusterConfig1.setMultiplierStrategyList(darkClusterStrategyList);
+    darkClusterConfig1.setDarkClusterStrategyPrioritizedList(darkClusterStrategyList);
 
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
@@ -233,7 +233,7 @@ public class TestDarkClusterStrategyFactory
     DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0f);
     DarkClusterStrategyNameArray darkClusterStrategyList = new DarkClusterStrategyNameArray();
     darkClusterStrategyList.addAll(Collections.singletonList(RELATIVE_TRAFFIC));
-    darkClusterConfig1.setMultiplierStrategyList(darkClusterStrategyList);
+    darkClusterConfig1.setDarkClusterStrategyPrioritizedList(darkClusterStrategyList);
 
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);

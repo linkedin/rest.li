@@ -103,7 +103,7 @@ public class DarkClustersConverterTest
     Assert.assertEquals(resultConfig.getMultiplier(), DARK_CLUSTER_DEFAULT_MULTIPLIER);
     Assert.assertEquals((int)resultConfig.getDispatcherOutboundTargetRate(), DARK_CLUSTER_DEFAULT_TARGET_RATE);
     Assert.assertEquals((int)resultConfig.getDispatcherOutboundMaxRate(), DARK_CLUSTER_DEFAULT_MAX_RATE);
-    Assert.assertEquals(resultConfig.getMultiplierStrategyList().size(), 1, "default strategy list should be size 1");
+    Assert.assertEquals(resultConfig.getDarkClusterStrategyPrioritizedList().size(), 1, "default strategy list should be size 1");
     Assert.assertFalse(resultConfig.hasTransportClientProperties(), "default shouldn't have transportProperties");
   }
 
@@ -118,7 +118,7 @@ public class DarkClustersConverterTest
     DarkClusterConfig config = new DarkClusterConfig()
         .setDispatcherOutboundTargetRate(454)
         .setDispatcherOutboundMaxRate(1234566)
-        .setMultiplierStrategyList(multiplierStrategyTypeArray)
+        .setDarkClusterStrategyPrioritizedList(multiplierStrategyTypeArray)
         .setTransportClientProperties(transportClientProperties);
 
     configMap.put(DARK_CLUSTER_KEY, config);
@@ -131,11 +131,11 @@ public class DarkClustersConverterTest
     Assert.assertEquals(resultConfigMap, expectedConfigMap);
     // verify values are converted properly.
     DarkClusterConfig darkClusterConfig = resultConfigMap.get(DARK_CLUSTER_KEY);
-    Assert.assertEquals(darkClusterConfig.getMultiplier(),0.0f, "unexpected multiplier");
+    Assert.assertEquals(darkClusterConfig.getMultiplier(),DARK_CLUSTER_DEFAULT_MULTIPLIER, "unexpected multiplier");
     Assert.assertEquals((int)darkClusterConfig.getDispatcherOutboundTargetRate(), 454, "unexpected target rate");
     Assert.assertEquals((int)darkClusterConfig.getDispatcherOutboundMaxRate(), 1234566, "unexpected maxRate");
-    Assert.assertEquals(darkClusterConfig.getMultiplierStrategyList().size(), 1, "there should be one strategy");
-    Assert.assertEquals(darkClusterConfig.getMultiplierStrategyList().get(0), DarkClusterStrategyName.RELATIVE_TRAFFIC,
+    Assert.assertEquals(darkClusterConfig.getDarkClusterStrategyPrioritizedList().size(), 1, "there should be one strategy");
+    Assert.assertEquals(darkClusterConfig.getDarkClusterStrategyPrioritizedList().get(0), DarkClusterStrategyName.RELATIVE_TRAFFIC,
                         "expected RELATIVE_TRAFFIC strategy");
     Assert.assertTrue(darkClusterConfig.hasTransportClientProperties());
     D2TransportClientProperties returnedTransportClientProperties = darkClusterConfig.getTransportClientProperties();
@@ -150,27 +150,27 @@ public class DarkClustersConverterTest
   public void testMultipleStrategies()
   {
     DarkClusterConfigMap configMap = new DarkClusterConfigMap();
-    DarkClusterStrategyNameArray multiplierStrategyTypeArray = new DarkClusterStrategyNameArray();
-    multiplierStrategyTypeArray.add(DarkClusterStrategyName.RELATIVE_TRAFFIC);
-    multiplierStrategyTypeArray.add(DarkClusterStrategyName.CONSTANT_QPS);
+    DarkClusterStrategyNameArray darkClusterStrategyNameArray = new DarkClusterStrategyNameArray();
+    darkClusterStrategyNameArray.add(DarkClusterStrategyName.RELATIVE_TRAFFIC);
+    darkClusterStrategyNameArray.add(DarkClusterStrategyName.CONSTANT_QPS);
     DarkClusterConfig config = new DarkClusterConfig()
-      .setMultiplierStrategyList(multiplierStrategyTypeArray);
+      .setDarkClusterStrategyPrioritizedList(darkClusterStrategyNameArray);
 
     configMap.put(DARK_CLUSTER_KEY, config);
 
     // these are defaults that will be set if the fields are missing.
-    config.setMultiplier(0.0f);
-    config.setDispatcherOutboundTargetRate(0);
-    config.setDispatcherOutboundMaxRate(Integer.MAX_VALUE);
+    config.setMultiplier(DARK_CLUSTER_DEFAULT_MULTIPLIER);
+    config.setDispatcherOutboundTargetRate(DARK_CLUSTER_DEFAULT_TARGET_RATE);
+    config.setDispatcherOutboundMaxRate(DARK_CLUSTER_DEFAULT_MAX_RATE);
     DarkClusterConfigMap expectedConfigMap = new DarkClusterConfigMap();
     DarkClusterConfig expectedConfig = new DarkClusterConfig(config.data());
     expectedConfig.setMultiplier(0);
     expectedConfigMap.put(DARK_CLUSTER_KEY, expectedConfig);
     DarkClusterConfigMap resultConfigMap = DarkClustersConverter.toConfig(DarkClustersConverter.toProperties(configMap));
     Assert.assertEquals(resultConfigMap, expectedConfigMap);
-    Assert.assertEquals(resultConfigMap.get(DARK_CLUSTER_KEY).getMultiplierStrategyList().get(0), DarkClusterStrategyName.RELATIVE_TRAFFIC,
+    Assert.assertEquals(resultConfigMap.get(DARK_CLUSTER_KEY).getDarkClusterStrategyPrioritizedList().get(0), DarkClusterStrategyName.RELATIVE_TRAFFIC,
                         "expected first strategy to be RELATIVE_TRAFFIC");
-    Assert.assertEquals(resultConfigMap.get(DARK_CLUSTER_KEY).getMultiplierStrategyList().get(1), DarkClusterStrategyName.CONSTANT_QPS,
+    Assert.assertEquals(resultConfigMap.get(DARK_CLUSTER_KEY).getDarkClusterStrategyPrioritizedList().get(1), DarkClusterStrategyName.CONSTANT_QPS,
                         "expected first strategy to be CONSTANT_QPS");
   }
 
@@ -183,10 +183,10 @@ public class DarkClustersConverterTest
     myStrategyList.add("BLAH_BLAH");
 
     Map<String, Object> darkClusterMap = new HashMap<>();
-    darkClusterMap.put(PropertyKeys.DARK_CLUSTER_MULTIPLIER_STRATEGY_LIST, myStrategyList);
+    darkClusterMap.put(PropertyKeys.DARK_CLUSTER_STRATEGY_LIST, myStrategyList);
     props.put(DARK_CLUSTER_KEY, darkClusterMap);
     DarkClusterConfigMap configMap = DarkClustersConverter.toConfig(props);
-    DarkClusterStrategyNameArray strategyList = configMap.get(DARK_CLUSTER_KEY).getMultiplierStrategyList();
+    DarkClusterStrategyNameArray strategyList = configMap.get(DARK_CLUSTER_KEY).getDarkClusterStrategyPrioritizedList();
     Assert.assertEquals(strategyList.get(0), DarkClusterStrategyName.RELATIVE_TRAFFIC, "first strategy should be RELATIVE_TRAFFIC");
 
     // the bad strategy BLAH_BLAH gets converted to unknown on access

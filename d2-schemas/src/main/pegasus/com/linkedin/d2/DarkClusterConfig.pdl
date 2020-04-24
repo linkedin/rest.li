@@ -25,7 +25,7 @@ record DarkClusterConfig {
    * pick it up as they upgrade code versions, versus waiting for all strategy users to upgrade first. This is the same reason
    * DegraderLoadBalancerStrategyName was replaced by DegraderLoadBalancerStrategyList.
    */
-  multiplierStrategyList: array[DarkClusterStrategyName] = ["RELATIVE_TRAFFIC"]
+  DarkClusterStrategyPrioritizedList: array[DarkClusterStrategyName] = ["RELATIVE_TRAFFIC"]
 
   /**
    * The transport client properties to use for this dark cluster

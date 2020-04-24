@@ -21,6 +21,7 @@ import java.util.Random;
 import javax.annotation.Nonnull;
 
 import com.linkedin.common.util.Notifier;
+import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
@@ -67,6 +68,11 @@ public class RelativeTrafficMultiplierDarkClusterStrategy implements DarkCluster
   {
     int numRequestDuplicates = getNumDuplicateRequests();
     return _baseDarkClusterDispatcher.sendRequest(originalRequest, darkRequest, requestContext, numRequestDuplicates);
+  }
+
+  public static boolean isValidConfig(DarkClusterConfig darkClusterConfig)
+  {
+    return darkClusterConfig.hasMultiplier() && darkClusterConfig.getMultiplier() > 0;
   }
 
   /**

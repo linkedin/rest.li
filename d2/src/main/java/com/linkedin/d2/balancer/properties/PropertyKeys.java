@@ -179,7 +179,7 @@ public class PropertyKeys
   public static final String DARK_CLUSTER_MULTIPLIER = "multiplier";
   public static final String DARK_CLUSTER_OUTBOUND_TARGET_RATE = "dispatcherOutboundTargetRate";
   public static final String DARK_CLUSTER_OUTBOUND_MAX_RATE = "dispatcherOutboundMaxRate";
-  public static final String DARK_CLUSTER_MULTIPLIER_STRATEGY_LIST = "multiplierStrategyList";
+  public static final String DARK_CLUSTER_STRATEGY_LIST = "darkClusterStrategyList";
   public static final String DARK_CLUSTER_TRANSPORT_CLIENT_PROPERTIES = "transportClientProperties";
 
   // used by ClusterInfoProvider
