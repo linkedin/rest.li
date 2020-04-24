@@ -16,12 +16,14 @@
 
 package com.linkedin.d2.balancer.servers;
 
-import com.linkedin.d2.discovery.stores.zk.ZookeeperEphemeralPrefixGenerator;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZookeeperChildFilter;
+import com.linkedin.d2.discovery.stores.zk.ZookeeperEphemeralPrefixGenerator;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * ChildPrefixFilter helps to filter the children in {@link ZooKeeperEphemeralStore}
@@ -42,28 +44,11 @@ public class ZookeeperPrefixChildFilter implements ZookeeperChildFilter
   @Override
   public List<String> filter(List<String> children)
   {
-    List<String> filteredChildren = new ArrayList<>();
-    for (String child : children)
-    {
+    return children.stream().filter(child -> {
       int separatorIndex = child.lastIndexOf('-');
-      if (separatorIndex < 0)
-      {
-        filteredChildren.add(child);
-        continue;
-      }
-
-      String childPrefix = child.substring(0, separatorIndex);
+      String childPrefix = separatorIndex > 0 ? child.substring(0, separatorIndex) : child;
       String ephemeralStorePrefix = _prefixGenerator.generatePrefix();
-      if (childPrefix.equals(ephemeralStorePrefix))
-      {
-        filteredChildren.add(child);
-      }
-      else if (childPrefix.equals(ZooKeeperEphemeralStore.DEFAULT_PREFIX)) // TODO: cleanup this else after everyone migrated to new prefix
-      {
-        filteredChildren.add(child);
-      }
-    }
-
-    return filteredChildren;
+      return StringUtils.isEmpty(ephemeralStorePrefix) || childPrefix.equals(ephemeralStorePrefix) || childPrefix.equals(ZooKeeperEphemeralStore.DEFAULT_PREFIX);
+    }).collect(Collectors.toList());
   }
 }

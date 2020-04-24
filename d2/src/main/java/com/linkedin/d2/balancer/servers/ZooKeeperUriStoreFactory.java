@@ -20,6 +20,11 @@ public class ZooKeeperUriStoreFactory implements ZooKeeperConnectionManager.ZKSt
   private ZookeeperEphemeralPrefixGenerator _prefixGenerator;
   private boolean _useHashEphemeralPrefix;
 
+  public ZooKeeperUriStoreFactory()
+  {
+    this(null, null, false);
+  }
+
   public ZooKeeperUriStoreFactory(ZookeeperChildFilter childFilter, ZookeeperEphemeralPrefixGenerator prefixGenerator, boolean useHashEphemeralPrefix)
   {
 

@@ -26,29 +26,27 @@ import com.linkedin.d2.discovery.stores.zk.ZookeeperEphemeralPrefixGenerator;
  * @author Nizar Mankulangara (nmankulangara@linkedin.com)
  */
 
-public class AnnouncerUriHashPrefixGenerator implements ZookeeperEphemeralPrefixGenerator
+public class AnnouncerHostPrefixGenerator implements ZookeeperEphemeralPrefixGenerator
 {
-  private final ZooKeeperAnnouncer _announcer;
+  private final String _hostName;
 
-  public AnnouncerUriHashPrefixGenerator(ZooKeeperAnnouncer Announcer)
+  public AnnouncerHostPrefixGenerator(String hostName)
   {
-    _announcer = Announcer;
+    if (hostName == null)
+    {
+      _hostName = null;
+    }
+    else
+    {
+      // Since just want to use the machine name for pre-fix and not the entire FQDN to reduce the size of name
+      int machineNameEndIndex = hostName.indexOf('.');
+      _hostName = machineNameEndIndex > 0 ? hostName.substring(0, machineNameEndIndex) : hostName;
+    }
   }
 
   @Override
   public String generatePrefix()
   {
-    return getAnnouncedUriHashCode();
-  }
-
-  public String getAnnouncedUriHashCode()
-  {
-    if (_announcer == null || _announcer.getUri() == null)
-    {
-      return ZooKeeperEphemeralStore.DEFAULT_PREFIX;
-    }
-
-    int hashCode = Math.abs(_announcer.getUri().hashCode());
-    return Integer.toString(hashCode);
+    return _hostName;
   }
 }

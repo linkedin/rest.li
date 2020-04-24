@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -219,7 +220,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       @Override
       public void onSuccess(None none)
       {
-        final String ephemeralPath = path + "/" + _prefixGenerator.generatePrefix() + "-";
+        String ephemeralPrefix = _prefixGenerator.generatePrefix();
+        if (StringUtils.isEmpty(ephemeralPrefix))
+        {
+          ephemeralPrefix = DEFAULT_PREFIX;
+        }
+        final String ephemeralPath = path + "/" + ephemeralPrefix + "-";
 
         AsyncCallback.StringCallback stringCallback = new AsyncCallback.StringCallback()
         {

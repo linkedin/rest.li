@@ -30,9 +30,8 @@ import java.util.concurrent.TimeoutException;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.servers.AnnouncerHostPrefixGenerator;
 import com.linkedin.d2.balancer.servers.ZookeeperPrefixChildFilter;
-import com.linkedin.d2.balancer.servers.AnnouncerUriHashPrefixGenerator;
-import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
 import com.linkedin.d2.discovery.stores.PropertySetStringMerger;
 import com.linkedin.d2.discovery.stores.PropertySetStringSerializer;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
@@ -137,7 +136,8 @@ public class ZooKeeperEphemeralStoreWithFiltersTest
 
     if (expectedPrefixDuplicates > 1) // // expectedPrefixDuplicates = childrenNames.size() when shared prefixGenerator is used
     {
-      final ZooKeeperEphemeralStore<Set<String>> store = getStore(client, new ZookeeperPrefixChildFilter(prefixGenerators.get(0)), prefixGenerators.get(0));
+      final ZooKeeperEphemeralStore<Set<String>> store =
+        getStore(client, new ZookeeperPrefixChildFilter(prefixGenerators.get(0)), prefixGenerators.get(0));
       stores.add(store);
 
       // Read the data from store using get with the shared prefixGenerator
@@ -178,9 +178,7 @@ public class ZooKeeperEphemeralStoreWithFiltersTest
       int numChildren = ThreadLocalRandom.current().nextInt(25) + 1;
       List<String> children = new ArrayList<>();
       List<ZookeeperEphemeralPrefixGenerator> prefixGenerators = new ArrayList<>();
-      ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(null, false);
-      announcer.setUri("http://testuri:1234/context/");
-      AnnouncerUriHashPrefixGenerator generator = new AnnouncerUriHashPrefixGenerator(announcer);
+      AnnouncerHostPrefixGenerator generator = new AnnouncerHostPrefixGenerator("test-machine.subdomain1.subdomain2.com");
       for (int j = 0; j < numChildren; j++)
       {
         children.add("Child" + i + j + 1);
@@ -203,9 +201,8 @@ public class ZooKeeperEphemeralStoreWithFiltersTest
       {
         String childName = "Child" + i + j + 1;
         children.add(childName);
-        ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(null, false);
-        announcer.setUri("http://" + childName);
-        prefixGenerators.add(new AnnouncerUriHashPrefixGenerator(announcer));
+        String fqdn = "test-machine" + i + j+ ".subdomain1.subdomain2.com";
+        prefixGenerators.add(new AnnouncerHostPrefixGenerator(fqdn));
       }
 
       data[i][0] = "D2Test2Cluster" + i;
