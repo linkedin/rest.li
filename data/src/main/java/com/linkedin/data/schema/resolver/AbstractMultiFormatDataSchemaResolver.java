@@ -56,8 +56,8 @@ public abstract class AbstractMultiFormatDataSchemaResolver implements DataSchem
   public static List<DataSchemaParserFactory> BUILTIN_FORMAT_PARSER_FACTORIES;
   static {
     BUILTIN_FORMAT_PARSER_FACTORIES = new ArrayList<>(2);
-    BUILTIN_FORMAT_PARSER_FACTORIES.add(SchemaParserFactory.instance());
     BUILTIN_FORMAT_PARSER_FACTORIES.add(PdlSchemaParserFactory.instance());
+    BUILTIN_FORMAT_PARSER_FACTORIES.add(SchemaParserFactory.instance());
   }
 
   /**
