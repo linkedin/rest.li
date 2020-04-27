@@ -187,8 +187,8 @@ public abstract class AbstractDataElement implements DataElement
       }
       index--;
       DataSchema parentDataSchema = element.getParent().getSchema();
-      if (parentDataSchema != null && (parentDataSchema.getType() == DataSchema.Type.MAP ||
-                                       parentDataSchema.getType() == DataSchema.Type.ARRAY))
+      if (parentDataSchema != null && (parentDataSchema.getDereferencedType() == DataSchema.Type.MAP ||
+                                       parentDataSchema.getDereferencedType() == DataSchema.Type.ARRAY))
       {
         pathSpec[index] = PathSpec.WILDCARD;
       }
