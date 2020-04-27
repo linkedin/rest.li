@@ -44,6 +44,11 @@ public class ZookeeperPrefixChildFilter implements ZookeeperChildFilter
   @Override
   public List<String> filter(List<String> children)
   {
+    if (children == null)
+    {
+      return null;
+    }
+
     return children.stream().filter(child -> {
       int separatorIndex = child.lastIndexOf('-');
       String childPrefix = separatorIndex > 0 ? child.substring(0, separatorIndex) : child;
