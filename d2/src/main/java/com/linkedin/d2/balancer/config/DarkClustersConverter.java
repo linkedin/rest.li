@@ -61,16 +61,6 @@ public class DarkClustersConverter
           prop.put(PropertyKeys.DARK_CLUSTER_MULTIPLIER, darkClusterConfig.getMultiplier().toString());
         }
 
-//        if (darkClusterConfig.hasDispatcherOutboundMaxRate())
-//        {
-//          prop.put(PropertyKeys.DARK_CLUSTER_OUTBOUND_MAX_RATE, darkClusterConfig.getDispatcherOutboundMaxRate().toString());
-//        }
-//
-//        if (darkClusterConfig.hasDispatcherOutboundTargetRate())
-//        {
-//          prop.put(PropertyKeys.DARK_CLUSTER_OUTBOUND_TARGET_RATE, darkClusterConfig.getDispatcherOutboundTargetRate().toString());
-//        }
-
         if (darkClusterConfig.hasDarkClusterStrategyPrioritizedList())
         {
           DarkClusterStrategyNameArray myArray = darkClusterConfig.getDarkClusterStrategyPrioritizedList();
@@ -111,26 +101,6 @@ public class DarkClustersConverter
         // to maintain backwards compatibility with previously ser/de, set the default on deserialization
         darkClusterConfig.setMultiplier(DARK_CLUSTER_DEFAULT_MULTIPLIER);
       }
-//
-//      if (props.containsKey(PropertyKeys.DARK_CLUSTER_OUTBOUND_MAX_RATE))
-//      {
-//        darkClusterConfig.setDispatcherOutboundMaxRate(PropertyUtil.coerce(props.get(PropertyKeys.DARK_CLUSTER_OUTBOUND_MAX_RATE), Integer.class));
-//      }
-//      else
-//      {
-//        // to maintain backwards compatibility with previously ser/de, set the default on deserialization
-//        darkClusterConfig.setDispatcherOutboundMaxRate(DARK_CLUSTER_DEFAULT_MAX_RATE);
-//      }
-//
-//      if (props.containsKey(PropertyKeys.DARK_CLUSTER_OUTBOUND_TARGET_RATE))
-//      {
-//        darkClusterConfig.setDispatcherOutboundTargetRate(PropertyUtil.coerce(props.get(PropertyKeys.DARK_CLUSTER_OUTBOUND_TARGET_RATE), Integer.class));
-//      }
-//      else
-//      {
-//        // to maintain backwards compatibility with previously ser/de, set the default on deserialization
-//        darkClusterConfig.setDispatcherOutboundTargetRate(DARK_CLUSTER_DEFAULT_TARGET_RATE);
-//      }
 
       if (props.containsKey(PropertyKeys.DARK_CLUSTER_STRATEGY_LIST))
       {
@@ -141,8 +111,8 @@ public class DarkClustersConverter
 
         DarkClusterStrategyNameArray darkClusterStrategyNameArray = new DarkClusterStrategyNameArray(dataList);
         darkClusterConfig.setDarkClusterStrategyPrioritizedList(darkClusterStrategyNameArray);
-
       }
+
       if (props.containsKey(PropertyKeys.DARK_CLUSTER_TRANSPORT_CLIENT_PROPERTIES))
       {
         @SuppressWarnings("unchecked")
