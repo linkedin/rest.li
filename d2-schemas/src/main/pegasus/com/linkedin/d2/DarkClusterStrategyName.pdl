@@ -1,0 +1,22 @@
+namespace com.linkedin.d2
+
+/**
+ * There are 2 types of strategy: RELATIVE_TRAFFIC, CONSTANT_QPS. These can be specified in prioritized order and
+ * will be picked in that order depending on availability.
+ * A strategy may not be available when a new strategy is introduced but the client has not upgraded to a code version
+ * that supports that strategy.
+ */
+enum DarkClusterStrategyName {
+
+  /**
+   * This strategy aims to maintain a proportional amount of incoming QPS at the host level between the source and dark clusters.
+   * Configured with "multiplier". For example a multiplier of 1 would mean the average incoming QPS for a source host equals that
+   * of a dark host. A multiplier of 2 means on average a dark host will receive 2x more traffic than a source host.
+   */
+  RELATIVE_TRAFFIC
+
+  /**
+   * This strategy will try to maintain a certain queries per second to the entire dark cluster. Configured with "dispatcherOutboundTargetRate".
+   */
+  CONSTANT_QPS
+}

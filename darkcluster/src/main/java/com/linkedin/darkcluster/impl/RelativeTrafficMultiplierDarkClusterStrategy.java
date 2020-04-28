@@ -21,6 +21,7 @@ import java.util.Random;
 import javax.annotation.Nonnull;
 
 import com.linkedin.common.util.Notifier;
+import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
@@ -67,6 +68,21 @@ public class RelativeTrafficMultiplierDarkClusterStrategy implements DarkCluster
   {
     int numRequestDuplicates = getNumDuplicateRequests();
     return _baseDarkClusterDispatcher.sendRequest(originalRequest, darkRequest, requestContext, numRequestDuplicates);
+  }
+
+  /**
+   * We won't create this strategy if this config isn't valid for this strategy. For instance, we don't want to create
+   * the RelativeTrafficMultiplierDarkClusterStrategy if there's no multiplier or if the multiplier is zero, because we'd
+   * be doing pointless work on every getOrCreate. Instead if will go to the next strategy (or NoOpDarkClusterStrategy).
+   *
+   * This is a static method defined here because we don't want to instantiate a strategy to check this. It cannot be a
+   * method that is on the interface because static methods on an interface cannot be overridden by implementations.
+   * @param darkClusterConfig
+   * @return
+   */
+  public static boolean isValidConfig(DarkClusterConfig darkClusterConfig)
+  {
+    return darkClusterConfig.hasMultiplier() && darkClusterConfig.getMultiplier() > 0;
   }
 
   /**

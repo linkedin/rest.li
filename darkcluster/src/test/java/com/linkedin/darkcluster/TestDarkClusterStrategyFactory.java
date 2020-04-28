@@ -17,6 +17,8 @@
 package com.linkedin.darkcluster;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -24,6 +26,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.linkedin.d2.DarkClusterConfig;
+import com.linkedin.d2.DarkClusterStrategyNameArray;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
@@ -37,6 +40,8 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 
+import static com.linkedin.d2.DarkClusterStrategyName.CONSTANT_QPS;
+import static com.linkedin.d2.DarkClusterStrategyName.RELATIVE_TRAFFIC;
 import static com.linkedin.darkcluster.DarkClusterTestUtil.createRelativeTrafficMultiplierConfig;
 import static org.testng.Assert.fail;
 import org.testng.Assert;
@@ -58,11 +63,11 @@ public class TestDarkClusterStrategyFactory
     Facilities facilities = new MockFacilities(_clusterInfoProvider);
     DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcher(new MockClient(false));
     _strategyFactory = new DarkClusterStrategyFactoryImpl(facilities,
-                                                                                    SOURCE_CLUSTER_NAME,
-                                                                                    darkClusterDispatcher,
-                                                                                    new DoNothingNotifier(),
-                                                                                    new Random(SEED),
-                                                                                    new CountingVerifierManager());
+                                                          SOURCE_CLUSTER_NAME,
+                                                          darkClusterDispatcher,
+                                                          new DoNothingNotifier(),
+                                                          new Random(SEED),
+                                                          new CountingVerifierManager());
     _strategyFactory.start();
   }
   @Test
@@ -188,6 +193,54 @@ public class TestDarkClusterStrategyFactory
     {
       scheduledExecutorService.shutdown();
     }
+  }
+
+  @Test
+  public void testStrategyFallThru()
+  {
+    DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0.5f);
+    DarkClusterStrategyNameArray darkClusterStrategyList = new DarkClusterStrategyNameArray();
+    darkClusterStrategyList.addAll(Arrays.asList(CONSTANT_QPS, RELATIVE_TRAFFIC));
+    darkClusterConfig1.setDarkClusterStrategyPrioritizedList(darkClusterStrategyList);
+
+    _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
+    DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
+
+    // test that we didn't find a strategy corresponding to Constant QPS and fell through to Relative traffic
+    Assert.assertTrue(strategy instanceof RelativeTrafficMultiplierDarkClusterStrategy);
+    Assert.assertEquals(((RelativeTrafficMultiplierDarkClusterStrategy)strategy).getMultiplier(), 0.5f, "expected 0.5f multiplier");
+  }
+
+  @Test
+  public void testStrategyFallThruWithNoFallback()
+  {
+    DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0.5f);
+    DarkClusterStrategyNameArray darkClusterStrategyList = new DarkClusterStrategyNameArray();
+    // Only ConstantQPS strategy is present, with no alternative.
+    darkClusterStrategyList.addAll(Collections.singletonList(CONSTANT_QPS));
+    darkClusterConfig1.setDarkClusterStrategyPrioritizedList(darkClusterStrategyList);
+
+    _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
+    DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
+
+    // test that we didn't find a strategy corresponding to Constant QPS and fell through. It will end up with the NoOpStrategy.
+    Assert.assertTrue(strategy instanceof NoOpDarkClusterStrategy);
+  }
+
+  @Test
+  public void testStrategyZeroMultiplier()
+  {
+    DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0f);
+    DarkClusterStrategyNameArray darkClusterStrategyList = new DarkClusterStrategyNameArray();
+    darkClusterStrategyList.addAll(Collections.singletonList(RELATIVE_TRAFFIC));
+    darkClusterConfig1.setDarkClusterStrategyPrioritizedList(darkClusterStrategyList);
+
+    _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
+    DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
+
+    // test that we choose a NoOpDarkClusterStrategy because we want to allow RelativeTrafficMultiplierStrategy with a zero muliplier to be
+    // a NoOp. This allows clients to easily turn off traffic without adjusting multiple values.
+    Assert.assertTrue(strategy instanceof NoOpDarkClusterStrategy);
   }
 
   private static class DeletingClusterListener implements LoadBalancerClusterListener

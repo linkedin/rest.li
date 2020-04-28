@@ -911,7 +911,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       ClusterProperties clusterProperties = _state.getClusterProperties(clusterName).getProperty();
       DarkClusterConfigMap darkClusterConfigMap = clusterProperties != null ?
-        clusterProperties.getDarkClusters() : new DarkClusterConfigMap();
+        clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
       darkClusterConfigMapFutureCallback.onSuccess(darkClusterConfigMap);
     });
 

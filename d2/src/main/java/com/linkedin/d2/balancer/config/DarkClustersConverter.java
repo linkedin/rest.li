@@ -16,17 +16,22 @@
 
 package com.linkedin.d2.balancer.config;
 
+import com.linkedin.d2.D2TransportClientProperties;
+import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
-import com.linkedin.d2.balancer.util.JacksonUtil;
-import com.linkedin.data.codec.JacksonDataCodec;
-import com.linkedin.data.schema.validation.CoercionMode;
-import com.linkedin.data.schema.validation.RequiredMode;
-import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
-import com.linkedin.data.schema.validation.ValidationOptions;
-import java.io.IOException;
+import com.linkedin.d2.DarkClusterStrategyName;
+import com.linkedin.d2.DarkClusterStrategyNameArray;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.properties.util.PropertyUtil;
+import com.linkedin.data.DataList;
+
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static com.linkedin.d2.balancer.properties.ClusterProperties.DARK_CLUSTER_DEFAULT_MULTIPLIER;
 
 /**
  * This class converts {@link DarkClusterConfigMap} into a Map
@@ -36,10 +41,6 @@ import java.util.Map;
  */
 public class DarkClustersConverter
 {
-  private static final JacksonDataCodec CODEC = new JacksonDataCodec();
-  private static final ValidationOptions VALIDATION_OPTIONS =
-      new ValidationOptions(RequiredMode.FIXUP_ABSENT_WITH_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE);
-
   @SuppressWarnings("unchecked")
   public static Map<String, Object> toProperties(DarkClusterConfigMap config)
   {
@@ -49,36 +50,78 @@ public class DarkClustersConverter
     }
     else
     {
-      try
+      Map<String, Object> darkProps = new HashMap<>();
+      for (Map.Entry<String,DarkClusterConfig> entry : config.entrySet())
       {
-        String json = CODEC.mapToString(config.data());
-        return JacksonUtil.getObjectMapper().readValue(json, Map.class);
+        String darkClusterName = entry.getKey();
+        DarkClusterConfig darkClusterConfig = entry.getValue();
+        Map<String, Object> prop = new HashMap<>();
+        if (darkClusterConfig.hasMultiplier())
+        {
+          prop.put(PropertyKeys.DARK_CLUSTER_MULTIPLIER, darkClusterConfig.getMultiplier().toString());
+        }
+
+        if (darkClusterConfig.hasDarkClusterStrategyPrioritizedList())
+        {
+          DarkClusterStrategyNameArray strategyNameArray = darkClusterConfig.getDarkClusterStrategyPrioritizedList();
+          List<String> strategyList = new ArrayList<>();
+          for (DarkClusterStrategyName type : strategyNameArray)
+          {
+            strategyList.add(type.toString());
+          }
+          prop.put(PropertyKeys.DARK_CLUSTER_STRATEGY_LIST, strategyList);
+        }
+
+        if (darkClusterConfig.hasTransportClientProperties())
+        {
+          prop.put(PropertyKeys.DARK_CLUSTER_TRANSPORT_CLIENT_PROPERTIES,
+                   TransportClientPropertiesConverter.toProperties(darkClusterConfig.getTransportClientProperties()));
+        }
+        darkProps.put(darkClusterName, prop);
       }
-      catch (IOException e)
-      {
-        throw new RuntimeException(e);
-      }
+      return darkProps;
     }
   }
 
   public static DarkClusterConfigMap toConfig(Map<String, Object> properties)
   {
-    try
+    DarkClusterConfigMap configMap = new DarkClusterConfigMap();
+    for (Map.Entry<String, Object> entry : properties.entrySet())
     {
-      if (properties == null)
+      String darkClusterName = entry.getKey();
+      DarkClusterConfig darkClusterConfig = new DarkClusterConfig();
+      @SuppressWarnings("unchecked")
+      Map<String, Object> props = (Map<String, Object>) entry.getValue();
+      if (props.containsKey(PropertyKeys.DARK_CLUSTER_MULTIPLIER))
       {
-        return new DarkClusterConfigMap();
+        darkClusterConfig.setMultiplier(PropertyUtil.coerce(props.get(PropertyKeys.DARK_CLUSTER_MULTIPLIER), Float.class));
       }
-      String json = JacksonUtil.getObjectMapper().writeValueAsString(properties);
-      DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap(CODEC.stringToMap(json));
-      //fixes are applied in place
-      ValidateDataAgainstSchema.validate(darkClusterConfigMap, VALIDATION_OPTIONS);
+      else
+      {
+        // to maintain backwards compatibility with previously ser/de, set the default on deserialization
+        darkClusterConfig.setMultiplier(DARK_CLUSTER_DEFAULT_MULTIPLIER);
+      }
 
-      return darkClusterConfigMap;
+      if (props.containsKey(PropertyKeys.DARK_CLUSTER_STRATEGY_LIST))
+      {
+        DataList dataList = new DataList();
+        @SuppressWarnings("unchecked")
+        List<String> strategyList = (List<String>)props.get(PropertyKeys.DARK_CLUSTER_STRATEGY_LIST);
+        dataList.addAll(strategyList);
+
+        DarkClusterStrategyNameArray darkClusterStrategyNameArray = new DarkClusterStrategyNameArray(dataList);
+        darkClusterConfig.setDarkClusterStrategyPrioritizedList(darkClusterStrategyNameArray);
+      }
+
+      if (props.containsKey(PropertyKeys.DARK_CLUSTER_TRANSPORT_CLIENT_PROPERTIES))
+      {
+        @SuppressWarnings("unchecked")
+        D2TransportClientProperties transportClientProperties = TransportClientPropertiesConverter.toConfig(
+          (Map<String, Object>)props.get(PropertyKeys.DARK_CLUSTER_TRANSPORT_CLIENT_PROPERTIES));
+        darkClusterConfig.setTransportClientProperties(transportClientProperties);
+      }
+      configMap.put(darkClusterName, darkClusterConfig);
     }
-    catch (IOException e)
-    {
-      throw new RuntimeException(e);
-    }
+    return configMap;
   }
 }

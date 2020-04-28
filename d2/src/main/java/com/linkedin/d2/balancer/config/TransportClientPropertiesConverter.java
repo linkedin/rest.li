@@ -35,6 +35,11 @@ import static com.linkedin.d2.balancer.properties.util.PropertyUtil.coerce;
 /**
  * This class converts {@link D2TransportClientProperties} into a map from String to Object
  * that can be stored in zookeeper and vice versa.
+ *
+ * Note that this Converter uses different key names than the field names (e.g. http.queryPostThreshold instead of queryPostThreshold),
+ * so all serialization should go through toProperties first, and deserialization should go through toConfig afterwards
+ * to properly convert to and from the pegasus objects.
+ *
  * @author Ang Xu
  */
 public class TransportClientPropertiesConverter
