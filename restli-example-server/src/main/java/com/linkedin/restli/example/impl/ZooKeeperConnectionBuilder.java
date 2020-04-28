@@ -17,11 +17,10 @@
 package com.linkedin.restli.example.impl;
 
 
-import com.linkedin.d2.balancer.servers.ZKUriStoreFactory;
 import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
 import com.linkedin.d2.balancer.servers.ZooKeeperConnectionManager;
 import com.linkedin.d2.balancer.servers.ZooKeeperServer;
-
+import com.linkedin.d2.balancer.servers.ZooKeeperUriStoreFactory;
 
 /**
  * @author Keren Jin
@@ -71,7 +70,7 @@ public class ZooKeeperConnectionBuilder
     return new ZooKeeperConnectionManager(_zkHostname + ":" + _zkPort,
                                           _sessionTimeoutInMs,
                                           _basePath,
-                                          new ZKUriStoreFactory(),
+                                          new ZooKeeperUriStoreFactory(),
                                           _announcer);
   }
 

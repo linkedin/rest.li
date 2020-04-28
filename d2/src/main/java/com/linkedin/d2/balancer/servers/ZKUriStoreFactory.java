@@ -29,8 +29,11 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 /**
  * @author Steven Ihde
  * @version $Revision: $
+ *
+ * @deprecated Use {@link ZooKeeperUriStoreFactory} instead.
  */
 
+@Deprecated
 public class ZKUriStoreFactory implements ZooKeeperConnectionManager.ZKStoreFactory<UriProperties,ZooKeeperEphemeralStore<UriProperties>>
 {
 
