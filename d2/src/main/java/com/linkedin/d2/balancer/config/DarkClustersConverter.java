@@ -63,9 +63,9 @@ public class DarkClustersConverter
 
         if (darkClusterConfig.hasDarkClusterStrategyPrioritizedList())
         {
-          DarkClusterStrategyNameArray myArray = darkClusterConfig.getDarkClusterStrategyPrioritizedList();
+          DarkClusterStrategyNameArray strategyNameArray = darkClusterConfig.getDarkClusterStrategyPrioritizedList();
           List<String> strategyList = new ArrayList<>();
-          for (DarkClusterStrategyName type : myArray)
+          for (DarkClusterStrategyName type : strategyNameArray)
           {
             strategyList.add(type.toString());
           }
