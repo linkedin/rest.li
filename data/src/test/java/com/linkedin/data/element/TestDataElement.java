@@ -24,7 +24,9 @@ import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.EnumDataSchema;
+import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.StringDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import java.io.IOException;
@@ -58,9 +60,11 @@ public class TestDataElement
       "    { \"name\" : \"int\", \"type\" : \"int\", \"optional\" : true }," +
       "    { \"name\" : \"string\", \"type\" : \"string\", \"optional\" : true }," +
       "    { \"name\" : \"array\", \"type\" : { \"type\" : \"array\", \"items\" : \"Foo\" }, \"optional\" : true }," +
+      "    { \"name\" : \"mapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"optional\" : true }," +
       "    { \"name\" : \"enumField\", \"type\" : {\"name\":\"namedEnum\", \"type\":\"enum\", \"symbols\": [ \"SYMBOL1\", \"SYMBOL2\", \"SYMBOL3\" ] }, \"optional\" : true }," +
       "    { \"name\" : \"unionField\", \"type\" : [ \"int\", \"string\" ], \"optional\" : true }," +
       "    { \"name\" : \"typeRefField\", \"type\" : {\"name\":\"namedTypeRef\", \"type\": \"typeref\", \"ref\": \"int\"}, \"optional\" : true }," +
+      "    { \"name\" : \"typeRefFieldToMap\", \"type\" : { \"type\" : \"typeref\", \"name\" : \"namedTypeRefToMap\", \"ref\" : { \"type\" : \"map\", \"values\" : \"string\" } }, \"optional\" : true}," +
       "    { \"name\" : \"unionWithAliasesField\", \"type\" : [" +
       "        {" +
       "          \"type\" : \"string\"," +
@@ -75,7 +79,7 @@ public class TestDataElement
       "        }" +
       "     ], \"optional\" : true }" +
       "  ]" +
-      "}";
+      "}" ;
 
   public static interface DataElementFactory
   {
@@ -119,25 +123,33 @@ public class TestDataElement
     ArrayDataSchema arraySchema = (ArrayDataSchema) fooSchema.getField("array").getType();
 
     String fooText =
-        " { " +
-        "   \"int\" : 34, " +
-        "   \"string\" : \"abc\", " +
-        "   \"array\" : [ " +
-        "     { \"int\" : 56 }, " +
-        "     { \"string\" : \"xyz\" }, " +
-        "     { \"array\" : [ " +
-        "       { \"int\" : 78 } " +
-        "     ] } " +
-        "   ], " +
-        "   \"enumField\": \"SYMBOL1\", " +
-        "   \"unionField\": { " +
-        "       \"string\":\"unionString\" " +
-        "   }, " +
-        "   \"typeRefField\": \"42\", " +
-        "   \"unionWithAliasesField\" : { " +
-        "       \"stringFieldInUnionWithAliases\" : \"stringInUnionWithAlias\" " +
-        "   } " +
-        " } ";
+        " {" +
+        "   \"int\" : 34," +
+        "   \"string\" : \"abc\"," +
+        "   \"array\" : [" +
+        "     { \"int\" : 56 }," +
+        "     { \"string\" : \"xyz\" }," +
+        "     { \"array\" : [" +
+        "       { \"int\" : 78 }" +
+        "     ] }" +
+        "   ]," +
+        "   \"enumField\": \"SYMBOL1\"," +
+        "   \"unionField\": {" +
+        "       \"string\":\"unionString\"" +
+        "   }," +
+        "   \"mapField\": {" +
+        "    \"key1\":\"value1\"," +
+        "    \"key2\":\"value2\"" +
+        "   }," +
+        "   \"typeRefField\": \"42\"," +
+        "   \"typeRefFieldToMap\": {" +
+        "    \"key1\":\"value1\"," +
+        "    \"key2\":\"value2\"" +
+        "   }," +
+        "   \"unionWithAliasesField\" : {" +
+        "       \"stringFieldInUnionWithAliases\" : \"stringInUnionWithAlias\"" +
+        "   }" +
+        " }" ;
 
 
     DataMap foo = TestUtil.dataMapFromString(fooText);
@@ -146,6 +158,11 @@ public class TestDataElement
     DataElement int1 = factory.create(foo.get("int"), "int", fooSchema.getField("int").getType(), root);
     DataElement string1 = factory.create(foo.get("string"), "string", fooSchema.getField("string").getType(), root);
     DataElement array1 = factory.create(foo.get("array"), "array", fooSchema.getField("array").getType(), root);
+
+    MapDataSchema mapDataSchema = (MapDataSchema) fooSchema.getField("mapField").getType();
+    StringDataSchema stringDataSchema = (StringDataSchema) mapDataSchema.getValues();
+    DataElement mapFieldElement = factory.create(foo.get("mapField"), "mapField", mapDataSchema, root);
+    DataElement mapValueInMapField = factory.create(mapFieldElement.getChild("key1"), "key1", stringDataSchema, mapFieldElement);
 
     EnumDataSchema enumDataSchema = (EnumDataSchema) fooSchema.getField("enumField").getType();
     DataElement enumField = factory.create(foo.get("enumField"), "enumField", enumDataSchema, root);
@@ -156,6 +173,10 @@ public class TestDataElement
 
     TyperefDataSchema typerefDataSchema = (TyperefDataSchema) fooSchema.getField("typeRefField").getType();
     DataElement typeRefField = factory.create(foo.get("typeRefField"), "typeRefField", typerefDataSchema, root);
+
+    TyperefDataSchema typeRefToMapDataSchema = (TyperefDataSchema) fooSchema.getField("typeRefFieldToMap").getType();
+    DataElement typeRefToMapField = factory.create(foo.get("typeRefFieldToMap"), "typeRefFieldToMap", typeRefToMapDataSchema, root);
+    DataElement mapValueInTypeReffedMapField = factory.create(typeRefToMapField.getChild("key1"), "key1", stringDataSchema, typeRefToMapField);
 
     DataElement unionWithAliasesField = factory.create(foo.get("unionWithAliasesField"), "unionWithAliasesField", fooSchema.getField("unionWithAliasesField").getType(), root);
     UnionDataSchema unionWithAliasesSchema = (UnionDataSchema) fooSchema.getField("unionWithAliasesField").getType();
@@ -207,6 +228,27 @@ public class TestDataElement
           arraySchema,
           new Object[] { "array" },
           "/array"
+        },
+        {
+            mapFieldElement,
+            foo.get("mapField"),
+            mapDataSchema,
+            new Object[] { "mapField" },
+            "/mapField"
+        },
+        {
+            mapValueInMapField,
+            ((DataMap)foo.get("mapField")).get("key1"),
+            stringDataSchema,
+            new Object[] { "mapField", "key1" },
+            "/mapField/*"
+        },
+        {
+            mapValueInTypeReffedMapField,
+            ((DataMap)foo.get("typeRefFieldToMap")).get("key1"),
+            stringDataSchema,
+            new Object[] { "typeRefFieldToMap", "key1" },
+            "/typeRefFieldToMap/*"
         },
         {
             enumField,
