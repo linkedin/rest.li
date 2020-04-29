@@ -46,23 +46,13 @@ public class DarkClustersConverterTest
   public Object[][] provideKeys()
   {
     return new Object[][] {
-        new Object[] {true, new DarkClusterConfig().setMultiplier(0.5f).setDispatcherOutboundTargetRate(0).setDispatcherOutboundMaxRate(1234566)},
+        new Object[] {true, new DarkClusterConfig().setMultiplier(0.5f)},
         // multiplier is default, the default will be filled in
-        new Object[] {false, new DarkClusterConfig().setDispatcherOutboundTargetRate(456).setDispatcherOutboundMaxRate(1234566)},
-        // dynamic multiplier defaults, the default will be filled in
-        new Object[] {false, new DarkClusterConfig().setMultiplier(0.5f)},
+        new Object[] {false, new DarkClusterConfig()},
         // test zeros
-        new Object[] {true, new DarkClusterConfig().setMultiplier(0.0f).setDispatcherOutboundTargetRate(0).setDispatcherOutboundMaxRate(0)},
+        new Object[] {true, new DarkClusterConfig().setMultiplier(0.0f)},
         // negative multiplier not allowed
-        new Object[] {false, new DarkClusterConfig().setMultiplier(-1.0f).setDispatcherOutboundTargetRate(0).setDispatcherOutboundMaxRate(1234566)},
-        // negative target rate not allowed
-        new Object[] {false, new DarkClusterConfig().setMultiplier(0.0f).setDispatcherOutboundTargetRate(-1).setDispatcherOutboundMaxRate(1234566)},
-        // negative max rate not allowed
-        new Object[] {false, new DarkClusterConfig().setMultiplier(1.0f).setDispatcherOutboundTargetRate(0).setDispatcherOutboundMaxRate(-1)},
-        // maxRate should not be greater than OutboundTargetRate, multiplier is set.
-        new Object[] {false, new DarkClusterConfig().setMultiplier(1.0f).setDispatcherOutboundTargetRate(500).setDispatcherOutboundMaxRate(400)},
-        // maxRate should not be greater than OutboundTargetRate
-        new Object[] {false, new DarkClusterConfig().setMultiplier(0.0f).setDispatcherOutboundTargetRate(500).setDispatcherOutboundMaxRate(400)}
+        new Object[] {false, new DarkClusterConfig().setMultiplier(-1.0f)}
     };
   }
 
@@ -116,8 +106,6 @@ public class DarkClustersConverterTest
     D2TransportClientProperties transportClientProperties = new D2TransportClientProperties()
       .setRequestTimeout(1000);
     DarkClusterConfig config = new DarkClusterConfig()
-        .setDispatcherOutboundTargetRate(454)
-        .setDispatcherOutboundMaxRate(1234566)
         .setDarkClusterStrategyPrioritizedList(multiplierStrategyTypeArray)
         .setTransportClientProperties(transportClientProperties);
 
@@ -132,8 +120,6 @@ public class DarkClustersConverterTest
     // verify values are converted properly.
     DarkClusterConfig darkClusterConfig = resultConfigMap.get(DARK_CLUSTER_KEY);
     Assert.assertEquals(darkClusterConfig.getMultiplier(),DARK_CLUSTER_DEFAULT_MULTIPLIER, "unexpected multiplier");
-    Assert.assertEquals((int)darkClusterConfig.getDispatcherOutboundTargetRate(), 454, "unexpected target rate");
-    Assert.assertEquals((int)darkClusterConfig.getDispatcherOutboundMaxRate(), 1234566, "unexpected maxRate");
     Assert.assertEquals(darkClusterConfig.getDarkClusterStrategyPrioritizedList().size(), 1, "there should be one strategy");
     Assert.assertEquals(darkClusterConfig.getDarkClusterStrategyPrioritizedList().get(0), DarkClusterStrategyName.RELATIVE_TRAFFIC,
                         "expected RELATIVE_TRAFFIC strategy");
@@ -160,8 +146,6 @@ public class DarkClustersConverterTest
 
     // these are defaults that will be set if the fields are missing.
     config.setMultiplier(DARK_CLUSTER_DEFAULT_MULTIPLIER);
-    config.setDispatcherOutboundTargetRate(DARK_CLUSTER_DEFAULT_TARGET_RATE);
-    config.setDispatcherOutboundMaxRate(DARK_CLUSTER_DEFAULT_MAX_RATE);
     DarkClusterConfigMap expectedConfigMap = new DarkClusterConfigMap();
     DarkClusterConfig expectedConfig = new DarkClusterConfig(config.data());
     expectedConfig.setMultiplier(0);
