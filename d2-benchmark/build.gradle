@@ -10,7 +10,7 @@ jmh {
 
 
 dependencies {
-  testCompile project(':d2').sourceSets.test.output
+  testCompile project(path: ':d2', configuration: 'testArtifacts')
   jmh project(':d2')
   jmh externalDependency.jmhCore
   jmh externalDependency.jmhAnnotations
