@@ -19,4 +19,16 @@ record DarkClusterConfig {
    * Max rate dispatcher can send to dark canary. Measured in qps. Will act as upper bound to protect canaries in case of traffic spikes
    */
   dispatcherOutboundMaxRate: int = 2147483647
+
+  /**
+   * Prioritized order of dark cluster multiplier strategies. This is a list to support adding new strategies and having the strategy users
+   * pick it up as they upgrade code versions, versus waiting for all strategy users to upgrade first. This is the same reason
+   * DegraderLoadBalancerStrategyName was replaced by DegraderLoadBalancerStrategyList.
+   */
+  DarkClusterStrategyPrioritizedList: array[DarkClusterStrategyName] = ["RELATIVE_TRAFFIC"]
+
+  /**
+   * The transport client properties to use for this dark cluster
+   */
+  transportClientProperties: D2TransportClientProperties = {}
 }

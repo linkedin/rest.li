@@ -32,10 +32,10 @@ import com.linkedin.d2.balancer.properties.ServicePropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.properties.UriPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
-import com.linkedin.d2.balancer.servers.ZKUriStoreFactory;
 import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
 import com.linkedin.d2.balancer.servers.ZooKeeperConnectionManager;
 import com.linkedin.d2.balancer.servers.ZooKeeperServer;
+import com.linkedin.d2.balancer.servers.ZooKeeperUriStoreFactory;
 import com.linkedin.d2.balancer.util.HostSet;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
@@ -191,7 +191,7 @@ public class SharedZkConnectionProviderTest {
       partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(0.5d));
       announcer.setPartitionData(partitionWeight);
 
-      ZooKeeperConnectionManager.ZKStoreFactory<UriProperties,ZooKeeperEphemeralStore<UriProperties>> factory = new ZKUriStoreFactory();
+      ZooKeeperConnectionManager.ZKStoreFactory<UriProperties,ZooKeeperEphemeralStore<UriProperties>> factory = new ZooKeeperUriStoreFactory();
       ZKConnectionBuilder connectionBuilder = new ZKConnectionBuilder("localhost:" + ZK_PORT);
       connectionBuilder.setTimeout(ZK_TIMEOUT);
       ZKPersistentConnection connection = _provider.getZKPersistentConnection(connectionBuilder);

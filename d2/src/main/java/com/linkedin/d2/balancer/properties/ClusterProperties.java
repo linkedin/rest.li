@@ -17,13 +17,26 @@
 package com.linkedin.d2.balancer.properties;
 
 import com.linkedin.d2.DarkClusterConfigMap;
+import com.linkedin.d2.balancer.config.DarkClustersConverter;
+
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * ClusterProperties is the serialized cluster object that is stored in zookeeper.
+ *
+ * Most likely you want POJO's here, and not include pegasus generated objects, because
+ * certain objects, like transportClientProperties, are serialized differently than
+ * how Jackson would serialize the object (for instance, using different key names), and
+ * that will cause problems in serialization/deserialization. This is the reason _darkClusters
+ * is a Map<String, Object> and not DarkClusterConfigMap. For simple objects that won't ever be
+ * expanded it may be ok to reuse the pegasus objects.
+ */
 public class ClusterProperties
 {
   public static final float DARK_CLUSTER_DEFAULT_MULTIPLIER = 0.0f;
@@ -38,7 +51,7 @@ public class ClusterProperties
   private final Set<URI> _bannedUris;
   @Deprecated
   private final List<String>          _prioritizedSchemes;
-  private final DarkClusterConfigMap _darkClusters;
+  private final Map<String, Object> _darkClusters;
   private final boolean              _delegated;
 
   public ClusterProperties(String clusterName)
@@ -83,9 +96,13 @@ public class ClusterProperties
       List<String> sslSessionValidationStrings)
   {
     this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
-        null);
+         (Map<String, Object>) null, false);
   }
 
+  /**
+   * @deprecated see below constructor for note on deprecation.
+   */
+  @Deprecated
   public ClusterProperties(String clusterName,
       List<String> prioritizedSchemes,
       Map<String, String> properties,
@@ -95,9 +112,17 @@ public class ClusterProperties
       DarkClusterConfigMap darkClusters)
   {
     this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
-        darkClusters, false);
+        (Map<String, Object>)null, false);
   }
 
+  /**
+   * @deprecated Use the constructor that uses a Map instead of DarkClusterConfigMap. Using this object is not flexible enough to hold
+   * transportClientProperties, because {@link com.linkedin.d2.balancer.config.TransportClientPropertiesConverter} uses different
+   * keys in it's serialization than how Jackson would serialize D2TransportClientProperties. That is problematic since ClusterProperties
+   * already should have had all necessary conversions done, but in this case the pegasus objects don't have a mechanism to allow the conversions.
+   * The solution is to use a Map<String, Object> to pass in the darkClusters.
+   */
+  @Deprecated
   public ClusterProperties(String clusterName,
       List<String> prioritizedSchemes,
       Map<String, String> properties,
@@ -106,6 +131,19 @@ public class ClusterProperties
       List<String> sslSessionValidationStrings,
       DarkClusterConfigMap darkClusters,
       boolean delegated)
+  {
+    // Don't support this constructor by forcing a no-op dark cluster.
+    this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings, (Map<String, Object>)null, false);
+  }
+
+  public ClusterProperties(String clusterName,
+                           List<String> prioritizedSchemes,
+                           Map<String, String> properties,
+                           Set<URI> bannedUris,
+                           PartitionProperties partitionProperties,
+                           List<String> sslSessionValidationStrings,
+                           Map<String, Object> darkClusters,
+                           boolean delegated)
   {
     _clusterName = clusterName;
     _prioritizedSchemes =
@@ -116,7 +154,7 @@ public class ClusterProperties
     _partitionProperties = partitionProperties;
     _sslSessionValidationStrings = sslSessionValidationStrings == null ? Collections.emptyList() : Collections.unmodifiableList(
         sslSessionValidationStrings);
-    _darkClusters = darkClusters == null ? new DarkClusterConfigMap() : darkClusters;
+    _darkClusters = darkClusters == null ? new HashMap<>() : darkClusters;
     _delegated = delegated;
   }
 
@@ -155,9 +193,15 @@ public class ClusterProperties
     return _sslSessionValidationStrings;
   }
 
-  public DarkClusterConfigMap getDarkClusters()
+  public Map<String, Object> getDarkClusters()
   {
     return _darkClusters;
+  }
+
+  // named so jackson won't use this method. This gives a more typesafe view of the dark clusters.
+  public DarkClusterConfigMap accessDarkClusters()
+  {
+    return DarkClustersConverter.toConfig(_darkClusters);
   }
 
   public boolean isDelegated()

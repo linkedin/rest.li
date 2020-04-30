@@ -1252,7 +1252,8 @@ public class SimpleLoadBalancerStateTest
 
     final List<String> sslValidationList = Arrays.asList("validation1", "validation2");
     _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", Collections.emptyList(),
-        Collections.emptyMap(), Collections.emptySet(), NullPartitionProperties.getInstance(), sslValidationList));
+        Collections.emptyMap(), Collections.emptySet(), NullPartitionProperties.getInstance(), sslValidationList,
+                                                            (Map<String, Object>)null, false));
     _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
         "/test", Arrays.asList("random"), Collections.<String, Object>emptyMap(),
         transportClientProperties, null, schemes, null));
