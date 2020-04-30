@@ -39,6 +39,8 @@ import com.linkedin.r2.message.stream.entitystream.FullEntityObserver;
 import java.net.URI;
 import java.util.Set;
 import java.util.concurrent.Future;
+
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -217,7 +219,7 @@ public class RetryClient extends D2ClientDelegator
       // 1. A RetriableRequestException is thrown
       // 2. There is no target host hint
       boolean retry = false;
-      if (e instanceof RetriableRequestException)
+      if (isRetryException(e))
       {
         URI targetHostUri = KeyMapper.TargetHostHints.getRequestContextTargetHost(_context);
         if (targetHostUri == null)
@@ -241,6 +243,11 @@ public class RetryClient extends D2ClientDelegator
         ExcludedHostHints.clearRequestContextExcludedHosts(_context);
         _callback.onError(e);
       }
+    }
+
+    private boolean isRetryException(Throwable e)
+    {
+      return ExceptionUtils.indexOfType(e, RetriableRequestException.class) != -1;
     }
 
     /**
