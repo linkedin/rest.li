@@ -563,6 +563,8 @@ public class PegasusPlugin implements Plugin<Project>
   private static final String TRANSLATED_SCHEMAS_DIR = "legacyPegasusSchemas";
   // Enable the use of argFiles for the tasks that support them
   private static final String ENABLE_ARG_FILE = "pegasusPlugin.enableArgFile";
+  // Flag used to skip running translate legacy schema (pdl->pdsc) to save local build time
+  private static final String DISABLE_LEGACY_SCHEMA_TRANSLATION = "pegasusPlugin.disableLegacySchemaTranslation";
 
   @SuppressWarnings("unchecked")
   private Class<? extends Plugin<Project>> _thisPluginType = (Class<? extends Plugin<Project>>)
@@ -1659,27 +1661,30 @@ public class PegasusPlugin implements Plugin<Project>
     dataTemplateJarDepends.add(compileTask);
     dataTemplateJarDepends.add(prepareSchemasForPublishTask);
 
-    // Convert all PDL files back to PDSC for publication
-    // TODO: Remove this conversion permanently once translated PDSCs are no longer needed.
-    Task prepareLegacySchemasForPublishTask = project.getTasks()
-        .create(sourceSet.getName() + "TranslateSchemas", TranslateSchemasTask.class, task ->
-        {
-          task.setInputDir(dataSchemaDir);
-          task.setDestinationDir(publishableLegacySchemasBuildDir);
-          task.setResolverPath(getDataModelConfig(project, sourceSet));
-          task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
-          task.setSourceFormat(SchemaFileType.PDL);
-          task.setDestinationFormat(SchemaFileType.PDSC);
-          task.setKeepOriginal(true);
-          task.setSkipVerification(true);
-          if (isPropertyTrue(project, ENABLE_ARG_FILE))
+    if (!isPropertyTrue(project, DISABLE_LEGACY_SCHEMA_TRANSLATION))
+    {
+      // Convert all PDL files back to PDSC for publication
+      // TODO: Remove this conversion permanently once translated PDSCs are no longer needed.
+      Task prepareLegacySchemasForPublishTask = project.getTasks()
+          .create(sourceSet.getName() + "TranslateSchemas", TranslateSchemasTask.class, task ->
           {
-            task.setEnableArgFile(true);
-          }
-        });
+            task.setInputDir(dataSchemaDir);
+            task.setDestinationDir(publishableLegacySchemasBuildDir);
+            task.setResolverPath(getDataModelConfig(project, sourceSet));
+            task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+            task.setSourceFormat(SchemaFileType.PDL);
+            task.setDestinationFormat(SchemaFileType.PDSC);
+            task.setKeepOriginal(true);
+            task.setSkipVerification(true);
+            if (isPropertyTrue(project, ENABLE_ARG_FILE))
+            {
+              task.setEnableArgFile(true);
+            }
+          });
 
-    prepareLegacySchemasForPublishTask.dependsOn(destroyStaleFiles);
-    dataTemplateJarDepends.add(prepareLegacySchemasForPublishTask);
+      prepareLegacySchemasForPublishTask.dependsOn(destroyStaleFiles);
+      dataTemplateJarDepends.add(prepareLegacySchemasForPublishTask);
+    }
 
     // create data template jar file
     Jar dataTemplateJarTask = project.getTasks()
