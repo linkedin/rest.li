@@ -19,6 +19,7 @@ dependencies {
   compile externalDependency.jdkTools
   compile externalDependency.zero_allocation_hashing
   compile externalDependency.xchart
+  testCompile externalDependency.guava
   testCompile externalDependency.testng
   testCompile externalDependency.junit
   testCompile externalDependency.commonsIo
