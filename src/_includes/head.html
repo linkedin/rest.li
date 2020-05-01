@@ -25,9 +25,9 @@
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
 
     <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
-    <script src="{{ 'assets/js/lunr.min.js' | relative_url }}"></script>
-    <script src="{{ 'assets/js/lunr-feed.js' | relative_url }}"></script>
-    {% if page.title == "Search" %}
+    <script src="{{ 'assets/js/search-input.js' | relative_url }}"></script>
+    {% if page.search %}
+      <script src="{{ 'assets/js/lunr.min.js' | relative_url }}"></script>
       <script src="{{ 'assets/js/search.js' | relative_url }}"></script>
     {% endif %}
 

@@ -1,29 +1,75 @@
 ---
-
 ---
-$(document).ready(function() {
-    buildSearch();
-  });
 
-function buildSearch(){
+/*
+ * This script performs the search functionality of the site.
+ * It should only be executed on the actual search page, as executing this
+ * will load the entire site's text content into memory.
+ */
+
+var index = lunr(function () {
+  this.field('title')
+  this.field('content', { boost: 10 })
+  this.field('category')
+  this.field('tags')
+  this.ref('id')
+});
+
+{% assign count = 0 %}
+{% for post in site.pages %}
+  {% if post.name contains '.md' %}
+    index.add({
+      title: {{post.title | jsonify}},
+      category: {{post.categories[0] | jsonify}},
+      content: {{post.content | strip_html | jsonify}},
+      tags: {{post.tags | jsonify}},
+      id: {{count}}
+    });
+    {% assign count = count | plus: 1 %}
+    {% endif %}
+{% endfor %}
+
+var store = [{% for post in site.pages %}
+  {% if post.name contains '.md' %}
+    {
+      "title": {{post.title | jsonify}},
+      "excerpt": {{post.excerpt | truncate: 220 | jsonify}},
+      "link": {{ post.url | jsonify }},
+      "image": {{ post.image | jsonify }},
+      "date": {{ post.date | date: '%B %-d, %Y' | jsonify }},
+      "category": {{ post.categories[0] | jsonify }}
+    }{% unless forloop.last %},{% endunless %}
+  {% endif %}
+{% endfor %}]
+
+$(document).ready(() => {
   const urlParams = new URLSearchParams(window.location.search);
   const query = urlParams.get('term');
-  var resultdiv = $('#results');      
-  var result = index.search(query);
-  resultdiv.empty();
 
-  resultdiv.prepend('<h1>Search results for <b>'+query+'</b></h1>');
-  var list = '<div class="result"><ul>';
-  for (var item in result) {
-    var ref = result[item].ref;
-    list += '<li class="result-item"><h3><a href="/rest.li'+store[ref].link+'" class="post-title">'+store[ref].title+'</a></h3><p class="markdown-body">'
-    if(store[ref].desc != null) {
-       list +=  store[ref].desc;
-    }
-    list += '</p></li>';
+  if (query) {
+    // Fill the query value back into the search bar
+    $('#search-input').val(query);
+
+    // Perform the search using the query param
+    performSearch(query);
   }
-  list += '</ul></div>';
-  resultdiv.append(list);
+});
 
-  document.getElementById("search-input").value = query
+function performSearch(query){
+  const results = index.search(query);
+  const resultsDiv = $('#results');
+  resultsDiv.empty();
+
+  if (results && results.length !== 0) {
+    // Populate the search results list
+    const itemMapperFunction = (item) => {
+      const storeItem = store[item.ref];
+      return `<li class="result-item"><h3><a href="{{ '' | relative_url }}${storeItem.link}" class="post-title">${storeItem.title}</a></h3>` +
+             `<p class="markdown-body">${storeItem.excerpt || ''}</p></li>`;
+    };
+    resultsDiv.append(`<h1>Search results for <b>${query}</b></h1><div class="result"><ul>${results.map(itemMapperFunction).join('')}</ul></div>`);
+  } else {
+    // Indicate that no results were found
+    resultsDiv.prepend(`<h1>No results for <b>${query}</b></h1>`);
+  }
 }
