@@ -57,6 +57,8 @@ import java.util.function.Function;
  */
 public class ProtoWriter
 {
+  public static final int FIXED32_SIZE = 4;
+  public static final int FIXED64_SIZE = 8;
   private static final int MAX_VARINT32_SIZE = 5;
   private static final int MAX_VARINT64_SIZE = 10;
   private static final int DEFAULT_BUFFER_SIZE = 4096;
@@ -137,7 +139,19 @@ public class ProtoWriter
   }
 
   /**
-   * Write a 32-bit signed integer.
+   * Write a fixed length 32-bit signed integer.
+   */
+  public final void writeFixedInt32(final int value) throws IOException
+  {
+    flushIfNotAvailable(FIXED32_SIZE);
+    _buffer[_position++] = (byte) (value & 0xFF);
+    _buffer[_position++] = (byte) ((value >> 8) & 0xFF);
+    _buffer[_position++] = (byte) ((value >> 16) & 0xFF);
+    _buffer[_position++] = (byte) ((value >> 24) & 0xFF);
+  }
+
+  /**
+   * Write a variable length 32-bit signed integer.
    */
   public final void writeInt32(final int value) throws IOException
   {
@@ -153,7 +167,23 @@ public class ProtoWriter
   }
 
   /**
-   * Write a 64-bit signed integer.
+   * Write a fixed length 64-bit signed integer.
+   */
+  public final void writeFixedInt64(final long value) throws IOException
+  {
+    flushIfNotAvailable(FIXED64_SIZE);
+    _buffer[_position++] = (byte) ((int) (value) & 0xFF);
+    _buffer[_position++] = (byte) ((int) (value >> 8) & 0xFF);
+    _buffer[_position++] = (byte) ((int) (value >> 16) & 0xFF);
+    _buffer[_position++] = (byte) ((int) (value >> 24) & 0xFF);
+    _buffer[_position++] = (byte) ((int) (value >> 32) & 0xFF);
+    _buffer[_position++] = (byte) ((int) (value >> 40) & 0xFF);
+    _buffer[_position++] = (byte) ((int) (value >> 48) & 0xFF);
+    _buffer[_position++] = (byte) ((int) (value >> 56) & 0xFF);
+  }
+
+  /**
+   * Write a variable length 64-bit signed integer.
    */
   public final void writeInt64(final long value) throws IOException
   {
@@ -211,7 +241,7 @@ public class ProtoWriter
   }
 
   /**
-   * Write a 32-bit unsigned integer.
+   * Write a variable length 32-bit unsigned integer.
    */
   public void writeUInt32(int value) throws IOException
   {
@@ -237,7 +267,7 @@ public class ProtoWriter
   }
 
   /**
-   * Write a 64-bit unsigned integer.
+   * Write a variable length 64-bit unsigned integer.
    */
   public void writeUInt64(long value) throws IOException
   {

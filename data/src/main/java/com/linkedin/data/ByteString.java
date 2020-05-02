@@ -1551,6 +1551,52 @@ public final class ByteString
     }
 
     @Override
+    public int readFixedInt32() throws IOException
+    {
+      if (getCurrentRemaining() < ProtoWriter.FIXED32_SIZE)
+      {
+        return (((readRawByte() & 0xff))
+            | ((readRawByte() & 0xff) << 8)
+            | ((readRawByte() & 0xff) << 16)
+            | ((readRawByte() & 0xff) << 24));
+      }
+
+      final byte[] buffer = _currentSegment.getArray();
+
+      return (((buffer[_currentArrayOffset++] & 0xff))
+          | ((buffer[_currentArrayOffset++] & 0xff) << 8)
+          | ((buffer[_currentArrayOffset++] & 0xff) << 16)
+          | ((buffer[_currentArrayOffset++] & 0xff) << 24));
+    }
+
+    @Override
+    public long readFixedInt64() throws IOException
+    {
+      if (getCurrentRemaining() < ProtoWriter.FIXED64_SIZE)
+      {
+        return (((readRawByte() & 0xffL))
+            | ((readRawByte() & 0xffL) << 8)
+            | ((readRawByte() & 0xffL) << 16)
+            | ((readRawByte() & 0xffL) << 24)
+            | ((readRawByte() & 0xffL) << 32)
+            | ((readRawByte() & 0xffL) << 40)
+            | ((readRawByte() & 0xffL) << 48)
+            | ((readRawByte() & 0xffL) << 56));
+      }
+
+      final byte[] buffer = _currentSegment.getArray();
+
+      return (((buffer[_currentArrayOffset++] & 0xffL))
+          | ((buffer[_currentArrayOffset++] & 0xffL) << 8)
+          | ((buffer[_currentArrayOffset++] & 0xffL) << 16)
+          | ((buffer[_currentArrayOffset++] & 0xffL) << 24)
+          | ((buffer[_currentArrayOffset++] & 0xffL) << 32)
+          | ((buffer[_currentArrayOffset++] & 0xffL) << 40)
+          | ((buffer[_currentArrayOffset++] & 0xffL) << 48)
+          | ((buffer[_currentArrayOffset++] & 0xffL) << 56));
+    }
+
+    @Override
     public byte readRawByte() throws IOException
     {
       if (getCurrentRemaining() == 0)

@@ -20,6 +20,7 @@ import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.codec.JacksonLICORDataCodec;
 import com.linkedin.data.codec.JacksonSmileDataCodec;
+import com.linkedin.data.codec.ProtobufCodecOptions;
 import com.linkedin.data.codec.ProtobufDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.codec.entitystream.JacksonLICORStreamDataCodec;
@@ -55,7 +56,8 @@ public class ContentType
   private static final JacksonLICORStreamDataCodec
       LICOR_BINARY_STREAM_DATA_CODEC = new JacksonLICORStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, true);
   private static final ProtobufDataCodec PROTOBUF_DATA_CODEC = new ProtobufDataCodec();
-  private static final ProtobufDataCodec PROTOBUF2_DATA_CODEC = new ProtobufDataCodec(null, true);
+  private static final ProtobufDataCodec PROTOBUF2_DATA_CODEC =
+      new ProtobufDataCodec(new ProtobufCodecOptions.Builder().setEnableASCIIOnlyStrings(true).build());
   private static final PsonDataCodec PSON_DATA_CODEC = new PsonDataCodec();
   private static final JacksonSmileDataCodec SMILE_DATA_CODEC = new JacksonSmileDataCodec();
   private static final JacksonSmileStreamDataCodec SMILE_STREAM_DATA_CODEC = new JacksonSmileStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
@@ -103,10 +105,12 @@ public class ContentType
     SUPPORTED_TYPE_PROVIDERS.put(SMILE.getHeaderKey(), (rawMimeType, mimeType) -> SMILE);
     SUPPORTED_TYPE_PROVIDERS.put(PROTOBUF.getHeaderKey(),
         new SymbolTableBasedContentTypeProvider(PROTOBUF,
-            (rawMimeType, symbolTable) -> new ContentType(rawMimeType, new ProtobufDataCodec(symbolTable, false), null)));
+            (rawMimeType, symbolTable) -> new ContentType(rawMimeType,
+                new ProtobufDataCodec(new ProtobufCodecOptions.Builder().setSymbolTable(symbolTable).build()), null)));
     SUPPORTED_TYPE_PROVIDERS.put(PROTOBUF2.getHeaderKey(),
         new SymbolTableBasedContentTypeProvider(PROTOBUF2,
-            (rawMimeType, symbolTable) -> new ContentType(rawMimeType, new ProtobufDataCodec(symbolTable, true), null)));
+            (rawMimeType, symbolTable) -> new ContentType(rawMimeType,
+                new ProtobufDataCodec(new ProtobufCodecOptions.Builder().setSymbolTable(symbolTable).setEnableASCIIOnlyStrings(true).build()), null)));
     SUPPORTED_TYPE_PROVIDERS.put(LICOR_TEXT.getHeaderKey(),
         new SymbolTableBasedContentTypeProvider(LICOR_TEXT,
             (rawMimeType, symbolTable) -> new ContentType(rawMimeType,
