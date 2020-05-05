@@ -717,6 +717,12 @@ public class ConsistentHashKeyMapperTest
     }
 
     @Override
+    public String getName()
+    {
+      return "TestLoadBalancerStrategy";
+    }
+
+    @Override
     public TrackerClient getTrackerClient(Request request,
         RequestContext requestContext,
         long clusterGenerationId,

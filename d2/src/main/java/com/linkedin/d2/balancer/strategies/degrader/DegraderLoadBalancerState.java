@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.strategies.degrader;
 
-import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import java.net.URI;
@@ -50,7 +49,7 @@ public class DegraderLoadBalancerState
   // trackerClients anymore and we do not have to hold the healthCheck objects in healthCheckMap.
   // When individual trackerClient is quarantined, the corresponding healthCheck will be
   // generated again.
-  private final ConcurrentMap<TrackerClientUpdater, HealthCheck> _healthCheckMap;
+  private final ConcurrentMap<DegraderTrackerClientUpdater, HealthCheck> _healthCheckMap;
   private final List<PartitionDegraderLoadBalancerStateListener.Factory> _degraderStateListenerFactories;
 
   DegraderLoadBalancerState(String serviceName, Map<String, String> degraderProperties,
@@ -82,12 +81,12 @@ public class DegraderLoadBalancerState
           new ReentrantLock(),
           new PartitionDegraderLoadBalancerState
               (-1, _config.getClock().currentTimeMillis(), false,
-                  new DegraderRingFactory<>(_config),
+                  new DelegatingRingFactory<>(_config),
                   new HashMap<URI, Integer>(),
                   PartitionDegraderLoadBalancerState.Strategy.
                       LOAD_BALANCE,
                   0, 0,
-                  new HashMap<TrackerClient, Double>(),
+                  new HashMap<>(),
                   _serviceName, _degraderProperties,
                   0, 0, 0,
                   new HashMap<>(), new HashMap<>(),
@@ -128,12 +127,12 @@ public class DegraderLoadBalancerState
     getPartition(partitionId).setState(newState);
   }
 
-  void putHealthCheckClient(TrackerClientUpdater updater, HealthCheck client)
+  void putHealthCheckClient(DegraderTrackerClientUpdater updater, HealthCheck client)
   {
     _healthCheckMap.put(updater, client);
   }
 
-  Map<TrackerClientUpdater, HealthCheck> getHealthCheckMap()
+  Map<DegraderTrackerClientUpdater, HealthCheck> getHealthCheckMap()
   {
      return _healthCheckMap;
   }

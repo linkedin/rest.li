@@ -75,7 +75,7 @@ public class TrackerClientTest
     TestClient wrappedClient = new TestClient(true);
     Clock clock = new SettableClock();
     Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(3d);
-    TrackerClient client = new TrackerClient(uri, partitionDataMap, wrappedClient, clock, null);
+    DegraderTrackerClient client = new DegraderTrackerClient(uri, partitionDataMap, wrappedClient, clock, null);
 
     assertEquals(client.getUri(), uri);
     Double clientWeight = client.getPartitionWeight(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
@@ -102,7 +102,7 @@ public class TrackerClientTest
     TestClient wrappedClient = new TestClient();
     Clock clock = new SettableClock();
     Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(3d);
-    TrackerClient client = new TrackerClient(uri, partitionDataMap, wrappedClient, clock, null);
+    DegraderTrackerClient client = new DegraderTrackerClient(uri, partitionDataMap, wrappedClient, clock, null);
 
     assertEquals(client.getUri(), uri);
     Double clientWeight = client.getPartitionWeight(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
@@ -152,7 +152,7 @@ public class TrackerClientTest
       public void shutdown(Callback<None> callback) {}
     };
 
-    TrackerClient client = createTrackerClient(tc, clock, uri);
+    DegraderTrackerClient client = createTrackerClient(tc, clock, uri);
     CallTracker callTracker = client.getCallTracker();
     CallTracker.CallStats stats;
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
@@ -232,7 +232,7 @@ public class TrackerClientTest
       public void shutdown(Callback<None> callback) {}
     };
 
-    TrackerClient client = createTrackerClient(tc, clock, uri);
+    DegraderTrackerClient client = createTrackerClient(tc, clock, uri);
     CallTracker callTracker = client.getCallTracker();
     CallTracker.CallStats stats;
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
@@ -310,9 +310,9 @@ public class TrackerClientTest
     double initialDropRate = 0.99d;
     config.setInitialDropRate(initialDropRate);
 
-    TrackerClient client = new TrackerClient(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
+    DegraderTrackerClient client = new DegraderTrackerClient(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
         new TestClient(), new SettableClock(), config, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
-        TrackerClient.DEFAULT_ERROR_STATUS_REGEX, uriSpecificProperties);
+        TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, uriSpecificProperties);
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Assert.assertEquals(degraderControl.getInitialDropRate(), DegraderImpl.DEFAULT_DO_NOT_SLOW_START_INITIAL_DROP_RATE,
         "Initial drop rate in config should have been overridden by doNotSlowStart uri property.");
@@ -330,9 +330,9 @@ public class TrackerClientTest
     double initialDropRate = 0.99d;
     config.setInitialDropRate(initialDropRate);
 
-    TrackerClient client = new TrackerClient(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
+    DegraderTrackerClient client = new DegraderTrackerClient(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
         new TestClient(), new SettableClock(), config, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
-        TrackerClient.DEFAULT_ERROR_STATUS_REGEX, uriSpecificProperties);
+        TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, uriSpecificProperties);
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Assert.assertEquals(degraderControl.getInitialDropRate(), initialDropRate,
         "Initial drop rate in config should not have been overridden by doNotSlowStart uri property.");
@@ -345,7 +345,7 @@ public class TrackerClientTest
     return partitionDataMap;
   }
 
-  private TrackerClient createTrackerClient(TransportClient tc, Clock clock, URI uri)
+  private DegraderTrackerClient createTrackerClient(TransportClient tc, Clock clock, URI uri)
   {
     Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(3d);
     DegraderImpl.Config config = new DegraderImpl.Config();
@@ -353,7 +353,7 @@ public class TrackerClientTest
     config.setLowErrorRate(0.0);
     config.setMinCallCount(1);
     config.setDownStep(0.20);
-    return new TrackerClient(uri, partitionDataMap, tc, clock, config);
+    return new DegraderTrackerClient(uri, partitionDataMap, tc, clock, config);
   }
 
   public static class TestClient implements TransportClient

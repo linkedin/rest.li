@@ -1,0 +1,27 @@
+namespace com.linkedin.d2
+
+/**
+ * Properties for D2 quarantine.
+ *
+ * Uhealthy hosts can be placed in quarantine, in which a predefined method is used
+ * to check endpoint health without routing real request traffic to them.
+ */
+record D2QuarantineProperties {
+
+  /**
+   * The max percentage of hosts in the cluster that can be quarantined at the same time.
+   * Values are from 0.0 - 1.0. A value of 0.0 means quarantine is disabled.
+   */
+  quarantineMaxPercent: optional double
+
+  /**
+   * Specifies the method used for health checking. Format: <METHOD>:<FULL_PATH>. Defaults to OPTIONS method.
+   */
+  quarantineMethod: optional string
+
+  /**
+   * The latency threshold (in milliseconds) for health check requests. Response times longer
+   * than this threshold are considered as unhealthy.
+   */
+  quarantineLatency: optional long
+}

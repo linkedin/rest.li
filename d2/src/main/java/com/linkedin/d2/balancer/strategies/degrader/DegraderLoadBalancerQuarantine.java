@@ -2,6 +2,7 @@ package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
@@ -51,7 +52,7 @@ public class DegraderLoadBalancerQuarantine
   private static final long ERROR_REPORT_PERIOD = 60 * 1000; // Millisecond = 1 minute
   private volatile QuarantineStates _quarantineState;
   // TrackerClient with problem
-  final private TrackerClient _trackerClient;
+  final private DegraderTrackerClient _trackerClient;
   final private HealthCheck _healthCheckClient;
   final private String _serviceName;
 
@@ -69,7 +70,7 @@ public class DegraderLoadBalancerQuarantine
   final private DegraderLoadBalancerStrategyConfig _config;
   private final RateLimitedLogger _rateLimitedLogger;
 
-  DegraderLoadBalancerQuarantine(TrackerClientUpdater client, DegraderLoadBalancerStrategyConfig config,
+  DegraderLoadBalancerQuarantine(DegraderTrackerClientUpdater client, DegraderLoadBalancerStrategyConfig config,
                                  String serviceName)
   {
     _trackerClient = client.getTrackerClient();

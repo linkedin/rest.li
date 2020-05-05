@@ -1,0 +1,125 @@
+namespace com.linkedin.d2
+
+/**
+ * Relative load balancer strategy properties for a particular D2 service.
+ *
+ * Balances traffic to hosts within a service by dynamically adjusting a server's health score
+ * based on call statitics compared relatively to the performance of the entire cluster.
+ *
+ * Health score is rated on a scale from 0.0 - 1.0, with 0.0 meaning most unhealthy (all traffic
+ * routed away) and 1.0 meaning most healthy (no traffic routed away). Note that this behavior is
+ * inverse of dropRate in the degrader strategy.
+ */
+record D2RelativeStrategyProperties {
+
+  /**
+   * Step function delta size for increasing a server's health score. Values are from 0.0 - 1.0.
+   */
+  upStep: optional double
+
+  /**
+   * Step function delta size for decreasing a server's health score. Values are from 0.0 - 1.0.
+   */
+  downStep: optional double
+
+  /**
+   * A server whose latency is above this specified factor of the cluster average is considered unhealthy,
+   * and its health score will be decreased by downStep.
+   * Values must be greater than both 1.0 and relativeLatencyLowThresholdFactor.
+   */
+  relativeLatencyHighThresholdFactor: optional double
+
+  /**
+   * A server whose latency is below this specified factor of the cluster average is considered healthy,
+   * and its health score will be increased by upStep.
+   * Values must be greater than 1.0 and below relativeLatencyHighThresholdFactor.
+   */
+  relativeLatencyLowThresholdFactor: optional double
+
+  /**
+   * If the error rate during the interval exceeds this value, then we will decrease the health score by downStep.
+   * Values are from 0.0 - 1.0.
+   */
+  highErrorRate: optional double
+
+  /**
+   * If the error rate during the interval is under this value, then we will increase the health score by upStep.
+   * Values are from 0.0 - 1.0.
+   */
+  lowErrorRate: optional double
+
+  /**
+   * The health score for a server will not be calculated unless the number of calls to it in the interval
+   * meets or exceeds the minimum call count.
+   */
+  minCallCount: optional int
+
+  /**
+   * The interval (in milliseconds) between each round of health score calculations.
+   */
+  updateIntervalMs: optional long
+
+  /**
+   * The latency metric type used to calculate the health score.
+   */
+  latencyMetricType: optional enum LatencyMetricType {
+
+    /**
+     * Average latency.
+     */
+    AVERAGE
+
+    /**
+     * 50th percentile latency.
+     */
+    PCT50
+
+    /**
+     * 90th percentile latency.
+     */
+    PCT90
+
+    /**
+     * 95th percentile latency.
+     */
+    PCT95
+
+    /**
+     * 99th percentile latency.
+     */
+    PCT99
+  }
+
+  /**
+   * The initial health score that a server starts with.
+   * Values are from 0.0 - 1.0.
+   */
+  initialHealthScore: optional double
+
+  /**
+   * The health score threshold that determines whether D2 should perform slow start
+   * (by doubling the health score) or the normal stepUp/Down operation.
+   * Values are from 0.0 - 1.0. A value of 0.0 means slow start is disabled.
+   */
+  slowStartThreshold: optional double
+
+  /**
+   * Regular expression used to match a request status code and indicate a server-side error.
+   */
+  errorStatusRegex: optional string
+
+  /**
+   * Emitting interval (in milliseconds) for D2Events.
+   */
+  emittingIntervalMs: optional int
+
+  /**
+   * Quarantine properties.
+   */
+  quarantineProperties: optional D2QuarantineProperties
+
+  /**
+   * Ring properties.
+   */
+  ringProperties: optional D2RingProperties
+}

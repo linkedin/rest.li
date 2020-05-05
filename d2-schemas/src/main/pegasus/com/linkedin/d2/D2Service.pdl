@@ -20,9 +20,15 @@ record D2Service includes D2ChangeTimeStamps {
    */
   loadBalancerStrategyList: array[
     /**
-     * There are 2 types of strategy: DEGRADER, RANDOM
+     * There are 3 types of strategy: RELATIVE, DEGRADER, and RANDOM.
      */
     enum loadBalancerStrategyType {
+
+      /**
+       * This strategy balances traffic to hosts within a service by comparing individual hosts` call
+       * statistics relatively to the performance of the entire cluster.
+       */
+      RELATIVE
 
       /**
        * This strategy will choose an endpoint based on multiple hints like latency, error rate and other call statistics
@@ -63,14 +69,23 @@ record D2Service includes D2ChangeTimeStamps {
   cluster: string
 
   /**
-   * The load balancer strategy properties for this service
+   * The load balancer strategy properties for this service.
+   *
+   * Required along with D2DegraderProperties for the degrader strategy.
    */
   loadBalancerStrategyProperties: D2LoadBalancerStrategyProperties
 
   /**
-   * The degrader properties for this service
+   * The degrader properties for this service.
+   *
+   * Required along with D2DegraderProperties for the degrader strategy.
    */
   degraderProperties: D2DegraderProperties
+
+  /**
+   * Properties used for the relative load balancing strategy.
+   */
+  relativeStrategyProperties: optional D2RelativeStrategyProperties
 
   /**
    * The transport client properties for this service

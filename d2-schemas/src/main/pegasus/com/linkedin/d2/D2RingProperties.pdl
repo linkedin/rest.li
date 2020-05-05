@@ -1,0 +1,92 @@
+namespace com.linkedin.d2
+
+/**
+ * D2 hash ring properties used for load balancing.
+ */
+record D2RingProperties {
+
+  /**
+   * How fast should load balancer ramp up node that has been 100% degraded and is being recovered. Defaults to 1.0.
+   */
+  ringRampFactor: optional double
+
+  /**
+   * The number of points per weight given for a particular node in a hash ring. Defaults to 100.
+   */
+  pointsPerWeight: optional int
+
+  /**
+   * What hashing method used to hash incoming request. Used to determine which node should serve the request. Choices are Random, UriRegex
+   */
+  @symbolDocs = {
+    "URI_REGEX" : "Extract a key from URI and use it to hash",
+    "RANDOM" : "The default fall back value"
+  }
+  hashMethod: optional enum HashMethod {
+    RANDOM
+    URI_REGEX
+  }
+
+  /**
+   * Configuration used to supplement the hash method.
+   */
+  hashConfig: optional record HashConfig {
+
+    /**
+     * List of Regex to match against the URI of incoming request and compute hash value. The hash value is computed based on the contents of the first capture group of the first expression that matches the request URI
+     */
+    uriRegexes: optional array[string]
+
+    /**
+     * Optional config value. if true, fail if no regex matches, otherwise fall back to random.
+     */
+    failOnNoMatch: boolean = false
+
+    /**
+     *  Optional config value. if false, don't warn on falling back to random if the uri doesn't match the regex
+     */
+    warnOnNoMatch: boolean = true
+  }
+
+  /**
+   * The highest ratio of unused entries over the total entries of the Ring points that d2 maintains.
+   */
+  hashRingPointCleanupRate: optional double
+
+  /**
+   * Consistent hash algorithm the d2 load balancer should use. Defaults to POINT_BASED.
+   */
+  consistentHashAlgorithm: optional enum ConsistentHashAlgorithm {
+
+    /**
+     * Point-based consistent hash ring. The more points the ring has, the more balanced it is.
+     */
+    POINT_BASED
+
+    /**
+     * Multi-probe consistent hash. The more probes to use, the more balanced the ring is.
+     */
+    MULTI_PROBE
+
+    /**
+     * Use points of hosts to build a distribution and make randomized host selection. NOTE: this algorithm DOES NOT support sticky routing
+     */
+    DISTRIBUTION_BASED
+  }
+
+  /**
+   * The number of probes used to look up a key in consistent hash ring. Defaults to 21.
+   */
+  numberOfProbes: optional int
+
+  /**
+   * The number of points on MultiProbe hash ring for each host. Defaults to 1.
+   */
+  numberOfPointsPerHost: optional int
+
+  /**
+   * The balancing factor that enables the bounded-load feature, which is a decorator of consistent hashing algorithms. No single server is allowed to have a load more than this factor times the average load among all servers. A value of -1 disables the feature. Otherwise, it is a factor greater than 1. Defaults to -1.
+   */
+  boundedLoadBalancingFactor: optional double
+
+}

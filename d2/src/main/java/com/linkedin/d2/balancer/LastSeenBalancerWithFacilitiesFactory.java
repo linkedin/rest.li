@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer;
 
+import com.linkedin.d2.balancer.clients.TrackerClientFactory;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.ServiceProperties;

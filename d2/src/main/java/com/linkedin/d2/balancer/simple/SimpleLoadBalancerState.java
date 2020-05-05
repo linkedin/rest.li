@@ -19,24 +19,19 @@ package com.linkedin.d2.balancer.simple;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.SimpleCallback;
-import com.linkedin.common.util.MapUtil;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.clients.TrackerClientFactory;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
-import com.linkedin.d2.balancer.properties.PartitionData;
-import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
-import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistryImpl;
@@ -49,9 +44,6 @@ import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
-import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,29 +57,26 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
+import static com.linkedin.d2.discovery.util.LogUtil.error;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.trace;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactoryProvider
 {
-  private static final Logger                                                            _log =
-                                                                                                  LoggerFactory.getLogger(SimpleLoadBalancerState.class);
-  private static final int DEGRADER_RATELIMITEDLOG_RATE_MS = 20000;
+  private static final Logger                                                            _log = LoggerFactory.getLogger(SimpleLoadBalancerState.class);
 
   private final UriLoadBalancerSubscriber _uriSubscriber;
   private final ClusterLoadBalancerSubscriber _clusterSubscriber;
   private final ServiceLoadBalancerSubscriber _serviceSubscriber;
-
-  private final PropertyEventBus<UriProperties> _uriBus;
-  private final PropertyEventBus<ClusterProperties> _clusterBus;
-  private final PropertyEventBus<ServiceProperties> _serviceBus;
 
   private final Map<String, LoadBalancerStateItem<UriProperties>>                        _uriProperties;
   private final Map<String, ClusterInfoItem>                                             _clusterInfo;
@@ -145,8 +134,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final SSLContext    _sslContext;
   private final SSLParameters _sslParameters;
   private final boolean       _isSSLEnabled;
-
-
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
 
   /*
@@ -159,7 +146,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
    * _uriProperties _clusterProperties _serviceProperties _servicesPerCluster
    * _trackerClients _serviceStrategies
    */
-
   public SimpleLoadBalancerState(ScheduledExecutorService executorService,
                                  PropertyEventPublisher<UriProperties> uriPublisher,
                                  PropertyEventPublisher<ClusterProperties> clusterPublisher,
@@ -263,47 +249,30 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                  SslSessionValidatorFactory sessionValidatorFactory)
   {
     _executor = executorService;
-    _uriProperties =
-      new ConcurrentHashMap<String, LoadBalancerStateItem<UriProperties>>();
-    _clusterInfo =
-      new ConcurrentHashMap<String, ClusterInfoItem>();
-    _serviceProperties =
-      new ConcurrentHashMap<String, LoadBalancerStateItem<ServiceProperties>>();
+    _uriProperties = new ConcurrentHashMap<>();
+    _clusterInfo = new ConcurrentHashMap<>();
+    _serviceProperties = new ConcurrentHashMap<>();
     _version = new AtomicLong(0);
 
-    _uriBus = uriBus;
     _uriSubscriber = new UriLoadBalancerSubscriber(uriBus, this);
-
-    _clusterBus = clusterBus;
     _clusterSubscriber = new ClusterLoadBalancerSubscriber(this, clusterBus, partitionAccessorRegistry);
-
-    _serviceBus = serviceBus;
     _serviceSubscriber = new ServiceLoadBalancerSubscriber(serviceBus, this);
 
-    // We assume the factories themselves are immutable, therefore a shallow copy of the
-    // maps
-    // should be a completely immutable data structure.
-    _clientFactories =
-      Collections.unmodifiableMap(new HashMap<String, TransportClientFactory>(clientFactories));
-    _loadBalancerStrategyFactories =
-      Collections.unmodifiableMap(new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>(loadBalancerStrategyFactories));
+    _clientFactories = Collections.unmodifiableMap(new HashMap<>(clientFactories));
+    _loadBalancerStrategyFactories = Collections.unmodifiableMap(new HashMap<>(loadBalancerStrategyFactories));
 
-    _servicesPerCluster = new ConcurrentHashMap<String, Set<String>>();
-    _serviceStrategies =
-      new ConcurrentHashMap<String, Map<String, LoadBalancerStrategy>>();
-    _serviceStrategiesCache =
-      new ConcurrentHashMap<String, List<SchemeStrategyPair>>();
-    _trackerClients = new ConcurrentHashMap<String, Map<URI, TrackerClient>>();
-    _serviceClients = new ConcurrentHashMap<String, Map<String, TransportClient>>();
-    _listeners =
-      Collections.synchronizedList(new ArrayList<SimpleLoadBalancerStateListener>());
+    _servicesPerCluster = new ConcurrentHashMap<>();
+    _serviceStrategies = new ConcurrentHashMap<>();
+    _serviceStrategiesCache = new ConcurrentHashMap<>();
+    _trackerClients = new ConcurrentHashMap<>();
+    _serviceClients = new ConcurrentHashMap<>();
+    _listeners = Collections.synchronizedList(new ArrayList<>());
     _delayedExecution = 1000;
     _sslContext = sslContext;
     _sslParameters = sslParameters;
     _isSSLEnabled = isSSLEnabled;
     _sslSessionValidatorFactory = sessionValidatorFactory;
-    _clusterListeners =
-      Collections.synchronizedList(new ArrayList<LoadBalancerClusterListener>());
+    _clusterListeners = Collections.synchronizedList(new ArrayList<>());
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -392,7 +361,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         }
 
         // put all tracker clients into a single set for convenience
-        Set<TransportClient> transportClients = new HashSet<TransportClient>();
+        Set<TransportClient> transportClients = new HashSet<>();
 
         for (Map<String, TransportClient> clientsByScheme : _serviceClients.values())
         {
@@ -595,8 +564,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     for (String serviceName : serviceNames)
     {
       count += LoadBalancerUtil.getOrElse(_trackerClients,
-                                            serviceName,
-                                            new HashMap<URI, TrackerClient>()).size();
+                                          serviceName, new HashMap<>()).size();
     }
     return count;
   }
@@ -684,7 +652,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     }
     else
     {
-      return new ArrayList<URI>(trackerClients.keySet());
+      return new ArrayList<>(trackerClients.keySet());
     }
   }
 
@@ -778,7 +746,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
   void removeTrackerClients(String clusterName)
   {
-    // uri properties was null, so remove all tracker clients
     warn(_log, "removing all tracker clients for cluster: ", clusterName);
     Set<String> serviceNames = _servicesPerCluster.get(clusterName);
     if (serviceNames != null)
@@ -802,162 +769,63 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     }
   }
 
-  TrackerClient buildTrackerClient(String serviceName, URI uri, Map<Integer, PartitionData> partitionDataMap,
-                                 DegraderImpl.Config config, Clock clk, long callTrackerInterval,
-                                 String errorStatusPattern, Map<String, Object> uriSpecificProperties)
+  @Nullable
+  public TrackerClient buildTrackerClient(URI uri,
+                                   UriProperties uriProperties,
+                                   String serviceName)
   {
-    Map<String,TransportClient> clientsByScheme = _serviceClients.get(serviceName);
-    if (clientsByScheme == null)
+    LoadBalancerStateItem<ServiceProperties> servicePropertiesItem = _serviceProperties.get(serviceName);
+    ServiceProperties serviceProperties = servicePropertiesItem == null ? null : servicePropertiesItem.getProperty();
+
+    TransportClient transportClient = getTransportClient(serviceName, uri);
+    if (transportClient == null)
     {
-      _log.error("buildTrackerClient: unknown service name {} for URI {} and partitionDataMap {}",
-          new Object[]{ serviceName, uri, partitionDataMap });
       return null;
     }
-    if (uri == null || uri.getScheme() == null)
+
+    return serviceProperties == null ? null : TrackerClientFactory.createTrackerClient(uri,
+                                                                                       uriProperties,
+                                                                                       serviceProperties,
+                                                                                       _serviceStrategies.get(serviceName).get(uri.getScheme()).getName(),
+                                                                                       transportClient);
+  }
+
+  /**
+   * Gets a {@link TransportClient} for a service and URI.
+   */
+  @Nullable
+  private TransportClient getTransportClient(String serviceName, URI uri)
+  {
+    Map<String,TransportClient> clientsByScheme = _serviceClients.get(serviceName);
+    if (clientsByScheme == null || uri == null || uri.getScheme() == null)
     {
-      _log.error("Error: could not extract scheme from URI: {}", uri);
+      warn(_log, "Issue building client for service ", serviceName, " and uri ", uri);
       return null;
     }
     TransportClient client = clientsByScheme.get(uri.getScheme().toLowerCase());
     if (client == null)
     {
-      // logging this at debug because there may be situations where a service may want some of its
-      // clients talking https while others are ok using http.
-      _log.debug("No TransportClient for scheme {}, service {}, URI {} and partitionDataMap {}. " +
-                  "This client may not be configured to handle URIs in this scheme.",
-            new Object[]{uri.getScheme(), serviceName, uri, partitionDataMap });
+      debug(_log, "No TransportClient for scheme ", uri.getScheme(), " service ", serviceName, "URI ", uri);
       return null;
     }
-    TrackerClient trackerClient = new TrackerClient(uri, partitionDataMap, client, clk, config, callTrackerInterval,
-                                                    errorStatusPattern, uriSpecificProperties);
-    return trackerClient;
+    return client;
   }
 
-  private Map<String, TransportClient> createAndInsertTransportClientTo(ServiceProperties serviceProperties)
-  {
-    Map<String, Object> transportClientProperties = new HashMap<>(serviceProperties.getTransportClientProperties());
-    List<String> schemes = serviceProperties.getPrioritizedSchemes();
-    Map<String,TransportClient> newTransportClients = new HashMap<String, TransportClient>();
-    if (schemes != null && !schemes.isEmpty())
-    {
-      for (String scheme : schemes)
-      {
-        TransportClientFactory factory = _clientFactories.get(scheme);
-
-        if ("https".equals(scheme))
-        {
-          if (_isSSLEnabled)
-          {
-            // if https is a prioritized scheme and SSL is enabled, then a SSLContext and SSLParameters
-            // should have been passed in during creation.
-            if (_sslContext != null && _sslParameters != null)
-            {
-              transportClientProperties.put(HttpClientFactory.HTTP_SSL_CONTEXT, _sslContext);
-              transportClientProperties.put(HttpClientFactory.HTTP_SSL_PARAMS, _sslParameters);
-            }
-            else
-            {
-              _log.error("https specified as a prioritized scheme for service: " + serviceProperties.getServiceName() +
-                        " but no SSLContext or SSLParameters have been configured.");
-              if (schemes.size() == 1)
-              {
-                // throw exception when https is the only scheme specified
-                throw new IllegalStateException(
-                    "SSL enabled but required SSLContext and SSLParameters" + "were not both present.");
-              }
-              // Do not create the transport client for https.
-              continue;
-            }
-          }
-          else
-          {
-            // don't create this transport client if ssl isn't enabled. If the https transport client
-            // is requested later on, buildTrackerClient will catch this situation and log an error.
-            continue;
-          }
-        }
-
-        if (factory != null)
-        {
-          final String clusterName = serviceProperties.getClusterName();
-          transportClientProperties.put(HttpClientFactory.HTTP_SERVICE_NAME, serviceProperties.getServiceName());
-          transportClientProperties.put(HttpClientFactory.HTTP_POOL_STATS_NAME_PREFIX, clusterName);
-          TransportClient client = _sslSessionValidatorFactory == null ? factory.getClient(transportClientProperties)
-              : new ClusterAwareTransportClient(clusterName, factory.getClient(transportClientProperties),
-                  getClusterInfo(), _sslSessionValidatorFactory);
-          newTransportClients.put(scheme.toLowerCase(), client);
-        }
-        else
-        {
-          _log.warn("Failed to find client factory for scheme {}", scheme);
-        }
-      }
-    }
-    else
-    {
-      _log.warn("Prioritized schemes is null for service properties = " + serviceProperties.getServiceName());
-    }
-    return newTransportClients;
-  }
-
-  static long getTrackerClientInterval(ServiceProperties serviceProperties)
-  {
-    long trackerClientInterval = DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS;
-    if (serviceProperties != null && serviceProperties.getLoadBalancerStrategyProperties() != null)
-    {
-      trackerClientInterval = MapUtil.getWithDefault(serviceProperties.getLoadBalancerStrategyProperties(),
-                             PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS,
-                             DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
-                             Long.class);
-    }
-    return trackerClientInterval;
-  }
-
-  static String getErrorStatusPattern(ServiceProperties serviceProperties)
-  {
-    String pattern = TrackerClient.DEFAULT_ERROR_STATUS_REGEX;
-    if (serviceProperties != null && serviceProperties.getLoadBalancerStrategyProperties() != null)
-    {
-      pattern = MapUtil.getWithDefault(serviceProperties.getLoadBalancerStrategyProperties(),
-          PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX, TrackerClient.DEFAULT_ERROR_STATUS_REGEX, String.class);
-    }
-    return pattern;
-  }
-
-  void refreshTransportClientsPerService(ServiceProperties serviceProperties)
+  /**
+   * Creates new {@link TrackerClient} and {@link TransportClient} for service and shut down any old ones.
+   *
+   * @param serviceProperties
+   */
+  void refreshClients(ServiceProperties serviceProperties)
   {
     String serviceName = serviceProperties.getServiceName();
-    //create new TransportClients
-    Map<String,TransportClient> newTransportClients =  createAndInsertTransportClientTo(serviceProperties);
+
+    Map<String,TransportClient> newTransportClients = createTransportClients(serviceProperties);
 
     // clients-by-scheme map is never edited, only replaced.
     newTransportClients = Collections.unmodifiableMap(newTransportClients);
 
-    final Map<String, TransportClient> oldTransportClients = _serviceClients.put(serviceName, newTransportClients);
-
-    // gets the information for configuring the parameter for how DegraderImpl should behave for
-    // each tracker clients that we instantiate here. If there's no such information, then we'll instantiate
-    // each tracker clients with default configuration
-    DegraderImpl.Config config = null;
-    Clock clk = SystemClock.instance();
-
-    if (serviceProperties.getDegraderProperties() != null && !serviceProperties.getDegraderProperties().isEmpty())
-    {
-      config = DegraderConfigFactory.toDegraderConfig(serviceProperties.getDegraderProperties());
-      config.setLogger(new RateLimitedLogger(_log, DEGRADER_RATELIMITEDLOG_RATE_MS, clk));
-    }
-    else
-    {
-      debug(_log, "trying to see if there's a special degraderImpl properties but serviceInfo.getDegraderImpl() is null"
-          + " for service name = " + serviceName + " so we'll set config to default");
-    }
-
-    if (serviceProperties.getLoadBalancerStrategyProperties() != null)
-    {
-      Map<String, Object> loadBalancerStrategyProperties =
-          serviceProperties.getLoadBalancerStrategyProperties();
-      clk = MapUtil.getWithDefault(loadBalancerStrategyProperties, PropertyKeys.CLOCK, SystemClock.instance(), Clock.class);
-    }
+    Map<String, TransportClient> oldTransportClients = _serviceClients.put(serviceName, newTransportClients);
 
     Map<URI,TrackerClient> newTrackerClients;
 
@@ -967,16 +835,16 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     if (uriProperties != null)
     {
       Set<URI> uris = uriProperties.Uris();
-      // clients-by-uri map may be edited later by UriPropertiesListener.handlePut
-      newTrackerClients = new ConcurrentHashMap<URI, TrackerClient>(
-          CollectionUtils.getMapInitialCapacity(uris.size(), 0.75f), 0.75f, 1);
-      long trackerClientInterval = getTrackerClientInterval (serviceProperties);
-      String errorStatusPattern = getErrorStatusPattern(serviceProperties);
+      newTrackerClients = new ConcurrentHashMap<>(CollectionUtils.getMapInitialCapacity(uris.size(), 0.75f), 0.75f, 1);
+
       for (URI uri : uris)
       {
-        TrackerClient trackerClient = buildTrackerClient(serviceName, uri, uriProperties.getPartitionDataMap(uri),
-                                                       config, clk, trackerClientInterval, errorStatusPattern,
-                                                       uriProperties.getUriSpecificProperties().get(uri));
+
+        TrackerClient trackerClient = TrackerClientFactory.createTrackerClient(uri,
+                                                                               uriProperties,
+                                                                               serviceProperties,
+                                                                               _serviceStrategies.get(serviceName).get(uri.getScheme()).getName(),
+                                                                               _serviceClients.get(serviceName).get(uri.getScheme()));
         if (trackerClient != null)
         {
           newTrackerClients.put(uri, trackerClient);
@@ -985,40 +853,76 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     }
     else
     {
-      // clients-by-uri map may be edited later by UriPropertiesListener.handlePut
-      newTrackerClients = new ConcurrentHashMap<URI, TrackerClient>(16, 0.75f, 1);
+      newTrackerClients = new ConcurrentHashMap<>();
     }
 
-    //override the oldTrackerClients with newTrackerClients
     _trackerClients.put(serviceName, newTrackerClients);
-    // No need to shut down oldTrackerClients, because they all point directly to the TransportClient for the service
-    // We do need to shut down the old transport clients
+
     shutdownTransportClients(oldTransportClients, serviceName);
   }
 
-  void shutdownClients(String serviceName)
+  private Map<String, TransportClient> createTransportClients(ServiceProperties serviceProperties)
   {
-    _log.warn("shutting down all tracker clients and transport clients for service " + serviceName);
+    Map<String, Object> transportClientProperties = new HashMap<>(serviceProperties.getTransportClientProperties());
+    List<String> schemes = serviceProperties.getPrioritizedSchemes();
+    Map<String, TransportClient> newTransportClients = new HashMap<>();
 
-    //We need to remove all the tracker clients owned by this service. We don't need to shutdown
-    //because trackerClient is just a wrapper of transport client which we'll shutdown next.
-    Map<URI, TrackerClient> clients = _trackerClients.remove(serviceName);
-
-    if (clients != null)
+    if (schemes == null || schemes.isEmpty())
     {
-      for (TrackerClient client : clients.values())
-      {
-        // notify listeners of the removed client
-        for (SimpleLoadBalancerStateListener listener : _listeners)
-        {
-          listener.onClientRemoved(serviceName, client);
-        }
-      }
+      warn(_log, "Prioritized schemes is null for service properties = ", serviceProperties.getServiceName());
     }
 
-    //we also need to shutdown the transport client owned by this service
-    Map<String, TransportClient> schemeToTransportClients = _serviceClients.get(serviceName);
-    shutdownTransportClients(schemeToTransportClients, serviceName);
+    for (String scheme : schemes)
+    {
+      TransportClientFactory factory = _clientFactories.get(scheme);
+
+      if ("https".equals(scheme))
+      {
+        if (_isSSLEnabled)
+        {
+          if (_sslContext != null && _sslParameters != null)
+          {
+            transportClientProperties.put(HttpClientFactory.HTTP_SSL_CONTEXT, _sslContext);
+            transportClientProperties.put(HttpClientFactory.HTTP_SSL_PARAMS, _sslParameters);
+          }
+          else
+          {
+            error(_log, "https specified as a prioritized scheme for service: ", serviceProperties.getServiceName(),
+                  " but no SSLContext or SSLParameters have been configured.");
+            if (schemes.size() == 1)
+            {
+              // throw exception when https is the only scheme specified
+              throw new IllegalStateException(
+                "SSL enabled but required SSLContext and SSLParameters" + "were not both present.");
+            }
+            continue;
+          }
+        }
+        else
+        {
+          continue;
+        }
+      }
+
+      if (factory == null)
+      {
+        warn(_log, "Failed to find client factory for scheme ", scheme);
+        continue;
+      }
+
+      final String clusterName = serviceProperties.getClusterName();
+      transportClientProperties.put(HttpClientFactory.HTTP_SERVICE_NAME, serviceProperties.getServiceName());
+      transportClientProperties.put(HttpClientFactory.HTTP_POOL_STATS_NAME_PREFIX, clusterName);
+
+      TransportClient client = _sslSessionValidatorFactory == null ? factory.getClient(transportClientProperties)
+        : new ClusterAwareTransportClient(clusterName,
+                                          factory.getClient(transportClientProperties),
+                                          _clusterInfo,
+                                          _sslSessionValidatorFactory);
+      newTransportClients.put(scheme.toLowerCase(), client);
+    }
+
+    return newTransportClients;
   }
 
   private void shutdownTransportClients(final Map<String, TransportClient> schemeToTransportClients,
@@ -1037,45 +941,107 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     // after the call to getClient() so we won't have this problem.
     if (schemeToTransportClients != null)
     {
-      _executor.schedule(new Runnable()
-      {
-        @Override
-        public void run()
+      _executor.schedule(() -> {
+        for (final Map.Entry<String, TransportClient> entry : schemeToTransportClients.entrySet())
         {
-          for (final Map.Entry<String, TransportClient> entry : schemeToTransportClients.entrySet())
+          Callback<None> callback = new Callback<None>()
           {
-            Callback<None> callback = new Callback<None>()
+            @Override
+            public void onError(Throwable e)
             {
-              @Override
-              public void onError(Throwable e)
-              {
-                _log.warn("Failed to shut down old " + serviceName + " TransportClient with scheme = " + entry.getKey()
-                    , e);
-              }
+              warn(_log, "Failed to shut down old ", serviceName, " TransportClient with scheme = ", entry.getKey()
+                , e);
+            }
 
-              @Override
-              public void onSuccess(None result)
-              {
-                _log.info("Shut down old " + serviceName + " TransportClient with scheme = " + entry.getKey());
-              }
-            };
-            entry.getValue().shutdown(callback);
-          }
+            @Override
+            public void onSuccess(None result)
+            {
+              info(_log, "Shut down old ", serviceName, " TransportClient with scheme = ", entry.getKey());
+            }
+          };
+          entry.getValue().shutdown(callback);
         }
       }, _delayedExecution, TimeUnit.MILLISECONDS);
     }
   }
 
+  void shutdownClients(String serviceName)
+  {
+    _log.warn("shutting down all tracker clients and transport clients for service " + serviceName);
+
+    Map<URI, TrackerClient> clients = _trackerClients.remove(serviceName);
+
+    if (clients != null)
+    {
+      for (TrackerClient client : clients.values())
+      {
+        for (SimpleLoadBalancerStateListener listener : _listeners)
+        {
+          listener.onClientRemoved(serviceName, client);
+        }
+      }
+    }
+
+    //we also need to shutdown the transport client owned by this service
+    Map<String, TransportClient> schemeToTransportClients = _serviceClients.get(serviceName);
+    shutdownTransportClients(schemeToTransportClients, serviceName);
+  }
+
+  /**
+   * Creates new strategies for service and deletes old strategies, if they exist.
+   *
+   * {@link com.linkedin.d2.balancer.simple.SimpleLoadBalancerState.SimpleLoadBalancerStateListener}s
+   * are notified of the changes.
+   *
+   * @param serviceProperties Contains the update properties.
+   */
   void refreshServiceStrategies(ServiceProperties serviceProperties)
   {
     info(_log, "refreshing service strategies for service: ", serviceProperties);
+
+    Map<String, LoadBalancerStrategy> newStrategies = createNewStrategies(serviceProperties);
+
+    Map<String, LoadBalancerStrategy> oldStrategies = _serviceStrategies.put(serviceProperties.getServiceName(), newStrategies);
+    _serviceStrategiesCache.remove(serviceProperties.getServiceName());
+
+    info(_log, "removing strategies ", serviceProperties.getServiceName(), ": ", oldStrategies);
+
+    if (oldStrategies != null)
+    {
+      for (Map.Entry<String, LoadBalancerStrategy> oldStrategy : oldStrategies.entrySet())
+      {
+        oldStrategy.getValue().shutdown();
+
+        for (SimpleLoadBalancerState.SimpleLoadBalancerStateListener listener : _listeners)
+        {
+          listener.onStrategyRemoved(serviceProperties.getServiceName(),
+                                     oldStrategy.getKey(),
+                                     oldStrategy.getValue());
+
+        }
+      }
+    }
+
+    if (!newStrategies.isEmpty())
+    {
+      for (SimpleLoadBalancerState.SimpleLoadBalancerStateListener listener : _listeners)
+      {
+        for (Map.Entry<String, LoadBalancerStrategy> newStrategy : newStrategies.entrySet())
+        {
+          listener.onStrategyAdded(serviceProperties.getServiceName(),
+                                   newStrategy.getKey(),
+                                   newStrategy.getValue());
+        }
+      }
+    }
+  }
+
+  private Map<String, LoadBalancerStrategy> createNewStrategies(ServiceProperties serviceProperties)
+  {
     List<String> strategyList = serviceProperties.getLoadBalancerStrategyList();
     LoadBalancerStrategyFactory<? extends LoadBalancerStrategy> factory = null;
     if (strategyList != null && !strategyList.isEmpty())
     {
-      // In this prioritized strategy list, pick the first one that is available. This is needed
-      // so that a new strategy can be used as it becomes available in the client, rather than
-      // waiting for all clients to update their code level before any clients can use it.
       for (String strategy : strategyList)
       {
         factory = _loadBalancerStrategyFactories.get(strategy);
@@ -1085,104 +1051,36 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         }
       }
     }
-    // if we get here without a factory, then something might be wrong, there should always
-    // be at least a default strategy in the list that is always available.
-    // The intent is that the loadBalancerStrategyName will be replaced by the
-    // loadBalancerStrategyList, and eventually the StrategyName will be removed from the code.
-    // We don't issue a RuntimeException here because it's possible, when adding services (ie publishAdd),
-    // to refreshServiceStrategies without the strategy existing yet.
-    if (factory == null)
+
+    Map<String, LoadBalancerStrategy> newStrategies = new ConcurrentHashMap<>();
+
+    if (factory == null || serviceProperties.getPrioritizedSchemes() == null || serviceProperties.getPrioritizedSchemes().isEmpty())
     {
-      warn(_log,"No valid strategy found. ", serviceProperties);
-    }
-
-    Map<String, LoadBalancerStrategy> strategyMap = new ConcurrentHashMap<String, LoadBalancerStrategy>();
-
-    if (factory != null && serviceProperties.getPrioritizedSchemes() != null &&
-        !serviceProperties.getPrioritizedSchemes().isEmpty())
-    {
-      // if switching from HTTP_ONLY to HTTPS_ONLY or vice versa and the service has a high QPS,
-      // it could experience ServiceUnavailable exception for a limited period of time given by the fact
-      // that clients are not replaced atomically and that the request accesses shared data structures in different
-      // moments in time and not atomically
-      List<String> schemes = serviceProperties.getPrioritizedSchemes();
-      for (String scheme : schemes)
-      {
-        Map<String, Object> loadBalancerStrategyProperties =
-            new HashMap<String, Object>(serviceProperties.getLoadBalancerStrategyProperties());
-        // Save the service path as a property -- Quarantine may need this info to construct correct
-        // health checking path
-        loadBalancerStrategyProperties.put(PropertyKeys.PATH, serviceProperties.getPath());
-        // Also save the clusterName as a property
-        loadBalancerStrategyProperties.put(PropertyKeys.CLUSTER_NAME, serviceProperties.getClusterName());
-
-        LoadBalancerStrategy strategy = factory.newLoadBalancer(
-            serviceProperties.getServiceName(),
-            loadBalancerStrategyProperties,
-            serviceProperties.getDegraderProperties());
-
-        strategyMap.put(scheme, strategy);
-      }
+      warn(_log, "unable to find cluster or factory for ", serviceProperties, ": ", factory);
     }
     else
     {
-        warn(_log,
-             "unable to find cluster or factory for ",
-             serviceProperties,
-             ": ",
-             factory);
-
-    }
-
-    Map<String, LoadBalancerStrategy> oldStrategies =
-        _serviceStrategies.put(serviceProperties.getServiceName(), strategyMap);
-    _serviceStrategiesCache.remove(serviceProperties.getServiceName());
-
-    info(_log,
-         "removing strategies ",
-         serviceProperties.getServiceName(),
-         ": ",
-         oldStrategies);
-
-    info(_log,
-         "putting strategies ",
-         serviceProperties.getServiceName(),
-         ": ",
-         strategyMap);
-
-    // notify listeners of the removed strategy
-    if (oldStrategies != null)
-    {
-      // shutdown strategies before notification
-      oldStrategies.values().forEach(LoadBalancerStrategy::shutdown);
-
-      for (SimpleLoadBalancerStateListener listener : _listeners)
+      List<String> schemes = serviceProperties.getPrioritizedSchemes();
+      for (String scheme : schemes)
       {
-        for (Map.Entry<String, LoadBalancerStrategy> oldStrategy : oldStrategies.entrySet())
-        {
-          listener.onStrategyRemoved(serviceProperties.getServiceName(),
-                                     oldStrategy.getKey(),
-                                     oldStrategy.getValue());
-        }
+        // TODO
+//        Map<String, Object> loadBalancerStrategyProperties = new HashMap<String, Object>(serviceProperties.getLoadBalancerStrategyProperties());
+//        // Save the service path as a property -- Quarantine may need this info to construct correct
+//        // health checking path
+//        loadBalancerStrategyProperties.put(PropertyKeys.PATH, serviceProperties.getPath());
+//        // Also save the clusterName as a property
+//        loadBalancerStrategyProperties.put(PropertyKeys.CLUSTER_NAME, serviceProperties.getClusterName());
 
+//        LoadBalancerStrategy strategy = factory.newLoadBalancer(serviceProperties.getServiceName(), loadBalancerStrategyProperties, serviceProperties.getDegraderProperties());
+        LoadBalancerStrategy strategy = factory.newLoadBalancer(serviceProperties);
+
+        newStrategies.put(scheme, strategy);
       }
     }
 
-    // we need to inform the listeners of the strategy removal before the strategy add, otherwise
-    // they will get confused and remove what was just added.
-    if (!strategyMap.isEmpty())
-    {
-      for (SimpleLoadBalancerStateListener listener : _listeners)
-      {
-        // notify listeners of the added strategy
-        for (Map.Entry<String, LoadBalancerStrategy> newStrategy : strategyMap.entrySet())
-        {
-          listener.onStrategyAdded(serviceProperties.getServiceName(),
-                                   newStrategy.getKey(),
-                                   newStrategy.getValue());
-        }
-      }
-    }
+    info(_log, "putting strategies ", serviceProperties.getServiceName(), ": ", newStrategies);
+
+    return newStrategies;
   }
 
   public interface SimpleLoadBalancerStateListener

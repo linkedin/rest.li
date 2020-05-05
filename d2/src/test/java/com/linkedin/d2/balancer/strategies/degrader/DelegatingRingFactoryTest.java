@@ -40,7 +40,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 
-public class DegraderRingFactoryTest
+public class DelegatingRingFactoryTest
 {
   private static final int DEFAULT_PARTITION_ID = DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
   private static final int DEFAULT_CONSISTENT_HASH_VERSION = 1;
@@ -48,7 +48,7 @@ public class DegraderRingFactoryTest
   public static void main(String[] args) throws URISyntaxException,
           InterruptedException
   {
-    DegraderRingFactoryTest test = new DegraderRingFactoryTest();
+    DelegatingRingFactoryTest test = new DelegatingRingFactoryTest();
 
     test.testPointsCleanUp();
   }
@@ -176,7 +176,7 @@ public class DegraderRingFactoryTest
 
   @Test(groups = { "small", "back-end" })
   public void testFactoryWithNoneHashConfig() {
-    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder(null, null));
+    RingFactory<String> factory = new DelegatingRingFactory<>(configBuilder(null, null));
     Ring<String> ring = factory.createRing(buildPointsMap(10));
 
     assertTrue(ring instanceof DistributionNonDiscreteRing);
@@ -184,7 +184,7 @@ public class DegraderRingFactoryTest
 
   @Test(groups = { "small", "back-end" })
   public void testFactoryWithHashMethod() {
-    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder(null, "uriRegex"));
+    RingFactory<String> factory = new DelegatingRingFactory<>(configBuilder(null, "uriRegex"));
     Ring<String> ring = factory.createRing(buildPointsMap(10));
 
     assertTrue(ring instanceof MPConsistentHashRing);
@@ -192,7 +192,7 @@ public class DegraderRingFactoryTest
 
   @Test(groups = { "small", "back-end" })
   public void testFactoryWithMultiProbe() {
-    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder("multiProbe", null));
+    RingFactory<String> factory = new DelegatingRingFactory<>(configBuilder("multiProbe", null));
     Ring<String> ring = factory.createRing(buildPointsMap(10));
 
     assertTrue(ring instanceof MPConsistentHashRing);
@@ -200,7 +200,7 @@ public class DegraderRingFactoryTest
 
   @Test(groups = { "small", "back-end" })
   public void testFactoryWithMultiProbeAndHashMethod() {
-    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder("multiProbe", "uriRegex"));
+    RingFactory<String> factory = new DelegatingRingFactory<>(configBuilder("multiProbe", "uriRegex"));
     Ring<String> ring = factory.createRing(buildPointsMap(10));
 
     assertTrue(ring instanceof MPConsistentHashRing);
@@ -208,7 +208,7 @@ public class DegraderRingFactoryTest
 
   @Test(groups = { "small", "back-end" })
   public void testFactoryWithPointBased() {
-    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder("pointBased", "uriRegex"));
+    RingFactory<String> factory = new DelegatingRingFactory<>(configBuilder("pointBased", "uriRegex"));
     Ring<String> ring = factory.createRing(buildPointsMap(10));
 
     assertTrue(ring instanceof ConsistentHashRing);
@@ -216,7 +216,7 @@ public class DegraderRingFactoryTest
 
   @Test(groups = { "small", "back-end" })
   public void testFactoryWithDistributionBasedAndRegix() {
-    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder("distributionBased", "uriRegex"));
+    RingFactory<String> factory = new DelegatingRingFactory<>(configBuilder("distributionBased", "uriRegex"));
     Ring<String> ring = factory.createRing(buildPointsMap(10));
 
     assertTrue(ring instanceof MPConsistentHashRing);
@@ -224,7 +224,7 @@ public class DegraderRingFactoryTest
 
   @Test(groups = { "small", "back-end" })
   public void testFactoryWithDistributionBased() {
-    RingFactory<String> factory = new DegraderRingFactory<>(configBuilder("distributionBased", null));
+    RingFactory<String> factory = new DelegatingRingFactory<>(configBuilder("distributionBased", null));
     Ring<String> ring = factory.createRing(buildPointsMap(10));
 
     assertTrue(ring instanceof DistributionNonDiscreteRing);

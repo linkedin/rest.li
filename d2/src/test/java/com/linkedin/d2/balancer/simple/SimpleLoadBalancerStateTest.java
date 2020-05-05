@@ -22,6 +22,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallback;
 import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
+import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.NullPartitionProperties;
@@ -799,8 +800,8 @@ public class SimpleLoadBalancerStateTest
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    clients.add(new TrackerClient(uri, partitionDataMap, new DegraderLoadBalancerTest.TestLoadBalancerClient(uri),
-                                  SystemClock.instance(), null));
+    clients.add(new DegraderTrackerClient(uri, partitionDataMap, new DegraderLoadBalancerTest.TestLoadBalancerClient(uri),
+                                          SystemClock.instance(), null));
 
     for (int i = 0; i < 20; i++)
     {
@@ -1353,7 +1354,7 @@ public class SimpleLoadBalancerStateTest
 
     ServiceProperties serviceProperties = new ServiceProperties("service-1", "cluster-1",
                                                                 "/test", Arrays.asList("random"),
-                                                                Collections.<String, Object>emptyMap(),
+                                                                Collections.emptyMap(),
                                                                 transportClientProperties, null, schemes, null);
     _serviceRegistry.put("service-1", serviceProperties);
 
@@ -1377,7 +1378,7 @@ public class SimpleLoadBalancerStateTest
     client = _state.getClient("service-1", httpsUri);
     assertNull(client, "shouldn't pick an https uri");
 
-    _state.refreshTransportClientsPerService(serviceProperties);
+    _state.refreshClients(serviceProperties);
 
   }
 
@@ -1596,7 +1597,7 @@ public class SimpleLoadBalancerStateTest
     assertNotNull(client);
     assertEquals(client.getUri(), uri);
     // tracker client should see empty partition data map
-    assertTrue(client.getParttitionDataMap().isEmpty());
+    assertTrue(client.getPartitionDataMap().isEmpty());
 
     // then we update this uri to have a non-empty partition data map
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
@@ -1609,8 +1610,8 @@ public class SimpleLoadBalancerStateTest
     assertNotSame(client, updatedClient);
     assertEquals(updatedClient.getUri(), uri);
     // this updated client should have updated partition data map
-    assertFalse(updatedClient.getParttitionDataMap().isEmpty());
-    assertEquals(updatedClient.getParttitionDataMap(), partitionDataMap);
+    assertFalse(updatedClient.getPartitionDataMap().isEmpty());
+    assertEquals(updatedClient.getPartitionDataMap(), partitionDataMap);
 
   }
 

@@ -38,6 +38,10 @@ import javax.annotation.Nullable;
  */
 public interface LoadBalancerStrategy
 {
+  /**
+   * @return Name of the strategy.
+   */
+  String getName();
 
   /**
    * Given a list of tracker clients this return one tracker client to use

@@ -18,6 +18,8 @@ package com.linkedin.d2.balancer.strategies;
 
 import java.util.Map;
 
+import com.linkedin.d2.balancer.properties.ServiceProperties;
+
 /**
  * Factory for LoadBalancerStrategies.  The factory is expected to be immutable.
  * @param <T>
@@ -25,15 +27,19 @@ import java.util.Map;
 public interface LoadBalancerStrategyFactory<T extends LoadBalancerStrategy>
 {
   /**
-   * Creates a new LoadBalancer for a service
-   * @param serviceName The service name
-   * @param strategyProperties The load balancer strategy properties specified in the service
-   * configuration; may be empty.  The semantics of the properties are defined by the particular
-   * load balancer strategy receiving the map.  The values of the map are either Strings or nested
-   * structures (Lists or Maps); any nested structures will obey the same restriction.
-   * @param degraderProperties the degrader properties that is used by tracker clients
-   * @return The LoadBalancer
+   * Create new {@link LoadBalancerStrategy} for a service.
+   *
+   * @param serviceProperties {@link ServiceProperties}.
+   * @return Load balancer strategy.
    */
-  T newLoadBalancer(String serviceName, Map<String, Object> strategyProperties,
-                    Map<String, String> degraderProperties);
+  T newLoadBalancer(ServiceProperties serviceProperties);
+
+  /**
+   * deprecated use {{@link #newLoadBalancer(ServiceProperties)}} instead.
+   */
+  default T newLoadBalancer(String serviceName, Map<String, Object> strategyProperties,
+                            Map<String, String> degraderProperties)
+  {
+    return null;
+  }
 }
