@@ -72,17 +72,17 @@ public class DelegatingRingFactory<T> implements RingFactory<T>
         factory = new DistributionNonDiscreteRingFactory<>();
       }
     }
-    else if (consistentHashAlgorithm.toString().equalsIgnoreCase(POINT_BASED_CONSISTENT_HASH))
+    else if (consistentHashAlgorithm == ConsistentHashAlgorithm.POINT_BASED)
     {
       double hashPointCleanupRate = getOrDefault(ringProperties.getHashRingPointCleanupRate(),
                                                  DegraderLoadBalancerStrategyConfig.DEFAULT_HASHRING_POINT_CLEANUP_RATE);
       factory = new PointBasedConsistentHashRingFactory<>(hashPointCleanupRate);
     }
-    else if (MULTI_PROBE_CONSISTENT_HASH.equalsIgnoreCase(consistentHashAlgorithm.toString()))
+    else if (consistentHashAlgorithm == ConsistentHashAlgorithm.MULTI_PROBE)
     {
       factory = new MPConsistentHashRingFactory<>(numProbes, numPointsPerHost);
     }
-    else if (DISTRIBUTION_NON_HASH.equalsIgnoreCase(consistentHashAlgorithm.toString())) {
+    else if (consistentHashAlgorithm == ConsistentHashAlgorithm.DISTRIBUTION_BASED) {
       if (isAffinityRoutingEnabled(hashMethod))
       {
         _log.warn("URI Regex hash is specified but distribution based ring is picked, falling back to multiProbe ring");
@@ -119,7 +119,7 @@ public class DelegatingRingFactory<T> implements RingFactory<T>
   }
 
   private boolean isAffinityRoutingEnabled(HashMethod hashMethod) {
-    return hashMethod.toString().equalsIgnoreCase(DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX);
+    return hashMethod == HashMethod.URI_REGEX;
   }
 
   private static D2RingProperties toD2RingProperties(DegraderLoadBalancerStrategyConfig config)
@@ -131,14 +131,38 @@ public class DelegatingRingFactory<T> implements RingFactory<T>
 
     if (config.getConsistentHashAlgorithm() != null)
     {
-      ringProperties.setConsistentHashAlgorithm(ConsistentHashAlgorithm.valueOf(config.getConsistentHashAlgorithm()));
+      ringProperties.setConsistentHashAlgorithm(toConsistentHashAlgorithm(config.getConsistentHashAlgorithm()));
     }
     if (config.getHashMethod() != null)
     {
-      ringProperties.setHashMethod(HashMethod.valueOf(config.getHashMethod()));
+      ringProperties.setHashMethod(toHashMethod(config.getHashMethod()));
     }
 
     return ringProperties;
+  }
+
+  private static ConsistentHashAlgorithm toConsistentHashAlgorithm(String consistentHashAlgorithm)
+  {
+    switch (consistentHashAlgorithm)
+    {
+      case POINT_BASED_CONSISTENT_HASH:
+        return ConsistentHashAlgorithm.POINT_BASED;
+      case MULTI_PROBE_CONSISTENT_HASH:
+        return ConsistentHashAlgorithm.MULTI_PROBE;
+      default:
+        return ConsistentHashAlgorithm.DISTRIBUTION_BASED;
+    }
+  }
+
+  private static HashMethod toHashMethod(String hashMethod)
+  {
+    switch (hashMethod)
+    {
+      case DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX:
+        return HashMethod.URI_REGEX;
+      default:
+        return HashMethod.RANDOM;
+    }
   }
 
   private <R> R getOrDefault(R value, R defaultValue)

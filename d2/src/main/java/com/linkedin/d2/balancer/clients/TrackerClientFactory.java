@@ -43,7 +43,6 @@ public class TrackerClientFactory
    * @param transportClient Inner TransportClient.
    * @return TrackerClient
    */
-  @Nullable
   public static TrackerClient createTrackerClient(URI uri,
                                            UriProperties uriProperties,
                                            ServiceProperties serviceProperties,
