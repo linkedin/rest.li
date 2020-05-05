@@ -339,6 +339,40 @@ final class InputStreamReader extends ProtoReader
     return readRawVarint64SlowPath();
   }
 
+  @Override
+  public int readFixedInt32() throws IOException
+  {
+    // Make sure we have enough space to read.
+    if (ProtoWriter.FIXED32_SIZE > (_bufferSize - _pos))
+    {
+      refillBuffer(ProtoWriter.FIXED32_SIZE);
+    }
+
+    return (((_buffer[_pos++] & 0xff))
+        | ((_buffer[_pos++] & 0xff) << 8)
+        | ((_buffer[_pos++] & 0xff) << 16)
+        | ((_buffer[_pos++] & 0xff) << 24));
+  }
+
+  @Override
+  public long readFixedInt64() throws IOException
+  {
+    // Make sure we have enough space to read.
+    if (ProtoWriter.FIXED64_SIZE > (_bufferSize - _pos))
+    {
+      refillBuffer(ProtoWriter.FIXED64_SIZE);
+    }
+
+    return (((_buffer[_pos++] & 0xffL))
+        | ((_buffer[_pos++] & 0xffL) << 8)
+        | ((_buffer[_pos++] & 0xffL) << 16)
+        | ((_buffer[_pos++] & 0xffL) << 24)
+        | ((_buffer[_pos++] & 0xffL) << 32)
+        | ((_buffer[_pos++] & 0xffL) << 40)
+        | ((_buffer[_pos++] & 0xffL) << 48)
+        | ((_buffer[_pos++] & 0xffL) << 56));
+  }
+
   long readRawVarint64SlowPath() throws IOException
   {
     long result = 0;
