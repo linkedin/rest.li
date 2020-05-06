@@ -140,6 +140,9 @@ public class ServiceProperties
     return _clusterName;
   }
 
+  /**
+   * @return Prioritized {@link com.linkedin.d2.balancer.strategies.LoadBalancerStrategy} list.
+   */
   public List<String> getLoadBalancerStrategyList()
   {
     return _prioritizedStrategyList;

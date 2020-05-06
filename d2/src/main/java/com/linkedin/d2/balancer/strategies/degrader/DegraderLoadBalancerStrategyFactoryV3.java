@@ -68,8 +68,7 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
                            serviceProperties.getDegraderProperties());
   }
 
-  @Override
-  public DegraderLoadBalancerStrategyV3 newLoadBalancer(String serviceName,
+  private DegraderLoadBalancerStrategyV3 newLoadBalancer(String serviceName,
       Map<String, Object> strategyProperties, Map<String, String> degraderProperties)
   {
     debug(LOG, "created a degrader load balancer strategyV3");

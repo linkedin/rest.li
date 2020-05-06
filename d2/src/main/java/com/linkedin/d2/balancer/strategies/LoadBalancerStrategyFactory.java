@@ -16,8 +16,6 @@
 
 package com.linkedin.d2.balancer.strategies;
 
-import java.util.Map;
-
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 
 /**
@@ -33,13 +31,4 @@ public interface LoadBalancerStrategyFactory<T extends LoadBalancerStrategy>
    * @return Load balancer strategy.
    */
   T newLoadBalancer(ServiceProperties serviceProperties);
-
-  /**
-   * deprecated use {{@link #newLoadBalancer(ServiceProperties)}} instead.
-   */
-  default T newLoadBalancer(String serviceName, Map<String, Object> strategyProperties,
-                            Map<String, String> degraderProperties)
-  {
-    return null;
-  }
 }
