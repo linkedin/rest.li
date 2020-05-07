@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# The purpose of this script is to publish artifacts to ~/local-repo
+
+# Ensure that the script is being run from the root project directory
+PROPERTIES_FILE='gradle.properties'
+if [ ! -f "$PROPERTIES_FILE" ]; then
+  echo "Could not find $PROPERTIES_FILE, please run this script from the root project directory."
+  exit 2
+fi
+
+# Process CLI arguments
+# TODO: add an argument to override the repo location
+VERSION_SUFFIX=''
+for ARG in "$@"; do
+  if [ "$ARG" = '-h' ] || [ "$ARG" = '--help' ]; then
+    cat ./scripts/help-text/local-release.txt
+    exit 0
+  elif [ "$ARG" = '-s' ] || [ "$ARG" = '--snapshot' ]; then
+    VERSION_SUFFIX='-SNAPSHOT'
+  else
+    echo "Unrecognized option: $ARG"
+    echo ''
+    cat ./scripts/help-text/local-release.txt
+    exit 2
+  fi
+done
+
+if [ ! -d "$HOME" ]; then
+  echo 'Cannot perform local release, $HOME is not set to a valid directory.'
+  exit 1
+fi
+
+# Create ~/local-repo if it doesn't already exist
+LOCAL_REPO="${HOME}/local-repo"
+if [ ! -d $LOCAL_REPO ]; then
+  mkdir $LOCAL_REPO
+fi
+
+# Determine the version to be released, adding the snapshot suffix if appropriate
+VERSION=$(awk 'BEGIN { FS = "=" }; $1 == "version" { print $2 }' $PROPERTIES_FILE | awk '{ print $1 }')
+if [ -z "$VERSION" ]; then
+  echo "Couldn't read the version from $PROPERTIES_FILE, please fix this then try again."
+  exit 1
+elif [ ! -z "$VERSION_SUFFIX" ] && [[ "$VERSION" != *$VERSION_SUFFIX ]]; then
+  VERSION="${VERSION}${VERSION_SUFFIX}"
+fi
+
+echo "Publishing pegasus $VERSION to ${LOCAL_REPO}..."
+
+# Publish artifacts to Maven local, but override the repo path and the version
+./gradlew -Dmaven.repo.local=$LOCAL_REPO -Pversion=$VERSION publishReleasePublicationToMavenLocal --rerun-tasks
+
+if [ $? = 0 ]; then
+  echo "Published pegasus $VERSION to $LOCAL_REPO"
+else
+  exit 1
+fi

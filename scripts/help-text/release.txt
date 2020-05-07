@@ -1,0 +1,11 @@
+Usage: ./scripts/release [OPTION]... [TARGET_COMMIT]
+Releases a new version of Rest.li by creating and pushing a tag at TARGET_COMMIT (defaults to HEAD).
+This script must be run from the root project directory.
+
+Options:
+  -h, --help                    print this help text and exit
+
+Examples:
+  ./scripts/release             create and push a release tag at HEAD
+  ./scripts/release 0a1b2c3     create and push a release tag at commit 0a1b2c3
+  ./scripts/release master^^    create and push a release tag at two commits before the head of master

@@ -19,7 +19,7 @@ buildscript {
     jcenter()
   }
   dependencies {
-    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7'
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
   }
 }
 
@@ -193,11 +193,7 @@ subprojects {
     all*.exclude group: 'com.sun.jmx', module: 'jmxri'
   }
 
-  if (it.name == 'd2') {
-    configurations.testArtifacts.visible = true
-  }
-
-  if (it.name == 'darkcluster') {
+  if (it.name == 'd2' || it.name == 'darkcluster') {
     configurations.testArtifacts.visible = true
   }
 
@@ -257,6 +253,11 @@ subprojects {
 
   artifacts {
     testArtifacts testJar
+  }
+
+  // The artifacts for custom archive configurations aren't built by default
+  if (configurations.testArtifacts.visible) {
+    tasks.assemble.dependsOn buildTestArtifacts
   }
 
   if (isDefaultEnvironment) {
