@@ -1,10 +1,9 @@
 package com.linkedin.d2.balancer.strategies.degrader;
 
-import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.util.clock.SettableClock;
-import com.linkedin.util.degrader.CallTracker;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -173,11 +172,11 @@ public class DegraderLoadBalancerStateTest
   private static PartitionDegraderLoadBalancerState newPartitionState(long generationID, long lastUpdated)
   {
     return new PartitionDegraderLoadBalancerState(generationID, lastUpdated,
-                                                  false, new DegraderRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L)),
+                                                  false, new DelegatingRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L)),
                                                   Collections.<URI, Integer>emptyMap(),
                                                   PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
-                                                  0, 0, Collections.<TrackerClient, Double>emptyMap(),
-                                                  SERVICE_NAME, Collections.<String, String>emptyMap(), 0, 0, 0,
+                                                  0, 0, Collections.emptyMap(),
+                                                  SERVICE_NAME, Collections.emptyMap(), 0, 0, 0,
                                                   Collections.emptyMap(), Collections.emptyMap(), null, 0);
   }
 

@@ -20,12 +20,12 @@ import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.r2.message.RequestContext;
+
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,26 +35,15 @@ import static org.testng.Assert.assertNotNull;
 public class RandomLoadBalancerTest
 {
 
-  public static void main(String[] args) throws InterruptedException,
-      URISyntaxException
-  {
-    new RandomLoadBalancerTest().testRoundRobinBalancer();
-  }
-
   @Test(groups = { "small", "back-end" })
-  public void testRoundRobinBalancer() throws InterruptedException,
-      URISyntaxException
+  public void testRoundRobinBalancer()
   {
     RandomLoadBalancerStrategyFactory lbFactory = new RandomLoadBalancerStrategyFactory();
-    RandomLoadBalancerStrategy rrLoadBalancer = lbFactory.newLoadBalancer("unused",
-                                                                          Collections.<String, Object>emptyMap(),
-                                                                          null);
+    RandomLoadBalancerStrategy rrLoadBalancer = lbFactory.newLoadBalancer(null);
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    TrackerClient trackerClient1 =
-        new TrackerClient(URI.create("http://www.google.com:567/foo/bar"), partitionDataMap, null);
-    TrackerClient trackerClient2 =
-        new TrackerClient(URI.create("http://www.amazon.com:567/foo/bar"), partitionDataMap, null);
+    TrackerClient trackerClient1 = Mockito.mock(TrackerClient.class);
+    TrackerClient trackerClient2 = Mockito.mock(TrackerClient.class);
     List<TrackerClient> trackerClients = new ArrayList<TrackerClient>();
 
     trackerClients.add(trackerClient1);

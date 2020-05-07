@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.event.NoopEventEmitter;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import java.util.ArrayList;
@@ -60,7 +61,14 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
   }
 
   @Override
-  public DegraderLoadBalancerStrategyV3 newLoadBalancer(String serviceName,
+  public DegraderLoadBalancerStrategyV3 newLoadBalancer(ServiceProperties serviceProperties)
+  {
+    return newLoadBalancer(serviceProperties.getServiceName(),
+                           serviceProperties.getLoadBalancerStrategyProperties(),
+                           serviceProperties.getDegraderProperties());
+  }
+
+  private DegraderLoadBalancerStrategyV3 newLoadBalancer(String serviceName,
       Map<String, Object> strategyProperties, Map<String, String> degraderProperties)
   {
     debug(LOG, "created a degrader load balancer strategyV3");

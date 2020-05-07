@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.strategies.degrader;
 
+import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.event.D2MonitorBuilder;
 import com.linkedin.d2.balancer.event.EventEmitter;
@@ -63,7 +64,7 @@ class D2MonitorEventEmitter implements PartitionDegraderLoadBalancerStateListene
   {
     D2MonitorBuilder builder = new D2MonitorBuilder(_serviceName, _config.getClusterName(), _partitionId);
     D2MonitorBuilder.D2MonitorClusterStatsBuilder clusterStatsBuilder = builder.getClusterStatsBuilder();
-    Set<TrackerClient> trackerClients = state.getTrackerClients();
+    Set<DegraderTrackerClient> trackerClients = state.getTrackerClients();
 
     // 1. Set cluster metrics
     clusterStatsBuilder.setClusterNumHosts(trackerClients.size())
@@ -101,7 +102,7 @@ class D2MonitorEventEmitter implements PartitionDegraderLoadBalancerStateListene
         || ((_config.getHighEventEmittingInterval() > 0) && (intervalMs >= _config.getHighEventEmittingInterval())));
   }
 
-  private boolean isClientHealthy(TrackerClient trackerClient, final Map<URI, Integer> pointsMap)
+  private boolean isClientHealthy(DegraderTrackerClient trackerClient, final Map<URI, Integer> pointsMap)
   {
     int perfectHealth = (int) (trackerClient.getPartitionWeight(_partitionId) * _config.getPointsPerWeight());
     return pointsMap.get(trackerClient.getUri()) >= perfectHealth;
@@ -114,13 +115,13 @@ class D2MonitorEventEmitter implements PartitionDegraderLoadBalancerStateListene
    * @param state
    * @return true if all trackerClients are healthy. False otherwise
    */
-  private boolean createD2MonitorEvent(Set<TrackerClient> trackerClients, D2MonitorBuilder d2MonitorBuilder,
+  private boolean createD2MonitorEvent(Set<DegraderTrackerClient> trackerClients, D2MonitorBuilder d2MonitorBuilder,
       PartitionDegraderLoadBalancerState state)
   {
-    List<TrackerClient> healthyClients = new ArrayList<>();
+    List<DegraderTrackerClient> healthyClients = new ArrayList<>();
     boolean isHealthy = true;
 
-    for (TrackerClient client : trackerClients)
+    for (DegraderTrackerClient client : trackerClients)
     {
       if (isClientHealthy(client, state.getPointsMap()))
       {
@@ -143,7 +144,7 @@ class D2MonitorEventEmitter implements PartitionDegraderLoadBalancerStateListene
     return isHealthy;
   }
 
-  private void addRandomClientsToUriInfo(List<TrackerClient> healthyClients, int num, final D2MonitorBuilder builder,
+  private void addRandomClientsToUriInfo(List<DegraderTrackerClient> healthyClients, int num, final D2MonitorBuilder builder,
       PartitionDegraderLoadBalancerState state)
   {
     // Randomly pick num of entries and add their UriInfo.
@@ -153,13 +154,13 @@ class D2MonitorEventEmitter implements PartitionDegraderLoadBalancerStateListene
     for (int i = 0; i < Math.min(num, healthyClients.size()); ++i)
     {
       Collections.swap(healthyClients, i, random.nextInt(healthyClients.size() - i) + i);
-      TrackerClient nextClient = healthyClients.get(i);
+      DegraderTrackerClient nextClient = healthyClients.get(i);
       builder.addUriInfoBuilder(nextClient.getUri(), createUriInfoBuilder(nextClient, state));
     }
   }
 
   // Create UriInfoBuilder from corresponding TrackerClient
-  private D2MonitorBuilder.D2MonitorUriInfoBuilder createUriInfoBuilder(TrackerClient client,
+  private D2MonitorBuilder.D2MonitorUriInfoBuilder createUriInfoBuilder(DegraderTrackerClient client,
       PartitionDegraderLoadBalancerState state)
   {
     D2MonitorBuilder.D2MonitorUriInfoBuilder uriInfoBuilder =

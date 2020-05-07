@@ -31,6 +31,8 @@ import javax.annotation.Nonnull;
 
 public class RandomLoadBalancerStrategy implements LoadBalancerStrategy
 {
+  public static final String RANDOM_STRATEGY_NAME = "random";
+
   private final Random _random;
 
   public RandomLoadBalancerStrategy()
@@ -64,5 +66,11 @@ public class RandomLoadBalancerStrategy implements LoadBalancerStrategy
     }
 
     return null;
+  }
+
+  @Override
+  public String getName()
+  {
+    return RANDOM_STRATEGY_NAME;
   }
 }

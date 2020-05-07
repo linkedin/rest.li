@@ -52,8 +52,8 @@ public class PointBasedConsistentHashRingFactory<T> implements RingFactory<T>
 
   final private Map<T, List<Point<T>>> _ringPoints; // map from object t --> list of points for this object
   private final MessageDigest _md;
+  private final double _hashRingPointCleanUpRate;
   // threshold to clean up old factory points. See clearPoints function
-  private final DegraderLoadBalancerStrategyConfig _config;
   private final int POINTS_CLEANUP_MIN_UNUSED_ENTRY = 3;
   // the partition number of each hash value
   private final int HASH_PARTITION_NUM = 4;
@@ -61,8 +61,13 @@ public class PointBasedConsistentHashRingFactory<T> implements RingFactory<T>
 
   public PointBasedConsistentHashRingFactory(final DegraderLoadBalancerStrategyConfig config)
   {
-    _ringPoints = new HashMap<T, List<Point<T>>>();
-    _config = config;
+    this(config.getHashRingPointCleanUpRate());
+  }
+
+  public PointBasedConsistentHashRingFactory(double hashRingPointCleanUpRate)
+  {
+    _ringPoints = new HashMap<>();
+    _hashRingPointCleanUpRate = hashRingPointCleanUpRate;
 
     try {
       _md = MessageDigest.getInstance("MD5");
@@ -120,7 +125,7 @@ public class PointBasedConsistentHashRingFactory<T> implements RingFactory<T>
   private void clearPoints(int size)
   {
     int unusedEntries = _ringPoints.size() - size;
-    int unusedEntryThreshold = (int)(_ringPoints.size() * _config.getHashRingPointCleanUpRate());
+    int unusedEntryThreshold = (int)(_ringPoints.size() * _hashRingPointCleanUpRate);
     if (unusedEntries > Math.max(unusedEntryThreshold, POINTS_CLEANUP_MIN_UNUSED_ENTRY))
     {
       _ringPoints.clear();

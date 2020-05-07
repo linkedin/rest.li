@@ -1,5 +1,6 @@
 package com.linkedin.d2.balancer.strategies.degrader;
 
+import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.util.degrader.DegraderControl;
 
@@ -16,15 +17,15 @@ import com.linkedin.util.degrader.DegraderControl;
  *
  * For overrideDropRate and overrideMinCallCount, the new values are not used in the state update.
  */
-/*package private*/class TrackerClientUpdater
+/*package private*/class DegraderTrackerClientUpdater
 {
-  private final TrackerClient _trackerClient;
+  private final DegraderTrackerClient _trackerClient;
   private final int _partitionId;
   private double _overrideDropRate;
   private double _maxDropRate;
   private int _overrideMinCallCount;
 
-  TrackerClientUpdater(TrackerClient trackerClient, int partitionId)
+  DegraderTrackerClientUpdater(DegraderTrackerClient trackerClient, int partitionId)
   {
     _trackerClient = trackerClient;
     _partitionId = partitionId;
@@ -34,7 +35,7 @@ import com.linkedin.util.degrader.DegraderControl;
     _maxDropRate = degraderControl.getMaxDropRate();
   }
 
-  TrackerClient getTrackerClient()
+  DegraderTrackerClient getTrackerClient()
   {
     return _trackerClient;
   }

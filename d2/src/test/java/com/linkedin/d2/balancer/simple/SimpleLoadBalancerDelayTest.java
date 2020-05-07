@@ -27,7 +27,7 @@ import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerTest;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
+import com.linkedin.d2.balancer.strategies.degrader.DelegatingRingFactory;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import java.net.URI;
 import java.util.ArrayList;
@@ -161,7 +161,7 @@ public class SimpleLoadBalancerDelayTest
     List<String> prioritizedSchemes = Collections.singletonList("http");
     // enable multi-probe consistent hashing
     Map<String, Object> lbStrategyProperties = new HashMap<>();
-    lbStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
+    lbStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DelegatingRingFactory.MULTI_PROBE_CONSISTENT_HASH);
     lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
     // set initial drop rate and slow start threshold
     Map<String, String> degraderProperties = DegraderLoadBalancerTest.degraderDefaultConfig();
