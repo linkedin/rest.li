@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.balancer.strategies.framework;
 
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -11,26 +27,37 @@ import java.util.Map;
 /**
  * Builder class that helps build different types of {@link LoadBalancerStrategy} with less effort
  */
-class LoadBalancerStrategyDataBuilder {
+class LoadBalancerStrategyDataBuilder
+{
   private final loadBalancerStrategyType _type;
   private final String _serviceName;
-  private final Map<String, Object> _strategyProperties;
+  private Map<String, Object> _v3StrategyProperties = new HashMap<>();
+  private Map<String, String> _v3DegraderProperties = new HashMap<>();
 
-  public LoadBalancerStrategyDataBuilder(final loadBalancerStrategyType type, final String serviceName,
-      final Map<String, Object> strategyProperties) {
+  public LoadBalancerStrategyDataBuilder(final loadBalancerStrategyType type, final String serviceName)
+  {
     _type = type;
     _serviceName = serviceName;
-    _strategyProperties = strategyProperties;
   }
 
-  public LoadBalancerStrategy build() {
-    switch (_type) {
-      case DEGRADER:
-        // TODO: Change the StrategyV3 constructor
-        return new DegraderLoadBalancerStrategyFactoryV3().newLoadBalancer(_serviceName, _strategyProperties, new HashMap<>());
+  public LoadBalancerStrategyDataBuilder setDegraderProperties(Map<String, Object> strategyProperties,
+      Map<String, String> degraderProperties)
+  {
+    _v3StrategyProperties = strategyProperties;
+    _v3DegraderProperties = degraderProperties;
+    return this;
+  }
+
+  public LoadBalancerStrategy build()
+  {
+    switch (_type)
+    {
       case RANDOM:
-      default:
         return new RandomLoadBalancerStrategy();
+      case DEGRADER:
+      default:
+        // TODO: Change the StrategyV3 constructor, add new strategy case
+        return new DegraderLoadBalancerStrategyFactoryV3().newLoadBalancer(_serviceName, _v3StrategyProperties, _v3DegraderProperties);
     }
   }
 }

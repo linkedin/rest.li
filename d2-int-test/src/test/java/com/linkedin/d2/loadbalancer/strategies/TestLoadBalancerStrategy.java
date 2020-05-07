@@ -1,116 +1,105 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.loadbalancer.strategies;
 
-import com.linkedin.d2.balancer.strategies.framework.LatencyQPSCorrelation;
 import com.linkedin.d2.balancer.strategies.framework.LoadBalancerStrategyTestRunner;
 import com.linkedin.d2.balancer.strategies.framework.LoadBalancerStrategyTestRunnerBuilder;
 import com.linkedin.d2.loadBalancerStrategyType;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.testng.annotations.Test;
 
-import static com.linkedin.d2.balancer.properties.PropertyKeys.*;
 import static org.testng.Assert.*;
 
 
 /**
  * Integration tests for all the load balancer strategies
+ * TODO: This file just started with a few tests to verify the test framework, will add more tests
  */
-public class TestLoadBalancerStrategy {
-  private static final String DUMMY_SERVICE_NAME = "dummyService";
+public class TestLoadBalancerStrategy
+{
+  private static final int HEALTHY_POINTS = 100;
+  // Sometimes the points change between 1 and 2
+  private static final int FULLY_DROPPED_POINTS = 2;
 
   @Test
-  public void testStrategyV3HealthPoints() {
-    long healthyLatency = 10L;
-    long unhealthyLatency = 3100L; // For strategyV3, the default highLatency is 3000
-
-    LoadBalancerStrategyTestRunner testRunner = new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.DEGRADER, null, DUMMY_SERVICE_NAME, 5)
-        .addStrategyProperty(HTTP_LB_CONSISTENT_HASH_ALGORITHM, "pointBased")
-        .setNumIntervals(3)
-        .setConstantRequestCount(1000)
-        // Set one host to be unhealthy, the the rest of the hosts to be healthy
-        .setConstantLatency(Arrays.asList(
-            unhealthyLatency,
-            healthyLatency,
-            healthyLatency,
-            healthyLatency,
-            healthyLatency
-        ))
-        .build();
-
+  public void testConstantBadHostWithLatency()
+  {
+    LoadBalancerStrategyTestRunner testRunner =
+        LoadBalancerStrategyTestRunnerBuilder.create1Unhealthy4HealthyHostWithLatency(loadBalancerStrategyType.DEGRADER, 3);
     testRunner.runWait();
     Map<URI, Integer> pointsMap = testRunner.getPoints();
 
     //Verify the unhealthy host has 60 points, and all other hosts have 100 points
     assertEquals(pointsMap.get(testRunner.getUri(0)).intValue(), 60);
-    assertEquals(pointsMap.get(testRunner.getUri(1)).intValue(), 100);
-    assertEquals(pointsMap.get(testRunner.getUri(2)).intValue(), 100);
-    assertEquals(pointsMap.get(testRunner.getUri(3)).intValue(), 100);
-    assertEquals(pointsMap.get(testRunner.getUri(4)).intValue(), 100);
+    assertEquals(pointsMap.get(testRunner.getUri(1)).intValue(), HEALTHY_POINTS);
+    assertEquals(pointsMap.get(testRunner.getUri(2)).intValue(), HEALTHY_POINTS);
+    assertEquals(pointsMap.get(testRunner.getUri(3)).intValue(), HEALTHY_POINTS);
+    assertEquals(pointsMap.get(testRunner.getUri(4)).intValue(), HEALTHY_POINTS);
   }
 
   @Test
-  public void testStrategyV3HealthPointsRecover() {
-    LatencyQPSCorrelation unhealthyLatencyCorrelation = new LatencyQPSCorrelation() {
-      @Override
-      public long getLatency(int requestsPerInterval) {
-        /**
-         * If the weight is evenly distributed, this host will get around 200 requests per interval
-         * If the request count > 180, we will use unhealthy latency
-         * With this latency calculation, we may see the weight going down first and recover after getting less QPS
-         * The latency may go down and up again and again
-         */
-
-        if (requestsPerInterval > 180) {
-          return 2820L + requestsPerInterval;
-        }
-        return 10L;
-      }
-    };
-
-    LatencyQPSCorrelation healthyLatencyCorrelation = new LatencyQPSCorrelation() {
-      @Override
-      public long getLatency(int requestsPerInterval) {
-        return 10L;
-      }
-    };
-
-    LoadBalancerStrategyTestRunner testRunner = new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.DEGRADER, null, DUMMY_SERVICE_NAME, 5)
-        .addStrategyProperty(HTTP_LB_CONSISTENT_HASH_ALGORITHM, "pointBased")
-        .setNumIntervals(100)
-        .setConstantRequestCount(1000)
-        // Set one host to be unhealthy, the the rest of the hosts to be healthy
-        .setDynamicLatency(Arrays.asList(
-            unhealthyLatencyCorrelation,
-            healthyLatencyCorrelation,
-            healthyLatencyCorrelation,
-            healthyLatencyCorrelation,
-            healthyLatencyCorrelation
-        ))
-        .build();
-
+  public void testPointsDropToZeroWithLatency()
+  {
+    LoadBalancerStrategyTestRunner testRunner =
+        LoadBalancerStrategyTestRunnerBuilder.create1GoingBad4HealthyHostWithLatency(loadBalancerStrategyType.DEGRADER, 20);
     testRunner.runWait();
 
-    // Verify the points went down first and went up again (The pattern may repeat multiple times)
-    boolean pointsDropped = false;
-    boolean pointsRecovered = true;
+    // Get the point history for the unhealthy host
     List<Integer> pointHistory = testRunner.getPointHistory().get(testRunner.getUri(0));
-    int pre = pointHistory.get(0);
-    int curr = pointHistory.get(0);
-    for (Integer point : pointHistory) {
-      pre = curr;
-      curr = point;
-      if (curr < pre) {
-        pointsDropped = true;
-      }
-      if (pointsDropped && curr > pre) {
-        pointsRecovered = true;
-      }
-      if (pointsDropped && pointsRecovered) {
-        break;
-      }
-    }
-    assertTrue(pointsDropped && pointsRecovered);
+
+    // The points will drop to lowest in the end
+    assertEquals(pointHistory.get(0).intValue(), HEALTHY_POINTS);
+    assertTrue(pointHistory.get(19).intValue() <= FULLY_DROPPED_POINTS);
+  }
+
+  @Test
+  public void testPointsRecoverToNormalWithLatency()
+  {
+    LoadBalancerStrategyTestRunner testRunner =
+        LoadBalancerStrategyTestRunnerBuilder.create1Receovering4HealthyHostWithLatency(loadBalancerStrategyType.DEGRADER, 30);
+    testRunner.runWait();
+
+    // Get the point history for the unhealthy host
+    List<Integer> pointHistory = testRunner.getPointHistory().get(testRunner.getUri(0));
+
+    // The points will drop first, finally it will recover to 100
+    assertTrue(getLowestPoints(pointHistory) <= FULLY_DROPPED_POINTS);
+    assertEquals(pointHistory.get(29).intValue(), HEALTHY_POINTS);
+  }
+
+  @Test
+  public void testPointsRecoverToNormalWithError()
+  {
+    LoadBalancerStrategyTestRunner testRunner =
+        LoadBalancerStrategyTestRunnerBuilder.create1Receovering4HealthyHostWithError(loadBalancerStrategyType.DEGRADER, 50);
+    testRunner.runWait();
+
+    // Get the point history for the unhealthy host
+    List<Integer> pointHistory = testRunner.getPointHistory().get(testRunner.getUri(0));
+
+    // The points will drop first, finally it will recover to 100
+    assertTrue(getLowestPoints(pointHistory) <= FULLY_DROPPED_POINTS);
+    assertEquals(pointHistory.get(49).intValue(), HEALTHY_POINTS);
+  }
+
+  private int getLowestPoints(List<Integer> pointHistory) {
+    return pointHistory.stream().min(Integer::compareTo)
+        .orElse(HEALTHY_POINTS);
   }
 }

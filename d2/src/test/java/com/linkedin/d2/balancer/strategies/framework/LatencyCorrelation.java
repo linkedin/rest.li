@@ -16,21 +16,17 @@
 
 package com.linkedin.d2.balancer.strategies.framework;
 
-import java.util.List;
-
-
-class FixedRequestCountManager implements RequestCountManager
+/**
+ * Define the correlation between latency, call count and time
+ */
+public interface LatencyCorrelation
 {
-  private final List<Integer> _requestsPerIntervalList;
 
-  FixedRequestCountManager(List<Integer> requestsPerIntervalList)
-  {
-    _requestsPerIntervalList = requestsPerIntervalList;
-  }
-
-  @Override
-  public int getRequestCount(int intervalIndex)
-  {
-    return _requestsPerIntervalList.get(intervalIndex);
-  }
+  /**
+   * Given the requests per interval, calculate the latency
+   * @param requestsPerInterval the number of requests received in the interval
+   * @param intervalIndex the index of the current interval since the test initialization
+   * @return Expected latency
+   */
+  long getLatency(int requestsPerInterval, int intervalIndex);
 }

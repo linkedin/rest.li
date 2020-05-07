@@ -13,7 +13,6 @@ dependencies {
   compile externalDependency.zookeeper
   compile externalDependency.jdkTools
   compile externalDependency.netty
-  testCompile externalDependency.guava
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo
   testCompile project(path: ":d2", configuration: "testArtifacts")

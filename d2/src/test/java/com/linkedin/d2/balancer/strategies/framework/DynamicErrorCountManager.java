@@ -16,21 +16,25 @@
 
 package com.linkedin.d2.balancer.strategies.framework;
 
-import java.util.List;
+import java.net.URI;
+import java.util.Map;
 
 
-class FixedRequestCountManager implements RequestCountManager
+/**
+ * Create dynamic error count using the correlation with call count and the interval index
+ */
+class DynamicErrorCountManager implements ErrorCountManager
 {
-  private final List<Integer> _requestsPerIntervalList;
+  private final Map<URI, ErrorCountCorrelation> _errorCountCalculationMap;
 
-  FixedRequestCountManager(List<Integer> requestsPerIntervalList)
+  DynamicErrorCountManager(Map<URI, ErrorCountCorrelation> errorCountCalculationMap)
   {
-    _requestsPerIntervalList = requestsPerIntervalList;
+    _errorCountCalculationMap = errorCountCalculationMap;
   }
 
   @Override
-  public int getRequestCount(int intervalIndex)
+  public int getErrorCount(URI uri, int hostRequestCount, int intervalIndex)
   {
-    return _requestsPerIntervalList.get(intervalIndex);
+    return _errorCountCalculationMap.get(uri).getErrorCount(hostRequestCount, intervalIndex);
   }
 }

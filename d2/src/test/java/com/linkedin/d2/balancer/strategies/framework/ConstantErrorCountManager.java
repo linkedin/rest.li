@@ -16,21 +16,22 @@
 
 package com.linkedin.d2.balancer.strategies.framework;
 
-import java.util.List;
+import java.net.URI;
+import java.util.Map;
 
 
-class FixedRequestCountManager implements RequestCountManager
+public class ConstantErrorCountManager implements ErrorCountManager
 {
-  private final List<Integer> _requestsPerIntervalList;
+  private Map<URI, Integer> _constantErrorCountMap;
 
-  FixedRequestCountManager(List<Integer> requestsPerIntervalList)
+  public ConstantErrorCountManager(Map<URI, Integer> constantErrorCountMap)
   {
-    _requestsPerIntervalList = requestsPerIntervalList;
+    _constantErrorCountMap = constantErrorCountMap;
   }
 
   @Override
-  public int getRequestCount(int intervalIndex)
+  public int getErrorCount(URI uri, int hostRequestCount, int intervalIndex)
   {
-    return _requestsPerIntervalList.get(intervalIndex);
+    return _constantErrorCountMap.get(uri);
   }
 }

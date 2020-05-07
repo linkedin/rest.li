@@ -1387,6 +1387,15 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     partition.setState(newState);
   }
 
+  /**
+   * Method used to verify the points of URIs in tests
+   * @param partition partition ID
+   * @return A URI to points map
+   */
+  public Map<URI, Integer> getPointsMap(int partition) {
+    return _state.getPartitionState(partition).getPointsMap();
+  }
+
   @Override
   public String toString()
   {
