@@ -20,8 +20,8 @@ branches:
 # Set environment variables (includes Bintray credentials)
 env:
   global:
-    - secure: 'DJbT0+O3W57jxaXmpVvuY4AH5VDqAgvmAwtw9GLK7fHhntmKMh8o43xWU7Tmv5LUPDU/UChXzte5fRPSe75KvkS72Rie02M/MSizO9B9fWGQ5trzWqCqGO4mI38v9e2PfInOWa7R/FA3z1NYas11CulkTXQI+a10po7nzIMrEnM='
-    - secure: 'b4Q5mdqAQJcyuDyvxZK6MiImxho18HteKMDT0UANpIyrFXEfzWKIlB110unofXSXKiI0bAg+ob/PLRULkB/wuj69WasXRiH83+Ao2WpNbWyMoqPwiY/DL8MN0M1RhHbuSMso/O6C34eRImhj5NDcN+nkI+py8pHAq9FNrmQ92O4='
+    - secure: DJbT0+O3W57jxaXmpVvuY4AH5VDqAgvmAwtw9GLK7fHhntmKMh8o43xWU7Tmv5LUPDU/UChXzte5fRPSe75KvkS72Rie02M/MSizO9B9fWGQ5trzWqCqGO4mI38v9e2PfInOWa7R/FA3z1NYas11CulkTXQI+a10po7nzIMrEnM=
+    - secure: b4Q5mdqAQJcyuDyvxZK6MiImxho18HteKMDT0UANpIyrFXEfzWKIlB110unofXSXKiI0bAg+ob/PLRULkB/wuj69WasXRiH83+Ao2WpNbWyMoqPwiY/DL8MN0M1RhHbuSMso/O6C34eRImhj5NDcN+nkI+py8pHAq9FNrmQ92O4=
 
 # Publish a new version on tag push
 deploy:
