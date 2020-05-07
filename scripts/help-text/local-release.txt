@@ -1,0 +1,11 @@
+Usage: ./scripts/local-release [OPTION]...
+Publishes Rest.li's Maven artifacts to ~/local-repo.
+This script must be run from the root project directory.
+
+Options:
+  -h, --help                    print this help text and exit
+  -s, --snapshot                release a snapshot version
+
+Examples:
+  ./scripts/local-release       publish x.y.z artifacts to ~/local-repo
+  ./scripts/local-release -s    publish x.y.z-SNAPSHOT artifacts to ~/local-repo

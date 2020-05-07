@@ -1,20 +1,40 @@
 language: java
-
-# Skip testing for now, since this is experimental
-script: ./gradlew build -x test
-
 jdk:
   - oraclejdk8
 
+# Anything after trusty doesn't have Java 8
 dist: trusty
 
 # Below skips the installation step completely (https://docs.travis-ci.com/user/customizing-the-build/#Skipping-the-Installation-Step)
-# If we don't skip it, Travis runs unnecessary Gradle tasks like './gradlew assemble'
-install:
-  - true
+# If we don't skip it Travis runs unnecessary Gradle tasks like './gradlew assemble'
+install: true
 
-# Only build on master and release tags
+# Build commits to master, PRs to master, and release tags
+# TODO: enable testing once test flakiness is resolved
+script: ./gradlew build -x test
 branches:
   only:
-  - master
-  - /^v\d+\.\d+\.\d+$/
+    - master
+    - /^v\d+\.\d+\.\d+$/
+
+# Set environment variables (includes Bintray credentials)
+env:
+  global:
+    - secure: 'DJbT0+O3W57jxaXmpVvuY4AH5VDqAgvmAwtw9GLK7fHhntmKMh8o43xWU7Tmv5LUPDU/UChXzte5fRPSe75KvkS72Rie02M/MSizO9B9fWGQ5trzWqCqGO4mI38v9e2PfInOWa7R/FA3z1NYas11CulkTXQI+a10po7nzIMrEnM='
+    - secure: 'b4Q5mdqAQJcyuDyvxZK6MiImxho18HteKMDT0UANpIyrFXEfzWKIlB110unofXSXKiI0bAg+ob/PLRULkB/wuj69WasXRiH83+Ao2WpNbWyMoqPwiY/DL8MN0M1RhHbuSMso/O6C34eRImhj5NDcN+nkI+py8pHAq9FNrmQ92O4='
+
+# Publish a new version on tag push
+deploy:
+  provider: script
+  script: scripts/travis/publish-tag.sh
+  on:
+    tags: true
+  # Without this, build artifacts will be cleaned up before deployment
+  skip_cleanup: true
+
+# Send email notifications to the user associated with a tag deployment
+notifications:
+  email:
+    if: tag IS present
+    on_failure: always
+    on_success: always
