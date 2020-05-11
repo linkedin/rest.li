@@ -115,7 +115,7 @@ public class LoadBalancerStrategyTestRunner
     // TODO: Add other strategy types here
     if (_strategy instanceof DegraderLoadBalancerStrategyV3)
     {
-      return ((DegraderLoadBalancerStrategyV3) _strategy).getPointsMap(DEFAULT_PARTITION_ID);
+      return ((DegraderLoadBalancerStrategyV3) _strategy).getState().getPartitionState(DEFAULT_PARTITION_ID).getPointsMap();
     }
     // We should not get points if the strategy is not using hash ring
     return new HashMap<>();
