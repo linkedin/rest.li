@@ -114,11 +114,11 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     return DEGRADER_STRATEGY_NAME;
   }
 
-  private List<DegraderTrackerClient> castToDegraderTrackerClients(List<TrackerClient> trackerClients)
+  private List<DegraderTrackerClient> castToDegraderTrackerClients(Map<URI, TrackerClient> trackerClients)
   {
     List<DegraderTrackerClient> degraderTrackerClients = new ArrayList<>(trackerClients.size());
 
-    for (TrackerClient trackerClient: trackerClients)
+    for (TrackerClient trackerClient: trackerClients.values())
     {
       if (trackerClient instanceof DegraderTrackerClient)
       {
@@ -140,7 +140,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                         RequestContext requestContext,
                                         long clusterGenerationId,
                                         int partitionId,
-                                        List<TrackerClient> trackerClients)
+                                        Map<URI, TrackerClient> trackerClients)
   {
     debug(_log,
           "getTrackerClient with generation id ",
@@ -1079,7 +1079,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
   @Nonnull
   @Override
-  public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
+  public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
   {
     if (trackerClients.isEmpty())
     {

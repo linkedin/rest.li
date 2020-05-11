@@ -25,7 +25,10 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import javax.annotation.Nonnull;
 
@@ -42,7 +45,7 @@ public class RandomLoadBalancerStrategy implements LoadBalancerStrategy
 
   @Nonnull
   @Override
-  public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
+  public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
   {
     throw new UnsupportedOperationException();
   }
@@ -58,11 +61,13 @@ public class RandomLoadBalancerStrategy implements LoadBalancerStrategy
                                         RequestContext requestContext,
                                         long clusterGenerationId,
                                         int partitionId,
-                                        List<TrackerClient> trackerClients)
+                                        Map<URI, TrackerClient> trackerClients)
   {
-    if (trackerClients.size() > 0)
+    int size = trackerClients.size();
+    if (size > 0)
     {
-      return trackerClients.get(_random.nextInt(trackerClients.size()));
+      List<TrackerClient> trackerClientList = new ArrayList<>(trackerClients.values());
+      return trackerClientList.get(_random.nextInt(trackerClients.size()));
     }
 
     return null;
