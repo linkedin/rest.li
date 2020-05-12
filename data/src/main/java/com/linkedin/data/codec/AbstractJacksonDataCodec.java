@@ -115,19 +115,9 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
 
   protected void writeObject(Object object, JsonGenerator generator) throws IOException
   {
-    try
+    try (Data.TraverseCallback callback = createTraverseCallback(generator))
     {
-      Data.TraverseCallback callback = createTraverseCallback(generator);
       Data.traverse(object, callback);
-      generator.flush();
-    }
-    catch (IOException e)
-    {
-      throw e;
-    }
-    finally
-    {
-      DataCodec.closeQuietly(generator);
     }
   }
 
@@ -374,6 +364,13 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     public void endList() throws IOException
     {
       _generator.writeEndArray();
+    }
+
+    @Override
+    public void close() throws IOException
+    {
+      _generator.flush();
+      _generator.close();
     }
   }
 

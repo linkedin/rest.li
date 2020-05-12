@@ -465,9 +465,9 @@ public final class ByteString
    */
   public int feed(ByteArrayFeeder feeder, int index) throws IOException
   {
-    ByteArray byteArray = _byteArrays.get(index);
     if (feeder.needMoreInput())
     {
+      ByteArray byteArray = _byteArrays.get(index);
       // Note that jackson ByteArrayFeeder API takes in end and NOT length.
       int end = byteArray.getOffset() + byteArray.getLength();
       feeder.feedInput(byteArray.getArray(), byteArray.getOffset(), end);
