@@ -110,7 +110,6 @@ public class LoadBalancerStrategyTestRunnerBuilder
   private RequestCountManager _requestCountManager;
   private final loadBalancerStrategyType _type;
   private final ClockedExecutor _clockedExecutor = new ClockedExecutor();
-  private final Object _lock = new Object();
 
   // Performance stats
   private Map<URI, Integer> _currentErrorCountMap = new HashMap<>();
@@ -303,7 +302,7 @@ public class LoadBalancerStrategyTestRunnerBuilder
         .build();
 
     _transportClients = _uris.stream()
-        .map(uri -> new MockTransportClient(_clockedExecutor, _latencyManager, _errorCountManager, uri, INTERVAL_IN_MILLIS, _lock,
+        .map(uri -> new MockTransportClient(_clockedExecutor, _latencyManager, _errorCountManager, uri, INTERVAL_IN_MILLIS,
             _currentErrorCountMap, _lastRequestCountMap, _callCountMap, _latencySumMap))
         .collect(Collectors.toList());
     List<TrackerClient> trackerClients = _transportClients.stream()
@@ -412,7 +411,6 @@ public class LoadBalancerStrategyTestRunnerBuilder
     private final ErrorCountManager _errorCountManager;
     private final URI _uri;
     private final long _intervalMillis;
-    private final Object _lock;
 
     private Map<URI, Integer> _currentErrorCountMap;
     private Map<URI, Integer> _lastRequestCountMap;
@@ -421,7 +419,7 @@ public class LoadBalancerStrategyTestRunnerBuilder
 
     MockTransportClient(
         ClockedExecutor executor, LatencyManager latencyManager, ErrorCountManager errorCountManager, URI uri,
-        long intervalMillis, Object lock, Map<URI, Integer> currentErrorCountMap, Map<URI, Integer> lastRequestCountMap,
+        long intervalMillis, Map<URI, Integer> currentErrorCountMap, Map<URI, Integer> lastRequestCountMap,
         Map<URI, Integer> callCountMap, Map<URI, Long> latencySumMap)
     {
       _clockedExecutor = executor;
@@ -430,7 +428,6 @@ public class LoadBalancerStrategyTestRunnerBuilder
       _uri = uri;
       _intervalMillis = intervalMillis;
 
-      _lock = lock;
       _currentErrorCountMap = currentErrorCountMap;
       _lastRequestCountMap = lastRequestCountMap;
       _callCountMap = callCountMap;
@@ -465,18 +462,15 @@ public class LoadBalancerStrategyTestRunnerBuilder
       }, latency, TimeUnit.MILLISECONDS);
 
       // Collect basic stats
-      synchronized (_lock)
+      if (hasError)
       {
-        if (hasError)
-        {
-          _currentErrorCountMap.putIfAbsent(_uri, 0);
-          _currentErrorCountMap.put(_uri, _currentErrorCountMap.get(_uri) + 1);
-        }
-        _callCountMap.putIfAbsent(_uri, 0);
-        _callCountMap.put(_uri, _callCountMap.get(_uri) + 1);
-        _latencySumMap.putIfAbsent(_uri, 0L);
-        _latencySumMap.put(_uri, _latencySumMap.get(_uri) + latency);
+        _currentErrorCountMap.putIfAbsent(_uri, 0);
+        _currentErrorCountMap.put(_uri, _currentErrorCountMap.get(_uri) + 1);
       }
+      _callCountMap.putIfAbsent(_uri, 0);
+      _callCountMap.put(_uri, _callCountMap.get(_uri) + 1);
+      _latencySumMap.putIfAbsent(_uri, 0L);
+      _latencySumMap.put(_uri, _latencySumMap.get(_uri) + latency);
 
     }
 
