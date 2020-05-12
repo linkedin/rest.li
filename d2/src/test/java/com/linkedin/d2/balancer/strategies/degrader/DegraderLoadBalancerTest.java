@@ -72,6 +72,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nonnull;
+
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -98,8 +99,7 @@ public class DegraderLoadBalancerTest
                                                long clusterGenerationId,
                                                List<DegraderTrackerClient> degraderTrackerClients)
   {
-    List<TrackerClient> trackerClients = degraderTrackerClients == null ? Collections.emptyList() : new ArrayList<>(degraderTrackerClients);
-    return strategy.getTrackerClient(request, requestContext, clusterGenerationId, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, trackerClients);
+    return strategy.getTrackerClient(request, requestContext, clusterGenerationId, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, toMap(degraderTrackerClients));
   }
 
   public static Map<Integer, PartitionData> getDefaultPartitionData(double weight)
@@ -1047,7 +1047,7 @@ public class DegraderLoadBalancerTest
   public void testOneTrackerClientForPartition() throws URISyntaxException
   {
     DegraderLoadBalancerStrategyV3 strategy = getStrategy();
-    List<TrackerClient> clients = new ArrayList<TrackerClient>();
+    Map<URI, TrackerClient> clients = new HashMap<>();
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
     Map<Integer, PartitionData> weightMap = new HashMap<Integer, PartitionData>();
     weightMap.put(0, new PartitionData(1d));
@@ -1056,7 +1056,7 @@ public class DegraderLoadBalancerTest
             new TestLoadBalancerClient(uri1),
             new TestClock(), null);
 
-    clients.add(client);
+    clients.put(client.getUri(), client);
 
     // should always get the only client in the list
     for (int i = 0; i < 1000; ++i)
@@ -1261,8 +1261,8 @@ public class DegraderLoadBalancerTest
   {
     DegraderLoadBalancerStrategyV3 strategy = getStrategy(consistentHashAlgorithm);
 
-    List<TrackerClient> clientsForPartition0 = new ArrayList<TrackerClient>();
-    List<TrackerClient> clientsForPartition1 = new ArrayList<TrackerClient>();
+    Map<URI, TrackerClient> clientsForPartition0 = new HashMap<>();
+    Map<URI, TrackerClient> clientsForPartition1 = new HashMap<>();
     URI uri1 = URI.create("http://someTestService/someTestUrl");
     URI uri2 = URI.create("http://abcxfweuoeueoueoueoukeueoueoueoueoueouo/2354");
     URI uri3 = URI.create("http://slashdot/blah");
@@ -1287,12 +1287,12 @@ public class DegraderLoadBalancerTest
 
 
     final int partitionId0 = 0;
-    clientsForPartition0.add(client1);
-    clientsForPartition0.add(client2);
+    clientsForPartition0.put(client1.getUri(), client1);
+    clientsForPartition0.put(client2.getUri(), client2);
 
     final int partitionId1 = 1;
-    clientsForPartition1.add(client2);
-    clientsForPartition1.add(client3);
+    clientsForPartition1.put(client2.getUri(), client2);
+    clientsForPartition1.put(client3.getUri(), client3);
 
     // force client2 to be disabled
     DegraderControl dcClient2Partition0 = client2.getDegraderControl(0);
@@ -1480,7 +1480,7 @@ public class DegraderLoadBalancerTest
       }
 
       TrackerClient client =
-          strategy.getTrackerClient(null, new RequestContext(), i, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new ArrayList<>(clients));
+          strategy.getTrackerClient(null, new RequestContext(), i, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, toMap(clients));
       assertNotNull(client);
 
       // update the client number
@@ -1490,6 +1490,23 @@ public class DegraderLoadBalancerTest
         numberOfClients -= random.nextInt(numberOfClients / 5);
       }
     }
+  }
+
+  public static Map<URI, TrackerClient> toMap(List<DegraderTrackerClient> trackerClients)
+  {
+    if (trackerClients == null)
+    {
+      return null;
+    }
+
+    Map<URI, TrackerClient> trackerClientMap = new HashMap<>();
+
+    for (TrackerClient trackerClient: trackerClients)
+    {
+      trackerClientMap.put(trackerClient.getUri(), trackerClient);
+    }
+
+    return trackerClientMap;
   }
 
   // Performance test, disabled by default
@@ -1520,7 +1537,7 @@ public class DegraderLoadBalancerTest
     }
     for (int i = 0; i < loopNumber; ++i) {
       TrackerClient client =
-          strategy.getTrackerClient(null, requestContext, 1, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new ArrayList<>(clients));
+          strategy.getTrackerClient(null, requestContext, 1, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, toMap(clients));
       assertNotNull(client);
       Integer count = clientCount.get(client);
       if (count == null) {
@@ -1952,11 +1969,11 @@ public class DegraderLoadBalancerTest
     degraderProperties.put(PropertyKeys.DEGRADER_HIGH_ERROR_RATE, "0.5");
     degraderProperties.put(PropertyKeys.DEGRADER_LOW_ERROR_RATE, "0.2");
     DegraderImpl.Config degraderConfig = DegraderConfigFactory.toDegraderConfig(degraderProperties);
-    final List<TrackerClient> clients = new ArrayList<TrackerClient>();
+    final List<DegraderTrackerClient> clients = new ArrayList<>();
     for (int i = 0; i < numberOfPartitions; i++)
     {
       URI uri = URI.create(baseUri + i);
-      TrackerClient client =   new DegraderTrackerClient(uri,
+      DegraderTrackerClient client = new DegraderTrackerClient(uri,
               getDefaultPartitionData(1, numberOfPartitions),
               new TestLoadBalancerClient(uri), testClock, degraderConfig);
       clients.add(client);
@@ -1987,7 +2004,7 @@ public class DegraderLoadBalancerTest
             {
 
             }
-            strategyV3.getRing(1, partitionId, clients);
+            strategyV3.getRing(1, partitionId, toMap(clients));
             finishLatch.countDown();
           }
         });
@@ -2086,7 +2103,7 @@ public class DegraderLoadBalancerTest
 
 
     // get tracker passing some clients
-    strategy.getRing(1, PARTITION_ID, new ArrayList<>(clients));
+    strategy.getRing(1, PARTITION_ID, toMap(clients));
     String strategyState = strategyV3.getState().getPartition(PARTITION_ID).toString();
 
     // making some calls to enable the properties to update the strategy
@@ -2094,7 +2111,7 @@ public class DegraderLoadBalancerTest
 
     // make another call that should not trigger update state since no clients are passed, even if we made some
     // calls and the clientGenerationId changed
-    Ring<URI> emptyRing = strategy.getRing(2, PARTITION_ID, Collections.emptyList());
+    Ring<URI> emptyRing = strategy.getRing(2, PARTITION_ID, Collections.emptyMap());
 
     String strategyStateEmptyClients = strategyV3.getState().getPartition(PARTITION_ID).toString();
 
@@ -2136,16 +2153,16 @@ public class DegraderLoadBalancerTest
   private List<Runnable> createRaceCondition(final URI uri, Clock clock, final DegraderLoadBalancerStrategyV3 strategy, final CountDownLatch joinLatch)
   {
     final CountDownLatch clientLatch = new CountDownLatch(1);
-    TrackerClient evilClient = new EvilClient(uri, getDefaultPartitionData(1, 2), new TrackerClientTest.TestClient(),
+    DegraderTrackerClient evilClient = new EvilClient(uri, getDefaultPartitionData(1, 2), new TrackerClientTest.TestClient(),
             clock, null, clientLatch);
-    final List<TrackerClient> clients = Collections.singletonList(evilClient);
+    final List<DegraderTrackerClient> clients = Collections.singletonList(evilClient);
     final Runnable update = new Runnable()
     {
       @Override
       public void run()
       {
         // getRing will wait for latch in getPartitionWeight
-        strategy.getRing(1, 0, clients);
+        strategy.getRing(1, 0, toMap(clients));
         joinLatch.countDown();
       }
     };
@@ -2158,7 +2175,7 @@ public class DegraderLoadBalancerTest
         // releases latch for partition 0
         clientLatch.countDown();
         // resize
-        strategy.getRing(1, 1, clients);
+        strategy.getRing(1, 1, toMap(clients));
         joinLatch.countDown();
       }
     };
@@ -2177,14 +2194,14 @@ public class DegraderLoadBalancerTest
                                final long timeInterval)
           throws Exception
   {
-    final List<TrackerClient> client = Collections.<TrackerClient>singletonList(new ErrorClient(1, numberOfPartitions, clock));
+    final List<DegraderTrackerClient> client = Collections.singletonList(new ErrorClient(1, numberOfPartitions, clock));
     final int partitionId = DefaultPartitionAccessor.DEFAULT_PARTITION_ID + numberOfPartitions - 1;
     final Callable<Ring<URI>> getRing = new Callable<Ring<URI>>()
     {
       @Override
       public Ring<URI> call()
       {
-        return strategy.getRing(1L, partitionId, client);
+        return strategy.getRing(1L, partitionId, toMap(client));
       }
     };
     try
@@ -2314,17 +2331,18 @@ public class DegraderLoadBalancerTest
       return "DegraderLoadBalancerStrategyAdapter";
     }
 
+    @Override
     public TrackerClient getTrackerClient(Request request,
                                           RequestContext requestContext,
                                           long clusterGenerationId,
                                           int partitionId,
-                                          List<TrackerClient> trackerClients)
+                                          Map<URI, TrackerClient> trackerClients)
     {
       return _strategy.getTrackerClient(request, requestContext, clusterGenerationId, partitionId, trackerClients);
     }
 
     @Nonnull
-    public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
+    public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
     {
       return _strategy.getRing(clusterGenerationId, partitionId, trackerClients);
     }

@@ -895,13 +895,25 @@ public class SimpleLoadBalancerStateTest
       for (int i = 0; i < 100; i++)
       {
         trackerClient = _myState.getStrategy("service-1", "http").
-                getTrackerClient(null, new RequestContext(), 0, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, _tcList);
+                getTrackerClient(null, new RequestContext(), 0, DefaultPartitionAccessor.DEFAULT_PARTITION_ID, toMap(_tcList));
         if (trackerClient == null)
         {
           badCall++;
         }
       }
       return badCall;
+    }
+
+    private Map<URI, TrackerClient> toMap(List<TrackerClient> trackerClients)
+    {
+      Map<URI, TrackerClient> trackerClientMap = new HashMap<>();
+
+      for (TrackerClient trackerClient: trackerClients)
+      {
+        trackerClientMap.put(trackerClient.getUri(), trackerClient);
+      }
+
+      return trackerClientMap;
     }
   }
 

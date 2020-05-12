@@ -44,10 +44,13 @@ public class RandomLoadBalancerTest
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
     TrackerClient trackerClient1 = Mockito.mock(TrackerClient.class);
     TrackerClient trackerClient2 = Mockito.mock(TrackerClient.class);
-    List<TrackerClient> trackerClients = new ArrayList<TrackerClient>();
+    Map<URI, TrackerClient> trackerClients = new HashMap<>();
 
-    trackerClients.add(trackerClient1);
-    trackerClients.add(trackerClient2);
+    URI uri1 = URI.create("http://cluster-1/test");
+    URI uri2 = URI.create("http://cluster-1/test");
+
+    trackerClients.put(uri1, trackerClient1);
+    trackerClients.put(uri2, trackerClient2);
 
     // test balancer with two clients, both available
     for (int i = 0; i < 100; ++i)
