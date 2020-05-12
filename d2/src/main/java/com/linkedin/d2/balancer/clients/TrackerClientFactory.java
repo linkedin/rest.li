@@ -49,14 +49,7 @@ public class TrackerClientFactory
   private static final int LOG_RATE_MS = 20000;
 
   /**
-   * Creates a {@link TrackerClient}.
-   *
-   * @param uri URI of the server for this client.
-   * @param loadBalancerStrategyName Name of the strategy. eg "degrader"
-   * @param serviceProperties Properties for the service this URI belongs to.
-   * @param uriProperties URI properties.
-   * @param transportClient Inner TransportClient.
-   * @return TrackerClient
+   * @see #createTrackerClient(URI, UriProperties, ServiceProperties, String, TransportClient, Clock)
    */
   public static TrackerClient createTrackerClient(URI uri,
                                            UriProperties uriProperties,
@@ -64,40 +57,61 @@ public class TrackerClientFactory
                                            String loadBalancerStrategyName,
                                            TransportClient transportClient)
   {
+    return createTrackerClient(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, SystemClock.instance());
+  }
+
+  /**
+   * Creates a {@link TrackerClient}.
+   *
+   * @param uri URI of the server for this client.
+   * @param loadBalancerStrategyName Name of the strategy. eg "degrader"
+   * @param serviceProperties Properties for the service this URI belongs to.
+   * @param uriProperties URI properties.
+   * @param transportClient Inner TransportClient.
+   * @param clock Clock used for internal call tracking.
+   * @return TrackerClient
+   */
+  public static TrackerClient createTrackerClient(URI uri,
+                                                  UriProperties uriProperties,
+                                                  ServiceProperties serviceProperties,
+                                                  String loadBalancerStrategyName,
+                                                  TransportClient transportClient,
+                                                  Clock clock)
+  {
     TrackerClient trackerClient;
 
     switch (loadBalancerStrategyName)
     {
       case (DegraderLoadBalancerStrategyV3.DEGRADER_STRATEGY_NAME):
-        trackerClient = createDegraderTrackerClient(uri, uriProperties, serviceProperties,  loadBalancerStrategyName, transportClient);
+        trackerClient = createDegraderTrackerClient(uri, uriProperties, serviceProperties,  loadBalancerStrategyName, transportClient, clock);
         break;
       default:
-        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient);
+        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, clock);
     }
 
     return trackerClient;
   }
 
   private static DegraderTrackerClient createDegraderTrackerClient(URI uri,
-                                                            UriProperties uriProperties,
-                                                            ServiceProperties serviceProperties,
-                                                            String loadBalancerStrategyName,
-                                                            TransportClient transportClient)
+                                                                   UriProperties uriProperties,
+                                                                   ServiceProperties serviceProperties,
+                                                                   String loadBalancerStrategyName,
+                                                                   TransportClient transportClient,
+                                                                   Clock clock)
   {
     DegraderImpl.Config config = null;
-    Clock clock = SystemClock.instance();
-
-    if (serviceProperties.getDegraderProperties() != null && !serviceProperties.getDegraderProperties().isEmpty())
-    {
-      config = DegraderConfigFactory.toDegraderConfig(serviceProperties.getDegraderProperties());
-      config.setLogger(new RateLimitedLogger(LOG, LOG_RATE_MS, clock));
-    }
 
     if (serviceProperties.getLoadBalancerStrategyProperties() != null)
     {
       Map<String, Object> loadBalancerStrategyProperties =
         serviceProperties.getLoadBalancerStrategyProperties();
-      clock = MapUtil.getWithDefault(loadBalancerStrategyProperties, PropertyKeys.CLOCK, SystemClock.instance(), Clock.class);
+      clock = MapUtil.getWithDefault(loadBalancerStrategyProperties, PropertyKeys.CLOCK, clock, Clock.class);
+    }
+
+    if (serviceProperties.getDegraderProperties() != null && !serviceProperties.getDegraderProperties().isEmpty())
+    {
+      config = DegraderConfigFactory.toDegraderConfig(serviceProperties.getDegraderProperties());
+      config.setLogger(new RateLimitedLogger(LOG, LOG_RATE_MS, clock));
     }
 
     long trackerClientInterval = getInterval(loadBalancerStrategyName, serviceProperties);
@@ -165,15 +179,16 @@ public class TrackerClientFactory
   }
 
   private static TrackerClientImpl createTrackerClientImpl(URI uri,
-                                                    UriProperties uriProperties,
-                                                    ServiceProperties serviceProperties,
-                                                    String loadBalancerStrategyName,
-                                                    TransportClient transportClient)
+                                                           UriProperties uriProperties,
+                                                           ServiceProperties serviceProperties,
+                                                           String loadBalancerStrategyName,
+                                                           TransportClient transportClient,
+                                                           Clock clock)
   {
     return new TrackerClientImpl(uri,
                                  uriProperties.getPartitionDataMap(uri),
                                  transportClient,
-                                 SystemClock.instance(),
+                                 clock,
                                  getInterval(loadBalancerStrategyName, serviceProperties),
                                  getErrorStatusPattern(loadBalancerStrategyName, serviceProperties));
   }
