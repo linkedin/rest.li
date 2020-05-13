@@ -18,13 +18,11 @@ package com.linkedin.data.codec.entitystream;
 
 import com.linkedin.data.DataList;
 
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.START_ARRAY;
-
 
 public class JacksonJsonDataListDecoder extends JacksonJsonDataDecoder<DataList>
 {
   public JacksonJsonDataListDecoder()
   {
-    super(START_ARRAY.bitPattern);
+    super(START_ARRAY_TOKEN);
   }
 }

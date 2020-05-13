@@ -26,9 +26,6 @@ import com.linkedin.entitystream.EntityStream;
 import com.linkedin.entitystream.EntityStreams;
 import java.util.concurrent.CompletionStage;
 
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.START_ARRAY;
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.START_OBJECT;
-
 
 /**
  * An {@link StreamDataCodec} for SMILE backed by Jackson's non blocking SMILE parser and generator.
@@ -61,7 +58,8 @@ public class JacksonSmileStreamDataCodec implements StreamDataCodec
   @Override
   public CompletionStage<DataMap> decodeMap(EntityStream<ByteString> entityStream)
   {
-    JacksonSmileDataDecoder<DataMap> decoder = new JacksonSmileDataDecoder<>(_smileFactory, START_OBJECT.bitPattern);
+    JacksonSmileDataDecoder<DataMap> decoder =
+        new JacksonSmileDataDecoder<>(_smileFactory, AbstractDataDecoder.START_OBJECT_TOKEN);
     entityStream.setReader(decoder);
     return decoder.getResult();
   }
@@ -69,7 +67,8 @@ public class JacksonSmileStreamDataCodec implements StreamDataCodec
   @Override
   public CompletionStage<DataList> decodeList(EntityStream<ByteString> entityStream)
   {
-    JacksonSmileDataDecoder<DataList> decoder = new JacksonSmileDataDecoder<>(_smileFactory, START_ARRAY.bitPattern);
+    JacksonSmileDataDecoder<DataList> decoder =
+        new JacksonSmileDataDecoder<>(_smileFactory, AbstractDataDecoder.START_OBJECT_TOKEN);
     entityStream.setReader(decoder);
     return decoder.getResult();
   }

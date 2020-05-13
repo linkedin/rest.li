@@ -16,34 +16,21 @@
 
 package com.linkedin.data.codec.entitystream;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.async.ByteArrayFeeder;
 import com.linkedin.data.ByteString;
-import com.linkedin.data.Data;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.collections.CheckedUtil;
-import com.linkedin.entitystream.ReadHandle;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-
+import com.linkedin.data.parser.NonBlockingDataParser;
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
+import java.util.EnumSet;
 
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.END_ARRAY;
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.END_OBJECT;
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.FIELD_NAME;
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.SIMPLE_VALUE;
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.START_ARRAY;
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.START_OBJECT;
+import static com.linkedin.data.parser.NonBlockingDataParser.Token.*;
 
 
 /**
@@ -54,11 +41,13 @@ import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.To
  *
  * @author kramgopa, xma
  */
-class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T>
+class AbstractJacksonDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
 {
   /**
    * Internal tokens. Each token is presented by a bit in a byte.
+   * Deprecated, use {@link NonBlockingDataParser.Token}
    */
+  @Deprecated
   enum Token
   {
     START_OBJECT(0b00000001),
@@ -76,328 +65,204 @@ class AbstractJacksonDataDecoder<T extends DataComplex> implements DataDecoder<T
     }
   }
 
-  private static final byte VALUE = (byte) (SIMPLE_VALUE.bitPattern | START_OBJECT.bitPattern | START_ARRAY.bitPattern);
-  private static final byte NEXT_OBJECT_FIELD = (byte) (FIELD_NAME.bitPattern | END_OBJECT.bitPattern);
-  private static final byte NEXT_ARRAY_ITEM = (byte) (VALUE | END_ARRAY.bitPattern);
-
   private final JsonFactory _jsonFactory;
-
-  private CompletableFuture<T> _completable;
-  private T _result;
-  private ReadHandle _readHandle;
-
-  private JsonParser _jsonParser;
-  private ByteArrayFeeder _byteArrayFeeder;
-
-  private Deque<DataComplex> _stack;
-  private Deque<String> _currFieldStack;
-  private String _currField;
-  // Expected tokens represented by a bit pattern. Every bit represents a token.
-  private byte _expectedTokens;
-  private boolean _isCurrList;
-
-  private ByteString _currentChunk;
-  private int _currentChunkIndex = -1;
-
   private DataMapBuilder _currDataMapBuilder;
 
+  /**
+   * Deprecated, use {@link #AbstractJacksonDataDecoder(JsonFactory, EnumSet)} instead
+   */
+  @Deprecated
   protected AbstractJacksonDataDecoder(JsonFactory jsonFactory, byte expectedFirstToken)
   {
+    super();
     _jsonFactory = jsonFactory;
-    _completable = new CompletableFuture<>();
-    _result = null;
-    _stack = new ArrayDeque<>();
-    _currFieldStack = new ArrayDeque<>();
-    _expectedTokens = expectedFirstToken;
-    _currDataMapBuilder = new DataMapBuilder();
+    EnumSet<NonBlockingDataParser.Token> expectedDataToken = NONE;
+    if ((expectedFirstToken & Token.START_OBJECT.bitPattern) != 0) {
+      expectedDataToken.add(NonBlockingDataParser.Token.START_OBJECT);
+    }
+    if ((expectedFirstToken & Token.START_ARRAY.bitPattern) != 0) {
+      expectedDataToken.add(NonBlockingDataParser.Token.START_ARRAY);
+    }
+    _expectedTokens = expectedDataToken;
   }
 
   protected AbstractJacksonDataDecoder(JsonFactory jsonFactory)
   {
-    this(jsonFactory, (byte) (START_OBJECT.bitPattern | START_ARRAY.bitPattern));
+    this(jsonFactory, START_TOKENS);
+  }
+
+  protected AbstractJacksonDataDecoder(JsonFactory jsonFactory, EnumSet<NonBlockingDataParser.Token> expectedFirstTokens)
+  {
+    super(expectedFirstTokens);
+    _jsonFactory = jsonFactory;
   }
 
   @Override
-  public void onInit(ReadHandle rh)
+  protected NonBlockingDataParser createDataParser() throws IOException
   {
-    _readHandle = rh;
-
-    try
-    {
-      _jsonParser = _jsonFactory.createNonBlockingByteArrayParser();
-      _byteArrayFeeder = (ByteArrayFeeder)_jsonParser;
-    }
-    catch (IOException e)
-    {
-      handleException(e);
-    }
-
-    _readHandle.request(1);
+    return new JacksonStreamDataParser(_jsonFactory);
   }
 
   @Override
-  public void onDataAvailable(ByteString data)
+  protected DataComplex createDataObject(NonBlockingDataParser parser)
   {
-    // Process chunk incrementally without copying the data in the interest of performance.
-    _currentChunk = data;
-    _currentChunkIndex = 0;
-
-    processCurrentChunk();
+    if (_currDataMapBuilder == null || _currDataMapBuilder.inUse())
+    {
+      _currDataMapBuilder = new DataMapBuilder();
+    }
+    _currDataMapBuilder.setInUse(true);
+    return _currDataMapBuilder;
   }
 
-  private void readNextChunk()
+  @Override
+  protected DataComplex createDataList(NonBlockingDataParser parser)
   {
-    if (_currentChunkIndex == -1)
-    {
-      _readHandle.request(1);
-      return;
-    }
-
-    processCurrentChunk();
+    return new DataList();
   }
 
-  private void processCurrentChunk()
+  @Override
+  protected DataComplex postProcessDataComplex(DataComplex dataComplex)
   {
-    try
+    if (dataComplex instanceof DataMapBuilder)
     {
-      _currentChunkIndex = _currentChunk.feed(_byteArrayFeeder, _currentChunkIndex);
-      processTokens();
+      dataComplex = ((DataMapBuilder) dataComplex).convertToDataMap();
     }
-    catch (IOException e)
-    {
-      handleException(e);
-    }
+    return dataComplex;
   }
 
-  private void processTokens()
+  @Override
+  protected void addEntryToDataObject(DataComplex dataComplex, String currField, Object currValue)
   {
-    try
+    if (dataComplex instanceof DataMapBuilder)
     {
-      JsonToken token;
-      while ((token = _jsonParser.nextToken()) != null)
+      DataMapBuilder dataMapBuilder = (DataMapBuilder) dataComplex;
+      if (dataMapBuilder.smallHashMapThresholdReached())
       {
-        switch (token)
-        {
-          case START_OBJECT:
-            validate(START_OBJECT);
-            // If we are already filling out a DataMap, we cannot reuse _currDataMapBuilder and thus
-            // need to create a new one.
-            if (_currDataMapBuilder.inUse())
-            {
-              _currDataMapBuilder = new DataMapBuilder();
-            }
-            _currDataMapBuilder.setInUse(true);
-            push(_currDataMapBuilder, false);
-            break;
-          case END_OBJECT:
-            validate(END_OBJECT);
-            pop();
-            break;
-          case START_ARRAY:
-            validate(START_ARRAY);
-            push(new DataList(), true);
-            break;
-          case END_ARRAY:
-            validate(END_ARRAY);
-            pop();
-            break;
-          case FIELD_NAME:
-            validate(FIELD_NAME);
-            _currField = _jsonParser.getCurrentName();
-            _expectedTokens = VALUE;
-            break;
-          case VALUE_STRING:
-            validate(SIMPLE_VALUE);
-            addValue(_jsonParser.getText());
-            break;
-          case VALUE_NUMBER_INT:
-          case VALUE_NUMBER_FLOAT:
-            validate(SIMPLE_VALUE);
-            JsonParser.NumberType numberType = _jsonParser.getNumberType();
-            switch (numberType)
-            {
-              case INT:
-                addValue(_jsonParser.getIntValue());
-                break;
-              case LONG:
-                addValue(_jsonParser.getLongValue());
-                break;
-              case FLOAT:
-                addValue(_jsonParser.getFloatValue());
-                break;
-              case DOUBLE:
-                addValue(_jsonParser.getDoubleValue());
-                break;
-              case BIG_INTEGER:
-              case BIG_DECIMAL:
-              default:
-                handleException(new Exception("Unexpected number value type " + numberType + " at " + _jsonParser.getTokenLocation()));
-                break;
-            }
-            break;
-          case VALUE_TRUE:
-            validate(SIMPLE_VALUE);
-            addValue(Boolean.TRUE);
-            break;
-          case VALUE_FALSE:
-            validate(SIMPLE_VALUE);
-            addValue(Boolean.FALSE);
-            break;
-          case VALUE_NULL:
-            validate(SIMPLE_VALUE);
-            addValue(Data.NULL);
-            break;
-          case NOT_AVAILABLE:
-            readNextChunk();
-            return;
-          default:
-            handleException(new Exception("Unexpected token " + token + " at " + _jsonParser.getTokenLocation()));
-        }
-      }
-    }
-    catch (IOException e)
-    {
-      handleException(e);
-    }
-  }
-
-  protected final void validate(Token token)
-  {
-    if ((_expectedTokens & token.bitPattern) == 0)
-    {
-      handleException(new Exception("Expecting " + joinTokens(_expectedTokens) + " but get " + token
-          + " at " + _jsonParser.getTokenLocation()));
-    }
-  }
-
-  private void push(DataComplex dataComplex, boolean isList)
-  {
-    if (!(_isCurrList || _stack.isEmpty()))
-    {
-      _currFieldStack.push(_currField);
-    }
-    _stack.push(dataComplex);
-    _isCurrList = isList;
-    updateExpected();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void pop()
-  {
-    // The stack should never be empty because of token validation.
-    assert !_stack.isEmpty() : "Trying to pop empty stack at " + _jsonParser.getTokenLocation();
-
-    DataComplex tmp = _stack.pop();
-
-    if (tmp instanceof DataMapBuilder)
-    {
-      tmp = ((DataMapBuilder) tmp).convertToDataMap();
-    }
-
-    if (_stack.isEmpty())
-    {
-      _result = (T) tmp;
-      // No more tokens is expected.
-      _expectedTokens = 0;
-    }
-    else
-    {
-      _isCurrList = _stack.peek() instanceof DataList;
-      if (!_isCurrList)
-      {
-        _currField = _currFieldStack.pop();
-      }
-      addValue(tmp);
-      updateExpected();
-    }
-  }
-
-  protected void addValue(Object value)
-  {
-    if (!_stack.isEmpty())
-    {
-      DataComplex currItem = _stack.peek();
-      if (_isCurrList)
-      {
-        CheckedUtil.addWithoutChecking((DataList) currItem, value);
+        DataMap dataMap = dataMapBuilder.convertToDataMap();
+        replaceObjectStackTop(dataMap);
+        CheckedUtil.putWithoutChecking(dataMap, currField, currValue);
       }
       else
       {
-        if (currItem instanceof DataMapBuilder)
-        {
-          DataMapBuilder dataMapBuilder = (DataMapBuilder) currItem;
-          if (dataMapBuilder.smallHashMapThresholdReached())
-          {
-            _stack.pop();
-            DataMap dataMap = dataMapBuilder.convertToDataMap();
-            _stack.push(dataMap);
-            CheckedUtil.putWithoutChecking(dataMap, _currField, value);
-          }
-          else
-          {
-            dataMapBuilder.addKVPair(_currField, value);
-          }
-        }
-        else
-        {
-          CheckedUtil.putWithoutChecking((DataMap) currItem, _currField, value);
-        }
+        dataMapBuilder.addKVPair(currField, currValue);
       }
-
-      updateExpected();
-    }
-  }
-
-  protected void updateExpected()
-  {
-    _expectedTokens = _isCurrList ? NEXT_ARRAY_ITEM : NEXT_OBJECT_FIELD;
-  }
-
-  @Override
-  public void onDone()
-  {
-    // We must signal to the parser the end of the input and pull any remaining token, even if it's unexpected.
-    _byteArrayFeeder.endOfInput();
-    processTokens();
-
-    if (_stack.isEmpty())
-    {
-      _completable.complete(_result);
     }
     else
     {
-      handleException(new Exception("Unexpected end of source at " + _jsonParser.getTokenLocation()));
+      CheckedUtil.putWithoutChecking((DataMap) dataComplex, currField, currValue);
     }
   }
 
-  @Override
-  public void onError(Throwable e)
+  class JacksonStreamDataParser implements NonBlockingDataParser
   {
-    _completable.completeExceptionally(e);
-  }
+    private final JsonParser _jsonParser;
+    private final ByteArrayFeeder _byteArrayFeeder;
+    private JsonToken _previousTokenReturned;
 
-  @Override
-  public CompletionStage<T> getResult()
-  {
-    return _completable;
-  }
+    public JacksonStreamDataParser(JsonFactory jsonFactory) throws IOException
+    {
+      _jsonParser = jsonFactory.createNonBlockingByteArrayParser();
+      _byteArrayFeeder = (ByteArrayFeeder) _jsonParser;
+    }
 
-  protected void handleException(Throwable e)
-  {
-    _readHandle.cancel();
-    _completable.completeExceptionally(e);
-  }
+    @Override
+    public void feedInput(byte[] data, int offset, int len) throws IOException
+    {
+      if(_byteArrayFeeder.needMoreInput())
+      {
+        _byteArrayFeeder.feedInput(data, offset, offset + len);
+      }
+      else
+      {
+        throw new IOException("Invalid state: Parser cannot accept more data");
+      }
+    }
 
-  /**
-   * Build a string for the tokens represented by the bit pattern.
-   */
-  private String joinTokens(byte tokens)
-  {
-    return tokens == 0
-        ? "no tokens"
-        : Arrays.stream(Token.values())
-            .filter(token -> (tokens & token.bitPattern) > 0)
-            .map(Token::name)
-            .collect(Collectors.joining(", "));
+    @Override
+    public void endOfInput()
+    {
+      _byteArrayFeeder.endOfInput();
+    }
+
+    @Override
+    public NonBlockingDataParser.Token nextToken() throws IOException
+    {
+      _previousTokenReturned = _jsonParser.nextToken();
+      if (_previousTokenReturned == null)
+      {
+        return EOF_INPUT;
+      }
+      switch (_previousTokenReturned)
+      {
+        case START_OBJECT:
+          return START_OBJECT;
+        case END_OBJECT:
+          return END_OBJECT;
+        case START_ARRAY:
+          return START_ARRAY;
+        case END_ARRAY:
+          return END_ARRAY;
+        case FIELD_NAME:
+        case VALUE_STRING:
+          return STRING;
+        case VALUE_NUMBER_INT:
+        case VALUE_NUMBER_FLOAT:
+          JsonParser.NumberType numberType = _jsonParser.getNumberType();
+          switch (numberType)
+          {
+            case INT:
+              return INTEGER;
+            case LONG:
+              return LONG;
+            case FLOAT:
+              return FLOAT;
+            case DOUBLE:
+              return DOUBLE;
+            default:
+              throw new IOException(
+                  "Unexpected number value type " + numberType + " at " + _jsonParser.getTokenLocation());
+          }
+        case VALUE_TRUE:
+          return BOOL_TRUE;
+        case VALUE_FALSE:
+          return BOOL_FALSE;
+        case VALUE_NULL:
+          return NULL;
+        case NOT_AVAILABLE:
+          return NOT_AVAILABLE;
+        default:
+          throw new IOException("Unexpected token " + _previousTokenReturned + " at " + _jsonParser.getTokenLocation());
+      }
+    }
+
+    @Override
+    public String getString() throws IOException {
+      return _previousTokenReturned == JsonToken.FIELD_NAME ? _jsonParser.getCurrentName() : _jsonParser.getText();
+    }
+
+    @Override
+    public ByteString getRawBytes() throws IOException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getIntValue() throws IOException {
+      return _jsonParser.getIntValue();
+    }
+
+    @Override
+    public long getLongValue() throws IOException {
+      return _jsonParser.getLongValue();
+    }
+
+    @Override
+    public float getFloatValue() throws IOException {
+      return _jsonParser.getFloatValue();
+    }
+
+    @Override
+    public double getDoubleValue() throws IOException {
+      return _jsonParser.getDoubleValue();
+    }
   }
 }

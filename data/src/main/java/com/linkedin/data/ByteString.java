@@ -19,6 +19,7 @@ package com.linkedin.data;
 
 
 import com.fasterxml.jackson.core.async.ByteArrayFeeder;
+import com.linkedin.data.parser.NonBlockingDataParser;
 import com.linkedin.data.protobuf.ProtoReader;
 import com.linkedin.data.protobuf.ProtoWriter;
 import com.linkedin.data.protobuf.Utf8Utils;
@@ -477,6 +478,25 @@ public final class ByteString
       throw new IOException("Byte Array Feeder is not ok to feed more data.");
     }
 
+    int returnIndex = index + 1;
+    return returnIndex < _byteArrays.getArraySize() ? returnIndex : -1;
+  }
+
+  /**
+   * Feeds a chunk of this {@link ByteString} to a {@link NonBlockingDataParser}
+   * without copying the underlying byte[].
+   *
+   * @param parser the feeder to feed the bytes to
+   * @param index the index of the chunk to feed
+   *
+   * @throws IOException if an error occurs while writing to the feeder
+   *
+   * @return The next index to feed or -1 if no more indices are left to feed.
+   */
+  public int feed(NonBlockingDataParser parser, int index) throws IOException
+  {
+    ByteArray byteArray = _byteArrays.get(index);
+    parser.feedInput(byteArray.getArray(), byteArray.getOffset(), byteArray.getLength());
     int returnIndex = index + 1;
     return returnIndex < _byteArrays.getArraySize() ? returnIndex : -1;
   }
