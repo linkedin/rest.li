@@ -186,12 +186,12 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
 
   protected boolean isBadLocation(DataSchemaLocation location)
   {
-    return _badLocations.contains(location);
+    return _badLocations.contains(location.getLightweightRepresentation());
   }
 
   protected boolean addBadLocation(DataSchemaLocation location)
   {
-    return _badLocations.add(location);
+    return _badLocations.add(location.getLightweightRepresentation());
   }
 
   @Override
@@ -349,7 +349,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
       errorMessageBuilder.append(parser.errorMessageBuilder());
       errorMessageBuilder.append("Done parsing ").append(location).append(".\n");
 
-      _badLocations.add(location);
+      addBadLocation(location);
     }
     else
     {
@@ -366,7 +366,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
   private final Map<String, NamedDataSchema> _nameToDataSchema = new HashMap<String, NamedDataSchema>();
   private final Map<String, DataSchemaLocation> _nameToDataSchemaLocations = new HashMap<String, DataSchemaLocation>();
   private final DataSchemaParserFactory _parserFactory;
-  private final Set<DataSchemaLocation> _badLocations = new HashSet<DataSchemaLocation>();
+  private final Set<DataSchemaLocation> _badLocations = new HashSet<>();
   private final Set<DataSchemaLocation> _resolvedLocations = new HashSet<DataSchemaLocation>();
   // Map of pending records with the boolean flag indicating if includes are being processed for that schema.
   private final LinkedHashMap<String, Boolean> _pendingSchemas = new LinkedHashMap<>();

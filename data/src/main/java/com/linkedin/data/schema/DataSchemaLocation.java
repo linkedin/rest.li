@@ -36,6 +36,19 @@ public interface DataSchemaLocation
    */
   File getSourceFile();
 
+  /**
+   * Return {@link DataSchemaLocation} that is a lightweight representation of this location for storing in-memory.
+   *
+   * For example, {@link com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation}
+   * contains an entire Jar-file in it's impl; this isn't necessary for storing as a {@link DataSchemaLocation},
+   * so it could return a lighter-weight implementation.
+   *
+   * @return a light-weight representation of this DataSchemaLocation. Default is {@code this}
+   */
+  default DataSchemaLocation getLightweightRepresentation() {
+    return this;
+  }
+
   final DataSchemaLocation NO_LOCATION = new DataSchemaLocation()
   {
     @Override
