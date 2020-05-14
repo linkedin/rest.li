@@ -47,7 +47,7 @@ public class RandomLoadBalancerTest
     Map<URI, TrackerClient> trackerClients = new HashMap<>();
 
     URI uri1 = URI.create("http://cluster-1/test");
-    URI uri2 = URI.create("http://cluster-1/test");
+    URI uri2 = URI.create("http://cluster-2/test");
 
     trackerClients.put(uri1, trackerClient1);
     trackerClients.put(uri2, trackerClient2);

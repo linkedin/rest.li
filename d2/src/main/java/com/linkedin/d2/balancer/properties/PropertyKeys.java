@@ -66,6 +66,7 @@ public class PropertyKeys
   public static final String DEFAULT_ROUTING = "defaultRouting";
   public static final String ALLOWED_CLIENT_OVERRIDE_KEYS = "allowedClientOverrideKeys";
   public static final String SERVICE_METADATA_PROPERTIES = "serviceMetadataProperties";
+  public static final String RELATIVE_STRATEGY_PROPERTIES = "relativeStrategyProperties";
 
   //load balancer specific properties
   public static final String LB_STRATEGY_LIST = "loadBalancerStrategyList";
