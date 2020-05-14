@@ -72,8 +72,8 @@ class HttpChannelInitializer extends ChannelInitializer<NioSocketChannel>
   private final int _maxInitialLineLength;
   private final int _maxHeaderSize;
   private final int _maxChunkSize;
-  private final int _maxContentLength;
   private final int _sslHandShakeTimeout;
+  private final long _maxContentLength;
   private final boolean _ssl;
   private final boolean _enableSSLSessionResumption;
 
@@ -86,7 +86,7 @@ class HttpChannelInitializer extends ChannelInitializer<NioSocketChannel>
     _maxInitialLineLength = maxInitialLineLength;
     _maxHeaderSize = maxHeaderSize;
     _maxChunkSize = maxChunkSize;
-    _maxContentLength = maxContentLength > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxContentLength;
+    _maxContentLength = maxContentLength;
     _sslHandShakeTimeout = sslHandShakeTimeout;
     _ssl = _sslContext != null && _sslParameters != null;
     _enableSSLSessionResumption = enableSSLSessionResumption;

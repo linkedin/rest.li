@@ -1334,9 +1334,6 @@ public class HttpClientFactory implements TransportClientFactory
     ChannelPoolManagerKey key = createChannelPoolManagerKey(properties, null, null);
     ChannelPoolManagerKey sslKey = createChannelPoolManagerKey(properties, sslContext, sslParameters);
 
-    String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
-    LOG.info("The service '{}' has been assigned to the ChannelPoolManager with key '{}' ", httpServiceName, key.getName());
-
     // Raw Client properties
     int shutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT), DEFAULT_SHUTDOWN_TIMEOUT);
     int requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
@@ -1351,8 +1348,12 @@ public class HttpClientFactory implements TransportClientFactory
       }
     }
 
+    String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
     HttpProtocolVersion httpProtocolVersion =
       chooseNewOverDefault(getHttpProtocolVersion(properties, HTTP_PROTOCOL_VERSION), _defaultHttpVersion);
+
+    LOG.info("The service '{}' has been assigned to the ChannelPoolManager with key '{}', http.protocolVersion={}, usePipelineV2={}, requestTimeout={}ms, streamingTimeout={}ms",
+             httpServiceName, key.getName(), httpProtocolVersion, _usePipelineV2, requestTimeout, streamingTimeout);
 
     if (_usePipelineV2)
     {
