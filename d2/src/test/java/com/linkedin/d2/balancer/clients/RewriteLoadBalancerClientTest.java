@@ -17,7 +17,7 @@
 package com.linkedin.d2.balancer.clients;
 
 
-import com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient;
+import com.linkedin.d2.balancer.clients.TestClient;
 import com.linkedin.d2.balancer.clients.TrackerClientTest.TestTransportCallback;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;

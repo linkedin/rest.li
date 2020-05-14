@@ -65,42 +65,6 @@ def manipulatePomXml = {
   } else {
     children.last() + pomConfig
   }
-
-  // Hack to ensure that test dependencies are maintained if test artifacts are published
-  // TODO: remove this once test artifacts are migrated to a separate module
-  if (project.configurations.testArtifacts.visible) {
-    if (!root.dependencies) {
-      root.appendNode('dependencies')
-    }
-
-    def dependencies = root.dependencies.first()
-    ['testCompile', 'testRuntime'].forEach { testConfiguration ->
-      project.configurations.getByName(testConfiguration).dependencies.forEach {
-        // Manually add dependency node
-        def dependency = dependencies.appendNode('dependency')
-        dependency.appendNode('groupId', it.group)
-        dependency.appendNode('artifactId', it.name)
-        dependency.appendNode('version', it.version)
-        dependency.appendNode('scope', 'test')
-        if (it.getTargetConfiguration() == 'testArtifacts') {
-          dependency.appendNode('classifier', 'tests')
-        }
-
-        // Manually add exclusions for this dependency
-        def excludeRules = new HashSet<>();
-        excludeRules.addAll it.excludeRules // dependency-specific exclusions
-        excludeRules.addAll project.configurations.getByName(testConfiguration).excludeRules // configuration exclusions
-        if (excludeRules) {
-          def exclusions = dependency.appendNode('exclusions')
-          excludeRules.forEach { excludeRule ->
-            def exclusion = exclusions.appendNode('exclusion')
-            exclusion.appendNode('artifactId', excludeRule.module)
-            exclusion.appendNode('groupId', excludeRule.group)
-          }
-        }
-      }
-    }
-  }
 }
 
 publishing {
@@ -112,12 +76,6 @@ publishing {
         // Add all extra archives (sources, javadoc, any custom archives e.g. all)
         project.configurations.archives.allArtifacts.forEach {
           if (it.classifier) {
-            artifact it
-          }
-        }
-        // Add test artifacts for sub-projects that explicitly make them visible
-        if (project.configurations.testArtifacts.visible) {
-          project.configurations.testArtifacts.allArtifacts.forEach {
             artifact it
           }
         }
@@ -157,10 +115,9 @@ bintray {
 task assertArtifactsExist() {
   doLast {
     final Set<File> missingArtifacts = configurations.archives.allArtifacts.file.findAll { !it.exists() }
-    final Set<File> missingTestArtifacts = configurations.testArtifacts.allArtifacts.file.findAll { !it.exists() }
-    if (missingArtifacts || (configurations.testArtifacts.visible && missingTestArtifacts)) {
+    if (missingArtifacts) {
       throw new GradleException(
-          "Cannot perform Bintray upload. The project likely hasn't been built. Missing artifacts ${missingArtifacts + missingTestArtifacts}")
+          "Cannot perform Bintray upload. The project likely hasn't been built. Missing artifacts ${missingArtifacts}")
     }
   }
 }

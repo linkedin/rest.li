@@ -15,7 +15,8 @@ dependencies {
   compile externalDependency.netty
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo
-  testCompile project(path: ":d2", configuration: "testArtifacts")
+  testCompile project(path: ':d2', configuration: 'testArtifacts')
+  testCompile project(':d2-test-api')
   testRuntime project(':r2-jetty')
 }
 

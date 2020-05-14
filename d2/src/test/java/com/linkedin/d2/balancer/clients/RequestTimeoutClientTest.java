@@ -38,7 +38,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient.DEFAULT_REQUEST_TIMEOUT;
+import static com.linkedin.d2.balancer.clients.TestClient.DEFAULT_REQUEST_TIMEOUT;
 import static org.testng.Assert.assertNull;
 
 

@@ -14,10 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.d2.discovery.stores.zk;
 
 import java.io.File;
@@ -32,9 +28,7 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 /**
  * Very simple wrapper around ZooKeeper server, intended only for TEST use.
  * @author Steven Ihde
- * @version $Revision: $
  */
-
 public class ZKServer
 {
   private volatile ZooKeeperServer _zk;
