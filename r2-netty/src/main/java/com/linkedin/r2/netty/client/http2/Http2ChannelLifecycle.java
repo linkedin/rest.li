@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
 class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
 {
   private static final Logger LOG = LoggerFactory.getLogger(Http2ChannelLifecycle.class);
-  public static final int DEFAULT_OBJECT_CREATION_TIMEOUT = 10000;
+  public static final int DEFAULT_CHANNEL_CREATION_TIMEOUT_MS = 10000;
 
   private final SocketAddress _address;
   private final ScheduledExecutorService _scheduler;
@@ -62,7 +62,7 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
   private final long _maxContentLength;
   private final long _idleTimeout;
   private AsyncPool.Lifecycle<Channel> _parentChannelLifecycle;
-  private final long _creationTimeout;
+  private final long _channelCreationTimeoutMs;
 
   /**
    * Read and write to the following members should be synchronized by this lock.
@@ -89,7 +89,7 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
     _parentChannelLifecycle = parentChannelLifecycle;
     _childChannelCount = 0;
     _lastActiveTime = _clock.currentTimeMillis();
-    _creationTimeout = DEFAULT_OBJECT_CREATION_TIMEOUT; // TODO: expose this through cfg2
+    _channelCreationTimeoutMs = DEFAULT_CHANNEL_CREATION_TIMEOUT_MS; // TODO: expose this through cfg2
     _scheduler.scheduleAtFixedRate(this::closeParentIfIdle, idleTimeout, idleTimeout, TimeUnit.MILLISECONDS);
   }
 
@@ -194,7 +194,7 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
     // Lets not trust the _parentChannelLifecycle to timely return a response here.
     // Embedding the callback inside a timeout callback (ObjectCreationTimeoutCallback)
     // to force a response within creationTimeout deadline
-    _parentChannelLifecycle.create(new TimeoutCallback<>(_scheduler, _creationTimeout, TimeUnit.MILLISECONDS, new Callback<Channel>() {
+    _parentChannelLifecycle.create(new TimeoutCallback<>(_scheduler, _channelCreationTimeoutMs, TimeUnit.MILLISECONDS, new Callback<Channel>() {
       @Override
       public void onError(Throwable error)
       {
@@ -216,7 +216,7 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
         });
       }
     }, new ObjectCreationTimeoutException(
-      "HTTP/2 parent channel creation Exceeded creation timeout of " + _creationTimeout)));
+      "HTTP/2 parent channel creation Exceeded creation timeout of " + _channelCreationTimeoutMs)));
   }
 
   /**
