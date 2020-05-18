@@ -820,9 +820,6 @@ Every parameter of a finder method must be annotated with one of:
     obtained from a request query parameter. The value of the annotation
     indicates the name of the query parameter. Duplicate names are not
     allowed for the same finder method.
--   `@ActionParam` - similar to Query Param, but the parameter
-    information will be located in the request body. Generally,
-    `@QueryParam` is preferred over `@ActionParam`.
 -   `@AssocKey` - indicates that the value of the parameter is a partial
     association key, obtained from the request. The value of the
     annotation indicates the name of the association key, which must
