@@ -19,7 +19,9 @@ package com.linkedin.r2.netty.client.http2;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.transport.http.client.AsyncPool;
+import com.linkedin.r2.transport.http.client.ObjectCreationTimeoutException;
 import com.linkedin.r2.transport.http.client.PoolStats;
+import com.linkedin.r2.transport.http.client.TimeoutCallback;
 import com.linkedin.util.clock.Clock;
 import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
@@ -51,6 +53,7 @@ import org.slf4j.LoggerFactory;
 class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
 {
   private static final Logger LOG = LoggerFactory.getLogger(Http2ChannelLifecycle.class);
+  public static final int DEFAULT_CHANNEL_CREATION_TIMEOUT_MS = 10000;
 
   private final SocketAddress _address;
   private final ScheduledExecutorService _scheduler;
@@ -58,6 +61,7 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
   private final boolean _ssl;
   private final long _maxContentLength;
   private final long _idleTimeout;
+  private final long _channelCreationTimeoutMs;
   private AsyncPool.Lifecycle<Channel> _parentChannelLifecycle;
 
   /**
@@ -83,6 +87,7 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
     _idleTimeout = idleTimeout;
     _parentChannelLifecycle = parentChannelLifecycle;
     _childChannelCount = 0;
+    _channelCreationTimeoutMs = DEFAULT_CHANNEL_CREATION_TIMEOUT_MS; // TODO: expose this through cfg2
 
     _lastActiveTime = _clock.currentTimeMillis();
     _scheduler.scheduleAtFixedRate(this::closeParentIfIdle, idleTimeout, idleTimeout, TimeUnit.MILLISECONDS);
@@ -186,11 +191,20 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
    */
   private void doBootstrapParentChannel(Callback<Channel> callback)
   {
-    _parentChannelLifecycle.create(new Callback<Channel>() {
+    // Lets not trust the _parentChannelLifecycle to timely return a response here.
+    // Embedding the callback inside a timeout callback (ObjectCreationTimeoutCallback)
+    // to force a response within creationTimeout deadline
+    _parentChannelLifecycle.create(new TimeoutCallback<>(_scheduler, _channelCreationTimeoutMs, TimeUnit.MILLISECONDS, new Callback<Channel>() {
       @Override
       public void onError(Throwable error)
       {
         callback.onError(error);
+
+        // Make sure to log the object creation timeout error
+        if (error instanceof ObjectCreationTimeoutException)
+        {
+          LOG.error(error.getMessage(), error);
+        }
       }
 
       @Override
@@ -207,7 +221,8 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
           }
         });
       }
-    });
+    }, new ObjectCreationTimeoutException(
+    "Exceeded creation timeout of " + _channelCreationTimeoutMs + "ms: for HTTP/2 parent channel, remote=" + _address)));
   }
 
   /**
