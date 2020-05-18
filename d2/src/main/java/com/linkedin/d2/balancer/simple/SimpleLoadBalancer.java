@@ -39,6 +39,7 @@ import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
+import com.linkedin.d2.balancer.util.HostOverrideList;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.KeysAndHosts;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
@@ -84,6 +85,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.warn;
 public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider, WarmUpService,
                                            ClusterInfoProvider
 {
+  private static final String HOST_OVERRIDE_LIST = "HOST_OVERRIDE_LIST";
   private static final Logger     _log =
                                            LoggerFactory.getLogger(SimpleLoadBalancer.class);
   private static final String     D2_SCHEME_NAME = "d2";
@@ -177,10 +179,17 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
         // Check if we want to override the service URL and bypass choosing among the existing
         // tracker clients. This is useful when the service we want is not announcing itself to
-        // the cluster, ie a private service for a set of clients.
+        // the cluster, ie a private service for a set of clients. This mechanism is deprecated;
+        // use host override list instead.
+        @SuppressWarnings("deprecation")
         URI targetService = LoadBalancerUtil.TargetHints.getRequestContextTargetService(requestContext);
 
-        if (targetService == null)
+        // Checks if we have a host override list provided in the request context. If present,
+        // get the override URI available override for the current cluster and service names.
+        HostOverrideList overrides = (HostOverrideList) requestContext.getLocalAttr(HOST_OVERRIDE_LIST);
+        URI override = overrides == null ? null : overrides.getOverride(clusterName, serviceName);
+
+        if (targetService == null && override == null)
         {
           LoadBalancerStateItem<UriProperties> uriItem = getUriItem(serviceName, clusterName, cluster);
           UriProperties uris = uriItem.getProperty();
@@ -201,16 +210,26 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         }
         else
         {
-          _log.debug("service hint found, using generic client for target: {}", targetService);
+          URI target = override == null ? targetService : URI.create(override + service.getPath());
+          if (targetService != null && override != null)
+          {
+            _log.warn("Both TargetHints and HostOverrideList are found. HostOverList will take precedence %s.", target);
+          }
 
-          TransportClient transportClient = _state.getClient(serviceName, targetService.getScheme());
+          if (_log.isDebugEnabled())
+          {
+            _log.debug("Rewrite URI as specified in the TargetHints/HostOverrideList {} for cluster {} and service {}.",
+                target, clusterName, serviceName);
+          }
+          TransportClient transportClient = _state.getClient(serviceName, target.getScheme());
           if (transportClient == null)
           {
-            throw new ServiceUnavailableException(serviceName,
-                "PEGA_1001. Cannot find transportClient for service " + serviceName + " and scheme: " + targetService.getScheme()
-                    + " with service hint" + targetService);
+            throw new ServiceUnavailableException(serviceName, String.format(
+                    "PEGA_1001. Cannot find transportClient for service %s and scheme %s with URI specified in"
+                        + "TargetHints/HostOverrideList %s", serviceName, target.getScheme(), target));
           }
-          clientCallback.onSuccess(new RewriteLoadBalancerClient(serviceName, targetService, transportClient));
+
+          clientCallback.onSuccess(new RewriteLoadBalancerClient(serviceName, target, transportClient));
         }
       }
       catch (ServiceUnavailableException e)

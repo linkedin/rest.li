@@ -211,10 +211,13 @@ public class LoadBalancerUtil
     }
   }
 
+  /**
+   * @deprecated Use {@link HostOverrideList} instead.
+   */
+  @Deprecated
   public static class TargetHints
   {
     public static final String TARGET_SERVICE_KEY_NAME = "D2-Hint-TargetService";
-
 
     /**
      * Inserts a hint in RequestContext instructing D2 to bypass normal hashing behavior

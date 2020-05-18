@@ -49,6 +49,7 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
+import com.linkedin.d2.balancer.util.HostOverrideList;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.KeysAndHosts;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
@@ -120,6 +121,7 @@ import static org.testng.Assert.fail;
 
 public class SimpleLoadBalancerTest
 {
+  private static final String HOST_OVERRIDE_LIST = "HOST_OVERRIDE_LIST";
   private static final String CLUSTER1_NAME = "cluster-1";
   private static final String DARK_CLUSTER1_NAME = CLUSTER1_NAME + "-dark";
   private static final String NONEXISTENT_CLUSTER = "nonexistent_cluster";
@@ -557,6 +559,7 @@ public class SimpleLoadBalancerTest
    * @throws Exception
    */
   @Test (expectedExceptions = ServiceUnavailableException.class)
+  @SuppressWarnings("deprecation")
   public void testGetClient() throws Exception
   {
 
@@ -621,6 +624,112 @@ public class SimpleLoadBalancerTest
 
     URIRequest uriRequest = new URIRequest("d2://foo");
     loadBalancer.getClient(uriRequest, requestContextWithHint);
+  }
+
+  /**
+   * Tests getClient() when with host override list specified in the request context.
+   * @throws Exception
+   */
+  @Test
+  public void testGetClientHostOverrideList() throws Exception
+  {
+    Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
+        new HashMap<>();
+    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
+    List<String> prioritizedSchemes = new ArrayList<>();
+
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+
+    ScheduledExecutorService executorService = new SynchronousExecutorService();
+
+    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
+    clientFactories.put(PropertyKeys.HTTP_SCHEME, new DoNothingClientFactory());
+
+    SimpleLoadBalancerState state =
+        new SimpleLoadBalancerState(executorService,
+            uriRegistry,
+            clusterRegistry,
+            serviceRegistry,
+            clientFactories,
+            loadBalancerStrategyFactories);
+
+    SimpleLoadBalancer loadBalancer =
+        new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
+
+    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    loadBalancer.start(balancerCallback);
+    balancerCallback.get();
+
+    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(2);
+    uriData.put(URI.create("http://host1/path"), partitionData);
+
+    prioritizedSchemes.add(PropertyKeys.HTTP_SCHEME);
+
+    String cluster1 = "Cluster1";
+    String cluster2 = "Cluster2";
+    String service1 = "service1";
+
+    clusterRegistry.put(cluster1, new ClusterProperties(cluster1, Collections.emptyList(),
+        Collections.emptyMap(), new HashSet<>(), NullPartitionProperties.getInstance()));
+
+    serviceRegistry.put(service1, new ServiceProperties(service1,
+        cluster1,
+        "/service1Path",
+        Arrays.asList("degrader"),
+        Collections.<String,Object>emptyMap(),
+        null,
+        null,
+        prioritizedSchemes,
+        null));
+    uriRegistry.put(cluster1, new UriProperties(cluster1, uriData));
+
+    URI override = URI.create("http://override/path");
+    URI expected = URI.create("http://override/path/service1Path");
+    URIRequest uriRequest = new URIRequest("d2://service1");
+
+    HostOverrideList clusterOverrides = new HostOverrideList();
+    clusterOverrides.addClusterOverride(cluster1, override);
+    RequestContext clusterContext = new RequestContext();
+    clusterContext.putLocalAttr(HOST_OVERRIDE_LIST, clusterOverrides);
+    Assert.assertEquals(
+        ((RewriteLoadBalancerClient)loadBalancer.getClient(uriRequest, clusterContext)).getUri(),
+        URI.create("http://override/path/service1Path"));
+
+    HostOverrideList serviceOverrides = new HostOverrideList();
+    serviceOverrides.addServiceOverride(service1, override);
+    RequestContext serviceContext = new RequestContext();
+    serviceContext.putLocalAttr(HOST_OVERRIDE_LIST, serviceOverrides);
+    Assert.assertEquals(
+        ((RewriteLoadBalancerClient)loadBalancer.getClient(uriRequest, serviceContext)).getUri(),
+        URI.create("http://override/path/service1Path"));
+
+    HostOverrideList overrides = new HostOverrideList();
+    overrides.addOverride(override);
+    RequestContext context = new RequestContext();
+    context.putLocalAttr(HOST_OVERRIDE_LIST, overrides);
+    Assert.assertEquals(
+        ((RewriteLoadBalancerClient)loadBalancer.getClient(uriRequest, context)).getUri(),
+        URI.create("http://override/path/service1Path"));
+
+    HostOverrideList unrelatedClusterOverrides = new HostOverrideList();
+    unrelatedClusterOverrides.addClusterOverride(cluster2, override);
+    RequestContext unrelatedClusterContext = new RequestContext();
+    unrelatedClusterContext.putLocalAttr(HOST_OVERRIDE_LIST, unrelatedClusterOverrides);
+    Assert.assertEquals(
+        ((RewriteLoadBalancerClient)loadBalancer.getClient(uriRequest, unrelatedClusterContext)).getUri(),
+        URI.create("http://host1/path/service1Path"));
+
+    HostOverrideList unrelatedServiceOverrides = new HostOverrideList();
+    unrelatedServiceOverrides.addClusterOverride(cluster2, override);
+    RequestContext unrelatedServiceContext = new RequestContext();
+    unrelatedServiceContext.putLocalAttr(HOST_OVERRIDE_LIST, unrelatedServiceOverrides);
+    Assert.assertEquals(
+        ((RewriteLoadBalancerClient)loadBalancer.getClient(uriRequest, unrelatedServiceContext)).getUri(),
+        URI.create("http://host1/path/service1Path"));
   }
 
   /**
