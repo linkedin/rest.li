@@ -136,7 +136,7 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
 
   private void onError(Callback<Channel> channelCallback, Throwable cause)
   {
-    LOG.error("Failed to create channel, remote={}", _remoteAddress, cause);
+    LOG.warn("Failed to create channel, remote={}", _remoteAddress, cause);
     if (cause instanceof ConnectException)
     {
       channelCallback.onError(new RetriableRequestException(cause));
@@ -172,7 +172,7 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
         else
         {
           final Throwable cause = channelFuture.cause();
-          LOG.error("Failed to destroy channel, remote={}", _remoteAddress, cause);
+          LOG.warn("Failed to destroy channel, remote={}", _remoteAddress, cause);
           channelCallback.onError(HttpNettyStreamClient.toException(cause));
         }
       });
