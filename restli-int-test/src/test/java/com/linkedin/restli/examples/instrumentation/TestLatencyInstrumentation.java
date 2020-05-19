@@ -45,6 +45,7 @@ import com.linkedin.restli.examples.instrumentation.api.InstrumentationControl;
 import com.linkedin.restli.examples.instrumentation.client.LatencyInstrumentationBuilders;
 import com.linkedin.restli.examples.instrumentation.server.LatencyInstrumentationResource;
 import com.linkedin.restli.server.RestLiServiceException;
+import com.linkedin.test.util.retry.SingleRetry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -97,7 +98,6 @@ public class TestLatencyInstrumentation extends RestLiIntegrationTest
   private static final Set<TimingKey> TIMING_KEYS_MISSING_ON_PROTOCOL_2_0_0 =
       Collections.singleton(FrameworkTimingKeys.SERVER_REQUEST_RESTLI_URI_PARSE_1.key());
 
-  private static final int MAX_RETRIES = 2;
   private static final double NANOS_TO_MILLIS = .000001;
 
   private Map<TimingKey, TimingContextUtil.TimingContext> _resultMap;
@@ -167,37 +167,19 @@ public class TestLatencyInstrumentation extends RestLiIntegrationTest
    * using streaming should be inconsequential for this test, but the server using the streaming codec will actually
    * affect the outcome.
    *
-   * This test allows for multiple retries in case of an anomalous test run to prevent test flakiness.
-   *
    * @param useStreaming whether the server should use an underlying streaming server ("restOverStream") and whether the
    *                     downstream request should use streaming (see the disclaimer above)
    * @param forceException whether the upstream and downstream resources should trigger the error response path
    * @param timingImportanceThreshold impacts which keys are included in the request context
    */
-  @Test(dataProvider = "latencyInstrumentation")
+  @Test(dataProvider = "latencyInstrumentation", retryAnalyzer = SingleRetry.class)
   public void testLatencyInstrumentation(boolean useStreaming, boolean forceException, boolean useScatterGather,
       TimingImportance timingImportanceThreshold) throws RemoteInvocationException, InterruptedException
   {
-    AssertionError testFailure = null;
-    for (int iteration = 0; iteration <= MAX_RETRIES; iteration++)
-    {
-      try
-      {
-        // Perform the test logic, return if successful
-        makeUpstreamRequest(useStreaming, forceException, useScatterGather);
-        checkTimingKeyCompleteness(forceException, timingImportanceThreshold, useScatterGather);
-        checkTimingKeyConsistency();
-        checkTimingKeySubsetSums(timingImportanceThreshold, useScatterGather);
-        return;
-      }
-      catch (AssertionError e)
-      {
-        // Only allow retries for assertion errors
-        testFailure = e;
-      }
-    }
-    // Out of retries, so throw test failure exception
-    throw testFailure;
+    makeUpstreamRequest(useStreaming, forceException, useScatterGather);
+    checkTimingKeyCompleteness(forceException, timingImportanceThreshold, useScatterGather);
+    checkTimingKeyConsistency();
+    checkTimingKeySubsetSums(timingImportanceThreshold, useScatterGather);
   }
 
   /**

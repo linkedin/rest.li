@@ -42,11 +42,11 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
+import com.linkedin.test.util.retry.SingleRetry;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SettableClock;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.CallCompletion;
-import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import com.linkedin.util.degrader.ErrorType;
@@ -517,7 +517,7 @@ public class DegraderLoadBalancerTest
     return map;
   }
 
-  @Test(groups = { "small", "back-end" })
+  @Test(groups = { "small", "back-end" }, retryAnalyzer = SingleRetry.class)
   public void testDegraderLoadBalancerHandlingExceptionInUpdate()
   {
     Map<String, Object> myMap = lbDefaultConfig();

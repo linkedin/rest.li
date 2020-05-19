@@ -31,6 +31,7 @@ dependencies {
   testCompile project(path: ':restli-int-test-api', configuration: 'restClient')
   testCompile project(path: project.path, configuration: 'testRestClient')
   testCompile project(path: ':d2', configuration: 'testArtifacts')
+  testCompile project(':test-util')
 }
 
 test {

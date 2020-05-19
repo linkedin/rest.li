@@ -35,6 +35,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
+import com.linkedin.test.util.retry.SingleRetry;
 import com.linkedin.util.clock.SettableClock;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
@@ -428,7 +429,7 @@ public class TestHttpNettyClient
     }
   }
 
-  @Test
+  @Test(retryAnalyzer = SingleRetry.class)
   public void testShutdownRequestOutstanding()
       throws IOException, ExecutionException, TimeoutException, InterruptedException
   {

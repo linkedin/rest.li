@@ -41,6 +41,7 @@ import com.linkedin.restli.examples.groups.client.GroupsBuilders;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
+import com.linkedin.test.util.retry.SingleRetry;
 import java.util.concurrent.CountDownLatch;
 
 import org.testng.Assert;
@@ -97,7 +98,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     latch.await();
   }
 
-  @Test(dataProvider = "requestGreetingBuilderDataProvider")
+  @Test(dataProvider = "requestGreetingBuilderDataProvider", retryAnalyzer = SingleRetry.class) // Allow retry due to CI timeouts
   public void testSuccessfulCall(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(1L).build();

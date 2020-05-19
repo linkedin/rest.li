@@ -34,6 +34,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.http.client.HttpClientBuilder;
 import com.linkedin.r2.testutils.server.HttpServerBuilder;
 import com.linkedin.test.util.ExceptionTestUtil;
+import com.linkedin.test.util.retry.SingleRetry;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http2.Http2Exception;
@@ -175,7 +176,7 @@ public class TestHttp2NettyStreamClient
    * When a request fails due to {@link TimeoutException}, connection should not be destroyed.
    * @throws Exception
    */
-  @Test(timeOut = TEST_TIMEOUT)
+  @Test(timeOut = TEST_TIMEOUT, retryAnalyzer = SingleRetry.class)
   public void testChannelReusedAfterStreamingTimeout() throws Exception
   {
     final HttpServerBuilder.HttpServerStatsProvider statsProvider = new HttpServerBuilder.HttpServerStatsProvider();

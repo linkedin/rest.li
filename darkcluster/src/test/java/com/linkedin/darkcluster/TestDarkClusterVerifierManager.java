@@ -143,7 +143,7 @@ public class TestDarkClusterVerifierManager
     final CountDownLatch latch = new CountDownLatch(1);
     Runnable myCallable = latch::countDown;
     _executorService.submit(myCallable);
-    if (!latch.await(30, TimeUnit.SECONDS))
+    if (!latch.await(60, TimeUnit.SECONDS))
     {
       fail("unable to execute task on executor");
     }

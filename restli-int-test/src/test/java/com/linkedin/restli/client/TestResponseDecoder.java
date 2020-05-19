@@ -25,6 +25,7 @@ import com.linkedin.restli.examples.TestConstants;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.client.StringKeysRequestBuilders;
 
+import com.linkedin.test.util.retry.ThreeRetries;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -67,7 +68,7 @@ public class TestResponseDecoder extends RestLiIntegrationTest
    * pass the 'new' error to its inner callback's onError method.
    * {@link CallbackAdapter#onError(java.lang.Throwable)}
    */
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "dataProvider")
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "dataProvider", retryAnalyzer = ThreeRetries.class)
   public void testNonRestliServerErrorHandling(RestliRequestOptions requestOptions) throws Exception
   {
     Set<String> keys = new HashSet<String>();

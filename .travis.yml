@@ -10,8 +10,7 @@ dist: trusty
 install: true
 
 # Build commits to master, PRs to master, and release tags
-# TODO: enable testing once test flakiness is resolved
-script: ./gradlew build -x test
+script: ./scripts/travis/build.sh
 branches:
   only:
     - master
