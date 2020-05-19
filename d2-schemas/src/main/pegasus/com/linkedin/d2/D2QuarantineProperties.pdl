@@ -1,0 +1,29 @@
+namespace com.linkedin.d2
+
+/**
+ * Properties for D2 quarantine.
+ *
+ * Severely unhealthy hosts can be placed in quarantine, in which "dummy" requests with a
+ * customizable method/path are used as pings to check endpoint health instead of real requests.
+ */
+record D2QuarantineProperties {
+
+  /**
+   * The max percentage of hosts in the cluster that can be quarantined at the same time.
+   * Values are from 0.0 - 1.0. A value of 0.0 means quarantine is disabled.
+   */
+  quarantineMaxPercent: optional double
+
+  /**
+   * The http method used for health checking quarantined hosts. Defaults to OPTIONS method.
+   */
+  healthCheckMethod: optional enum HttpMethod {
+    OPTIONS
+    GET
+  }
+
+  /**
+   * The path used for health checking quarantined hosts. eg: "/<contextPath>/admin". Defaults to the service path.
+   */
+  healthCheckPath: optional string
+}
