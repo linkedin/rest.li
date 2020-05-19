@@ -180,7 +180,7 @@ public class DegraderLoadBalancerState
       try
       {
         PartitionDegraderLoadBalancerState curState = par.getState();
-        curState.getQuarantineMap().values().forEach(DegraderLoadBalancerQuarantine::shutdown);
+        curState.getQuarantineMap().values().forEach(LoadBalancerQuarantine::shutdown);
       }
       finally
       {

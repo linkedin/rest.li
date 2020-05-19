@@ -870,6 +870,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     if (schemes == null || schemes.isEmpty())
     {
       warn(_log, "Prioritized schemes is null for service properties = ", serviceProperties.getServiceName());
+      return newTransportClients;
     }
 
     for (String scheme : schemes)

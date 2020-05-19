@@ -1,6 +1,5 @@
 package com.linkedin.d2.balancer.util.healthcheck;
 
-import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.util.clock.Clock;
@@ -21,7 +20,7 @@ public class HealthCheckClientBuilder
   private String _servicePath;
   private Clock _clock;
   private long _latency;
-  private DegraderTrackerClient _client;
+  private TrackerClient _client;
   private String _method;
 
   public HealthCheckClientBuilder()
@@ -30,7 +29,7 @@ public class HealthCheckClientBuilder
   }
 
   public HealthCheckClientBuilder(HealthCheckOperations ops, String path, String servicePath,
-                                  Clock clk, long latency, DegraderTrackerClient client, String method)
+                                  Clock clk, long latency, TrackerClient client, String method)
   {
     _healthOperations = ops;
     _healthCheckPath = path;
@@ -66,7 +65,7 @@ public class HealthCheckClientBuilder
     }
 
     return new TransportHealthCheck(_clock,
-                                    _client.getWrappedClient(),
+                                    _client.getTransportClient(),
                                     operations.buildRestRequest(_method, newUri),
                                     operations.buildRequestContextSupplier(),
                                     operations.buildWireAttributesSupplier(),
@@ -104,7 +103,7 @@ public class HealthCheckClientBuilder
     return this;
   }
 
-  public HealthCheckClientBuilder setClient(DegraderTrackerClient client)
+  public HealthCheckClientBuilder setClient(TrackerClient client)
   {
     _client = client;
     return this;

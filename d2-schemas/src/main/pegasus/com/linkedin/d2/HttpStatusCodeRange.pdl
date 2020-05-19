@@ -1,0 +1,19 @@
+namespace com.linkedin.d2
+
+/**
+ * Defines a range of http status codes as [lowerBound, upperBound].
+ *
+ * For example, 5xx would be modeled as HttpCodeRange(500, 599).
+ */
+record HttpStatusCodeRange {
+
+  /**
+   * The lower bound in the range, inclusive.
+   */
+  lowerBound: int
+
+  /**
+   * The upper bound in the range, inclusive.
+   */
+  upperBound: int
+}

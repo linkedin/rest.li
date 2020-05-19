@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 
 import com.linkedin.d2.balancer.LoadBalancerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.util.degrader.CallTracker;
 
 /**
@@ -38,6 +39,11 @@ public interface TrackerClient extends LoadBalancerClient
    * @return {@link PartitionData} map.
    */
   Map<Integer, PartitionData> getPartitionDataMap();
+
+  /**
+   * @return {@link TransportClient} that sends the requests.
+   */
+  TransportClient getTransportClient();
 
   /**
    * @param partitionId Partition ID key.

@@ -23,6 +23,7 @@ import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallback;
 import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
 import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
+import com.linkedin.d2.balancer.clients.DegraderTrackerClientImpl;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.NullPartitionProperties;
@@ -800,8 +801,8 @@ public class SimpleLoadBalancerStateTest
     List<TrackerClient> clients = new ArrayList<TrackerClient>();
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    clients.add(new DegraderTrackerClient(uri, partitionDataMap, new DegraderLoadBalancerTest.TestLoadBalancerClient(uri),
-                                          SystemClock.instance(), null));
+    clients.add(new DegraderTrackerClientImpl(uri, partitionDataMap, new DegraderLoadBalancerTest.TestLoadBalancerClient(uri),
+                                              SystemClock.instance(), null));
 
     for (int i = 0; i < 20; i++)
     {

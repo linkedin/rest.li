@@ -1,7 +1,6 @@
 package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
-import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.util.degrader.DegraderControl;
 
 /**

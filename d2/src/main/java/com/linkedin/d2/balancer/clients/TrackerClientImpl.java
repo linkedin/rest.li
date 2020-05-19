@@ -66,7 +66,7 @@ public class TrackerClientImpl implements TrackerClient
 
   private static final Logger _log = LoggerFactory.getLogger(TrackerClient.class);
 
-  private final TransportClient _wrappedClient;
+  private final TransportClient _transportClient;
   private final Map<Integer, PartitionData> _partitionData;
   private final URI _uri;
   private final Pattern _errorStatusPattern;
@@ -74,14 +74,15 @@ public class TrackerClientImpl implements TrackerClient
 
   private volatile CallTracker.CallStats _latestCallStats;
 
-  public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
+  public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
                            Clock clock, long interval, Pattern errorStatusPattern)
   {
     _uri = uri;
-    _wrappedClient = wrappedClient;
+    _transportClient = transportClient;
     _callTracker = new CallTrackerImpl(interval, clock);
     _errorStatusPattern = errorStatusPattern;
     _partitionData = Collections.unmodifiableMap(partitionDataMap);
+    _latestCallStats = _callTracker.getCallStats();
 
     _callTracker.addStatsRolloverEventListener(event -> _latestCallStats = event.getCallStats());
 
@@ -97,19 +98,16 @@ public class TrackerClientImpl implements TrackerClient
   @Override
   public void shutdown(Callback<None> callback)
   {
-    _wrappedClient.shutdown(callback);
+    _transportClient.shutdown(callback);
   }
 
-  public TransportClient getWrappedClient()
+  @Override
+  public TransportClient getTransportClient()
   {
-    return _wrappedClient;
+    return _transportClient;
   }
 
-  public CallTracker getCallTracker()
-  {
-    return _callTracker;
-  }
-
+  @Override
   public Map<Integer, PartitionData> getPartitionDataMap()
   {
     return _partitionData;
@@ -121,7 +119,7 @@ public class TrackerClientImpl implements TrackerClient
                           Map<String, String> wireAttrs,
                           TransportCallback<RestResponse> callback)
   {
-    _wrappedClient.restRequest(request, requestContext, wireAttrs, new TrackerClientRestCallback(callback, _callTracker.startCall()));
+    _transportClient.restRequest(request, requestContext, wireAttrs, new TrackerClientRestCallback(callback, _callTracker.startCall()));
   }
 
   @Override
@@ -130,7 +128,7 @@ public class TrackerClientImpl implements TrackerClient
                             Map<String, String> wireAttrs,
                             TransportCallback<StreamResponse> callback)
   {
-    _wrappedClient.streamRequest(request, requestContext, wireAttrs, new TrackerClientStreamCallback(callback, _callTracker.startCall()));
+    _transportClient.streamRequest(request, requestContext, wireAttrs, new TrackerClientStreamCallback(callback, _callTracker.startCall()));
   }
 
   @Override

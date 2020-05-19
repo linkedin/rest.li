@@ -79,7 +79,7 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
 
     // Adds the default degrader state listener factories
     final List<PartitionDegraderLoadBalancerStateListener.Factory> listeners = new ArrayList<>();
-    listeners.add(new D2MonitorEventEmitter.Factory(serviceName));
+    listeners.add(new DegraderMonitorEventEmitter.Factory(serviceName));
     listeners.addAll(_degraderStateListenerFactories);
 
     return new DegraderLoadBalancerStrategyV3(config, serviceName, degraderProperties, listeners);

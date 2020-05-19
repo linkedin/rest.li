@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 
-public class RetryTrackerClient extends DegraderTrackerClient
+public class RetryTrackerClient extends DegraderTrackerClientImpl
 {
   private final URI _uri;
 

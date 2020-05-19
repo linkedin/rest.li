@@ -576,7 +576,7 @@ public class TestBackupRequestsClient
       @Override
       public TrackerClient getClient(String serviceName, URI uri)
       {
-        return new DegraderTrackerClient(uri, partitionDescriptions.get(uri), null, SystemClock.instance(), null) {
+        return new DegraderTrackerClientImpl(uri, partitionDescriptions.get(uri), null, SystemClock.instance(), null) {
           @Override
           public void restRequest(RestRequest request,
               RequestContext requestContext,

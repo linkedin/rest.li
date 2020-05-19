@@ -6,11 +6,6 @@ namespace com.linkedin.d2
 record D2RingProperties {
 
   /**
-   * How fast should load balancer ramp up node that has been 100% degraded and is being recovered. Defaults to 1.0.
-   */
-  ringRampFactor: optional double
-
-  /**
    * The number of points per weight given for a particular node in a hash ring. Defaults to 100.
    */
   pointsPerWeight: optional int
@@ -18,13 +13,17 @@ record D2RingProperties {
   /**
    * What hashing method used to hash incoming request. Used to determine which node should serve the request. Choices are Random, UriRegex
    */
-  @symbolDocs = {
-    "URI_REGEX" : "Extract a key from URI and use it to hash",
-    "RANDOM" : "The default fall back value"
-  }
   hashMethod: optional enum HashMethod {
-    RANDOM
+
+    /**
+     * Extract a key from the URI and use it to hash the request.
+     */
     URI_REGEX
+
+    /**
+     * The default fall back value. Will route requests randomly.
+     */
+    RANDOM
   }
 
   /**

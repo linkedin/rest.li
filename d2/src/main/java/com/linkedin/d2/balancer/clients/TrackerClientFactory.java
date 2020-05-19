@@ -20,8 +20,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import javax.annotation.Nullable;
-
 import com.linkedin.common.util.MapUtil;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -117,7 +115,7 @@ public class TrackerClientFactory
     long trackerClientInterval = getInterval(loadBalancerStrategyName, serviceProperties);
     Pattern errorStatusPattern = getErrorStatusPattern(loadBalancerStrategyName, serviceProperties);
 
-    return new DegraderTrackerClient(uri,
+    return new DegraderTrackerClientImpl(uri,
                                      uriProperties.getPartitionDataMap(uri),
                                      transportClient,
                                      clock,

@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
+import com.linkedin.d2.balancer.clients.DegraderTrackerClientImpl;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
@@ -60,7 +61,7 @@ public class LoadBalancerTestState implements LoadBalancerState
   {
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1));
-    return (getClient) ? new DegraderTrackerClient(uri, partitionDataMap, new TestClient(), SystemClock.instance(), null) : null;
+    return (getClient) ? new DegraderTrackerClientImpl(uri, partitionDataMap, new TestClient(), SystemClock.instance(), null) : null;
   }
 
   @Override

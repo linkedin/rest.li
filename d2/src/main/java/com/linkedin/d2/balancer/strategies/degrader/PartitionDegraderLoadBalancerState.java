@@ -59,9 +59,9 @@ public class PartitionDegraderLoadBalancerState
   private final Map<DegraderTrackerClient,Double>          _recoveryMap;
 
   // quarantineMap is the active quarantine for trackerClient
-  private final Map<DegraderTrackerClient, DegraderLoadBalancerQuarantine> _quarantineMap;
+  private final Map<DegraderTrackerClient, LoadBalancerQuarantine> _quarantineMap;
   // quarantineHistory saves all previous trackerClients that are once quarantined
-  private final Map<DegraderTrackerClient, DegraderLoadBalancerQuarantine> _quarantineHistory;
+  private final Map<DegraderTrackerClient, LoadBalancerQuarantine> _quarantineHistory;
 
   // Because we will alternate between Load Balancing and Call Dropping strategies, we keep track of
   // the strategy to try to aid us in alternating strategies when updatingState. There is a setter
@@ -129,8 +129,8 @@ public class PartitionDegraderLoadBalancerState
       long currentClusterCallCount,
       long currentClusterDropCount,
       long currentClusterErrorCount,
-      Map<DegraderTrackerClient, DegraderLoadBalancerQuarantine> quarantineMap,
-      Map<DegraderTrackerClient, DegraderLoadBalancerQuarantine> quarantineHistory,
+      Map<DegraderTrackerClient, LoadBalancerQuarantine> quarantineMap,
+      Map<DegraderTrackerClient, LoadBalancerQuarantine> quarantineHistory,
       Set<DegraderTrackerClient> trackerClients,
       int unHealthyClientNumber)
   {
@@ -214,12 +214,12 @@ public class PartitionDegraderLoadBalancerState
     return _recoveryMap;
   }
 
-  public Map<DegraderTrackerClient, DegraderLoadBalancerQuarantine> getQuarantineMap()
+  public Map<DegraderTrackerClient, LoadBalancerQuarantine> getQuarantineMap()
   {
     return _quarantineMap;
   }
 
-  public Map<DegraderTrackerClient, DegraderLoadBalancerQuarantine> getQuarantineHistory()
+  public Map<DegraderTrackerClient, LoadBalancerQuarantine> getQuarantineHistory()
   {
     return _quarantineHistory;
   }

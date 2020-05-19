@@ -60,37 +60,6 @@ record D2RelativeStrategyProperties {
   updateIntervalMs: optional long
 
   /**
-   * The latency metric type used to calculate the health score.
-   */
-  latencyMetricType: optional enum LatencyMetricType {
-
-    /**
-     * Average latency.
-     */
-    AVERAGE
-
-    /**
-     * 50th percentile latency.
-     */
-    PCT50
-
-    /**
-     * 90th percentile latency.
-     */
-    PCT90
-
-    /**
-     * 95th percentile latency.
-     */
-    PCT95
-
-    /**
-     * 99th percentile latency.
-     */
-    PCT99
-  }
-
-  /**
    * The initial health score that a server starts with.
    * Values are from 0.0 - 1.0.
    */
@@ -104,14 +73,23 @@ record D2RelativeStrategyProperties {
   slowStartThreshold: optional double
 
   /**
-   * Regular expression used to match a request status code and indicate a server-side error.
+   * A request status code that falls within any of the provided ranges will be considered as a server-side error.
    */
-  errorStatusRegex: optional string
+  errorStatusFilter: optional array[HttpStatusCodeRange]
 
   /**
    * Emitting interval (in milliseconds) for D2Events.
    */
-  emittingIntervalMs: optional int
+  emittingIntervalMs: optional long
+
+  /**
+   * When enabled, fully degraded hosts will "recover" health despite not taking any traffic.
+   * The health recovery will model that of slow start. Health score will be doubled as long
+   * as the number of requests toward the entire cluster exceed the minimum call count (minCallCount).
+   * The idea is to prevent unhealthy hosts from never receiving traffic and being able to
+   * naturally recover due to their health score and overall QPS to the cluster being too low.
+   */
+  enableFastRecovery: optional boolean
 
   /**
    * Quarantine properties.

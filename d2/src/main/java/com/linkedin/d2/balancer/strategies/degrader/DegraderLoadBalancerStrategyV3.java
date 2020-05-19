@@ -101,7 +101,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     setConfig(config);
     if (degraderProperties == null)
     {
-      degraderProperties = Collections.<String, String>emptyMap();
+      degraderProperties = Collections.emptyMap();
     }
     _state = new DegraderLoadBalancerState(serviceName, degraderProperties, config, degraderStateListenerFactories);
     _rateLimitedLogger = new RateLimitedLogger(_log, config.DEFAULT_UPDATE_INTERVAL_MS, config.getClock());
@@ -507,7 +507,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   }
 
   private static String getClientStats(DegraderTrackerClient client, int partitionId, Map<URI, Integer> pointsMap,
-      DegraderLoadBalancerStrategyConfig config)
+                                       DegraderLoadBalancerStrategyConfig config)
   {
     DegraderControl degraderControl = client.getDegraderControl(partitionId);
     return client.getUri() + ":" + pointsMap.get(client.getUri()) + "/" +
@@ -516,10 +516,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   }
 
   private static List<DegraderTrackerClient> getUnhealthyTrackerClients(List<DegraderTrackerClientUpdater> degraderTrackerClientUpdaters,
-                                                         Map<URI, Integer> pointsMap,
-                                                         Map<DegraderTrackerClient, DegraderLoadBalancerQuarantine> quarantineMap,
-                                                         DegraderLoadBalancerStrategyConfig config,
-                                                         int partitionId)
+                                                                        Map<URI, Integer> pointsMap,
+                                                                        Map<DegraderTrackerClient, LoadBalancerQuarantine> quarantineMap,
+                                                                        DegraderLoadBalancerStrategyConfig config,
+                                                                        int partitionId)
   {
     List<DegraderTrackerClient> unhealthyClients = new ArrayList<>();
     for (DegraderTrackerClientUpdater clientUpdater : degraderTrackerClientUpdaters)
@@ -622,8 +622,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     double ringRampFactor = config.getRingRampFactor();
     int pointsPerWeight = config.getPointsPerWeight();
     PartitionDegraderLoadBalancerState newState;
-    Map<DegraderTrackerClient, DegraderLoadBalancerQuarantine> quarantineMap = oldState.getQuarantineMap();
-    Map<DegraderTrackerClient, DegraderLoadBalancerQuarantine> quarantineHistory = oldState.getQuarantineHistory();
+    Map<DegraderTrackerClient, LoadBalancerQuarantine> quarantineMap = oldState.getQuarantineMap();
+    Map<DegraderTrackerClient, LoadBalancerQuarantine> quarantineHistory = oldState.getQuarantineHistory();
     Set<DegraderTrackerClient> activeClients = new HashSet<>();
     long clk = config.getClock().currentTimeMillis();
     long clusterErrorCount = 0;
@@ -647,7 +647,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       if (isQuarantineEnabled)
       {
         // Check/update quarantine state if current client is already under quarantine
-        DegraderLoadBalancerQuarantine quarantine = quarantineMap.get(client);
+        LoadBalancerQuarantine quarantine = quarantineMap.get(client);
         if (quarantine != null && quarantine.checkUpdateQuarantineState())
         {
           // Evict client from quarantine
@@ -775,10 +775,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
           if (1.0 * quarantineMap.size() < Math.ceil(degraderTrackerClientUpdaters.size() * config.getQuarantineMaxPercent()))
           {
             // Put the client into quarantine
-            DegraderLoadBalancerQuarantine quarantine = quarantineHistory.remove(client);
+            LoadBalancerQuarantine quarantine = quarantineHistory.remove(client);
             if (quarantine == null)
             {
-              quarantine = new DegraderLoadBalancerQuarantine(clientUpdater, config, oldState.getServiceName());
+              quarantine = new LoadBalancerQuarantine(clientUpdater, config, oldState.getServiceName());
             }
 
             // If the trackerClient was just recently evicted from quarantine, it is possible that
@@ -1234,8 +1234,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
    * @return: true if the recoveryMap changed, false otherwise.
    */
   private static boolean handleClientInRecoveryMap(DegraderControl degraderControl, DegraderTrackerClientUpdater clientUpdater,
-      double initialRecoveryLevel, double ringRampFactor, long callCount,
-      Map<DegraderTrackerClient, Double> newRecoveryMap, PartitionDegraderLoadBalancerState.Strategy strategy)
+                                                   double initialRecoveryLevel, double ringRampFactor, long callCount,
+                                                   Map<DegraderTrackerClient, Double> newRecoveryMap, PartitionDegraderLoadBalancerState.Strategy strategy)
   {
     if (callCount < degraderControl.getMinCallCount())
     {
