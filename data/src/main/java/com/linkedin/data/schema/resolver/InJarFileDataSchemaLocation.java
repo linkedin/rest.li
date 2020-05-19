@@ -33,6 +33,8 @@ public class InJarFileDataSchemaLocation implements DataSchemaLocation, InputStr
   private final JarFile _jarFile;
   private final String _pathInJar;
 
+  private LightweightInJarFileDataSchemaLocation _lightweightInJarFileDataSchemaLocation = null;
+
   public InJarFileDataSchemaLocation(JarFile jarFile, String pathInJar)
   {
     _jarFile = jarFile;
@@ -86,5 +88,54 @@ public class InJarFileDataSchemaLocation implements DataSchemaLocation, InputStr
       errorMessageBuilder.append(_pathInJar).append(" not found in ").append(getSourceFile().toString()).append("\n");
     }
     return inputStream;
+  }
+
+  @Override
+  public DataSchemaLocation getLightweightRepresentation() {
+    if (_lightweightInJarFileDataSchemaLocation == null) {
+      _lightweightInJarFileDataSchemaLocation = new LightweightInJarFileDataSchemaLocation(_jarFile.getName(), _pathInJar);
+    }
+    return _lightweightInJarFileDataSchemaLocation;
+  }
+
+  private static class LightweightInJarFileDataSchemaLocation implements DataSchemaLocation {
+    private final String _jarFileName;
+    private final String _pathInJar;
+
+    public LightweightInJarFileDataSchemaLocation(String jarFileName, String pathInJar)
+    {
+      _jarFileName = jarFileName;
+      _pathInJar = pathInJar;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+      if (this == o)
+        return true;
+      if (!(o instanceof LightweightInJarFileDataSchemaLocation))
+        return false;
+      LightweightInJarFileDataSchemaLocation other = (LightweightInJarFileDataSchemaLocation) o;
+      return (_jarFileName.equals(other._jarFileName) && _pathInJar.equals(other._pathInJar));
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return _jarFileName.hashCode() ^ _pathInJar.hashCode();
+    }
+
+    @Override
+    public String toString()
+    {
+      return getSourceFile().getPath() + ":" + _pathInJar;
+
+    }
+
+    @Override
+    public File getSourceFile()
+    {
+      return new File(_jarFileName);
+    }
   }
 }
