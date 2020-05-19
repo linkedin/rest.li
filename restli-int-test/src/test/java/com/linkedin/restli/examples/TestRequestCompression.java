@@ -50,6 +50,7 @@ import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
+import com.linkedin.test.util.retry.ThreeRetries;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -215,7 +216,7 @@ public class TestRequestCompression extends RestLiIntegrationTest
     };
   }
 
-  @Test(dataProvider = "requestData")
+  @Test(dataProvider = "requestData", retryAnalyzer = ThreeRetries.class)
   public void testUpdate(CompressionConfig requestCompressionConfig,
                          String supportedEncodings,
                          RestliRequestOptions restliRequestOptions,

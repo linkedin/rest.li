@@ -138,7 +138,8 @@ public class RestLiIntegrationTest
   {
     _clientFactory = new HttpClientFactory.Builder().setUsePipelineV2(false).build();
     _transportClients = new ArrayList<Client>();
-    Map<String, String> transportProperties = Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "10000");
+    final String httpRequestTimeout = System.getProperty("test.httpRequestTimeout", "10000");
+    Map<String, String> transportProperties = Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT, httpRequestTimeout);
     Client client = newTransportClient(transportProperties);
     RestLiClientConfig restLiClientConfig = new RestLiClientConfig();
     restLiClientConfig.setUseStreaming(Boolean.parseBoolean(System.getProperty("test.useStreamCodecClient", "false")));

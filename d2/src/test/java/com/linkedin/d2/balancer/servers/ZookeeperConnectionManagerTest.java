@@ -1,5 +1,6 @@
 package com.linkedin.d2.balancer.servers;
 
+import com.linkedin.test.util.retry.ThreeRetries;
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
@@ -352,7 +353,7 @@ public class ZookeeperConnectionManagerTest
     shutdownManager(manager);
   }
 
-  @Test(invocationCount = 10, timeOut = 10000)
+  @Test(invocationCount = 10, timeOut = 10000, retryAnalyzer = ThreeRetries.class)
   public void testMarkUpDuringSessionExpirationManyCallbacks()
     throws Exception
   {
@@ -437,7 +438,7 @@ public class ZookeeperConnectionManagerTest
     executorService.shutdown();
   }
 
-  @Test(invocationCount = 10, timeOut = 10000)
+  @Test(invocationCount = 10, timeOut = 10000, retryAnalyzer = ThreeRetries.class)
   public void testMarkUpAndDownMultipleTimesFinalUp()
     throws Exception
   {

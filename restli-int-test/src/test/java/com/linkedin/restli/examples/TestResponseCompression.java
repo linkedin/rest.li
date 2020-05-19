@@ -45,6 +45,7 @@ import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
+import com.linkedin.test.util.retry.SingleRetry;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -188,7 +189,7 @@ public class TestResponseCompression extends RestLiIntegrationTest
     };
   }
 
-  @Test(dataProvider = "requestData")
+  @Test(dataProvider = "requestData", retryAnalyzer = SingleRetry.class) // Often fails in CI without a retry
   public void testResponseCompression(Boolean useResponseCompression, CompressionConfig responseCompressionConfig,
                                       RestliRequestOptions restliRequestOptions, int idCount, String expectedAcceptEncoding,
                                       String expectedCompressionThreshold, boolean responseShouldBeCompressed)
@@ -259,7 +260,7 @@ public class TestResponseCompression extends RestLiIntegrationTest
         };
   }
 
-  @Test(dataProvider = "encodingsData")
+  @Test(dataProvider = "encodingsData", retryAnalyzer = SingleRetry.class) // Often fails in CI without a retry
   public void testAcceptEncodingConfiguration(String responseContentEncodings, String expectedAcceptEncoding, String expectedContentEncoding) throws RemoteInvocationException
   {
     Map<String, Object> properties = new HashMap<String, Object>();

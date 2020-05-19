@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
+import com.linkedin.test.util.retry.ThreeRetries;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -55,7 +56,7 @@ public class ZooKeeperEphemeralStoreWithFiltersTest
   private int _port;
   private ExecutorService _executor = Executors.newSingleThreadExecutor();
 
-  @Test(dataProvider = "dataD2ClusterWithNumberOfChildren")
+  @Test(dataProvider = "dataD2ClusterWithNumberOfChildren", groups = { "ci-flaky" })
   public void testPutWithoutPrefixAndFilter(String d2ClusterName, int numberOfChildren)
     throws IOException, InterruptedException, ExecutionException, PropertyStoreException
   {
@@ -85,7 +86,7 @@ public class ZooKeeperEphemeralStoreWithFiltersTest
     tearDown(store);
   }
 
-  @Test(dataProvider = "dataD2ClusterWithNumberOfChildrenAndHashCode")
+  @Test(dataProvider = "dataD2ClusterWithNumberOfChildrenAndHashCode", retryAnalyzer = ThreeRetries.class)
   public void testPutAndGetWithPrefixAndFilter(String d2ClusterName, List<String> childrenNames, int expectedPrefixDuplicates,
                                                List<ZookeeperEphemeralPrefixGenerator> prefixGenerators)
     throws IOException, InterruptedException, ExecutionException, PropertyStoreException

@@ -25,6 +25,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
 
+import com.linkedin.test.util.retry.SingleRetry;
 import java.util.concurrent.ExecutionException;
 
 import org.testng.Assert;
@@ -58,7 +59,7 @@ public class TestMultiplexerDelays extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test
+  @Test(retryAnalyzer = SingleRetry.class) // Often fails the first invocation; needs warmup
   public void parallelTasksCreationDelay() throws Exception
   {
     MultiplexedRequestBuilder muxRequestBuilder = MultiplexedRequestBuilder.createParallelRequest();
@@ -73,7 +74,7 @@ public class TestMultiplexerDelays extends RestLiIntegrationTest
     assertInRange(actualTime, expectedTime, TOLERANCE);
   }
 
-  @Test
+  @Test(retryAnalyzer = SingleRetry.class) // Often fails the first invocation; needs warmup
   public void parallelTasksExecutionDelay() throws Exception
   {
     MultiplexedRequestBuilder muxRequestBuilder = MultiplexedRequestBuilder.createParallelRequest();
