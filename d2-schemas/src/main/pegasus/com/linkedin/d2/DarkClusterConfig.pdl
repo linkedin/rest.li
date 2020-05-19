@@ -30,5 +30,5 @@ record DarkClusterConfig {
   /**
    * The transport client properties to use for this dark cluster
    */
-  transportClientProperties: D2TransportClientProperties = {}
+  transportClientProperties: optional D2TransportClientProperties
 }

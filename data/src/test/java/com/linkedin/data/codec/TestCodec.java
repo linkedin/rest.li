@@ -277,7 +277,7 @@ public class TestCodec
     SymbolTableProviderHolder.INSTANCE.setSymbolTableProvider(provider);
     codecs.add(new JacksonLICORBinaryDataCodec(symbolTable));
     codecs.add(new JacksonLICORTextDataCodec(symbolTable));
-    codecs.add(new ProtobufDataCodec(symbolTable));
+    codecs.add(new ProtobufDataCodec(new ProtobufCodecOptions.Builder().setSymbolTable(symbolTable).build()));
 
     for (DataCodec codec : codecs)
     {

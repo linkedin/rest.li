@@ -22,7 +22,6 @@ import com.linkedin.data.Data.TraverseCallback;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.DataMapBuilder;
-import com.linkedin.data.codec.symbol.EmptySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.protobuf.ProtoReader;
@@ -62,34 +61,64 @@ public class ProtobufDataCodec implements DataCodec
   private static final byte RAW_BYTES_ORDINAL = 10;
   private static final byte NULL_ORDINAL = 11;
   private static final byte ASCII_STRING_LITERAL_ORDINAL = 20;
+  private static final byte FIXED_FLOAT_ORDINAL = 21;
+  private static final byte FIXED_DOUBLE_ORDINAL = 22;
 
+  /**
+   * @deprecated Use {@link #_options} and invoke {@link ProtobufCodecOptions#getSymbolTable()} instead.
+   */
+  @Deprecated
   protected final SymbolTable _symbolTable;
 
+  /**
+   * @deprecated Use {@link #_options} and invoke {@link ProtobufCodecOptions#shouldEnableASCIIOnlyStrings()} instead.
+   */
+  @Deprecated
   protected final boolean _supportsASCIIOnlyStrings;
+
+  protected final ProtobufCodecOptions _options;
 
   public ProtobufDataCodec()
   {
-    this((SymbolTable) null);
-  }
-
-  public ProtobufDataCodec(SymbolTable symbolTable)
-  {
-    this(symbolTable, false);
-  }
-
-  public ProtobufDataCodec(SymbolTable symbolTable, boolean supportsASCIIOnlyStrings)
-  {
-    _symbolTable = symbolTable == null ? EmptySymbolTable.SHARED : symbolTable;
-    _supportsASCIIOnlyStrings = supportsASCIIOnlyStrings;
+    this(new ProtobufCodecOptions.Builder().build());
   }
 
   /**
-   * @deprecated Use {@link #ProtobufDataCodec(SymbolTable)} instead. This constructor ignores its argument.
+   * @deprecated Use {@link ProtobufDataCodec#ProtobufDataCodec(ProtobufCodecOptions)} instead. This constructor
+   * ignores its argument.
    */
   @Deprecated
   public ProtobufDataCodec(String symbolTableName)
   {
-    this((SymbolTable) null);
+    this(new ProtobufCodecOptions.Builder().build());
+  }
+
+  /**
+   * @deprecated Use {@link ProtobufDataCodec#ProtobufDataCodec(ProtobufCodecOptions)} instead.
+   */
+  @Deprecated
+  public ProtobufDataCodec(SymbolTable symbolTable)
+  {
+    this(new ProtobufCodecOptions.Builder().setSymbolTable(symbolTable).build());
+  }
+
+  /**
+   * @deprecated Use {@link ProtobufDataCodec#ProtobufDataCodec(ProtobufCodecOptions)} instead.
+   */
+  @Deprecated
+  public ProtobufDataCodec(SymbolTable symbolTable, boolean supportsASCIIOnlyStrings)
+  {
+    this(new ProtobufCodecOptions.Builder()
+        .setSymbolTable(symbolTable)
+        .setEnableASCIIOnlyStrings(supportsASCIIOnlyStrings)
+        .build());
+  }
+
+  public ProtobufDataCodec(ProtobufCodecOptions options)
+  {
+    _options = options;
+    _symbolTable = options.getSymbolTable();
+    _supportsASCIIOnlyStrings = options.shouldEnableASCIIOnlyStrings();
   }
 
   @Override
@@ -111,32 +140,18 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public void writeMap(DataMap map, OutputStream out) throws IOException
   {
-    try
+    try(TraverseCallback callback = createTraverseCallback(new ProtoWriter(out), _symbolTable))
     {
-      ProtoWriter protoWriter = new ProtoWriter(out);
-      TraverseCallback callback = createTraverseCallback(protoWriter, _symbolTable);
       Data.traverse(map, callback);
-      protoWriter.flush();
-    }
-    finally
-    {
-      DataCodec.closeQuietly(out);
     }
   }
 
   @Override
   public void writeList(DataList list, OutputStream out) throws IOException
   {
-    try
+    try(TraverseCallback callback = createTraverseCallback(new ProtoWriter(out), _symbolTable))
     {
-      ProtoWriter protoWriter = new ProtoWriter(out);
-      TraverseCallback callback = createTraverseCallback(protoWriter, _symbolTable);
       Data.traverse(list, callback);
-      protoWriter.flush();
-    }
-    finally
-    {
-      DataCodec.closeQuietly(out);
     }
   }
 
@@ -190,9 +205,20 @@ public class ProtobufDataCodec implements DataCodec
     return (DataList) readValue(in.asProtoReader(), this::isList);
   }
 
+  /**
+   * @deprecated Override {@link #createTraverseCallback(ProtoWriter)} instead. This method
+   * is no longer invoked by this class.
+   */
+  @Deprecated
   protected TraverseCallback createTraverseCallback(ProtoWriter protoWriter, SymbolTable symbolTable)
   {
-    return new ProtobufTraverseCallback(protoWriter, symbolTable);
+    return new ProtobufTraverseCallback(protoWriter,
+        new ProtobufCodecOptions.Builder().setSymbolTable(symbolTable).build());
+  }
+
+  protected TraverseCallback createTraverseCallback(ProtoWriter protoWriter)
+  {
+    return new ProtobufTraverseCallback(protoWriter, _options);
   }
 
   protected Object readUnknownValue(byte ordinal, ProtoReader reader) throws IOException
@@ -227,7 +253,7 @@ public class ProtobufDataCodec implements DataCodec
   protected final String readStringReference(ProtoReader reader) throws IOException
   {
     String value;
-    if ((value = _symbolTable.getSymbolName(reader.readInt32())) == null)
+    if ((value = _options.getSymbolTable().getSymbolName(reader.readInt32())) == null)
     {
       throw new DataDecodingException("Error decoding string reference");
     }
@@ -262,7 +288,9 @@ public class ProtobufDataCodec implements DataCodec
       case INTEGER_ORDINAL: return reader.readInt32();
       case LONG_ORDINAL: return reader.readInt64();
       case FLOAT_ORDINAL: return Float.intBitsToFloat(reader.readInt32());
+      case FIXED_FLOAT_ORDINAL: return Float.intBitsToFloat(reader.readFixedInt32());
       case DOUBLE_ORDINAL: return Double.longBitsToDouble(reader.readInt64());
+      case FIXED_DOUBLE_ORDINAL: return Double.longBitsToDouble(reader.readFixedInt64());
       case BOOLEAN_TRUE_ORDINAL: return true;
       case BOOLEAN_FALSE_ORDINAL: return false;
       case RAW_BYTES_ORDINAL: return ByteString.unsafeWrap(reader.readByteArray());
@@ -292,19 +320,50 @@ public class ProtobufDataCodec implements DataCodec
   public static class ProtobufTraverseCallback implements TraverseCallback
   {
     protected final ProtoWriter _protoWriter;
+
+    /**
+     * @deprecated Use {@link #_options} and invoke {@link ProtobufCodecOptions#getSymbolTable()} instead.
+     */
+    @Deprecated
     protected final SymbolTable _symbolTable;
+
+    /**
+     * @deprecated Use {@link #_options} and invoke {@link ProtobufCodecOptions#shouldEnableASCIIOnlyStrings()} instead.
+     */
+    @Deprecated
     protected final boolean _supportsASCIIOnlyStrings;
 
+    protected final ProtobufCodecOptions _options;
+
+    /**
+     * @deprecated Use {@link ProtobufTraverseCallback#ProtobufTraverseCallback(ProtoWriter, ProtobufCodecOptions)}
+     * instead.
+     */
+    @Deprecated
     public ProtobufTraverseCallback(ProtoWriter protoWriter, SymbolTable symbolTable)
     {
-      this(protoWriter, symbolTable, false);
+      this(protoWriter, new ProtobufCodecOptions.Builder().setSymbolTable(symbolTable).build());
     }
 
+    /**
+     * @deprecated Use {@link ProtobufTraverseCallback#ProtobufTraverseCallback(ProtoWriter, ProtobufCodecOptions)}
+     * instead.
+     */
+    @Deprecated
     public ProtobufTraverseCallback(ProtoWriter protoWriter, SymbolTable symbolTable, boolean supportsASCIIOnlyStrings)
     {
+      this(protoWriter, new ProtobufCodecOptions.Builder()
+          .setSymbolTable(symbolTable)
+          .setEnableASCIIOnlyStrings(supportsASCIIOnlyStrings)
+          .build());
+    }
+
+    public ProtobufTraverseCallback(ProtoWriter protoWriter, ProtobufCodecOptions options)
+    {
       _protoWriter = protoWriter;
-      _symbolTable = symbolTable;
-      _supportsASCIIOnlyStrings =  supportsASCIIOnlyStrings;
+      _options = options;
+      _symbolTable = options.getSymbolTable();
+      _supportsASCIIOnlyStrings = options.shouldEnableASCIIOnlyStrings();
     }
 
     public void nullValue() throws IOException
@@ -358,8 +417,16 @@ public class ProtobufDataCodec implements DataCodec
      */
     public void floatValue(float value) throws IOException
     {
-      _protoWriter.writeByte(FLOAT_ORDINAL);
-      _protoWriter.writeInt32(Float.floatToIntBits(value));
+      if (_options.shouldEnableFixedLengthFloatDoubles())
+      {
+        _protoWriter.writeByte(FIXED_FLOAT_ORDINAL);
+        _protoWriter.writeFixedInt32(Float.floatToRawIntBits(value));
+      }
+      else
+      {
+        _protoWriter.writeByte(FLOAT_ORDINAL);
+        _protoWriter.writeInt32(Float.floatToRawIntBits(value));
+      }
     }
 
     /**
@@ -369,8 +436,16 @@ public class ProtobufDataCodec implements DataCodec
      */
     public void doubleValue(double value) throws IOException
     {
-      _protoWriter.writeByte(DOUBLE_ORDINAL);
-      _protoWriter.writeInt64(Double.doubleToLongBits(value));
+      if (_options.shouldEnableFixedLengthFloatDoubles())
+      {
+        _protoWriter.writeByte(FIXED_DOUBLE_ORDINAL);
+        _protoWriter.writeFixedInt64(Double.doubleToRawLongBits(value));
+      }
+      else
+      {
+        _protoWriter.writeByte(DOUBLE_ORDINAL);
+        _protoWriter.writeInt64(Double.doubleToRawLongBits(value));
+      }
     }
 
     /**
@@ -381,7 +456,7 @@ public class ProtobufDataCodec implements DataCodec
     public void stringValue(String value) throws IOException
     {
       int symbolId;
-      if ((symbolId = _symbolTable.getSymbolId(value)) != SymbolTable.UNKNOWN_SYMBOL_ID)
+      if ((symbolId = _options.getSymbolTable().getSymbolId(value)) != SymbolTable.UNKNOWN_SYMBOL_ID)
       {
         _protoWriter.writeByte(STRING_REFERENCE_ORDINAL);
         _protoWriter.writeUInt32(symbolId);
@@ -390,7 +465,8 @@ public class ProtobufDataCodec implements DataCodec
       {
         // If the byte length is the same as the string length, then this is an ASCII-only string.
         _protoWriter.writeString(value, byteLength ->
-            (_supportsASCIIOnlyStrings && value.length() == byteLength) ? ASCII_STRING_LITERAL_ORDINAL : STRING_LITERAL_ORDINAL);
+            (_options.shouldEnableASCIIOnlyStrings() && value.length() == byteLength) ?
+                ASCII_STRING_LITERAL_ORDINAL : STRING_LITERAL_ORDINAL);
       }
     }
 
@@ -471,6 +547,12 @@ public class ProtobufDataCodec implements DataCodec
     {
       _protoWriter.writeByte(LIST_ORDINAL);
       _protoWriter.writeUInt32(list.size());
+    }
+
+    @Override
+    public void close() throws IOException
+    {
+      _protoWriter.close();
     }
   }
 }

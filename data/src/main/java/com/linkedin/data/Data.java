@@ -18,6 +18,7 @@ package com.linkedin.data;
 
 
 import com.linkedin.util.ArgumentUtil;
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -143,7 +144,7 @@ public class Data
    * @see #traverse(Object obj, TraverseCallback callback)
    * @author slim
    */
-  public interface TraverseCallback
+  public interface TraverseCallback extends Closeable
   {
     /**
      * Return an {@link Iterable} with the
@@ -313,6 +314,11 @@ public class Data
      * Invoked when the end of a {@link DataList} is traversed.
      */
     default void endList() throws IOException
+    {
+    }
+
+    @Override
+    default void close() throws IOException
     {
     }
   }

@@ -52,6 +52,7 @@ import com.linkedin.restli.tools.snapshot.check.Snapshot;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -86,39 +87,31 @@ public class SnapshotGenerator
   {
     fileName += RestConstants.SNAPSHOT_FILENAME_EXTENTION;
     final File file = new File(outdirFile, fileName);
-
-    FileOutputStream fileOutputStream = new FileOutputStream(file);
-
-    JsonBuilder jsonBuilder = new JsonBuilder(JsonBuilder.Pretty.INDENTED);
-    SchemaToJsonEncoder encoder = new SchemaToJsonEncoder(jsonBuilder);
-
-    jsonBuilder.writeStartObject();
-    jsonBuilder.writeFieldName(Snapshot.MODELS_KEY);
-    jsonBuilder.writeStartArray();
-
-    List<NamedDataSchema> models = generateModelList();
-    models.sort(Comparator.comparing(NamedDataSchema::getFullName));
-
-    for(DataSchema model : models){
-      encoder.encode(model);
-    }
-
-    jsonBuilder.writeEndArray();
-
-    jsonBuilder.writeFieldName(Snapshot.SCHEMA_KEY);
-    jsonBuilder.writeDataTemplate(_topLevelSchema, true);
-
-    jsonBuilder.writeEndObject();
-
-    try
+    try (JsonBuilder jsonBuilder = new JsonBuilder(JsonBuilder.Pretty.INDENTED, new FileWriter(file)))
     {
-      fileOutputStream.write(jsonBuilder.result().getBytes());
+      SchemaToJsonEncoder encoder = new SchemaToJsonEncoder(jsonBuilder);
+
+      jsonBuilder.writeStartObject();
+      jsonBuilder.writeFieldName(Snapshot.MODELS_KEY);
+      jsonBuilder.writeStartArray();
+
+      List<NamedDataSchema> models = generateModelList();
+      models.sort(Comparator.comparing(NamedDataSchema::getFullName));
+
+      for (DataSchema model : models)
+      {
+        encoder.encode(model);
+      }
+
+      jsonBuilder.writeEndArray();
+
+      jsonBuilder.writeFieldName(Snapshot.SCHEMA_KEY);
+      jsonBuilder.writeDataTemplate(_topLevelSchema, true);
+
+      jsonBuilder.writeEndObject();
+      jsonBuilder.flush();
     }
-    finally
-    {
-      fileOutputStream.close();
-      jsonBuilder.close();
-    }
+
     return file;
   }
 

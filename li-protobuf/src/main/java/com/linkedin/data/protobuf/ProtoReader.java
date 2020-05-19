@@ -125,6 +125,24 @@ public abstract class ProtoReader
   public abstract long readInt64() throws IOException;
 
   /**
+   * Read a fixed 32-bit int from the stream.
+   */
+  public int readFixedInt32() throws IOException
+  {
+    // For backward compatibility at build time, implement but throw an UnsupportedOperationException.
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Read a fixed 64-bit int from the stream.
+   */
+  public long readFixedInt64() throws IOException
+  {
+    // For backward compatibility at build time, implement but throw an UnsupportedOperationException.
+    throw new UnsupportedOperationException();
+  }
+
+  /**
    * Read one byte from the _input.
    *
    * @throws EOFException The end of the stream or the current _limit was reached.

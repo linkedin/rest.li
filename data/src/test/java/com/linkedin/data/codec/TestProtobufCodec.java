@@ -23,9 +23,17 @@ import org.testng.annotations.Test;
 public class TestProtobufCodec extends TestCodec
 {
   @Test(dataProvider = "protobufCodecData", dataProviderClass = CodecDataProviders.class)
-  public void testProtobufDataCodec(String testName, DataComplex dataComplex, boolean supportASCIIOnlyStrings) throws IOException
+  public void testProtobufDataCodec(String testName, DataComplex dataComplex, boolean enableFixedLengthFloatDoubles) throws IOException
   {
-    ProtobufDataCodec codec = new ProtobufDataCodec(null, supportASCIIOnlyStrings);
+    ProtobufDataCodec codec = new ProtobufDataCodec(
+        new ProtobufCodecOptions.Builder().setEnableASCIIOnlyStrings(true)
+            .setEnableFixedLengthFloatDoubles(enableFixedLengthFloatDoubles)
+            .build());
+    testDataCodec(codec, dataComplex);
+    codec = new ProtobufDataCodec(
+      new ProtobufCodecOptions.Builder().setEnableASCIIOnlyStrings(false)
+          .setEnableFixedLengthFloatDoubles(enableFixedLengthFloatDoubles)
+          .build());
     testDataCodec(codec, dataComplex);
   }
 }

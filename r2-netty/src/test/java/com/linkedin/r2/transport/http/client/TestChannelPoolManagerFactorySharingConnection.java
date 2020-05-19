@@ -100,7 +100,7 @@ public class TestChannelPoolManagerFactorySharingConnection
    * End to end test. Testing all the client combinations (http/https stream/rest sharing/not sharing) and check they
    * are NOT using the same channelPoolManager
    */
-  @Test(dataProvider = "configsOpenedConnections")
+  @Test(dataProvider = "configsOpenedConnections", groups = { "ci-flaky" })
   public void testSuccessfulRequestds(boolean restOverStream, String protocolVersion, boolean shareConnection) throws Exception
   {
     makeRequestsWithClients(shareConnection, (clients, clientFactory) ->

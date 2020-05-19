@@ -19,7 +19,7 @@ buildscript {
     jcenter()
   }
   dependencies {
-    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7'
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
   }
 }
 
@@ -193,11 +193,7 @@ subprojects {
     all*.exclude group: 'com.sun.jmx', module: 'jmxri'
   }
 
-  if (it.name == 'd2') {
-    configurations.testArtifacts.visible = true
-  }
-
-  if (it.name == 'darkcluster') {
+  if (it.name == 'd2' || it.name == 'darkcluster') {
     configurations.testArtifacts.visible = true
   }
 
@@ -259,6 +255,11 @@ subprojects {
     testArtifacts testJar
   }
 
+  // The artifacts for custom archive configurations aren't built by default
+  if (configurations.testArtifacts.visible) {
+    tasks.assemble.dependsOn buildTestArtifacts
+  }
+
   if (isDefaultEnvironment) {
     // Configure the Bintray release task
     apply from: "${buildScriptDirPath}/bintrayRelease.gradle"
@@ -286,6 +287,16 @@ subprojects {
       excludeGroups 'integration_external_product_dependent'
       excludeGroups 'known_issue'
       excludeGroups 'withoutAssertion'
+    }
+  }
+
+  // Exclude tests which are known to be flaky in the Travis CI environment
+  if (System.getenv('TRAVIS') == 'true' && System.getenv('USER') == 'travis') {
+    afterEvaluate {
+      project.tasks.withType(Test).forEach {
+        it.options.excludeGroups 'ci-flaky'
+        it.systemProperties['test.httpRequestTimeout'] = '20000'
+      }
     }
   }
 
@@ -388,6 +399,14 @@ project.gradle.addListener(new TestListener() {
 
   @Override
   void afterTest(TestDescriptor testDescriptor, TestResult result) {
+    // Display test failure messages since these aren't shown by default
+    if (result.failures) {
+      logger.error "\nFailure message for ${testDescriptor.getClassName()} > ${testDescriptor.getDisplayName()}:"
+      result.failures.forEach {
+        logger.error "    ${it.getMessage()}"
+      }
+    }
+    // Accumulate info about skipped tests, display at the end of the build as a warning
     if (result.skippedTestCount > 0)
     {
       skippedTests[testDescriptor.className] << testDescriptor.name
@@ -398,10 +417,10 @@ project.gradle.addListener(new TestListener() {
 project.gradle.buildFinished { BuildResult result ->
   if (skippedTests.size() > 0)
   {
-    final StringBuilder msgBuilder = new StringBuilder("\nThe following tests should be executed but actually skipped. Please fix and try again.");
+    final StringBuilder msgBuilder = new StringBuilder("\nThe following tests were skipped or failed and had to retry.");
     skippedTests.each { className, methods ->
-      msgBuilder.append("\nClass: ${className} , Methods: ${methods}")
+      msgBuilder.append("\n    ${className} > ${methods}")
     }
-    throw new GradleException(msgBuilder.toString())
+    logger.warn msgBuilder.toString()
   }
 }

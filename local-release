@@ -1,25 +1,5 @@
 #!/bin/sh
-# The purpose of this script is to publish artifacts to ~/local-repo
 
-if [ ! -d "$HOME" ]; then
-  echo 'Cannot perform local release, $HOME is not set to a valid directory'
-  exit 1
-fi
-
-LOCAL_REPO="${HOME}/local-repo"
-
-if [ ! -d $LOCAL_REPO ]; then
-  mkdir $LOCAL_REPO
-fi
-
-VERSION=$(awk 'BEGIN { FS = "=" }; $1 == "version" { print $2 }' gradle.properties | awk '{ print $1 }')
-echo "Publishing pegasus $VERSION to ${LOCAL_REPO}..."
-
-./gradlew -Dmaven.repo.local=$LOCAL_REPO publishReleasePublicationToMavenLocal
-
-if [ $? -eq 0 ]; then
-  echo "Published pegasus $VERSION to $LOCAL_REPO"
-else
-  exit 1
-fi
-
+# TODO: delete this eventually
+echo 'This script has been moved to ./scripts/local-release'
+exit 2

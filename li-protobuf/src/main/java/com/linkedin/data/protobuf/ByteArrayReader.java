@@ -275,6 +275,36 @@ final class ByteArrayReader extends ProtoReader
     return readRawVarint64SlowPath();
   }
 
+  @Override
+  public int readFixedInt32() throws IOException
+  {
+    if (_limit - _pos < ProtoWriter.FIXED32_SIZE) {
+      throw new EOFException();
+    }
+
+    return (((_buffer[_pos++] & 0xff))
+        | ((_buffer[_pos++] & 0xff) << 8)
+        | ((_buffer[_pos++] & 0xff) << 16)
+        | ((_buffer[_pos++] & 0xff) << 24));
+  }
+
+  @Override
+  public long readFixedInt64() throws IOException
+  {
+    if (_limit - _pos < ProtoWriter.FIXED64_SIZE) {
+      throw new EOFException();
+    }
+
+    return (((_buffer[_pos++] & 0xffL))
+        | ((_buffer[_pos++] & 0xffL) << 8)
+        | ((_buffer[_pos++] & 0xffL) << 16)
+        | ((_buffer[_pos++] & 0xffL) << 24)
+        | ((_buffer[_pos++] & 0xffL) << 32)
+        | ((_buffer[_pos++] & 0xffL) << 40)
+        | ((_buffer[_pos++] & 0xffL) << 48)
+        | ((_buffer[_pos++] & 0xffL) << 56));
+  }
+
   long readRawVarint64SlowPath() throws IOException
   {
     long result = 0;

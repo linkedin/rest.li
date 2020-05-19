@@ -43,6 +43,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarFile;
+import org.mockito.Mockito;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -147,6 +149,8 @@ public class TestDataSchemaResolver
     private String _extension;
     private Map<String,String> _map;
   };
+
+
 
   List<String> _testPaths = Arrays.asList
   (
@@ -835,6 +839,21 @@ public class TestDataSchemaResolver
 
     final DataSchema nonExistSchema = parser.lookupName(nonExistSchemaName);
     assertNull(nonExistSchema);
+  }
+
+  @Test
+  public void testAddBadLocation()
+  {
+    MapDataSchemaResolver resolver = new MapDataSchemaResolver(SchemaParserFactory.instance(), _testPaths, _testSchemas);
+    JarFile jarFile = Mockito.mock(JarFile.class);
+    Mockito.when(jarFile.getName()).thenReturn("jarFile");
+    InJarFileDataSchemaLocation location = new InJarFileDataSchemaLocation(jarFile, "samplePath");
+    InJarFileDataSchemaLocation otherLocation = new InJarFileDataSchemaLocation(jarFile, "otherPath");
+    resolver.addBadLocation(location);
+    assertTrue(resolver.isBadLocation(location));
+    assertTrue(resolver.isBadLocation(location.getLightweightRepresentation()));
+    assertFalse(resolver.isBadLocation(otherLocation));
+    assertFalse(resolver.isBadLocation(otherLocation.getLightweightRepresentation()));
   }
 
   public void lookup(DataSchemaResolver resolver, String[][] lookups, char separator, boolean debug)

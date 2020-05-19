@@ -157,9 +157,10 @@ bintray {
 task assertArtifactsExist() {
   doLast {
     final Set<File> missingArtifacts = configurations.archives.allArtifacts.file.findAll { !it.exists() }
-    if (missingArtifacts) {
+    final Set<File> missingTestArtifacts = configurations.testArtifacts.allArtifacts.file.findAll { !it.exists() }
+    if (missingArtifacts || (configurations.testArtifacts.visible && missingTestArtifacts)) {
       throw new GradleException(
-          "Cannot perform Bintray upload. The project likely hasn't been built. Missing artifacts ${missingArtifacts}")
+          "Cannot perform Bintray upload. The project likely hasn't been built. Missing artifacts ${missingArtifacts + missingTestArtifacts}")
     }
   }
 }

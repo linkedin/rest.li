@@ -23,7 +23,6 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.KeyMapper;
-import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerTestState;
 import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
@@ -78,6 +77,7 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.util.NamedThreadFactory;
+import com.linkedin.test.util.retry.ThreeRetries;
 import com.linkedin.util.degrader.DegraderImpl;
 import java.io.File;
 import java.io.IOException;
@@ -1343,7 +1343,7 @@ public class SimpleLoadBalancerTest
     simulator.reset();
   }
 
-  @Test(groups = { "medium", "back-end" })
+  @Test(groups = { "medium", "back-end" }, retryAnalyzer = ThreeRetries.class)
   public void testLoadBalancerSimulationDegrader() throws URISyntaxException,
       IOException,
       ServiceUnavailableException,
@@ -1384,7 +1384,7 @@ public class SimpleLoadBalancerTest
     simulator.reset();
   }
 
-  @Test(groups = { "medium", "back-end" })
+  @Test(groups = { "medium", "back-end", "ci-flaky" })
   public void testLoadBalancerSimulationDegraderWithFileStore() throws URISyntaxException,
       IOException,
       ServiceUnavailableException,

@@ -22,6 +22,7 @@ import com.linkedin.multipart.exceptions.SinglePartFinishedException;
 import com.linkedin.multipart.exceptions.MultiPartReaderFinishedException;
 import com.linkedin.r2.filter.R2Constants;
 
+import com.linkedin.test.util.retry.SingleRetry;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -90,7 +91,7 @@ public class TestMIMEReader extends AbstractMIMEUnitTest
     executeRequestAndAssert(trimTrailingCRLF(requestPayload), chunkSize, multiPartMimeBody);
   }
 
-  @Test(dataProvider = "eachSingleBodyDataSource")
+  @Test(dataProvider = "eachSingleBodyDataSource", retryAnalyzer = SingleRetry.class)
   public void testEachSingleBodyDataSourceMultipleTimes(final int chunkSize, final MimeBodyPart bodyPart)
       throws Exception
   {

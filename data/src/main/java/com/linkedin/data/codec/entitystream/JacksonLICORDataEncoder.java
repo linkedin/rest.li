@@ -60,18 +60,24 @@ public class JacksonLICORDataEncoder extends AbstractJacksonDataEncoder
     _symbolTable = symbolTable;
   }
 
+  @Deprecated
+  @Override
   protected void writeStartObject() throws IOException
   {
     _generator.writeStartArray();
     _generator.writeNumber(JacksonLICORStreamDataCodec.MAP_ORDINAL);
   }
 
+  @Override
+  @Deprecated
   protected void writeStartArray() throws IOException
   {
     _generator.writeStartArray();
     _generator.writeNumber(JacksonLICORStreamDataCodec.LIST_ORDINAL);
   }
 
+  @Override
+  @Deprecated
   protected void writeFieldName(String name) throws IOException
   {
     int fieldId;
@@ -85,6 +91,8 @@ public class JacksonLICORDataEncoder extends AbstractJacksonDataEncoder
     }
   }
 
+  @Override
+  @Deprecated
   protected void writeEndObject() throws IOException
   {
     writeEndArray();
