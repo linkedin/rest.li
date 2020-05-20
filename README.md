@@ -1,3 +1,5 @@
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Build Status](https://api.travis-ci.com/linkedin/rest.li.svg?branch=master)](https://travis-ci.com/github/linkedin/rest.li) [![Download](https://api.bintray.com/packages/linkedin/maven/pegasus/images/download.svg)](https://bintray.com/linkedin/maven/pegasus/_latestVersion)
+
 <p align="center">
   <img src="https://github.com/linkedin/rest.li/wiki/restli-logo-white-small.png"/>
 </p>
