@@ -193,10 +193,6 @@ subprojects {
     all*.exclude group: 'com.sun.jmx', module: 'jmxri'
   }
 
-  if (it.name == 'd2' || it.name == 'darkcluster') {
-    configurations.testArtifacts.visible = true
-  }
-
   if (!(it.name in ['data-avro', 'restli-int-test'])) {
     configurations {
       // Prevent Guava from creeping in to avoid incompatibilities in multiple classloader environments.
@@ -244,6 +240,14 @@ subprojects {
       archives sourcesJar
       archives javadocJar
     }
+
+    // Only build and publish artifacts for consumer-facing modules
+    final Set internalModules = ['d2-benchmark', 'd2-int-test', 'generator-test', 'log-test-config', 'r2-int-test',
+                                 'r2-perf-test', 'restli-internal-testutils'];
+    if (!(it.name in internalModules)) {
+      // Configure the Bintray release task
+      apply from: "${buildScriptDirPath}/bintrayRelease.gradle"
+    }
   }
 
   task testJar(type: Jar) {
@@ -253,16 +257,6 @@ subprojects {
 
   artifacts {
     testArtifacts testJar
-  }
-
-  // The artifacts for custom archive configurations aren't built by default
-  if (configurations.testArtifacts.visible) {
-    tasks.assemble.dependsOn buildTestArtifacts
-  }
-
-  if (isDefaultEnvironment) {
-    // Configure the Bintray release task
-    apply from: "${buildScriptDirPath}/bintrayRelease.gradle"
   }
 
   // Configure the IDEA plugin to (1) add the codegen as source dirs and (2) work around

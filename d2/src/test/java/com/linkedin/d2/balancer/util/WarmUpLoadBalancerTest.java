@@ -16,27 +16,13 @@
 
 package com.linkedin.d2.balancer.util;
 
-
-import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
-import com.linkedin.d2.balancer.Directory;
-import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
-import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.WarmUpService;
-import com.linkedin.d2.balancer.clients.TrackerClientTest.TestClient;
-import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
-import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
-import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
-import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
-import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.transport.common.TransportClientFactory;
-import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -44,10 +30,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -410,111 +394,6 @@ public class WarmUpLoadBalancerTest
       {
         throw new RuntimeException(e);
       }
-    }
-  }
-
-  /**
-   * Dummy LoadBalancer counting the number of requests done
-   */
-  public static class TestLoadBalancer implements LoadBalancerWithFacilities, WarmUpService
-  {
-
-    private final AtomicInteger _requestCount = new AtomicInteger();
-    private final AtomicInteger _completedRequestCount = new AtomicInteger();
-    private int _delayMs = 0;
-    private final int DELAY_STANDARD_DEVIATION = 10; //ms
-    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-
-    public TestLoadBalancer()
-    {
-    }
-
-    public TestLoadBalancer(int delayMs)
-    {
-      _delayMs = delayMs;
-    }
-
-    @Override
-    public void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback)
-    {
-      clientCallback.onSuccess(new TestClient());
-    }
-
-    @Override
-    public void warmUpService(String serviceName, Callback<None> callback)
-    {
-      _requestCount.incrementAndGet();
-      executorService.schedule(() ->
-      {
-        _completedRequestCount.incrementAndGet();
-        callback.onSuccess(None.none());
-      }, Math.max(0, _delayMs
-        // any kind of random delay works for the test
-        + ((int) new Random().nextGaussian() * DELAY_STANDARD_DEVIATION)), TimeUnit.MILLISECONDS);
-    }
-
-    @Override
-    public void start(Callback<None> callback)
-    {
-      callback.onSuccess(None.none());
-    }
-
-    @Override
-    public void shutdown(PropertyEventShutdownCallback shutdown)
-    {
-      shutdown.done();
-    }
-
-    @Override
-    public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
-    {
-      clientCallback.onSuccess(new ServiceProperties(serviceName, "clustername", "/foo", Arrays.asList("rr")));
-    }
-
-    AtomicInteger getRequestCount()
-    {
-      return _requestCount;
-    }
-
-    AtomicInteger getCompletedRequestCount()
-    {
-      return _completedRequestCount;
-    }
-
-    @Override
-    public Directory getDirectory()
-    {
-      return null;
-    }
-
-    @Override
-    public PartitionInfoProvider getPartitionInfoProvider()
-    {
-      return null;
-    }
-
-    @Override
-    public HashRingProvider getHashRingProvider()
-    {
-      return null;
-    }
-
-    @Override
-    public KeyMapper getKeyMapper()
-    {
-      return null;
-    }
-
-    @Override
-    public TransportClientFactory getClientFactory(String scheme)
-    {
-      return null;
-    }
-
-    @Override
-    public ClusterInfoProvider getClusterInfoProvider()
-    {
-      return null;
     }
   }
 }

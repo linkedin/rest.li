@@ -25,7 +25,8 @@ dependencies {
   testCompile externalDependency.easymock
   testCompile externalDependency.mockito
   testCompile project(':r2-jetty')
-  testCompile project (':test-util')
+  testCompile project(':test-util')
+  testCompile project(':d2-test-api')
 }
 
 task packup(dependsOn: configurations.default.allArtifacts, type: Copy) {
@@ -43,22 +44,6 @@ task packup(dependsOn: configurations.default.allArtifacts, type: Copy) {
     }
 }
 
-task packupTest(dependsOn: [testJar, packup], type: Copy) {
-    into "$buildDir/package"
-    from configurations.testArtifacts
-    from { configurations.testArtifacts.allArtifacts.files }
-    from "src/test/sh"
-
-    description = "Packages all test jars, scripts, etc into a \"packages\" folder under the build directory."
-
-    doLast {
-        exec {
-            executable = 'chmod'
-            args = [ '+x', fileTree(dir: "$buildDir/package", include: '*.sh') as Object[] ].flatten()
-        }
-    }
-}
-
 task scripts(dependsOn: packup, type: Zip) {
     from "$buildDir/package"
     baseName = 'lb-tool'
@@ -66,9 +51,6 @@ task scripts(dependsOn: packup, type: Zip) {
 }
 
 configurations {
-  testArtifacts {
-    visible = true
-  }
   // exclude slf4j-log4j12 which is pulled in from zookeeper
   all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }

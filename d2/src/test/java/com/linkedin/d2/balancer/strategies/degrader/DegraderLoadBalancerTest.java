@@ -16,14 +16,13 @@
 
 package com.linkedin.d2.balancer.strategies.degrader;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancerClient;
+import com.linkedin.d2.balancer.clients.TestClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.clients.TrackerClientTest;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -2142,7 +2141,7 @@ public class DegraderLoadBalancerTest
   private List<Runnable> createRaceCondition(final URI uri, Clock clock, final DegraderLoadBalancerStrategyV3 strategy, final CountDownLatch joinLatch)
   {
     final CountDownLatch clientLatch = new CountDownLatch(1);
-    TrackerClient evilClient = new EvilClient(uri, getDefaultPartitionData(1, 2), new TrackerClientTest.TestClient(),
+    TrackerClient evilClient = new EvilClient(uri, getDefaultPartitionData(1, 2), new TestClient(),
             clock, null, clientLatch);
     final List<TrackerClient> clients = Collections.singletonList(evilClient);
     final Runnable update = new Runnable()

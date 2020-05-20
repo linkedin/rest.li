@@ -20,6 +20,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.clients.TestClient;
 import com.linkedin.d2.balancer.clients.TrackerClientTest;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -69,8 +70,8 @@ public class LoadBalancerMock implements LoadBalancer
       return;
     }
 
-    clientCallback.onSuccess(new TrackerClientTest.TestClient(true, _dontCallCallback,
-      TrackerClientTest.TestClient.DEFAULT_REQUEST_TIMEOUT, _scheduledExecutorService));
+    clientCallback.onSuccess(new TestClient(true, _dontCallCallback,
+      TestClient.DEFAULT_REQUEST_TIMEOUT, _scheduledExecutorService));
   }
 
   @Override
@@ -90,7 +91,7 @@ public class LoadBalancerMock implements LoadBalancer
   public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
   {
     Map<String, Object> transportClientProperties = new HashMap<>();
-    transportClientProperties.put(PropertyKeys.HTTP_REQUEST_TIMEOUT, TrackerClientTest.TestClient.DEFAULT_REQUEST_TIMEOUT);
+    transportClientProperties.put(PropertyKeys.HTTP_REQUEST_TIMEOUT, TestClient.DEFAULT_REQUEST_TIMEOUT);
 
     ServiceProperties test = new ServiceProperties(serviceName, serviceName + "Cluster", "/" + serviceName,
       Collections.singletonList("test"), Collections.emptyMap(), transportClientProperties, Collections.emptyMap(),
