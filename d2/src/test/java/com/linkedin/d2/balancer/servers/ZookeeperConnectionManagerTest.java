@@ -438,7 +438,7 @@ public class ZookeeperConnectionManagerTest
     executorService.shutdown();
   }
 
-  @Test(invocationCount = 10, timeOut = 10000, retryAnalyzer = ThreeRetries.class)
+  @Test(invocationCount = 10, timeOut = 10000, groups = { "ci-flaky" })
   public void testMarkUpAndDownMultipleTimesFinalUp()
     throws Exception
   {
