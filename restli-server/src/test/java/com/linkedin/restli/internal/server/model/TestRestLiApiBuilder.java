@@ -198,4 +198,33 @@ public class TestRestLiApiBuilder
       Assert.assertEquals(resourceMethodDescriptor.getActionReturnType(), expectedActionReturnType);
     }
   }
+
+  @DataProvider(name = "unstructuredFinderReturnTypeData")
+  private Object[][] unstructuredFinderReturnTypeData()
+  {
+    return new Object[][]
+        {
+            {fooBarFinderResource.class, "The return type must be a RecordTemplate"}
+        };
+  }
+
+  /**
+   * Ensures that when finder methods are processed, if the return type is not of a Record, then it will be warned.
+   * For instance, it should recognize that the "logical" return type for a method
+   * {@code Task<ActionResult<String>> doFoo();} is {@code String.class}.
+   *
+   * @param resourceClass resource used as an input
+   */
+  @Test(dataProvider = "unstructuredFinderReturnTypeData")
+  public void testFinderUnsupportedReturnType(Class<?> resourceClass, String expectedPartialMessage)
+  {
+    try {
+      RestLiApiBuilder.buildResourceModels(Collections.singleton(resourceClass));
+      Assert.fail("For the finder resource class with a non RecordTemplate sub class, we shall throw an exception");
+    } catch (ResourceConfigException resourceConfigException) {
+      Assert.assertTrue(resourceConfigException.getMessage().contains(expectedPartialMessage),
+          String.format("Expected %s with message containing \"%s\" but instead found message \"%s\"",
+              ResourceConfigException.class.getSimpleName(), expectedPartialMessage, resourceConfigException.getMessage()));
+    }
+  }
 }

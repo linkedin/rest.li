@@ -75,8 +75,10 @@ import com.linkedin.restli.server.resources.SimpleResourceAsyncTemplate;
 import com.linkedin.restli.server.resources.SimpleResourceTaskTemplate;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceReactiveTemplate;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceTemplate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -759,4 +761,16 @@ class SampleResources
 
   @RestLiCollection(name = "collectionComplexKeyTask")
   class CollectionComplexKeyTask extends ComplexKeyResourceTaskTemplate<EmptyRecord, EmptyRecord, EmptyRecord> {}
+
+  @RestLiCollection(name="lucky",keyName="dayOfWeek")
+  public class fooBarFinderResource extends UnstructuredDataCollectionResourceTemplate<Integer>
+  {
+    @Finder("findFooBar")
+    public List<String> findLucky(@PagingContextParam final PagingContext context, @QueryParam("dayOfWeek") Integer dayOfWeek) throws Exception
+    {
+      List<String> res = new LinkedList<>();
+      res.add("gotLuck!");
+      return res;
+    }
+  }
 }

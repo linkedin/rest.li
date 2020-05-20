@@ -2595,6 +2595,13 @@ public final class RestLiAnnotationReader
     Method method = finderMethodDescriptor.getMethod();
     Class<?> valueClass = resourceModel.getValueClass();
 
+    if (valueClass == null)
+    {
+      throw new ResourceConfigException("@Finder method '" + method.getName()
+          + "' on class '" + resourceModel.getResourceClass().getName()
+          + "' has an invalid return type, The return type must be a RecordTemplate'");
+    }
+
     Class<?> returnType, elementType;
     try
     {
