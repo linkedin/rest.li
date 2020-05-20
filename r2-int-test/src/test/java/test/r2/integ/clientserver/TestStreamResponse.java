@@ -20,7 +20,6 @@ import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.test.util.retry.ThreeRetries;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -149,7 +148,7 @@ public class TestStreamResponse extends AbstractServiceTest
     factoryShutdownCallback.get();
   }
 
-  @Test(retryAnalyzer = ThreeRetries.class)
+  @Test(groups = { "ci-flaky" })
   public void testBackpressure() throws Exception
   {
     StreamRequestBuilder builder = new StreamRequestBuilder(_clientProvider.createHttpURI(_port, SMALL_URI));
