@@ -18,13 +18,11 @@ package com.linkedin.data.codec.entitystream;
 
 import com.linkedin.data.DataMap;
 
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.START_OBJECT;
-
 
 public class JacksonJsonDataMapDecoder extends JacksonJsonDataDecoder<DataMap>
 {
   public JacksonJsonDataMapDecoder()
   {
-    super(START_OBJECT.bitPattern);
+    super(START_OBJECT_TOKEN);
   }
 }

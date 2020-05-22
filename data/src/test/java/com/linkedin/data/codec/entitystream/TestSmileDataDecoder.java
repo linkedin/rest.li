@@ -31,10 +31,7 @@ import com.linkedin.entitystream.Writer;
 import java.util.concurrent.ExecutionException;
 import org.testng.annotations.Test;
 
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.START_ARRAY;
-import static com.linkedin.data.codec.entitystream.AbstractJacksonDataDecoder.Token.START_OBJECT;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 
 public class TestSmileDataDecoder
@@ -151,13 +148,15 @@ public class TestSmileDataDecoder
 
   private static DataMap decodeMap(byte[] bytes) throws Exception
   {
-    JacksonSmileDataDecoder<DataMap> decoder = new JacksonSmileDataDecoder<>(SMILE_FACTORY, START_OBJECT.bitPattern);
+    JacksonSmileDataDecoder<DataMap> decoder =
+        new JacksonSmileDataDecoder<>(SMILE_FACTORY, AbstractDataDecoder.START_OBJECT_TOKEN);
     return decode(bytes, decoder);
   }
 
   private static DataList decodeList(byte[] bytes) throws Exception
   {
-    JacksonSmileDataDecoder<DataList> decoder = new JacksonSmileDataDecoder<>(SMILE_FACTORY, START_ARRAY.bitPattern);
+    JacksonSmileDataDecoder<DataList> decoder =
+        new JacksonSmileDataDecoder<>(SMILE_FACTORY, AbstractDataDecoder.START_ARRAY_TOKEN);
     return decode(bytes, decoder);
   }
 

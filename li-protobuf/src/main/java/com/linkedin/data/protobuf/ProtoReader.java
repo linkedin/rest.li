@@ -149,4 +149,3 @@ public abstract class ProtoReader
    */
   public abstract byte readRawByte() throws IOException;
 }
-
