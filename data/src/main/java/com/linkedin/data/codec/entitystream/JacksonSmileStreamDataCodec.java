@@ -68,7 +68,7 @@ public class JacksonSmileStreamDataCodec implements StreamDataCodec
   public CompletionStage<DataList> decodeList(EntityStream<ByteString> entityStream)
   {
     JacksonSmileDataDecoder<DataList> decoder =
-        new JacksonSmileDataDecoder<>(_smileFactory, AbstractDataDecoder.START_OBJECT_TOKEN);
+        new JacksonSmileDataDecoder<>(_smileFactory, AbstractDataDecoder.START_ARRAY_TOKEN);
     entityStream.setReader(decoder);
     return decoder.getResult();
   }
