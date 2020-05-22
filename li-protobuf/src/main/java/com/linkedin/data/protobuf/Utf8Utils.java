@@ -98,6 +98,11 @@ public class Utf8Utils
 
   private static final IllegalArgumentException INVALID_UTF8_EXCEPTION = new IllegalArgumentException("Invalid UTF-8");
 
+  public static int lookupUtfTable(int initialByte)
+  {
+    return UTF8_LOOKUP_TABLE[initialByte];
+  }
+
   /**
    * Encodes an input character sequence ({@code in}) to UTF-8 in the target array ({@code out}).
    * For a string, this method is similar to
