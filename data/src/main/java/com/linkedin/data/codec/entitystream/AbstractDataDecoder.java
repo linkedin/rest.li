@@ -42,7 +42,7 @@ import static com.linkedin.data.parser.NonBlockingDataParser.Token.*;
  *
  * @author kramgopa, xma, amgupta1
  */
-abstract class AbstractDataDecoder<T extends DataComplex> implements DataDecoder<T>
+public abstract class AbstractDataDecoder<T extends DataComplex> implements DataDecoder<T>
 {
   private static final EnumSet<NonBlockingDataParser.Token> SIMPLE_VALUE =
       EnumSet.of(STRING, RAW_BYTES, INTEGER, LONG, FLOAT, DOUBLE, BOOL_TRUE, BOOL_FALSE, NULL);
@@ -54,8 +54,8 @@ abstract class AbstractDataDecoder<T extends DataComplex> implements DataDecoder
   protected static final EnumSet<NonBlockingDataParser.Token> NONE = EnumSet.noneOf(NonBlockingDataParser.Token.class);
   protected static final EnumSet<NonBlockingDataParser.Token> START_TOKENS =
       EnumSet.of(NonBlockingDataParser.Token.START_OBJECT, NonBlockingDataParser.Token.START_ARRAY);
-  protected static final EnumSet<NonBlockingDataParser.Token> START_ARRAY_TOKEN = EnumSet.of(NonBlockingDataParser.Token.START_ARRAY);
-  protected static final EnumSet<NonBlockingDataParser.Token> START_OBJECT_TOKEN = EnumSet.of(NonBlockingDataParser.Token.START_OBJECT);
+  public static final EnumSet<NonBlockingDataParser.Token> START_ARRAY_TOKEN = EnumSet.of(NonBlockingDataParser.Token.START_ARRAY);
+  public static final EnumSet<NonBlockingDataParser.Token> START_OBJECT_TOKEN = EnumSet.of(NonBlockingDataParser.Token.START_OBJECT);
 
   static
   {
