@@ -762,15 +762,23 @@ class SampleResources
   @RestLiCollection(name = "collectionComplexKeyTask")
   class CollectionComplexKeyTask extends ComplexKeyResourceTaskTemplate<EmptyRecord, EmptyRecord, EmptyRecord> {}
 
-  @RestLiCollection(name="lucky",keyName="dayOfWeek")
-  public class fooBarFinderResource extends UnstructuredDataCollectionResourceTemplate<Integer>
+  @RestLiCollection(name = "lucky",keyName = "dayOfWeek")
+  public class UnsupportedReturnType1FinderResource extends UnstructuredDataCollectionResourceTemplate<Integer>
   {
-    @Finder("findFooBar")
+    @Finder("findFooBar1")
     public List<String> findLucky(@PagingContextParam final PagingContext context, @QueryParam("dayOfWeek") Integer dayOfWeek) throws Exception
     {
-      List<String> res = new LinkedList<>();
-      res.add("gotLuck!");
-      return res;
+      return Collections.singletonList("finderReturns");
+    }
+  }
+
+  @RestLiCollection(name = "lucky",keyName = "dayOfWeek")
+  public class UnsupportedReturnType2FinderResource extends UnstructuredDataCollectionResourceTemplate<Integer>
+  {
+    @Finder("findFooBar2")
+    public List<Long> findLucky(@PagingContextParam final PagingContext context, @QueryParam("dayOfWeek") Integer dayOfWeek) throws Exception
+    {
+      return Collections.singletonList(0L);
     }
   }
 }

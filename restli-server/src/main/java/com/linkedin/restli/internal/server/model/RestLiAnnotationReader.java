@@ -2599,7 +2599,7 @@ public final class RestLiAnnotationReader
     {
       throw new ResourceConfigException("@Finder method '" + method.getName()
           + "' on class '" + resourceModel.getResourceClass().getName()
-          + "' has an invalid return type, The return type must be a RecordTemplate'");
+          + "' has an invalid return type. The return type must be a RecordTemplate");
     }
 
     Class<?> returnType, elementType;

@@ -199,12 +199,13 @@ public class TestRestLiApiBuilder
     }
   }
 
-  @DataProvider(name = "unstructuredFinderReturnTypeData")
-  private Object[][] unstructuredFinderReturnTypeData()
+  @DataProvider(name = "unsupportedFinderReturnTypeData")
+  private Object[][] unsupportedFinderReturnTypeData()
   {
     return new Object[][]
         {
-            {fooBarFinderResource.class, "The return type must be a RecordTemplate"}
+            { UnsupportedReturnType1FinderResource.class, "The return type must be a RecordTemplate" },
+            { UnsupportedReturnType2FinderResource.class, "The return type must be a RecordTemplate" }
         };
   }
 
@@ -215,13 +216,16 @@ public class TestRestLiApiBuilder
    *
    * @param resourceClass resource used as an input
    */
-  @Test(dataProvider = "unstructuredFinderReturnTypeData")
+  @Test(dataProvider = "unsupportedFinderReturnTypeData")
   public void testFinderUnsupportedReturnType(Class<?> resourceClass, String expectedPartialMessage)
   {
-    try {
+    try
+    {
       RestLiApiBuilder.buildResourceModels(Collections.singleton(resourceClass));
       Assert.fail("For the finder resource class with a non RecordTemplate sub class, we shall throw an exception");
-    } catch (ResourceConfigException resourceConfigException) {
+    }
+    catch (ResourceConfigException resourceConfigException)
+    {
       Assert.assertTrue(resourceConfigException.getMessage().contains(expectedPartialMessage),
           String.format("Expected %s with message containing \"%s\" but instead found message \"%s\"",
               ResourceConfigException.class.getSimpleName(), expectedPartialMessage, resourceConfigException.getMessage()));
