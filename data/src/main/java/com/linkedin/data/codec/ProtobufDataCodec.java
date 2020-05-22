@@ -140,7 +140,7 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public void writeMap(DataMap map, OutputStream out) throws IOException
   {
-    try(TraverseCallback callback = createTraverseCallback(new ProtoWriter(out), _symbolTable))
+    try(TraverseCallback callback = createTraverseCallback(new ProtoWriter(out)))
     {
       Data.traverse(map, callback);
     }
@@ -149,7 +149,7 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public void writeList(DataList list, OutputStream out) throws IOException
   {
-    try(TraverseCallback callback = createTraverseCallback(new ProtoWriter(out), _symbolTable))
+    try(TraverseCallback callback = createTraverseCallback(new ProtoWriter(out)))
     {
       Data.traverse(list, callback);
     }
