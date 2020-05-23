@@ -199,13 +199,13 @@ public class TestRestLiApiBuilder
     }
   }
 
-  @DataProvider(name = "unsupportedFinderReturnTypeData")
-  private Object[][] unsupportedFinderReturnTypeData()
+  @DataProvider(name = "unsupportedFinderResourceTypeData")
+  private Object[][] unsupportedFinderResourceTypeData()
   {
     return new Object[][]
         {
-            { UnsupportedReturnType1FinderResource.class, "The return type must be a RecordTemplate" },
-            { UnsupportedReturnType2FinderResource.class, "The return type must be a RecordTemplate" }
+            { UnsupportedReturnType1FinderResource.class, "subtype of KeyUnstructuredDataResource is not supported for finders" },
+            { UnsupportedReturnType2FinderResource.class, "subtype of KeyUnstructuredDataResource is not supported for finders" }
         };
   }
 
@@ -216,8 +216,8 @@ public class TestRestLiApiBuilder
    *
    * @param resourceClass resource used as an input
    */
-  @Test(dataProvider = "unsupportedFinderReturnTypeData")
-  public void testFinderUnsupportedReturnType(Class<?> resourceClass, String expectedPartialMessage)
+  @Test(dataProvider = "unsupportedFinderResourceTypeData")
+  public void testFinderUnsupportedResourceType(Class<?> resourceClass, String expectedPartialMessage)
   {
     try
     {

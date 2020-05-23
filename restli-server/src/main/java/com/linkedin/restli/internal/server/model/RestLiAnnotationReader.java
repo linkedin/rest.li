@@ -2597,9 +2597,8 @@ public final class RestLiAnnotationReader
 
     if (valueClass == null)
     {
-      throw new ResourceConfigException("@Finder method '" + method.getName()
-          + "' on class '" + resourceModel.getResourceClass().getName()
-          + "' has an invalid return type. The return type must be a RecordTemplate");
+      throw new ResourceConfigException("Class '" + resourceModel.getResourceClass().getName()
+          + "' where the class is a subtype of KeyUnstructuredDataResource is not supported for finders");
     }
 
     Class<?> returnType, elementType;

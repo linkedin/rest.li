@@ -776,9 +776,9 @@ class SampleResources
   public class UnsupportedReturnType2FinderResource extends UnstructuredDataCollectionResourceTemplate<Integer>
   {
     @Finder("findFooBar2")
-    public List<Long> findLucky(@PagingContextParam final PagingContext context, @QueryParam("dayOfWeek") Integer dayOfWeek) throws Exception
+    public List<EmptyRecord> findLucky(@PagingContextParam final PagingContext context, @QueryParam("dayOfWeek") Integer dayOfWeek) throws Exception
     {
-      return Collections.singletonList(0L);
+      return Collections.singletonList(new EmptyRecord());
     }
   }
 }
