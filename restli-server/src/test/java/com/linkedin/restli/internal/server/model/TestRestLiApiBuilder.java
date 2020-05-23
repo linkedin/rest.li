@@ -204,8 +204,8 @@ public class TestRestLiApiBuilder
   {
     return new Object[][]
         {
-            { UnsupportedReturnType1FinderResource.class, "subtype of KeyUnstructuredDataResource is not supported for finders" },
-            { UnsupportedReturnType2FinderResource.class, "subtype of KeyUnstructuredDataResource is not supported for finders" }
+            { FinderUnsupportedKeyUnstructuredDataResource.class, "KeyUnstructuredDataResource class does not support for @Finder methods" },
+            { FinderUnsupportedSingleUnstructuredDataResource.class, "SingleUnstructuredDataResource class does not support for @Finder methods" }
         };
   }
 
@@ -229,6 +229,31 @@ public class TestRestLiApiBuilder
       Assert.assertTrue(resourceConfigException.getMessage().contains(expectedPartialMessage),
           String.format("Expected %s with message containing \"%s\" but instead found message \"%s\"",
               ResourceConfigException.class.getSimpleName(), expectedPartialMessage, resourceConfigException.getMessage()));
+    }
+  }
+
+  @DataProvider(name = "finderSupportedResourceTypeData")
+  private Object[][] finderSupportedResourceTypeData()
+  {
+    return new Object[][]
+        {
+            { FinderSupportedAssociationDataResource.class },
+            { FinderSupportedComplexKeyDataResource.class },
+            { FinderWithActionResource.class }
+        };
+  }
+
+  @Test(dataProvider = "finderSupportedResourceTypeData")
+  public void testFinderSupportedResourceType(Class<?> resourceClass)
+  {
+    try
+    {
+      RestLiApiBuilder.buildResourceModels(Collections.singleton(resourceClass));
+    }
+    catch (Exception exception)
+    {
+      Assert.fail(String.format("Unexpected exception:  class: %s, message: \"%s\"",
+              resourceClass.getSimpleName(), exception.getMessage()));
     }
   }
 }

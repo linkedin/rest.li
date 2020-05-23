@@ -76,6 +76,7 @@ import com.linkedin.restli.server.resources.SimpleResourceTaskTemplate;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceReactiveTemplate;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceTemplate;
+import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourceTemplate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -762,23 +763,52 @@ class SampleResources
   @RestLiCollection(name = "collectionComplexKeyTask")
   class CollectionComplexKeyTask extends ComplexKeyResourceTaskTemplate<EmptyRecord, EmptyRecord, EmptyRecord> {}
 
-  @RestLiCollection(name = "lucky",keyName = "dayOfWeek")
-  public class UnsupportedReturnType1FinderResource extends UnstructuredDataCollectionResourceTemplate<Integer>
+  @RestLiCollection(name = "lucky", keyName = "dayOfWeek")
+  public class FinderUnsupportedKeyUnstructuredDataResource extends UnstructuredDataCollectionResourceTemplate<Integer>
   {
-    @Finder("findFooBar1")
-    public List<String> findLucky(@PagingContextParam final PagingContext context, @QueryParam("dayOfWeek") Integer dayOfWeek) throws Exception
+    @Finder("key")
+    public List<String> findLucky(@PagingContextParam final PagingContext context,
+                                 @QueryParam("dayOfWeek") Integer dayOfWeek) throws Exception
     {
       return Collections.singletonList("finderReturns");
     }
   }
 
-  @RestLiCollection(name = "lucky",keyName = "dayOfWeek")
-  public class UnsupportedReturnType2FinderResource extends UnstructuredDataCollectionResourceTemplate<Integer>
+  @RestLiSimpleResource(name="single")
+  public class FinderUnsupportedSingleUnstructuredDataResource extends UnstructuredDataSimpleResourceTemplate
   {
-    @Finder("findFooBar2")
-    public List<EmptyRecord> findLucky(@PagingContextParam final PagingContext context, @QueryParam("dayOfWeek") Integer dayOfWeek) throws Exception
+    @Finder("single")
+    public List<EmptyRecord> findLucky(@PagingContextParam final PagingContext context,
+                                      @QueryParam("dayOfWeek") Integer dayOfWeek) throws Exception
     {
       return Collections.singletonList(new EmptyRecord());
     }
   }
+
+  @RestLiAssociation(
+      name="associate",
+      assocKeys={@Key(name="followerID", type=long.class), @Key(name="followeeID", type=long.class)})
+  public class FinderSupportedAssociationDataResource extends AssociationResourceTemplate<EmptyRecord>
+  {
+    @Finder("associate")
+    public List<EmptyRecord> find(@PagingContextParam final PagingContext context,
+        @QueryParam("dayOfWeek") Integer dayOfWeek) throws Exception
+    {
+      return Collections.singletonList(new EmptyRecord());
+    }
+  }
+
+  @RestLiCollection(name="collectionComplexKey")
+  public class FinderSupportedComplexKeyDataResource extends ComplexKeyResourceTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
+  {
+    @Finder("complex")
+    public List<EmptyRecord> find(@PagingContextParam final PagingContext context,
+                                  @QueryParam("dayOfWeek") Integer dayOfWeek) throws Exception
+    {
+      return Collections.singletonList(new EmptyRecord());
+    }
+  }
+
+  @RestLiActions(name = "foo")
+  static class FinderWithActionResource {}
 }

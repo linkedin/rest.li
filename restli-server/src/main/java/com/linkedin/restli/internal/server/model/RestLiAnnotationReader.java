@@ -693,7 +693,7 @@ public final class RestLiAnnotationReader
           continue;
         }
         throw new ResourceConfigException("Class '" + resourceClass.getName() + "' of a SingleUnstructuredDataResource "
-            + "does not support for @Finder methods");
+            + "class does not support for @Finder methods");
       }
     }
 
