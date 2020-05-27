@@ -63,6 +63,20 @@ public class CodecDataProviders
   }
 
   @DataProvider
+  public static Object[][] streamCodecData()
+  {
+    List<Object[]> list = new ArrayList<>();
+    for (Map.Entry<String, DataComplex> entry : codecDataInputs().entrySet())
+    {
+      list.add(new Object[] {entry.getKey(), entry.getValue(), 1});
+      list.add(new Object[] {entry.getKey(), entry.getValue(), 3});
+      list.add(new Object[] {entry.getKey(), entry.getValue(), 1000});
+    }
+
+    return list.toArray(new Object[][] {});
+  }
+
+  @DataProvider
   public static Object[][] codecData()
   {
     return codecDataInputs().entrySet().stream()

@@ -20,7 +20,7 @@ package com.linkedin.data.protobuf;
 /**
  * A container for holding text data in the form of a char[] to minimize allocations when parsing strings.
  */
-final class TextBuffer
+public final class TextBuffer
 {
   private char[] _buffer;
 
@@ -55,6 +55,21 @@ final class TextBuffer
 
     _buffer = null;
     return new char[size];
+  }
+
+  /**
+   * Get a underlying buffer from this instance.
+   */
+  public char[] getBuf()
+  {
+    if (_buffer == null)
+    {
+      throw new IllegalStateException("Buffer already in use or closed.");
+    }
+
+    char[] buffer = _buffer;
+    _buffer = null;
+    return buffer;
   }
 
   /**

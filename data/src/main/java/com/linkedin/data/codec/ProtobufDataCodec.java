@@ -48,21 +48,21 @@ public class ProtobufDataCodec implements DataCodec
   // may choose to use. 0-11 and 20-29 are reserved for use by this codec.
   //
 
-  private static final byte MAP_ORDINAL = 0;
-  private static final byte LIST_ORDINAL = 1;
-  private static final byte STRING_LITERAL_ORDINAL = 2;
-  private static final byte STRING_REFERENCE_ORDINAL = 3;
-  private static final byte INTEGER_ORDINAL = 4;
-  private static final byte LONG_ORDINAL = 5;
-  private static final byte FLOAT_ORDINAL = 6;
-  private static final byte DOUBLE_ORDINAL = 7;
-  private static final byte BOOLEAN_TRUE_ORDINAL = 8;
-  private static final byte BOOLEAN_FALSE_ORDINAL = 9;
-  private static final byte RAW_BYTES_ORDINAL = 10;
-  private static final byte NULL_ORDINAL = 11;
-  private static final byte ASCII_STRING_LITERAL_ORDINAL = 20;
-  private static final byte FIXED_FLOAT_ORDINAL = 21;
-  private static final byte FIXED_DOUBLE_ORDINAL = 22;
+  public static final byte MAP_ORDINAL = 0;
+  public static final byte LIST_ORDINAL = 1;
+  public static final byte STRING_LITERAL_ORDINAL = 2;
+  public static final byte STRING_REFERENCE_ORDINAL = 3;
+  public static final byte INTEGER_ORDINAL = 4;
+  public static final byte LONG_ORDINAL = 5;
+  public static final byte FLOAT_ORDINAL = 6;
+  public static final byte DOUBLE_ORDINAL = 7;
+  public static final byte BOOLEAN_TRUE_ORDINAL = 8;
+  public static final byte BOOLEAN_FALSE_ORDINAL = 9;
+  public static final byte RAW_BYTES_ORDINAL = 10;
+  public static final byte NULL_ORDINAL = 11;
+  public static final byte ASCII_STRING_LITERAL_ORDINAL = 20;
+  public static final byte FIXED_FLOAT_ORDINAL = 21;
+  public static final byte FIXED_DOUBLE_ORDINAL = 22;
 
   /**
    * @deprecated Use {@link #_options} and invoke {@link ProtobufCodecOptions#getSymbolTable()} instead.
