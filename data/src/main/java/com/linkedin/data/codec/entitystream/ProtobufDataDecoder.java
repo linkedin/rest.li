@@ -16,16 +16,15 @@
 
 package com.linkedin.data.codec.entitystream;
 
-import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.DataMapBuilder;
-import com.linkedin.data.parser.NonBlockingDataParser;
 import com.linkedin.data.codec.DataDecodingException;
 import com.linkedin.data.codec.symbol.EmptySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
+import com.linkedin.data.parser.NonBlockingDataParser;
 import com.linkedin.data.protobuf.ProtoReader;
 import com.linkedin.data.protobuf.ProtoWriter;
 import com.linkedin.data.protobuf.TextBuffer;
@@ -35,8 +34,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.EnumSet;
 
-import static com.linkedin.data.parser.NonBlockingDataParser.Token.*;
 import static com.linkedin.data.codec.ProtobufDataCodec.*;
+import static com.linkedin.data.parser.NonBlockingDataParser.Token.*;
 
 /**
  * A ProtoBuf format decoder for a {@link DataComplex} object, reading from an
@@ -79,17 +78,22 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
   {
     private final SymbolTable _symbolTable;
 
+    // Since Protobuf pre-append map/array size instead of using identifiers for start/end of complex object
+    // This stack stores pending map/array remaining elements.
     private final Deque<Integer> _complexObjTokenSizeStack = new ArrayDeque<>();
+    // Stores remaining token size of current pending complex object and is decremented on each value parsed
     private int _currComplexObjTokenSize = -1;
 
     private byte[] _input;  //holds feed input bytes
     private int _limit;
     private int _pos;
 
-    private boolean _eofInput;  //no more inputs can be feed if this is set to true
+    private boolean _endOfInput;  // no more inputs can be feed if this is set to true
 
-    private final TextBuffer _textBuffer;  //buffer to hold parsed string characters.
-    private int _bufferPos = -1;  //signify no. of chars in text buffers as buffer is reused to avoid thrashing
+    private final TextBuffer _textBuffer;  // buffer to hold parsed string characters.
+    private int _textBufferPos = -1;  // signify no. of chars in text buffers as buffer is reused to avoid thrashing
+
+    private byte[] _bytesBuffer;  // Used to hold partial raw bytes for pending Token#RAW_BYTES value
 
     private int _pendingCharUtfRep;  // no. of bytes used by Utf-8 multi-byte representation of pending char
     private int _pendingIntShifts = -1;  // remaining bits/bytes for int32/64
@@ -100,10 +104,10 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
     private Token _currentToken;
     private byte _currentOrdinal = -1;
 
-    //Below value variables hold parsed value for current token returned from #nextToken
+    // Below value variables hold parsed value for current token returned from #nextToken
     private byte[] _bytesValue;
     private String _stringValue;
-    private int _intValue;
+    private int _intValue;  // Also used for storing remaining size for other token values like String.
     private long _longValue;
 
     ProtobufStreamDataParser(SymbolTable symbolTable)
@@ -120,7 +124,7 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
         throw new IllegalArgumentException("Bad arguments");
       }
 
-      if (_pos >= _limit && !_eofInput)
+      if (_pos >= _limit && !_endOfInput)
       {
         _pos = offset;
         _limit = offset + len;
@@ -135,39 +139,34 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
     @Override
     public void endOfInput()
     {
-      _eofInput = true;
+      _endOfInput = true;
     }
 
     @Override
     public Token nextToken() throws IOException
     {
-      // First: regardless of where we really are, need at least one more byte;
-      // can simplify some of the checks by short-circuiting right away
+      // check for completed complex object (ie. Map or Array)
+      if (_currComplexObjTokenSize == 0)
+      {
+        _currentToken = getComplexObjEndToken();
+        return finishToken(_currentToken);
+      }
+      // regardless of where we really are, need at least one more byte;
       if (_pos >= _limit) {
-        Token endComplexObjToken = readEndComplexObj();
-        if (endComplexObjToken != NOT_AVAILABLE)
-        {
-          return finishToken(endComplexObjToken);
-        }
-        if (_eofInput) {
+        if (_endOfInput) {
           return EOF_INPUT;
         }
         return NOT_AVAILABLE;
       }
       if (_currentToken != NOT_AVAILABLE)
       {
-        _currentToken = readEndComplexObj();
-        if (_currentToken != NOT_AVAILABLE)
-        {
-          return finishToken(_currentToken);
-        }
         _currentOrdinal = _input[_pos++];
-        //release bytes array if previous token was Token#RAW_BYTES
-        _bytesValue = null;
       }
       Token currToken;
+      // pre-reads _currentOrdinal value before it returns the corresponding token
       switch (_currentOrdinal)
       {
+        // pre-read map/list size to initiate complex object with required memory in order to avoid thrashing
         case MAP_ORDINAL:
           currToken = readInt32();
           if (currToken == INTEGER)
@@ -242,17 +241,13 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
       return finishToken(currToken);
     }
 
-    private Token readEndComplexObj()
+    private Token getComplexObjEndToken()
     {
-      if(_currComplexObjTokenSize == 0)
+      if (!_complexObjTokenSizeStack.isEmpty())
       {
-        if (!_complexObjTokenSizeStack.isEmpty())
-        {
-          _currComplexObjTokenSize = _complexObjTokenSizeStack.pop();
-        }
-        return isCurrList() ? END_ARRAY : END_OBJECT;
+        _currComplexObjTokenSize = _complexObjTokenSizeStack.pop();
       }
-      return NOT_AVAILABLE;
+      return isCurrList() ? END_ARRAY : END_OBJECT;
     }
 
     private Token readStringReference() throws IOException
@@ -279,6 +274,7 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
           {
             _complexObjTokenSizeStack.push(_currComplexObjTokenSize);
           }
+          // Stores map size as 2*size since map is serialized as list of key-value (2 tokens) pairs
           _currComplexObjTokenSize = _intValue << 1;
           break;
         case START_ARRAY:
@@ -363,10 +359,12 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
 
     /*
     * Non blocking ProtoReader Implementation
+    * if the value cannot be read using _input read methods must return Token#NOT_AVAILABLE
     */
 
     private Token readASCIIString() throws IOException {
-      if (_bufferPos == -1)
+      // Read size if reading a new string value, using _textBufferPos to identify since _textBuffer is reused
+      if (_textBufferPos == -1)
       {
         Token sizeToken = readInt32();
         if (sizeToken == NOT_AVAILABLE)
@@ -377,36 +375,40 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
       int remainingSize = _intValue;
       if (remainingSize > 0)
       {
-        if (_bufferPos == -1 && remainingSize <= _limit - _pos)
+        if (_textBufferPos == -1 && remainingSize <= _limit - _pos)
         {
-          // If we can read from the current chunk, read directly.
+          // Case when new string value can be read directly from the feed input chunk
           _stringValue = Utf8Utils.decodeASCII(_input, _pos, remainingSize, _textBuffer);
           _pos += remainingSize;
           return STRING;
         }
         else
         {
+          // Case when new string value cannot be read directly from the feed input chunk
+          // or there is pending string value in _textBuffer
           char[] resultArr = null;
           try
           {
-            if (_bufferPos == -1)
+            if (_textBufferPos == -1)
             {
+              // Case when new string value cannot be read directly from the feed input chunk
               resultArr = _textBuffer.getBuf(remainingSize);
-              _bufferPos = 0;
+              _textBufferPos = 0;
             }
             else
             {
+              // Case when there is pending string value in _textBuffer
               resultArr = _textBuffer.getBuf();
             }
             while (_pos < _limit && remainingSize > 0)
             {
-              resultArr[_bufferPos++] = (char) _input[_pos++];
+              resultArr[_textBufferPos++] = (char) _input[_pos++];
               remainingSize--;
             }
             if (remainingSize == 0)
             {
-              _stringValue = new String(resultArr, 0, _bufferPos);
-              _bufferPos = -1;
+              _stringValue = new String(resultArr, 0, _textBufferPos);
+              _textBufferPos = -1;
               return STRING;
             }
             else
@@ -434,7 +436,8 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
 
     private Token readString() throws IOException
     {
-      if (_bufferPos == -1)
+      // Read size if reading a new string value, using _textBufferPos to identify since _textBuffer is reused
+      if (_textBufferPos == -1)
       {
         Token sizeToken = readInt32();
         if (sizeToken == NOT_AVAILABLE)
@@ -445,25 +448,29 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
       int remainingSize = _intValue;
       if (remainingSize > 0)
       {
-        if (_bufferPos == -1 && remainingSize <= _limit - _pos)
+        if (_textBufferPos == -1 && remainingSize <= _limit - _pos)
         {
-          // If we can read from the current chunk, read directly.
+          // Case when new string value can be read directly from the feed input chunk
           _stringValue = Utf8Utils.decode(_input, _pos, remainingSize, _textBuffer);
           _pos += remainingSize;
           return STRING;
         }
         else
         {
+          // Case when new string value cannot be read directly from the feed input chunk
+          // or there is pending string value in _textBuffer
           char[] resultArr = null;
           try
           {
-            if (_bufferPos == -1)
+            if (_textBufferPos == -1)
             {
+              // Case when new string value cannot be read directly from the feed input chunk
               resultArr = _textBuffer.getBuf(remainingSize);
-              _bufferPos = 0;
+              _textBufferPos = 0;
             }
             else
             {
+              // Case when there is pending string value in _textBuffer
               resultArr = _textBuffer.getBuf();
             }
             while (_pos < _limit && remainingSize > 0)
@@ -548,7 +555,7 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
                         i |= (_input[_pos++] & 0x3F);
                         // Split the codepoint
                         i -= 0x10000;
-                        resultArr[_bufferPos++] = (char) (0xD800 | (i >> 10));
+                        resultArr[_textBufferPos++] = (char) (0xD800 | (i >> 10));
                         i = 0xDC00 | (i & 0x3FF);
                       }
                       remainingSize--;
@@ -558,13 +565,13 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
                 default:
                   throw new IllegalArgumentException("Invalid UTF-8. UTF-8 character cannot be " + Utf8Utils.lookupUtfTable(i) + "bytes");
               }
-              resultArr[_bufferPos++] = (char) i;
+              resultArr[_textBufferPos++] = (char) i;
               _pendingIntShifts = -1;
             }
             if (remainingSize == 0)
             {
-              _stringValue = new String(resultArr, 0, _bufferPos);
-              _bufferPos = -1;
+              _stringValue = new String(resultArr, 0, _textBufferPos);
+              _textBufferPos = -1;
               return STRING;
             }
             else
@@ -592,7 +599,7 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
 
     private Token readByteArray() throws IOException
     {
-      if (_bytesValue == null)
+      if (_bytesBuffer == null)
       {
         Token sizeToken = readInt32();
         if (sizeToken == NOT_AVAILABLE)
@@ -600,25 +607,27 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
           return NOT_AVAILABLE;
         }
       }
-      int size = _intValue;
-      if (size < 0)
+      int remainingSize = _intValue;
+      if (remainingSize < 0)
       {
-        throw new DataDecodingException("Read negative size: " + size + ". Invalid byte array");
+        throw new DataDecodingException("Read negative size: " + remainingSize + ". Invalid byte array");
       }
-      if (_bytesValue == null)
+      if (_bytesBuffer == null)
       {
-        _bytesValue = new byte[size];
+        _bytesBuffer = new byte[remainingSize];
       }
 
-      if (size <= _limit - _pos)
+      if (remainingSize <= _limit - _pos)
       {
-        System.arraycopy(_input, _pos, _bytesValue, _bytesValue.length - size, size);
-        _pos += size;
+        System.arraycopy(_input, _pos, _bytesBuffer, _bytesBuffer.length - remainingSize, remainingSize);
+        _pos += remainingSize;
+        _bytesValue = _bytesBuffer;
+        _bytesBuffer = null;
         return RAW_BYTES;
       }
       else
       {
-        System.arraycopy(_input, _pos, _bytesValue, _bytesValue.length - size, _limit - _pos);
+        System.arraycopy(_input, _pos, _bytesBuffer, _bytesBuffer.length - remainingSize, _limit - _pos);
         _intValue -= _limit - _pos;
         _pos = _limit;
         return NOT_AVAILABLE;
