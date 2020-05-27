@@ -49,11 +49,13 @@ import java.util.Collections;
 import java.util.Map;
 
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.discovery.util.LogUtil.debug;
+
 
 /**
  * Default {@link TrackerClient} implementation.
@@ -69,18 +71,18 @@ public class TrackerClientImpl implements TrackerClient
   private final TransportClient _transportClient;
   private final Map<Integer, PartitionData> _partitionData;
   private final URI _uri;
-  private final Pattern _errorStatusPattern;
+  private final Predicate<Integer> _isErrorStatus;
   final CallTracker _callTracker;
 
   private volatile CallTracker.CallStats _latestCallStats;
 
   public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
-                           Clock clock, long interval, Pattern errorStatusPattern)
+      Clock clock, long interval, Predicate<Integer> isErrorStatus)
   {
     _uri = uri;
     _transportClient = transportClient;
     _callTracker = new CallTrackerImpl(interval, clock);
-    _errorStatusPattern = errorStatusPattern;
+    _isErrorStatus = isErrorStatus;
     _partitionData = Collections.unmodifiableMap(partitionDataMap);
     _latestCallStats = _callTracker.getCallStats();
 
@@ -135,6 +137,12 @@ public class TrackerClientImpl implements TrackerClient
   public URI getUri()
   {
     return _uri;
+  }
+
+  @Override
+  public CallTracker getCallTracker()
+  {
+    return _callTracker;
   }
 
   @Override
@@ -280,7 +288,7 @@ public class TrackerClientImpl implements TrackerClient
       RestException restException = (RestException) throwable;
       if (restException.getResponse() != null)
       {
-        return matchErrorStatus(restException.getResponse().getStatus());
+        return _isErrorStatus.test(restException.getResponse().getStatus());
       }
     }
     else if (throwable instanceof StreamException)
@@ -288,13 +296,9 @@ public class TrackerClientImpl implements TrackerClient
       StreamException streamException = (StreamException) throwable;
       if (streamException.getResponse() != null)
       {
-        return matchErrorStatus(streamException.getResponse().getStatus());
+        return _isErrorStatus.test(streamException.getResponse().getStatus());
       }
     }
     return false;
-  }
-
-  private boolean matchErrorStatus(int status) {
-    return _errorStatusPattern.matcher(Integer.toString(status)).matches();
   }
 }

@@ -55,4 +55,9 @@ public interface TrackerClient extends LoadBalancerClient
     PartitionData partitionData = getPartitionDataMap().get(partitionId);
     return partitionData == null ? null : partitionData.getWeight();
   }
+
+  /**
+   * @return CallTracker.
+   */
+  CallTracker getCallTracker();
 }
