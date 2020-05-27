@@ -30,6 +30,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Each partitionLoadBalancerState corresponds to a partition for a particular service
+ * It keeps the tracker clients and the ring for the partition
  */
 public class PartitionLoadBalancerState
 {
