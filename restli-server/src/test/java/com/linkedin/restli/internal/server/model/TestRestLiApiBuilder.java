@@ -222,7 +222,6 @@ public class TestRestLiApiBuilder
   public void testFinderUnsupportedResourceType(Class<?> resourceClass, String expectedPartialMessage)
   {
     RestLiApiBuilder.buildResourceModels(Collections.singleton(resourceClass));
-    Assert.fail("For the finder resource class with a non RecordTemplate sub class, we shall throw an exception");
   }
 
   @DataProvider(name = "finderSupportedResourceTypeData")

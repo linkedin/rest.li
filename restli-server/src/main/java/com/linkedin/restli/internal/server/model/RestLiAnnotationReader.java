@@ -2628,8 +2628,8 @@ public final class RestLiAnnotationReader
 
     if (valueClass == null)
     {
-      throw new ResourceConfigException("Class '" + resourceModel.getResourceClass().getName()
-          + "' is not supported @Finder method");
+      throw new ResourceConfigException("Class '" + resourceModel.getResourceClass().getSimpleName()
+          + "' does not support @Finder method");
     }
 
     Class<?> returnType, elementType;
