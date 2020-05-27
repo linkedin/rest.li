@@ -565,8 +565,8 @@ public final class RestLiAnnotationReader
           {
             continue;
           }
-          throw new ResourceConfigException("Class '" + collectionResourceClass.getName() + "' of a"
-              + "KeyUnstructuredDataResource class does not support for @Finder methods");
+          throw new ResourceConfigException("Class '" + collectionResourceClass.getSimpleName() + "' of a"
+              + " KeyUnstructuredDataResource class does not support @Finder methods");
         }
       }
 
@@ -692,8 +692,8 @@ public final class RestLiAnnotationReader
         {
           continue;
         }
-        throw new ResourceConfigException("Class '" + resourceClass.getName() + "' of a SingleUnstructuredDataResource "
-            + "class does not support for @Finder methods");
+        throw new ResourceConfigException("Class '" + resourceClass.getSimpleName() + "' of a SingleUnstructuredDataResource "
+            + "class does not support @Finder methods");
       }
     }
 
@@ -2629,7 +2629,7 @@ public final class RestLiAnnotationReader
     if (valueClass == null)
     {
       throw new ResourceConfigException("Class '" + resourceModel.getResourceClass().getName()
-          + "' is not supported for @Finder method");
+          + "' is not supported @Finder method");
     }
 
     Class<?> returnType, elementType;

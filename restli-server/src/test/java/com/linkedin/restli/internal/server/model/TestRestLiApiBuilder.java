@@ -204,8 +204,8 @@ public class TestRestLiApiBuilder
   {
     return new Object[][]
         {
-            { FinderUnsupportedKeyUnstructuredDataResource.class, "KeyUnstructuredDataResource class does not support for @Finder methods" },
-            { FinderUnsupportedSingleUnstructuredDataResource.class, "SingleUnstructuredDataResource class does not support for @Finder methods" }
+            { FinderUnsupportedKeyUnstructuredDataResource.class, "KeyUnstructuredDataResource class does not support @Finder methods" },
+            { FinderUnsupportedSingleUnstructuredDataResource.class, "SingleUnstructuredDataResource class does not support @Finder methods" }
         };
   }
 
@@ -216,20 +216,13 @@ public class TestRestLiApiBuilder
    *
    * @param resourceClass resource used as an input
    */
-  @Test(dataProvider = "unsupportedFinderResourceTypeData")
+  @Test(dataProvider = "unsupportedFinderResourceTypeData",
+      expectedExceptions = ResourceConfigException.class,
+      expectedExceptionsMessageRegExp = "Class '.*' of a ((SingleUnstructuredDataResource)|(KeyUnstructuredDataResource)) class does not support @Finder methods")
   public void testFinderUnsupportedResourceType(Class<?> resourceClass, String expectedPartialMessage)
   {
-    try
-    {
-      RestLiApiBuilder.buildResourceModels(Collections.singleton(resourceClass));
-      Assert.fail("For the finder resource class with a non RecordTemplate sub class, we shall throw an exception");
-    }
-    catch (ResourceConfigException resourceConfigException)
-    {
-      Assert.assertTrue(resourceConfigException.getMessage().contains(expectedPartialMessage),
-          String.format("Expected %s with message containing \"%s\" but instead found message \"%s\"",
-              ResourceConfigException.class.getSimpleName(), expectedPartialMessage, resourceConfigException.getMessage()));
-    }
+    RestLiApiBuilder.buildResourceModels(Collections.singleton(resourceClass));
+    Assert.fail("For the finder resource class with a non RecordTemplate sub class, we shall throw an exception");
   }
 
   @DataProvider(name = "finderSupportedResourceTypeData")
