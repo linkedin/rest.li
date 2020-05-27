@@ -77,14 +77,15 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
   {
     debug(LOG, "created a degrader load balancer strategyV3");
 
+    Map<String, Object> strategyPropertiesCopy = new HashMap<>(strategyProperties);
     // Save the service path as a property -- Quarantine may need this info to construct correct
     // health checking path
-    strategyProperties.put(PropertyKeys.PATH, path);
+    strategyPropertiesCopy.put(PropertyKeys.PATH, path);
     // Also save the clusterName as a property
-    strategyProperties.put(PropertyKeys.CLUSTER_NAME, clusterName);
+    strategyPropertiesCopy.put(PropertyKeys.CLUSTER_NAME, clusterName);
 
     final DegraderLoadBalancerStrategyConfig config =
-        DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(strategyProperties,
+        DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(strategyPropertiesCopy,
             _healthCheckOperations, _executorService, degraderProperties, _eventEmitter);
 
     // Adds the default degrader state listener factories
