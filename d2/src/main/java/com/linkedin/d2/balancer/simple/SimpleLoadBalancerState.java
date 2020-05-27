@@ -1064,15 +1064,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       List<String> schemes = serviceProperties.getPrioritizedSchemes();
       for (String scheme : schemes)
       {
-        // TODO
-//        Map<String, Object> loadBalancerStrategyProperties = new HashMap<String, Object>(serviceProperties.getLoadBalancerStrategyProperties());
-//        // Save the service path as a property -- Quarantine may need this info to construct correct
-//        // health checking path
-//        loadBalancerStrategyProperties.put(PropertyKeys.PATH, serviceProperties.getPath());
-//        // Also save the clusterName as a property
-//        loadBalancerStrategyProperties.put(PropertyKeys.CLUSTER_NAME, serviceProperties.getClusterName());
-
-//        LoadBalancerStrategy strategy = factory.newLoadBalancer(serviceProperties.getServiceName(), loadBalancerStrategyProperties, serviceProperties.getDegraderProperties());
         LoadBalancerStrategy strategy = factory.newLoadBalancer(serviceProperties);
 
         newStrategies.put(scheme, strategy);

@@ -18,11 +18,13 @@ package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.event.NoopEventEmitter;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
@@ -65,13 +67,21 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
   {
     return newLoadBalancer(serviceProperties.getServiceName(),
                            serviceProperties.getLoadBalancerStrategyProperties(),
-                           serviceProperties.getDegraderProperties());
+                           serviceProperties.getDegraderProperties(),
+                           serviceProperties.getPath(),
+                           serviceProperties.getClusterName());
   }
 
   private DegraderLoadBalancerStrategyV3 newLoadBalancer(String serviceName,
-      Map<String, Object> strategyProperties, Map<String, String> degraderProperties)
+      Map<String, Object> strategyProperties, Map<String, String> degraderProperties, String path, String clusterName)
   {
     debug(LOG, "created a degrader load balancer strategyV3");
+
+    // Save the service path as a property -- Quarantine may need this info to construct correct
+    // health checking path
+    strategyProperties.put(PropertyKeys.PATH, path);
+    // Also save the clusterName as a property
+    strategyProperties.put(PropertyKeys.CLUSTER_NAME, clusterName);
 
     final DegraderLoadBalancerStrategyConfig config =
         DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(strategyProperties,
