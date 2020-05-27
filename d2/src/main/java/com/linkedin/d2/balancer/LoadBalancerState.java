@@ -105,15 +105,15 @@ public interface LoadBalancerState
   {
   }
 
-  public static interface LoadBalancerStateListenerCallback
+  interface LoadBalancerStateListenerCallback
   {
-    public static int SERVICE = 0;
-    public static int CLUSTER = 1;
+    int SERVICE = 0;
+    int CLUSTER = 1;
 
     void done(int type, String name);
   }
 
-  public static class NullStateListenerCallback implements
+  class NullStateListenerCallback implements
       LoadBalancerStateListenerCallback
   {
     @Override
@@ -122,7 +122,7 @@ public interface LoadBalancerState
     }
   }
 
-  public static class SchemeStrategyPair
+  class SchemeStrategyPair
   {
     private final String _scheme;
     private final LoadBalancerStrategy _strategy;

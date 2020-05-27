@@ -27,6 +27,7 @@ import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerTestState;
 import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
 import com.linkedin.d2.balancer.clients.RewriteClient;
 import com.linkedin.d2.balancer.clients.RewriteLoadBalancerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
@@ -1650,18 +1651,24 @@ public class SimpleLoadBalancerTest
     }
 
     @Override
+    public String getName()
+    {
+      return "TestLoadBalancerStrategy";
+    }
+
+    @Override
     public TrackerClient getTrackerClient(Request request,
                                           RequestContext requestContext,
                                           long clusterGenerationId,
                                           int partitionId,
-                                          List<TrackerClient> trackerClients)
+                                          Map<URI, TrackerClient> trackerClients)
     {
       throw new UnsupportedOperationException();
     }
 
     @Nonnull
     @Override
-    public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
+    public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
     {
       if (_partitionData.containsKey(partitionId))
       {
@@ -1807,7 +1814,7 @@ public class SimpleLoadBalancerTest
           assertTrue(client.getDecoratedClient() instanceof RewriteClient);
           RewriteClient rewriteClient = (RewriteClient) client.getDecoratedClient();
           assertTrue(rewriteClient.getDecoratedClient() instanceof TrackerClient);
-          TrackerClient tClient = (TrackerClient) rewriteClient.getDecoratedClient();
+          DegraderTrackerClient tClient = (DegraderTrackerClient) rewriteClient.getDecoratedClient();
           DegraderImpl degrader = (DegraderImpl)tClient.getDegrader(DEFAULT_PARTITION_ID);
           DegraderImpl.Config cfg = new DegraderImpl.Config(degrader.getConfig());
           // Change DropRate to 0.0 at the rate of 1/3

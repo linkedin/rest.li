@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.properties;
 
+import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.util.ArgumentUtil;
 
 import java.net.URI;
@@ -30,24 +31,25 @@ public class ServiceProperties
   private final String _serviceName;
   private final String _clusterName;
   private final String _path;
-  private final List<String> _loadBalancerStrategyList;
-  private final Map<String,Object> _loadBalancerStrategyProperties;
-  private final Map<String,Object> _transportClientProperties;
-  private final List<Map<String,Object>> _backupRequests;  // each map in the list represents one backup requests strategy
-  private final Map<String,String> _degraderProperties;
+  private final List<String> _prioritizedStrategyList;
+  private final Map<String, Object> _loadBalancerStrategyProperties;
+  private final Map<String, Object> _transportClientProperties;
+  private final D2RelativeStrategyProperties _relativeStrategyProperties;
+  private final List<Map<String, Object>> _backupRequests;  // each map in the list represents one backup requests strategy
+  private final Map<String, String> _degraderProperties;
   private final List<String> _prioritizedSchemes;
   private final Set<URI> _banned;
-  private final Map<String,Object> _serviceMetadataProperties;
+  private final Map<String, Object> _serviceMetadataProperties;
 
   public ServiceProperties(String serviceName,
                            String clusterName,
                            String path,
-                           List<String> loadBalancerStrategyList)
+                           List<String> prioritizedStrategyList)
   {
-    this(serviceName, clusterName, path, loadBalancerStrategyList,
+    this(serviceName, clusterName, path, prioritizedStrategyList,
          Collections.<String, Object>emptyMap(), Collections.<String, Object>emptyMap(),
-            Collections.<String, String>emptyMap(),
-            Collections.<String>emptyList(), Collections.<URI>emptySet());
+         Collections.<String, String>emptyMap(),
+         Collections.<String>emptyList(), Collections.<URI>emptySet());
   }
 
   // The addition of the StrategyList is to allow new strategies to be introduced and be used as they
@@ -56,10 +58,10 @@ public class ServiceProperties
   public ServiceProperties(String serviceName,
                            String clusterName,
                            String path,
-                           List<String> loadBalancerStrategyList,
+                           List<String> prioritizedStrategyList,
                            Map<String,Object> loadBalancerStrategyProperties)
   {
-    this(serviceName,clusterName,path,loadBalancerStrategyList,loadBalancerStrategyProperties,
+    this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
          Collections.<String, Object>emptyMap(), Collections.<String, String>emptyMap(),
          Collections.<String>emptyList(), Collections.<URI>emptySet());
   }
@@ -67,22 +69,22 @@ public class ServiceProperties
   public ServiceProperties(String serviceName,
                            String clusterName,
                            String path,
-                           List<String> loadBalancerStrategyList,
+                           List<String> prioritizedStrategyList,
                            Map<String,Object> loadBalancerStrategyProperties,
                            Map<String,Object> transportClientProperties,
                            Map<String,String> degraderProperties,
                            List<String> prioritizedSchemes,
                            Set<URI> banned)
   {
-    this(serviceName,clusterName,path, loadBalancerStrategyList,loadBalancerStrategyProperties,
-        transportClientProperties, degraderProperties, prioritizedSchemes, banned,
-        Collections.<String,Object>emptyMap());
+    this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
+         transportClientProperties, degraderProperties, prioritizedSchemes, banned,
+         Collections.<String,Object>emptyMap());
   }
 
   public ServiceProperties(String serviceName,
       String clusterName,
       String path,
-      List<String> loadBalancerStrategyList,
+      List<String> prioritizedStrategyList,
       Map<String,Object> loadBalancerStrategyProperties,
       Map<String,Object> transportClientProperties,
       Map<String,String> degraderProperties,
@@ -90,15 +92,15 @@ public class ServiceProperties
       Set<URI> banned,
       Map<String,Object> serviceMetadataProperties)
   {
-    this(serviceName,clusterName,path, loadBalancerStrategyList,loadBalancerStrategyProperties,
-        transportClientProperties, degraderProperties, prioritizedSchemes, banned,
-        serviceMetadataProperties, Collections.<Map<String,Object>>emptyList());
+    this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
+         transportClientProperties, degraderProperties, prioritizedSchemes, banned,
+         serviceMetadataProperties, Collections.emptyList());
   }
 
   public ServiceProperties(String serviceName,
                            String clusterName,
                            String path,
-                           List<String> loadBalancerStrategyList,
+                           List<String> prioritizedStrategyList,
                            Map<String,Object> loadBalancerStrategyProperties,
                            Map<String,Object> transportClientProperties,
                            Map<String,String> degraderProperties,
@@ -107,11 +109,29 @@ public class ServiceProperties
                            Map<String,Object> serviceMetadataProperties,
                            List<Map<String,Object>> backupRequests)
   {
+    this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties, transportClientProperties, degraderProperties,
+         prioritizedSchemes, banned, serviceMetadataProperties, backupRequests, new D2RelativeStrategyProperties());
+  }
+
+  public ServiceProperties(String serviceName,
+                           String clusterName,
+                           String path,
+                           List<String> prioritizedStrategyList,
+                           Map<String,Object> loadBalancerStrategyProperties,
+                           Map<String,Object> transportClientProperties,
+                           Map<String,String> degraderProperties,
+                           List<String> prioritizedSchemes,
+                           Set<URI> banned,
+                           Map<String,Object> serviceMetadataProperties,
+                           List<Map<String,Object>> backupRequests,
+                           D2RelativeStrategyProperties relativeStrategyProperties)
+  {
     ArgumentUtil.notNull(serviceName, PropertyKeys.SERVICE_NAME);
     ArgumentUtil.notNull(clusterName, PropertyKeys.CLUSTER_NAME);
     ArgumentUtil.notNull(path, PropertyKeys.PATH);
     ArgumentUtil.notNull(loadBalancerStrategyProperties, "loadBalancerStrategyProperties");
-    if (loadBalancerStrategyList == null || loadBalancerStrategyList.isEmpty())
+
+    if (prioritizedStrategyList == null || prioritizedStrategyList.isEmpty())
     {
       throw new NullPointerException("loadBalancerStrategyList is null or empty");
     }
@@ -121,28 +141,32 @@ public class ServiceProperties
     _serviceName = serviceName;
     _clusterName = clusterName;
     _path = path;
-    _loadBalancerStrategyList = Collections.unmodifiableList(loadBalancerStrategyList);
+    _prioritizedStrategyList = Collections.unmodifiableList(prioritizedStrategyList);
     _loadBalancerStrategyProperties = Collections.unmodifiableMap(loadBalancerStrategyProperties);
     _transportClientProperties = (transportClientProperties != null) ?
-        Collections.unmodifiableMap(transportClientProperties) : Collections.<String, Object>emptyMap();
+        Collections.unmodifiableMap(transportClientProperties) : Collections.emptyMap();
     _degraderProperties = (degraderProperties != null) ? Collections.unmodifiableMap(degraderProperties) :
         Collections.<String, String>emptyMap();
     _prioritizedSchemes = (prioritizedSchemes != null) ? Collections.unmodifiableList(prioritizedSchemes) :
         Collections.<String>emptyList();
-    _banned = (banned != null) ? Collections.unmodifiableSet(banned) : Collections.<URI>emptySet();
+    _banned = (banned != null) ? Collections.unmodifiableSet(banned) : Collections.emptySet();
     _serviceMetadataProperties = (serviceMetadataProperties != null) ? Collections.unmodifiableMap(serviceMetadataProperties) :
         Collections.<String,Object>emptyMap();
+    _relativeStrategyProperties = relativeStrategyProperties == null ?
+      new D2RelativeStrategyProperties() : relativeStrategyProperties;
   }
-
 
   public String getClusterName()
   {
     return _clusterName;
   }
 
+  /**
+   * @return Prioritized {@link com.linkedin.d2.balancer.strategies.LoadBalancerStrategy} list.
+   */
   public List<String> getLoadBalancerStrategyList()
   {
-    return _loadBalancerStrategyList;
+    return _prioritizedStrategyList;
   }
 
   public String getPath()
@@ -155,9 +179,28 @@ public class ServiceProperties
     return _serviceName;
   }
 
+  /**
+   * @return Properties used by load balancer component of {@link com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3}.
+   */
   public Map<String,Object> getLoadBalancerStrategyProperties()
   {
     return _loadBalancerStrategyProperties;
+  }
+
+  /**
+   * @return Properties used by degrader component of {@link com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3}.
+   */
+  public Map<String, String> getDegraderProperties()
+  {
+    return _degraderProperties;
+  }
+
+  /**
+   * @return Properties used by {@link com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy}.
+   */
+  public D2RelativeStrategyProperties getRelativeStrategyProperties()
+  {
+    return _relativeStrategyProperties;
   }
 
   public Map<String, Object> getTransportClientProperties()
@@ -168,11 +211,6 @@ public class ServiceProperties
   public List<Map<String, Object>> getBackupRequests()
   {
     return _backupRequests;
-  }
-
-  public Map<String, String> getDegraderProperties()
-  {
-    return _degraderProperties;
   }
 
   public List<String> getPrioritizedSchemes()
@@ -200,11 +238,13 @@ public class ServiceProperties
   {
     return "ServiceProperties [_clusterName=" + _clusterName
         +  ", _path=" + _path
-        + ", _serviceName=" + _serviceName + ", _loadBalancerStrategyList=" + _loadBalancerStrategyList
+        + ", _serviceName=" + _serviceName + ", _loadBalancerStrategyList=" + _prioritizedStrategyList
         + ", _loadBalancerStrategyProperties="
         + _loadBalancerStrategyProperties
         + ", _transportClientProperties="
         + _transportClientProperties
+        + ", _relativeStrategyProperties="
+        + _relativeStrategyProperties
         + ", _degraderProperties="
         + _degraderProperties
         + ", prioritizedSchemes="
@@ -224,7 +264,7 @@ public class ServiceProperties
     final int prime = 31;
     int result = 1;
     result = prime * result + _clusterName.hashCode();
-    result = prime * result + _loadBalancerStrategyList.hashCode();
+    result = prime * result + _prioritizedStrategyList.hashCode();
     result = prime * result + _path.hashCode();
     result = prime * result + _serviceName.hashCode();
     result = prime * result + _loadBalancerStrategyProperties.hashCode();
@@ -249,7 +289,7 @@ public class ServiceProperties
     ServiceProperties other = (ServiceProperties) obj;
     if (!_clusterName.equals(other._clusterName))
       return false;
-    if (!_loadBalancerStrategyList.equals(other._loadBalancerStrategyList))
+    if (!_prioritizedStrategyList.equals(other._prioritizedStrategyList))
       return false;
     if (!_path.equals(other._path))
       return false;

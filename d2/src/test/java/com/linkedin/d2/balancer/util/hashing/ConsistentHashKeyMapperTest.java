@@ -717,18 +717,24 @@ public class ConsistentHashKeyMapperTest
     }
 
     @Override
+    public String getName()
+    {
+      return "TestLoadBalancerStrategy";
+    }
+
+    @Override
     public TrackerClient getTrackerClient(Request request,
         RequestContext requestContext,
         long clusterGenerationId,
         int partitionId,
-        List<TrackerClient> trackerClients)
+                                          Map<URI, TrackerClient> trackerClients)
     {
       throw new UnsupportedOperationException();
     }
 
     @Nonnull
     @Override
-    public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
+    public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
     {
       if (_partitionData.containsKey(partitionId))
       {
