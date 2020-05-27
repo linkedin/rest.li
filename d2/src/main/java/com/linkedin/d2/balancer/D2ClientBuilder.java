@@ -31,6 +31,7 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -505,6 +506,10 @@ public class D2ClientBuilder
     loadBalancerStrategyFactories.putIfAbsent("degraderV2", degraderStrategyFactoryV3);
     loadBalancerStrategyFactories.putIfAbsent("degraderV3", degraderStrategyFactoryV3);
     loadBalancerStrategyFactories.putIfAbsent("degraderV2_1", degraderStrategyFactoryV3);
+
+    final RelativeLoadBalancerStrategyFactory relativeLoadBalancerStrategyFactory = new RelativeLoadBalancerStrategyFactory(
+        _config._executorService);
+    loadBalancerStrategyFactories.putIfAbsent("relative", relativeLoadBalancerStrategyFactory);
 
     return loadBalancerStrategyFactories;
   }
