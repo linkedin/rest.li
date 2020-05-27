@@ -22,7 +22,7 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
-import com.linkedin.d2.balancer.strategies.degrader.DelegatingRingFactory;
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;

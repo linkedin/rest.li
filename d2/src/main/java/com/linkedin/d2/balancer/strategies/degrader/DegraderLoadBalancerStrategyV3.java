@@ -22,6 +22,8 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
+import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
@@ -778,7 +780,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
             LoadBalancerQuarantine quarantine = quarantineHistory.remove(client);
             if (quarantine == null)
             {
-              quarantine = new LoadBalancerQuarantine(clientUpdater, config, oldState.getServiceName());
+              quarantine = new LoadBalancerQuarantine(clientUpdater.getTrackerClient(), config, oldState.getServiceName());
             }
 
             // If the trackerClient was just recently evicted from quarantine, it is possible that

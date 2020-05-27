@@ -17,9 +17,9 @@
 package com.linkedin.d2.balancer.util.hashing;
 
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
-import com.linkedin.d2.balancer.strategies.degrader.MPConsistentHashRingFactory;
-import com.linkedin.d2.balancer.strategies.degrader.PointBasedConsistentHashRingFactory;
-import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
+import com.linkedin.d2.balancer.strategies.MPConsistentHashRingFactory;
+import com.linkedin.d2.balancer.strategies.PointBasedConsistentHashRingFactory;
+import com.linkedin.d2.balancer.strategies.RingFactory;
 import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.CallTrackerImpl;
 import com.linkedin.util.degrader.DegraderImpl;

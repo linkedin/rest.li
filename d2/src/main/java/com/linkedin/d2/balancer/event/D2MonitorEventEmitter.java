@@ -17,7 +17,7 @@
 package com.linkedin.d2.balancer.event;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.strategies.degrader.LoadBalancerQuarantine;
+import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
 import com.linkedin.util.clock.Clock;
 
 import java.net.URI;

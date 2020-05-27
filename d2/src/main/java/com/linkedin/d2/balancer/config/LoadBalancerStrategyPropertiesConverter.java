@@ -20,7 +20,7 @@ import com.linkedin.d2.ConsistentHashAlgorithmEnum;
 import com.linkedin.d2.D2LoadBalancerStrategyProperties;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
-import com.linkedin.d2.balancer.strategies.degrader.DelegatingRingFactory;
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.hashConfigType;
 import com.linkedin.d2.hashMethodEnum;
