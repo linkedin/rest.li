@@ -230,8 +230,7 @@ public class TestRestLiApiBuilder
     return new Object[][]
         {
             { FinderSupportedAssociationDataResource.class },
-            { FinderSupportedComplexKeyDataResource.class },
-            { ActionMethodCollectionResources.class }
+            { FinderSupportedComplexKeyDataResource.class }
         };
   }
 

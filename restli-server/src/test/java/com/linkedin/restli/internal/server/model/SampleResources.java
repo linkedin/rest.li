@@ -808,13 +808,4 @@ class SampleResources
       return Collections.singletonList(new EmptyRecord());
     }
   }
-
-  @RestLiCollection(name = "collectionAttachmentParamsFailureResource")
-  class ActionMethodCollectionResources extends CollectionResourceTemplate<String, EmptyRecord>
-  {
-    @Action(name = "AttachmentParamsIncorrectDataTypeAction")
-    public void AttachmentParamsIncorrectDataTypeAction(@RestLiAttachmentsParam RestLiAttachmentReader attachmentReader)
-    {
-    }
-  }
 }
