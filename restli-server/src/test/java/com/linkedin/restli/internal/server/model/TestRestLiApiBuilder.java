@@ -204,22 +204,22 @@ public class TestRestLiApiBuilder
   {
     return new Object[][]
         {
-            { FinderUnsupportedKeyUnstructuredDataResource.class, "KeyUnstructuredDataResource class does not support @Finder methods" },
-            { FinderUnsupportedSingleUnstructuredDataResource.class, "SingleUnstructuredDataResource class does not support @Finder methods" }
+            { FinderUnsupportedKeyUnstructuredDataResource.class },
+            { FinderUnsupportedSingleUnstructuredDataResource.class }
         };
   }
 
   /**
-   * Ensures that when finder methods are processed, if the return type is not of a Record, then it will be warned.
-   * For instance, it should recognize that the "logical" return type for a method
+   * Ensures that when finder methods are processed, when the resource value class is a SingleUnstructuredDataResource
+   * or a KeyUnstructuredDataResource, we will end up with a ResourceConfigException because we don't support that righ tnow.
    * {@code Task<ActionResult<String>> doFoo();} is {@code String.class}.
    *
    * @param resourceClass resource used as an input
    */
   @Test(dataProvider = "unsupportedFinderResourceTypeData",
       expectedExceptions = ResourceConfigException.class,
-      expectedExceptionsMessageRegExp = "Class '.*' of a ((SingleUnstructuredDataResource)|(KeyUnstructuredDataResource)) class does not support @Finder methods")
-  public void testFinderUnsupportedResourceType(Class<?> resourceClass, String expectedPartialMessage)
+      expectedExceptionsMessageRegExp = "Class '.*' extends the '.*' class does not support @Finder methods")
+  public void testFinderUnsupportedResourceType(Class<?> resourceClass)
   {
     RestLiApiBuilder.buildResourceModels(Collections.singleton(resourceClass));
   }
@@ -231,7 +231,7 @@ public class TestRestLiApiBuilder
         {
             { FinderSupportedAssociationDataResource.class },
             { FinderSupportedComplexKeyDataResource.class },
-            { FinderWithActionResource.class }
+            { ActionMethodCollectionResources.class }
         };
   }
 

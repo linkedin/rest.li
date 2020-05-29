@@ -554,20 +554,6 @@ public final class RestLiAnnotationReader
         @SuppressWarnings("unchecked")
         Class<? extends KeyUnstructuredDataResource<?>> clazz = (Class<? extends KeyUnstructuredDataResource<?>>) collectionResourceClass;
         actualTypeArguments = ReflectionUtils.getTypeArgumentsParametrized(KeyUnstructuredDataResource.class, clazz);
-        for (Method method : collectionResourceClass.getDeclaredMethods())
-        {
-          if (method.isSynthetic())
-          {
-            continue;
-          }
-          Finder finderAnno = method.getAnnotation(Finder.class);
-          if (finderAnno == null)
-          {
-            continue;
-          }
-          throw new ResourceConfigException("Class '" + collectionResourceClass.getSimpleName() + "' of a"
-              + " KeyUnstructuredDataResource class does not support @Finder methods");
-        }
       }
 
       keyClass = ReflectionUtils.getClass(actualTypeArguments.get(0));
@@ -678,23 +664,6 @@ public final class RestLiAnnotationReader
       Class<? extends SingleObjectResource<?>> clazz = (Class<? extends SingleObjectResource<?>>) resourceClass;
       List<Class<?>> kvParams = ReflectionUtils.getTypeArguments(SingleObjectResource.class, clazz);
       valueClass = kvParams.get(0).asSubclass(RecordTemplate.class);
-    }
-    else
-    {
-      for (Method method : resourceClass.getDeclaredMethods())
-      {
-        if (method.isSynthetic())
-        {
-          continue;
-        }
-        Finder finderAnno = method.getAnnotation(Finder.class);
-        if (finderAnno == null)
-        {
-          continue;
-        }
-        throw new ResourceConfigException("Class '" + resourceClass.getSimpleName() + "' of a SingleUnstructuredDataResource "
-            + "class does not support @Finder methods");
-      }
     }
 
     ResourceType resourceType = getResourceType(resourceClass);
@@ -2626,10 +2595,11 @@ public final class RestLiAnnotationReader
     Method method = finderMethodDescriptor.getMethod();
     Class<?> valueClass = resourceModel.getValueClass();
 
-    if (valueClass == null)
+    if (SingleUnstructuredDataResource.class.isAssignableFrom(resourceModel.getResourceClass())
+        || KeyUnstructuredDataResource.class.isAssignableFrom(resourceModel.getResourceClass()))
     {
       throw new ResourceConfigException("Class '" + resourceModel.getResourceClass().getSimpleName()
-          + "' does not support @Finder method");
+          + "' extends the '" + resourceModel.getResourceClass().getSuperclass().getSimpleName() + "' class does not support @Finder methods");
     }
 
     Class<?> returnType, elementType;
