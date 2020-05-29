@@ -218,7 +218,7 @@ public class TestRestLiApiBuilder
    */
   @Test(dataProvider = "unsupportedFinderResourceTypeData",
       expectedExceptions = ResourceConfigException.class,
-      expectedExceptionsMessageRegExp = "Class '.*' extends the '.*' class does not support @Finder methods")
+      expectedExceptionsMessageRegExp = "Class '.*' does not support @Finder methods, because it's an unstructured data resource")
   public void testFinderUnsupportedResourceType(Class<?> resourceClass)
   {
     RestLiApiBuilder.buildResourceModels(Collections.singleton(resourceClass));
