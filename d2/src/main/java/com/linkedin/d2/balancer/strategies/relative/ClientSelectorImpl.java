@@ -116,6 +116,8 @@ public class ClientSelectorImpl implements ClientSelector
       }
     }
 
+    // TODO choose a random one if it's still null
+
     return trackerClient;
   }
 

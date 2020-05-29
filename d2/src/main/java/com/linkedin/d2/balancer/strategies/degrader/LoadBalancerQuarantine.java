@@ -99,7 +99,7 @@ public class LoadBalancerQuarantine
          config.getHealthCheckOperations());
   }
 
-  LoadBalancerQuarantine(TrackerClient trackerClient,
+  public LoadBalancerQuarantine(TrackerClient trackerClient,
                          ScheduledExecutorService executorService,
                          Clock clock,
                          long updateIntervalMs,
@@ -211,7 +211,7 @@ public class LoadBalancerQuarantine
    * Check and update the quarantine state
    * @return true if current client is ready to exist quarantine, false otherwise.
    */
-  boolean checkUpdateQuarantineState()
+  public boolean checkUpdateQuarantineState()
   {
     _lastChecked = _clock.currentTimeMillis();
     int repeatNum = DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_CHECKNUM;
@@ -290,7 +290,7 @@ public class LoadBalancerQuarantine
     }
   }
 
-  long getLastChecked()
+  public long getLastChecked()
   {
     return _lastChecked;
   }

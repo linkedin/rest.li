@@ -29,7 +29,10 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
+import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.r2.message.Request;
+import com.linkedin.util.clock.Clock;
+import com.linkedin.util.clock.SystemClock;
 import java.util.concurrent.ScheduledExecutorService;
 
 
@@ -60,10 +63,12 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
 
 
   private final ScheduledExecutorService _executorService;
+  private final HealthCheckOperations _healthCheckOperations;
 
-  public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService)
+  public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations)
   {
     _executorService = executorService;
+    _healthCheckOperations = healthCheckOperations;
   }
 
 
@@ -73,18 +78,31 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     D2RelativeStrategyProperties relativeStrategyProperties = serviceProperties.getRelativeStrategyProperties();
     relativeStrategyProperties = putDefaultValues(relativeStrategyProperties);
 
-    return new RelativeLoadBalancerStrategy(getRelativeStateUpdater(relativeStrategyProperties),
+    return new RelativeLoadBalancerStrategy(getRelativeStateUpdater(relativeStrategyProperties,
+                                            serviceProperties.getServiceName(), serviceProperties.getPath()),
                                             getClientSelector(relativeStrategyProperties));
   }
 
-  private RelativeStateUpdater getRelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties)
+  private RelativeStateUpdater getRelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
+      String serviceName, String servicePath)
   {
-    return new RelativeStateUpdater(relativeStrategyProperties, _executorService);
+    QuarantineManager quarantineManager = getQuarantineManager(relativeStrategyProperties, serviceName, servicePath);
+    return new RelativeStateUpdater(relativeStrategyProperties, quarantineManager, _executorService);
   }
 
   private ClientSelectorImpl getClientSelector(D2RelativeStrategyProperties relativeStrategyProperties)
   {
     return new ClientSelectorImpl(getRequestHashFunction(relativeStrategyProperties));
+  }
+
+  private QuarantineManager getQuarantineManager(D2RelativeStrategyProperties relativeStrategyProperties,
+      String serviceName, String servicePath)
+  {
+    Clock clock = SystemClock.instance();
+    return new QuarantineManager(serviceName, servicePath, _healthCheckOperations,
+        relativeStrategyProperties.getQuarantineProperties(), relativeStrategyProperties.isEnableFastRecovery(),
+        relativeStrategyProperties.getInitialHealthScore(), _executorService, clock,
+        relativeStrategyProperties.getUpdateIntervalMs(), relativeStrategyProperties.getRelativeLatencyLowThresholdFactor());
   }
 
   private HashFunction<Request> getRequestHashFunction(D2RelativeStrategyProperties relativeStrategyProperties)

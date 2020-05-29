@@ -508,7 +508,7 @@ public class D2ClientBuilder
     loadBalancerStrategyFactories.putIfAbsent("degraderV2_1", degraderStrategyFactoryV3);
 
     final RelativeLoadBalancerStrategyFactory relativeLoadBalancerStrategyFactory = new RelativeLoadBalancerStrategyFactory(
-        _config._executorService);
+        _config._executorService, _config.healthCheckOperations);
     loadBalancerStrategyFactories.putIfAbsent("relative", relativeLoadBalancerStrategyFactory);
 
     return loadBalancerStrategyFactories;

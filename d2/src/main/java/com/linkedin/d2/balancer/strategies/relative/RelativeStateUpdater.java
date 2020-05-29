@@ -21,6 +21,7 @@ import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.StateUpdater;
 import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.ErrorType;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -35,22 +36,25 @@ import java.util.concurrent.TimeUnit;
  */
 public class RelativeStateUpdater implements StateUpdater
 {
-  private static final double LOWEST_HEALTH_SCORE = 0.0;
-  private static final double HEALTHY_HEALTH_SCORE = 1.0;
+  public static final double LOWEST_HEALTH_SCORE = 0.0;
+  public static final double HEALTHY_HEALTH_SCORE = 1.0;
   // If slow start is enabled, it will always start from 0.01
   private static final double SLOW_START_HEALTH_SCORE = 0.01;
   private static final int SLOW_START_RECOVERY_FACTOR = 2;
 
   private final D2RelativeStrategyProperties _relativeStrategyProperties;
+  private final QuarantineManager _quarantineManager;
   private final ScheduledExecutorService _executorService;
 
   // Keeps the state of each partition
   private ConcurrentMap<Integer, PartitionLoadBalancerState> _partitionLoadBalancerStateMap;
 
   RelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
+                       QuarantineManager quarantineManager,
                        ScheduledExecutorService executorService)
   {
     _relativeStrategyProperties = relativeStrategyProperties;
+    _quarantineManager = quarantineManager;
     _executorService = executorService;
     _partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
 
@@ -101,20 +105,23 @@ public class RelativeStateUpdater implements StateUpdater
    */
   private void updateStateForPartition(Set<TrackerClient> trackerClients, int partitionId, Optional<Long> maybeClusterGenerationId)
   {
-    // Step 1: Update all the health scores for each {@link TrackerClient} in the cluster
-    updateTrackerClientHealthScore(trackerClients, partitionId, maybeClusterGenerationId);
-    // Step 2: TODO Handle quarantine and recovery for all tracker clients in this cluster
-    // Step 3: TODO Calculate the new ring for each partition
+    // Step 1: Update the base health scores for each {@link TrackerClient} in the cluster
+    updateHealthScoreAndState(trackerClients, partitionId, maybeClusterGenerationId);
+    // Step 2: TODO check if we can enable quarantine, we enable quarantine only if at least one of the clients return success for the checking.
+    // Step 3: Handle quarantine and recovery for all tracker clients in this cluster
+    // this will adjust the base health score if there is any change in quarantine and recovery map
+    _quarantineManager.updateQuarantineState(_partitionLoadBalancerStateMap.get(partitionId));
+    // Step 4: TODO Calculate the new ring for each partition
   }
 
   /**
    * Update the health score of all tracker clients for the service
    * @param trackerClients All the tracker clients in this cluster
    */
-  private void updateTrackerClientHealthScore(Set<TrackerClient> trackerClients, int partitionId, Optional<Long> maybeClusterGenerationId)
+  private void updateHealthScoreAndState(Set<TrackerClient> trackerClients, int partitionId, Optional<Long> maybeClusterGenerationId)
   {
-    ConcurrentMap<TrackerClient, TrackerClientState> trackerClientStateMap =
-        _partitionLoadBalancerStateMap.get(partitionId).getTrackerClientStateMap();
+    PartitionLoadBalancerState partitionLoadBalancerState = _partitionLoadBalancerStateMap.get(partitionId);
+    ConcurrentMap<TrackerClient, TrackerClientState> trackerClientStateMap = partitionLoadBalancerState.getTrackerClientStateMap();
 
     // Remove the trackerClients from original map if there is any change in uri list
     if (maybeClusterGenerationId.isPresent())
@@ -124,61 +131,87 @@ public class RelativeStateUpdater implements StateUpdater
         if (!trackerClients.contains(trackerClient))
         {
           trackerClientStateMap.remove(trackerClient);
+          partitionLoadBalancerState.getQuarantineMap().remove(trackerClient);
+          partitionLoadBalancerState.getQuarantineHistory().remove(trackerClient);
+          partitionLoadBalancerState.getRecoveryMap().remove(trackerClient);
         }
       }
     }
 
-    // Snap stats for each tracker client, we want to get snap the stats because they can change any time during we calculate the new health score
-    long sumAvgLatency = 0;
-    for (TrackerClient trackerClient : trackerClients)
-    {
-      CallTracker.CallStats latestCallStats = trackerClient.getLatestCallStats();
-      long avgLatency = Math.round(latestCallStats.getCallTimeStats().getAverage());
-      int errorCount = latestCallStats.getErrorCount();
-      Map<ErrorType, Integer> errorTypeCounts = latestCallStats.getErrorTypeCounts();
-
-      if (!trackerClientStateMap.containsKey(trackerClient))
-      {
-        trackerClientStateMap.put(trackerClient, new TrackerClientState(avgLatency, errorCount, errorTypeCounts,
-            _relativeStrategyProperties.getInitialHealthScore()));
-      } else {
-        trackerClientStateMap.get(trackerClient).updateStats(avgLatency, errorCount, errorTypeCounts);
-      }
-      sumAvgLatency += avgLatency;
-    }
-    long clusterAvgLatency = sumAvgLatency / trackerClients.size();
-
-    // Update health score
-    for (TrackerClientState trackerClientState : trackerClientStateMap.values())
-    {
-      double oldHealthScore = trackerClientState.getHealthScore();
-      double newHealthScore = oldHealthScore;
-      if (TrackerClientState.isUnhealthy(trackerClientState, clusterAvgLatency,
-          _relativeStrategyProperties.getRelativeLatencyHighThresholdFactor(),
-          _relativeStrategyProperties.getHighErrorRate()))
-      {
-        newHealthScore = Double.min(trackerClientState.getHealthScore() - _relativeStrategyProperties.getDownStep(), LOWEST_HEALTH_SCORE);
-      }
-      else if (trackerClientState.getHealthScore() < HEALTHY_HEALTH_SCORE
-          && TrackerClientState.isHealthy(trackerClientState, clusterAvgLatency,
-          _relativeStrategyProperties.getRelativeLatencyLowThresholdFactor(),
-          _relativeStrategyProperties.getLowErrorRate())) {
-        if (oldHealthScore < _relativeStrategyProperties.getSlowStartThreshold())
-        {
-          newHealthScore = oldHealthScore > LOWEST_HEALTH_SCORE
-              ? Math.min(HEALTHY_HEALTH_SCORE, SLOW_START_RECOVERY_FACTOR * oldHealthScore)
-              : SLOW_START_HEALTH_SCORE;
-        } else {
-          newHealthScore = Math.min(HEALTHY_HEALTH_SCORE, oldHealthScore + _relativeStrategyProperties.getUpStep());
-        }
-      }
-      trackerClientState.updateHealthScore(newHealthScore);
-    }
+    // Calculate the base health score before we override them when handling the quarantine and recovery
+    calculateBaseHealthScore(trackerClients, partitionId);
 
     // Update cluster generation id if it's changed
     if (maybeClusterGenerationId.isPresent())
     {
       _partitionLoadBalancerStateMap.get(partitionId).setClusterGenerationId(maybeClusterGenerationId.get());
+    }
+  }
+
+  private void calculateBaseHealthScore(Set<TrackerClient> trackerClients, int partitionId)
+  {
+    // Snap stats for each tracker client, we want to get snap the stats because they can change any time during we calculate the new health score
+    long sumAvgLatency = 0;
+    PartitionLoadBalancerState partitionLoadBalancerState = _partitionLoadBalancerStateMap.get(partitionId);
+    ConcurrentMap<TrackerClient, TrackerClientState> trackerClientStateMap = partitionLoadBalancerState.getTrackerClientStateMap();
+    Map<TrackerClient, CallTracker.CallStats> latestCallStatsMap = new HashMap<>();
+
+    for (TrackerClient trackerClient : trackerClients)
+    {
+      CallTracker.CallStats latestCallStats = trackerClient.getLatestCallStats();
+      latestCallStatsMap.put(trackerClient, latestCallStats);
+
+      sumAvgLatency += Math.round(latestCallStats.getCallTimeStats().getAverage());
+    }
+    long clusterAvgLatency = sumAvgLatency / trackerClients.size();
+    partitionLoadBalancerState.setClusterAvgLatency(clusterAvgLatency);
+
+    // Update health score
+    for (TrackerClient trackerClient : trackerClients)
+    {
+      CallTracker.CallStats latestCallStats = latestCallStatsMap.get(trackerClient);
+
+      if (trackerClientStateMap.containsKey(trackerClient))
+      {
+        TrackerClientState trackerClientState = trackerClientStateMap.get(trackerClient);
+        int callCount = latestCallStats.getCallCount();
+        double errorRate = TrackerClientState.getErrorRateByType(latestCallStats.getErrorTypeCounts(), callCount);
+        long latency = Math.round(latestCallStats.getCallTimeStats().getAverage());
+        // If it is an existing tracker client
+        double oldHealthScore = trackerClientState.getHealthScore();
+        double newHealthScore = oldHealthScore;
+        if (TrackerClientState.isUnhealthy(trackerClientState, clusterAvgLatency, callCount, latency, errorRate,
+            _relativeStrategyProperties.getRelativeLatencyHighThresholdFactor(),
+            _relativeStrategyProperties.getHighErrorRate()))
+        {
+          // If it is above high latency, we reduce the health score by down step
+          newHealthScore = Double.min(trackerClientState.getHealthScore() - _relativeStrategyProperties.getDownStep(), LOWEST_HEALTH_SCORE);
+          trackerClientState.setIsUnhealthy();
+        }
+        else if (trackerClientState.getHealthScore() < HEALTHY_HEALTH_SCORE
+            && TrackerClientState.isHealthy(trackerClientState, clusterAvgLatency, callCount, latency, errorRate,
+            _relativeStrategyProperties.getRelativeLatencyLowThresholdFactor(),
+            _relativeStrategyProperties.getLowErrorRate()))
+        {
+          if (oldHealthScore < _relativeStrategyProperties.getSlowStartThreshold())
+          {
+            // If the client is healthy and slow start is enabled, we double the health score
+            newHealthScore = oldHealthScore > LOWEST_HEALTH_SCORE
+                ? Math.min(HEALTHY_HEALTH_SCORE, SLOW_START_RECOVERY_FACTOR * oldHealthScore)
+                : SLOW_START_HEALTH_SCORE;
+            trackerClientState.setIsHealthy();
+          } else {
+            // If slow start is not enabled, we just increase the health score by up step
+            newHealthScore = Math.min(HEALTHY_HEALTH_SCORE, oldHealthScore + _relativeStrategyProperties.getUpStep());
+          }
+        }
+        trackerClientState.setHealthScore(newHealthScore);
+
+      } else
+      {
+        // If it is a new client, we directly set health score as the initial health score to initialize
+        trackerClientStateMap.put(trackerClient, new TrackerClientState(_relativeStrategyProperties.getInitialHealthScore()));
+      }
     }
   }
 }

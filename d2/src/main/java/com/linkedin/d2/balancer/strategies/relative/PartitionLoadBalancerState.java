@@ -39,7 +39,7 @@ public class PartitionLoadBalancerState
   private Map<URI, Integer> _pointsMap;
   private Map<TrackerClient, Double> _recoveryMap;
   private long _clusterGenerationId;
-  // TODO: copied from old files, need to re-evaluate
+  private long _clusterAvgLatencyMs;
   private Map<TrackerClient, LoadBalancerQuarantine> _quarantineMap;
   private Map<TrackerClient, LoadBalancerQuarantine> _quarantineHistory;
   private Ring<URI> _ring;
@@ -53,12 +53,16 @@ public class PartitionLoadBalancerState
 
     _pointsMap = new HashMap<>();
     _recoveryMap = new HashMap<>();
-
   }
 
   public Lock getLock()
   {
     return _lock;
+  }
+
+  public int getPartitionId()
+  {
+    return _partitionId;
   }
 
   public long getClusterGenerationId() {
@@ -75,8 +79,33 @@ public class PartitionLoadBalancerState
     return _trackerClientStateMap.keySet();
   }
 
+  public Map<TrackerClient, LoadBalancerQuarantine> getQuarantineMap()
+  {
+    return _quarantineMap;
+  }
+
+  public Map<TrackerClient, LoadBalancerQuarantine> getQuarantineHistory()
+  {
+    return _quarantineHistory;
+  }
+
+  public Map<TrackerClient, Double> getRecoveryMap()
+  {
+    return _recoveryMap;
+  }
+
+  public long getClusterAvgLatency()
+  {
+    return _clusterAvgLatencyMs;
+  }
+
   public void setClusterGenerationId(long clusterGenerationId)
   {
     _clusterGenerationId = clusterGenerationId;
+  }
+
+  public void setClusterAvgLatency(long clusterAvgLatencyMs)
+  {
+    _clusterAvgLatencyMs = clusterAvgLatencyMs;
   }
 }

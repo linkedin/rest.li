@@ -24,46 +24,41 @@ import java.util.Map;
  * Keeps the state of each tracker client for a partition
  */
 public class TrackerClientState {
-  private long _avgLatency;
   private int _callCount;
-  private double _errorRate;
   // TODO: update adjusted min call count
   private int _adjustedMinCallCount;
   private double _healthScore;
+  private boolean _isUnhealthy;
+  private boolean _isHealthy;
 
-  public TrackerClientState(long avgLatency, int callCount, Map<ErrorType, Integer> errorTypeCounts, double initialHealthScore)
+  public TrackerClientState(double initialHealthScore)
   {
-    _avgLatency = avgLatency;
-    _callCount = callCount;
-    _errorRate = getErrorRateByType(errorTypeCounts, callCount);
     _healthScore = initialHealthScore;
   }
 
-  public void updateStats(long avgLatency, int callCount, Map<ErrorType, Integer> errorTypeCounts)
+  public void setCallCount(int callCount)
   {
-    _avgLatency = avgLatency;
     _callCount = callCount;
-    _errorRate = getErrorRateByType(errorTypeCounts, callCount);
   }
 
-  public void updateHealthScore(double healthScore)
+  public void setIsUnhealthy()
+  {
+    _isUnhealthy = true;
+  }
+
+  public void setIsHealthy()
+  {
+    _isHealthy = true;
+  }
+
+  public void setHealthScore(double healthScore)
   {
     _healthScore = healthScore;
-  }
-
-  public long getAvgLatency()
-  {
-    return _avgLatency;
   }
 
   public int getCallCount()
   {
     return _callCount;
-  }
-
-  public double getErrorRate()
-  {
-    return _errorRate;
   }
 
   public int getAdjustedMinCallCount()
@@ -76,13 +71,23 @@ public class TrackerClientState {
     return _healthScore;
   }
 
-  private double getErrorRateByType(Map<ErrorType, Integer> errorTypeCounts, int callCount)
+  public boolean isHealthy()
+  {
+    return _isHealthy;
+  }
+
+  public boolean isUnhealthy()
+  {
+    return _isUnhealthy;
+  }
+
+  public static double getErrorRateByType(Map<ErrorType, Integer> errorTypeCounts, int callCount)
   {
     Integer connectExceptionCount = errorTypeCounts.getOrDefault(ErrorType.CONNECT_EXCEPTION, 0);
     Integer closedChannelExceptionCount = errorTypeCounts.getOrDefault(ErrorType.CLOSED_CHANNEL_EXCEPTION, 0);
     Integer serverErrorCount = errorTypeCounts.getOrDefault(ErrorType.SERVER_ERROR, 0);
     Integer timeoutExceptionCount = errorTypeCounts.getOrDefault(ErrorType.TIMEOUT_EXCEPTION, 0);
-    return _callCount == 0
+    return callCount == 0
         ? 0
         : (double) (connectExceptionCount + closedChannelExceptionCount + serverErrorCount + timeoutExceptionCount) / callCount;
   }
@@ -90,20 +95,22 @@ public class TrackerClientState {
   /**
    * Identify if a client is unhealthy
    */
-  public static boolean isUnhealthy(TrackerClientState trackerClientState, long clusterAvgLatency, double highThresholdFactor, double highErrorRate)
+  public static boolean isUnhealthy(TrackerClientState trackerClientState, long clusterAvgLatency,
+      int callCount, long latency, double errorRate, double highThresholdFactor, double highErrorRate)
   {
-    return trackerClientState.getCallCount() >= trackerClientState.getAdjustedMinCallCount()
-        && (trackerClientState.getAvgLatency() >= clusterAvgLatency * highThresholdFactor
-        || trackerClientState.getErrorRate() >= highErrorRate);
+    return callCount >= trackerClientState.getAdjustedMinCallCount()
+        && (latency >= clusterAvgLatency * highThresholdFactor
+        || errorRate >= highErrorRate);
   }
 
   /**
    * Identify if a client is healthy
    */
-  public static boolean isHealthy(TrackerClientState trackerClientState, long clusterAvgLatency, double lowThresholdFactor, double lowErrorRate)
+  public static boolean isHealthy(TrackerClientState trackerClientState, long clusterAvgLatency,
+      int callCount, long latency, double errorRate, double lowThresholdFactor, double lowErrorRate)
   {
-    return trackerClientState.getCallCount() >= trackerClientState.getAdjustedMinCallCount()
-        && (trackerClientState.getAvgLatency() <= clusterAvgLatency * lowThresholdFactor
-        || trackerClientState.getErrorRate() <= lowErrorRate);
+    return callCount >= trackerClientState.getAdjustedMinCallCount()
+        && (latency <= clusterAvgLatency * lowThresholdFactor
+        || errorRate <= lowErrorRate);
   }
 }
