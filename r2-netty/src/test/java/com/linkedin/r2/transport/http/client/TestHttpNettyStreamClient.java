@@ -48,6 +48,7 @@ import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
+import com.linkedin.test.util.retry.SingleRetry;
 import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.TooLongFrameException;
@@ -606,7 +607,7 @@ public class TestHttpNettyStreamClient
     }
   }
 
-  @Test
+  @Test(retryAnalyzer = SingleRetry.class)
   public void testShutdownRequestOutstanding() throws Exception
   {
     // Test that it works when the shutdown kills the outstanding request...

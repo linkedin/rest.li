@@ -2595,6 +2595,12 @@ public final class RestLiAnnotationReader
     Method method = finderMethodDescriptor.getMethod();
     Class<?> valueClass = resourceModel.getValueClass();
 
+    if (ResourceEntityType.UNSTRUCTURED_DATA == resourceModel.getResourceEntityType())
+    {
+      throw new ResourceConfigException("Class '" + resourceModel.getResourceClass().getSimpleName()
+          + "' does not support @Finder methods, because it's an unstructured data resource");
+    }
+
     Class<?> returnType, elementType;
     try
     {
