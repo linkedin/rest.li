@@ -45,10 +45,10 @@ import static com.linkedin.data.parser.NonBlockingDataParser.Token.*;
  *
  * @author amgupta1
  */
-class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
+public class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
 {
 
-  private final SymbolTable _symbolTable;
+  protected final SymbolTable _symbolTable;
 
   protected ProtobufDataDecoder(SymbolTable symbolTable, EnumSet<NonBlockingDataParser.Token> expectedFirstToken)
   {
@@ -74,15 +74,15 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
     return new DataList(parser.getComplexObjSize());
   }
 
-  class ProtobufStreamDataParser implements NonBlockingDataParser
+  protected class ProtobufStreamDataParser implements NonBlockingDataParser
   {
     private final SymbolTable _symbolTable;
 
     // Since Protobuf pre-append map/array size instead of using identifiers for start/end of complex object
     // This stack stores pending map/array remaining elements.
-    private final Deque<Integer> _complexObjTokenSizeStack = new ArrayDeque<>();
+    protected final Deque<Integer> _complexObjTokenSizeStack = new ArrayDeque<>();
     // Stores remaining token size of current pending complex object and is decremented on each value parsed
-    private int _currComplexObjTokenSize = -1;
+    protected int _currComplexObjTokenSize = -1;
 
     private byte[] _input;  //holds feed input bytes
     private int _limit;
@@ -110,7 +110,7 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
     private int _intValue;  // Also used for storing remaining size for other token values like String.
     private long _longValue;
 
-    ProtobufStreamDataParser(SymbolTable symbolTable)
+    protected ProtobufStreamDataParser(SymbolTable symbolTable)
     {
       _symbolTable = symbolTable == null ? EmptySymbolTable.SHARED : symbolTable;
       _textBuffer = new TextBuffer(ProtoReader.DEFAULT_TEXT_BUFFER_SIZE);
@@ -149,7 +149,8 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
       if (_currComplexObjTokenSize == 0)
       {
         _currentToken = getComplexObjEndToken();
-        return finishToken(_currentToken);
+        finishToken(_currentToken);
+        return _currentToken;
       }
       // regardless of where we really are, need at least one more byte;
       if (_pos >= _limit) {
@@ -236,9 +237,15 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
         case NULL_ORDINAL:
           currToken = NULL;
           break;
-        default: throw new DataDecodingException("Unknown ordinal: " + _currentOrdinal);
+        default:
+          currToken = readUnknown();
       }
-      return finishToken(currToken);
+      _currentToken = currToken;
+      if (_currentToken != NOT_AVAILABLE)
+      {
+        finishToken(_currentToken);
+      }
+      return _currentToken;
     }
 
     private Token getComplexObjEndToken()
@@ -264,10 +271,12 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
       return STRING;
     }
 
-    private Token finishToken(Token token)
+    /**
+     * Invoked after each parsed token for post processing
+     */
+    protected void finishToken(Token token) throws IOException
     {
-      _currentToken = token;
-      switch (_currentToken)
+      switch (token)
       {
         case START_OBJECT:
           if (_currComplexObjTokenSize > 0)
@@ -284,12 +293,17 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
           }
           _currComplexObjTokenSize = _intValue;
           break;
-        case NOT_AVAILABLE:
-          break;
         default:
           _currComplexObjTokenSize--;
       }
-      return _currentToken;
+    }
+
+    /**
+     * Returns pending/parsed current value ordinal if not present returns -1.
+     */
+    public final int getCurrentOrdinal()
+    {
+      return _currentOrdinal;
     }
 
     @Override
@@ -320,10 +334,6 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
     @Override
     public int getIntValue() throws IOException
     {
-      if (_currentToken != INTEGER)
-      {
-        throw new DataDecodingException("Unexpected call: int value is not available");
-      }
       return _intValue;
     }
 
@@ -362,7 +372,17 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
     * if the value cannot be read using _input read methods must return Token#NOT_AVAILABLE
     */
 
-    private Token readASCIIString() throws IOException {
+    /**
+     * read unknown ordinals which could be added in codec extensions. use #readInput
+     * if the value cannot be read using _input read methods must return Token#NOT_AVAILABLE
+     */
+    protected Token readUnknown() throws IOException
+    {
+      throw new DataDecodingException("Unknown ordinal: " + _currentOrdinal);
+    }
+
+    private Token readASCIIString() throws IOException
+    {
       // Read size if reading a new string value, using _textBufferPos to identify since _textBuffer is reused
       if (_textBufferPos == -1)
       {
@@ -634,7 +654,11 @@ class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDecoder<T>
       }
     }
 
-    private Token readInt32() throws IOException
+    /**
+     * Reads varint from input if available returns Token#INTEGER else Token#NOT_AVAILABLE
+     * Read value can be fetched using {@link ProtobufStreamDataParser#getIntValue()}
+     */
+    protected final Token readInt32() throws IOException
     {
       // See implementation notes for readInt64
       fastpath:

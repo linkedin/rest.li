@@ -17,7 +17,7 @@ import org.testng.annotations.DataProvider;
 public class CodecDataProviders
 {
   @DataProvider
-  public static Object[][] tempCodecData()
+  public static Object[][] smallCodecData()
   {
     final Map<String, DataComplex> inputs = new TreeMap<>();
 
@@ -28,6 +28,11 @@ public class CodecDataProviders
       map1.put("map11", map11);
       map1.put("list11", list11);
       inputs.put("Map with empty map and list", map1);
+
+      DataList list1 = new DataList();
+      list1.add(map1);
+      list1.add(map1);
+      inputs.put("List with nested empty map", list1);
     }
 
     return inputs.entrySet().stream()

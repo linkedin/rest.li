@@ -26,6 +26,7 @@ import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.codec.entitystream.JacksonLICORStreamDataCodec;
 import com.linkedin.data.codec.entitystream.JacksonSmileStreamDataCodec;
 import com.linkedin.data.codec.entitystream.JacksonStreamDataCodec;
+import com.linkedin.data.codec.entitystream.ProtobufStreamDataCodec;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
 import com.linkedin.r2.filter.R2Constants;
 import java.net.URI;
@@ -56,8 +57,13 @@ public class ContentType
   private static final JacksonLICORStreamDataCodec
       LICOR_BINARY_STREAM_DATA_CODEC = new JacksonLICORStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE, true);
   private static final ProtobufDataCodec PROTOBUF_DATA_CODEC = new ProtobufDataCodec();
+  private static final ProtobufStreamDataCodec PROTOBUF_STREAM_DATA_CODEC =
+      new ProtobufStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE,
+          new ProtobufCodecOptions.Builder().setEnableASCIIOnlyStrings(false).build());
   private static final ProtobufDataCodec PROTOBUF2_DATA_CODEC =
       new ProtobufDataCodec(new ProtobufCodecOptions.Builder().setEnableASCIIOnlyStrings(true).build());
+  private static final ProtobufStreamDataCodec PROTOBUF2_STREAM_DATA_CODEC =
+      new ProtobufStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
   private static final PsonDataCodec PSON_DATA_CODEC = new PsonDataCodec();
   private static final JacksonSmileDataCodec SMILE_DATA_CODEC = new JacksonSmileDataCodec();
   private static final JacksonSmileStreamDataCodec SMILE_STREAM_DATA_CODEC = new JacksonSmileStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE);
@@ -82,7 +88,7 @@ public class ContentType
    */
   @Deprecated
   public static final ContentType PROTOBUF =
-      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF, PROTOBUF_DATA_CODEC, null);
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF, PROTOBUF_DATA_CODEC, PROTOBUF_STREAM_DATA_CODEC);
 
   /**
    * Protocol buffers codec that supports marking ASCII only strings separately, as a hint to decoders
@@ -90,7 +96,8 @@ public class ContentType
    * {@link #PROTOBUF} codec.
    */
   public static final ContentType PROTOBUF2 =
-      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF2, PROTOBUF2_DATA_CODEC, null);
+      new ContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF2, PROTOBUF2_DATA_CODEC,
+          PROTOBUF2_STREAM_DATA_CODEC);
 
   // Content type to be used only as an accept type.
   public static final ContentType ACCEPT_TYPE_ANY =
@@ -106,11 +113,16 @@ public class ContentType
     SUPPORTED_TYPE_PROVIDERS.put(PROTOBUF.getHeaderKey(),
         new SymbolTableBasedContentTypeProvider(PROTOBUF,
             (rawMimeType, symbolTable) -> new ContentType(rawMimeType,
-                new ProtobufDataCodec(new ProtobufCodecOptions.Builder().setSymbolTable(symbolTable).build()), null)));
-    SUPPORTED_TYPE_PROVIDERS.put(PROTOBUF2.getHeaderKey(),
-        new SymbolTableBasedContentTypeProvider(PROTOBUF2,
-            (rawMimeType, symbolTable) -> new ContentType(rawMimeType,
-                new ProtobufDataCodec(new ProtobufCodecOptions.Builder().setSymbolTable(symbolTable).setEnableASCIIOnlyStrings(true).build()), null)));
+                new ProtobufDataCodec(new ProtobufCodecOptions.Builder().setSymbolTable(symbolTable).build()),
+                new ProtobufStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE,
+                    new ProtobufCodecOptions.Builder().setSymbolTable(symbolTable)
+                        .setEnableASCIIOnlyStrings(false).build()))));
+    SUPPORTED_TYPE_PROVIDERS.put(PROTOBUF2.getHeaderKey(), new SymbolTableBasedContentTypeProvider(PROTOBUF2,
+        (rawMimeType, symbolTable) -> new ContentType(rawMimeType, new ProtobufDataCodec(
+            new ProtobufCodecOptions.Builder().setSymbolTable(symbolTable).setEnableASCIIOnlyStrings(true).build()),
+            new ProtobufStreamDataCodec(R2Constants.DEFAULT_DATA_CHUNK_SIZE,
+                new ProtobufCodecOptions.Builder().setSymbolTable(symbolTable)
+                    .setEnableASCIIOnlyStrings(true).build()))));
     SUPPORTED_TYPE_PROVIDERS.put(LICOR_TEXT.getHeaderKey(),
         new SymbolTableBasedContentTypeProvider(LICOR_TEXT,
             (rawMimeType, symbolTable) -> new ContentType(rawMimeType,
