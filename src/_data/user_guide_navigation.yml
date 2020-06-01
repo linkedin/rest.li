@@ -67,6 +67,8 @@ toc:
         url: /rest.li/Send-Rest_li-Request-Query-In-Request-Body
       - page: Use Projections
         url: /rest.li/How-to-use-projections-in-Java
+      - page: Use PathSpec in Rest.Li
+        url: /rest.li/pathspec_user_guide
       - page: Avro Conversion
         url: /rest.li/Rest_li_Avro_conversions
       - page: Compression
