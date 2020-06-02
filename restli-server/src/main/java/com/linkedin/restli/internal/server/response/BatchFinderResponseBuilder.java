@@ -151,11 +151,7 @@ public class BatchFinderResponseBuilder
     }
     catch (CloneNotSupportedException exception)
     {
-      BatchFinderEntry entry = new BatchFinderEntry(
-          new RestLiServiceException(S_500_INTERNAL_SERVER_ERROR, "Batch finder response builder failed when rebuild projection URI"));
-      return new RestLiResponseDataImpl<>(new BatchFinderResponseEnvelope(S_500_INTERNAL_SERVER_ERROR, collectionResponse),
-          headers,
-          cookies);
+      throw new RestLiServiceException(S_500_INTERNAL_SERVER_ERROR, "Batch finder response builder failed when rebuild projection URI");
     }
   }
 
