@@ -17,7 +17,7 @@ test {
 
 task fatjar(type: Jar) {
   description 'Creating a fat jar from 3 sources: src/main, src/mainGeneratedTemplate, src/mainGeneratedRest.'
-  classifier = 'all'
+  classifier = 'with-generated'
   from sourceSets.main.output
   from sourceSets.mainGeneratedDataTemplate.output
   from sourceSets.mainGeneratedRest.output
