@@ -204,7 +204,7 @@ public class BatchFinderResponseBuilder
   private DataList getCriteriaParameters(RoutingResult routingResult)
   {
     String batchParameterName = getBatchParameterName(routingResult);
-    return(DataList)routingResult.getContext().getStructuredParameter(batchParameterName);
+    return (DataList) routingResult.getContext().getStructuredParameter(batchParameterName);
   }
 
   static URI buildCriteriaURI(ResourceContextImpl resourceContext, RecordTemplate criteria, String batchParameterName, URI uri)
