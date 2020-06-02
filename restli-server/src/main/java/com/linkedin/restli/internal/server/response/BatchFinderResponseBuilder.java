@@ -27,8 +27,6 @@ import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -107,52 +105,45 @@ public class BatchFinderResponseBuilder
     TimingContextUtil.beginTiming(routingResult.getContext().getRawRequestContext(),
         FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
 
-    try
+    for (Object criteriaParam : criteriaParams.values())
     {
-      for (Object criteriaParam : criteriaParams.values())
+      RecordTemplate criteria = new AnyRecord((DataMap) criteriaParam);
+      BatchFinderEntry entry;
+      if (result.getResults().containsKey(criteria))
       {
-        RecordTemplate criteria = new AnyRecord((DataMap) criteriaParam);
-        BatchFinderEntry entry;
-        if (result.getResults().containsKey(criteria))
-        {
-          CollectionResult<RecordTemplate, RecordTemplate> cr = result.getResult(criteria);
+        CollectionResult<RecordTemplate, RecordTemplate> cr = result.getResult(criteria);
 
-          //Process elements
-          List<AnyRecord> elements = buildElements(cr, resourceContext);
+        //Process elements
+        List<AnyRecord> elements = buildElements(cr, resourceContext);
 
-          //Process paging
-          final CollectionMetadata projectedPaging =
-              buildPaginationMetaData(routingResult, criteria, resourceContext, request, cr);
+        //Process paging
+        final CollectionMetadata projectedPaging =
+            buildPaginationMetaData(routingResult, criteria, resourceContext, request, cr);
 
-          //Process metadata
-          final AnyRecord projectedCustomMetadata = buildMetaData(cr, resourceContext);
+        //Process metadata
+        final AnyRecord projectedCustomMetadata = buildMetaData(cr, resourceContext);
 
-          entry = new BatchFinderEntry(elements, projectedPaging, projectedCustomMetadata);
-        }
-        else if (result.getErrors().containsKey(criteria))
-        {
-          entry = new BatchFinderEntry(result.getErrors().get(criteria));
-        }
-        else
-        {
-          entry = new BatchFinderEntry(
-              new RestLiServiceException(S_404_NOT_FOUND, "The server didn't find a representation for this criteria"));
-        }
-
-        collectionResponse.add(entry);
+        entry = new BatchFinderEntry(elements, projectedPaging, projectedCustomMetadata);
+      }
+      else if (result.getErrors().containsKey(criteria))
+      {
+        entry = new BatchFinderEntry(result.getErrors().get(criteria));
+      }
+      else
+      {
+        entry = new BatchFinderEntry(
+            new RestLiServiceException(S_404_NOT_FOUND, "The server didn't find a representation for this criteria"));
       }
 
-      TimingContextUtil.endTiming(routingResult.getContext().getRawRequestContext(),
-          FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+      collectionResponse.add(entry);
+    }
 
-      return new RestLiResponseDataImpl<>(new BatchFinderResponseEnvelope(HttpStatus.S_200_OK, collectionResponse),
-          headers,
-          cookies);
-    }
-    catch (CloneNotSupportedException exception)
-    {
-      throw new RestLiServiceException(S_500_INTERNAL_SERVER_ERROR, "Batch finder response builder failed when rebuild projection URI");
-    }
+    TimingContextUtil.endTiming(routingResult.getContext().getRawRequestContext(),
+        FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+
+    return new RestLiResponseDataImpl<>(new BatchFinderResponseEnvelope(HttpStatus.S_200_OK, collectionResponse),
+                                        headers,
+                                        cookies);
   }
 
   private List<AnyRecord> buildElements(CollectionResult<RecordTemplate, RecordTemplate> cr,
@@ -174,7 +165,7 @@ public class BatchFinderResponseBuilder
                                                      ResourceContextImpl resourceContext,
                                                      Request request,
                                                      CollectionResult<RecordTemplate,
-                                                     RecordTemplate> cr) throws CloneNotSupportedException
+                                                     RecordTemplate> cr)
   {
     String batchParameterName = getBatchParameterName(routingResult);
     URI criteriaURI = buildCriteriaURI(resourceContext, criteria, batchParameterName, request.getURI());
@@ -216,35 +207,14 @@ public class BatchFinderResponseBuilder
     return(DataList)routingResult.getContext().getStructuredParameter(batchParameterName);
   }
 
-  protected static URI buildCriteriaURI(ResourceContextImpl resourceContext, RecordTemplate criteria, String batchParameterName, URI uri)
-      throws CloneNotSupportedException
+  static URI buildCriteriaURI(ResourceContextImpl resourceContext, RecordTemplate criteria, String batchParameterName, URI uri)
   {
     DataList criteriaList = new DataList(1);
     criteriaList.add(criteria.data());
-    DataMap queryParams = extractQueryParamsFromResourceContext(resourceContext);
     return URIParamUtils.replaceQueryParam(uri,
                                            batchParameterName,
                                            criteriaList,
-                                           queryParams,
+                                           resourceContext.getParameters(),
                                            resourceContext.getRestliProtocolVersion());
-  }
-
-  protected static DataMap extractQueryParamsFromResourceContext(ResourceContextImpl resourceContext)
-      throws CloneNotSupportedException
-  {
-    DataMap queryParams = resourceContext.getParameters().clone();
-    if (queryParams.containsKey(RestConstants.FIELDS_PARAM))
-    {
-      queryParams.put(RestConstants.FIELDS_PARAM, resourceContext.getProjectionMask().getDataMap());
-    }
-    if (queryParams.containsKey(RestConstants.PAGING_FIELDS_PARAM))
-    {
-      queryParams.put(RestConstants.PAGING_FIELDS_PARAM, resourceContext.getPagingProjectionMask().getDataMap());
-    }
-    if (queryParams.containsKey(RestConstants.METADATA_FIELDS_PARAM))
-    {
-      queryParams.put(RestConstants.METADATA_FIELDS_PARAM, resourceContext.getMetadataProjectionMask().getDataMap());
-    }
-    return queryParams;
   }
 }

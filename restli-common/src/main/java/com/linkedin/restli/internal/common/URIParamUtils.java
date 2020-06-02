@@ -62,7 +62,14 @@ public class URIParamUtils
     {
       if (dataMap.containsKey(parameterName))
       {
-        result.put(parameterName, URIMaskUtil.encodeMaskForURI(dataMap.getDataMap(parameterName)));
+        try
+        {
+          result.put(parameterName, dataMap.getString(parameterName));
+        }
+        catch (ClassCastException exception)
+        {
+          result.put(parameterName, URIMaskUtil.encodeMaskForURI(dataMap.getDataMap(parameterName)));
+        }
       }
     }
 
