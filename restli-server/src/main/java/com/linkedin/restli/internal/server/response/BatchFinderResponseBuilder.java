@@ -107,19 +107,19 @@ public class BatchFinderResponseBuilder
     TimingContextUtil.beginTiming(routingResult.getContext().getRawRequestContext(),
         FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
 
-    for (Object criteriaParam : criteriaParams.values())
+    try
     {
-      RecordTemplate criteria = new AnyRecord((DataMap) criteriaParam);
-      BatchFinderEntry entry;
-      if (result.getResults().containsKey(criteria))
+      for (Object criteriaParam : criteriaParams.values())
       {
-        CollectionResult<RecordTemplate, RecordTemplate> cr = result.getResult(criteria);
-
-        //Process elements
-        List<AnyRecord> elements = buildElements(cr, resourceContext);
-
-        try
+        RecordTemplate criteria = new AnyRecord((DataMap) criteriaParam);
+        BatchFinderEntry entry;
+        if (result.getResults().containsKey(criteria))
         {
+          CollectionResult<RecordTemplate, RecordTemplate> cr = result.getResult(criteria);
+
+          //Process elements
+          List<AnyRecord> elements = buildElements(cr, resourceContext);
+
           //Process paging
           final CollectionMetadata projectedPaging =
               buildPaginationMetaData(routingResult, criteria, resourceContext, request, cr);
@@ -129,31 +129,34 @@ public class BatchFinderResponseBuilder
 
           entry = new BatchFinderEntry(elements, projectedPaging, projectedCustomMetadata);
         }
-        catch (CloneNotSupportedException exception)
+        else if (result.getErrors().containsKey(criteria))
+        {
+          entry = new BatchFinderEntry(result.getErrors().get(criteria));
+        }
+        else
         {
           entry = new BatchFinderEntry(
-              new RestLiServiceException(S_500_INTERNAL_SERVER_ERROR, "Batch finder response builder failed when rebuild projection URI"));
+              new RestLiServiceException(S_404_NOT_FOUND, "The server didn't find a representation for this criteria"));
         }
-      }
-      else if (result.getErrors().containsKey(criteria))
-      {
-        entry = new BatchFinderEntry(result.getErrors().get(criteria));
-      }
-      else
-      {
-        entry = new BatchFinderEntry(
-            new RestLiServiceException(S_404_NOT_FOUND, "The server didn't find a representation for this criteria"));
+
+        collectionResponse.add(entry);
       }
 
-      collectionResponse.add(entry);
+      TimingContextUtil.endTiming(routingResult.getContext().getRawRequestContext(),
+          FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
+
+      return new RestLiResponseDataImpl<>(new BatchFinderResponseEnvelope(HttpStatus.S_200_OK, collectionResponse),
+          headers,
+          cookies);
     }
-
-    TimingContextUtil.endTiming(routingResult.getContext().getRawRequestContext(),
-        FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
-
-    return new RestLiResponseDataImpl<>(new BatchFinderResponseEnvelope(HttpStatus.S_200_OK, collectionResponse),
-                                        headers,
-                                        cookies);
+    catch (CloneNotSupportedException exception)
+    {
+      BatchFinderEntry entry = new BatchFinderEntry(
+          new RestLiServiceException(S_500_INTERNAL_SERVER_ERROR, "Batch finder response builder failed when rebuild projection URI"));
+      return new RestLiResponseDataImpl<>(new BatchFinderResponseEnvelope(S_500_INTERNAL_SERVER_ERROR, collectionResponse),
+          headers,
+          cookies);
+    }
   }
 
   private List<AnyRecord> buildElements(CollectionResult<RecordTemplate, RecordTemplate> cr,
