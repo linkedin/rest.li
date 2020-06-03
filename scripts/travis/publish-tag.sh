@@ -57,5 +57,19 @@ echo "All checks passed, attempting to publish Rest.li $VERSION to Bintray..."
 if [ $? = 0 ]; then
   echo "Successfully published Rest.li $VERSION to Bintray."
 else
+  # Publish failed, so roll back the upload to ensure this version is completely wiped from the repo
+  echo "Publish failed, wiping $VERSION from Bintray..."
+  DELETE_VERSION_URL="https://api.bintray.com/packages/linkedin/maven/pegasus/versions/${VERSION}"
+  curl -X DELETE --user ${BINTRAY_USER}:${BINTRAY_KEY} --fail $DELETE_VERSION_URL
+
+  if [ $? = 0 ]; then
+    echo "Successfully rolled $VERSION back."
+    echo 'Please retry the upload by restarting this Travis job.'
+  else
+    echo "Failed to roll back $VERSION, please manually delete this version from Bintray."
+    echo "See: https://bintray.com/linkedin/maven/pegasus/$VERSION"
+    echo 'Once this version is deleted, please retry the upload by restarting this Travis job.'
+  fi
+
   exit 1
 fi
