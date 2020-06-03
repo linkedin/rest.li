@@ -3,9 +3,9 @@ package com.linkedin.restli.internal.server.response;
 import com.google.common.collect.Lists;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.jersey.api.uri.UriBuilder;
-import com.linkedin.jersey.api.uri.UriComponent;
 import com.linkedin.pegasus.generator.examples.Foo;
 import com.linkedin.pegasus.generator.examples.Fruits;
 import com.linkedin.r2.message.RequestContext;
@@ -14,16 +14,18 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.QueryParamsDataMap;
 import com.linkedin.restli.internal.common.TestConstants;
-import com.linkedin.restli.internal.common.URIParamUtils;
-import com.linkedin.restli.internal.common.URLEscaper;
+import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.methods.AnyRecord;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
 import com.linkedin.restli.server.BatchFinderResult;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.PagingContext;
@@ -36,6 +38,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.easymock.EasyMock;
@@ -340,5 +343,95 @@ public class TestBatchFinderResponseBuilder
     map.put("OnError", onError);
     Foo foo = new Foo(map);
     return foo;
+  }
+
+  @DataProvider(name = "build_uri_test_cases")
+  public Object[][] testBuildCriteriaURIDataProvider() throws RestLiSyntaxException
+  {
+    String[] requestURIs =
+    {
+        "/greetings?bq=searchGreetings&criteria=List((id:1,tone:SINCERE))&message=hello",
+        "/talent/api/talentHiringProjectCandidates?bq=candidates&candidates=List((candidate:urn%3Ali%3Ats_hire_identity%3A88156577))",
+        "/talent/api/talentHiringProjectCandidates?bq=candidates&candidates=List((candidate:urn%3Ali%3Ats_hire_identity%3A88156577))&fields=candidate",
+        "/talent/api/talentHiringProjectCandidates?bq=candidates&candidates=List((candidate:urn%3Ali%3Ats_hire_identity%3A88156577),(candidate:urn%3Baba%3Ats_hire_identity%3A88156588))",
+        "/talent/api/talentHiringProjectCandidates?bq=candidates&candidates=List((candidate:urn%3Ali%3Ats_hire_identity%3A88156577),(candidate:urn%3Baba%3Ats_hire_identity%3A88156588))&fields=candidate",
+        "/test/api/restli?bq=findSomething&fields=field1&search_criteria=List((field1:val1,field2:val2))",
+        "/test/api/restli?bq=findSomething&fields=field1&search_criteria=List((field1:val1,field2:val1),(field1:val2,field2:val2))",
+        "/test/api/restli?bq=findSomething&fields=person:(firstname,lastname)&search_criteria=List((field1:val1,field2:val2))",
+        "/groups?fields=state,locale&metadataFields=city,age&pagingFields=start,count&q=emailDomain&search=List((field1:value1))",
+    };
+
+    String[] batchCriteriaParameterNames =
+    {
+        "criteria",
+        "candidates",
+        "candidates",
+        "candidates",
+        "candidates",
+        "search_criteria",
+        "search_criteria",
+        "search_criteria",
+        "search",
+    };
+
+    String[] expectedURIs =
+    {
+        "/greetings?bq=searchGreetings&criteria=List((id:1,tone:SINCERE))&message=hello",
+        "/talent/api/talentHiringProjectCandidates?bq=candidates&candidates=List((candidate:urn%3Ali%3Ats_hire_identity%3A88156577))",
+        "/talent/api/talentHiringProjectCandidates?bq=candidates&candidates=List((candidate:urn%3Ali%3Ats_hire_identity%3A88156577))&fields=candidate",
+        "/talent/api/talentHiringProjectCandidates?bq=candidates&candidates=List((candidate:urn%3Ali%3Ats_hire_identity%3A88156577))",
+        "/talent/api/talentHiringProjectCandidates?bq=candidates&candidates=List((candidate:urn;aba%3Ats_hire_identity%3A88156588))",
+        "/talent/api/talentHiringProjectCandidates?bq=candidates&candidates=List((candidate:urn%3Ali%3Ats_hire_identity%3A88156577))&fields=candidate",
+        "/talent/api/talentHiringProjectCandidates?bq=candidates&candidates=List((candidate:urn;aba%3Ats_hire_identity%3A88156588))&fields=candidate",
+        "/test/api/restli?bq=findSomething&fields=field1&search_criteria=List((field1:val1,field2:val2))",
+        "/test/api/restli?bq=findSomething&fields=field1&search_criteria=List((field1:val1,field2:val1))",
+        "/test/api/restli?bq=findSomething&fields=field1&search_criteria=List((field1:val2,field2:val2))",
+        "/test/api/restli?bq=findSomething&fields=person:(firstname,lastname)&search_criteria=List((field1:val1,field2:val2))",
+        "/groups?fields=state,locale&metadataFields=city,age&pagingFields=start,count&q=emailDomain&search=List((field1:value1))",
+    };
+
+    int totalCriteriaCases = expectedURIs.length;
+    Object[][] testData = new Object[totalCriteriaCases][5];
+    int cases = 0;
+    int uriIndex = 0;
+    while (cases < totalCriteriaCases)
+    {
+      Object[] singleCase = new Object[5];
+      URI uri = URI.create(requestURIs[uriIndex]);
+      RequestContext requestContext = new RequestContext();
+      requestContext.putLocalAttr("timingsDisabled", true);
+      ResourceContextImpl resourceContext = new ResourceContextImpl(new PathKeysImpl(),
+          new RestRequestBuilder(uri)
+              .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion().toString())
+              .build(),
+          requestContext);
+
+      DataList criteriaParameters = (DataList) resourceContext.getStructuredParameter(batchCriteriaParameterNames[uriIndex]);
+      for (int i = 0; i < criteriaParameters.size(); i++)
+      {
+        RecordTemplate criteria = new AnyRecord((DataMap) criteriaParameters.get(i));
+        singleCase[0] = resourceContext;
+        singleCase[1] = criteria;
+        singleCase[2] = batchCriteriaParameterNames[uriIndex];
+        singleCase[3] = uri;
+        singleCase[4] = URI.create(expectedURIs[cases]);
+        testData[cases] = singleCase;
+        cases ++;
+      }
+      uriIndex ++;
+    }
+
+    return testData;
+  }
+
+  @Test(dataProvider = "build_uri_test_cases")
+  public void testBuildCriteriaURI(ResourceContextImpl resourceContext,
+                                   RecordTemplate criteria,
+                                   String batchParameterName,
+                                   URI uri,
+                                   URI expectedURI)
+  {
+    URI generatedURI = BatchFinderResponseBuilder.buildCriteriaURI(resourceContext, criteria, batchParameterName, uri);
+    Assert.assertEquals(generatedURI.toString(), expectedURI.toString());
   }
 }
