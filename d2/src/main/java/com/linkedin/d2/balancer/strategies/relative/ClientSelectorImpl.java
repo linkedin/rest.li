@@ -70,6 +70,13 @@ public class ClientSelectorImpl implements ClientSelector
       trackerClient = getTrackerClientFromRing(request, requestContext, ring, trackerClients);
     }
 
+    if (trackerClient == null)
+    {
+      // Pick a one from the tracker clients passed from the request if there is no one selected from the ring
+      trackerClient = trackerClients.values().stream().findAny().orElse(null);
+      LOG.warn("Did not find a valid client from the ring, picked {} instead", trackerClient.getUri());
+    }
+
     addToExcludedHosts(trackerClient, requestContext);
 
     return trackerClient;
@@ -88,7 +95,7 @@ public class ClientSelectorImpl implements ClientSelector
                                                  Ring<URI> ring,
                                                  Map<URI, TrackerClient> trackerClients)
   {
-    if (ring == null) // TODO is this possible?
+    if (ring == null)
     {
       return null;
     }
@@ -115,8 +122,6 @@ public class ClientSelectorImpl implements ClientSelector
         }
       }
     }
-
-    // TODO choose a random one if it's still null
 
     return trackerClient;
   }

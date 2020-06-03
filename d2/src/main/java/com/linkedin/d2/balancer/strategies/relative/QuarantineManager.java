@@ -1,74 +1,208 @@
+/*
+   Copyright (c) 2020 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.balancer.strategies.relative;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
 import com.linkedin.d2.D2QuarantineProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.degrader.LoadBalancerQuarantine;
+import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
+import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.util.clock.Clock;
+import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+/**
+ * Handles the quarantine and recovery logic, see {@link LoadBalancerQuarantine} to understand how quarantine works
+ */
 public class QuarantineManager {
-  private static final Logger _log = LoggerFactory.getLogger(QuarantineManager.class);
-  private static final double QUARANTINE_ENABLED_PERCENTAGE = 0.0;
+  private static final Logger LOG = LoggerFactory.getLogger(QuarantineManager.class);
+  private static final double SLOW_START_ENABLED_THRESHOLD = 0;
+
+  private static final double QUARANTINE_ENABLED_PERCENTAGE_THRESHOLD = 0.0;
   private static final double FAST_RECOVERY_FACTOR = 2.0;
   private static final double FAST_RECOVERY_HEALTH_SCORE_THRESHOLD = 0.5;
   private static final long QUARANTINE_REENTRY_TIME_MS = 30000;
-  // If client weight is set to 0, it means we should not send traffic to that client
-  private static final double ZOOKEEPER_CLIENT_WEIGHT_THRESHOLD = 0.0;
+  private static final double MIN_ZOOKEEPER_CLIENT_WEIGHT = 0.0;
+  private static final int MAX_RETRIES_TO_CHECK_QUARANTINE = 5;
+  private static final int MAX_HOSTS_TO_PRE_CHECK_QUARANTINE = 10;
 
   private final String _serviceName;
   private final String _servicePath;
   private final HealthCheckOperations _healthCheckOperations;
   private final D2QuarantineProperties _quarantineProperties;
-  private final boolean _isQuarantineEnabled;
+  private final boolean _slowStartEnabled;
   private final boolean _fastRecoveryEnabled;
   private final double _initialHealthScore;
   private final ScheduledExecutorService _executorService;
   private final Clock _clock;
   private final long _updateIntervalMs;
-  // lowThresholdFactor reflects the expected health threshold for the service
-  //so we can use this factor times avg latency as the quarantine health checking latency
   private final double _relativeLatencyLowThresholdFactor;
 
+  private final AtomicBoolean _quarantineEnabled;
+  private final AtomicInteger _quarantineRetries;
+  private ConcurrentMap<TrackerClient, HealthCheck> _healthCheckMap;
+
   QuarantineManager(String serviceName, String servicePath, HealthCheckOperations healthCheckOperations,
-      D2QuarantineProperties quarantineProperties, boolean fastRecoveryEnabled, double initialHealthScore,
-      ScheduledExecutorService executorService, Clock clock, long updateIntervalMs, double relativeLatencyLowThresholdFactor)
+      D2QuarantineProperties quarantineProperties, double slowStartThreshold, boolean fastRecoveryEnabled,
+      double initialHealthScore, ScheduledExecutorService executorService, Clock clock, long updateIntervalMs,
+      double relativeLatencyLowThresholdFactor)
   {
     _serviceName = serviceName;
     _servicePath = servicePath;
     _healthCheckOperations = healthCheckOperations;
     _quarantineProperties = quarantineProperties;
-    _isQuarantineEnabled = quarantineProperties.hasQuarantineMaxPercent()
-        && quarantineProperties.getQuarantineMaxPercent() > QUARANTINE_ENABLED_PERCENTAGE;
+    _slowStartEnabled = slowStartThreshold > SLOW_START_ENABLED_THRESHOLD;
     _fastRecoveryEnabled = fastRecoveryEnabled;
     _initialHealthScore = initialHealthScore;
     _executorService = executorService;
     _clock = clock;
     _updateIntervalMs = updateIntervalMs;
     _relativeLatencyLowThresholdFactor = relativeLatencyLowThresholdFactor;
+
+    _quarantineEnabled = new AtomicBoolean(false);
+    _quarantineRetries = new AtomicInteger(0);
+    _healthCheckMap = new ConcurrentHashMap<>();
   }
 
-  public void updateQuarantineState(PartitionLoadBalancerState partitionLoadBalancerState)
+  public void updateQuarantineState(PartitionRelativeLoadBalancerState newPartitionRelativeLoadBalancerState,
+      PartitionRelativeLoadBalancerState oldPartitionRelativeLoadBalancerState, long clusterAvgLatency)
   {
+    // Step 0: Pre-check if quarantine method works for clients, if it works, we will mark _quarantineEnabled as true
+    preCheckQuarantine(newPartitionRelativeLoadBalancerState, clusterAvgLatency);
     // Step 1: check if quarantine state still applies. If not, remove it from the quarantine map
-    checkAndRemoveQuarantine(partitionLoadBalancerState);
+    checkAndRemoveQuarantine(newPartitionRelativeLoadBalancerState);
     // Step 2: Handle special clients recovery logic from the recovery map
-    handleClientsRecovery(partitionLoadBalancerState);
+    handleClientsRecovery(newPartitionRelativeLoadBalancerState);
     // Step 3: Enroll new quarantine and recovery map
-    enrollNewQuarantineAndRecoveryMap(partitionLoadBalancerState, partitionLoadBalancerState.getClusterAvgLatency());
+    enrollNewQuarantineAndRecoveryMap(newPartitionRelativeLoadBalancerState, oldPartitionRelativeLoadBalancerState, clusterAvgLatency);
   }
 
-  private void checkAndRemoveQuarantine(PartitionLoadBalancerState partitionLoadBalancerState)
+  /**
+   * Before actually putting a client into quarantine, check if the specified quarantine method and path works
+   * TODO: Decide what value to use for quarantine latency
+   */
+  private void preCheckQuarantine(PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState, long avgClusterLatency)
   {
-    Map<TrackerClient, LoadBalancerQuarantine> quarantineMap = partitionLoadBalancerState.getQuarantineMap();
-    Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory = partitionLoadBalancerState.getQuarantineHistory();
-    Map<TrackerClient, Double> recoveryMap = partitionLoadBalancerState.getRecoveryMap();
+    boolean isQuarantineConfigured = _quarantineProperties.hasQuarantineMaxPercent()
+        && _quarantineProperties.getQuarantineMaxPercent() > QUARANTINE_ENABLED_PERCENTAGE_THRESHOLD;
+    if (isQuarantineConfigured && !_quarantineEnabled.get()
+        && _quarantineRetries.incrementAndGet() <= MAX_RETRIES_TO_CHECK_QUARANTINE)
+    {
+      // if quarantine is configured but not enabled, and we haven't tried MAX_RETRIES_TIMES,
+      // check the hosts to see if the quarantine can be enabled.
+      Set<TrackerClient> trackerClients = partitionRelativeLoadBalancerState.getTrackerClients();
+      long quarantineLatency = (long) (avgClusterLatency * _relativeLatencyLowThresholdFactor);
+      _executorService.submit(() -> preCheckQuarantineState(trackerClients, quarantineLatency));
 
-    for (TrackerClient trackerClient : partitionLoadBalancerState.getTrackerClients())
+    }
+  }
+
+  private boolean tryEnableQuarantine()
+  {
+    return _quarantineEnabled.compareAndSet(false, true);
+  }
+
+  private void preCheckQuarantineState(Set<TrackerClient> trackerClients, long quarantineLatency)
+  {
+    Callback<None> healthCheckCallback = new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        if (!_quarantineEnabled.get())
+        {
+          // TODO: Is there a reason why we use rateLimitedLogger here to log the error?
+//          _rateLimitedLogger.warn("Error enabling quarantine. Health checking failed for service {}: ",
+//              _state.getServiceName(), e);
+        }
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        if (tryEnableQuarantine())
+        {
+          LOG.info("Quarantine is enabled for service {}", _serviceName);
+        }
+      }
+    };
+
+    // Ideally we would like to healthchecking all the service hosts (ie all TrackerClients) because
+    // this can help to warm up the R2 connections to the service hosts, thus speed up the initial access
+    // speed when d2client starts to access those hosts. However this can expose/expedite the problem that
+    // the d2client host needs too many connections or file handles to all the hosts, when the downstream
+    // services have large amount of hosts. Before that problem is addressed, we limit the number of hosts
+    // for pre-healthchecking to a small number
+    trackerClients.stream().limit(MAX_HOSTS_TO_PRE_CHECK_QUARANTINE)
+        .forEach(client -> {
+          try
+          {
+            HealthCheck healthCheckClient = _healthCheckMap.get(client);
+            if (healthCheckClient == null)
+            {
+              // create a new client if not exits
+              healthCheckClient =  new HealthCheckClientBuilder()
+                  .setHealthCheckOperations(_healthCheckOperations)
+                  .setHealthCheckPath(_quarantineProperties.getHealthCheckPath())
+                  .setServicePath(_servicePath)
+                  .setClock(_clock)
+                  .setLatency(quarantineLatency)
+                  .setMethod(_quarantineProperties.getHealthCheckMethod().toString())
+                  .setClient(client)
+                  .build();
+              _healthCheckMap.put(client, healthCheckClient);
+            }
+            healthCheckClient.checkHealth(healthCheckCallback);
+          }
+          catch (URISyntaxException e)
+          {
+            LOG.error("Error to build healthCheckClient ", e);
+          }
+        });
+
+    // also remove the entries that the corresponding trackerClientUpdaters do not exist anymore
+    for (TrackerClient client : _healthCheckMap.keySet())
+    {
+      if (!trackerClients.contains(client))
+      {
+        _healthCheckMap.remove(client);
+      }
+    }
+  }
+
+  private void checkAndRemoveQuarantine(PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState)
+  {
+    Map<TrackerClient, LoadBalancerQuarantine> quarantineMap = partitionRelativeLoadBalancerState.getQuarantineMap();
+    Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory = partitionRelativeLoadBalancerState.getQuarantineHistory();
+    Map<TrackerClient, Double> recoveryMap = partitionRelativeLoadBalancerState.getRecoveryMap();
+
+    for (TrackerClient trackerClient : partitionRelativeLoadBalancerState.getTrackerClients())
     {
       // Check/update quarantine state if current client is already under quarantine
       LoadBalancerQuarantine quarantine = quarantineMap.get(trackerClient);
@@ -77,40 +211,40 @@ public class QuarantineManager {
         // Evict client from quarantine
         quarantineMap.remove(quarantine);
         quarantineHistory.put(trackerClient, quarantine);
-        _log.info("TrackerClient {} evicted from quarantine", trackerClient.getUri());
+        LOG.info("TrackerClient {} evicted from quarantine", trackerClient.getUri());
 
-        // When a client get out of the quarantine map, we put it to recovery map with the 0.0 health score
-        // TODO: should we use initialHealthScore instead?
-        recoveryMap.put(trackerClient, RelativeStateUpdater.LOWEST_HEALTH_SCORE);
+        recoveryMap.put(trackerClient, _initialHealthScore);
       }
     }
   }
 
-  private void handleClientsRecovery(PartitionLoadBalancerState partitionLoadBalancerState)
+  private void handleClientsRecovery(PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState)
   {
-    for (TrackerClient trackerClient : partitionLoadBalancerState.getTrackerClients())
+    for (TrackerClient trackerClient : partitionRelativeLoadBalancerState.getTrackerClients())
     {
-      handleClientInRecoveryMap(trackerClient, partitionLoadBalancerState.getTrackerClientStateMap().get(trackerClient),
-          partitionLoadBalancerState.getRecoveryMap());
+      handleClientInRecoveryMap(trackerClient, partitionRelativeLoadBalancerState.getTrackerClientStateMap().get(trackerClient),
+          partitionRelativeLoadBalancerState.getRecoveryMap());
     }
   }
 
-  private void enrollNewQuarantineAndRecoveryMap(PartitionLoadBalancerState partitionLoadBalancerState, long clusterAvgLatency) {
-    int partitionId = partitionLoadBalancerState.getPartitionId();
-    Map<TrackerClient, LoadBalancerQuarantine> quarantineMap = partitionLoadBalancerState.getQuarantineMap();
-    Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory = partitionLoadBalancerState.getQuarantineHistory();
-    Map<TrackerClient, Double> recoveryMap = partitionLoadBalancerState.getRecoveryMap();
+  private void enrollNewQuarantineAndRecoveryMap(
+      PartitionRelativeLoadBalancerState newPartitionRelativeLoadBalancerState,
+      PartitionRelativeLoadBalancerState oldPartitionRelativeLoadBalancerState, long clusterAvgLatency) {
+    int partitionId = newPartitionRelativeLoadBalancerState.getPartitionId();
+    Map<TrackerClient, LoadBalancerQuarantine> quarantineMap = newPartitionRelativeLoadBalancerState.getQuarantineMap();
+    Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory = newPartitionRelativeLoadBalancerState.getQuarantineHistory();
+    Map<TrackerClient, Double> recoveryMap = newPartitionRelativeLoadBalancerState.getRecoveryMap();
 
-    for (TrackerClient trackerClient : partitionLoadBalancerState.getTrackerClients()) {
-      TrackerClientState trackerClientState = partitionLoadBalancerState.getTrackerClientStateMap().get(trackerClient);
+    for (TrackerClient trackerClient : newPartitionRelativeLoadBalancerState.getTrackerClients()) {
+      TrackerClientState trackerClientState = newPartitionRelativeLoadBalancerState.getTrackerClientStateMap().get(trackerClient);
 
       double clientWeight = trackerClient.getPartitionWeight(partitionId);
-      double healthScore = trackerClientState.getHealthScore();
       // Check and enroll quarantine map
       boolean isQuarantined = enrollClientInQuarantineMap(trackerClient, trackerClientState, clientWeight, quarantineMap,
-          quarantineHistory, partitionLoadBalancerState.getTrackerClientStateMap().size(), clusterAvgLatency);
+          quarantineHistory, newPartitionRelativeLoadBalancerState.getTrackerClientStateMap().size(), clusterAvgLatency);
       // check and enroll recovery map
-      enrollClientInRecoveryMap(isQuarantined, trackerClient, trackerClientState, clientWeight, recoveryMap);
+      enrollClientInRecoveryMap(isQuarantined, trackerClient, trackerClientState, clientWeight, recoveryMap,
+          oldPartitionRelativeLoadBalancerState);
     }
   }
 
@@ -120,7 +254,7 @@ public class QuarantineManager {
     if (trackerClientState.getCallCount() < trackerClientState.getAdjustedMinCallCount())
     {
       double healthScore = trackerClientState.getHealthScore();
-      if (healthScore <= RelativeStateUpdater.LOWEST_HEALTH_SCORE)
+      if (healthScore <= RelativeStateUpdater.MIN_HEALTH_SCORE)
       {
         // Reset the health score to initial health score if health score dropped to 0 before
         trackerClientState.setHealthScore(_initialHealthScore);
@@ -128,7 +262,7 @@ public class QuarantineManager {
       {
         // If fast recovery is enabled, we perform fast recovery: double the health score
         healthScore *= FAST_RECOVERY_FACTOR;
-        trackerClientState.setHealthScore(Math.max(healthScore, RelativeStateUpdater.HEALTHY_HEALTH_SCORE));
+        trackerClientState.setHealthScore(Math.max(healthScore, RelativeStateUpdater.MAX_HEALTH_SCORE));
       }
     } else if (!_fastRecoveryEnabled
         || !trackerClientState.isUnhealthy()
@@ -148,16 +282,16 @@ public class QuarantineManager {
       double clientWeight, Map<TrackerClient, LoadBalancerQuarantine> quarantineMap,
       Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory, int trackerClientSize, long clusterAvgLatency)
   {
-    if (_isQuarantineEnabled) {
+    if (_quarantineEnabled.get()) {
       double healthScore = trackerClientState.getHealthScore();
 
       if (quarantineMap.containsKey(trackerClient)) {
         // If the client is still in quarantine, keep the points to 0 so no real traffic will be used
-        trackerClientState.setHealthScore(RelativeStateUpdater.LOWEST_HEALTH_SCORE);
+        trackerClientState.setHealthScore(RelativeStateUpdater.MIN_HEALTH_SCORE);
         return true;
       }
-      else if (healthScore <= RelativeStateUpdater.LOWEST_HEALTH_SCORE
-          && clientWeight > ZOOKEEPER_CLIENT_WEIGHT_THRESHOLD
+      else if (healthScore <= RelativeStateUpdater.MIN_HEALTH_SCORE
+          && clientWeight > MIN_ZOOKEEPER_CLIENT_WEIGHT
           && trackerClientState.isUnhealthy()) {
         /**
          * To put a TrackerClient into quarantine, it needs to meet all the following criteria:
@@ -178,19 +312,11 @@ public class QuarantineManager {
                 _quarantineProperties.getHealthCheckMethod().toString(), _quarantineProperties.getHealthCheckPath(), _serviceName,
                 _servicePath, _healthCheckOperations);
           }
-
-          // If the trackerClient was just recently evicted from quarantine, it is possible that
-          // the service is already in trouble while the quarantine probing approach works
-          // fine. In such case we'll reuse the previous waiting duration instead of starting
-          // from scratch again
           quarantine.reset((_clock.currentTimeMillis() - quarantine.getLastChecked()) > QUARANTINE_REENTRY_TIME_MS);
           quarantineMap.put(trackerClient, quarantine);
-
-          // reduce the health score to 0 so no real traffic will be used
-          trackerClientState.setHealthScore(RelativeStateUpdater.LOWEST_HEALTH_SCORE);
           return true;
         } else {
-          _log.error("Quarantine for service {} is full! Could not add {}", _serviceName, trackerClient);
+          LOG.error("Quarantine for service {} is full! Could not add {}", _serviceName, trackerClient);
         }
       }
     }
@@ -198,31 +324,27 @@ public class QuarantineManager {
   }
 
   private void enrollClientInRecoveryMap(boolean isQuarantined, TrackerClient trackerClient,
-      TrackerClientState trackerClientState, double clientWeight, Map<TrackerClient, Double> recoveryMap)
+      TrackerClientState trackerClientState, double clientWeight, Map<TrackerClient, Double> recoveryMap,
+      PartitionRelativeLoadBalancerState oldPartitionRelativeLoadBalancerState)
   {
     if (!isQuarantined
-        && trackerClientState.getHealthScore() == RelativeStateUpdater.LOWEST_HEALTH_SCORE
-        && clientWeight > ZOOKEEPER_CLIENT_WEIGHT_THRESHOLD)
+        && trackerClientState.getHealthScore() == RelativeStateUpdater.MIN_HEALTH_SCORE
+        && clientWeight > MIN_ZOOKEEPER_CLIENT_WEIGHT)
     {
       // Enroll the client to recovery map if the health score dropped to 0, but zookeeper does not set the client weight to be 0
       trackerClientState.setHealthScore(_initialHealthScore);
       if (!recoveryMap.containsKey(trackerClient)) {
-        // TODO: what value to put here
-        recoveryMap.put(trackerClient, RelativeStateUpdater.LOWEST_HEALTH_SCORE);
+        recoveryMap.put(trackerClient, RelativeStateUpdater.MIN_HEALTH_SCORE);
       }
     }
 
-    // TODO: also enroll new client into the recovery map if fast recovery is enabled, double check existing implementation
-//    if (!recoveryMap.containsKey(trackerClient)                               // client is not in the map yet
-//        && !state.getTrackerClients().contains(client)                        // client is new  ////// TODO
-//        && _fastRecoveryEnabled                                               // Fast recovery is enabled
-//        && degraderControl.getInitialDropRate() > SLOW_START_THRESHOLD        // Slow start is enabled
-//        && !degraderControl.isHigh())                                         // current client is not degrading or QPS is too low
-//    {
-//      recoveryMap.put(client, clientUpdater.getMaxDropRate());
-//      // also set the maxDropRate to the computedDropRate if not 1;
-//      double maxDropRate = 1.0 - config.getInitialRecoveryLevel();
-//      clientUpdater.setMaxDropRate(Math.min(degraderControl.getCurrentComputedDropRate(), maxDropRate));
-//    }
+    // Also enroll new client into the recovery map if fast recovery and slow start are both enabled
+    if (!recoveryMap.containsKey(trackerClient)
+        && !oldPartitionRelativeLoadBalancerState.getTrackerClients().contains(trackerClient)
+        && _fastRecoveryEnabled
+        && _slowStartEnabled)
+    {
+      recoveryMap.put(trackerClient, _initialHealthScore);
+    }
   }
 }

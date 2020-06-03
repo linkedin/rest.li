@@ -17,6 +17,8 @@
 package com.linkedin.d2.balancer.strategies;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.util.hashing.Ring;
+import java.net.URI;
 import java.util.Set;
 
 
@@ -34,5 +36,7 @@ public interface StateUpdater
    * @param partitionId The partition id of the request
    * @param clusterGenerationId The id that identifies a unique set of uris in the current cluster
    */
-  void updateStateByRequest(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId);
+  void updateState(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId);
+
+  Ring<URI> getRing(int partitionId);
 }

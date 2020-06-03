@@ -18,14 +18,19 @@ package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.D2QuarantineProperties;
 import com.linkedin.d2.D2RelativeStrategyProperties;
+import com.linkedin.d2.D2RingProperties;
 import com.linkedin.d2.HashConfig;
 import com.linkedin.d2.HashMethod;
 import com.linkedin.d2.HttpMethod;
 import com.linkedin.d2.HttpStatusCodeRange;
 import com.linkedin.d2.HttpStatusCodeRangeArray;
 import com.linkedin.d2.balancer.config.RelativeStrategyPropertiesConverter;
+import com.linkedin.d2.balancer.event.EventEmitter;
+import com.linkedin.d2.balancer.event.NoopEventEmitter;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderMonitorEventEmitter;
+import com.linkedin.d2.balancer.strategies.degrader.PartitionDegraderLoadBalancerStateListener;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
@@ -33,6 +38,8 @@ import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.r2.message.Request;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 
@@ -60,15 +67,24 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   // Default quarantine properties
   private static final double DEFAULT_QUARANTINE_MAX_PERCENT = 0.0;
   private static final HttpMethod DEFAULT_HTTP_METHOD = HttpMethod.OPTIONS;
+  // Default ring properties
+  private static final int DEFAULT_POINTS_PER_WEIGHT = 100;
 
 
   private final ScheduledExecutorService _executorService;
   private final HealthCheckOperations _healthCheckOperations;
+  private final List<PartitionRelativeLoadBalancerStateListener.Factory> _stateListenerFactories;
+  private final EventEmitter _eventEmitter;
+  private final Clock _clock;
 
-  public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations)
+  public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
+      List<PartitionRelativeLoadBalancerStateListener.Factory> stateListenerFactories, EventEmitter eventEmitter)
   {
     _executorService = executorService;
     _healthCheckOperations = healthCheckOperations;
+    _stateListenerFactories = stateListenerFactories;
+    _eventEmitter = (eventEmitter == null) ? new NoopEventEmitter() : eventEmitter;
+    _clock = SystemClock.instance();
   }
 
 
@@ -79,15 +95,20 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     relativeStrategyProperties = putDefaultValues(relativeStrategyProperties);
 
     return new RelativeLoadBalancerStrategy(getRelativeStateUpdater(relativeStrategyProperties,
-                                            serviceProperties.getServiceName(), serviceProperties.getPath()),
-                                            getClientSelector(relativeStrategyProperties));
+                                            serviceProperties.getServiceName(), serviceProperties.getClusterName(),
+                                            serviceProperties.getPath()), getClientSelector(relativeStrategyProperties));
   }
 
   private RelativeStateUpdater getRelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
-      String serviceName, String servicePath)
+      String serviceName, String clusterName, String servicePath)
   {
     QuarantineManager quarantineManager = getQuarantineManager(relativeStrategyProperties, serviceName, servicePath);
-    return new RelativeStateUpdater(relativeStrategyProperties, quarantineManager, _executorService);
+    final List<PartitionRelativeLoadBalancerStateListener.Factory> listenerFactories = new ArrayList<>();
+    listenerFactories.add(new RelativeLoadBalancerMonitorEventEmitter.Factory(serviceName, clusterName, _clock,
+        relativeStrategyProperties.getEmittingIntervalMs(),
+        relativeStrategyProperties.getRingProperties().getPointsPerWeight(), _eventEmitter));
+    listenerFactories.addAll(_stateListenerFactories);
+    return new RelativeStateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories);
   }
 
   private ClientSelectorImpl getClientSelector(D2RelativeStrategyProperties relativeStrategyProperties)
@@ -98,11 +119,11 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   private QuarantineManager getQuarantineManager(D2RelativeStrategyProperties relativeStrategyProperties,
       String serviceName, String servicePath)
   {
-    Clock clock = SystemClock.instance();
     return new QuarantineManager(serviceName, servicePath, _healthCheckOperations,
-        relativeStrategyProperties.getQuarantineProperties(), relativeStrategyProperties.isEnableFastRecovery(),
-        relativeStrategyProperties.getInitialHealthScore(), _executorService, clock,
-        relativeStrategyProperties.getUpdateIntervalMs(), relativeStrategyProperties.getRelativeLatencyLowThresholdFactor());
+        relativeStrategyProperties.getQuarantineProperties(), relativeStrategyProperties.getSlowStartThreshold(),
+        relativeStrategyProperties.isEnableFastRecovery(), relativeStrategyProperties.getInitialHealthScore(),
+        _executorService, _clock, relativeStrategyProperties.getUpdateIntervalMs(),
+        relativeStrategyProperties.getRelativeLatencyLowThresholdFactor());
   }
 
   private HashFunction<Request> getRequestHashFunction(D2RelativeStrategyProperties relativeStrategyProperties)
@@ -143,6 +164,12 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     quarantineProperties.setQuarantineMaxPercent(getOrDefault(quarantineProperties.getQuarantineMaxPercent(), DEFAULT_QUARANTINE_MAX_PERCENT));
     quarantineProperties.setHealthCheckMethod(getOrDefault(quarantineProperties.getHealthCheckMethod(), DEFAULT_HTTP_METHOD));
     properties.setQuarantineProperties(quarantineProperties);
+
+    // Most ring properties are initialized in {@link DelegatingRingFactory}
+    D2RingProperties ringProperties = properties.hasRingProperties()
+        ? properties.getRingProperties() : new D2RingProperties();
+    ringProperties.setPointsPerWeight(getOrDefault(ringProperties.getPointsPerWeight(), DEFAULT_POINTS_PER_WEIGHT));
+    properties.setRingProperties(ringProperties);
 
     return properties;
   }

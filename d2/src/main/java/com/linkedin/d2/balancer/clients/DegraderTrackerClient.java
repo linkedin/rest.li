@@ -38,9 +38,4 @@ public interface DegraderTrackerClient extends TrackerClient
    * @return DegraderControl corresponding to the given partition.
    */
   DegraderControl getDegraderControl(int partitionId);
-
-  /**
-   * @return CallTracker.
-   */
-  CallTracker getCallTracker();
 }

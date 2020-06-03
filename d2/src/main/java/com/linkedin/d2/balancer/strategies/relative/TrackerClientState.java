@@ -16,24 +16,32 @@
 
 package com.linkedin.d2.balancer.strategies.relative;
 
-import com.linkedin.util.degrader.ErrorType;
-import java.util.Map;
-
 
 /**
  * Keeps the state of each tracker client for a partition
  */
 public class TrackerClientState {
-  private int _callCount;
-  // TODO: update adjusted min call count
-  private int _adjustedMinCallCount;
-  private double _healthScore;
-  private boolean _isUnhealthy;
-  private boolean _isHealthy;
+  enum HealthState
+  {
+    UNHEALTHY,
+    NEUTRAL,
+    HEALTHY
+  }
+  private static final int MIN_CALL_COUNT_THRESHOLD = 1;
+  private static final int INITIAL_CALL_COUNT = 0;
 
-  public TrackerClientState(double initialHealthScore)
+  private final int _minCallCount;
+
+  private int _callCount;
+  private double _healthScore;
+  private HealthState _healthState;
+
+  public TrackerClientState(double initialHealthScore, int minCallCount)
   {
     _healthScore = initialHealthScore;
+    _minCallCount = minCallCount;
+    _callCount = INITIAL_CALL_COUNT;
+    _healthState = HealthState.NEUTRAL;
   }
 
   public void setCallCount(int callCount)
@@ -41,14 +49,9 @@ public class TrackerClientState {
     _callCount = callCount;
   }
 
-  public void setIsUnhealthy()
+  public void setHealthState(HealthState healthState)
   {
-    _isUnhealthy = true;
-  }
-
-  public void setIsHealthy()
-  {
-    _isHealthy = true;
+    _healthState = healthState;
   }
 
   public void setHealthScore(double healthScore)
@@ -63,7 +66,7 @@ public class TrackerClientState {
 
   public int getAdjustedMinCallCount()
   {
-    return _adjustedMinCallCount;
+    return Math.max((int) Math.round(_healthScore * _minCallCount), MIN_CALL_COUNT_THRESHOLD);
   }
 
   public double getHealthScore()
@@ -71,46 +74,8 @@ public class TrackerClientState {
     return _healthScore;
   }
 
-  public boolean isHealthy()
-  {
-    return _isHealthy;
-  }
-
   public boolean isUnhealthy()
   {
-    return _isUnhealthy;
-  }
-
-  public static double getErrorRateByType(Map<ErrorType, Integer> errorTypeCounts, int callCount)
-  {
-    Integer connectExceptionCount = errorTypeCounts.getOrDefault(ErrorType.CONNECT_EXCEPTION, 0);
-    Integer closedChannelExceptionCount = errorTypeCounts.getOrDefault(ErrorType.CLOSED_CHANNEL_EXCEPTION, 0);
-    Integer serverErrorCount = errorTypeCounts.getOrDefault(ErrorType.SERVER_ERROR, 0);
-    Integer timeoutExceptionCount = errorTypeCounts.getOrDefault(ErrorType.TIMEOUT_EXCEPTION, 0);
-    return callCount == 0
-        ? 0
-        : (double) (connectExceptionCount + closedChannelExceptionCount + serverErrorCount + timeoutExceptionCount) / callCount;
-  }
-
-  /**
-   * Identify if a client is unhealthy
-   */
-  public static boolean isUnhealthy(TrackerClientState trackerClientState, long clusterAvgLatency,
-      int callCount, long latency, double errorRate, double highThresholdFactor, double highErrorRate)
-  {
-    return callCount >= trackerClientState.getAdjustedMinCallCount()
-        && (latency >= clusterAvgLatency * highThresholdFactor
-        || errorRate >= highErrorRate);
-  }
-
-  /**
-   * Identify if a client is healthy
-   */
-  public static boolean isHealthy(TrackerClientState trackerClientState, long clusterAvgLatency,
-      int callCount, long latency, double errorRate, double lowThresholdFactor, double lowErrorRate)
-  {
-    return callCount >= trackerClientState.getAdjustedMinCallCount()
-        && (latency <= clusterAvgLatency * lowThresholdFactor
-        || errorRate <= lowErrorRate);
+    return _healthState == HealthState.UNHEALTHY;
   }
 }

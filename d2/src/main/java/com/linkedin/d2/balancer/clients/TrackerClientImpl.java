@@ -138,6 +138,12 @@ public class TrackerClientImpl implements TrackerClient
   }
 
   @Override
+  public CallTracker getCallTracker()
+  {
+    return _callTracker;
+  }
+
+  @Override
   public String toString()
   {
     return this.getClass().getSimpleName() + " [_uri=" + _uri + ", _partitionData=" + _partitionData + "]";

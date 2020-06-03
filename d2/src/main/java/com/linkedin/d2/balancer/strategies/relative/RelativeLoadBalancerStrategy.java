@@ -70,7 +70,7 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
                                         int partitionId,
                                         Map<URI, TrackerClient> trackerClients)
   {
-    _stateUpdater.updateStateByRequest(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId);
+    _stateUpdater.updateState(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId);
     Ring<URI> ring = getRing(clusterGenerationId, partitionId, trackerClients);
     return _clientSelector.getTrackerClient(request, requestContext, ring, trackerClients);
   }
@@ -79,7 +79,14 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
   @Override
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
   {
-    return null;
+    Ring<URI> ring = _stateUpdater.getRing(partitionId);
+    if (ring == null)
+    {
+      // partition is not initialized yet
+      _stateUpdater.updateState(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId);
+      ring = _stateUpdater.getRing(partitionId);
+    }
+    return ring;
   }
 
   @Override

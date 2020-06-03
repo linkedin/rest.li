@@ -136,12 +136,6 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
     return getPartitionState(partitionId).getDegraderControl();
   }
 
-  @Override
-  public CallTracker getCallTracker()
-  {
-    return _callTracker;
-  }
-
   private PartitionState getPartitionState(int partitionId)
   {
     PartitionState partitionState = _partitionStates.get(partitionId);
