@@ -429,7 +429,7 @@ public class TestBatchFinderResponseBuilder
                                    RecordTemplate criteria,
                                    String batchParameterName,
                                    URI uri,
-                                   URI expectedURI) throws CloneNotSupportedException
+                                   URI expectedURI)
   {
     URI generatedURI = BatchFinderResponseBuilder.buildCriteriaURI(resourceContext, criteria, batchParameterName, uri);
     Assert.assertEquals(generatedURI.toString(), expectedURI.toString());
