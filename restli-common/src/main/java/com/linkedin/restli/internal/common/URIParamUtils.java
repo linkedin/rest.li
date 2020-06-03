@@ -70,13 +70,18 @@ public class URIParamUtils
     {
       if (dataMap.containsKey(parameterName))
       {
-        if (dataMap.get(parameterName) instanceof String)
+        Object projectionParameters = dataMap.get(parameterName);
+        if (projectionParameters instanceof String)
         {
-          result.put(parameterName, dataMap.getString(parameterName));
+          result.put(parameterName, (String) projectionParameters);
         }
-        else if (dataMap.get(parameterName) instanceof DataMap)
+        else if (projectionParameters instanceof DataMap)
         {
-          result.put(parameterName, URIMaskUtil.encodeMaskForURI(dataMap.getDataMap(parameterName)));
+          result.put(parameterName, URIMaskUtil.encodeMaskForURI((DataMap) projectionParameters));
+        }
+        else
+        {
+          throw new IllegalArgumentException("Invalid projection field data type");
         }
       }
     }
