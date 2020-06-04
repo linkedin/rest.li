@@ -27,7 +27,6 @@ import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.SchemaToPdlEncoder;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
-import com.linkedin.internal.tools.ArgumentFileProcessor;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import java.io.File;
 import java.io.FileInputStream;
@@ -90,6 +89,10 @@ public class SchemaFormatTranslator
     OPTIONS.addOption(OptionBuilder.withLongOpt("skip-verification")
         .withDescription("Skip verification of the translated schemas. Be cautious, as incorrect translations will not be caught.")
         .create('k'));
+
+    OPTIONS.addOption(OptionBuilder.withLongOpt("force-pdsc-fully-qualified-names")
+        .withDescription("Forces generated PDSC schemas to always use fully qualified names.")
+        .create('q'));
   }
 
   public static void main(String[] args) throws Exception
@@ -110,6 +113,7 @@ public class SchemaFormatTranslator
       boolean keepOriginal = cl.hasOption('o');
       String preserveSourceCmd = cl.getOptionValue('p');
       boolean skipVerification = cl.hasOption('k');
+      boolean forcePdscFullyQualifiedNames = cl.hasOption('q');
 
       String[] cliArgs = cl.getArgs();
       if (cliArgs.length != 3)
@@ -146,7 +150,8 @@ public class SchemaFormatTranslator
           destFormat,
           keepOriginal,
           preserveSourceCmd,
-          skipVerification);
+          skipVerification,
+          forcePdscFullyQualifiedNames);
 
       translator.translateFiles();
     }
@@ -166,9 +171,10 @@ public class SchemaFormatTranslator
   private boolean _keepOriginal;
   private String _preserveSourceCmd;
   private boolean _skipVerification;
+  private boolean _forcePdscFullyQualifiedNames;
 
   SchemaFormatTranslator(String resolverPath, File sourceDir, File destDir, String sourceFormat, String destFormat,
-      boolean keepOriginal, String preserveSourceCmd, boolean skipVerification)
+      boolean keepOriginal, String preserveSourceCmd, boolean skipVerification, boolean forcePdscFullyQualifiedNames)
   {
     _resolverPath = resolverPath;
     _sourceDir = sourceDir;
@@ -178,6 +184,7 @@ public class SchemaFormatTranslator
     _keepOriginal = keepOriginal;
     _preserveSourceCmd = preserveSourceCmd;
     _skipVerification = skipVerification;
+    _forcePdscFullyQualifiedNames = forcePdscFullyQualifiedNames;
   }
 
   private void translateFiles() throws IOException, InterruptedException
@@ -219,7 +226,7 @@ public class SchemaFormatTranslator
       NamedDataSchema schema = checkForErrorsAndGetTopLevelSchema(sourceFile, schemaFullname, parser, errorMessages);
       if (schema != null)
       {
-        topLevelTranslatedSchemas.put(schemaFullname, new SchemaInfo(schema, sourceFile, encode(schema, _destFormat)));
+        topLevelTranslatedSchemas.put(schemaFullname, new SchemaInfo(schema, sourceFile, encode(schema)));
       }
     }
     if (errorMessages.length() > 0)
@@ -378,9 +385,9 @@ public class SchemaFormatTranslator
     return (NamedDataSchema) sourceSchema;
   }
 
-  private static String encode(DataSchema schema, String format) throws IOException
+  private String encode(DataSchema schema) throws IOException
   {
-    if (format.equals(PdlSchemaParser.FILETYPE))
+    if (_destFormat.equals(PdlSchemaParser.FILETYPE))
     {
       StringWriter writer = new StringWriter();
       SchemaToPdlEncoder encoder = new SchemaToPdlEncoder(writer);
@@ -388,13 +395,17 @@ public class SchemaFormatTranslator
       encoder.encode(schema);
       return writer.toString();
     }
-    else if (format.equals(SchemaParser.FILETYPE))
+    else if (_destFormat.equals(SchemaParser.FILETYPE))
     {
       JsonBuilder.Pretty pretty = JsonBuilder.Pretty.INDENTED;
       JsonBuilder builder = new JsonBuilder(pretty);
       try
       {
         SchemaToJsonEncoder encoder = new SchemaToJsonEncoder(builder, AbstractSchemaEncoder.TypeReferenceFormat.PRESERVE);
+        if (_forcePdscFullyQualifiedNames)
+        {
+          encoder.setAlwaysUseFullyQualifiedName(true);
+        }
         encoder.encode(schema);
         return builder.result();
       }
@@ -405,7 +416,7 @@ public class SchemaFormatTranslator
     }
     else
     {
-      throw new IllegalArgumentException("Unsupported format: " + format);
+      throw new IllegalArgumentException("Unsupported format: " + _destFormat);
     }
   }
 

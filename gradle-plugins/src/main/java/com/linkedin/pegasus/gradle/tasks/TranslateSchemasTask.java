@@ -35,6 +35,7 @@ public class TranslateSchemasTask extends DefaultTask {
   private boolean _keepOriginal = false;
   private String _preserveSourceCmd;
   private boolean _skipVerification = false;
+  private boolean _forcePdscFullyQualifedNames = false;
   private boolean _enableArgFile;
 
   @TaskAction
@@ -82,6 +83,10 @@ public class TranslateSchemasTask extends DefaultTask {
       if (_skipVerification)
       {
         javaExecSpec.args("--skip-verification");
+      }
+      if (_forcePdscFullyQualifedNames)
+      {
+        javaExecSpec.args("--force-pdsc-fully-qualified-names");
       }
       javaExecSpec.args(resolverPathArg);
       javaExecSpec.args(_inputDir.getAbsolutePath());
@@ -209,5 +214,16 @@ public class TranslateSchemasTask extends DefaultTask {
   public void setEnableArgFile(boolean enable)
   {
     _enableArgFile = enable;
+  }
+
+  @Input
+  public boolean isForcePdscFullyQualifedNames()
+  {
+    return _forcePdscFullyQualifedNames;
+  }
+
+  public void setForcePdscFullyQualifedNames(boolean forcePdscFullyQualifedNames)
+  {
+    _forcePdscFullyQualifedNames = forcePdscFullyQualifedNames;
   }
 }
