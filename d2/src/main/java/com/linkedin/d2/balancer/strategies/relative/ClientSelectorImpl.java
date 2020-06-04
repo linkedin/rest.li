@@ -32,6 +32,8 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.linkedin.d2.discovery.util.LogUtil.*;
+
 
 /**
  * Implementation for {@link ClientSelector}
@@ -74,7 +76,7 @@ public class ClientSelectorImpl implements ClientSelector
     {
       // Pick a one from the tracker clients passed from the request if there is no one selected from the ring
       trackerClient = trackerClients.values().stream().findAny().orElse(null);
-      LOG.warn("Did not find a valid client from the ring, picked {} instead", trackerClient.getUri());
+      warn(LOG, "Did not find a valid client from the ring, picked {} instead", trackerClient.getUri());
     }
 
     addToExcludedHosts(trackerClient, requestContext);

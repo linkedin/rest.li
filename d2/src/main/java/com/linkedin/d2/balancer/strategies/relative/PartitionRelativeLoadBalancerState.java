@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.strategies.PartitionLoadBalancerStateListener;
 import com.linkedin.d2.balancer.strategies.degrader.LoadBalancerQuarantine;
 import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
 import com.linkedin.d2.balancer.util.hashing.Ring;
@@ -42,7 +43,7 @@ public class PartitionRelativeLoadBalancerState
   private final Lock _lock;
   private final int _pointsPerWeight;
   private final RingFactory<URI> _ringFactory;
-  private final List<PartitionRelativeLoadBalancerStateListener> _listeners;
+  private final List<PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>> _listeners;
   private Map<TrackerClient, Double> _recoveryMap;
   private long _clusterGenerationId;
   private Map<TrackerClient, LoadBalancerQuarantine> _quarantineMap;
@@ -53,7 +54,7 @@ public class PartitionRelativeLoadBalancerState
   private PartitionStats _partitionStats;
 
   public PartitionRelativeLoadBalancerState(int partitionId, RingFactory<URI> ringFactory, int pointsPerWeight,
-      List<PartitionRelativeLoadBalancerStateListener> listeners)
+      List<PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>> listeners)
   {
     _partitionId = partitionId;
     _lock = new ReentrantLock();
@@ -73,7 +74,7 @@ public class PartitionRelativeLoadBalancerState
       Map<TrackerClient, LoadBalancerQuarantine> quarantineMap,
       Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory,
       Map<TrackerClient, TrackerClientState> trackerClientStateMap,
-      List<PartitionRelativeLoadBalancerStateListener> listeners)
+      List<PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>> listeners)
   {
     _partitionId = partitionId;
     _lock = lock;
@@ -181,14 +182,31 @@ public class PartitionRelativeLoadBalancerState
     return _partitionStats;
   }
 
-  public List<PartitionRelativeLoadBalancerStateListener> getListeners()
+  public List<PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>> getListeners()
   {
     return Collections.unmodifiableList(_listeners);
+  }
+
+  public void removeTrackerClient(TrackerClient trackerClient)
+  {
+    _trackerClientStateMap.remove(trackerClient);
+    _quarantineMap.remove(trackerClient);
+    _quarantineHistory.remove(trackerClient);
+    _recoveryMap.remove(trackerClient);
   }
 
   int getPointsPerWeight()
   {
     return _pointsPerWeight;
+  }
+
+  @Override
+  public String toString() {
+    return "PartitionRelativeLoadBalancerState{" + "_partitionId=" + _partitionId
+        + ", _clusterGenerationId=" + _clusterGenerationId
+        + ", _recoveryMap=" + _recoveryMap + ", _quarantineMap=" + _quarantineMap
+        + ", _pointsMap=" + _pointsMap + ", _ring=" + _ring + ", _trackerClientStateMap=" + _trackerClientStateMap
+        + ", _partitionStats=" + _partitionStats + '}';
   }
 
   class PartitionStats

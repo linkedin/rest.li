@@ -17,13 +17,14 @@ package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.balancer.event.D2MonitorEventEmitter;
 import com.linkedin.d2.balancer.event.EventEmitter;
+import com.linkedin.d2.balancer.strategies.PartitionLoadBalancerStateListener;
 import com.linkedin.util.clock.Clock;
 
 
 /**
  * Adapter for emitting D2 events from {@link RelativeStateUpdater}.
  */
-public class RelativeLoadBalancerMonitorEventEmitter implements PartitionRelativeLoadBalancerStateListener
+public class RelativeLoadBalancerMonitorEventEmitter implements PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>
 {
   private final D2MonitorEventEmitter _d2MonitorEventEmitter;
 
@@ -45,7 +46,7 @@ public class RelativeLoadBalancerMonitorEventEmitter implements PartitionRelativ
                                                                                     0));
   }
 
-  public static class Factory implements PartitionRelativeLoadBalancerStateListener.Factory
+  public static class Factory implements PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>
   {
     private final String _serviceName;
     private final String _clusterName;

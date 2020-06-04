@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.strategies.PartitionLoadBalancerStateListener;
 import com.linkedin.d2.balancer.strategies.StateUpdater;
 import com.linkedin.d2.balancer.strategies.degrader.DelegatingRingFactory;
 import com.linkedin.d2.balancer.util.hashing.Ring;
@@ -33,30 +34,35 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static com.linkedin.d2.discovery.util.LogUtil.*;
 
 
 /**
  * Update the state of the RelativeLoadBalancerStrategy periodically
- * TODO: add more logging
  */
 public class RelativeStateUpdater implements StateUpdater
 {
+  private static final Logger LOG = LoggerFactory.getLogger(RelativeStateUpdater.class);
   public static final double MIN_HEALTH_SCORE = 0.0;
   public static final double MAX_HEALTH_SCORE = 1.0;
   private static final double SLOW_START_INITIAL_HEALTH_SCORE = 0.01;
   private static final int SLOW_START_RECOVERY_FACTOR = 2;
+  private static final int LOG_UNHEALTHY_CLIENT_NUMBERS = 10;
 
   private final D2RelativeStrategyProperties _relativeStrategyProperties;
   private final QuarantineManager _quarantineManager;
   private final ScheduledExecutorService _executorService;
-  private final List<PartitionRelativeLoadBalancerStateListener.Factory> _listenerFactories;
+  private final List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> _listenerFactories;
 
   private ConcurrentMap<Integer, PartitionRelativeLoadBalancerState> _partitionLoadBalancerStateMap;
 
   RelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
                        QuarantineManager quarantineManager,
                        ScheduledExecutorService executorService,
-                       List<PartitionRelativeLoadBalancerStateListener.Factory> listenerFactories)
+                       List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> listenerFactories)
   {
     _relativeStrategyProperties = relativeStrategyProperties;
     _quarantineManager = quarantineManager;
@@ -70,21 +76,22 @@ public class RelativeStateUpdater implements StateUpdater
   @Override
   public void updateState(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId)
   {
-    if (!_partitionLoadBalancerStateMap.containsKey(partitionId))
+    if (shouldUpdateSynchronously(partitionId, clusterGenerationId))
     {
-      PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState =  new PartitionRelativeLoadBalancerState(partitionId,
-          new DelegatingRingFactory<>(_relativeStrategyProperties.getRingProperties()),
-          _relativeStrategyProperties.getRingProperties().getPointsPerWeight(),
-          _listenerFactories.stream().map(factory -> factory.create(partitionId)).collect(Collectors.toList()));
-      // If it is the very first request for the partition, update the state synchronously
+      PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState = _partitionLoadBalancerStateMap.containsKey(partitionId)
+          ? _partitionLoadBalancerStateMap.get(partitionId)
+          : new PartitionRelativeLoadBalancerState(partitionId,
+              new DelegatingRingFactory<>(_relativeStrategyProperties.getRingProperties()),
+              _relativeStrategyProperties.getRingProperties().getPointsPerWeight(),
+              _listenerFactories.stream().map(factory -> factory.create(partitionId)).collect(Collectors.toList()));
+
       if(partitionRelativeLoadBalancerState.getLock().tryLock())
       {
         try
         {
-          if (!_partitionLoadBalancerStateMap.containsKey(partitionId))
+          if (shouldUpdateSynchronously(partitionId, clusterGenerationId))
           {
-            _partitionLoadBalancerStateMap.put(partitionId, partitionRelativeLoadBalancerState);
-            updateStateForPartition(trackerClients, partitionId, clusterGenerationId);
+            updateStateForPartition(trackerClients, partitionId, partitionRelativeLoadBalancerState, clusterGenerationId);
           }
         }
         finally
@@ -92,10 +99,6 @@ public class RelativeStateUpdater implements StateUpdater
           partitionRelativeLoadBalancerState.getLock().unlock();
         }
       }
-    } else if (_partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId() != clusterGenerationId)
-    {
-      // If there are uris change in the cluster, use executor to update the state asynchronously
-      _executorService.execute(() -> updateStateForPartition(trackerClients, partitionId, clusterGenerationId));
     }
   }
 
@@ -116,39 +119,44 @@ public class RelativeStateUpdater implements StateUpdater
     // Update state for each partition
     for (Integer partitionId : _partitionLoadBalancerStateMap.keySet())
     {
-      updateStateForPartition(_partitionLoadBalancerStateMap.get(partitionId).getTrackerClients(), partitionId, null);
+      PartitionRelativeLoadBalancerState partitionState = _partitionLoadBalancerStateMap.get(partitionId);
+      updateStateForPartition(partitionState.getTrackerClients(), partitionId, partitionState, null);
     }
   }
 
   /**
    * Update the partition state when there is a cluster uris change.
    */
-  private void updateStateForPartition(Set<TrackerClient> trackerClients, int partitionId, Long clusterGenerationId)
+  private void updateStateForPartition(Set<TrackerClient> trackerClients, int partitionId,
+      PartitionRelativeLoadBalancerState oldPartitionState, Long clusterGenerationId)
   {
-    PartitionRelativeLoadBalancerState oldPartitionRelativeLoadBalancerState = _partitionLoadBalancerStateMap.get(partitionId);
-    PartitionRelativeLoadBalancerState newPartitionRelativeLoadBalancerState = oldPartitionRelativeLoadBalancerState.copy();
+    debug(LOG, "Updating for partition: " + partitionId + ", state: " + oldPartitionState);
+    PartitionRelativeLoadBalancerState newPartitionState = oldPartitionState.copy();
 
     // Step 1: Update the base health scores for each {@link TrackerClient} in the cluster
     Map<TrackerClient, CallTracker.CallStats> latestCallStatsMap = new HashMap<>();
     long avgClusterLatency = getAvgClusterLatency(trackerClients, latestCallStatsMap);
-    updateHealthScoreAndState(trackerClients, newPartitionRelativeLoadBalancerState, avgClusterLatency, clusterGenerationId);
+    updateHealthScoreAndState(trackerClients, newPartitionState, avgClusterLatency, clusterGenerationId);
 
     // Step 2: Handle quarantine and recovery for all tracker clients in this cluster
     // this will adjust the base health score if there is any change in quarantine and recovery map
-    _quarantineManager.updateQuarantineState(newPartitionRelativeLoadBalancerState,
-        oldPartitionRelativeLoadBalancerState, avgClusterLatency);
+    _quarantineManager.updateQuarantineState(newPartitionState,
+        oldPartitionState, avgClusterLatency);
 
     // Step 3: Calculate the new ring for each partition
-    newPartitionRelativeLoadBalancerState.resetRing();
+    newPartitionState.resetRing();
 
     if (clusterGenerationId != null)
     {
-      newPartitionRelativeLoadBalancerState.setClusterGenerationId(clusterGenerationId);
+      newPartitionState.setClusterGenerationId(clusterGenerationId);
     }
-    _partitionLoadBalancerStateMap.put(partitionId, newPartitionRelativeLoadBalancerState);
+    _partitionLoadBalancerStateMap.put(partitionId, newPartitionState);
 
-    // Step 4: Emit monitor event asynchronously
-    _executorService.execute(() -> emitMonitorEvents(newPartitionRelativeLoadBalancerState));
+    // Step 4: Log and emit monitor event
+    _executorService.execute(() -> {
+      logState(oldPartitionState, newPartitionState, partitionId);
+      emitMonitorEvents(newPartitionState);
+    });
   }
 
   /**
@@ -170,10 +178,7 @@ public class RelativeStateUpdater implements StateUpdater
       {
         if (!trackerClients.contains(trackerClient))
         {
-          trackerClientStateMap.remove(trackerClient);
-          partitionRelativeLoadBalancerState.getQuarantineMap().remove(trackerClient);
-          partitionRelativeLoadBalancerState.getQuarantineHistory().remove(trackerClient);
-          partitionRelativeLoadBalancerState.getRecoveryMap().remove(trackerClient);
+          partitionRelativeLoadBalancerState.removeTrackerClient(trackerClient);
         }
       }
     }
@@ -314,5 +319,62 @@ public class RelativeStateUpdater implements StateUpdater
     return callCount == 0
         ? 0
         : (double) (connectExceptionCount + closedChannelExceptionCount + serverErrorCount + timeoutExceptionCount) / callCount;
+  }
+
+  private boolean shouldUpdateSynchronously(int partitionId, long clusterGenerationId)
+  {
+    return !_partitionLoadBalancerStateMap.containsKey(partitionId)
+        || clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId();
+  }
+
+  private static void logState(PartitionRelativeLoadBalancerState oldState,
+      PartitionRelativeLoadBalancerState newState,
+      int partitionId) {
+    Map<TrackerClient, TrackerClientState> newTrackerClientStateMap = newState.getTrackerClientStateMap();
+    Map<TrackerClient, TrackerClientState> oldTrackerClientStateMap = oldState.getTrackerClientStateMap();
+    Set<TrackerClient> newUnhealthyClients = newTrackerClientStateMap.keySet().stream()
+        .filter(trackerClient -> newTrackerClientStateMap.get(trackerClient).getHealthScore() < MAX_HEALTH_SCORE)
+        .collect(Collectors.toSet());
+    Set<TrackerClient> oldUnhealthyClients = oldTrackerClientStateMap.keySet().stream()
+        .filter(trackerClient -> oldTrackerClientStateMap.get(trackerClient).getHealthScore() < MAX_HEALTH_SCORE)
+        .collect(Collectors.toSet());
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", unhealthyClients = ["
+          + (newUnhealthyClients.stream().map(client -> getClientStats(client, newTrackerClientStateMap))
+          .collect(Collectors.joining(","))) + "]");
+    } else if (allowToLog(oldState, newState, newUnhealthyClients, oldUnhealthyClients)) {
+      LOG.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", unhealthyClients = ["
+          + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
+          .map(client -> getClientStats(client, newTrackerClientStateMap)).collect(Collectors.joining(",")))
+          + (newUnhealthyClients.size() > LOG_UNHEALTHY_CLIENT_NUMBERS ? "...(total "
+          + newUnhealthyClients.size() + ")" : "") + "]");
+    }
+  }
+
+  private static boolean allowToLog(PartitionRelativeLoadBalancerState oldState, PartitionRelativeLoadBalancerState newState,
+      Set<TrackerClient> newUnhealthyClients, Set<TrackerClient> oldUnhealthyClients)
+  {
+    // if host number changes
+    if (oldState.getPointsMap().size() != newState.getPointsMap().size())
+    {
+      return true;
+    }
+    // if the unhealthy client changes
+    for (TrackerClient client : newUnhealthyClients)
+    {
+      if (!oldUnhealthyClients.contains(client))
+      {
+        return true;
+      }
+    }
+    // if hosts number changes in recoveryMap or quarantineMap
+    return oldState.getRecoveryMap().size() != newState.getRecoveryMap().size()
+        || oldState.getQuarantineMap().size() != newState.getQuarantineMap().size();
+  }
+
+  private static String getClientStats(TrackerClient client, Map<TrackerClient, TrackerClientState> trackerClientStateMap)
+  {
+    return client.getUri() + ":" + trackerClientStateMap.get(client).getHealthScore();
   }
 }

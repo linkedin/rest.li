@@ -21,6 +21,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.D2QuarantineProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.degrader.LoadBalancerQuarantine;
+import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -51,6 +52,7 @@ public class QuarantineManager {
   private static final double MIN_ZOOKEEPER_CLIENT_WEIGHT = 0.0;
   private static final int MAX_RETRIES_TO_CHECK_QUARANTINE = 5;
   private static final int MAX_HOSTS_TO_PRE_CHECK_QUARANTINE = 10;
+  private static final double INITIAL_RECOVERY_HEALTH_SCORE = 0.01;
 
   private final String _serviceName;
   private final String _servicePath;
@@ -63,6 +65,7 @@ public class QuarantineManager {
   private final Clock _clock;
   private final long _updateIntervalMs;
   private final double _relativeLatencyLowThresholdFactor;
+  private final RateLimitedLogger _rateLimitedLogger;
 
   private final AtomicBoolean _quarantineEnabled;
   private final AtomicInteger _quarantineRetries;
@@ -84,6 +87,7 @@ public class QuarantineManager {
     _clock = clock;
     _updateIntervalMs = updateIntervalMs;
     _relativeLatencyLowThresholdFactor = relativeLatencyLowThresholdFactor;
+    _rateLimitedLogger = new RateLimitedLogger(LOG, RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS, clock);
 
     _quarantineEnabled = new AtomicBoolean(false);
     _quarantineRetries = new AtomicInteger(0);
@@ -105,7 +109,6 @@ public class QuarantineManager {
 
   /**
    * Before actually putting a client into quarantine, check if the specified quarantine method and path works
-   * TODO: Decide what value to use for quarantine latency
    */
   private void preCheckQuarantine(PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState, long avgClusterLatency)
   {
@@ -137,9 +140,7 @@ public class QuarantineManager {
       {
         if (!_quarantineEnabled.get())
         {
-          // TODO: Is there a reason why we use rateLimitedLogger here to log the error?
-//          _rateLimitedLogger.warn("Error enabling quarantine. Health checking failed for service {}: ",
-//              _state.getServiceName(), e);
+          _rateLimitedLogger.warn("Error enabling quarantine. Health checking failed for service {}: ", _serviceName, e);
         }
       }
 
@@ -213,7 +214,7 @@ public class QuarantineManager {
         quarantineHistory.put(trackerClient, quarantine);
         LOG.info("TrackerClient {} evicted from quarantine", trackerClient.getUri());
 
-        recoveryMap.put(trackerClient, _initialHealthScore);
+        recoveryMap.put(trackerClient, INITIAL_RECOVERY_HEALTH_SCORE);
       }
     }
   }
@@ -256,13 +257,13 @@ public class QuarantineManager {
       double healthScore = trackerClientState.getHealthScore();
       if (healthScore <= RelativeStateUpdater.MIN_HEALTH_SCORE)
       {
-        // Reset the health score to initial health score if health score dropped to 0 before
-        trackerClientState.setHealthScore(_initialHealthScore);
+        // Reset the health score to initial recovery health score if health score dropped to 0 before
+        trackerClientState.setHealthScore(INITIAL_RECOVERY_HEALTH_SCORE);
       } else if (_fastRecoveryEnabled)
       {
         // If fast recovery is enabled, we perform fast recovery: double the health score
         healthScore *= FAST_RECOVERY_FACTOR;
-        trackerClientState.setHealthScore(Math.max(healthScore, RelativeStateUpdater.MAX_HEALTH_SCORE));
+        trackerClientState.setHealthScore(Math.min(healthScore, RelativeStateUpdater.MAX_HEALTH_SCORE));
       }
     } else if (!_fastRecoveryEnabled
         || !trackerClientState.isUnhealthy()
@@ -332,7 +333,7 @@ public class QuarantineManager {
         && clientWeight > MIN_ZOOKEEPER_CLIENT_WEIGHT)
     {
       // Enroll the client to recovery map if the health score dropped to 0, but zookeeper does not set the client weight to be 0
-      trackerClientState.setHealthScore(_initialHealthScore);
+      trackerClientState.setHealthScore(INITIAL_RECOVERY_HEALTH_SCORE);
       if (!recoveryMap.containsKey(trackerClient)) {
         recoveryMap.put(trackerClient, RelativeStateUpdater.MIN_HEALTH_SCORE);
       }

@@ -29,6 +29,10 @@ import java.util.HashSet;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static com.linkedin.d2.discovery.util.LogUtil.*;
 
 
 /**
@@ -43,7 +47,8 @@ import javax.annotation.Nullable;
  */
 public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
 {
-  public static String RELATIVE_LOAD_BALANCER_STRATEGY_NAME = "relative";
+  private static final Logger LOG = LoggerFactory.getLogger(RelativeLoadBalancerStrategy.class);
+  public static final String RELATIVE_LOAD_BALANCER_STRATEGY_NAME = "relative";
 
   /// We should probably directly use the interface name instead of the Impl name, because we should only access the public methods
   private final StateUpdater _stateUpdater;
@@ -70,6 +75,14 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
                                         int partitionId,
                                         Map<URI, TrackerClient> trackerClients)
   {
+    if (trackerClients == null || trackerClients.size() == 0)
+    {
+      warn(LOG,
+          "getTrackerClient called with null/empty trackerClients, so returning null");
+
+      return null;
+    }
+
     _stateUpdater.updateState(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId);
     Ring<URI> ring = getRing(clusterGenerationId, partitionId, trackerClients);
     return _clientSelector.getTrackerClient(request, requestContext, ring, trackerClients);
@@ -79,14 +92,8 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
   @Override
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
   {
-    Ring<URI> ring = _stateUpdater.getRing(partitionId);
-    if (ring == null)
-    {
-      // partition is not initialized yet
-      _stateUpdater.updateState(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId);
-      ring = _stateUpdater.getRing(partitionId);
-    }
-    return ring;
+    _stateUpdater.updateState(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId);
+    return _stateUpdater.getRing(partitionId);
   }
 
   @Override

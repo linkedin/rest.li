@@ -29,8 +29,7 @@ import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.event.NoopEventEmitter;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderMonitorEventEmitter;
-import com.linkedin.d2.balancer.strategies.degrader.PartitionDegraderLoadBalancerStateListener;
+import com.linkedin.d2.balancer.strategies.PartitionLoadBalancerStateListener;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
@@ -49,8 +48,7 @@ import java.util.concurrent.ScheduledExecutorService;
 public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategyFactory<RelativeLoadBalancerStrategy>
 {
   // Default load balancer property values
-  private static final long DEFAULT_UPDATE_INTERVAL_MS = 5000L;
-  ///// TODO It was 0.2 and 0.05 before???
+  public static final long DEFAULT_UPDATE_INTERVAL_MS = 5000L;
   private static final double DEFAULT_UP_STEP = 0.2;
   private static final double DEFAULT_DOWN_STEP = 0.2;
   private static final double DEFAULT_RELATIVE_LATENCY_HIGH_THRESHOLD_FACTOR = 1.2;
@@ -73,12 +71,12 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
 
   private final ScheduledExecutorService _executorService;
   private final HealthCheckOperations _healthCheckOperations;
-  private final List<PartitionRelativeLoadBalancerStateListener.Factory> _stateListenerFactories;
+  private final List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> _stateListenerFactories;
   private final EventEmitter _eventEmitter;
   private final Clock _clock;
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
-      List<PartitionRelativeLoadBalancerStateListener.Factory> stateListenerFactories, EventEmitter eventEmitter)
+      List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> stateListenerFactories, EventEmitter eventEmitter)
   {
     _executorService = executorService;
     _healthCheckOperations = healthCheckOperations;
@@ -103,7 +101,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
       String serviceName, String clusterName, String servicePath)
   {
     QuarantineManager quarantineManager = getQuarantineManager(relativeStrategyProperties, serviceName, servicePath);
-    final List<PartitionRelativeLoadBalancerStateListener.Factory> listenerFactories = new ArrayList<>();
+    final List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> listenerFactories = new ArrayList<>();
     listenerFactories.add(new RelativeLoadBalancerMonitorEventEmitter.Factory(serviceName, clusterName, _clock,
         relativeStrategyProperties.getEmittingIntervalMs(),
         relativeStrategyProperties.getRingProperties().getPointsPerWeight(), _eventEmitter));
