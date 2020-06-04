@@ -53,6 +53,14 @@ public class URIParamUtils
   private static final Pattern NORMALIZED_URI_PATTERN = Pattern.compile("(^/|/$)");
   private static final Pattern URI_SEPARATOR_PATTERN = Pattern.compile("/+");
 
+  /**
+   * Return the string encoded version of query parameters.
+   * For projection parameters stored in dataMap, this function handles both cases when the value is a original string
+   * or a structured {@link DataMap}
+   *
+   * @param dataMap the {@link DataMap} which contains projection parameters as keys
+   * @return a {@link Map} from query param key to value in encoded string
+   */
   private static Map<String, String> dataMapToQueryParams(DataMap dataMap)
   {
     final Map<String, String> result = encodeDataMapParameters(dataMap);
@@ -62,7 +70,19 @@ public class URIParamUtils
     {
       if (dataMap.containsKey(parameterName))
       {
-        result.put(parameterName, URIMaskUtil.encodeMaskForURI(dataMap.getDataMap(parameterName)));
+        Object projectionParameters = dataMap.get(parameterName);
+        if (projectionParameters instanceof String)
+        {
+          result.put(parameterName, (String) projectionParameters);
+        }
+        else if (projectionParameters instanceof DataMap)
+        {
+          result.put(parameterName, URIMaskUtil.encodeMaskForURI((DataMap) projectionParameters));
+        }
+        else
+        {
+          throw new IllegalArgumentException("Invalid projection field data type");
+        }
       }
     }
 

@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
@@ -26,6 +27,7 @@ import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.BatchFinderCriteriaResult;
+import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingCriteria;
@@ -85,6 +87,31 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
     Assert.assertTrue(greetings2.get(0).getTone().equals(Tone.FRIENDLY));
   }
 
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchFindersRequestBuilderDataProvider")
+  public void testBatchFinderWithProjection(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  {
+    GreetingCriteria c1 = new GreetingCriteria().setId(1L).setTone(Tone.SINCERE);
+    GreetingCriteria c2 = new GreetingCriteria().setId(2L).setTone(Tone.FRIENDLY);
+
+    Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
+        .setQueryParam("criteria", Arrays.asList(c1, c2))
+        .setQueryParam("message", "hello world")
+        .fields(Greeting.fields().id())
+        .build();
+    ResponseFuture<BatchCollectionResponse<Greeting>> future = getClient().sendRequest(request);
+    BatchCollectionResponse<Greeting> response = future.getResponse().getEntity();
+
+    List<BatchFinderCriteriaResult<Greeting>> batchResult = response.getResults();
+
+
+    List<Greeting> greetings1 = batchResult.get(0).getElements();
+    Assert.assertFalse(greetings1.get(0).hasTone());
+    Assert.assertTrue(greetings1.get(0).hasId());
+
+    List<Greeting> greetings2 = batchResult.get(1).getElements();
+    Assert.assertTrue(greetings2.get(0).hasId());
+    Assert.assertFalse(greetings2.get(0).hasTone());
+  }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchFindersRequestBuilderDataProvider")
   public void testBatchFinderWithError(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
@@ -93,6 +120,23 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
 
     Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
         .addQueryParam("criteria", c3).setQueryParam("message", "hello world").build();
+
+    ResponseFuture<BatchCollectionResponse<Greeting>> future = getClient().sendRequest(request);
+    BatchCollectionResponse<Greeting> response = future.getResponse().getEntity();
+    List<BatchFinderCriteriaResult<Greeting>> batchResult = response.getResults();
+
+    Assert.assertEquals(batchResult.size(), 1);
+    ErrorResponse error = batchResult.get(0).getError();
+    Assert.assertEquals(error.getMessage(), "Fail to find Greeting!");
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchFindersRequestBuilderDataProvider")
+  public void testBatchFinderWithErrorAndProjection(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  {
+    GreetingCriteria c3 = new GreetingCriteria().setId(100L);
+
+    Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
+        .addQueryParam("criteria", c3).setQueryParam("message", "hello world").fields(Greeting.fields().id()).build();
 
     ResponseFuture<BatchCollectionResponse<Greeting>> future = getClient().sendRequest(request);
     BatchCollectionResponse<Greeting> response = future.getResponse().getEntity();
@@ -137,6 +181,37 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
     List<Greeting> greetings1 = batchResult.get(0).getElements();
     Assert.assertTrue(greetings1.get(0).hasTone());
     Assert.assertTrue(greetings1.get(0).getTone().equals(Tone.SINCERE));
+
+    // on error
+    ErrorResponse error = batchResult.get(2).getError();
+    Assert.assertTrue(batchResult.get(2).isError());
+    Assert.assertEquals(error.getMessage(), "Fail to find Greeting!");
+  }
+
+  @Test
+  public void testUsingResourceSpecificBuilderWithProjection() throws RemoteInvocationException {
+    GreetingCriteria c1 = new GreetingCriteria().setId(1L).setTone(Tone.SINCERE);
+    GreetingCriteria c2 = new GreetingCriteria().setId(2L).setTone(Tone.FRIENDLY);
+    GreetingCriteria c3 = new GreetingCriteria().setId(100);
+    Request<BatchCollectionResponse<Greeting>> req = new BatchfindersRequestBuilders().batchFindBySearchGreetings()
+        .criteriaParam(Arrays.asList(c1, c2, c3)).fields(Greeting.fields().tone()).messageParam("hello world").build();
+    Response<BatchCollectionResponse<Greeting>> resp = REST_CLIENT.sendRequest(req).getResponse();
+    BatchCollectionResponse<Greeting> response = resp.getEntity();
+
+    List<BatchFinderCriteriaResult<Greeting>> batchResult = response.getResults();
+
+    Assert.assertEquals(batchResult.size(), 3);
+
+    // on success
+    List<Greeting> greetings1 = batchResult.get(0).getElements();
+    Assert.assertTrue(greetings1.get(0).hasTone());
+    Assert.assertTrue(greetings1.get(0).getTone().equals(Tone.SINCERE));
+    Assert.assertFalse(greetings1.get(0).hasId());
+
+    List<Greeting> greetings2 = batchResult.get(1).getElements();
+    Assert.assertTrue(greetings2.get(0).hasTone());
+    Assert.assertTrue(greetings2.get(0).getTone().equals(Tone.FRIENDLY));
+    Assert.assertFalse(greetings2.get(0).hasId());
 
     // on error
     ErrorResponse error = batchResult.get(2).getError();
