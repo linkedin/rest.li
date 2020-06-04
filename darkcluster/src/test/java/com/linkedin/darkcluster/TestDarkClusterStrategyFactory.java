@@ -29,6 +29,7 @@ import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterStrategyNameArray;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.darkcluster.api.DarkClusterStrategyFactory;
@@ -70,6 +71,7 @@ public class TestDarkClusterStrategyFactory
                                                           new CountingVerifierManager());
     _strategyFactory.start();
   }
+
   @Test
   public void testCreateStrategiesWithNoDarkClusters()
   {
@@ -92,8 +94,9 @@ public class TestDarkClusterStrategyFactory
 
     // update Strategy, then simulating a notification on the source cluster.
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig2);
-    _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
-    // Nothing should have been changed, since we should be ignoring source cluster changes.
+    _clusterInfoProvider.notifyListenersClusterAdded(DARK_CLUSTER_NAME);
+    // Nothing should have been changed, since we should be ignoring dark cluster changes. (strategy-impacting changes are all captured
+    // in the source cluster data)
     DarkClusterStrategy strategy2 = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
     Assert.assertTrue(strategy2 instanceof RelativeTrafficMultiplierDarkClusterStrategy);
     Assert.assertEquals(((RelativeTrafficMultiplierDarkClusterStrategy) strategy2).getMultiplier(), 0.5f, "expected 0.5f multiplier");
@@ -114,7 +117,7 @@ public class TestDarkClusterStrategyFactory
 
     // now trigger a refresh on the dark cluster. Note that darkClusterConfig1 is ignored since there should already be an entry for this
     // dark cluster, and we should get the strategy associated with darkClusterConfig2 back.
-    _clusterInfoProvider.notifyListenersClusterAdded(DARK_CLUSTER_NAME);
+    _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
     DarkClusterStrategy strategy3 = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
     Assert.assertTrue(strategy3 instanceof RelativeTrafficMultiplierDarkClusterStrategy);
     Assert.assertEquals(((RelativeTrafficMultiplierDarkClusterStrategy)strategy3).getMultiplier(), 0.1f, "expected 0.1f multiplier");
@@ -128,6 +131,7 @@ public class TestDarkClusterStrategyFactory
   public void testChangingStrategiesAfterStoppingListener()
   {
     DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0.5f);
+    DarkClusterConfig darkClusterConfig2 = createRelativeTrafficMultiplierConfig(0.1f);
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
     Assert.assertTrue(strategy instanceof RelativeTrafficMultiplierDarkClusterStrategy);
@@ -135,10 +139,10 @@ public class TestDarkClusterStrategyFactory
 
     _strategyFactory.shutdown();
 
-    // now trigger a refresh on the dark cluster. Note that darkClusterConfig1 is ignored since there should already be an entry for this
-    // dark cluster, and we should get the strategy associated with darkClusterConfig2 back.
-    _clusterInfoProvider.notifyListenersClusterAdded(DARK_CLUSTER_NAME);
-    // Nothing should have been changed, since we should be ignoring source cluster changes.
+    // update the strategy.
+    _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig2);
+    _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
+    // Nothing should have been changed, since we shutdown down the listener
     DarkClusterStrategy strategy2 = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
     Assert.assertTrue(strategy2 instanceof RelativeTrafficMultiplierDarkClusterStrategy);
     Assert.assertEquals(((RelativeTrafficMultiplierDarkClusterStrategy)strategy2).getMultiplier(), 0.5f, "expected 0.5f multiplier");
@@ -164,7 +168,7 @@ public class TestDarkClusterStrategyFactory
     try
     {
       scheduledExecutorService.scheduleAtFixedRate(() -> {
-        _clusterInfoProvider.notifyListenersClusterAdded(DARK_CLUSTER_NAME);
+        _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
         latch.countDown();
       }, 0, 1, TimeUnit.MILLISECONDS);
 
@@ -259,6 +263,18 @@ public class TestDarkClusterStrategyFactory
       // deleting whatever the first cluster listener added. It would have been more straightforward to have
       // a handle directly to the other clusterListener, but there's no good reason for the StrategyFactory to
       // expose that or allow it to be passed in, as the clusterListener needs to manipulate internal state.
+      try
+      {
+        for (String darkCluster : mockClusterInfoProvider.getDarkClusterConfigMap(clusterName).keySet())
+        {
+          mockClusterInfoProvider.notifyListenersClusterRemoved(darkCluster);
+        }
+      }
+      catch (ServiceUnavailableException e)
+      {
+        fail("got ServiceUnavailable exception", e);
+      }
+
       mockClusterInfoProvider.notifyListenersClusterRemoved(clusterName);
     }
 
