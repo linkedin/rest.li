@@ -144,6 +144,31 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
     }
   }
 
+  /**
+   * Constructor
+   *
+   * @param client               The {@link Client} to use to make requests to remote services to fetch their symbol tables.
+   * @param uriPrefix            The URI prefix to use when invoking remote services by name (and not by hostname:port)
+   * @param cacheSize            The size of the caches used to store symbol tables.
+   * @param serverNodeUri        The URI on which the current service is running. This should also include the context
+   *                             and servlet path (if applicable).
+   * @param responseSymbolTable  The pre-generated response symbol table.
+   */
+  public RestLiSymbolTableProvider(Client client,
+      String uriPrefix,
+      int cacheSize,
+      String serverNodeUri,
+      SymbolTable responseSymbolTable)
+  {
+    _client = client;
+    _uriPrefix = uriPrefix;
+    _symbolTableNameHandler = new SymbolTableNameHandler(responseSymbolTable.getName(), serverNodeUri);
+    _serviceNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
+    _symbolTableNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
+    _defaultResponseSymbolTable = responseSymbolTable;
+    _defaultResponseSymbolTableName = responseSymbolTable.getName();
+  }
+
   @Override
   public SymbolTable getSymbolTable(String symbolTableName)
   {
