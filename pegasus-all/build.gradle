@@ -1,0 +1,12 @@
+/*
+    This is a meta-project that programmatically depends on all other consumer-facing modules
+    so that the entire dependency tree of pegasus may be pulled in easily. Be warned that this
+    module is not intended to be directly consumed, since it'll bloat the consumer's dependencies.
+ */
+dependencies {
+    rootProject.subprojects.forEach {
+        if (it != project && !(it.name in privateModules)) {
+            compile it
+        }
+    }
+}

@@ -23,8 +23,12 @@ buildscript {
   }
 }
 
-project.ext.buildScriptDirPath = "${projectDir.path}/build_script"
-project.ext.isDefaultEnvironment = !project.hasProperty('overrideBuildEnvironment')
+project.ext {
+  buildScriptDirPath = "${projectDir.path}/build_script"
+  isDefaultEnvironment = !project.hasProperty('overrideBuildEnvironment')
+  privateModules = ['d2-benchmark', 'd2-int-test', 'generator-test', 'log-test-config', 'r2-int-test',
+                     'r2-perf-test', 'restli-internal-testutils'] as Set
+}
 
 File getEnvironmentScript()
 {
@@ -242,9 +246,7 @@ subprojects {
     }
 
     // Only build and publish artifacts for consumer-facing modules
-    final Set internalModules = ['d2-benchmark', 'd2-int-test', 'generator-test', 'log-test-config', 'r2-int-test',
-                                 'r2-perf-test', 'restli-internal-testutils'];
-    if (!(it.name in internalModules)) {
+    if (!(it.name in privateModules)) {
       // Configure the Bintray release task
       apply from: "${buildScriptDirPath}/bintrayRelease.gradle"
     }
