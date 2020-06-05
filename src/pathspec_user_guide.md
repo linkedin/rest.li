@@ -2,36 +2,72 @@
 layout: guide
 title: PathSpec User Guide
 permalink: /pathspec_user_guide
-excerpt: Guide for use PathSpec within Rest.Li
+excerpt: Guide for using PathSpec within Rest.li
 ---
 
 # PathSpec User Guide
+- [PathSpec User Guide](#pathspec-user-guide)
+  - [What is PathSpec](#what-is-pathspec)
+  - [Applications](#applications)
+    - [Specifying Projections](#specifying-projections)
+    - [Request Validation](#request-validation)
+  - [PathSpec Syntax in its string form](#pathspec-syntax-in-its-string-form)
+    - [Primitive type fields](#primitive-type-fields)
+    - [Record type fields](#record-type-fields)
+    - [Map and Array type fields](#map-and-array-type-fields)
+        - [Map type](#map-type)
+        - [Array type](#array-type)
+    - [Union and UnionArray, Alias and Alias in Unions](#union-and-unionarray-alias-and-alias-in-unions)
+        - [Union](#union)
+        - [UnionArray](#unionarray)
+        - [Alias](#alias)
+        - [Alias in Unions](#alias-in-unions)
+    - [TypeRef and Fixed](#typeref-and-fixed)
+        - [TypeRef](#typeref)
+      - [Fixed](#fixed)
+  - [PathSpec Syntax in its java binded class form](#pathspec-syntax-in-its-java-binded-class-form)
+  - [More resources and examples](#more-resources-and-examples)
 
 ## What is PathSpec
-PathSpec represents a path to a component within a complex data object within Rest.Li framework. It generates uniform references in hierarchical data maps (used in the data-transform) component. It is an abstract path concept which has two forms of concrete existences.
+PathSpec represents a path to a component within a complex data object within Rest.li framework. It generates uniform references in hierarchical [datamap](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/DataMap.java) components. It is an abstract path concept and has its specification. It currently has two concrete forms in Rest.li, but it is not language-specific.
 
-1. The PathSpec path can be represented as a string, current example usages of its string form can be found in [Validation annotation](https://linkedin.github.io/rest.li/Validation-in-Rest_li#specifying-restli-validation-annotations), where the PathSpec string is used in annotation and the [Annotation Reader](https://github.com/linkedin/rest.li/blob/master/restli-server/src/main/java/com/linkedin/restli/internal/server/model/RestLiAnnotationReader.java#L185) would interpret it.
-2. The PathSpec path also have a binded java class: [PathSpec.java](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/PathSpec.java). This java class can be passed as arguments in Restli Framework. Its Java class form is now mainly used for [Projection in Rest.Li framework](https://linkedin.github.io/rest.li/How-to-use-projections-in-Java). The PathSpec java class also has a method to return the correct path string by calling `toString()`.
+1. The PathSpec path can be represented as a string, current example usages of its string form can be found in [Validation annotation](/rest.li/Validation-in-Rest_li#specifying-restli-validation-annotations), where the PathSpec string is used in annotation and the [Annotation Reader](https://github.com/linkedin/rest.li/blob/master/restli-server/src/main/java/com/linkedin/restli/internal/server/model/RestLiAnnotationReader.java#L185) would interpret it.
 
-## Current usage
-### PathSpec in Projection
+2. The PathSpec path also have a binded java class: [PathSpec.java](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/PathSpec.java). This java class can be passed as arguments in Rest.li Framework. Its Java class form is now mainly used for [Projection in Rest.li framework](/rest.li/How-to-use-projections-in-Java). The PathSpec java class has convenient method to return the correct pathspec string by calling `toString()`, which returns the string form.
+
+For example:
+given a data schema
+```pdl
+record User {
+  firstName: string
+  birthday: optional Date
+  isActive: boolean = true
+  address: record Address {
+    state: string
+    zipcode: string
+  }
+}
+```
+both `/address/zipcode` and `new PathSpec("addressa", "zipcodeb")` are pathspecs referring to the inner `zipcode` field.
+## Applications 
+### Specifying Projections
 PathSpec's java class binding can be used for projection. Users can get PathSpec object that represents the fields in data object. For example, it could be obtained from generated RecordTemplate subclasses using the .fields() method. 
 For example:
 ```java
-PathSpec pathSpec = Foo.fields().bar(); 
+PathSpec pathSpec = Foo.fields().bar();
 ```
 
-More concrete examples can be found [here in the wiki](https://linkedin.github.io/rest.li/How-to-use-projections-in-Java#getting-the-pathspec-of-a-field).
+More concrete examples can be found [here in the wiki](/rest.li/How-to-use-projections-in-Java#getting-the-pathspec-of-a-field).
 
-This capability is provided by Rest.Li auto-generated code, as data object representation for data in Pegasus schema should extend [RecordTemplate.java](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/template/RecordTemplate.java), and will define a inner class called "fields", which extended PathSpec.java. By passing PathSpec object to the reqeust builder, the PathSpec is then used by [MaskCreator](https://github.com/linkedin/rest.li/blob/master/data-transform/src/main/java/com/linkedin/data/transform/filter/request/MaskCreator.java) to create a [MaskTree](https://github.com/linkedin/rest.li/blob/master/data-transform/src/main/java/com/linkedin/data/transform/filter/request/MaskTree.java). Thus, PathSpec can be used to control the projection behavior.
+This capability is provided by Rest.li auto-generated code, as data object representation for data in Pegasus schema should extend [RecordTemplate.java](/rest.li/blob/master/data/src/main/java/com/linkedin/data/template/RecordTemplate.java), and will define a inner class called "fields", which extended PathSpec.java. By passing PathSpec object to the reqeust builder, the PathSpec is then used by [MaskCreator](https://github.com/linkedin/rest.li/blob/master/data-transform/src/main/java/com/linkedin/data/transform/filter/request/MaskCreator.java) to create a [MaskTree](https://github.com/linkedin/rest.li/blob/master/data-transform/src/main/java/com/linkedin/data/transform/filter/request/MaskTree.java). Thus, PathSpec can be used to control the projection behavior.
 
-### PathSpec in Validation
-PathSpec's string form is used for [Request Validation](https://linkedin.github.io/rest.li/Validation-in-Rest_li) in Rest.Li Resource. A string path can be added in annotation such as "CreateOnly" and "ReadOnly". For example:
+### Request Validation
+PathSpec's string form is used for [Request Validation](/rest.li/Validation-in-Rest_li) in Rest.li Resource. A string path can be added in annotation such as "CreateOnly" and "ReadOnly". For example:
 ```java
 @CreateOnly({"/id", "/EXIF"})
 public class PhotoResource extends CollectionResourceTemplate<Long, Photo>
 {
-    ...
+    // ...
 }
 ```
 
@@ -52,16 +88,16 @@ You can also invoke [RestliDataValidator](https://github.com/linkedin/rest.li/bl
 
 ```
 
-## PathSec Semantics
+## PathSpec Syntax in its string form
 
-PathSpec has been defined as a path to a component within a complex data object path. This provides a way to traverse the Pegasus data object. The abstract data object, in most case, is a form of [DataMap](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/DataMap.java) internally in RestLi framework, but PathSpec should be meaningful for the same data object in other forms, for example, a json representing the same data object.
+PathSpec has been defined as a path to a component within a complex data object path. This provides a way to traverse the Pegasus data object. The abstract data object, in most case, is a form of [DataMap](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/DataMap.java) internally in Rest.li framework, but PathSpec should be meaningful for the same data object in other forms, for example, a json representing the same data object.
 
-The PathSpec format is represented by separators(`'/'`) and segments in between. 
+The PathSpec string format is represented by separators(`'/'`) and segments in between.
 ```
 /demoRecord/innerRecordField/nestedInnerRecordField
 ```
 
-The path segment for some types, such as array, could have some attributes, which following the `&` sign, 
+The path segment could use attribute syntax to carry some meaningful attributes. They attributes could be added following the `&` sign. Users can add any attributes but for some types, there are reserved attributes. For example, for array type, one can specify `start` and `count` attributes and these two attributes are used in specifying projections.
 ```
 /arrayOfIntFieldE?start=0&count=10
 ```
@@ -72,10 +108,9 @@ For some collection types, such as maps and arrays, the path segment could also 
 ```
 Above examples points to the `innerRecordField` field of the `map` value in a `map` schema. `map` is a collection schema type, here `*` wildcarded its keys.
 
-## PathSpec Syntax in its string form
 Each PathSpec has a corresponding string form.
 
-Pegasus schema has defined kinds of types, the full specification about the supported types can be found from the document [Rest.li Data Schema And Templates](https://linkedin.github.io/rest.li/DATA-Data-Schema-and-Templates). There are mainly following supported types in Pegasus.
+Pegasus schema has defined various kinds of types, the full specification about the supported types can be found from the document [Rest.li Data Schema And Templates](/rest.li/DATA-Data-Schema-and-Templates). There are mainly following supported types in Pegasus and following sections list the example pathspecs.
 
 ### Primitive type fields
 Primitive types includes type such as bytes, string, boolean, double, float, long, int. In the reocrd form, they came with a name to the field in record, so the reference to the primitive types, in most cases are just a PathSpec string which specify the field name of this type. 
@@ -114,7 +149,7 @@ The example PathSpec for above fields in this record example would be
 /bytesField
 ```
 
-## Record type fields
+### Record type fields
 If a field in a record is of another record type, in this case  you have "nested field", then again the reference for the nested path component is the record's field name, 
 
 For example the above PDSC schema example now hava a record field,
@@ -236,7 +271,7 @@ It worth noting that single element indexing is currently not defined yet. For e
 
 
 
-### Union and UnionArray, Alias and Alias in Union
+### Union and UnionArray, Alias and Alias in Unions
 
 ##### Union
 The use case for the PathSpec for union would be a path to one of the types within the union.
@@ -328,7 +363,7 @@ Then here are the PathSpec can be used
 /a1/a1/a2
 ```
 
-##### Alias in Union
+##### Alias in Unions
 
 It is worth mentioning that in most cases you will want to use alias in Union. For example in Union you can define two arrays with 
 ```pdl
@@ -399,7 +434,7 @@ In the Map type example
 ```
 
 
-#### FixedI#
+#### Fixed#
 Fixed type can be defined in a separate file and then refered in another schema by name, for example in schema files:
 ```pdl
 namespace com.linkedin.pegasus.example
@@ -425,7 +460,7 @@ As above example shows, when fixed type are defined inline, they will still have
 ```
 
 ## PathSpec Syntax in its java binded class form
-All auto-generated `RecordTemplate` class has a static nested class `fields` which extends `PathSpec`. To find out, after you build the Rest.Li project, you could check such `RecordTemplate` classes in `GeneratedDataTemplate` folder and to find following codes.
+All auto-generated `RecordTemplate` class has a static nested class `fields` which extends `PathSpec`. To find out, after you build the Rest.li project, you could check such `RecordTemplate` classes in `GeneratedDataTemplate` folder and to find following codes.
 ```java
   public static class Fields extends PathSpec
   {
@@ -437,8 +472,8 @@ Therefore it is very easy to get the PathSpec java binded class. Let's say you h
 ```java
 PathSpec pathSpec = Foo.fields().bar();
 ```
-This has also been documented in [How to Use Projections in Java](https://linkedin.github.io/rest.li/How-to-use-projections-in-Java#getting-the-pathspec-of-a-field)
+This has also been documented in [How to Use Projections in Java](/rest.li/How-to-use-projections-in-Java#getting-the-pathspec-of-a-field)
 
 
-## More Resources
-More example can be referred from our Rest.Li Framework test code example. [TestPathSpec.java](https://github.com/linkedin/rest.li/blob/master/generator-test/src/test/java/com/linkedin/pegasus/generator/test/TestPathSpec.java) is a very uesful file that shows and tests what string should look like for the fields defined.
+## More resources and examples
+More example can be referred from our Rest.li Framework test code example. [TestPathSpec.java](https://github.com/linkedin/rest.li/blob/master/generator-test/src/test/java/com/linkedin/pegasus/generator/test/TestPathSpec.java) is a very uesful file that shows and tests what string should look like for the fields defined.
