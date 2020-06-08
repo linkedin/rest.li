@@ -21,12 +21,14 @@ import com.linkedin.data.schema.generator.AbstractGenerator;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.security.MessageDigest;
 import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -44,6 +46,7 @@ public class TestPegasusDataTemplateGenerator
   private static final String testDir = System.getProperty("testDir", new File("src/test").getAbsolutePath());
   private static final String resourcesDir = "resources" + FS + "generator";
   private static final String pegasusDir = testDir + FS + resourcesDir;
+  private static final String pegasusDirGenerated = testDir + FS + "resources" + FS + "referenceJava";
 
   private File _tempDir;
   private String _resolverPath;
@@ -204,5 +207,79 @@ public class TestPegasusDataTemplateGenerator
         .collect(Collectors.toMap(
             file -> file.getName().replace(".java", ""),
             Function.identity()));
+  }
+
+  @DataProvider(name = "withMultiDataTemplateCases")
+  private Object[][] createDataTemplateCases()
+  {
+    return new Object[][]
+        {
+            {"IsoDuration.pdsc", "PremiumService.pdsc"},
+            {"PremiumService.pdsc", "IsoDuration.pdsc"},
+        };
+  }
+
+  @Test(dataProvider = "withMultiDataTemplateCases")
+  public void testDataTemplateGenerationOrderWithResolver(String[] pegasusFilenames)
+      throws Exception
+  {
+    File tempDir = Files.createTempDirectory("restli").toFile();
+    File argFile = new File(tempDir, "resolverPath");
+    Files.write(argFile.toPath(), Collections.singletonList(pegasusDir));
+    System.setProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH, String.format("@%s", argFile.toPath()));
+    String tempDirectoryPath1 = _tempDir.getAbsolutePath();
+    String[] args1 = new String[3];
+    args1[0] = tempDirectoryPath1;
+    args1[1] = new File(pegasusDir + FS + pegasusFilenames[0]).getAbsolutePath();
+    args1[2] = new File(pegasusDir + FS + pegasusFilenames[1]).getAbsolutePath();
+
+    PegasusDataTemplateGenerator.main(args1);
+
+    File[] generatedFiles = _tempDir.listFiles((File dir, String name) -> name.endsWith(".java"));
+    Assert.assertNotNull(generatedFiles, "Found no generated Java files.");
+    Map<String, byte[]> checkSumByFile = new HashMap<>();
+
+    Arrays.stream(generatedFiles).forEach(file ->
+    {
+      try
+      {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        md.update(Files.readAllBytes(file.toPath()));
+        checkSumByFile.put(file.getName(), md.digest());
+      }
+      catch (NoSuchAlgorithmException e)
+      {
+        throw new RuntimeException("MessageDigest module does not have MD5 algorithm");
+      }
+      catch (IOException e)
+      {
+        throw new RuntimeException("Can't read generated data template file " + file.getName());
+      }
+    });
+    File[] expectedFiles = new File[4];
+    expectedFiles[0] = new File(pegasusDirGenerated + FS + "IsoDuration.java");
+    expectedFiles[1] = new File(pegasusDirGenerated + FS + "PremiumService.java");
+    expectedFiles[2] = new File(pegasusDirGenerated + FS + "PremiumServiceState.java");
+    expectedFiles[3] = new File(pegasusDirGenerated + FS + "AccountBalanceType.java");
+    Arrays.stream(expectedFiles).forEach(file ->
+    {
+      try
+      {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        md.update(Files.readAllBytes(file.toPath()));
+        byte[] digests = md.digest();
+        Assert.assertTrue(checkSumByFile.containsKey(file.getName()));
+        Assert.assertEquals(checkSumByFile.get(file.getName()), digests);
+      }
+      catch (NoSuchAlgorithmException e)
+      {
+        throw new RuntimeException("MessageDigest module does not have MD5 algorithm");
+      }
+      catch (IOException e)
+      {
+        throw new RuntimeException("Can't read generated data template file " + file.getName());
+      }
+    });
+    Assert.assertEquals(expectedFiles.length, generatedFiles.length);
   }
 }

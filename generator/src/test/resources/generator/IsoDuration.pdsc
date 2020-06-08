@@ -1,0 +1,6 @@
+{
+  "type"      : "typeref",
+  "name"      : "IsoDuration",
+  "ref"       : "string",
+  "doc"       : "An ISO duration. See org.joda.time.Period."
+}

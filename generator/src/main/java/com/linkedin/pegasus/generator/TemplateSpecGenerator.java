@@ -712,6 +712,7 @@ public class TemplateSpecGenerator
 
   private TyperefTemplateSpec generateTyperef(TyperefDataSchema schema, TyperefDataSchema originalTyperefSchema)
   {
+    pushCurrentLocation(_schemaResolver.nameToDataSchemaLocations().get(schema.getFullName()));
     final TyperefTemplateSpec typerefClass = new TyperefTemplateSpec(schema);
     typerefClass.setOriginalTyperefSchema(originalTyperefSchema);
     typerefClass.setNamespace(schema.getNamespace());
@@ -722,7 +723,7 @@ public class TemplateSpecGenerator
 
     final CustomInfoSpec customInfo = getImmediateCustomInfo(schema);
     typerefClass.setCustomInfo(customInfo);
-
+    popCurrentLocation();
     return typerefClass;
   }
 

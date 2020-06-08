@@ -1,0 +1,73 @@
+{
+  "type": "record",
+  "name": "PremiumService",
+  "doc": "A premium service.",
+  "fields":
+  [
+    {
+      "name": "id",
+      "type": "int",
+      "doc": "The primary key id for a premium service.",
+      "optional": true
+    },
+    {
+      "name": "trialPeriod",
+      "type": "IsoDuration",
+      "optional": true,
+      "doc": "Trial period for the recurrence. See org.joda.time.Period"
+    },
+    {
+      "name": "state",
+      "type": "PremiumServiceState",
+      "doc": "Lifecycle states for a premium serivce.",
+      "optional": true
+    },
+    {
+      "name": "currencyCode",
+      "type": "string",
+      "doc": "Can be ISO currency code for the money OR A Virtual Currency which is prefixed with V$. If a member purchases a 5 Job Pack he will get 5 Job Credits. Each Credit can be used to Post 1 Job.",
+      "optional": true
+    },
+    {
+      "name": "amount",
+      "type": "string",
+      "doc": "The amount of money.",
+      "optional": true
+    },
+    {
+      "name": "interval",
+      "type": "string",
+      "optional": true,
+      "doc": "Duration for the recurrence in ISO. See org.joda.time.Period"
+    },
+    {
+      "name": "productCode",
+      "type": "string",
+      "doc": "code for the product."
+    },
+    {
+      "name": "accountBalance",
+      "type": "string",
+      "doc": "The account balance.",
+      "optional": true
+    },
+    {
+      "name": "pendingCancellation",
+      "type": "boolean",
+      "doc": "Whether or not there is a pending cancellation scheduled for this service.",
+      "optional": true
+    },
+    {
+      "name": "freeTrial",
+      "type": "boolean",
+      "doc": "Whether or not user is on free trial.",
+      "optional": true
+    },
+    {
+      "name": "accountBalanceType",
+      "type": "AccountBalanceType",
+      "doc": "The account balance type",
+      "optional": true
+    }
+  ]
+}
