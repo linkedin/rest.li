@@ -1,12 +1,12 @@
 ---
 layout: guide
-title: PathSpec User Guide
-permalink: /pathspec_user_guide
+title: Use PathSpec in Rest.Li
+permalink: /use_pathspec
 excerpt: Guide for using PathSpec within Rest.li
 ---
 
-# PathSpec User Guide
-- [PathSpec User Guide](#pathspec-user-guide)
+# Use PathSpec in Rest.Li
+- [Use PathSpec in Rest.Li](#use-pathspec-in-restli)
   - [What is PathSpec](#what-is-pathspec)
   - [Applications](#applications)
     - [Specifying Projections](#specifying-projections)
