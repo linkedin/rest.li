@@ -44,6 +44,7 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import static com.linkedin.d2.DarkClusterStrategyName.CONSTANT_QPS;
 import static com.linkedin.d2.DarkClusterStrategyName.RELATIVE_TRAFFIC;
 import static com.linkedin.darkcluster.DarkClusterTestUtil.createRelativeTrafficMultiplierConfig;
+import static com.linkedin.darkcluster.impl.DarkClusterStrategyFactoryImpl.NO_OP_DARK_CLUSTER_STRATEGY;
 import static org.testng.Assert.fail;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -53,6 +54,7 @@ public class TestDarkClusterStrategyFactory
 {
   static final String SOURCE_CLUSTER_NAME = "FooCluster";
   static final String DARK_CLUSTER_NAME = "FooCluster-dark";
+  static final String DARK_CLUSTER_NAME2 = "FooCluster-dark2";
   private static final int SEED = 2;
   private DarkClusterStrategyFactory _strategyFactory;
   private MockClusterInfoProvider _clusterInfoProvider;
@@ -88,11 +90,13 @@ public class TestDarkClusterStrategyFactory
     DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0.5f);
     DarkClusterConfig darkClusterConfig2 = createRelativeTrafficMultiplierConfig(1.0f);
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
+    _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
+
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
     Assert.assertTrue(strategy instanceof RelativeTrafficMultiplierDarkClusterStrategy);
     Assert.assertEquals(((RelativeTrafficMultiplierDarkClusterStrategy) strategy).getMultiplier(), 0.5f, "expected 0.5f multiplier");
 
-    // update Strategy, then simulating a notification on the source cluster.
+    // update Strategy, then simulating a notification on the dark cluster.
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig2);
     _clusterInfoProvider.notifyListenersClusterAdded(DARK_CLUSTER_NAME);
     // Nothing should have been changed, since we should be ignoring dark cluster changes. (strategy-impacting changes are all captured
@@ -108,6 +112,7 @@ public class TestDarkClusterStrategyFactory
     DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0.5f);
     DarkClusterConfig darkClusterConfig2 = createRelativeTrafficMultiplierConfig(0.1f);
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
+    _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
     Assert.assertTrue(strategy instanceof RelativeTrafficMultiplierDarkClusterStrategy);
     Assert.assertEquals(((RelativeTrafficMultiplierDarkClusterStrategy) strategy).getMultiplier(), 0.5f, "expected 0.5f multiplier");
@@ -128,11 +133,51 @@ public class TestDarkClusterStrategyFactory
   }
 
   @Test
+  public void testRemoveDarkClusters()
+  {
+    DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0.5f);
+    DarkClusterConfig darkClusterConfig2 = createRelativeTrafficMultiplierConfig(0.1f);
+    _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
+    _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME2, darkClusterConfig2);
+    // now trigger a refresh on the source cluster.
+    _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
+    DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
+    Assert.assertTrue(strategy instanceof RelativeTrafficMultiplierDarkClusterStrategy);
+    Assert.assertEquals(((RelativeTrafficMultiplierDarkClusterStrategy) strategy).getMultiplier(), 0.5f, "expected 0.5f multiplier");
+    DarkClusterStrategy strategy2 = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME2, darkClusterConfig2);
+    Assert.assertTrue(strategy2 instanceof RelativeTrafficMultiplierDarkClusterStrategy);
+    Assert.assertEquals(((RelativeTrafficMultiplierDarkClusterStrategy) strategy2).getMultiplier(), 0.1f, "expected 0.1f multiplier");
+
+    // update the clusterInfoProvider, and refresh the strategyMap
+    _clusterInfoProvider.removeDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME2);
+    _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
+
+    DarkClusterStrategy strategy3 = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
+    Assert.assertTrue(strategy3 instanceof RelativeTrafficMultiplierDarkClusterStrategy);
+    // there should be no strategy entry for DARK_CLUSTER_NAME2, so it should return the NO_OP strategy
+    DarkClusterStrategy strategy4 = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME2, darkClusterConfig2);
+    Assert.assertSame(strategy4, NO_OP_DARK_CLUSTER_STRATEGY);
+  }
+
+  @Test
+  public void testRemoveSourceClusters()
+  {
+    DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0.5f);
+    _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
+    _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
+
+    //  remove the source cluster
+    _clusterInfoProvider.notifyListenersClusterRemoved(SOURCE_CLUSTER_NAME);
+    Assert.assertSame(_strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1), NO_OP_DARK_CLUSTER_STRATEGY, "expected no op strategy");
+  }
+
+  @Test
   public void testChangingStrategiesAfterStoppingListener()
   {
     DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0.5f);
     DarkClusterConfig darkClusterConfig2 = createRelativeTrafficMultiplierConfig(0.1f);
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
+    _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
     Assert.assertTrue(strategy instanceof RelativeTrafficMultiplierDarkClusterStrategy);
     Assert.assertEquals(((RelativeTrafficMultiplierDarkClusterStrategy)strategy).getMultiplier(), 0.5f, "expected 0.5f multiplier");
@@ -155,6 +200,7 @@ public class TestDarkClusterStrategyFactory
 
     DarkClusterConfig darkClusterConfig1 = createRelativeTrafficMultiplierConfig(0.5f);
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
+    _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
     Assert.assertTrue(strategy instanceof RelativeTrafficMultiplierDarkClusterStrategy);
     Assert.assertEquals(((RelativeTrafficMultiplierDarkClusterStrategy) strategy).getMultiplier(), 0.5f, "expected 0.5f multiplier");
@@ -208,6 +254,7 @@ public class TestDarkClusterStrategyFactory
     darkClusterConfig1.setDarkClusterStrategyPrioritizedList(darkClusterStrategyList);
 
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
+    _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
 
     // test that we didn't find a strategy corresponding to Constant QPS and fell through to Relative traffic
@@ -225,6 +272,7 @@ public class TestDarkClusterStrategyFactory
     darkClusterConfig1.setDarkClusterStrategyPrioritizedList(darkClusterStrategyList);
 
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig1);
+    _clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
     DarkClusterStrategy strategy = _strategyFactory.getOrCreate(DARK_CLUSTER_NAME, darkClusterConfig1);
 
     // test that we didn't find a strategy corresponding to Constant QPS and fell through. It will end up with the NoOpStrategy.

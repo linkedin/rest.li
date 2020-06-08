@@ -16,8 +16,10 @@
 
 package com.linkedin.darkcluster.impl;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nonnull;
@@ -45,7 +47,7 @@ import com.linkedin.darkcluster.api.NoOpDarkClusterStrategy;
  */
 public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactory
 {
-  private static final DarkClusterStrategy NO_OP_DARK_CLUSTER_STRATEGY = new NoOpDarkClusterStrategy();
+  public static final DarkClusterStrategy NO_OP_DARK_CLUSTER_STRATEGY = new NoOpDarkClusterStrategy();
 
   // ClusterInfoProvider isn't available until the D2 client is started, so it can't be
   // populated during construction time.
@@ -93,14 +95,9 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   @Override
   public DarkClusterStrategy getOrCreate(@Nonnull String darkClusterName, @Nonnull DarkClusterConfig darkClusterConfig)
   {
-    // pre jdk9 computeIfAbsent has a performance issue. In the future, this contain/put could be rewritten to
-    // _darkStrategyMap.computeIfAbsent(darkClusterName, k -> createStrategy(darkClusterName, darkClusterConfig));
-    if (!_darkStrategyMap.containsKey(darkClusterName))
-    {
-      _darkStrategyMap.putIfAbsent(darkClusterName, createStrategy(darkClusterName, darkClusterConfig));
-    }
-    // it's theoretically possible for the Listener to remove the entry after the containsKey but before we retrieve it. Rather
-    // than adding synchronization between accessors of _darkStrategyMap, we will make each put or get resilient
+    // If the strategy map doesn't contain the darkClusterName, return the NO_OP strategy, and rely on the listener to
+    // populate the darkStrategyMap. We don't want to create a race condition by trying to add what the listener is trying
+    // to remove.
     return _darkStrategyMap.getOrDefault(darkClusterName, NO_OP_DARK_CLUSTER_STRATEGY);
   }
 
@@ -150,23 +147,29 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
       // from the source cluster, and that called listenToCluster.
       // We also will be listening to updates on the dark clusters, because we'll be sending d2 requests
       // to the dark clusters, and will be listening on the dark cluster znodes.
-
-      // It should be sufficient to listen to updates on just the source cluster of the dark clusters, because all pertinent dark strategy info
-      // is contained in the source cluster entries. Source cluster changes will include stuff like dark multiplier changes and dark
-      // transportClientProperty changes, etc.
+      // It is sufficient to listen just to source cluster updates, because all
+      // pertinent dark cluster strategy properties are contained there.
       if (_sourceClusterName.equals(updatedClusterName))
       {
         try
         {
-          DarkClusterConfigMap potentialDarkConfigMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(updatedClusterName);
-          for (Map.Entry<String, DarkClusterConfig> entry : potentialDarkConfigMap.entrySet())
+          DarkClusterConfigMap updatedDarkConfigMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
+
+          // get the existing entries in the strategy map
+          Set<String> oldDarkStrategySet = _darkStrategyMap.keySet();
+          // get the "updated" dark clusters
+          Set<String> updatedDarkClusterConfigKeySet = updatedDarkConfigMap.keySet();
+          // Any old strategy entry that isn't in the "updated" set should be removed from the strategyMap.
+          oldDarkStrategySet.removeAll(updatedDarkClusterConfigKeySet);
+          for (String darkClusterToRemove : oldDarkStrategySet)
           {
-            // we need to refresh every dark cluster in this "source" cluster, because we don't have an easy way to tell
-            // what changed in the source cluster. It could have been a dark cluster change, or it could have been an unrelated
-            // change in the source cluster. Because there are so few changes in cluster znodes, this is not a
-            // big concern at the moment. If it does become a concern, storing the original darkClusterConfig and comparing with the
-            // new one is one way to reduce the strategy refreshes. However, since the strategy itself is so lightweight, it probably won't be a
-            // problem or worth the effort.
+            _darkStrategyMap.remove(darkClusterToRemove);
+          }
+
+          // Now update/add the dark clusters.
+          for (Map.Entry<String, DarkClusterConfig> entry : updatedDarkConfigMap.entrySet())
+          {
+            // For simplicity, we refresh all strategies since we expect cluster updates to be rare and refresh to be cheap.
             String darkClusterName = entry.getKey();
             DarkClusterConfig darkClusterConfig = entry.getValue();
             _darkStrategyMap.put(darkClusterName, createStrategy(darkClusterName, darkClusterConfig));
@@ -177,20 +180,19 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
           _notifier.notify(() -> new RuntimeException("PEGA_0019 unable to refresh DarkClusterConfigMap for source cluster: "
                                                         + _sourceClusterName));
         }
-        return;
       }
     }
 
     /**
-     * The only thing we can do on onClusterRemoved is to remove the cluster that got triggered. Theoretically we should never see the source
-     * cluster being removed if we still have strategies for it's dark clusters. If there is any case where the source cluster
-     * could be removed while we still have strategies for the dark cluster, we should reevaluate this cluster listener. For now, there is no
-     * need to take any additional action.
+     * If the source cluster is removed, the only thing we can do is to make sure the darkStrategyMap is cleared.
      */
     @Override
     public void onClusterRemoved(String clusterName)
     {
-      _darkStrategyMap.remove(clusterName);
+      if (_sourceClusterName.equals(clusterName))
+      {
+        _darkStrategyMap.clear();
+      }
     }
   }
 }

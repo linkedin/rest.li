@@ -78,6 +78,15 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
     lookupMap.put(sourceClusterName, darkClusterConfigMap);
   }
 
+  void removeDarkClusterConfig(String sourceClusterName, String darkClusterName)
+  {
+    DarkClusterConfigMap darkClusterConfigMap = (lookupMap.containsKey(sourceClusterName)) ? lookupMap.get(sourceClusterName) :
+      new DarkClusterConfigMap();
+
+    darkClusterConfigMap.remove(darkClusterName);
+    lookupMap.put(sourceClusterName, darkClusterConfigMap);
+  }
+
   void notifyListenersClusterAdded(String clusterName)
   {
     for (LoadBalancerClusterListener listener : clusterListeners)
