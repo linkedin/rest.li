@@ -33,6 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,29 +78,15 @@ public class RelativeStateUpdater implements StateUpdater
   @Override
   public void updateState(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId)
   {
-    if (shouldUpdateSynchronously(partitionId, clusterGenerationId))
+    if (!_partitionLoadBalancerStateMap.containsKey(partitionId))
     {
-      PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState = _partitionLoadBalancerStateMap.containsKey(partitionId)
-          ? _partitionLoadBalancerStateMap.get(partitionId)
-          : new PartitionRelativeLoadBalancerState(partitionId,
-              new DelegatingRingFactory<>(_relativeStrategyProperties.getRingProperties()),
-              _relativeStrategyProperties.getRingProperties().getPointsPerWeight(),
-              _listenerFactories.stream().map(factory -> factory.create(partitionId)).collect(Collectors.toList()));
-
-      if(partitionRelativeLoadBalancerState.getLock().tryLock())
-      {
-        try
-        {
-          if (shouldUpdateSynchronously(partitionId, clusterGenerationId))
-          {
-            updateStateForPartition(trackerClients, partitionId, partitionRelativeLoadBalancerState, clusterGenerationId);
-          }
-        }
-        finally
-        {
-          partitionRelativeLoadBalancerState.getLock().unlock();
-        }
-      }
+      // If the partition is not initialized, initialize the state synchronously
+      initializePartition(trackerClients, partitionId, clusterGenerationId);
+    } else if (clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
+    {
+      // Asynchronously update the state if it is from uri properties change
+      PartitionRelativeLoadBalancerState oldPartitionState = _partitionLoadBalancerStateMap.get(partitionId);
+      _executorService.execute(() -> updateStateForPartition(trackerClients, partitionId, oldPartitionState, clusterGenerationId));
     }
   }
 
@@ -321,10 +309,23 @@ public class RelativeStateUpdater implements StateUpdater
         : (double) (connectExceptionCount + closedChannelExceptionCount + serverErrorCount + timeoutExceptionCount) / callCount;
   }
 
-  private boolean shouldUpdateSynchronously(int partitionId, long clusterGenerationId)
+  private void initializePartition(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId)
   {
-    return !_partitionLoadBalancerStateMap.containsKey(partitionId)
-        || clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId();
+    Lock lock = new ReentrantLock();
+    PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState = new PartitionRelativeLoadBalancerState(partitionId,
+            new DelegatingRingFactory<>(_relativeStrategyProperties.getRingProperties()),
+            _relativeStrategyProperties.getRingProperties().getPointsPerWeight(), lock,
+            _listenerFactories.stream().map(factory -> factory.create(partitionId)).collect(Collectors.toList()));
+
+    partitionRelativeLoadBalancerState.getLock().lock();
+    try {
+      if (!_partitionLoadBalancerStateMap.containsKey(partitionId)) {
+        updateStateForPartition(trackerClients, partitionId, partitionRelativeLoadBalancerState, clusterGenerationId);
+      }
+    } finally
+    {
+      partitionRelativeLoadBalancerState.getLock().unlock();
+    }
   }
 
   private static void logState(PartitionRelativeLoadBalancerState oldState,

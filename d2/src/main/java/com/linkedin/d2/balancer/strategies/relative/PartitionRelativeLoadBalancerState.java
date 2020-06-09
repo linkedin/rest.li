@@ -54,10 +54,10 @@ public class PartitionRelativeLoadBalancerState
   private PartitionStats _partitionStats;
 
   public PartitionRelativeLoadBalancerState(int partitionId, RingFactory<URI> ringFactory, int pointsPerWeight,
-      List<PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>> listeners)
+      Lock lock, List<PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>> listeners)
   {
     _partitionId = partitionId;
-    _lock = new ReentrantLock();
+    _lock = lock;
     _clusterGenerationId = -1;
     _ringFactory = ringFactory;
     _pointsPerWeight = pointsPerWeight;
@@ -69,6 +69,7 @@ public class PartitionRelativeLoadBalancerState
     _listeners = listeners;
     resetRing();
   }
+
   private PartitionRelativeLoadBalancerState(int partitionId, Lock lock, RingFactory<URI> ringFactory, int pointsPerWeight,
       Map<TrackerClient, Double> recoveryMap, long clusterGenerationId,
       Map<TrackerClient, LoadBalancerQuarantine> quarantineMap,

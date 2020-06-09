@@ -53,6 +53,7 @@ public class QuarantineManager {
   private static final int MAX_RETRIES_TO_CHECK_QUARANTINE = 5;
   private static final int MAX_HOSTS_TO_PRE_CHECK_QUARANTINE = 10;
   private static final double INITIAL_RECOVERY_HEALTH_SCORE = 0.01;
+  private static final long MIN_QUANRANTINE_LATENCY_MS = 300;
 
   private final String _serviceName;
   private final String _servicePath;
@@ -97,20 +98,22 @@ public class QuarantineManager {
   public void updateQuarantineState(PartitionRelativeLoadBalancerState newPartitionRelativeLoadBalancerState,
       PartitionRelativeLoadBalancerState oldPartitionRelativeLoadBalancerState, long clusterAvgLatency)
   {
+    long quarantineLatency = Math.max((long) (clusterAvgLatency * _relativeLatencyLowThresholdFactor),
+        MIN_QUANRANTINE_LATENCY_MS);
     // Step 0: Pre-check if quarantine method works for clients, if it works, we will mark _quarantineEnabled as true
-    preCheckQuarantine(newPartitionRelativeLoadBalancerState, clusterAvgLatency);
+    preCheckQuarantine(newPartitionRelativeLoadBalancerState, quarantineLatency);
     // Step 1: check if quarantine state still applies. If not, remove it from the quarantine map
     checkAndRemoveQuarantine(newPartitionRelativeLoadBalancerState);
     // Step 2: Handle special clients recovery logic from the recovery map
     handleClientsRecovery(newPartitionRelativeLoadBalancerState);
     // Step 3: Enroll new quarantine and recovery map
-    enrollNewQuarantineAndRecoveryMap(newPartitionRelativeLoadBalancerState, oldPartitionRelativeLoadBalancerState, clusterAvgLatency);
+    enrollNewQuarantineAndRecoveryMap(newPartitionRelativeLoadBalancerState, oldPartitionRelativeLoadBalancerState, quarantineLatency);
   }
 
   /**
    * Before actually putting a client into quarantine, check if the specified quarantine method and path works
    */
-  private void preCheckQuarantine(PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState, long avgClusterLatency)
+  private void preCheckQuarantine(PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState, long quarantineLatency)
   {
     boolean isQuarantineConfigured = _quarantineProperties.hasQuarantineMaxPercent()
         && _quarantineProperties.getQuarantineMaxPercent() > QUARANTINE_ENABLED_PERCENTAGE_THRESHOLD;
@@ -120,7 +123,6 @@ public class QuarantineManager {
       // if quarantine is configured but not enabled, and we haven't tried MAX_RETRIES_TIMES,
       // check the hosts to see if the quarantine can be enabled.
       Set<TrackerClient> trackerClients = partitionRelativeLoadBalancerState.getTrackerClients();
-      long quarantineLatency = (long) (avgClusterLatency * _relativeLatencyLowThresholdFactor);
       _executorService.submit(() -> preCheckQuarantineState(trackerClients, quarantineLatency));
 
     }
@@ -281,7 +283,7 @@ public class QuarantineManager {
 
   private boolean enrollClientInQuarantineMap(TrackerClient trackerClient, TrackerClientState trackerClientState,
       double clientWeight, Map<TrackerClient, LoadBalancerQuarantine> quarantineMap,
-      Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory, int trackerClientSize, long clusterAvgLatency)
+      Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory, int trackerClientSize, long quarantineLatency)
   {
     if (_quarantineEnabled.get()) {
       double healthScore = trackerClientState.getHealthScore();
@@ -308,8 +310,7 @@ public class QuarantineManager {
           // If quarantine exists, reuse the same object
           LoadBalancerQuarantine quarantine = quarantineHistory.remove(trackerClient);
           if (quarantine == null) {
-            long quarantineLatencyThreshold = (long) (clusterAvgLatency * _relativeLatencyLowThresholdFactor);
-            quarantine = new LoadBalancerQuarantine(trackerClient, _executorService, _clock, _updateIntervalMs, quarantineLatencyThreshold,
+            quarantine = new LoadBalancerQuarantine(trackerClient, _executorService, _clock, _updateIntervalMs, quarantineLatency,
                 _quarantineProperties.getHealthCheckMethod().toString(), _quarantineProperties.getHealthCheckPath(), _serviceName,
                 _servicePath, _healthCheckOperations);
           }

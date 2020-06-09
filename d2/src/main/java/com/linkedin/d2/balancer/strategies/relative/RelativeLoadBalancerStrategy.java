@@ -92,7 +92,12 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
   @Override
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
   {
-    _stateUpdater.updateState(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId);
+    Ring<URI> ring = _stateUpdater.getRing(partitionId);
+    if (ring == null)
+    {
+      // If there is no existing ring, we update the partition first
+      _stateUpdater.updateState(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId);
+    }
     return _stateUpdater.getRing(partitionId);
   }
 
