@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFacilitiesFactory
 {
+  public static final int MATURITY_LEVEL = 1;
   private static final Logger LOG = LoggerFactory.getLogger(LastSeenBalancerWithFacilitiesFactory.class);
 
   @Override
