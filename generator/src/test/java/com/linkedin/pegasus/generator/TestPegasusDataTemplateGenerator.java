@@ -207,26 +207,28 @@ public class TestPegasusDataTemplateGenerator
             Function.identity()));
   }
 
-  @DataProvider(name = "test_schema_permutation_deterministic")
+  /**
+   *
+   * @return an array of test cases where each case has two array of test schema file names. Those file names are
+   *   in the different permutations of same group of test schema files
+   */
+  @DataProvider(name = "test_schema_permutation_determinisim")
   private Object[][] createPermutedDataTemplateCases()
   {
     return new Object[][]
         {
-            {"IsoDuration.pdsc", "PremiumService.pdsc", "PremiumService.pdsc", "IsoDuration.pdsc"},
-            {"AField.pdl", "ARecord.pdl", "ARecord.pdl", "AField.pdl"},
-            {"BRecord.pdl", "BField.pdl", "BField.pdl", "BRecord.pdl"},
+            {new String[]{"IsoDuration.pdsc", "PremiumService.pdsc"}, new String[]{"PremiumService.pdsc", "IsoDuration.pdsc"}},
+            {new String[]{"AField.pdl", "ARecord.pdl"}, new String[]{"ARecord.pdl", "AField.pdl"}},
+            {new String[]{"BRecord.pdl", "BField.pdl"}, new String[]{"BField.pdl", "BRecord.pdl"}},
         };
   }
 
-  @Test(dataProvider = "test_schema_permutation_deterministic")
-  public void testDataTemplateGenerationDeterminism(String[] testArgs)
+  @Test(dataProvider = "test_schema_permutation_determinisim")
+  public void testDataTemplateGenerationDeterminism(String[][] testArgs)
       throws Exception
   {
-    int permuteLength = testArgs.length / 2;
-    String[] pegasusFilenames1 = Arrays.copyOfRange(testArgs, 0, permuteLength);
-    String[] pegasusFilenames2 = Arrays.copyOfRange(testArgs, permuteLength, testArgs.length);
-    File[] generatedFiles1 = generateDataTemplateFiles(pegasusFilenames1);
-    File[] generatedFiles2 = generateDataTemplateFiles(pegasusFilenames2);
+    File[] generatedFiles1 = generateDataTemplateFiles(testArgs[0]);
+    File[] generatedFiles2 = generateDataTemplateFiles(testArgs[1]);
     checkGeneratedFilesConsistency(generatedFiles1, generatedFiles2);
   }
 

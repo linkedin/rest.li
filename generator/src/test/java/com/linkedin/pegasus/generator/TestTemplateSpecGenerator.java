@@ -24,6 +24,7 @@ import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.StringDataSchemaLocation;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
@@ -33,6 +34,7 @@ import com.linkedin.util.CustomTypeUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -72,14 +74,18 @@ public class TestTemplateSpecGenerator
   private AtomicInteger _uniqueNumberGenerator;
   @Mock
   private DataSchemaResolver _resolver;
-  @Mock
   private DataSchemaLocation _location;
 
   @BeforeMethod
   public void initMocks() {
     MockitoAnnotations.initMocks(this);
     _uniqueNumberGenerator = new AtomicInteger();
-    Mockito.when(_resolver.nameToDataSchemaLocations()).thenReturn(Collections.singletonMap(INPUT_SCHEMA_NAME, _location));
+    _location = new StringDataSchemaLocation("location");
+    HashMap<String, DataSchemaLocation> schemaToLocation = new HashMap<>();
+    schemaToLocation.put(INPUT_SCHEMA_NAME, _location);
+    schemaToLocation.put(CUSTOM_TYPE_1.getFullName(), _location);
+    schemaToLocation.put(CUSTOM_TYPE_2.getFullName(), _location);
+    Mockito.when(_resolver.nameToDataSchemaLocations()).thenReturn(schemaToLocation);
   }
 
 
