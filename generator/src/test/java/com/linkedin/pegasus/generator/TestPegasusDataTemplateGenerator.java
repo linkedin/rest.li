@@ -209,18 +209,63 @@ public class TestPegasusDataTemplateGenerator
             Function.identity()));
   }
 
-  @DataProvider(name = "withMultiDataTemplateCases")
+  @DataProvider(name = "with_typeref_field_in_record_pdsc")
   private Object[][] createDataTemplateCases()
   {
     return new Object[][]
         {
-            {"IsoDuration.pdsc", "PremiumService.pdsc"},
-            {"PremiumService.pdsc", "IsoDuration.pdsc"},
+            {"IsoDuration.pdsc", "PremiumService.pdsc", "IsoDuration.java", "PremiumService.java", "PremiumServiceState.java", "AccountBalanceType.java"},
+            {"PremiumService.pdsc", "IsoDuration.pdsc", "IsoDuration.java", "PremiumService.java", "PremiumServiceState.java", "AccountBalanceType.java"},
         };
   }
 
-  @Test(dataProvider = "withMultiDataTemplateCases")
-  public void testDataTemplateGenerationOrderWithResolver(String[] pegasusFilenames)
+  @Test(dataProvider = "with_typeref_field_in_record_pdsc")
+  public void testDataTemplateGenerationOrderWithResolver(String[] testArgs)
+      throws Exception
+  {
+    String[] pegasusFilenames = Arrays.copyOfRange(testArgs, 0, 2);
+    String[] javaFilenames = Arrays.copyOfRange(testArgs, 2, testArgs.length);
+    testDataTemplateGenerationDeterministic(pegasusFilenames, javaFilenames);
+  }
+
+  @DataProvider(name = "with_typeref_field_in_record_pdl")
+  private Object[][] createCasesWithTyperefFieldInRecord()
+  {
+    return new Object[][]
+        {
+            {"AField.pdl", "ARecord.pdl", "AField.java", "ARecord.java"},
+            {"ARecord.pdl", "AField.pdl", "AField.java", "ARecord.java"},
+        };
+  }
+
+  @Test(dataProvider = "with_typeref_field_in_record_pdl")
+  public void testCasesWithTyperefFieldInRecord(String[] testArgs)
+      throws Exception
+  {
+    String[] pegasusFilenames = Arrays.copyOfRange(testArgs, 0, 2);
+    String[] javaFilenames = Arrays.copyOfRange(testArgs, 2, testArgs.length);
+    testDataTemplateGenerationDeterministic(pegasusFilenames, javaFilenames);
+  }
+
+  @DataProvider(name = "with_inline_field_in_record_pdl")
+  private Object[][] createCasesWithInlineFieldInRecord()
+  {
+    return new Object[][]
+        {
+            {"BRecord.pdl", "InlineRecord.java", "BRecord.java"},
+        };
+  }
+
+  @Test(dataProvider = "with_inline_field_in_record_pdl")
+  public void testCasesWithInlineFieldInRecord(String[] testArgs)
+      throws Exception
+  {
+    String[] pegasusFilenames = Arrays.copyOfRange(testArgs, 0, 1);
+    String[] javaFilenames = Arrays.copyOfRange(testArgs, 1, testArgs.length);
+    testDataTemplateGenerationDeterministic(pegasusFilenames, javaFilenames);
+  }
+
+  private void testDataTemplateGenerationDeterministic(String[] pegasusFilenames, String[] javaFilenames)
       throws Exception
   {
     File tempDir = Files.createTempDirectory("restli").toFile();
@@ -228,17 +273,17 @@ public class TestPegasusDataTemplateGenerator
     Files.write(argFile.toPath(), Collections.singletonList(pegasusDir));
     System.setProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH, String.format("@%s", argFile.toPath()));
     String tempDirectoryPath1 = _tempDir.getAbsolutePath();
-    String[] args1 = new String[3];
-    args1[0] = tempDirectoryPath1;
-    args1[1] = new File(pegasusDir + FS + pegasusFilenames[0]).getAbsolutePath();
-    args1[2] = new File(pegasusDir + FS + pegasusFilenames[1]).getAbsolutePath();
-
-    PegasusDataTemplateGenerator.main(args1);
-
+    String[] mainArgs = new String[pegasusFilenames.length + 1];
+    mainArgs[0] = tempDirectoryPath1;
+    for (int i = 0; i < pegasusFilenames.length; i++)
+    {
+      mainArgs[i+1] = new File(pegasusDir + FS + pegasusFilenames[i]).getAbsolutePath();
+    }
+    PegasusDataTemplateGenerator.main(mainArgs);
     File[] generatedFiles = _tempDir.listFiles((File dir, String name) -> name.endsWith(".java"));
     Assert.assertNotNull(generatedFiles, "Found no generated Java files.");
-    Map<String, byte[]> checkSumByFile = new HashMap<>();
 
+    Map<String, byte[]> checkSumByFile = new HashMap<>();
     Arrays.stream(generatedFiles).forEach(file ->
     {
       try
@@ -256,11 +301,11 @@ public class TestPegasusDataTemplateGenerator
         throw new RuntimeException("Can't read generated data template file " + file.getName());
       }
     });
-    File[] expectedFiles = new File[4];
-    expectedFiles[0] = new File(pegasusDirGenerated + FS + "IsoDuration.java");
-    expectedFiles[1] = new File(pegasusDirGenerated + FS + "PremiumService.java");
-    expectedFiles[2] = new File(pegasusDirGenerated + FS + "PremiumServiceState.java");
-    expectedFiles[3] = new File(pegasusDirGenerated + FS + "AccountBalanceType.java");
+    File[] expectedFiles = new File[javaFilenames.length];
+    for (int i = 0; i < javaFilenames.length; i++)
+    {
+      expectedFiles[i] = new File(pegasusDirGenerated + FS + javaFilenames[i]);
+    }
     Arrays.stream(expectedFiles).forEach(file ->
     {
       try
