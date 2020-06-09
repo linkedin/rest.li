@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -224,11 +225,11 @@ public class TestPegasusDataTemplateGenerator
   }
 
   @Test(dataProvider = "test_schema_permutation_determinisim")
-  public void testDataTemplateGenerationDeterminism(String[][] testArgs)
+  public void testDataTemplateGenerationDeterminism(String[] schemaFiles1, String[] schemaFiles2)
       throws Exception
   {
-    File[] generatedFiles1 = generateDataTemplateFiles(testArgs[0]);
-    File[] generatedFiles2 = generateDataTemplateFiles(testArgs[1]);
+    File[] generatedFiles1 = generateDataTemplateFiles(schemaFiles1);
+    File[] generatedFiles2 = generateDataTemplateFiles(schemaFiles2);
     checkGeneratedFilesConsistency(generatedFiles1, generatedFiles2);
   }
 
@@ -253,6 +254,8 @@ public class TestPegasusDataTemplateGenerator
 
   private void checkGeneratedFilesConsistency(File[] generatedFiles1, File[] generatedFiles2) throws IOException
   {
+    Arrays.sort(generatedFiles1, Comparator.comparing(File::getAbsolutePath));
+    Arrays.sort(generatedFiles2, Comparator.comparing(File::getAbsolutePath));
     Assert.assertEquals(generatedFiles1.length, generatedFiles2.length);
     for (int i = 0; i < generatedFiles1.length; i++)
     {
