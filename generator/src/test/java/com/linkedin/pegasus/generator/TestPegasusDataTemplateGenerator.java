@@ -21,14 +21,12 @@ import com.linkedin.data.schema.generator.AbstractGenerator;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.security.MessageDigest;
 import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -209,64 +207,30 @@ public class TestPegasusDataTemplateGenerator
             Function.identity()));
   }
 
-  @DataProvider(name = "with_typeref_field_in_record_pdsc")
-  private Object[][] createDataTemplateCases()
+  @DataProvider(name = "test_schema_permutation_deterministic")
+  private Object[][] createPermutedDataTemplateCases()
   {
     return new Object[][]
         {
-            {"IsoDuration.pdsc", "PremiumService.pdsc", "IsoDuration.java", "PremiumService.java", "PremiumServiceState.java", "AccountBalanceType.java"},
-            {"PremiumService.pdsc", "IsoDuration.pdsc", "IsoDuration.java", "PremiumService.java", "PremiumServiceState.java", "AccountBalanceType.java"},
+            {"IsoDuration.pdsc", "PremiumService.pdsc", "PremiumService.pdsc", "IsoDuration.pdsc"},
+            {"AField.pdl", "ARecord.pdl", "ARecord.pdl", "AField.pdl"},
+            {"BRecord.pdl", "BField.pdl", "BField.pdl", "BRecord.pdl"},
         };
   }
 
-  @Test(dataProvider = "with_typeref_field_in_record_pdsc")
-  public void testDataTemplateGenerationOrderWithResolver(String[] testArgs)
+  @Test(dataProvider = "test_schema_permutation_deterministic")
+  public void testDataTemplateGeneratorWithResolverAndPermutation(String[] testArgs)
       throws Exception
   {
-    String[] pegasusFilenames = Arrays.copyOfRange(testArgs, 0, 2);
-    String[] javaFilenames = Arrays.copyOfRange(testArgs, 2, testArgs.length);
-    testDataTemplateGenerationDeterministic(pegasusFilenames, javaFilenames);
+    int permuteLength = testArgs.length / 2;
+    String[] pegasusFilenames1 = Arrays.copyOfRange(testArgs, 0, permuteLength);
+    String[] pegasusFilenames2 = Arrays.copyOfRange(testArgs, permuteLength, testArgs.length);
+    File[] generatedFiles1 = testDataTemplateGenerationDeterministic(pegasusFilenames1);
+    File[] generatedFiles2 = testDataTemplateGenerationDeterministic(pegasusFilenames2);
+    checkGeneratedFilesConsistency(generatedFiles1, generatedFiles2);
   }
 
-  @DataProvider(name = "with_typeref_field_in_record_pdl")
-  private Object[][] createCasesWithTyperefFieldInRecord()
-  {
-    return new Object[][]
-        {
-            {"AField.pdl", "ARecord.pdl", "AField.java", "ARecord.java"},
-            {"ARecord.pdl", "AField.pdl", "AField.java", "ARecord.java"},
-        };
-  }
-
-  @Test(dataProvider = "with_typeref_field_in_record_pdl")
-  public void testCasesWithTyperefFieldInRecord(String[] testArgs)
-      throws Exception
-  {
-    String[] pegasusFilenames = Arrays.copyOfRange(testArgs, 0, 2);
-    String[] javaFilenames = Arrays.copyOfRange(testArgs, 2, testArgs.length);
-    testDataTemplateGenerationDeterministic(pegasusFilenames, javaFilenames);
-  }
-
-  @DataProvider(name = "with_inline_field_in_record_pdl")
-  private Object[][] createCasesWithInlineFieldInRecord()
-  {
-    return new Object[][]
-        {
-            {"BRecord.pdl", "InlineRecord.java", "BRecord.java"},
-        };
-  }
-
-  @Test(dataProvider = "with_inline_field_in_record_pdl")
-  public void testCasesWithInlineFieldInRecord(String[] testArgs)
-      throws Exception
-  {
-    String[] pegasusFilenames = Arrays.copyOfRange(testArgs, 0, 1);
-    String[] javaFilenames = Arrays.copyOfRange(testArgs, 1, testArgs.length);
-    testDataTemplateGenerationDeterministic(pegasusFilenames, javaFilenames);
-  }
-
-  private void testDataTemplateGenerationDeterministic(String[] pegasusFilenames, String[] javaFilenames)
-      throws Exception
+  private File[] testDataTemplateGenerationDeterministic(String[] pegasusFilenames) throws Exception
   {
     File tempDir = Files.createTempDirectory("restli").toFile();
     File argFile = new File(tempDir, "resolverPath");
@@ -282,49 +246,22 @@ public class TestPegasusDataTemplateGenerator
     PegasusDataTemplateGenerator.main(mainArgs);
     File[] generatedFiles = _tempDir.listFiles((File dir, String name) -> name.endsWith(".java"));
     Assert.assertNotNull(generatedFiles, "Found no generated Java files.");
+    return generatedFiles;
+  }
 
-    Map<String, byte[]> checkSumByFile = new HashMap<>();
-    Arrays.stream(generatedFiles).forEach(file ->
+  private void checkGeneratedFilesConsistency(File[] generatedFiles1, File[] generatedFiles2) throws IOException
+  {
+    Assert.assertEquals(generatedFiles1.length, generatedFiles2.length);
+    for (int i = 0; i < generatedFiles1.length; i++)
     {
-      try
-      {
-        MessageDigest md = MessageDigest.getInstance("MD5");
-        md.update(Files.readAllBytes(file.toPath()));
-        checkSumByFile.put(file.getName(), md.digest());
-      }
-      catch (NoSuchAlgorithmException e)
-      {
-        throw new RuntimeException("MessageDigest module does not have MD5 algorithm");
-      }
-      catch (IOException e)
-      {
-        throw new RuntimeException("Can't read generated data template file " + file.getName());
-      }
-    });
-    File[] expectedFiles = new File[javaFilenames.length];
-    for (int i = 0; i < javaFilenames.length; i++)
-    {
-      expectedFiles[i] = new File(pegasusDirGenerated + FS + javaFilenames[i]);
+      Assert.assertTrue(compareTwoFiles(generatedFiles1[i], generatedFiles2[i]));
     }
-    Arrays.stream(expectedFiles).forEach(file ->
-    {
-      try
-      {
-        MessageDigest md = MessageDigest.getInstance("MD5");
-        md.update(Files.readAllBytes(file.toPath()));
-        byte[] digests = md.digest();
-        Assert.assertTrue(checkSumByFile.containsKey(file.getName()));
-        Assert.assertEquals(checkSumByFile.get(file.getName()), digests);
-      }
-      catch (NoSuchAlgorithmException e)
-      {
-        throw new RuntimeException("MessageDigest module does not have MD5 algorithm");
-      }
-      catch (IOException e)
-      {
-        throw new RuntimeException("Can't read generated data template file " + file.getName());
-      }
-    });
-    Assert.assertEquals(expectedFiles.length, generatedFiles.length);
+  }
+
+  private boolean compareTwoFiles(File file1, File file2) throws IOException
+  {
+    byte[] content1 = Files.readAllBytes(file1.toPath());
+    byte[] content2 = Files.readAllBytes(file2.toPath());
+    return Arrays.equals(content1, content2);
   }
 }
