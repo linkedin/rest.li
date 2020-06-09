@@ -219,18 +219,18 @@ public class TestPegasusDataTemplateGenerator
   }
 
   @Test(dataProvider = "test_schema_permutation_deterministic")
-  public void testDataTemplateGeneratorWithResolverAndPermutation(String[] testArgs)
+  public void testDataTemplateGenerationDeterminism(String[] testArgs)
       throws Exception
   {
     int permuteLength = testArgs.length / 2;
     String[] pegasusFilenames1 = Arrays.copyOfRange(testArgs, 0, permuteLength);
     String[] pegasusFilenames2 = Arrays.copyOfRange(testArgs, permuteLength, testArgs.length);
-    File[] generatedFiles1 = testDataTemplateGenerationDeterministic(pegasusFilenames1);
-    File[] generatedFiles2 = testDataTemplateGenerationDeterministic(pegasusFilenames2);
+    File[] generatedFiles1 = generateDataTemplateFiles(pegasusFilenames1);
+    File[] generatedFiles2 = generateDataTemplateFiles(pegasusFilenames2);
     checkGeneratedFilesConsistency(generatedFiles1, generatedFiles2);
   }
 
-  private File[] testDataTemplateGenerationDeterministic(String[] pegasusFilenames) throws Exception
+  private File[] generateDataTemplateFiles(String[] pegasusFilenames) throws Exception
   {
     File tempDir = Files.createTempDirectory("restli").toFile();
     File argFile = new File(tempDir, "resolverPath");
