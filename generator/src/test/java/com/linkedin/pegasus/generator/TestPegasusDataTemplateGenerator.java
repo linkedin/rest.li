@@ -48,6 +48,8 @@ public class TestPegasusDataTemplateGenerator
   private static final String pegasusDirGenerated = testDir + FS + "resources" + FS + "referenceJava";
 
   private File _tempDir;
+  private File _dataTemplateTargetDir1;
+  private File _dataTemplateTargetDir2;
   private String _resolverPath;
 
   @BeforeClass
@@ -76,12 +78,16 @@ public class TestPegasusDataTemplateGenerator
   private void beforeMethod() throws IOException
   {
     _tempDir = Files.createTempDirectory(this.getClass().getSimpleName() + System.currentTimeMillis()).toFile();
+    _dataTemplateTargetDir1 = Files.createTempDirectory(this.getClass().getSimpleName() + System.currentTimeMillis()).toFile();
+    _dataTemplateTargetDir2 = Files.createTempDirectory(this.getClass().getSimpleName() + System.currentTimeMillis()).toFile();
   }
 
   @AfterMethod
   private void afterMethod() throws IOException
   {
     FileUtils.forceDelete(_tempDir);
+    FileUtils.forceDelete(_dataTemplateTargetDir1);
+    FileUtils.forceDelete(_dataTemplateTargetDir2);
   }
 
   @DataProvider(name = "withoutResolverCases")
@@ -228,20 +234,21 @@ public class TestPegasusDataTemplateGenerator
   public void testDataTemplateGenerationDeterminism(String[] schemaFiles1, String[] schemaFiles2)
       throws Exception
   {
-    File[] generatedFiles1 = generateDataTemplateFiles(schemaFiles1);
-    File[] generatedFiles2 = generateDataTemplateFiles(schemaFiles2);
+    String targetDir1 = _dataTemplateTargetDir1.getAbsolutePath();
+    String targetDir2 = _dataTemplateTargetDir2.getAbsolutePath();
+    File[] generatedFiles1 = generateDataTemplateFiles(targetDir1, schemaFiles1);
+    File[] generatedFiles2 = generateDataTemplateFiles(targetDir2, schemaFiles2);
     checkGeneratedFilesConsistency(generatedFiles1, generatedFiles2);
   }
 
-  private File[] generateDataTemplateFiles(String[] pegasusFilenames) throws Exception
+  private File[] generateDataTemplateFiles(String targetDir, String[] pegasusFilenames) throws Exception
   {
     File tempDir = Files.createTempDirectory("restli").toFile();
     File argFile = new File(tempDir, "resolverPath");
     Files.write(argFile.toPath(), Collections.singletonList(pegasusDir));
     System.setProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH, String.format("@%s", argFile.toPath()));
-    String tempDirectoryPath1 = _tempDir.getAbsolutePath();
     String[] mainArgs = new String[pegasusFilenames.length + 1];
-    mainArgs[0] = tempDirectoryPath1;
+    mainArgs[0] = targetDir;
     for (int i = 0; i < pegasusFilenames.length; i++)
     {
       mainArgs[i+1] = new File(pegasusDir + FS + pegasusFilenames[i]).getAbsolutePath();
