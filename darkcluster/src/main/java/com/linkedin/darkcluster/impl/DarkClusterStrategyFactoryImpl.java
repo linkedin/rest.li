@@ -90,14 +90,17 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     _facilities.getClusterInfoProvider().unregisterClusterListener(_clusterListener);
   }
 
-
-
+  /**
+   * If we don't have a strategy for the darkClusterName, return the NO_OP strategy, and rely on the listener to
+   * populate the darkStrategyMap. We don't want to create a race condition by trying to add what the listener is trying
+   * to remove.
+   * @param darkClusterName darkClusterName to look up
+   * @param darkClusterConfig darkClusterConfig to store, if needed.
+   * @return darkClusterStrategy to use.
+   */
   @Override
-  public DarkClusterStrategy getOrCreate(@Nonnull String darkClusterName, @Nonnull DarkClusterConfig darkClusterConfig)
+  public DarkClusterStrategy get(@Nonnull String darkClusterName, @Nonnull DarkClusterConfig darkClusterConfig)
   {
-    // If the strategy map doesn't contain the darkClusterName, return the NO_OP strategy, and rely on the listener to
-    // populate the darkStrategyMap. We don't want to create a race condition by trying to add what the listener is trying
-    // to remove.
     return _darkStrategyMap.getOrDefault(darkClusterName, NO_OP_DARK_CLUSTER_STRATEGY);
   }
 

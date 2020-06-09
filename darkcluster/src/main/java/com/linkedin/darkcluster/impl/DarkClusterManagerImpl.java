@@ -92,7 +92,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
 
           RestRequest newD2Request = rewriteRequest(reqCopy, darkClusterName);
           // now find the strategy appropriate for each dark cluster
-          DarkClusterStrategy strategy = _darkClusterStrategyFactory.getOrCreate(darkClusterName, darkClusterConfig);
+          DarkClusterStrategy strategy = _darkClusterStrategyFactory.get(darkClusterName, darkClusterConfig);
           darkRequestSent = strategy.handleRequest(reqCopy, newD2Request, newRequestContext);
         }
 
