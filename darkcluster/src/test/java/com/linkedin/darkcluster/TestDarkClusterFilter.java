@@ -52,6 +52,7 @@ import static com.linkedin.darkcluster.DarkClusterTestUtil.createRelativeTraffic
 import static com.linkedin.darkcluster.TestDarkClusterStrategyFactory.DARK_CLUSTER_NAME;
 import static com.linkedin.darkcluster.TestDarkClusterStrategyFactory.SOURCE_CLUSTER_NAME;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -89,6 +90,7 @@ public class TestDarkClusterFilter
                                                                        _notifier);
     _darkClusterFilter = new DarkClusterFilter(darkClusterManager, _verifierManager);
   }
+
   @Test
   public void testDarkClusterAssemblyNoDarkCluster()
   {
@@ -113,7 +115,7 @@ public class TestDarkClusterFilter
                                                                      _darkClusterDispatcher,
                                                                      _notifier, _random,
                                                                      _verifierManager);
-
+    _darkClusterStrategyFactory.start();
     DarkClusterManager darkClusterManager = new DarkClusterManagerImpl(SOURCE_CLUSTER_NAME,
                                                                        _facilities,
                                                                        _darkClusterStrategyFactory,
@@ -124,6 +126,7 @@ public class TestDarkClusterFilter
     // set the multiplier to 1 so that traffic gets sent.
     DarkClusterConfig darkClusterConfig = createRelativeTrafficMultiplierConfig(1.0f);
     clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig);
+    clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
 
     // send the request, expecting it to make it all the way down to the client
     RestRequest restRequest = new RestRequestBuilder(URI.create("foo")).build();
