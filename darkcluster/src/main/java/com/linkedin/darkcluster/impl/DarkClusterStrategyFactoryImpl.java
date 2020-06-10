@@ -95,11 +95,10 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
    * populate the darkStrategyMap. We don't want to create a race condition by trying to add what the listener is trying
    * to remove.
    * @param darkClusterName darkClusterName to look up
-   * @param darkClusterConfig darkClusterConfig to store, if needed.
    * @return darkClusterStrategy to use.
    */
   @Override
-  public DarkClusterStrategy get(@Nonnull String darkClusterName, @Nonnull DarkClusterConfig darkClusterConfig)
+  public DarkClusterStrategy get(@Nonnull String darkClusterName)
   {
     return _darkStrategyMap.getOrDefault(darkClusterName, NO_OP_DARK_CLUSTER_STRATEGY);
   }

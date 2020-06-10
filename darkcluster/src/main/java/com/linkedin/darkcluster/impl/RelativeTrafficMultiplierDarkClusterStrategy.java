@@ -78,7 +78,7 @@ public class RelativeTrafficMultiplierDarkClusterStrategy implements DarkCluster
    * This is a static method defined here because we don't want to instantiate a strategy to check this. It cannot be a
    * method that is on the interface because static methods on an interface cannot be overridden by implementations.
    * @param darkClusterConfig
-   * @return
+   * @return true if config is valid for this strategy
    */
   public static boolean isValidConfig(DarkClusterConfig darkClusterConfig)
   {
