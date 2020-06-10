@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,7 +62,6 @@ public class DataSchemaParser
 
     MultiFormatDataSchemaResolver resolver =
       new MultiFormatDataSchemaResolver(resolverPath, parserFactoriesForFromats);
-
     _parserByFileExtension = new HashMap<>();
     for (DataSchemaParserFactory parserForFormat : parserFactoriesForFromats)
     {
@@ -179,7 +179,7 @@ public class DataSchemaParser
    */
   public static class ParseResult
   {
-    private final Map<DataSchema, DataSchemaLocation> _schemaAndLocations = new HashMap<>();
+    private final Map<DataSchema, DataSchemaLocation> _schemaAndLocations = new LinkedHashMap<>();
     private final Set<File> _sourceFiles = new HashSet<>();
     protected final StringBuilder _messageBuilder = new StringBuilder();
 

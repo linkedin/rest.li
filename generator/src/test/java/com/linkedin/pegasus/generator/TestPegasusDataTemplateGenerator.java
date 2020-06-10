@@ -78,8 +78,8 @@ public class TestPegasusDataTemplateGenerator
   private void beforeMethod() throws IOException
   {
     _tempDir = Files.createTempDirectory(this.getClass().getSimpleName() + System.currentTimeMillis()).toFile();
-    _dataTemplateTargetDir1 = Files.createTempDirectory(this.getClass().getSimpleName() + System.currentTimeMillis()).toFile();
-    _dataTemplateTargetDir2 = Files.createTempDirectory(this.getClass().getSimpleName() + System.currentTimeMillis()).toFile();
+    _dataTemplateTargetDir1 = Files.createTempDirectory(this.getClass().getSimpleName() + System.currentTimeMillis() + "-a").toFile();
+    _dataTemplateTargetDir2 = Files.createTempDirectory(this.getClass().getSimpleName() + System.currentTimeMillis() + "-b").toFile();
   }
 
   @AfterMethod
@@ -219,7 +219,7 @@ public class TestPegasusDataTemplateGenerator
    * @return an array of test cases where each case has two array of test schema file names. Those file names are
    *   in the different permutations of same group of test schema files
    */
-  @DataProvider(name = "test_schema_permutation_determinisim")
+  @DataProvider(name = "test_schema_permutation_determinism")
   private Object[][] createPermutedDataTemplateCases()
   {
     return new Object[][]
@@ -230,31 +230,29 @@ public class TestPegasusDataTemplateGenerator
         };
   }
 
-  @Test(dataProvider = "test_schema_permutation_determinisim")
+  @Test(dataProvider = "test_schema_permutation_determinism")
   public void testDataTemplateGenerationDeterminism(String[] schemaFiles1, String[] schemaFiles2)
       throws Exception
   {
-    String targetDir1 = _dataTemplateTargetDir1.getAbsolutePath();
-    String targetDir2 = _dataTemplateTargetDir2.getAbsolutePath();
-    File[] generatedFiles1 = generateDataTemplateFiles(targetDir1, schemaFiles1);
-    File[] generatedFiles2 = generateDataTemplateFiles(targetDir2, schemaFiles2);
+    File[] generatedFiles1 = generateDataTemplateFiles(_dataTemplateTargetDir1, schemaFiles1);
+    File[] generatedFiles2 = generateDataTemplateFiles(_dataTemplateTargetDir2, schemaFiles2);
     checkGeneratedFilesConsistency(generatedFiles1, generatedFiles2);
   }
 
-  private File[] generateDataTemplateFiles(String targetDir, String[] pegasusFilenames) throws Exception
+  private File[] generateDataTemplateFiles(File targetDir, String[] pegasusFilenames) throws Exception
   {
     File tempDir = Files.createTempDirectory("restli").toFile();
     File argFile = new File(tempDir, "resolverPath");
     Files.write(argFile.toPath(), Collections.singletonList(pegasusDir));
     System.setProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH, String.format("@%s", argFile.toPath()));
     String[] mainArgs = new String[pegasusFilenames.length + 1];
-    mainArgs[0] = targetDir;
+    mainArgs[0] = targetDir.getAbsolutePath();
     for (int i = 0; i < pegasusFilenames.length; i++)
     {
       mainArgs[i+1] = new File(pegasusDir + FS + pegasusFilenames[i]).getAbsolutePath();
     }
     PegasusDataTemplateGenerator.main(mainArgs);
-    File[] generatedFiles = _tempDir.listFiles((File dir, String name) -> name.endsWith(".java"));
+    File[] generatedFiles = targetDir.listFiles((File dir, String name) -> name.endsWith(".java"));
     Assert.assertNotNull(generatedFiles, "Found no generated Java files.");
     return generatedFiles;
   }
