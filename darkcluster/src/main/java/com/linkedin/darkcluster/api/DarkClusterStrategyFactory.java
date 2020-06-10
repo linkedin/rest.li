@@ -25,7 +25,7 @@ import com.linkedin.d2.DarkClusterConfig;
 public interface DarkClusterStrategyFactory
 {
   /**
-   * getOrCreate retrieves the {@link DarkClusterStrategy} corresponding to the darkClusterName. The implementation has discretion on what to do
+   * get retrieves the {@link DarkClusterStrategy} corresponding to the darkClusterName. The implementation has discretion on what to do
    * if the strategy doesn't exist. The darkClusterConfig is passed in so that it can be easily stored if needed.
    * @param darkClusterName darkClusterName to look up
    * @param darkClusterConfig darkClusterConfig to store, if needed.

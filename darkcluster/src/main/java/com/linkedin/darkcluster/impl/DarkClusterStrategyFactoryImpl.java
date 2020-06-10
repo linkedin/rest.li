@@ -146,10 +146,6 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     @Override
     public void onClusterAdded(String updatedClusterName)
     {
-      // We will be listening to both the source cluster because we needed the DarkClusterConfig
-      // from the source cluster, and that called listenToCluster.
-      // We also will be listening to updates on the dark clusters, because we'll be sending d2 requests
-      // to the dark clusters, and will be listening on the dark cluster znodes.
       // It is sufficient to listen just to source cluster updates, because all
       // pertinent dark cluster strategy properties are contained there.
       if (_sourceClusterName.equals(updatedClusterName))
@@ -158,9 +154,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
         {
           DarkClusterConfigMap updatedDarkConfigMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
 
-          // get the existing entries in the strategy map
           Set<String> oldDarkStrategySet = _darkStrategyMap.keySet();
-          // get the "updated" dark clusters
           Set<String> updatedDarkClusterConfigKeySet = updatedDarkConfigMap.keySet();
           // Any old strategy entry that isn't in the "updated" set should be removed from the strategyMap.
           oldDarkStrategySet.removeAll(updatedDarkClusterConfigKeySet);
@@ -173,9 +167,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
           for (Map.Entry<String, DarkClusterConfig> entry : updatedDarkConfigMap.entrySet())
           {
             // For simplicity, we refresh all strategies since we expect cluster updates to be rare and refresh to be cheap.
-            String darkClusterName = entry.getKey();
-            DarkClusterConfig darkClusterConfig = entry.getValue();
-            _darkStrategyMap.put(darkClusterName, createStrategy(darkClusterName, darkClusterConfig));
+            _darkStrategyMap.put(entry.getKey(), createStrategy(entry.getKey(), entry.getValue()));
           }
         }
         catch (ServiceUnavailableException e)
