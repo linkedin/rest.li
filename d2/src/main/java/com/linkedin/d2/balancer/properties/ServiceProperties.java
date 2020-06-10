@@ -129,7 +129,6 @@ public class ServiceProperties
     ArgumentUtil.notNull(serviceName, PropertyKeys.SERVICE_NAME);
     ArgumentUtil.notNull(clusterName, PropertyKeys.CLUSTER_NAME);
     ArgumentUtil.notNull(path, PropertyKeys.PATH);
-    ArgumentUtil.notNull(loadBalancerStrategyProperties, "loadBalancerStrategyProperties");
 
     if (prioritizedStrategyList == null || prioritizedStrategyList.isEmpty())
     {
@@ -142,7 +141,8 @@ public class ServiceProperties
     _clusterName = clusterName;
     _path = path;
     _prioritizedStrategyList = Collections.unmodifiableList(prioritizedStrategyList);
-    _loadBalancerStrategyProperties = Collections.unmodifiableMap(loadBalancerStrategyProperties);
+    _loadBalancerStrategyProperties = loadBalancerStrategyProperties != null
+        ? Collections.unmodifiableMap(loadBalancerStrategyProperties) : Collections.emptyMap();
     _transportClientProperties = (transportClientProperties != null) ?
         Collections.unmodifiableMap(transportClientProperties) : Collections.emptyMap();
     _degraderProperties = (degraderProperties != null) ? Collections.unmodifiableMap(degraderProperties) :

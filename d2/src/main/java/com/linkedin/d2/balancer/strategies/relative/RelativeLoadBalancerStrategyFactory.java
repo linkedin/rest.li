@@ -49,7 +49,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
 {
   // Default load balancer property values
   public static final long DEFAULT_UPDATE_INTERVAL_MS = 5000L;
-  private static final double DEFAULT_UP_STEP = 0.2;
+  private static final double DEFAULT_UP_STEP = 0.05;
   private static final double DEFAULT_DOWN_STEP = 0.2;
   private static final double DEFAULT_RELATIVE_LATENCY_HIGH_THRESHOLD_FACTOR = 1.2;
   private static final double DEFAULT_RELATIVE_LATENCY_LOW_THRESHOLD_FACTOR = 1.1;
@@ -105,7 +105,10 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     listenerFactories.add(new RelativeLoadBalancerMonitorEventEmitter.Factory(serviceName, clusterName, _clock,
         relativeStrategyProperties.getEmittingIntervalMs(),
         relativeStrategyProperties.getRingProperties().getPointsPerWeight(), _eventEmitter));
-    listenerFactories.addAll(_stateListenerFactories);
+    if (_stateListenerFactories != null)
+    {
+      listenerFactories.addAll(_stateListenerFactories);
+    }
     return new RelativeStateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories);
   }
 
@@ -152,7 +155,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     properties.setMinCallCount(getOrDefault(properties.getMinCallCount(), DEFAULT_MIN_CALL_COUNT));
     properties.setUpdateIntervalMs(getOrDefault(properties.getUpdateIntervalMs(), DEFAULT_UPDATE_INTERVAL_MS));
     properties.setInitialHealthScore(getOrDefault(properties.getInitialHealthScore(), DEFAULT_INITIAL_HEALTH_SCORE));
-    properties.setSlowStartThreshold(getOrDefault(properties.getInitialHealthScore(), DEFAULT_SLOW_START_THRESHOLD));
+    properties.setSlowStartThreshold(getOrDefault(properties.getSlowStartThreshold(), DEFAULT_SLOW_START_THRESHOLD));
     properties.setErrorStatusFilter(getOrDefault(properties.getErrorStatusFilter(), DEFAULT_ERROR_STATUS_FILTER));
     properties.setEmittingIntervalMs(getOrDefault(properties.getEmittingIntervalMs(), DEFAULT_EMITTING_INTERVAL_MS));
     properties.setEnableFastRecovery(getOrDefault(properties.isEnableFastRecovery(), DEFAULT_ENABLE_FAST_RECOVERY));

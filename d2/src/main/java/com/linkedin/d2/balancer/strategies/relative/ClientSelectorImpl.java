@@ -25,6 +25,7 @@ import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -107,6 +108,10 @@ public class ClientSelectorImpl implements ClientSelector
     URI uri = ring.get(hashCode);
 
     TrackerClient trackerClient = trackerClients.get(uri);
+    if (excludedUris == null)
+    {
+      excludedUris = new HashSet<>();
+    }
 
     if (trackerClient == null || excludedUris.contains(uri))
     {

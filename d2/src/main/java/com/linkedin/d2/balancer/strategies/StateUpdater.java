@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.strategies;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import java.net.URI;
+import java.util.Map;
 import java.util.Set;
 
 

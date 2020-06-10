@@ -15,7 +15,11 @@
 */
 package com.linkedin.d2.balancer.clients;
 
+import com.linkedin.d2.HttpStatusCodeRange;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -113,7 +117,7 @@ public class TrackerClientFactory
     }
 
     long trackerClientInterval = getInterval(loadBalancerStrategyName, serviceProperties);
-    Pattern errorStatusPattern = getErrorStatusPattern(loadBalancerStrategyName, serviceProperties);
+    Pattern errorStatusPattern = getErrorStatusPattern(serviceProperties);
 
     return new DegraderTrackerClientImpl(uri,
                                      uriProperties.getPartitionDataMap(uri),
@@ -147,20 +151,15 @@ public class TrackerClientFactory
     return interval;
   }
 
-  private static Pattern getErrorStatusPattern(String loadBalancerStrategyName, ServiceProperties serviceProperties)
+  private static Pattern getErrorStatusPattern(ServiceProperties serviceProperties)
   {
     String regex = TrackerClientImpl.DEFAULT_ERROR_STATUS_REGEX;
     if (serviceProperties != null)
     {
-      switch (loadBalancerStrategyName)
-      {
-        case (DegraderLoadBalancerStrategyV3.DEGRADER_STRATEGY_NAME):
-          regex = MapUtil.getWithDefault(serviceProperties.getLoadBalancerStrategyProperties(),
-                                           PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX,
-                                           TrackerClientImpl.DEFAULT_ERROR_STATUS_REGEX,
-                                           String.class);
-          break;
-      }
+      regex = MapUtil.getWithDefault(serviceProperties.getLoadBalancerStrategyProperties(),
+          PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX,
+          TrackerClientImpl.DEFAULT_ERROR_STATUS_REGEX,
+          String.class);
     }
 
     Pattern errorPattern;
@@ -176,6 +175,16 @@ public class TrackerClientFactory
     return errorPattern;
   }
 
+  private static List<HttpStatusCodeRange> getErrorStatusRanges(ServiceProperties serviceProperties)
+  {
+    if (serviceProperties.getRelativeStrategyProperties() == null
+        || serviceProperties.getRelativeStrategyProperties().getErrorStatusFilter() == null)
+    {
+      return TrackerClientImpl.DEFAULT_ERROR_STATUS_RANGES;
+    }
+    return serviceProperties.getRelativeStrategyProperties().getErrorStatusFilter();
+  }
+
   private static TrackerClientImpl createTrackerClientImpl(URI uri,
                                                            UriProperties uriProperties,
                                                            ServiceProperties serviceProperties,
@@ -188,6 +197,6 @@ public class TrackerClientFactory
                                  transportClient,
                                  clock,
                                  getInterval(loadBalancerStrategyName, serviceProperties),
-                                 getErrorStatusPattern(loadBalancerStrategyName, serviceProperties));
+                                 getErrorStatusRanges(serviceProperties));
   }
 }

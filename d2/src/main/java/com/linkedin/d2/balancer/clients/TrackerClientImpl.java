@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.clients;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.HttpStatusCodeRange;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
@@ -45,7 +46,9 @@ import com.linkedin.util.degrader.ErrorType;
 import java.net.ConnectException;
 import java.net.URI;
 import java.nio.channels.ClosedChannelException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import java.util.concurrent.TimeoutException;
@@ -62,6 +65,8 @@ public class TrackerClientImpl implements TrackerClient
 {
   public static final String DEFAULT_ERROR_STATUS_REGEX = "(5..)";
   public static final Pattern DEFAULT_ERROR_STATUS_PATTERN = Pattern.compile(DEFAULT_ERROR_STATUS_REGEX);
+  public static final List<HttpStatusCodeRange> DEFAULT_ERROR_STATUS_RANGES = Arrays.asList(new HttpStatusCodeRange()
+      .setLowerBound(500).setUpperBound(599));
   public static final long DEFAULT_CALL_TRACKER_INTERVAL = DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS;
 
   private static final Logger _log = LoggerFactory.getLogger(TrackerClient.class);
@@ -70,6 +75,7 @@ public class TrackerClientImpl implements TrackerClient
   private final Map<Integer, PartitionData> _partitionData;
   private final URI _uri;
   private final Pattern _errorStatusPattern;
+  private final List<HttpStatusCodeRange> _errorStatusRanges;
   final CallTracker _callTracker;
 
   private volatile CallTracker.CallStats _latestCallStats;
@@ -81,6 +87,23 @@ public class TrackerClientImpl implements TrackerClient
     _transportClient = transportClient;
     _callTracker = new CallTrackerImpl(interval, clock);
     _errorStatusPattern = errorStatusPattern;
+    _errorStatusRanges = null;
+    _partitionData = Collections.unmodifiableMap(partitionDataMap);
+    _latestCallStats = _callTracker.getCallStats();
+
+    _callTracker.addStatsRolloverEventListener(event -> _latestCallStats = event.getCallStats());
+
+    debug(_log, "created tracker client: ", this);
+  }
+
+  public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
+      Clock clock, long interval, List<HttpStatusCodeRange> errorStatusRanges)
+  {
+    _uri = uri;
+    _transportClient = transportClient;
+    _callTracker = new CallTrackerImpl(interval, clock);
+    _errorStatusRanges = errorStatusRanges;
+    _errorStatusPattern = null;
     _partitionData = Collections.unmodifiableMap(partitionDataMap);
     _latestCallStats = _callTracker.getCallStats();
 
@@ -301,6 +324,17 @@ public class TrackerClientImpl implements TrackerClient
   }
 
   private boolean matchErrorStatus(int status) {
+    if (_errorStatusRanges != null)
+    {
+      for(HttpStatusCodeRange statusCodeRange : _errorStatusRanges)
+      {
+        if (status >= statusCodeRange.getLowerBound() && status <= statusCodeRange.getUpperBound())
+        {
+          return true;
+        }
+      }
+      return false;
+    }
     return _errorStatusPattern.matcher(Integer.toString(status)).matches();
   }
 }

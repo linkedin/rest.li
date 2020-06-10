@@ -101,6 +101,11 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
     return _stateUpdater.getRing(partitionId);
   }
 
+  Map<URI, Integer> getPointsMap(int partitionId)
+  {
+    return ((RelativeStateUpdater) _stateUpdater).getPointsMap(partitionId);
+  }
+
   @Override
   public HashFunction<Request> getHashFunction()
   {

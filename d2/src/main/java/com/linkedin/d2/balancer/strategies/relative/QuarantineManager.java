@@ -107,7 +107,7 @@ public class QuarantineManager {
     // Step 2: Handle special clients recovery logic from the recovery map
     handleClientsRecovery(newPartitionRelativeLoadBalancerState);
     // Step 3: Enroll new quarantine and recovery map
-    enrollNewQuarantineAndRecoveryMap(newPartitionRelativeLoadBalancerState, oldPartitionRelativeLoadBalancerState, quarantineLatency);
+    enrollNewQuarantineAndRecovery(newPartitionRelativeLoadBalancerState, oldPartitionRelativeLoadBalancerState, quarantineLatency);
   }
 
   /**
@@ -203,7 +203,7 @@ public class QuarantineManager {
   {
     Map<TrackerClient, LoadBalancerQuarantine> quarantineMap = partitionRelativeLoadBalancerState.getQuarantineMap();
     Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory = partitionRelativeLoadBalancerState.getQuarantineHistory();
-    Map<TrackerClient, Double> recoveryMap = partitionRelativeLoadBalancerState.getRecoveryMap();
+    Set<TrackerClient> recoverySet = partitionRelativeLoadBalancerState.getRecoveryTrackerClients();
 
     for (TrackerClient trackerClient : partitionRelativeLoadBalancerState.getTrackerClients())
     {
@@ -216,7 +216,7 @@ public class QuarantineManager {
         quarantineHistory.put(trackerClient, quarantine);
         LOG.info("TrackerClient {} evicted from quarantine", trackerClient.getUri());
 
-        recoveryMap.put(trackerClient, INITIAL_RECOVERY_HEALTH_SCORE);
+        recoverySet.add(trackerClient);
       }
     }
   }
@@ -225,18 +225,22 @@ public class QuarantineManager {
   {
     for (TrackerClient trackerClient : partitionRelativeLoadBalancerState.getTrackerClients())
     {
-      handleClientInRecoveryMap(trackerClient, partitionRelativeLoadBalancerState.getTrackerClientStateMap().get(trackerClient),
-          partitionRelativeLoadBalancerState.getRecoveryMap());
+      Set<TrackerClient> recoverySet = partitionRelativeLoadBalancerState.getRecoveryTrackerClients();
+      if (recoverySet.contains(trackerClient))
+      {
+        handleClientInRecoverySet(trackerClient, partitionRelativeLoadBalancerState.getTrackerClientStateMap().get(trackerClient),
+            partitionRelativeLoadBalancerState.getRecoveryTrackerClients());
+      }
     }
   }
 
-  private void enrollNewQuarantineAndRecoveryMap(
+  private void enrollNewQuarantineAndRecovery(
       PartitionRelativeLoadBalancerState newPartitionRelativeLoadBalancerState,
       PartitionRelativeLoadBalancerState oldPartitionRelativeLoadBalancerState, long clusterAvgLatency) {
     int partitionId = newPartitionRelativeLoadBalancerState.getPartitionId();
     Map<TrackerClient, LoadBalancerQuarantine> quarantineMap = newPartitionRelativeLoadBalancerState.getQuarantineMap();
     Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory = newPartitionRelativeLoadBalancerState.getQuarantineHistory();
-    Map<TrackerClient, Double> recoveryMap = newPartitionRelativeLoadBalancerState.getRecoveryMap();
+    Set<TrackerClient> recoverySet = newPartitionRelativeLoadBalancerState.getRecoveryTrackerClients();
 
     for (TrackerClient trackerClient : newPartitionRelativeLoadBalancerState.getTrackerClients()) {
       TrackerClientState trackerClientState = newPartitionRelativeLoadBalancerState.getTrackerClientStateMap().get(trackerClient);
@@ -245,14 +249,14 @@ public class QuarantineManager {
       // Check and enroll quarantine map
       boolean isQuarantined = enrollClientInQuarantineMap(trackerClient, trackerClientState, clientWeight, quarantineMap,
           quarantineHistory, newPartitionRelativeLoadBalancerState.getTrackerClientStateMap().size(), clusterAvgLatency);
-      // check and enroll recovery map
-      enrollClientInRecoveryMap(isQuarantined, trackerClient, trackerClientState, clientWeight, recoveryMap,
+      // check and enroll recovery set
+      enrollClientInRecoverySet(isQuarantined, trackerClient, trackerClientState, clientWeight, recoverySet,
           oldPartitionRelativeLoadBalancerState);
     }
   }
 
-  private void handleClientInRecoveryMap(TrackerClient trackerClient, TrackerClientState trackerClientState,
-      Map<TrackerClient, Double> recoveryMap)
+  private void handleClientInRecoverySet(TrackerClient trackerClient, TrackerClientState trackerClientState,
+      Set<TrackerClient> recoverySet)
   {
     if (trackerClientState.getCallCount() < trackerClientState.getAdjustedMinCallCount())
     {
@@ -277,7 +281,7 @@ public class QuarantineManager {
        * 2. the client is not unhealthy any more OR
        * 3. The health score is beyond 0.5, we will let it perform normal recovery
        */
-      recoveryMap.remove(trackerClient);
+      recoverySet.remove(trackerClient);
     }
   }
 
@@ -325,28 +329,28 @@ public class QuarantineManager {
     return false;
   }
 
-  private void enrollClientInRecoveryMap(boolean isQuarantined, TrackerClient trackerClient,
-      TrackerClientState trackerClientState, double clientWeight, Map<TrackerClient, Double> recoveryMap,
+  private void enrollClientInRecoverySet(boolean isQuarantined, TrackerClient trackerClient,
+      TrackerClientState trackerClientState, double clientWeight, Set<TrackerClient> recoverySet,
       PartitionRelativeLoadBalancerState oldPartitionRelativeLoadBalancerState)
   {
     if (!isQuarantined
         && trackerClientState.getHealthScore() == RelativeStateUpdater.MIN_HEALTH_SCORE
         && clientWeight > MIN_ZOOKEEPER_CLIENT_WEIGHT)
     {
-      // Enroll the client to recovery map if the health score dropped to 0, but zookeeper does not set the client weight to be 0
+      // Enroll the client to recovery set if the health score dropped to 0, but zookeeper does not set the client weight to be 0
       trackerClientState.setHealthScore(INITIAL_RECOVERY_HEALTH_SCORE);
-      if (!recoveryMap.containsKey(trackerClient)) {
-        recoveryMap.put(trackerClient, RelativeStateUpdater.MIN_HEALTH_SCORE);
+      if (!recoverySet.contains(trackerClient)) {
+        recoverySet.add(trackerClient);
       }
     }
 
-    // Also enroll new client into the recovery map if fast recovery and slow start are both enabled
-    if (!recoveryMap.containsKey(trackerClient)
+    // Also enroll new client into the recovery set if fast recovery and slow start are both enabled
+    if (!recoverySet.contains(trackerClient)
         && !oldPartitionRelativeLoadBalancerState.getTrackerClients().contains(trackerClient)
         && _fastRecoveryEnabled
         && _slowStartEnabled)
     {
-      recoveryMap.put(trackerClient, _initialHealthScore);
+      recoverySet.add(trackerClient);
     }
   }
 }

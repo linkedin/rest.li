@@ -25,6 +25,7 @@ import com.linkedin.util.degrader.CallTracker;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +45,7 @@ public class PartitionRelativeLoadBalancerState
   private final int _pointsPerWeight;
   private final RingFactory<URI> _ringFactory;
   private final List<PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>> _listeners;
-  private Map<TrackerClient, Double> _recoveryMap;
+  private Set<TrackerClient> _recoveryTrackerClients;
   private long _clusterGenerationId;
   private Map<TrackerClient, LoadBalancerQuarantine> _quarantineMap;
   private Map<TrackerClient, LoadBalancerQuarantine> _quarantineHistory;
@@ -62,7 +63,7 @@ public class PartitionRelativeLoadBalancerState
     _ringFactory = ringFactory;
     _pointsPerWeight = pointsPerWeight;
 
-    _recoveryMap = new HashMap<>();
+    _recoveryTrackerClients = new HashSet<>();
     _quarantineMap = new HashMap<>();
     _quarantineHistory = new HashMap<>();
     _trackerClientStateMap = new HashMap<>();
@@ -71,7 +72,7 @@ public class PartitionRelativeLoadBalancerState
   }
 
   private PartitionRelativeLoadBalancerState(int partitionId, Lock lock, RingFactory<URI> ringFactory, int pointsPerWeight,
-      Map<TrackerClient, Double> recoveryMap, long clusterGenerationId,
+      Set<TrackerClient> recoveryTrackerClients, long clusterGenerationId,
       Map<TrackerClient, LoadBalancerQuarantine> quarantineMap,
       Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory,
       Map<TrackerClient, TrackerClientState> trackerClientStateMap,
@@ -81,7 +82,7 @@ public class PartitionRelativeLoadBalancerState
     _lock = lock;
     _ringFactory = ringFactory;
     _pointsPerWeight = pointsPerWeight;
-    _recoveryMap = recoveryMap;
+    _recoveryTrackerClients = recoveryTrackerClients;
     _clusterGenerationId = clusterGenerationId;
     _quarantineMap = quarantineMap;
     _quarantineHistory = quarantineHistory;
@@ -96,7 +97,7 @@ public class PartitionRelativeLoadBalancerState
         this.getLock(),
         this.getRingFactory(),
         this.getPointsPerWeight(),
-        new HashMap<>(this.getRecoveryMap()),
+        new HashSet<>(this.getRecoveryTrackerClients()),
         this.getClusterGenerationId(),
         new HashMap<>(this.getQuarantineMap()),
         new HashMap<>(this.getQuarantineHistory()),
@@ -138,9 +139,9 @@ public class PartitionRelativeLoadBalancerState
     return _quarantineHistory;
   }
 
-  public Map<TrackerClient, Double> getRecoveryMap()
+  public Set<TrackerClient> getRecoveryTrackerClients()
   {
-    return _recoveryMap;
+    return _recoveryTrackerClients;
   }
 
   public RingFactory<URI> getRingFactory()
@@ -193,7 +194,7 @@ public class PartitionRelativeLoadBalancerState
     _trackerClientStateMap.remove(trackerClient);
     _quarantineMap.remove(trackerClient);
     _quarantineHistory.remove(trackerClient);
-    _recoveryMap.remove(trackerClient);
+    _recoveryTrackerClients.remove(trackerClient);
   }
 
   int getPointsPerWeight()
@@ -205,7 +206,7 @@ public class PartitionRelativeLoadBalancerState
   public String toString() {
     return "PartitionRelativeLoadBalancerState{" + "_partitionId=" + _partitionId
         + ", _clusterGenerationId=" + _clusterGenerationId
-        + ", _recoveryMap=" + _recoveryMap + ", _quarantineMap=" + _quarantineMap
+        + ", _recoveryTrackerClients=" + _recoveryTrackerClients + ", _quarantineMap=" + _quarantineMap
         + ", _pointsMap=" + _pointsMap + ", _ring=" + _ring + ", _trackerClientStateMap=" + _trackerClientStateMap
         + ", _partitionStats=" + _partitionStats + '}';
   }
