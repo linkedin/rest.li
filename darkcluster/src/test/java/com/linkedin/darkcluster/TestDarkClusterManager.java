@@ -79,7 +79,7 @@ public class TestDarkClusterManager
     int strategyGetOrCreateCount;
 
     @Override
-    public DarkClusterStrategy getOrCreate(String darkClusterName, DarkClusterConfig darkClusterConfig)
+    public DarkClusterStrategy get(String darkClusterName)
     {
       strategyGetOrCreateCount++;
       return NO_OP_STRATEGY;
