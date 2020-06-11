@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
+import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.zkfs.LastSeenLoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
@@ -50,6 +51,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFacilitiesFactory
 {
+  public static final int MATURITY_LEVEL = 1;
   private static final Logger LOG = LoggerFactory.getLogger(LastSeenBalancerWithFacilitiesFactory.class);
 
   @Override
@@ -104,8 +106,17 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     d2ClientJmxManager.setSimpleLoadBalancer(simpleLoadBalancer);
 
     // add facilities
-    LoadBalancerWithFacilities balancer = new LastSeenLoadBalancerWithFacilities(simpleLoadBalancer, config.basePath, config.d2ServicePath,
+    LastSeenLoadBalancerWithFacilities lastSeenLoadBalancer = new LastSeenLoadBalancerWithFacilities(simpleLoadBalancer, config.basePath, config.d2ServicePath,
                                                                                  zkPersistentConnection, lsClusterStore, lsServiceStore, lsUrisStore);
+
+    LoadBalancerWithFacilities balancer = lastSeenLoadBalancer;
+
+    if (config.warmUp)
+    {
+      balancer = new WarmUpLoadBalancer(balancer, lastSeenLoadBalancer, config.startUpExecutorService, config.fsBasePath,
+                                        config.d2ServicePath, config.downstreamServicesFetcher, config.warmUpTimeoutSeconds,
+                                        config.warmUpConcurrentRequests);
+    }
 
     return balancer;
   }
