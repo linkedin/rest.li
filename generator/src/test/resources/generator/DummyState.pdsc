@@ -1,0 +1,14 @@
+{
+  "type": "enum",
+  "name": "DummyState",
+  "symbols": ["FUTURE",
+    "ACTIVE",
+    "CREATED"
+  ],
+
+  "symbolDocs": {
+    "ACTIVE": "Dummy is active.",
+    "CREATED": "Dummy is created."
+  },
+  "doc": "States for a Dummy."
+}

@@ -1,25 +1,25 @@
 {
   "type": "record",
-  "name": "PremiumService",
-  "doc": "A premium service.",
+  "name": "Service",
+  "doc": "service.",
   "fields":
   [
     {
       "name": "id",
       "type": "int",
-      "doc": "The primary key id for a premium service.",
+      "doc": "The primary key id",
       "optional": true
     },
     {
-      "name": "trialPeriod",
-      "type": "IsoDuration",
+      "name": "aTypeRef",
+      "type": "ATypeRef",
       "optional": true,
-      "doc": "Trial period for the recurrence. See org.joda.time.Period"
+      "doc": "A type referenced field"
     },
     {
       "name": "state",
-      "type": "PremiumServiceState",
-      "doc": "Lifecycle states for a premium serivce.",
+      "type": "DummyState",
+      "doc": "this is the doc of dummy state.",
       "optional": true
     },
     {
@@ -41,32 +41,26 @@
       "doc": "Duration for the recurrence in ISO. See org.joda.time.Period"
     },
     {
-      "name": "productCode",
+      "name": "codeField",
       "type": "string",
-      "doc": "code for the product."
+      "doc": "code for the field."
     },
     {
-      "name": "accountBalance",
+      "name": "stringField",
       "type": "string",
-      "doc": "The account balance.",
+      "doc": "This is a string field.",
       "optional": true
     },
     {
-      "name": "pendingCancellation",
+      "name": "aBoolField",
       "type": "boolean",
-      "doc": "Whether or not there is a pending cancellation scheduled for this service.",
+      "doc": "This is a bool field.",
       "optional": true
     },
     {
-      "name": "freeTrial",
-      "type": "boolean",
-      "doc": "Whether or not user is on free trial.",
-      "optional": true
-    },
-    {
-      "name": "accountBalanceType",
-      "type": "AccountBalanceType",
-      "doc": "The account balance type",
+      "name": "dummyType",
+      "type": "DummyType",
+      "doc": "The dummy type",
       "optional": true
     }
   ]

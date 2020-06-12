@@ -224,7 +224,7 @@ public class TestPegasusDataTemplateGenerator
   {
     return new Object[][]
         {
-            {new String[]{"IsoDuration.pdsc", "PremiumService.pdsc"}, new String[]{"PremiumService.pdsc", "IsoDuration.pdsc"}},
+            {new String[]{"ATypeRef.pdsc", "Service.pdsc"}, new String[]{"Service.pdsc", "ATypeRef.pdsc"}},
             {new String[]{"AField.pdl", "ARecord.pdl"}, new String[]{"ARecord.pdl", "AField.pdl"}},
             {new String[]{"BRecord.pdl", "BField.pdl"}, new String[]{"BField.pdl", "BRecord.pdl"}},
         };

@@ -1,0 +1,6 @@
+{
+  "type"      : "typeref",
+  "name"      : "ATypeRef",
+  "ref"       : "string",
+  "doc"       : "A type ref data."
+}
