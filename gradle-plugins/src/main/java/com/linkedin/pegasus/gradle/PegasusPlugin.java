@@ -57,9 +57,9 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.api.tasks.Sync;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
@@ -1631,29 +1631,31 @@ public class PegasusPlugin implements Plugin<Project>
     Task compileTask = project.getTasks().getByName(targetSourceSet.getCompileJavaTaskName());
     compileTask.dependsOn(generateDataTemplatesTask);
 
-    // we need to delete the build directory before staging files for translation/code generation, in case there were
-    // left over files from a previous execution. This is not a problem if the input for translation/code generation
-    // hasn't changed at all, because gradle will just realize the buildDir can be rebuilt from cache.
+    // Dummy task to maintain backward compatibility
+    // TODO: Delete this task once use cases have had time to reference the new task
     Task destroyStaleFiles = project.getTasks().create(sourceSet.getName() + "DestroyStaleFiles");
-    if (isPropertyTrue(project, DESTROY_STALE_FILES_ENABLE) && publishableSchemasBuildDir.exists())
-    {
-      destroyStaleFiles.getInputs().dir(publishableSchemasBuildDir);
-      destroyStaleFiles.doLast(new CacheableAction<>(task -> project.delete(publishableSchemasBuildDir)));
-    }
+    destroyStaleFiles.doLast(new CacheableAction<>(t -> project.getLogger().lifecycle("DestroyStaleFiles task has been deprecated.")));
 
     // Dummy task to maintain backward compatibility, as this task was replaced by CopySchemas
     // TODO: Delete this task once use cases have had time to reference the new task
     Task copyPdscSchemasTask = project.getTasks().create(sourceSet.getName() + "CopyPdscSchemas");
     copyPdscSchemasTask.dependsOn(destroyStaleFiles);
+    copyPdscSchemasTask.doLast(new CacheableAction<>(t -> project.getLogger().lifecycle("CopyPdscSchemas task has been deprecated.")));
 
-    // Copy all schema files directly over for publication
+    // Dummy task to maintain backward compatibility, as this task was replaced by SyncSchemas
+    // TODO: Delete this task once use cases have had time to reference the new task
+    Task copySchemasTask = project.getTasks().create(sourceSet.getName() + "CopySchemas");
+    copySchemasTask.dependsOn(copyPdscSchemasTask);
+    copySchemasTask.doLast(new CacheableAction<>(t -> project.getLogger().lifecycle("CopySchemas task has been deprecated.")));
+
+    // Sync all schema files directly over for publication
     Task prepareSchemasForPublishTask = project.getTasks()
-        .create(sourceSet.getName() + "CopySchemas", Copy.class, task ->
+        .create(sourceSet.getName() + "SyncSchemas", Sync.class, task ->
         {
-          task.from(dataSchemaDir, copySpec -> DATA_TEMPLATE_FILE_SUFFIXES.forEach(suffix -> copySpec.include("**/*" + suffix)));
+          task.from(dataSchemaDir, syncSpec -> DATA_TEMPLATE_FILE_SUFFIXES.forEach(suffix -> syncSpec.include("**/*" + suffix)));
           task.into(publishableSchemasBuildDir);
         });
-    prepareSchemasForPublishTask.dependsOn(copyPdscSchemasTask);
+    prepareSchemasForPublishTask.dependsOn(copySchemasTask);
 
     Collection<Task> dataTemplateJarDepends = new ArrayList<>();
     dataTemplateJarDepends.add(compileTask);
