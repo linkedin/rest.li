@@ -67,11 +67,20 @@ public class RelativeStateUpdater implements StateUpdater
                        ScheduledExecutorService executorService,
                        List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> listenerFactories)
   {
+    this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories);
+  }
+
+  RelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
+      QuarantineManager quarantineManager,
+      ScheduledExecutorService executorService,
+      ConcurrentMap<Integer, PartitionRelativeLoadBalancerState> partitionLoadBalancerStateMap,
+      List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> listenerFactories)
+  {
     _relativeStrategyProperties = relativeStrategyProperties;
     _quarantineManager = quarantineManager;
     _executorService = executorService;
     _listenerFactories = listenerFactories;
-    _partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    _partitionLoadBalancerStateMap = partitionLoadBalancerStateMap;
 
     _executorService.scheduleWithFixedDelay((Runnable) this::updateState, EXECUTOR_INITIAL_DELAY,
         _relativeStrategyProperties.getUpdateIntervalMs(), TimeUnit.MILLISECONDS);
@@ -111,7 +120,7 @@ public class RelativeStateUpdater implements StateUpdater
    * Update the partition state.
    * This is scheduled by executor, and the update should not involve any cluster change
    */
-  private void updateState()
+  void updateState()
   {
     // Update state for each partition
     for (Integer partitionId : _partitionLoadBalancerStateMap.keySet())
@@ -126,7 +135,7 @@ public class RelativeStateUpdater implements StateUpdater
   /**
    * Update the partition state when there is a cluster uris change.
    */
-  private void updateStateForPartition(Set<TrackerClient> trackerClients, int partitionId,
+  void updateStateForPartition(Set<TrackerClient> trackerClients, int partitionId,
       PartitionRelativeLoadBalancerState oldPartitionState, Long clusterGenerationId)
   {
     debug(LOG, "Updating for partition: " + partitionId + ", state: " + oldPartitionState);
@@ -173,12 +182,12 @@ public class RelativeStateUpdater implements StateUpdater
     Map<TrackerClient, TrackerClientState> trackerClientStateMap = partitionRelativeLoadBalancerState.getTrackerClientStateMap();
     if (clusterGenerationId != null)
     {
-      for (TrackerClient trackerClient : trackerClientStateMap.keySet())
+      List<TrackerClient> trackerClientsToRemove = trackerClientStateMap.keySet().stream()
+          .filter(oldTrackerClient -> !trackerClients.contains(oldTrackerClient))
+          .collect(Collectors.toList());
+      for (TrackerClient trackerClient : trackerClientsToRemove)
       {
-        if (!trackerClients.contains(trackerClient))
-        {
-          partitionRelativeLoadBalancerState.removeTrackerClient(trackerClient);
-        }
+        partitionRelativeLoadBalancerState.removeTrackerClient(trackerClient);
       }
     }
   }
@@ -200,21 +209,21 @@ public class RelativeStateUpdater implements StateUpdater
         TrackerClientState trackerClientState = trackerClientStateMap.get(trackerClient);
         int callCount = latestCallStats.getCallCount() + latestCallStats.getOutstandingCount();
         double errorRate = getErrorRateByType(latestCallStats.getErrorTypeCounts(), callCount);
-        long avglatency = getAvgHostLatency(latestCallStats);
+        long avgLatency = getAvgHostLatency(latestCallStats);
         double oldHealthScore = trackerClientState.getHealthScore();
         double newHealthScore = oldHealthScore;
 
         clusterCallCount += callCount;
         clusterErrorCount += errorRate * callCount;
 
-        if (isUnhealthy(trackerClientState, avgClusterLatency, callCount, avglatency, errorRate))
+        if (isUnhealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
         {
           // If it is above high latency, we reduce the health score by down step
           newHealthScore = Double.max(trackerClientState.getHealthScore() - _relativeStrategyProperties.getDownStep(), MIN_HEALTH_SCORE);
           trackerClientState.setHealthState(TrackerClientState.HealthState.UNHEALTHY);
         }
         else if (trackerClientState.getHealthScore() < MAX_HEALTH_SCORE
-            && isHealthy(trackerClientState, avgClusterLatency, callCount, avglatency, errorRate))
+            && isHealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
         {
           if (oldHealthScore < _relativeStrategyProperties.getSlowStartThreshold())
           {
@@ -276,8 +285,8 @@ public class RelativeStateUpdater implements StateUpdater
     int outstandingCallCount = callStats.getOutstandingCount();
     return callCount + outstandingCallCount == 0
         ? 0
-        : Math.round(avgLatency * (callCount / (callCount + outstandingCallCount))
-            + avgOutstandingLatency * (outstandingCallCount / (callCount + outstandingCallCount)));
+        : Math.round(avgLatency * ((double)callCount / (callCount + outstandingCallCount))
+            + avgOutstandingLatency * ((double)outstandingCallCount / (callCount + outstandingCallCount)));
   }
 
   /**

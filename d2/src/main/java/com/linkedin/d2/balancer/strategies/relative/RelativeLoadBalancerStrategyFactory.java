@@ -49,21 +49,21 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
 {
   // Default load balancer property values
   public static final long DEFAULT_UPDATE_INTERVAL_MS = 5000L;
+  public static final int DEFAULT_MIN_CALL_COUNT = 1;
+  public static final double DEFAULT_INITIAL_HEALTH_SCORE = 1.0;
+  public static final double DEFAULT_SLOW_START_THRESHOLD = 0.0;
+  public static final double DEFAULT_RELATIVE_LATENCY_LOW_THRESHOLD_FACTOR = 1.1;
   private static final double DEFAULT_UP_STEP = 0.05;
   private static final double DEFAULT_DOWN_STEP = 0.2;
   private static final double DEFAULT_RELATIVE_LATENCY_HIGH_THRESHOLD_FACTOR = 1.2;
-  private static final double DEFAULT_RELATIVE_LATENCY_LOW_THRESHOLD_FACTOR = 1.1;
   private static final double DEFAULT_HIGH_ERROR_RATE = 1.1;
   private static final double DEFAULT_LOW_ERROR_RATE = 1.1;
-  private static final int DEFAULT_MIN_CALL_COUNT = 1;
-  private static final double DEFAULT_INITIAL_HEALTH_SCORE = 1.0;
-  private static final double DEFAULT_SLOW_START_THRESHOLD = 0.0;
   private static final HttpStatusCodeRangeArray DEFAULT_ERROR_STATUS_FILTER =
       new HttpStatusCodeRangeArray(new HttpStatusCodeRange().setLowerBound(500).setUpperBound(599));
   private static final long DEFAULT_EMITTING_INTERVAL_MS = 0L;
   private static final boolean DEFAULT_ENABLE_FAST_RECOVERY = false;
   // Default quarantine properties
-  private static final double DEFAULT_QUARANTINE_MAX_PERCENT = 0.0;
+  public static final double DEFAULT_QUARANTINE_MAX_PERCENT = 0.0;
   private static final HttpMethod DEFAULT_HTTP_METHOD = HttpMethod.OPTIONS;
   // Default ring properties
   private static final int DEFAULT_POINTS_PER_WEIGHT = 100;
@@ -122,9 +122,8 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   {
     return new QuarantineManager(serviceName, servicePath, _healthCheckOperations,
         relativeStrategyProperties.getQuarantineProperties(), relativeStrategyProperties.getSlowStartThreshold(),
-        relativeStrategyProperties.isEnableFastRecovery(), relativeStrategyProperties.getInitialHealthScore(),
-        _executorService, _clock, relativeStrategyProperties.getUpdateIntervalMs(),
-        relativeStrategyProperties.getRelativeLatencyLowThresholdFactor());
+        relativeStrategyProperties.isEnableFastRecovery(), _executorService, _clock,
+        relativeStrategyProperties.getUpdateIntervalMs(), relativeStrategyProperties.getRelativeLatencyLowThresholdFactor());
   }
 
   private HashFunction<Request> getRequestHashFunction(D2RelativeStrategyProperties relativeStrategyProperties)
@@ -144,7 +143,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     return new RandomHash();
   }
 
-  private D2RelativeStrategyProperties putDefaultValues(D2RelativeStrategyProperties properties)
+  static D2RelativeStrategyProperties putDefaultValues(D2RelativeStrategyProperties properties)
   {
     properties.setUpStep(getOrDefault(properties.getUpStep(), DEFAULT_UP_STEP));
     properties.setDownStep(getOrDefault(properties.getDownStep(), DEFAULT_DOWN_STEP));
@@ -175,7 +174,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     return properties;
   }
 
-  private <R> R getOrDefault(R value, R defaultValue)
+  private static <R> R getOrDefault(R value, R defaultValue)
   {
     return value == null ? defaultValue : value;
   }

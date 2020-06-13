@@ -43,11 +43,11 @@ import org.slf4j.LoggerFactory;
  */
 public class QuarantineManager {
   private static final Logger LOG = LoggerFactory.getLogger(QuarantineManager.class);
-  private static final double SLOW_START_ENABLED_THRESHOLD = 0;
+  public static final double SLOW_START_ENABLED_THRESHOLD = 0;
+  public static final double FAST_RECOVERY_HEALTH_SCORE_THRESHOLD = 0.5;
 
   private static final double QUARANTINE_ENABLED_PERCENTAGE_THRESHOLD = 0.0;
   private static final double FAST_RECOVERY_FACTOR = 2.0;
-  private static final double FAST_RECOVERY_HEALTH_SCORE_THRESHOLD = 0.5;
   private static final long QUARANTINE_REENTRY_TIME_MS = 30000;
   private static final double MIN_ZOOKEEPER_CLIENT_WEIGHT = 0.0;
   private static final int MAX_RETRIES_TO_CHECK_QUARANTINE = 5;
@@ -61,7 +61,6 @@ public class QuarantineManager {
   private final D2QuarantineProperties _quarantineProperties;
   private final boolean _slowStartEnabled;
   private final boolean _fastRecoveryEnabled;
-  private final double _initialHealthScore;
   private final ScheduledExecutorService _executorService;
   private final Clock _clock;
   private final long _updateIntervalMs;
@@ -74,8 +73,7 @@ public class QuarantineManager {
 
   QuarantineManager(String serviceName, String servicePath, HealthCheckOperations healthCheckOperations,
       D2QuarantineProperties quarantineProperties, double slowStartThreshold, boolean fastRecoveryEnabled,
-      double initialHealthScore, ScheduledExecutorService executorService, Clock clock, long updateIntervalMs,
-      double relativeLatencyLowThresholdFactor)
+      ScheduledExecutorService executorService, Clock clock, long updateIntervalMs, double relativeLatencyLowThresholdFactor)
   {
     _serviceName = serviceName;
     _servicePath = servicePath;
@@ -83,7 +81,6 @@ public class QuarantineManager {
     _quarantineProperties = quarantineProperties;
     _slowStartEnabled = slowStartThreshold > SLOW_START_ENABLED_THRESHOLD;
     _fastRecoveryEnabled = fastRecoveryEnabled;
-    _initialHealthScore = initialHealthScore;
     _executorService = executorService;
     _clock = clock;
     _updateIntervalMs = updateIntervalMs;
@@ -128,7 +125,7 @@ public class QuarantineManager {
     }
   }
 
-  private boolean tryEnableQuarantine()
+  boolean tryEnableQuarantine()
   {
     return _quarantineEnabled.compareAndSet(false, true);
   }
@@ -212,7 +209,7 @@ public class QuarantineManager {
       if (quarantine != null && quarantine.checkUpdateQuarantineState())
       {
         // Evict client from quarantine
-        quarantineMap.remove(quarantine);
+        quarantineMap.remove(trackerClient);
         quarantineHistory.put(trackerClient, quarantine);
         LOG.info("TrackerClient {} evicted from quarantine", trackerClient.getUri());
 

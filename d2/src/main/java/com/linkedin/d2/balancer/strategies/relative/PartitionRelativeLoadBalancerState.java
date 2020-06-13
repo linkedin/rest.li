@@ -71,7 +71,7 @@ public class PartitionRelativeLoadBalancerState
     resetRing();
   }
 
-  private PartitionRelativeLoadBalancerState(int partitionId, Lock lock, RingFactory<URI> ringFactory, int pointsPerWeight,
+  PartitionRelativeLoadBalancerState(int partitionId, Lock lock, RingFactory<URI> ringFactory, int pointsPerWeight,
       Set<TrackerClient> recoveryTrackerClients, long clusterGenerationId,
       Map<TrackerClient, LoadBalancerQuarantine> quarantineMap,
       Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory,

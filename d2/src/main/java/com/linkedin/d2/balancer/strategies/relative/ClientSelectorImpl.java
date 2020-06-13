@@ -66,21 +66,12 @@ public class ClientSelectorImpl implements ClientSelector
 
     if (targetHostUri != null)
     {
-      trackerClient = trackerClients.get(targetHostUri);
+      trackerClient = getTrackerClientFromTarget(targetHostUri, requestContext, trackerClients);
     }
     else
     {
       trackerClient = getTrackerClientFromRing(request, requestContext, ring, trackerClients);
     }
-
-    if (trackerClient == null)
-    {
-      // Pick a one from the tracker clients passed from the request if there is no one selected from the ring
-      trackerClient = trackerClients.values().stream().findAny().orElse(null);
-      warn(LOG, "Did not find a valid client from the ring, picked {} instead", trackerClient.getUri());
-    }
-
-    addToExcludedHosts(trackerClient, requestContext);
 
     return trackerClient;
   }
@@ -93,6 +84,26 @@ public class ClientSelectorImpl implements ClientSelector
     }
   }
 
+  private TrackerClient getTrackerClientFromTarget(URI targetHostUri, RequestContext requestContext, Map<URI, TrackerClient> trackerClients)
+  {
+    TrackerClient trackerClient = trackerClients.get(targetHostUri);
+
+    if (trackerClient == null)
+    {
+      warn(LOG, "No client found for ", targetHostUri, ". Target host specified is no longer part of cluster");
+    }
+    else
+    {
+      // if this flag is set to be true, that means affinity routing is preferred but backup requests are still acceptable
+      Boolean otherHostAcceptable = KeyMapper.TargetHostHints.getRequestContextOtherHostAcceptable(requestContext);
+      if (otherHostAcceptable != null && otherHostAcceptable)
+      {
+        addToExcludedHosts(trackerClient, requestContext);
+      }
+    }
+    return trackerClient;
+  }
+
   private TrackerClient getTrackerClientFromRing(Request request,
                                                  RequestContext requestContext,
                                                  Ring<URI> ring,
@@ -103,15 +114,13 @@ public class ClientSelectorImpl implements ClientSelector
       return null;
     }
 
-    Set<URI> excludedUris = LoadBalancerStrategy.ExcludedHostHints.getRequestContextExcludedHosts(requestContext);
+    Set<URI> excludedUris = LoadBalancerStrategy.ExcludedHostHints.getRequestContextExcludedHosts(requestContext) == null
+        ? new HashSet<>()
+        : LoadBalancerStrategy.ExcludedHostHints.getRequestContextExcludedHosts(requestContext);
     int hashCode = _requestHashFunction.hash(request);
     URI uri = ring.get(hashCode);
 
     TrackerClient trackerClient = trackerClients.get(uri);
-    if (excludedUris == null)
-    {
-      excludedUris = new HashSet<>();
-    }
 
     if (trackerClient == null || excludedUris.contains(uri))
     {
@@ -128,7 +137,22 @@ public class ClientSelectorImpl implements ClientSelector
           break;
         }
       }
+      trackerClient = null;
     }
+
+    if (trackerClient == null)
+    {
+      // Pick a one from the tracker clients passed from the request if the ring is completely out of date
+      trackerClient = trackerClients.values().stream()
+          .filter(latestTrackerClient -> !excludedUris.contains(latestTrackerClient.getUri()))
+          .findAny().orElse(null);
+      if (trackerClient != null)
+      {
+        warn(LOG, "Did not find a valid client from the ring, picked {} instead", trackerClient.getUri());
+      }
+    }
+
+    addToExcludedHosts(trackerClient, requestContext);
 
     return trackerClient;
   }
