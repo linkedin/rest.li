@@ -106,12 +106,13 @@ public class PegasusDataTemplateGenerator
       resolverPath = argFileContents.length > 0 ? argFileContents[0] : null;
     }
     _log.debug("Resolver Path: " + resolverPath);
+    String[] schemaFiles = Arrays.copyOfRange(args, 1, args.length);
     PegasusDataTemplateGenerator.run(resolverPath,
                                      System.getProperty(JavaCodeGeneratorBase.GENERATOR_DEFAULT_PACKAGE),
                                      System.getProperty(JavaCodeGeneratorBase.ROOT_PATH),
                                      generateImported,
                                      args[0],
-                                     Arrays.copyOfRange(args, 1, args.length));
+                                     schemaFiles);
   }
 
   public static GeneratorResult run(String resolverPath, String defaultPackage, String rootPath, final boolean generateImported, String targetDirectoryPath, String[] sources)

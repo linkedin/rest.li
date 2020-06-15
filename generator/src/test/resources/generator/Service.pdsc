@@ -1,0 +1,67 @@
+{
+  "type": "record",
+  "name": "Service",
+  "doc": "service.",
+  "fields":
+  [
+    {
+      "name": "id",
+      "type": "int",
+      "doc": "The primary key id",
+      "optional": true
+    },
+    {
+      "name": "aTypeRef",
+      "type": "ATypeRef",
+      "optional": true,
+      "doc": "A type referenced field"
+    },
+    {
+      "name": "state",
+      "type": "DummyState",
+      "doc": "this is the doc of dummy state.",
+      "optional": true
+    },
+    {
+      "name": "currencyCode",
+      "type": "string",
+      "doc": "Can be ISO currency code for the money OR A Virtual Currency which is prefixed with V$. If a member purchases a 5 Job Pack he will get 5 Job Credits. Each Credit can be used to Post 1 Job.",
+      "optional": true
+    },
+    {
+      "name": "amount",
+      "type": "string",
+      "doc": "The amount of money.",
+      "optional": true
+    },
+    {
+      "name": "interval",
+      "type": "string",
+      "optional": true,
+      "doc": "Duration for the recurrence in ISO. See org.joda.time.Period"
+    },
+    {
+      "name": "codeField",
+      "type": "string",
+      "doc": "code for the field."
+    },
+    {
+      "name": "stringField",
+      "type": "string",
+      "doc": "This is a string field.",
+      "optional": true
+    },
+    {
+      "name": "aBoolField",
+      "type": "boolean",
+      "doc": "This is a bool field.",
+      "optional": true
+    },
+    {
+      "name": "dummyType",
+      "type": "DummyType",
+      "doc": "The dummy type",
+      "optional": true
+    }
+  ]
+}
