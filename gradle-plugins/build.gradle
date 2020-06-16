@@ -1,10 +1,13 @@
 apply plugin: 'java'
+apply plugin: 'java-gradle-plugin'
 
 dependencies {
   compile gradleApi()
 
   testCompile externalDependency.testng
   testCompile externalDependency.junit
+
+  testCompile gradleTestKit()
 }
 
 // This is done so that the plugin can know which version of restli should be used when creating the pegasus configuration.
