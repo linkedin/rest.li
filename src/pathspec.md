@@ -29,7 +29,7 @@ excerpt: Rest.Li PathSpecs
   - [More resources and examples](#more-resources-and-examples)
 
 ## What is PathSpec
-PathSpec represents a path to a component within a complex data object within Rest.li framework. It generates uniform references in hierarchical [datamap](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/DataMap.java) components. It is an abstract path concept and has its specification. It currently has two concrete forms in Rest.li, but it is not language-specific.
+In Rest.li framework, PathSpec represents a path to a component within a complex data object. It generates uniform references in hierarchical [datamap](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/DataMap.java) components. It is an abstract path concept and has its specification. It currently has two concrete forms in Rest.li, but PathSpec itself should not be language-specific.
 
 1. The PathSpec path can be represented as a string, current example usages of its string form can be found in [Validation annotation](/rest.li/Validation-in-Rest_li#specifying-restli-validation-annotations), where the PathSpec string is used in annotation and the [Annotation Reader](https://github.com/linkedin/rest.li/blob/master/restli-server/src/main/java/com/linkedin/restli/internal/server/model/RestLiAnnotationReader.java#L185) would interpret it.
 
@@ -97,7 +97,7 @@ The PathSpec string format is represented by separators(`'/'`) and segments in b
 /demoRecord/innerRecordField/nestedInnerRecordField
 ```
 
-The path segment could use attribute syntax to carry some meaningful attributes. These attributes added to the string form using '?' and '&' separators. Users can add any attributes but for some types, there are reserved attributes. For example, for array type, one can specify `start` and `count` attributes and these two attributes are used in [specifying projections](/rest.li/Projections#array).
+The path segment can use the "attribute" syntax to carry meaningful attributes. These attributes added to the string form using '?' and '&' separators. Users can add any attributes but for some types, there are reserved attributes. For example, for array type, one can specify `start` and `count` attributes and these two attributes are used in [specifying the projections for array](/rest.li/Projections#array).
 ```
 /arrayOfIntFieldE?start=0&count=10
 ```
@@ -108,7 +108,7 @@ For collection types, such as maps and arrays, the path segment could also be re
 ```
 Above examples points to the `innerRecordField` field of the `map` value in a `map` schema. `map` is a collection schema type, here `*` wildcarded its keys.
 
-Pegasus schema has defined various kinds of types, the full specification about the supported types can be found from the document [Rest.li Data Schema And Templates](/rest.li/DATA-Data-Schema-and-Templates). There are mainly following supported types in Pegasus and following sections list the example pathspecs.
+Pegasus schema has defined various kinds of types, the full specification about the supported types can be found from the document [Rest.li Data Schema And Templates](/rest.li/DATA-Data-Schema-and-Templates). There are mainly following supported types in Pegasus and following sections list the example PathSpecs.
 
 ### Primitive type fields
 Primitive types includes type such as bytes, string, boolean, double, float, long, int. In the reocrd form, they came with a name to the field in record, so the reference to the primitive types, in most cases are just a PathSpec string which specify the field name of this type. 
@@ -184,7 +184,7 @@ The map has a key followed by the value referenced. Recall PathSpec's semantic i
 For example, here is a example PathSpec that can be used to traverse the map.
 
 ```
-/mapField/<AKeyInMap>
+/mapField/<A-Key-In-the-Map>
 ```
 Note that the above PathSpec is referring to the component key-ed by the key in the map. If the value is of a primitive type, the above PathSpec can be implicitly used to refer to the primitive type value.
 
@@ -196,7 +196,7 @@ If you want to specifically refer to all the key fields, the syntax is to use th
 if the value held in the map is a record type and you want to refer to that record, the PathSpec could be
 
 ```
-/mapField/<AKeyInMap>/<someRecordField>
+/mapField/<A-Key-In-the-Map>/<someRecordField>
 ```
 
 Another common use case is that you want to use wildcard (represented by symbol "*" ) to "select all keys", if the interested path is to a field for all entries in this map, then it would be
@@ -261,7 +261,7 @@ Say you want to select some elements in within a range in the array, you can do 
 ```
 
 
-It worth noting that single element indexing is currently not defined yet. For example indexing the first element of an array is currently not defined. Alternatively this can be achieved by using the range PathSpec.
+It is worth noting that single element indexing in Array's PathSpec is currently not defined yet. For example indexing the first element of an array is currently not defined. Alternatively this can be achieved by using the range PathSpec.
 ```
 /recordArray/0 # This sytanx is not defined yet
 /recordArray?start=0&count=1 # This syntax has been defined
@@ -458,7 +458,7 @@ As above example shows, when fixed type are defined inline, they will still have
 ```
 
 ## PathSpec Syntax in its java binded class form
-All auto-generated `RecordTemplate` class has a static nested class `fields` which extends `PathSpec`. To find out, after you build the Rest.li project, you could check such `RecordTemplate` classes in `GeneratedDataTemplate` folder and to find following codes.
+All auto-generated `RecordTemplate` class has a static nested class `Fields` which extends `PathSpec`. To find out, after you build the Rest.li project, you can check such `RecordTemplate` classes in `GeneratedDataTemplate` folder and to find following codes.
 ```java
   public static class Fields extends PathSpec
   {
@@ -466,6 +466,9 @@ All auto-generated `RecordTemplate` class has a static nested class `fields` whi
   }
 ```
 [Check example code here](https://github.com/linkedin/rest.li/blob/master/generator-test/src/test/java/com/linkedin/pegasus/generator/test/pdl/fixtures/CustomRecord.java#L62). 
+
+
+
 Therefore it is very easy to get the PathSpec java binded class. Let's say you have a `Foo` schema which has `bar` fields. You can get the PathSpec by following
 ```java
 PathSpec pathSpec = Foo.fields().bar();
