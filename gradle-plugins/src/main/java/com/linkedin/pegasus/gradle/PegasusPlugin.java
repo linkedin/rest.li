@@ -57,6 +57,7 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.Sync;
@@ -1644,7 +1645,7 @@ public class PegasusPlugin implements Plugin<Project>
 
     // Dummy task to maintain backward compatibility, as this task was replaced by SyncSchemas
     // TODO: Delete this task once use cases have had time to reference the new task
-    Task copySchemasTask = project.getTasks().create(sourceSet.getName() + "CopySchemas");
+    Task copySchemasTask = project.getTasks().create(sourceSet.getName() + "CopySchemas", Copy.class);
     copySchemasTask.dependsOn(copyPdscSchemasTask);
     copySchemasTask.doLast(new CacheableAction<>(t -> project.getLogger().lifecycle("CopySchemas task has been deprecated.")));
 
