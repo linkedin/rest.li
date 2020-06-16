@@ -273,9 +273,13 @@ subprojects {
     testOutputDir = sourceSets.test.output.classesDirs.getSingleFile()
   }
 
-  test {
+  task junitTests(type: Test) {
     maxHeapSize = '4g'
+    useJUnit()
+  }
 
+  task testngTests(type: Test) {
+    maxHeapSize = '4g'
     useTestNG() {
       excludeGroups 'not_implemented'
       excludeGroups 'integration'
@@ -284,6 +288,11 @@ subprojects {
       excludeGroups 'known_issue'
       excludeGroups 'withoutAssertion'
     }
+  }
+
+  test {
+    dependsOn junitTests
+    dependsOn testngTests
   }
 
   // Exclude tests which are known to be flaky in the Travis CI environment
