@@ -295,10 +295,10 @@ subprojects {
     dependsOn testngTests
   }
 
-  // Exclude tests which are known to be flaky in the Travis CI environment
+  // Exclude tests (of testNG) which are known to be flaky in the Travis CI environment
   if (System.getenv('TRAVIS') == 'true' && System.getenv('USER') == 'travis') {
     afterEvaluate {
-      project.tasks.withType(Test).forEach {
+      project.tasks.withType(Test).withName("testngTests").forEach {
         it.options.excludeGroups 'ci-flaky'
         it.systemProperties['test.httpRequestTimeout'] = '20000'
       }
