@@ -1,12 +1,12 @@
 ---
 layout: guide
-title: Use PathSpec in Rest.Li
-permalink: /use_pathspec
-excerpt: Guide for using PathSpec within Rest.li
+title: Rest.Li PathSpecs
+permalink: /pathspec
+excerpt: Rest.Li PathSpecs
 ---
 
-# Use PathSpec in Rest.Li
-- [Use PathSpec in Rest.Li](#use-pathspec-in-restli)
+# Rest.li PathSpecs
+- [Rest.li PathSpecs](#restli-pathspecs)
   - [What is PathSpec](#what-is-pathspec)
   - [Applications](#applications)
     - [Specifying Projections](#specifying-projections)
@@ -90,32 +90,30 @@ You can also invoke [RestliDataValidator](https://github.com/linkedin/rest.li/bl
 
 ## PathSpec Syntax in its string form
 
-PathSpec has been defined as a path to a component within a complex data object path. This provides a way to traverse the Pegasus data object. The abstract data object, in most case, is a form of [DataMap](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/DataMap.java) internally in Rest.li framework, but PathSpec should be meaningful for the same data object in other forms, for example, a json representing the same data object.
+Each PathSpec has a corresponding string form. PathSpec has been defined as a path to a component within a complex data object path. This provides a way to traverse the Pegasus data object. The abstract data object, in most case, is a form of [DataMap](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/DataMap.java) internally in Rest.li framework, but PathSpec should be meaningful for the same data object in other forms, for example, it could provide path reference to a json representing the data object.
 
 The PathSpec string format is represented by separators(`'/'`) and segments in between.
 ```
 /demoRecord/innerRecordField/nestedInnerRecordField
 ```
 
-The path segment could use attribute syntax to carry some meaningful attributes. They attributes could be added following the `&` sign. Users can add any attributes but for some types, there are reserved attributes. For example, for array type, one can specify `start` and `count` attributes and these two attributes are used in specifying projections.
+The path segment could use attribute syntax to carry some meaningful attributes. These attributes added to the string form using '?' and '&' separators. Users can add any attributes but for some types, there are reserved attributes. For example, for array type, one can specify `start` and `count` attributes and these two attributes are used in [specifying projections](/rest.li/Projections#array).
 ```
 /arrayOfIntFieldE?start=0&count=10
 ```
 
-For some collection types, such as maps and arrays, the path segment could also be replaced by the wildcard. A wildcard means that this segment path string can be replaced by any applicable segment string, for example.
+For collection types, such as maps and arrays, the path segment could also be replaced by the wildcard. A wildcard means that this segment path string can be replaced by any applicable segment string, for example.
 ```
 /mapOfRecordField/*/innerRecordField
 ```
 Above examples points to the `innerRecordField` field of the `map` value in a `map` schema. `map` is a collection schema type, here `*` wildcarded its keys.
-
-Each PathSpec has a corresponding string form.
 
 Pegasus schema has defined various kinds of types, the full specification about the supported types can be found from the document [Rest.li Data Schema And Templates](/rest.li/DATA-Data-Schema-and-Templates). There are mainly following supported types in Pegasus and following sections list the example pathspecs.
 
 ### Primitive type fields
 Primitive types includes type such as bytes, string, boolean, double, float, long, int. In the reocrd form, they came with a name to the field in record, so the reference to the primitive types, in most cases are just a PathSpec string which specify the field name of this type. 
 
-For example for a Pegasus pdsc schema file as such
+For example for a Pegasus pdl schema file as such
 ```pdl
 namespace com.linkedin.pegasus.examples
 
@@ -152,7 +150,7 @@ The example PathSpec for above fields in this record example would be
 ### Record type fields
 If a field in a record is of another record type, in this case  you have "nested field", then again the reference for the nested path component is the record's field name, 
 
-For example the above PDSC schema example now hava a record field,
+For example the above PDL schema example now hava a record field,
 
 ```pdl
 namespace com.linkedin.pegasus.examples
@@ -209,7 +207,7 @@ Another common use case is that you want to use wildcard (represented by symbol 
 
 It is worth noting that in Pegasus, the map keys are always of string types.
 
-Here is an concrete example of a record, containing a map field, and that map field's map has value of record type. The example also defines a "recordInlineMap" field for similar demenstration purpose
+Here is an concrete example of a record, containing a map field, and that map field's map has value of record type. The example also defines a "recordInlineMap" field for similar demonstration purpose
 ```pdl
 namespace com.linkedin.pegasus.examples
 
@@ -254,7 +252,7 @@ Then similarly if you are interested in some fields only, you can use wildCard t
 /recordInlineArray/*/f
 ```
 
-One big difference between Array and Map is that in Array, we support reference to the range. It is achieved by specifying attributes aforementioned. 1
+One big difference between Array and Map is that in Array, we support reference to the range. It is achieved by using the 'start' and 'count' attributes.
 
 Say you want to select some elements in within a range in the array, you can do so by using the "start" and "count" attribute, 
 ```
@@ -341,7 +339,7 @@ In this example, the union also contains array and map, and the reference to the
 If the schema defines more than one array or more than one map in the union, they need to have defined alias for each (see Alias usage in next section).
 
 ##### Alias
-Alias are used for refer to types (such as record type) that cannot be directly defined in the field due to same name conflict. Here is an example PDSC with name "AliasTest" in "AliasTest.pdsc"
+Alias are used for refer to types (such as record type) that cannot be directly defined in the field due to same name conflict. Here is an example PDL with name "AliasTest" in "AliasTest.pdl"
 ```pdl
 namespace com.linkedin.pegasus.examples
 
@@ -354,7 +352,7 @@ record AliasTest {
   a2: AliasTest
 }
 ```
-Here the AliasTest2 is an alias for another record with same name "AliasTest" in "AliasTest2.pdsc"
+Here the AliasTest2 is an alias for another record with same name "AliasTest" in "AliasTest2.pdl"
 
 Then here are the PathSpec can be used
 ```
