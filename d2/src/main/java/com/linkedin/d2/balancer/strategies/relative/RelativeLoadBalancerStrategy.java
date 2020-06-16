@@ -32,8 +32,6 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.d2.discovery.util.LogUtil.*;
-
 
 /**
  * This strategy balances traffic to hosts within a service by dynamically adjusting a server's
@@ -50,7 +48,6 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
   private static final Logger LOG = LoggerFactory.getLogger(RelativeLoadBalancerStrategy.class);
   public static final String RELATIVE_LOAD_BALANCER_STRATEGY_NAME = "relative";
 
-  /// We should probably directly use the interface name instead of the Impl name, because we should only access the public methods
   private final StateUpdater _stateUpdater;
   private final ClientSelector _clientSelector;
 
@@ -77,9 +74,7 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
   {
     if (trackerClients == null || trackerClients.size() == 0)
     {
-      warn(LOG,
-          "getTrackerClient called with null/empty trackerClients, so returning null");
-
+      LOG.warn("getTrackerClient called with null/empty trackerClients, so returning null");
       return null;
     }
 

@@ -31,15 +31,21 @@ import javax.annotation.Nullable;
 public interface ClientSelector
 {
   /**
-   * @param request
-   * @param requestContext
-   * @param ring
-   * @param trackerClients
-   * @return
+   * Get the {@link TrackerClient} for this request
+   *
+   * @param request The request to be routed by D2
+   * @param requestContext The request context of the request
+   * @param ring A hash ring of URIs
+   * @param trackerClients A list of server tracker clients to pick
+   * @return The picked server to route the traffic to
    */
   @Nullable
   TrackerClient getTrackerClient(Request request, RequestContext requestContext, Ring<URI> ring,
       Map<URI, TrackerClient> trackerClients);
 
+  /**
+   * Get the hash function of the hash ring
+   * @return The hash function of the hash ring
+   */
   HashFunction<Request> getRequestHashFunction();
 }

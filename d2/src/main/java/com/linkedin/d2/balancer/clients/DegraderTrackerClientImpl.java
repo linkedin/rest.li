@@ -26,7 +26,6 @@ import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
-import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.Degrader;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
@@ -63,7 +62,8 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
                                Clock clock, DegraderImpl.Config config, long interval, Pattern errorStatusPattern,
                                Map<String, Object> uriSpecificProperties)
   {
-    super(uri, partitionDataMap, wrappedClient, clock, interval, errorStatusPattern);
+    super(uri, partitionDataMap, wrappedClient, clock, interval,
+        (status) -> errorStatusPattern.matcher(Integer.toString(status)).matches());
 
     if (config == null)
     {

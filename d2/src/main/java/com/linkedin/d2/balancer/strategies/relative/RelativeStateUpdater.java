@@ -18,7 +18,7 @@ package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.strategies.PartitionLoadBalancerStateListener;
+import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.d2.balancer.strategies.StateUpdater;
 import com.linkedin.d2.balancer.strategies.degrader.DelegatingRingFactory;
 import com.linkedin.d2.balancer.util.hashing.Ring;
@@ -39,8 +39,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.d2.discovery.util.LogUtil.*;
-
 
 /**
  * Update the state of the RelativeLoadBalancerStrategy periodically
@@ -58,14 +56,15 @@ public class RelativeStateUpdater implements StateUpdater
   private final D2RelativeStrategyProperties _relativeStrategyProperties;
   private final QuarantineManager _quarantineManager;
   private final ScheduledExecutorService _executorService;
-  private final List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> _listenerFactories;
+  private final Lock _lock;
+  private final List<PartitionStateUpdateListener.Factory<PartitionState>> _listenerFactories;
 
-  private ConcurrentMap<Integer, PartitionRelativeLoadBalancerState> _partitionLoadBalancerStateMap;
+  private ConcurrentMap<Integer, PartitionState> _partitionLoadBalancerStateMap;
 
   RelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
                        QuarantineManager quarantineManager,
                        ScheduledExecutorService executorService,
-                       List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> listenerFactories)
+                       List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories)
   {
     this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories);
   }
@@ -73,14 +72,15 @@ public class RelativeStateUpdater implements StateUpdater
   RelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
       QuarantineManager quarantineManager,
       ScheduledExecutorService executorService,
-      ConcurrentMap<Integer, PartitionRelativeLoadBalancerState> partitionLoadBalancerStateMap,
-      List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> listenerFactories)
+      ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap,
+      List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories)
   {
     _relativeStrategyProperties = relativeStrategyProperties;
     _quarantineManager = quarantineManager;
     _executorService = executorService;
     _listenerFactories = listenerFactories;
     _partitionLoadBalancerStateMap = partitionLoadBalancerStateMap;
+    _lock = new ReentrantLock();
 
     _executorService.scheduleWithFixedDelay((Runnable) this::updateState, EXECUTOR_INITIAL_DELAY,
         _relativeStrategyProperties.getUpdateIntervalMs(), TimeUnit.MILLISECONDS);
@@ -93,10 +93,11 @@ public class RelativeStateUpdater implements StateUpdater
     {
       // If the partition is not initialized, initialize the state synchronously
       initializePartition(trackerClients, partitionId, clusterGenerationId);
-    } else if (clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
+    }
+    else if (clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
     {
       // Asynchronously update the state if it is from uri properties change
-      PartitionRelativeLoadBalancerState oldPartitionState = _partitionLoadBalancerStateMap.get(partitionId);
+      PartitionState oldPartitionState = _partitionLoadBalancerStateMap.get(partitionId);
       _executorService.execute(() -> updateStateForPartition(trackerClients, partitionId, oldPartitionState, clusterGenerationId));
     }
   }
@@ -125,8 +126,9 @@ public class RelativeStateUpdater implements StateUpdater
     // Update state for each partition
     for (Integer partitionId : _partitionLoadBalancerStateMap.keySet())
     {
-      PartitionRelativeLoadBalancerState partitionState = _partitionLoadBalancerStateMap.get(partitionId);
-      if (partitionState != null) {
+      PartitionState partitionState = _partitionLoadBalancerStateMap.get(partitionId);
+      if (partitionState != null)
+      {
         updateStateForPartition(partitionState.getTrackerClients(), partitionId, partitionState, null);
       }
     }
@@ -136,10 +138,10 @@ public class RelativeStateUpdater implements StateUpdater
    * Update the partition state when there is a cluster uris change.
    */
   void updateStateForPartition(Set<TrackerClient> trackerClients, int partitionId,
-      PartitionRelativeLoadBalancerState oldPartitionState, Long clusterGenerationId)
+      PartitionState oldPartitionState, Long clusterGenerationId)
   {
-    debug(LOG, "Updating for partition: " + partitionId + ", state: " + oldPartitionState);
-    PartitionRelativeLoadBalancerState newPartitionState = oldPartitionState.copy();
+    LOG.debug("Updating for partition: " + partitionId + ", state: " + oldPartitionState);
+    PartitionState newPartitionState = oldPartitionState.copy();
 
     // Step 1: Update the base health scores for each {@link TrackerClient} in the cluster
     Map<TrackerClient, CallTracker.CallStats> latestCallStatsMap = new HashMap<>();
@@ -163,7 +165,7 @@ public class RelativeStateUpdater implements StateUpdater
     // Step 4: Log and emit monitor event
     _executorService.execute(() -> {
       logState(oldPartitionState, newPartitionState, partitionId);
-      emitMonitorEvents(newPartitionState);
+      notifyPartitionStateUpdateListener(newPartitionState);
     });
   }
 
@@ -172,14 +174,14 @@ public class RelativeStateUpdater implements StateUpdater
    * @param trackerClients All the tracker clients in this cluster
    */
   private void updateHealthScoreAndState(Set<TrackerClient> trackerClients,
-      PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState, long clusterAvgLatency,
+      PartitionState partitionState, long clusterAvgLatency,
       Long clusterGenerationId, Map<TrackerClient, CallTracker.CallStats> lastCallStatsMap)
   {
     // Calculate the base health score before we override them when handling the quarantine and recovery
-    calculateBaseHealthScore(trackerClients, partitionRelativeLoadBalancerState, clusterAvgLatency, lastCallStatsMap);
+    calculateBaseHealthScore(trackerClients, partitionState, clusterAvgLatency, lastCallStatsMap);
 
     // Remove the trackerClients from original map if there is any change in uri list
-    Map<TrackerClient, TrackerClientState> trackerClientStateMap = partitionRelativeLoadBalancerState.getTrackerClientStateMap();
+    Map<TrackerClient, TrackerClientState> trackerClientStateMap = partitionState.getTrackerClientStateMap();
     if (clusterGenerationId != null)
     {
       List<TrackerClient> trackerClientsToRemove = trackerClientStateMap.keySet().stream()
@@ -187,15 +189,15 @@ public class RelativeStateUpdater implements StateUpdater
           .collect(Collectors.toList());
       for (TrackerClient trackerClient : trackerClientsToRemove)
       {
-        partitionRelativeLoadBalancerState.removeTrackerClient(trackerClient);
+        partitionState.removeTrackerClient(trackerClient);
       }
     }
   }
 
-  private void calculateBaseHealthScore(Set<TrackerClient> trackerClients, PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState,
+  private void calculateBaseHealthScore(Set<TrackerClient> trackerClients, PartitionState partitionState,
       long avgClusterLatency, Map<TrackerClient, CallTracker.CallStats> lastCallStatsMap)
   {
-    Map<TrackerClient, TrackerClientState> trackerClientStateMap = partitionRelativeLoadBalancerState.getTrackerClientStateMap();
+    Map<TrackerClient, TrackerClientState> trackerClientStateMap = partitionState.getTrackerClientStateMap();
 
     // Update health score
     long clusterCallCount = 0;
@@ -231,25 +233,29 @@ public class RelativeStateUpdater implements StateUpdater
             newHealthScore = oldHealthScore > MIN_HEALTH_SCORE
                 ? Math.min(MAX_HEALTH_SCORE, SLOW_START_RECOVERY_FACTOR * oldHealthScore)
                 : SLOW_START_INITIAL_HEALTH_SCORE;
-          } else {
+          }
+          else
+          {
             // If slow start is not enabled, we just increase the health score by up step
             newHealthScore = Math.min(MAX_HEALTH_SCORE, oldHealthScore + _relativeStrategyProperties.getUpStep());
           }
           trackerClientState.setHealthState(TrackerClientState.HealthState.HEALTHY);
-        } else
+        }
+        else
         {
           trackerClientState.setHealthState(TrackerClientState.HealthState.NEUTRAL);
         }
         trackerClientState.setHealthScore(newHealthScore);
         trackerClientState.setCallCount(callCount);
-      } else
+      }
+      else
       {
         // If it is a new client, we directly set health score as the initial health score to initialize
         trackerClientStateMap.put(trackerClient, new TrackerClientState(_relativeStrategyProperties.getInitialHealthScore(),
             _relativeStrategyProperties.getMinCallCount()));
       }
     }
-    partitionRelativeLoadBalancerState.setPartitionStats(avgClusterLatency, clusterCallCount, clusterErrorCount);
+    partitionState.setPartitionStats(avgClusterLatency, clusterCallCount, clusterErrorCount);
   }
 
   private long getAvgClusterLatency(Set<TrackerClient> trackerClients, Map<TrackerClient, CallTracker.CallStats> latestCallStatsMap)
@@ -311,7 +317,7 @@ public class RelativeStateUpdater implements StateUpdater
         || errorRate <= _relativeStrategyProperties.getLowErrorRate());
   }
 
-  private void emitMonitorEvents(PartitionRelativeLoadBalancerState state)
+  private void notifyPartitionStateUpdateListener(PartitionState state)
   {
     state.getListeners().forEach(listener -> listener.onUpdate(state));
   }
@@ -329,26 +335,29 @@ public class RelativeStateUpdater implements StateUpdater
 
   private void initializePartition(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId)
   {
-    Lock lock = new ReentrantLock();
-    PartitionRelativeLoadBalancerState partitionRelativeLoadBalancerState = new PartitionRelativeLoadBalancerState(partitionId,
+    PartitionState partitionState = new PartitionState(partitionId,
             new DelegatingRingFactory<>(_relativeStrategyProperties.getRingProperties()),
-            _relativeStrategyProperties.getRingProperties().getPointsPerWeight(), lock,
+            _relativeStrategyProperties.getRingProperties().getPointsPerWeight(),
             _listenerFactories.stream().map(factory -> factory.create(partitionId)).collect(Collectors.toList()));
 
-    partitionRelativeLoadBalancerState.getLock().lock();
-    try {
-      if (!_partitionLoadBalancerStateMap.containsKey(partitionId)) {
-        updateStateForPartition(trackerClients, partitionId, partitionRelativeLoadBalancerState, clusterGenerationId);
-      }
-    } finally
+    _lock.lock();
+    try
     {
-      partitionRelativeLoadBalancerState.getLock().unlock();
+      if (!_partitionLoadBalancerStateMap.containsKey(partitionId))
+      {
+        updateStateForPartition(trackerClients, partitionId, partitionState, clusterGenerationId);
+      }
+    }
+    finally
+    {
+      _lock.unlock();
     }
   }
 
-  private static void logState(PartitionRelativeLoadBalancerState oldState,
-      PartitionRelativeLoadBalancerState newState,
-      int partitionId) {
+  private static void logState(PartitionState oldState,
+      PartitionState newState,
+      int partitionId)
+  {
     Map<TrackerClient, TrackerClientState> newTrackerClientStateMap = newState.getTrackerClientStateMap();
     Map<TrackerClient, TrackerClientState> oldTrackerClientStateMap = oldState.getTrackerClientStateMap();
     Set<TrackerClient> newUnhealthyClients = newTrackerClientStateMap.keySet().stream()
@@ -358,11 +367,14 @@ public class RelativeStateUpdater implements StateUpdater
         .filter(trackerClient -> oldTrackerClientStateMap.get(trackerClient).getHealthScore() < MAX_HEALTH_SCORE)
         .collect(Collectors.toSet());
 
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled())
+    {
       LOG.debug("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", unhealthyClients = ["
           + (newUnhealthyClients.stream().map(client -> getClientStats(client, newTrackerClientStateMap))
           .collect(Collectors.joining(","))) + "]");
-    } else if (allowToLog(oldState, newState, newUnhealthyClients, oldUnhealthyClients)) {
+    }
+    else if (allowToLog(oldState, newState, newUnhealthyClients, oldUnhealthyClients))
+    {
       LOG.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", unhealthyClients = ["
           + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
           .map(client -> getClientStats(client, newTrackerClientStateMap)).collect(Collectors.joining(",")))
@@ -371,15 +383,17 @@ public class RelativeStateUpdater implements StateUpdater
     }
   }
 
-  private static boolean allowToLog(PartitionRelativeLoadBalancerState oldState, PartitionRelativeLoadBalancerState newState,
+  private static boolean allowToLog(PartitionState oldState, PartitionState newState,
       Set<TrackerClient> newUnhealthyClients, Set<TrackerClient> oldUnhealthyClients)
   {
-    // if host number changes
-    if (oldState.getPointsMap().size() != newState.getPointsMap().size())
+    for (URI uri : newState.getPointsMap().keySet())
     {
-      return true;
+      if (!oldState.getPointsMap().containsKey(uri))
+      {
+        return true;
+      }
     }
-    // if the unhealthy client changes
+
     for (TrackerClient client : newUnhealthyClients)
     {
       if (!oldUnhealthyClients.contains(client))
@@ -387,9 +401,23 @@ public class RelativeStateUpdater implements StateUpdater
         return true;
       }
     }
-    // if hosts number changes in recoveryMap or quarantineMap
-    return oldState.getRecoveryTrackerClients().size() != newState.getRecoveryTrackerClients().size()
-        || oldState.getQuarantineMap().size() != newState.getQuarantineMap().size();
+
+    for (TrackerClient trackerClient : newState.getRecoveryTrackerClients())
+    {
+      if (!oldState.getRecoveryTrackerClients().contains(trackerClient))
+      {
+        return true;
+      }
+    }
+
+    for (TrackerClient trackerClient : newState.getQuarantineMap().keySet())
+    {
+      if (!oldState.getQuarantineMap().containsKey(trackerClient))
+      {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static String getClientStats(TrackerClient client, Map<TrackerClient, TrackerClientState> trackerClientStateMap)

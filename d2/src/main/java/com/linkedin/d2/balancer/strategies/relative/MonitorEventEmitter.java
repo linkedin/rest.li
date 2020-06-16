@@ -17,23 +17,23 @@ package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.balancer.event.D2MonitorEventEmitter;
 import com.linkedin.d2.balancer.event.EventEmitter;
-import com.linkedin.d2.balancer.strategies.PartitionLoadBalancerStateListener;
+import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.util.clock.Clock;
 
 
 /**
  * Adapter for emitting D2 events from {@link RelativeStateUpdater}.
  */
-public class RelativeLoadBalancerMonitorEventEmitter implements PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>
+public class MonitorEventEmitter implements PartitionStateUpdateListener<PartitionState>
 {
   private final D2MonitorEventEmitter _d2MonitorEventEmitter;
 
-  public RelativeLoadBalancerMonitorEventEmitter(D2MonitorEventEmitter d2MonitorEventEmitter)
+  public MonitorEventEmitter(D2MonitorEventEmitter d2MonitorEventEmitter)
   {
     _d2MonitorEventEmitter = d2MonitorEventEmitter;
   }
 
-  public void onUpdate(PartitionRelativeLoadBalancerState state)
+  public void onUpdate(PartitionState state)
   {
     // Please note that cluster level drop is deprecated in the relative load balancer, so there is no cluster level dropped calls and drop level
     _d2MonitorEventEmitter.emitEvent(new D2MonitorEventEmitter.ClusterStatsProvider(state.getPointsMap(),
@@ -41,12 +41,12 @@ public class RelativeLoadBalancerMonitorEventEmitter implements PartitionLoadBal
                                                                                     state.getTrackerClients(),
                                                                                     state.getPartitionStats().getClusterCallCount(),
                                                                                     state.getPartitionStats().getAvgClusterLatency(),
-                                                                                    0,
+                                                                                    -1,
                                                                                     state.getPartitionStats().getClusterErrorCount(),
-                                                                                    0));
+                                                                                    -1));
   }
 
-  public static class Factory implements PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>
+  public static class Factory implements PartitionStateUpdateListener.Factory<PartitionState>
   {
     private final String _serviceName;
     private final String _clusterName;
@@ -67,7 +67,7 @@ public class RelativeLoadBalancerMonitorEventEmitter implements PartitionLoadBal
     }
 
     @Override
-    public RelativeLoadBalancerMonitorEventEmitter create(int partitionId)
+    public MonitorEventEmitter create(int partitionId)
     {
       D2MonitorEventEmitter d2MonitorEventEmitter = new D2MonitorEventEmitter(_clusterName,
                                                                               _serviceName,
@@ -76,7 +76,7 @@ public class RelativeLoadBalancerMonitorEventEmitter implements PartitionLoadBal
                                                                               _eventEmitter,
                                                                               _emitIntervalMs,
                                                                               _pointsPerWeight);
-      return new RelativeLoadBalancerMonitorEventEmitter(d2MonitorEventEmitter);
+      return new MonitorEventEmitter(d2MonitorEventEmitter);
     }
   }
 }

@@ -37,7 +37,7 @@ public class QuarantineManagerTest {
   public void testQuarantineNotEnabledInConfig() throws URISyntaxException {
     Mocks mocks = new Mocks(RelativeLoadBalancerStrategyFactory.DEFAULT_QUARANTINE_MAX_PERCENT, false, false);
 
-    PartitionRelativeLoadBalancerState state = new PartitionRelativeLoadBalancerStateDataBuilder(RING_FACTORY)
+    PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
         .setTrackerClientStateMap(TrackerClientMockHelper.mockTrackerClients(2), Arrays.asList(0.0, 0.6),
             Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
             Arrays.asList(20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
@@ -56,7 +56,7 @@ public class QuarantineManagerTest {
     mocks._quarantineManager.tryEnableQuarantine();
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2);
-    PartitionRelativeLoadBalancerState state = new PartitionRelativeLoadBalancerStateDataBuilder(RING_FACTORY)
+    PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
         .setTrackerClientStateMap(trackerClients, Arrays.asList(0.0, 0.6),
             Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
             Arrays.asList(20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
@@ -76,7 +76,7 @@ public class QuarantineManagerTest {
     mocks._quarantineManager.tryEnableQuarantine();
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(4);
-    PartitionRelativeLoadBalancerState state = new PartitionRelativeLoadBalancerStateDataBuilder(RING_FACTORY)
+    PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
         .setTrackerClientStateMap(trackerClients, Arrays.asList(0.0, 0.0, 0.0, 0.6),
             Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY,
                 TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
@@ -99,7 +99,7 @@ public class QuarantineManagerTest {
     existingQuarantineMap.put(trackerClients.get(0), quarantine);
     Mockito.when(quarantine.checkUpdateQuarantineState()).thenReturn(quarantineCheckResult);
 
-    PartitionRelativeLoadBalancerState state = new PartitionRelativeLoadBalancerStateDataBuilder(RING_FACTORY)
+    PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
         .setTrackerClientStateMap(trackerClients, Arrays.asList(0.0, 0.6, 0.6),
             Arrays.asList(NEUTRAL, TrackerClientState.HealthState.UNHEALTHY,
                 TrackerClientState.HealthState.UNHEALTHY),
@@ -144,7 +144,7 @@ public class QuarantineManagerTest {
     Set<TrackerClient> recoverySet = new HashSet<>();
     recoverySet.add(trackerClients.get(0));
 
-    PartitionRelativeLoadBalancerState state = new PartitionRelativeLoadBalancerStateDataBuilder(RING_FACTORY)
+    PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
         .setTrackerClientStateMap(trackerClients, Arrays.asList(healthScore, 0.6, 0.6),
             Arrays.asList(healthState, TrackerClientState.HealthState.UNHEALTHY,
                 TrackerClientState.HealthState.UNHEALTHY),
@@ -193,11 +193,11 @@ public class QuarantineManagerTest {
     mocks._quarantineManager.tryEnableQuarantine();
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2);
-    PartitionRelativeLoadBalancerState oldState = new PartitionRelativeLoadBalancerStateDataBuilder(RING_FACTORY)
+    PartitionState oldState = new PartitionStateDataBuilder(RING_FACTORY)
         .setTrackerClientStateMap(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
             Collections.emptyList(), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT).build();
-    PartitionRelativeLoadBalancerState newState = new PartitionRelativeLoadBalancerStateDataBuilder(RING_FACTORY)
+    PartitionState newState = new PartitionStateDataBuilder(RING_FACTORY)
         .setTrackerClientStateMap(trackerClients, Arrays.asList(0.01, 0.01),
             Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
             Arrays.asList(20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
@@ -236,7 +236,7 @@ public class QuarantineManagerTest {
     QuarantineManager quarantineManager = mocks._quarantineManager;
     mocks._quarantineManager.tryEnableQuarantine();
 
-    PartitionRelativeLoadBalancerState state = new PartitionRelativeLoadBalancerStateDataBuilder(RING_FACTORY)
+    PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
         .setTrackerClientStateMap(trackerClients, Arrays.asList(0.0, 0.0, 0.01),
             Arrays.asList(UNHEALTHY, NEUTRAL, UNHEALTHY),
             Arrays.asList(20, 20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,

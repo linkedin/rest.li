@@ -16,26 +16,24 @@
 
 package com.linkedin.d2.balancer.strategies;
 
-import com.linkedin.d2.balancer.strategies.relative.PartitionRelativeLoadBalancerState;
-
 
 /**
- * The listener that listens to the change of a partition in relative load balancer
+ * The listener that listens to the change of a partition in the load balancer
  */
-public interface PartitionLoadBalancerStateListener<T>
+public interface PartitionStateUpdateListener<T>
 {
   void onUpdate(T state);
 
   /**
-   * Creates an instance of {@link PartitionLoadBalancerStateListener} with a given partition ID.
+   * Creates an instance of {@link PartitionStateUpdateListener} with a given partition ID.
    */
   interface Factory<T>
   {
     /**
-     * Creates an instance of {@link PartitionLoadBalancerStateListener}.
-     * @param partitionId Paritition ID
-     * @return An instance of {@link PartitionLoadBalancerStateListener} with the partition ID.
+     * Creates an instance of {@link PartitionStateUpdateListener}.
+     * @param partitionId Partition ID
+     * @return An instance of {@link PartitionStateUpdateListener} with the partition ID.
      */
-    PartitionLoadBalancerStateListener<T> create(int partitionId);
+    PartitionStateUpdateListener<T> create(int partitionId);
   }
 }

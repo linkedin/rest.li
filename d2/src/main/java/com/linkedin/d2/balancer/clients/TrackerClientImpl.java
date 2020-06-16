@@ -19,7 +19,6 @@ package com.linkedin.d2.balancer.clients;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
-import com.linkedin.d2.HttpStatusCodeRange;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
@@ -52,11 +51,13 @@ import java.util.List;
 import java.util.Map;
 
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.d2.discovery.util.LogUtil.debug;
+import static com.linkedin.d2.discovery.util.LogUtil.*;
+
 
 /**
  * Default {@link TrackerClient} implementation.
@@ -65,8 +66,6 @@ public class TrackerClientImpl implements TrackerClient
 {
   public static final String DEFAULT_ERROR_STATUS_REGEX = "(5..)";
   public static final Pattern DEFAULT_ERROR_STATUS_PATTERN = Pattern.compile(DEFAULT_ERROR_STATUS_REGEX);
-  public static final List<HttpStatusCodeRange> DEFAULT_ERROR_STATUS_RANGES = Arrays.asList(new HttpStatusCodeRange()
-      .setLowerBound(500).setUpperBound(599));
   public static final long DEFAULT_CALL_TRACKER_INTERVAL = DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS;
 
   private static final Logger _log = LoggerFactory.getLogger(TrackerClient.class);
@@ -74,36 +73,18 @@ public class TrackerClientImpl implements TrackerClient
   private final TransportClient _transportClient;
   private final Map<Integer, PartitionData> _partitionData;
   private final URI _uri;
-  private final Pattern _errorStatusPattern;
-  private final List<HttpStatusCodeRange> _errorStatusRanges;
+  private final ErrorStatusMatch _errorStatusMatch;
   final CallTracker _callTracker;
 
   private volatile CallTracker.CallStats _latestCallStats;
 
   public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
-                           Clock clock, long interval, Pattern errorStatusPattern)
+      Clock clock, long interval, ErrorStatusMatch errorStatusMatch)
   {
     _uri = uri;
     _transportClient = transportClient;
     _callTracker = new CallTrackerImpl(interval, clock);
-    _errorStatusPattern = errorStatusPattern;
-    _errorStatusRanges = null;
-    _partitionData = Collections.unmodifiableMap(partitionDataMap);
-    _latestCallStats = _callTracker.getCallStats();
-
-    _callTracker.addStatsRolloverEventListener(event -> _latestCallStats = event.getCallStats());
-
-    debug(_log, "created tracker client: ", this);
-  }
-
-  public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
-      Clock clock, long interval, List<HttpStatusCodeRange> errorStatusRanges)
-  {
-    _uri = uri;
-    _transportClient = transportClient;
-    _callTracker = new CallTrackerImpl(interval, clock);
-    _errorStatusRanges = errorStatusRanges;
-    _errorStatusPattern = null;
+    _errorStatusMatch = errorStatusMatch;
     _partitionData = Collections.unmodifiableMap(partitionDataMap);
     _latestCallStats = _callTracker.getCallStats();
 
@@ -309,7 +290,7 @@ public class TrackerClientImpl implements TrackerClient
       RestException restException = (RestException) throwable;
       if (restException.getResponse() != null)
       {
-        return matchErrorStatus(restException.getResponse().getStatus());
+        return _errorStatusMatch.isError(restException.getResponse().getStatus());
       }
     }
     else if (throwable instanceof StreamException)
@@ -317,24 +298,13 @@ public class TrackerClientImpl implements TrackerClient
       StreamException streamException = (StreamException) throwable;
       if (streamException.getResponse() != null)
       {
-        return matchErrorStatus(streamException.getResponse().getStatus());
+        return _errorStatusMatch.isError(streamException.getResponse().getStatus());
       }
     }
     return false;
   }
 
-  private boolean matchErrorStatus(int status) {
-    if (_errorStatusRanges != null)
-    {
-      for(HttpStatusCodeRange statusCodeRange : _errorStatusRanges)
-      {
-        if (status >= statusCodeRange.getLowerBound() && status <= statusCodeRange.getUpperBound())
-        {
-          return true;
-        }
-      }
-      return false;
-    }
-    return _errorStatusPattern.matcher(Integer.toString(status)).matches();
+  public interface ErrorStatusMatch {
+    boolean isError(int status);
   }
 }

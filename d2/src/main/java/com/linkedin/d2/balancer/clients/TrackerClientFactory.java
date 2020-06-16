@@ -13,12 +13,12 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
 package com.linkedin.d2.balancer.clients;
 
 import com.linkedin.d2.HttpStatusCodeRange;
-import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -180,7 +180,7 @@ public class TrackerClientFactory
     if (serviceProperties.getRelativeStrategyProperties() == null
         || serviceProperties.getRelativeStrategyProperties().getErrorStatusFilter() == null)
     {
-      return TrackerClientImpl.DEFAULT_ERROR_STATUS_RANGES;
+      return RelativeLoadBalancerStrategyFactory.DEFAULT_ERROR_STATUS_FILTER;
     }
     return serviceProperties.getRelativeStrategyProperties().getErrorStatusFilter();
   }
@@ -192,11 +192,21 @@ public class TrackerClientFactory
                                                            TransportClient transportClient,
                                                            Clock clock)
   {
+    TrackerClientImpl.ErrorStatusMatch errorStatusRangeMatch = (status) -> {
+      for(HttpStatusCodeRange statusCodeRange : getErrorStatusRanges(serviceProperties))
+      {
+        if (status >= statusCodeRange.getLowerBound() && status <= statusCodeRange.getUpperBound())
+        {
+          return true;
+        }
+      }
+      return false;
+    };
     return new TrackerClientImpl(uri,
                                  uriProperties.getPartitionDataMap(uri),
                                  transportClient,
                                  clock,
                                  getInterval(loadBalancerStrategyName, serviceProperties),
-                                 getErrorStatusRanges(serviceProperties));
+                                 errorStatusRangeMatch);
   }
 }

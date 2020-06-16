@@ -29,7 +29,7 @@ import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.event.NoopEventEmitter;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
-import com.linkedin.d2.balancer.strategies.PartitionLoadBalancerStateListener;
+import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
@@ -53,13 +53,13 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   public static final double DEFAULT_INITIAL_HEALTH_SCORE = 1.0;
   public static final double DEFAULT_SLOW_START_THRESHOLD = 0.0;
   public static final double DEFAULT_RELATIVE_LATENCY_LOW_THRESHOLD_FACTOR = 1.1;
+  public static final HttpStatusCodeRangeArray DEFAULT_ERROR_STATUS_FILTER =
+      new HttpStatusCodeRangeArray(new HttpStatusCodeRange().setLowerBound(500).setUpperBound(599));
   private static final double DEFAULT_UP_STEP = 0.05;
   private static final double DEFAULT_DOWN_STEP = 0.2;
-  private static final double DEFAULT_RELATIVE_LATENCY_HIGH_THRESHOLD_FACTOR = 1.2;
+  private static final double DEFAULT_RELATIVE_LATENCY_HIGH_THRESHOLD_FACTOR = 1.3;
   private static final double DEFAULT_HIGH_ERROR_RATE = 1.1;
   private static final double DEFAULT_LOW_ERROR_RATE = 1.1;
-  private static final HttpStatusCodeRangeArray DEFAULT_ERROR_STATUS_FILTER =
-      new HttpStatusCodeRangeArray(new HttpStatusCodeRange().setLowerBound(500).setUpperBound(599));
   private static final long DEFAULT_EMITTING_INTERVAL_MS = 0L;
   private static final boolean DEFAULT_ENABLE_FAST_RECOVERY = false;
   // Default quarantine properties
@@ -71,12 +71,12 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
 
   private final ScheduledExecutorService _executorService;
   private final HealthCheckOperations _healthCheckOperations;
-  private final List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> _stateListenerFactories;
+  private final List<PartitionStateUpdateListener.Factory<PartitionState>> _stateListenerFactories;
   private final EventEmitter _eventEmitter;
   private final Clock _clock;
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
-      List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> stateListenerFactories, EventEmitter eventEmitter)
+      List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter)
   {
     _executorService = executorService;
     _healthCheckOperations = healthCheckOperations;
@@ -101,8 +101,8 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
       String serviceName, String clusterName, String servicePath)
   {
     QuarantineManager quarantineManager = getQuarantineManager(relativeStrategyProperties, serviceName, servicePath);
-    final List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> listenerFactories = new ArrayList<>();
-    listenerFactories.add(new RelativeLoadBalancerMonitorEventEmitter.Factory(serviceName, clusterName, _clock,
+    final List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories = new ArrayList<>();
+    listenerFactories.add(new MonitorEventEmitter.Factory(serviceName, clusterName, _clock,
         relativeStrategyProperties.getEmittingIntervalMs(),
         relativeStrategyProperties.getRingProperties().getPointsPerWeight(), _eventEmitter));
     if (_stateListenerFactories != null)
@@ -128,10 +128,12 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
 
   private HashFunction<Request> getRequestHashFunction(D2RelativeStrategyProperties relativeStrategyProperties)
   {
-    if (relativeStrategyProperties.hasRingProperties() && relativeStrategyProperties.getRingProperties().hasHashConfig()) {
+    if (relativeStrategyProperties.hasRingProperties() && relativeStrategyProperties.getRingProperties().hasHashConfig())
+    {
       HashMethod hashMethod = relativeStrategyProperties.getRingProperties().getHashMethod();
       HashConfig hashConfig = relativeStrategyProperties.getRingProperties().getHashConfig();
-      switch (hashMethod) {
+      switch (hashMethod)
+      {
         case URI_REGEX:
           return new URIRegexHash(RelativeStrategyPropertiesConverter.convertHashConfigToMap(hashConfig));
         case RANDOM:

@@ -2,7 +2,7 @@ package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.strategies.PartitionLoadBalancerStateListener;
+import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.d2.balancer.strategies.degrader.DistributionNonDiscreteRingFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -50,13 +50,13 @@ public class RelativeStateUpdaterTest
   @Test
   public void testClusterGenerationIdChange() throws URISyntaxException
   {
-    PartitionRelativeLoadBalancerState state = new PartitionRelativeLoadBalancerStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
+    PartitionState state = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
         .build();
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
         Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0));
 
-    ConcurrentMap<Integer, PartitionRelativeLoadBalancerState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
     Mocks mocks = new Mocks(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap,
         Collections.emptyList());
@@ -73,14 +73,14 @@ public class RelativeStateUpdaterTest
         Arrays.asList(20, 20, 20), Arrays.asList(10, 10, 10), Arrays.asList(200L, 300L, 1000L),
         Arrays.asList(100L, 200L, 500L), Arrays.asList(0, 0, 0));
 
-    PartitionRelativeLoadBalancerState state = new PartitionRelativeLoadBalancerStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
+    PartitionState state = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
         .setTrackerClientStateMap(trackerClients, Arrays.asList(1.0, 1.0, 1.0), Arrays.asList(HEALTHY, HEALTHY, HEALTHY),
             Arrays.asList(30, 30, 30), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .build();
 
-    ConcurrentMap<Integer, PartitionRelativeLoadBalancerState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
     Mocks mocks = new Mocks(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap,
         Collections.emptyList());
@@ -111,20 +111,20 @@ public class RelativeStateUpdaterTest
         Arrays.asList(600L), Arrays.asList(0));
     trackerClients2.add(trackerClients1.get(2));
 
-    PartitionRelativeLoadBalancerState state1 = new PartitionRelativeLoadBalancerStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
+    PartitionState state1 = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
         .setTrackerClientStateMap(trackerClients1, Arrays.asList(1.0, 1.0, 1.0), Arrays.asList(HEALTHY, HEALTHY, HEALTHY),
             Arrays.asList(30, 30, 30), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .build();
-    PartitionRelativeLoadBalancerState state2 = new PartitionRelativeLoadBalancerStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
+    PartitionState state2 = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
         .setTrackerClientStateMap(trackerClients2, Arrays.asList(1.0, 1.0), Arrays.asList(HEALTHY, HEALTHY),
             Arrays.asList(30, 30), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .build();
 
-    ConcurrentMap<Integer, PartitionRelativeLoadBalancerState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(0, state1);
     partitionLoadBalancerStateMap.put(1, state2);
     Mocks mocks = new Mocks(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap,
@@ -145,14 +145,14 @@ public class RelativeStateUpdaterTest
         Arrays.asList(20, 20, 20), Arrays.asList(10, 10, 10), Arrays.asList(200L, 220L, 1000L),
         Arrays.asList(100L, 110L, 500L), Arrays.asList(0, 0, 0));
 
-    PartitionRelativeLoadBalancerState state = new PartitionRelativeLoadBalancerStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
+    PartitionState state = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
         .setTrackerClientStateMap(trackerClients, Arrays.asList(1.0, 1.0, 1.0), Arrays.asList(HEALTHY, HEALTHY, HEALTHY),
             Arrays.asList(30, 30, 30), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .build();
 
-    ConcurrentMap<Integer, PartitionRelativeLoadBalancerState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
     Mocks mocks = new Mocks(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap,
         Collections.emptyList());
@@ -174,14 +174,14 @@ public class RelativeStateUpdaterTest
   public void testHealthScoreDropByLatency(List<TrackerClient> trackerClients, double highLatencyFactor,
       double highErrorRate, boolean expectToDropHealthScore)
   {
-    PartitionRelativeLoadBalancerState state = new PartitionRelativeLoadBalancerStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
+    PartitionState state = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
         .setTrackerClientStateMap(trackerClients, Arrays.asList(1.0, 1.0, 1.0), Arrays.asList(HEALTHY, HEALTHY, HEALTHY),
             Arrays.asList(30, 30, 30), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .build();
 
-    ConcurrentMap<Integer, PartitionRelativeLoadBalancerState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
     Mocks mocks = new Mocks(new D2RelativeStrategyProperties()
             .setRelativeLatencyHighThresholdFactor(highLatencyFactor).setHighErrorRate(highErrorRate),
@@ -247,13 +247,13 @@ public class RelativeStateUpdaterTest
         Arrays.asList(5, 20, 20), Arrays.asList(0, 0, 0), Arrays.asList(1000L, 300L, 300L),
         Arrays.asList(100L, 200L, 200L), Arrays.asList(0, 0, 0));
 
-    PartitionRelativeLoadBalancerState state = new PartitionRelativeLoadBalancerStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
+    PartitionState state = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
         .setTrackerClientStateMap(trackerClients, Arrays.asList(1.0, 1.0, 1.0), Arrays.asList(HEALTHY, HEALTHY, HEALTHY),
             Arrays.asList(5, 20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE, minCallCount)
         .build();
 
-    ConcurrentMap<Integer, PartitionRelativeLoadBalancerState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
     Mocks mocks = new Mocks(new D2RelativeStrategyProperties().setMinCallCount(minCallCount),
         partitionLoadBalancerStateMap, Collections.emptyList());
@@ -273,14 +273,14 @@ public class RelativeStateUpdaterTest
         Arrays.asList(20, 20, 20), Arrays.asList(0, 0, 0), Arrays.asList(300L, 300L, 300L),
         Arrays.asList(200L, 200L, 200L), Arrays.asList(0, 0, 0));
 
-    PartitionRelativeLoadBalancerState state = new PartitionRelativeLoadBalancerStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
+    PartitionState state = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
         .setTrackerClientStateMap(trackerClients, Arrays.asList(currentHealthScore, 1.0, 1.0), Arrays.asList(UNHEALTHY, HEALTHY, HEALTHY),
             Arrays.asList(20, 20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .build();
 
-    ConcurrentMap<Integer, PartitionRelativeLoadBalancerState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
     Mocks mocks = new Mocks(new D2RelativeStrategyProperties().setSlowStartThreshold(slowStartThreshold),
         partitionLoadBalancerStateMap, Collections.emptyList());
@@ -331,11 +331,11 @@ public class RelativeStateUpdaterTest
     private final RelativeStateUpdater _relativeStateUpdater;
 
     private Mocks(D2RelativeStrategyProperties relativeStrategyProperties,
-        ConcurrentMap<Integer, PartitionRelativeLoadBalancerState> partitionLoadBalancerStateMap,
-        List<PartitionLoadBalancerStateListener.Factory<PartitionRelativeLoadBalancerState>> listenerFactories)
+        ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap,
+        List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories)
     {
       RelativeLoadBalancerStrategyFactory.putDefaultValues(relativeStrategyProperties);
-      Mockito.doNothing().when(_quarantineManager).updateQuarantineState(any(PartitionRelativeLoadBalancerState.class), any(PartitionRelativeLoadBalancerState.class),
+      Mockito.doNothing().when(_quarantineManager).updateQuarantineState(any(PartitionState.class), any(PartitionState.class),
           anyLong());
 
       _relativeStateUpdater = new RelativeStateUpdater(relativeStrategyProperties, _quarantineManager, _executorService,

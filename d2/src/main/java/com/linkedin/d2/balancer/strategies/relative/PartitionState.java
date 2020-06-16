@@ -17,10 +17,11 @@
 package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.strategies.PartitionLoadBalancerStateListener;
+import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.d2.balancer.strategies.degrader.LoadBalancerQuarantine;
 import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
 import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.util.degrader.CallTracker;
 import java.net.URI;
 import java.util.Collections;
@@ -29,36 +30,33 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 
 /**
- * Each partitionLoadBalancerState corresponds to a partition for a particular service
- * It keeps the tracker clients and the ring for the partition
+ * Each {@link PartitionState} corresponds to a partition for a particular service in the relative load balancer
+ * It keeps the tracker clients and the ring of the partition
  */
-public class PartitionRelativeLoadBalancerState
+public class PartitionState
 {
   private final int _partitionId;
-  private final Lock _lock;
   private final int _pointsPerWeight;
   private final RingFactory<URI> _ringFactory;
-  private final List<PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>> _listeners;
+  private final List<PartitionStateUpdateListener<PartitionState>> _listeners;
   private Set<TrackerClient> _recoveryTrackerClients;
   private long _clusterGenerationId;
   private Map<TrackerClient, LoadBalancerQuarantine> _quarantineMap;
   private Map<TrackerClient, LoadBalancerQuarantine> _quarantineHistory;
+  private Map<TrackerClient, HealthCheck> _healthCheckMap;
   private Map<URI, Integer> _pointsMap;
   private Ring<URI> _ring;
   private Map<TrackerClient, TrackerClientState> _trackerClientStateMap;
   private PartitionStats _partitionStats;
 
-  public PartitionRelativeLoadBalancerState(int partitionId, RingFactory<URI> ringFactory, int pointsPerWeight,
-      Lock lock, List<PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>> listeners)
+  public PartitionState(int partitionId, RingFactory<URI> ringFactory, int pointsPerWeight,
+      List<PartitionStateUpdateListener<PartitionState>> listeners)
   {
     _partitionId = partitionId;
-    _lock = lock;
     _clusterGenerationId = -1;
     _ringFactory = ringFactory;
     _pointsPerWeight = pointsPerWeight;
@@ -66,48 +64,45 @@ public class PartitionRelativeLoadBalancerState
     _recoveryTrackerClients = new HashSet<>();
     _quarantineMap = new HashMap<>();
     _quarantineHistory = new HashMap<>();
+    _healthCheckMap = new HashMap<>();
     _trackerClientStateMap = new HashMap<>();
     _listeners = listeners;
     resetRing();
   }
 
-  PartitionRelativeLoadBalancerState(int partitionId, Lock lock, RingFactory<URI> ringFactory, int pointsPerWeight,
+  PartitionState(int partitionId, RingFactory<URI> ringFactory, int pointsPerWeight,
       Set<TrackerClient> recoveryTrackerClients, long clusterGenerationId,
       Map<TrackerClient, LoadBalancerQuarantine> quarantineMap,
       Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory,
+      Map<TrackerClient, HealthCheck> healthCheckMap,
       Map<TrackerClient, TrackerClientState> trackerClientStateMap,
-      List<PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>> listeners)
+      List<PartitionStateUpdateListener<PartitionState>> listeners)
   {
     _partitionId = partitionId;
-    _lock = lock;
     _ringFactory = ringFactory;
     _pointsPerWeight = pointsPerWeight;
     _recoveryTrackerClients = recoveryTrackerClients;
     _clusterGenerationId = clusterGenerationId;
     _quarantineMap = quarantineMap;
     _quarantineHistory = quarantineHistory;
+    _healthCheckMap = healthCheckMap;
     _trackerClientStateMap = trackerClientStateMap;
     _listeners = listeners;
     resetRing();
   }
 
-  public PartitionRelativeLoadBalancerState copy()
+  public PartitionState copy()
   {
-    return new PartitionRelativeLoadBalancerState(this.getPartitionId(),
-        this.getLock(),
+    return new PartitionState(this.getPartitionId(),
         this.getRingFactory(),
         this.getPointsPerWeight(),
         new HashSet<>(this.getRecoveryTrackerClients()),
         this.getClusterGenerationId(),
         new HashMap<>(this.getQuarantineMap()),
         new HashMap<>(this.getQuarantineHistory()),
+        new HashMap<>(this.getHealthCheckMap()),
         new HashMap<>(this.getTrackerClientStateMap()),
         this.getListeners());
-  }
-
-  public Lock getLock()
-  {
-    return _lock;
   }
 
   public int getPartitionId()
@@ -115,7 +110,8 @@ public class PartitionRelativeLoadBalancerState
     return _partitionId;
   }
 
-  public long getClusterGenerationId() {
+  public long getClusterGenerationId()
+  {
     return _clusterGenerationId;
   }
 
@@ -139,6 +135,11 @@ public class PartitionRelativeLoadBalancerState
     return _quarantineHistory;
   }
 
+  public Map<TrackerClient, HealthCheck> getHealthCheckMap()
+  {
+    return _healthCheckMap;
+  }
+
   public Set<TrackerClient> getRecoveryTrackerClients()
   {
     return _recoveryTrackerClients;
@@ -149,7 +150,8 @@ public class PartitionRelativeLoadBalancerState
     return _ringFactory;
   }
 
-  public Ring<URI> getRing() {
+  public Ring<URI> getRing()
+  {
     return _ring;
   }
 
@@ -163,6 +165,9 @@ public class PartitionRelativeLoadBalancerState
     return _pointsMap;
   }
 
+  /**
+   * Reset the hash ring using the latest tracker clients and points map
+   */
   public void resetRing()
   {
     Set<TrackerClient> trackerClients = _trackerClientStateMap.keySet();
@@ -184,7 +189,7 @@ public class PartitionRelativeLoadBalancerState
     return _partitionStats;
   }
 
-  public List<PartitionLoadBalancerStateListener<PartitionRelativeLoadBalancerState>> getListeners()
+  public List<PartitionStateUpdateListener<PartitionState>> getListeners()
   {
     return Collections.unmodifiableList(_listeners);
   }
@@ -194,6 +199,7 @@ public class PartitionRelativeLoadBalancerState
     _trackerClientStateMap.remove(trackerClient);
     _quarantineMap.remove(trackerClient);
     _quarantineHistory.remove(trackerClient);
+    _healthCheckMap.remove(trackerClient);
     _recoveryTrackerClients.remove(trackerClient);
   }
 
@@ -203,7 +209,8 @@ public class PartitionRelativeLoadBalancerState
   }
 
   @Override
-  public String toString() {
+  public String toString()
+  {
     return "PartitionRelativeLoadBalancerState{" + "_partitionId=" + _partitionId
         + ", _clusterGenerationId=" + _clusterGenerationId
         + ", _recoveryTrackerClients=" + _recoveryTrackerClients + ", _quarantineMap=" + _quarantineMap
@@ -224,15 +231,18 @@ public class PartitionRelativeLoadBalancerState
       _clusterErrorCount = clusterErrorCount;
     }
 
-    double getAvgClusterLatency() {
+    double getAvgClusterLatency()
+    {
       return _avgClusterLatency;
     }
 
-    long getClusterCallCount() {
+    long getClusterCallCount()
+    {
       return _clusterCallCount;
     }
 
-    long getClusterErrorCount() {
+    long getClusterErrorCount()
+    {
       return _clusterErrorCount;
     }
   }

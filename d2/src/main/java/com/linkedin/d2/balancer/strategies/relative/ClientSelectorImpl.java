@@ -33,8 +33,6 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.d2.discovery.util.LogUtil.*;
-
 
 /**
  * Implementation for {@link ClientSelector}
@@ -90,7 +88,7 @@ public class ClientSelectorImpl implements ClientSelector
 
     if (trackerClient == null)
     {
-      warn(LOG, "No client found for ", targetHostUri, ". Target host specified is no longer part of cluster");
+      LOG.warn("No client found for ", targetHostUri, ". Target host specified is no longer part of cluster");
     }
     else
     {
@@ -109,11 +107,6 @@ public class ClientSelectorImpl implements ClientSelector
                                                  Ring<URI> ring,
                                                  Map<URI, TrackerClient> trackerClients)
   {
-    if (ring == null)
-    {
-      return null;
-    }
-
     Set<URI> excludedUris = LoadBalancerStrategy.ExcludedHostHints.getRequestContextExcludedHosts(requestContext) == null
         ? new HashSet<>()
         : LoadBalancerStrategy.ExcludedHostHints.getRequestContextExcludedHosts(requestContext);
@@ -142,13 +135,13 @@ public class ClientSelectorImpl implements ClientSelector
 
     if (trackerClient == null)
     {
-      // Pick a one from the tracker clients passed from the request if the ring is completely out of date
+      // Pick one from the tracker clients passed from the request if the ring is completely out of date
       trackerClient = trackerClients.values().stream()
           .filter(latestTrackerClient -> !excludedUris.contains(latestTrackerClient.getUri()))
           .findAny().orElse(null);
       if (trackerClient != null)
       {
-        warn(LOG, "Did not find a valid client from the ring, picked {} instead", trackerClient.getUri());
+        LOG.warn("Did not find a valid client from the ring, picked {} instead", trackerClient.getUri());
       }
     }
 

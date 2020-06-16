@@ -10,34 +10,31 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 
-public class PartitionRelativeLoadBalancerStateDataBuilder {
+public class PartitionStateDataBuilder {
   private static final int DEFAULT_PARTITION_ID = 0;
   private static final int DEFAULT_POINTS_PER_WEIGHT = 100;
 
-  private final Lock _lock = new ReentrantLock();
   private final RingFactory<URI> _ringFactory;
   private long _clusterGenerationId;
   private Set<TrackerClient> _recoveryTrackerClients = new HashSet<>();
   private Map<TrackerClient, LoadBalancerQuarantine> _quarantineMap = new HashMap<>();
   private Map<TrackerClient, TrackerClientState> _trackerClientStateMap = new HashMap<>();
 
-  PartitionRelativeLoadBalancerStateDataBuilder(RingFactory<URI> ringFactory)
+  PartitionStateDataBuilder(RingFactory<URI> ringFactory)
   {
     _ringFactory = ringFactory;
     _clusterGenerationId = 0;
   }
 
-  PartitionRelativeLoadBalancerStateDataBuilder setClusterGenerationId(long clusterGenerationId)
+  PartitionStateDataBuilder setClusterGenerationId(long clusterGenerationId)
   {
     _clusterGenerationId = clusterGenerationId;
     return this;
   }
 
-  PartitionRelativeLoadBalancerStateDataBuilder setTrackerClientStateMap(List<TrackerClient> trackerClients,
+  PartitionStateDataBuilder setTrackerClientStateMap(List<TrackerClient> trackerClients,
       List<Double> healthScores, List<TrackerClientState.HealthState> healthStates, List<Integer> callCountList,
       double initialHealthScore, int minCallCount)
   {
@@ -56,22 +53,22 @@ public class PartitionRelativeLoadBalancerStateDataBuilder {
     return this;
   }
 
-  PartitionRelativeLoadBalancerStateDataBuilder setRecoveryClients(Set<TrackerClient> trackerClients)
+  PartitionStateDataBuilder setRecoveryClients(Set<TrackerClient> trackerClients)
   {
     _recoveryTrackerClients = trackerClients;
     return this;
   }
 
-  PartitionRelativeLoadBalancerStateDataBuilder setQuarantineMap(Map<TrackerClient, LoadBalancerQuarantine> quarantineMap)
+  PartitionStateDataBuilder setQuarantineMap(Map<TrackerClient, LoadBalancerQuarantine> quarantineMap)
   {
     _quarantineMap = quarantineMap;
     return this;
   }
 
-  PartitionRelativeLoadBalancerState build()
+  PartitionState build()
   {
-    return new PartitionRelativeLoadBalancerState(DEFAULT_PARTITION_ID, _lock, _ringFactory, DEFAULT_POINTS_PER_WEIGHT,
-        _recoveryTrackerClients, _clusterGenerationId, _quarantineMap, new HashMap<>(),
+    return new PartitionState(DEFAULT_PARTITION_ID, _ringFactory, DEFAULT_POINTS_PER_WEIGHT,
+        _recoveryTrackerClients, _clusterGenerationId, _quarantineMap, new HashMap<>(), new HashMap<>(),
         _trackerClientStateMap, new ArrayList<>());
   }
 }
