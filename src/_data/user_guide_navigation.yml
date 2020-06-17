@@ -43,6 +43,8 @@ toc:
         url: /rest.li/Rest_li-Filters
       - page: Projections
         url: /rest.li/Projections
+      - page: PathSpecs
+        url: /rest.li/pathspec
       - page: Validation
         url: /rest.li/Validation-in-Rest_li
       - page: Attachment Streaming
