@@ -36,7 +36,7 @@ import com.linkedin.common.util.ConfigHelper;
  * This class implementation is not synchronized. If concurrent access is required, it
  * must be synchronized externally.
  */
-public class LongTracking implements LongTracker
+public class LongTracking extends SimpleLongTracker implements LongTracker
 {
   private static final int    DEFAULT_INITIAL_CAPACITY = 1000;
   private static final double DEFAULT_GROWTH_FACTOR    = 2.0;
@@ -47,14 +47,6 @@ public class LongTracking implements LongTracker
   private final int           _initialCapacity;
   private final double        _growthFactor;
   private final int           _maxCapacity;
-
-  private int                 _count;
-  private long                _min;
-  private long                _max;
-  private long                _sum;
-  private long                _sumOfSquares;                  // Running sum of squares
-                                                               // for call times, used for
-                                                               // std deviation.
 
   private int                 _sortedEnd;
   private int                 _nextIndex;
@@ -91,11 +83,7 @@ public class LongTracking implements LongTracker
   @Override
   public void reset()
   {
-    _count = 0;
-    _min = 0;
-    _max = 0;
-    _sum = 0;
-    _sumOfSquares = 0;
+    super.reset();
 
     _sortedEnd = 0;
     _nextIndex = 0;
@@ -105,23 +93,9 @@ public class LongTracking implements LongTracker
   @Override
   public void addValue(long value)
   {
-    if (_count == 0)
-    {
-      _min = _max = value;
-    }
-    else if (value < _min)
-    {
-      _min = value;
-    }
-    else if (value > _max)
-    {
-      _max = value;
-    }
-    _sum += value;
-    _sumOfSquares += value * value;
-    _count++;
+    super.addValue(value);
 
-    if (_keepRatio > 1 && (_count % _keepRatio) != 0)
+    if (_keepRatio > 1 && (getCount() % _keepRatio) != 0)
     {
       return;
     }
@@ -169,33 +143,6 @@ public class LongTracking implements LongTracker
                          get50Pct(), get90Pct(), get95Pct(), get99Pct());
   }
 
-  private int getCount()
-  {
-    return _count;
-  }
-
-  private double getAverage()
-  {
-    return safeDivide(_sum, _count);
-  }
-
-  private double getStandardDeviation()
-  {
-    double variation;
-    variation = safeDivide(_sumOfSquares - _sum * getAverage(), getCount());
-    return Math.sqrt(variation);
-  }
-
-  private long getMinimum()
-  {
-    return _min;
-  }
-
-  private long getMaximum()
-  {
-    return _max;
-  }
-
   private long get50Pct()
   {
     return getPercentile(0.50);
@@ -218,7 +165,7 @@ public class LongTracking implements LongTracker
 
   private long getPercentile(double pct)
   {
-    if (_count == 0)
+    if (getCount() == 0)
     {
       return 0;
     }
@@ -270,11 +217,6 @@ public class LongTracking implements LongTracker
     System.arraycopy(_buffer, 0, newBuffer, 0, _nextIndex);
     _buffer = newBuffer;
     _bufferSize = newBufferSize;
-  }
-
-  private static double safeDivide(final double numerator, final double denominator)
-  {
-    return denominator != 0 ? numerator / denominator : 0;
   }
 
   public static class Config

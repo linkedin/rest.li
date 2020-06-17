@@ -15,6 +15,7 @@
 */
 package com.linkedin.d2.balancer.clients;
 
+import com.linkedin.util.degrader.CallTrackerImpl;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,7 +64,7 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
                                Clock clock, DegraderImpl.Config config, long interval, Pattern errorStatusPattern,
                                Map<String, Object> uriSpecificProperties)
   {
-    super(uri, partitionDataMap, wrappedClient, clock, interval, errorStatusPattern);
+    super(uri, partitionDataMap, wrappedClient, clock, interval, errorStatusPattern, CallTrackerImpl.CallTrackerType.LONG_TRACKING);
 
     if (config == null)
     {
