@@ -16,7 +16,6 @@
 
 package com.linkedin.darkcluster.impl;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -39,6 +38,9 @@ import com.linkedin.darkcluster.api.DarkClusterStrategyFactory;
 import com.linkedin.darkcluster.api.DarkClusterVerifierManager;
 import com.linkedin.darkcluster.api.NoOpDarkClusterStrategy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * DarkClusterStrategyFactoryImpl creates and maintains the strategies needed for dark clusters. This involves refreshing
  * when darkClusterConfig changes are detected, by way of a {@link LoadBalancerClusterListener}
@@ -47,6 +49,7 @@ import com.linkedin.darkcluster.api.NoOpDarkClusterStrategy;
  */
 public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactory
 {
+  private static final Logger LOG = LoggerFactory.getLogger(DarkClusterStrategyFactoryImpl.class);
   public static final DarkClusterStrategy NO_OP_DARK_CLUSTER_STRATEGY = new NoOpDarkClusterStrategy();
 
   // ClusterInfoProvider isn't available until the D2 client is started, so it can't be
@@ -82,6 +85,10 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   public void start()
   {
     _facilities.getClusterInfoProvider().registerClusterListener(_clusterListener);
+    // make sure we're listening to the source cluster and have strategies for any
+    // associated dark clusters.
+    _clusterListener.onClusterAdded(_sourceClusterName);
+    LOG.info("listening to dark clusters on " + _sourceClusterName);
   }
 
   @Override
@@ -160,13 +167,16 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
           for (String darkClusterToRemove : oldDarkStrategySet)
           {
             _darkStrategyMap.remove(darkClusterToRemove);
+            LOG.info("Removed dark cluster strategy for dark cluster: " + darkClusterToRemove + ", source cluster: " + _sourceClusterName);
           }
 
           // Now update/add the dark clusters.
           for (Map.Entry<String, DarkClusterConfig> entry : updatedDarkConfigMap.entrySet())
           {
+            String darkClusterToAdd = entry.getKey();
             // For simplicity, we refresh all strategies since we expect cluster updates to be rare and refresh to be cheap.
-            _darkStrategyMap.put(entry.getKey(), createStrategy(entry.getKey(), entry.getValue()));
+            _darkStrategyMap.put(darkClusterToAdd, createStrategy(darkClusterToAdd, entry.getValue()));
+            LOG.info("Created new strategy for dark cluster: " + darkClusterToAdd + ", source cluster: " + _sourceClusterName);
           }
         }
         catch (ServiceUnavailableException e)

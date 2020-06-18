@@ -29,6 +29,7 @@ import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 
 public class MockClusterInfoProvider implements ClusterInfoProvider
 {
+  DarkClusterConfigMap EMPTY_DARK_CLUSTER_CONFIG_MAP = new DarkClusterConfigMap();
   Map<String, DarkClusterConfigMap> lookupMap = new HashMap<>();
   List<LoadBalancerClusterListener> clusterListeners = new ArrayList<>();
   Map<String, Integer> clusterHttpsCount = new HashMap<>();
@@ -51,7 +52,7 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
   public DarkClusterConfigMap getDarkClusterConfigMap(String clusterName)
     throws ServiceUnavailableException
   {
-    return lookupMap.get(clusterName);
+    return lookupMap.getOrDefault(clusterName, EMPTY_DARK_CLUSTER_CONFIG_MAP);
   }
 
   @Override
