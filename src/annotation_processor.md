@@ -1,15 +1,22 @@
 ---
 layout: guide
-title: PDL Schema
+title: Introduction of Annotation Processor
 permalink: /annotation_processor
-excerpt: Documentation of using annotation processor in Rest.Li
+excerpt: Documentation of using annotation processor in Rest.li
 ---
 
-# Annotation Processor
-This sections introduces a generic schema annotation processing tool in Rest.Li. Before reading this, it is recommended to be familiar with the concept of PathSpec in Rest.Li. [Insert link here]
+# Introduction of Annotation Processor
 
-## Annotating Rest.Li Schemas
-In Rest.Li, schema writers are able to add annotations to schema fields or the schema itself.
+- [Introduction of Annotation Processor](#introduction-of-annotation-processor)
+  - [Annotating Pegasus Schemas](#annotating-pegasus-schemas)
+  - [Inherit and override schema annotations](#inherit-and-override-schema-annotations)
+    - [A common application of overriding annotation using PathSpec](#a-common-application-of-overriding-annotation-using-pathspec)
+  - [Use the schema annotation processor](#use-the-schema-annotation-processor)
+
+This page introduces a generic schema annotation processing tool in Rest.li. Before reading this, it is recommended readers be familiar with the concept of [PathSpec](/rest.li/pathspec) in Rest.li.
+
+## Annotating Pegasus Schemas
+In Rest.li, schema authors are able to add annotations using '@' sytnax to schema fields or the schema itself.
 
 **Example**: annotate on the schema fields
 ```pdl
@@ -35,39 +42,38 @@ record UserPersonallyIdentifiableInformation {
   socialSecurityNumber: string,
 }
 ```
-Note that these annotations are on the schema level.
+Note that the data_classifcation annotation is specified at record level.
 
-The support that Rest.Li provided for processing annotation in Rest.Li schema has been quite limited. These annotations in above examples are later stored as a `DataSchema`'s class attribute called "property". Just as the example shows, both field and the DataSchema can have this "property". We let the user chooses where they want to have the schema annotated and how they want to interpret. There were no preferrabled way regarding how annotation should be written, read and interpreted.
+These annotations in above examples are stored as an attribute insdie `DataSchema`'s class called "property". Just as the example shows, both the field and the DataSchema can have this "property". Rest.li framework did not provide specification on how these annotations should be interpreted and it was left to the user to add logic for interpreting them. 
 
 ## Inherit and override schema annotations
-But Rest.Li users found it useful to process annotations during schema processing. One use case is to introduce "inheritance" and "overrides" to annotations so those annotations can be dynamically processed in the way user defines, when for example the schemas were reused. This gives annotation extensibility and adds to schema reusability.
+Rest.li users found it useful to process annotations during schema processing. One use case is to introduce "inheritance" and "overrides" to annotations so those annotations can be dynamically processed in the way user defines when the schemas were reused. This gives annotation extensibility and adds to schema reusability.
 
-Here are examples:
-Example case 1: Users might want the annotation of a field be inherited. The fields can reuse the annotations from upper level.
+Here are examples: \\
+**Example case 1** : Users might want the annotation of a field to be inherited. The fields can inherit the annotations from the upper level.
 ```pdl
 @persistencePolicyInDays = 30
-record  UserVisitRecord {
+record UserVisitRecord {
   visitedUrls: array[URL]
   visitedUserProfiles: array[UserRecord]
 }
 ```
 Reading from the schema, we might find both `visitedUrls` and `visitedUserProfiles` have `persistencePolicyInDays` annotated as 30.
-//<inheritance example>
 
-Example case 2: Users might want the annotation of a field be overriden. Override is where the annotation on a field or a schema might get updated when other annotations assign it another value.
-//<override example>
+**Example case 2**: Users might want the annotation of a field to be overriden. Override is where the annotation on a field or a schema might get updated when other annotations assign it another value.
 ```pdl
 @persistencePolicyInDays = 30
 record  UserVisitRecord {
   @persistencePolicyInDays = 10
   visitedUrls: array[URL]
+
   visitedUserProfiles: array[UserRecord]
 }
 ```
-Reading from the schema, a user might find the field `visitedUserProfiles`s `persistencePolicyInDays` annotation is 30 but `visitedUrls`'s `persistencePolicyInDays` annotation has value 10, which overrides the original value inherited(which was 30).
+Reading from the schema, a user might find the field `visitedUserProfiles`s `persistencePolicyInDays` annotation is 30 but `visitedUrls`'s `persistencePolicyInDays` annotation has value 10, which overrides the original value inherited (i.e. the value 30).
 
 
-Example case 3:  Override might also happen when some annotation needs to be updated by another value assigned from another annotation location
+**Example case 3**:  Override might also happen when the annotation needs to be updated by another value assigned from other annotation locations
 ```pdl
 record UserVisitRecord {
   //...
@@ -87,32 +93,30 @@ record EnterpriseUserRecord {
   //...
 }
 ```
-In this example, schema `EnterpriseUserRecord` reused `UserVisitRecord` and its annotation in the field `visitRecord`, but it overrides the annotation value of `recycledChatHistories`.
+In this example, the schema `EnterpriseUserRecord` reused `UserVisitRecord` and its annotation in the field `visitRecord`, and overrides the annotation value for the field `recycledChatHistories`.
 
 
-All above examples shows that inheritance and overrides gives more extensibility to the schema annotations. Users should be free to define their own rules regarding how those annotations can be read. There should be an imambigous annotation value for the fields after user's rules are applied. We call this processing step to figure out the eventual value of a field or schema's annotation "resolution" and we call such value "resolved" value.
+All above examples shows that inheritance and overrides give more extensibility to schema annotations. Users should be free to define their own rules regarding how those annotations are read. There should be an unambiguous annotation value for the fields after the user's rules are applied. The processing step to figure out the eventual value of a field or schema's annotation is called "resolution" and such value is called "resolved" value.
 
-What is more, users could have their own customized logic to process the annotations and define the custom behavior when annotations is overriden or inheritted, and even have the flexibility to set a customized resolved value by calling another local function or remote procedure.  The need for such extensibility gives the motivation for Annotation Processor. We aim to build a tool that can process annotations during schema resolution, process all interested annotations by plugin-ing user's own logic and save the "resolved" value back to corresponding DataSchema.
+What is more, users could have their own customized logic to process the annotations and define the custom behavior when annotations are overridden or inherited, and even have the flexibility to set a customized resolved value by calling another local function or remote procedure. The need for such extensibility gives the motivation for Annotation Processor. We aim to build a tool that can process annotations during schema resolution, process all interested annotations by plugging in the user's own logic and saving the "resolved" value back to the corresponding DataSchema.
 
 ### A common application of overriding annotation using PathSpec
-In the above `EnterpriseUserRecord` example, we use `@persistencePolicyInDays = {"/recycledChatHistories" : 3650}` do denote the field we are overriding is `recycledChatHistories`. This is basically using PathSpec to reference the field or child schema that needs to be overriden. PathSpec <insert-linke-here> can be used as a path to associate relations between fields among nested schemas. Users can use PathSpec to inambigously specifcy all the paths to the child fields that they want to override.
+In the above `EnterpriseUserRecord` example, `@persistencePolicyInDays = {"/recycledChatHistories" : 3650}` were used to denote the field that are being overriden is `recycledChatHistories`. This is basically using PathSpec as a reference to the field or child schema that needs to be overriden. [PathSpec](/rest.li/pathspec) can be used as a path to define relationships between fields among nested schemas. Users can use PathSpec to unambiguously specify all the paths to child fields that they want to override.
 
-
-In Linkedin, such usage is so common that we want to use 
-we provided `PathSpecBaseVisitor`. 
+The above usage is very common at LinkedIn so an implementation of annotation processing based on this behavior is provided as part of annotation processor.
 
 It assumes \\
 (1) All *overrides* to the fields are specified using PathSpecs to the fields. \\
-(2) All *overrides* are applied on fields, not on the record
+(2) All *overrides* are applied on fields, and not on the record.
+(3) All *overrides* are pointing to the fields.
 
-For more examples regarding the syntax, one can read the java doc from `PathSpecBaseVisitor`.//<insert Link about > and the test cases //<insert Link about >
+For more examples regarding the syntax, one can read the java doc from [PathSpecBasedSchemaAnnotationVisitor](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/PathSpecBasedSchemaAnnotationVisitor.java), and the [test cases](https://github.com/linkedin/rest.li/blob/master/data/src/test/java/com/linkedin/data/schema/annotation/TestSchemaAnnotationProcessor.java)
 
-
-One can seek to extend this case to adapt to their own use cases. Please see next section regarding what class to extend to fit the best use cases.
+Users can seek to extend this case to adapt to their own use cases. Please see next section regarding what class to extend to fit the best use cases.
 
 ## Use the schema annotation processor
-We have created a paradigm of processing Rest.Li schema annotations and wrapped them into `com.linkedin.data.schema.annotation` package.
-First thing to understand is that `DataSchema` object internally is stored recursively. We added `resolvedProperties` attribute, in order to store the final reesolved annotation.
+We have created a paradigm of processing Rest.li schema annotations and wrapped them into `com.linkedin.data.schema.annotation` package.
+First thing to understand is how [DataSchema](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/DataSchema.java) object is internally stored. We added `resolvedProperties` attribute, in order to store the final resolved annotation.
 
 For an example schema:
 
@@ -128,16 +132,16 @@ Its memory presentation is as followed:
 <b>DataSchema Example</b><br><img src="{{ 'assets/images/DataSchema_with_resolvedProperties.png' | relative_url }}" />
 </center>
 
-The SchemaAnnotationProcessor will process `DataSchema` using `DataSchemaRichContextTraverser` and resolve the annotation for fields in the schemas.
+The [SchemaAnnotationProcessor](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/SchemaAnnotationProcessor.java) will process [DataSchema](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/DataSchema.java) using [DataSchemaRichContextTraverser](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/DataSchemaRichContextTraverser.java) and resolve the annotation for fields in the schemas.
 
 
 <center>
 <b>Sequence Diagram</b><br><img src="{{ 'assets/images/AnnotationProcessor_UML_sequence_diagram.png' | relative_url }}"  />
 </center>
 
-The `DataSchemaRichContextTraverser` travsers the data schema and in turn calls an implementation of `SchemaVisitor`. It is the `SchemaVisitor`' that resolves the annotations for fields in the schemas, based on the context provided by the `DataSchemaRichContextTraverser`. `SchemaVisitor` may also create copy of original data schema if the oroginal data schema needs to be immutable.
+The [DataSchemaRichContextTraverser](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/DataSchemaRichContextTraverser.java) traverse the data schema and in-turn calls an implementation of [SchemaVisitor](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/SchemaVisitor.java). It is the `SchemaVisitor` that resolves the annotations for fields in the schemas, based on the context provided by the `DataSchemaRichContextTraverser`. This process eventually produces a copy of the origianl schema and return because the original schema should not be modified during traversal.
 
-If the overriding of annotations are specified using the `PathSpec` syntax, the `PathSpecBaseVisitor` and `SchemaHandler` class are implemented for such use case. If a user want to implement their own logic, one should look for reimplementing the `SchemaVisitor`, or extending `PathSpecBaseVisitor`, or simply implement `SchemaHandler`
+If the overriding of annotations is specified using the [PathSpec](/rest.li/pathspec) syntax, the [PathSpecBasedSchemaAnnotationVisitor](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/PathSpecBasedSchemaAnnotationVisitor.java) and [SchemaAnnotationHandler](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/SchemaAnnotationHandler.java) class are implemented for such use case. If a user wants to implement their own logic, one should look for reimplementing the `SchemaVisitor`, or extending `PathSpecBasedSchemaAnnotationVisitor`, or simply implement [SchemaAnnotationHandler](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/SchemaAnnotationHandler.java)
 
 <center>
 <b>Class Diagram</b><br><img src="{{ 'assets/images/AnnotationProcessor_UML_class_diagram.png' | relative_url }}"  />
@@ -146,4 +150,4 @@ If the overriding of annotations are specified using the `PathSpec` syntax, the 
 
 
 
-For more, please ook at the test cases. <insert-me-the-link>
+For more, please look at our [test case package](https://github.com/linkedin/rest.li/tree/master/data/src/test/java/com/linkedin/data/schema/annotation) and [test examples](https://github.com/linkedin/rest.li/tree/master/data/src/test/resources/com/linkedin/data/schema/annotation/denormalizedsource).
