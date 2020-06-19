@@ -1,6 +1,11 @@
 {
   "models" : [ {
     "type" : "record",
+    "name" : "Empty",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ ]
+  }, {
+    "type" : "record",
     "name" : "Greeting",
     "namespace" : "com.linkedin.restli.examples.greetings.api",
     "doc" : "A greeting",
@@ -92,6 +97,9 @@
           "name" : "message",
           "type" : "string"
         } ],
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+        },
         "pagingSupported" : true,
         "batchParam" : "criteria"
       } ],
