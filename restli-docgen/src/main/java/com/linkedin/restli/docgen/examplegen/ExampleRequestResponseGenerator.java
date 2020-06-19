@@ -1210,7 +1210,7 @@ public class ExampleRequestResponseGenerator
 
   private static ResourceModel buildPlaceholderResourceModel(ResourceSchema resourceSchema)
   {
-    return new ResourceModel(RecordTemplatePlaceholder.class,
+    return new ResourceModel(ResourceSchema.class,
         Object.class,
         null,
         resourceSchema.getName(),

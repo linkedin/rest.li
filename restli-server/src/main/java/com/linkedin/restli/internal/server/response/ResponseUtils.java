@@ -18,8 +18,14 @@ package com.linkedin.restli.internal.server.response;
 
 
 import com.linkedin.data.ByteString;
+import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaUtil;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.entitystream.EntityStream;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -84,6 +90,20 @@ public class ResponseUtils
     }
   }
 
+  public static void getAbsentFieldsDefaultValues(RecordDataSchema dataSchema, DataMap dataMap)
+  {
+    for (RecordDataSchema.Field field : dataSchema.getFields())
+    {
+      if (!dataMap.containsKey(field.getName()))
+      {
+        if (field.getDefault() != null)
+        {
+          dataMap.put(field.getName(), field.getDefault());
+        }
+      }
+    }
+  }
+
   public static RestResponse buildResponse(RoutingResult routingResult, RestLiResponse restLiResponse)
   {
     RestResponseBuilder builder = new RestResponseBuilder()
@@ -97,7 +117,19 @@ public class ResponseUtils
                                                          .getResourceEntityType();
     if (restLiResponse.hasData() && ResourceEntityType.STRUCTURED_DATA == resourceEntityType)
     {
+      DataSchema dataSchema = null;
+      Class<? extends RecordTemplate> valueClass = routingResult.getResourceMethod().getResourceModel().getValueClass();
+      if (valueClass != null)
+      {
+        dataSchema = DataTemplateUtil.getSchema(valueClass);
+      }
+
       DataMap dataMap = restLiResponse.getDataMap();
+      if (context.getParameters().containsKey("sendDefaults") &&
+          (Boolean) context.getParameters().get("sendDefaults") && dataSchema != null)
+      {
+        getAbsentFieldsDefaultValues((RecordDataSchema) dataSchema, dataMap);
+      }
       String mimeType = context.getResponseMimeType();
       URI requestUri = context.getRequestURI();
       Map<String, String> requestHeaders = context.getRequestHeaders();
