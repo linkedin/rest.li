@@ -2050,28 +2050,40 @@ public final class RestLiAnnotationReader
 
   private static Class<? extends RecordTemplate> getCustomCollectionMetadata(final Method method, int metadataIndex)
   {
-    Class<? extends RecordTemplate> metadataType = null;
     final Class<?> returnClass = getLogicalReturnClass(method);
+    final List<Class<?>> typeArguments;
     if (CollectionResult.class.isAssignableFrom(returnClass))
     {
-      final List<Class<?>> typeArguments = ReflectionUtils.getTypeArguments(CollectionResult.class, returnClass.asSubclass(CollectionResult.class));
-      final Class<?> metadataClass;
-      if (typeArguments == null || typeArguments.get(metadataIndex) == null)
-      {
-        // the return type may leave metadata type as parameterized and specify in runtime
-        metadataClass = ((Class<?>) ((ParameterizedType) getLogicalReturnType(method)).getActualTypeArguments()[metadataIndex]);
-      }
-      else
-      {
-        metadataClass = typeArguments.get(metadataIndex);
-      }
-
-      if (!metadataClass.equals(NoMetadata.class))
-      {
-        metadataType = metadataClass.asSubclass(RecordTemplate.class);
-      }
+      typeArguments = ReflectionUtils.getTypeArguments(CollectionResult.class, returnClass.asSubclass(CollectionResult.class));
     }
-    return metadataType;
+    else if (BatchFinderResult.class.isAssignableFrom(returnClass))
+    {
+      typeArguments = ReflectionUtils.getTypeArguments(BatchFinderResult.class, returnClass.asSubclass(BatchFinderResult.class));
+    }
+    else
+    {
+      return null;
+    }
+
+    final Class<?> metadataClass;
+    if (typeArguments == null || typeArguments.get(metadataIndex) == null)
+    {
+      // the return type may leave metadata type as parameterized and specify in runtime
+      metadataClass = ((Class<?>) ((ParameterizedType) getLogicalReturnType(method)).getActualTypeArguments()[metadataIndex]);
+    }
+    else
+    {
+      metadataClass = typeArguments.get(metadataIndex);
+    }
+
+    if (!metadataClass.equals(NoMetadata.class))
+    {
+      return metadataClass.asSubclass(RecordTemplate.class);
+    }
+    else
+    {
+      return null;
+    }
   }
 
   private static void addFinderResourceMethod(final ResourceModel model, final Method method)

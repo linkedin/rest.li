@@ -1,6 +1,11 @@
 {
   "models" : [ {
     "type" : "record",
+    "name" : "Empty",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ ]
+  }, {
+    "type" : "record",
     "name" : "Message",
     "namespace" : "com.linkedin.restli.examples.greetings.api",
     "doc" : "A message",
@@ -73,6 +78,9 @@
           "name" : "criteria",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.MessageCriteria\" }"
         } ],
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+        },
         "assocKeys" : [ "src" ],
         "pagingSupported" : true,
         "batchParam" : "criteria"

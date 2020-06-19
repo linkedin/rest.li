@@ -17,11 +17,11 @@
 package com.linkedin.restli.example.impl;
 
 
-import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.example.EXIF;
 import com.linkedin.restli.example.PhotoCriteria;
 import com.linkedin.restli.server.BatchFinderResult;
 import com.linkedin.restli.server.CollectionResult;
+import com.linkedin.restli.server.NoMetadata;
 import com.linkedin.restli.server.annotations.BatchFinder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -218,10 +218,10 @@ public class PhotoResource extends CollectionResourceTemplate<Long, Photo>
   }
 
   @BatchFinder(value = "searchPhotos", batchParam = "criteria")
-  public BatchFinderResult<PhotoCriteria, Photo, EmptyRecord> searchPhotos(@PagingContextParam PagingContext pagingContext,
+  public BatchFinderResult<PhotoCriteria, Photo, NoMetadata> searchPhotos(@PagingContextParam PagingContext pagingContext,
       @QueryParam("criteria") PhotoCriteria[] criteria, @QueryParam("exif") @Optional EXIF exif)
   {
-     BatchFinderResult<PhotoCriteria, Photo, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
+     BatchFinderResult<PhotoCriteria, Photo, NoMetadata> batchFinderResult = new BatchFinderResult<>();
 
     for (PhotoCriteria currentCriteria: criteria) {
       if (currentCriteria.getTitle() != null) {
@@ -250,7 +250,7 @@ public class PhotoResource extends CollectionResourceTemplate<Long, Photo>
 
           index++;
         }
-        CollectionResult<Photo, EmptyRecord> cr = new CollectionResult<Photo, EmptyRecord>(photos, photos.size());
+        CollectionResult<Photo, NoMetadata> cr = new CollectionResult<>(photos, photos.size());
         batchFinderResult.putResult(currentCriteria, cr);
       } else {
         // on error: to construct error response for test

@@ -35,7 +35,17 @@ public class CombinedTestDataModels
       super(map, null);
     }
   }
-  
+
+  public static class FooMetaData extends RecordTemplate
+  {
+    // schema content is irrelevant, this Foo is never used
+    private final static DataSchema SCHEMA = DataTemplateUtil.parseSchema("{\"type\":\"record\", \"name\":\"FooMetadata\", \"namespace\":\"com.linkedin.restli.server.combined\", \"fields\" : [{ \"name\":\"booleanField\", \"type\":\"boolean\" }]}");
+    public FooMetaData(DataMap map)
+    {
+      super(map, null);
+    }
+  }
+
   public static class DummyKeyPart extends RecordTemplate
   {
     public DummyKeyPart(DataMap map)
