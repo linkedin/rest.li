@@ -13,7 +13,7 @@ excerpt: Documentation of using annotation processor in Rest.li
     - [A common application of overriding annotation using PathSpec](#a-common-application-of-overriding-annotation-using-pathspec)
   - [Use the schema annotation processor](#use-the-schema-annotation-processor)
 
-This page introduces a generic schema annotation processing tool in Rest.li. Before reading this, it is recommended readers be familiar with the concept of [PathSpec](/rest.li/pathspec) in Rest.li.
+This page introduces a generic schema annotation processing tool in Rest.li. Before reading this, it is recommended that readers be familiar with the concept of [PathSpec](/rest.li/pathspec) in Rest.li.
 
 ## Annotating Pegasus Schemas
 In Rest.li, schema authors are able to add annotations using '@' sytnax to schema fields or the schema itself.
@@ -42,9 +42,9 @@ record UserPersonallyIdentifiableInformation {
   socialSecurityNumber: string,
 }
 ```
-Note that the data_classifcation annotation is specified at record level.
+Note that the "data_classifcation" annotation is specified at record level.
 
-These annotations in above examples are stored as an attribute insdie `DataSchema`'s class called "property". Just as the example shows, both the field and the DataSchema can have this "property". Rest.li framework did not provide specification on how these annotations should be interpreted and it was left to the user to add logic for interpreting them. 
+These annotations in above examples are stored as an attribute inside [DataSchema](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/DataSchema.java)'s class as "property". Just as the example shows, both the field and the DataSchema can have this "property". Rest.li framework did not provide specification on how these annotations should be interpreted and it was left to the user to add logic for interpreting them. 
 
 ## Inherit and override schema annotations
 Rest.li users found it useful to process annotations during schema processing. One use case is to introduce "inheritance" and "overrides" to annotations so those annotations can be dynamically processed in the way user defines when the schemas were reused. This gives annotation extensibility and adds to schema reusability.
@@ -107,10 +107,9 @@ The above usage is very common at LinkedIn so an implementation of annotation pr
 
 It assumes \\
 (1) All *overrides* to the fields are specified using PathSpecs to the fields. \\
-(2) All *overrides* are applied on fields, and not on the record.
-(3) All *overrides* are pointing to the fields.
+(2) All *overrides* are pointing to fields, and not to the record.
 
-For more examples regarding the syntax, one can read the java doc from [PathSpecBasedSchemaAnnotationVisitor](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/PathSpecBasedSchemaAnnotationVisitor.java), and the [test cases](https://github.com/linkedin/rest.li/blob/master/data/src/test/java/com/linkedin/data/schema/annotation/TestSchemaAnnotationProcessor.java)
+For more examples regarding the syntax, one can read the java doc from [PathSpecBasedSchemaAnnotationVisitor](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/PathSpecBasedSchemaAnnotationVisitor.java), [schema processor tests](https://github.com/linkedin/rest.li/blob/master/data/src/test/java/com/linkedin/data/schema/annotation/TestSchemaAnnotationProcessor.java) and [schema test examples using PathSpec based overriding](https://github.com/linkedin/rest.li/tree/master/data/src/test/resources/com/linkedin/data/schema/annotation/denormalizedsource).
 
 Users can seek to extend this case to adapt to their own use cases. Please see next section regarding what class to extend to fit the best use cases.
 
@@ -139,15 +138,19 @@ The [SchemaAnnotationProcessor](https://github.com/linkedin/rest.li/blob/master/
 <b>Sequence Diagram</b><br><img src="{{ 'assets/images/AnnotationProcessor_UML_sequence_diagram.png' | relative_url }}"  />
 </center>
 
-The [DataSchemaRichContextTraverser](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/DataSchemaRichContextTraverser.java) traverse the data schema and in-turn calls an implementation of [SchemaVisitor](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/SchemaVisitor.java). It is the `SchemaVisitor` that resolves the annotations for fields in the schemas, based on the context provided by the `DataSchemaRichContextTraverser`. This process eventually produces a copy of the origianl schema and return because the original schema should not be modified during traversal.
+The [DataSchemaRichContextTraverser](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/DataSchemaRichContextTraverser.java) traverse the data schema and in turn calls an implementation of [SchemaVisitor](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/SchemaVisitor.java). It is the `SchemaVisitor` that resolves the annotations for fields in the schemas, based on the context provided by the `DataSchemaRichContextTraverser`. This process would eventually produces a copy of the origianl schema to return, because the original schema should not be modified during traversal.
 
-If the overriding of annotations is specified using the [PathSpec](/rest.li/pathspec) syntax, the [PathSpecBasedSchemaAnnotationVisitor](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/PathSpecBasedSchemaAnnotationVisitor.java) and [SchemaAnnotationHandler](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/SchemaAnnotationHandler.java) class are implemented for such use case. If a user wants to implement their own logic, one should look for reimplementing the `SchemaVisitor`, or extending `PathSpecBasedSchemaAnnotationVisitor`, or simply implement [SchemaAnnotationHandler](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/SchemaAnnotationHandler.java)
+
 
 <center>
 <b>Class Diagram</b><br><img src="{{ 'assets/images/AnnotationProcessor_UML_class_diagram.png' | relative_url }}"  />
 </center>
 
+If the overriding of annotations is specified using the [PathSpec](/rest.li/pathspec) syntax, the [PathSpecBasedSchemaAnnotationVisitor](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/PathSpecBasedSchemaAnnotationVisitor.java) and [SchemaAnnotationHandler](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/SchemaAnnotationHandler.java) class are the ones to use for such use case. If a user wants to customize this, one should either look for re-implementing the `SchemaVisitor`, or extending `PathSpecBasedSchemaAnnotationVisitor`, or simply implement [SchemaAnnotationHandler](https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/annotation/SchemaAnnotationHandler.java)
 
-
-
-For more, please look at our [test case package](https://github.com/linkedin/rest.li/tree/master/data/src/test/java/com/linkedin/data/schema/annotation) and [test examples](https://github.com/linkedin/rest.li/tree/master/data/src/test/resources/com/linkedin/data/schema/annotation/denormalizedsource).
+| Situation | Recommendation |
+|----------|:-------------:|
+| Annotation based on PathSpec based overriding|Create a SchemaAnnotationHandler of your own implementation
+| Annotation based on PathSpec with custom traversal context handling |Override PathSpecBasedSchemaAnnotationVisitor and optionally create a SchemaAnnotationHandler of your own implementation
+| Annotation not using PathSpec based overriding |Implement your own SchemaVisitor 
+| Annotation needs custom way of traversal |Override DataSchemaRichContextTraverser
