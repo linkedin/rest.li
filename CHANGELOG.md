@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add PathSpecSet, an immutable set of PathSpecs that is convenient to use when building logic based on Rest.li projection
 
 ## [29.14.2] - 2021-02-03
 - Exclude conflicting velocity engine dependency.
