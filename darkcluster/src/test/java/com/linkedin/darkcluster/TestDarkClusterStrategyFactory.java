@@ -55,6 +55,7 @@ public class TestDarkClusterStrategyFactory
   static final String SOURCE_CLUSTER_NAME = "FooCluster";
   static final String DARK_CLUSTER_NAME = "FooCluster-dark";
   static final String DARK_CLUSTER_NAME2 = "FooCluster-dark2";
+  static final String PREEXISTING_DARK_CLUSTER_NAME = "FooCluster-darkOld";
   private static final int SEED = 2;
   private DarkClusterStrategyFactory _strategyFactory;
   private MockClusterInfoProvider _clusterInfoProvider;
@@ -64,6 +65,8 @@ public class TestDarkClusterStrategyFactory
   {
     _clusterInfoProvider = new MockClusterInfoProvider();
     Facilities facilities = new MockFacilities(_clusterInfoProvider);
+    DarkClusterConfig darkClusterConfigOld = createRelativeTrafficMultiplierConfig(0.5f);
+    _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, PREEXISTING_DARK_CLUSTER_NAME, darkClusterConfigOld);
     DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcher(new MockClient(false));
     _strategyFactory = new DarkClusterStrategyFactoryImpl(facilities,
                                                           SOURCE_CLUSTER_NAME,
@@ -104,6 +107,14 @@ public class TestDarkClusterStrategyFactory
     DarkClusterStrategy strategy2 = _strategyFactory.get(DARK_CLUSTER_NAME);
     Assert.assertTrue(strategy2 instanceof RelativeTrafficMultiplierDarkClusterStrategy);
     Assert.assertEquals(((RelativeTrafficMultiplierDarkClusterStrategy) strategy2).getMultiplier(), 0.5f, "expected 0.5f multiplier");
+  }
+
+  @Test
+  public void testStrategyPopulatedWithoutExplicitUpdate()
+  {
+    DarkClusterStrategy strategy = _strategyFactory.get(PREEXISTING_DARK_CLUSTER_NAME);
+    Assert.assertTrue(strategy instanceof RelativeTrafficMultiplierDarkClusterStrategy);
+    Assert.assertEquals(((RelativeTrafficMultiplierDarkClusterStrategy) strategy).getMultiplier(), 0.5f, "expected 0.5f multiplier");
   }
 
   @Test

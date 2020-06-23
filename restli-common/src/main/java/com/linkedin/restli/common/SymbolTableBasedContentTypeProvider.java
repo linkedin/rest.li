@@ -55,18 +55,11 @@ public class SymbolTableBasedContentTypeProvider implements ContentTypeProvider
       return _baseContentType;
     }
 
-    final SymbolTable symbolTable =
-        SymbolTableProviderHolder.INSTANCE.getSymbolTableProvider().getSymbolTable(symbolTableName);
-    if (symbolTable == null)
-    {
-      return _baseContentType;
-    }
-
-    return _symbolTableMapper.apply(rawMimeType, symbolTable);
+    return getContentType(rawMimeType, symbolTableName);
   }
 
   @Override
-  public ContentType getRequestContentType(String rawMimeType, MimeType mimeType, URI requestUri)
+  public final ContentType getRequestContentType(String rawMimeType, MimeType mimeType, URI requestUri)
   {
     final SymbolTable requestSymbolTable =
         SymbolTableProviderHolder.INSTANCE.getSymbolTableProvider().getRequestSymbolTable(requestUri);
@@ -74,14 +67,21 @@ public class SymbolTableBasedContentTypeProvider implements ContentTypeProvider
   }
 
   @Override
-  public ContentType getResponseContentType(String rawMimeType, MimeType mimeType, URI requestUri,
+  public final ContentType getResponseContentType(String rawMimeType, MimeType mimeType, URI requestUri,
       Map<String, String> requestHeaders) {
-    final SymbolTable responseSymbolTable =
-        SymbolTableProviderHolder.INSTANCE.getSymbolTableProvider().getResponseSymbolTable(requestUri, requestHeaders);
-    return getContentType(mimeType, responseSymbolTable);
+
+    String symbolTableName = mimeType.getParameter(RestConstants.CONTENT_TYPE_PARAM_SYMBOL_TABLE);
+    if (symbolTableName == null)
+    {
+      final SymbolTable responseSymbolTable =
+          SymbolTableProviderHolder.INSTANCE.getSymbolTableProvider().getResponseSymbolTable(requestUri, requestHeaders);
+      return getContentType(mimeType, responseSymbolTable);
+    }
+
+    return getContentType(rawMimeType, symbolTableName);
   }
 
-  public ContentType getBaseContentType()
+  public final ContentType getBaseContentType()
   {
     return _baseContentType;
   }
@@ -95,5 +95,17 @@ public class SymbolTableBasedContentTypeProvider implements ContentTypeProvider
 
     mimeType.setParameter(RestConstants.CONTENT_TYPE_PARAM_SYMBOL_TABLE, symbolTable.getName());
     return _symbolTableMapper.apply(mimeType.toString(), symbolTable);
+  }
+
+  private ContentType getContentType(String rawMimeType, String symbolTableName)
+  {
+    final SymbolTable symbolTable =
+        SymbolTableProviderHolder.INSTANCE.getSymbolTableProvider().getSymbolTable(symbolTableName);
+    if (symbolTable == null)
+    {
+      return _baseContentType;
+    }
+
+    return _symbolTableMapper.apply(rawMimeType, symbolTable);
   }
 }

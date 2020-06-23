@@ -25,6 +25,9 @@
         "name" : "message",
         "type" : "string"
       } ],
+      "metadata" : {
+        "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+      },
       "pagingSupported" : true,
       "batchParam" : "criteria"
     } ],

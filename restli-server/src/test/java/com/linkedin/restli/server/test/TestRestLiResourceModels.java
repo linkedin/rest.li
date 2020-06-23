@@ -29,6 +29,7 @@ import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.ResourceType;
+import com.linkedin.restli.restspec.BatchFinderSchema;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.UnstructuredDataWriter;
 import com.linkedin.restli.server.ResourceConfigException;
@@ -38,6 +39,7 @@ import com.linkedin.restli.server.combined.CombinedResources.CombinedAssociation
 import com.linkedin.restli.server.combined.CombinedResources.CombinedCollectionResource;
 import com.linkedin.restli.server.combined.CombinedResources.CombinedCollectionWithSubresources;
 import com.linkedin.restli.server.combined.CombinedResources.SubCollectionResource;
+import com.linkedin.restli.server.combined.CombinedTestDataModels;
 import com.linkedin.restli.server.combined.CombinedTestDataModels.Foo;
 import com.linkedin.restli.server.invalid.InvalidActions;
 import com.linkedin.restli.server.invalid.InvalidResources;
@@ -662,6 +664,15 @@ public class TestRestLiResourceModels
     expectConfigException(InvalidResources.RedundantDataAnnotation2.class, "mapA is marked as both ReadOnly and CreateOnly");
     expectConfigException(InvalidResources.RedundantDataAnnotation3.class, "mapA/*/doubleField is marked as CreateOnly, but is contained in a ReadOnly field mapA");
     expectConfigException(InvalidResources.RedundantDataAnnotation4.class, "mapA/*/doubleField is marked as ReadOnly, but is contained in a CreateOnly field mapA");
+  }
+
+  @Test
+  public void testBatchFinderWithMetadata()
+  {
+    ResourceModel resourceModel = buildResourceModel(CombinedResources.CollectionResourceWithBatchFinder.class);
+    ResourceMethodDescriptor batchFinderSchema = resourceModel.getResourceMethodDescriptors().get(0);
+    Assert.assertEquals(batchFinderSchema.getBatchFinderName(), "testBatchFinder");
+    Assert.assertEquals(batchFinderSchema.getCollectionCustomMetadataType(), CombinedTestDataModels.FooMetaData.class);
   }
 
   // ************************
