@@ -1,0 +1,13 @@
+Usage: ./scripts/update-changelog [OPTION]...
+This script should be run after bumping the project version in the gradle.properties file.
+Running this script will perform the following modifications to the changelog:
+  (1) Move everything under the "Unreleased" heading of the changelog to a new version heading.
+  (2) Update and insert links as appropriate.
+Note that the resulting modifications to the changelog should be committed along with the project version bump.
+This script will fail if the project version hasn't been bumped. You should manually add to "Unreleased" if not bumping.
+
+Options:
+  -h, --help                    print this help text and exit
+
+Examples:
+  ./scripts/update-changelog    updates the changelog
