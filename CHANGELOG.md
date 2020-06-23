@@ -13,7 +13,10 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.4.0] - 2020-06-23
 - Add new changelog (`CHANGELOG.md`) and changelog helper script (`./scripts/update-changelog`).
+- Fix a bug in batch_finder that ignored metadata when generating IDL. This change will result in IDL change without source change, but the change will be considered backwards compatible. There will not be any change to runtime behavior of the server.
 
 ## [29.3.2] - 2020-06-19
 - Fix dark cluster startup problem (#330)
@@ -4538,7 +4541,8 @@ patch operations can re-use these classes for generating patch messages.
 ## [0.14.1]
 
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.3.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.0...master
+[29.4.0]: https://github.com/linkedin/rest.li/compare/v29.3.2...v29.4.0
 [29.3.2]: https://github.com/linkedin/rest.li/compare/v29.3.1...v29.3.2
 [29.3.1]: https://github.com/linkedin/rest.li/compare/v29.3.0...v29.3.1
 [29.3.0]: https://github.com/linkedin/rest.li/compare/v29.2.5...v29.3.0
