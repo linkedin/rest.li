@@ -2,5 +2,5 @@ namespace com.linkedin.restli.server.defaults
 
 record RecordC {
   name: string = "default+",
-  personalRecordA: optional RecordD
+  personalRecordD: optional RecordD
 }

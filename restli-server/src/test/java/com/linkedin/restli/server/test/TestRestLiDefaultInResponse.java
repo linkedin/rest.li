@@ -62,6 +62,9 @@ public class TestRestLiDefaultInResponse
     recordBField2DefaultValues.add("defaultValue1");
     recordBField2DefaultValues.add("defaultValue2");
     recordBField2.put("defaultKey", recordBField2DefaultValues);
+    DataMap personalRecordD = new DataMap();
+    personalRecordD.put("field3", 0L);
+    personalRecordD.put("field4", "default");
 
     return new Object[][]{
         {
@@ -91,6 +94,7 @@ public class TestRestLiDefaultInResponse
             new DataMap(),
             new DataMap(new ImmutableMap.Builder<String, Object>()
                 .put("name", "default+")
+                .put("personalRecordD", personalRecordD)
                 .build()),
         }
     };

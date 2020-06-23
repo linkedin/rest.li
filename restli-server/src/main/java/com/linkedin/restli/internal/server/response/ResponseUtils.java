@@ -18,11 +18,9 @@ package com.linkedin.restli.internal.server.response;
 
 
 import com.linkedin.data.ByteString;
-import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
@@ -38,7 +36,6 @@ import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.CookieUtil;
-import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceModel;
@@ -50,7 +47,6 @@ import com.linkedin.restli.server.RestLiServiceException;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import javax.activation.MimeTypeParseException;
 
@@ -100,6 +96,16 @@ public class ResponseUtils
         {
           dataMap.put(field.getName(), field.getDefault());
         }
+        else
+        {
+          DataSchema fieldSchema = field.getType();
+          if (fieldSchema != null && !fieldSchema.isPrimitive())
+          {
+            DataMap fieldDataMap = new DataMap();
+            getAbsentFieldsDefaultValues((RecordDataSchema) fieldSchema, fieldDataMap);
+            dataMap.put(field.getName(), fieldDataMap);
+          }
+        }
       }
     }
   }
@@ -125,8 +131,9 @@ public class ResponseUtils
       }
 
       DataMap dataMap = restLiResponse.getDataMap();
-      if (context.getParameters().containsKey("sendDefaults") &&
-          (Boolean) context.getParameters().get("sendDefaults") && dataSchema != null)
+      if (context.getParameters().containsKey(RestConstants.FILL_DEFAULT_VALUE_IN_RESPONSE_PARAM) &&
+          (Boolean) context.getParameters().get(RestConstants.FILL_DEFAULT_VALUE_IN_RESPONSE_PARAM) &&
+          dataSchema != null)
       {
         getAbsentFieldsDefaultValues((RecordDataSchema) dataSchema, dataMap);
       }
