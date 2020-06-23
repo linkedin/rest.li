@@ -13,9 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
-- Add new changelog (`CHANGELOG.md`) and changelog helper script (`./scripts/update-changelog`).
 
 ## [29.3.3] - 2020-06-22
+- Add new changelog (`CHANGELOG.md`) and changelog helper script (`./scripts/update-changelog`).
 
 ## [29.3.2] - 2020-06-19
 - Fix dark cluster startup problem (#330)
@@ -4540,7 +4540,8 @@ patch operations can re-use these classes for generating patch messages.
 ## [0.14.1]
 
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.3.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.3.3...master
+[29.3.3]: https://github.com/linkedin/rest.li/compare/v29.3.2...v29.3.3
 [29.3.2]: https://github.com/linkedin/rest.li/compare/v29.3.1...v29.3.2
 [29.3.1]: https://github.com/linkedin/rest.li/compare/v29.3.0...v29.3.1
 [29.3.0]: https://github.com/linkedin/rest.li/compare/v29.2.5...v29.3.0
