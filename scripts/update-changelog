@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# The purpose of this script is to move all "unreleased" info in the changelog to a released version section
+
+# Ensure that the script is being run from the root project directory
+PROPERTIES_FILE='gradle.properties'
+if [ ! -f "$PROPERTIES_FILE" ]; then
+  echo "Could not find $PROPERTIES_FILE, please run this script from the root project directory."
+  exit 2
+fi
+
+# Process CLI arguments
+for ARG in "$@"; do
+  if [ "$ARG" = '-h' ] || [ "$ARG" = '--help' ]; then
+    cat ./scripts/help-text/update-changelog.txt
+    exit 0
+  fi
+done
+
+CHANGELOG_FILE='CHANGELOG.md'
+BASE_URL='https://github.com/linkedin/rest.li/compare/'
+
+# Determine the current version
+VERSION=$(awk 'BEGIN { FS = "=" }; $1 == "version" { print $2 }' $PROPERTIES_FILE | awk '{ print $1 }')
+if [ -z "$VERSION" ]; then
+  echo "Couldn't read the version from $PROPERTIES_FILE, please fix this then try again."
+  exit 1
+fi
+
+# Ensure that the changelog is in a valid state before proceeding
+cat $CHANGELOG_FILE | grep -F "[${VERSION}]" > /dev/null
+if [ $? = 0 ]; then
+  echo "Can't update the changelog for version $VERSION, as there's already an entry for it."
+  echo "You either already ran this script, or you forgot to bump the project version."
+  echo ''
+  cat ./scripts/help-text/update-changelog.txt
+  exit 1
+fi
+
+# Determine two places to split the changelog: at the "Unreleased" heading and at the "Unreleased" link footnote
+LINE_A=$(grep -Fn '## [Unreleased]' $CHANGELOG_FILE | awk 'BEGIN { FS = ":" }; { print $1 }' | head -1)
+LINE_B=$(grep -Fn '[Unreleased]: https' $CHANGELOG_FILE | awk 'BEGIN { FS = ":" }; { print $1 }' | tail -1)
+if [ -z "$LINE_A" ] || [ -z "$LINE_B" ]; then
+  echo 'Failed to update changelog; cannot find "Unreleased" heading or "Unreleased" link footnote. Were they removed?'
+  exit 1
+elif [ $LINE_A -ge $LINE_B ]; then
+  echo 'Failed to update changelog; the "Unreleased" heading and the "Unreleased" link footnote seem to be misplaced.'
+fi
+
+# Determine the previously released version by looking at the latest link footnote
+PREV_VERSION=$(sed "$((LINE_B + 1))q;d" $CHANGELOG_FILE | sed 's/^\[\(.*\)\].*$/\1/g')
+if [ -z "$PREV_VERSION" ]; then
+  echo "Failed to update changelog; cannot determine previous version. Were the link footnotes altered?"
+  exit 1
+fi
+
+# Create temp file where we can construct the next changelog
+TEMP_FILE=$(mktemp --tmpdir restli-changelog-XXXXX)
+
+# At this point, abort if something goes wrong
+set -e
+
+echo 'Attempting to update the changelog...'
+
+# Copy the beginning of the file (up to and including the "Unreleased" heading)
+cat $CHANGELOG_FILE | head -${LINE_A} | tee $TEMP_FILE > /dev/null
+# Insert newline
+echo "" | tee -a $TEMP_FILE > /dev/null
+# Insert new heading for the release version
+echo "## [${VERSION}] - $(date +'%Y-%m-%d')" | tee -a $TEMP_FILE > /dev/null
+# Copy "Unreleased" entries into the new heading, and copy all other past version entries
+cat $CHANGELOG_FILE | head -$((LINE_B - 1)) | tail -n +$((LINE_A + 1)) | tee -a $TEMP_FILE > /dev/null
+# Insert updated "Unreleased" link footnote
+echo "[Unreleased]: ${BASE_URL}v${VERSION}...master" | tee -a $TEMP_FILE > /dev/null
+# Insert new version link footnote
+echo "[${VERSION}]: ${BASE_URL}v${PREV_VERSION}...v${VERSION}" | tee -a $TEMP_FILE > /dev/null
+# Copy all other past link footnotes
+cat $CHANGELOG_FILE | tail -n +$((LINE_B + 1)) | tee -a $TEMP_FILE > /dev/null
+
+# Finally, save the constructed text as the changelog
+mv $TEMP_FILE $CHANGELOG_FILE
+
+echo "Successfully updated the changelog for version $VERSION."
