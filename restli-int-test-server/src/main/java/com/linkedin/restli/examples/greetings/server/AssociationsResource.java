@@ -22,7 +22,7 @@ package com.linkedin.restli.examples.greetings.server;
 
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.EmptyRecord;
+import com.linkedin.restli.examples.greetings.api.Empty;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.MessageCriteria;
 import com.linkedin.restli.examples.greetings.api.Tone;
@@ -139,15 +139,15 @@ public class AssociationsResource extends AssociationResourceTemplate<Message>
   private static final Message m2 = new Message().setMessage("world").setTone(Tone.FRIENDLY);
 
   @BatchFinder(value = "searchMessages", batchParam = "criteria")
-  public BatchFinderResult<MessageCriteria, Message, EmptyRecord> searchMessages(@AssocKeyParam("src") String src, @PagingContextParam PagingContext context,
+  public BatchFinderResult<MessageCriteria, Message, Empty> searchMessages(@AssocKeyParam("src") String src, @PagingContextParam PagingContext context,
       @QueryParam("criteria") MessageCriteria[] criteria)
   {
-    BatchFinderResult<MessageCriteria, Message, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
+    BatchFinderResult<MessageCriteria, Message, Empty> batchFinderResult = new BatchFinderResult<>();
 
     for (MessageCriteria currentCriteria: criteria) {
       if (currentCriteria.getTone() == Tone.FRIENDLY) {
         // on success
-        CollectionResult<Message, EmptyRecord> cr = new CollectionResult<Message, EmptyRecord>(Arrays.asList(m1, m2), 2);
+        CollectionResult<Message, Empty> cr = new CollectionResult<>(Arrays.asList(m1, m2), 2);
         batchFinderResult.putResult(currentCriteria, cr);
       } else {
         // on error: to construct error response for test

@@ -16,6 +16,8 @@
 
 package com.linkedin.restli.server.combined;
 
+import com.linkedin.restli.server.BatchFinderResult;
+import com.linkedin.restli.server.annotations.BatchFinder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +36,6 @@ import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CreateResponse;
-import com.linkedin.restli.server.MapWithTestRecord;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.TestPathRecord;
 import com.linkedin.restli.server.TestRecord;
@@ -557,4 +558,15 @@ public class CombinedResources
   public class DataAnnotationTestResource extends SimpleResourceTemplate<TestPathRecord>
   {
   }
+
+  @RestLiCollection(name="testBatchFinder")
+  public static class CollectionResourceWithBatchFinder extends CollectionResourceTemplate<String, Foo>
+  {
+    @BatchFinder(value = "testBatchFinder", batchParam = "criteria")
+    public BatchFinderResult<Foo, Foo, CombinedTestDataModels.FooMetaData> testBatchFinder(@QueryParam("criteria") Foo[] criteria)
+    {
+      return null;
+    }
+  }
+
 }

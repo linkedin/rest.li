@@ -37,8 +37,8 @@
       "optional" : true,
       "validate" : {
         "strlen" : {
-          "min" : 1,
-          "max" : 10
+          "max" : 10,
+          "min" : 1
         }
       }
     }, {
@@ -56,8 +56,8 @@
       "type" : "string",
       "validate" : {
         "strlen" : {
-          "min" : 1,
-          "max" : 10
+          "max" : 10,
+          "min" : 1
         }
       }
     }, {

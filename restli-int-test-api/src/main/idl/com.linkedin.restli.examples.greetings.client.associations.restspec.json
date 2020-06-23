@@ -38,6 +38,9 @@
         "name" : "criteria",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.MessageCriteria\" }"
       } ],
+      "metadata" : {
+        "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+      },
       "assocKeys" : [ "src" ],
       "pagingSupported" : true,
       "batchParam" : "criteria"
