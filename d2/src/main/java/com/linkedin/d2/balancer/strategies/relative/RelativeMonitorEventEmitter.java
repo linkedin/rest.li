@@ -22,13 +22,13 @@ import com.linkedin.util.clock.Clock;
 
 
 /**
- * Adapter for emitting D2 events from {@link RelativeStateUpdater}.
+ * Adapter for emitting D2 events from {@link StateUpdater}.
  */
-public class MonitorEventEmitter implements PartitionStateUpdateListener<PartitionState>
+public class RelativeMonitorEventEmitter implements PartitionStateUpdateListener<PartitionState>
 {
   private final D2MonitorEventEmitter _d2MonitorEventEmitter;
 
-  public MonitorEventEmitter(D2MonitorEventEmitter d2MonitorEventEmitter)
+  public RelativeMonitorEventEmitter(D2MonitorEventEmitter d2MonitorEventEmitter)
   {
     _d2MonitorEventEmitter = d2MonitorEventEmitter;
   }
@@ -67,7 +67,7 @@ public class MonitorEventEmitter implements PartitionStateUpdateListener<Partiti
     }
 
     @Override
-    public MonitorEventEmitter create(int partitionId)
+    public RelativeMonitorEventEmitter create(int partitionId)
     {
       D2MonitorEventEmitter d2MonitorEventEmitter = new D2MonitorEventEmitter(_clusterName,
                                                                               _serviceName,
@@ -76,7 +76,7 @@ public class MonitorEventEmitter implements PartitionStateUpdateListener<Partiti
                                                                               _eventEmitter,
                                                                               _emitIntervalMs,
                                                                               _pointsPerWeight);
-      return new MonitorEventEmitter(d2MonitorEventEmitter);
+      return new RelativeMonitorEventEmitter(d2MonitorEventEmitter);
     }
   }
 }

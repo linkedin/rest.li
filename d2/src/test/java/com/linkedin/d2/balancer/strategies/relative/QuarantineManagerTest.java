@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.D2QuarantineProperties;
@@ -19,11 +35,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import org.mockito.Mockito;
-import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static com.linkedin.d2.balancer.strategies.relative.TrackerClientState.HealthState.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 
 public class QuarantineManagerTest {
@@ -32,67 +48,109 @@ public class QuarantineManagerTest {
   private static final HealthCheckOperations HEALTH_CHECK_OPERATIONS = new HealthCheckOperations();
   private static final long DEFAULT_AVG_CLUSTER_LATENCY = 100;
   private static final RingFactory<URI> RING_FACTORY = new DistributionNonDiscreteRingFactory<>();
+  private static final Clock CLOCK = Mockito.mock(Clock.class);
+
+  private final ScheduledExecutorService _executorService = Mockito.mock(ScheduledExecutorService.class);
+  private QuarantineManager _quarantineManager;
+
+  private void setup(double quarantineMaxPercent, boolean slowStartEnabled, boolean fastRecoveryEnabled)
+  {
+    double slowStartThreshold = slowStartEnabled ? 0.5 : 0;
+    D2QuarantineProperties d2QuarantineProperties = new D2QuarantineProperties().setQuarantineMaxPercent(quarantineMaxPercent)
+        .setHealthCheckMethod(HttpMethod.OPTIONS);
+    _quarantineManager = new QuarantineManager(SERVICE_NAME, SERVICE_PATH, HEALTH_CHECK_OPERATIONS, d2QuarantineProperties,
+        slowStartThreshold, fastRecoveryEnabled, _executorService, CLOCK,
+        RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS,
+        RelativeLoadBalancerStrategyFactory.DEFAULT_RELATIVE_LATENCY_LOW_THRESHOLD_FACTOR);
+  }
 
   @Test
-  public void testQuarantineNotEnabledInConfig() throws URISyntaxException {
-    Mocks mocks = new Mocks(RelativeLoadBalancerStrategyFactory.DEFAULT_QUARANTINE_MAX_PERCENT, false, false);
+  public void testQuarantineNotEnabledInConfig() throws URISyntaxException
+  {
+    setup(RelativeLoadBalancerStrategyFactory.DEFAULT_QUARANTINE_MAX_PERCENT, false, false);
 
     PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
-        .setTrackerClientStateMap(TrackerClientMockHelper.mockTrackerClients(2), Arrays.asList(0.0, 0.6),
+        .setTrackerClientStateMap(TrackerClientMockHelper.mockTrackerClients(2),
+            Arrays.asList(StateUpdater.MIN_HEALTH_SCORE, 0.6),
             Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
             Arrays.asList(20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT).build();
 
-    mocks._quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
+    _quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
 
     // Verify quarantine is not enabled
-    Mockito.verifyZeroInteractions(mocks._executorService);
-    Assert.assertTrue(state.getQuarantineMap().isEmpty());
+    Mockito.verifyZeroInteractions(_executorService);
+    assertTrue(state.getQuarantineMap().isEmpty());
   }
 
-  @Test
-  public void testQuarantineOneHost() throws URISyntaxException {
-    Mocks mocks = new Mocks(0.5, false, false);
-    mocks._quarantineManager.tryEnableQuarantine();
+  @Test(dataProvider = "unhealthyHealthScore")
+  public void testQuarantineHost(double unhealthyHealthScore) throws URISyntaxException
+  {
+    setup(0.5, false, false);
+    _quarantineManager.tryEnableQuarantine();
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2);
     PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(0.0, 0.6),
+        .setTrackerClientStateMap(trackerClients, Arrays.asList(unhealthyHealthScore, StateUpdater.MAX_HEALTH_SCORE),
             Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
             Arrays.asList(20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT).build();
 
-    mocks._quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
+    _quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
 
-    // Verify quarantine is enabled and one client is quarantined
-    Assert.assertEquals(state.getQuarantineMap().size(), 1);
-    Assert.assertTrue(state.getQuarantineMap().containsKey(trackerClients.get(0)));
-    Assert.assertTrue(state.getRecoveryTrackerClients().isEmpty());
+    if (unhealthyHealthScore == StateUpdater.MIN_HEALTH_SCORE)
+    {
+      // Verify quarantine is enabled and one client is quarantined
+      assertEquals(state.getQuarantineMap().size(), 1);
+      assertTrue(state.getQuarantineMap().containsKey(trackerClients.get(0)));
+      assertTrue(state.getRecoveryTrackerClients().isEmpty());
+    }
+    else
+    {
+      // Verify quarantine map is empty
+      assertTrue(state.getQuarantineMap().isEmpty());
+      assertTrue(state.getRecoveryTrackerClients().isEmpty());
+    }
+
+  }
+
+  @DataProvider(name = "unhealthyHealthScore")
+  Object[][] getUnhealthyHealthScore()
+  {
+    return new Object[][]
+        {
+            {StateUpdater.MIN_HEALTH_SCORE},
+            {0.6},
+            {0.8}
+        };
   }
 
   @Test
-  public void testQuarantinedMaxPercentage() throws URISyntaxException {
-    Mocks mocks = new Mocks(0.5, false, false);
-    mocks._quarantineManager.tryEnableQuarantine();
+  public void testQuarantinedMaxPercentage() throws URISyntaxException
+  {
+    setup(0.5, false, false);
+    _quarantineManager.tryEnableQuarantine();
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(4);
     PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(0.0, 0.0, 0.0, 0.6),
+        .setTrackerClientStateMap(trackerClients,
+            Arrays.asList(StateUpdater.MIN_HEALTH_SCORE, StateUpdater.MIN_HEALTH_SCORE, StateUpdater.MIN_HEALTH_SCORE, 0.6),
             Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY,
                 TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
             Arrays.asList(20, 20, 20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT).build();
 
-    mocks._quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
+    _quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
 
     // Verify quarantine is enabled and 2 clients are quarantined.
-    // In theory, there are 3 candidates, but because of the max percentage is 50%, we only quarantine 2, the other one is put into recovery
-    Assert.assertEquals(state.getQuarantineMap().size(), 2);
-    Assert.assertEquals(state.getRecoveryTrackerClients().size(), 1);
+    // In theory, there are 3 candidates, but because of the max percentage is 50%, we only quarantine 2
+    assertEquals(state.getQuarantineMap().size(), 2);
   }
 
   @Test(dataProvider = "quarantineCheckResult")
-  public void testQuarantineCheck(boolean quarantineCheckResult) throws URISyntaxException {
+  public void testQuarantineCheck(boolean quarantineCheckResult) throws URISyntaxException
+  {
+    setup(0.5, false, false);
     LoadBalancerQuarantine quarantine = Mockito.mock(LoadBalancerQuarantine.class);
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3);
     Map<TrackerClient, LoadBalancerQuarantine> existingQuarantineMap = new HashMap<>();
@@ -100,31 +158,29 @@ public class QuarantineManagerTest {
     Mockito.when(quarantine.checkUpdateQuarantineState()).thenReturn(quarantineCheckResult);
 
     PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(0.0, 0.6, 0.6),
-            Arrays.asList(NEUTRAL, TrackerClientState.HealthState.UNHEALTHY,
+        .setTrackerClientStateMap(trackerClients, Arrays.asList(StateUpdater.MIN_HEALTH_SCORE, 0.6, 0.6),
+            Arrays.asList(TrackerClientState.HealthState.NEUTRAL, TrackerClientState.HealthState.UNHEALTHY,
                 TrackerClientState.HealthState.UNHEALTHY),
             Arrays.asList(20, 20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .setQuarantineMap(existingQuarantineMap)
         .build();
 
-    Mocks mocks = new Mocks(0.5, false, false);
-    mocks._quarantineManager.tryEnableQuarantine();
-
-    mocks._quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
+    _quarantineManager.tryEnableQuarantine();
+    _quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
 
     if (quarantineCheckResult)
     {
       // If quarantine check passed, verify the tracker client is put into recovery map, and the initial recovery rate is 0.01
-      Assert.assertTrue(state.getQuarantineMap().isEmpty());
-      Assert.assertEquals(state.getRecoveryTrackerClients().size(), 1);
-      Assert.assertEquals(state.getTrackerClientStateMap().get(trackerClients.get(0)).getHealthScore(), 0.01);
+      assertTrue(state.getQuarantineMap().isEmpty());
+      assertEquals(state.getRecoveryTrackerClients().size(), 1);
+      assertEquals(state.getTrackerClientStateMap().get(trackerClients.get(0)).getHealthScore(), 0.01);
     } else
     {
       // Otherwise, the client stays in the quarantine map
-      Assert.assertEquals(state.getQuarantineMap().size(), 1);
-      Assert.assertTrue(state.getRecoveryTrackerClients().isEmpty());
-      Assert.assertTrue(state.getQuarantineMap().containsKey(trackerClients.get(0)));
+      assertEquals(state.getQuarantineMap().size(), 1);
+      assertTrue(state.getRecoveryTrackerClients().isEmpty());
+      assertTrue(state.getQuarantineMap().containsKey(trackerClients.get(0)));
     }
   }
 
@@ -139,7 +195,9 @@ public class QuarantineManagerTest {
   }
 
   @Test(dataProvider = "trackerClientState")
-  public void testFastRecoveryInRecoveryMap(int callCount, TrackerClientState.HealthState healthState, double healthScore) throws URISyntaxException {
+  public void testFastRecoveryInRecoveryMap(int callCount, TrackerClientState.HealthState healthState, double healthScore) throws URISyntaxException
+  {
+    setup(0.5, false, true);
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3);
     Set<TrackerClient> recoverySet = new HashSet<>();
     recoverySet.add(trackerClients.get(0));
@@ -153,25 +211,24 @@ public class QuarantineManagerTest {
         .setRecoveryClients(recoverySet)
         .build();
 
-    Mocks mocks = new Mocks(0.5, false, true);
-    mocks._quarantineManager.tryEnableQuarantine();
+    _quarantineManager.tryEnableQuarantine();
 
-    mocks._quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
+    _quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
 
     if (callCount <= RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
     {
       // Verify the health score doubled
-      Assert.assertEquals(state.getTrackerClientStateMap().get(trackerClients.get(0)).getHealthScore(), healthScore * 2);
-      Assert.assertTrue(state.getRecoveryTrackerClients().contains(trackerClients.get(0)));
-    } else if (healthState == UNHEALTHY && healthScore <= QuarantineManager.FAST_RECOVERY_HEALTH_SCORE_THRESHOLD)
+      assertEquals(state.getTrackerClientStateMap().get(trackerClients.get(0)).getHealthScore(), healthScore * 2);
+      assertTrue(state.getRecoveryTrackerClients().contains(trackerClients.get(0)));
+    } else if (healthState != TrackerClientState.HealthState.UNHEALTHY && healthScore <= QuarantineManager.FAST_RECOVERY_HEALTH_SCORE_THRESHOLD)
     {
       // Verify the health score keeps the same, and the client is still in recovery map
-      Assert.assertEquals(state.getTrackerClientStateMap().get(trackerClients.get(0)).getHealthScore(), healthScore);
-      Assert.assertTrue(state.getRecoveryTrackerClients().contains(trackerClients.get(0)));
+      assertEquals(state.getTrackerClientStateMap().get(trackerClients.get(0)).getHealthScore(), healthScore);
+      assertTrue(state.getRecoveryTrackerClients().contains(trackerClients.get(0)));
     } else
     {
       // Verify the client comes out of recovery map
-      Assert.assertTrue(state.getRecoveryTrackerClients().isEmpty());
+      assertTrue(state.getRecoveryTrackerClients().isEmpty());
     }
   }
 
@@ -180,17 +237,18 @@ public class QuarantineManagerTest {
   {
     return new Object[][]
         {
-            {0, NEUTRAL, 0.01},
-            {15, UNHEALTHY, 0.01},
-            {15, UNHEALTHY, 0.6},
-            {15, HEALTHY, 0.01}
+            {0, TrackerClientState.HealthState.NEUTRAL, 0.01},
+            {15, TrackerClientState.HealthState.UNHEALTHY, 0.01},
+            {15, TrackerClientState.HealthState.UNHEALTHY, 0.6},
+            {15, TrackerClientState.HealthState.HEALTHY, 0.01}
         };
   }
 
   @Test(dataProvider = "enableFastRecovery")
-  public void testEnrollNewClientInRecoveryMap(boolean fastRecoveryEnabled) throws URISyntaxException {
-    Mocks mocks = new Mocks(0.5, true, fastRecoveryEnabled);
-    mocks._quarantineManager.tryEnableQuarantine();
+  public void testEnrollNewClientInRecoveryMap(boolean fastRecoveryEnabled) throws URISyntaxException
+  {
+    setup(0.5, true, fastRecoveryEnabled);
+    _quarantineManager.tryEnableQuarantine();
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2);
     PartitionState oldState = new PartitionStateDataBuilder(RING_FACTORY)
@@ -203,14 +261,14 @@ public class QuarantineManagerTest {
             Arrays.asList(20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT).build();
 
-    mocks._quarantineManager.updateQuarantineState(newState, oldState, DEFAULT_AVG_CLUSTER_LATENCY);
+    _quarantineManager.updateQuarantineState(newState, oldState, DEFAULT_AVG_CLUSTER_LATENCY);
 
     if (fastRecoveryEnabled)
     {
-      Assert.assertEquals(newState.getRecoveryTrackerClients().size(), 2);
+      assertEquals(newState.getRecoveryTrackerClients().size(), 2);
     } else
     {
-      Assert.assertTrue(newState.getRecoveryTrackerClients().isEmpty());
+      assertTrue(newState.getRecoveryTrackerClients().isEmpty());
     }
   }
 
@@ -225,46 +283,30 @@ public class QuarantineManagerTest {
   }
 
   @Test
-  public void testEnrollOneQuarantineOneRecovery() throws URISyntaxException {
+  public void testEnrollOneQuarantineOneRecovery() throws URISyntaxException
+  {
     LoadBalancerQuarantine quarantine = Mockito.mock(LoadBalancerQuarantine.class);
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3);
     Map<TrackerClient, LoadBalancerQuarantine> existingQuarantineMap = new HashMap<>();
     existingQuarantineMap.put(trackerClients.get(1), quarantine);
     Mockito.when(quarantine.checkUpdateQuarantineState()).thenReturn(true);
 
-    Mocks mocks = new Mocks(0.5, true, true);
-    QuarantineManager quarantineManager = mocks._quarantineManager;
-    mocks._quarantineManager.tryEnableQuarantine();
+    setup(0.5, true, true);
+    _quarantineManager.tryEnableQuarantine();
 
     PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(0.0, 0.0, 0.01),
-            Arrays.asList(UNHEALTHY, NEUTRAL, UNHEALTHY),
+        .setTrackerClientStateMap(trackerClients,
+            Arrays.asList(StateUpdater.MIN_HEALTH_SCORE, StateUpdater.MIN_HEALTH_SCORE, 0.01),
+            Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.NEUTRAL,
+                TrackerClientState.HealthState.UNHEALTHY),
             Arrays.asList(20, 20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT).build();
 
-    quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
+    _quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
 
-    Assert.assertEquals(state.getRecoveryTrackerClients().size(), 1);
-    Assert.assertTrue(state.getRecoveryTrackerClients().contains(trackerClients.get(1)));
-    Assert.assertEquals(state.getQuarantineMap().size(), 1);
-    Assert.assertTrue(state.getQuarantineMap().containsKey(trackerClients.get(0)));
-  }
-
-  private static class Mocks
-  {
-    private final ScheduledExecutorService _executorService = Mockito.mock(ScheduledExecutorService.class);
-    private final Clock _clock = Mockito.mock(Clock.class);
-
-    private final QuarantineManager _quarantineManager;
-    private Mocks(double quarantineMaxPercent, boolean slowStartEnabled, boolean fastRecoveryEnabled)
-    {
-      double slowStartThreshold = slowStartEnabled ? 0.5 : 0;
-      D2QuarantineProperties d2QuarantineProperties = new D2QuarantineProperties().setQuarantineMaxPercent(quarantineMaxPercent)
-          .setHealthCheckMethod(HttpMethod.OPTIONS);
-      _quarantineManager = new QuarantineManager(SERVICE_NAME, SERVICE_PATH, HEALTH_CHECK_OPERATIONS, d2QuarantineProperties,
-          slowStartThreshold, fastRecoveryEnabled, _executorService, _clock,
-          RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS,
-          RelativeLoadBalancerStrategyFactory.DEFAULT_RELATIVE_LATENCY_LOW_THRESHOLD_FACTOR);
-    }
+    assertEquals(state.getRecoveryTrackerClients().size(), 1);
+    assertTrue(state.getRecoveryTrackerClients().contains(trackerClients.get(1)));
+    assertEquals(state.getQuarantineMap().size(), 1);
+    assertTrue(state.getQuarantineMap().containsKey(trackerClients.get(0)));
   }
 }

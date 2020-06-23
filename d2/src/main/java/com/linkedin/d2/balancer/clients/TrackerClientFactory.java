@@ -21,6 +21,7 @@ import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -192,8 +193,9 @@ public class TrackerClientFactory
                                                            TransportClient transportClient,
                                                            Clock clock)
   {
-    TrackerClientImpl.ErrorStatusMatch errorStatusRangeMatch = (status) -> {
-      for(HttpStatusCodeRange statusCodeRange : getErrorStatusRanges(serviceProperties))
+    List<HttpStatusCodeRange> errorStatusCodeRanges = getErrorStatusRanges(serviceProperties);
+    Predicate<Integer> isErrorStatus = (status) -> {
+      for(HttpStatusCodeRange statusCodeRange : errorStatusCodeRanges)
       {
         if (status >= statusCodeRange.getLowerBound() && status <= statusCodeRange.getUpperBound())
         {
@@ -202,11 +204,12 @@ public class TrackerClientFactory
       }
       return false;
     };
+
     return new TrackerClientImpl(uri,
                                  uriProperties.getPartitionDataMap(uri),
                                  transportClient,
                                  clock,
                                  getInterval(loadBalancerStrategyName, serviceProperties),
-                                 errorStatusRangeMatch);
+                                 isErrorStatus);
   }
 }

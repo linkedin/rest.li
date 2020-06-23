@@ -1,8 +1,23 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.d2.balancer.strategies.degrader.DistributionNonDiscreteRingFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -16,35 +31,51 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import org.mockito.Mockito;
-import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static com.linkedin.d2.balancer.strategies.relative.TrackerClientState.HealthState.*;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 
-public class RelativeStateUpdaterTest
+public class StateUpdaterTest
 {
   private static final int DEFAULT_PARTITION_ID = 0;
   private static final long DEFAULT_CLUSTER_GENERATION_ID = 0;
+  private static final int HEALTHY_POINTS = 100;
+  private StateUpdater _stateUpdater;
+  private final ScheduledExecutorService _executorService = Mockito.mock(ScheduledExecutorService.class);
+
+  private void setup(D2RelativeStrategyProperties relativeStrategyProperties,
+      ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap)
+  {
+    final QuarantineManager quarantineManager = Mockito.mock(QuarantineManager.class);
+
+    RelativeLoadBalancerStrategyFactory.putDefaultValues(relativeStrategyProperties);
+    Mockito.doNothing().when(quarantineManager).updateQuarantineState(any(PartitionState.class), any(PartitionState.class),
+        anyLong());
+
+    _stateUpdater = new StateUpdater(relativeStrategyProperties, quarantineManager, _executorService,
+        partitionLoadBalancerStateMap, Collections.emptyList());
+  }
 
   @Test
   public void testInitializePartition() throws URISyntaxException
   {
-    Mocks mocks = new Mocks(new D2RelativeStrategyProperties(), new ConcurrentHashMap<>(),
-        Collections.emptyList());
+    setup(new D2RelativeStrategyProperties(), new ConcurrentHashMap<>());
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
         Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0));
 
     // Verify before initialization the partition does not exist
-    Assert.assertTrue(mocks._relativeStateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty());
+    assertTrue(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty());
 
-    mocks._relativeStateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID);
+    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID);
 
-    Assert.assertEquals(mocks._relativeStateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(), 100);
-    Assert.assertEquals(mocks._relativeStateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(), 100);
+    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
+    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
   }
 
   @Test
@@ -58,12 +89,11 @@ public class RelativeStateUpdaterTest
 
     ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
-    Mocks mocks = new Mocks(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap,
-        Collections.emptyList());
+    setup(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap);
     // Cluster generation id changed from 0 to 1
-    mocks._relativeStateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1);
+    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1);
 
-    Mockito.verify(mocks._executorService).execute(any(Runnable.class));
+    Mockito.verify(_executorService).execute(any(Runnable.class));
   }
 
   @Test
@@ -75,23 +105,23 @@ public class RelativeStateUpdaterTest
 
     PartitionState state = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(1.0, 1.0, 1.0), Arrays.asList(HEALTHY, HEALTHY, HEALTHY),
+        .setTrackerClientStateMap(trackerClients, Arrays.asList(1.0, 1.0, 1.0), Arrays.asList(TrackerClientState.HealthState.HEALTHY,
+            TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
             Arrays.asList(30, 30, 30), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .build();
 
     ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
-    Mocks mocks = new Mocks(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap,
-        Collections.emptyList());
+    setup(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap);
 
-    mocks._relativeStateUpdater.updateState();
-    Map<URI, Integer> pointsMap = mocks._relativeStateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
+    _stateUpdater.updateState();
+    Map<URI, Integer> pointsMap = _stateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
 
     // Verify one host's health score dropped to 80
-    Assert.assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 100);
-    Assert.assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), 100);
-    Assert.assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), 80);
+    assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
+    assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+    assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), 80);
   }
 
   @Test
@@ -113,13 +143,15 @@ public class RelativeStateUpdaterTest
 
     PartitionState state1 = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
-        .setTrackerClientStateMap(trackerClients1, Arrays.asList(1.0, 1.0, 1.0), Arrays.asList(HEALTHY, HEALTHY, HEALTHY),
+        .setTrackerClientStateMap(trackerClients1, Arrays.asList(1.0, 1.0, 1.0),
+            Arrays.asList(TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
             Arrays.asList(30, 30, 30), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .build();
     PartitionState state2 = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
-        .setTrackerClientStateMap(trackerClients2, Arrays.asList(1.0, 1.0), Arrays.asList(HEALTHY, HEALTHY),
+        .setTrackerClientStateMap(trackerClients2, Arrays.asList(1.0, 1.0),
+            Arrays.asList(TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
             Arrays.asList(30, 30), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .build();
@@ -127,15 +159,14 @@ public class RelativeStateUpdaterTest
     ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(0, state1);
     partitionLoadBalancerStateMap.put(1, state2);
-    Mocks mocks = new Mocks(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap,
-        Collections.emptyList());
+    setup(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap);
 
-    mocks._relativeStateUpdater.updateState();
+    _stateUpdater.updateState();
     URI overlapUri = trackerClients1.get(2).getUri();
 
     // Verify the host has 80 points in partition 0, 100 points in partition 1
-    Assert.assertEquals(partitionLoadBalancerStateMap.get(0).getPointsMap().get(overlapUri).intValue(), 80);
-    Assert.assertEquals(partitionLoadBalancerStateMap.get(1).getPointsMap().get(overlapUri).intValue(), 100);
+    assertEquals(partitionLoadBalancerStateMap.get(0).getPointsMap().get(overlapUri).intValue(), 80);
+    assertEquals(partitionLoadBalancerStateMap.get(1).getPointsMap().get(overlapUri).intValue(), HEALTHY_POINTS);
   }
 
   @Test
@@ -147,27 +178,27 @@ public class RelativeStateUpdaterTest
 
     PartitionState state = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(1.0, 1.0, 1.0), Arrays.asList(HEALTHY, HEALTHY, HEALTHY),
+        .setTrackerClientStateMap(trackerClients, Arrays.asList(1.0, 1.0, 1.0),
+            Arrays.asList(TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
             Arrays.asList(30, 30, 30), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .build();
 
     ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
-    Mocks mocks = new Mocks(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap,
-        Collections.emptyList());
+    setup(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap);
 
     // New tracker clients set only contains 2 out of 3 tracker clients from the old state
     Set<TrackerClient> newTrackerClientSet = new HashSet<>();
     newTrackerClientSet.add(trackerClients.get(0));
     newTrackerClientSet.add(trackerClients.get(1));
-    mocks._relativeStateUpdater.updateStateForPartition(newTrackerClientSet, DEFAULT_PARTITION_ID, state, DEFAULT_CLUSTER_GENERATION_ID);
+    _stateUpdater.updateStateForPartition(newTrackerClientSet, DEFAULT_PARTITION_ID, state, 1L);
 
     // Verify there are only 2 URIs in the points map
-    Map<URI, Integer> pointsMap = mocks._relativeStateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
-    Assert.assertEquals(pointsMap.size(), 2);
-    Assert.assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 100);
-    Assert.assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), 100);
+    Map<URI, Integer> pointsMap = _stateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
+    assertEquals(pointsMap.size(), 2);
+    assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
+    assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
   }
 
   @Test(dataProvider = "trackerClients")
@@ -176,31 +207,31 @@ public class RelativeStateUpdaterTest
   {
     PartitionState state = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(1.0, 1.0, 1.0), Arrays.asList(HEALTHY, HEALTHY, HEALTHY),
+        .setTrackerClientStateMap(trackerClients, Arrays.asList(1.0, 1.0, 1.0),
+            Arrays.asList(TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
             Arrays.asList(30, 30, 30), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .build();
 
     ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
-    Mocks mocks = new Mocks(new D2RelativeStrategyProperties()
+    setup(new D2RelativeStrategyProperties()
             .setRelativeLatencyHighThresholdFactor(highLatencyFactor).setHighErrorRate(highErrorRate),
-        partitionLoadBalancerStateMap,
-        Collections.emptyList());
-    mocks._relativeStateUpdater.updateState();
+        partitionLoadBalancerStateMap);
+    _stateUpdater.updateState();
 
-    Map<URI, Integer> pointsMap = mocks._relativeStateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
+    Map<URI, Integer> pointsMap = _stateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
     if (!expectToDropHealthScore)
     {
-      Assert.assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 100);
-      Assert.assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), 100);
-      Assert.assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), 100);
+      assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), HEALTHY_POINTS);
     } else
     {
       // Experiment 1 dropped because of latency, experiment 2 dropped because of outstanding latency
-      Assert.assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 80);
-      Assert.assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), 100);
-      Assert.assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), 100);
+      assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 80);
+      assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), HEALTHY_POINTS);
     }
   }
 
@@ -249,22 +280,23 @@ public class RelativeStateUpdaterTest
 
     PartitionState state = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(1.0, 1.0, 1.0), Arrays.asList(HEALTHY, HEALTHY, HEALTHY),
+        .setTrackerClientStateMap(trackerClients, Arrays.asList(1.0, 1.0, 1.0),
+            Arrays.asList(TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
             Arrays.asList(5, 20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE, minCallCount)
         .build();
 
     ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
-    Mocks mocks = new Mocks(new D2RelativeStrategyProperties().setMinCallCount(minCallCount),
-        partitionLoadBalancerStateMap, Collections.emptyList());
+    setup(new D2RelativeStrategyProperties().setMinCallCount(minCallCount),
+        partitionLoadBalancerStateMap);
 
-    mocks._relativeStateUpdater.updateState();
-    Map<URI, Integer> pointsMap = mocks._relativeStateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
+    _stateUpdater.updateState();
+    Map<URI, Integer> pointsMap = _stateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
 
     // Verify the host with high latency still has 100 points
-    Assert.assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 100);
-    Assert.assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), 100);
-    Assert.assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), 100);
+    assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
+    assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+    assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), HEALTHY_POINTS);
   }
 
   @Test(dataProvider = "slowStartThreshold")
@@ -275,39 +307,40 @@ public class RelativeStateUpdaterTest
 
     PartitionState state = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(currentHealthScore, 1.0, 1.0), Arrays.asList(UNHEALTHY, HEALTHY, HEALTHY),
+        .setTrackerClientStateMap(trackerClients, Arrays.asList(currentHealthScore, 1.0, 1.0),
+            Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
             Arrays.asList(20, 20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
             RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
         .build();
 
     ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
-    Mocks mocks = new Mocks(new D2RelativeStrategyProperties().setSlowStartThreshold(slowStartThreshold),
-        partitionLoadBalancerStateMap, Collections.emptyList());
+    setup(new D2RelativeStrategyProperties().setSlowStartThreshold(slowStartThreshold),
+        partitionLoadBalancerStateMap);
 
-    mocks._relativeStateUpdater.updateState();
-    Map<URI, Integer> pointsMap = mocks._relativeStateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
+    _stateUpdater.updateState();
+    Map<URI, Integer> pointsMap = _stateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
 
     if (slowStartThreshold == RelativeLoadBalancerStrategyFactory.DEFAULT_SLOW_START_THRESHOLD)
     {
-      Assert.assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 5);
-      Assert.assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), 100);
-      Assert.assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), 100);
+      assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 5);
+      assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), HEALTHY_POINTS);
     } else if (currentHealthScore == 0.0)
     {
-      Assert.assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 1);
-      Assert.assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), 100);
-      Assert.assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), 100);
+      assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 1);
+      assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), HEALTHY_POINTS);
     } else if (currentHealthScore == 0.1)
     {
-      Assert.assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 20);
-      Assert.assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), 100);
-      Assert.assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), 100);
+      assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 20);
+      assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), HEALTHY_POINTS);
     } else
     {
-      Assert.assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 30);
-      Assert.assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), 100);
-      Assert.assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), 100);
+      assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), 30);
+      assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), HEALTHY_POINTS);
     }
   }
 
@@ -321,25 +354,5 @@ public class RelativeStateUpdaterTest
             {0.1, 0.2},
             {0.25, 0.2}
         };
-  }
-
-  private static class Mocks
-  {
-    private final ScheduledExecutorService _executorService = Mockito.mock(ScheduledExecutorService.class);
-    private final QuarantineManager _quarantineManager = Mockito.mock(QuarantineManager.class);
-
-    private final RelativeStateUpdater _relativeStateUpdater;
-
-    private Mocks(D2RelativeStrategyProperties relativeStrategyProperties,
-        ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap,
-        List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories)
-    {
-      RelativeLoadBalancerStrategyFactory.putDefaultValues(relativeStrategyProperties);
-      Mockito.doNothing().when(_quarantineManager).updateQuarantineState(any(PartitionState.class), any(PartitionState.class),
-          anyLong());
-
-      _relativeStateUpdater = new RelativeStateUpdater(relativeStrategyProperties, _quarantineManager, _executorService,
-          partitionLoadBalancerStateMap, listenerFactories);
-    }
   }
 }

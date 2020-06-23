@@ -18,7 +18,6 @@ package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.strategies.ClientSelector;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.Ring;
@@ -35,24 +34,29 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Implementation for {@link ClientSelector}
+ * Select host from the hash ring for a request
  */
-public class ClientSelectorImpl implements ClientSelector
+public class ClientSelector
 {
-  private static final Logger LOG = LoggerFactory.getLogger(ClientSelectorImpl.class.getName());
+  private static final Logger LOG = LoggerFactory.getLogger(ClientSelector.class.getName());
 
   private final HashFunction<Request> _requestHashFunction;
 
-  public ClientSelectorImpl(HashFunction<Request> requestHashFunction)
+  public ClientSelector(HashFunction<Request> requestHashFunction)
   {
     _requestHashFunction = requestHashFunction;
   }
 
   /**
-   * @return TrackerClient
+   * Pick a {@link TrackerClient} from the ring for the given request
+   *
+   * @param request The request to be routed by D2
+   * @param requestContext The request context of the request
+   * @param ring A hash ring of URIs
+   * @param trackerClients A list of server tracker clients to pick
+   * @return The picked server to route the traffic to
    */
   @Nullable
-  @Override
   public TrackerClient getTrackerClient(Request request,
                                         RequestContext requestContext,
                                         Ring<URI> ring,
@@ -70,6 +74,7 @@ public class ClientSelectorImpl implements ClientSelector
     {
       trackerClient = getTrackerClientFromRing(request, requestContext, ring, trackerClients);
     }
+    addToExcludedHosts(trackerClient, requestContext);
 
     return trackerClient;
   }
@@ -85,20 +90,11 @@ public class ClientSelectorImpl implements ClientSelector
   private TrackerClient getTrackerClientFromTarget(URI targetHostUri, RequestContext requestContext, Map<URI, TrackerClient> trackerClients)
   {
     TrackerClient trackerClient = trackerClients.get(targetHostUri);
-
     if (trackerClient == null)
     {
       LOG.warn("No client found for ", targetHostUri, ". Target host specified is no longer part of cluster");
     }
-    else
-    {
-      // if this flag is set to be true, that means affinity routing is preferred but backup requests are still acceptable
-      Boolean otherHostAcceptable = KeyMapper.TargetHostHints.getRequestContextOtherHostAcceptable(requestContext);
-      if (otherHostAcceptable != null && otherHostAcceptable)
-      {
-        addToExcludedHosts(trackerClient, requestContext);
-      }
-    }
+
     return trackerClient;
   }
 
@@ -145,12 +141,14 @@ public class ClientSelectorImpl implements ClientSelector
       }
     }
 
-    addToExcludedHosts(trackerClient, requestContext);
-
     return trackerClient;
   }
 
-  @Override
+  /**
+   * Get the hash function of the hash ring
+   *
+   * @return The hash function of the hash ring
+   */
   public HashFunction<Request> getRequestHashFunction()
   {
     return _requestHashFunction;

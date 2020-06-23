@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.common.stats.LongStats;
@@ -13,9 +29,12 @@ import java.util.List;
 import java.util.Map;
 import org.mockito.Mockito;
 
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.anyInt;
 
 
+/**
+ * The helper class that builds quick mock of {@link TrackerClient}
+ */
 public class TrackerClientMockHelper {
   public static List<TrackerClient> mockTrackerClients(int numTrackerClients) throws URISyntaxException {
     List<TrackerClient> trackerClients = new ArrayList<>();

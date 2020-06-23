@@ -36,7 +36,6 @@ import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.r2.message.Request;
 import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -76,13 +75,13 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   private final Clock _clock;
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
-      List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter)
+      List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock)
   {
     _executorService = executorService;
     _healthCheckOperations = healthCheckOperations;
     _stateListenerFactories = stateListenerFactories;
     _eventEmitter = (eventEmitter == null) ? new NoopEventEmitter() : eventEmitter;
-    _clock = SystemClock.instance();
+    _clock = clock;
   }
 
 
@@ -97,24 +96,24 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
                                             serviceProperties.getPath()), getClientSelector(relativeStrategyProperties));
   }
 
-  private RelativeStateUpdater getRelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
+  private StateUpdater getRelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
       String serviceName, String clusterName, String servicePath)
   {
     QuarantineManager quarantineManager = getQuarantineManager(relativeStrategyProperties, serviceName, servicePath);
     final List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories = new ArrayList<>();
-    listenerFactories.add(new MonitorEventEmitter.Factory(serviceName, clusterName, _clock,
+    listenerFactories.add(new RelativeMonitorEventEmitter.Factory(serviceName, clusterName, _clock,
         relativeStrategyProperties.getEmittingIntervalMs(),
         relativeStrategyProperties.getRingProperties().getPointsPerWeight(), _eventEmitter));
     if (_stateListenerFactories != null)
     {
       listenerFactories.addAll(_stateListenerFactories);
     }
-    return new RelativeStateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories);
+    return new StateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories);
   }
 
-  private ClientSelectorImpl getClientSelector(D2RelativeStrategyProperties relativeStrategyProperties)
+  private ClientSelector getClientSelector(D2RelativeStrategyProperties relativeStrategyProperties)
   {
-    return new ClientSelectorImpl(getRequestHashFunction(relativeStrategyProperties));
+    return new ClientSelector(getRequestHashFunction(relativeStrategyProperties));
   }
 
   private QuarantineManager getQuarantineManager(D2RelativeStrategyProperties relativeStrategyProperties,

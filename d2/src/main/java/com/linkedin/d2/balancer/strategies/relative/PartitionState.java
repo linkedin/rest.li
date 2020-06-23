@@ -39,10 +39,11 @@ import java.util.stream.Collectors;
  */
 public class PartitionState
 {
-  private final int _partitionId;
-  private final int _pointsPerWeight;
-  private final RingFactory<URI> _ringFactory;
-  private final List<PartitionStateUpdateListener<PartitionState>> _listeners;
+  private static final long INITIAL_CLUSTER_GENERATION_ID = -1;
+  private int _partitionId;
+  private int _pointsPerWeight;
+  private RingFactory<URI> _ringFactory;
+  private List<PartitionStateUpdateListener<PartitionState>> _listeners;
   private Set<TrackerClient> _recoveryTrackerClients;
   private long _clusterGenerationId;
   private Map<TrackerClient, LoadBalancerQuarantine> _quarantineMap;
@@ -56,18 +57,8 @@ public class PartitionState
   public PartitionState(int partitionId, RingFactory<URI> ringFactory, int pointsPerWeight,
       List<PartitionStateUpdateListener<PartitionState>> listeners)
   {
-    _partitionId = partitionId;
-    _clusterGenerationId = -1;
-    _ringFactory = ringFactory;
-    _pointsPerWeight = pointsPerWeight;
-
-    _recoveryTrackerClients = new HashSet<>();
-    _quarantineMap = new HashMap<>();
-    _quarantineHistory = new HashMap<>();
-    _healthCheckMap = new HashMap<>();
-    _trackerClientStateMap = new HashMap<>();
-    _listeners = listeners;
-    resetRing();
+    this(partitionId, ringFactory, pointsPerWeight, new HashSet<>(), INITIAL_CLUSTER_GENERATION_ID,
+        new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), listeners);
   }
 
   PartitionState(int partitionId, RingFactory<URI> ringFactory, int pointsPerWeight,
@@ -88,87 +79,87 @@ public class PartitionState
     _healthCheckMap = healthCheckMap;
     _trackerClientStateMap = trackerClientStateMap;
     _listeners = listeners;
-    resetRing();
+    updateRing();
   }
 
-  public PartitionState copy()
+  PartitionState (PartitionState oldPartitionState)
   {
-    return new PartitionState(this.getPartitionId(),
-        this.getRingFactory(),
-        this.getPointsPerWeight(),
-        new HashSet<>(this.getRecoveryTrackerClients()),
-        this.getClusterGenerationId(),
-        new HashMap<>(this.getQuarantineMap()),
-        new HashMap<>(this.getQuarantineHistory()),
-        new HashMap<>(this.getHealthCheckMap()),
-        new HashMap<>(this.getTrackerClientStateMap()),
-        this.getListeners());
+    this(oldPartitionState.getPartitionId(),
+        oldPartitionState.getRingFactory(),
+        oldPartitionState.getPointsPerWeight(),
+        new HashSet<>(oldPartitionState.getRecoveryTrackerClients()),
+        oldPartitionState.getClusterGenerationId(),
+        new HashMap<>(oldPartitionState.getQuarantineMap()),
+        new HashMap<>(oldPartitionState.getQuarantineHistory()),
+        new HashMap<>(oldPartitionState.getHealthCheckMap()),
+        new HashMap<>(oldPartitionState.getTrackerClientStateMap()),
+        oldPartitionState.getListeners());
   }
 
-  public int getPartitionId()
+  int getPartitionId()
   {
     return _partitionId;
   }
 
-  public long getClusterGenerationId()
+  long getClusterGenerationId()
   {
     return _clusterGenerationId;
   }
 
-  public Map<TrackerClient, TrackerClientState> getTrackerClientStateMap()
+  Map<TrackerClient, TrackerClientState> getTrackerClientStateMap()
   {
     return _trackerClientStateMap;
   }
 
-  public Set<TrackerClient> getTrackerClients()
+  Set<TrackerClient> getTrackerClients()
   {
     return _trackerClientStateMap.keySet();
   }
 
-  public Map<TrackerClient, LoadBalancerQuarantine> getQuarantineMap()
+  Map<TrackerClient, LoadBalancerQuarantine> getQuarantineMap()
   {
     return _quarantineMap;
   }
 
-  public Map<TrackerClient, LoadBalancerQuarantine> getQuarantineHistory()
+  Map<TrackerClient, LoadBalancerQuarantine> getQuarantineHistory()
   {
     return _quarantineHistory;
   }
 
-  public Map<TrackerClient, HealthCheck> getHealthCheckMap()
+  Map<TrackerClient, HealthCheck> getHealthCheckMap()
   {
     return _healthCheckMap;
   }
 
-  public Set<TrackerClient> getRecoveryTrackerClients()
+  Set<TrackerClient> getRecoveryTrackerClients()
   {
     return _recoveryTrackerClients;
   }
 
-  public RingFactory<URI> getRingFactory()
+  RingFactory<URI> getRingFactory()
   {
     return _ringFactory;
   }
 
-  public Ring<URI> getRing()
+  Ring<URI> getRing()
   {
     return _ring;
   }
 
-  public void setClusterGenerationId(long clusterGenerationId)
+  void setClusterGenerationId(long clusterGenerationId)
   {
     _clusterGenerationId = clusterGenerationId;
   }
 
-  public Map<URI, Integer> getPointsMap()
+  Map<URI, Integer> getPointsMap()
   {
     return _pointsMap;
   }
 
   /**
-   * Reset the hash ring using the latest tracker clients and points map
+   * Update the hash ring using the latest tracker clients and points map
    */
-  public void resetRing()
+  void updateRing()
   {
     Set<TrackerClient> trackerClients = _trackerClientStateMap.keySet();
     Map<URI, CallTracker> callTrackerMap = Collections.unmodifiableMap(trackerClients.stream()
@@ -179,22 +170,22 @@ public class PartitionState
     _ring = _ringFactory.createRing(_pointsMap, callTrackerMap);
   }
 
-  public void setPartitionStats(double avgClusterLatency, long clusterCallCount, long clusterErrorCount)
+  void setPartitionStats(double avgClusterLatency, long clusterCallCount, long clusterErrorCount)
   {
     _partitionStats = new PartitionStats(avgClusterLatency, clusterCallCount, clusterErrorCount);
   }
 
-  public PartitionStats getPartitionStats()
+  PartitionStats getPartitionStats()
   {
     return _partitionStats;
   }
 
-  public List<PartitionStateUpdateListener<PartitionState>> getListeners()
+  List<PartitionStateUpdateListener<PartitionState>> getListeners()
   {
     return Collections.unmodifiableList(_listeners);
   }
 
-  public void removeTrackerClient(TrackerClient trackerClient)
+  void removeTrackerClient(TrackerClient trackerClient)
   {
     _trackerClientStateMap.remove(trackerClient);
     _quarantineMap.remove(trackerClient);

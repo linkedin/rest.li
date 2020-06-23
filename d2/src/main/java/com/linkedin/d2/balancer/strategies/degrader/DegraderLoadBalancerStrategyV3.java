@@ -781,12 +781,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
               quarantine = new LoadBalancerQuarantine(clientUpdater, config, oldState.getServiceName());
             }
 
-            // If the trackerClient was just recently evicted from quarantine, it is possible that
-            // the service is already in trouble while the quarantine probing approach works
-            // fine. In such case we'll reuse the previous waiting duration instead of starting
-            // from scratch again
-            quarantine.reset((clk - quarantine.getLastChecked())
-                > DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_REENTRY_TIME);
+            quarantine.reset(clk);
             quarantineMap.put(client, quarantine);
 
             newPoints = 0;     // reduce the points to 0 so no real traffic will be used

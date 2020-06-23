@@ -46,7 +46,6 @@ public class QuarantineManager {
 
   private static final double QUARANTINE_ENABLED_PERCENTAGE_THRESHOLD = 0.0;
   private static final double FAST_RECOVERY_FACTOR = 2.0;
-  private static final long QUARANTINE_REENTRY_TIME_MS = 30000;
   private static final double MIN_ZOOKEEPER_SERVER_WEIGHT = 0.0;
   private static final int MAX_RETRIES_TO_CHECK_QUARANTINE = 5;
   private static final int MAX_HOSTS_TO_PRE_CHECK_QUARANTINE = 10;
@@ -100,6 +99,7 @@ public class QuarantineManager {
   {
     long quarantineLatency = Math.max((long) (clusterAvgLatency * _relativeLatencyLowThresholdFactor),
         MIN_QUANRANTINE_LATENCY_MS);
+    long currentTime = _clock.currentTimeMillis();
     // Step 0: Pre-check if quarantine method works for clients, if it works, we will mark _quarantineEnabled as true
     preCheckQuarantine(newPartitionState, quarantineLatency);
     // Step 1: check if quarantine state still applies. If not, remove it from the quarantine map
@@ -107,7 +107,7 @@ public class QuarantineManager {
     // Step 2: Handle special clients recovery logic from the recovery map
     handleClientsRecovery(newPartitionState);
     // Step 3: Enroll new quarantine and recovery map
-    enrollNewQuarantineAndRecovery(newPartitionState, oldPartitionState, quarantineLatency);
+    enrollNewQuarantineAndRecovery(newPartitionState, oldPartitionState, quarantineLatency, currentTime);
   }
 
   /**
@@ -207,7 +207,7 @@ public class QuarantineManager {
       Set<TrackerClient> recoverySet = partitionState.getRecoveryTrackerClients();
       if (recoverySet.contains(trackerClient))
       {
-        handleClientInRecoverySet(trackerClient, partitionState.getTrackerClientStateMap().get(trackerClient),
+        handleSingleClientInRecovery(trackerClient, partitionState.getTrackerClientStateMap().get(trackerClient),
             partitionState.getRecoveryTrackerClients());
       }
     }
@@ -222,7 +222,7 @@ public class QuarantineManager {
    */
   private void enrollNewQuarantineAndRecovery(
       PartitionState newPartitionState,
-      PartitionState oldPartitionState, long clusterAvgLatency)
+      PartitionState oldPartitionState, long clusterAvgLatency, long currentTime)
   {
     int partitionId = newPartitionState.getPartitionId();
     Map<TrackerClient, LoadBalancerQuarantine> quarantineMap = newPartitionState.getQuarantineMap();
@@ -236,48 +236,54 @@ public class QuarantineManager {
       double serverWeight = trackerClient.getPartitionWeight(partitionId);
       // Check and enroll quarantine map
       boolean isQuarantined = enrollClientInQuarantineMap(trackerClient, trackerClientState, serverWeight, quarantineMap,
-          quarantineHistory, newPartitionState.getTrackerClientStateMap().size(), clusterAvgLatency);
-      // check and enroll recovery set
-      enrollClientInRecoverySet(isQuarantined, trackerClient, trackerClientState, serverWeight, recoverySet,
-          oldPartitionState);
+          quarantineHistory, newPartitionState.getTrackerClientStateMap().size(), clusterAvgLatency, currentTime);
+
+      if (!isQuarantined)
+      {
+        if (!_fastRecoveryEnabled)
+        {
+          trackerClientState.setHealthScore(INITIAL_RECOVERY_HEALTH_SCORE);
+        }
+        else
+        {
+          // Only enroll the client into recovery state if fast recovery is enabled
+          enrollSingleClientInRecoverySet(trackerClient, trackerClientState, serverWeight, recoverySet,
+              oldPartitionState);
+        }
+      }
     }
   }
 
   /**
-   * Perform fast recovery or regular recovery when necessary
-   * Fast recovery will double the current health score when it is enabled
+   * Perform fast recovery for hosts in the recovery set
+   * Fast recovery will double the current health score
    *
    * @param trackerClient The {@link TrackerClient} to be recovered
    * @param trackerClientState The state of the {@link TrackerClient}
    * @param recoverySet A set of {@link TrackerClient} to be recovered
    */
-  private void handleClientInRecoverySet(TrackerClient trackerClient, TrackerClientState trackerClientState,
+  private void handleSingleClientInRecovery(TrackerClient trackerClient, TrackerClientState trackerClientState,
       Set<TrackerClient> recoverySet)
   {
     if (trackerClientState.getCallCount() < trackerClientState.getAdjustedMinCallCount())
     {
       double healthScore = trackerClientState.getHealthScore();
-      if (healthScore <= RelativeStateUpdater.MIN_HEALTH_SCORE)
+      if (healthScore <= StateUpdater.MIN_HEALTH_SCORE)
       {
         // Reset the health score to initial recovery health score if health score dropped to 0 before
         trackerClientState.setHealthScore(INITIAL_RECOVERY_HEALTH_SCORE);
       }
-      else if (_fastRecoveryEnabled)
+      else
       {
-        // If fast recovery is enabled, we perform fast recovery: double the health score
+        // Perform fast recovery: double the health score
         healthScore *= FAST_RECOVERY_FACTOR;
-        trackerClientState.setHealthScore(Math.min(healthScore, RelativeStateUpdater.MAX_HEALTH_SCORE));
+        trackerClientState.setHealthScore(Math.min(healthScore, StateUpdater.MAX_HEALTH_SCORE));
       }
     }
-    else if (!_fastRecoveryEnabled
-        || !trackerClientState.isUnhealthy()
-        || trackerClientState.getHealthScore() > FAST_RECOVERY_HEALTH_SCORE_THRESHOLD)
+    else if (trackerClientState.isUnhealthy() || trackerClientState.getHealthScore() > FAST_RECOVERY_HEALTH_SCORE_THRESHOLD)
     {
       /**
-       * Remove the client from the map if:
-       * 1. fast recovery is not enabled OR
-       * 2. the client is not unhealthy any more OR
-       * 3. The health score is beyond 0.5, we will let it perform normal recovery
+       * Remove the client from the map if the client is unhealthy or he health score is beyond 0.5
        */
       recoverySet.remove(trackerClient);
     }
@@ -303,7 +309,8 @@ public class QuarantineManager {
    */
   private boolean enrollClientInQuarantineMap(TrackerClient trackerClient, TrackerClientState trackerClientState,
       double serverWeight, Map<TrackerClient, LoadBalancerQuarantine> quarantineMap,
-      Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory, int trackerClientSize, long quarantineLatency)
+      Map<TrackerClient, LoadBalancerQuarantine> quarantineHistory, int trackerClientSize, long quarantineLatency,
+      long currentTime)
   {
     if (_quarantineEnabled.get())
     {
@@ -311,11 +318,9 @@ public class QuarantineManager {
 
       if (quarantineMap.containsKey(trackerClient))
       {
-        // If the client is still in quarantine, keep the points to 0 so no real traffic will be used
-        trackerClientState.setHealthScore(RelativeStateUpdater.MIN_HEALTH_SCORE);
         return true;
       }
-      else if (healthScore <= RelativeStateUpdater.MIN_HEALTH_SCORE
+      else if (healthScore <= StateUpdater.MIN_HEALTH_SCORE
           && serverWeight > MIN_ZOOKEEPER_SERVER_WEIGHT
           && trackerClientState.isUnhealthy())
       {
@@ -329,7 +334,7 @@ public class QuarantineManager {
                 _quarantineProperties.getHealthCheckMethod().toString(), _quarantineProperties.getHealthCheckPath(), _serviceName,
                 _servicePath, _healthCheckOperations);
           }
-          quarantine.reset((_clock.currentTimeMillis() - quarantine.getLastChecked()) > QUARANTINE_REENTRY_TIME_MS);
+          quarantine.reset(currentTime);
           quarantineMap.put(trackerClient, quarantine);
           return true;
         }
@@ -342,12 +347,11 @@ public class QuarantineManager {
     return false;
   }
 
-  private void enrollClientInRecoverySet(boolean isQuarantined, TrackerClient trackerClient,
+  private void enrollSingleClientInRecoverySet(TrackerClient trackerClient,
       TrackerClientState trackerClientState, double serverWeight, Set<TrackerClient> recoverySet,
       PartitionState oldPartitionState)
   {
-    if (!isQuarantined
-        && trackerClientState.getHealthScore() == RelativeStateUpdater.MIN_HEALTH_SCORE
+    if (trackerClientState.getHealthScore() == StateUpdater.MIN_HEALTH_SCORE
         && serverWeight > MIN_ZOOKEEPER_SERVER_WEIGHT)
     {
       // Enroll the client to recovery set if the health score dropped to 0, but zookeeper does not set the client weight to be 0
@@ -358,10 +362,9 @@ public class QuarantineManager {
       }
     }
 
-    // Also enroll new client into the recovery set if fast recovery and slow start are both enabled
+    // Also enroll new client into the recovery set if slow start is enabled
     if (!recoverySet.contains(trackerClient)
         && !oldPartitionState.getTrackerClients().contains(trackerClient)
-        && _fastRecoveryEnabled
         && _slowStartEnabled)
     {
       recoverySet.add(trackerClient);

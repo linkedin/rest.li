@@ -17,9 +17,7 @@
 package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.strategies.ClientSelector;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
-import com.linkedin.d2.balancer.strategies.StateUpdater;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.r2.message.Request;
@@ -79,7 +77,7 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
     }
 
     _stateUpdater.updateState(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId);
-    Ring<URI> ring = getRing(clusterGenerationId, partitionId, trackerClients);
+    Ring<URI> ring = _stateUpdater.getRing(partitionId);
     return _clientSelector.getTrackerClient(request, requestContext, ring, trackerClients);
   }
 
@@ -87,18 +85,16 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
   @Override
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
   {
-    Ring<URI> ring = _stateUpdater.getRing(partitionId);
-    if (ring == null)
-    {
-      // If there is no existing ring, we update the partition first
-      _stateUpdater.updateState(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId);
-    }
+    _stateUpdater.updateState(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId);
     return _stateUpdater.getRing(partitionId);
   }
 
+  /**
+   * Exposed for testings
+   */
   Map<URI, Integer> getPointsMap(int partitionId)
   {
-    return ((RelativeStateUpdater) _stateUpdater).getPointsMap(partitionId);
+    return _stateUpdater.getPointsMap(partitionId);
   }
 
   @Override
