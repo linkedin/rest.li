@@ -15,6 +15,8 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 - Add new changelog (`CHANGELOG.md`) and changelog helper script (`./scripts/update-changelog`).
 
+## [29.3.3] - 2020-06-22
+
 ## [29.3.2] - 2020-06-19
 - Fix dark cluster startup problem (#330)
 - Only include the underlying exception message in BufferedReaderInputStream instead of rethrowing the original exception (#329)
