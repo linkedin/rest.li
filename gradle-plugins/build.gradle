@@ -1,10 +1,9 @@
-apply plugin: 'java'
+// Setup integTests
+apply from: "${buildScriptDirPath}/integTest.gradle"
 
 dependencies {
-  compile gradleApi()
-
-  testCompile externalDependency.testng
-  testCompile externalDependency.junit
+  testImplementation externalDependency.testng
+  testImplementation externalDependency.junit
 }
 
 // This is done so that the plugin can know which version of restli should be used when creating the pegasus configuration.
