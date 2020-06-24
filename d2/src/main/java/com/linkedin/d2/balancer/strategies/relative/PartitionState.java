@@ -204,9 +204,12 @@ public class PartitionState
   {
     return "PartitionRelativeLoadBalancerState{" + "_partitionId=" + _partitionId
         + ", _clusterGenerationId=" + _clusterGenerationId
-        + ", _recoveryTrackerClients=" + _recoveryTrackerClients + ", _quarantineMap=" + _quarantineMap
-        + ", _pointsMap=" + _pointsMap + ", _ring=" + _ring + ", _trackerClientStateMap=" + _trackerClientStateMap
-        + ", _partitionStats=" + _partitionStats + '}';
+        + ", _numHostsInCluster=" + (getTrackerClients().size())
+        + ", _recoveryTrackerClients=" + _recoveryTrackerClients
+        + ", _quarantineMap=" + _quarantineMap.keySet().stream().map(TrackerClient::getUri).collect(Collectors.toList())
+        + ", _pointsMap=" + _pointsMap
+        + ", _trackerClientStateMap=" + _trackerClientStateMap
+        + ", _partitionStats={" + _partitionStats + "}}";
   }
 
   class PartitionStats
@@ -235,6 +238,13 @@ public class PartitionState
     long getClusterErrorCount()
     {
       return _clusterErrorCount;
+    }
+
+    public String toString()
+    {
+      return "_avgClusterLatency=" + _avgClusterLatency
+          +", _clusterCallCount=" + _clusterCallCount
+          +", _clusterErrorCount= " + _clusterCallCount;
     }
   }
 }

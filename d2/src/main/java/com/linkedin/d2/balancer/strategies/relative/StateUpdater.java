@@ -116,7 +116,7 @@ public class StateUpdater
     {
       // Asynchronously update the state if it is from uri properties change
       PartitionState oldPartitionState = _partitionLoadBalancerStateMap.get(partitionId);
-      _executorService.execute(() -> updateStateForPartition(trackerClients, partitionId, oldPartitionState, clusterGenerationId));
+      _executorService.execute(() -> updateStateDueToClusterChange(trackerClients, partitionId, oldPartitionState, clusterGenerationId));
     }
   }
 
@@ -194,6 +194,20 @@ public class StateUpdater
       logState(oldPartitionState, newPartitionState, partitionId);
       notifyPartitionStateUpdateListener(newPartitionState);
     });
+  }
+
+  /**
+   * Right after a cluster change, multiple requests may schedule more than 1 update due to async updates
+   * We will check the cluster generation id again before performing the actual update to make sure only one updates got executed
+   * This can be guaranteed because the executor service has has 1 thread
+   */
+  void updateStateDueToClusterChange(Set<TrackerClient> trackerClients, int partitionId,
+      PartitionState oldPartitionState, Long newClusterGenerationId)
+  {
+    if (newClusterGenerationId != oldPartitionState.getClusterGenerationId())
+    {
+      updateStateForPartition(trackerClients, partitionId, oldPartitionState, newClusterGenerationId);
+    }
   }
 
   /**

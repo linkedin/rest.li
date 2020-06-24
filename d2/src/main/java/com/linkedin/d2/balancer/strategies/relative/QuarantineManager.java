@@ -242,7 +242,7 @@ public class QuarantineManager {
       {
         if (!_fastRecoveryEnabled)
         {
-          trackerClientState.setHealthScore(INITIAL_RECOVERY_HEALTH_SCORE);
+          performNormalRecovery(trackerClientState);
         }
         else
         {
@@ -347,11 +347,22 @@ public class QuarantineManager {
     return false;
   }
 
+  /**
+   * For normal recovery, if a client is not quarantined, we will adjust the health score back to 0.01 from 0 so that it can get some traffic
+   */
+  private void performNormalRecovery(TrackerClientState trackerClientState)
+  {
+    if (trackerClientState.getHealthScore() <= StateUpdater.MIN_HEALTH_SCORE)
+    {
+      trackerClientState.setHealthScore(INITIAL_RECOVERY_HEALTH_SCORE);
+    }
+  }
+
   private void enrollSingleClientInRecoverySet(TrackerClient trackerClient,
       TrackerClientState trackerClientState, double serverWeight, Set<TrackerClient> recoverySet,
       PartitionState oldPartitionState)
   {
-    if (trackerClientState.getHealthScore() == StateUpdater.MIN_HEALTH_SCORE
+    if (trackerClientState.getHealthScore() <= StateUpdater.MIN_HEALTH_SCORE
         && serverWeight > MIN_ZOOKEEPER_SERVER_WEIGHT)
     {
       // Enroll the client to recovery set if the health score dropped to 0, but zookeeper does not set the client weight to be 0

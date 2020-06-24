@@ -25,18 +25,21 @@ import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static org.mockito.Matchers.anyInt;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 
-public class ClientSelectorTest {
+public class ClientSelectorTest
+{
   private static URI URI_1;
   private static URI URI_2;
   private static URI URI_3;
@@ -48,14 +51,11 @@ public class ClientSelectorTest {
   private static final Map<URI, TrackerClient> DEFAULT_TRACKER_CLIENT_MAP = new HashMap<>();
   private ClientSelector _clientSelector;
 
-  static {
-    try {
-      URI_1 = new URI("dummy_uri_1");
-      URI_2 = new URI("dummy_uri_2");
-      URI_3 = new URI("dummy_uri_3");
-    } catch (URISyntaxException e) {
-      // do nothing
-    }
+  static
+  {
+    URI_1 = URI.create("dummy_uri_1");
+    URI_2 = URI.create("dummy_uri_2");
+    URI_3 = URI.create("dummy_uri_3");
     Mockito.when(TRACKER_CLIENT_1.getUri()).thenReturn(URI_1);
     Mockito.when(TRACKER_CLIENT_2.getUri()).thenReturn(URI_2);
     Mockito.when(TRACKER_CLIENT_3.getUri()).thenReturn(URI_3);
@@ -86,8 +86,9 @@ public class ClientSelectorTest {
   }
 
   @Test
-  public void testGetTargetHostNotFound() throws URISyntaxException {
-    URI newUri = new URI("new_uri");
+  public void testGetTargetHostNotFound()
+  {
+    URI newUri = URI.create("new_uri");
     Request request = Mockito.mock(Request.class);
     RequestContext requestContext = new RequestContext();
     KeyMapper.TargetHostHints.setRequestContextTargetHost(requestContext, newUri);
@@ -120,10 +121,11 @@ public class ClientSelectorTest {
   }
 
   @Test
-  public void testRingAndHostInconsistency() throws URISyntaxException {
+  public void testRingAndHostInconsistency()
+  {
     Request request = Mockito.mock(Request.class);
     RequestContext requestContext = new RequestContext();
-    URI newUri = new URI("new_uri");
+    URI newUri = URI.create("new_uri");
     TrackerClient newTrackerClient = Mockito.mock(TrackerClient.class);
     Mockito.when(newTrackerClient.getUri()).thenReturn(newUri);
     Map<URI, TrackerClient> newTrackerClientMap = new HashMap<>();
@@ -132,5 +134,22 @@ public class ClientSelectorTest {
     // Ring and the tracker clients are completely off so that they do not have any overlap
     TrackerClient trackerClient = _clientSelector.getTrackerClient(request, requestContext, DEFAULT_RING, newTrackerClientMap);
     assertEquals(trackerClient, newTrackerClient);
+  }
+
+  @Test
+  public void testSubstituteClientFromRing()
+  {
+    URI newUri = URI.create("new_uri");
+    Request request = Mockito.mock(Request.class);
+    RequestContext requestContext = new RequestContext();
+    
+    @SuppressWarnings("unchecked")
+    Ring<URI> ring = Mockito.mock(Ring.class);
+    Mockito.when(ring.get(anyInt())).thenReturn(newUri);
+    List<URI> ringIteratierList = Arrays.asList(newUri, URI_1, URI_2, URI_3);
+    Mockito.when(ring.getIterator(anyInt())).thenReturn(ringIteratierList.iterator());
+
+    TrackerClient trackerClient = _clientSelector.getTrackerClient(request, requestContext, ring, DEFAULT_TRACKER_CLIENT_MAP);
+    assertTrue(DEFAULT_TRACKER_CLIENT_MAP.containsKey(trackerClient.getUri()));
   }
 }

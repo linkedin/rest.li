@@ -31,7 +31,8 @@ import java.util.Set;
 /**
  * The helper class that builds an object of {@link PartitionState}
  */
-public class PartitionStateDataBuilder {
+public class PartitionStateDataBuilder
+{
   private static final int DEFAULT_PARTITION_ID = 0;
   private static final int DEFAULT_POINTS_PER_WEIGHT = 100;
 

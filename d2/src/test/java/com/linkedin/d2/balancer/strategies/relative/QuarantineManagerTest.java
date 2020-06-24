@@ -25,7 +25,6 @@ import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.util.clock.Clock;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,7 +41,8 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 
-public class QuarantineManagerTest {
+public class QuarantineManagerTest
+{
   private static final String SERVICE_NAME = "dummyService";
   private static final String SERVICE_PATH = "dummyServicePath";
   private static final HealthCheckOperations HEALTH_CHECK_OPERATIONS = new HealthCheckOperations();
@@ -65,7 +65,7 @@ public class QuarantineManagerTest {
   }
 
   @Test
-  public void testQuarantineNotEnabledInConfig() throws URISyntaxException
+  public void testQuarantineNotEnabledInConfig()
   {
     setup(RelativeLoadBalancerStrategyFactory.DEFAULT_QUARANTINE_MAX_PERCENT, false, false);
 
@@ -84,7 +84,7 @@ public class QuarantineManagerTest {
   }
 
   @Test(dataProvider = "unhealthyHealthScore")
-  public void testQuarantineHost(double unhealthyHealthScore) throws URISyntaxException
+  public void testQuarantineHost(double unhealthyHealthScore)
   {
     setup(0.5, false, false);
     _quarantineManager.tryEnableQuarantine();
@@ -126,7 +126,7 @@ public class QuarantineManagerTest {
   }
 
   @Test
-  public void testQuarantinedMaxPercentage() throws URISyntaxException
+  public void testQuarantinedMaxPercentage()
   {
     setup(0.5, false, false);
     _quarantineManager.tryEnableQuarantine();
@@ -148,7 +148,7 @@ public class QuarantineManagerTest {
   }
 
   @Test(dataProvider = "quarantineCheckResult")
-  public void testQuarantineCheck(boolean quarantineCheckResult) throws URISyntaxException
+  public void testQuarantineCheck(boolean quarantineCheckResult)
   {
     setup(0.5, false, false);
     LoadBalancerQuarantine quarantine = Mockito.mock(LoadBalancerQuarantine.class);
@@ -195,7 +195,7 @@ public class QuarantineManagerTest {
   }
 
   @Test(dataProvider = "trackerClientState")
-  public void testFastRecoveryInRecoveryMap(int callCount, TrackerClientState.HealthState healthState, double healthScore) throws URISyntaxException
+  public void testFastRecoveryInRecoveryMap(int callCount, TrackerClientState.HealthState healthState, double healthScore)
   {
     setup(0.5, false, true);
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3);
@@ -245,7 +245,7 @@ public class QuarantineManagerTest {
   }
 
   @Test(dataProvider = "enableFastRecovery")
-  public void testEnrollNewClientInRecoveryMap(boolean fastRecoveryEnabled) throws URISyntaxException
+  public void testEnrollNewClientInRecoveryMap(boolean fastRecoveryEnabled)
   {
     setup(0.5, true, fastRecoveryEnabled);
     _quarantineManager.tryEnableQuarantine();
@@ -283,7 +283,7 @@ public class QuarantineManagerTest {
   }
 
   @Test
-  public void testEnrollOneQuarantineOneRecovery() throws URISyntaxException
+  public void testEnrollOneQuarantineOneRecovery()
   {
     LoadBalancerQuarantine quarantine = Mockito.mock(LoadBalancerQuarantine.class);
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3);

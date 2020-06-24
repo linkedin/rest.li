@@ -20,7 +20,6 @@ import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.degrader.DistributionNonDiscreteRingFactory;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -62,7 +61,7 @@ public class StateUpdaterTest
   }
 
   @Test
-  public void testInitializePartition() throws URISyntaxException
+  public void testInitializePartition()
   {
     setup(new D2RelativeStrategyProperties(), new ConcurrentHashMap<>());
 
@@ -79,7 +78,7 @@ public class StateUpdaterTest
   }
 
   @Test
-  public void testClusterGenerationIdChange() throws URISyntaxException
+  public void testClusterGenerationIdChange()
   {
     PartitionState state = new PartitionStateDataBuilder(new DistributionNonDiscreteRingFactory<>())
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
@@ -97,7 +96,7 @@ public class StateUpdaterTest
   }
 
   @Test
-  public void testUpdateOnePartition() throws URISyntaxException
+  public void testUpdateOnePartition()
   {
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3,
         Arrays.asList(20, 20, 20), Arrays.asList(10, 10, 10), Arrays.asList(200L, 300L, 1000L),
@@ -125,7 +124,7 @@ public class StateUpdaterTest
   }
 
   @Test
-  public void testUpdateMultiplePartitions() throws URISyntaxException
+  public void testUpdateMultiplePartitions()
   {
     /**
      * There are 2 partitions, and 4 tracker clients in total.
@@ -170,7 +169,7 @@ public class StateUpdaterTest
   }
 
   @Test
-  public void testClusterUrisChange() throws URISyntaxException
+  public void testClusterUrisChange()
   {
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3,
         Arrays.asList(20, 20, 20), Arrays.asList(10, 10, 10), Arrays.asList(200L, 220L, 1000L),
@@ -236,7 +235,7 @@ public class StateUpdaterTest
   }
 
   @DataProvider(name = "trackerClients")
-  Object[][] getTrackerClients() throws URISyntaxException
+  Object[][] getTrackerClients()
   {
     List<Long> defaultLatencyList = Arrays.asList(100L, 100L, 100L);
     List<Long> defaultOutstandingLatencyList = Arrays.asList(20L, 20L, 20L);
@@ -271,7 +270,8 @@ public class StateUpdaterTest
   }
 
   @Test
-  public void testSmallCallCount() throws URISyntaxException {
+  public void testSmallCallCount()
+  {
     int minCallCount = 10;
     // One client has high latency but small call count
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3,
@@ -300,7 +300,8 @@ public class StateUpdaterTest
   }
 
   @Test(dataProvider = "slowStartThreshold")
-  public void testHealthScoreRecover(double currentHealthScore, double slowStartThreshold) throws URISyntaxException {
+  public void testHealthScoreRecover(double currentHealthScore, double slowStartThreshold)
+  {
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3,
         Arrays.asList(20, 20, 20), Arrays.asList(0, 0, 0), Arrays.asList(300L, 300L, 300L),
         Arrays.asList(200L, 200L, 200L), Arrays.asList(0, 0, 0));

@@ -125,8 +125,11 @@ public class ClientSelector
         {
           break;
         }
+        else
+        {
+          trackerClient = null;
+        }
       }
-      trackerClient = null;
     }
 
     if (trackerClient == null)

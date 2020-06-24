@@ -78,4 +78,9 @@ public class TrackerClientState {
   {
     return _healthState == HealthState.UNHEALTHY;
   }
+
+  public String toString()
+  {
+    return "_healthScore=" + _healthScore;
+  }
 }
