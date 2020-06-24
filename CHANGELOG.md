@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.4.1] - 2020-06-24
+- Relax visibility of some methods in PDL schema parser to allow extending it.
+
 ## [29.4.0] - 2020-06-23
 - Add new changelog (`CHANGELOG.md`) and changelog helper script (`./scripts/update-changelog`).
 - Fix a bug in batch_finder that ignored metadata when generating IDL. This change will result in IDL change without source change, but the change will be considered backwards compatible. There will not be any change to runtime behavior of the server.
@@ -4541,7 +4544,8 @@ patch operations can re-use these classes for generating patch messages.
 ## [0.14.1]
 
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.1...master
+[29.4.1]: https://github.com/linkedin/rest.li/compare/v29.4.0...v29.4.1
 [29.4.0]: https://github.com/linkedin/rest.li/compare/v29.3.2...v29.4.0
 [29.3.2]: https://github.com/linkedin/rest.li/compare/v29.3.1...v29.3.2
 [29.3.1]: https://github.com/linkedin/rest.li/compare/v29.3.0...v29.3.1
