@@ -22,6 +22,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.entitystream.EntityStream;
@@ -49,6 +50,8 @@ import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.util.Map;
 import javax.activation.MimeTypeParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -56,6 +59,7 @@ import javax.activation.MimeTypeParseException;
  */
 public class ResponseUtils
 {
+  private static final Logger log = LoggerFactory.getLogger(ResponseUtils.class);
   /**
    * If needed, translate a given canonical key to its alternative format.
    *
@@ -86,24 +90,45 @@ public class ResponseUtils
     }
   }
 
-  public static void getAbsentFieldsDefaultValues(RecordDataSchema dataSchema, DataMap dataMap)
+  /**
+   * This function will look at the dataSchema to see missing fields in the dataMap.
+   * If the missing field is provided with default values, this function will populate the dataMap
+   * with the key and the default value. If the missing field is not primitive (meaning itself is a
+   * RecordDataSchema) then this function will recursively to fill default values of that field as a record.
+   * This feature is controlled by:
+   * Client: add this query parameter in the URL: $sendDefaults=true
+   * Server: put true to RestLiConfig::isResponseSendDefaultValues
+   * The feature is controlled
+   * @param dataSchema a RecordDataSchema that matches the dataMap
+   * @param dataMap the actual data of the argument dataSchema
+   */
+  public static void fillInDefaultValues(DataSchema dataSchema, DataMap dataMap)
   {
-    for (RecordDataSchema.Field field : dataSchema.getFields())
+    if (dataSchema instanceof TyperefDataSchema)
     {
-      if (!dataMap.containsKey(field.getName()))
+      TyperefDataSchema typerefDataSchema = (TyperefDataSchema) dataSchema;
+      fillInDefaultValues(typerefDataSchema.getDereferencedDataSchema(), dataMap);
+    }
+    else if (dataSchema instanceof RecordDataSchema)
+    {
+      RecordDataSchema recordDataSchema = (RecordDataSchema) dataSchema;
+      for (RecordDataSchema.Field field : recordDataSchema.getFields())
       {
-        if (field.getDefault() != null)
+        if (!dataMap.containsKey(field.getName()))
         {
-          dataMap.put(field.getName(), field.getDefault());
-        }
-        else
-        {
-          DataSchema fieldSchema = field.getType();
-          if (fieldSchema != null && !fieldSchema.isPrimitive())
+          if (field.getDefault() != null)
           {
-            DataMap fieldDataMap = new DataMap();
-            getAbsentFieldsDefaultValues((RecordDataSchema) fieldSchema, fieldDataMap);
-            dataMap.put(field.getName(), fieldDataMap);
+            dataMap.put(field.getName(), field.getDefault());
+          }
+          else
+          {
+            DataSchema fieldSchema = field.getType();
+            if (fieldSchema instanceof RecordDataSchema)
+            {
+              DataMap fieldDataMap = new DataMap();
+              fillInDefaultValues(fieldSchema, fieldDataMap);
+              dataMap.put(field.getName(), fieldDataMap);
+            }
           }
         }
       }
@@ -123,19 +148,15 @@ public class ResponseUtils
                                                          .getResourceEntityType();
     if (restLiResponse.hasData() && ResourceEntityType.STRUCTURED_DATA == resourceEntityType)
     {
-      DataSchema dataSchema = null;
-      Class<? extends RecordTemplate> valueClass = routingResult.getResourceMethod().getResourceModel().getValueClass();
-      if (valueClass != null)
-      {
-        dataSchema = DataTemplateUtil.getSchema(valueClass);
-      }
-
       DataMap dataMap = restLiResponse.getDataMap();
-      if (context.getParameters().containsKey(RestConstants.FILL_DEFAULT_VALUE_IN_RESPONSE_PARAM) &&
-          (Boolean) context.getParameters().get(RestConstants.FILL_DEFAULT_VALUE_IN_RESPONSE_PARAM) &&
-          dataSchema != null)
+      if (context.isDefaultValueFillInRequested())
       {
-        getAbsentFieldsDefaultValues((RecordDataSchema) dataSchema, dataMap);
+        Class<? extends RecordTemplate> valueClass = routingResult.getResourceMethod().getResourceModel().getValueClass();
+        if (valueClass != null)
+        {
+          DataSchema dataSchema = DataTemplateUtil.getSchema(valueClass);
+          fillInDefaultValues(dataSchema, dataMap);
+        }
       }
       String mimeType = context.getResponseMimeType();
       URI requestUri = context.getRequestURI();

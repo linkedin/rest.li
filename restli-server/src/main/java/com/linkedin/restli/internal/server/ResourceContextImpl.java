@@ -630,6 +630,14 @@ public class ResourceContextImpl implements ServerResourceContext
   }
 
   @Override
+  public boolean isDefaultValueFillInRequested()
+  {
+    String sendDefaultsQuery = getParameter(RestConstants.FILL_DEFAULT_VALUE_IN_RESPONSE_PARAM);
+
+    return sendDefaultsQuery != null;
+  }
+
+  @Override
   public Optional<Object> getCustomContextData(String key)
   {
     if (_customRequestContext != null && key != null && !key.isEmpty() && _customRequestContext.containsKey(key))

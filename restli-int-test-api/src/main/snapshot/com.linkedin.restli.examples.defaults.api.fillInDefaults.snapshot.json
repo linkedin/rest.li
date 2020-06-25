@@ -1,0 +1,79 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "HighLevelRecordWithDefault",
+    "namespace" : "com.linkedin.restli.examples.defaults.api",
+    "fields" : [ {
+      "name" : "noDefaultFieldA",
+      "type" : "int"
+    }, {
+      "name" : "intDefaultFieldB",
+      "type" : "int",
+      "default" : -1
+    }, {
+      "name" : "midLevelRecordWithoutDefault",
+      "type" : {
+        "type" : "record",
+        "name" : "MidLevelRecordWithDefault",
+        "fields" : [ {
+          "name" : "intWithDefault",
+          "type" : "int",
+          "default" : -1
+        }, {
+          "name" : "intWithoutDefault",
+          "type" : "int"
+        }, {
+          "name" : "lowLevelRecordWithDefault",
+          "type" : {
+            "type" : "record",
+            "name" : "LowLevelRecordWithDefault",
+            "fields" : [ {
+              "name" : "nameWithDefault",
+              "type" : "string",
+              "default" : "i_am_default_name"
+            }, {
+              "name" : "nameWithoutDefault",
+              "type" : "string"
+            } ]
+          },
+          "default" : {
+            "nameWithDefault" : "mid_default_a",
+            "nameWithoutDefault" : "i_am_without_default_in_midlevel"
+          },
+          "optional" : true
+        }, {
+          "name" : "lowLevelRecordWithoutDefault",
+          "type" : "LowLevelRecordWithDefault",
+          "optional" : true
+        } ]
+      }
+    }, {
+      "name" : "midLevelRecordWithDefault",
+      "type" : "MidLevelRecordWithDefault",
+      "default" : {
+        "intWithoutDefault" : 0,
+        "intWithDefault" : 0
+      }
+    } ]
+  }, "com.linkedin.restli.examples.defaults.api.LowLevelRecordWithDefault", "com.linkedin.restli.examples.defaults.api.MidLevelRecordWithDefault" ],
+  "schema" : {
+    "name" : "fillInDefaults",
+    "namespace" : "com.linkedin.restli.examples.defaults.api",
+    "path" : "/fillInDefaults",
+    "schema" : "com.linkedin.restli.examples.defaults.api.HighLevelRecordWithDefault",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.defaults.FieldFillInDefaultResources",
+    "collection" : {
+      "identifier" : {
+        "name" : "fillInDefaultsId",
+        "type" : "long"
+      },
+      "supports" : [ "get" ],
+      "methods" : [ {
+        "method" : "get"
+      } ],
+      "entity" : {
+        "path" : "/fillInDefaults/{fillInDefaultsId}"
+      }
+    }
+  }
+}

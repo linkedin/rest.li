@@ -19,17 +19,13 @@ import com.google.common.collect.ImmutableMap;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaFormatType;
-import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.generator.AbstractGenerator;
-import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.restli.internal.server.response.ResponseUtils;
 import java.io.File;
-import java.io.IOException;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -65,6 +61,7 @@ public class TestRestLiDefaultInResponse
     DataMap personalRecordD = new DataMap();
     personalRecordD.put("field3", 0L);
     personalRecordD.put("field4", "default");
+    personalRecordD.put("field5", "a-typeref-default");
 
     return new Object[][]{
         {
@@ -109,7 +106,7 @@ public class TestRestLiDefaultInResponse
 
       String schemaFileText = Files.readFile(new File(pegasusDir + FS + filename));
       DataSchema schema = DataTemplateUtil.parseSchema(schemaFileText, schemaResolver, SchemaFormatType.PDL);
-      ResponseUtils.getAbsentFieldsDefaultValues((RecordDataSchema) schema, data);
+      ResponseUtils.fillInDefaultValues(schema, data);
       Assert.assertEquals(data, expected);
     }
     catch (Exception e)
@@ -124,3 +121,4 @@ public class TestRestLiDefaultInResponse
     System.clearProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
   }
 }
+

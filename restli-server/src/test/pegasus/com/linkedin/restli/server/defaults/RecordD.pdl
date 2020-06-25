@@ -4,5 +4,6 @@ record RecordD {
   field1: int,
   field2: string,
   field3: long = 0,
-  field4: optional string = "default"
+  field4: optional string = "default",
+  field5: RecordE = "a-typeref-default"
 }

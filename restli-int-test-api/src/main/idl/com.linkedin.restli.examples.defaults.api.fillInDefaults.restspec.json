@@ -1,0 +1,20 @@
+{
+  "name" : "fillInDefaults",
+  "namespace" : "com.linkedin.restli.examples.defaults.api",
+  "path" : "/fillInDefaults",
+  "schema" : "com.linkedin.restli.examples.defaults.api.HighLevelRecordWithDefault",
+  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.defaults.FieldFillInDefaultResources",
+  "collection" : {
+    "identifier" : {
+      "name" : "fillInDefaultsId",
+      "type" : "long"
+    },
+    "supports" : [ "get" ],
+    "methods" : [ {
+      "method" : "get"
+    } ],
+    "entity" : {
+      "path" : "/fillInDefaults/{fillInDefaultsId}"
+    }
+  }
+}

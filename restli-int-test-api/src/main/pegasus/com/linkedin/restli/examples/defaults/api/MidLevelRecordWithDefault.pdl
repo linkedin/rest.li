@@ -1,0 +1,10 @@
+namespace com.linkedin.restli.examples.defaults.api
+
+record MidLevelRecordWithDefault {
+  intWithDefault: int = -1,
+  intWithoutDefault: int,
+  lowLevelRecordWithDefault: optional LowLevelRecordWithDefault = {"nameWithDefault": "mid_default_a", "nameWithoutDefault": "i_am_without_default_in_midlevel" },
+  lowLevelRecordWithoutDefault: optional LowLevelRecordWithDefault
+}
+
+
