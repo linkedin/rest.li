@@ -58,8 +58,10 @@ import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.Copy;
+import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.api.tasks.Sync;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
@@ -1607,7 +1609,7 @@ public class PegasusPlugin implements Plugin<Project>
     _generateJavadocTask.dependsOn(generateDataTemplatesTask);
 
     // Add extra dependencies for data model compilation
-    project.getDependencies().add("dataTemplateCompile", "com.google.code.findbugs:jsr305:3.0.0");
+    project.getDependencies().add("dataTemplateCompile", "com.google.code.findbugs:jsr305:3.0.2");
 
     // create new source set for generated java source and class files
     String targetSourceSetName = getGeneratedSourceSetName(sourceSet, DATA_TEMPLATE_GEN_TYPE);
@@ -1631,26 +1633,28 @@ public class PegasusPlugin implements Plugin<Project>
     Task compileTask = project.getTasks().getByName(targetSourceSet.getCompileJavaTaskName());
     compileTask.dependsOn(generateDataTemplatesTask);
 
-    // we need to delete the build directory before staging files for translation/code generation, in case there were
-    // left over files from a previous execution. This is not a problem if the input for translation/code generation
-    // hasn't changed at all, because gradle will just realize the buildDir can be rebuilt from cache.
-    Task destroyStaleFiles = project.getTasks().create(sourceSet.getName() + "DestroyStaleFiles");
-    if (isPropertyTrue(project, DESTROY_STALE_FILES_ENABLE) && publishableSchemasBuildDir.exists())
-    {
-      destroyStaleFiles.getInputs().dir(publishableSchemasBuildDir);
-      destroyStaleFiles.doLast(new CacheableAction<>(task -> project.delete(publishableSchemasBuildDir)));
-    }
+    // Dummy task to maintain backward compatibility
+    // TODO: Delete this task once use cases have had time to reference the new task
+    Task destroyStaleFiles = project.getTasks().create(sourceSet.getName() + "DestroyStaleFiles", Delete.class);
+    destroyStaleFiles.onlyIf(task -> {
+      project.getLogger().lifecycle("{} task is a NO-OP task.", task.getPath());
+      return false;
+    });
 
     // Dummy task to maintain backward compatibility, as this task was replaced by CopySchemas
     // TODO: Delete this task once use cases have had time to reference the new task
-    Task copyPdscSchemasTask = project.getTasks().create(sourceSet.getName() + "CopyPdscSchemas");
+    Task copyPdscSchemasTask = project.getTasks().create(sourceSet.getName() + "CopyPdscSchemas", Copy.class);
     copyPdscSchemasTask.dependsOn(destroyStaleFiles);
+    copyPdscSchemasTask.onlyIf(task -> {
+      project.getLogger().lifecycle("{} task is a NO-OP task.", task.getPath());
+      return false;
+    });
 
-    // Copy all schema files directly over for publication
+    // Prepare schema files for publication by syncing schema folders.
     Task prepareSchemasForPublishTask = project.getTasks()
-        .create(sourceSet.getName() + "CopySchemas", Copy.class, task ->
+        .create(sourceSet.getName() + "CopySchemas", Sync.class, task ->
         {
-          task.from(dataSchemaDir, copySpec -> DATA_TEMPLATE_FILE_SUFFIXES.forEach(suffix -> copySpec.include("**/*" + suffix)));
+          task.from(dataSchemaDir, syncSpec -> DATA_TEMPLATE_FILE_SUFFIXES.forEach(suffix -> syncSpec.include("**/*" + suffix)));
           task.into(publishableSchemasBuildDir);
         });
     prepareSchemasForPublishTask.dependsOn(copyPdscSchemasTask);
