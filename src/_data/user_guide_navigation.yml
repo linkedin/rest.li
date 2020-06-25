@@ -25,6 +25,8 @@ toc:
         url: /rest.li/avro_translation
       - page: Java Binding
         url: /rest.li/java_binding
+      - page: Schema Annotation Processor
+        url: /rest.li/annotation_processor
   - title: Modeling Resources
     subfolderitems:
       - page: Modeling Resources
