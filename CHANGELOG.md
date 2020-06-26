@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.4.2] - 2020-06-25
+- Update Pegasus Plugin's CopySchema tasks to delete stale schemas (#337)
+
 ## [29.4.1] - 2020-06-24
 - Relax visibility of some methods in PDL schema parser to allow extending it.
 
@@ -4544,7 +4547,8 @@ patch operations can re-use these classes for generating patch messages.
 ## [0.14.1]
 
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.2...master
+[29.4.2]: https://github.com/linkedin/rest.li/compare/v29.4.1...v29.4.2
 [29.4.1]: https://github.com/linkedin/rest.li/compare/v29.4.0...v29.4.1
 [29.4.0]: https://github.com/linkedin/rest.li/compare/v29.3.2...v29.4.0
 [29.3.2]: https://github.com/linkedin/rest.li/compare/v29.3.1...v29.3.2
