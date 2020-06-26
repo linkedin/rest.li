@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2020 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -38,6 +38,9 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 
+/**
+ * Test for {@link ClientSelector}
+ */
 public class ClientSelectorTest
 {
   private static URI URI_1;
@@ -50,6 +53,8 @@ public class ClientSelectorTest
   private static final Ring<URI> DEFAULT_RING;
   private static final Map<URI, TrackerClient> DEFAULT_TRACKER_CLIENT_MAP = new HashMap<>();
   private ClientSelector _clientSelector;
+  private Request _request;
+  private RequestContext _requestContext;
 
   static
   {
@@ -72,16 +77,16 @@ public class ClientSelectorTest
   private void setup()
   {
     _clientSelector = new ClientSelector(new RandomHash());
+    _request = Mockito.mock(Request.class);
+    _requestContext = new RequestContext();
   }
 
   @Test
   public void testGetTargetHost()
   {
-    Request request = Mockito.mock(Request.class);
-    RequestContext requestContext = new RequestContext();
-    KeyMapper.TargetHostHints.setRequestContextTargetHost(requestContext, URI_1);
+    KeyMapper.TargetHostHints.setRequestContextTargetHost(_requestContext, URI_1);
 
-    TrackerClient trackerClient = _clientSelector.getTrackerClient(request, requestContext, DEFAULT_RING, DEFAULT_TRACKER_CLIENT_MAP);
+    TrackerClient trackerClient = _clientSelector.getTrackerClient(_request, _requestContext, DEFAULT_RING, DEFAULT_TRACKER_CLIENT_MAP);
     assertEquals(trackerClient.getUri(), URI_1);
   }
 
@@ -89,67 +94,65 @@ public class ClientSelectorTest
   public void testGetTargetHostNotFound()
   {
     URI newUri = URI.create("new_uri");
-    Request request = Mockito.mock(Request.class);
-    RequestContext requestContext = new RequestContext();
-    KeyMapper.TargetHostHints.setRequestContextTargetHost(requestContext, newUri);
+    KeyMapper.TargetHostHints.setRequestContextTargetHost(_requestContext, newUri);
 
-    TrackerClient trackerClient = _clientSelector.getTrackerClient(request, requestContext, DEFAULT_RING, DEFAULT_TRACKER_CLIENT_MAP);
+    TrackerClient trackerClient = _clientSelector.getTrackerClient(_request, _requestContext, DEFAULT_RING, DEFAULT_TRACKER_CLIENT_MAP);
     assertEquals(trackerClient, null);
   }
 
   @Test
   public void testGetHostFromRing()
   {
-    Request request = Mockito.mock(Request.class);
-    RequestContext requestContext = new RequestContext();
-
-    TrackerClient trackerClient = _clientSelector.getTrackerClient(request, requestContext, DEFAULT_RING, DEFAULT_TRACKER_CLIENT_MAP);
+    TrackerClient trackerClient = _clientSelector.getTrackerClient(_request, _requestContext, DEFAULT_RING, DEFAULT_TRACKER_CLIENT_MAP);
     assertTrue(DEFAULT_TRACKER_CLIENT_MAP.containsKey(trackerClient.getUri()));
   }
 
   @Test
   public void testAllClientsExcluded()
   {
-    Request request = Mockito.mock(Request.class);
-    RequestContext requestContext = new RequestContext();
-    LoadBalancerStrategy.ExcludedHostHints.addRequestContextExcludedHost(requestContext, URI_1);
-    LoadBalancerStrategy.ExcludedHostHints.addRequestContextExcludedHost(requestContext, URI_2);
-    LoadBalancerStrategy.ExcludedHostHints.addRequestContextExcludedHost(requestContext, URI_3);
+    LoadBalancerStrategy.ExcludedHostHints.addRequestContextExcludedHost(_requestContext, URI_1);
+    LoadBalancerStrategy.ExcludedHostHints.addRequestContextExcludedHost(_requestContext, URI_2);
+    LoadBalancerStrategy.ExcludedHostHints.addRequestContextExcludedHost(_requestContext, URI_3);
 
-    TrackerClient trackerClient = _clientSelector.getTrackerClient(request, requestContext, DEFAULT_RING, DEFAULT_TRACKER_CLIENT_MAP);
+    TrackerClient trackerClient = _clientSelector.getTrackerClient(_request, _requestContext, DEFAULT_RING, DEFAULT_TRACKER_CLIENT_MAP);
     assertEquals(trackerClient, null);
+  }
+
+  @Test
+  public void testClientsPartiallyExcluded()
+  {
+    LoadBalancerStrategy.ExcludedHostHints.addRequestContextExcludedHost(_requestContext, URI_1);
+    LoadBalancerStrategy.ExcludedHostHints.addRequestContextExcludedHost(_requestContext, URI_2);
+
+    TrackerClient trackerClient = _clientSelector.getTrackerClient(_request, _requestContext, DEFAULT_RING, DEFAULT_TRACKER_CLIENT_MAP);
+    assertEquals(trackerClient, TRACKER_CLIENT_3);
   }
 
   @Test
   public void testRingAndHostInconsistency()
   {
-    Request request = Mockito.mock(Request.class);
-    RequestContext requestContext = new RequestContext();
     URI newUri = URI.create("new_uri");
     TrackerClient newTrackerClient = Mockito.mock(TrackerClient.class);
     Mockito.when(newTrackerClient.getUri()).thenReturn(newUri);
     Map<URI, TrackerClient> newTrackerClientMap = new HashMap<>();
     newTrackerClientMap.put(newUri, newTrackerClient);
 
-    // Ring and the tracker clients are completely off so that they do not have any overlap
-    TrackerClient trackerClient = _clientSelector.getTrackerClient(request, requestContext, DEFAULT_RING, newTrackerClientMap);
-    assertEquals(trackerClient, newTrackerClient);
+    TrackerClient trackerClient = _clientSelector.getTrackerClient(_request, _requestContext, DEFAULT_RING, newTrackerClientMap);
+    assertEquals(trackerClient, newTrackerClient,
+        "The host should be picked from the tracker client list passed from the request because the ring is completely out of date");
   }
 
   @Test
   public void testSubstituteClientFromRing()
   {
     URI newUri = URI.create("new_uri");
-    Request request = Mockito.mock(Request.class);
-    RequestContext requestContext = new RequestContext();
-    
     @SuppressWarnings("unchecked")
     Ring<URI> ring = Mockito.mock(Ring.class);
     Mockito.when(ring.get(anyInt())).thenReturn(newUri);
     List<URI> ringIteratierList = Arrays.asList(newUri, URI_1, URI_2, URI_3);
     Mockito.when(ring.getIterator(anyInt())).thenReturn(ringIteratierList.iterator());
 
-    TrackerClient trackerClient = _clientSelector.getTrackerClient(request, requestContext, ring, DEFAULT_TRACKER_CLIENT_MAP);
+    TrackerClient trackerClient = _clientSelector.getTrackerClient(_request, _requestContext, ring, DEFAULT_TRACKER_CLIENT_MAP);
     assertTrue(DEFAULT_TRACKER_CLIENT_MAP.containsKey(trackerClient.getUri()));
   }
 }

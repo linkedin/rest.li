@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2020 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -19,12 +19,10 @@ package com.linkedin.d2.balancer.strategies.relative;
 import com.linkedin.d2.D2QuarantineProperties;
 import com.linkedin.d2.HttpMethod;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.strategies.degrader.DistributionNonDiscreteRingFactory;
 import com.linkedin.d2.balancer.strategies.degrader.LoadBalancerQuarantine;
-import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.util.clock.Clock;
-import java.net.URI;
+import com.linkedin.util.clock.SettableClock;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,14 +39,16 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 
+/**
+ * Test for {@link QuarantineManager}
+ */
 public class QuarantineManagerTest
 {
   private static final String SERVICE_NAME = "dummyService";
   private static final String SERVICE_PATH = "dummyServicePath";
   private static final HealthCheckOperations HEALTH_CHECK_OPERATIONS = new HealthCheckOperations();
   private static final long DEFAULT_AVG_CLUSTER_LATENCY = 100;
-  private static final RingFactory<URI> RING_FACTORY = new DistributionNonDiscreteRingFactory<>();
-  private static final Clock CLOCK = Mockito.mock(Clock.class);
+  private static final Clock CLOCK = new SettableClock();
 
   private final ScheduledExecutorService _executorService = Mockito.mock(ScheduledExecutorService.class);
   private QuarantineManager _quarantineManager;
@@ -69,18 +69,17 @@ public class QuarantineManagerTest
   {
     setup(RelativeLoadBalancerStrategyFactory.DEFAULT_QUARANTINE_MAX_PERCENT, false, false);
 
-    PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
+    PartitionState state = new PartitionStateTestDataBuilder()
         .setTrackerClientStateMap(TrackerClientMockHelper.mockTrackerClients(2),
             Arrays.asList(StateUpdater.MIN_HEALTH_SCORE, 0.6),
             Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
-            Arrays.asList(20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
-            RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT).build();
+            Arrays.asList(20, 20))
+        .build();
 
     _quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
 
-    // Verify quarantine is not enabled
     Mockito.verifyZeroInteractions(_executorService);
-    assertTrue(state.getQuarantineMap().isEmpty());
+    assertTrue(state.getQuarantineMap().isEmpty(), "Quarantine should not be enabled.");
   }
 
   @Test(dataProvider = "unhealthyHealthScore")
@@ -90,25 +89,24 @@ public class QuarantineManagerTest
     _quarantineManager.tryEnableQuarantine();
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2);
-    PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(unhealthyHealthScore, StateUpdater.MAX_HEALTH_SCORE),
+    PartitionState state = new PartitionStateTestDataBuilder()
+        .setTrackerClientStateMap(trackerClients,
+            Arrays.asList(unhealthyHealthScore, StateUpdater.MAX_HEALTH_SCORE),
             Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
-            Arrays.asList(20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
-            RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT).build();
+            Arrays.asList(20, 20))
+        .build();
 
     _quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
 
     if (unhealthyHealthScore == StateUpdater.MIN_HEALTH_SCORE)
     {
-      // Verify quarantine is enabled and one client is quarantined
-      assertEquals(state.getQuarantineMap().size(), 1);
+      assertEquals(state.getQuarantineMap().size(), 1, "Only 1 host should be quarantined.");
       assertTrue(state.getQuarantineMap().containsKey(trackerClients.get(0)));
       assertTrue(state.getRecoveryTrackerClients().isEmpty());
     }
     else
     {
-      // Verify quarantine map is empty
-      assertTrue(state.getQuarantineMap().isEmpty());
+      assertTrue(state.getQuarantineMap().isEmpty(), "No host should be quarantined.");
       assertTrue(state.getRecoveryTrackerClients().isEmpty());
     }
 
@@ -132,22 +130,20 @@ public class QuarantineManagerTest
     _quarantineManager.tryEnableQuarantine();
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(4);
-    PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
+    PartitionState state = new PartitionStateTestDataBuilder()
         .setTrackerClientStateMap(trackerClients,
             Arrays.asList(StateUpdater.MIN_HEALTH_SCORE, StateUpdater.MIN_HEALTH_SCORE, StateUpdater.MIN_HEALTH_SCORE, 0.6),
             Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY,
                 TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
-            Arrays.asList(20, 20, 20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
-            RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT).build();
+            Arrays.asList(20, 20, 20, 20))
+        .build();
 
     _quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
 
-    // Verify quarantine is enabled and 2 clients are quarantined.
-    // In theory, there are 3 candidates, but because of the max percentage is 50%, we only quarantine 2
-    assertEquals(state.getQuarantineMap().size(), 2);
+    assertEquals(state.getQuarantineMap().size(), 2, "Only 2 hosts should be quarantined even if 3 hosts are unhealthy.");
   }
 
-  @Test(dataProvider = "quarantineCheckResult")
+  @Test(dataProvider = "trueFalse")
   public void testQuarantineCheck(boolean quarantineCheckResult)
   {
     setup(0.5, false, false);
@@ -157,12 +153,11 @@ public class QuarantineManagerTest
     existingQuarantineMap.put(trackerClients.get(0), quarantine);
     Mockito.when(quarantine.checkUpdateQuarantineState()).thenReturn(quarantineCheckResult);
 
-    PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(StateUpdater.MIN_HEALTH_SCORE, 0.6, 0.6),
-            Arrays.asList(TrackerClientState.HealthState.NEUTRAL, TrackerClientState.HealthState.UNHEALTHY,
-                TrackerClientState.HealthState.UNHEALTHY),
-            Arrays.asList(20, 20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
-            RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
+    PartitionState state = new PartitionStateTestDataBuilder()
+        .setTrackerClientStateMap(trackerClients,
+            Arrays.asList(StateUpdater.MIN_HEALTH_SCORE, 0.6, 0.6),
+            Arrays.asList(TrackerClientState.HealthState.NEUTRAL, TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
+            Arrays.asList(20, 20, 20))
         .setQuarantineMap(existingQuarantineMap)
         .build();
 
@@ -171,27 +166,18 @@ public class QuarantineManagerTest
 
     if (quarantineCheckResult)
     {
-      // If quarantine check passed, verify the tracker client is put into recovery map, and the initial recovery rate is 0.01
       assertTrue(state.getQuarantineMap().isEmpty());
-      assertEquals(state.getRecoveryTrackerClients().size(), 1);
-      assertEquals(state.getTrackerClientStateMap().get(trackerClients.get(0)).getHealthScore(), 0.01);
-    } else
+      assertEquals(state.getRecoveryTrackerClients().size(), 1,
+          "The quarantine should be over and the host should be put into recovery");
+      assertEquals(state.getTrackerClientStateMap().get(trackerClients.get(0)).getHealthScore(), QuarantineManager.INITIAL_RECOVERY_HEALTH_SCORE);
+    }
+    else
     {
-      // Otherwise, the client stays in the quarantine map
-      assertEquals(state.getQuarantineMap().size(), 1);
-      assertTrue(state.getRecoveryTrackerClients().isEmpty());
+      assertEquals(state.getQuarantineMap().size(), 1,
+          "Quarantine health check failed, the host should be kept in quarantine state");
+      assertTrue(state.getRecoveryTrackerClients().isEmpty(), "No client should be in recovery state");
       assertTrue(state.getQuarantineMap().containsKey(trackerClients.get(0)));
     }
-  }
-
-  @DataProvider(name = "quarantineCheckResult")
-  Object[][] getQuarantineCheckResult()
-  {
-    return new Object[][]
-        {
-            {true},
-            {false}
-        };
   }
 
   @Test(dataProvider = "trackerClientState")
@@ -202,12 +188,11 @@ public class QuarantineManagerTest
     Set<TrackerClient> recoverySet = new HashSet<>();
     recoverySet.add(trackerClients.get(0));
 
-    PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(healthScore, 0.6, 0.6),
-            Arrays.asList(healthState, TrackerClientState.HealthState.UNHEALTHY,
-                TrackerClientState.HealthState.UNHEALTHY),
-            Arrays.asList(callCount, 20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
-            RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
+    PartitionState state = new PartitionStateTestDataBuilder()
+        .setTrackerClientStateMap(trackerClients,
+            Arrays.asList(healthScore, 0.6, 0.6),
+            Arrays.asList(healthState, TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
+            Arrays.asList(callCount, 20, 20))
         .setRecoveryClients(recoverySet)
         .build();
 
@@ -217,18 +202,19 @@ public class QuarantineManagerTest
 
     if (callCount <= RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT)
     {
-      // Verify the health score doubled
-      assertEquals(state.getTrackerClientStateMap().get(trackerClients.get(0)).getHealthScore(), healthScore * 2);
+      assertEquals(state.getTrackerClientStateMap().get(trackerClients.get(0)).getHealthScore(), healthScore * 2,
+          "The health score should be doubled when fast recovery is enabled");
       assertTrue(state.getRecoveryTrackerClients().contains(trackerClients.get(0)));
-    } else if (healthState != TrackerClientState.HealthState.UNHEALTHY && healthScore <= QuarantineManager.FAST_RECOVERY_HEALTH_SCORE_THRESHOLD)
+    }
+    else if (healthState != TrackerClientState.HealthState.UNHEALTHY && healthScore <= QuarantineManager.FAST_RECOVERY_HEALTH_SCORE_THRESHOLD)
     {
-      // Verify the health score keeps the same, and the client is still in recovery map
-      assertEquals(state.getTrackerClientStateMap().get(trackerClients.get(0)).getHealthScore(), healthScore);
+      assertEquals(state.getTrackerClientStateMap().get(trackerClients.get(0)).getHealthScore(), healthScore,
+          "The health score should not change");
       assertTrue(state.getRecoveryTrackerClients().contains(trackerClients.get(0)));
-    } else
+    }
+    else
     {
-      // Verify the client comes out of recovery map
-      assertTrue(state.getRecoveryTrackerClients().isEmpty());
+      assertTrue(state.getRecoveryTrackerClients().isEmpty(), "The host should come out of recovery");
     }
   }
 
@@ -237,49 +223,43 @@ public class QuarantineManagerTest
   {
     return new Object[][]
         {
-            {0, TrackerClientState.HealthState.NEUTRAL, 0.01},
-            {15, TrackerClientState.HealthState.UNHEALTHY, 0.01},
+            {0, TrackerClientState.HealthState.NEUTRAL, QuarantineManager.INITIAL_RECOVERY_HEALTH_SCORE},
+            {15, TrackerClientState.HealthState.UNHEALTHY, QuarantineManager.INITIAL_RECOVERY_HEALTH_SCORE},
             {15, TrackerClientState.HealthState.UNHEALTHY, 0.6},
-            {15, TrackerClientState.HealthState.HEALTHY, 0.01}
+            {15, TrackerClientState.HealthState.HEALTHY, QuarantineManager.INITIAL_RECOVERY_HEALTH_SCORE}
         };
   }
 
-  @Test(dataProvider = "enableFastRecovery")
+  @Test(dataProvider = "trueFalse")
   public void testEnrollNewClientInRecoveryMap(boolean fastRecoveryEnabled)
   {
     setup(0.5, true, fastRecoveryEnabled);
     _quarantineManager.tryEnableQuarantine();
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2);
-    PartitionState oldState = new PartitionStateDataBuilder(RING_FACTORY)
-        .setTrackerClientStateMap(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
-            Collections.emptyList(), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
-            RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT).build();
-    PartitionState newState = new PartitionStateDataBuilder(RING_FACTORY)
-        .setTrackerClientStateMap(trackerClients, Arrays.asList(0.01, 0.01),
+    PartitionState oldState = new PartitionStateTestDataBuilder()
+        .setTrackerClientStateMap(Collections.emptyList(),
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Collections.emptyList())
+        .build();
+    PartitionState newState = new PartitionStateTestDataBuilder()
+        .setTrackerClientStateMap(trackerClients,
+            Arrays.asList(QuarantineManager.INITIAL_RECOVERY_HEALTH_SCORE, QuarantineManager.INITIAL_RECOVERY_HEALTH_SCORE),
             Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.UNHEALTHY),
-            Arrays.asList(20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
-            RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT).build();
+            Arrays.asList(20, 20))
+        .build();
 
     _quarantineManager.updateQuarantineState(newState, oldState, DEFAULT_AVG_CLUSTER_LATENCY);
 
     if (fastRecoveryEnabled)
     {
       assertEquals(newState.getRecoveryTrackerClients().size(), 2);
-    } else
+    }
+    else
     {
       assertTrue(newState.getRecoveryTrackerClients().isEmpty());
     }
-  }
-
-  @DataProvider(name = "enableFastRecovery")
-  Object[][] getFastRecoveryEnabled()
-  {
-    return new Object[][]
-        {
-            {true},
-            {false}
-        };
   }
 
   @Test
@@ -294,13 +274,12 @@ public class QuarantineManagerTest
     setup(0.5, true, true);
     _quarantineManager.tryEnableQuarantine();
 
-    PartitionState state = new PartitionStateDataBuilder(RING_FACTORY)
+    PartitionState state = new PartitionStateTestDataBuilder()
         .setTrackerClientStateMap(trackerClients,
-            Arrays.asList(StateUpdater.MIN_HEALTH_SCORE, StateUpdater.MIN_HEALTH_SCORE, 0.01),
-            Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.NEUTRAL,
-                TrackerClientState.HealthState.UNHEALTHY),
-            Arrays.asList(20, 20, 20), RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE,
-            RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT).build();
+            Arrays.asList(StateUpdater.MIN_HEALTH_SCORE, StateUpdater.MIN_HEALTH_SCORE, QuarantineManager.INITIAL_RECOVERY_HEALTH_SCORE),
+            Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.NEUTRAL, TrackerClientState.HealthState.UNHEALTHY),
+            Arrays.asList(20, 20, 20))
+        .build();
 
     _quarantineManager.updateQuarantineState(state, state, DEFAULT_AVG_CLUSTER_LATENCY);
 
@@ -308,5 +287,15 @@ public class QuarantineManagerTest
     assertTrue(state.getRecoveryTrackerClients().contains(trackerClients.get(1)));
     assertEquals(state.getQuarantineMap().size(), 1);
     assertTrue(state.getQuarantineMap().containsKey(trackerClients.get(0)));
+  }
+
+  @DataProvider(name = "trueFalse")
+  Object[][] enable()
+  {
+    return new Object[][]
+        {
+            {true},
+            {false}
+        };
   }
 }

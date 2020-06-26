@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2020 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.strategies.degrader.DistributionNonDiscreteRingFactory;
 import com.linkedin.d2.balancer.strategies.degrader.LoadBalancerQuarantine;
 import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
 import java.net.URI;
@@ -31,9 +32,10 @@ import java.util.Set;
 /**
  * The helper class that builds an object of {@link PartitionState}
  */
-public class PartitionStateDataBuilder
+public class PartitionStateTestDataBuilder
 {
   private static final int DEFAULT_PARTITION_ID = 0;
+  private static final long DEFAULT_CLUSTER_GENERATION_ID = 0L;
   private static final int DEFAULT_POINTS_PER_WEIGHT = 100;
 
   private final RingFactory<URI> _ringFactory;
@@ -42,29 +44,38 @@ public class PartitionStateDataBuilder
   private Map<TrackerClient, LoadBalancerQuarantine> _quarantineMap = new HashMap<>();
   private Map<TrackerClient, TrackerClientState> _trackerClientStateMap = new HashMap<>();
 
-  PartitionStateDataBuilder(RingFactory<URI> ringFactory)
+  PartitionStateTestDataBuilder()
   {
-    _ringFactory = ringFactory;
-    _clusterGenerationId = 0;
+    _ringFactory = new DistributionNonDiscreteRingFactory<>();
+    _clusterGenerationId = DEFAULT_CLUSTER_GENERATION_ID;
   }
 
-  PartitionStateDataBuilder setClusterGenerationId(long clusterGenerationId)
+  PartitionStateTestDataBuilder setClusterGenerationId(long clusterGenerationId)
   {
     _clusterGenerationId = clusterGenerationId;
     return this;
   }
 
-  PartitionStateDataBuilder setTrackerClientStateMap(List<TrackerClient> trackerClients,
-      List<Double> healthScores, List<TrackerClientState.HealthState> healthStates, List<Integer> callCountList,
-      double initialHealthScore, int minCallCount)
+  PartitionStateTestDataBuilder setTrackerClientStateMap(List<TrackerClient> trackerClients,
+      List<Double> healthScores, List<TrackerClientState.HealthState> healthStates, List<Integer> callCountList)
   {
+    return setTrackerClientStateMap(trackerClients, healthScores, healthStates, callCountList,
+        RelativeLoadBalancerStrategyFactory.DEFAULT_MIN_CALL_COUNT);
+  }
+
+  PartitionStateTestDataBuilder setTrackerClientStateMap(List<TrackerClient> trackerClients,
+      List<Double> healthScores, List<TrackerClientState.HealthState> healthStates, List<Integer> callCountList,
+      int minCallCount)
+  {
+    _trackerClientStateMap = new HashMap<>();
     if (trackerClients.size() != healthScores.size() || trackerClients.size() != healthStates.size() || trackerClients.size() != callCountList.size())
     {
       throw new IllegalArgumentException("The size of the tracker client and health scores have to match!");
     }
     for (int index = 0; index < trackerClients.size(); index ++)
     {
-      TrackerClientState trackerClientState = new TrackerClientState(initialHealthScore, minCallCount);
+      TrackerClientState trackerClientState = new TrackerClientState(
+          RelativeLoadBalancerStrategyFactory.DEFAULT_INITIAL_HEALTH_SCORE, minCallCount);
       trackerClientState.setHealthScore(healthScores.get(index));
       trackerClientState.setHealthState(healthStates.get(index));
       trackerClientState.setCallCount(callCountList.get(index));
@@ -73,13 +84,13 @@ public class PartitionStateDataBuilder
     return this;
   }
 
-  PartitionStateDataBuilder setRecoveryClients(Set<TrackerClient> trackerClients)
+  PartitionStateTestDataBuilder setRecoveryClients(Set<TrackerClient> trackerClients)
   {
     _recoveryTrackerClients = trackerClients;
     return this;
   }
 
-  PartitionStateDataBuilder setQuarantineMap(Map<TrackerClient, LoadBalancerQuarantine> quarantineMap)
+  PartitionStateTestDataBuilder setQuarantineMap(Map<TrackerClient, LoadBalancerQuarantine> quarantineMap)
   {
     _quarantineMap = quarantineMap;
     return this;

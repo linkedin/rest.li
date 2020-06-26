@@ -54,8 +54,8 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   public static final double DEFAULT_RELATIVE_LATENCY_LOW_THRESHOLD_FACTOR = 1.1;
   public static final HttpStatusCodeRangeArray DEFAULT_ERROR_STATUS_FILTER =
       new HttpStatusCodeRangeArray(new HttpStatusCodeRange().setLowerBound(500).setUpperBound(599));
-  private static final double DEFAULT_UP_STEP = 0.05;
-  private static final double DEFAULT_DOWN_STEP = 0.2;
+  public static final double DEFAULT_UP_STEP = 0.05;
+  public static final double DEFAULT_DOWN_STEP = 0.2;
   private static final double DEFAULT_RELATIVE_LATENCY_HIGH_THRESHOLD_FACTOR = 1.3;
   private static final double DEFAULT_HIGH_ERROR_RATE = 1.1;
   private static final double DEFAULT_LOW_ERROR_RATE = 1.1;
@@ -65,7 +65,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   public static final double DEFAULT_QUARANTINE_MAX_PERCENT = 0.0;
   private static final HttpMethod DEFAULT_HTTP_METHOD = HttpMethod.OPTIONS;
   // Default ring properties
-  private static final int DEFAULT_POINTS_PER_WEIGHT = 100;
+  public static final int DEFAULT_POINTS_PER_WEIGHT = 100;
 
 
   private final ScheduledExecutorService _executorService;
@@ -88,7 +88,8 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   @Override
   public RelativeLoadBalancerStrategy newLoadBalancer(ServiceProperties serviceProperties)
   {
-    D2RelativeStrategyProperties relativeStrategyProperties = serviceProperties.getRelativeStrategyProperties();
+    D2RelativeStrategyProperties relativeStrategyProperties = RelativeStrategyPropertiesConverter
+        .toProperties(serviceProperties.getRelativeStrategyProperties());
     relativeStrategyProperties = putDefaultValues(relativeStrategyProperties);
 
     return new RelativeLoadBalancerStrategy(getRelativeStateUpdater(relativeStrategyProperties,
@@ -134,7 +135,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
       switch (hashMethod)
       {
         case URI_REGEX:
-          return new URIRegexHash(RelativeStrategyPropertiesConverter.convertHashConfigToMap(hashConfig));
+          return new URIRegexHash(RelativeStrategyPropertiesConverter.toHashConfigMap(hashConfig));
         case RANDOM:
         default:
           return new RandomHash();

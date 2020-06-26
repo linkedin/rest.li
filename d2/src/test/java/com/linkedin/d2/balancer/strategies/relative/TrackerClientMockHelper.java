@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2020 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -36,6 +36,12 @@ import static org.mockito.Matchers.anyInt;
  */
 public class TrackerClientMockHelper
 {
+  /**
+   * Mock a list of {@link TrackerClient} without call stats
+   *
+   * @param numTrackerClients The number of hosts to be mocked
+   * @return A list of mocked {@link TrackerClient}
+   */
   public static List<TrackerClient> mockTrackerClients(int numTrackerClients)
   {
     List<TrackerClient> trackerClients = new ArrayList<>();
@@ -51,6 +57,17 @@ public class TrackerClientMockHelper
     return trackerClients;
   }
 
+  /**
+   * Mock a list of {@link TrackerClient} for testing
+   *
+   * @param numTrackerClients The number of {@link TrackerClient} to be mocked
+   * @param callCountList The call count that each host receives
+   * @param outstandingCallCountList The outstanding call count that each host receives
+   * @param latencyList The latency of each host
+   * @param outstandingLatencyList The outstanding latency of each host
+   * @param errorCountList The error count of each host
+   * @return A list of mocked {@link TrackerClient}
+   */
   public static List<TrackerClient> mockTrackerClients(int numTrackerClients, List<Integer> callCountList,
       List<Integer> outstandingCallCountList, List<Long> latencyList, List<Long> outstandingLatencyList,
       List<Integer> errorCountList)
@@ -65,15 +82,16 @@ public class TrackerClientMockHelper
       Map<ErrorType, Integer> errorTypeCounts = new HashMap<>();
       errorTypeCounts.put(ErrorType.SERVER_ERROR, errorCountList.get(index));
 
-      CallTrackerImpl.CallTrackerStats callStats = new CallTrackerImpl.CallTrackerStats(RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS,
-      0,
+      CallTrackerImpl.CallTrackerStats callStats = new CallTrackerImpl.CallTrackerStats(
           RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS,
-      callCountList.get(index),
-      0,
-      0,
-      errorCountList.get(index),
-      errorCountList.get(index),
-      1,
+          0,
+          RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS,
+          callCountList.get(index),
+          0,
+          0,
+          errorCountList.get(index),
+          errorCountList.get(index),
+          1,
           RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS - outstandingLatencyList.get(index),
       outstandingCallCountList.get(index),
       longStats,

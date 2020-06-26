@@ -115,8 +115,7 @@ public class StateUpdater
     else if (clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
     {
       // Asynchronously update the state if it is from uri properties change
-      PartitionState oldPartitionState = _partitionLoadBalancerStateMap.get(partitionId);
-      _executorService.execute(() -> updateStateDueToClusterChange(trackerClients, partitionId, oldPartitionState, clusterGenerationId));
+      _executorService.execute(() -> updateStateDueToClusterChange(trackerClients, partitionId, clusterGenerationId));
     }
   }
 
@@ -139,6 +138,14 @@ public class StateUpdater
     return _partitionLoadBalancerStateMap.get(partitionId) == null
         ? new HashMap<>()
         : _partitionLoadBalancerStateMap.get(partitionId).getPointsMap();
+  }
+
+  /**
+   * Exposed for testings
+   */
+  PartitionState getPartitionState(int partitionId)
+  {
+    return _partitionLoadBalancerStateMap.get(partitionId);
   }
 
   /**
@@ -201,11 +208,11 @@ public class StateUpdater
    * We will check the cluster generation id again before performing the actual update to make sure only one updates got executed
    * This can be guaranteed because the executor service has has 1 thread
    */
-  void updateStateDueToClusterChange(Set<TrackerClient> trackerClients, int partitionId,
-      PartitionState oldPartitionState, Long newClusterGenerationId)
+  void updateStateDueToClusterChange(Set<TrackerClient> trackerClients, int partitionId, Long newClusterGenerationId)
   {
-    if (newClusterGenerationId != oldPartitionState.getClusterGenerationId())
+    if (newClusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
     {
+      PartitionState oldPartitionState = _partitionLoadBalancerStateMap.get(partitionId);
       updateStateForPartition(trackerClients, partitionId, oldPartitionState, newClusterGenerationId);
     }
   }
@@ -356,8 +363,8 @@ public class StateUpdater
       int callCount, long latency, double errorRate)
   {
     return callCount >= trackerClientState.getAdjustedMinCallCount()
-        && (latency <= avgClusterLatency * _relativeStrategyProperties.getRelativeLatencyLowThresholdFactor()
-        || errorRate <= _relativeStrategyProperties.getLowErrorRate());
+        && latency <= avgClusterLatency * _relativeStrategyProperties.getRelativeLatencyLowThresholdFactor()
+        && errorRate <= _relativeStrategyProperties.getLowErrorRate();
   }
 
   private void notifyPartitionStateUpdateListener(PartitionState state)

@@ -16,7 +16,9 @@
 
 package com.linkedin.d2.balancer.clients;
 
+import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.HttpStatusCodeRange;
+import com.linkedin.d2.balancer.config.RelativeStrategyPropertiesConverter;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import java.net.URI;
 import java.util.List;
@@ -178,12 +180,13 @@ public class TrackerClientFactory
 
   private static List<HttpStatusCodeRange> getErrorStatusRanges(ServiceProperties serviceProperties)
   {
-    if (serviceProperties.getRelativeStrategyProperties() == null
-        || serviceProperties.getRelativeStrategyProperties().getErrorStatusFilter() == null)
+    D2RelativeStrategyProperties relativeStrategyProperties =
+        RelativeStrategyPropertiesConverter.toProperties(serviceProperties.getRelativeStrategyProperties());
+    if (relativeStrategyProperties.getErrorStatusFilter() == null)
     {
       return RelativeLoadBalancerStrategyFactory.DEFAULT_ERROR_STATUS_FILTER;
     }
-    return serviceProperties.getRelativeStrategyProperties().getErrorStatusFilter();
+    return relativeStrategyProperties.getErrorStatusFilter();
   }
 
   private static TrackerClientImpl createTrackerClientImpl(URI uri,

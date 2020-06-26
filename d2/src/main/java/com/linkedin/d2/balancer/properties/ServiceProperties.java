@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.properties;
 
-import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.util.ArgumentUtil;
 
 import java.net.URI;
@@ -34,7 +33,7 @@ public class ServiceProperties
   private final List<String> _prioritizedStrategyList;
   private final Map<String, Object> _loadBalancerStrategyProperties;
   private final Map<String, Object> _transportClientProperties;
-  private final D2RelativeStrategyProperties _relativeStrategyProperties;
+  private final Map<String, Object> _relativeStrategyProperties;
   private final List<Map<String, Object>> _backupRequests;  // each map in the list represents one backup requests strategy
   private final Map<String, String> _degraderProperties;
   private final List<String> _prioritizedSchemes;
@@ -110,7 +109,7 @@ public class ServiceProperties
                            List<Map<String,Object>> backupRequests)
   {
     this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties, transportClientProperties, degraderProperties,
-         prioritizedSchemes, banned, serviceMetadataProperties, backupRequests, new D2RelativeStrategyProperties());
+         prioritizedSchemes, banned, serviceMetadataProperties, backupRequests, null);
   }
 
   public ServiceProperties(String serviceName,
@@ -124,7 +123,7 @@ public class ServiceProperties
                            Set<URI> banned,
                            Map<String,Object> serviceMetadataProperties,
                            List<Map<String,Object>> backupRequests,
-                           D2RelativeStrategyProperties relativeStrategyProperties)
+                           Map<String, Object> relativeStrategyProperties)
   {
     ArgumentUtil.notNull(serviceName, PropertyKeys.SERVICE_NAME);
     ArgumentUtil.notNull(clusterName, PropertyKeys.CLUSTER_NAME);
@@ -152,8 +151,8 @@ public class ServiceProperties
     _banned = (banned != null) ? Collections.unmodifiableSet(banned) : Collections.emptySet();
     _serviceMetadataProperties = (serviceMetadataProperties != null) ? Collections.unmodifiableMap(serviceMetadataProperties) :
         Collections.<String,Object>emptyMap();
-    _relativeStrategyProperties = relativeStrategyProperties == null ?
-      new D2RelativeStrategyProperties() : relativeStrategyProperties;
+    _relativeStrategyProperties = relativeStrategyProperties != null
+        ? relativeStrategyProperties : Collections.emptyMap();
   }
 
   public String getClusterName()
@@ -198,7 +197,7 @@ public class ServiceProperties
   /**
    * @return Properties used by {@link com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy}.
    */
-  public D2RelativeStrategyProperties getRelativeStrategyProperties()
+  public Map<String, Object> getRelativeStrategyProperties()
   {
     return _relativeStrategyProperties;
   }
@@ -255,6 +254,8 @@ public class ServiceProperties
         + _serviceMetadataProperties
         + ", backupRequests="
         + _backupRequests
+        + ", relativeStrategyProperties="
+        + _relativeStrategyProperties
         + "]";
   }
 
@@ -274,6 +275,7 @@ public class ServiceProperties
     result = prime * result + _prioritizedSchemes.hashCode();
     result = prime * result + _banned.hashCode();
     result = prime * result + _serviceMetadataProperties.hashCode();
+    result = prime * result + _relativeStrategyProperties.hashCode();
     return result;
   }
 
@@ -308,6 +310,8 @@ public class ServiceProperties
     if (!_banned.equals(other._banned))
       return false;
     if (!_serviceMetadataProperties.equals(other._serviceMetadataProperties))
+      return false;
+    if (!_relativeStrategyProperties.equals(other._relativeStrategyProperties))
       return false;
     return true;
   }

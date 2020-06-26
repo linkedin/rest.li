@@ -43,13 +43,14 @@ public class QuarantineManager {
   private static final Logger LOG = LoggerFactory.getLogger(QuarantineManager.class);
   public static final double SLOW_START_ENABLED_THRESHOLD = 0;
   public static final double FAST_RECOVERY_HEALTH_SCORE_THRESHOLD = 0.5;
+  public static final double INITIAL_RECOVERY_HEALTH_SCORE = 0.01;
 
+  private static final double DOUBLE_COMPARISON_THRESHOLD = 10e-4;
   private static final double QUARANTINE_ENABLED_PERCENTAGE_THRESHOLD = 0.0;
   private static final double FAST_RECOVERY_FACTOR = 2.0;
   private static final double MIN_ZOOKEEPER_SERVER_WEIGHT = 0.0;
   private static final int MAX_RETRIES_TO_CHECK_QUARANTINE = 5;
   private static final int MAX_HOSTS_TO_PRE_CHECK_QUARANTINE = 10;
-  private static final double INITIAL_RECOVERY_HEALTH_SCORE = 0.01;
   private static final long MIN_QUANRANTINE_LATENCY_MS = 300;
 
   private final String _serviceName;
@@ -268,7 +269,7 @@ public class QuarantineManager {
     if (trackerClientState.getCallCount() < trackerClientState.getAdjustedMinCallCount())
     {
       double healthScore = trackerClientState.getHealthScore();
-      if (healthScore <= StateUpdater.MIN_HEALTH_SCORE)
+      if (healthScore <= StateUpdater.MIN_HEALTH_SCORE + DOUBLE_COMPARISON_THRESHOLD)
       {
         // Reset the health score to initial recovery health score if health score dropped to 0 before
         trackerClientState.setHealthScore(INITIAL_RECOVERY_HEALTH_SCORE);
@@ -320,7 +321,7 @@ public class QuarantineManager {
       {
         return true;
       }
-      else if (healthScore <= StateUpdater.MIN_HEALTH_SCORE
+      else if (healthScore <= StateUpdater.MIN_HEALTH_SCORE + DOUBLE_COMPARISON_THRESHOLD
           && serverWeight > MIN_ZOOKEEPER_SERVER_WEIGHT
           && trackerClientState.isUnhealthy())
       {
@@ -352,7 +353,7 @@ public class QuarantineManager {
    */
   private void performNormalRecovery(TrackerClientState trackerClientState)
   {
-    if (trackerClientState.getHealthScore() <= StateUpdater.MIN_HEALTH_SCORE)
+    if (trackerClientState.getHealthScore() <= StateUpdater.MIN_HEALTH_SCORE + DOUBLE_COMPARISON_THRESHOLD)
     {
       trackerClientState.setHealthScore(INITIAL_RECOVERY_HEALTH_SCORE);
     }
