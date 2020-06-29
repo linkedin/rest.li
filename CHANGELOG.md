@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Provide public method in the AbstractRequestBuilder for adding field projections.
 
 ## [29.4.2] - 2020-06-25
 - Update Pegasus Plugin's CopySchema tasks to delete stale schemas (#337)

@@ -271,6 +271,16 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     return this;
   }
 
+  public void addFields(PathSpec... fieldPaths)
+  {
+    if (_queryParams.containsKey(RestConstants.FIELDS_PARAM))
+    {
+      throw new IllegalStateException("Entity projection fields already set on this request: "
+                                          + _queryParams.get(RestConstants.FIELDS_PARAM));
+    }
+    setParam(RestConstants.FIELDS_PARAM, fieldPaths == null ? null : new HashSet<>(Arrays.asList(fieldPaths)));
+  }
+
   public AbstractRequestBuilder<K, V, R> pathKey(String name, Object value)
   {
     _pathKeys.put(name, value);
@@ -357,16 +367,6 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
   protected void addAssocKey(String key, Object value)
   {
     _assocKey.append(key, value);
-  }
-
-  protected void addFields(PathSpec... fieldPaths)
-  {
-    if (_queryParams.containsKey(RestConstants.FIELDS_PARAM))
-    {
-      throw new IllegalStateException("Entity projection fields already set on this request: "
-                                          + _queryParams.get(RestConstants.FIELDS_PARAM));
-    }
-    setParam(RestConstants.FIELDS_PARAM, fieldPaths == null ? null : new HashSet<>(Arrays.asList(fieldPaths)));
   }
 
   protected void addMetadataFields(PathSpec... fieldPaths)
