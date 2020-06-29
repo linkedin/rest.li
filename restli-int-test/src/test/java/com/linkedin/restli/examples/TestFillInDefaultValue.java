@@ -24,10 +24,7 @@ import com.linkedin.restli.examples.defaults.api.FillInDefaultsGetRequestBuilder
 import com.linkedin.restli.examples.defaults.api.FillInDefaultsRequestBuilders;
 import com.linkedin.restli.examples.defaults.api.HighLevelRecordWithDefault;
 import java.io.IOException;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
+import java.util.Collections;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -43,7 +40,7 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
   @BeforeClass
   public void initClass() throws Exception
   {
-    super.init();
+    super.init(Collections.emptyList());
   }
 
   @AfterClass
