@@ -64,26 +64,20 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
   @DataProvider(name = "testCaseProvider")
   private static Object[][] testCaseProvider()
   {
-    DataMap testCase1Data = new DataMap();
-    testCase1Data.put("intDefaultFieldB", -1);
-    DataMap case1DataMidLevel = new DataMap();
-    case1DataMidLevel.put("intWithDefault", -1);
-    DataMap case1DataLowLevel = new DataMap();
-    case1DataLowLevel.put("nameWithDefault", "i_am_default_name");
-    DataMap case1DataLowLevelDefault = new DataMap();
-    case1DataLowLevelDefault.put("nameWithDefault", "mid_default_a");
-    case1DataLowLevelDefault.put("nameWithoutDefault", "i_am_without_default_in_midlevel");
-    case1DataMidLevel.put("lowLevelRecordWithoutDefault", case1DataLowLevel);
-    case1DataMidLevel.put("lowLevelRecordWithDefault", case1DataLowLevelDefault);
-    testCase1Data.put("midLevelRecordWithoutDefault", case1DataMidLevel);
-    DataMap case1DataMidLevelDefault = new DataMap();
-    case1DataMidLevelDefault.put("intWithDefault", 0);
-    case1DataMidLevelDefault.put("intWithoutDefault", 0);
-    testCase1Data.put("midLevelRecordWithoutDefault", case1DataMidLevel);
-    testCase1Data.put("midLevelRecordWithDefault", case1DataMidLevelDefault);
+    // case 1
+    DataMap testCase1Expected = new DataMap();
+    testCase1Expected.put("intDefaultFieldB", -1);
+    DataMap case1MidLevelRecordWithDefault = new DataMap();
+    case1MidLevelRecordWithDefault.put("intWithDefault", 0);
+    case1MidLevelRecordWithDefault.put("intWithoutDefault", 0);
+    DataMap case1LowLevelRecordWithDefault = new DataMap();
+    case1LowLevelRecordWithDefault.put("nameWithDefault", "a");
+    case1LowLevelRecordWithDefault.put("nameWithoutDefault", "b");
+    case1MidLevelRecordWithDefault.put("lowLevelRecordWithDefault", case1LowLevelRecordWithDefault);
+    testCase1Expected.put("midLevelRecordWithDefault", case1MidLevelRecordWithDefault);
 
     return new Object[][] {
-        {1L, testCase1Data},
+        {1L, testCase1Expected},
     };
   }
 }

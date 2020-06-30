@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.server.defaults
+
+record Foo {
+  f1: int = 5,
+  f2: optional int
+}

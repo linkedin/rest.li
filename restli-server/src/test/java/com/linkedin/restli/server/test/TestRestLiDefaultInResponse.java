@@ -15,11 +15,9 @@
 */
 package com.linkedin.restli.server.test;
 
-import com.google.common.collect.ImmutableMap;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
@@ -50,49 +48,100 @@ public class TestRestLiDefaultInResponse
   @DataProvider(name = "default_serialization")
   public Object[][] schemaFilesForDefaultSerializationTest()
   {
-    DataList recordBField1 = new DataList(1);
-    recordBField1.add(-1);
+    // case 1
+    DataMap case1Input = new DataMap();
+    case1Input.put("field1", 1);
+    case1Input.put("field2", "2");
+    DataMap case1Expect = new DataMap();
+    case1Expect.put("field1", 1);
+    case1Expect.put("field2", "2");
+    case1Expect.put("field3", 0L);
+    case1Expect.put("field4", "default");
 
-    DataMap recordBField2 = new DataMap();
-    DataList recordBField2DefaultValues = new DataList(2);
-    recordBField2DefaultValues.add("defaultValue1");
-    recordBField2DefaultValues.add("defaultValue2");
-    recordBField2.put("defaultKey", recordBField2DefaultValues);
-    DataMap personalRecordD = new DataMap();
-    personalRecordD.put("field3", 0L);
-    personalRecordD.put("field4", "default");
-    personalRecordD.put("field5", "a-typeref-default");
+    // case 2
+    DataMap case2Input = new DataMap();
+    DataMap case2Expect = new DataMap();
+    DataList case2F1 = new DataList(1);
+    case2F1.add(-1);
+    case2Expect.put("field1", case2F1);
+    DataMap case2F2 = new DataMap();
+    DataList case2F2Default = new DataList(2);
+    case2F2Default.add("defaultValue1");
+    case2F2Default.add("defaultValue2");
+    case2F2.put("defaultKey", case2F2Default);
+    case2Expect.put("field2", case2F2);
 
+    // case 3
+    DataMap case3Input = new DataMap();
+    case3Input.put("name", "not-a-default");
+    case3Input.put("personalRecordD", new DataMap());
+    DataMap case3Expect = new DataMap();
+    DataMap case3RecordDExpect = new DataMap();
+    case3RecordDExpect.put("field3", 0L);
+    case3RecordDExpect.put("field4", "default");
+    case3RecordDExpect.put("field5", "a-typeref-default");
+    case3Expect.put("name", "not-a-default");
+    case3Expect.put("personalRecordD", case3RecordDExpect);
+
+    // case 4
+    DataMap case4B1 = new DataMap();
+    case4B1.put("f1", 1);
+    DataMap case4Input = new DataMap();
+    case4Input.put("b1", case4B1);
+    case4Input.put("b2", new DataMap());
+    DataMap case4Expect = new DataMap();
+    DataMap case4ExpectB1 = new DataMap();
+    case4ExpectB1.put("f1", 1);
+    DataMap case4ExpectB2 = new DataMap();
+    case4ExpectB2.put("f1", 5);
+    case4Expect.put("b1", case4ExpectB1);
+    case4Expect.put("b2", case4ExpectB2);
+
+    // case 5
+    DataMap case5B3 = new DataMap();
+    case5B3.put("f2", 1);
+    DataMap case5Input = new DataMap();
+    case5Input.put("b3", case5B3);
+    DataMap case5Expect = new DataMap();
+    DataMap case5ExpectB1 = new DataMap();
+    case5ExpectB1.put("f1", 5);
+    case5ExpectB1.put("f2", 10);
+    DataMap case5ExpectB3 = new DataMap();
+    case5ExpectB3.put("f2", 1);
+    case5ExpectB3.put("f1", 5);
+    case5Expect.put("b1", case5ExpectB1);
+    case5Expect.put("b3", case5ExpectB3);
+
+
+    // Each test case has 3 elements:
+    // Index 0: PDL file name
+    // Index 1: data before filling default
+    // Index 2: expected data after filling default
     return new Object[][]{
         {
             "RecordA.pdl",
-            new DataMap(new ImmutableMap.Builder<String, Object>()
-                .put("field1", 1)
-                .put("field2", "2")
-                .build()),
-            new DataMap(new ImmutableMap.Builder<String, Object>()
-                .put("field1", 1)
-                .put("field2", "2")
-                .put("field3", 0L)
-                .put("field4", "default")
-                .build())
+            case1Input,
+            case1Expect
         },
         {
             "RecordB.pdl",
-            new DataMap(new ImmutableMap.Builder<String, Object>()
-                .build()),
-            new DataMap(new ImmutableMap.Builder<String, Object>()
-                .put("field1", recordBField1)
-                .put("field2", recordBField2)
-                .build())
+            case2Input,
+            case2Expect
         },
         {
             "RecordC.pdl",
-            new DataMap(),
-            new DataMap(new ImmutableMap.Builder<String, Object>()
-                .put("name", "default+")
-                .put("personalRecordD", personalRecordD)
-                .build()),
+            case3Input,
+            case3Expect
+        },
+        {
+            "Bar.pdl",
+            case4Input,
+            case4Expect
+        },
+        {
+            "Bar.pdl",
+            case5Input,
+            case5Expect
         }
     };
   }
@@ -106,7 +155,7 @@ public class TestRestLiDefaultInResponse
 
       String schemaFileText = Files.readFile(new File(pegasusDir + FS + filename));
       DataSchema schema = DataTemplateUtil.parseSchema(schemaFileText, schemaResolver, SchemaFormatType.PDL);
-      ResponseUtils.fillInDefaultValues(schema, data);
+      data = ResponseUtils.fillInDefaultValues(schema, data);
       Assert.assertEquals(data, expected);
     }
     catch (Exception e)

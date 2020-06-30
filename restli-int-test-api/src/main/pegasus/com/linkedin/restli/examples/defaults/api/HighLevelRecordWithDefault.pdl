@@ -4,5 +4,6 @@ record HighLevelRecordWithDefault {
   noDefaultFieldA: int,
   intDefaultFieldB: int = -1,
   midLevelRecordWithoutDefault: MidLevelRecordWithDefault,
-  midLevelRecordWithDefault: MidLevelRecordWithDefault = {"intWithDefault": 0, "intWithoutDefault": 0}
+  midLevelRecordWithDefault: MidLevelRecordWithDefault = {"intWithDefault": 0, "intWithoutDefault": 0},
+  midLevelField: optional MidLevelRecordWithDefault
 }

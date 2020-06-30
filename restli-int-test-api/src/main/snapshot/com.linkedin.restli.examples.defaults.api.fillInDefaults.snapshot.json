@@ -54,6 +54,10 @@
         "intWithoutDefault" : 0,
         "intWithDefault" : 0
       }
+    }, {
+      "name" : "midLevelField",
+      "type" : "MidLevelRecordWithDefault",
+      "optional" : true
     } ]
   }, "com.linkedin.restli.examples.defaults.api.LowLevelRecordWithDefault", "com.linkedin.restli.examples.defaults.api.MidLevelRecordWithDefault" ],
   "schema" : {
