@@ -56,13 +56,24 @@ public class ProtobufCodecOptions
    */
   private final boolean _enableFixedLengthFloatDoubles;
 
+  /**
+   * If true, then tolerates invalid surrogate pairs when serializing strings to UTF-8 bytes. Invalid characters are
+   * replaced with the default replacement character. If false, then an exception is thrown when encountering such
+   * sequences.
+   *
+   * <p>Enabled by default.</p>
+   */
+  private final boolean _shouldTolerateInvalidSurrogatePairs;
+
   private ProtobufCodecOptions(SymbolTable symbolTable,
                                boolean enableASCIIOnlyStrings,
-                               boolean enableFixedLengthFloatDoubles)
+                               boolean enableFixedLengthFloatDoubles,
+                               boolean tolerateInvalidSurrogatePairs)
   {
     _symbolTable = symbolTable == null ? EmptySymbolTable.SHARED : symbolTable;
     _enableASCIIOnlyStrings = enableASCIIOnlyStrings;
     _enableFixedLengthFloatDoubles = enableFixedLengthFloatDoubles;
+    _shouldTolerateInvalidSurrogatePairs = tolerateInvalidSurrogatePairs;
   }
 
   /**
@@ -88,6 +99,15 @@ public class ProtobufCodecOptions
   public boolean shouldEnableFixedLengthFloatDoubles()
   {
     return _enableFixedLengthFloatDoubles;
+  }
+
+  /**
+   * @return True if invalid surrogate pairs should be tolerated when serializing strings to UTF-8, with all invalid
+   * occurences replaced with the default replacement character. If false, then an exception will be thrown when
+   * encountering such data.
+   */
+  public boolean shouldTolerateInvalidSurrogatePairs() {
+    return _shouldTolerateInvalidSurrogatePairs;
   }
 
   /**
@@ -125,11 +145,21 @@ public class ProtobufCodecOptions
      */
     private boolean _enableFixedLengthFloatDoubles;
 
+    /**
+     * If true, then tolerates invalid surrogate pairs when serializing strings to UTF-8 bytes. Invalid characters are
+     * replaced with the default replacement character. If false, then an exception is thrown when encountering such
+     * sequences.
+     *
+     * <p>Enabled by default.</p>
+     */
+    private boolean _shouldTolerateInvalidSurrogatePairs;
+
     public Builder()
     {
       _symbolTable = null;
       _enableASCIIOnlyStrings = false;
       _enableFixedLengthFloatDoubles = false;
+      _shouldTolerateInvalidSurrogatePairs = true;
     }
 
     /**
@@ -168,11 +198,25 @@ public class ProtobufCodecOptions
     }
 
     /**
+     * If true, then tolerates invalid surrogate pairs when serializing strings to UTF-8 bytes. Invalid characters are
+     * replaced with the default replacement character. If false, then an exception is thrown when encountering such
+     * sequences.
+     */
+    public Builder setShouldTolerateInvalidSurrogatePairs(boolean tolerateInvalidSurrogatePairs)
+    {
+      this._shouldTolerateInvalidSurrogatePairs = tolerateInvalidSurrogatePairs;
+      return this;
+    }
+
+    /**
      * Build an options instance.
      */
     public ProtobufCodecOptions build()
     {
-      return new ProtobufCodecOptions(_symbolTable, _enableASCIIOnlyStrings, _enableFixedLengthFloatDoubles);
+      return new ProtobufCodecOptions(_symbolTable,
+          _enableASCIIOnlyStrings,
+          _enableFixedLengthFloatDoubles,
+          _shouldTolerateInvalidSurrogatePairs);
     }
   }
 }

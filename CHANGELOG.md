@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.4.3] - 2020-07-01
+- Add an option (enabled by default) to gracefully degrade on encountering invalid surrogate pairs during protobuf string serialization (#344)
+
 ## [29.4.2] - 2020-06-25
 - Update Pegasus Plugin's CopySchema tasks to delete stale schemas (#337)
 

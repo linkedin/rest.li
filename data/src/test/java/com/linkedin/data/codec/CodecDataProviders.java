@@ -68,6 +68,26 @@ public class CodecDataProviders
   }
 
   @DataProvider
+  public static Object[][] surrogatePairData()
+  {
+    List<Object[]> list = new ArrayList<>();
+    list.add(new Object[] {"a\uD800", "a?", 2, false, false});
+    list.add(new Object[] {"\uD800a", "?a", 2, false, false});
+    list.add(new Object[] {"\uD800\uD800", "??", 2, false, false});
+    list.add(new Object[] {"abc\uD800\uD800abc", "abc??abc", 8, false, false});
+    list.add(new Object[] {"\uDBFF\uDFFF", "\uDBFF\uDFFF", 4, true, false});
+    list.add(new Object[] {"\uD83D\uDE00\uD83D\uDE00", "\uD83D\uDE00\uD83D\uDE00", 8, true, false});
+    list.add(new Object[] {"a\uD800", "a?", 2, false, true});
+    list.add(new Object[] {"\uD800a", "?a", 2, false, true});
+    list.add(new Object[] {"\uD800\uD800", "??", 2, false, true});
+    list.add(new Object[] {"abc\uD800\uD800abc", "abc??abc", 8, false, true});
+    list.add(new Object[] {"\uDBFF\uDFFF", "\uDBFF\uDFFF", 4, true, true});
+    list.add(new Object[] {"\uD83D\uDE00\uD83D\uDE00", "\uD83D\uDE00\uD83D\uDE00", 8, true, true});
+
+    return list.toArray(new Object[][] {});
+  }
+
+  @DataProvider
   public static Object[][] streamCodecData()
   {
     List<Object[]> list = new ArrayList<>();
