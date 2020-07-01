@@ -167,7 +167,7 @@ public class StateUpdaterTest
     _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1);
     if (!countDownLatch.await(5, TimeUnit.SECONDS))
     {
-      fail("Initialization failed to finish within 5 seconds");
+      fail("cluster update failed to finish within 5 seconds");
     }
 
     assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).size(), 2);
@@ -465,7 +465,7 @@ public class StateUpdaterTest
     Mockito.doAnswer(new ExecutionCountDown<>(countDownLatch)).when(_quarantineManager).updateQuarantineState(any(), any(), anyLong());
     if (!countDownLatch.await(6, TimeUnit.SECONDS))
     {
-      fail("Initialization failed to finish within 6 seconds");
+      fail("scheduled update failed to finish within 6 seconds");
     }
 
     Mockito.verify(_quarantineManager, Mockito.atLeast(2)).updateQuarantineState(any(), any(), anyLong());
