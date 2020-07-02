@@ -51,6 +51,18 @@ import java.util.TreeMap;
  */
 public abstract class AbstractJacksonDataCodec implements DataCodec
 {
+  /**
+   * Default factory to be shared between all jackson JSON codec instances. This is done to maximize factory reuse for
+   * performance reasons as recommended by Jackson authors.
+   *
+   * <a href="https://github.com/FasterXML/jackson-docs/wiki/Presentation:-Jackson-Performance">Jackson Performance</a>
+   */
+  public static final JsonFactory JSON_FACTORY = new JsonFactory();
+  static {
+    // Disable string interning by default since it causes GC issues.
+    JSON_FACTORY.disable(JsonFactory.Feature.INTERN_FIELD_NAMES);
+  }
+
   protected static final int DEFAULT_BUFFER_SIZE = 4096;
 
   protected final JsonFactory _factory;

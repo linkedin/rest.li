@@ -16,13 +16,20 @@
 
 package com.linkedin.data.codec.entitystream;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.linkedin.data.DataList;
+import com.linkedin.data.codec.AbstractJacksonDataCodec;
 
 
 public class JacksonJsonDataListDecoder extends JacksonJsonDataDecoder<DataList>
 {
   public JacksonJsonDataListDecoder()
   {
-    super(START_ARRAY_TOKEN);
+    this(AbstractJacksonDataCodec.JSON_FACTORY);
+  }
+
+  public JacksonJsonDataListDecoder(JsonFactory jsonFactory)
+  {
+    super(jsonFactory, START_ARRAY_TOKEN);
   }
 }
