@@ -33,10 +33,8 @@ import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertSame;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
+
 
 /**
  * Tests specific to {@link JacksonDataCodec}
@@ -151,25 +149,22 @@ public class TestJacksonCodec extends TestCodec
   }
 
   /**
-   * Test to make sure that field names are interned.
-   *
-   * @throws IOException
+   * Test to make sure that field names are not interned by default.
    */
   @Test
-  public void testStringIntern() throws IOException
+  public void testStringInternDisabledByDefault() throws IOException
   {
     final String keyName = "testKey";
     final String json = "{ \"" + keyName + "\" : 1 }";
     final byte[] jsonAsBytes = json.getBytes(Data.UTF_8_CHARSET);
 
-    final JsonFactory jsonFactory = new JsonFactory();
-    final JacksonDataCodec codec = new JacksonDataCodec(jsonFactory);
-    // make sure intern field names is enabled
-    assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.INTERN_FIELD_NAMES));
-    assertTrue(jsonFactory.isEnabled(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES));
+    final JacksonDataCodec codec = new JacksonDataCodec();
+    // make sure intern field names is disabled by default
+    assertFalse(codec._factory.isEnabled(JsonFactory.Feature.INTERN_FIELD_NAMES));
     final DataMap map = codec.bytesToMap(jsonAsBytes);
     final String key = map.keySet().iterator().next();
-    assertSame(key, keyName);
+    assertEquals(key, keyName);
+    assertNotSame(key, keyName);
   }
 
   @Test(dataProvider = "longKeyFromByteSource", dataProviderClass = CodecDataProviders.class)

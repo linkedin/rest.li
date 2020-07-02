@@ -48,7 +48,7 @@ public class JacksonDataCodec extends AbstractJacksonDataCodec implements TextDa
 
   public JacksonDataCodec()
   {
-    this(new JsonFactory());
+    this(JSON_FACTORY);
   }
 
   public JacksonDataCodec(JsonFactory jsonFactory)

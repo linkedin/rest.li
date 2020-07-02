@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.AbstractJacksonDataCodec;
 import com.linkedin.entitystream.EntityStream;
 import com.linkedin.entitystream.EntityStreams;
 
@@ -34,25 +35,24 @@ import java.util.concurrent.CompletionStage;
  */
 public class JacksonStreamDataCodec implements StreamDataCodec
 {
-  /**
-   * Default factory to be shared between encoder and decoder. This is done to maximize factory reuse for
-   * performance reasons as recommended by Jackson authors.
-   *
-   * <a href="https://github.com/FasterXML/jackson-docs/wiki/Presentation:-Jackson-Performance">Jackson Performance</a>
-   */
-  static final JsonFactory JSON_FACTORY = new JsonFactory();
-
   protected final int _bufferSize;
+  protected final JsonFactory _jsonFactory;
 
   public JacksonStreamDataCodec(int bufferSize)
   {
+    this(bufferSize, AbstractJacksonDataCodec.JSON_FACTORY);
+  }
+
+  public JacksonStreamDataCodec(int bufferSize, JsonFactory jsonFactory)
+  {
     _bufferSize = bufferSize;
+    _jsonFactory = jsonFactory;
   }
 
   @Override
   public CompletionStage<DataMap> decodeMap(EntityStream<ByteString> entityStream)
   {
-    JacksonJsonDataMapDecoder decoder = new JacksonJsonDataMapDecoder();
+    JacksonJsonDataMapDecoder decoder = new JacksonJsonDataMapDecoder(_jsonFactory);
     entityStream.setReader(decoder);
     return decoder.getResult();
   }
@@ -60,7 +60,7 @@ public class JacksonStreamDataCodec implements StreamDataCodec
   @Override
   public CompletionStage<DataList> decodeList(EntityStream<ByteString> entityStream)
   {
-    JacksonJsonDataListDecoder decoder = new JacksonJsonDataListDecoder();
+    JacksonJsonDataListDecoder decoder = new JacksonJsonDataListDecoder(_jsonFactory);
     entityStream.setReader(decoder);
     return decoder.getResult();
   }
@@ -68,14 +68,14 @@ public class JacksonStreamDataCodec implements StreamDataCodec
   @Override
   public EntityStream<ByteString> encodeMap(DataMap map)
   {
-    JacksonJsonDataEncoder encoder = new JacksonJsonDataEncoder(map, _bufferSize);
+    JacksonJsonDataEncoder encoder = new JacksonJsonDataEncoder(_jsonFactory, map, _bufferSize);
     return EntityStreams.newEntityStream(encoder);
   }
 
   @Override
   public EntityStream<ByteString> encodeList(DataList list)
   {
-    JacksonJsonDataEncoder encoder = new JacksonJsonDataEncoder(list, _bufferSize);
+    JacksonJsonDataEncoder encoder = new JacksonJsonDataEncoder(_jsonFactory, list, _bufferSize);
     return EntityStreams.newEntityStream(encoder);
   }
 }

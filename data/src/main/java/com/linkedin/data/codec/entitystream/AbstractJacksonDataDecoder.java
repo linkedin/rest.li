@@ -65,7 +65,7 @@ class AbstractJacksonDataDecoder<T extends DataComplex> extends AbstractDataDeco
     }
   }
 
-  private final JsonFactory _jsonFactory;
+  protected final JsonFactory _jsonFactory;
   private DataMapBuilder _currDataMapBuilder;
 
   /**

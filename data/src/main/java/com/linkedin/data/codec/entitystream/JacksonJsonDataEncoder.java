@@ -16,10 +16,12 @@
 
 package com.linkedin.data.codec.entitystream;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.codec.AbstractJacksonDataCodec;
 
 
 /**
@@ -35,11 +37,21 @@ public class JacksonJsonDataEncoder extends AbstractJacksonDataEncoder implement
 {
   public JacksonJsonDataEncoder(DataMap dataMap, int bufferSize)
   {
-    super(JacksonStreamDataCodec.JSON_FACTORY, dataMap, bufferSize);
+    super(AbstractJacksonDataCodec.JSON_FACTORY, dataMap, bufferSize);
   }
 
   public JacksonJsonDataEncoder(DataList dataList, int bufferSize)
   {
-    super(JacksonStreamDataCodec.JSON_FACTORY, dataList, bufferSize);
+    super(AbstractJacksonDataCodec.JSON_FACTORY, dataList, bufferSize);
+  }
+
+  public JacksonJsonDataEncoder(JsonFactory jsonFactory, DataMap dataMap, int bufferSize)
+  {
+    super(jsonFactory, dataMap, bufferSize);
+  }
+
+  public JacksonJsonDataEncoder(JsonFactory jsonFactory, DataList dataList, int bufferSize)
+  {
+    super(jsonFactory, dataList, bufferSize);
   }
 }
