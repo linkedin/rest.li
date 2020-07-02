@@ -306,6 +306,15 @@ public class ProtoWriter implements Closeable
    */
   public void writeString(String value, Function<Integer, Byte> leadingOrdinalGenerator) throws IOException
   {
+    writeString(value, leadingOrdinalGenerator, false);
+  }
+
+  /**
+   * Write a String.
+   */
+  public void writeString(String value, Function<Integer, Byte> leadingOrdinalGenerator,
+      boolean tolerateInvalidSurrogatePairs) throws IOException
+  {
     // Based on whether a leading ordinal generator is provided or not, we need to budget 0 or 1 byte.
     final int leadingOrdinalLength = (leadingOrdinalGenerator == null) ? 0 : 1;
 
@@ -323,7 +332,7 @@ public class ProtoWriter implements Closeable
       // right size. We can skip that copy and just writeRawBytes up to the actualLength of the
       // UTF-8 encoded bytes.
       final byte[] encodedBytes = new byte[maxLength];
-      int actualLength = Utf8Utils.encode(value, encodedBytes, 0, maxLength);
+      int actualLength = Utf8Utils.encode(value, encodedBytes, 0, maxLength, tolerateInvalidSurrogatePairs);
 
       if (leadingOrdinalGenerator != null)
       {
@@ -352,7 +361,7 @@ public class ProtoWriter implements Closeable
       if (minLengthVarIntSize == maxLengthVarIntSize)
       {
         _position = oldPosition + leadingOrdinalLength + minLengthVarIntSize;
-        int newPosition = Utf8Utils.encode(value, _buffer, _position, _limit - _position);
+        int newPosition = Utf8Utils.encode(value, _buffer, _position, _limit - _position, tolerateInvalidSurrogatePairs);
         // Since this class is stateful and tracks the position, we rewind and store the state,
         // prepend the length, then reset it back to the end of the string.
         _position = oldPosition;
@@ -368,7 +377,7 @@ public class ProtoWriter implements Closeable
       }
       else
       {
-        int length = Utf8Utils.encodedLength(value);
+        int length = Utf8Utils.encodedLength(value, tolerateInvalidSurrogatePairs);
 
         if (leadingOrdinalGenerator != null)
         {
@@ -376,7 +385,7 @@ public class ProtoWriter implements Closeable
         }
 
         bufferUInt32(length);
-        _position = Utf8Utils.encode(value, _buffer, _position, length);
+        _position = Utf8Utils.encode(value, _buffer, _position, length, tolerateInvalidSurrogatePairs);
       }
     }
     catch (IllegalArgumentException e)

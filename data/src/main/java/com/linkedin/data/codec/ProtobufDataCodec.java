@@ -466,7 +466,8 @@ public class ProtobufDataCodec implements DataCodec
         // If the byte length is the same as the string length, then this is an ASCII-only string.
         _protoWriter.writeString(value, byteLength ->
             (_options.shouldEnableASCIIOnlyStrings() && value.length() == byteLength) ?
-                ASCII_STRING_LITERAL_ORDINAL : STRING_LITERAL_ORDINAL);
+                ASCII_STRING_LITERAL_ORDINAL : STRING_LITERAL_ORDINAL,
+            _options.shouldTolerateInvalidSurrogatePairs());
       }
     }
 

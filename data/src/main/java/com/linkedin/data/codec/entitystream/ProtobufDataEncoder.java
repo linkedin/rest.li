@@ -43,7 +43,6 @@ import java.io.OutputStream;
 public class ProtobufDataEncoder extends AbstractDataEncoder
 {
   private final ProtobufCodecOptions _options;
-  private ProtoWriter _writer;
 
   public ProtobufDataEncoder(DataMap dataMap, int bufferSize)
   {
