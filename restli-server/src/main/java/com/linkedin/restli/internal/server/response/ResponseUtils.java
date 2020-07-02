@@ -22,6 +22,7 @@ import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -92,9 +93,26 @@ public class ResponseUtils
   }
 
   /**
-   *
-   * @param dataSchema
-   * @param dataMap
+   * Used to fill in the default field for a data record if the record is having the field but not "complete"
+   * Basically, a simplified psuedo code is:
+   *  FillInDefault(schema, dataMap):
+   *   for field in schema.fields:
+   *     fieldSchema = field.getSchema()
+   *     if fieldSchema instanceOf RecordDataTemplate:
+   *       if data.contains(field):
+   *         FillInDefault(fieldSchema, data.get(field))
+   *       else:
+   *         if field.hasDefaultValue():
+   *           DataMap newData = field.getDefault()
+   *           FillInDefault(fieldSchema, newData)
+   *       data.put(field, newData)
+   *     else if fieldSchema instanceOf TypeRefDataTemplate:
+   *       FillIndFefault(schema.deReference(), data)
+   *     else:
+   *       if !data.contains(field) && field.hasDefaultValue():
+   *         data.put(field, field.getDefaultValue())
+   * @param dataSchema -> a schema of the corresponding dataMap
+   * @param dataMap -> a dataMap that needs to be filling the default
    * @return a new different data map that contains original data plus the default values
    */
   public static DataMap fillInDefaultValues(DataSchema dataSchema, DataMap dataMap)
@@ -120,18 +138,9 @@ public class ResponseUtils
         {
           if (dataDefaultFilled.containsKey(field.getName()))
           {
-            DataMap fieldDefault = (DataMap) field.getDefault();
             DataMap fieldDataAssigned = (DataMap) dataDefaultFilled.get(field.getName());
-            if (fieldDataAssigned != null)
-            {
-              DataMap fieldFilled = fillInDefaultValues(fieldSchema, fieldDataAssigned);
-              dataDefaultFilled.put(field.getName(), fieldFilled);
-            }
-            else if (fieldDefault != null)
-            {
-              DataMap fieldFilled = fillInDefaultValues(fieldSchema, fieldDefault);
-              dataDefaultFilled.put(field.getName(), fieldFilled);
-            }
+            DataMap fieldFilled = fillInDefaultValues(fieldSchema, fieldDataAssigned);
+            dataDefaultFilled.put(field.getName(), fieldFilled);
           }
           else if (field.getDefault() != null)
           {
@@ -159,14 +168,11 @@ public class ResponseUtils
             }
           }
         }
-        else // primitive | complex data schemas
+        else // primitive | complex data schemas of this field in the record
         {
-          if (!dataDefaultFilled.containsKey(field.getName()))
+          if (!dataDefaultFilled.containsKey(field.getName()) && field.getDefault() != null)
           {
-            if (field.getDefault() != null)
-            {
-              dataDefaultFilled.put(field.getName(), field.getDefault());
-            }
+            dataDefaultFilled.put(field.getName(), field.getDefault());
           }
         }
       }
@@ -189,15 +195,6 @@ public class ResponseUtils
     if (restLiResponse.hasData() && ResourceEntityType.STRUCTURED_DATA == resourceEntityType)
     {
       DataMap dataMap = restLiResponse.getDataMap();
-      if (context.isDefaultValueFillInRequested())
-      {
-        Class<? extends RecordTemplate> valueClass = routingResult.getResourceMethod().getResourceModel().getValueClass();
-        if (valueClass != null)
-        {
-          DataSchema dataSchema = DataTemplateUtil.getSchema(valueClass);
-          dataMap = fillInDefaultValues(dataSchema, dataMap);
-        }
-      }
       String mimeType = context.getResponseMimeType();
       URI requestUri = context.getRequestURI();
       Map<String, String> requestHeaders = context.getRequestHeaders();

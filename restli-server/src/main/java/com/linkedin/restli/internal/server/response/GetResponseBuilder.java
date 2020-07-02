@@ -18,6 +18,7 @@ package com.linkedin.restli.internal.server.response;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.timing.FrameworkTimingKeys;
@@ -75,11 +76,17 @@ public class GetResponseBuilder implements RestLiResponseBuilder<RestLiResponseD
       status = HttpStatus.S_200_OK;
     }
     final ResourceContext resourceContext = routingResult.getContext();
+    DataMap rawData = record.data();
+    RecordDataSchema schema = record.schema();
+    if (resourceContext.isDefaultValueFillInRequested())
+    {
+      rawData = ResponseUtils.fillInDefaultValues(schema, rawData);
+    }
 
     TimingContextUtil.beginTiming(resourceContext.getRawRequestContext(),
         FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
 
-    final DataMap data = RestUtils.projectFields(record.data(), resourceContext);
+    final DataMap data = RestUtils.projectFields(rawData, resourceContext);
 
     TimingContextUtil.endTiming(resourceContext.getRawRequestContext(),
         FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());

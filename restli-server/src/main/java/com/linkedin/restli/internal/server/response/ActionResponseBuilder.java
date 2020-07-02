@@ -17,16 +17,21 @@
 package com.linkedin.restli.internal.server.response;
 
 
+import com.linkedin.data.Data;
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.FieldDef;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
@@ -85,12 +90,40 @@ public class ActionResponseBuilder implements RestLiResponseBuilder<RestLiRespon
       status = HttpStatus.S_200_OK;
     }
     RecordDataSchema actionReturnRecordDataSchema = routingResult.getResourceMethod().getActionReturnRecordDataSchema();
-    @SuppressWarnings("unchecked")
-    FieldDef<Object> actionReturnFieldDef =
-        (FieldDef<Object>) routingResult.getResourceMethod().getActionReturnFieldDef();
-    final ActionResponse<?> actionResponse =
-        new ActionResponse<>(value, actionReturnFieldDef, actionReturnRecordDataSchema);
 
-    return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(status, actionResponse), headers, cookies);
+    if (value != null && RecordTemplate.class.isAssignableFrom(value.getClass())
+        && routingResult.getContext().isDefaultValueFillInRequested())
+    {
+      RecordTemplate actionResponseRecordTemplate = (RecordTemplate) value;
+      DataMap dataWithoutDefault = actionResponseRecordTemplate.data();
+      System.out.println("Fill in default for action result " + value.getClass().getSimpleName() + ", "
+          + actionResponseRecordTemplate.schema().getFullName());
+      DataMap dataWithDefault = ResponseUtils.fillInDefaultValues(actionResponseRecordTemplate.schema(), dataWithoutDefault);
+      Object valueWithDefault = null;
+      try
+      {
+        valueWithDefault = (Object) value.getClass().getConstructor(DataMap.class).newInstance(dataWithDefault);
+      }
+      catch (Exception e)
+      {
+        System.out.println("Happened " + e.getCause());
+        valueWithDefault = value;
+      }
+      @SuppressWarnings("unchecked")
+      FieldDef<Object> actionReturnFieldDef =
+          (FieldDef<Object>) routingResult.getResourceMethod().getActionReturnFieldDef();
+      final ActionResponse<?> actionResponse =
+          new ActionResponse<>(valueWithDefault, actionReturnFieldDef, actionReturnRecordDataSchema);
+      return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(status, actionResponse), headers, cookies);
+    }
+    else
+    {
+      @SuppressWarnings("unchecked")
+      FieldDef<Object> actionReturnFieldDef =
+          (FieldDef<Object>) routingResult.getResourceMethod().getActionReturnFieldDef();
+      final ActionResponse<?> actionResponse =
+          new ActionResponse<>(value, actionReturnFieldDef, actionReturnRecordDataSchema);
+      return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(status, actionResponse), headers, cookies);
+    }
   }
 }

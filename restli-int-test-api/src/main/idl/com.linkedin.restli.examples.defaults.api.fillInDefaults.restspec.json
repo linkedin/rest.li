@@ -9,9 +9,40 @@
       "name" : "fillInDefaultsId",
       "type" : "long"
     },
-    "supports" : [ "get" ],
+    "supports" : [ "batch_get", "get", "get_all" ],
     "methods" : [ {
       "method" : "get"
+    }, {
+      "method" : "batch_get"
+    }, {
+      "method" : "get_all",
+      "pagingSupported" : true
+    } ],
+    "finders" : [ {
+      "name" : "HighLevelRecord",
+      "parameters" : [ {
+        "name" : "totalCount",
+        "type" : "int"
+      } ]
+    } ],
+    "batchFinders" : [ {
+      "name" : "searchRecords",
+      "parameters" : [ {
+        "name" : "criteria",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.defaults.api.RecordCriteria\" }"
+      } ],
+      "metadata" : {
+        "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+      },
+      "batchParam" : "criteria"
+    } ],
+    "actions" : [ {
+      "name" : "defaultFillAction",
+      "parameters" : [ {
+        "name" : "actionParam",
+        "type" : "long"
+      } ],
+      "returns" : "com.linkedin.restli.examples.defaults.api.HighLevelRecordWithDefault"
     } ],
     "entity" : {
       "path" : "/fillInDefaults/{fillInDefaultsId}"
