@@ -4550,7 +4550,8 @@ patch operations can re-use these classes for generating patch messages.
 ## [0.14.1]
 
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.3...master
+[29.4.3]: https://github.com/linkedin/rest.li/compare/v29.4.2...v29.4.3
 [29.4.2]: https://github.com/linkedin/rest.li/compare/v29.4.1...v29.4.2
 [29.4.1]: https://github.com/linkedin/rest.li/compare/v29.4.0...v29.4.1
 [29.4.0]: https://github.com/linkedin/rest.li/compare/v29.3.2...v29.4.0
