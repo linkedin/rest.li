@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-package com.linkedin.restli.server.test;
+package com.linkedin.restli.internal.server.response;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -22,7 +22,6 @@ import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.restli.internal.server.response.ResponseUtils;
 import java.io.File;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
@@ -32,7 +31,7 @@ import org.testng.annotations.Test;
 import org.testng.reporters.Files;
 
 
-public class TestRestLiDefaultInResponse
+public class TestResponseUtils
 {
   final static String FS = File.separator;
   final static String testDir = System.getProperty("testDir", new File("src/test").getAbsolutePath());
@@ -147,7 +146,7 @@ public class TestRestLiDefaultInResponse
   }
 
   @Test(dataProvider = "default_serialization")
-  public void testSerializingDefaultValue(String filename, DataMap data, DataMap expected)
+  public void testGetAbsentFieldsDefaultValues(String filename, DataMap data, DataMap expected)
   {
     try
     {

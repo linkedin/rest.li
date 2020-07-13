@@ -17,7 +17,6 @@
 package com.linkedin.restli.internal.server.response;
 
 
-import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.FieldDef;
@@ -26,12 +25,10 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.RestLiResponseData;
 import com.linkedin.restli.server.RestLiServiceException;
 
-import java.lang.reflect.InvocationTargetException;
 import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +89,7 @@ public class ActionResponseBuilder implements RestLiResponseBuilder<RestLiRespon
     RecordDataSchema actionReturnRecordDataSchema = routingResult.getResourceMethod().getActionReturnRecordDataSchema();
 
     if (value != null && RecordTemplate.class.isAssignableFrom(value.getClass())
-        && routingResult.getContext().isDefaultValueFillInRequested())
+        && routingResult.getContext().isFillInDefaultsRequested())
     {
       RecordTemplate actionResponseRecordTemplate = (RecordTemplate) value;
       DataMap dataWithoutDefault = actionResponseRecordTemplate.data();

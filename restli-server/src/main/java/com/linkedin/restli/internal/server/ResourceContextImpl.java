@@ -630,9 +630,9 @@ public class ResourceContextImpl implements ServerResourceContext
   }
 
   @Override
-  public boolean isDefaultValueFillInRequested()
+  public boolean isFillInDefaultsRequested()
   {
-    String sendDefaultsQuery = getParameter(RestConstants.FILL_DEFAULT_VALUE_IN_RESPONSE_PARAM);
+    String sendDefaultsQuery = getParameter(RestConstants.FILL_IN_DEFAULTS_PARAM);
 
     return sendDefaultsQuery != null;
   }

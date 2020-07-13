@@ -178,7 +178,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder<RestLiResp
       Object finalKey = ResponseUtils.translateCanonicalKeyToAlternativeKeyIfNeeded(entity.getKey(), routingResult);
 
       DataMap rawData = entity.getValue().data();
-      if (routingResult.getContext().isDefaultValueFillInRequested())
+      if (routingResult.getContext().isFillInDefaultsRequested())
       {
         rawData = ResponseUtils.fillInDefaultValues(entity.getValue().schema(), rawData);
       }

@@ -78,7 +78,7 @@ public class GetResponseBuilder implements RestLiResponseBuilder<RestLiResponseD
     final ResourceContext resourceContext = routingResult.getContext();
     DataMap rawData = record.data();
     RecordDataSchema schema = record.schema();
-    if (resourceContext.isDefaultValueFillInRequested())
+    if (resourceContext.isFillInDefaultsRequested())
     {
       rawData = ResponseUtils.fillInDefaultValues(schema, rawData);
     }

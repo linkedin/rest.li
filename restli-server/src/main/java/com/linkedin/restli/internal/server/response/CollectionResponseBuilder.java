@@ -155,7 +155,7 @@ public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? e
             "Unexpected null encountered. Null element inside of a List returned by the resource method: " + routingResult.getResourceMethod());
       }
       DataMap rawData = entry.data();
-      if (resourceContext.isDefaultValueFillInRequested())
+      if (resourceContext.isFillInDefaultsRequested())
       {
         rawData = ResponseUtils.fillInDefaultValues(entry.schema(), rawData);
       }

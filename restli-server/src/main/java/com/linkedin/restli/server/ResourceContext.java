@@ -236,5 +236,5 @@ public interface ResourceContext extends CustomRequestContext
    * 2. the server is configured to return default value for every request-response pair
    * @return true if the service need to fill in default value when the field of the return value record is absent
    */
-  boolean isDefaultValueFillInRequested();
+  boolean isFillInDefaultsRequested();
 }

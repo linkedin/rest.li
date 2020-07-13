@@ -154,7 +154,7 @@ public class BatchFinderResponseBuilder
     List<AnyRecord> response = new ArrayList<>(elements.size());
     for (int j = 0; j < elements.size(); j++)
     {
-      if (resourceContext.isDefaultValueFillInRequested())
+      if (resourceContext.isFillInDefaultsRequested())
       {
         DataMap elementData = elements.get(j).data();
         RecordDataSchema schema = elements.get(j).schema();

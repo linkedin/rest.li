@@ -23,7 +23,6 @@ import com.linkedin.restli.client.BatchGetEntityRequest;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.GetAllRequest;
 import com.linkedin.restli.client.GetRequest;
-import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchFinderCriteriaResult;
 import com.linkedin.restli.common.EntityResponse;
@@ -89,7 +88,7 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
   {
     FillInDefaultsRequestBuilders requestBuilders = new FillInDefaultsRequestBuilders();
     FillInDefaultsGetRequestBuilder getRequestBuilder = requestBuilders.get();
-    GetRequest<HighLevelRecordWithDefault> req = getRequestBuilder.id(id).setParam(RestConstants.FILL_DEFAULT_VALUE_IN_RESPONSE_PARAM, true).build();
+    GetRequest<HighLevelRecordWithDefault> req = getRequestBuilder.id(id).setParam(RestConstants.FILL_IN_DEFAULTS_PARAM, true).build();
     HighLevelRecordWithDefault actual = getClient().sendRequest(req).getResponse().getEntity();
     Assert.assertEquals(actual, expectedRecord);
   }
@@ -115,7 +114,7 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
     }
     FillInDefaultsRequestBuilders builders = new FillInDefaultsRequestBuilders();
     BatchGetEntityRequest<Long, HighLevelRecordWithDefault> request =
-        builders.batchGet().setParam(RestConstants.FILL_DEFAULT_VALUE_IN_RESPONSE_PARAM, true).ids(ids).build();
+        builders.batchGet().setParam(RestConstants.FILL_IN_DEFAULTS_PARAM, true).ids(ids).build();
     BatchKVResponse<Long, EntityResponse<HighLevelRecordWithDefault>> batchKVResponse =
         getClient().sendRequest(request).getResponse().getEntity();
     for (Map.Entry<Long, EntityResponse<HighLevelRecordWithDefault>> entry : batchKVResponse.getResults().entrySet())
@@ -142,7 +141,7 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
   {
     FillInDefaultsRequestBuilders builders = new FillInDefaultsRequestBuilders();
     GetAllRequest<HighLevelRecordWithDefault> request =
-        builders.getAll().setParam(RestConstants.FILL_DEFAULT_VALUE_IN_RESPONSE_PARAM, true).build();
+        builders.getAll().setParam(RestConstants.FILL_IN_DEFAULTS_PARAM, true).build();
     List<HighLevelRecordWithDefault> allResult = getClient().sendRequest(request).getResponse().getEntity().getElements();
     Map<Integer, HighLevelRecordWithDefault> actual = new HashMap<>();
     for (HighLevelRecordWithDefault oneRecord : allResult)
@@ -163,7 +162,7 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
   {
     FillInDefaultsRequestBuilders builders = new FillInDefaultsRequestBuilders();
     FindRequest<HighLevelRecordWithDefault> request = builders.findByHighLevelRecord()
-        .setParam(RestConstants.FILL_DEFAULT_VALUE_IN_RESPONSE_PARAM, true)
+        .setParam(RestConstants.FILL_IN_DEFAULTS_PARAM, true)
         .setParam("totalCount", count).build();
     List<HighLevelRecordWithDefault> result = getClient().sendRequest(request).getResponse().getEntity().getElements();
     Set<HighLevelRecordWithDefault> actual = new HashSet<>(result);
@@ -196,7 +195,7 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
     BatchFindRequest<HighLevelRecordWithDefault> request = builders.batchFindBySearchRecords()
         .addCriteriaParam((RecordCriteria) criteria[0])
         .addCriteriaParam((RecordCriteria) criteria[1])
-        .setParam(RestConstants.FILL_DEFAULT_VALUE_IN_RESPONSE_PARAM, true).build();
+        .setParam(RestConstants.FILL_IN_DEFAULTS_PARAM, true).build();
     List<BatchFinderCriteriaResult<HighLevelRecordWithDefault>> batchFinderCriteriaResults = getClient()
         .sendRequest(request).getResponse().getEntity().getResults();
     Set<HighLevelRecordWithDefault> actualActionResponse = new HashSet<>();
@@ -218,7 +217,7 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
   public void testFillInDefaultAction(Long actionParam) throws RemoteInvocationException {
     FillInDefaultsRequestBuilders builders = new FillInDefaultsRequestBuilders();
     ActionRequest<HighLevelRecordWithDefault> request = builders.actionDefaultFillAction().actionParamParam(actionParam)
-        .setParam(RestConstants.FILL_DEFAULT_VALUE_IN_RESPONSE_PARAM, true)
+        .setParam(RestConstants.FILL_IN_DEFAULTS_PARAM, true)
         .build();
     HighLevelRecordWithDefault actual = getClient().sendRequest(request).getResponse().getEntity();
     HighLevelRecordWithDefault expect = new HighLevelRecordWithDefault(expectedTestData)
