@@ -18,8 +18,8 @@ package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
-import com.linkedin.d2.balancer.strategies.degrader.LoadBalancerQuarantine;
-import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
+import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
+import com.linkedin.d2.balancer.strategies.RingFactory;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.util.degrader.CallTracker;

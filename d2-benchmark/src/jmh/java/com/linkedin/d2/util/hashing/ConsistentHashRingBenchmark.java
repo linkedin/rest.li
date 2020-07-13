@@ -16,10 +16,10 @@
 
 package com.linkedin.d2.util.hashing;
 
-import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
 import com.linkedin.d2.balancer.strategies.MPConsistentHashRingFactory;
 import com.linkedin.d2.balancer.strategies.RingFactory;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.hashing.BoundedLoadConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;

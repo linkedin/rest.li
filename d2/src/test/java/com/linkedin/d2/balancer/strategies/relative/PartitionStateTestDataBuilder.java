@@ -17,9 +17,9 @@
 package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.strategies.degrader.DistributionNonDiscreteRingFactory;
-import com.linkedin.d2.balancer.strategies.degrader.LoadBalancerQuarantine;
-import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
+import com.linkedin.d2.balancer.strategies.DistributionNonDiscreteRingFactory;
+import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
+import com.linkedin.d2.balancer.strategies.RingFactory;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;

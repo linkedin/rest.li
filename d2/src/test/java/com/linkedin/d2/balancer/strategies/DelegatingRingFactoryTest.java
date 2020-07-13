@@ -14,12 +14,10 @@
    limitations under the License.
 */
 
-package com.linkedin.d2.balancer.strategies.degrader;
+package com.linkedin.d2.balancer.strategies;
 
 
-import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
-import com.linkedin.d2.balancer.strategies.PointBasedConsistentHashRingFactory;
-import com.linkedin.d2.balancer.strategies.RingFactory;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing.Point;
 import com.linkedin.d2.balancer.util.hashing.DistributionNonDiscreteRing;

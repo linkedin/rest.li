@@ -19,7 +19,7 @@ package com.linkedin.d2.balancer.strategies.relative;
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
-import com.linkedin.d2.balancer.strategies.degrader.DelegatingRingFactory;
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.ErrorType;

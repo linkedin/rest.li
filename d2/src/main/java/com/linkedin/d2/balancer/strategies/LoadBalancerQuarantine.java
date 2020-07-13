@@ -85,11 +85,11 @@ public class LoadBalancerQuarantine
 
   private final RateLimitedLogger _rateLimitedLogger;
 
-  public LoadBalancerQuarantine(TrackerClient trackerClient,
+  public LoadBalancerQuarantine(TrackerClient client,
                          DegraderLoadBalancerStrategyConfig config,
                          String serviceName)
   {
-    this(trackerClient,
+    this(client,
          config.getExecutorService(),
          config.getClock(),
          config.getUpdateIntervalMs(),
@@ -304,6 +304,7 @@ public class LoadBalancerQuarantine
     return _timeTilNextCheck;
   }
 
+  // For testing only
   public HealthCheck getHealthCheckClient()
   {
     return _healthCheckClient;
