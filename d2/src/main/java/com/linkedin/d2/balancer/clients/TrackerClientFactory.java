@@ -13,10 +13,17 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
 package com.linkedin.d2.balancer.clients;
 
+import com.linkedin.d2.D2RelativeStrategyProperties;
+import com.linkedin.d2.HttpStatusCodeRange;
+import com.linkedin.d2.balancer.config.RelativeStrategyPropertiesConverter;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -113,7 +120,7 @@ public class TrackerClientFactory
     }
 
     long trackerClientInterval = getInterval(loadBalancerStrategyName, serviceProperties);
-    Pattern errorStatusPattern = getErrorStatusPattern(loadBalancerStrategyName, serviceProperties);
+    Pattern errorStatusPattern = getErrorStatusPattern(serviceProperties);
 
     return new DegraderTrackerClientImpl(uri,
                                      uriProperties.getPartitionDataMap(uri),
@@ -147,20 +154,15 @@ public class TrackerClientFactory
     return interval;
   }
 
-  private static Pattern getErrorStatusPattern(String loadBalancerStrategyName, ServiceProperties serviceProperties)
+  private static Pattern getErrorStatusPattern(ServiceProperties serviceProperties)
   {
     String regex = TrackerClientImpl.DEFAULT_ERROR_STATUS_REGEX;
     if (serviceProperties != null)
     {
-      switch (loadBalancerStrategyName)
-      {
-        case (DegraderLoadBalancerStrategyV3.DEGRADER_STRATEGY_NAME):
-          regex = MapUtil.getWithDefault(serviceProperties.getLoadBalancerStrategyProperties(),
-                                           PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX,
-                                           TrackerClientImpl.DEFAULT_ERROR_STATUS_REGEX,
-                                           String.class);
-          break;
-      }
+      regex = MapUtil.getWithDefault(serviceProperties.getLoadBalancerStrategyProperties(),
+          PropertyKeys.HTTP_LB_ERROR_STATUS_REGEX,
+          TrackerClientImpl.DEFAULT_ERROR_STATUS_REGEX,
+          String.class);
     }
 
     Pattern errorPattern;
@@ -176,6 +178,17 @@ public class TrackerClientFactory
     return errorPattern;
   }
 
+  private static List<HttpStatusCodeRange> getErrorStatusRanges(ServiceProperties serviceProperties)
+  {
+    D2RelativeStrategyProperties relativeStrategyProperties =
+        RelativeStrategyPropertiesConverter.toProperties(serviceProperties.getRelativeStrategyProperties());
+    if (relativeStrategyProperties.getErrorStatusFilter() == null)
+    {
+      return RelativeLoadBalancerStrategyFactory.DEFAULT_ERROR_STATUS_FILTER;
+    }
+    return relativeStrategyProperties.getErrorStatusFilter();
+  }
+
   private static TrackerClientImpl createTrackerClientImpl(URI uri,
                                                            UriProperties uriProperties,
                                                            ServiceProperties serviceProperties,
@@ -183,11 +196,23 @@ public class TrackerClientFactory
                                                            TransportClient transportClient,
                                                            Clock clock)
   {
+    List<HttpStatusCodeRange> errorStatusCodeRanges = getErrorStatusRanges(serviceProperties);
+    Predicate<Integer> isErrorStatus = (status) -> {
+      for(HttpStatusCodeRange statusCodeRange : errorStatusCodeRanges)
+      {
+        if (status >= statusCodeRange.getLowerBound() && status <= statusCodeRange.getUpperBound())
+        {
+          return true;
+        }
+      }
+      return false;
+    };
+
     return new TrackerClientImpl(uri,
                                  uriProperties.getPartitionDataMap(uri),
                                  transportClient,
                                  clock,
                                  getInterval(loadBalancerStrategyName, serviceProperties),
-                                 getErrorStatusPattern(loadBalancerStrategyName, serviceProperties));
+                                 isErrorStatus);
   }
 }

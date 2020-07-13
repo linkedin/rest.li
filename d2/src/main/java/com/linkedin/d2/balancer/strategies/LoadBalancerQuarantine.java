@@ -65,6 +65,7 @@ public class LoadBalancerQuarantine
 
   private static final Logger _log = LoggerFactory.getLogger(LoadBalancerQuarantine.class);
   private static final long ERROR_REPORT_PERIOD = 60 * 1000; // Millisecond = 1 minute
+  private static final long QUARANTINE_MIN_REENTRY_TIME_MS = 30000;
 
   private final TrackerClient _trackerClient;
   private final HealthCheck _healthCheckClient;
@@ -100,7 +101,7 @@ public class LoadBalancerQuarantine
          config.getHealthCheckOperations());
   }
 
-  LoadBalancerQuarantine(TrackerClient trackerClient,
+  public LoadBalancerQuarantine(TrackerClient trackerClient,
                          ScheduledExecutorService executorService,
                          Clock clock,
                          long updateIntervalMs,
@@ -270,13 +271,15 @@ public class LoadBalancerQuarantine
   }
 
   /**
-   * When resetInterval set to true, reset the interval time to Update Interval time.
+   * Reset the interval time to the update interval time if it has been more than 30s since last checked
    * Otherwise reuse the existing interval time
-   * @param resetInterval
+   *
+   * @param currentTime The time of the quarantine check
    */
-  public void reset(boolean resetInterval)
+  public void reset(long currentTime)
   {
     _quarantineState = QuarantineStates.FAILURE;
+    boolean resetInterval = currentTime - this.getLastChecked() > QUARANTINE_MIN_REENTRY_TIME_MS;
 
     if (resetInterval)
     {
