@@ -313,6 +313,9 @@ public class TestCollectionResponseBuilder
     //Paging Projection
     EasyMock.expect(mockContext.getPagingProjectionMask()).andReturn(pagingMaskTree).once();
 
+    //Default value requested
+    EasyMock.expect(mockContext.isFillInDefaultsRequested()).andReturn(false).anyTimes();
+
     EasyMock.replay(mockContext);
     return mockContext;
   }
