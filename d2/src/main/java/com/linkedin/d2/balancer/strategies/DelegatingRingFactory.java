@@ -14,11 +14,13 @@
    limitations under the License.
 */
 
-package com.linkedin.d2.balancer.strategies.degrader;
+package com.linkedin.d2.balancer.strategies;
 
 import com.linkedin.d2.ConsistentHashAlgorithm;
 import com.linkedin.d2.D2RingProperties;
 import com.linkedin.d2.HashMethod;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.util.degrader.CallTracker;

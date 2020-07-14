@@ -20,7 +20,7 @@ import com.linkedin.d2.HttpMethod;
 import com.linkedin.d2.HttpStatusCodeRange;
 import com.linkedin.d2.HttpStatusCodeRangeArray;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
-import com.linkedin.d2.balancer.strategies.degrader.DelegatingRingFactory;
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import java.util.ArrayList;
 import java.util.Arrays;

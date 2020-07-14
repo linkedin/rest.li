@@ -19,7 +19,7 @@ package com.linkedin.d2.balancer.strategies.relative;
 import com.linkedin.d2.D2QuarantineProperties;
 import com.linkedin.d2.HttpMethod;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.strategies.degrader.LoadBalancerQuarantine;
+import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SettableClock;

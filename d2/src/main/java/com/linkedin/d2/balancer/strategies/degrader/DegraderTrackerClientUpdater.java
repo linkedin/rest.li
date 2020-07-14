@@ -16,7 +16,7 @@ import com.linkedin.util.degrader.DegraderControl;
  *
  * For overrideDropRate and overrideMinCallCount, the new values are not used in the state update.
  */
-/*package private*/class DegraderTrackerClientUpdater
+public class DegraderTrackerClientUpdater
 {
   private final DegraderTrackerClient _trackerClient;
   private final int _partitionId;
@@ -34,7 +34,7 @@ import com.linkedin.util.degrader.DegraderControl;
     _maxDropRate = degraderControl.getMaxDropRate();
   }
 
-  DegraderTrackerClient getTrackerClient()
+  public DegraderTrackerClient getTrackerClient()
   {
     return _trackerClient;
   }

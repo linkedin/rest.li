@@ -13,11 +13,12 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-package com.linkedin.d2.balancer.strategies.degrader;
+package com.linkedin.d2.balancer.strategies;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
@@ -84,11 +85,11 @@ public class LoadBalancerQuarantine
 
   private final RateLimitedLogger _rateLimitedLogger;
 
-  LoadBalancerQuarantine(DegraderTrackerClientUpdater client,
+  public LoadBalancerQuarantine(TrackerClient client,
                          DegraderLoadBalancerStrategyConfig config,
                          String serviceName)
   {
-    this(client.getTrackerClient(),
+    this(client,
          config.getExecutorService(),
          config.getClock(),
          config.getUpdateIntervalMs(),
@@ -304,7 +305,7 @@ public class LoadBalancerQuarantine
   }
 
   // For testing only
-  HealthCheck getHealthCheckClient()
+  public HealthCheck getHealthCheckClient()
   {
     return _healthCheckClient;
   }

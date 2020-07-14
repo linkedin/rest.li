@@ -17,10 +17,10 @@
 package com.linkedin.d2.balancer.util.hashing.simulator;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
+import com.linkedin.d2.balancer.strategies.RingFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
-import com.linkedin.d2.balancer.strategies.degrader.DelegatingRingFactory;
-import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
 import com.linkedin.util.degrader.DegraderImpl;
 import java.util.ArrayList;
 import java.util.Collections;

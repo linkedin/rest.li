@@ -1,6 +1,7 @@
 package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.event.EventEmitter;
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.util.clock.SettableClock;
 

@@ -27,7 +27,10 @@ import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClientTest;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
+import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.RingFactory;
 import com.linkedin.d2.balancer.util.URIRequest;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.Ring;
@@ -3588,7 +3591,7 @@ public class DegraderLoadBalancerTest
     List<DegraderTrackerClient> trackerClients = createTrackerClient(3, clock, degraderConfig);
     DegraderTrackerClientUpdater degraderTrackerClientUpdater = new DegraderTrackerClientUpdater(trackerClients.get(0), DEFAULT_PARTITION_ID);
 
-    LoadBalancerQuarantine quarantine = new LoadBalancerQuarantine(degraderTrackerClientUpdater, config, "abc0");
+    LoadBalancerQuarantine quarantine = new LoadBalancerQuarantine(degraderTrackerClientUpdater.getTrackerClient(), config, "abc0");
     TransportHealthCheck healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
     RestRequest restRequest = healthCheck.getRestRequest();
 
@@ -3620,7 +3623,7 @@ public class DegraderLoadBalancerTest
         DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_NAME);
 
     DegraderTrackerClientUpdater updater1 = new DegraderTrackerClientUpdater(trackerClients.get(1), DEFAULT_PARTITION_ID);
-    quarantine = new LoadBalancerQuarantine(updater1, config1, "abc0");
+    quarantine = new LoadBalancerQuarantine(updater1.getTrackerClient(), config1, "abc0");
     healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
     restRequest = healthCheck.getRestRequest();
 
@@ -3652,7 +3655,7 @@ public class DegraderLoadBalancerTest
         DegraderLoadBalancerStrategyConfig.DEFAULT_CLUSTER_NAME);
 
     DegraderTrackerClientUpdater updater2 = new DegraderTrackerClientUpdater(trackerClients.get(2), DEFAULT_PARTITION_ID);
-    quarantine = new LoadBalancerQuarantine(updater2, config2, "abc0");
+    quarantine = new LoadBalancerQuarantine(updater2.getTrackerClient(), config2, "abc0");
     healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
     restRequest = healthCheck.getRestRequest();
 
@@ -3670,7 +3673,7 @@ public class DegraderLoadBalancerTest
     final TestLoadBalancerClient testLoadBalancerClient = (TestLoadBalancerClient) trackerClient.getTransportClient();
     final DegraderTrackerClientUpdater degraderTrackerClientUpdater = new DegraderTrackerClientUpdater(trackerClient, DEFAULT_PARTITION_ID);
 
-    final LoadBalancerQuarantine quarantine = new LoadBalancerQuarantine(degraderTrackerClientUpdater, config, "abc0");
+    final LoadBalancerQuarantine quarantine = new LoadBalancerQuarantine(degraderTrackerClientUpdater.getTrackerClient(), config, "abc0");
     final TransportHealthCheck healthCheck = (TransportHealthCheck) quarantine.getHealthCheckClient();
 
     healthCheck.checkHealth(Callbacks.empty());

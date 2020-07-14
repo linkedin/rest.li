@@ -16,6 +16,8 @@
 
 package com.linkedin.d2.balancer.strategies.degrader;
 
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
+import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import java.net.URI;

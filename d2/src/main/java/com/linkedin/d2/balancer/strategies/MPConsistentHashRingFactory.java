@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2018 LinkedIn Corp.
+   Copyright (c) 2016 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,16 +14,32 @@
    limitations under the License.
 */
 
-package com.linkedin.d2.balancer.strategies.degrader;
+package com.linkedin.d2.balancer.strategies;
 
-import com.linkedin.d2.balancer.util.hashing.DistributionNonDiscreteRing;
+import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import java.util.Map;
 
 
-public class DistributionNonDiscreteRingFactory<T> implements RingFactory<T> {
+/**
+ * A ring factory generates {@link MPConsistentHashRing}s.
+ *
+ * @author Ang Xu
+ */
+public class MPConsistentHashRingFactory<T> implements RingFactory<T>
+{
+  private final int _numProbes;
+  private final int _pointsPerHost;
+
+  public MPConsistentHashRingFactory(int numProbes, int pointsPerHost)
+  {
+    _numProbes = numProbes;
+    _pointsPerHost = pointsPerHost;
+  }
+
   @Override
-  public Ring<T> createRing(Map<T, Integer> points) {
-    return new DistributionNonDiscreteRing<>(points);
+  public Ring<T> createRing(Map<T, Integer> points)
+  {
+    return new MPConsistentHashRing<>(points, _numProbes, _pointsPerHost);
   }
 }
