@@ -75,11 +75,11 @@ public class TrackerClientImpl implements TrackerClient
   private volatile CallTracker.CallStats _latestCallStats;
 
   public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
-                           Clock clock, long interval, Pattern errorStatusPattern, CallTrackerImpl.CallTrackerType callTrackerType)
+                           Clock clock, long interval, Pattern errorStatusPattern)
   {
     _uri = uri;
     _transportClient = transportClient;
-    _callTracker = new CallTrackerImpl(interval, clock, callTrackerType);
+    _callTracker = new CallTrackerImpl(interval, clock);
     _errorStatusPattern = errorStatusPattern;
     _partitionData = Collections.unmodifiableMap(partitionDataMap);
     _latestCallStats = _callTracker.getCallStats();

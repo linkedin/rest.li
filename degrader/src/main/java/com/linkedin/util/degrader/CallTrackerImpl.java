@@ -19,8 +19,6 @@
  */
 package com.linkedin.util.degrader;
 
-import com.linkedin.common.stats.LongTracker;
-import com.linkedin.common.stats.SimpleLongTracker;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -91,23 +89,7 @@ public class CallTrackerImpl implements CallTracker
     _lastResetTime = _clock.currentTimeMillis();
     _errorTypeCountsTotal = new HashMap<ErrorType, Integer>();
     /* create trackers for each resolution */
-    _tracker = new Tracker(CallTrackerType.LONG_TRACKING);
-  }
-
-  public CallTrackerImpl(long interval, CallTrackerType callTrackerType)
-  {
-    this(interval, DEFAULT_CLOCK, callTrackerType);
-  }
-
-  public CallTrackerImpl(long interval, Clock clock, CallTrackerType callTrackerType)
-  {
-    _clock = clock;
-    _interval = interval;
-    _lastStartTime = -1;
-    _lastResetTime = _clock.currentTimeMillis();
-    _errorTypeCountsTotal = new HashMap<ErrorType, Integer>();
-    /* create trackers for each resolution */
-    _tracker = new Tracker(callTrackerType);
+    _tracker = new Tracker();
   }
 
   @Override
@@ -457,22 +439,14 @@ public class CallTrackerImpl implements CallTracker
     private int _callStartCount;
     private int _errorCount;
     private int _concurrentMax;
-    private final LongTracker _callTimeTracking;
+    private final LongTracking _callTimeTracking;
     //this map is used to store the number of specific errors that happened in one interval only
     private final Map<ErrorType, Integer> _errorTypeCounts;
 
-    private Tracker(CallTrackerType callTrackerType)
+    private Tracker()
     {
-      switch (callTrackerType)
-      {
-        case SIMPLE_TRACKING:
-          _callTimeTracking = new SimpleLongTracker();
-          break;
-        case LONG_TRACKING:
-        default:
-          _callTimeTracking = new LongTracking();
-      }
-      _errorTypeCounts = new HashMap<>();
+      _callTimeTracking = new LongTracking();
+      _errorTypeCounts = new HashMap<ErrorType, Integer>();
       reset();
     }
 
@@ -852,11 +826,4 @@ public class CallTrackerImpl implements CallTracker
         );
     }
   }
-
-  public enum CallTrackerType{
-    // Maps to {@link LongTracking}
-    LONG_TRACKING,
-    // Maps to {@link SimpleLongTracker}
-    SIMPLE_TRACKING
-}
 }

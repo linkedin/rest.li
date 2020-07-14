@@ -15,7 +15,6 @@
 */
 package com.linkedin.d2.balancer.clients;
 
-import com.linkedin.util.degrader.CallTrackerImpl;
 import java.net.URI;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -189,7 +188,6 @@ public class TrackerClientFactory
                                  transportClient,
                                  clock,
                                  getInterval(loadBalancerStrategyName, serviceProperties),
-                                 getErrorStatusPattern(loadBalancerStrategyName, serviceProperties),
-                                 CallTrackerImpl.CallTrackerType.SIMPLE_TRACKING);
+                                 getErrorStatusPattern(loadBalancerStrategyName, serviceProperties));
   }
 }
