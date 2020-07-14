@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.d2.balancer.strategies.degrader;
+package com.linkedin.d2.balancer.strategies;
 
 import com.linkedin.util.degrader.CallTracker;
 import java.util.Map;

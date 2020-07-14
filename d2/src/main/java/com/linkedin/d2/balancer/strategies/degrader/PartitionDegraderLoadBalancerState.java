@@ -18,6 +18,8 @@ package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
+import com.linkedin.d2.balancer.strategies.RingFactory;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.util.degrader.CallTracker;
 import java.net.URI;
