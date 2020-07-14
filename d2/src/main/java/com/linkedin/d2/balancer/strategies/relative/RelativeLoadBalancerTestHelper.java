@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2020 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,7 +20,18 @@ import java.net.URI;
 import java.util.Map;
 
 
+/**
+ * The helper class for {@link RelativeLoadBalancerStrategy} related tests
+ */
 public class RelativeLoadBalancerTestHelper {
+
+  /**
+   * Get points map for a given partition
+   *
+   * @param strategy The object of the strategy
+   * @param partitionId The id of the partition
+   * @return The points map
+   */
   public static Map<URI, Integer> getPointsMap(RelativeLoadBalancerStrategy strategy, int partitionId)
   {
     return strategy.getPointsMap(partitionId);
