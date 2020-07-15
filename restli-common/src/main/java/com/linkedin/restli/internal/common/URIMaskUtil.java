@@ -121,161 +121,161 @@ public class URIMaskUtil
     ParseState state = ParseState.PARSE_FIELDS;
 
     DataMap result = new DataMap();
-    Deque<DataMap> stack = new ArrayDeque<DataMap>();
+    Deque<DataMap> stack = new ArrayDeque<>();
     stack.addLast(result);
+    int position = 0;
 
-    while (toparse.length() > 0)
+    while (position < toparse.length())
     {
       switch (state)
       {
-      case TRAVERSE:
-        if (toparse.indexOf(",") != 0)
-        {
-          throw new IllegalStateException("Internal Error parsing mask: unexpected parse buffer '"
-              + toparse + "' while traversing");
-        }
-        toparse.delete(0, 1);
-        state = ParseState.PARSE_FIELDS;
-        break;
-      case DESCEND:
-        if (toparse.indexOf(":(") != 0)
-        {
-          throw new IllegalStateException("Internal Error parsing mask: unexpected parse buffer '"
-              + toparse + "' while descending");
-        }
-        toparse.delete(0, 2);
-        state = ParseState.PARSE_FIELDS;
-        break;
-      case PARSE_FIELDS:
-
-        Integer maskValue = null;
-        if (toparse.charAt(0) == '-')
-        {
-          maskValue = MaskOperation.NEGATIVE_MASK_OP.getRepresentation();
-          toparse.delete(0, 1);
-        }
-        else
-        {
-          maskValue = MaskOperation.POSITIVE_MASK_OP.getRepresentation();
-        }
-
-        int nextToken = -1;
-        StringBuilder field = new StringBuilder();
-        for (int ii = 0; ii < toparse.length(); ++ii)
-        {
-          char c = toparse.charAt(ii);
-          switch (c)
+        case TRAVERSE:
+          if (toparse.charAt(position) != ',')
           {
-          case ',':
-            state = ParseState.TRAVERSE;
-            nextToken = ii;
-            break;
-          case ':':
-            if (field.length() > 0 && (FilterConstants.START.equals(field.toString()) || FilterConstants.COUNT.equals(field.toString())))
+            throw new IllegalStateException("Internal Error parsing mask: unexpected parse buffer '"
+                + toparse + "' while traversing");
+          }
+          position++;
+          state = ParseState.PARSE_FIELDS;
+          break;
+        case DESCEND:
+          if (toparse.charAt(position) != ':'
+              || (position+1 == toparse.length() || toparse.charAt(position+1) != '('))
+          {
+            throw new IllegalStateException("Internal Error parsing mask: unexpected parse buffer '"
+                + toparse + "' while descending");
+          }
+          position += 2;
+          state = ParseState.PARSE_FIELDS;
+          break;
+        case PARSE_FIELDS:
+
+          Integer maskValue;
+          if (toparse.charAt(position) == '-')
+          {
+            maskValue = MaskOperation.NEGATIVE_MASK_OP.getRepresentation();
+            position++;
+          }
+          else
+          {
+            maskValue = MaskOperation.POSITIVE_MASK_OP.getRepresentation();
+          }
+
+          int nextToken = -1;
+          StringBuilder field = new StringBuilder();
+          for (int subPosition = position; subPosition < toparse.length(); ++subPosition)
+          {
+            char c = toparse.charAt(subPosition);
+            switch (c)
             {
-              if (!Character.isDigit(toparse.charAt(ii + 1)))
-              {
-                throw new IllegalMaskException("Malformed mask syntax: unexpected range value");
-              }
+              case ',':
+                state = ParseState.TRAVERSE;
+                nextToken = subPosition;
+                break;
+              case ':':
+                if (field.length() > 0 && (stringBuilderEquals(FilterConstants.START, field) || stringBuilderEquals(FilterConstants.COUNT, field)))
+                {
+                  if (!Character.isDigit(toparse.charAt(subPosition + 1)))
+                  {
+                    throw new IllegalMaskException("Malformed mask syntax: unexpected range value");
+                  }
 
-              ii++;
+                  subPosition++;
 
-              // Aggressively consume the numerical value for the range parameter as this is a special case.
-              StringBuilder rangeValue = new StringBuilder();
-              while (ii < toparse.length())
-              {
-                char ch = toparse.charAt(ii);
-                if (ch == ',')
-                {
-                  state = ParseState.TRAVERSE;
-                  nextToken = ii;
-                  break;
-                }
-                else if (ch == ')')
-                {
-                  state = ParseState.ASCEND;
-                  nextToken = ii;
-                  break;
-                }
-                else if (Character.isDigit(ch))
-                {
-                  rangeValue.append(ch);
+                  // Aggressively consume the numerical value for the range parameter as this is a special case.
+                  maskValue = 0;
+                  while (subPosition < toparse.length())
+                  {
+                    char ch = toparse.charAt(subPosition);
+                    if (ch == ',')
+                    {
+                      state = ParseState.TRAVERSE;
+                      nextToken = subPosition;
+                      break;
+                    }
+                    else if (ch == ')')
+                    {
+                      state = ParseState.ASCEND;
+                      nextToken = subPosition;
+                      break;
+                    }
+                    else if (Character.isDigit(ch))
+                    {
+                      // Accumulate the value as it's being read in order
+                      maskValue = maskValue * 10 + Character.getNumericValue(ch);
+                    }
+                    else
+                    {
+                      throw new IllegalMaskException("Malformed mask syntax: unexpected range value");
+                    }
+                    subPosition++;
+                  }
                 }
                 else
                 {
-                  throw new IllegalMaskException("Malformed mask syntax: unexpected range value");
+                  if (toparse.charAt(subPosition + 1) != '(')
+                  {
+                    throw new IllegalMaskException("Malformed mask syntax: expected '(' token");
+                  }
+
+                  state = ParseState.DESCEND;
+                  nextToken = subPosition;
                 }
-                ii++;
-              }
-
-              // Set the mask value to the range value specified for the parameter
-              maskValue = Integer.valueOf(rangeValue.toString());
+                break;
+              case ')':
+                state = ParseState.ASCEND;
+                nextToken = subPosition;
+                break;
+              default:
+                field.append(c);
+                break;
             }
-            else
+            if (nextToken != -1)
             {
-              if (toparse.charAt(ii + 1) != '(')
-              {
-                throw new IllegalMaskException("Malformed mask syntax: expected '(' token");
-              }
-
-              state = ParseState.DESCEND;
-              nextToken = ii;
+              break;
             }
-            break;
-          case ')':
-            state = ParseState.ASCEND;
-            nextToken = ii;
-            break;
-          default:
-            field.append(c);
-            break;
           }
-          if (nextToken != -1)
+          if (toparse.length() - position != field.length())
           {
-            break;
+            if (nextToken == -1)
+            {
+              throw new IllegalMaskException("Malformed mask syntax: expected closing token");
+            }
+            position = nextToken;
           }
-        }
-        if (toparse.length() != field.length())
-        {
-          if (nextToken == -1)
+          else
           {
-            throw new IllegalMaskException("Malformed mask syntax: expected closing token");
+            position = toparse.length();
           }
-          toparse.delete(0, nextToken);
-        }
-        else
-        {
-          toparse.delete(0, toparse.length());
-        }
-        if (state == ParseState.DESCEND)
-        {
-          if (field.length() == 0)
+          if (state == ParseState.DESCEND)
           {
-            throw new IllegalMaskException("Malformed mask syntax: empty parent field name");
+            if (field.length() == 0)
+            {
+              throw new IllegalMaskException("Malformed mask syntax: empty parent field name");
+            }
+            DataMap subTree = new DataMap();
+            stack.peekLast().put(field.toString().trim(), subTree);
+            stack.addLast(subTree);
           }
-          DataMap subTree = new DataMap();
-          stack.peekLast().put(field.toString().trim(), subTree);
-          stack.addLast(subTree);
-        }
-        else if (field.length() != 0)
-        {
-          stack.peekLast().put(field.toString().trim(), maskValue);
-        }
-        break;
-      case ASCEND:
-        if (toparse.indexOf(")") != 0)
-        {
-          throw new IllegalStateException("Internal Error parsing mask: unexpected parse buffer '"
-              + toparse + "' while ascending");
-        }
-        if (stack.isEmpty())
-        {
-          throw new IllegalMaskException("Malformed mask syntax: unexpected ')' token");
-        }
-        toparse.delete(0, 1);
-        stack.removeLast();
-        state = ParseState.PARSE_FIELDS;
-        break;
+          else if (field.length() != 0)
+          {
+            stack.peekLast().put(field.toString().trim(), maskValue);
+          }
+          break;
+        case ASCEND:
+          if (toparse.charAt(position) != ')')
+          {
+            throw new IllegalStateException("Internal Error parsing mask: unexpected parse buffer '"
+                + toparse + "' while ascending");
+          }
+          if (stack.isEmpty())
+          {
+            throw new IllegalMaskException("Malformed mask syntax: unexpected ')' token");
+          }
+          position++;
+          stack.removeLast();
+          state = ParseState.PARSE_FIELDS;
+          break;
       }
     }
     if (stack.size() != 1)
@@ -284,6 +284,24 @@ public class URIMaskUtil
     }
     result = stack.removeLast();
     return new MaskTree(result);
+  }
+
+  private static boolean stringBuilderEquals(String string, StringBuilder stringBuilder)
+  {
+    if (string.length() != stringBuilder.length())
+    {
+      return false;
+    }
+
+    for (int i = 0; i < string.length(); i++)
+    {
+      if (string.charAt(i) != stringBuilder.charAt(i))
+      {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private enum ParseState
