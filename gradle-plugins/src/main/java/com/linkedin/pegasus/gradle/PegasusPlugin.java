@@ -934,7 +934,7 @@ public class PegasusPlugin implements Plugin<Project>
 
   protected void configureExtensionSchemaValidationAndPublishTasks(Project project, SourceSet sourceSet)
   {
-    // extension schema  directory
+    // extension schema directory
     File extensionSchemaDir = project.file(getExtensionSchemaPath(project, sourceSet));
 
     if (SharedFileUtils.getSuffixedFiles(project, extensionSchemaDir, PDL_FILE_SUFFIX).isEmpty())
@@ -964,8 +964,11 @@ public class PegasusPlugin implements Plugin<Project>
             .info("Add extensionSchema file: {}", fileCopyDetails));
         copySpec.setIncludes(Collections.singletonList('*' + PDL_FILE_SUFFIX));
       });
+
+      task.getArchiveAppendix().set(getAppendix(sourceSet, "extension-schema"));
       task.setDescription("Generate extensionSchema jar");
     });
+
     extensionSchemaJarTask.dependsOn(validateExtensionSchemaTask);
 
     project.getArtifacts().add("extensionSchema", extensionSchemaJarTask);
