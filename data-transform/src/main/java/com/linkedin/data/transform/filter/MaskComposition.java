@@ -90,6 +90,11 @@ public class MaskComposition implements Interpreter
                          instrCtx);
           }
         }
+        // This can happen if the mask is for an array field and the merged start/count resulted in default values.
+        // Setting the wildcard mask to represent all items are included.
+        if (data.isEmpty()) {
+          data.put(FilterConstants.WILDCARD, FilterConstants.POSITIVE);
+        }
       }
     }
   }

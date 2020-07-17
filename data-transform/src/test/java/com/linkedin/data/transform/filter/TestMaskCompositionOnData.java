@@ -264,7 +264,7 @@ public class TestMaskCompositionOnData
       /*description:*/"Compose disjoint array ranges with a default for start and count. The result is smallest range containing both ranges.",
       /*data1:*/      "{'a': { '$count': 10 }}",
       /*data2:*/      "{'a': { '$start': 20 }}",
-      /*expected*/    "{'a': {}}"
+      /*expected*/    "{'a': { '$*': 1}}"
     },
     {
       /*description:*/"Compose array ranges when one range contain other. The result is larger range.",
@@ -282,19 +282,19 @@ public class TestMaskCompositionOnData
       /*description:*/"Compose array ranges with one of them having the default values specified explicitly.",
       /*data1:*/      "{'a': { '$start': 0, '$count': 2147483647 }}",
       /*data2:*/      "{'a': { '$start': 20, '$count': 50 }}",
-      /*expected*/    "{'a': {}}"
+      /*expected*/    "{'a': {'$*': 1}}"
     },
     {
       /*description:*/"Compose array ranges with one of them having the count default value specified explicitly.",
       /*data1:*/      "{'a': { '$count': 2147483647 }}",
       /*data2:*/      "{'a': { '$start': 20, '$count': 50 }}",
-      /*expected*/    "{'a': {}}"
+      /*expected*/    "{'a': {'$*': 1}}"
     },
     {
       /*description:*/"Compose array ranges with one of them having the start default value specified explicitly.",
       /*data1:*/      "{'a': { '$start': 0 }}",
       /*data2:*/      "{'a': { '$start': 20, '$count': 50 }}",
-      /*expected*/    "{'a': {}}"
+      /*expected*/    "{'a': {'$*': 1}}"
     },
     {
       /*description:*/"Compose array ranges with one of them having range values that overflows the integer range.",

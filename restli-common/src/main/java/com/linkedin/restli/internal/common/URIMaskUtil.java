@@ -14,19 +14,15 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
 package com.linkedin.restli.internal.common;
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.filter.FilterConstants;
+import com.linkedin.data.transform.filter.request.MaskOperation;
+import com.linkedin.data.transform.filter.request.MaskTree;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
-
-import com.linkedin.data.DataMap;
-import com.linkedin.data.transform.filter.request.MaskOperation;
-import com.linkedin.data.transform.filter.request.MaskTree;
 
 /**
  * Class with implementation of helper methods to serialize/deserialize mask to/from URI
@@ -47,7 +43,7 @@ public class URIMaskUtil
    */
   public static String encodeMaskForURI(MaskTree maskTree)
   {
-    return URIMaskUtil.encodeMaskForURIImpl(maskTree.getDataMap(), false);
+    return URIMaskUtil.encodeMaskForURI(maskTree.getDataMap());
   }
 
   /**
@@ -59,12 +55,13 @@ public class URIMaskUtil
    */
   public static String encodeMaskForURI(DataMap simplifiedMask)
   {
-    return URIMaskUtil.encodeMaskForURIImpl(simplifiedMask, false);
+    StringBuilder result = new StringBuilder();
+    URIMaskUtil.encodeMaskForURIImpl(result, simplifiedMask, false);
+    return result.toString();
   }
 
-  private static String encodeMaskForURIImpl(DataMap simplifiedMask, boolean parenthesize)
+  private static void encodeMaskForURIImpl(StringBuilder result, DataMap simplifiedMask, boolean parenthesize)
   {
-    StringBuilder result = new StringBuilder();
     if (parenthesize)
     {
       result.append(":(");
@@ -74,7 +71,7 @@ public class URIMaskUtil
     {
       if (delimit)
       {
-        result.append(",");
+        result.append(',');
       }
       delimit = true;
 
@@ -82,7 +79,7 @@ public class URIMaskUtil
           entry.getValue() instanceof Integer)
       {
         result.append(entry.getKey());
-        result.append(":").append(entry.getValue());
+        result.append(':').append(entry.getValue());
       }
       else if (entry.getValue().equals(MaskOperation.POSITIVE_MASK_OP.getRepresentation()))
       {
@@ -97,15 +94,13 @@ public class URIMaskUtil
       else
       {
         result.append(entry.getKey());
-        result.append(encodeMaskForURIImpl((DataMap) entry.getValue(), true));
+        encodeMaskForURIImpl(result, (DataMap) entry.getValue(), true);
       }
     }
     if (parenthesize)
     {
-      result.append(")");
+      result.append(')');
     }
-
-    return result.toString();
   }
 
   /**
@@ -115,44 +110,59 @@ public class URIMaskUtil
    * @param toparse StringBuilder containing a string representation of an encoded MaskTree
    * @return a MaskTree
    * @throws IllegalMaskException if syntax in the input is malformed
+   * @deprecated use {@link #decodeMaskUriFormat(String)} instead.
    */
+  @Deprecated
   public static MaskTree decodeMaskUriFormat(StringBuilder toparse) throws IllegalMaskException
   {
+    return decodeMaskUriFormat(toparse.toString());
+  }
+
+  /**
+   * Return a {@link MaskTree} that is deserialized from the input projection mask string used in URI parameter. The
+   * input projection string must have been URL decoded if the projection was part of a request URI.
+   *
+   * @param toparse String representing an encoded MaskTree
+   * @return a MaskTree
+   * @throws IllegalMaskException if syntax in the input is malformed
+   */
+  public static MaskTree decodeMaskUriFormat(String toparse) throws IllegalMaskException
+  {
     ParseState state = ParseState.PARSE_FIELDS;
-
+    int index = 0;
     DataMap result = new DataMap();
-    Deque<DataMap> stack = new ArrayDeque<DataMap>();
+    Deque<DataMap> stack = new ArrayDeque<>();
     stack.addLast(result);
+    StringBuilder field = new StringBuilder();
 
-    while (toparse.length() > 0)
+    while (index < toparse.length())
     {
       switch (state)
       {
       case TRAVERSE:
-        if (toparse.indexOf(",") != 0)
+        if (toparse.charAt(index) != ',')
         {
           throw new IllegalStateException("Internal Error parsing mask: unexpected parse buffer '"
-              + toparse + "' while traversing");
+              + toparse.substring(index) + "' while traversing");
         }
-        toparse.delete(0, 1);
+        index++;
         state = ParseState.PARSE_FIELDS;
         break;
       case DESCEND:
-        if (toparse.indexOf(":(") != 0)
+        if (toparse.charAt(index) != ':' || toparse.charAt(index + 1) != '(')
         {
           throw new IllegalStateException("Internal Error parsing mask: unexpected parse buffer '"
-              + toparse + "' while descending");
+              + toparse.substring(index) + "' while descending");
         }
-        toparse.delete(0, 2);
+        index += 2;
         state = ParseState.PARSE_FIELDS;
         break;
       case PARSE_FIELDS:
-
-        Integer maskValue = null;
-        if (toparse.charAt(0) == '-')
+        Integer maskValue;
+        if (toparse.charAt(index) == '-')
         {
           maskValue = MaskOperation.NEGATIVE_MASK_OP.getRepresentation();
-          toparse.delete(0, 1);
+          index++;
         }
         else
         {
@@ -160,74 +170,84 @@ public class URIMaskUtil
         }
 
         int nextToken = -1;
-        StringBuilder field = new StringBuilder();
-        for (int ii = 0; ii < toparse.length(); ++ii)
+        field.setLength(0);
+        int fieldIndex = index;
+        for (; fieldIndex < toparse.length(); ++fieldIndex)
         {
-          char c = toparse.charAt(ii);
+          char c = toparse.charAt(fieldIndex);
           switch (c)
           {
           case ',':
             state = ParseState.TRAVERSE;
-            nextToken = ii;
+            nextToken = fieldIndex;
             break;
           case ':':
-            if (field.length() > 0 && (FilterConstants.START.equals(field.toString()) || FilterConstants.COUNT.equals(field.toString())))
+            if ((fieldIndex + 1) >= toparse.length())
             {
-              if (!Character.isDigit(toparse.charAt(ii + 1)))
+              throw new IllegalMaskException("Malformed mask syntax: unexpected end of buffer after ':'");
+            }
+            if ((field.length() == FilterConstants.START.length() && field.indexOf(FilterConstants.START) == 0)
+                || (field.length() == FilterConstants.COUNT.length() && field.indexOf(FilterConstants.COUNT) == 0))
+            {
+              if (!Character.isDigit(toparse.charAt(fieldIndex + 1)))
               {
                 throw new IllegalMaskException("Malformed mask syntax: unexpected range value");
               }
 
-              ii++;
+              fieldIndex++;
 
               // Aggressively consume the numerical value for the range parameter as this is a special case.
-              StringBuilder rangeValue = new StringBuilder();
-              while (ii < toparse.length())
+              int rangeValue = 0;
+              while (fieldIndex < toparse.length() && nextToken == -1)
               {
-                char ch = toparse.charAt(ii);
-                if (ch == ',')
+                char ch = toparse.charAt(fieldIndex);
+                switch (ch)
                 {
-                  state = ParseState.TRAVERSE;
-                  nextToken = ii;
-                  break;
+                  case ',':
+                    state = ParseState.TRAVERSE;
+                    nextToken = fieldIndex;
+                    break;
+                  case ')':
+                    state = ParseState.ASCEND;
+                    nextToken = fieldIndex;
+                    break;
+                  default:
+                    if (Character.isDigit(ch))
+                    {
+                      rangeValue = rangeValue * 10 + (ch - '0');
+                    }
+                    else
+                    {
+                      throw new IllegalMaskException("Malformed mask syntax: unexpected range value");
+                    }
+                    fieldIndex++;
+                    break;
                 }
-                else if (ch == ')')
-                {
-                  state = ParseState.ASCEND;
-                  nextToken = ii;
-                  break;
-                }
-                else if (Character.isDigit(ch))
-                {
-                  rangeValue.append(ch);
-                }
-                else
-                {
-                  throw new IllegalMaskException("Malformed mask syntax: unexpected range value");
-                }
-                ii++;
               }
 
               // Set the mask value to the range value specified for the parameter
-              maskValue = Integer.valueOf(rangeValue.toString());
+              maskValue = rangeValue;
             }
             else
             {
-              if (toparse.charAt(ii + 1) != '(')
+              if (toparse.charAt(fieldIndex + 1) != '(')
               {
                 throw new IllegalMaskException("Malformed mask syntax: expected '(' token");
               }
 
               state = ParseState.DESCEND;
-              nextToken = ii;
+              nextToken = fieldIndex;
             }
             break;
           case ')':
             state = ParseState.ASCEND;
-            nextToken = ii;
+            nextToken = fieldIndex;
             break;
           default:
-            field.append(c);
+            if (!Character.isWhitespace(c))
+            {
+              field.append(c);
+            }
             break;
           }
           if (nextToken != -1)
@@ -235,17 +255,17 @@ public class URIMaskUtil
             break;
           }
         }
-        if (toparse.length() != field.length())
+        if (toparse.length() != fieldIndex)
         {
           if (nextToken == -1)
           {
             throw new IllegalMaskException("Malformed mask syntax: expected closing token");
           }
-          toparse.delete(0, nextToken);
+          index = nextToken;
         }
         else
         {
-          toparse.delete(0, toparse.length());
+          index = toparse.length();
         }
         if (state == ParseState.DESCEND)
         {
@@ -254,25 +274,25 @@ public class URIMaskUtil
             throw new IllegalMaskException("Malformed mask syntax: empty parent field name");
           }
           DataMap subTree = new DataMap();
-          stack.peekLast().put(field.toString().trim(), subTree);
+          stack.peekLast().put(field.toString(), subTree);
           stack.addLast(subTree);
         }
         else if (field.length() != 0)
         {
-          stack.peekLast().put(field.toString().trim(), maskValue);
+          stack.peekLast().put(field.toString(), maskValue);
         }
         break;
       case ASCEND:
-        if (toparse.indexOf(")") != 0)
+        if (toparse.charAt(index) != ')')
         {
           throw new IllegalStateException("Internal Error parsing mask: unexpected parse buffer '"
-              + toparse + "' while ascending");
+              + toparse.substring(index) + "' while ascending");
         }
         if (stack.isEmpty())
         {
           throw new IllegalMaskException("Malformed mask syntax: unexpected ')' token");
         }
-        toparse.delete(0, 1);
+        index++;
         stack.removeLast();
         state = ParseState.PARSE_FIELDS;
         break;

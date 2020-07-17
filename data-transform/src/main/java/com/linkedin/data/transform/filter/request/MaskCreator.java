@@ -20,12 +20,10 @@
 
 package com.linkedin.data.transform.filter.request;
 
-import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Map;
 
 
 /**
@@ -86,33 +84,6 @@ public class MaskCreator
     {
       maskTree.addOperation(path, op);
     }
-
-    // Clean up empty masks. This usually happens for array masks whose $start and $count are removed if they have the
-    // default values of 0 and Integer.MAX_INT, respectively.
-    cleanUpEmptyMasks(maskTree.getDataMap());
-
     return maskTree;
-  }
-
-  /**
-   * Helper method to clean up empty masks with positive integer mask
-   */
-  private static void cleanUpEmptyMasks(DataMap mask)
-  {
-    for (Map.Entry<String, Object> entry: mask.entrySet())
-    {
-      if (entry.getValue() instanceof DataMap)
-      {
-        if (((DataMap) entry.getValue()).isEmpty())
-        {
-          // Replace the empty mask with positive integer mask
-          mask.put(entry.getKey(), MaskOperation.POSITIVE_MASK_OP.getRepresentation());
-        }
-        else
-        {
-          cleanUpEmptyMasks((DataMap) entry.getValue());
-        }
-      }
-    }
   }
 }

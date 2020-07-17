@@ -255,6 +255,12 @@ public class TestFilterOnData
       /*expected*/    "{'b': [{'a': 'aaa'}, {'b': 'bbb'}, {'c': 'ccc'}, {'d': 'ddd'}, {'e': 'eee'}]}"
     },
     {
+        /*description:*/"Filter contains simple positive mask on array field. Array contains objects.",
+        /*data:*/       "{'a': 10, 'b': [{'a': 'aaa'}, {'b': 'bbb'}, {'c': 'ccc'}, {'d': 'ddd'}, {'e': 'eee'}]}",
+        /*filter:*/     "{'b' : 1}",
+        /*expected*/    "{'b': [{'a': 'aaa'}, {'b': 'bbb'}, {'c': 'ccc'}, {'d': 'ddd'}, {'e': 'eee'}]}"
+    },
+    {
       /*description:*/"Filter contains only negative wildcard.",
       /*data:*/       "{'a': 10, 'b': [1, 2, 3, 4, 5, 6]}",
       /*filter:*/     "{'b' : { '$*': 0}}",
