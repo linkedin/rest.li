@@ -179,14 +179,14 @@ public class ExtensionSchemaValidationCmdLineApp
       {
         if (!(dataElement instanceof DataMap))
         {
-          _logger.error("extension schema annotation is not a datamap!");
+          _logger.error("Extension schema annotation is not a datamap!");
           System.exit(1);
         }
         DataSchema extensionSchemaAnnotationSchema = new ExtensionSchemaAnnotation().schema();
         ValidationResult result = ValidateDataAgainstSchema.validate(dataElement, extensionSchemaAnnotationSchema, validationOptions);
         if (!result.isValid())
         {
-          _logger.error("extension schema annotation is not valid: " + result.getMessages());
+          _logger.error("Extension schema annotation is not valid: " + result.getMessages());
           System.exit(1);
         }
       }
@@ -195,20 +195,19 @@ public class ExtensionSchemaValidationCmdLineApp
         _logger.error("Error while checking extension schema field annotation: " + e.getMessage());
         System.exit(1);
       }
-      checkExtensionSchemaFieldSchema(field.getType());
     }
   }
 
   private static void checkExtensionSchemaFieldSchema(DataSchema fieldSchema)
   {
-    if (!isAnnotatedWithResourceKey(fieldSchema) && !isArrayAndItemIsAnnotatedWithResourceKey(fieldSchema))
+    if (!isAnnotatedWithResourceKey(fieldSchema) && !arrayAndItemIsAnnotatedWithResourceKey(fieldSchema))
     {
         _logger.error("Field schema: [{}] is not annotated with 'resourceKey'", fieldSchema.toString());
         System.exit(1);
     }
   }
 
-  private static boolean isArrayAndItemIsAnnotatedWithResourceKey(DataSchema schema)
+  private static boolean arrayAndItemIsAnnotatedWithResourceKey(DataSchema schema)
   {
     if (schema.getType() == DataSchema.Type.ARRAY)
     {
