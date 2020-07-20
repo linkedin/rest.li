@@ -237,4 +237,5 @@ public interface ResourceContext extends CustomRequestContext
    * @return true if the service need to fill in default value when the field of the return value record is absent
    */
   boolean isFillInDefaultsRequested();
+  void setFillInDefaultValues(boolean fillInDefaultValues);
 }
