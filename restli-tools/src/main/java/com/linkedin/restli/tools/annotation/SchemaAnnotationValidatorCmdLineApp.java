@@ -119,15 +119,15 @@ public class SchemaAnnotationValidatorCmdLineApp
     List<String> handlerJarPathsArray = parsePaths(handlerJarPaths);
     // Use Jar Paths to initiate URL class loaders.
     ClassLoader classLoader = new URLClassLoader(handlerJarPathsArray.stream().map(str -> {
-                                                                                     try
-                                                                                     {
-                                                                                       return Paths.get(str).toUri().toURL();
-                                                                                     } catch (Exception e)
-                                                                                     {
-                                                                                       _log.error("URL {} parsing failed", str, e);
-                                                                                     }
-                                                                                     return null;
-                                                                                   }).filter(Objects::nonNull).toArray(URL[]::new));
+      try
+      {
+        return Paths.get(str).toUri().toURL();
+      } catch (Exception e)
+      {
+        _log.error("URL {} parsing failed", str, e);
+      }
+      return null;
+    }).filter(Objects::nonNull).toArray(URL[]::new));
     List<SchemaAnnotationHandler> handlers = new ArrayList<>();
     for (String className: parsePaths(handlerClassNames))
     {

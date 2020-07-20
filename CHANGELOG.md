@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Update ExtensionSchemaValidation task to check extension schema annotation (#254)
 
 ## [29.4.4] - 2020-07-02
 - Disable string interning in Jackson JSON since it causes GC issues (#346)

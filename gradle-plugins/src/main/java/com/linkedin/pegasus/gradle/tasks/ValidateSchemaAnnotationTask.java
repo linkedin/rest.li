@@ -113,7 +113,7 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
     }
 
     _classLoader = new URLClassLoader(handlerJarPathUrls.toArray(new URL[handlerJarPathUrls.size()]),
-                                      getClass().getClassLoader());
+        getClass().getClassLoader());
 
     getProject().getLogger().info("search for schema annotation handlers...");
 
@@ -129,15 +129,15 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
     if (foundClassNames.size() != expectedHandlersNumber)
     {
       String errorMsg = String.format("Encountered errors when searching for annotation handlers: total %s dependencies configured, but %s handlers found: [%s].",
-                                      expectedHandlersNumber,
-                                      foundClassNames.size(),
-                                      String.join(",", foundClassNames));
+          expectedHandlersNumber,
+          foundClassNames.size(),
+          String.join(",", foundClassNames));
       getProject().getLogger().error(errorMsg);
       throw new GradleException("ValidationSchemaAnnotation task failed during search for annotation handlers.");
     }
 
     getProject().getLogger()
-                .info("Found Schema annotation processing handlers: " + Arrays.toString(foundClassNames.toArray()));
+        .info("Found Schema annotation processing handlers: " + Arrays.toString(foundClassNames.toArray()));
 
     getProject().javaexec(javaExecSpec ->
                           {
@@ -171,7 +171,7 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
     try(
         InputStream in = f.toURI().toURL().openStream();
         JarInputStream jarIn = new JarInputStream(in);
-        )
+    )
     {
 
       for (JarEntry e = jarIn.getNextJarEntry(); e != null; e = jarIn.getNextJarEntry())
@@ -219,7 +219,7 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
       } catch (Exception | Error e)
       {
         getProject().getLogger().info("During search for annotation handlers, encountered an unexpected exception or error [{}] when instantiating the class, " +
-                                      "will skip checking this class: [{}]", e.getClass(), clazzName);
+            "will skip checking this class: [{}]", e.getClass(), clazzName);
         getProject().getLogger().debug("Unexpected exceptions or errors found during instantiating the class [{}], detailed error: ", clazzName, e);
         return;
       }
