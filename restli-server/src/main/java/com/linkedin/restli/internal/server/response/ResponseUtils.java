@@ -20,6 +20,7 @@ package com.linkedin.restli.internal.server.response;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
@@ -117,18 +118,18 @@ public class ResponseUtils
    */
   public static DataMap fillInDefaultValues(DataSchema dataSchema, DataMap dataMap)
   {
-    DataMap dataDefaultFilled = new DataMap();
+    DataMap dataDefaultFilled;
     if (dataMap != null)
     {
+      dataDefaultFilled = new DataMap(DataMapBuilder.getOptimumHashMapCapacityFromSize(dataMap.size()));
       dataDefaultFilled.putAll(dataMap);
     }
-
-    if (dataSchema instanceof TyperefDataSchema)
+    else
     {
-      TyperefDataSchema typerefDataSchema = (TyperefDataSchema) dataSchema;
-      return fillInDefaultValues(typerefDataSchema.getDereferencedDataSchema(), dataDefaultFilled);
+      dataDefaultFilled = new DataMap();
     }
-    else if (dataSchema instanceof RecordDataSchema)
+
+    if (dataSchema instanceof RecordDataSchema)
     {
       RecordDataSchema recordDataSchema = (RecordDataSchema) dataSchema;
       for (RecordDataSchema.Field field : recordDataSchema.getFields())
@@ -138,33 +139,35 @@ public class ResponseUtils
         {
           if (dataDefaultFilled.containsKey(field.getName()))
           {
-            DataMap fieldDataAssigned = (DataMap) dataDefaultFilled.get(field.getName());
-            DataMap fieldFilled = fillInDefaultValues(fieldSchema, fieldDataAssigned);
-            dataDefaultFilled.put(field.getName(), fieldFilled);
+            DataMap fieldDataWithDefault = fillInDefaultValues(fieldSchema, (DataMap) dataDefaultFilled.get(field.getName()));
+            dataDefaultFilled.put(field.getName(), fieldDataWithDefault);
           }
           else if (field.getDefault() != null)
           {
-            dataDefaultFilled.put(field.getName(), fillInDefaultValues(fieldSchema, (DataMap) field.getDefault()));
+            DataMap fieldDataWithDefault = fillInDefaultValues(fieldSchema, (DataMap) field.getDefault());
+            dataDefaultFilled.put(field.getName(), fieldDataWithDefault);
           }
         }
         else if (fieldSchema instanceof TyperefDataSchema)
         {
-          DataSchema dereferencedDataSchema = fieldSchema.getDereferencedDataSchema();
-          if (dataDefaultFilled.containsKey(field.getName()) && dereferencedDataSchema instanceof RecordDataSchema)
+          TyperefDataSchema typerefDataSchema = (TyperefDataSchema) fieldSchema;
+          DataSchema dereferencedSchema = typerefDataSchema.getDereferencedDataSchema();
+          if (!dataDefaultFilled.containsKey(field.getName()))
           {
-            dataDefaultFilled.put(field.getName(), fillInDefaultValues(dereferencedDataSchema,
-                (DataMap) dataDefaultFilled.get(field.getName())));
-          }
-          else if (field.getDefault() != null)
-          {
-            if (dereferencedDataSchema instanceof RecordDataSchema)
+            if (dereferencedSchema instanceof RecordDataSchema)
             {
-              dataDefaultFilled.put(field.getName(), fillInDefaultValues(dereferencedDataSchema,
-                  (DataMap) field.getDefault()));
+              DataMap fieldDataMapWithDefault = fillInDefaultValues(fieldSchema, null);
+              if (fieldDataMapWithDefault.size() > 0)
+              {
+                dataDefaultFilled.put(field.getName(), fieldDataMapWithDefault);
+              }
             }
             else
             {
-              dataDefaultFilled.put(field.getName(), field.getDefault());
+              if (field.getDefault() != null)
+              {
+                dataDefaultFilled.put(field.getName(), field.getDefault());
+              }
             }
           }
         }
@@ -176,9 +179,8 @@ public class ResponseUtils
           }
         }
       }
-      return dataDefaultFilled;
     }
-    return dataMap;
+    return dataDefaultFilled;
   }
 
   public static RestResponse buildResponse(RoutingResult routingResult, RestLiResponse restLiResponse)

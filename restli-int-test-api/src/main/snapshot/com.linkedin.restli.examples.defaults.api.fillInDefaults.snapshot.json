@@ -58,6 +58,16 @@
       "name" : "midLevelField",
       "type" : "MidLevelRecordWithDefault",
       "optional" : true
+    }, {
+      "name" : "testFieldArray",
+      "type" : {
+        "type" : "array",
+        "items" : "MidLevelRecordWithDefault"
+      },
+      "default" : [ {
+        "intWithoutDefault" : 0,
+        "intWithDefault" : 0
+      } ]
     } ]
   }, "com.linkedin.restli.examples.defaults.api.LowLevelRecordWithDefault", "com.linkedin.restli.examples.defaults.api.MidLevelRecordWithDefault", {
     "type" : "record",
@@ -94,9 +104,9 @@
         "pagingSupported" : true
       } ],
       "finders" : [ {
-        "name" : "HighLevelRecord",
+        "name" : "findRecords",
         "parameters" : [ {
-          "name" : "totalCount",
+          "name" : "noDefaultFieldA",
           "type" : "int"
         } ]
       } ],

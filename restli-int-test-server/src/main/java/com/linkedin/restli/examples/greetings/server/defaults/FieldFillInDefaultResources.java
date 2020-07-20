@@ -23,7 +23,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import sun.util.resources.cldr.ha.CalendarData_ha_Latn_GH;
 
 
 @RestLiCollection(name = "fillInDefaults", namespace = "com.linkedin.restli.examples.defaults.api")
@@ -57,15 +56,12 @@ public class FieldFillInDefaultResources extends CollectionResourceTemplate<Long
     return result;
   }
 
-  @Finder("HighLevelRecord")
-  public List<HighLevelRecordWithDefault> findHighLevelRecord(@QueryParam("totalCount") Integer totalCount)
+  @Finder("findRecords")
+  public List<HighLevelRecordWithDefault> findRecords(@QueryParam("noDefaultFieldA") Integer fieldA)
   {
-    List<HighLevelRecordWithDefault> ordersCollection = new ArrayList<>();
-    for (int i = 0; i < totalCount; i++)
-    {
-      ordersCollection.add(new HighLevelRecordWithDefault().setNoDefaultFieldA(i));
-    }
-    return ordersCollection;
+    List<HighLevelRecordWithDefault> finderResult = new ArrayList<>();
+    finderResult.add(new HighLevelRecordWithDefault().setNoDefaultFieldA(fieldA));
+    return finderResult;
   }
 
   @BatchFinder(value = "searchRecords", batchParam = "criteria")

@@ -5,5 +5,6 @@ record HighLevelRecordWithDefault {
   intDefaultFieldB: int = -1,
   midLevelRecordWithoutDefault: MidLevelRecordWithDefault,
   midLevelRecordWithDefault: MidLevelRecordWithDefault = {"intWithDefault": 0, "intWithoutDefault": 0},
-  midLevelField: optional MidLevelRecordWithDefault
+  midLevelField: optional MidLevelRecordWithDefault,
+  testFieldArray: array[MidLevelRecordWithDefault] = [{"intWithDefault": 0, "intWithoutDefault": 0}],
 }

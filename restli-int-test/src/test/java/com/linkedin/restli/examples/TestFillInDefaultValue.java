@@ -15,6 +15,8 @@
 */
 package com.linkedin.restli.examples;
 
+import com.linkedin.data.Data;
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.ActionRequest;
@@ -67,6 +69,12 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
     case1LowLevelRecordWithDefault.put("nameWithoutDefault", "b");
     case1MidLevelRecordWithDefault.put("lowLevelRecordWithDefault", case1LowLevelRecordWithDefault);
     expectedTestData.put("midLevelRecordWithDefault", case1MidLevelRecordWithDefault);
+    DataMap defaultInArray = new DataMap();
+    defaultInArray.put("intWithDefault", 0);
+    defaultInArray.put("intWithoutDefault", 0);
+    DataList defaultArrayField = new DataList();
+    defaultArrayField.add(defaultInArray);
+    expectedTestData.put("testFieldArray", defaultArrayField);
   }
 
   @AfterClass
@@ -79,7 +87,7 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
   private Object[][] testGetData() throws CloneNotSupportedException
   {
     HighLevelRecordWithDefault expected = new HighLevelRecordWithDefault(expectedTestData.clone()).setNoDefaultFieldA(1);
-    return new Object[][] {{1L, expected},};
+    return new Object[][] {{1L, expected}};
   }
 
   @Test(dataProvider = "testGetData")
@@ -89,6 +97,25 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
     FillInDefaultsRequestBuilders requestBuilders = new FillInDefaultsRequestBuilders();
     FillInDefaultsGetRequestBuilder getRequestBuilder = requestBuilders.get();
     GetRequest<HighLevelRecordWithDefault> req = getRequestBuilder.id(id).setParam(RestConstants.FILL_IN_DEFAULTS_PARAM, true).build();
+    HighLevelRecordWithDefault actual = getClient().sendRequest(req).getResponse().getEntity();
+    Assert.assertEquals(actual, expectedRecord);
+  }
+
+  @DataProvider(name = "testGetDataNoFillIn")
+  private Object[][] testGetDataNoFillIn() throws CloneNotSupportedException
+  {
+    DataMap data = new DataMap();
+    data.put("noDefaultFieldA", 1);
+    HighLevelRecordWithDefault expected = new HighLevelRecordWithDefault(data.clone());
+    return new Object[][] {{1L, expected}};
+  }
+
+  @Test(dataProvider = "testGetDataNoFillIn")
+  public void testGetWithFillInDefaults(Long id, HighLevelRecordWithDefault expectedRecord) throws RemoteInvocationException
+  {
+    FillInDefaultsRequestBuilders requestBuilders = new FillInDefaultsRequestBuilders();
+    FillInDefaultsGetRequestBuilder getRequestBuilder = requestBuilders.get();
+    GetRequest<HighLevelRecordWithDefault> req = getRequestBuilder.id(id).build();
     HighLevelRecordWithDefault actual = getClient().sendRequest(req).getResponse().getEntity();
     Assert.assertEquals(actual, expectedRecord);
   }
@@ -158,19 +185,17 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "testFinderData")
-  public void testFillInDefaultFinder(Integer count) throws RemoteInvocationException
+  public void testFillInDefaultFinder(Integer fieldA) throws RemoteInvocationException
   {
     FillInDefaultsRequestBuilders builders = new FillInDefaultsRequestBuilders();
-    FindRequest<HighLevelRecordWithDefault> request = builders.findByHighLevelRecord()
+    FindRequest<HighLevelRecordWithDefault> request = builders.findByFindRecords()
         .setParam(RestConstants.FILL_IN_DEFAULTS_PARAM, true)
-        .setParam("totalCount", count).build();
+        .setParam("noDefaultFieldA", fieldA).build();
     List<HighLevelRecordWithDefault> result = getClient().sendRequest(request).getResponse().getEntity().getElements();
     Set<HighLevelRecordWithDefault> actual = new HashSet<>(result);
     Set<HighLevelRecordWithDefault> expect = new HashSet<>();
-    for (int i = 0; i < count; i++)
-    {
-      expect.add(new HighLevelRecordWithDefault(expectedTestData).setNoDefaultFieldA(i));
-    }
+    System.out.println(result);
+    expect.add(new HighLevelRecordWithDefault(expectedTestData).setNoDefaultFieldA(fieldA));
     Assert.assertEquals(actual, expect);
   }
 

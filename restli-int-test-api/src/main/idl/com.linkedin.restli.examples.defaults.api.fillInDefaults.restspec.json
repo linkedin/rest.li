@@ -19,9 +19,9 @@
       "pagingSupported" : true
     } ],
     "finders" : [ {
-      "name" : "HighLevelRecord",
+      "name" : "findRecords",
       "parameters" : [ {
-        "name" : "totalCount",
+        "name" : "noDefaultFieldA",
         "type" : "int"
       } ]
     } ],

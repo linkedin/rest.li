@@ -22,6 +22,7 @@ import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.restli.internal.server.util.DataMapUtils;
 import java.io.File;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
@@ -154,12 +155,12 @@ public class TestResponseUtils
 
       String schemaFileText = Files.readFile(new File(pegasusDir + FS + filename));
       DataSchema schema = DataTemplateUtil.parseSchema(schemaFileText, schemaResolver, SchemaFormatType.PDL);
-      data = ResponseUtils.fillInDefaultValues(schema, data);
-      Assert.assertEquals(data, expected);
+      DataMap dataMapToFillDefault = ResponseUtils.fillInDefaultValues(schema, data);
+      Assert.assertEquals(dataMapToFillDefault, expected);
     }
     catch (Exception e)
     {
-      Assert.fail("Read test schema file failure, check file read successful \n" + e);
+      Assert.fail("Test failed with exception: \n" + e);
     }
   }
 

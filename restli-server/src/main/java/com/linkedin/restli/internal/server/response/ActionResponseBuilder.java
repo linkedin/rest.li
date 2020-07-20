@@ -88,39 +88,36 @@ public class ActionResponseBuilder implements RestLiResponseBuilder<RestLiRespon
     }
     RecordDataSchema actionReturnRecordDataSchema = routingResult.getResourceMethod().getActionReturnRecordDataSchema();
 
+    final Object actionResponseValue;
     if (value != null && RecordTemplate.class.isAssignableFrom(value.getClass())
         && routingResult.getContext().isFillInDefaultsRequested())
     {
       RecordTemplate actionResponseRecordTemplate = (RecordTemplate) value;
-      DataMap dataWithoutDefault = actionResponseRecordTemplate.data();
-      System.out.println("Fill in default for action result " + value.getClass().getSimpleName() + ", "
-          + actionResponseRecordTemplate.schema().getFullName());
-      DataMap dataWithDefault = ResponseUtils.fillInDefaultValues(actionResponseRecordTemplate.schema(), dataWithoutDefault);
+      DataMap dataMap = actionResponseRecordTemplate.data();
+      dataMap = ResponseUtils.fillInDefaultValues(actionResponseRecordTemplate.schema(), dataMap);
       Object valueWithDefault = null;
       try
       {
-        valueWithDefault = (Object) value.getClass().getConstructor(DataMap.class).newInstance(dataWithDefault);
+        valueWithDefault = (Object) value.getClass().getConstructor(DataMap.class).newInstance(dataMap);
       }
       catch (Exception e)
       {
-        System.out.println("Happened " + e.getCause());
-        valueWithDefault = value;
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected error encountered. Can not create return value class " + value.getClass().getSimpleName()
+                + " with default filled  inside of an ActionResult returned by the resource method: "
+                + routingResult.getResourceMethod());
       }
-      @SuppressWarnings("unchecked")
-      FieldDef<Object> actionReturnFieldDef =
-          (FieldDef<Object>) routingResult.getResourceMethod().getActionReturnFieldDef();
-      final ActionResponse<?> actionResponse =
-          new ActionResponse<>(valueWithDefault, actionReturnFieldDef, actionReturnRecordDataSchema);
-      return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(status, actionResponse), headers, cookies);
+      actionResponseValue = valueWithDefault;
     }
     else
     {
-      @SuppressWarnings("unchecked")
-      FieldDef<Object> actionReturnFieldDef =
-          (FieldDef<Object>) routingResult.getResourceMethod().getActionReturnFieldDef();
-      final ActionResponse<?> actionResponse =
-          new ActionResponse<>(value, actionReturnFieldDef, actionReturnRecordDataSchema);
-      return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(status, actionResponse), headers, cookies);
+      actionResponseValue = value;
     }
+    @SuppressWarnings("unchecked")
+    FieldDef<Object> actionReturnFieldDef =
+        (FieldDef<Object>) routingResult.getResourceMethod().getActionReturnFieldDef();
+    final ActionResponse<?> actionResponse =
+        new ActionResponse<>(actionResponseValue, actionReturnFieldDef, actionReturnRecordDataSchema);
+    return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(status, actionResponse), headers, cookies);
   }
 }
