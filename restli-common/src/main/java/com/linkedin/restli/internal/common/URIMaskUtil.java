@@ -149,7 +149,7 @@ public class URIMaskUtil
         state = ParseState.PARSE_FIELDS;
         break;
       case DESCEND:
-        if (toparse.charAt(index) != ':' || toparse.charAt(index + 1) != '(')
+        if (toparse.charAt(index) != ':' || index + 1 == toparse.length() || toparse.charAt(index + 1) != '(')
         {
           throw new IllegalStateException("Internal Error parsing mask: unexpected parse buffer '"
               + toparse.substring(index) + "' while descending");
