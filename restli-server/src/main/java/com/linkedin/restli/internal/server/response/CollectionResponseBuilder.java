@@ -153,8 +153,7 @@ public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? e
         throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
             "Unexpected null encountered. Null element inside of a List returned by the resource method: " + routingResult.getResourceMethod());
       }
-      processedElements.add(new AnyRecord(RestUtils
-          .projectFields(entry.data(), resourceContext.getProjectionMode(), resourceContext.getProjectionMask())));
+      processedElements.add(new AnyRecord(RestUtils.projectFields(entry.data(), resourceContext)));
     }
 
     //Now for custom metadata
@@ -163,7 +162,7 @@ public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? e
     {
       projectedCustomMetadata = new AnyRecord(RestUtils
           .projectFields(customMetadata.data(), resourceContext.getMetadataProjectionMode(),
-              resourceContext.getMetadataProjectionMask()));
+              resourceContext.getMetadataProjectionMask(), resourceContext.getAlwaysProjectedFields()));
     }
     else
     {

@@ -2,8 +2,11 @@ package com.linkedin.restli.server.config;
 
 import com.linkedin.parseq.function.Function1;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Class holding some common coercers (Long, Integer, Boolean) for transforming config values to their desired data type.
@@ -106,11 +109,23 @@ public class ConfigValueCoercers
     throw failCoercion(val, Boolean.class);
   };
 
+  public static final Function1<Object, List<String>> COMMA_SEPARATED_STRINGS = val ->
+  {
+    if (val instanceof String)
+    {
+      String trimmed = ((String)val).trim();
+      return Arrays.stream(trimmed.split(",")).map(String::trim).collect(Collectors.toList());
+    }
+    throw new Exception("Could not convert object to List<String>. Object is instance of: "
+        + val.getClass().getName() + ", value: " + val.toString() + ". Expected a comma separated string.");
+  };
+
   /**
    * Determine whether the given value String indicates a hex number, i.e. needs to be
    * passed into <code>Long.decode</code> instead of <code>Long.valueOf</code> (etc).
    */
-  private static boolean isHexNumber(String value) {
+  private static boolean isHexNumber(String value)
+  {
     int index = (value.startsWith("-") ? 1 : 0);
     return (value.startsWith("0x", index) || value.startsWith("0X", index) || value.startsWith("#", index));
   }
