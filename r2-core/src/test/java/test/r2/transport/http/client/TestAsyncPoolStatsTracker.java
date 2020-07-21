@@ -19,7 +19,7 @@
  */
 package test.r2.transport.http.client;
 
-import com.linkedin.common.stats.LongTracking;
+import com.linkedin.common.stats.LongTrackingWithQuantile;
 import com.linkedin.r2.transport.http.client.AsyncPoolLifecycleStats;
 import com.linkedin.r2.transport.http.client.AsyncPoolStats;
 import com.linkedin.r2.transport.http.client.AsyncPoolStatsTracker;
@@ -79,7 +79,7 @@ public class TestAsyncPoolStatsTracker
         () -> CHECKED_OUT,
         () -> IDLE_SIZE,
         CLOCK,
-        new LongTracking());
+        new LongTrackingWithQuantile());
 
     AsyncPoolStats stats = tracker.getStats();
     Assert.assertSame(stats.getLifecycleStats(), LIFECYCLE_STATS);
@@ -113,7 +113,7 @@ public class TestAsyncPoolStatsTracker
         () -> CHECKED_OUT,
         () -> IDLE_SIZE,
         CLOCK,
-        new LongTracking());
+        new LongTrackingWithQuantile());
 
     IntStream.range(0, DESTROY_ERROR_INCREMENTS).forEach(i -> tracker.incrementDestroyErrors());
     IntStream.range(0, DESTROY_INCREMENTS).forEach(i -> tracker.incrementDestroyed());
@@ -150,7 +150,7 @@ public class TestAsyncPoolStatsTracker
         () -> _checkedOut,
         () -> IDLE_SIZE,
         clock,
-        new LongTracking());
+        new LongTrackingWithQuantile());
 
     // Samples the max values
     tracker.sampleMaxPoolSize();
@@ -190,7 +190,7 @@ public class TestAsyncPoolStatsTracker
         () -> _checkedOut,
         () -> IDLE_SIZE,
         clock,
-        new LongTracking());
+        new LongTrackingWithQuantile());
 
     // Samples the max values
     tracker.sampleMaxPoolSize();
@@ -230,7 +230,7 @@ public class TestAsyncPoolStatsTracker
         () -> _checkedOut,
         () -> IDLE_SIZE,
         CLOCK,
-        new LongTracking());
+        new LongTrackingWithQuantile());
 
     for (int i = 0; i < 10; i++)
     {

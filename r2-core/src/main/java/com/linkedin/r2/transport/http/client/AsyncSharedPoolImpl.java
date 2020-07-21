@@ -23,7 +23,7 @@ package com.linkedin.r2.transport.http.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.SimpleCallback;
 import com.linkedin.common.stats.LongTracker;
-import com.linkedin.common.stats.LongTracking;
+import com.linkedin.common.stats.LongTrackingWithQuantile;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.SizeLimitExceededException;
 import com.linkedin.r2.util.Cancellable;
@@ -103,7 +103,7 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
       RateLimiter rateLimiter, long timeoutMills, int maxWaiters)
   {
     this(name, lifecycle, scheduler, rateLimiter, timeoutMills, false, maxWaiters,
-        SystemClock.instance(), new LongTracking());
+        SystemClock.instance(), new LongTrackingWithQuantile());
   }
 
   public AsyncSharedPoolImpl(String name, AsyncPool.Lifecycle<T> lifecycle, ScheduledExecutorService scheduler,

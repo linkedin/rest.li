@@ -19,6 +19,9 @@
  */
 package com.linkedin.util.degrader;
 
+import com.linkedin.common.stats.LongTracking;
+import com.linkedin.common.stats.LongTracker;
+import com.linkedin.common.stats.LongTrackingWithQuantile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,7 +31,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.linkedin.common.stats.LongStats;
-import com.linkedin.common.stats.LongTracking;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 
@@ -439,13 +441,13 @@ public class CallTrackerImpl implements CallTracker
     private int _callStartCount;
     private int _errorCount;
     private int _concurrentMax;
-    private final LongTracking _callTimeTracking;
+    private final LongTracker _callTimeTracking;
     //this map is used to store the number of specific errors that happened in one interval only
     private final Map<ErrorType, Integer> _errorTypeCounts;
 
     private Tracker()
     {
-      _callTimeTracking = new LongTracking();
+      _callTimeTracking = new LongTrackingWithQuantile();
       _errorTypeCounts = new HashMap<ErrorType, Integer>();
       reset();
     }

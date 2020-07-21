@@ -22,7 +22,7 @@ package test.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.stats.LongTracking;
+import com.linkedin.common.stats.LongTrackingWithQuantile;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.common.util.None;
@@ -342,7 +342,7 @@ public class TestAsyncPool
     final int MIN_SIZE = 0;
     final int MAX_WAITER_SIZE = Integer.MAX_VALUE;
     final SettableClock clock = new SettableClock();
-    final LongTracking waitTimeTracker = new LongTracking();
+    final LongTrackingWithQuantile waitTimeTracker = new LongTrackingWithQuantile();
 
     final int GET = 20;
     final int PUT_GOOD = 2;
@@ -726,7 +726,7 @@ public class TestAsyncPool
         clockedExecutor,
         Integer.MAX_VALUE,
         AsyncPoolImpl.Strategy.MRU,
-        0, rateLimiter, clockedExecutor, new LongTracking()
+        0, rateLimiter, clockedExecutor, new LongTrackingWithQuantile()
     );
 
     pool.start();
@@ -804,7 +804,7 @@ public class TestAsyncPool
         clockedExecutor,
         Integer.MAX_VALUE,
         AsyncPoolImpl.Strategy.MRU,
-        0, rateLimiter, clockedExecutor, new LongTracking()
+        0, rateLimiter, clockedExecutor, new LongTrackingWithQuantile()
     );
 
     pool.start();
