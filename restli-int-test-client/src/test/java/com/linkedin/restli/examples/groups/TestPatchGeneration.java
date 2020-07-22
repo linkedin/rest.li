@@ -116,7 +116,7 @@ public class TestPatchGeneration
     //"id,location:(longitude,latitude),name";
     final String actualEncodedMaskURI = URIMaskUtil.encodeMaskForURI(mask);
     //We convert back into a MaskTree so we can compare DataMaps because the URI could be in any order
-    final MaskTree generatedMaskTree = URIMaskUtil.decodeMaskUriFormat(new StringBuilder(actualEncodedMaskURI));
+    final MaskTree generatedMaskTree = URIMaskUtil.decodeMaskUriFormat(actualEncodedMaskURI);
     Assert.assertEquals(generatedMaskTree.getDataMap(), idLocationNameMap, "The actual encoded Mask URI should be correct");
   }
 

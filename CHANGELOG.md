@@ -13,7 +13,10 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.4.5] - 2020-07-21
 - Update ExtensionSchemaValidation task to check extension schema annotation (#254)
+- Improve performance of uri mask encoding and decoding (#350)
 
 ## [29.4.4] - 2020-07-02
 - Disable string interning in Jackson JSON since it causes GC issues (#346)
@@ -4553,7 +4556,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.5...master
+[29.4.5]: https://github.com/linkedin/rest.li/compare/v29.4.4...v29.4.5
 [29.4.4]: https://github.com/linkedin/rest.li/compare/v29.4.3...v29.4.4
 [29.4.3]: https://github.com/linkedin/rest.li/compare/v29.4.2...v29.4.3
 [29.4.2]: https://github.com/linkedin/rest.li/compare/v29.4.1...v29.4.2

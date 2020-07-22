@@ -14,9 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $id$
- */
 package com.linkedin.data.transform.filter;
 
 public class FilterConstants

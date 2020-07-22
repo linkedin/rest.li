@@ -155,7 +155,7 @@ public class ArgumentUtils
   {
     try
     {
-      return URIMaskUtil.decodeMaskUriFormat(new StringBuilder(uriParam));
+      return URIMaskUtil.decodeMaskUriFormat(uriParam);
     }
     catch (IllegalMaskException e)
     {

@@ -58,53 +58,40 @@ public class URIParamUtils
    * For projection parameters stored in dataMap, this function handles both cases when the value is a original string
    * or a structured {@link DataMap}
    *
-   * @param dataMap the {@link DataMap} which contains projection parameters as keys
+   * @param dataMap the {@link DataMap} which represents the query parameters
    * @return a {@link Map} from query param key to value in encoded string
    */
   private static Map<String, String> dataMapToQueryParams(DataMap dataMap)
   {
-    final Map<String, String> result = encodeDataMapParameters(dataMap);
-
-    // Serialize the projection MaskTree values
-    for (final String parameterName : RestConstants.PROJECTION_PARAMETERS)
+    Map<String, String> flattenedMap = new HashMap<>();
+    for (Map.Entry<String, Object> entry : dataMap.entrySet())
     {
-      if (dataMap.containsKey(parameterName))
+      // Serialize the projection MaskTree values
+      if (RestConstants.PROJECTION_PARAMETERS.contains(entry.getKey()))
       {
-        Object projectionParameters = dataMap.get(parameterName);
+        Object projectionParameters = entry.getValue();
         if (projectionParameters instanceof String)
         {
-          result.put(parameterName, (String) projectionParameters);
+          flattenedMap.put(entry.getKey(), (String) projectionParameters);
         }
         else if (projectionParameters instanceof DataMap)
         {
-          result.put(parameterName, URIMaskUtil.encodeMaskForURI((DataMap) projectionParameters));
+          flattenedMap.put(entry.getKey(), URIMaskUtil.encodeMaskForURI((DataMap) projectionParameters));
         }
         else
         {
           throw new IllegalArgumentException("Invalid projection field data type");
         }
       }
-    }
+      else
+      {
 
-    return result;
-  }
-
-  /**
-   * Encode the given {@link DataMap} as a map from query param to value
-   *
-   * @param dataMap the {@link com.linkedin.data.DataMap} to be encoded
-   * @return a {@link Map} from query param key to value
-   */
-  private static Map<String, String> encodeDataMapParameters(DataMap dataMap)
-  {
-    Map<String, String> flattenedMap = new HashMap<String, String>();
-    for (Map.Entry<String, Object> entry : dataMap.entrySet())
-    {
-      String flattenedValue = encodeElement(entry.getValue(),
-                                            URLEscaper.Escaping.URL_ESCAPING,
-                                            UriComponent.Type.QUERY_PARAM);
-      String encodedKey = encodeString(entry.getKey(), URLEscaper.Escaping.URL_ESCAPING, UriComponent.Type.QUERY_PARAM);
-      flattenedMap.put(encodedKey, flattenedValue);
+        String flattenedValue = encodeElement(entry.getValue(),
+                                              URLEscaper.Escaping.URL_ESCAPING,
+                                              UriComponent.Type.QUERY_PARAM);
+        String encodedKey = encodeString(entry.getKey(), URLEscaper.Escaping.URL_ESCAPING, UriComponent.Type.QUERY_PARAM);
+        flattenedMap.put(encodedKey, flattenedValue);
+      }
     }
     return flattenedMap;
   }
