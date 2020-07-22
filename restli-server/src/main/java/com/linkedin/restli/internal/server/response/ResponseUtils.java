@@ -19,9 +19,11 @@ package com.linkedin.restli.internal.server.response;
 
 import com.linkedin.data.ByteString;
 import com.linkedin.data.Data;
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
+import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
@@ -53,6 +55,7 @@ import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.util.Map;
 import javax.activation.MimeTypeParseException;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,94 +96,96 @@ public class ResponseUtils
     }
   }
 
-  /**
-   * Used to fill in the default field for a data record if the record is having the field but not "complete"
-   * Basically, a simplified psuedo code is:
-   *  FillInDefault(schema, dataMap):
-   *   for field in schema.fields:
-   *     fieldSchema = field.getSchema()
-   *     if fieldSchema instanceOf RecordDataTemplate:
-   *       if data.contains(field):
-   *         FillInDefault(fieldSchema, data.get(field))
-   *       else:
-   *         if field.hasDefaultValue():
-   *           DataMap newData = field.getDefault()
-   *           FillInDefault(fieldSchema, newData)
-   *       data.put(field, newData)
-   *     else if fieldSchema instanceOf TypeRefDataTemplate:
-   *       FillIndFefault(schema.deReference(), data)
-   *     else:
-   *       if !data.contains(field) && field.hasDefaultValue():
-   *         data.put(field, field.getDefaultValue())
-   * @param dataSchema -> a schema of the corresponding dataMap
-   * @param dataMap -> a dataMap that needs to be filling the default
-   * @return a new different data map that contains original data plus the default values
-   */
-  public static DataMap fillInDefaultValues(DataSchema dataSchema, DataMap dataMap)
+  public static DataMap fillInDefaultOnRecord(RecordDataSchema schema, DataMap dataMap)
   {
-    DataMap dataDefaultFilled;
-    if (dataMap != null)
+    DataMap dataWithDefault = new DataMap(DataMapBuilder.getOptimumHashMapCapacityFromSize(dataMap.size()));
+    dataWithDefault.putAll(dataMap);
+    for (RecordDataSchema.Field field : schema.getFields())
     {
-      dataDefaultFilled = new DataMap(DataMapBuilder.getOptimumHashMapCapacityFromSize(dataMap.size()));
-      dataDefaultFilled.putAll(dataMap);
+      DataSchema dataFieldSchema = field.getType();
+      if (dataFieldSchema.getType() == DataSchema.Type.RECORD)
+      {
+        if (dataMap.containsKey(field.getName()) || field.getDefault() != null)
+        {
+          DataMap originalData = dataMap.containsKey(field.getName()) ? (DataMap) dataMap.get(field.getName()) : (DataMap) field.getDefault();
+          dataWithDefault.put(field.getName(), fillInDefaultOnRecord((RecordDataSchema) dataFieldSchema, originalData));
+        }
+      }
+      else if (dataFieldSchema.getType() == DataSchema.Type.ARRAY)
+      {
+        if (dataMap.containsKey(field.getName()) || field.getDefault() != null)
+        {
+          DataList originalData = dataMap.containsKey(field.getName()) ? (DataList) dataMap.get(field.getName()) : (DataList) field.getDefault();
+          dataWithDefault.put(field.getName(), fillInDefaultOnArray((ArrayDataSchema) dataFieldSchema, originalData));
+        }
+      }
+      else if (dataFieldSchema.getType() == DataSchema.Type.TYPEREF)
+      {
+        if (dataMap.containsKey(field.getName()) || field.getDefault() != null)
+        {
+          Object originalData = dataMap.containsKey(field.getName()) ? dataMap.get(field.getName()) : field.getDefault();
+          dataWithDefault.put(field.getName(), fillInDefaultOnTyperef((TyperefDataSchema) dataFieldSchema, originalData));
+        }
+      }
+      else if (!dataWithDefault.containsKey(field.getName()) && field.getDefault() != null)
+      {
+        dataWithDefault.put(field.getName(), field.getDefault());
+      }
+    }
+    return dataWithDefault;
+  }
+
+  public static DataList fillInDefaultOnArray(ArrayDataSchema schema, DataList dataList)
+  {
+    DataSchema itemDataSchema = schema.getItems();
+    DataList dataListWithDefault = new DataList();
+    for (Object o : dataList)
+    {
+      if (itemDataSchema.getType() == DataSchema.Type.ARRAY)
+      {
+        dataListWithDefault.add(fillInDefaultOnArray((ArrayDataSchema) itemDataSchema, (DataList) o));
+      }
+      else if (itemDataSchema.getType() == DataSchema.Type.RECORD)
+      {
+        dataListWithDefault.add(fillInDefaultOnRecord((RecordDataSchema) itemDataSchema, (DataMap) o));
+      }
+      else if (itemDataSchema.getType() == DataSchema.Type.TYPEREF)
+      {
+        dataListWithDefault.add(fillInDefaultOnTyperef((TyperefDataSchema) itemDataSchema, o));
+      }
+      else
+      {
+        dataListWithDefault.add(o);
+      }
+    }
+    return dataListWithDefault;
+  }
+
+  public static Object fillInDefaultOnTyperef(TyperefDataSchema typerefDataSchema, Object data)
+  {
+    DataSchema dataSchema = typerefDataSchema.getDereferencedDataSchema();
+    if (dataSchema.getType() == DataSchema.Type.RECORD)
+    {
+      DataMap dataMap = (DataMap) data;
+      return (Object) fillInDefaultOnRecord((RecordDataSchema)dataSchema, dataMap);
+    }
+    else if (dataSchema.getType() == DataSchema.Type.TYPEREF)
+    {
+      return fillInDefaultOnTyperef((TyperefDataSchema) dataSchema, data);
     }
     else
     {
-      dataDefaultFilled = new DataMap();
+      return data;
     }
+  }
 
-    if (dataSchema instanceof RecordDataSchema)
+  public static DataMap fillInDefaultValues(DataSchema dataSchema, DataMap dataMap)
+  {
+    if (dataSchema.getType() == DataSchema.Type.RECORD)
     {
-      RecordDataSchema recordDataSchema = (RecordDataSchema) dataSchema;
-      for (RecordDataSchema.Field field : recordDataSchema.getFields())
-      {
-        DataSchema fieldSchema = field.getType();
-        if (fieldSchema instanceof RecordDataSchema)
-        {
-          if (dataDefaultFilled.containsKey(field.getName()))
-          {
-            DataMap fieldDataWithDefault = fillInDefaultValues(fieldSchema, (DataMap) dataDefaultFilled.get(field.getName()));
-            dataDefaultFilled.put(field.getName(), fieldDataWithDefault);
-          }
-          else if (field.getDefault() != null)
-          {
-            DataMap fieldDataWithDefault = fillInDefaultValues(fieldSchema, (DataMap) field.getDefault());
-            dataDefaultFilled.put(field.getName(), fieldDataWithDefault);
-          }
-        }
-        else if (fieldSchema instanceof TyperefDataSchema)
-        {
-          TyperefDataSchema typerefDataSchema = (TyperefDataSchema) fieldSchema;
-          DataSchema dereferencedSchema = typerefDataSchema.getDereferencedDataSchema();
-          if (!dataDefaultFilled.containsKey(field.getName()))
-          {
-            if (dereferencedSchema instanceof RecordDataSchema)
-            {
-              DataMap fieldDataMapWithDefault = fillInDefaultValues(fieldSchema, null);
-              if (fieldDataMapWithDefault.size() > 0)
-              {
-                dataDefaultFilled.put(field.getName(), fieldDataMapWithDefault);
-              }
-            }
-            else
-            {
-              if (field.getDefault() != null)
-              {
-                dataDefaultFilled.put(field.getName(), field.getDefault());
-              }
-            }
-          }
-        }
-        else // primitive | complex data schemas of this field in the record
-        {
-          if (!dataDefaultFilled.containsKey(field.getName()) && field.getDefault() != null)
-          {
-            dataDefaultFilled.put(field.getName(), field.getDefault());
-          }
-        }
-      }
+      return fillInDefaultOnRecord((RecordDataSchema) dataSchema, dataMap);
     }
-    return dataDefaultFilled;
+    return dataMap;
   }
 
   public static RestResponse buildResponse(RoutingResult routingResult, RestLiResponse restLiResponse)

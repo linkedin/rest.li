@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add feature for client controlled feature to add/patch default values in return records
 
 ## [29.5.6] - 2020-08-21
 - Add a constructor for DataSchemaParser, which is able to pass ExtensionsDataSchemaResolver to the DataSchemaParser to parse schemas from both extensions and pegasus directories.

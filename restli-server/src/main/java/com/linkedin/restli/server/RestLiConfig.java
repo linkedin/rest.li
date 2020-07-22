@@ -577,12 +577,18 @@ public class RestLiConfig
 
   /**
    * Get/Set for filling default values in restli response
+   * check config to see if the data in result should fill in default in fields
+   * @return boolean
    */
   public boolean shouldFillInDefaultValues()
   {
     return _fillInDefaultValues;
   }
 
+  /**
+   * set the flag to decide whether to fill in default values in result record's fields
+   * @param fillInDefaultValues a boolean for the flag
+   */
   public void setFillInDefaultValues(boolean fillInDefaultValues)
   {
     _fillInDefaultValues = fillInDefaultValues;

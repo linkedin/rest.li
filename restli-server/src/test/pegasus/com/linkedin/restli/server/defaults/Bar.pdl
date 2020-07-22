@@ -3,5 +3,6 @@ namespace com.linkedin.restli.server.defaults
 record Bar {
   b1: Foo = {"f2": 10},
   b2: optional Foo,
-  b3: Foo
+  b3: Foo,
+  b4: array[Foo]
 }

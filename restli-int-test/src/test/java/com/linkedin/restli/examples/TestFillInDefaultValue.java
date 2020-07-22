@@ -72,6 +72,10 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
     DataMap defaultInArray = new DataMap();
     defaultInArray.put("intWithDefault", 0);
     defaultInArray.put("intWithoutDefault", 0);
+    DataMap defaultInArrayRecord = new DataMap();
+    defaultInArrayRecord.put("nameWithoutDefault", "b");
+    defaultInArrayRecord.put("nameWithDefault", "a");
+    defaultInArray.put("lowLevelRecordWithDefault", defaultInArrayRecord);
     DataList defaultArrayField = new DataList();
     defaultArrayField.add(defaultInArray);
     expectedTestData.put("testFieldArray", defaultArrayField);
@@ -194,7 +198,6 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
     List<HighLevelRecordWithDefault> result = getClient().sendRequest(request).getResponse().getEntity().getElements();
     Set<HighLevelRecordWithDefault> actual = new HashSet<>(result);
     Set<HighLevelRecordWithDefault> expect = new HashSet<>();
-    System.out.println(result);
     expect.add(new HighLevelRecordWithDefault(expectedTestData).setNoDefaultFieldA(fieldA));
     Assert.assertEquals(actual, expect);
   }

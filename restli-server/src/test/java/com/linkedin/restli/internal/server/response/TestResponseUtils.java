@@ -23,6 +23,7 @@ import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.server.defaults.Foo;
 import java.io.File;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
@@ -112,6 +113,27 @@ public class TestResponseUtils
     case5Expect.put("b1", case5ExpectB1);
     case5Expect.put("b3", case5ExpectB3);
 
+    // case 6
+    DataMap case6Input = new DataMap(case5Input);
+    DataList dataList = new DataList();
+    DataMap case6Foo1 = new DataMap();
+    case6Foo1.put("f2", 2);
+    dataList.add(case6Foo1);
+    DataMap case6Foo2 = new DataMap();
+    case6Foo2.put("f2", 3);
+    dataList.add(case6Foo2);
+    case6Input.put("b4", dataList);
+    DataMap case6Expect = new DataMap(case5Expect);
+    DataList case6B4 = new DataList();
+    DataMap c6b4expect1 = new DataMap();
+    c6b4expect1.put("f1", 5);
+    c6b4expect1.put("f2", 2);
+    case6B4.add(c6b4expect1);
+    DataMap c6b4expect2 = new DataMap();
+    c6b4expect2.put("f1", 5);
+    c6b4expect2.put("f2", 3);
+    case6B4.add(c6b4expect2);
+    case6Expect.put("b4", case6B4);
 
     // Each test case has 3 elements:
     // Index 0: PDL file name
@@ -121,33 +143,44 @@ public class TestResponseUtils
         {
             "RecordA.pdl",
             case1Input,
-            case1Expect
+            case1Expect,
+            "A basic case where fields in the record has default and not"
         },
         {
             "RecordB.pdl",
             case2Input,
-            case2Expect
+            case2Expect,
+            "A case where array and map with default are tested"
         },
         {
             "RecordC.pdl",
             case3Input,
-            case3Expect
+            case3Expect,
+            "Test case where recursive filling is tested, in RecordC's field, there are RecordD and TypeRef"
         },
         {
             "Bar.pdl",
             case4Input,
-            case4Expect
+            case4Expect,
+            "Test case regarding patching default field for record that exists, b2 field exists and its field f1 = 5 shall be filled"
         },
         {
             "Bar.pdl",
             case5Input,
-            case5Expect
+            case5Expect,
+            "Test case regarding b1 is not in the input data but b1 has provided default in the schema"
+        },
+        {
+            "Bar.pdl",
+            case6Input,
+            case6Expect,
+            "Test case regarding the filling algorithm can deal array of record"
         }
     };
   }
 
   @Test(dataProvider = "default_serialization")
-  public void testGetAbsentFieldsDefaultValues(String filename, DataMap data, DataMap expected)
+  public void testGetAbsentFieldsDefaultValues(String filename, DataMap data, DataMap expected, String context)
   {
     try
     {
@@ -156,7 +189,9 @@ public class TestResponseUtils
       String schemaFileText = Files.readFile(new File(pegasusDir + FS + filename));
       DataSchema schema = DataTemplateUtil.parseSchema(schemaFileText, schemaResolver, SchemaFormatType.PDL);
       DataMap dataMapToFillDefault = ResponseUtils.fillInDefaultValues(schema, data);
-      Assert.assertEquals(dataMapToFillDefault, expected);
+      System.out.println("Expected " + expected.toString());
+      System.out.println("Actual " + dataMapToFillDefault.toString());
+      Assert.assertEquals(dataMapToFillDefault, expected, context);
     }
     catch (Exception e)
     {
