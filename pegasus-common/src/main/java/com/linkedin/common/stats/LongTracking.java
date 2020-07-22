@@ -1,5 +1,11 @@
 package com.linkedin.common.stats;
 
+/**
+ * Tracks count, average, standard deviation, minimum and maximum
+ * in a memory-efficient way.
+ *
+ * If percentile information is required, use {@link LongTrackingWithPercentile}.
+ */
 public class LongTracking implements LongTracker
 {
   private int                 _count;

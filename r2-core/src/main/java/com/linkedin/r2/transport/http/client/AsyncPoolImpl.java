@@ -21,7 +21,7 @@
 package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.stats.LongTracker;
-import com.linkedin.common.stats.LongTrackingWithQuantile;
+import com.linkedin.common.stats.LongTrackingWithPercentile;
 import com.linkedin.r2.util.SingleTimeout;
 import com.linkedin.util.ArgumentUtil;
 import com.linkedin.util.clock.Clock;
@@ -160,7 +160,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       RateLimiter rateLimiter)
   {
     this(name, lifecycle, maxSize, idleTimeout, timeoutExecutor,
-        maxWaiters, strategy, minSize, rateLimiter, SystemClock.instance(), new LongTrackingWithQuantile());
+        maxWaiters, strategy, minSize, rateLimiter, SystemClock.instance(), new LongTrackingWithPercentile());
   }
 
   @Deprecated

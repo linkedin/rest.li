@@ -21,7 +21,6 @@ package com.linkedin.common.stats;
 
 import static org.testng.Assert.assertEquals;
 
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -34,13 +33,13 @@ import org.testng.annotations.Test;
 public class TestLongTrackerAndLongStats
 {
   LongTracking _tracking;
-  LongTrackingWithQuantile _trackingWithQuantile;
+  LongTrackingWithPercentile _trackingWithPercentile;
 
   @BeforeMethod
   protected void setUp() throws Exception
   {
     _tracking = new LongTracking();
-    _trackingWithQuantile = new LongTrackingWithQuantile();
+    _trackingWithPercentile = new LongTrackingWithPercentile();
   }
 
   @Test
@@ -55,7 +54,7 @@ public class TestLongTrackerAndLongStats
     for (long i = begin; i < end; ++i)
     {
       _tracking.addValue(i);
-      _trackingWithQuantile.addValue(i);
+      _trackingWithPercentile.addValue(i);
       sum += i;
       sumSquares += i * i;
     }
@@ -64,7 +63,7 @@ public class TestLongTrackerAndLongStats
     double stddev = Math.sqrt(variance);
 
     LongStats stats = _tracking.getStats();
-    LongStats statsWithQuantile = _trackingWithQuantile.getStats();
+    LongStats statsWithPercentile = _trackingWithPercentile.getStats();
 
     assertEquals(stats.getCount(), count, "Count is incorrect");
     assertEquals(average, stats.getAverage(), 0.0001, "Average is incorrect");
@@ -72,16 +71,16 @@ public class TestLongTrackerAndLongStats
     assertEquals(stats.getMinimum(), begin, "Minimum is incorrect");
     assertEquals(stats.getMaximum(), end - 1, "Maximum is incorrect");
 
-    assertEquals(statsWithQuantile.getCount(), count, "Count is incorrect");
-    assertEquals(average, statsWithQuantile.getAverage(), 0.0001, "Average is incorrect");
-    assertEquals(stddev, statsWithQuantile.getStandardDeviation(), 0.0001, "Standard deviation is incorrect");
-    assertEquals(statsWithQuantile.getMinimum(), begin, "Minimum is incorrect");
-    assertEquals(statsWithQuantile.getMaximum(), end - 1, "Maximum is incorrect");
+    assertEquals(statsWithPercentile.getCount(), count, "Count is incorrect");
+    assertEquals(average, statsWithPercentile.getAverage(), 0.0001, "Average is incorrect");
+    assertEquals(stddev, statsWithPercentile.getStandardDeviation(), 0.0001, "Standard deviation is incorrect");
+    assertEquals(statsWithPercentile.getMinimum(), begin, "Minimum is incorrect");
+    assertEquals(statsWithPercentile.getMaximum(), end - 1, "Maximum is incorrect");
 
-    assertEquals(begin + count * 0.50, statsWithQuantile.get50Pct(), 1000.0, "50 percentile is incorrect");
-    assertEquals(begin + count * 0.90, statsWithQuantile.get90Pct(), 1000.0, "90 percentile is incorrect");
-    assertEquals(begin + count * 0.95, statsWithQuantile.get95Pct(), 1000.0, "95 percentile is incorrect");
-    assertEquals(begin + count * 0.99, statsWithQuantile.get99Pct(), 1000.0, "99 percentile is incorrect");
+    assertEquals(begin + count * 0.50, statsWithPercentile.get50Pct(), 1000.0, "50 percentile is incorrect");
+    assertEquals(begin + count * 0.90, statsWithPercentile.get90Pct(), 1000.0, "90 percentile is incorrect");
+    assertEquals(begin + count * 0.95, statsWithPercentile.get95Pct(), 1000.0, "95 percentile is incorrect");
+    assertEquals(begin + count * 0.99, statsWithPercentile.get99Pct(), 1000.0, "99 percentile is incorrect");
   }
 
   @Test public void testDecreasingLinearly()
@@ -95,7 +94,7 @@ public class TestLongTrackerAndLongStats
     for (long i = begin; i > end; --i)
     {
       _tracking.addValue(i);
-      _trackingWithQuantile.addValue(i);
+      _trackingWithPercentile.addValue(i);
       sum += i;
       sumSquares += i * i;
     }
@@ -104,7 +103,7 @@ public class TestLongTrackerAndLongStats
     double stddev = Math.sqrt(variance);
 
     LongStats stats = _tracking.getStats();
-    LongStats statsWithQuantile = _trackingWithQuantile.getStats();
+    LongStats statsWithPercentile = _trackingWithPercentile.getStats();
 
     assertEquals(stats.getCount(), count, "Count is incorrect");
     assertEquals(average, stats.getAverage(), 0.0001, "Average is incorrect");
@@ -112,16 +111,16 @@ public class TestLongTrackerAndLongStats
     assertEquals(stats.getMinimum(), end + 1, "Minimum is incorrect");
     assertEquals(stats.getMaximum(), begin, "Maximum is incorrect");
 
-    assertEquals(statsWithQuantile.getCount(), count, "Count is incorrect");
-    assertEquals(average, statsWithQuantile.getAverage(), 0.0001, "Average is incorrect");
-    assertEquals(stddev, statsWithQuantile.getStandardDeviation(), 0.0001, "Standard deviation is incorrect");
-    assertEquals(statsWithQuantile.getMinimum(), end + 1, "Minimum is incorrect");
-    assertEquals(statsWithQuantile.getMaximum(), begin, "Maximum is incorrect");
+    assertEquals(statsWithPercentile.getCount(), count, "Count is incorrect");
+    assertEquals(average, statsWithPercentile.getAverage(), 0.0001, "Average is incorrect");
+    assertEquals(stddev, statsWithPercentile.getStandardDeviation(), 0.0001, "Standard deviation is incorrect");
+    assertEquals(statsWithPercentile.getMinimum(), end + 1, "Minimum is incorrect");
+    assertEquals(statsWithPercentile.getMaximum(), begin, "Maximum is incorrect");
 
-    assertEquals(end + count * 0.50, statsWithQuantile.get50Pct(), 1000.0, "50 percentile is incorrect");
-    assertEquals(end + count * 0.90, statsWithQuantile.get90Pct(), 1000.0, "90 percentile is incorrect");
-    assertEquals(end + count * 0.95, statsWithQuantile.get95Pct(), 1000.0, "95 percentile is incorrect");
-    assertEquals(end + count * 0.99, statsWithQuantile.get99Pct(), 1000.0, "99 percentile is incorrect");
+    assertEquals(end + count * 0.50, statsWithPercentile.get50Pct(), 1000.0, "50 percentile is incorrect");
+    assertEquals(end + count * 0.90, statsWithPercentile.get90Pct(), 1000.0, "90 percentile is incorrect");
+    assertEquals(end + count * 0.95, statsWithPercentile.get95Pct(), 1000.0, "95 percentile is incorrect");
+    assertEquals(end + count * 0.99, statsWithPercentile.get99Pct(), 1000.0, "99 percentile is incorrect");
   }
 
   @Test public void testRandom()
@@ -138,7 +137,7 @@ public class TestLongTrackerAndLongStats
     {
       long value = (long) (Math.random() * count) + begin;
       _tracking.addValue(value);
-      _trackingWithQuantile.addValue(value);
+      _trackingWithPercentile.addValue(value);
       sum += value;
       sumSquares += value * value;
       if (i == 0)
@@ -156,7 +155,7 @@ public class TestLongTrackerAndLongStats
     double stddev = Math.sqrt(variance);
 
     LongStats stats = _tracking.getStats();
-    LongStats statsWithQuantile = _trackingWithQuantile.getStats();
+    LongStats statsWithPercentile = _trackingWithPercentile.getStats();
 
     assertEquals(stats.getCount(), count, "Count is incorrect");
     assertEquals(average, stats.getAverage(), 0.0001, "Average is incorrect");
@@ -164,16 +163,16 @@ public class TestLongTrackerAndLongStats
     assertEquals(stats.getMinimum(), min, "Minimum is incorrect");
     assertEquals(stats.getMaximum(), max, "Maximum is incorrect");
 
-    assertEquals(statsWithQuantile.getCount(), count, "Count is incorrect");
-    assertEquals(average, statsWithQuantile.getAverage(), 0.0001, "Average is incorrect");
-    assertEquals(stddev, statsWithQuantile.getStandardDeviation(), 0.0001, "Standard deviation is incorrect");
-    assertEquals(statsWithQuantile.getMinimum(), min, "Minimum is incorrect");
-    assertEquals(statsWithQuantile.getMaximum(), max, "Maximum is incorrect");
+    assertEquals(statsWithPercentile.getCount(), count, "Count is incorrect");
+    assertEquals(average, statsWithPercentile.getAverage(), 0.0001, "Average is incorrect");
+    assertEquals(stddev, statsWithPercentile.getStandardDeviation(), 0.0001, "Standard deviation is incorrect");
+    assertEquals(statsWithPercentile.getMinimum(), min, "Minimum is incorrect");
+    assertEquals(statsWithPercentile.getMaximum(), max, "Maximum is incorrect");
 
-    assertEquals(begin + count * 0.50, statsWithQuantile.get50Pct(), tolerance, "50 percentile is incorrect");
-    assertEquals(begin + count * 0.90, statsWithQuantile.get90Pct(), tolerance, "90 percentile is incorrect");
-    assertEquals(begin + count * 0.95, statsWithQuantile.get95Pct(), tolerance, "95 percentile is incorrect");
-    assertEquals(begin + count * 0.99, statsWithQuantile.get99Pct(), tolerance, "99 percentile is incorrect");
+    assertEquals(begin + count * 0.50, statsWithPercentile.get50Pct(), tolerance, "50 percentile is incorrect");
+    assertEquals(begin + count * 0.90, statsWithPercentile.get90Pct(), tolerance, "90 percentile is incorrect");
+    assertEquals(begin + count * 0.95, statsWithPercentile.get95Pct(), tolerance, "95 percentile is incorrect");
+    assertEquals(begin + count * 0.99, statsWithPercentile.get99Pct(), tolerance, "99 percentile is incorrect");
   }
 
   @Test public void testConstant()
@@ -186,7 +185,7 @@ public class TestLongTrackerAndLongStats
     for (long i = 0; i < count; ++i)
     {
       _tracking.addValue(value);
-      _trackingWithQuantile.addValue(value);
+      _trackingWithPercentile.addValue(value);
       sum += value;
       sumSquares += value * value;
     }
@@ -195,7 +194,7 @@ public class TestLongTrackerAndLongStats
     double stddev = Math.sqrt(variance);
 
     LongStats stats = _tracking.getStats();
-    LongStats statsWithQuantile = _trackingWithQuantile.getStats();
+    LongStats statsWithPercentile = _trackingWithPercentile.getStats();
 
     assertEquals(stats.getCount(), count, "Count is incorrect");
     assertEquals(value, stats.getAverage(), 0.0001, "Average is incorrect");
@@ -203,25 +202,25 @@ public class TestLongTrackerAndLongStats
     assertEquals(stats.getMinimum(), value, "Minimum is incorrect");
     assertEquals(stats.getMaximum(), value, "Maximum is incorrect");
 
-    assertEquals(statsWithQuantile.getCount(), count, "Count is incorrect");
-    assertEquals(value, statsWithQuantile.getAverage(), 0.0001, "Average is incorrect");
-    assertEquals(0, statsWithQuantile.getStandardDeviation(), 0.0001, "Standard deviation is incorrect");
-    assertEquals(statsWithQuantile.getMinimum(), value, "Minimum is incorrect");
-    assertEquals(statsWithQuantile.getMaximum(), value, "Maximum is incorrect");
+    assertEquals(statsWithPercentile.getCount(), count, "Count is incorrect");
+    assertEquals(value, statsWithPercentile.getAverage(), 0.0001, "Average is incorrect");
+    assertEquals(0, statsWithPercentile.getStandardDeviation(), 0.0001, "Standard deviation is incorrect");
+    assertEquals(statsWithPercentile.getMinimum(), value, "Minimum is incorrect");
+    assertEquals(statsWithPercentile.getMaximum(), value, "Maximum is incorrect");
 
-    assertEquals(statsWithQuantile.get50Pct(), value, "50 percentile is incorrect");
-    assertEquals(statsWithQuantile.get90Pct(), value, "90 percentile is incorrect");
-    assertEquals(statsWithQuantile.get95Pct(), value, "95 percentile is incorrect");
-    assertEquals(statsWithQuantile.get99Pct(), value, "99 percentile is incorrect");
+    assertEquals(statsWithPercentile.get50Pct(), value, "50 percentile is incorrect");
+    assertEquals(statsWithPercentile.get90Pct(), value, "90 percentile is incorrect");
+    assertEquals(statsWithPercentile.get95Pct(), value, "95 percentile is incorrect");
+    assertEquals(statsWithPercentile.get99Pct(), value, "99 percentile is incorrect");
   }
 
   @Test public void testPerformance()
   {
     final int numInstances = 1000;
-    LongTrackingWithQuantile[] instances = new LongTrackingWithQuantile[numInstances];
+    LongTrackingWithPercentile[] instances = new LongTrackingWithPercentile[numInstances];
     for (int i = 0; i < numInstances; ++i)
     {
-      instances[i] = new LongTrackingWithQuantile();
+      instances[i] = new LongTrackingWithPercentile();
       for (int j = 0; j < instances[i].getMaxCapacity(); ++j)
       {
         long value = (long) (Math.random() * 10000);

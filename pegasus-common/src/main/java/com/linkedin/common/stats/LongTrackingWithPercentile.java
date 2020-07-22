@@ -3,7 +3,14 @@ package com.linkedin.common.stats;
 import java.util.Arrays;
 
 
-public class LongTrackingWithQuantile implements LongTracker
+/**
+ * Extends {@link LongTracking} with additional percentile information.
+ *
+ * To calculate the percentiles, all values added are recorded in a resizable
+ * long array buffer. For memory efficiency, use {@link LongTracking}
+ * when percentile information is nonessential.
+ */
+public class LongTrackingWithPercentile implements LongTracker
 {
   private static final int    DEFAULT_INITIAL_CAPACITY = 1000;
   private static final double DEFAULT_GROWTH_FACTOR    = 2.0;
@@ -21,12 +28,12 @@ public class LongTrackingWithQuantile implements LongTracker
 
   private final LongTracking _longTracking;
 
-  public LongTrackingWithQuantile()
+  public LongTrackingWithPercentile()
   {
     this(DEFAULT_MAX_CAPACITY, DEFAULT_INITIAL_CAPACITY, DEFAULT_GROWTH_FACTOR);
   }
 
-  public LongTrackingWithQuantile(final int maxCapacity, int initialCapacity, double growthFactor)
+  public LongTrackingWithPercentile(final int maxCapacity, int initialCapacity, double growthFactor)
   {
     if (initialCapacity > maxCapacity || initialCapacity <= 0)
     {

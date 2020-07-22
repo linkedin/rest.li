@@ -18,7 +18,7 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.stats.LongStats;
 import com.linkedin.common.stats.LongTracker;
-import com.linkedin.common.stats.LongTrackingWithQuantile;
+import com.linkedin.common.stats.LongTrackingWithPercentile;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.clock.Time;
@@ -93,7 +93,7 @@ public class AsyncPoolStatsTracker
         checkedOutSupplier,
         idleSizeSupplier,
         SystemClock.instance(),
-        new LongTrackingWithQuantile());
+        new LongTrackingWithPercentile());
   }
 
   public AsyncPoolStatsTracker(

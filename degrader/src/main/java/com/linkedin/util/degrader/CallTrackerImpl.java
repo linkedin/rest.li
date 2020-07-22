@@ -19,9 +19,8 @@
  */
 package com.linkedin.util.degrader;
 
-import com.linkedin.common.stats.LongTracking;
 import com.linkedin.common.stats.LongTracker;
-import com.linkedin.common.stats.LongTrackingWithQuantile;
+import com.linkedin.common.stats.LongTrackingWithPercentile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -447,7 +446,7 @@ public class CallTrackerImpl implements CallTracker
 
     private Tracker()
     {
-      _callTimeTracking = new LongTrackingWithQuantile();
+      _callTimeTracking = new LongTrackingWithPercentile();
       _errorTypeCounts = new HashMap<ErrorType, Integer>();
       reset();
     }
