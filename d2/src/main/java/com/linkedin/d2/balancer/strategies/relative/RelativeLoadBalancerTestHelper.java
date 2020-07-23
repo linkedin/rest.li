@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.strategies.relative;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
 
 
@@ -34,6 +35,6 @@ public class RelativeLoadBalancerTestHelper {
    */
   public static Map<URI, Integer> getPointsMap(RelativeLoadBalancerStrategy strategy, int partitionId)
   {
-    return strategy.getPointsMap(partitionId);
+    return Collections.unmodifiableMap(strategy.getPointsMap(partitionId));
   }
 }
