@@ -79,9 +79,15 @@ public class TrackerClientImpl implements TrackerClient
   public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
       Clock clock, long interval, Predicate<Integer> isErrorStatus)
   {
+    this(uri, partitionDataMap, transportClient, clock, interval, isErrorStatus, true);
+  }
+
+  public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
+      Clock clock, long interval, Predicate<Integer> isErrorStatus, boolean percentileTrackingEnabled)
+  {
     _uri = uri;
     _transportClient = transportClient;
-    _callTracker = new CallTrackerImpl(interval, clock);
+    _callTracker = new CallTrackerImpl(interval, clock, percentileTrackingEnabled);
     _isErrorStatus = isErrorStatus;
     _partitionData = Collections.unmodifiableMap(partitionDataMap);
     _latestCallStats = _callTracker.getCallStats();

@@ -20,7 +20,8 @@
 package com.linkedin.util.degrader;
 
 import com.linkedin.common.stats.LongTracker;
-import com.linkedin.common.stats.LongTrackingWithPercentile;
+import com.linkedin.common.stats.LongTracking;
+import com.linkedin.common.stats.SimpleLongTracking;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -84,13 +85,17 @@ public class CallTrackerImpl implements CallTracker
 
   public CallTrackerImpl(long interval, Clock clock)
   {
+    this(interval, clock, true);
+  }
+
+  public CallTrackerImpl(long interval, Clock clock, boolean percentileTrackingEnabled) {
     _clock = clock;
     _interval = interval;
     _lastStartTime = -1;
     _lastResetTime = _clock.currentTimeMillis();
     _errorTypeCountsTotal = new HashMap<ErrorType, Integer>();
     /* create trackers for each resolution */
-    _tracker = new Tracker();
+    _tracker = new Tracker(percentileTrackingEnabled);
   }
 
   @Override
@@ -444,9 +449,15 @@ public class CallTrackerImpl implements CallTracker
     //this map is used to store the number of specific errors that happened in one interval only
     private final Map<ErrorType, Integer> _errorTypeCounts;
 
-    private Tracker()
+    private Tracker(boolean percentileTrackingEnabled)
     {
-      _callTimeTracking = new LongTrackingWithPercentile();
+      if (percentileTrackingEnabled)
+      {
+        _callTimeTracking = new LongTracking();
+      } else
+      {
+        _callTimeTracking = new SimpleLongTracking();
+      }
       _errorTypeCounts = new HashMap<ErrorType, Integer>();
       reset();
     }

@@ -22,7 +22,7 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
-import com.linkedin.common.stats.LongTrackingWithPercentile;
+import com.linkedin.common.stats.LongTracking;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.filter.R2Constants;
@@ -721,7 +721,7 @@ public class TestHttpNettyClient
             Math.max(10, MAX_RATE_LIMITING_PERIOD / 32),
             _scheduler),
         new SettableClock(),
-        new LongTrackingWithPercentile()
+        new LongTracking()
      );
     HttpNettyClient client = new HttpNettyClient(address -> testPool, _scheduler, MAX_RATE_LIMITING_PERIOD * 2, 500);
 

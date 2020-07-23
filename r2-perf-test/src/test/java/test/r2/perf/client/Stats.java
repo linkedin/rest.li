@@ -22,7 +22,7 @@ package test.r2.perf.client;
 
 import com.linkedin.common.stats.LongStats;
 
-import com.linkedin.common.stats.LongTrackingWithPercentile;
+import com.linkedin.common.stats.LongTracking;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class Stats
   private final AtomicLong _error = new AtomicLong();
   private volatile Exception _lastError = null;
 
-  private final LongTrackingWithPercentile _latencyTracker = new LongTrackingWithPercentile();
+  private final LongTracking _latencyTracker = new LongTracking();
 
   public Stats(long startTime)
   {
