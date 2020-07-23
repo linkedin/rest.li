@@ -1,0 +1,18 @@
+{
+  "schema": "Bar.pdl",
+  "context": "Test even b2 is empty, algorithm will still fill all remain default to get ",
+  "input": {
+    "b1": {
+      "f1": 1
+    },
+    "b2": {}
+  },
+  "expect": {
+    "b1": {
+      "f1": 1
+    },
+    "b2": {
+      "f1": 5
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schema": "Bar.pdl",
+  "context": "Test any record in union's value will be filling default",
+  "input": {
+    "b6": {
+      "com.linkedin.restli.server.defaults.Foo": {
+        "f2": 11
+      }
+    }
+  },
+  "expect": {
+    "b1": {
+      "f1": 5,
+      "f2": 10
+    },
+    "b6": {
+      "com.linkedin.restli.server.defaults.Foo": {
+        "f2": 11,
+        "f1": 5
+      }
+    }
+  }
+}

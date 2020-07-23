@@ -18,18 +18,16 @@ package com.linkedin.restli.internal.server.response;
 
 
 import com.linkedin.data.ByteString;
-import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.PrimitiveDataSchema;
+import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
-import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.entitystream.EntityStream;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -53,6 +51,7 @@ import com.linkedin.restli.server.RestLiServiceException;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import javax.activation.MimeTypeParseException;
 import org.checkerframework.checker.units.qual.A;
@@ -127,9 +126,62 @@ public class ResponseUtils
           dataWithDefault.put(field.getName(), fillInDefaultOnTyperef((TyperefDataSchema) dataFieldSchema, originalData));
         }
       }
+      else if (dataFieldSchema.getType() == DataSchema.Type.MAP)
+      {
+        if (dataMap.containsKey(field.getName()) || field.getDefault() != null)
+        {
+          DataMap originalData = dataMap.containsKey(field.getName()) ? (DataMap) dataMap.get(field.getName()) : (DataMap) field.getDefault();
+          dataWithDefault.put(field.getName(), fillInDefaultOnMap((MapDataSchema) dataFieldSchema, originalData));
+        }
+      }
+      else if (dataFieldSchema.getType() == DataSchema.Type.UNION)
+      {
+        if (dataMap.containsKey(field.getName()) || field.getDefault() != null)
+        {
+          DataMap originalData = dataMap.containsKey(field.getName()) ? (DataMap) dataMap.get(field.getName()) : (DataMap) field.getDefault();
+          dataWithDefault.put(field.getName(), fillInDefaultOnUnion((UnionDataSchema) dataFieldSchema, originalData));
+        }
+      }
       else if (!dataWithDefault.containsKey(field.getName()) && field.getDefault() != null)
       {
         dataWithDefault.put(field.getName(), field.getDefault());
+      }
+    }
+    return dataWithDefault;
+  }
+
+  public static DataMap fillInDefaultOnMap(MapDataSchema schema, DataMap dataMap)
+  {
+    DataSchema valueSchema = schema.getValues();
+    DataMap dataWithDefault = new DataMap(dataMap);
+    for (Map.Entry<String, Object> entry : dataWithDefault.entrySet())
+    {
+      if (valueSchema.getType() == DataSchema.Type.ARRAY)
+      {
+        ArrayDataSchema arrayDataSchema = (ArrayDataSchema) valueSchema;
+        DataList dataList = (DataList) entry.getValue();
+        dataWithDefault.put(entry.getKey(), fillInDefaultOnArray(arrayDataSchema, dataList));
+      }
+      else if (valueSchema.getType() == DataSchema.Type.RECORD)
+      {
+        RecordDataSchema recordDataSchema = (RecordDataSchema) valueSchema;
+        DataMap valueDataMap = (DataMap) entry.getValue();
+        dataWithDefault.put(entry.getKey(), fillInDefaultOnRecord(recordDataSchema, valueDataMap));
+      }
+      else if (valueSchema.getType() == DataSchema.Type.TYPEREF)
+      {
+        TyperefDataSchema typerefDataSchema = (TyperefDataSchema) valueSchema;
+        dataWithDefault.put(entry.getKey(), fillInDefaultOnTyperef(typerefDataSchema, entry.getValue()));
+      }
+      else if (valueSchema.getType() == DataSchema.Type.MAP)
+      {
+        MapDataSchema mapDataSchema = (MapDataSchema) valueSchema;
+        dataWithDefault.put(entry.getKey(), fillInDefaultOnMap(mapDataSchema, (DataMap) entry.getValue()));
+      }
+      else if (valueSchema.getType() == DataSchema.Type.UNION)
+      {
+        UnionDataSchema unionDataSchema = (UnionDataSchema) valueSchema;
+        dataWithDefault.put(entry.getKey(), fillInDefaultOnUnion(unionDataSchema, (DataMap) entry.getValue()));
       }
     }
     return dataWithDefault;
@@ -153,12 +205,58 @@ public class ResponseUtils
       {
         dataListWithDefault.add(fillInDefaultOnTyperef((TyperefDataSchema) itemDataSchema, o));
       }
+      else if (itemDataSchema.getType() == DataSchema.Type.MAP)
+      {
+        dataListWithDefault.add(fillInDefaultOnMap((MapDataSchema) itemDataSchema, (DataMap) o));
+      }
+      else if (itemDataSchema.getType() == DataSchema.Type.UNION)
+      {
+        dataListWithDefault.add(fillInDefaultOnUnion((UnionDataSchema) itemDataSchema, (DataMap) o));
+      }
       else
       {
         dataListWithDefault.add(o);
       }
     }
     return dataListWithDefault;
+  }
+
+  public static DataMap fillInDefaultOnUnion(UnionDataSchema schema, DataMap dataMap)
+  {
+    DataMap dataWithDefault = new DataMap(dataMap);
+    if (dataWithDefault.size() == 1)
+    {
+      for (Map.Entry<String, Object> entry: dataWithDefault.entrySet())
+      {
+        String memberTypeKey = entry.getKey();
+        DataSchema memberDataSchema = schema.getTypeByMemberKey(memberTypeKey);
+        if (memberDataSchema == null)
+        {
+          return dataWithDefault;
+        }
+        else if (memberDataSchema.getType() == DataSchema.Type.RECORD)
+        {
+          RecordDataSchema recordSchema = (RecordDataSchema) memberDataSchema;
+          dataWithDefault.put(memberTypeKey, fillInDefaultOnRecord(recordSchema, (DataMap) entry.getValue()));
+        }
+        else if (memberDataSchema.getType() == DataSchema.Type.ARRAY)
+        {
+          ArrayDataSchema arraySchema = (ArrayDataSchema) memberDataSchema;
+          dataWithDefault.put(memberTypeKey, fillInDefaultOnArray(arraySchema, (DataList) entry.getValue()));
+        }
+        else if (memberDataSchema.getType() == DataSchema.Type.TYPEREF)
+        {
+          TyperefDataSchema typerefSchema = (TyperefDataSchema) memberDataSchema;
+          dataWithDefault.put(memberTypeKey, fillInDefaultOnTyperef(typerefSchema, entry.getValue()));
+        }
+        else if (memberDataSchema.getType() == DataSchema.Type.MAP)
+        {
+          MapDataSchema mapSchema = (MapDataSchema) memberDataSchema;
+          dataWithDefault.put(memberTypeKey, fillInDefaultOnMap(mapSchema, (DataMap) entry.getValue()));
+        }
+      }
+    }
+    return dataWithDefault;
   }
 
   public static Object fillInDefaultOnTyperef(TyperefDataSchema typerefDataSchema, Object data)
@@ -172,6 +270,18 @@ public class ResponseUtils
     else if (dataSchema.getType() == DataSchema.Type.TYPEREF)
     {
       return fillInDefaultOnTyperef((TyperefDataSchema) dataSchema, data);
+    }
+    else if (dataSchema.getType() == DataSchema.Type.MAP)
+    {
+      return fillInDefaultOnMap((MapDataSchema) dataSchema, (DataMap) data);
+    }
+    else if (dataSchema.getType() == DataSchema.Type.ARRAY)
+    {
+      return fillInDefaultOnArray((ArrayDataSchema) dataSchema, (DataList) data);
+    }
+    else if (dataSchema.getType() == DataSchema.Type.UNION)
+    {
+      return fillInDefaultOnUnion((UnionDataSchema) dataSchema, (DataMap) data);
     }
     else
     {
