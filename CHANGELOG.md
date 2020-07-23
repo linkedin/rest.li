@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Provide public method in the AbstractRequestBuilder for adding field projections (#353)
 
 ## [29.4.5] - 2020-07-21
 - Update ExtensionSchemaValidation task to check extension schema annotation (#254)
