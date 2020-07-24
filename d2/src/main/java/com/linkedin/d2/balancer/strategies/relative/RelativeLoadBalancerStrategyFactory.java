@@ -52,21 +52,24 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   public static final double DEFAULT_INITIAL_HEALTH_SCORE = 1.0;
   public static final double DEFAULT_SLOW_START_THRESHOLD = 0.0;
   public static final double DEFAULT_RELATIVE_LATENCY_LOW_THRESHOLD_FACTOR = 1.1;
+  public static final int DEFAULT_ERROR_STATUS_LOWER_BOUND = 500;
+  public static final int DEFAULT_ERROR_STATUS_UPPER_BOUND = 599;
   public static final HttpStatusCodeRangeArray DEFAULT_ERROR_STATUS_FILTER =
-      new HttpStatusCodeRangeArray(new HttpStatusCodeRange().setLowerBound(500).setUpperBound(599));
+      new HttpStatusCodeRangeArray(new HttpStatusCodeRange()
+          .setLowerBound(DEFAULT_ERROR_STATUS_LOWER_BOUND)
+          .setUpperBound(DEFAULT_ERROR_STATUS_UPPER_BOUND));
   public static final double DEFAULT_UP_STEP = 0.05;
   public static final double DEFAULT_DOWN_STEP = 0.2;
-  private static final double DEFAULT_RELATIVE_LATENCY_HIGH_THRESHOLD_FACTOR = 1.3;
-  private static final double DEFAULT_HIGH_ERROR_RATE = 1.1;
-  private static final double DEFAULT_LOW_ERROR_RATE = 1.1;
-  private static final long DEFAULT_EMITTING_INTERVAL_MS = 0L;
-  private static final boolean DEFAULT_ENABLE_FAST_RECOVERY = false;
+  public static final double DEFAULT_RELATIVE_LATENCY_HIGH_THRESHOLD_FACTOR = 1.3;
+  public static final double DEFAULT_HIGH_ERROR_RATE = 1.1;
+  public static final double DEFAULT_LOW_ERROR_RATE = 1.1;
+  public static final long DEFAULT_EMITTING_INTERVAL_MS = 0L;
+  public static final boolean DEFAULT_ENABLE_FAST_RECOVERY = false;
   // Default quarantine properties
   public static final double DEFAULT_QUARANTINE_MAX_PERCENT = 0.0;
-  private static final HttpMethod DEFAULT_HTTP_METHOD = HttpMethod.OPTIONS;
+  public static final HttpMethod DEFAULT_HTTP_METHOD = HttpMethod.OPTIONS;
   // Default ring properties
   public static final int DEFAULT_POINTS_PER_WEIGHT = 100;
-
 
   private final ScheduledExecutorService _executorService;
   private final HealthCheckOperations _healthCheckOperations;
