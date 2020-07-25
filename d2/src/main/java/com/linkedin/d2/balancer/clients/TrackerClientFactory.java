@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.clients;
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.HttpStatusCodeRange;
 import com.linkedin.d2.balancer.config.RelativeStrategyPropertiesConverter;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import java.net.URI;
 import java.util.List;
@@ -90,8 +91,11 @@ public class TrackerClientFactory
       case (DegraderLoadBalancerStrategyV3.DEGRADER_STRATEGY_NAME):
         trackerClient = createDegraderTrackerClient(uri, uriProperties, serviceProperties,  loadBalancerStrategyName, transportClient, clock);
         break;
+      case (RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME):
+        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, clock, false);
+        break;
       default:
-        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, clock);
+        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, clock, true);
     }
 
     return trackerClient;
@@ -194,7 +198,8 @@ public class TrackerClientFactory
                                                            ServiceProperties serviceProperties,
                                                            String loadBalancerStrategyName,
                                                            TransportClient transportClient,
-                                                           Clock clock)
+                                                           Clock clock,
+                                                           boolean percentileTrackingEnabled)
   {
     List<HttpStatusCodeRange> errorStatusCodeRanges = getErrorStatusRanges(serviceProperties);
     Predicate<Integer> isErrorStatus = (status) -> {
@@ -213,6 +218,7 @@ public class TrackerClientFactory
                                  transportClient,
                                  clock,
                                  getInterval(loadBalancerStrategyName, serviceProperties),
-                                 isErrorStatus);
+                                 isErrorStatus,
+                                 percentileTrackingEnabled);
   }
 }
