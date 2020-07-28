@@ -396,7 +396,7 @@ public class TestLoadBalancerStrategy
     LoadBalancerStrategyTestRunnerBuilder builder =
         new LoadBalancerStrategyTestRunnerBuilder(type, DEFAULT_SERVICE_NAME, 5)
             .setConstantRequestCount(60)
-            .setNumIntervals(30)
+            .setNumIntervals(50)
             .setDegraderStrategies(new HashMap<>(), degraderPropertiesWithSlowStart)
             // All hosts with unhealthy latency
             .setDynamicLatency(Arrays.asList(HOST_RECOVERING_TO_HEALTHY_LATENCY,
