@@ -22,6 +22,7 @@ import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.codec.symbol.InMemorySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
+import com.linkedin.data.codec.symbol.SymbolTableMetadata;
 import com.linkedin.data.codec.symbol.SymbolTableProvider;
 import com.linkedin.data.codec.symbol.SymbolTableSerializer;
 import com.linkedin.data.schema.DataSchema;
@@ -140,7 +141,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
     {
       String symbolTableName = _symbolTableNameHandler.generateName(overriddenSymbols);
       _defaultResponseSymbolTable = new InMemorySymbolTable(symbolTableName, overriddenSymbols);
-      _defaultResponseSymbolTableName = _symbolTableNameHandler.extractTableInfo(symbolTableName)._2();
+      _defaultResponseSymbolTableName = _symbolTableNameHandler.extractMetadata(symbolTableName).getSymbolTableName();
     }
   }
 
@@ -174,10 +175,10 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
   {
     try
     {
-      Tuple3<String, String, Boolean> tuple = _symbolTableNameHandler.extractTableInfo(symbolTableName);
-      String serverNodeUri = tuple._1();
-      String tableName = tuple._2();
-      boolean isLocal = tuple._3();
+      SymbolTableMetadata metadata = _symbolTableNameHandler.extractMetadata(symbolTableName);
+      String serverNodeUri = metadata.getServerNodeUri();
+      String tableName = metadata.getSymbolTableName();
+      boolean isRemote = metadata.isRemote();
 
       // Check if it's the default table name.
       if (tableName.equals(_defaultResponseSymbolTableName))
@@ -193,7 +194,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
       }
 
       // If this is a local table, and we didn't find it in the cache, cry foul.
-      if (isLocal)
+      if (!isRemote)
       {
         throw new IllegalStateException("Unable to fetch symbol table with name: " + symbolTableName);
       }
@@ -243,7 +244,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
         // Cache the retrieved table.
         _serviceNameToSymbolTableCache.put(serviceName, symbolTable);
         _symbolTableNameToSymbolTableCache.put(
-            _symbolTableNameHandler.extractTableInfo(symbolTable.getName())._2(), symbolTable);
+            _symbolTableNameHandler.extractMetadata(symbolTable.getName()).getSymbolTableName(), symbolTable);
       }
 
       return symbolTable;
@@ -273,7 +274,8 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
     Set<DataSchema> schemas = new HashSet<>();
     resourceDefinitions.values().forEach(resourceDefinition -> resourceDefinition.collectReferencedDataSchemas(schemas));
     _defaultResponseSymbolTable = RuntimeSymbolTableGenerator.generate(_symbolTableNameHandler, schemas);
-    _defaultResponseSymbolTableName = _symbolTableNameHandler.extractTableInfo(_defaultResponseSymbolTable.getName())._2();
+    _defaultResponseSymbolTableName =
+        _symbolTableNameHandler.extractMetadata(_defaultResponseSymbolTable.getName()).getSymbolTableName();
   }
 
   SymbolTable fetchRemoteSymbolTable(URI symbolTableUri, Map<String, String> requestHeaders)
