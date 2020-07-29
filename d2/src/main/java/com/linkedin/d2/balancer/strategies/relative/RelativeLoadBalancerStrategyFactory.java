@@ -51,7 +51,6 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   public static final int DEFAULT_MIN_CALL_COUNT = 1;
   public static final double DEFAULT_INITIAL_HEALTH_SCORE = 1.0;
   public static final double DEFAULT_SLOW_START_THRESHOLD = 0.0;
-  public static final double DEFAULT_RELATIVE_LATENCY_LOW_THRESHOLD_FACTOR = 1.1;
   public static final int DEFAULT_ERROR_STATUS_LOWER_BOUND = 500;
   public static final int DEFAULT_ERROR_STATUS_UPPER_BOUND = 599;
   public static final HttpStatusCodeRangeArray DEFAULT_ERROR_STATUS_FILTER =
@@ -61,6 +60,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   public static final double DEFAULT_UP_STEP = 0.05;
   public static final double DEFAULT_DOWN_STEP = 0.2;
   public static final double DEFAULT_RELATIVE_LATENCY_HIGH_THRESHOLD_FACTOR = 1.3;
+  public static final double DEFAULT_RELATIVE_LATENCY_LOW_THRESHOLD_FACTOR = 1.2;
   public static final double DEFAULT_HIGH_ERROR_RATE = 1.1;
   public static final double DEFAULT_LOW_ERROR_RATE = 1.1;
   public static final long DEFAULT_EMITTING_INTERVAL_MS = 0L;
