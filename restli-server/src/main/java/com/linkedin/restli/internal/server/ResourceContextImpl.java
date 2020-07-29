@@ -639,14 +639,17 @@ public class ResourceContextImpl implements ServerResourceContext
     return _fillInDefaultValues;
   }
 
+  /**
+   * if a server has a configuration to set the flag to true, it will be set
+   * through this method, and if the request itself already has the flag set to true
+   * we will keep the flag remain true even the server config is not set.
+   * That is => either server config or client request param will be able to
+   * request fill in default values
+   * @param fillInDefaultValues boolean to set the flag for filling default values
+   */
   @Override
   public void setFillInDefaultValues(boolean fillInDefaultValues)
   {
-    // if a server has a configuration to set the flag to true, it will be set
-    // through this method, and if the request itself already has the flag set to true
-    // we will keep the flag remain true even the server config is not set.
-    // That is => either server config or client request param will be able to
-    // request fill in default values
     _fillInDefaultValues = fillInDefaultValues || _fillInDefaultValues;
   }
 
