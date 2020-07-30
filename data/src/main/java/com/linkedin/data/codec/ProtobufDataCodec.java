@@ -43,6 +43,11 @@ import java.util.function.Function;
  */
 public class ProtobufDataCodec implements DataCodec
 {
+  /**
+   * Default header indicating protobuf encoded responses.
+   */
+  public static final String DEFAULT_HEADER = "application/x-protobuf2";
+
   //
   // List of protobuf type ordinals. 12-19 and 30-127 are reserved for custom ordinals that extenders of this codec
   // may choose to use. 0-11 and 20-29 are reserved for use by this codec.

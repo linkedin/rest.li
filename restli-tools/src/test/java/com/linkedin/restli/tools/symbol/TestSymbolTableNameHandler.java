@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.tools.symbol;
 
+import com.linkedin.data.codec.symbol.SymbolTableMetadata;
 import com.linkedin.parseq.function.Tuple3;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,21 +39,21 @@ public class TestSymbolTableNameHandler
   }
 
   @Test
-  public void testExtractTableInfoLocalTable()
+  public void testExtractTableInfoRemoteTable()
   {
-    Tuple3<String, String, Boolean> tuple = SYMBOL_TABLE_NAME_HANDLER.extractTableInfo("https://Host:100/service|Prefix-1000");
-    Assert.assertEquals(tuple._1(), "https://Host:100/service");
-    Assert.assertEquals(tuple._2(), "Prefix-1000");
-    Assert.assertTrue(tuple._3());
+    SymbolTableMetadata metadata = SYMBOL_TABLE_NAME_HANDLER.extractMetadata("https://Host:100/service|Prefix-1000");
+    Assert.assertEquals(metadata.getServerNodeUri(), "https://Host:100/service");
+    Assert.assertEquals(metadata.getSymbolTableName(), "Prefix-1000");
+    Assert.assertFalse(metadata.isRemote());
   }
 
   @Test
-  public void testExtractTableInfoNonLocalTable()
+  public void testExtractTableInfoLocalTable()
   {
-    Tuple3<String, String, Boolean> tuple = SYMBOL_TABLE_NAME_HANDLER.extractTableInfo("https://OtherHost:100/service|Prefix-1000");
-    Assert.assertEquals(tuple._1(), "https://OtherHost:100/service");
-    Assert.assertEquals(tuple._2(), "Prefix-1000");
-    Assert.assertFalse(tuple._3());
+    SymbolTableMetadata metadata = SYMBOL_TABLE_NAME_HANDLER.extractMetadata("https://OtherHost:100/service|Prefix-1000");
+    Assert.assertEquals(metadata.getServerNodeUri(), "https://OtherHost:100/service");
+    Assert.assertEquals(metadata.getSymbolTableName(), "Prefix-1000");
+    Assert.assertTrue(metadata.isRemote());
   }
 
   @Test
