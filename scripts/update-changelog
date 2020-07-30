@@ -54,7 +54,7 @@ if [ -z "$PREV_VERSION" ]; then
 fi
 
 # Create temp file where we can construct the next changelog
-TEMP_FILE=$(mktemp --tmpdir restli-changelog-XXXXX)
+TEMP_FILE=$(mktemp /tmp/restli-changelog-XXXXX)
 
 # At this point, abort if something goes wrong
 set -e

@@ -19,4 +19,13 @@ enum DarkClusterStrategyName {
    * This strategy will try to maintain a certain queries per second to the entire dark cluster. Configured with "dispatcherOutboundTargetRate".
    */
   CONSTANT_QPS
+
+  /**
+   * This strategy aims to send identical traffic across all the dark clusters configured with this strategy. For eg: if
+   * there are 3 dark clusters configured with this strategy with a multiplier of 1, all 3 dark clusters would receive
+   * exactly same requests from the source clusters. This strategy can be used in scenarios where users want to do performance
+   * analysis across dark clusters in which case having exactly similar traffic coming into all the clusters would help
+   * make a fair comparison
+   */
+  IDENTICAL_TRAFFIC
 }
