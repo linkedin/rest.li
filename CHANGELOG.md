@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.4.8] - 2020-08-04
 - Add identical traffic multiplier strategy for dark clusters
 
 ## [29.4.7] - 2020-07-30
@@ -4564,7 +4566,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.8...master
+[29.4.8]: https://github.com/linkedin/rest.li/compare/v29.4.6...v29.4.8
 [29.4.6]: https://github.com/linkedin/rest.li/compare/v29.4.5...v29.4.6
 [29.4.5]: https://github.com/linkedin/rest.li/compare/v29.4.4...v29.4.5
 [29.4.4]: https://github.com/linkedin/rest.li/compare/v29.4.3...v29.4.4
