@@ -11,6 +11,12 @@ import com.linkedin.r2.message.rest.RestRequest;
 import java.util.Random;
 
 
+/**
+ * The high level goal of this strategy is to send identical requests to all dark clusters configured with this strategy.
+ * However, we also ensure that the level of traffic is proportional to itself on any instance in dark cluster accounting
+ * for the multiplier. In order to ensure this, it uses the same logic as {@link RelativeTrafficMultiplierDarkClusterStrategy}
+ * to determine the traffic QPS to dark clusters
+ */
 public class IdenticalTrafficMultiplierDarkClusterStrategy implements DarkClusterStrategy {
   private final String _originalClusterName;
   private final String _darkClusterName;
@@ -77,23 +83,23 @@ public class IdenticalTrafficMultiplierDarkClusterStrategy implements DarkCluste
    * So we compute random number, say 0.05 and persist the same in requestContext
    * Avg#DarkRequests = 1 * 0.1 / 1 = 0.1
    * since 0.05 < 0.1, request will be sent to A
-   * When it comes to B, the random number is already present and since it is < 0.2, request will be sent to B
-   * When it comes to C, the random number is already present and since it is < 0.3, request will be sent to C
+   * When it comes to B, the random number is already present and since it is < 0.1, request will be sent to B
+   * When it comes to C, the random number is already present and since it is < 0.1, request will be sent to C
+   * Note that the above logic works regardless of the order in which the 3 dark clusters are called.
    *
    * Example 2:
-   * There are 3 dark clusters: A, B and C all of which are configured with same multiplier of 0.1.
+   * There are 3 dark clusters: A, B and C with multipliers 0.1, 0.2, 0.3 respectively.
    * There is 1 source instance and 1 dark instance in each cluster.
-   * This time we read it in this order: B, A and C.
-   * For B, there will be no random number persisted in requestContext since we're seeing this request for the first time
+   * Assume that the strategy is called for A, B and C in the same order.
+   * For A, there will be no random number persisted in requestContext since we're seeing this request for the first time
    * So we compute random number, say 0.15 and persist the same in requestContext
    * Avg#DarkRequests = 1 * 0.2 / 1 = 0.2
-   * since 0.15 < 0.2, request will be sent to B
-   * When it comes to A, the random number is already present and since it is > 0.1, request will NOT be sent to A
+   * since 0.15 < 0.1, so request will NOT be sent to A
+   * When it comes to B, the random number is already present and since it is < 0.2, request will be sent to A
    * When it comes to C, the random number is already present and since it is < 0.3, request will be sent to C
    * Note that in this case, we are sending identical requests between B and C but since A happened to have a smaller multiplier,
    * it was not sent to it.
-   *
-   * Similarly this would work for any other combinations and multiplier values
+   * This would also work regardless of the order in which the 3 dark clusters are called
    */
   private int getNumDuplicateRequests(RequestContext requestContext)
   {
