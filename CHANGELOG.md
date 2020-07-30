@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.4.7] - 2020-07-30
+- Add support for configuring fields that are always projected on the server. Configs can be applied for the entire service, resource or method level.
+
 ## [29.4.6] - 2020-07-29
 - Provide a default symbol table provider implementation that doesn't use symbol tables for requests/responses of its own, but is able to retrieve remote symbol tables to decode responses from other services (#357)
 - Provide public method in the AbstractRequestBuilder for adding field projections (#353)
@@ -4560,7 +4563,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.7...master
+[29.4.7]: https://github.com/linkedin/rest.li/compare/v29.4.6...v29.4.7
 [29.4.6]: https://github.com/linkedin/rest.li/compare/v29.4.5...v29.4.6
 [29.4.5]: https://github.com/linkedin/rest.li/compare/v29.4.4...v29.4.5
 [29.4.4]: https://github.com/linkedin/rest.li/compare/v29.4.3...v29.4.4
