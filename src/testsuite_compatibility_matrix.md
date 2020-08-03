@@ -47,7 +47,6 @@ Based on these test suites, we've made the following compatibility matrices:
 | Enum&nbsp;with&nbsp;Properties | x | x | |
 | Fixed | x | | Python does not support Fixed in the same way as Java|
 | Fixed5 | x | | Python does not support Fixed in the same way as Java|
-| Fruits | x | x | |
 | Includes | x | x | |
 | Large&nbsp;Record | x | x | |
 | Map&nbsp;of&nbsp;Ints| x | x | |
