@@ -289,6 +289,24 @@ public class TestLoadBalancerPerformanceSimulation {
     assertTrue(relativeStrategyAverageLatency2 < relativeStrategyAverageLatency3);
   }
 
+  @Test
+  public void testLowQpsWithBigLatencyRange()
+  {
+    LoadBalancerStrategyTestRunner testRunnerWithFastRecovery = buildRelativeRunnerWithRandomLatencyInRange(true);
+    testRunnerWithFastRecovery.runWait();
+
+    LoadBalancerStrategyTestRunner testRunnerWithoutFastRecovery = buildRelativeRunnerWithRandomLatencyInRange(false);
+    testRunnerWithoutFastRecovery.runWait();
+
+    long fullyDroppedWithFastRecovery = testRunnerWithFastRecovery.getPoints().values()
+        .stream().filter(point -> point <= UNHEALTHY_POINTS).count();
+    long fullyDroppedWithoutFastRecovery = testRunnerWithoutFastRecovery.getPoints().values()
+        .stream().filter(point -> point <= UNHEALTHY_POINTS).count();
+
+    assertTrue(fullyDroppedWithoutFastRecovery > 0, "Without fast recovery, when qps is low, some hosts can be fully dropped");
+    assertTrue(fullyDroppedWithoutFastRecovery > fullyDroppedWithFastRecovery);
+  }
+
   private LoadBalancerStrategyTestRunner buildDefaultRunnerWithConstantBadHost(int numHosts, long badHostLatency,
       double relativeLatencyHighThresholdFactor)
   {
@@ -397,6 +415,32 @@ public class TestLoadBalancerPerformanceSimulation {
     return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, numHosts)
         .setConstantRequestCount(10000)
         .setNumIntervals(30)
+        .setDynamicLatency(latencyCorrelationList)
+        .setRelativeLoadBalancerStrategies(relativeStrategyProperties)
+        .build();
+  }
+
+  private LoadBalancerStrategyTestRunner buildRelativeRunnerWithRandomLatencyInRange(boolean isFastRecovery)
+  {
+    long baseLatency = 100L;
+    int numHosts = 20;
+    int numRequestsPerInterval = 20;
+
+    List<LatencyCorrelation> latencyCorrelationList = new ArrayList<>();
+    long leftLimit = 0L;
+    long rightLimit = 400L;
+    for (int i = 0; i < numHosts; i ++)
+    {
+      latencyCorrelationList.add((requestsPerInterval, intervalIndex) ->
+          baseLatency + (long) (Math.random() * (rightLimit - leftLimit)));
+    }
+
+    D2RelativeStrategyProperties relativeStrategyProperties = new D2RelativeStrategyProperties()
+        .setEnableFastRecovery(isFastRecovery);
+
+    return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, numHosts)
+        .setConstantRequestCount(numRequestsPerInterval)
+        .setNumIntervals(100)
         .setDynamicLatency(latencyCorrelationList)
         .setRelativeLoadBalancerStrategies(relativeStrategyProperties)
         .build();
