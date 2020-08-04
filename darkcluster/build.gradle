@@ -7,4 +7,5 @@ dependencies {
   testCompile externalDependency.testng
   testCompile project(':darkcluster-test-api')
   testCompile project(path: ':d2', configuration: 'testArtifacts')
+  testCompile externalDependency.mockito
 }
