@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.4.8] - 2020-08-04
-- Add identical traffic multiplier strategy for dark clusters
+- Add identical traffic multiplier strategy for dark clusters to enable identical traffic across all dark clusters
 
 ## [29.4.7] - 2020-07-30
 - Add support for configuring fields that are always projected on the server. Configs can be applied for the entire service, resource or method level.
