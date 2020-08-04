@@ -23,6 +23,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
 
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -33,6 +34,20 @@ import java.util.Map;
  */
 public class CopyFilter extends AbstractFilter
 {
+  public CopyFilter()
+  {
+  }
+
+  /**
+   * Create a filter with set of fields that are always included.
+   * @param alwaysIncludedFields Fields to include in the filtered data, these fields override the operation specified
+   *                             by the filter data.
+   */
+  public CopyFilter(Set<String> alwaysIncludedFields)
+  {
+    super(alwaysIncludedFields);
+  }
+
   @Override
   protected Object onFilterDataList(DataList data, int start, int count, Object operation)
   {
@@ -43,10 +58,10 @@ public class CopyFilter extends AbstractFilter
 
     count = Math.min(count, data.size() - start);
     final DataList resultList =  new DataList(count);
+    final Class<?> operationClass = operation.getClass();
 
     for (int i = start; i < start + count; ++i)
     {
-      final Class<?> operationClass = operation.getClass();
       final Object original = data.get(i);
       final Object value;
 

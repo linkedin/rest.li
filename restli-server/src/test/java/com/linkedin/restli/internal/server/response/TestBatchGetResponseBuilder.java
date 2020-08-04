@@ -390,6 +390,7 @@ public class TestBatchGetResponseBuilder
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
     EasyMock.expect(mockContext.getBatchKeyErrors()).andReturn(Collections.emptyMap()).once();
     EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
+    EasyMock.expect(mockContext.getAlwaysProjectedFields()).andReturn(Collections.emptySet()).anyTimes();
     EasyMock.replay(mockContext);
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
@@ -429,6 +430,7 @@ public class TestBatchGetResponseBuilder
       EasyMock.expect(mockContext.getParameter(RestConstants.ALT_KEY_PARAM)).andReturn(altKeyName).atLeastOnce();
     }
     EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
+    EasyMock.expect(mockContext.getAlwaysProjectedFields()).andReturn(Collections.emptySet()).anyTimes();
     EasyMock.replay(mockContext);
     return mockContext;
   }

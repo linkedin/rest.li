@@ -277,6 +277,7 @@ public class TestBatchCreateResponseBuilder
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(null);
     EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
+    EasyMock.expect(mockContext.getAlwaysProjectedFields()).andReturn(Collections.emptySet()).anyTimes();
     EasyMock.replay(mockContext);
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
@@ -324,6 +325,7 @@ public class TestBatchCreateResponseBuilder
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
     EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
+    EasyMock.expect(mockContext.getAlwaysProjectedFields()).andReturn(Collections.emptySet()).anyTimes();
     EasyMock.replay(mockContext);
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
@@ -402,7 +404,7 @@ public class TestBatchCreateResponseBuilder
     Map<String, String> protocolVersionOnlyHeaders = Collections.singletonMap(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion().toString());
     EasyMock.expect(mockContext.getRequestHeaders()).andReturn(protocolVersionOnlyHeaders).atLeastOnce();
     EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
-
+    EasyMock.expect(mockContext.getAlwaysProjectedFields()).andReturn(Collections.emptySet()).anyTimes();
     EasyMock.replay(mockContext);
     return mockContext;
   }

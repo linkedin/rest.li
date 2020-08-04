@@ -2,6 +2,8 @@ package com.linkedin.restli.server.config;
 
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.RestLiConfig;
+import java.util.Collections;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +29,7 @@ class ResourceMethodConfigProviderImpl implements ResourceMethodConfigProvider
   static final RestLiMethodConfig DEFAULT_CONFIG = createDefaultConfig();
 
   private final ResourceMethodConfigTree<Long> _timeoutMs = new ResourceMethodConfigTree<>();
+  private final ResourceMethodConfigTree<Set<String>> _alwaysProjectedFields = new ResourceMethodConfigTree<>();
   private final ConcurrentMap<ResourceMethodConfigCacheKey, ResourceMethodConfig> _cache = new ConcurrentHashMap<>();
   private boolean _shouldValidateQueryParams;
   private boolean _shouldValidateResourceKey;
@@ -41,20 +44,21 @@ class ResourceMethodConfigProviderImpl implements ResourceMethodConfigProvider
 
   private void initialize(RestLiMethodConfig config) throws ResourceMethodConfigParsingException
   {
-    boolean success = initializeProperty(config.getTimeoutMsConfig(), "timeoutMs");
+    boolean success = initializeProperty(config.getTimeoutMsConfig(), RestLiMethodConfig.ConfigType.TIMEOUT);
+    success &= initializeProperty(config.getAlwaysProjectedFieldsConfig(), RestLiMethodConfig.ConfigType.ALWAYS_PROJECTED_FIELDS);
     if (!success)
     {
       throw new ResourceMethodConfigParsingException("Rest.li resource method level configuration parsing error!");
     }
   }
 
-  private boolean initializeProperty(Map<String, ?> config, String property)
+  private boolean initializeProperty(Map<String, ?> config, RestLiMethodConfig.ConfigType configType)
   {
     for (Map.Entry<String, ?> entry : config.entrySet())
     {
       try
       {
-        ResourceMethodConfigElement element = ResourceMethodConfigElement.parse(property, entry.getKey(), entry.getValue());
+        ResourceMethodConfigElement element = ResourceMethodConfigElement.parse(configType, entry.getKey(), entry.getValue());
         processConfigElement(element);
       }
       catch (ResourceMethodConfigParsingException e)
@@ -65,9 +69,18 @@ class ResourceMethodConfigProviderImpl implements ResourceMethodConfigProvider
     }
 
     // logging configuration items in priority orderCollections.sort(elements);
-    List<ResourceMethodConfigElement> elements = _timeoutMs.getConfigItemsByPriority();
+    List<ResourceMethodConfigElement> elements = Collections.emptyList();
+    switch (configType)
+    {
+      case TIMEOUT:
+        elements = _timeoutMs.getConfigItemsByPriority();
+        break;
+      case ALWAYS_PROJECTED_FIELDS:
+        elements = _alwaysProjectedFields.getConfigItemsByPriority();
+        break;
+    }
     StringBuilder sb = new StringBuilder();
-    sb.append("RestLi MethodLevel Configuration for property " + property + " sorted by priority - first match gets applied:\n");
+    sb.append("RestLi MethodLevel Configuration for property " + configType.getConfigName() + " sorted by priority - first match gets applied:\n");
     elements.forEach(el -> sb.append(el.getKey())
             .append(" = ")
             .append(el.getValue())
@@ -78,10 +91,13 @@ class ResourceMethodConfigProviderImpl implements ResourceMethodConfigProvider
 
   private void processConfigElement(ResourceMethodConfigElement element) throws ResourceMethodConfigParsingException
   {
-    switch (element.getProperty())
+    switch (element.getConfigType())
     {
       // switch case is for future extension to another method-level configuration category
-      case "timeoutMs": _timeoutMs.add(element); break;
+      case TIMEOUT: _timeoutMs.add(element); break;
+      case ALWAYS_PROJECTED_FIELDS:
+        _alwaysProjectedFields.add(element);
+        break;
       default: throw new ResourceMethodConfigParsingException("Unrecognized property: " + element.getProperty());
     }
   }
@@ -96,7 +112,7 @@ class ResourceMethodConfigProviderImpl implements ResourceMethodConfigProvider
   private ResourceMethodConfig resolve(ResourceMethodConfigCacheKey cacheKey)
   {
     return new ResourceMethodConfigImpl(_timeoutMs.resolve(cacheKey), _shouldValidateQueryParams,
-        _shouldValidateResourceKey);
+        _shouldValidateResourceKey, _alwaysProjectedFields.resolve(cacheKey));
   }
 
   /**
