@@ -24,6 +24,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -220,4 +221,10 @@ public interface ResourceContext extends CustomRequestContext
    * @return whether the request specifies that the resource should return an entity
    */
   boolean isReturnEntityRequested();
+
+  /**
+   * Returns the set of fields that are configured to be always included in the projection. These fields are
+   * specified at the service level and apply to all resources and methods.
+   */
+  Set<String> getAlwaysProjectedFields();
 }

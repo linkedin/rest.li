@@ -191,6 +191,7 @@ public class TestCreateResponseBuilder
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(null);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
+    EasyMock.expect(mockContext.getAlwaysProjectedFields()).andReturn(Collections.emptySet()).anyTimes();
     EasyMock.replay(mockContext);
     RoutingResult routingResult = new RoutingResult(mockContext, null);
 
@@ -259,6 +260,7 @@ public class TestCreateResponseBuilder
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree);
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(ProjectionMode.AUTOMATIC);
     EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
+    EasyMock.expect(mockContext.getAlwaysProjectedFields()).andReturn(Collections.emptySet()).anyTimes();
     EasyMock.replay(mockContext);
     RoutingResult routingResult = new RoutingResult(mockContext, null);
 

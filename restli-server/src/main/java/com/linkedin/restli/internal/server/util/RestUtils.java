@@ -33,7 +33,6 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.LinkArray;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.Parameter;
@@ -252,6 +251,36 @@ public class RestUtils
   public static DataMap projectFields(final DataMap dataMap, final ProjectionMode projectionMode,
       final MaskTree projectionMask)
   {
+    return projectFields(dataMap, projectionMode, projectionMask, Collections.emptySet());
+  }
+
+  /**
+   * Filter input {@link DataMap} by the projection mask from the resource context {@link ResourceContext}.
+   *
+   * @param dataMap {@link DataMap} to filter
+   * @param resourceContext Resource context from which projection inputs like mask, mode and always included fields
+   *                        are obtained.
+   * @return filtered DataMap. Empty one if the projection mask specifies no fields.
+   */
+  public static DataMap projectFields(final DataMap dataMap, final ResourceContext resourceContext)
+  {
+    return projectFields(dataMap, resourceContext.getProjectionMode(), resourceContext.getProjectionMask(),
+        resourceContext.getAlwaysProjectedFields());
+  }
+
+  /**
+   * Filter input {@link DataMap} by the projection mask from the input.
+   * {@link ResourceContext}.
+   *
+   * @param dataMap {@link DataMap} to filter
+   * @param projectionMode {@link ProjectionMode} to decide if restli should project or not
+   * @param  projectionMask {@link MaskTree} the mask to use when projecting
+   * @param alwaysIncludedFields Set of fields that are always included in the result.
+   * @return filtered DataMap. Empty one if the projection mask specifies no fields.
+   */
+  public static DataMap projectFields(final DataMap dataMap, final ProjectionMode projectionMode,
+      final MaskTree projectionMask, Set<String> alwaysIncludedFields)
+  {
     if (projectionMode == ProjectionMode.MANUAL)
     {
       return dataMap;
@@ -263,15 +292,15 @@ public class RestUtils
     }
 
     final DataMap filterMap = projectionMask.getDataMap();
-    //Special-case: when present, an empty filter should not return any fields.
-    if (projectionMask.getDataMap().isEmpty())
+    //Special-case: when present, an empty filter and no fields to include by default means the result would be empty.
+    if (filterMap.isEmpty() && (alwaysIncludedFields == null || alwaysIncludedFields.isEmpty()))
     {
       return EMPTY_DATAMAP;
     }
 
     try
     {
-      return (DataMap) new CopyFilter().filter(dataMap, filterMap);
+      return (DataMap) new CopyFilter(alwaysIncludedFields).filter(dataMap, filterMap);
     }
     catch (Exception e)
     {

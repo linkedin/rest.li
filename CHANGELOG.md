@@ -13,9 +13,10 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add identical traffic multiplier strategy for dark clusters
 
 ## [29.4.7] - 2020-07-30
-- Add identical traffic multiplier strategy for dark clusters
+- Add support for configuring fields that are always projected on the server. Configs can be applied for the entire service, resource or method level.
 
 ## [29.4.6] - 2020-07-29
 - Provide a default symbol table provider implementation that doesn't use symbol tables for requests/responses of its own, but is able to retrieve remote symbol tables to decode responses from other services (#357)

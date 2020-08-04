@@ -5242,7 +5242,7 @@ public class TestRestLiMethodInvocation
                                final RestLiResponseAttachments expectedResponseAttachments)
           throws Exception
   {
-    checkInvocation(resource, requestContext, resourceMethodDescriptor, new ResourceMethodConfigImpl(null , false, false), httpMethod, version,
+    checkInvocation(resource, requestContext, resourceMethodDescriptor, ResourceMethodConfigImpl.DEFAULT_CONFIG, httpMethod, version,
             uri, entityBody, pathkeys, callback, isDebugMode, expectRoutingException, expectedRequestAttachments, expectedResponseAttachments);
   }
 

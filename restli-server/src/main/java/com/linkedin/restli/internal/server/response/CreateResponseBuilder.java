@@ -123,7 +123,7 @@ public class CreateResponseBuilder implements RestLiResponseBuilder<RestLiRespon
       TimingContextUtil.beginTiming(resourceContext.getRawRequestContext(),
           FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
 
-      final DataMap data = RestUtils.projectFields(entityData, resourceContext.getProjectionMode(), resourceContext.getProjectionMask());
+      final DataMap data = RestUtils.projectFields(entityData, resourceContext);
 
       TimingContextUtil.endTiming(resourceContext.getRawRequestContext(),
           FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());

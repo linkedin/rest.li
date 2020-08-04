@@ -39,7 +39,7 @@ class ResourceMethodConfigTree<T>
 
   ConfigValue<T> resolve(ResourceMethodConfigCacheKey cacheKey)
   {
-    return resolveResourceName(cacheKey).get();
+    return resolveResourceName(cacheKey).orElse(new ConfigValue<>(null, null));
   }
 
   Optional<ConfigValue<T>> resolveResourceName(ResourceMethodConfigCacheKey cacheKeyd)
