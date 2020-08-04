@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.4.9] - 2020-08-04
+- Add missing ClusterInfoProvider implementations in ZKFSLoadBalancer and TogglingLoadBalancer
+
 ## [29.4.8] - 2020-08-04
 - Add identical traffic multiplier strategy for dark clusters to enable identical traffic across all dark clusters
 
@@ -4566,7 +4569,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.8...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.9...master
+[29.4.9]: https://github.com/linkedin/rest.li/compare/v29.4.8...v29.4.9
 [29.4.8]: https://github.com/linkedin/rest.li/compare/v29.4.7...v29.4.8
 [29.4.7]: https://github.com/linkedin/rest.li/compare/v29.4.6...v29.4.7
 [29.4.6]: https://github.com/linkedin/rest.li/compare/v29.4.5...v29.4.6
