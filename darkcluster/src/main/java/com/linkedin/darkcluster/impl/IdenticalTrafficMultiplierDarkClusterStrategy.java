@@ -73,7 +73,7 @@ public class IdenticalTrafficMultiplierDarkClusterStrategy implements DarkCluste
    * dark clusters as well.
    *
    * The logic to determine if a request should be sent to dark cluster or not for the first time is determined similar
-   * to {@link RelativeTrafficMultiplierDarkClusterStrategy}
+   * to {@link RelativeTrafficMultiplierDarkClusterStrategy}.
    *
    * Example 1:
    * There are 3 dark clusters: A, B and C all of which are configured with same multiplier of 0.1.
