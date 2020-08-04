@@ -130,6 +130,11 @@ public class ResponseUtils
     return builder;
   }
 
+  public static RestException buildRestException(RestLiResponseException restLiResponseException)
+  {
+    return buildRestException(restLiResponseException, true);
+  }
+
   public static RestException buildRestException(RestLiResponseException restLiResponseException, boolean writableStackTrace)
   {
     RestLiResponse restLiResponse = restLiResponseException.getRestLiResponse();
