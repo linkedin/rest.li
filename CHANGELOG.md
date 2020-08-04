@@ -39,6 +39,9 @@ and what APIs have changed, if applicable.
 - Provide an option in `SmoothRateLimiter` to not drop tasks if going above the max buffered. Dropping tasks might be more diruptive to workflows compared to just not ratelimit.
 - Fix non-deterministic issues on generated java files to solve build performance issues.
 
+## [29.5.1] - 2020-08-17
+- Add feature for client/server controlled feature default values in return records
+
 ## [29.5.0] - 2020-08-12
 - Add Callback method for `ClusterInfoProvider.getDarkClusterConfigMap`.
 
@@ -68,7 +71,11 @@ and what APIs have changed, if applicable.
 
 ## [29.4.6] - 2020-07-29
 - Provide a default symbol table provider implementation that doesn't use symbol tables for requests/responses of its own, but is able to retrieve remote symbol tables to decode responses from other services (#357)
+<<<<<<< HEAD
 - Provide public method in the `AbstractRequestBuilder` for adding field projections (#353)
+=======
+- Provide public method in the AbstractRequestBuilder for adding field projections (#353)
+>>>>>>> d63ee8467... update changelog.md
 
 ## [29.4.5] - 2020-07-21
 - Update `ExtensionSchemaValidation` task to check extension schema annotation (#254)
