@@ -138,6 +138,7 @@ abstract class BaseRestLiServer
 
       ResourceMethodDescriptor method = _router.process(context);
       ResourceMethodConfig methodConfig = _methodConfigProvider.apply(method);
+      context.setAlwaysProjectedFields(methodConfig.getAlwaysProjectedFields().getValue());
 
       return new RoutingResult(context, method, methodConfig);
     }

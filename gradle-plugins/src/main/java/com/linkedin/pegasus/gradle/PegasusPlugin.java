@@ -539,6 +539,9 @@ public class PegasusPlugin implements Plugin<Project>
   private static final String SNAPSHOT_NO_PUBLISH = "rest.model.noPublish";
   private static final String IDL_NO_PUBLISH = "rest.idl.noPublish";
   private static final String SKIP_IDL_CHECK = "rest.idl.skipCheck";
+  // gradle property to skip running GenerateRestModel task.
+  // Note it affects GenerateRestModel task only, and does not skip tasks depends on GenerateRestModel.
+  private static final String SKIP_GENERATE_REST_MODEL= "rest.model.skipGenerateRestModel";
   private static final String SUPPRESS_REST_CLIENT_RESTLI_2 = "rest.client.restli2.suppress";
   private static final String SUPPRESS_REST_CLIENT_RESTLI_1 = "rest.client.restli1.suppress";
 
@@ -1225,6 +1228,8 @@ public class PegasusPlugin implements Plugin<Project>
             {
               task.setEnableArgFile(true);
             }
+
+            task.onlyIf(t -> !isPropertyTrue(project, SKIP_GENERATE_REST_MODEL));
 
             task.doFirst(new CacheableAction<>(t -> deleteGeneratedDir(project, sourceSet, REST_GEN_TYPE)));
           });

@@ -218,6 +218,7 @@ public class TestBatchFinderResponseBuilder
     EasyMock.expect(mockContext.getMetadataProjectionMask()).andStubReturn(mockMask);
     EasyMock.expect(mockContext.getMetadataProjectionMode()).andStubReturn(ProjectionMode.MANUAL);
     EasyMock.expect(mockContext.getRawRequestContext()).andStubReturn(new RequestContext());
+    EasyMock.expect(mockContext.getAlwaysProjectedFields()).andReturn(Collections.emptySet()).anyTimes();
 
     EasyMock.replay(mockContext);
 

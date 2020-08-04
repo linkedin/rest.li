@@ -19,6 +19,7 @@ package com.linkedin.data.transform.filter;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.transform.DataProcessingException;
+import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
 
@@ -29,12 +30,13 @@ import static org.testng.Assert.assertEquals;
 public class TestCopyFilter extends TestFilterOnData
 {
   @Override
-  protected void genericFilterTest(DataMap data, DataMap filter, DataMap expected, String description) throws DataProcessingException
+  protected void genericFilterTest(DataMap data, DataMap filter, DataMap expected, Set<String> alwaysIncludedFields,
+      String description) throws DataProcessingException
   {
     final String dataBefore = data.toString();
-    final Object filtered = new CopyFilter().filter(data, filter);
+    final Object filtered = new CopyFilter(alwaysIncludedFields).filter(data, filter);
     assertEquals(filtered, expected, "The following test failed: \n" + description  +
-        "\nData: " + dataBefore + "\nFilter: " + filter +
+        "\nData: " + dataBefore + "\nFilter: " + filter + "\nAlwaysIncludedFields: " + alwaysIncludedFields +
         "\nExpected: " + expected + "\nActual result: " + filtered);
   }
 }

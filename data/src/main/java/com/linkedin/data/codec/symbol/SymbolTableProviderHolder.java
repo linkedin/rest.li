@@ -36,7 +36,7 @@ public class SymbolTableProviderHolder
    */
   private SymbolTableProviderHolder()
   {
-    _symbolTableProvider = new SymbolTableProvider() {};
+    _symbolTableProvider = new DefaultSymbolTableProvider();
   }
 
   /**

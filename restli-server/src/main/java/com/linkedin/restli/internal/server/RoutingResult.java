@@ -36,7 +36,7 @@ public class RoutingResult
    */
   public RoutingResult(ServerResourceContext context, ResourceMethodDescriptor methodDescriptor)
   {
-    this(context, methodDescriptor, new ResourceMethodConfigImpl(null, false, false));
+    this(context, methodDescriptor, ResourceMethodConfigImpl.DEFAULT_CONFIG);
   }
 
   /**
