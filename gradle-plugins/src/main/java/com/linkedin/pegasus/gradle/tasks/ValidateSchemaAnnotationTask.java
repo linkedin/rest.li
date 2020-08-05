@@ -39,6 +39,7 @@ import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.SkipWhenEmpty;
@@ -84,54 +85,46 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
 
   // Below fields needs to retrieve from GenerateDataTemplateTask
   // models location
-  private File _inputDir;
+  private FileCollection _inputDirs = getProject().files();
   // resolver path to parse the models
   private FileCollection _resolverPath;
 
   @TaskAction
-  public void validateSchemaAnnotation() throws IOException
-  {
+  public void validateSchemaAnnotation() throws IOException {
     // need to Update resolver path
-    _resolverPath = _resolverPath.plus(getProject().files(_inputDir));
+    _resolverPath = _resolverPath.plus(_inputDirs);
 
     getProject().getLogger().info("started schema annotation validation");
 
     int expectedHandlersNumber = ((DefaultConfiguration) _handlerJarPath).getAllDependencies().size();
     // skip if no handlers configured
-    if (expectedHandlersNumber == 0)
-    {
-      getProject().getLogger()
-                  .info("no schema annotation handlers configured, will skip schema annotation validation.");
+    if (expectedHandlersNumber == 0) {
+      getProject().getLogger().info("no schema annotation handlers configured, will skip schema annotation validation.");
       return;
     }
 
     List<URL> handlerJarPathUrls = new ArrayList<>();
 
-    for (File f : _handlerJarPath)
-    {
+    for (File f : _handlerJarPath) {
       handlerJarPathUrls.add(f.toURI().toURL());
     }
 
-    _classLoader = new URLClassLoader(handlerJarPathUrls.toArray(new URL[handlerJarPathUrls.size()]),
-        getClass().getClassLoader());
+    _classLoader = new URLClassLoader(handlerJarPathUrls.toArray(new URL[handlerJarPathUrls.size()]), getClass().getClassLoader());
 
     getProject().getLogger().info("search for schema annotation handlers...");
 
     List<String> foundClassNames = new ArrayList<>();
     Set<String> scannedClass = new HashSet<>(); // prevent duplicate scans
-    for (File f : _handlerJarPath)
-    {
+    for (File f : _handlerJarPath) {
       scanHandlersInClassPathJar(f, foundClassNames, scannedClass);
     }
 
     // For now, every schema annotation handler should be in its own module
     // if the number of found handlers doesn't match number of configured modules, will throw exception
-    if (foundClassNames.size() != expectedHandlersNumber)
-    {
-      String errorMsg = String.format("Encountered errors when searching for annotation handlers: total %s dependencies configured, but %s handlers found: [%s].",
-          expectedHandlersNumber,
-          foundClassNames.size(),
-          String.join(",", foundClassNames));
+    if (foundClassNames.size() != expectedHandlersNumber) {
+      String errorMsg = String.format(
+          "Encountered errors when searching for annotation handlers: total %s dependencies configured, but %s handlers found: [%s].",
+          expectedHandlersNumber, foundClassNames.size(), String.join(",", foundClassNames));
       getProject().getLogger().error(errorMsg);
       throw new GradleException("ValidationSchemaAnnotation task failed during search for annotation handlers.");
     }
@@ -139,6 +132,12 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
     getProject().getLogger()
         .info("Found Schema annotation processing handlers: " + Arrays.toString(foundClassNames.toArray()));
 
+    for (File dir : _inputDirs.getFiles()) {
+      javaExec(dir, foundClassNames);
+    }
+  }
+
+  private void javaExec(File inputDir, List<String> foundClassNames) {
     getProject().javaexec(javaExecSpec ->
                           {
                             String resolverPathArg = _resolverPath.getAsPath();
@@ -150,7 +149,7 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
                             javaExecSpec.setMain(
                                 "com.linkedin.restli.tools.annotation.SchemaAnnotationValidatorCmdLineApp");
                             javaExecSpec.setClasspath(_classPath);
-                            javaExecSpec.args(_inputDir.getAbsolutePath());
+                            javaExecSpec.args(inputDir.getAbsolutePath());
                             javaExecSpec.args("--handler-jarpath");
                             javaExecSpec.args(_handlerJarPath.getAsPath());
                             javaExecSpec.args("--handler-classnames");
@@ -271,17 +270,27 @@ public class ValidateSchemaAnnotationTask extends DefaultTask
     _handlerJarPath = handlerJarPath;
   }
 
-  @InputDirectory
+  @InputFiles
   @SkipWhenEmpty
-  @PathSensitive(PathSensitivity.RELATIVE)
-  public File getInputDir()
+  public FileCollection getInputDirs()
   {
-    return _inputDir;
+    return _inputDirs;
   }
 
+  public void setInputDirs(FileCollection fileCollection) {
+    _inputDirs = fileCollection;
+  }
+
+  @Deprecated
+  public File getInputDir()
+  {
+    return _inputDirs.getSingleFile();
+  }
+
+  @Deprecated
   public void setInputDir(File inputDir)
   {
-    _inputDir = inputDir;
+    _inputDirs = getProject().files(inputDir);
   }
 
   @Classpath

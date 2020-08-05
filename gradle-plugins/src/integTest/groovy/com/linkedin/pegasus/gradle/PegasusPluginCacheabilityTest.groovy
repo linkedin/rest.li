@@ -17,6 +17,7 @@ class PegasusPluginCacheabilityTest extends Specification {
     def runner = GradleRunner.create()
         .withProjectDir(tempDir.root)
         .withPluginClasspath()
+        .withDebug(Boolean.parseBoolean(System.getProperty("debug-jvm")))
         .withArguments('mainDataTemplateJar')
 
     def settingsFile = tempDir.newFile('settings.gradle')

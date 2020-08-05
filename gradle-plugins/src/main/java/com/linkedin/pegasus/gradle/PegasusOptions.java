@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,10 +33,19 @@ import org.slf4j.LoggerFactory;
 
 public class PegasusOptions
 {
+  private PegasusOptions(ConfigurableFileCollection dataSchemaDirs) {
+    this.dataSchemaDirs = dataSchemaDirs;
+  }
+
+  public static PegasusOptions create(ConfigurableFileCollection dataSchemaDirs) {
+    return new PegasusOptions(dataSchemaDirs);
+  }
+
   public Set<GenerationMode> generationModes = new HashSet<GenerationMode>(Arrays.asList(GenerationMode.PEGASUS));
   public IdlOptions idlOptions = new IdlOptions();
   public ClientOptions clientOptions = new ClientOptions();
   public RestModelOptions restModelOptions = new RestModelOptions();
+  private final ConfigurableFileCollection dataSchemaDirs;
 
   private static final Logger _log = LoggerFactory.getLogger(PegasusOptions.class);
 
@@ -166,5 +176,12 @@ public class PegasusOptions
     {
       return _restResourcesRootPath != null ? _restResourcesRootPath : "src/main/java";
     }
+  }
+
+  /**
+   * Locations to search for data schemas.
+   */
+  public ConfigurableFileCollection getDataSchemaDirs() {
+    return dataSchemaDirs;
   }
 }
