@@ -292,10 +292,11 @@ public class TestLoadBalancerPerformanceSimulation {
   @Test
   public void testLowQpsWithBigLatencyRange()
   {
-    LoadBalancerStrategyTestRunner testRunnerWithFastRecovery = buildRelativeRunnerWithRandomLatencyInRange(true);
+    long baseLatency = 100L;
+    LoadBalancerStrategyTestRunner testRunnerWithFastRecovery = buildRelativeRunnerWithRandomLatencyInRange(true, baseLatency, baseLatency);
     testRunnerWithFastRecovery.runWait();
 
-    LoadBalancerStrategyTestRunner testRunnerWithoutFastRecovery = buildRelativeRunnerWithRandomLatencyInRange(false);
+    LoadBalancerStrategyTestRunner testRunnerWithoutFastRecovery = buildRelativeRunnerWithRandomLatencyInRange(false, baseLatency, baseLatency);
     testRunnerWithoutFastRecovery.runWait();
 
     long fullyDroppedWithFastRecovery = testRunnerWithFastRecovery.getPoints().values()
@@ -305,6 +306,32 @@ public class TestLoadBalancerPerformanceSimulation {
 
     assertTrue(fullyDroppedWithoutFastRecovery > 0, "Without fast recovery, when qps is low, some hosts can be fully dropped");
     assertTrue(fullyDroppedWithoutFastRecovery > fullyDroppedWithFastRecovery);
+  }
+
+  @Test(dataProvider = "isFastRecovery")
+  public void testLowQpsWithOneBadHost(boolean isFastRecovery)
+  {
+    long badHostBaseLatency = 400L;
+    long regularBaseLatency = 100L;
+    LoadBalancerStrategyTestRunner testRunner = buildRelativeRunnerWithRandomLatencyInRange(isFastRecovery, badHostBaseLatency, regularBaseLatency);
+    testRunner.runWait();
+
+    double badHostPointAverage = testRunner.getPointHistory().get(testRunner.getUri(0))
+        .stream().mapToDouble(point -> point).average().getAsDouble();
+    double regularHostPointAverage = testRunner.getPointHistory().get(testRunner.getUri(1))
+        .stream().mapToDouble(point -> point).average().getAsDouble();
+
+    assertTrue(badHostPointAverage <= regularHostPointAverage);
+  }
+
+  @DataProvider(name = "isFastRecovery")
+  public Object[][] isFastRecovery()
+  {
+    return new Object[][]
+        {
+            {true},
+            {false}
+        };
   }
 
   private LoadBalancerStrategyTestRunner buildDefaultRunnerWithConstantBadHost(int numHosts, long badHostLatency,
@@ -420,19 +447,21 @@ public class TestLoadBalancerPerformanceSimulation {
         .build();
   }
 
-  private LoadBalancerStrategyTestRunner buildRelativeRunnerWithRandomLatencyInRange(boolean isFastRecovery)
+  private LoadBalancerStrategyTestRunner buildRelativeRunnerWithRandomLatencyInRange(boolean isFastRecovery, long badHostBaseLatency, long regularBaseLatency)
   {
-    long baseLatency = 100L;
     int numHosts = 20;
     int numRequestsPerInterval = 20;
 
     List<LatencyCorrelation> latencyCorrelationList = new ArrayList<>();
     long leftLimit = 0L;
     long rightLimit = 400L;
-    for (int i = 0; i < numHosts; i ++)
+
+    latencyCorrelationList.add((requestsPerInterval, intervalIndex) ->
+        badHostBaseLatency + (long) (Math.random() * (rightLimit - leftLimit)));
+    for (int i = 1; i < numHosts; i ++)
     {
       latencyCorrelationList.add((requestsPerInterval, intervalIndex) ->
-          baseLatency + (long) (Math.random() * (rightLimit - leftLimit)));
+          regularBaseLatency + (long) (Math.random() * (rightLimit - leftLimit)));
     }
 
     D2RelativeStrategyProperties relativeStrategyProperties = new D2RelativeStrategyProperties()
