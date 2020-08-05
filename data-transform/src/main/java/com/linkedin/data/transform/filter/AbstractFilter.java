@@ -25,7 +25,9 @@ import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.data.transform.Escaper;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static com.linkedin.data.transform.filter.FilterConstants.COUNT;
 import static com.linkedin.data.transform.filter.FilterConstants.NEGATIVE;
@@ -42,6 +44,29 @@ import static com.linkedin.data.transform.filter.FilterUtil.getIntegerWithDefaul
  */
 public abstract class AbstractFilter
 {
+  private final DefaultNodeModeCalculator _dafaultNodeModeCalculator = new DefaultNodeModeCalculator();
+  /**
+   * Set of field names that will always be included in the filtered data.
+   */
+  private final Set<String> _alwaysIncludedFields = new HashSet<>();
+
+  protected AbstractFilter()
+  {
+  }
+
+  /**
+   * Create a filter with set of fields that are always included.
+   * @param alwaysIncludedFields Fields to include in the filtered data, these fields override the operation specified
+   *                             by the filter data.
+   */
+  protected AbstractFilter(Set<String> alwaysIncludedFields)
+  {
+    if (alwaysIncludedFields != null)
+    {
+      this._alwaysIncludedFields.addAll(alwaysIncludedFields);
+    }
+  }
+
   public Object filter(Object data, DataMap opNode)
   {
     if ((data != null) && (opNode != null))
@@ -174,7 +199,7 @@ public abstract class AbstractFilter
 
     if (start != null && start >= 0 && count != null && count >= 0)
     {
-      final Object operation = filterByWildcard(opNode, valueDataList);
+      final Object operation = validateAndGetWildcard(opNode);
       return onFilterDataList(valueDataList, start, count, operation);
     }
 
@@ -192,7 +217,7 @@ public abstract class AbstractFilter
    * </ul>
    *
    */
-  private Object filterByWildcard(DataMap opNode, DataList valueDataList)
+  private Object validateAndGetWildcard(DataMap opNode)
   {
     final Object wildcard = opNode.get(FilterConstants.WILDCARD);
     if (wildcard != null)
@@ -203,22 +228,9 @@ public abstract class AbstractFilter
       }
       else if (wildcard.getClass() == DataMap.class)
       {
-        for (int i = 0; i < valueDataList.size(); ++i)
-        {
-          final Object elem = valueDataList.get(i);
-
-          // if it is not complex, then it is an error, because for simple types filter
-          // can be only 0 or 1
-          // and at this stage we know that filter is complex
-          if (!(elem instanceof DataComplex))
-          {
-            onError(i,
-                    "complex filter defined for array element, which is not an object nor an array, " +
-                        "but it is of type: %1$s, with value: %2$s",
-                    elem.getClass().getName(),
-                    elem);
-          }
-        }
+        // If the wildcard map is datamap, then all values of datalist should be DataComplex.
+        // It need not be checked here as the check is performed when ::filter is called to filter the items of the list
+        // using the wildcard DataMap operation.
         return wildcard;
       }
       else if (!wildcard.equals(POSITIVE))
@@ -248,20 +260,32 @@ public abstract class AbstractFilter
     for (Map.Entry<String, Object> entry : valueDataMap.entrySet())
     {
       final String name = entry.getKey();
+      final String nameEscaped = Escaper.replaceAll(name, "$", "$$");
       final Object childValue = entry.getValue();
 
       // make sure that mask is of correct type if it is defined
-      if (!isValidMaskType(opNode.get(Escaper.replaceAll(name, "$", "$$"))))
+      if (!isValidMaskType(opNode.get(nameEscaped)))
       {
         onError(name,
                 "mask value for field %2$s should be of type Integer or DataMap, instead it is of type: %1$s, ",
-                opNode.get(Escaper.replaceAll(name, "$", "$$")),
+                opNode.get(nameEscaped),
                 name);
         // in not fast-fail mode just skip this entry
         continue;
       }
 
       Object operation = FilterConstants.POSITIVE;
+
+      // Always included fields override the mask operations. A field specified in always include list will be included
+      // even if the filter operation is negative.
+      if (_alwaysIncludedFields.contains(name))
+      {
+        if (isValidDataMapFieldOperation(result, name, operation))
+        {
+          result.put(name, operation);
+        }
+        continue;
+      }
 
       // _explicitFieldMode can only have value of high priority: either
       // show_high or hide_high
@@ -296,7 +320,7 @@ public abstract class AbstractFilter
       {
         // field was not explicitly masked
 
-        final Object opChild = opNode.get(Escaper.replaceAll(name, "$", "$$"));
+        final Object opChild = opNode.get(nameEscaped);
 
         // if item was not explicitly excluded nor included
 
@@ -425,6 +449,4 @@ public abstract class AbstractFilter
     }
     return null;
   }
-
-  private final DefaultNodeModeCalculator _dafaultNodeModeCalculator = new DefaultNodeModeCalculator();
 }

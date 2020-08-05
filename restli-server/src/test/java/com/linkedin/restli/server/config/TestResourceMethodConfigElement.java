@@ -1,11 +1,14 @@
 package com.linkedin.restli.server.config;
 
 import com.linkedin.restli.common.ResourceMethod;
+import java.util.Arrays;
+import java.util.HashSet;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Optional;
 
+import static com.linkedin.restli.server.config.RestLiMethodConfig.ConfigType.*;
 import static org.testng.Assert.assertEquals;
 
 public class TestResourceMethodConfigElement
@@ -37,8 +40,9 @@ public class TestResourceMethodConfigElement
                                             Optional<ResourceMethod> opType,
                                             Optional<String> opName,
                                             Long configValue
-                                            ) throws ResourceMethodConfigParsingException {
-    ResourceMethodConfigElement el = ResourceMethodConfigElement.parse("timeoutMs", configKey, configValue);
+                                            ) throws ResourceMethodConfigParsingException
+  {
+    ResourceMethodConfigElement el = ResourceMethodConfigElement.parse(RestLiMethodConfig.ConfigType.TIMEOUT, configKey, configValue);
     assertEquals(el.getResourceName(), restResource);
     assertEquals(el.getOpType(), opType);
     assertEquals(el.getOpName(), opName);
@@ -46,25 +50,47 @@ public class TestResourceMethodConfigElement
     assertEquals(el.getValue(), configValue);
   }
 
+  // Testing only the config scenarios as the key parsing is covered by timeoutConfig tests above.
   @DataProvider
-  public Object[][] invalidTimeoutConfigs()
+  public Object[][] validAlwaysProjectedFieldsConfigs()
+  {
+    return new Object[][]
+            {
+                    {"*.*", "f1", new String[]{"f1"}},
+                    {"*.*", "f1, f2", new String[]{"f1", "f2"}},
+                    {"*.*", "f1,f2", new String[]{"f1", "f2"}}
+            };
+  }
+
+  @Test(dataProvider = "validAlwaysProjectedFieldsConfigs")
+  public void testValidAlwaysProjectedFieldConfigParsing(String configKey, String configValue, String[] expected)
+          throws ResourceMethodConfigParsingException
+  {
+    ResourceMethodConfigElement el = ResourceMethodConfigElement.parse(ALWAYS_PROJECTED_FIELDS, configKey, configValue);
+    assertEquals(el.getProperty(), ALWAYS_PROJECTED_FIELDS.getConfigName());
+    assertEquals(el.getValue(), new HashSet<>(Arrays.asList(expected)));
+  }
+
+  @DataProvider
+  public Object[][] invalidConfigs()
   {
     return new Object[][]
         {
-          {"blah", "*.*", 100L}, // invalid property
-          {"timeoutMs", "*.*", true}, // invalid config value
-          {"timeoutMs", "*.FINDER", 100L}, // missing operation name for FINDER
-          {"timeoutMs", "*.BATCH_FINDER", 100L}, // missing operation name for BATCH_FINDER
-          {"timeoutMs", "greetings.DELETE/timeoutMs", 100L}, // invalid config key
-          {"timeoutMs", "greetings.foo.DELETE", 100L} // invalid subresource key
+          {RestLiMethodConfig.ConfigType.TIMEOUT, "*.*", true}, // invalid config value
+          {ALWAYS_PROJECTED_FIELDS, "*.*", true}, // invalid config value
+          {RestLiMethodConfig.ConfigType.TIMEOUT, "*.FINDER", 100L}, // missing operation name for FINDER
+          {RestLiMethodConfig.ConfigType.TIMEOUT, "*.BATCH_FINDER", 100L}, // missing operation name for BATCH_FINDER
+          {RestLiMethodConfig.ConfigType.TIMEOUT, "greetings.DELETE/timeoutMs", 100L}, // invalid config key
+          {RestLiMethodConfig.ConfigType.TIMEOUT, "greetings.foo.DELETE", 100L} // invalid subresource key
         };
   }
 
 
-  @Test(dataProvider = "invalidTimeoutConfigs", expectedExceptions = {ResourceMethodConfigParsingException.class})
-  public void testInvalidTimeoutConfigParsing(String property,
+  @Test(dataProvider = "invalidConfigs", expectedExceptions = {ResourceMethodConfigParsingException.class})
+  public void testInvalidTimeoutConfigParsing(RestLiMethodConfig.ConfigType configType,
                                               String configKey,
-                                              Object configValue) throws ResourceMethodConfigParsingException {
-    ResourceMethodConfigElement.parse(property, configKey, configValue);
+                                              Object configValue) throws ResourceMethodConfigParsingException
+  {
+    ResourceMethodConfigElement.parse(configType, configKey, configValue);
   }
 }

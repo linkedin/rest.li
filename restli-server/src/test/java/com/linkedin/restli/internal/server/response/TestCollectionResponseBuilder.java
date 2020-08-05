@@ -300,6 +300,7 @@ public class TestCollectionResponseBuilder
     EasyMock.expect(mockContext.getParameter(EasyMock.<String>anyObject())).andReturn(null).times(2);
     EasyMock.expect(mockContext.getRequestHeaders()).andReturn(ResponseBuilderUtil.getHeaders()).once();
     EasyMock.expect(mockContext.getRawRequestContext()).andReturn(new RequestContext()).anyTimes();
+    EasyMock.expect(mockContext.getAlwaysProjectedFields()).andReturn(Collections.emptySet()).anyTimes();
 
     //Field Projection
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(dataProjectionMode).times(generateTestList().size());

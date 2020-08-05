@@ -153,9 +153,7 @@ public class BatchFinderResponseBuilder
     List<AnyRecord> response = new ArrayList<>(elements.size());
     for (int j = 0; j < elements.size(); j++)
     {
-      response.add(new AnyRecord(RestUtils.projectFields(elements.get(j).data(),
-                                                         resourceContext.getProjectionMode(),
-                                                         resourceContext.getProjectionMask())));
+      response.add(new AnyRecord(RestUtils.projectFields(elements.get(j).data(), resourceContext)));
     }
     return response;
   }
@@ -179,7 +177,8 @@ public class BatchFinderResponseBuilder
 
     return new CollectionMetadata(RestUtils.projectFields(paging.data(),
                                                           ProjectionMode.AUTOMATIC,
-                                                          resourceContext.getPagingProjectionMask()));
+                                                          resourceContext.getPagingProjectionMask(),
+                                                          resourceContext.getAlwaysProjectedFields()));
   }
 
   private AnyRecord buildMetaData(CollectionResult<RecordTemplate, RecordTemplate> cr,
@@ -189,7 +188,8 @@ public class BatchFinderResponseBuilder
     {
       return new AnyRecord(RestUtils.projectFields(cr.getMetadata().data(),
                                                    resourceContext.getMetadataProjectionMode(),
-                                                   resourceContext.getMetadataProjectionMask()));
+                                                   resourceContext.getMetadataProjectionMask(),
+                                                   resourceContext.getAlwaysProjectedFields()));
     }
 
     return null;

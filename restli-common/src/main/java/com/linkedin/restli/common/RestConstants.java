@@ -17,6 +17,7 @@
 
 package com.linkedin.restli.common;
 
+import com.linkedin.data.codec.ProtobufDataCodec;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,7 +51,7 @@ public interface RestConstants
    */
   @Deprecated
   String HEADER_VALUE_APPLICATION_PROTOBUF = "application/x-protobuf";
-  String HEADER_VALUE_APPLICATION_PROTOBUF2 = "application/x-protobuf2";
+  String HEADER_VALUE_APPLICATION_PROTOBUF2 = ProtobufDataCodec.DEFAULT_HEADER;
   String HEADER_VALUE_APPLICATION_SMILE = "application/x-smile";
   String HEADER_VALUE_MULTIPART_RELATED = "multipart/related";
   String HEADER_VALUE_ACCEPT_ANY = "*/*";

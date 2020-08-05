@@ -20,6 +20,7 @@ import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.codec.DataCodec;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.function.Function;
 
@@ -62,7 +63,22 @@ public class SymbolTableSerializer
   @SuppressWarnings("unchecked")
   public static SymbolTable fromByteString(ByteString byteString, DataCodec codec, Function<String, String> symbolTableRenamer) throws IOException
   {
-    DataList dataList = codec.readList(byteString.asInputStream());
+    return fromInputStream(byteString.asInputStream(), codec, symbolTableRenamer);
+  }
+
+  /**
+   * Deserialize a symbol table.
+   *
+   * @param inputStream              The serialized representation.
+   * @param codec                    The {@link DataCodec} to use to deserialize.
+   * @param symbolTableRenamer       An optional function to rename the deserialized symbol table.
+   * @return The deserialized table.
+   * @throws IOException  If any exception occurred during deserialization.
+   */
+  @SuppressWarnings("unchecked")
+  public static SymbolTable fromInputStream(InputStream inputStream, DataCodec codec, Function<String, String> symbolTableRenamer) throws IOException
+  {
+    DataList dataList = codec.readList(inputStream);
     String symbolTableName = (String) dataList.get(0);
     if (symbolTableRenamer != null)
     {

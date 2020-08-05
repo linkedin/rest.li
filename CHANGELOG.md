@@ -13,6 +13,18 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.4.9] - 2020-08-04
+- Add missing ClusterInfoProvider implementations in ZKFSLoadBalancer and TogglingLoadBalancer
+
+## [29.4.8] - 2020-08-04
+- Add identical traffic multiplier strategy for dark clusters to enable identical traffic across all dark clusters
+
+## [29.4.7] - 2020-07-30
+- Add support for configuring fields that are always projected on the server. Configs can be applied for the entire service, resource or method level.
+
+## [29.4.6] - 2020-07-29
+- Provide a default symbol table provider implementation that doesn't use symbol tables for requests/responses of its own, but is able to retrieve remote symbol tables to decode responses from other services (#357)
 - Provide public method in the AbstractRequestBuilder for adding field projections (#353)
 - Allow RestRestliServer and StreamRestliServer throw RestException & StreamException with no stacktrace
 
@@ -4558,7 +4570,11 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.9...master
+[29.4.9]: https://github.com/linkedin/rest.li/compare/v29.4.8...v29.4.9
+[29.4.8]: https://github.com/linkedin/rest.li/compare/v29.4.7...v29.4.8
+[29.4.7]: https://github.com/linkedin/rest.li/compare/v29.4.6...v29.4.7
+[29.4.6]: https://github.com/linkedin/rest.li/compare/v29.4.5...v29.4.6
 [29.4.5]: https://github.com/linkedin/rest.li/compare/v29.4.4...v29.4.5
 [29.4.4]: https://github.com/linkedin/rest.li/compare/v29.4.3...v29.4.4
 [29.4.3]: https://github.com/linkedin/rest.li/compare/v29.4.2...v29.4.3

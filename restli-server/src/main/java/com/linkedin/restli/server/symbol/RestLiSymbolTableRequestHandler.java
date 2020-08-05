@@ -20,6 +20,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
+import com.linkedin.data.codec.symbol.DefaultSymbolTableProvider;
 import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTableProvider;
 import com.linkedin.data.codec.symbol.SymbolTableProviderHolder;
@@ -49,7 +50,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RestLiSymbolTableRequestHandler implements NonResourceRequestHandler
 {
-  public static final String SYMBOL_TABLE_URI_PATH = "symbolTable";
+  public static final String SYMBOL_TABLE_URI_PATH = DefaultSymbolTableProvider.SYMBOL_TABLE_URI_PATH;
   private static final Logger LOGGER = LoggerFactory.getLogger(RestLiSymbolTableRequestHandler.class);
   private static final int DEFAULT_CACHE_SIZE = 100;
 

@@ -132,6 +132,16 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
                                                                       _random);
             }
             break;
+          case IDENTICAL_TRAFFIC:
+            if (IdenticalTrafficMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig))
+            {
+              BaseDarkClusterDispatcher baseDarkClusterDispatcher =
+                  new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
+              return new IdenticalTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
+                  baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(),
+                  _random);
+            }
+            break;
           case CONSTANT_QPS:
             // the constant qps strategy is not yet implemented, continue to the next strategy if it exists
             break;
