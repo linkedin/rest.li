@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.4.10] - 2020-08-05
+- Allow RestRestliServer and StreamRestliServer throw RestException & StreamException with no stacktrace
+
 ## [29.4.9] - 2020-08-04
 - Add missing ClusterInfoProvider implementations in ZKFSLoadBalancer and TogglingLoadBalancer
 
@@ -26,7 +29,6 @@ and what APIs have changed, if applicable.
 ## [29.4.6] - 2020-07-29
 - Provide a default symbol table provider implementation that doesn't use symbol tables for requests/responses of its own, but is able to retrieve remote symbol tables to decode responses from other services (#357)
 - Provide public method in the AbstractRequestBuilder for adding field projections (#353)
-- Allow RestRestliServer and StreamRestliServer throw RestException & StreamException with no stacktrace
 
 ## [29.4.5] - 2020-07-21
 - Update ExtensionSchemaValidation task to check extension schema annotation (#254)
@@ -4570,7 +4572,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.9...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.10...master
+[29.4.10]: https://github.com/linkedin/rest.li/compare/v29.4.9...v29.4.10
 [29.4.9]: https://github.com/linkedin/rest.li/compare/v29.4.8...v29.4.9
 [29.4.8]: https://github.com/linkedin/rest.li/compare/v29.4.7...v29.4.8
 [29.4.7]: https://github.com/linkedin/rest.li/compare/v29.4.6...v29.4.7
