@@ -663,6 +663,9 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     greetingMap.put("key1", new Greeting());
     return new Object[][]
         {
+            // Required fields even if marked createOnly should be present
+            {new ValidationDemo(),
+                 "/stringB :: field is required but not found and has no default value"},
             // Required fields should be present in an update request
             {new ValidationDemo().setArrayWithInlineRecord(myItems),
                 "/ArrayWithInlineRecord/0/bar2 :: field is required but not found and has no default value"},
@@ -703,6 +706,9 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     }
   }
 
+  /**
+   * Required but read-only fields are optional. Required create-only fields must be present.
+   */
   public static Object[] updateSuccesses()
   {
     ValidationDemo.UnionFieldWithInlineRecord unionField = new ValidationDemo.UnionFieldWithInlineRecord();
@@ -717,8 +723,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     map.put("key1", new Greeting().setId(1).setMessage("msg").setTone(Tone.FRIENDLY));
     return new Object[]
         {
-            // All required fields have to be present, regardless of ReadOnly or CreateOnly annotations
+            // All fields present.
             validationDemo1,
+            // ReadOnly fields stringA, intA not present
+            new ValidationDemo().setStringB("BBB").setUnionFieldWithInlineRecord(unionField2)
+                    .setIntB(5432).setArrayWithInlineRecord(array).setMapWithTyperefs(map).setValidationDemoNext(validationDemo1),
             new ValidationDemo().setStringA("aaa").setStringB("bbb").setUnionFieldWithInlineRecord(unionField2)
                 .setIntA(1234).setIntB(5678).setArrayWithInlineRecord(array).setMapWithTyperefs(map).setValidationDemoNext(validationDemo1)
         };

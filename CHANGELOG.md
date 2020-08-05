@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Relax validation of read-only fields for upsert usecase: UPDATE used for create or update. Fields marked as ReadOnly will be treated as optional for UPDATE methods.
 
 ## [29.4.7] - 2020-07-30
 - Add support for configuring fields that are always projected on the server. Configs can be applied for the entire service, resource or method level.

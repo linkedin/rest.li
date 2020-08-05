@@ -106,7 +106,7 @@ public class RestLiDataValidator
 
   // ReadOnly fields are treated as optional for these types of requests
   private static final Set<ResourceMethod> readOnlyOptional = new HashSet<>(Arrays.asList(
-      ResourceMethod.CREATE, ResourceMethod.BATCH_CREATE));
+      ResourceMethod.CREATE, ResourceMethod.BATCH_CREATE, ResourceMethod.UPDATE, ResourceMethod.BATCH_UPDATE));
 
   // Resource methods that require validation on response
   public static final Set<ResourceMethod>  METHODS_VALIDATED_ON_RESPONSE = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
@@ -115,6 +115,9 @@ public class RestLiDataValidator
 
   // A path is ReadOnly if it satisfies this predicate
   private final Predicate _readOnlyPredicate;
+  // A path is Optional if it satisfies this predicate, even if the field is required in the schema. These are fields
+  // marked as ReadOnly and for methods that create entity (CREATE/UPDATE)
+  private final Predicate _readOnlyOptionalPredicate;
   // A path is CreateOnly if it satisfies this predicate
   private final Predicate _createOnlyPredicate;
   // A path is a descendant of a ReadOnly field if it satisfies this predicate
@@ -247,8 +250,7 @@ public class RestLiDataValidator
       for (Map.Entry<String, List<String>> entry : annotations.entrySet())
       {
         String annotationName = entry.getKey();
-        if (annotationName.equals(ReadOnly.class.getAnnotation(RestSpecAnnotation.class).name())
-            && readOnlyRestrictedMethods.contains(resourceMethod))
+        if (annotationName.equals(ReadOnly.class.getAnnotation(RestSpecAnnotation.class).name()))
         {
           for (String path : entry.getValue())
           {
@@ -267,7 +269,8 @@ public class RestLiDataValidator
         }
       }
     }
-    _readOnlyPredicate = Predicates.or(readOnly);
+    _readOnlyPredicate = readOnlyRestrictedMethods.contains(resourceMethod) ? Predicates.or(readOnly) : Predicates.alwaysFalse();
+    _readOnlyOptionalPredicate = readOnlyOptional.contains(resourceMethod) ? Predicates.or(readOnly) : Predicates.alwaysFalse();
     _createOnlyPredicate = Predicates.or(createOnly);
     _readOnlyDescendantPredicate = Predicates.or(readOnlyDescendant);
     _createOnlyDescendantPredicate = Predicates.or(createOnlyDescendant);
@@ -595,11 +598,10 @@ public class RestLiDataValidator
   private ValidationResult validateInputEntity(RecordTemplate entity)
   {
     ValidationOptions validationOptions = new ValidationOptions();
-    if (readOnlyOptional.contains(_resourceMethod))
-    {
-      // Even if ReadOnly fields are non-optional, the client cannot supply them in a create request, so they should be treated as optional.
-      validationOptions.setTreatOptional(_readOnlyPredicate);
-    }
+    // Even if ReadOnly fields are non-optional,
+    //  the client cannot supply them in a create request, so they should be treated as optional.
+    //  similarly for update requests used as upsert(update to create), they are treated as optional.
+    validationOptions.setTreatOptional(_readOnlyOptionalPredicate);
     ValidationResult result = ValidateDataAgainstSchema.validate(entity, validationOptions, new DataValidator(entity.schema()));
     return result;
   }

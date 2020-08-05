@@ -17,7 +17,6 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
-import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.validation.CreateOnly;
