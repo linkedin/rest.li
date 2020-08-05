@@ -132,6 +132,11 @@ public class ResponseUtils
 
   public static RestException buildRestException(RestLiResponseException restLiResponseException)
   {
+    return buildRestException(restLiResponseException, true);
+  }
+
+  public static RestException buildRestException(RestLiResponseException restLiResponseException, boolean writableStackTrace)
+  {
     RestLiResponse restLiResponse = restLiResponseException.getRestLiResponse();
     RestResponseBuilder responseBuilder = new RestResponseBuilder()
         .setHeaders(restLiResponse.getHeaders())
@@ -148,7 +153,8 @@ public class ResponseUtils
     }
 
     RestResponse restResponse = responseBuilder.build();
-    return new RestException(restResponse, restLiResponseException.getCause());
+    Throwable cause = restLiResponseException.getCause();
+    return new RestException(restResponse, cause==null ? null : cause.toString(), cause, writableStackTrace);
   }
 
   public static StreamException buildStreamException(RestLiResponseException restLiResponseException, StreamDataCodec codec)

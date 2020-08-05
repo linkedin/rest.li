@@ -59,6 +59,7 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
   private static final Logger log = LoggerFactory.getLogger(RestRestLiServer.class);
 
   private final List<NonResourceRequestHandler> _nonResourceRequestHandlers;
+  private final boolean _writableStackTrace;
 
   RestRestLiServer(RestLiConfig config,
       ResourceFactory resourceFactory,
@@ -101,6 +102,7 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
 
     // Add custom request handlers
     config.getCustomRequestHandlers().forEach(_nonResourceRequestHandlers::add);
+    _writableStackTrace = config.isWritableStackTrace();
   }
 
   List<NonResourceRequestHandler> getNonResourceRequestHandlers()
@@ -201,14 +203,15 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
   private RestException buildPreRoutingRestException(Throwable throwable, RestRequest request)
   {
     RestLiResponseException restLiException = buildPreRoutingError(throwable, request);
-    return ResponseUtils.buildRestException(restLiException);
+    return ResponseUtils.buildRestException(restLiException, _writableStackTrace);
   }
 
   protected void handleResourceRequest(RestRequest request,
       RoutingResult routingResult,
       Callback<RestResponse> callback)
   {
-    handleResourceRequestWithRestLiResponse(request, routingResult, new RestLiToRestResponseCallbackAdapter(callback, routingResult));
+    handleResourceRequestWithRestLiResponse(request, routingResult,
+        new RestLiToRestResponseCallbackAdapter(callback, routingResult, _writableStackTrace));
   }
 
   protected void handleResourceRequestWithRestLiResponse(RestRequest request, RoutingResult routingResult,
@@ -248,11 +251,13 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
   static class RestLiToRestResponseCallbackAdapter extends CallbackAdapter<RestResponse, RestLiResponse>
   {
     private final RoutingResult _routingResult;
+    private final boolean _writableStackTrace;
 
-    RestLiToRestResponseCallbackAdapter(Callback<RestResponse> callback, RoutingResult routingResult)
+    RestLiToRestResponseCallbackAdapter(Callback<RestResponse> callback, RoutingResult routingResult, Boolean writableStackTrace)
     {
       super(callback);
       _routingResult = routingResult;
+      _writableStackTrace = writableStackTrace;
     }
 
     @Override
@@ -274,7 +279,7 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
       TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_ERROR_SERIALIZATION.key());
 
       final Throwable throwable = error instanceof RestLiResponseException
-          ? ResponseUtils.buildRestException((RestLiResponseException) error)
+          ? ResponseUtils.buildRestException((RestLiResponseException) error, _writableStackTrace)
           : error;
 
       TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_ERROR_SERIALIZATION.key());
