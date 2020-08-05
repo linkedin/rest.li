@@ -25,6 +25,9 @@ import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 
 /**
  * ClusterInfoProvider provides a mechanism to access detailed cluster information from the D2 infrastructure.
+ * Implementations should implement at least getClusterCount, getDarkClusterConfigMap, registerClusterListener,
+ * and unregisterClusterListener. Some have a default implementation for backwards compatibility reasons, but
+ * should be regarded as required.
  *
  * @author David Hoa
  * @version $Revision: $
