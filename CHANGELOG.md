@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.4.11] - 2020-08-06
 - Relax validation of read-only fields for upsert usecase: UPDATE used for create or update. Fields marked as ReadOnly will be treated as optional for UPDATE methods.
 
 ## [29.4.10] - 2020-08-05
@@ -4573,7 +4575,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.10...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.11...master
+[29.4.11]: https://github.com/linkedin/rest.li/compare/v29.4.10...v29.4.11
 [29.4.10]: https://github.com/linkedin/rest.li/compare/v29.4.9...v29.4.10
 [29.4.9]: https://github.com/linkedin/rest.li/compare/v29.4.8...v29.4.9
 [29.4.8]: https://github.com/linkedin/rest.li/compare/v29.4.7...v29.4.8
