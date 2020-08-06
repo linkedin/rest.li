@@ -15,6 +15,15 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 - Relax validation of read-only fields for upsert usecase: UPDATE used for create or update. Fields marked as ReadOnly will be treated as optional for UPDATE methods.
 
+## [29.4.10] - 2020-08-05
+- Allow RestRestliServer and StreamRestliServer throw RestException & StreamException with no stacktrace
+
+## [29.4.9] - 2020-08-04
+- Add missing ClusterInfoProvider implementations in ZKFSLoadBalancer and TogglingLoadBalancer
+
+## [29.4.8] - 2020-08-04
+- Add identical traffic multiplier strategy for dark clusters to enable identical traffic across all dark clusters
+
 ## [29.4.7] - 2020-07-30
 - Add support for configuring fields that are always projected on the server. Configs can be applied for the entire service, resource or method level.
 
@@ -4564,7 +4573,10 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.10...master
+[29.4.10]: https://github.com/linkedin/rest.li/compare/v29.4.9...v29.4.10
+[29.4.9]: https://github.com/linkedin/rest.li/compare/v29.4.8...v29.4.9
+[29.4.8]: https://github.com/linkedin/rest.li/compare/v29.4.7...v29.4.8
 [29.4.7]: https://github.com/linkedin/rest.li/compare/v29.4.6...v29.4.7
 [29.4.6]: https://github.com/linkedin/rest.li/compare/v29.4.5...v29.4.6
 [29.4.5]: https://github.com/linkedin/rest.li/compare/v29.4.4...v29.4.5
