@@ -807,17 +807,18 @@ public class PegasusPlugin implements Plugin<Project>
       Map<String, PegasusOptions> pegasusOptions = (Map<String, PegasusOptions>) project
           .getExtensions().getExtraProperties().get("pegasus");
 
-      pegasusOptions.put(sourceSet.getName(), new PegasusOptions());
+      PegasusOptions options = PegasusOptions.create(project.files(getDataSchemaPath(project, sourceSet)));
+      pegasusOptions.put(sourceSet.getName(), options);
 
       // rest model generation could fail on incompatibility
       // if it can fail, fail it early
       configureRestModelGeneration(project, sourceSet);
 
-      configureConversionUtilities(project, sourceSet);
+      configureConversionUtilities(project, sourceSet, options);
 
-      GenerateDataTemplateTask generateDataTemplateTask = configureDataTemplateGeneration(project, sourceSet);
+      GenerateDataTemplateTask generateDataTemplateTask = configureDataTemplateGeneration(project, sourceSet, options);
 
-      configureAvroSchemaGeneration(project, sourceSet);
+      configureAvroSchemaGeneration(project, sourceSet, options);
 
       configureRestClientGeneration(project, sourceSet);
 
@@ -826,7 +827,7 @@ public class PegasusPlugin implements Plugin<Project>
         configureSchemaAnnotationValidation(project, sourceSet, generateDataTemplateTask);
       }
 
-      configureExtensionSchemaValidationAndPublishTasks(project, sourceSet);
+      configureExtensionSchemaValidationAndPublishTasks(project, sourceSet, options);
 
       Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName("clean", "GeneratedDir"));
       cleanGeneratedDirTask.doLast(new CacheableAction<>(task ->
@@ -840,7 +841,7 @@ public class PegasusPlugin implements Plugin<Project>
       project.getTasks().getByName("clean").dependsOn(cleanGeneratedDirTask);
 
       // Set data schema directories as resource roots
-      configureDataSchemaResourcesRoot(project, sourceSet);
+      configureDataSchemaResourcesRoot(project, sourceSet, options);
     });
 
     project.getExtensions().getExtraProperties().set(GENERATOR_CLASSLOADER_NAME, getClass().getClassLoader());
@@ -857,7 +858,7 @@ public class PegasusPlugin implements Plugin<Project>
     ValidateSchemaAnnotationTask validateSchemaAnnotationTask = project.getTasks()
         .create(sourceSet.getTaskName("validate", "schemaAnnotation"), ValidateSchemaAnnotationTask.class, task ->
                 {
-                  task.setInputDir(generateDataTemplatesTask.getInputDir());
+                  task.setInputDirs(generateDataTemplatesTask.getInputDirs());
                   task.setResolverPath(getDataModelConfig(project, sourceSet)); // same resolver path as generateDataTemplatesTask
                   task.setClassPath(project.getConfigurations() .getByName("schemaAnnotationHandler")
                                            .plus(project.getConfigurations().getByName("pegasusPlugin"))
@@ -935,7 +936,8 @@ public class PegasusPlugin implements Plugin<Project>
     }
   }
 
-  protected void configureExtensionSchemaValidationAndPublishTasks(Project project, SourceSet sourceSet)
+  protected void configureExtensionSchemaValidationAndPublishTasks(Project project, SourceSet sourceSet,
+      PegasusOptions options)
   {
     // extension schema directory
     File extensionSchemaDir = project.file(getExtensionSchemaPath(project, sourceSet));
@@ -948,7 +950,7 @@ public class PegasusPlugin implements Plugin<Project>
     ValidateExtensionSchemaTask validateExtensionSchemaTask =  project.getTasks()
         .create(sourceSet.getTaskName("validate", "ExtensionSchema"), ValidateExtensionSchemaTask.class, task -> {
           task.setInputDir(extensionSchemaDir);
-          task.setResolverPath(getDataModelConfig(project, sourceSet).plus(project.files(getDataSchemaPath(project, sourceSet))));
+          task.setResolverPath(getDataModelConfig(project, sourceSet).plus(options.getDataSchemaDirs()));
           task.setClassPath(project.getConfigurations().getByName("pegasusPlugin"));
           if (isPropertyTrue(project, ENABLE_ARG_FILE))
           {
@@ -1438,16 +1440,15 @@ public class PegasusPlugin implements Plugin<Project>
   }
 
   @SuppressWarnings("deprecation")
-  protected void configureAvroSchemaGeneration(Project project, SourceSet sourceSet)
+  protected void configureAvroSchemaGeneration(Project project, SourceSet sourceSet, PegasusOptions options)
   {
-    File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet));
     File avroDir = project.file(getGeneratedDirPath(project, sourceSet, AVRO_SCHEMA_GEN_TYPE)
         + File.separatorChar + "avro");
 
     // generate avro schema files from data schema
     Task generateAvroSchemaTask = project.getTasks()
         .create(sourceSet.getTaskName("generate", "avroSchema"), GenerateAvroSchemaTask.class, task -> {
-          task.setInputDir(dataSchemaDir);
+          task.setInputDirs(options.getDataSchemaDirs());
           task.setDestinationDir(avroDir);
           task.setResolverPath(getDataModelConfig(project, sourceSet));
           task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
@@ -1458,7 +1459,7 @@ public class PegasusPlugin implements Plugin<Project>
 
           task.onlyIf(t ->
           {
-            if (task.getInputDir().exists())
+            if (task.getInputDirs().getFiles().stream().anyMatch(File::exists))
             {
               @SuppressWarnings("unchecked")
               Map<String, PegasusOptions> pegasusOptions = (Map<String, PegasusOptions>) project
@@ -1502,9 +1503,8 @@ public class PegasusPlugin implements Plugin<Project>
     }
   }
 
-  protected void configureConversionUtilities(Project project, SourceSet sourceSet)
+  protected void configureConversionUtilities(Project project, SourceSet sourceSet, PegasusOptions options)
   {
-    File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet));
     boolean reverse = isPropertyTrue(project, CONVERT_TO_PDL_REVERSE);
     boolean keepOriginal = isPropertyTrue(project, CONVERT_TO_PDL_KEEP_ORIGINAL);
     boolean skipVerification = isPropertyTrue(project, CONVERT_TO_PDL_SKIP_VERIFICATION);
@@ -1513,8 +1513,7 @@ public class PegasusPlugin implements Plugin<Project>
     // Utility task for migrating between PDSC and PDL.
     project.getTasks().create(sourceSet.getTaskName("convert", "ToPdl"), TranslateSchemasTask.class, task ->
     {
-      task.setInputDir(dataSchemaDir);
-      task.setDestinationDir(dataSchemaDir);
+      task.setInputDirs(options.getDataSchemaDirs());
       task.setResolverPath(getDataModelConfig(project, sourceSet));
       task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
       task.setPreserveSourceCmd(preserveSourceCmd);
@@ -1535,11 +1534,12 @@ public class PegasusPlugin implements Plugin<Project>
         task.setEnableArgFile(true);
       }
 
-      task.onlyIf(t -> task.getInputDir().exists());
+      task.onlyIf(t -> task.getInputDirs().getFiles().stream().anyMatch(File::exists));
       task.doLast(new CacheableAction<>(t ->
       {
         project.getLogger().lifecycle("Pegasus schema conversion complete.");
-        project.getLogger().lifecycle("All pegasus schema files in " + dataSchemaDir + " have been converted");
+        project.getLogger()
+            .lifecycle("All pegasus schema files in " + task.getInputDirs().getAsPath() + " have been converted");
         project.getLogger().lifecycle("You can use '-PconvertToPdl.reverse=true|false' to change the direction of conversion.");
       }));
     });
@@ -1547,8 +1547,7 @@ public class PegasusPlugin implements Plugin<Project>
     // Helper task for reformatting existing PDL schemas by generating them again.
     project.getTasks().create(sourceSet.getTaskName("reformat", "Pdl"), TranslateSchemasTask.class, task ->
     {
-      task.setInputDir(dataSchemaDir);
-      task.setDestinationDir(dataSchemaDir);
+      task.setInputDirs(options.getDataSchemaDirs());
       task.setResolverPath(getDataModelConfig(project, sourceSet));
       task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
       task.setSourceFormat(SchemaFileType.PDL);
@@ -1560,15 +1559,15 @@ public class PegasusPlugin implements Plugin<Project>
         task.setEnableArgFile(true);
       }
 
-      task.onlyIf(t -> task.getInputDir().exists());
+      task.onlyIf(t -> task.getInputDirs().getFiles().stream().anyMatch(File::exists));
       task.doLast(new CacheableAction<>(t -> project.getLogger().lifecycle("PDL reformat complete.")));
     });
   }
 
   @SuppressWarnings("deprecation")
-  protected GenerateDataTemplateTask configureDataTemplateGeneration(Project project, SourceSet sourceSet)
+  protected GenerateDataTemplateTask configureDataTemplateGeneration(Project project, SourceSet sourceSet,
+      PegasusOptions options)
   {
-    File dataSchemaDir = project.file(getDataSchemaPath(project, sourceSet));
     File generatedDataTemplateDir = project.file(getGeneratedDirPath(project, sourceSet, DATA_TEMPLATE_GEN_TYPE)
         + File.separatorChar + "java");
     File publishableSchemasBuildDir = project.file(project.getBuildDir().getAbsolutePath()
@@ -1580,7 +1579,7 @@ public class PegasusPlugin implements Plugin<Project>
     GenerateDataTemplateTask generateDataTemplatesTask = project.getTasks()
         .create(sourceSet.getTaskName("generate", "dataTemplate"), GenerateDataTemplateTask.class, task ->
         {
-          task.setInputDir(dataSchemaDir);
+          task.setInputDirs(options.getDataSchemaDirs());
           task.setDestinationDir(generatedDataTemplateDir);
           task.setResolverPath(getDataModelConfig(project, sourceSet));
           task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
@@ -1591,7 +1590,7 @@ public class PegasusPlugin implements Plugin<Project>
 
           task.onlyIf(t ->
           {
-            if (task.getInputDir().exists())
+            if (task.getInputDirs().getFiles().stream().anyMatch(File::exists))
             {
               @SuppressWarnings("unchecked")
               Map<String, PegasusOptions> pegasusOptions = (Map<String, PegasusOptions>) project
@@ -1662,7 +1661,7 @@ public class PegasusPlugin implements Plugin<Project>
     Task prepareSchemasForPublishTask = project.getTasks()
         .create(sourceSet.getName() + "CopySchemas", Sync.class, task ->
         {
-          task.from(dataSchemaDir, syncSpec -> DATA_TEMPLATE_FILE_SUFFIXES.forEach(suffix -> syncSpec.include("**/*" + suffix)));
+          task.from(options.getDataSchemaDirs(), syncSpec -> DATA_TEMPLATE_FILE_SUFFIXES.forEach(suffix -> syncSpec.include("**/*" + suffix)));
           task.into(publishableSchemasBuildDir);
         });
     prepareSchemasForPublishTask.dependsOn(copyPdscSchemasTask);
@@ -1676,7 +1675,7 @@ public class PegasusPlugin implements Plugin<Project>
     Task prepareLegacySchemasForPublishTask = project.getTasks()
         .create(sourceSet.getName() + "TranslateSchemas", TranslateSchemasTask.class, task ->
         {
-          task.setInputDir(dataSchemaDir);
+          task.setInputDirs(options.getDataSchemaDirs());
           task.setDestinationDir(publishableLegacySchemasBuildDir);
           task.setResolverPath(getDataModelConfig(project, sourceSet));
           task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
@@ -2083,25 +2082,23 @@ public class PegasusPlugin implements Plugin<Project>
    * The purpose of this is to improve the IDE experience. Makes sure to exclude this directory from being packaged in
    * with the default Jar task.
    */
-  private static void configureDataSchemaResourcesRoot(Project project, SourceSet sourceSet)
+  private static void configureDataSchemaResourcesRoot(Project project, SourceSet sourceSet, PegasusOptions options)
   {
     sourceSet.resources(sourceDirectorySet -> {
-      final String dataSchemaPath = getDataSchemaPath(project, sourceSet);
-      final File dataSchemaRoot = project.file(dataSchemaPath);
-      sourceDirectorySet.srcDir(dataSchemaPath);
-      project.getLogger().info("Adding resource root '{}'", dataSchemaPath);
+      for (File dataSchemaRoot : options.getDataSchemaDirs()) {
+        project.getLogger().info("Adding resource root '{}'", dataSchemaRoot);
 
-      // Exclude the data schema directory from being copied into the default Jar task
-      sourceDirectorySet.getFilter().exclude(fileTreeElement -> {
-        final File file = fileTreeElement.getFile();
-        // Traversal starts with the children of a resource root, so checking the direct parent is sufficient
-        final boolean exclude = dataSchemaRoot.equals(file.getParentFile());
-        if (exclude)
-        {
-          project.getLogger().info("Excluding resource directory '{}'", file);
-        }
-        return exclude;
-      });
+        // Exclude the data schema directory from being copied into the default Jar task
+        sourceDirectorySet.getFilter().exclude(fileTreeElement -> {
+          final File file = fileTreeElement.getFile();
+          // Traversal starts with the children of a resource root, so checking the direct parent is sufficient
+          final boolean exclude = dataSchemaRoot.equals(file.getParentFile());
+          if (exclude) {
+            project.getLogger().info("Excluding resource directory '{}'", file);
+          }
+          return exclude;
+        });
+      }
     });
   }
 }

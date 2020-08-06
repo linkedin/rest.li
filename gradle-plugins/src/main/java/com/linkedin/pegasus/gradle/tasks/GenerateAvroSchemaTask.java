@@ -17,6 +17,7 @@ import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.PathSensitive;
@@ -42,7 +43,7 @@ import static com.linkedin.pegasus.gradle.SharedFileUtils.getSuffixedFiles;
 @CacheableTask
 public class GenerateAvroSchemaTask extends DefaultTask
 {
-  private File _inputDir;
+  private FileCollection _inputDirs = getProject().files();
   private FileCollection _resolverPath;
   private FileCollection _codegenClasspath;
   private File _destinationDir;
@@ -50,10 +51,13 @@ public class GenerateAvroSchemaTask extends DefaultTask
   private static final String TYPERF_PROPERTIES_EXCLUDE = "generator.avro.typeref.properties.exclude";
 
   @TaskAction
-  public void generate()
-  {
-    FileTree inputDataSchemaFiles = getSuffixedFiles(getProject(), _inputDir,
-        PegasusPlugin.DATA_TEMPLATE_FILE_SUFFIXES);
+  public void generate() {
+    FileTree inputDataSchemaFiles = getProject().files().getAsFileTree();
+
+    for (File dir : _inputDirs) {
+      inputDataSchemaFiles =
+          inputDataSchemaFiles.plus(getSuffixedFiles(getProject(), dir, PegasusPlugin.DATA_TEMPLATE_FILE_SUFFIXES));
+    }
 
     List<String> inputDataSchemaFilenames = StreamSupport.stream(inputDataSchemaFiles.spliterator(), false)
         .map(File::getPath)
@@ -66,11 +70,11 @@ public class GenerateAvroSchemaTask extends DefaultTask
 
     getProject().getLogger().info("Generating Avro schemas ...");
     getProject().getLogger().lifecycle("There are {} data schema input files. Using input root folder: {}",
-        inputDataSchemaFilenames.size(), _inputDir);
+        inputDataSchemaFilenames.size(), _inputDirs.getAsPath());
 
     _destinationDir.mkdirs();
 
-    String resolverPathStr = _resolverPath.plus(getProject().files(_inputDir)).getAsPath();
+    String resolverPathStr = _resolverPath.plus(_inputDirs).getAsPath();
 
     FileCollection _pathedCodegenClasspath;
     try
@@ -121,19 +125,29 @@ public class GenerateAvroSchemaTask extends DefaultTask
   }
 
   /**
-   * Directory containing the data schema files.
+   * Directories containing the data schema files.
    */
-  @InputDirectory
+  @InputFiles
   @SkipWhenEmpty
-  @PathSensitive(PathSensitivity.RELATIVE)
-  public File getInputDir()
+  public FileCollection getInputDirs()
   {
-    return _inputDir;
+    return _inputDirs;
   }
 
+  public void setInputDirs(FileCollection fileCollection) {
+    _inputDirs = fileCollection;
+  }
+
+  @Deprecated
+  public File getInputDir()
+  {
+    return _inputDirs.getSingleFile();
+  }
+
+  @Deprecated
   public void setInputDir(File inputDir)
   {
-    _inputDir = inputDir;
+    _inputDirs = getProject().files(inputDir);
   }
 
   /**

@@ -15,14 +15,23 @@ class PegasusPluginIntegrationTest extends Specification {
   def 'apply pegasus plugin'() {
     setup:
     def buildFile = tempDir.newFile('build.gradle')
-    buildFile.text = "plugins { id 'pegasus' }"
+    buildFile << """
+    |plugins {
+    |  id 'pegasus'
+    |}
+    |
+    |repositories {
+    |  jcenter()
+    |}
+    """.stripMargin()
 
     when:
     def result = GradleRunner.create()
         .withProjectDir(tempDir.root)
         .withPluginClasspath()
-        .withArguments('mainDataTemplateJar')
+        .withArguments('mainDataTemplateJar', '--stacktrace')
         .forwardOutput()
+        .withDebug(Boolean.parseBoolean(System.getProperty("debug-jvm")))
         .build()
 
     then:
@@ -34,7 +43,8 @@ class PegasusPluginIntegrationTest extends Specification {
     def runner = GradleRunner.create()
         .withProjectDir(tempDir.root)
         .withPluginClasspath()
-        .withArguments('mainDataTemplateJar')
+        .withArguments('mainDataTemplateJar', '--stacktrace')
+        .withDebug(Boolean.parseBoolean(System.getProperty("debug-jvm")))
 
     def settingsFile = tempDir.newFile('settings.gradle')
     settingsFile << "rootProject.name = 'test-project'"
@@ -94,5 +104,66 @@ class PegasusPluginIntegrationTest extends Specification {
     result.task(':mainCopySchemas').getOutcome() == SUCCESS
     !preparedPdscFile1.exists()
     preparedPdscFile2.exists()
+  }
+
+  def 'build with multiple data schema directories'() {
+    setup:
+    def runner = GradleRunner.create()
+        .withProjectDir(tempDir.root)
+        .withPluginClasspath()
+        .withArguments('build', '--stacktrace')
+        .withDebug(Boolean.parseBoolean(System.getProperty("debug-jvm")))
+
+    def settingsFile = tempDir.newFile('settings.gradle')
+    settingsFile << "rootProject.name = 'test-project'"
+
+    def buildFile = tempDir.newFile('build.gradle')
+    buildFile << """
+    |plugins {
+    |  id 'pegasus'
+    |}
+    |
+    |repositories {
+    |  jcenter()
+    |}
+    |
+    |dependencies {
+    |  dataTemplateCompile files(${System.getProperty('integTest.dataTemplateCompileDependencies')})
+    |  pegasusPlugin files(${System.getProperty('integTest.pegasusPluginDependencies')})
+    |}
+    |
+    | task generateSomePegasus() {
+    |   doFirst {
+    |     def out = file('build/generated/pegasus/Foo.pdsc')
+    |     out.parentFile.mkdirs()
+    |     out.text = '{"name":"Foo","type": "record", "fields": []}'
+    |   }
+    | }
+    |
+    |pegasus.main.dataSchemaDirs.from('build/generated/pegasus').builtBy(generateSomePegasus)
+    |pegasus.main.generationModes = [PegasusGenerationMode.PEGASUS, PegasusGenerationMode.AVRO]
+    """.stripMargin()
+
+    def pegasusDir = tempDir.newFolder('src', 'main', 'pegasus')
+    def pdscFilename1 = 'ATypeRef.pdsc'
+    def pdscFile1 = new File("$pegasusDir.path$File.separator$pdscFilename1")
+    def pdscData1 = [
+        type: 'typeref',
+        name: 'ATypeRef',
+        ref : 'string',
+        doc : 'A type ref data.'
+    ]
+    pdscFile1 << JsonOutput.prettyPrint(JsonOutput.toJson(pdscData1))
+
+    when:
+    def result = runner.build()
+
+    then:
+    result.task(':mainCopySchemas').getOutcome() == SUCCESS
+    result.task(':generateAvroSchema').getOutcome() == SUCCESS
+    result.task(':generateDataTemplate').getOutcome() == SUCCESS
+    result.task(':build').getOutcome() == SUCCESS
+    new File([tempDir.root, 'src', 'mainGeneratedAvroSchema', 'avro', 'Foo.avsc'].join(File.separator)).exists()
+    new File([tempDir.root, 'src', 'mainGeneratedDataTemplate', 'java', 'Foo.java'].join(File.separator)).exists()
   }
 }
