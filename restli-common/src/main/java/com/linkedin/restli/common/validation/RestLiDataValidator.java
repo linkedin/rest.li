@@ -97,16 +97,12 @@ import java.util.Set;
 public class RestLiDataValidator
 {
   // ReadOnly fields should not be specified for these types of requests
-  private static final Set<ResourceMethod> readOnlyRestrictedMethods = new HashSet<>(Arrays.asList(
+  private static final Set<ResourceMethod> READ_ONLY_RESTRICTED_METHODS = new HashSet<>(Arrays.asList(
       ResourceMethod.CREATE, ResourceMethod.PARTIAL_UPDATE, ResourceMethod.BATCH_CREATE, ResourceMethod.BATCH_PARTIAL_UPDATE));
 
   // CreateOnly fields should not be specified for these types of requests
-  private static final Set<ResourceMethod> createOnlyRestrictedMethods = new HashSet<>(Arrays.asList(
+  private static final Set<ResourceMethod> CREATE_ONLY_RESTRICTED_METHODS = new HashSet<>(Arrays.asList(
       ResourceMethod.PARTIAL_UPDATE, ResourceMethod.BATCH_PARTIAL_UPDATE));
-
-  // ReadOnly fields are treated as optional for these types of requests
-  private static final Set<ResourceMethod> readOnlyOptional = new HashSet<>(Arrays.asList(
-      ResourceMethod.CREATE, ResourceMethod.BATCH_CREATE, ResourceMethod.UPDATE, ResourceMethod.BATCH_UPDATE));
 
   // Resource methods that require validation on response
   public static final Set<ResourceMethod>  METHODS_VALIDATED_ON_RESPONSE = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
@@ -114,7 +110,7 @@ public class RestLiDataValidator
       ResourceMethod.FINDER, ResourceMethod.BATCH_FINDER, ResourceMethod.BATCH_GET, ResourceMethod.BATCH_CREATE, ResourceMethod.BATCH_PARTIAL_UPDATE)));
 
   // A path is ReadOnly if it satisfies this predicate
-  private final Predicate _readOnlyPredicate;
+  private final Predicate _readOnlyRestrictedPredicate;
   // A path is Optional if it satisfies this predicate, even if the field is required in the schema. These are fields
   // marked as ReadOnly and for methods that create entity (CREATE/UPDATE)
   private final Predicate _readOnlyOptionalPredicate;
@@ -164,7 +160,7 @@ public class RestLiDataValidator
 
   private static Map<String, List<String>> annotationsToMap(Annotation[] annotations)
   {
-    Map<String, List<String>> annotationMap = new HashMap<String, List<String>>();
+    Map<String, List<String>> annotationMap = new HashMap<>();
     if (annotations != null)
     {
       for (Annotation annotation : annotations)
@@ -241,10 +237,10 @@ public class RestLiDataValidator
                              ResourceMethod resourceMethod,
                              Map<String, Class<? extends Validator>> validatorClassMap)
   {
-    List<Predicate> readOnly = new ArrayList<Predicate>();
-    List<Predicate> createOnly = new ArrayList<Predicate>();
-    List<Predicate> readOnlyDescendant = new ArrayList<Predicate>();
-    List<Predicate> createOnlyDescendant = new ArrayList<Predicate>();
+    List<Predicate> readOnly = new ArrayList<>();
+    List<Predicate> createOnly = new ArrayList<>();
+    List<Predicate> readOnlyDescendant = new ArrayList<>();
+    List<Predicate> createOnlyDescendant = new ArrayList<>();
     if (annotations != null)
     {
       for (Map.Entry<String, List<String>> entry : annotations.entrySet())
@@ -258,8 +254,7 @@ public class RestLiDataValidator
             readOnlyDescendant.add(stringToPredicate(path, true));
           }
         }
-        else if (annotationName.equals(CreateOnly.class.getAnnotation(RestSpecAnnotation.class).name())
-            && createOnlyRestrictedMethods.contains(resourceMethod))
+        else if (annotationName.equals(CreateOnly.class.getAnnotation(RestSpecAnnotation.class).name()))
         {
           for (String path : entry.getValue())
           {
@@ -269,9 +264,9 @@ public class RestLiDataValidator
         }
       }
     }
-    _readOnlyPredicate = readOnlyRestrictedMethods.contains(resourceMethod) ? Predicates.or(readOnly) : Predicates.alwaysFalse();
-    _readOnlyOptionalPredicate = readOnlyOptional.contains(resourceMethod) ? Predicates.or(readOnly) : Predicates.alwaysFalse();
-    _createOnlyPredicate = Predicates.or(createOnly);
+    _readOnlyRestrictedPredicate = READ_ONLY_RESTRICTED_METHODS.contains(resourceMethod) ? Predicates.or(readOnly) : Predicates.alwaysFalse();
+    _readOnlyOptionalPredicate = Predicates.or(readOnly);
+    _createOnlyPredicate = CREATE_ONLY_RESTRICTED_METHODS.contains(resourceMethod) ? Predicates.or(createOnly) : Predicates.alwaysFalse();
     _readOnlyDescendantPredicate = Predicates.or(readOnlyDescendant);
     _createOnlyDescendantPredicate = Predicates.or(createOnlyDescendant);
     _valueClass = valueClass;
@@ -291,7 +286,7 @@ public class RestLiDataValidator
     {
       super.validate(context);
       DataElement element = context.dataElement();
-      if (_readOnlyPredicate.evaluate(element))
+      if (_readOnlyRestrictedPredicate.evaluate(element))
       {
         context.addResult(new Message(element.path(), "ReadOnly field present in a %s request", _resourceMethod.toString()));
       }
@@ -318,7 +313,7 @@ public class RestLiDataValidator
     {
       case PARTIAL_UPDATE:
       case BATCH_PARTIAL_UPDATE:
-        return validatePatch((PatchRequest) dataTemplate);
+        return validatePatch((PatchRequest<?>) dataTemplate);
       case CREATE:
       case BATCH_CREATE:
       case UPDATE:
@@ -558,12 +553,10 @@ public class RestLiDataValidator
    */
   private static DataElement hollowElementFromPath(Object[] path)
   {
-    DataElement root = new SimpleDataElement(null, null);
-    DataElement current = root;
+    DataElement current = new SimpleDataElement(null, null);
     for (Object component : path)
     {
-      DataElement child = new SimpleDataElement(null, component.toString(), null, current);
-      current = child;
+      current = new SimpleDataElement(null, component.toString(), null, current);
     }
     return current;
   }
@@ -598,12 +591,11 @@ public class RestLiDataValidator
   private ValidationResult validateInputEntity(RecordTemplate entity)
   {
     ValidationOptions validationOptions = new ValidationOptions();
-    // Even if ReadOnly fields are non-optional,
+    // Even if ReadOnly fields are required,
     //  the client cannot supply them in a create request, so they should be treated as optional.
-    //  similarly for update requests used as upsert(update to create), they are treated as optional.
+    //  similarly for update requests used as upsert (update to create), they are treated as optional.
     validationOptions.setTreatOptional(_readOnlyOptionalPredicate);
-    ValidationResult result = ValidateDataAgainstSchema.validate(entity, validationOptions, new DataValidator(entity.schema()));
-    return result;
+    return ValidateDataAgainstSchema.validate(entity, validationOptions, new DataValidator(entity.schema()));
   }
 
   private ValidationResult validateOutputEntity(RecordTemplate entity, DataSchema validatingSchema)
@@ -621,11 +613,11 @@ public class RestLiDataValidator
 
   private static class ValidationErrorResult implements ValidationResult
   {
-    private MessageList<Message> _messages;
+    private final MessageList<Message> _messages;
 
     private ValidationErrorResult()
     {
-      _messages = new MessageList<Message>();
+      _messages = new MessageList<>();
     }
 
     @Override
@@ -663,6 +655,4 @@ public class RestLiDataValidator
       return _messages;
     }
   }
-
-
 }
