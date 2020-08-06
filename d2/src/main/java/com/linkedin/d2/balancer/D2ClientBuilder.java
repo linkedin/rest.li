@@ -166,7 +166,8 @@ public class D2ClientBuilder
                   _config.startUpExecutorService,
                   _config.jmxManager,
                   _config.d2JmxManagerPrefix,
-                  _config.zookeeperReadWindowMs);
+                  _config.zookeeperReadWindowMs,
+                  _config.enableRelativeLoadBalancer);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -479,6 +480,12 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setEnableRelativeLoadBalancer(boolean enableRelativeLoadBalancer)
+  {
+    _config.enableRelativeLoadBalancer = enableRelativeLoadBalancer;
+    return this;
+  }
+
   private Map<String, TransportClientFactory> createDefaultTransportClientFactories()
   {
     final Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
@@ -509,11 +516,14 @@ public class D2ClientBuilder
     loadBalancerStrategyFactories.putIfAbsent("degraderV3", degraderStrategyFactoryV3);
     loadBalancerStrategyFactories.putIfAbsent("degraderV2_1", degraderStrategyFactoryV3);
 
-    final RelativeLoadBalancerStrategyFactory relativeLoadBalancerStrategyFactory = new RelativeLoadBalancerStrategyFactory(
-        _config._executorService, _config.healthCheckOperations, Collections.emptyList(), _config.eventEmitter,
-        SystemClock.instance());
-    loadBalancerStrategyFactories.putIfAbsent(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME,
-        relativeLoadBalancerStrategyFactory);
+    if (_config.enableRelativeLoadBalancer)
+    {
+      final RelativeLoadBalancerStrategyFactory relativeLoadBalancerStrategyFactory = new RelativeLoadBalancerStrategyFactory(
+          _config._executorService, _config.healthCheckOperations, Collections.emptyList(), _config.eventEmitter,
+          SystemClock.instance());
+      loadBalancerStrategyFactories.putIfAbsent(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME,
+          relativeLoadBalancerStrategyFactory);
+    }
 
     return loadBalancerStrategyFactories;
   }

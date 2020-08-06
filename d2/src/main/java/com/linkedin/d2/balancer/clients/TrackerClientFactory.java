@@ -143,6 +143,15 @@ public class TrackerClientFactory
     {
       switch (loadBalancerStrategyName)
       {
+        case (RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME):
+          Map<String, Object> relativeLoadBalancerProperties = serviceProperties.getRelativeStrategyProperties();
+          if (relativeLoadBalancerProperties != null)
+          {
+            interval = MapUtil.getWithDefault(serviceProperties.getRelativeStrategyProperties(),
+                PropertyKeys.UPDATE_INTERVAL_MS,
+                RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS,
+                Long.class);
+          }
         case (DegraderLoadBalancerStrategyV3.DEGRADER_STRATEGY_NAME):
           Map<String, Object> loadBalancerStrategyProperties = serviceProperties.getLoadBalancerStrategyProperties();
           if (loadBalancerStrategyProperties != null)
