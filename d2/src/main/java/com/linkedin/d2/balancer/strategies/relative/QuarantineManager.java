@@ -363,7 +363,7 @@ public class QuarantineManager {
       TrackerClientState trackerClientState, double serverWeight, Set<TrackerClient> recoverySet,
       PartitionState oldPartitionState)
   {
-    if (trackerClientState.getHealthScore() <= StateUpdater.MIN_HEALTH_SCORE
+    if (trackerClientState.getHealthScore() <= StateUpdater.MIN_HEALTH_SCORE + DOUBLE_COMPARISON_THRESHOLD
         && serverWeight > MIN_ZOOKEEPER_SERVER_WEIGHT)
     {
       // Enroll the client to recovery set if the health score dropped to 0, but zookeeper does not set the client weight to be 0
