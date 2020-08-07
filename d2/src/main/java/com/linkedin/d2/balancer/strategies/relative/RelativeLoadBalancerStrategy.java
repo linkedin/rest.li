@@ -45,6 +45,8 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
 {
   private static final Logger LOG = LoggerFactory.getLogger(RelativeLoadBalancerStrategy.class);
   public static final String RELATIVE_LOAD_BALANCER_STRATEGY_NAME = "relative";
+  public static final String HASH_METHOD_RANDOM = "random";
+  public static final String HASH_METHOD_URI_REGEX = "uriRegex";
 
   private final StateUpdater _stateUpdater;
   private final ClientSelector _clientSelector;

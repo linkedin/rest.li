@@ -27,6 +27,7 @@ import com.linkedin.d2.HttpStatusCodeRange;
 import com.linkedin.d2.HttpStatusCodeRangeArray;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.validation.CoercionMode;
@@ -282,7 +283,17 @@ public class RelativeStrategyPropertiesConverter
     }
     if (ringProperties.hasHashMethod())
     {
-      ringPropertyMap.put(PropertyKeys.RING_HASH_METHOD, ringProperties.getHashMethod().toString());
+      switch (ringProperties.getHashMethod())
+      {
+        case RANDOM:
+          ringPropertyMap.put(PropertyKeys.RING_HASH_METHOD, RelativeLoadBalancerStrategy.HASH_METHOD_RANDOM);
+          break;
+        case URI_REGEX:
+          ringPropertyMap.put(PropertyKeys.RING_HASH_METHOD, RelativeLoadBalancerStrategy.HASH_METHOD_URI_REGEX);
+          break;
+        default:
+          ringPropertyMap.put(PropertyKeys.RING_HASH_METHOD, RelativeLoadBalancerStrategy.HASH_METHOD_RANDOM);
+      }
     }
     if (ringProperties.hasHashConfig())
     {
@@ -334,7 +345,8 @@ public class RelativeStrategyPropertiesConverter
     if (ringPropertyMap.containsKey(PropertyKeys.RING_HASH_METHOD))
     {
       String hashMethod = (String) ringPropertyMap.get(PropertyKeys.RING_HASH_METHOD);
-      if (HashMethod.URI_REGEX.name().equalsIgnoreCase(hashMethod))
+      if (HashMethod.URI_REGEX.name().equalsIgnoreCase(hashMethod) ||
+          RelativeLoadBalancerStrategy.HASH_METHOD_URI_REGEX.equalsIgnoreCase(hashMethod))
       {
         ringProperties.setHashMethod(HashMethod.URI_REGEX);
       }
