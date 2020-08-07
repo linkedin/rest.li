@@ -50,14 +50,14 @@ public class TestResponseUtils
   public Object[][] schemaFilesForDefaultSerializationTest()
   {
     return new Object[][]{
-        {"case1.json"},
-        {"case2.json"},
-        {"case3.json"},
-        {"case4.json"},
-        {"case5.json"},
-        {"case6.json"},
-        {"case7.json"},
-        {"case8.json"},
+        {"default_filling_for_empty_value_but_keyed.json"},
+        {"default_filling_union_without_alias.json"},
+        {"filling_other_field_in_record.json"},
+        {"iterate_array_element_default.json"},
+        {"iterate_map_entry_default.json"},
+        {"record_field_default_case.json"},
+        {"record_field_is_record.json"},
+        {"record_field_with_array_map.json"},
     };
   }
 
@@ -75,11 +75,13 @@ public class TestResponseUtils
       DataMap caseExpect = (DataMap) caseData.get("expect");
       DataSchema schema = DataTemplateUtil.parseSchema(schemaFileText, schemaResolver, SchemaFormatType.PDL);
       DataMap dataWithDefault = ResponseUtils.fillInDefaultValues(schema, caseInput);
+      System.out.println("Expect " + caseExpect);
+      System.out.println("Actual " + dataWithDefault);
       Assert.assertEquals(dataWithDefault, caseExpect, (String) caseData.get("context"));
     }
     catch (Exception e)
     {
-      Assert.fail("Test failed with exception: \n" + e);
+      Assert.fail("Test failed with exception: \n" + e.toString());
     }
   }
 
