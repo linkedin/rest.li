@@ -1,0 +1,4 @@
+record Bar {
+  field1: int,
+  field2: string
+}

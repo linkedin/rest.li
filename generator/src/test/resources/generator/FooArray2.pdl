@@ -1,0 +1,3 @@
+record FooArray2 {
+  field: array[Bar]
+}
