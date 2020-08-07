@@ -525,9 +525,6 @@ public class PegasusPlugin implements Plugin<Project>
   public static final String PDL_FILE_SUFFIX = ".pdl";
   // gradle property to opt OUT schema annotation validation, by default this feature is enabled.
   private static final String DISABLE_SCHEMA_ANNOTATION_VALIDATION = "schema.annotation.validation.disable";
-  // gradle property to opt in for destroying stale files from the build directory,
-  // by default it is disabled, because it triggers hot-reload (even if it results in a no-op)
-  private static final String DESTROY_STALE_FILES_ENABLE = "enableDestroyStaleFiles";
   public static final Collection<String> DATA_TEMPLATE_FILE_SUFFIXES = new ArrayList<>();
 
   public static final String IDL_FILE_SUFFIX = ".restspec.json";
@@ -1604,15 +1601,6 @@ public class PegasusPlugin implements Plugin<Project>
       return false;
     });
 
-    // Dummy task to maintain backward compatibility, as this task was replaced by CopySchemas
-    // TODO: Delete this task once use cases have had time to reference the new task
-    Task copyPdscSchemasTask = project.getTasks().create(sourceSet.getName() + "CopyPdscSchemas", Copy.class);
-    copyPdscSchemasTask.dependsOn(destroyStaleFiles);
-    copyPdscSchemasTask.onlyIf(task -> {
-      project.getLogger().lifecycle("{} task is a NO-OP task.", task.getPath());
-      return false;
-    });
-
     // Prepare schema files for publication by syncing schema folders.
     Task prepareSchemasForPublishTask = project.getTasks()
         .create(sourceSet.getName() + "CopySchemas", Sync.class, task ->
@@ -1620,7 +1608,6 @@ public class PegasusPlugin implements Plugin<Project>
           task.from(dataSchemaDir, syncSpec -> DATA_TEMPLATE_FILE_SUFFIXES.forEach(suffix -> syncSpec.include("**/*" + suffix)));
           task.into(publishableSchemasBuildDir);
         });
-    prepareSchemasForPublishTask.dependsOn(copyPdscSchemasTask);
 
     Collection<Task> dataTemplateJarDepends = new ArrayList<>();
     dataTemplateJarDepends.add(compileTask);

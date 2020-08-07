@@ -67,9 +67,8 @@ public final class TestPegasusPlugin
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(PegasusPlugin.class);
 
-    // Then: Validate the Copy/Sync Schema tasks are of the correct type.
+    // Then: Validate the Delete/Sync Schema tasks are of the correct type.
     assertTrue(project.getTasks().getByName("mainDestroyStaleFiles") instanceof Delete);
-    assertTrue(project.getTasks().getByName("mainCopyPdscSchemas") instanceof Copy);
     assertTrue(project.getTasks().getByName("mainCopySchemas") instanceof Sync);
   }
 }

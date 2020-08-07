@@ -62,7 +62,6 @@ class PegasusPluginCacheabilityTest extends Specification {
     result.task(':generateDataTemplate').outcome == SUCCESS
     result.task(':compileMainGeneratedDataTemplateJava').outcome == SUCCESS
     result.task(':mainDestroyStaleFiles').outcome == SKIPPED
-    result.task(':mainCopyPdscSchemas').outcome == SKIPPED
     result.task(':mainCopySchemas').outcome == SUCCESS
     result.task(':processMainGeneratedDataTemplateResources').outcome == NO_SOURCE
     result.task(':mainGeneratedDataTemplateClasses').outcome ==  SUCCESS
@@ -81,7 +80,6 @@ class PegasusPluginCacheabilityTest extends Specification {
     result.task(':generateDataTemplate').outcome == UP_TO_DATE
     result.task(':compileMainGeneratedDataTemplateJava').outcome == UP_TO_DATE
     result.task(':mainDestroyStaleFiles').outcome == SKIPPED
-    result.task(':mainCopyPdscSchemas').outcome == SKIPPED
     result.task(':mainCopySchemas').outcome == UP_TO_DATE
     result.task(':processMainGeneratedDataTemplateResources').outcome == NO_SOURCE
     result.task(':mainGeneratedDataTemplateClasses').outcome == UP_TO_DATE
