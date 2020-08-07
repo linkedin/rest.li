@@ -123,6 +123,7 @@ public class TestRestLiServer
   private RestLiServer _server;
   private RestLiServer _serverWithFilters;
   private RestLiServer _serverWithCustomErrorResponseConfig; // configured different than server
+  private RestLiServer _serverWithNoExceptionStacktrace;
   private EasyMockResourceFactory _resourceFactory;
   private Filter _mockFilter;
 
@@ -132,9 +133,12 @@ public class TestRestLiServer
     // silence null engine warning and get EasyMock failure if engine is used
     Engine fakeEngine = EasyMock.createMock(Engine.class);
     _mockFilter = EasyMock.createMock(Filter.class);
+    _resourceFactory = new EasyMockResourceFactory();
+
     setUpServer(fakeEngine);
     setupServerWithFilters(fakeEngine);
     setupServerWithCustomErrorResponseConfig(fakeEngine);
+    setUpServerWithNoExceptionStackTrace(fakeEngine);
     replay(fakeEngine);
   }
 
@@ -159,7 +163,6 @@ public class TestRestLiServer
   {
     RestLiConfig config = new RestLiConfig();
     config.addResourcePackageNames("com.linkedin.restli.server.twitter");
-    _resourceFactory  = new EasyMockResourceFactory();
 
     RestLiDebugRequestHandler debugRequestHandlerA = new DebugRequestHandler("a", DEBUG_HANDLER_RESPONSE_A);
 
@@ -167,6 +170,20 @@ public class TestRestLiServer
 
     config.addDebugRequestHandlers(debugRequestHandlerA, debugRequestHandlerB);
     _server = new RestLiServer(config, _resourceFactory, engine);
+  }
+
+  private void setUpServerWithNoExceptionStackTrace(Engine engine)
+  {
+    RestLiConfig config = new RestLiConfig();
+    config.setWritableStackTrace(false);
+    config.addResourcePackageNames("com.linkedin.restli.server.twitter");
+
+    RestLiDebugRequestHandler debugRequestHandlerA = new DebugRequestHandler("a", DEBUG_HANDLER_RESPONSE_A);
+
+    RestLiDebugRequestHandler debugRequestHandlerB = new DebugRequestHandler("b", DEBUG_HANDLER_RESPONSE_B);
+
+    config.addDebugRequestHandlers(debugRequestHandlerA, debugRequestHandlerB);
+    _serverWithNoExceptionStacktrace = new RestLiServer(config, _resourceFactory, engine);
   }
 
   private enum RestOrStream
@@ -229,12 +246,20 @@ public class TestRestLiServer
     return new Object[][]
         {
             //Rest
-            { _server, greaterThanNext, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, RestOrStream.REST },
-            { _server, new ProtocolVersion(0, 0, 0), RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, RestOrStream.REST },
+            { _server, greaterThanNext, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, RestOrStream.REST, true},
+            { _server, new ProtocolVersion(0, 0, 0), RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, RestOrStream.REST, true},
 
             //Stream
-            { _server, greaterThanNext, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, RestOrStream.STREAM },
-            { _server, new ProtocolVersion(0, 0, 0), RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, RestOrStream.STREAM }
+            { _server, greaterThanNext, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, RestOrStream.STREAM, true},
+            { _server, new ProtocolVersion(0, 0, 0), RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, RestOrStream.STREAM, true},
+
+            //Rest with no exception stacktrace
+            { _serverWithNoExceptionStacktrace, greaterThanNext, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, RestOrStream.REST, false},
+            { _serverWithNoExceptionStacktrace, new ProtocolVersion(0, 0, 0), RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, RestOrStream.REST, false},
+
+            //Stream with no exception stacktrace
+            { _serverWithNoExceptionStacktrace, greaterThanNext, RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, RestOrStream.STREAM, false},
+            { _serverWithNoExceptionStacktrace, new ProtocolVersion(0, 0, 0), RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, RestOrStream.STREAM, false}
         };
   }
 
@@ -556,13 +581,13 @@ public class TestRestLiServer
 
   @Test(dataProvider = "invalidClientProtocolVersionData")
   public void testInvalidClientProtocolVersion(RestLiServer server, ProtocolVersion clientProtocolVersion,
-                                               String headerConstant, RestOrStream restOrStream) throws URISyntaxException
+                                               String headerConstant, RestOrStream restOrStream, Boolean hasStackTrace) throws URISyntaxException
   {
-    testBadRequest(server, clientProtocolVersion, headerConstant, restOrStream);
+    testBadRequest(server, clientProtocolVersion, headerConstant, restOrStream, hasStackTrace);
   }
 
   private void testBadRequest(RestLiServer restLiServer, final ProtocolVersion clientProtocolVersion, String headerConstant,
-                              final RestOrStream restOrStream) throws URISyntaxException
+                              final RestOrStream restOrStream, final boolean hasStackTrace) throws URISyntaxException
   {
     Callback<RestResponse> restResponseCallback = new Callback<RestResponse>()
     {
@@ -578,6 +603,7 @@ public class TestRestLiServer
         assertEquals(((RestException) e).getResponse().getStatus(), 400);
         String expectedErrorMessage = "Rest.li protocol version " + clientProtocolVersion + " used by the client is not supported!";
         assertEquals(e.getCause().getMessage(), expectedErrorMessage);
+        assertEquals(e.getStackTrace().length != 0, hasStackTrace);
       }
     };
 
