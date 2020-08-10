@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.4.12] - 2020-08-10
+- directly fetch DarkClusterConfigMap during startup, before registering ClusterListener.
+
 ## [29.4.11] - 2020-08-06
 - Relax validation of read-only fields for upsert usecase: UPDATE used for create or update. Fields marked as ReadOnly will be treated as optional for UPDATE methods.
 
@@ -4575,7 +4578,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.11...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.12...master
+[29.4.12]: https://github.com/linkedin/rest.li/compare/v29.4.11...v29.4.12
 [29.4.11]: https://github.com/linkedin/rest.li/compare/v29.4.10...v29.4.11
 [29.4.10]: https://github.com/linkedin/rest.li/compare/v29.4.9...v29.4.10
 [29.4.9]: https://github.com/linkedin/rest.li/compare/v29.4.8...v29.4.9
