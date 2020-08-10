@@ -84,10 +84,15 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   @Override
   public void start()
   {
-    _facilities.getClusterInfoProvider().registerClusterListener(_clusterListener);
     // make sure we're listening to the source cluster and have strategies for any
-    // associated dark clusters.
+    // associated dark clusters. The order matters here: we directly invoke onClusterAdded to
+    // directly query zookeeper for the DarkClusterConfigMap, and then we add the listener.
+    // Doing it in reverse causes a timeout. Ideally, registerClusterListener would have some
+    // functionality similar to SimpleLoadBalancer.listenToCluster that both adds a listener and
+    // requests the data through the eventbus, which will trigger ClusterSubscriber::handlePut and
+    // and iterate through the ClusterListeners.
     _clusterListener.onClusterAdded(_sourceClusterName);
+    _facilities.getClusterInfoProvider().registerClusterListener(_clusterListener);
     LOG.info("listening to dark clusters on " + _sourceClusterName);
   }
 
