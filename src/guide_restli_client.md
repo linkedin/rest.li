@@ -1012,6 +1012,10 @@ This will set "Content-Type" header value as "application/json".
 
 This will set "Content-Type" header value as "application/x-pson"
 
+#### PROTOBUF2
+
+This will set "Content-Type" header value as "application/x-protobuf2"
+
 **NOTE**: Besides `RestliRequestOption`, the caller can also specify the
 `ContentType` through the `RestClient` constructor by passing the
 contentType parameter (as shown below), which will apply to all requests
@@ -1021,11 +1025,9 @@ sent through that client instance.
 public RestClient(Client client, String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
 ```
 
-However, this form of configuration has been DEPRECATED. Please use
-`RestliRequestOptions` instead to set such custom options. In cases
-where the caller has configured content type from multiple places,
-RestClient will resolve request content type based on the following
-precedence order:
+However, In cases where the caller has configured content type from 
+multiple places, RestClient will resolve request content type based 
+on the following precedence order:
 
 1.  Request header.
 2.  RestliRequestOptions.
@@ -1058,6 +1060,10 @@ This will accept media type of "application/json".
 
 This will accept media type of "application/x-pson".
 
+#### PROTOBUF2
+
+This will accept media type of "application/x-protobuf2"
+
 #### ANY
 
 This will accept any media type.
@@ -1071,11 +1077,8 @@ sent through that client instance.
 public RestClient(Client client, String uriPrefix, List<AcceptType> acceptTypes)
 public RestClient(Client client, String uriPrefix, ContentType contentType, List<AcceptType> acceptTypes)
 ```
-However, this form of configuration has been DEPRECATED. Please use
-`RestliRequestOptions` instead to set such custom options. In cases
-where the caller has configured accept types from multiple places,
-RestClient will resolve request accept type based on the following
-precedence order:
+However, In cases where the caller has configured accept types from multiple places,
+RestClient will resolve request accept type based on the following precedence order:
 
 1.  Request header.
 2.  RestliRequestOptions.
@@ -1086,8 +1089,7 @@ If `null` is specified for the accept type from these 3 sources,
 field is present, then it is assumed by the Rest.li server that the
 client accepts all media types based on the HTTP Spec (RFC 2616).
 
-If `RestliRequestOptions` is not set, or is set to null, the request
-builders will use
+If `RestliRequestOptions` is not set, or is set to null, the request builders will use
 `RestliRequestOptions.DEFAULT_OPTIONS(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE, null /*compression*/, null /*content type*/, null /*accept type*/)`
 to generate the Request.
 
