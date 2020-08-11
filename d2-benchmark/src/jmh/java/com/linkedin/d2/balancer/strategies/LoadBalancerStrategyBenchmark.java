@@ -260,7 +260,7 @@ public class LoadBalancerStrategyBenchmark
     for (int i = 0; i < numHosts; i++)
     {
       URI uri = URI.create(URI_PREFIX + i + URI_SUFFIX);
-      trackerClients.put(uri, new DegraderTrackerClientImpl(uri, DEFAULT_PARTITION_DATA_MAP, new NoLatencyTransportClient(), CLOCK, null));
+      trackerClients.put(uri, new DegraderTrackerClientImpl(uri, DEFAULT_PARTITION_DATA_MAP, new BaseTransportTestClient(), CLOCK, null));
     }
     return trackerClients;
   }
@@ -271,7 +271,7 @@ public class LoadBalancerStrategyBenchmark
     for (int i = 0; i < numHosts; i++)
     {
       URI uri = URI.create(URI_PREFIX + i + URI_SUFFIX);
-      trackerClients.put(uri, new TrackerClientImpl(uri, DEFAULT_PARTITION_DATA_MAP, new NoLatencyTransportClient(), CLOCK,
+      trackerClients.put(uri, new TrackerClientImpl(uri, DEFAULT_PARTITION_DATA_MAP, new BaseTransportTestClient(), CLOCK,
           RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS, (status) -> status >= 500 && status <= 599));
     }
     return trackerClients;

@@ -32,8 +32,8 @@ import java.util.Map;
  * Create a simple mock of transport client
  * This transport client will directly return without any latency or error.
  */
-public class NoLatencyTransportClient implements TransportClient {
-  NoLatencyTransportClient() {
+public class BaseTransportTestClient implements TransportClient {
+  BaseTransportTestClient() {
   }
 
   @Override
