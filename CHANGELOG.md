@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.4.13] - 2020-08-11
+- Undeprecate some Rest.li client methods since we do want the ability to set default content/accept types at the client level
+
 ## [29.4.12] - 2020-08-10
 - directly fetch DarkClusterConfigMap during startup, before registering ClusterListener.
 
@@ -4578,7 +4581,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.12...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.13...master
+[29.4.13]: https://github.com/linkedin/rest.li/compare/v29.4.12...v29.4.13
 [29.4.12]: https://github.com/linkedin/rest.li/compare/v29.4.11...v29.4.12
 [29.4.11]: https://github.com/linkedin/rest.li/compare/v29.4.10...v29.4.11
 [29.4.10]: https://github.com/linkedin/rest.li/compare/v29.4.9...v29.4.10
