@@ -25,6 +25,8 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,9 +64,21 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
   public static final String SYMBOL_TABLE_URI_PATH = "symbolTable";
 
   /**
+   * Overridden SSL socket factory if any.
+   */
+  private static SSLSocketFactory SSL_SOCKET_FACTORY;
+
+  /**
    * Cache storing mapping from symbol table name to symbol table.
    */
   private final Cache<String, SymbolTable> _cache;
+
+  /**
+   * Set the overridden SSL socket factory.
+   */
+  public static void setSSLSocketFactory(SSLSocketFactory socketFactory) {
+    SSL_SOCKET_FACTORY = socketFactory;
+  }
 
   /**
    * Constructor
@@ -156,6 +170,12 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
 
   HttpURLConnection openConnection(String url) throws IOException
   {
-    return (HttpURLConnection) new URL(url).openConnection();
+    HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+    if (SSL_SOCKET_FACTORY != null && connection instanceof HttpsURLConnection)
+    {
+      ((HttpsURLConnection) connection).setSSLSocketFactory(SSL_SOCKET_FACTORY);
+    }
+
+    return connection;
   }
 }
