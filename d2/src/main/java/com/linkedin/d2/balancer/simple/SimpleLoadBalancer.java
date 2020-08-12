@@ -925,14 +925,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   public DarkClusterConfigMap getDarkClusterConfigMap(String clusterName) throws ServiceUnavailableException
   {
     FutureCallback<DarkClusterConfigMap> darkClusterConfigMapFutureCallback = new FutureCallback<>();
-
-    _state.listenToCluster(clusterName, (type, name) ->
-    {
-      ClusterProperties clusterProperties = _state.getClusterProperties(clusterName).getProperty();
-      DarkClusterConfigMap darkClusterConfigMap = clusterProperties != null ?
-        clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
-      darkClusterConfigMapFutureCallback.onSuccess(darkClusterConfigMap);
-    });
+    getDarkClusterConfigMap(clusterName, darkClusterConfigMapFutureCallback);
 
     try
     {
@@ -943,6 +936,20 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       die("ClusterInfo", "PEGA_1018, unable to retrieve dark cluster info for cluster: " + clusterName  + ", exception: " + e);
       return new DarkClusterConfigMap();
     }
+  }
+
+  @Override
+  public void getDarkClusterConfigMap(String clusterName, Callback<DarkClusterConfigMap> callback)
+  {
+    Callback<DarkClusterConfigMap> wrappedCallback = new TimeoutCallback<>(_executor, _timeout,
+            _unit, callback);
+    _state.listenToCluster(clusterName, (type, name) ->
+    {
+      ClusterProperties clusterProperties = _state.getClusterProperties(clusterName).getProperty();
+      DarkClusterConfigMap darkClusterConfigMap = clusterProperties != null ?
+              clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
+      wrappedCallback.onSuccess(darkClusterConfigMap);
+    });
   }
 
   @Override

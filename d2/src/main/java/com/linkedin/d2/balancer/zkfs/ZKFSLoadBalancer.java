@@ -119,6 +119,12 @@ public class ZKFSLoadBalancer
   }
 
   @Override
+  public void getDarkClusterConfigMap(String clusterName, Callback<DarkClusterConfigMap> callback)
+  {
+    _currentLoadBalancer.getDarkClusterConfigMap(clusterName, callback);
+  }
+
+  @Override
   public void registerClusterListener(LoadBalancerClusterListener clusterListener)
   {
     _currentLoadBalancer.registerClusterListener(clusterListener);

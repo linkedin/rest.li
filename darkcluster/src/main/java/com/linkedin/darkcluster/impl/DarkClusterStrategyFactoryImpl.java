@@ -16,6 +16,7 @@
 
 package com.linkedin.darkcluster.impl;
 
+import com.linkedin.common.callback.Callback;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -29,7 +30,6 @@ import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.DarkClusterStrategyNameArray;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
 import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
@@ -85,14 +85,11 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   public void start()
   {
     // make sure we're listening to the source cluster and have strategies for any
-    // associated dark clusters. The order matters here: we directly invoke onClusterAdded to
-    // directly query zookeeper for the DarkClusterConfigMap, and then we add the listener.
-    // Doing it in reverse causes a timeout. Ideally, registerClusterListener would have some
-    // functionality similar to SimpleLoadBalancer.listenToCluster that both adds a listener and
-    // requests the data through the eventbus, which will trigger ClusterSubscriber::handlePut and
-    // and iterate through the ClusterListeners.
-    _clusterListener.onClusterAdded(_sourceClusterName);
+    // associated dark clusters. While registering the cluster listener is enough,
+    // we also "warm up" the strategies directly by triggering the clusterListener so that
+    // we retrieve the dark clusters before any inbound request. This is a
     _facilities.getClusterInfoProvider().registerClusterListener(_clusterListener);
+    _clusterListener.onClusterAdded(_sourceClusterName);
     LOG.info("listening to dark clusters on " + _sourceClusterName);
   }
 
@@ -171,34 +168,37 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
       // pertinent dark cluster strategy properties are contained there.
       if (_sourceClusterName.equals(updatedClusterName))
       {
-        try
+        _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName, new Callback<DarkClusterConfigMap>()
         {
-          DarkClusterConfigMap updatedDarkConfigMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
-
-          Set<String> oldDarkStrategySet = _darkStrategyMap.keySet();
-          Set<String> updatedDarkClusterConfigKeySet = updatedDarkConfigMap.keySet();
-          // Any old strategy entry that isn't in the "updated" set should be removed from the strategyMap.
-          oldDarkStrategySet.removeAll(updatedDarkClusterConfigKeySet);
-          for (String darkClusterToRemove : oldDarkStrategySet)
-          {
-            _darkStrategyMap.remove(darkClusterToRemove);
-            LOG.info("Removed dark cluster strategy for dark cluster: " + darkClusterToRemove + ", source cluster: " + _sourceClusterName);
+          @Override
+          public void onError(Throwable e) {
+            _notifier.notify(() -> new RuntimeException("PEGA_0019 unable to refresh DarkClusterConfigMap for source cluster: "
+                    + _sourceClusterName, e));
           }
 
-          // Now update/add the dark clusters.
-          for (Map.Entry<String, DarkClusterConfig> entry : updatedDarkConfigMap.entrySet())
+          @Override
+          public void onSuccess(DarkClusterConfigMap updatedDarkConfigMap)
           {
-            String darkClusterToAdd = entry.getKey();
-            // For simplicity, we refresh all strategies since we expect cluster updates to be rare and refresh to be cheap.
-            _darkStrategyMap.put(darkClusterToAdd, createStrategy(darkClusterToAdd, entry.getValue()));
-            LOG.info("Created new strategy for dark cluster: " + darkClusterToAdd + ", source cluster: " + _sourceClusterName);
+            Set<String> oldDarkStrategySet = _darkStrategyMap.keySet();
+            Set<String> updatedDarkClusterConfigKeySet = updatedDarkConfigMap.keySet();
+            // Any old strategy entry that isn't in the "updated" set should be removed from the strategyMap.
+            oldDarkStrategySet.removeAll(updatedDarkClusterConfigKeySet);
+            for (String darkClusterToRemove : oldDarkStrategySet)
+            {
+              _darkStrategyMap.remove(darkClusterToRemove);
+              LOG.info("Removed dark cluster strategy for dark cluster: " + darkClusterToRemove + ", source cluster: " + _sourceClusterName);
+            }
+
+            // Now update/add the dark clusters.
+            for (Map.Entry<String, DarkClusterConfig> entry : updatedDarkConfigMap.entrySet())
+            {
+              String darkClusterToAdd = entry.getKey();
+              // For simplicity, we refresh all strategies since we expect cluster updates to be rare and refresh to be cheap.
+              _darkStrategyMap.put(darkClusterToAdd, createStrategy(darkClusterToAdd, entry.getValue()));
+              LOG.info("Created new strategy for dark cluster: " + darkClusterToAdd + ", source cluster: " + _sourceClusterName);
+            }
           }
-        }
-        catch (ServiceUnavailableException e)
-        {
-          _notifier.notify(() -> new RuntimeException("PEGA_0019 unable to refresh DarkClusterConfigMap for source cluster: "
-                                                        + _sourceClusterName));
-        }
+        });
       }
     }
 
