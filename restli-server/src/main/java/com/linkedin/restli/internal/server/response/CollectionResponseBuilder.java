@@ -157,7 +157,7 @@ public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? e
       DataMap rawData = entry.data();
       if (resourceContext.isFillInDefaultsRequested())
       {
-        rawData = ResponseUtils.fillInDefaultValues(entry.schema(), rawData);
+        rawData = (DataMap) ResponseUtils.fillInDataDefault(entry.schema(), rawData);
       }
       processedElements.add(new AnyRecord(RestUtils.projectFields(rawData, resourceContext)));
     }

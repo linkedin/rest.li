@@ -22,6 +22,7 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.MapDataSchema;
@@ -51,10 +52,8 @@ import com.linkedin.restli.server.RestLiServiceException;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import javax.activation.MimeTypeParseException;
-import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +94,7 @@ public class ResponseUtils
     }
   }
 
-  private static Object fillInDataDefault(DataSchema schema, Object dataWithoutDefault)
+  public static Object fillInDataDefault(DataSchema schema, Object dataWithoutDefault)
   {
     switch (schema.getType())
     {
@@ -117,13 +116,13 @@ public class ResponseUtils
   public static DataMap fillInDefaultOnRecord(RecordDataSchema schema, DataMap dataMap)
   {
     DataMap dataWithDefault = new DataMap(DataMapBuilder.getOptimumHashMapCapacityFromSize(dataMap.size()));
-    dataWithDefault.putAll(dataMap);
+    CheckedUtil.putAllWithoutChecking(dataWithDefault, dataMap);
     for (RecordDataSchema.Field field : schema.getFields())
     {
       if (dataMap.containsKey(field.getName()) || field.getDefault() != null)
       {
         Object fieldData = dataMap.containsKey(field.getName()) ? dataMap.get(field.getName()) : field.getDefault();
-        dataWithDefault.put(field.getName(), fillInDataDefault(field.getType(), fieldData));
+        CheckedUtil.putWithoutChecking(dataWithDefault, field.getName(), fillInDataDefault(field.getType(), fieldData));
       }
     }
     return dataWithDefault;
@@ -132,10 +131,10 @@ public class ResponseUtils
   public static DataMap fillInDefaultOnMap(MapDataSchema schema, DataMap dataMap)
   {
     DataSchema valueSchema = schema.getValues();
-    DataMap dataWithDefault = new DataMap(dataMap);
-    for (Map.Entry<String, Object> entry : dataWithDefault.entrySet())
+    DataMap dataWithDefault = new DataMap(DataMapBuilder.getOptimumHashMapCapacityFromSize(dataMap.size()));
+    for (Map.Entry<String, Object> entry : dataMap.entrySet())
     {
-      dataWithDefault.put(entry.getKey(), fillInDataDefault(valueSchema, entry.getValue()));
+      CheckedUtil.putWithoutChecking(dataWithDefault, entry.getKey(), fillInDataDefault(valueSchema, entry.getValue()));
     }
     return dataWithDefault;
   }
@@ -143,17 +142,18 @@ public class ResponseUtils
   public static DataList fillInDefaultOnArray(ArrayDataSchema schema, DataList dataList)
   {
     DataSchema itemDataSchema = schema.getItems();
-    DataList dataListWithDefault = new DataList();
+    DataList dataListWithDefault = new DataList(dataList.size());
     for (Object o : dataList)
     {
-      dataListWithDefault.add(fillInDataDefault(itemDataSchema, o));
+      CheckedUtil.addWithoutChecking(dataListWithDefault, fillInDataDefault(itemDataSchema, o));
     }
     return dataListWithDefault;
   }
 
   public static DataMap fillInDefaultOnUnion(UnionDataSchema schema, DataMap dataMap)
   {
-    DataMap dataWithDefault = new DataMap(dataMap);
+    DataMap dataWithDefault = new DataMap(DataMapBuilder.getOptimumHashMapCapacityFromSize(dataMap.size()));
+    CheckedUtil.putAllWithoutChecking(dataWithDefault, dataMap);
     if (dataWithDefault.size() == 1)
     {
       for (Map.Entry<String, Object> entry: dataWithDefault.entrySet())
@@ -164,7 +164,7 @@ public class ResponseUtils
         {
           return dataWithDefault;
         }
-        dataWithDefault.put(memberTypeKey, fillInDataDefault(memberDataSchema, entry.getValue()));
+        CheckedUtil.putWithoutChecking(dataWithDefault, memberTypeKey, fillInDataDefault(memberDataSchema, entry.getValue()));
       }
     }
     return dataWithDefault;
@@ -174,15 +174,6 @@ public class ResponseUtils
   {
     DataSchema dataSchema = typerefDataSchema.getDereferencedDataSchema();
     return fillInDataDefault(dataSchema, data);
-  }
-
-  public static DataMap fillInDefaultValues(DataSchema dataSchema, DataMap dataMap)
-  {
-    if (dataSchema.getType() == DataSchema.Type.RECORD)
-    {
-      return fillInDefaultOnRecord((RecordDataSchema) dataSchema, dataMap);
-    }
-    return dataMap;
   }
 
   public static RestResponse buildResponse(RoutingResult routingResult, RestLiResponse restLiResponse)

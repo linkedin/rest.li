@@ -74,7 +74,7 @@ public class TestResponseUtils
       DataMap caseInput = (DataMap) caseData.get("input");
       DataMap caseExpect = (DataMap) caseData.get("expect");
       DataSchema schema = DataTemplateUtil.parseSchema(schemaFileText, schemaResolver, SchemaFormatType.PDL);
-      DataMap dataWithDefault = ResponseUtils.fillInDefaultValues(schema, caseInput);
+      DataMap dataWithDefault = (DataMap) ResponseUtils.fillInDataDefault(schema, caseInput);
       System.out.println("Expect " + caseExpect);
       System.out.println("Actual " + dataWithDefault);
       Assert.assertEquals(dataWithDefault, caseExpect, (String) caseData.get("context"));

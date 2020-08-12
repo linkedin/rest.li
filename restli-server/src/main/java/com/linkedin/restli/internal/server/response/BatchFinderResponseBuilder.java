@@ -157,7 +157,7 @@ public class BatchFinderResponseBuilder
       if (resourceContext.isFillInDefaultsRequested())
       {
         RecordDataSchema schema = elements.get(j).schema();
-        DataMap dataWithDefault = ResponseUtils.fillInDefaultValues(schema, elements.get(j).data());
+        DataMap dataWithDefault = (DataMap) ResponseUtils.fillInDataDefault(schema, elements.get(j).data());
         response.add(new AnyRecord(RestUtils.projectFields(dataWithDefault, resourceContext)));
       }
       else

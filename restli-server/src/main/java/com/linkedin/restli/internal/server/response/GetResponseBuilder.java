@@ -80,7 +80,7 @@ public class GetResponseBuilder implements RestLiResponseBuilder<RestLiResponseD
     RecordDataSchema schema = record.schema();
     if (resourceContext.isFillInDefaultsRequested())
     {
-      rawData = ResponseUtils.fillInDefaultValues(schema, rawData);
+      rawData = (DataMap) ResponseUtils.fillInDataDefault(schema, rawData);
     }
 
     TimingContextUtil.beginTiming(resourceContext.getRawRequestContext(),

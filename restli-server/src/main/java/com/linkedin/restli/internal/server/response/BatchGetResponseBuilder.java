@@ -180,7 +180,7 @@ public class BatchGetResponseBuilder implements RestLiResponseBuilder<RestLiResp
       DataMap rawData = entity.getValue().data();
       if (routingResult.getContext().isFillInDefaultsRequested())
       {
-        rawData = ResponseUtils.fillInDefaultValues(entity.getValue().schema(), rawData);
+        rawData = (DataMap) ResponseUtils.fillInDataDefault(entity.getValue().schema(), rawData);
       }
 
       final DataMap projectedData = RestUtils.projectFields(rawData, routingResult.getContext());

@@ -94,7 +94,7 @@ public class ActionResponseBuilder implements RestLiResponseBuilder<RestLiRespon
     {
       RecordTemplate actionResponseRecordTemplate = (RecordTemplate) value;
       DataMap dataMap = actionResponseRecordTemplate.data();
-      dataMap = ResponseUtils.fillInDefaultValues(actionResponseRecordTemplate.schema(), dataMap);
+      dataMap = (DataMap) ResponseUtils.fillInDataDefault(actionResponseRecordTemplate.schema(), dataMap);
       Object valueWithDefault = null;
       try
       {
