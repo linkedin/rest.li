@@ -106,7 +106,7 @@ public class PartitionState
     return _clusterGenerationId;
   }
 
-  Map<TrackerClient, TrackerClientState> getTrackerClientStateMap()
+  public Map<TrackerClient, TrackerClientState> getTrackerClientStateMap()
   {
     return _trackerClientStateMap;
   }
@@ -116,7 +116,7 @@ public class PartitionState
     return _trackerClientStateMap.keySet();
   }
 
-  Map<TrackerClient, LoadBalancerQuarantine> getQuarantineMap()
+  public Map<TrackerClient, LoadBalancerQuarantine> getQuarantineMap()
   {
     return _quarantineMap;
   }
@@ -151,7 +151,7 @@ public class PartitionState
     _clusterGenerationId = clusterGenerationId;
   }
 
-  Map<URI, Integer> getPointsMap()
+  public Map<URI, Integer> getPointsMap()
   {
     return _pointsMap;
   }

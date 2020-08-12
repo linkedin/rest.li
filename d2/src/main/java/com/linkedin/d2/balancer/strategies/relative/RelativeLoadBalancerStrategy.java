@@ -91,6 +91,11 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
     return _stateUpdater.getRing(partitionId);
   }
 
+  public PartitionState getPartitionState(int partitionId)
+  {
+    return _stateUpdater.getPartitionState(partitionId);
+  }
+
   /**
    * Exposed for testings
    */
