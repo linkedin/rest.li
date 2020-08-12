@@ -21,6 +21,7 @@ import com.linkedin.d2.HttpStatusCodeRange;
 import com.linkedin.d2.HttpStatusCodeRangeArray;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -127,7 +128,7 @@ public class RelativeStrategyPropertiesConverterTest
     ringPropertyMap.put(PropertyKeys.RING_BOUNDED_LOAD_BALANCING_FACTOR, String.valueOf(boundedLoadBalancingFactor));
     ringPropertyMap.put(PropertyKeys.RING_CONSISTENT_HASH_ALGORITHM, DelegatingRingFactory.POINT_BASED_CONSISTENT_HASH);
     ringPropertyMap.put(PropertyKeys.RING_HASH_CONFIG, hashConfigMap);
-    ringPropertyMap.put(PropertyKeys.RING_HASH_METHOD, hashMethod.toString());
+    ringPropertyMap.put(PropertyKeys.RING_HASH_METHOD, RelativeLoadBalancerStrategy.HASH_METHOD_URI_REGEX);
     ringPropertyMap.put(PropertyKeys.RING_POINTS_PER_WEIGHT, String.valueOf(pointsPerWeight));
     ringPropertyMap.put(PropertyKeys.RING_NUMBER_OF_PROBES, String.valueOf(numberOfProbes));
     ringPropertyMap.put(PropertyKeys.RING_NUMBER_OF_POINTS_PER_HOST, String.valueOf(numberOfPointsPerHost));
