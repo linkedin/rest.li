@@ -304,6 +304,11 @@ public class LoadBalancerQuarantine
     return _timeTilNextCheck;
   }
 
+  public boolean isInQuarantine()
+  {
+    return _quarantineState == QuarantineStates.FAILURE || _quarantineState == QuarantineStates.WAIT;
+  }
+
   // For testing only
   public HealthCheck getHealthCheckClient()
   {

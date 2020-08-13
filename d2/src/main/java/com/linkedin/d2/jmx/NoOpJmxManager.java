@@ -95,6 +95,11 @@ public class NoOpJmxManager extends JmxManager
     return this;
   }
 
+  public synchronized NoOpJmxManager registerRelativeLoadBalancerStrategyJmxBean(String name, RelativeLoadBalancerStrategyJmxMBean strategyJmx)
+  {
+    return this;
+  }
+
   public synchronized NoOpJmxManager registerZooKeeperAnnouncer(String name, ZooKeeperAnnouncer announcer)
   {
     return this;
