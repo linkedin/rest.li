@@ -152,7 +152,9 @@ public class TrackerClientFactory
                 RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS,
                 Long.class);
           }
+          break;
         case (DegraderLoadBalancerStrategyV3.DEGRADER_STRATEGY_NAME):
+        default:
           Map<String, Object> loadBalancerStrategyProperties = serviceProperties.getLoadBalancerStrategyProperties();
           if (loadBalancerStrategyProperties != null)
           {
