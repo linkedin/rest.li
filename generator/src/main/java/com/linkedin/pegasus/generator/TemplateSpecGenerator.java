@@ -602,6 +602,7 @@ public class TemplateSpecGenerator
 
     final MapTemplateSpec mapClass = (MapTemplateSpec) classInfo.definedClass;
     registerClassTemplateSpec(schema, mapClass);
+
     mapClass.setValueClass(processSchema(valueSchema, enclosingClass, memberName));
     mapClass.setValueDataClass(determineDataClass(valueSchema, enclosingClass, memberName));
 
@@ -705,6 +706,7 @@ public class TemplateSpecGenerator
     fixedClass.setClassName(schema.getName());
     fixedClass.setModifiers(ModifierSpec.PUBLIC);
     registerClassTemplateSpec(schema, fixedClass);
+
     return fixedClass;
   }
 
