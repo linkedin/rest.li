@@ -333,7 +333,7 @@ public class StateUpdater
         : (latencySum + outstandingLatencySum) / (callCountSum + outstandingCallCountSum);
   }
 
-  private static long getAvgHostLatency(CallTracker.CallStats callStats)
+  public static long getAvgHostLatency(CallTracker.CallStats callStats)
   {
     double avgLatency = callStats.getCallTimeStats().getAverage();
     long avgOutstandingLatency = callStats.getOutstandingStartTimeAvg();

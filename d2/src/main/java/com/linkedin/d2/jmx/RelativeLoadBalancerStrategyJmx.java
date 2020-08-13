@@ -1,8 +1,25 @@
+/*
+   Copyright (c) 2020 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.jmx;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.relative.StateUpdater;
 import com.linkedin.d2.balancer.strategies.relative.TrackerClientState;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.util.degrader.CallTracker;
@@ -10,6 +27,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -28,85 +46,77 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
     Map<TrackerClient, TrackerClientState> stateMap =
         _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClientStateMap();
 
-    List<Double> weightedLatencies = stateMap.keySet().stream()
-        .map(trackerClient -> getWeightedLatency(trackerClient.getLatestCallStats()))
-        .collect(Collectors.toList());
-
-    double avgLatency = weightedLatencies.stream()
-        .mapToDouble(Double::doubleValue)
-        .average()
-        .orElse(0);
-
-    double variance = weightedLatencies.stream()
-        .map(latency -> Math.pow(latency - avgLatency, 2))
-        .mapToDouble(Double::doubleValue)
-        .average()
-        .orElse(0);
-
-    return Math.sqrt(variance);
+    return calculateStandardDeviation(stateMap.keySet());
   }
 
   @Override
-  public double getLatencyAverageAbsoluteDeviation()
+  public double getLatencyMeanAbsoluteDeviation()
   {
     Map<TrackerClient, TrackerClientState> stateMap =
         _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClientStateMap();
 
-    List<Double> weightedLatencies = stateMap.keySet().stream()
-        .map(trackerClient -> getWeightedLatency(trackerClient.getLatestCallStats()))
-        .collect(Collectors.toList());
+    double avgLatency = getAvgClusterLatency(stateMap.keySet());
 
-    double avgLatency = weightedLatencies.stream()
-        .mapToDouble(Double::doubleValue)
-        .average()
-        .orElse(0);
-
-    return weightedLatencies.stream()
-        .map(latency -> Math.abs(latency - avgLatency))
+    return stateMap.keySet().stream()
+        .map(trackerClient -> Math.abs(StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()) - avgLatency))
         .mapToDouble(Double::doubleValue)
         .average()
         .orElse(0);
   }
 
   @Override
-  public double getLatencyMedianAbsoluteDeviation()
+  public double getAboveAverageLatencyStandardDeviation()
   {
     Map<TrackerClient, TrackerClientState> stateMap =
         _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClientStateMap();
 
-    List<Double> weightedLatencies = stateMap.keySet().stream()
-        .map(trackerClient -> getWeightedLatency(trackerClient.getLatestCallStats()))
-        .collect(Collectors.toList());
+    double avgLatency = getAvgClusterLatency(stateMap.keySet());
 
-    double medianLatency = getMedian(weightedLatencies);
+    Set<TrackerClient> aboveAvgClients = stateMap.keySet().stream()
+        .filter(trackerClient -> StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()) > avgLatency)
+        .collect(Collectors.toSet());
 
-    List<Double> medianAbsolutes = weightedLatencies.stream()
-        .map(latency -> Math.abs(latency - medianLatency))
-        .collect(Collectors.toList());
-
-    return getMedian(medianAbsolutes);
+    return calculateStandardDeviation(aboveAvgClients);
   }
 
   @Override
-  public double getLatencyMaxAbsoluteDeviation()
+  public double getMaxLatencyRelativeFactor()
   {
     Map<TrackerClient, TrackerClientState> stateMap =
         _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClientStateMap();
 
-    List<Double> weightedLatencies = stateMap.keySet().stream()
-        .map(trackerClient -> getWeightedLatency(trackerClient.getLatestCallStats()))
-        .collect(Collectors.toList());
-
-    double avgLatency = weightedLatencies.stream()
-        .mapToDouble(Double::doubleValue)
-        .average()
-        .orElse(0);
-
-    return weightedLatencies.stream()
-        .map(latency -> Math.abs(latency - avgLatency))
-        .mapToDouble(Double::doubleValue)
+    double avgLatency = getAvgClusterLatency(stateMap.keySet());
+    long maxLatency = stateMap.keySet().stream()
+        .map(trackerClient -> StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()))
+        .mapToLong(Long::longValue)
         .max()
-        .orElse(0);
+        .orElse(0L);
+
+    return avgLatency == 0 ? 0 : maxLatency / avgLatency;
+  }
+
+  @Override
+  public double getNthPercentileLatencyRelativeFactor(double pct)
+  {
+    Map<TrackerClient, TrackerClientState> stateMap =
+        _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClientStateMap();
+
+    if (stateMap.size() == 0)
+    {
+      return 0.0;
+    }
+
+    double avgLatency = getAvgClusterLatency(stateMap.keySet());
+    List<Long> weightedLatencies = stateMap.keySet()
+        .stream()
+        .map(trackerClient -> StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()))
+        .sorted()
+        .collect(Collectors.toList());
+
+    int nth = Math.max((int) (pct * weightedLatencies.size()) - 1, 0);
+    long nthLatency = weightedLatencies.get(nth);
+
+    return avgLatency == 0 ? 0 : nthLatency / avgLatency;
   }
 
   @Override
@@ -121,7 +131,8 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
   }
 
   @Override
-  public int getQuarantineHostsCount() {
+  public int getQuarantineHostsCount()
+  {
     Map<TrackerClient, LoadBalancerQuarantine> quarantineMap =
         _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getQuarantineMap();
 
@@ -131,7 +142,8 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
   }
 
   @Override
-  public int getTotalPointsInHashRing() {
+  public int getTotalPointsInHashRing()
+  {
     Map<URI, Integer> uris = _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getPointsMap();
 
     return uris.values().stream()
@@ -139,30 +151,39 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
         .sum();
   }
 
-  private static double getWeightedLatency(CallTracker.CallStats callStats)
+  private double calculateStandardDeviation(Set<TrackerClient> trackerClients)
   {
-    int callCount = callStats.getCallCount();
-    int outstandingCallCount = callStats.getOutstandingCount();
+    double avgLatency = getAvgClusterLatency(trackerClients);
+    double variance = trackerClients.stream()
+        .map(trackerClient -> Math.pow(StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()) - avgLatency, 2))
+        .mapToDouble(Double::doubleValue)
+        .average()
+        .orElse(0);
 
-    return (callStats.getCallTimeStats().getAverage() * callCount +
-        callStats.getOutstandingStartTimeAvg() * outstandingCallCount) / (callCount + outstandingCallCount);
+    return Math.sqrt(variance);
   }
 
-  private static double getMedian(List<Double> values)
+  private long getAvgClusterLatency(Set<TrackerClient> trackerClients)
   {
-    Collections.sort(values);
+    long latencySum = 0;
+    long outstandingLatencySum = 0;
+    int callCountSum = 0;
+    int outstandingCallCountSum = 0;
 
-    if (values.size() == 0)
+    for (TrackerClient trackerClient : trackerClients)
     {
-      return 0;
+      CallTracker.CallStats latestCallStats = trackerClient.getCallTracker().getCallStats();
+
+      int callCount = latestCallStats.getCallCount();
+      int outstandingCallCount = latestCallStats.getOutstandingCount();
+      latencySum += latestCallStats.getCallTimeStats().getAverage() * callCount;
+      outstandingLatencySum += latestCallStats.getOutstandingStartTimeAvg() * outstandingCallCount;
+      callCountSum += callCount;
+      outstandingCallCountSum += outstandingCallCount;
     }
-    else if (values.size() % 2 == 0)
-    {
-      return (values.get(values.size() / 2) + values.get(values.size() / 2 - 1)) / 2;
-    }
-    else
-    {
-      return values.get(values.size() / 2);
-    }
+
+    return callCountSum + outstandingCallCountSum == 0
+        ? 0
+        : Math.round((latencySum + outstandingLatencySum) / (double) (callCountSum + outstandingCallCountSum));
   }
 }
