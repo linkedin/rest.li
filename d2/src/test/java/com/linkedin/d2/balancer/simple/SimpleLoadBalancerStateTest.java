@@ -19,12 +19,14 @@ package com.linkedin.d2.balancer.simple;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallback;
 import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
 import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
 import com.linkedin.d2.balancer.clients.DegraderTrackerClientImpl;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.event.NoopEventEmitter;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.NullPartitionProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
@@ -40,6 +42,8 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategy
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerTest;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
@@ -58,6 +62,7 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionNotTrustedException;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
+import com.linkedin.test.util.ClockedExecutor;
 import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -131,20 +136,25 @@ public class SimpleLoadBalancerStateTest
 
   public void reset()
   {
-    reset(false);
+    reset(false, true);
   }
 
-  public void reset(boolean useSSL)
+  public void reset(boolean useSSL, boolean enableRelativeLoadBalancer)
   {
     _executorService = new SynchronousExecutorService();
-    _uriRegistry = new MockStore<UriProperties>();
-    _clusterRegistry = new MockStore<ClusterProperties>();
-    _serviceRegistry = new MockStore<ServiceProperties>();
-    _clientFactories = new HashMap<String, TransportClientFactory>();
-    _loadBalancerStrategyFactories =
-        new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
+    _uriRegistry = new MockStore<>();
+    _clusterRegistry = new MockStore<>();
+    _serviceRegistry = new MockStore<>();
+    _clientFactories = new HashMap<>();
+    _loadBalancerStrategyFactories = new HashMap<>();
+    if (enableRelativeLoadBalancer)
+    {
+      _loadBalancerStrategyFactories.put(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME,
+          new RelativeLoadBalancerStrategyFactory(new ClockedExecutor(), null, Collections.emptyList(), new NoopEventEmitter(), SystemClock.instance()));
+    }
     _loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
     _loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3());
+    _loadBalancerStrategyFactories.put(DegraderLoadBalancerStrategyV3.DEGRADER_STRATEGY_NAME, new DegraderLoadBalancerStrategyFactoryV3());
     try {
       _sslContext = SSLContext.getDefault();
     }
@@ -697,9 +707,9 @@ public class SimpleLoadBalancerStateTest
 
     assertNull(_state.getStrategy("service-1", "http"));
 
-    // Put degrader into the strategyList, it it not one of the supported strategies in
+    // Put degraderV2_1 into the strategyList, it it not one of the supported strategies in
     // this strategyFactory, so we should not get a strategy back for http.
-    strategyList.add("degrader");
+    strategyList.add("degraderV2_1");
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
                                                             "cluster-1",
                                                             "/test",
@@ -751,6 +761,75 @@ public class SimpleLoadBalancerStateTest
 
     assertNotNull(strategy);
     assertTrue(strategy instanceof DegraderLoadBalancerStrategyV3);
+  }
+
+  @Test
+  public void testServiceStrategyListWithRelativeStrategy()
+  {
+    reset();
+    LinkedList<String> strategyList = new LinkedList<>();
+    URI uri = URI.create("http://cluster-1/test");
+    List<String> schemes = new ArrayList<>();
+    Map<URI, Double> weights = new HashMap<>();
+
+    weights.put(uri, 1d);
+    schemes.add("http");
+
+    _state.listenToService("service-1", new NullStateListenerCallback());
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+
+    strategyList.add(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME);
+    strategyList.add(DegraderLoadBalancerStrategyV3.DEGRADER_STRATEGY_NAME);
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1",
+        "cluster-1",
+        "/test",
+        strategyList,
+        Collections.<String, Object>emptyMap(),
+        null,
+        null,
+        schemes,
+        null));
+
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+
+    LoadBalancerStrategy strategy = _state.getStrategy("service-1", "http");
+
+    assertNotNull(strategy);
+    assertTrue(strategy instanceof RelativeLoadBalancerStrategy);
+  }
+
+  @Test
+  public void testServiceStrategyListWithRelativeStrategyNotSupported()
+  {
+    reset(false, false);
+    LinkedList<String> strategyList = new LinkedList<>();
+    URI uri = URI.create("http://cluster-1/test");
+    List<String> schemes = new ArrayList<>();
+    Map<URI, Double> weights = new HashMap<>();
+
+    weights.put(uri, 1d);
+    schemes.add("http");
+
+    _state.listenToService("service-1", new NullStateListenerCallback());
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+
+    strategyList.add(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME);
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1",
+        "cluster-1",
+        "/test",
+        strategyList,
+        Collections.<String, Object>emptyMap(),
+        null,
+        null,
+        schemes,
+        null));
+
+    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
+
+    LoadBalancerStrategy strategy = _state.getStrategy("service-1", "http");
+
+    assertNotNull(strategy);
+    assertTrue(strategy instanceof DegraderLoadBalancerStrategyV3, "Load balancer should fall back to degrader");
   }
 
   // This test is to verify a fix for a specific bug, where the d2 client receives a zookeeper
@@ -1244,7 +1323,7 @@ public class SimpleLoadBalancerStateTest
   @Test(groups = { "small", "back-end" })
   public void testGetClientWithSSLValidation() throws URISyntaxException
   {
-    reset(true);
+    reset(true, true);
 
     URI uri = URI.create("https://cluster-1/test");
     List<String> schemes = new ArrayList<String>();
@@ -1289,7 +1368,7 @@ public class SimpleLoadBalancerStateTest
   @Test(groups = { "small", "back-end" })
   public void testGetSSLClient() throws URISyntaxException
   {
-    reset(true);
+    reset(true, true);
 
     URI uri = URI.create("https://cluster-1/test");
     List<String> schemes = new ArrayList<String>();

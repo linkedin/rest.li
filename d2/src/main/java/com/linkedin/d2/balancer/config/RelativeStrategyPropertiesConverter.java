@@ -49,10 +49,6 @@ import static com.linkedin.d2.balancer.properties.util.PropertyUtil.coerce;
  */
 public class RelativeStrategyPropertiesConverter
 {
-  private static final JacksonDataCodec CODEC = new JacksonDataCodec();
-  private static final ValidationOptions VALIDATION_OPTIONS =
-    new ValidationOptions(RequiredMode.FIXUP_ABSENT_WITH_DEFAULT, CoercionMode.STRING_TO_PRIMITIVE);
-
   /**
    * Convert {@link D2RelativeStrategyProperties} to Map
    *

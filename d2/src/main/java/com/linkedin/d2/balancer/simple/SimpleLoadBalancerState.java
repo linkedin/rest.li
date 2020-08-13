@@ -30,6 +30,8 @@ import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
@@ -1054,6 +1056,14 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     }
 
     Map<String, LoadBalancerStrategy> newStrategies = new ConcurrentHashMap<>();
+
+    if (factory == null && strategyList != null && strategyList.size() == 1
+        && strategyList.contains(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME)
+        && !_loadBalancerStrategyFactories.containsKey(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME))
+    {
+      factory = _loadBalancerStrategyFactories.get(DegraderLoadBalancerStrategyV3.DEGRADER_STRATEGY_NAME);
+      warn(_log, "unable to find cluster or factory for ", serviceProperties, ", defaulting to ", factory);
+    }
 
     if (factory == null || serviceProperties.getPrioritizedSchemes() == null || serviceProperties.getPrioritizedSchemes().isEmpty())
     {
