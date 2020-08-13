@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.5.0] - 2020-08-12
+add Callback method for ClusterInfoProvider.getDarkClusterConfigMap
+
 ## [29.4.14] - 2020-08-11
 - Provide an option to set an overridden SSL socket factory for the default symbol table provider 
 
@@ -4584,7 +4587,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.4.14...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.0...master
+[29.5.0]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.0
 [29.4.14]: https://github.com/linkedin/rest.li/compare/v29.4.13...v29.4.14
 [29.4.13]: https://github.com/linkedin/rest.li/compare/v29.4.12...v29.4.13
 [29.4.12]: https://github.com/linkedin/rest.li/compare/v29.4.11...v29.4.12

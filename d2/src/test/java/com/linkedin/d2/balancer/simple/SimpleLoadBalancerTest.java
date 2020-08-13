@@ -273,9 +273,22 @@ public class SimpleLoadBalancerTest
 
     populateUriRegistry(numHttp, numHttps, partitionIdForAdd, uriRegistry);
 
-    DarkClusterConfigMap returnedDarkClusterConfigMap = loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME);
-    Assert.assertEquals(returnedDarkClusterConfigMap, darkClusterConfigMap, "dark cluster configs should be equal");
-    Assert.assertEquals(returnedDarkClusterConfigMap.get(DARK_CLUSTER1_NAME).getMultiplier(), 1.0f, "multiplier should match");
+    loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME,
+      new Callback<DarkClusterConfigMap>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          Assert.fail("getDarkClusterConfigMap threw exception", e);
+        }
+
+        @Override
+        public void onSuccess(DarkClusterConfigMap returnedDarkClusterConfigMap)
+        {
+          Assert.assertEquals(returnedDarkClusterConfigMap, darkClusterConfigMap, "dark cluster configs should be equal");
+          Assert.assertEquals(returnedDarkClusterConfigMap.get(DARK_CLUSTER1_NAME).getMultiplier(), 1.0f, "multiplier should match");
+        }
+      });
   }
 
   @Test
@@ -295,9 +308,21 @@ public class SimpleLoadBalancerTest
         Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
                                                              DarkClustersConverter.toProperties(darkClusterConfigMap), false));
 
-    DarkClusterConfigMap returnedDarkClusterConfigMap = loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME);
-    Assert.assertEquals(returnedDarkClusterConfigMap, darkClusterConfigMap, "dark cluster configs should be equal");
-    Assert.assertEquals(returnedDarkClusterConfigMap.get(DARK_CLUSTER1_NAME).getMultiplier(), 1.0f, "multiplier should match");
+    loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME, new Callback<DarkClusterConfigMap>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        Assert.fail("getDarkClusterConfigMap threw exception", e);
+      }
+
+      @Override
+      public void onSuccess(DarkClusterConfigMap returnedDarkClusterConfigMap)
+      {
+        Assert.assertEquals(returnedDarkClusterConfigMap, darkClusterConfigMap, "dark cluster configs should be equal");
+        Assert.assertEquals(returnedDarkClusterConfigMap.get(DARK_CLUSTER1_NAME).getMultiplier(), 1.0f, "multiplier should match");
+      }
+    });
   }
 
   @Test
@@ -309,8 +334,20 @@ public class SimpleLoadBalancerTest
     MockStore<UriProperties> uriRegistry = new MockStore<>();
     SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
 
-    DarkClusterConfigMap returnedDarkClusterConfigMap = loadBalancer.getDarkClusterConfigMap(NONEXISTENT_CLUSTER);
-    Assert.assertEquals(returnedDarkClusterConfigMap.size(), 0, "expected empty map");
+    loadBalancer.getDarkClusterConfigMap(NONEXISTENT_CLUSTER, new Callback<DarkClusterConfigMap>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        Assert.fail("getDarkClusterConfigMap threw exception", e);
+      }
+
+      @Override
+      public void onSuccess(DarkClusterConfigMap returnedDarkClusterConfigMap)
+      {
+        Assert.assertEquals(returnedDarkClusterConfigMap.size(), 0, "expected empty map");
+      }
+    });
   }
 
   /**
