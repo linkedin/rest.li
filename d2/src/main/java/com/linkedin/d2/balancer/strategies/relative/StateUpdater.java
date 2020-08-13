@@ -330,7 +330,7 @@ public class StateUpdater
 
     return callCountSum + outstandingCallCountSum == 0
         ? 0
-        : (latencySum + outstandingLatencySum) / (callCountSum + outstandingCallCountSum);
+        : Math.round((latencySum + outstandingLatencySum) / (double) (callCountSum + outstandingCallCountSum));
   }
 
   public static long getAvgHostLatency(CallTracker.CallStats callStats)

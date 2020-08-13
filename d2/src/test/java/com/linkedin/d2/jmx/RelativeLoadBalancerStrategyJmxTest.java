@@ -77,6 +77,8 @@ public class RelativeLoadBalancerStrategyJmxTest {
     assertTrue(jmx2.getLatencyMeanAbsoluteDeviation() > jmx1.getLatencyMeanAbsoluteDeviation());
     assertTrue(jmx2.getAboveAverageLatencyStandardDeviation() > jmx1.getAboveAverageLatencyStandardDeviation());
 
+
+    // hosts not receiving any traffic should not affect deviation calculation
     List<TrackerClient> trackerClientsDiverse3 = TrackerClientMockHelper.mockTrackerClients(4,
         Arrays.asList(20, 20, 20, 0), Arrays.asList(10, 10, 10, 0),
         Arrays.asList(100L, 150L, 200L, 0L), Arrays.asList(50L, 75L, 100L, 0L), Arrays.asList(0, 0, 0, 0));
