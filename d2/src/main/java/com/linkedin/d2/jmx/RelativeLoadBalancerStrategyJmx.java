@@ -24,7 +24,6 @@ import com.linkedin.d2.balancer.strategies.relative.TrackerClientState;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.util.degrader.CallTracker;
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,6 +57,7 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
     double avgLatency = getAvgClusterLatency(stateMap.keySet());
 
     return stateMap.keySet().stream()
+        .filter(this::hasTraffic)
         .map(trackerClient -> Math.abs(StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()) - avgLatency))
         .mapToDouble(Double::doubleValue)
         .average()
@@ -151,10 +151,17 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
         .sum();
   }
 
+  private boolean hasTraffic(TrackerClient trackerClient)
+  {
+    CallTracker.CallStats stats = trackerClient.getCallTracker().getCallStats();
+    return stats.getOutstandingCount() + stats.getCallCount() > 0;
+  }
+
   private double calculateStandardDeviation(Set<TrackerClient> trackerClients)
   {
     double avgLatency = getAvgClusterLatency(trackerClients);
     double variance = trackerClients.stream()
+        .filter(this::hasTraffic)
         .map(trackerClient -> Math.pow(StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()) - avgLatency, 2))
         .mapToDouble(Double::doubleValue)
         .average()
