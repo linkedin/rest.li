@@ -16,6 +16,7 @@
 
 package com.linkedin.darkcluster;
 
+import com.linkedin.common.callback.Callback;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,6 +54,11 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
     throws ServiceUnavailableException
   {
     return lookupMap.getOrDefault(clusterName, EMPTY_DARK_CLUSTER_CONFIG_MAP);
+  }
+
+  @Override
+  public void getDarkClusterConfigMap(String clusterName, Callback<DarkClusterConfigMap> callback) {
+    callback.onSuccess(lookupMap.getOrDefault(clusterName, EMPTY_DARK_CLUSTER_CONFIG_MAP));
   }
 
   @Override

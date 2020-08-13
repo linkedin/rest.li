@@ -32,7 +32,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.trace;
 public abstract class AbstractLoadBalancerSubscriber<T> implements
   PropertyEventSubscriber<T>
 {
-  private static final Logger _log = LoggerFactory.getLogger(SimpleLoadBalancerState.class);
+  private static final Logger _log = LoggerFactory.getLogger(AbstractLoadBalancerSubscriber.class);
 
   private final String                                                                  _name;
   private final int                                                                     _type;

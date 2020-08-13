@@ -20,6 +20,8 @@
 
 package com.linkedin.d2.balancer.util;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.KeyMapper;
@@ -101,8 +103,21 @@ public class DelegatingFacilities implements Facilities
                               HashRingProvider hashRingProvider)
   {
     this(directoryProvider, keyMapperProvider, clientFactoryProvider, partitionInfoProvider, hashRingProvider,
-        (clusterName, scheme, partitionId) -> 0);
+      new ClusterInfoProvider()
+      {
+        @Override
+        public int getClusterCount(String clusterName, String scheme, int partitionId)
+        {
+          return 0;
+        }
+
+        @Override
+        public void getDarkClusterConfigMap(String clusterName, Callback<DarkClusterConfigMap> callback)
+        {
+        }
+      });
   }
+
   public DelegatingFacilities(DirectoryProvider directoryProvider,
       KeyMapperProvider keyMapperProvider,
       ClientFactoryProvider clientFactoryProvider,

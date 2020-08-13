@@ -208,6 +208,12 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   }
 
   @Override
+  public void getDarkClusterConfigMap(String clusterName, Callback<DarkClusterConfigMap> callback)
+  {
+    _clusterInfoProvider.getDarkClusterConfigMap(clusterName, callback);
+  }
+
+  @Override
   public void registerClusterListener(LoadBalancerClusterListener clusterListener)
   {
     _clusterInfoProvider.registerClusterListener(clusterListener);
