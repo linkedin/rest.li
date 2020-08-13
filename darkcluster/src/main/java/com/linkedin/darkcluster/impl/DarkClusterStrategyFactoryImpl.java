@@ -87,7 +87,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     // make sure we're listening to the source cluster and have strategies for any
     // associated dark clusters. While registering the cluster listener is enough,
     // we also "warm up" the strategies directly by triggering the clusterListener so that
-    // we retrieve the dark clusters before any inbound request. This is a
+    // we retrieve the dark clusters before any inbound request.
     _facilities.getClusterInfoProvider().registerClusterListener(_clusterListener);
     _clusterListener.onClusterAdded(_sourceClusterName);
     LOG.info("listening to dark clusters on " + _sourceClusterName);
