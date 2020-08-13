@@ -569,6 +569,8 @@ public class PegasusPlugin implements Plugin<Project>
   // Enable the use of argFiles for the tasks that support them
   private static final String ENABLE_ARG_FILE = "pegasusPlugin.enableArgFile";
 
+  private static final String PEGASUS_PLUGIN_CONFIGURATION = "pegasusPlugin";
+
   @SuppressWarnings("unchecked")
   private Class<? extends Plugin<Project>> _thisPluginType = (Class<? extends Plugin<Project>>)
       getClass().asSubclass(Plugin.class);
@@ -669,7 +671,7 @@ public class PegasusPlugin implements Plugin<Project>
     ConfigurationContainer configurations = project.getConfigurations();
 
     // configuration for getting the required classes to make pegasus call main methods
-    configurations.maybeCreate("pegasusPlugin");
+    configurations.maybeCreate(PEGASUS_PLUGIN_CONFIGURATION);
 
     // configuration for compiling generated data templates
     Configuration dataTemplateCompile = configurations.maybeCreate("dataTemplateCompile");
@@ -729,11 +731,6 @@ public class PegasusPlugin implements Plugin<Project>
     // and validate.
     Configuration schemaAnnotationHandler = configurations.maybeCreate("schemaAnnotationHandler");
 
-    // configuration for parsing and validating extension schemas during build time.
-    //
-    // publish extension schemas into extension schema Jar once the validation passes.
-    Configuration extensionSchema = configurations.maybeCreate("extensionSchema");
-
     // configuration for publishing jars containing rest idl and generated client builders
     // to the project artifacts for including in the ivy.xml
     //
@@ -761,10 +758,10 @@ public class PegasusPlugin implements Plugin<Project>
 
       String version = properties.getProperty("pegasus.version");
 
-      project.getDependencies().add("pegasusPlugin", "com.linkedin.pegasus:data:" + version);
-      project.getDependencies().add("pegasusPlugin", "com.linkedin.pegasus:data-avro-generator:" + version);
-      project.getDependencies().add("pegasusPlugin", "com.linkedin.pegasus:generator:" + version);
-      project.getDependencies().add("pegasusPlugin", "com.linkedin.pegasus:restli-tools:" + version);
+      project.getDependencies().add(PEGASUS_PLUGIN_CONFIGURATION, "com.linkedin.pegasus:data:" + version);
+      project.getDependencies().add(PEGASUS_PLUGIN_CONFIGURATION, "com.linkedin.pegasus:data-avro-generator:" + version);
+      project.getDependencies().add(PEGASUS_PLUGIN_CONFIGURATION, "com.linkedin.pegasus:generator:" + version);
+      project.getDependencies().add(PEGASUS_PLUGIN_CONFIGURATION, "com.linkedin.pegasus:restli-tools:" + version);
     }
     else
     {
@@ -773,8 +770,8 @@ public class PegasusPlugin implements Plugin<Project>
           + " are available on the configuration pegasusPlugin",
           project.getPath());
     }
-    project.getDependencies().add("pegasusPlugin", "org.slf4j:slf4j-simple:1.7.2");
-    project.getDependencies().add("pegasusPlugin", project.files(System.getProperty("java.home") + "/../lib/tools.jar"));
+    project.getDependencies().add(PEGASUS_PLUGIN_CONFIGURATION, "org.slf4j:slf4j-simple:1.7.2");
+    project.getDependencies().add(PEGASUS_PLUGIN_CONFIGURATION, project.files(System.getProperty("java.home") + "/../lib/tools.jar"));
 
     // this call has to be here because:
     // 1) artifact cannot be published once projects has been evaluated, so we need to first
@@ -826,8 +823,6 @@ public class PegasusPlugin implements Plugin<Project>
         configureSchemaAnnotationValidation(project, sourceSet, generateDataTemplateTask);
       }
 
-      configureExtensionSchemaValidationAndPublishTasks(project, sourceSet);
-
       Task cleanGeneratedDirTask = project.task(sourceSet.getTaskName("clean", "GeneratedDir"));
       cleanGeneratedDirTask.doLast(new CacheableAction<>(task ->
       {
@@ -860,7 +855,7 @@ public class PegasusPlugin implements Plugin<Project>
                   task.setInputDir(generateDataTemplatesTask.getInputDir());
                   task.setResolverPath(getDataModelConfig(project, sourceSet)); // same resolver path as generateDataTemplatesTask
                   task.setClassPath(project.getConfigurations() .getByName("schemaAnnotationHandler")
-                                           .plus(project.getConfigurations().getByName("pegasusPlugin"))
+                                           .plus(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION))
                                            .plus(project.getConfigurations().getByName("runtime")));
                   task.setHandlerJarPath(project.getConfigurations() .getByName("schemaAnnotationHandler"));
                   if (isPropertyTrue(project, ENABLE_ARG_FILE))
@@ -933,48 +928,6 @@ public class PegasusPlugin implements Plugin<Project>
       ((Jar) _generateJavadocJarTask).from(_generateJavadocTask.getDestinationDir());
       _generateJavadocJarTask.dependsOn(_generateJavadocTask);
     }
-  }
-
-  protected void configureExtensionSchemaValidationAndPublishTasks(Project project, SourceSet sourceSet)
-  {
-    // extension schema directory
-    File extensionSchemaDir = project.file(getExtensionSchemaPath(project, sourceSet));
-
-    if (SharedFileUtils.getSuffixedFiles(project, extensionSchemaDir, PDL_FILE_SUFFIX).isEmpty())
-    {
-      return;
-    }
-
-    ValidateExtensionSchemaTask validateExtensionSchemaTask =  project.getTasks()
-        .create(sourceSet.getTaskName("validate", "ExtensionSchema"), ValidateExtensionSchemaTask.class, task -> {
-          task.setInputDir(extensionSchemaDir);
-          task.setResolverPath(getDataModelConfig(project, sourceSet).plus(project.files(getDataSchemaPath(project, sourceSet))));
-          task.setClassPath(project.getConfigurations().getByName("pegasusPlugin"));
-          if (isPropertyTrue(project, ENABLE_ARG_FILE))
-          {
-            task.setEnableArgFile(true);
-          }
-        });
-
-    project.getTasks().getByName("check").dependsOn(validateExtensionSchemaTask);
-
-    // Publish Extension Schemas into extensionSchema Jar
-    Task extensionSchemaJarTask = project.getTasks().create(sourceSet.getName() + "ExtensionSchemaJar", Jar.class, task ->
-    {
-      task.from(extensionSchemaDir, copySpec ->
-      {
-        copySpec.eachFile(fileCopyDetails -> project.getLogger()
-            .info("Add extensionSchema file: {}", fileCopyDetails));
-        copySpec.setIncludes(Collections.singletonList('*' + PDL_FILE_SUFFIX));
-      });
-
-      task.getArchiveAppendix().set(getAppendix(sourceSet, "extension-schema"));
-      task.setDescription("Generate extensionSchema jar");
-    });
-
-    extensionSchemaJarTask.dependsOn(validateExtensionSchemaTask);
-
-    project.getArtifacts().add("extensionSchema", extensionSchemaJarTask);
   }
 
   private static void deleteGeneratedDir(Project project, SourceSet sourceSet, String dirType)
@@ -1194,7 +1147,7 @@ public class PegasusPlugin implements Plugin<Project>
       }
 
       // generate the rest model
-      FileCollection restModelCodegenClasspath = project.getConfigurations().getByName("pegasusPlugin")
+      FileCollection restModelCodegenClasspath = project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION)
           .plus(project.getConfigurations().getByName("runtime"))
           .plus(sourceSet.getRuntimeClasspath());
       String destinationDirPrefix = getGeneratedDirPath(project, sourceSet, REST_GEN_TYPE) + File.separatorChar;
@@ -1251,7 +1204,7 @@ public class PegasusPlugin implements Plugin<Project>
             task.setPreviousSnapshotDirectory(apiSnapshotDir);
             task.setCurrentIdlFiles(SharedFileUtils.getIdlFiles(project, destinationDirPrefix));
             task.setPreviousIdlDirectory(apiIdlDir);
-            task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+            task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
             task.setModelCompatLevel(PropertyUtil.findCompatLevel(project, FileCompatibilityType.SNAPSHOT));
             task.onlyIf(t -> !isPropertyTrue(project, SKIP_IDL_CHECK));
 
@@ -1269,7 +1222,7 @@ public class PegasusPlugin implements Plugin<Project>
             task.dependsOn(generateRestModelTask);
             task.setCurrentSnapshotFiles(SharedFileUtils.getSnapshotFiles(project, destinationDirPrefix));
             task.setPreviousSnapshotDirectory(apiSnapshotDir);
-            task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+            task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
             task.setSnapshotCompatLevel(PropertyUtil.findCompatLevel(project, FileCompatibilityType.SNAPSHOT));
 
             task.onlyIf(t -> isPropertyTrue(project, SKIP_IDL_CHECK));
@@ -1282,7 +1235,7 @@ public class PegasusPlugin implements Plugin<Project>
             task.setCurrentIdlFiles(SharedFileUtils.getIdlFiles(project, destinationDirPrefix));
             task.setPreviousIdlDirectory(apiIdlDir);
             task.setResolverPath(restModelResolverPath);
-            task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+            task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
             task.setIdlCompatLevel(PropertyUtil.findCompatLevel(project, FileCompatibilityType.IDL));
             if (isPropertyTrue(project, ENABLE_ARG_FILE))
             {
@@ -1450,7 +1403,7 @@ public class PegasusPlugin implements Plugin<Project>
           task.setInputDir(dataSchemaDir);
           task.setDestinationDir(avroDir);
           task.setResolverPath(getDataModelConfig(project, sourceSet));
-          task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+          task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
           if (isPropertyTrue(project, ENABLE_ARG_FILE))
           {
             task.setEnableArgFile(true);
@@ -1516,7 +1469,7 @@ public class PegasusPlugin implements Plugin<Project>
       task.setInputDir(dataSchemaDir);
       task.setDestinationDir(dataSchemaDir);
       task.setResolverPath(getDataModelConfig(project, sourceSet));
-      task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+      task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
       task.setPreserveSourceCmd(preserveSourceCmd);
       if (reverse)
       {
@@ -1550,7 +1503,7 @@ public class PegasusPlugin implements Plugin<Project>
       task.setInputDir(dataSchemaDir);
       task.setDestinationDir(dataSchemaDir);
       task.setResolverPath(getDataModelConfig(project, sourceSet));
-      task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+      task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
       task.setSourceFormat(SchemaFileType.PDL);
       task.setDestinationFormat(SchemaFileType.PDL);
       task.setKeepOriginal(true);
@@ -1575,6 +1528,8 @@ public class PegasusPlugin implements Plugin<Project>
         + File.separatorChar + sourceSet.getName() + "Schemas");
     File publishableLegacySchemasBuildDir = project.file(project.getBuildDir().getAbsolutePath()
         + File.separatorChar + sourceSet.getName() + "LegacySchemas");
+    File publishableExtensionSchemasBuildDir = project.file(project.getBuildDir().getAbsolutePath()
+        + File.separatorChar + sourceSet.getName() + "ExtensionSchemas");
 
     // generate data template source files from data schema
     GenerateDataTemplateTask generateDataTemplatesTask = project.getTasks()
@@ -1583,7 +1538,7 @@ public class PegasusPlugin implements Plugin<Project>
           task.setInputDir(dataSchemaDir);
           task.setDestinationDir(generatedDataTemplateDir);
           task.setResolverPath(getDataModelConfig(project, sourceSet));
-          task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+          task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
           if (isPropertyTrue(project, ENABLE_ARG_FILE))
           {
             task.setEnableArgFile(true);
@@ -1679,7 +1634,7 @@ public class PegasusPlugin implements Plugin<Project>
           task.setInputDir(dataSchemaDir);
           task.setDestinationDir(publishableLegacySchemasBuildDir);
           task.setResolverPath(getDataModelConfig(project, sourceSet));
-          task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+          task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
           task.setSourceFormat(SchemaFileType.PDL);
           task.setDestinationFormat(SchemaFileType.PDSC);
           task.setKeepOriginal(true);
@@ -1692,6 +1647,37 @@ public class PegasusPlugin implements Plugin<Project>
 
     prepareLegacySchemasForPublishTask.dependsOn(destroyStaleFiles);
     dataTemplateJarDepends.add(prepareLegacySchemasForPublishTask);
+
+    // extension schema directory
+    File extensionSchemaDir = project.file(getExtensionSchemaPath(project, sourceSet));
+
+    if (!SharedFileUtils.getSuffixedFiles(project, extensionSchemaDir, PDL_FILE_SUFFIX).isEmpty())
+    {
+      // Validate extension schemas if extension schemas are provided.
+      ValidateExtensionSchemaTask validateExtensionSchemaTask = project.getTasks()
+          .create(sourceSet.getTaskName("validate", "ExtensionSchemas"), ValidateExtensionSchemaTask.class, task ->
+          {
+            task.setInputDir(extensionSchemaDir);
+            task.setResolverPath(
+                getDataModelConfig(project, sourceSet).plus(project.files(getDataSchemaPath(project, sourceSet))));
+            task.setClassPath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
+            if (isPropertyTrue(project, ENABLE_ARG_FILE))
+            {
+              task.setEnableArgFile(true);
+            }
+          });
+
+      Task prepareExtensionSchemasForPublishTask = project.getTasks()
+          .create(sourceSet.getName() + "CopyExtensionSchemas", Sync.class, task ->
+          {
+            task.from(extensionSchemaDir, syncSpec -> syncSpec.include("**/*" + PDL_FILE_SUFFIX));
+            task.into(publishableExtensionSchemasBuildDir);
+          });
+
+      prepareExtensionSchemasForPublishTask.dependsOn(validateExtensionSchemaTask);
+      prepareExtensionSchemasForPublishTask.dependsOn(copyPdscSchemasTask);
+      dataTemplateJarDepends.add(prepareExtensionSchemasForPublishTask);
+    }
 
     // create data template jar file
     Jar dataTemplateJarTask = project.getTasks()
@@ -1709,6 +1695,11 @@ public class PegasusPlugin implements Plugin<Project>
           task.from(publishableLegacySchemasBuildDir, copySpec ->
               copySpec.eachFile(fileCopyDetails ->
                   fileCopyDetails.setPath(TRANSLATED_SCHEMAS_DIR + File.separatorChar + fileCopyDetails.getPath())));
+
+          // Copy all extension schemas as-is into the root extensions directory in the JAR
+          task.from(publishableExtensionSchemasBuildDir, copySpec ->
+              copySpec.eachFile(fileCopyDetails ->
+                  fileCopyDetails.setPath("extensions" + File.separatorChar + fileCopyDetails.getPath())));
 
           task.from(targetSourceSet.getOutput());
 
@@ -1830,7 +1821,7 @@ public class PegasusPlugin implements Plugin<Project>
           task.setResolverPath(dataModels);
           task.setRuntimeClasspath(project.getConfigurations().getByName("dataModel")
               .plus(project.getConfigurations().getByName("dataTemplate").getArtifacts().getFiles()));
-          task.setCodegenClasspath(project.getConfigurations().getByName("pegasusPlugin"));
+          task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
           task.setDestinationDir(generatedRestClientDir);
           task.setRestli2FormatSuppressed(project.hasProperty(SUPPRESS_REST_CLIENT_RESTLI_2));
           task.setRestli1FormatSuppressed(project.hasProperty(SUPPRESS_REST_CLIENT_RESTLI_1));
