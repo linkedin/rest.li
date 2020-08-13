@@ -84,4 +84,12 @@ public interface AsyncRateLimiter
    * @param throwable Reason for cancelling all pending callbacks.
    */
   void cancelAll(Throwable throwable);
+
+  /**
+   * Returns how many requests are in the queue in this instant.
+   * Returns -1 if the method is unimplemented
+   */
+  default int getPendingTasksCount(){
+    return -1;
+  };
 }

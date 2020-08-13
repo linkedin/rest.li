@@ -138,32 +138,39 @@ public abstract class BaseTestSmoothRateLimiter
       rateLimiter.submit(callback);
       callbacks.add(callback);
     });
+    Assert.assertEquals(rateLimiter.getPendingTasksCount(),5);
+
     // trigger task to run them until current time
     clockedExecutor.runFor(0);
 
     // We have one permit to begin with so the first task should run immediate and left with 4 pending
     callbacks.get(0).get();
+    Assert.assertEquals(rateLimiter.getPendingTasksCount(),4);
     IntStream.range(0, 1).forEach(i -> assertTrue(callbacks.get(i).isDone()));
     IntStream.range(1, 5).forEach(i -> assertFalse(callbacks.get(i).isDone()));
 
     // We increment the clock by one period and one more permit should have been issued
     clockedExecutor.runFor(ONE_MILLISECOND_PERIOD);
     callbacks.get(1).get();
+    Assert.assertEquals(rateLimiter.getPendingTasksCount(),3);
     IntStream.range(0, 2).forEach(i -> assertTrue(callbacks.get(i).isDone()));
     IntStream.range(2, 5).forEach(i -> assertFalse(callbacks.get(i).isDone()));
 
     clockedExecutor.runFor(ONE_MILLISECOND_PERIOD);
     callbacks.get(2).get();
+    Assert.assertEquals(rateLimiter.getPendingTasksCount(),2);
     IntStream.range(0, 3).forEach(i -> assertTrue(callbacks.get(i).isDone()));
     IntStream.range(3, 5).forEach(i -> assertFalse(callbacks.get(i).isDone()));
 
     clockedExecutor.runFor(ONE_MILLISECOND_PERIOD);
     callbacks.get(3).get();
+    Assert.assertEquals(rateLimiter.getPendingTasksCount(),1);
     IntStream.range(0, 4).forEach(i -> assertTrue(callbacks.get(i).isDone()));
     IntStream.range(4, 5).forEach(i -> assertFalse(callbacks.get(i).isDone()));
 
     clockedExecutor.runFor(ONE_MILLISECOND_PERIOD);
     callbacks.get(4).get();
+    Assert.assertEquals(rateLimiter.getPendingTasksCount(),0);
     IntStream.range(0, 5).forEach(i -> assertTrue(callbacks.get(i).isDone()));
   }
 
