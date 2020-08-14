@@ -1,0 +1,3 @@
+record FooMap2 {
+  fieldIsMap: map[string, Bar]
+}
