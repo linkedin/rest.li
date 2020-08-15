@@ -22,7 +22,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
-import com.linkedin.d2.balancer.util.RateLimitedLogger;
+import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;

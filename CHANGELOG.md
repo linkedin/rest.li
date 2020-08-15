@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.5.1] - 2020-08-14
+- Provide an option in SmoothRateLimiter to not drop tasks if going above the max buffered. Dropping tasks might be more diruptive to workflows compared to just not ratelimit.
+
 ## [29.5.0] - 2020-08-12
 add Callback method for ClusterInfoProvider.getDarkClusterConfigMap
 
@@ -4587,8 +4590,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.0...master
-[29.5.0]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.0
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.1...master
+[29.5.1]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.1
 [29.4.14]: https://github.com/linkedin/rest.li/compare/v29.4.13...v29.4.14
 [29.4.13]: https://github.com/linkedin/rest.li/compare/v29.4.12...v29.4.13
 [29.4.12]: https://github.com/linkedin/rest.li/compare/v29.4.11...v29.4.12

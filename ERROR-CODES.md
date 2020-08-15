@@ -15,3 +15,6 @@ PEGA_1030 ServiceUnavailableException
 
 ## R2 11
 
+## Ratelimiting 20
+PEGA_2001 RejectedExecutionException
+PEGA_2000 Not an exception, but a error log
