@@ -14,11 +14,15 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.5.3] - 2020-08-17
+- Treat `ReadOnly` required fields as optional in `PARTIAL_UPDATE`/`BATCH_PARTIAL_UPDATE` patches.
+  This will allow such patches to set fields containing descendent `ReadOnly` required fields, which wasn't possible before.
+
 ## [29.5.2] - 2020-08-17
 - Allow publishing unstable release candidate versions of Rest.li (e.g. `1.2.3-rc.1`) from non-master branches.
     - It's _strongly_ suggested to only use a release candidate version if you have a specific reason to do so.
-- Put extension schemas into the dataTemplate jar under /extensions path instead of putting them into the extensionSchema jar.
-- Remove stacktrace when convert between RestException and Stream Exception
+- Put extension schemas into the `dataTemplate` jar under `/extensions` path instead of putting them into the `extensionSchema` jar.
+- Remove stacktrace when convert between `RestException` and `StreamException`.
 
 ## [29.5.1] - 2020-08-14
 - Provide an option in `SmoothRateLimiter` to not drop tasks if going above the max buffered. Dropping tasks might be more diruptive to workflows compared to just not ratelimit.
@@ -4596,7 +4600,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.3...master
+[29.5.3]: https://github.com/linkedin/rest.li/compare/v29.5.2...v29.5.3
 [29.5.2]: https://github.com/linkedin/rest.li/compare/v29.5.1...v29.5.2
 [29.5.1]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.1
 [29.4.14]: https://github.com/linkedin/rest.li/compare/v29.4.13...v29.4.14
