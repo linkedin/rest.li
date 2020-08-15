@@ -17,7 +17,7 @@ for ARG in "$@"; do
     cat ./scripts/help-text/release.txt
     exit 0
   else
-    TARGET="$1"
+    TARGET="$ARG"
   fi
 done
 
@@ -30,11 +30,9 @@ if [ $? != 0 ]; then
   exit 2
 fi
 
-# Ensure that the target commit is an ancestor of master
-git merge-base --is-ancestor $TARGET_COMMIT master
-if [ $? != 0 ]; then
-  echo "Invalid target: $TARGET"
-  echo 'Please select a target commit which is an ancestor of master.'
+# Abort if there are uncommitted changes in the properties file
+if [ "$(git diff -- $PROPERTIES_FILE)" ]; then
+  echo "There are uncommitted changes in $PROPERTIES_FILE, please try again once all your changes are committed."
   exit 1
 fi
 
@@ -45,9 +43,64 @@ if [ -z "$VERSION" ]; then
   exit 1
 fi
 
+# Determine if the version is a release candidate version
+RELEASE_CANDIDATE=false
+if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$ ]]; then
+  RELEASE_CANDIDATE=true
+fi
+
+# Ensure that the target commit is an ancestor of master
+git merge-base --is-ancestor $TARGET_COMMIT master
+if [ $? != 0 ]; then
+  if $RELEASE_CANDIDATE; then
+    # Since this is a release candidate, allow it with a warning and confirmation
+    echo -n "You're attempting to publish a release candidate from a non-master branch. Are you sure you want to do this? (y/N) "
+    read ANSWER
+    if [[ ! "$ANSWER" =~ ^[yY]+$ ]]; then
+      echo 'Aborting...'
+      exit 1
+    fi
+  else
+    # In the general case, don't allow it
+    echo "Invalid target: $TARGET"
+    echo 'Please select a target commit which is an ancestor of master.'
+    exit 1
+  fi
+fi
+
+# Update local tags
+echo -n 'Updating local tags via remote fetch... '
+git fetch origin > /dev/null 2>&1
+echo 'done'
+
+# Perform some release candidate assertions, if applicable
+if $RELEASE_CANDIDATE; then
+  SUFFIXLESS_VERSION=${VERSION%-*}
+  # Assert that this release candidate precedes the associated release
+  if [ "$(git tag --list v$SUFFIXLESS_VERSION)" ]; then
+    echo "Cannot create release candidate $VERSION, as a release for $SUFFIXLESS_VERSION already exists."
+    echo "Release candidates must come before proper releases, so please bump the project version in $PROPERTIES_FILE and try again."
+    exit 1
+  fi
+  # Assert that there exists no available lower RC number (e.g. don't allow 1.2.3-rc.2 if 1.2.3-rc.1 is available)
+  RC_NUMBER=1
+  while true; do
+    RC_VERSION="$SUFFIXLESS_VERSION-rc.$RC_NUMBER"
+    # Break once we've reached the current RC number
+    if [ "$VERSION" = "$RC_VERSION" ]; then break; fi
+    # If this lower RC number is available, fail and suggest the user to use this RC number instead
+    if [ -z "$(git tag --list "v$RC_VERSION")" ]; then
+      echo "Cannot create release candidate $VERSION, as $RC_VERSION doesn't exist."
+      echo "Please try again using $RC_VERSION as the project version in $PROPERTIES_FILE."
+      exit 1
+    fi
+    let 'RC_NUMBER++'
+  done
+fi
+
 # Ensure that release tag name wouldn't conflict with a local branch
 TAG_NAME="v$VERSION"
-git show-ref --verify refs/heads/$TAG_NAME >/dev/null 2>&1
+git show-ref --verify refs/heads/$TAG_NAME > /dev/null 2>&1
 if [ $? = 0 ]; then
   echo "Cannot create tag $TAG_NAME, as it would conflict with a local branch of the same name."
   echo 'Please delete this branch and avoid naming branches like this in the future.'
