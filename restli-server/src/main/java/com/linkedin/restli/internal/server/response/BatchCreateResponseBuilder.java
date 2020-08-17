@@ -139,9 +139,7 @@ public class BatchCreateResponseBuilder implements RestLiResponseBuilder<RestLiR
           {
             DataMap entityData = createKVResponse.getEntity() != null ? createKVResponse.getEntity().data() : null;
 
-            final DataMap data = RestUtils.projectFields(entityData,
-                                                         resourceContext.getProjectionMode(),
-                                                         resourceContext.getProjectionMask());
+            final DataMap data = RestUtils.projectFields(entityData, resourceContext);
 
             CreateIdEntityStatus<Object, RecordTemplate> entry = new CreateIdEntityStatus<>(
                     createKVResponse.getStatus().getCode(),

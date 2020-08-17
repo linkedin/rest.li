@@ -22,6 +22,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
+import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
@@ -50,7 +51,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
-public class LastSeenLoadBalancerWithFacilities implements LoadBalancerWithFacilities {
+public class LastSeenLoadBalancerWithFacilities implements LoadBalancerWithFacilities, WarmUpService
+{
   private static final Logger LOG = LoggerFactory.getLogger(LastSeenLoadBalancerWithFacilities.class);
 
   private final ZKFSDirectory _directory;
@@ -181,5 +183,11 @@ public class LastSeenLoadBalancerWithFacilities implements LoadBalancerWithFacil
   @Override
   public ClusterInfoProvider getClusterInfoProvider() {
     return _loadBalancer;
+  }
+
+  @Override
+  public void warmUpService(String serviceName, Callback<None> callback)
+  {
+    _loadBalancer.warmUpService(serviceName, callback);
   }
 }

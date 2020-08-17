@@ -1,0 +1,4 @@
+record BRecord {
+  bInlineField: record InlineRecord {}
+  bTyperefField: BField
+}

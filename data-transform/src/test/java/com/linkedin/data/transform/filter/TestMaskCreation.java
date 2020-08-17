@@ -211,9 +211,11 @@ public class TestMaskCreation
     MaskTree mask = MaskCreator.createPositiveMask(arrayFirstHalfPath, arraySecondHalfPath);
 
     // Build the expected map with both start and count filtered out
-    // {parent={arrayField=1}}
+    // {parent={arrayField={$*=1}}}
     DataMap parentMap = new DataMap();
-    parentMap.put("arrayField", MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+    DataMap arrayFieldMap = new DataMap();
+    arrayFieldMap.put(FilterConstants.WILDCARD, MaskOperation.POSITIVE_MASK_OP.getRepresentation());
+    parentMap.put("arrayField", arrayFieldMap);
     DataMap expectedMaskMap = new DataMap();
     expectedMaskMap.put("parent", parentMap);
 

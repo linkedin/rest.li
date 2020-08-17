@@ -22,10 +22,12 @@ package com.linkedin.d2.balancer.zkfs;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
+import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
@@ -108,6 +110,30 @@ public class ZKFSLoadBalancer
   public int getClusterCount(String clusterName, String scheme, int partitionId) throws ServiceUnavailableException
   {
     return _currentLoadBalancer.getClusterCount(clusterName, scheme, partitionId);
+  }
+
+  @Override
+  public DarkClusterConfigMap getDarkClusterConfigMap(String clusterName) throws ServiceUnavailableException
+  {
+    return _currentLoadBalancer.getDarkClusterConfigMap(clusterName);
+  }
+
+  @Override
+  public void getDarkClusterConfigMap(String clusterName, Callback<DarkClusterConfigMap> callback)
+  {
+    _currentLoadBalancer.getDarkClusterConfigMap(clusterName, callback);
+  }
+
+  @Override
+  public void registerClusterListener(LoadBalancerClusterListener clusterListener)
+  {
+    _currentLoadBalancer.registerClusterListener(clusterListener);
+  }
+
+  @Override
+  public void unregisterClusterListener(LoadBalancerClusterListener clusterListener)
+  {
+    _currentLoadBalancer.unregisterClusterListener(clusterListener);
   }
 
   public interface TogglingLoadBalancerFactory

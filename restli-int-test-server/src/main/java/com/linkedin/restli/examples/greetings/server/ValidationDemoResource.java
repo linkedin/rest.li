@@ -25,6 +25,7 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.validation.CreateOnly;
 import com.linkedin.restli.common.validation.ReadOnly;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
+import com.linkedin.restli.examples.greetings.api.Empty;
 import com.linkedin.restli.examples.greetings.api.ValidationDemo;
 import com.linkedin.restli.examples.greetings.api.ValidationDemoCriteria;
 import com.linkedin.restli.examples.greetings.api.myEnum;
@@ -323,10 +324,10 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
 
 
   @BatchFinder(value = "searchValidationDemos", batchParam = "criteria")
-  public BatchFinderResult<ValidationDemoCriteria, ValidationDemo, EmptyRecord> searchValidationDemos(@PagingContextParam PagingContext context,
+  public BatchFinderResult<ValidationDemoCriteria, ValidationDemo, Empty> searchValidationDemos(@PagingContextParam PagingContext context,
       @QueryParam("criteria") ValidationDemoCriteria[] criteria, @ValidatorParam RestLiDataValidator validator)
   {
-    BatchFinderResult<ValidationDemoCriteria, ValidationDemo, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
+    BatchFinderResult<ValidationDemoCriteria, ValidationDemo, Empty> batchFinderResult = new BatchFinderResult<>();
 
 
     for (ValidationDemoCriteria currentCriteria : criteria) {
@@ -361,7 +362,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
         check(result.isValid());
       }
 
-      CollectionResult<ValidationDemo, EmptyRecord> cr = new CollectionResult<>(validationDemos, validationDemos.size());
+      CollectionResult<ValidationDemo, Empty> cr = new CollectionResult<>(validationDemos, validationDemos.size());
       batchFinderResult.putResult(currentCriteria, cr);
     }
 

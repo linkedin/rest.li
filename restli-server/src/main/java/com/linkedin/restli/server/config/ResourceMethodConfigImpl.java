@@ -3,6 +3,8 @@ package com.linkedin.restli.server.config;
 import com.linkedin.restli.common.ConfigValue;
 
 import java.util.Objects;
+import java.util.Set;
+
 
 /**
  * Implementation class for {@link ResourceMethodConfig}. When there are more method level configuration introduced
@@ -13,14 +15,25 @@ import java.util.Objects;
 public class ResourceMethodConfigImpl implements ResourceMethodConfig
 {
   private final ConfigValue<Long> _timeoutMs;
+  private final ConfigValue<Set<String>> _alwaysProjectedFields;
   private boolean _validateQueryParams;
   private boolean _validateResourceKeys;
 
+  public static final ResourceMethodConfig DEFAULT_CONFIG = new ResourceMethodConfigImpl(null, false, false, null);
+
+  @Deprecated
   public ResourceMethodConfigImpl(ConfigValue<Long> timeoutMs, boolean validateQueryParams, boolean validateResourceKeys)
+  {
+    this(timeoutMs, validateQueryParams, validateResourceKeys, null);
+  }
+
+  ResourceMethodConfigImpl(ConfigValue<Long> timeoutMs, boolean validateQueryParams, boolean validateResourceKeys,
+      ConfigValue<Set<String>> alwaysProjectedFields)
   {
     _timeoutMs = timeoutMs;
     _validateQueryParams = validateQueryParams;
     _validateResourceKeys = validateResourceKeys;
+    _alwaysProjectedFields = alwaysProjectedFields;
   }
 
   public ConfigValue<Long> getTimeoutMs()
@@ -36,6 +49,12 @@ public class ResourceMethodConfigImpl implements ResourceMethodConfig
   @Override
   public boolean shouldValidateResourceKeys() {
     return _validateResourceKeys;
+  }
+
+  @Override
+  public ConfigValue<Set<String>> getAlwaysProjectedFields()
+  {
+    return _alwaysProjectedFields;
   }
 
   @Override

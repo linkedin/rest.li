@@ -25,6 +25,7 @@ import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.LoadBalancer;
+import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -204,5 +205,23 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
     throws ServiceUnavailableException
   {
     return _clusterInfoProvider.getDarkClusterConfigMap(clusterName);
+  }
+
+  @Override
+  public void getDarkClusterConfigMap(String clusterName, Callback<DarkClusterConfigMap> callback)
+  {
+    _clusterInfoProvider.getDarkClusterConfigMap(clusterName, callback);
+  }
+
+  @Override
+  public void registerClusterListener(LoadBalancerClusterListener clusterListener)
+  {
+    _clusterInfoProvider.registerClusterListener(clusterListener);
+  }
+
+  @Override
+  public void unregisterClusterListener(LoadBalancerClusterListener clusterListener)
+  {
+    _clusterInfoProvider.unregisterClusterListener(clusterListener);
   }
 }

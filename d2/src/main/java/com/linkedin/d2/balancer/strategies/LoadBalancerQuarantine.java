@@ -18,8 +18,8 @@ package com.linkedin.d2.balancer.strategies;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
-import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -242,7 +242,8 @@ public class LoadBalancerQuarantine
         if (_timeTilNextCheck > ERROR_REPORT_PERIOD)
         {
           _rateLimitedLogger.error("Client {}  for service {} is being kept in quarantine for {} seconds, "
-              + "Please check to make sure it is healthy", _trackerClient.getUri(), _serviceName, (1.0 *_timeTilNextCheck / 1000));
+              + "Please check to make sure it is healthy", new Object[] {_trackerClient.getUri(), _serviceName,
+              (1.0 *_timeTilNextCheck / 1000)});
         }
         break;
       case SUCCESS:

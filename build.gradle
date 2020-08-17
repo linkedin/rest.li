@@ -23,8 +23,12 @@ buildscript {
   }
 }
 
-project.ext.buildScriptDirPath = "${projectDir.path}/build_script"
-project.ext.isDefaultEnvironment = !project.hasProperty('overrideBuildEnvironment')
+project.ext {
+  buildScriptDirPath = "${projectDir.path}/build_script"
+  isDefaultEnvironment = !project.hasProperty('overrideBuildEnvironment')
+  privateModules = ['d2-benchmark', 'd2-int-test', 'generator-test', 'log-test-config', 'r2-int-test',
+                     'r2-perf-test', 'restli-internal-testutils'] as Set
+}
 
 File getEnvironmentScript()
 {
@@ -91,6 +95,7 @@ project.ext.externalDependency = [
   'slf4jApi': 'org.slf4j:slf4j-api:1.7.30',
   'slf4jLog4j2': 'org.apache.logging.log4j:log4j-slf4j-impl:2.0.2',
   'snappy': 'org.iq80.snappy:snappy:0.4',
+  'spock': 'org.spockframework:spock-core:1.3-groovy-2.5',
   'testng': 'org.testng:testng:6.13.1',
   'velocity': 'org.apache.velocity:velocity:1.5',
   'zero_allocation_hashing': 'net.openhft:zero-allocation-hashing:0.7',
@@ -242,9 +247,7 @@ subprojects {
     }
 
     // Only build and publish artifacts for consumer-facing modules
-    final Set internalModules = ['d2-benchmark', 'd2-int-test', 'generator-test', 'log-test-config', 'r2-int-test',
-                                 'r2-perf-test', 'restli-internal-testutils'];
-    if (!(it.name in internalModules)) {
+    if (!(it.name in privateModules)) {
       // Configure the Bintray release task
       apply from: "${buildScriptDirPath}/bintrayRelease.gradle"
     }
@@ -284,11 +287,14 @@ subprojects {
     }
   }
 
-  // Exclude tests which are known to be flaky in the Travis CI environment
+  // Exclude tests which are known to be flaky in the Travis CI environment. Since all test tasks are TestNG tasks
+  // EXCEPT the integTest task, exclude the options from being evaluated by travis for the integTest task.
   if (System.getenv('TRAVIS') == 'true' && System.getenv('USER') == 'travis') {
     afterEvaluate {
       project.tasks.withType(Test).forEach {
-        it.options.excludeGroups 'ci-flaky'
+        if (it.options instanceof TestNGOptions) {
+          it.options.excludeGroups 'ci-flaky'
+        }
         it.systemProperties['test.httpRequestTimeout'] = '20000'
       }
     }

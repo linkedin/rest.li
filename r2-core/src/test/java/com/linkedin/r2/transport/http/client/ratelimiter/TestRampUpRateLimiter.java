@@ -16,13 +16,6 @@
 
 package com.linkedin.r2.transport.http.client.ratelimiter;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
@@ -30,7 +23,12 @@ import com.linkedin.r2.transport.http.client.AsyncRateLimiter;
 import com.linkedin.r2.transport.http.client.SmoothRateLimiter;
 import com.linkedin.test.util.ClockedExecutor;
 import com.linkedin.util.clock.Clock;
-
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -41,7 +39,7 @@ import static org.testng.Assert.assertTrue;
 public class TestRampUpRateLimiter extends TestSmoothRateLimiter
 {
   private static final int MINIMUM_BURST = 1;
-
+  private static final String RATE_LIMITER_NAME_TEST = "test";
 
   @DataProvider(name = "targetRamp")
   public Object[][] multiplePartsDataSource()
@@ -76,7 +74,8 @@ public class TestRampUpRateLimiter extends TestSmoothRateLimiter
       ClockedExecutor clockedExecutor = new ClockedExecutor();
 
       RampUpRateLimiter rateLimiter = new RampUpRateLimiterImpl(new SmoothRateLimiter(
-        clockedExecutor, clockedExecutor, clockedExecutor, _queue, Integer.MAX_VALUE), clockedExecutor);
+        clockedExecutor, clockedExecutor, clockedExecutor, _queue, Integer.MAX_VALUE, SmoothRateLimiter.BufferOverflowMode.DROP,
+        RATE_LIMITER_NAME_TEST), clockedExecutor);
 
       rateLimiter.setRate(0, 1, MINIMUM_BURST, rampUp);
       rateLimiter.setRate(targetPermitsPerPeriod, ONE_SECOND_PERIOD, MINIMUM_BURST, rampUp);
@@ -158,7 +157,7 @@ public class TestRampUpRateLimiter extends TestSmoothRateLimiter
     ClockedExecutor clockedExecutor = new ClockedExecutor();
 
     RampUpRateLimiter rateLimiter = new RampUpRateLimiterImpl(new SmoothRateLimiter(
-      clockedExecutor, clockedExecutor, clockedExecutor, _queue, Integer.MAX_VALUE), clockedExecutor);
+      clockedExecutor, clockedExecutor, clockedExecutor, _queue, Integer.MAX_VALUE, SmoothRateLimiter.BufferOverflowMode.DROP, RATE_LIMITER_NAME_TEST), clockedExecutor);
     rateLimiter.setRate(1000d, ONE_SECOND_PERIOD, MINIMUM_BURST);
 
     List<FutureCallback<None>> callbacks = new ArrayList<>();
@@ -185,6 +184,7 @@ public class TestRampUpRateLimiter extends TestSmoothRateLimiter
 
   protected AsyncRateLimiter getRateLimiter(ScheduledExecutorService executorService, ExecutorService executor, Clock clock)
   {
-    return new RampUpRateLimiterImpl(new SmoothRateLimiter(executorService, executor, clock, _queue, MAX_BUFFERED_CALLBACKS), executorService);
+    return new RampUpRateLimiterImpl(new SmoothRateLimiter(executorService, executor, clock, _queue, MAX_BUFFERED_CALLBACKS, SmoothRateLimiter.BufferOverflowMode.DROP,
+                                                           RATE_LIMITER_NAME_TEST), executorService);
   }
 }

@@ -1,0 +1,13 @@
+{
+  "type": "enum",
+  "name": "DummyType",
+  "symbols": [
+              "TYPE1",
+              "TYPE2"
+              ],
+  "symbolDocs": {
+       "TYPE1": "Type 1",
+       "TYPE2": "Type 2"
+  },
+  "doc": "Types of the Dummy."
+}

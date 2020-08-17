@@ -150,6 +150,5 @@ public class ValidateExtensionSchemaTask extends DefaultTask
       javaExecSpec.args(resolverPathArg);
       javaExecSpec.args(_inputDir.getAbsolutePath());
     });
-
   }
 }

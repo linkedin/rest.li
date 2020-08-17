@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author kramgopa, xma
  */
-abstract class AbstractDataEncoder implements DataEncoder
+public abstract class AbstractDataEncoder implements DataEncoder
 {
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDataEncoder.class);
 

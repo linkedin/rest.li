@@ -198,4 +198,53 @@ public class TestRestLiApiBuilder
       Assert.assertEquals(resourceMethodDescriptor.getActionReturnType(), expectedActionReturnType);
     }
   }
+
+  @DataProvider(name = "unsupportedFinderResourceTypeData")
+  private Object[][] unsupportedFinderResourceTypeData()
+  {
+    return new Object[][]
+        {
+            { FinderUnsupportedKeyUnstructuredDataResource.class },
+            { FinderUnsupportedSingleUnstructuredDataResource.class }
+        };
+  }
+
+  /**
+   * Ensures that when finder methods are processed, when the resource value class is a SingleUnstructuredDataResource
+   * or a KeyUnstructuredDataResource, we will end up with a ResourceConfigException because we don't support that righ tnow.
+   * {@code Task<ActionResult<String>> doFoo();} is {@code String.class}.
+   *
+   * @param resourceClass resource used as an input
+   */
+  @Test(dataProvider = "unsupportedFinderResourceTypeData",
+      expectedExceptions = ResourceConfigException.class,
+      expectedExceptionsMessageRegExp = "Class '.*' does not support @Finder methods, because it's an unstructured data resource")
+  public void testFinderUnsupportedResourceType(Class<?> resourceClass)
+  {
+    RestLiApiBuilder.buildResourceModels(Collections.singleton(resourceClass));
+  }
+
+  @DataProvider(name = "finderSupportedResourceTypeData")
+  private Object[][] finderSupportedResourceTypeData()
+  {
+    return new Object[][]
+        {
+            { FinderSupportedAssociationDataResource.class },
+            { FinderSupportedComplexKeyDataResource.class }
+        };
+  }
+
+  @Test(dataProvider = "finderSupportedResourceTypeData")
+  public void testFinderSupportedResourceType(Class<?> resourceClass)
+  {
+    try
+    {
+      RestLiApiBuilder.buildResourceModels(Collections.singleton(resourceClass));
+    }
+    catch (Exception exception)
+    {
+      Assert.fail(String.format("Unexpected exception:  class: %s, message: \"%s\"",
+              resourceClass.getSimpleName(), exception.getMessage()));
+    }
+  }
 }

@@ -35,6 +35,7 @@ import java.net.HttpCookie;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -191,4 +192,12 @@ public interface ServerResourceContext extends ResourceContext
    * @param pagingProjectionMask Projection mask to use for paging metadata
    */
   void setPagingProjectionMask(MaskTree pagingProjectionMask);
+
+  /**
+   * Sets the list of fields that should be included when projection mask is applied. These fields override the
+   * projection mask and will be included in the result even if the mask doesn't request them.
+   *
+   * @param alwaysProjectedFields Set of fields to include when projection is applied.
+   */
+  void setAlwaysProjectedFields(Set<String> alwaysProjectedFields);
 }

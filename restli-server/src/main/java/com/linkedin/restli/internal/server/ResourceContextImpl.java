@@ -58,6 +58,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 
 
@@ -96,6 +97,8 @@ public class ResourceContextImpl implements ServerResourceContext
   //project CollectionMetadata if the client asks for it.
   //The paging projection mask is still available to both parties (the resource method and restli).
   private MaskTree                                  _pagingProjectionMask;
+  // Fields to always include during projection
+  private Set<String> _alwaysProjectedFields;
 
   //For streaming attachments
   private RestLiAttachmentReader                    _requestAttachmentReader;
@@ -653,5 +656,17 @@ public class ResourceContextImpl implements ServerResourceContext
   public Optional<Object> removeCustomContextData(String key)
   {
     return getCustomContextData(key).isPresent() ? Optional.of(_customRequestContext.remove(key)) : Optional.empty();
+  }
+
+  @Override
+  public void setAlwaysProjectedFields(Set<String> alwaysProjectedFields)
+  {
+    this._alwaysProjectedFields = alwaysProjectedFields;
+  }
+
+  @Override
+  public Set<String> getAlwaysProjectedFields()
+  {
+    return _alwaysProjectedFields;
   }
 }

@@ -79,8 +79,7 @@ public class GetResponseBuilder implements RestLiResponseBuilder<RestLiResponseD
     TimingContextUtil.beginTiming(resourceContext.getRawRequestContext(),
         FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());
 
-    final DataMap data = RestUtils.projectFields(record.data(), resourceContext.getProjectionMode(),
-                                                 resourceContext.getProjectionMask());
+    final DataMap data = RestUtils.projectFields(record.data(), resourceContext);
 
     TimingContextUtil.endTiming(resourceContext.getRawRequestContext(),
         FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_PROJECTION_APPLY.key());

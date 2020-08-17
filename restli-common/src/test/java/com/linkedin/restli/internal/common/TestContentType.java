@@ -37,24 +37,30 @@ public class TestContentType
 {
   private static final String TEST_REQUEST_SYMBOL_TABLE_NAME = "HahaRequest";
   private static final String TEST_RESPONSE_SYMBOL_TABLE_NAME = "abc.linkedin.com:123|HahaResponse";
+  private static final String TEST_OVERRIDDEN_RESPONSE_SYMBOL_TABLE_NAME = "OverrideResponse";
   private static final URI TEST_URI = URI.create("https://www.linkedin.com");
 
   @BeforeClass
   public void setupSymbolTableProvider()
   {
-    SymbolTableProviderHolder.INSTANCE.setSymbolTableProvider(new SymbolTableProvider() {
+    SymbolTableProviderHolder.INSTANCE.setSymbolTableProvider(new SymbolTableProvider()
+    {
       @Override
-      public SymbolTable getSymbolTable(String symbolTableName) {
-        return null;
+      public SymbolTable getSymbolTable(String symbolTableName)
+      {
+        return TEST_OVERRIDDEN_RESPONSE_SYMBOL_TABLE_NAME.equals(symbolTableName) ?
+            new InMemorySymbolTable(TEST_REQUEST_SYMBOL_TABLE_NAME, Collections.emptyList()) : null;
       }
 
       @Override
-      public SymbolTable getRequestSymbolTable(URI requestUri) {
+      public SymbolTable getRequestSymbolTable(URI requestUri)
+      {
         return TEST_URI == requestUri ? new InMemorySymbolTable(TEST_REQUEST_SYMBOL_TABLE_NAME, Collections.emptyList()) : null;
       }
 
       @Override
-      public SymbolTable getResponseSymbolTable(URI requestUri, Map<String, String> requestHeaders) {
+      public SymbolTable getResponseSymbolTable(URI requestUri, Map<String, String> requestHeaders)
+      {
         return TEST_URI == requestUri ? new InMemorySymbolTable(TEST_RESPONSE_SYMBOL_TABLE_NAME, Collections.emptyList()) : null;
       }
     });
@@ -175,5 +181,13 @@ public class TestContentType
     ContentType contentType =
         ContentType.getResponseContentType(RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF2, TEST_URI, Collections.emptyMap()).get();
     Assert.assertEquals("application/x-protobuf2; symbol-table=\"abc.linkedin.com:123|HahaResponse\"", contentType.getHeaderKey());
+  }
+
+  @Test
+  public void testGetResponseProtobuf2ContentTypeOverriddenSymbolTable() throws MimeTypeParseException
+  {
+    ContentType contentType =
+        ContentType.getResponseContentType("application/x-protobuf2; symbol-table=\"OverrideResponse\"", TEST_URI, Collections.emptyMap()).get();
+    Assert.assertEquals("application/x-protobuf2; symbol-table=\"OverrideResponse\"", contentType.getHeaderKey());
   }
 }

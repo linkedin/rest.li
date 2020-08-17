@@ -276,7 +276,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
    *
    * For recoverable parse errors, the error should instead be recorded using startErrorMessage.
    */
-  private class ParseException extends IOException
+  protected class ParseException extends IOException
   {
     private static final long serialVersionUID = 1;
 
@@ -731,7 +731,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
    * @param target target on which to set doc, properties, and aliases
    * @return parsed properties
    */
-  private Map<String, Object> setDocAndProperties(NamedTypeDeclarationContext source, NamedDataSchema target)
+  protected Map<String, Object> setDocAndProperties(NamedTypeDeclarationContext source, NamedDataSchema target)
       throws ParseException
   {
     Map<String, Object> properties = new HashMap<>(target.getProperties());
@@ -1088,7 +1088,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     return assignment.typeReference() == null;
   }
 
-  private DataSchema toDataSchema(TypeReferenceContext typeReference) throws ParseException
+  protected DataSchema toDataSchema(TypeReferenceContext typeReference) throws ParseException
   {
     DataSchema dataSchema = stringToDataSchema(typeReference.value);
     if (dataSchema != null)

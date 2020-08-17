@@ -97,6 +97,9 @@ public class RestLiConfig
   // resource method level configuration
   private RestLiMethodConfig _methodConfig;
 
+  /** configuration for whether to attach stacktrace for {@link com.linkedin.r2.message.rest.RestException} */
+  private boolean _writableStackTrace = true;
+
   /**
    * Constructor.
    */
@@ -551,5 +554,19 @@ public class RestLiConfig
     _validateResourceKeys = validateResourceKeys;
     setMethodConfig(
         new RestLiMethodConfigBuilder(getMethodConfig()).withShouldValidateResourceKeys(_validateResourceKeys).build());
+  }
+
+  /**
+   * Get whether fill in stacktrace for {@link com.linkedin.r2.message.rest.RestException}
+   */
+  public boolean isWritableStackTrace() {
+    return _writableStackTrace;
+  }
+
+  /**
+   * Set whether fill in stacktrace for {@link com.linkedin.r2.message.rest.RestException}
+   */
+  public void setWritableStackTrace(boolean writableStackTrace) {
+    _writableStackTrace = writableStackTrace;
   }
 }

@@ -4,6 +4,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.server.config.ResourceMethodKeyParser.RestResourceContext;
 import com.linkedin.restli.server.config.ResourceMethodKeyParser.OperationContext;
 
+import java.util.HashSet;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -28,7 +29,7 @@ class ResourceMethodConfigElement implements Comparable<ResourceMethodConfigElem
   // config value
   private final Object _value;
   // config category, like timeoutMs, concurrencyLimit, etc
-  private final String _property;
+  private final RestLiMethodConfig.ConfigType _configType;
   // rest.li resource name
   private final Optional<String> _resourceName;
   // rest.li resource method type
@@ -41,14 +42,14 @@ class ResourceMethodConfigElement implements Comparable<ResourceMethodConfigElem
 
 
 
-  private ResourceMethodConfigElement(String key, Object value, String property,
+  private ResourceMethodConfigElement(String key, Object value, RestLiMethodConfig.ConfigType configType,
                                       Optional<String> resourceName,
                                       Optional<ResourceMethod> opType,
                                       Optional<String> opName)
   {
     _key = key;
     _value = value;
-    _property = property;
+    _configType = configType;
     _resourceName = resourceName;
     _opType = opType;
     _opName = opName;
@@ -66,7 +67,12 @@ class ResourceMethodConfigElement implements Comparable<ResourceMethodConfigElem
 
   public String getProperty()
   {
-    return _property;
+    return _configType.getConfigName();
+  }
+
+  public RestLiMethodConfig.ConfigType getConfigType()
+  {
+    return _configType;
   }
 
   public Optional<String> getResourceName()
@@ -102,7 +108,9 @@ class ResourceMethodConfigElement implements Comparable<ResourceMethodConfigElem
     }
   }
 
-  static ResourceMethodConfigElement parse(String property, String key, Object value) throws ResourceMethodConfigParsingException {
+  static ResourceMethodConfigElement parse(RestLiMethodConfig.ConfigType configType, String key, Object value)
+          throws ResourceMethodConfigParsingException
+  {
     ParsingErrorListener errorListener = new ParsingErrorListener();
     ANTLRInputStream input = new ANTLRInputStream(key);
     ResourceMethodKeyLexer lexer = new ResourceMethodKeyLexer(input);
@@ -119,7 +127,7 @@ class ResourceMethodConfigElement implements Comparable<ResourceMethodConfigElem
       Optional<String> resourceName = handlingWildcard(keyTree.restResource());
       Optional<ResourceMethod> opType = getOpType(keyTree.operation());
       Optional<String> opName = opType.flatMap(method -> getOpName(method, keyTree.operation()));
-      return new ResourceMethodConfigElement(key, coerceValue(property, value), property, resourceName, opType, opName);
+      return new ResourceMethodConfigElement(key, coerceValue(configType, value), configType, resourceName, opType, opName);
     }
     else
     {
@@ -159,15 +167,21 @@ class ResourceMethodConfigElement implements Comparable<ResourceMethodConfigElem
     }
   }
 
-  private static Object coerceValue(String property, Object value) throws ResourceMethodConfigParsingException {
-    try {
-      switch(property) {
-        case "timeoutMs":
+  private static Object coerceValue(RestLiMethodConfig.ConfigType configType, Object value) throws ResourceMethodConfigParsingException
+  {
+    try
+    {
+      switch(configType)
+      {
+        case TIMEOUT:
           return ConfigValueCoercers.LONG.apply(value);
+        case ALWAYS_PROJECTED_FIELDS:
+          return new HashSet<>(ConfigValueCoercers.COMMA_SEPARATED_STRINGS.apply(value));
         default:
-          throw new ResourceMethodConfigParsingException("Invalid method-level config property: " + property);
+          throw new ResourceMethodConfigParsingException("Invalid method-level config property: " + configType.getConfigName());
       }
-    } catch (Exception e) {
+    } catch (Exception e)
+    {
       throw new ResourceMethodConfigParsingException(e);
     }
   }

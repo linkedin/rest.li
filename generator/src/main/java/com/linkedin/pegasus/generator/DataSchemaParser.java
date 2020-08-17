@@ -27,11 +27,14 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import org.apache.commons.io.FilenameUtils;
 
 
@@ -61,7 +64,6 @@ public class DataSchemaParser
 
     MultiFormatDataSchemaResolver resolver =
       new MultiFormatDataSchemaResolver(resolverPath, parserFactoriesForFromats);
-
     _parserByFileExtension = new HashMap<>();
     for (DataSchemaParserFactory parserForFormat : parserFactoriesForFromats)
     {
@@ -179,7 +181,8 @@ public class DataSchemaParser
    */
   public static class ParseResult
   {
-    private final Map<DataSchema, DataSchemaLocation> _schemaAndLocations = new HashMap<>();
+    // The purpose of the sorting is to keep generated java meta classes consistent accross different input file orders
+    private final Map<DataSchema, DataSchemaLocation> _schemaAndLocations = new TreeMap<>(Comparator.comparing(DataSchema::toString));
     private final Set<File> _sourceFiles = new HashSet<>();
     protected final StringBuilder _messageBuilder = new StringBuilder();
 

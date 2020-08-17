@@ -71,9 +71,7 @@ public class BatchPartialUpdateResponseBuilder extends BatchResponseBuilder<Rest
       final RecordTemplate entity = ((UpdateEntityResponse<?>) updateResponse).getEntity();
 
       final DataMap entityData = entity != null ? entity.data() : null;
-      final DataMap projectedData = RestUtils.projectFields(entityData,
-          resourceContext.getProjectionMode(),
-          resourceContext.getProjectionMask());
+      final DataMap projectedData = RestUtils.projectFields(entityData, resourceContext);
 
       return new UpdateEntityStatus<>(updateResponse.getStatus().getCode(),
                                       new AnyRecord(projectedData));

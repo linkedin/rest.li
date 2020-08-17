@@ -15,12 +15,16 @@
 */
 package com.linkedin.pegasus.gradle;
 
-import java.util.Map;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.tasks.Copy;
+import org.gradle.api.tasks.Delete;
+import org.gradle.api.tasks.Sync;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.testng.annotations.Test;
+
+import java.util.Map;
 
 import static org.testng.Assert.*;
 
@@ -55,5 +59,17 @@ public final class TestPegasusPlugin
 
     assertFalse(pegasusOptions.get("main").hasGenerationMode(PegasusOptions.GenerationMode.AVRO));
     assertTrue(pegasusOptions.get("main").hasGenerationMode(PegasusOptions.GenerationMode.PEGASUS));
+  }
+
+  @Test
+  public void testTaskTypes() {
+    // Given/When: Pegasus Plugin is applied to a project.
+    Project project = ProjectBuilder.builder().build();
+    project.getPlugins().apply(PegasusPlugin.class);
+
+    // Then: Validate the Copy/Sync Schema tasks are of the correct type.
+    assertTrue(project.getTasks().getByName("mainDestroyStaleFiles") instanceof Delete);
+    assertTrue(project.getTasks().getByName("mainCopyPdscSchemas") instanceof Copy);
+    assertTrue(project.getTasks().getByName("mainCopySchemas") instanceof Sync);
   }
 }

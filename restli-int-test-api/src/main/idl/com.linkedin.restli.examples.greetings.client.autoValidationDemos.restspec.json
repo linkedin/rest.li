@@ -56,6 +56,9 @@
         "name" : "criteria",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.ValidationDemoCriteria\" }"
       } ],
+      "metadata" : {
+        "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+      },
       "pagingSupported" : true,
       "batchParam" : "criteria"
     } ],

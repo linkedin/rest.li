@@ -16,6 +16,9 @@
 
 package com.linkedin.r2.transport.http.client.ratelimiter;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.MultiCallback;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -26,6 +29,9 @@ import com.linkedin.r2.transport.http.client.AsyncRateLimiter;
 import com.linkedin.r2.transport.http.client.SmoothRateLimiter;
 import com.linkedin.util.clock.Clock;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.junit.Assert;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -33,6 +39,7 @@ import static org.testng.Assert.assertEquals;
 
 public class TestSmoothRateLimiter extends BaseTestSmoothRateLimiter
 {
+  private static final String RATE_LIMITER_NAME_TEST = "test";
 
   @Test(timeOut = TEST_TIMEOUT)
   public void testUnlimitedBurstRate()
@@ -59,21 +66,61 @@ public class TestSmoothRateLimiter extends BaseTestSmoothRateLimiter
     new Rate(50, 10, 1);
   }
 
-
-  @Test(timeOut = TEST_TIMEOUT, expectedExceptions = RejectedExecutionException.class)
+  @Test(timeOut = TEST_TIMEOUT)
   public void testSubmitExceedsMaxBuffered()
   {
-    SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
-      _scheduledExecutorService, _executor, _clock, _queue, 0);
+    SmoothRateLimiter rateLimiter =
+      new SmoothRateLimiter(_scheduledExecutorService, _executor, _clock, _queue, 0, SmoothRateLimiter.BufferOverflowMode.DROP,
+                            RATE_LIMITER_NAME_TEST);
     rateLimiter.setRate(ONE_PERMIT_PER_PERIOD, ONE_SECOND_PERIOD, UNLIMITED_BURST);
 
     FutureCallback<None> callback = new FutureCallback<>();
-    rateLimiter.submit(callback);
+    try
+    {
+      rateLimiter.submit(callback);
+    }
+    catch (RejectedExecutionException e)
+    {
+      Assert.assertFalse("The tasks should have been rejected and not run", callback.isDone());
+      // success, the exception has been thrown as expected!
+      return;
+    }
+    Assert.fail("It should have thrown a RejectedExecutionException");
   }
 
+  @Test(timeOut = TEST_TIMEOUT)
+  public void testSubmitExceedsMaxBufferedButNoReject()
+    throws InterruptedException, ExecutionException, TimeoutException
+  {
+    SmoothRateLimiter rateLimiter =
+      new SmoothRateLimiter(_scheduledExecutorService, _executor, _clock, _queue, 0, SmoothRateLimiter.BufferOverflowMode.SCHEDULE_WITH_WARNING,
+                            RATE_LIMITER_NAME_TEST);
+    rateLimiter.setRate(ONE_PERMIT_PER_PERIOD, ONE_SECOND_PERIOD, UNLIMITED_BURST);
+
+    int numberOfTasks = 100;
+
+    FutureCallback<None> callback = new FutureCallback<>();
+
+    Callback<None> callbacks = new MultiCallback(callback, numberOfTasks);
+
+    for (int i = 0; i < numberOfTasks; i++)
+    {
+      try
+      {
+        rateLimiter.submit(callbacks);
+      }
+      catch (RejectedExecutionException e)
+      {
+        Assert.fail("It should have just run a task and not throw a RejectedExecutionException");
+      }
+    }
+    callback.get(5, TimeUnit.SECONDS);
+    Assert.assertTrue("The tasks should run", callback.isDone());
+  }
 
   protected AsyncRateLimiter getRateLimiter(ScheduledExecutorService executorService, ExecutorService executor, Clock clock)
   {
-    return new SmoothRateLimiter(executorService, executor, clock, _queue, MAX_BUFFERED_CALLBACKS);
+    return new SmoothRateLimiter(executorService, executor, clock, _queue, MAX_BUFFERED_CALLBACKS, SmoothRateLimiter.BufferOverflowMode.DROP,
+                                 RATE_LIMITER_NAME_TEST);
   }
 }

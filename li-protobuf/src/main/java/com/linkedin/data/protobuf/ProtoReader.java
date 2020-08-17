@@ -56,7 +56,7 @@ import java.io.InputStream;
 public abstract class ProtoReader
 {
   static final int DEFAULT_BYTE_BUFFER_SIZE = 4096;
-  static final int DEFAULT_TEXT_BUFFER_SIZE = 1024;
+  public static final int DEFAULT_TEXT_BUFFER_SIZE = 1024;
   static final int DEFAULT_SIZE_LIMIT = Integer.MAX_VALUE;
 
   /**

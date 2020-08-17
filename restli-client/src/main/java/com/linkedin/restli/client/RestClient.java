@@ -152,20 +152,36 @@ public class RestClient implements Client {
       .expireAfterWrite(Duration.ofSeconds(30))
       .build();
 
+  /**
+   * Constructor
+   *
+   * @param client      The underlying R2 client.
+   * @param uriPrefix   The URI prefix used by this client.
+   */
   public RestClient(com.linkedin.r2.transport.common.Client client, String uriPrefix)
   {
-    this(client, uriPrefix, DEFAULT_CONTENT_TYPE, DEFAULT_ACCEPT_TYPES);
+    this(client, uriPrefix, new RestLiClientConfig());
   }
 
+  /**
+   * Constructor
+   *
+   * @param client             The underlying R2 client.
+   * @param uriPrefix          The URI prefix used by this client.
+   * @param restLiClientConfig The client configuration.
+   */
   public RestClient(com.linkedin.r2.transport.common.Client client, String uriPrefix, RestLiClientConfig restLiClientConfig)
   {
     this(client, uriPrefix, DEFAULT_CONTENT_TYPE, DEFAULT_ACCEPT_TYPES, restLiClientConfig);
   }
 
   /**
-   * @deprecated please use {@link RestliRequestOptions} to configure accept types.
+   * Constructor
+   *
+   * @param client             The underlying R2 client.
+   * @param uriPrefix          The URI prefix used by this client.
+   * @param acceptTypes        The default list of accept types to use for all requests.
    */
-  @Deprecated
   public RestClient(com.linkedin.r2.transport.common.Client client,
       String uriPrefix, List<ContentType> acceptTypes)
   {
@@ -173,9 +189,13 @@ public class RestClient implements Client {
   }
 
   /**
-   * @deprecated please use {@link RestliRequestOptions} to configure content type and accept types.
+   * Constructor
+   *
+   * @param client             The underlying R2 client.
+   * @param uriPrefix          The URI prefix used by this client.
+   * @param contentType        The default request body content type to use for all requests.
+   * @param acceptTypes        The default list of accept types to use for all requests.
    */
-  @Deprecated
   public RestClient(com.linkedin.r2.transport.common.Client client,
       String uriPrefix, ContentType contentType, List<ContentType> acceptTypes)
   {
@@ -183,9 +203,14 @@ public class RestClient implements Client {
   }
 
   /**
-   * @deprecated please use {@link RestliRequestOptions} to configure content type and accept types.
+   * Constructor
+   *
+   * @param client             The underlying R2 client.
+   * @param uriPrefix          The URI prefix used by this client.
+   * @param contentType        The default request body content type to use for all requests.
+   * @param acceptTypes        The default list of accept types to use for all requests.
+   * @param restLiClientConfig The client configuration.
    */
-  @Deprecated
   public RestClient(com.linkedin.r2.transport.common.Client client,
       String uriPrefix, ContentType contentType, List<ContentType> acceptTypes, RestLiClientConfig restLiClientConfig)
   {

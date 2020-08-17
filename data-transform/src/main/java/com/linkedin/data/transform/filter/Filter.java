@@ -28,6 +28,8 @@ import com.linkedin.data.transform.Interpreter;
 import com.linkedin.data.transform.InterpreterContext;
 
 import java.util.Map;
+import java.util.Set;
+
 
 /**
  * Interpreter, which implements data filtering. Instruction contains data to be filtered
@@ -42,6 +44,20 @@ import java.util.Map;
 public class Filter extends AbstractFilter implements Interpreter
 {
   private InterpreterContext _instrCtx;
+
+  public Filter()
+  {
+  }
+
+  /**
+   * Create a filter with set of fields that are always included.
+   * @param alwaysIncludedFields Fields to include in the filtered data, these fields override the operation specified
+   *                             by the filter data.
+   */
+  public Filter(Set<String> alwaysIncludedFields)
+  {
+    super(alwaysIncludedFields);
+  }
 
   @Override
   public void interpret(InterpreterContext instrCtx)
@@ -91,6 +107,14 @@ public class Filter extends AbstractFilter implements Interpreter
           {
             _instrCtx.setCurrentField(start + i);
             scheduleInstruction((DataMap) operation, (DataComplex) value);
+          }
+          else
+          {
+            onError(i,
+                "complex filter defined for array element, which is not an object nor an array, " +
+                    "but it is of type: %1$s, with value: %2$s",
+                value.getClass().getName(),
+                value);
           }
         }
       }

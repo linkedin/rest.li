@@ -17,7 +17,7 @@ import org.testng.annotations.DataProvider;
 public class CodecDataProviders
 {
   @DataProvider
-  public static Object[][] tempCodecData()
+  public static Object[][] smallCodecData()
   {
     final Map<String, DataComplex> inputs = new TreeMap<>();
 
@@ -28,6 +28,11 @@ public class CodecDataProviders
       map1.put("map11", map11);
       map1.put("list11", list11);
       inputs.put("Map with empty map and list", map1);
+
+      DataList list1 = new DataList();
+      list1.add(map1);
+      list1.add(map1);
+      inputs.put("List with nested empty map", list1);
     }
 
     return inputs.entrySet().stream()
@@ -57,6 +62,40 @@ public class CodecDataProviders
     {
       list.add(new Object[] {entry.getKey(), entry.getValue(), true});
       list.add(new Object[] {entry.getKey(), entry.getValue(), false});
+    }
+
+    return list.toArray(new Object[][] {});
+  }
+
+  @DataProvider
+  public static Object[][] surrogatePairData()
+  {
+    List<Object[]> list = new ArrayList<>();
+    list.add(new Object[] {"a\uD800", "a?", 2, false, false});
+    list.add(new Object[] {"\uD800a", "?a", 2, false, false});
+    list.add(new Object[] {"\uD800\uD800", "??", 2, false, false});
+    list.add(new Object[] {"abc\uD800\uD800abc", "abc??abc", 8, false, false});
+    list.add(new Object[] {"\uDBFF\uDFFF", "\uDBFF\uDFFF", 4, true, false});
+    list.add(new Object[] {"\uD83D\uDE00\uD83D\uDE00", "\uD83D\uDE00\uD83D\uDE00", 8, true, false});
+    list.add(new Object[] {"a\uD800", "a?", 2, false, true});
+    list.add(new Object[] {"\uD800a", "?a", 2, false, true});
+    list.add(new Object[] {"\uD800\uD800", "??", 2, false, true});
+    list.add(new Object[] {"abc\uD800\uD800abc", "abc??abc", 8, false, true});
+    list.add(new Object[] {"\uDBFF\uDFFF", "\uDBFF\uDFFF", 4, true, true});
+    list.add(new Object[] {"\uD83D\uDE00\uD83D\uDE00", "\uD83D\uDE00\uD83D\uDE00", 8, true, true});
+
+    return list.toArray(new Object[][] {});
+  }
+
+  @DataProvider
+  public static Object[][] streamCodecData()
+  {
+    List<Object[]> list = new ArrayList<>();
+    for (Map.Entry<String, DataComplex> entry : codecDataInputs().entrySet())
+    {
+      list.add(new Object[] {entry.getKey(), entry.getValue(), 1});
+      list.add(new Object[] {entry.getKey(), entry.getValue(), 3});
+      list.add(new Object[] {entry.getKey(), entry.getValue(), 1000});
     }
 
     return list.toArray(new Object[][] {});

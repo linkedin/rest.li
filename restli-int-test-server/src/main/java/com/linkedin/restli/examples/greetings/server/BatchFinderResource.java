@@ -18,6 +18,7 @@ package com.linkedin.restli.examples.greetings.server;
 
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.examples.greetings.api.Empty;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingCriteria;
 import com.linkedin.restli.examples.greetings.api.SearchMetadata;
@@ -50,19 +51,19 @@ public class BatchFinderResource extends CollectionResourceTemplate<Long, Greeti
   private static final Greeting g2 = new Greeting().setId(2).setTone(Tone.FRIENDLY);
 
   @BatchFinder(value = "searchGreetings", batchParam = "criteria")
-  public BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> searchGreetings(@PagingContextParam PagingContext context,
+  public BatchFinderResult<GreetingCriteria, Greeting, Empty> searchGreetings(@PagingContextParam PagingContext context,
                                                                 @QueryParam("criteria") GreetingCriteria[] criteria,
                                                                 @QueryParam("message") String message)
   {
-    BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord> batchFinderResult = new BatchFinderResult<>();
+    BatchFinderResult<GreetingCriteria, Greeting, Empty> batchFinderResult = new BatchFinderResult<>();
 
     for (GreetingCriteria currentCriteria: criteria) {
       if (currentCriteria.getId() == 1L) {
         // on success
-        CollectionResult<Greeting, EmptyRecord> c1 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g1), 1);
+        CollectionResult<Greeting, Empty> c1 = new CollectionResult<>(Arrays.asList(g1), 1);
         batchFinderResult.putResult(currentCriteria, c1);
       } else if (currentCriteria.getId() == 2L) {
-        CollectionResult<Greeting, EmptyRecord> c2 = new CollectionResult<Greeting, EmptyRecord>(Arrays.asList(g2), 1);
+        CollectionResult<Greeting, Empty> c2 = new CollectionResult<>(Arrays.asList(g2), 1);
         batchFinderResult.putResult(currentCriteria, c2);
       } else if (currentCriteria.getId() == 100L){
         // on error: to construct error response for test

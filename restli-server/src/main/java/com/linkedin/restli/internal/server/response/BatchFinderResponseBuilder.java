@@ -153,9 +153,7 @@ public class BatchFinderResponseBuilder
     List<AnyRecord> response = new ArrayList<>(elements.size());
     for (int j = 0; j < elements.size(); j++)
     {
-      response.add(new AnyRecord(RestUtils.projectFields(elements.get(j).data(),
-                                                         resourceContext.getProjectionMode(),
-                                                         resourceContext.getProjectionMask())));
+      response.add(new AnyRecord(RestUtils.projectFields(elements.get(j).data(), resourceContext)));
     }
     return response;
   }
@@ -167,8 +165,8 @@ public class BatchFinderResponseBuilder
                                                      CollectionResult<RecordTemplate,
                                                      RecordTemplate> cr)
   {
-    String batchParamName = getBatchParamterName(routingResult);
-    URI criteriaURI = buildCriteriaURI(resourceContext, criteria, batchParamName, request.getURI());
+    String batchParameterName = getBatchParameterName(routingResult);
+    URI criteriaURI = buildCriteriaURI(resourceContext, criteria, batchParameterName, request.getURI());
 
     final CollectionMetadata paging = RestUtils.buildMetadata(criteriaURI,
                                                               resourceContext,
@@ -179,7 +177,8 @@ public class BatchFinderResponseBuilder
 
     return new CollectionMetadata(RestUtils.projectFields(paging.data(),
                                                           ProjectionMode.AUTOMATIC,
-                                                          resourceContext.getPagingProjectionMask()));
+                                                          resourceContext.getPagingProjectionMask(),
+                                                          resourceContext.getAlwaysProjectedFields()));
   }
 
   private AnyRecord buildMetaData(CollectionResult<RecordTemplate, RecordTemplate> cr,
@@ -189,13 +188,14 @@ public class BatchFinderResponseBuilder
     {
       return new AnyRecord(RestUtils.projectFields(cr.getMetadata().data(),
                                                    resourceContext.getMetadataProjectionMode(),
-                                                   resourceContext.getMetadataProjectionMask()));
+                                                   resourceContext.getMetadataProjectionMask(),
+                                                   resourceContext.getAlwaysProjectedFields()));
     }
 
     return null;
   }
 
-  private String getBatchParamterName(RoutingResult routingResult)
+  private String getBatchParameterName(RoutingResult routingResult)
   {
     int batchFinderCriteriaIndex = routingResult.getResourceMethod().getBatchFinderCriteriaParamIndex();
     return routingResult.getResourceMethod().getParameters().get(batchFinderCriteriaIndex).getName();
@@ -203,16 +203,16 @@ public class BatchFinderResponseBuilder
 
   private DataList getCriteriaParameters(RoutingResult routingResult)
   {
-    String batchParamName = getBatchParamterName(routingResult);
-    return(DataList)routingResult.getContext().getStructuredParameter(batchParamName);
+    String batchParameterName = getBatchParameterName(routingResult);
+    return (DataList) routingResult.getContext().getStructuredParameter(batchParameterName);
   }
 
-  private URI buildCriteriaURI(ResourceContextImpl resourceContext, RecordTemplate criteria, String queryParam, URI uri)
+  static URI buildCriteriaURI(ResourceContextImpl resourceContext, RecordTemplate criteria, String batchParameterName, URI uri)
   {
     DataList criteriaList = new DataList(1);
     criteriaList.add(criteria.data());
     return URIParamUtils.replaceQueryParam(uri,
-                                           queryParam,
+                                           batchParameterName,
                                            criteriaList,
                                            resourceContext.getParameters(),
                                            resourceContext.getRestliProtocolVersion());

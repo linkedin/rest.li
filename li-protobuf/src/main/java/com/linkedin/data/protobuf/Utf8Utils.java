@@ -56,6 +56,12 @@ import java.io.IOException;
 public class Utf8Utils
 {
   /**
+   * Default replacement character emitted when encountering invalid surrogate pairs and when tolerating such
+   * behavior is enabled.
+   */
+  private static final char DEFAULT_REPLACEMENT_CHAR = '?';
+
+  /**
    * UTF-8 lookup table.
    *
    * Bytes representing ASCII characters return 0.
@@ -96,7 +102,10 @@ public class Utf8Utils
     UTF8_LOOKUP_TABLE = table;
   }
 
-  private static final IllegalArgumentException INVALID_UTF8_EXCEPTION = new IllegalArgumentException("Invalid UTF-8");
+  public static int lookupUtfTable(int initialByte)
+  {
+    return UTF8_LOOKUP_TABLE[initialByte];
+  }
 
   /**
    * Encodes an input character sequence ({@code in}) to UTF-8 in the target array ({@code out}).
@@ -108,8 +117,7 @@ public class Utf8Utils
    * return offset + a.length;
    * }</pre>
    * <p>
-   * but is more efficient in both time and space. One key difference is that this method requires
-   * paired surrogates, and therefore does not support chunking. While {@code
+   * but is more efficient in both time and space. While {@code
    * String.getBytes(UTF_8)} replaces unpaired surrogates with the default replacement character,
    * this method throws {@link IllegalArgumentException}.
    *
@@ -129,6 +137,43 @@ public class Utf8Utils
    *                                        {@code bytes.length - offset}
    */
   public static int encode(CharSequence in, byte[] out, int offset, int length)
+  {
+    return encode(in, out, offset, length, false);
+  }
+
+  /**
+   * Encodes an input character sequence ({@code in}) to UTF-8 in the target array ({@code out}).
+   * For a string, this method is similar to
+   *
+   * <pre>{@code
+   * byte[] a = string.getBytes(UTF_8);
+   * System.arraycopy(a, 0, bytes, offset, a.length);
+   * return offset + a.length;
+   * }</pre>
+   * <p>
+   * but is more efficient in both time and space. If tolerateInvalidSurrogatePairs is set to true, then
+   * this method replaces unpaired surrogates with the default replacement character, else
+   * this method throws {@link IllegalArgumentException}.
+   *
+   * <p>To ensure sufficient space in the output buffer, either call {@link #encodedLength} to
+   * compute the exact amount needed, or leave room for {@code Utf8.MAX_BYTES_PER_CHAR *
+   * sequence.length()}, which is the largest possible number of bytes that any input can be
+   * encoded to.
+   *
+   * @param in                            the input character sequence to be encoded
+   * @param out                           the target array
+   * @param offset                        the starting offset in {@code bytes} to start writing at
+   * @param length                        the length of the {@code bytes}, starting from {@code offset}
+   * @param tolerateInvalidSurrogatePairs True if invalid surrogate pairs should be tolerated, emitting the standard
+   *                                      replacement character when encountering them; false if an exception should
+   *                                      be thrown when encountering them.
+   * @return the new offset, equivalent to {@code offset + Utf8.encodedLength(sequence)}
+   * @throws IllegalArgumentException       if {@code sequence} contains ill-formed UTF-16 (unpaired
+   *                                        surrogates) and tolerateInvalidSurrogatePairs is true.
+   * @throws ArrayIndexOutOfBoundsException if {@code sequence} encoded in UTF-8 is longer than
+   *                                        {@code bytes.length - offset}
+   */
+  public static int encode(CharSequence in, byte[] out, int offset, int length, boolean tolerateInvalidSurrogatePairs)
   {
     int utf16Length = in.length();
     int j = offset;
@@ -173,26 +218,46 @@ public class Utf8Utils
         // Minimum code point represented by a surrogate pair is 0x10000, 17 bits,
         // four UTF-8 bytes
         final char low;
-        if (i + 1 == in.length() || !Character.isSurrogatePair(c, (low = in.charAt(++i))))
+        if (i + 1 == in.length() || !Character.isSurrogatePair(c, (low = in.charAt(i + 1))))
         {
-          throw new IllegalArgumentException("Unpaired surrogate at index " + (i - 1) + " of " + utf16Length);
+          if (tolerateInvalidSurrogatePairs)
+          {
+            out[j++] = DEFAULT_REPLACEMENT_CHAR;
+          }
+          else
+          {
+            throw new IllegalArgumentException("Unpaired surrogate at index " + (i - 1) + " of " + utf16Length);
+          }
         }
-        int codePoint = Character.toCodePoint(c, low);
-        out[j++] = (byte) ((0xF << 4) | (codePoint >>> 18));
-        out[j++] = (byte) (0x80 | (0x3F & (codePoint >>> 12)));
-        out[j++] = (byte) (0x80 | (0x3F & (codePoint >>> 6)));
-        out[j++] = (byte) (0x80 | (0x3F & codePoint));
+        else
+        {
+          i++;
+          int codePoint = Character.toCodePoint(c, low);
+          out[j++] = (byte) ((0xF << 4) | (codePoint >>> 18));
+          out[j++] = (byte) (0x80 | (0x3F & (codePoint >>> 12)));
+          out[j++] = (byte) (0x80 | (0x3F & (codePoint >>> 6)));
+          out[j++] = (byte) (0x80 | (0x3F & codePoint));
+        }
       }
       else
       {
-        // If we are surrogates and we're not a surrogate pair, always throw an
-        // UnpairedSurrogateException instead of an ArrayOutOfBoundsException.
-        if ((Character.MIN_SURROGATE <= c && c <= Character.MAX_SURROGATE)
-            && (i + 1 == in.length() || !Character.isSurrogatePair(c, in.charAt(i + 1))))
+        // If we are surrogates and we're not a surrogate pair, then throw an Illegal argument exception if
+        // we are not a surrogate pair, else throw an ArrayIndexOutOfBoundsException
+        if ((Character.isSurrogate(c)) && (i + 1 == in.length() || !Character.isSurrogatePair(c, in.charAt(i + 1))))
         {
-          throw new IllegalArgumentException("Unpaired surrogate at index " + i + " of " + utf16Length);
+          if (tolerateInvalidSurrogatePairs)
+          {
+            out[j++] = DEFAULT_REPLACEMENT_CHAR;
+          }
+          else
+          {
+            throw new IllegalArgumentException("Unpaired surrogate at index " + i + " of " + utf16Length);
+          }
         }
-        throw new ArrayIndexOutOfBoundsException("Failed writing " + c + " at index " + j);
+        else
+        {
+          throw new ArrayIndexOutOfBoundsException("Failed writing " + c + " at index " + j);
+        }
       }
     }
     return j;
@@ -207,6 +272,19 @@ public class Utf8Utils
    *                                  surrogates)
    */
   public static int encodedLength(CharSequence sequence)
+  {
+    return encodedLength(sequence, false);
+  }
+
+  /**
+   * Returns the number of bytes in the UTF-8-encoded form of {@code sequence}. For a string, this
+   * method is equivalent to {@code string.getBytes(UTF_8).length}, but is more efficient in both
+   * time and space.
+   *
+   * @throws IllegalArgumentException if {@code sequence} contains ill-formed UTF-16 (unpaired
+   *                                  surrogates) and tolerateInvalidSurrogatePairs is true.
+   */
+  public static int encodedLength(CharSequence sequence, boolean tolerateInvalidSurrogatePairs)
   {
     // Warning to maintainers: this implementation is highly optimized.
     int utf16Length = sequence.length();
@@ -229,7 +307,7 @@ public class Utf8Utils
       }
       else
       {
-        utf8Length += encodedLengthGeneral(sequence, i);
+        utf8Length += encodedLengthGeneral(sequence, i, tolerateInvalidSurrogatePairs);
         break;
       }
     }
@@ -243,7 +321,7 @@ public class Utf8Utils
     return utf8Length;
   }
 
-  private static int encodedLengthGeneral(CharSequence sequence, int start)
+  private static int encodedLengthGeneral(CharSequence sequence, int start, boolean tolerateInvalidSurrogatePairs)
   {
     int utf16Length = sequence.length();
     int utf8Length = 0;
@@ -257,14 +335,22 @@ public class Utf8Utils
       else
       {
         utf8Length += 2;
-        // jdk7+: if (Character.isSurrogate(c)) {
-        if (Character.MIN_SURROGATE <= c && c <= Character.MAX_SURROGATE)
+        if (Character.isSurrogate(c))
         {
           // Check that we have a well-formed surrogate pair.
           int cp = Character.codePointAt(sequence, i);
           if (cp < Character.MIN_SUPPLEMENTARY_CODE_POINT)
           {
-            throw new IllegalArgumentException("Unpaired surrogate at index " + i + " of " + utf16Length);
+            if (tolerateInvalidSurrogatePairs)
+            {
+              // Subtract 2 since the standard replacement character '?' will not consume the already
+              // accounted for 2 bytes.
+              utf8Length -= 2;
+            }
+            else
+            {
+              throw new IllegalArgumentException("Unpaired surrogate at index " + i + " of " + utf16Length);
+            }
           }
           i++;
         }

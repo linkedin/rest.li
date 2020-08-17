@@ -57,6 +57,8 @@ import javax.activation.MimeTypeParseException;
 class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandler, StreamToRestLiRequestHandler
 {
   private static final Logger log = LoggerFactory.getLogger(StreamRestLiServer.class);
+  private final boolean _writableStackTrace;
+
   final RestRestLiServer _fallback;
   private boolean _useStreamCodec;
 
@@ -77,6 +79,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
         resourceFactory, engine,
         rootResources,
         errorResponseBuilder);
+    _writableStackTrace = config.isWritableStackTrace();
   }
 
   /**
@@ -189,7 +192,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
   StreamException buildPreRoutingStreamException(Throwable throwable, StreamRequest request)
   {
     RestLiResponseException restLiException = buildPreRoutingError(throwable, request);
-    return Messages.toStreamException(ResponseUtils.buildRestException(restLiException));
+    return Messages.toStreamException(ResponseUtils.buildRestException(restLiException, _writableStackTrace));
   }
 
   private void handleStructuredDataResourceRequest(StreamRequest request,
@@ -411,7 +414,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
       Callback<StreamResponse> callback)
   {
     handleUnstructuredDataResourceRequestWithRestLiResponse(request, routingResult,
-        new UnstructuredDataStreamToRestLiResponseCallbackAdapter(callback, routingResult.getContext()));
+        new UnstructuredDataStreamToRestLiResponseCallbackAdapter(callback, routingResult.getContext(), _writableStackTrace));
   }
 
   private void handleUnstructuredDataResourceRequestWithRestLiResponse(StreamRequest request,
@@ -437,12 +440,14 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
   private static class UnstructuredDataStreamToRestLiResponseCallbackAdapter extends CallbackAdapter<StreamResponse, RestLiResponse>
   {
     private final ServerResourceContext _context;
+    private final boolean _writableStackTrace;
 
     private UnstructuredDataStreamToRestLiResponseCallbackAdapter(Callback<StreamResponse> callback,
-        ServerResourceContext context)
+        ServerResourceContext context, boolean writableStackTrace)
     {
       super(callback);
       _context = context;
+      _writableStackTrace = writableStackTrace;
     }
 
     @Override
@@ -477,7 +482,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
     {
       if (e instanceof RestLiResponseException)
       {
-        return Messages.toStreamException(ResponseUtils.buildRestException((RestLiResponseException) e));
+        return Messages.toStreamException(ResponseUtils.buildRestException((RestLiResponseException) e, _writableStackTrace));
       }
       else
       {

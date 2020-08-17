@@ -95,6 +95,7 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
   protected final JsonBuilder _builder;
   protected String _currentNamespace = "";
   protected String _currentPackage = "";
+  private boolean _alwaysUseFullyQualifedName = false;
 
   public SchemaToJsonEncoder(JsonBuilder builder, TypeReferenceFormat typeReferenceFormat)
   {
@@ -125,6 +126,21 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
   public String getCurrentNamespace()
   {
     return _currentNamespace;
+  }
+
+  /**
+   * Configure the encoder to always use fully qualified names when encoding named type references.
+   * When encoding a type-reference that is in the current namespace (eg, com.linkedin.Foo), there are two options:
+   * <ul>
+   *   <li>Omit the namespace part and write only the simple name (Foo). This is the default behavior.</li>
+   *   <li>Encode the fully qualified name (com.linkedin.Foo).</li>
+   * </ul>
+   * Both options are equivalent and represents the same schema. Setting this flag to true enables using the second
+   * option while encoding.
+   */
+  public void setAlwaysUseFullyQualifiedName(boolean alwaysUseFullyQualifiedName)
+  {
+    _alwaysUseFullyQualifedName = alwaysUseFullyQualifiedName;
   }
 
   /**
@@ -292,7 +308,7 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
 
   protected void writeSchemaName(NamedDataSchema schema) throws IOException
   {
-    if (_currentNamespace.equals(schema.getNamespace())) {
+    if (!_alwaysUseFullyQualifedName && _currentNamespace.equals(schema.getNamespace())) {
       _builder.writeString(schema.getName());
     } else {
       // when the model is DENORMALIZE and turn on the override namespace option, add namespace prefix for all schema reference

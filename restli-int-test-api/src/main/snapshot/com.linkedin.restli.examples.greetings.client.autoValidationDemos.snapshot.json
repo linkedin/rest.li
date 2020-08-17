@@ -1,6 +1,11 @@
 {
   "models" : [ {
     "type" : "record",
+    "name" : "Empty",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ ]
+  }, {
+    "type" : "record",
     "name" : "Greeting",
     "namespace" : "com.linkedin.restli.examples.greetings.api",
     "doc" : "A greeting",
@@ -37,8 +42,8 @@
       "optional" : true,
       "validate" : {
         "strlen" : {
-          "min" : 1,
-          "max" : 10
+          "max" : 10,
+          "min" : 1
         }
       }
     }, {
@@ -56,8 +61,8 @@
       "type" : "string",
       "validate" : {
         "strlen" : {
-          "min" : 1,
-          "max" : 10
+          "max" : 10,
+          "min" : 1
         }
       }
     }, {
@@ -196,6 +201,9 @@
           "name" : "criteria",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.ValidationDemoCriteria\" }"
         } ],
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+        },
         "pagingSupported" : true,
         "batchParam" : "criteria"
       } ],
