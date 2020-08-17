@@ -13,8 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.5.2] - 2020-08-18
 - Add feature for client controlled feature to add/patch default values in return records
-=======
 
 ## [29.5.1] - 2020-08-17
 - Allow publishing unstable release candidate versions of Rest.li (e.g. `1.2.3-rc.1`) from non-master branches.
