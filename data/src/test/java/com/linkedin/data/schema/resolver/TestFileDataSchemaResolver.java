@@ -18,6 +18,7 @@ package com.linkedin.data.schema.resolver;
 
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
+import com.linkedin.internal.common.InternalConstants;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -43,6 +44,7 @@ public class TestFileDataSchemaResolver
   static
   {
     JAR_ENTRIES.put("pegasus/com/example/models/Foo.pdl", "namespace com.example.models @legit record Foo {}");
+    JAR_ENTRIES.put("extensions/com/example/models/FooExtension.pdl", "namespace com.example.models @legit record FooExtension {}");
     JAR_ENTRIES.put("legacyPegasusSchemas/com/example/models/Foo.pdl", "namespace com.example.models @impostor record Foo {}");
     JAR_ENTRIES.put("legacyPegasusSchemas/com/example/models/IgnoreAlternative.pdl", "namespace com.example.models record IgnoreAlternative {}");
     JAR_ENTRIES.put("com/example/models/Foo.pdl", "namespace com.example.models @impostor record Foo {}");
@@ -83,6 +85,12 @@ public class TestFileDataSchemaResolver
     Assert.assertNotNull(schema);
     Assert.assertTrue(schema.getProperties().containsKey("legit"));
     Assert.assertFalse(schema.getProperties().containsKey("impostor"));
+    // Assert extension schemas are not searched.
+    Assert.assertNull(resolver.findDataSchema("com.example.models.FooExtension", new StringBuilder()));
+
+    resolver.setSchemasPathSuffix(InternalConstants.PEGASUS_EXTENSIONS_DIR_IN_JAR);
+    schema = resolver.findDataSchema("com.example.models.FooExtension", new StringBuilder());
+    Assert.assertTrue(schema.getProperties().containsKey("legit"));
 
     // Assert that alternative root directories are not searched
     schema = resolver.findDataSchema("com.example.models.IgnoreAlternative", new StringBuilder());
@@ -91,5 +99,6 @@ public class TestFileDataSchemaResolver
     // Assert that the resolver doesn't search from the root
     schema = resolver.findDataSchema("com.example.models.IgnoreRoot", new StringBuilder());
     Assert.assertNull(schema);
+
   }
 }

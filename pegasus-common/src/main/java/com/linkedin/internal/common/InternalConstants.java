@@ -27,5 +27,11 @@ public final class InternalConstants
    */
   public static final String PEGASUS_DIR_IN_JAR = "pegasus";
 
+  /**
+   * Directory within resource jar file that holds the Entity Relationship pegasus schemas.
+   * Pegasus Extensions schema parsers and resolvers look for pegasus files(*.pdl) only within this directory.
+   */
+  public static final String PEGASUS_EXTENSIONS_DIR_IN_JAR = "extensions";
+
   private InternalConstants() {}
 }
