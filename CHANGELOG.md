@@ -16,6 +16,8 @@ and what APIs have changed, if applicable.
 - Allow publishing unstable release candidate versions of Rest.li (e.g. `1.2.3-rc.1`) from non-master branches.
     - It's _strongly_ suggested to only use a release candidate version if you have a specific reason to do so.
 
+- Put extension schemas into the dataTemplate jar under /extensions path instead of putting them into the extensionSchema jar.
+
 ## [29.5.1] - 2020-08-14
 - Provide an option in `SmoothRateLimiter` to not drop tasks if going above the max buffered. Dropping tasks might be more diruptive to workflows compared to just not ratelimit.
 
