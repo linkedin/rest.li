@@ -91,6 +91,7 @@ public class TestMessages
       Assert.assertTrue(response.getError() instanceof RestException);
       Assert.assertNotNull(response.getWireAttributes());
       Assert.assertEquals(response.getWireAttributes(), WIRE_ATTR);
+      Assert.assertEquals(response.getError().getStackTrace().length, 0);
     };
 
     TransportCallback<StreamResponse> streamCallback = Messages.toStreamTransportCallback(restCallback);
@@ -139,6 +140,7 @@ public class TestMessages
       Assert.assertTrue(response.getError() instanceof StreamException);
       Assert.assertNotNull(response.getWireAttributes());
       Assert.assertEquals(response.getWireAttributes(), WIRE_ATTR);
+      Assert.assertEquals(response.getError().getStackTrace().length, 0);
     };
     TransportCallback<RestResponse> restCallback = Messages.toRestTransportCallback(streamCallback);
     RestResponseBuilder builder = new RestResponseBuilder();
