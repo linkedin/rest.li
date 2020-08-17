@@ -14,6 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 - Add feature for client controlled feature to add/patch default values in return records
+=======
+
+## [29.5.1] - 2020-08-17
+- Allow publishing unstable release candidate versions of Rest.li (e.g. `1.2.3-rc.1`) from non-master branches.
+    - It's _strongly_ suggested to only use a release candidate version if you have a specific reason to do so.
 
 ## [29.5.6] - 2020-08-21
 - Add a constructor for DataSchemaParser, which is able to pass ExtensionsDataSchemaResolver to the DataSchemaParser to parse schemas from both extensions and pegasus directories.
@@ -38,9 +43,6 @@ and what APIs have changed, if applicable.
 ## [29.5.1] - 2020-08-14
 - Provide an option in `SmoothRateLimiter` to not drop tasks if going above the max buffered. Dropping tasks might be more diruptive to workflows compared to just not ratelimit.
 - Fix non-deterministic issues on generated java files to solve build performance issues.
-
-## [29.5.1] - 2020-08-17
-- Add feature for client/server controlled feature default values in return records
 
 ## [29.5.0] - 2020-08-12
 - Add Callback method for `ClusterInfoProvider.getDarkClusterConfigMap`.
