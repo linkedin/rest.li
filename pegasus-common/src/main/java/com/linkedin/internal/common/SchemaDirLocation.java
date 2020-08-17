@@ -17,15 +17,20 @@
 package com.linkedin.internal.common;
 
 /**
- * Restli internal constants.
+ * Directories within resource jar file that holds different types of pegasus schemas. Ex. Data or Extensions
+ *
+ * @author Aman Gupta
  */
-public final class InternalConstants
+public enum SchemaDirLocation
 {
   /**
-   * Directory within resource jar file that holds the pegasus schemas. Pegasus parsers and resolvers look for pegasus
+   * Directory holds the pegasus schemas. Pegasus parsers and resolvers look for pegasus
    * files(*.pdl, *.pdsc) only within this directory.
    */
-  public static final String PEGASUS_DIR_IN_JAR = "pegasus";
-
-  private InternalConstants() {}
+  pegasus,
+  /**
+   * Directory holds the Entity Relationship pegasus schemas.
+   * Pegasus Extensions schema parsers and resolvers look for pegasus files(*.pdl) only within this directory.
+   */
+  extensions
 }

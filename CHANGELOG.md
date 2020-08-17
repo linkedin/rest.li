@@ -515,7 +515,6 @@ Add an option in symbol table provider to pass in a list of overridden symbols i
 - Revert "LastSeenLoadBalancer: adding support for custom d2ServicePath on ZK. Add support for BackupStoreFilePath to LastSeen"
 
 ## [27.6.6]
-- <<<<<<< HEAD
 - LastSeenLoadBalancer: adding support for custom d2ServicePath on ZK. Add support for BackupStoreFilePath to LastSeen
 - Disable SymlinkAwareZooKeeperTest temporarily
 
