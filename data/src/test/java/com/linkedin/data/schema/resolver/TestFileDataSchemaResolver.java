@@ -71,7 +71,8 @@ public class TestFileDataSchemaResolver
   }
 
   /**
-   * Ensures that the resolver only detects schemas packaged under the root 'pegasus' directory in data template JARs.
+   * Ensures that the resolver only detects schemas packaged under the default root 'pegasus'
+   * or {@link FileDataSchemaResolver#getSchemasDirPathSuffix()} directory in data template JARs.
    * Any schemas placed at the root or under some alternative root directory should be ignored by the resolver.
    */
   @Test
@@ -88,7 +89,8 @@ public class TestFileDataSchemaResolver
     // Assert extension schemas are not searched.
     Assert.assertNull(resolver.findDataSchema("com.example.models.FooExtension", new StringBuilder()));
 
-    resolver.setSchemasPathSuffix(InternalConstants.PEGASUS_EXTENSIONS_DIR_IN_JAR);
+    // Assert that schemas are resolved from provided directory path
+    resolver.setSchemasDirPathSuffix(InternalConstants.PEGASUS_EXTENSIONS_DIR_IN_JAR);
     schema = resolver.findDataSchema("com.example.models.FooExtension", new StringBuilder());
     Assert.assertTrue(schema.getProperties().containsKey("legit"));
 

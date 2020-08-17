@@ -72,7 +72,7 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
    * The file path suffix for different types of schemas. Default is {@link InternalConstants#PEGASUS_DIR_IN_JAR}
    * Ex "pegasus" for data or "extensions" for relationship extension schema files
    */
-  private String _schemasPathSuffix = InternalConstants.PEGASUS_DIR_IN_JAR;
+  private String _schemasDirPathSuffix = InternalConstants.PEGASUS_DIR_IN_JAR;
 
   /**
    * Constructor.
@@ -195,17 +195,18 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
    *
    * @return the current search paths.
    */
-  public String getSchemasPathSuffix() {
-    return _schemasPathSuffix;
+  public String getSchemasDirPathSuffix() {
+    return _schemasDirPathSuffix;
   }
 
   /**
-   * Sets the file path suffix for schemas location dir
+   * Sets the file path suffix for schemas location dir.
+   * If not set Defaults to {@link InternalConstants#PEGASUS_DIR_IN_JAR}
    *
-   * @param schemasPathSuffix path suffix.
+   * @param schemasDirPathSuffix path suffix.
    */
-  public void setSchemasPathSuffix(String schemasPathSuffix) {
-    _schemasPathSuffix = schemasPathSuffix;
+  public void setSchemasDirPathSuffix(String schemasDirPathSuffix) {
+    _schemasDirPathSuffix = schemasDirPathSuffix;
   }
 
   /**
@@ -265,7 +266,7 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
           StringBuilder builder = new StringBuilder();
           // within a JAR file, files are treated as resources. Thus, we should lookup using the resource separator
           // character, which is '/'
-          builder.append(_schemasPathSuffix)
+          builder.append(_schemasDirPathSuffix)
               .append('/')
               .append(transformedName.replace(File.separatorChar, '/'));
           return new InJarFileDataSchemaLocation(jarFile, builder.toString());
