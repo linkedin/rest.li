@@ -21,16 +21,27 @@ package com.linkedin.internal.common;
  *
  * @author Aman Gupta
  */
-public enum SchemaDirLocation
+public enum SchemaDirectoryName
 {
   /**
    * Directory holds the pegasus schemas. Pegasus parsers and resolvers look for pegasus
    * files(*.pdl, *.pdsc) only within this directory.
    */
-  pegasus,
+  PEGASUS("pegasus"),
   /**
    * Directory holds the Entity Relationship pegasus schemas.
    * Pegasus Extensions schema parsers and resolvers look for pegasus files(*.pdl) only within this directory.
    */
-  extensions
+  EXTENSIONS("extensions");
+
+  private String _name;
+
+  SchemaDirectoryName(String name)
+  {
+    _name = name;
+  }
+
+  public String getName() {
+    return _name;
+  }
 }

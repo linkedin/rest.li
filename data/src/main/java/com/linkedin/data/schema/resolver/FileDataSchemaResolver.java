@@ -21,7 +21,7 @@ import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
-import com.linkedin.internal.common.SchemaDirLocation;
+import com.linkedin.internal.common.SchemaDirectoryName;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,10 +68,10 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
   public static final String DEFAULT_EXTENSION = SchemaParser.FILE_EXTENSION;
 
   /**
-   * The file path suffix for different types of schemas. Default is {@link SchemaDirLocation#pegasus}
+   * The file path suffix for different types of schemas. Default is {@link SchemaDirectoryName#PEGASUS}
    * Ex "pegasus" for data or "extensions" for relationship extension schema files
    */
-  private SchemaDirLocation _schemasDirLocation = SchemaDirLocation.pegasus;
+  private SchemaDirectoryName _schemasDirectoryName = SchemaDirectoryName.PEGASUS;
 
   /**
    * Constructor.
@@ -194,20 +194,20 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
    *
    * @return the current search paths.
    */
-  public SchemaDirLocation getSchemasDirLocation()
+  public SchemaDirectoryName getSchemasDirectoryName()
   {
-    return _schemasDirLocation;
+    return _schemasDirectoryName;
   }
 
   /**
    * Sets the file path suffix for schemas location dir.
-   * If not set Defaults to {@link SchemaDirLocation#pegasus}
+   * If not set Defaults to {@link SchemaDirectoryName#PEGASUS}
    *
-   * @param schemasDirLocation path suffix.
+   * @param schemasDirectoryName path suffix.
    */
-  public void setSchemasDirLocation(SchemaDirLocation schemasDirLocation)
+  public void setSchemasDirectoryName(SchemaDirectoryName schemasDirectoryName)
   {
-    _schemasDirLocation = schemasDirLocation;
+    _schemasDirectoryName = schemasDirectoryName;
   }
 
   /**
@@ -267,7 +267,7 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
           StringBuilder builder = new StringBuilder();
           // within a JAR file, files are treated as resources. Thus, we should lookup using the resource separator
           // character, which is '/'
-          builder.append(_schemasDirLocation)
+          builder.append(_schemasDirectoryName.getName())
               .append('/')
               .append(transformedName.replace(File.separatorChar, '/'));
           return new InJarFileDataSchemaLocation(jarFile, builder.toString());

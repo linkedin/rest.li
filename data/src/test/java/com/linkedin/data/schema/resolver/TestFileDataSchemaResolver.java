@@ -18,7 +18,7 @@ package com.linkedin.data.schema.resolver;
 
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
-import com.linkedin.internal.common.SchemaDirLocation;
+import com.linkedin.internal.common.SchemaDirectoryName;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -72,7 +72,7 @@ public class TestFileDataSchemaResolver
 
   /**
    * Ensures that the resolver only detects schemas packaged under the default root 'pegasus'
-   * or {@link FileDataSchemaResolver#getSchemasDirLocation()} directory in data template JARs.
+   * or {@link FileDataSchemaResolver#getSchemasDirectoryName()} directory in data template JARs.
    * Any schemas placed at the root or under some alternative root directory should be ignored by the resolver.
    */
   @Test
@@ -90,7 +90,7 @@ public class TestFileDataSchemaResolver
     Assert.assertNull(resolver.findDataSchema("com.example.models.FooExtension", new StringBuilder()));
 
     // Assert that schemas are resolved from provided directory path
-    resolver.setSchemasDirLocation(SchemaDirLocation.extensions);
+    resolver.setSchemasDirectoryName(SchemaDirectoryName.EXTENSIONS);
     schema = resolver.findDataSchema("com.example.models.FooExtension", new StringBuilder());
     Assert.assertTrue(schema.getProperties().containsKey("legit"));
 
@@ -101,6 +101,5 @@ public class TestFileDataSchemaResolver
     // Assert that the resolver doesn't search from the root
     schema = resolver.findDataSchema("com.example.models.IgnoreRoot", new StringBuilder());
     Assert.assertNull(schema);
-
   }
 }
