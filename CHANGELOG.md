@@ -13,40 +13,47 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Allow publishing unstable release candidate versions of Rest.li (e.g. `1.2.3-rc.1`) from non-master branches.
+    - It's _strongly_ suggested to only use a release candidate version if you have a specific reason to do so.
+
+- Put extension schemas into the dataTemplate jar under /extensions path instead of putting them into the extensionSchema jar.
+
+## [29.5.1] - 2020-08-14
+- Provide an option in `SmoothRateLimiter` to not drop tasks if going above the max buffered. Dropping tasks might be more diruptive to workflows compared to just not ratelimit.
 
 ## [29.5.0] - 2020-08-12
-add Callback method for ClusterInfoProvider.getDarkClusterConfigMap
+- Add Callback method for `ClusterInfoProvider.getDarkClusterConfigMap`.
 
 ## [29.4.14] - 2020-08-11
-- Provide an option to set an overridden SSL socket factory for the default symbol table provider 
+- Provide an option to set an overridden SSL socket factory for the default symbol table provider.
 
 ## [29.4.13] - 2020-08-11
-- Undeprecate some Rest.li client methods since we do want the ability to set default content/accept types at the client level
+- Undeprecate some Rest.li client methods since we do want the ability to set default content/accept types at the client level.
 
 ## [29.4.12] - 2020-08-10
-- directly fetch DarkClusterConfigMap during startup, before registering ClusterListener.
+- Directly fetch `DarkClusterConfigMap` during startup, before registering `ClusterListener`.
 
 ## [29.4.11] - 2020-08-06
 - Relax validation of read-only fields for upsert usecase: UPDATE used for create or update. Fields marked as ReadOnly will be treated as optional for UPDATE methods.
 
 ## [29.4.10] - 2020-08-05
-- Allow RestRestliServer and StreamRestliServer throw RestException & StreamException with no stacktrace
+- Allow `RestRestliServer` and `StreamRestliServer` to throw `RestException` & `StreamException` with no stacktrace.
 
 ## [29.4.9] - 2020-08-04
-- Add missing ClusterInfoProvider implementations in ZKFSLoadBalancer and TogglingLoadBalancer
+- Add missing `ClusterInfoProvider` implementations in `ZKFSLoadBalancer` and `TogglingLoadBalancer`.
 
 ## [29.4.8] - 2020-08-04
-- Add identical traffic multiplier strategy for dark clusters to enable identical traffic across all dark clusters
+- Add identical traffic multiplier strategy for dark clusters to enable identical traffic across all dark clusters.
 
 ## [29.4.7] - 2020-07-30
 - Add support for configuring fields that are always projected on the server. Configs can be applied for the entire service, resource or method level.
 
 ## [29.4.6] - 2020-07-29
 - Provide a default symbol table provider implementation that doesn't use symbol tables for requests/responses of its own, but is able to retrieve remote symbol tables to decode responses from other services (#357)
-- Provide public method in the AbstractRequestBuilder for adding field projections (#353)
+- Provide public method in the `AbstractRequestBuilder` for adding field projections (#353)
 
 ## [29.4.5] - 2020-07-21
-- Update ExtensionSchemaValidation task to check extension schema annotation (#254)
+- Update `ExtensionSchemaValidation` task to check extension schema annotation (#254)
 - Improve performance of uri mask encoding and decoding (#350)
 
 ## [29.4.4] - 2020-07-02
@@ -56,7 +63,7 @@ add Callback method for ClusterInfoProvider.getDarkClusterConfigMap
 - Add an option (enabled by default) to gracefully degrade on encountering invalid surrogate pairs during protobuf string serialization (#334)
 
 ## [29.4.2] - 2020-06-25
-- Update Pegasus Plugin's CopySchema tasks to delete stale schemas (#337)
+- Update Pegasus Plugin's `CopySchema` tasks to delete stale schemas (#337)
 
 ## [29.4.1] - 2020-06-24
 - Relax visibility of some methods in PDL schema parser to allow extending it.
@@ -4587,8 +4594,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.0...master
-[29.5.0]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.0
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.1...master
+[29.5.1]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.1
 [29.4.14]: https://github.com/linkedin/rest.li/compare/v29.4.13...v29.4.14
 [29.4.13]: https://github.com/linkedin/rest.li/compare/v29.4.12...v29.4.13
 [29.4.12]: https://github.com/linkedin/rest.li/compare/v29.4.11...v29.4.12

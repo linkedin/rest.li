@@ -36,7 +36,7 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
-import com.linkedin.d2.balancer.util.RateLimitedLogger;
+import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistryImpl;

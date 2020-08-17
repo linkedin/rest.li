@@ -16,6 +16,12 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.r2.transport.http.client.ratelimiter.Rate;
+import com.linkedin.util.ArgumentUtil;
+import com.linkedin.util.RateLimitedLogger;
+import com.linkedin.util.clock.Clock;
 import java.util.Queue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
@@ -23,13 +29,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-
-import com.linkedin.common.callback.Callback;
-import com.linkedin.common.util.None;
-import com.linkedin.r2.transport.http.client.ratelimiter.Rate;
-import com.linkedin.util.ArgumentUtil;
-import com.linkedin.util.clock.Clock;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,9 +44,12 @@ import org.slf4j.LoggerFactory;
 public class SmoothRateLimiter implements AsyncRateLimiter
 {
   private static final Logger LOG = LoggerFactory.getLogger(SmoothRateLimiter.class);
+  private static final String RATE_LIMITER_NAME_UNDEFINED = "undefined";
 
   private final Executor _executor;
   private final ScheduledExecutorService _scheduler;
+  private final BufferOverflowMode _bufferOverflowMode;
+  private final String _rateLimiterName;
   private volatile Rate _rate = Rate.ZERO_VALUE;
   private final EventLoop _eventLoop;
   private final int _maxBuffered;
@@ -55,6 +57,21 @@ public class SmoothRateLimiter implements AsyncRateLimiter
 
   private final AtomicInteger _pendingCount = new AtomicInteger(0);
   private final AtomicReference<Throwable> _invocationError = new AtomicReference<>(null);
+
+  private final static Long OVER_BUFFER_RATELIMITEDLOG_RATE_MS = 60000L;
+  private final Logger _rateLimitedLoggerOverBuffer;
+
+  public enum BufferOverflowMode
+  {
+    /**
+     * Drop the request with RejectedException
+     */
+    DROP,
+    /**
+     * Enqueue the request and run at least one to avoid the overflow
+     */
+    SCHEDULE_WITH_WARNING
+  }
 
   /**
    * Constructs a new instance of {@link SmoothRateLimiter}.
@@ -65,9 +82,11 @@ public class SmoothRateLimiter implements AsyncRateLimiter
    * @param clock            Clock implementation that supports getting the current time accurate to milliseconds
    * @param pendingCallbacks THREAD SAFE and NON-BLOCKING implementation of callback queue
    * @param maxBuffered      Maximum number of tasks kept in the queue before execution
+   * @param bufferOverflowMode just what to do if the max buffer is reached. In many applications blindly
+   *                          dropping the request might not be backward compatible
    */
-  public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock,
-                           Queue<Callback<None>> pendingCallbacks, int maxBuffered)
+  public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, Queue<Callback<None>> pendingCallbacks,
+                           int maxBuffered, BufferOverflowMode bufferOverflowMode, String rateLimiterName)
   {
     ArgumentUtil.ensureNotNull(scheduler, "scheduler");
     ArgumentUtil.ensureNotNull(executor, "executor");
@@ -78,19 +97,26 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     _executor = executor;
     _pendingCallbacks = pendingCallbacks;
     _maxBuffered = maxBuffered;
+    _bufferOverflowMode = bufferOverflowMode;
+    _rateLimiterName = rateLimiterName;
 
     _eventLoop = new EventLoop(clock);
+    _rateLimitedLoggerOverBuffer = new RateLimitedLogger(LOG, OVER_BUFFER_RATELIMITEDLOG_RATE_MS, clock);
+  }
+
+  @Deprecated
+  public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, Queue<Callback<None>> pendingCallbacks,
+                           int maxBuffered)
+  {
+    this(scheduler, executor, clock, pendingCallbacks, maxBuffered, BufferOverflowMode.DROP, RATE_LIMITER_NAME_UNDEFINED);
   }
 
   /**
-   * @param permitsPerPeriod   Number of permits to run tasks per period of time
-   * @param periodMilliseconds Period of time in milliseconds used to calculate {@code permitsPerPeriod}
-   * @param burst              Maximum number of permits can be issued at a time, see {@link Rate}
-   * @deprecated use SmoothRateLimiter + setRate
+   * @deprecated use SmoothRateLimiter + setRate instead
    */
   @Deprecated
-  public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock,
-                           Queue<Callback<None>> pendingCallbacks, int maxBuffered, int permitsPerPeriod, long periodMilliseconds, int burst)
+  public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, Queue<Callback<None>> pendingCallbacks,
+                           int maxBuffered, int permitsPerPeriod, long periodMilliseconds, int burst)
   {
     this(scheduler, executor, clock, pendingCallbacks, maxBuffered);
 
@@ -107,7 +133,17 @@ public class SmoothRateLimiter implements AsyncRateLimiter
 
     if (_pendingCount.get() >= _maxBuffered)
     {
-      throw new RejectedExecutionException("Cannot submit callback because the buffer is full at " + _maxBuffered);
+      if (_bufferOverflowMode == BufferOverflowMode.DROP)
+      {
+        throw new RejectedExecutionException(
+          String.format("PEGA_2000: Cannot submit callback because the buffer is full at %d tasks for ratelimiter: %s", _maxBuffered, _rateLimiterName));
+      }
+      else
+      {
+        _rateLimitedLoggerOverBuffer.error(String.format(
+          "PEGA_2001: the buffer is full at %d tasks for ratelimiter: %s. Executing a request immediately to avoid overflowing and dropping the task.", _maxBuffered,
+          _rateLimiterName));
+      }
     }
 
     _pendingCallbacks.offer(callback);
@@ -151,11 +187,18 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     setRate(Rate.MAX_VALUE.getEventsRaw(), Rate.MAX_VALUE.getPeriod(), Rate.MAX_VALUE.getEvents());
   }
 
+  @Override
+  public int getPendingTasksCount(){
+    return _pendingCount.get();
+  }
+
   /**
    * A event loop implementation that dispatches and executes {@link Callback}s from the queue based
    * on available permits. If permits are exhausted, the event loop will reschedule itself to run
    * at the next permit issuance time. If the callback queue is exhausted, the event loop will exit
    * and need to be restarted externally.
+   *
+   * If there are more tasks than the max in the buffer, they'll be immediately executed to align with the limit
    * <p>
    * Event loop is meant to be run in a single-threaded setting.
    */
@@ -205,6 +248,13 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       if (_pendingCount.get() == 0)
       {
         return;
+      }
+
+      // the size of the pending cannot be ever greater than the maxBuffered. We prefer
+      // running above the limit then risking a leak
+      if (_pendingCount.get() > _maxBuffered)
+      {
+        _permitAvailableCount++;
       }
 
       if (_permitAvailableCount > 0)

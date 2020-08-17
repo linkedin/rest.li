@@ -14,7 +14,7 @@ script: ./scripts/travis/build.sh
 branches:
   only:
     - master
-    - /^v\d+\.\d+\.\d+$/
+    - /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
 
 # Set environment variables (includes Bintray credentials)
 env:

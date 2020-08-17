@@ -162,6 +162,12 @@ public class RampUpRateLimiterImpl implements RampUpRateLimiter
   // ############################################## Delegation Section ##############################################
 
   @Override
+  public int getPendingTasksCount()
+  {
+    return _asyncRateLimiter.getPendingTasksCount();
+  }
+
+  @Override
   public Rate getRate()
   {
     return _asyncRateLimiter.getRate();
