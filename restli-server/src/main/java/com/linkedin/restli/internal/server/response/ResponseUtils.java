@@ -20,7 +20,6 @@ package com.linkedin.restli.internal.server.response;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.ArrayDataSchema;
@@ -96,27 +95,33 @@ public class ResponseUtils
 
   public static Object fillInDataDefault(DataSchema schema, Object dataWithoutDefault)
   {
-    switch (schema.getType())
+    try
     {
-      case RECORD:
-        return fillInDefaultOnRecord((RecordDataSchema) schema, (DataMap) dataWithoutDefault);
-      case TYPEREF:
-        return fillInDefaultOnTyperef((TyperefDataSchema) schema, dataWithoutDefault);
-      case MAP:
-        return fillInDefaultOnMap((MapDataSchema) schema, (DataMap) dataWithoutDefault);
-      case UNION:
-        return fillInDefaultOnUnion((UnionDataSchema) schema, (DataMap) dataWithoutDefault);
-      case ARRAY:
-        return fillInDefaultOnArray((ArrayDataSchema) schema, (DataList) dataWithoutDefault);
-      default:
-        return dataWithoutDefault;
+      switch (schema.getType())
+      {
+        case RECORD:
+          return fillInDefaultOnRecord((RecordDataSchema) schema, (DataMap) dataWithoutDefault);
+        case TYPEREF:
+          return fillInDefaultOnTyperef((TyperefDataSchema) schema, dataWithoutDefault);
+        case MAP:
+          return fillInDefaultOnMap((MapDataSchema) schema, (DataMap) dataWithoutDefault);
+        case UNION:
+          return fillInDefaultOnUnion((UnionDataSchema) schema, (DataMap) dataWithoutDefault);
+        case ARRAY:
+          return fillInDefaultOnArray((ArrayDataSchema) schema, (DataList) dataWithoutDefault);
+        default:
+          return dataWithoutDefault;
+      }
+    }
+    catch (CloneNotSupportedException ex)
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, ex);
     }
   }
 
-  public static DataMap fillInDefaultOnRecord(RecordDataSchema schema, DataMap dataMap)
+  public static DataMap fillInDefaultOnRecord(RecordDataSchema schema, DataMap dataMap) throws CloneNotSupportedException
   {
-    DataMap dataWithDefault = new DataMap(DataMapBuilder.getOptimumHashMapCapacityFromSize(dataMap.size()));
-    CheckedUtil.putAllWithoutChecking(dataWithDefault, dataMap);
+    DataMap dataWithDefault = dataMap.clone();
     for (RecordDataSchema.Field field : schema.getFields())
     {
       if (dataMap.containsKey(field.getName()) || field.getDefault() != null)
@@ -128,10 +133,10 @@ public class ResponseUtils
     return dataWithDefault;
   }
 
-  public static DataMap fillInDefaultOnMap(MapDataSchema schema, DataMap dataMap)
+  public static DataMap fillInDefaultOnMap(MapDataSchema schema, DataMap dataMap) throws CloneNotSupportedException
   {
     DataSchema valueSchema = schema.getValues();
-    DataMap dataWithDefault = new DataMap(DataMapBuilder.getOptimumHashMapCapacityFromSize(dataMap.size()));
+    DataMap dataWithDefault = dataMap.clone();
     for (Map.Entry<String, Object> entry : dataMap.entrySet())
     {
       CheckedUtil.putWithoutChecking(dataWithDefault, entry.getKey(), fillInDataDefault(valueSchema, entry.getValue()));
@@ -150,10 +155,9 @@ public class ResponseUtils
     return dataListWithDefault;
   }
 
-  public static DataMap fillInDefaultOnUnion(UnionDataSchema schema, DataMap dataMap)
+  public static DataMap fillInDefaultOnUnion(UnionDataSchema schema, DataMap dataMap) throws CloneNotSupportedException
   {
-    DataMap dataWithDefault = new DataMap(DataMapBuilder.getOptimumHashMapCapacityFromSize(dataMap.size()));
-    CheckedUtil.putAllWithoutChecking(dataWithDefault, dataMap);
+    DataMap dataWithDefault = dataMap.clone();
     if (dataWithDefault.size() == 1)
     {
       for (Map.Entry<String, Object> entry: dataWithDefault.entrySet())
@@ -170,7 +174,7 @@ public class ResponseUtils
     return dataWithDefault;
   }
 
-  public static Object fillInDefaultOnTyperef(TyperefDataSchema typerefDataSchema, Object data)
+  public static Object fillInDefaultOnTyperef(TyperefDataSchema typerefDataSchema, Object data) throws CloneNotSupportedException
   {
     DataSchema dataSchema = typerefDataSchema.getDereferencedDataSchema();
     return fillInDataDefault(dataSchema, data);
