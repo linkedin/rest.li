@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.internal.common;
+package com.linkedin.data.schema.resolver;
 
 /**
  * Directories within resource jar file that holds different types of pegasus schemas. Ex. Data or Extensions

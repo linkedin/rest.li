@@ -30,7 +30,7 @@ import java.io.InputStream;
 
 
 /**
- * Resolve a data schema name into its data schema, assuming the data schema PDSC is loaded as resources using the {@link ClassLoader}.
+ * Resolve a data schema name into its data schema, assuming the data schema PDSC/PDL is loaded as resources using the {@link ClassLoader}.
  *
  * @author Min Chen
  */
@@ -44,6 +44,12 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
   public static final String DEFAULT_EXTENSION = SchemaParser.FILE_EXTENSION;
 
   private final ClassLoader _classLoader;
+
+  /**
+   * The file directory name for different types of schemas. Default is {@link SchemaDirectoryName#PEGASUS}
+   * Ex "pegasus" for data or "extensions" for relationship extension schema files
+   */
+  private SchemaDirectoryName _schemasDirectoryName = SchemaDirectoryName.PEGASUS;
 
 
   /**
@@ -108,7 +114,7 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
 
     private String getDataSchemaResourcePath(String schemaName)
     {
-      return InternalConstants.PEGASUS_DIR_IN_JAR + "/" + schemaName.replace('.', '/') + _extension;
+      return _schemasDirectoryName.getName() + "/" + schemaName.replace('.', '/') + _extension;
     }
 
     @Override
@@ -130,5 +136,26 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
       }
       return schema;
     }
+  }
+
+  /**
+   * Return the current schema file directory name for schemas location
+   *
+   * @return the current search paths.
+   */
+  public SchemaDirectoryName getSchemasDirectoryName()
+  {
+    return _schemasDirectoryName;
+  }
+
+  /**
+   * Sets the file directory name for schemas location dir.
+   * If not set Defaults to {@link SchemaDirectoryName#PEGASUS}
+   *
+   * @param schemasDirectoryName path suffix.
+   */
+  public void setSchemasDirectoryName(SchemaDirectoryName schemasDirectoryName)
+  {
+    _schemasDirectoryName = schemasDirectoryName;
   }
 }

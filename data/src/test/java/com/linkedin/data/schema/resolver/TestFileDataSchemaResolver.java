@@ -18,7 +18,6 @@ package com.linkedin.data.schema.resolver;
 
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
-import com.linkedin.internal.common.SchemaDirectoryName;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

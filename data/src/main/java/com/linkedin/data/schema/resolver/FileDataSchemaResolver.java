@@ -21,7 +21,6 @@ import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
-import com.linkedin.internal.common.SchemaDirectoryName;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,7 +67,7 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
   public static final String DEFAULT_EXTENSION = SchemaParser.FILE_EXTENSION;
 
   /**
-   * The file path suffix for different types of schemas. Default is {@link SchemaDirectoryName#PEGASUS}
+   * The file directory name for different types of schemas. Default is {@link SchemaDirectoryName#PEGASUS}
    * Ex "pegasus" for data or "extensions" for relationship extension schema files
    */
   private SchemaDirectoryName _schemasDirectoryName = SchemaDirectoryName.PEGASUS;
@@ -190,7 +189,7 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
   }
 
   /**
-   * Return the current file path suffix for schemas location dir
+   * Return the current schema file directory name for schemas location
    *
    * @return the current search paths.
    */
@@ -200,7 +199,7 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
   }
 
   /**
-   * Sets the file path suffix for schemas location dir.
+   * Sets the file directory name for schemas location dir.
    * If not set Defaults to {@link SchemaDirectoryName#PEGASUS}
    *
    * @param schemasDirectoryName path suffix.
