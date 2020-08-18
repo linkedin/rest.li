@@ -35,11 +35,11 @@ import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
-import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.DegraderImpl;
+import com.linkedin.util.RateLimitedLogger;
 
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 import org.slf4j.Logger;
