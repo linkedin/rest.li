@@ -14,8 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.5.5] - 2020-08-20
+## [29.5.6] - 2020-08-21
+- Add extension data schema resolvers to data schema parser to parse schema from both /extensions and /pegasus jar entry in the same jar file.
 - Updated File and class path DataSchemaResolvers to resolve extension schemas from /extensions directory if specified.
+
+## [29.5.5] - 2020-08-21
 - Added DarkGateKeeper to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
 
 ## [29.5.4] - 2020-08-17
@@ -33,6 +36,7 @@ and what APIs have changed, if applicable.
 
 ## [29.5.1] - 2020-08-14
 - Provide an option in `SmoothRateLimiter` to not drop tasks if going above the max buffered. Dropping tasks might be more diruptive to workflows compared to just not ratelimit.
+- Fix non-deterministic issues on generated java files to solve build performance issues.
 
 ## [29.5.0] - 2020-08-12
 - Add Callback method for `ClusterInfoProvider.getDarkClusterConfigMap`.

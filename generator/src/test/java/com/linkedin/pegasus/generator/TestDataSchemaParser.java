@@ -17,19 +17,29 @@
 package com.linkedin.pegasus.generator;
 
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaLocation;
+import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.resolver.AbstractMultiFormatDataSchemaResolver;
+import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
+import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
+import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -42,7 +52,7 @@ import static org.testng.Assert.*;
 public class TestDataSchemaParser
 {
   private static final String FS = File.separator;
-  private static final String testDir = System.getProperty("testDir");
+  private static final String testDir = System.getProperty("testDir", new File("src/test").getAbsolutePath());
   private static final String pegasusDir = testDir + FS + "resources" + FS + "generator";
 
   private File _tempDir;
@@ -90,6 +100,57 @@ public class TestDataSchemaParser
       assertTrue(schemaNames.contains(schema));
     }
     parseResult.getSchemaAndLocations().values().forEach(loc -> assertEquals(loc.getSourceFile().getAbsolutePath(), jarFile));
+  }
+
+  @DataProvider(name = "entityRelationshipInputFiles")
+  private Object[][] createResolverWithExtensionDirs()
+  {
+    return new Object[][]
+        {
+            {
+                new String[]{
+                    "extensions/Bar.pdl",
+                    "extensions/FooExtension.pdl",
+                    "pegasus/Foo.pdl"
+                },
+                new String[]{
+                    "FooExtension",
+                    "Bar"
+                }
+            },
+        };
+  }
+
+  @Test(dataProvider = "entityRelationshipInputFiles")
+  public void testSchemaFilesInExtensionPath(String[] files, String[] expectedExtensions) throws Exception
+  {
+    String tempDirectoryPath = _tempDir.getAbsolutePath();
+    String jarFile = tempDirectoryPath + FS + "test.jar";
+    String schemaDir = pegasusDir + FS + "entity-relationship";
+    Map<String, String> entryToFileMap = Arrays.stream(files).collect(Collectors.toMap(
+        filename -> schemaDir + FS + filename,
+        filename -> filename));
+    createTempJarFile(entryToFileMap, jarFile);
+
+    ExtensionsDataSchemaResolver resolver = new ExtensionsDataSchemaResolver(jarFile);
+    try
+    {
+      DataSchemaParser parser = new DataSchemaParser(jarFile, resolver);
+      DataSchemaParser.ParseResult parseResult = parser.parseSources(new String[]{jarFile});
+      Map<DataSchema, DataSchemaLocation> extensions = parseResult.getExtensionDataSchemaAndLocations();
+      assertEquals(extensions.size(), 2);
+      Set<String> actualNames = extensions
+          .keySet()
+          .stream()
+          .map(dataSchema -> (NamedDataSchema) dataSchema)
+          .map(NamedDataSchema::getName)
+          .collect(Collectors.toSet());
+      assertEquals(actualNames, Arrays.stream(expectedExtensions).collect(Collectors.toSet()));
+    }
+    catch (Exception e)
+    {
+      Assert.fail("Test failed");
+    }
   }
 
   @Test

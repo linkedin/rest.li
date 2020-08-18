@@ -22,6 +22,7 @@ import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PegasusSchemaParser;
+import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.SchemaDirectoryName;
@@ -49,6 +50,7 @@ import java.util.jar.JarFile;
  */
 public class FileFormatDataSchemaParser {
   static final String SCHEMA_PATH_PREFIX = SchemaDirectoryName.PEGASUS.getName() + "/";
+  static final String EXTENSION_PATH_ENTRY = SchemaDirectoryName.EXTENSIONS.getName() + "/";
   private final String _resolverPath;
   private final DataSchemaResolver _schemaResolver;
   private final DataSchemaParserFactory _schemaParserFactory;
@@ -58,6 +60,15 @@ public class FileFormatDataSchemaParser {
     _resolverPath = resolverPath;
     _schemaResolver = schemaResolver;
     _schemaParserFactory = schemaParserFactory;
+  }
+
+  private boolean isExtensionEntry(JarEntry entry)
+  {
+    if (_schemaResolver instanceof ExtensionsDataSchemaResolver)
+    {
+      return entry.getName().startsWith(EXTENSION_PATH_ENTRY);
+    }
+    return false;
   }
 
   public DataSchemaParser.ParseResult parseSources(String sources[]) throws IOException
@@ -91,7 +102,7 @@ public class FileFormatDataSchemaParser {
               {
                 final JarEntry entry = entries.nextElement();
                 if (!entry.isDirectory() && entry.getName().endsWith(_schemaParserFactory.getLanguageExtension()) &&
-                    entry.getName().startsWith(SCHEMA_PATH_PREFIX))
+                    (entry.getName().startsWith(SCHEMA_PATH_PREFIX) || isExtensionEntry(entry)))
                 {
                   parseJarEntry(jarFile, entry, result);
                   result.getSourceFiles().add(sourceFile);

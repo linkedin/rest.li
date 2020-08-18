@@ -20,6 +20,9 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
+import com.linkedin.data.schema.resolver.AbstractMultiFormatDataSchemaResolver;
+import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
+import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.util.FileUtil;
 import java.io.File;
@@ -30,11 +33,11 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 
 
@@ -47,31 +50,46 @@ public class DataSchemaParser
 {
   private final String _resolverPath;
   private final Map<String, FileFormatDataSchemaParser> _parserByFileExtension;
-  private final MultiFormatDataSchemaResolver _resolver;
+  private final AbstractMultiFormatDataSchemaResolver _resolver;
 
   /**
    * @param resolverPath provides the search paths separated by the system file separator, or null for no search paths.
    */
-  public DataSchemaParser(String resolverPath) {
-    this(resolverPath, MultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES);
+  public DataSchemaParser(String resolverPath)
+  {
+    this(resolverPath, AbstractMultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES);
   }
 
   public DataSchemaParser(
       String resolverPath,
       List<DataSchemaParserFactory> parserFactoriesForFromats)
   {
-    _resolverPath = resolverPath;
-
-    MultiFormatDataSchemaResolver resolver =
-      new MultiFormatDataSchemaResolver(resolverPath, parserFactoriesForFromats);
     _parserByFileExtension = new HashMap<>();
+    _resolverPath = resolverPath;
+    AbstractMultiFormatDataSchemaResolver resolver =
+      new MultiFormatDataSchemaResolver(resolverPath, parserFactoriesForFromats);
+    this._resolver = resolver;
+    init(resolver, resolverPath, parserFactoriesForFromats);
+  }
+
+  public DataSchemaParser(String resolverPath, AbstractMultiFormatDataSchemaResolver resolver)
+  {
+    _parserByFileExtension = new HashMap<>();
+    _resolverPath = resolverPath;
+    this._resolver = resolver;
+    init(resolver, resolverPath, MultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES);
+  }
+
+  private void init(AbstractMultiFormatDataSchemaResolver resolver,
+                    String resolverPath,
+                    List<DataSchemaParserFactory> parserFactoriesForFromats)
+  {
     for (DataSchemaParserFactory parserForFormat : parserFactoriesForFromats)
     {
       FileFormatDataSchemaParser fileFormatParser =
-        new FileFormatDataSchemaParser(resolverPath, resolver, parserForFormat);
+          new FileFormatDataSchemaParser(resolverPath, resolver, parserForFormat);
       _parserByFileExtension.put(parserForFormat.getLanguageExtension(), fileFormatParser);
     }
-    this._resolver = resolver;
   }
 
   public String getResolverPath()
@@ -189,6 +207,19 @@ public class DataSchemaParser
     public Map<DataSchema, DataSchemaLocation> getSchemaAndLocations()
     {
       return _schemaAndLocations;
+    }
+
+    public Map<DataSchema, DataSchemaLocation> getExtensionDataSchemaAndLocations()
+    {
+      return _schemaAndLocations.entrySet().stream().filter(entry -> {
+        DataSchemaLocation dataSchemaLocation = entry.getValue();
+        if (dataSchemaLocation instanceof InJarFileDataSchemaLocation)
+        {
+          InJarFileDataSchemaLocation inJarFileDataSchemaLocation = (InJarFileDataSchemaLocation) dataSchemaLocation;
+          return inJarFileDataSchemaLocation.getPathInJar().startsWith("extension");
+        }
+        return false;
+      }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     public Set<File> getSourceFiles()

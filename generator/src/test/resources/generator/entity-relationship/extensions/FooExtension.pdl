@@ -1,0 +1,3 @@
+record FooExtension includes Foo {
+  ext1: string
+}
