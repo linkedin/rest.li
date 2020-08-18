@@ -64,17 +64,16 @@ import com.linkedin.restli.examples.greetings.client.ValidationDemosRequestBuild
 import com.linkedin.restli.server.validation.RestLiValidationFilter;
 import com.linkedin.restli.test.util.PatchBuilder;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 
 /**
@@ -558,6 +557,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
             "{\"patch\": {\"validationDemoNext\": {\"$set\": {\"stringA\": \"some value\"}}}}",
             // A field (MapWithTyperefs/key1) containing a CreateOnly field (MapWithTyperefs/key1/id) has to be partially set
             "{\"patch\": {\"MapWithTyperefs\": {\"key1\": {\"$set\": {\"message\": \"some message\", \"tone\": \"SINCERE\"}}}}}",
+            // Okay to set a field containing a ReadOnly field by omitting the ReadOnly field
+            "{\"patch\": {\"$set\": {\"ArrayWithInlineRecord\": [{\"bar2\": \"missing bar1\"}]}}}",
             // Okay to delete a field containing a ReadOnly field
             "{\"patch\": {\"$delete\": [\"ArrayWithInlineRecord\"]}}",
             // Okay to delete a field containing a CreateOnly field
