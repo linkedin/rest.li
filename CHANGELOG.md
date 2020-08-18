@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.5.4] - 2020-08-17
+- Increase default timeout for symbol table fetch to 1s.
+
 ## [29.5.3] - 2020-08-17
 - Treat `ReadOnly` required fields as optional in `PARTIAL_UPDATE`/`BATCH_PARTIAL_UPDATE` patches.
   This will allow such patches to set fields containing descendent `ReadOnly` required fields, which wasn't possible before.
@@ -4600,7 +4603,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.4...master
+[29.5.4]: https://github.com/linkedin/rest.li/compare/v29.5.3...v29.5.4
 [29.5.3]: https://github.com/linkedin/rest.li/compare/v29.5.2...v29.5.3
 [29.5.2]: https://github.com/linkedin/rest.li/compare/v29.5.1...v29.5.2
 [29.5.1]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.1
