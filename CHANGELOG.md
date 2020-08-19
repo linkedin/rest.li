@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.5.5] - 2020-08-19
+- Change error log to info log when channel timeout due to inactivity
+
 ## [29.5.4] - 2020-08-17
 - Increase default timeout for symbol table fetch to 1s.
 
@@ -4603,7 +4606,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.5...master
+[29.5.5]: https://github.com/linkedin/rest.li/compare/v29.5.4...v29.5.5
 [29.5.4]: https://github.com/linkedin/rest.li/compare/v29.5.3...v29.5.4
 [29.5.3]: https://github.com/linkedin/rest.li/compare/v29.5.2...v29.5.3
 [29.5.2]: https://github.com/linkedin/rest.li/compare/v29.5.1...v29.5.2
