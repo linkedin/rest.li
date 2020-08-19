@@ -34,8 +34,10 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,6 +46,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.zip.ZipEntry;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -71,6 +75,23 @@ public class TestDataSchemaResolver
   @BeforeTest
   public void setup()
   {
+  }
+
+  public static File buildTempJar(Map<String, String> fileEntries) throws IOException
+  {
+    // Write a temp JAR file using the entries defined above
+    File tempJar = File.createTempFile(TestDataSchemaResolver.class.getCanonicalName(), ".jar");
+    tempJar.deleteOnExit();
+    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(tempJar));
+    for (Map.Entry<String, String> entry : fileEntries.entrySet())
+    {
+      jarOutputStream.putNextEntry(new ZipEntry(entry.getKey()));
+      jarOutputStream.write(entry.getValue().getBytes(Charset.defaultCharset()));
+      jarOutputStream.closeEntry();
+    }
+    jarOutputStream.finish();
+    jarOutputStream.close();
+    return tempJar;
   }
 
   public static class MapDataSchemaResolver extends AbstractDataSchemaResolver
