@@ -16,6 +16,7 @@
 
 package com.linkedin.data.schema;
 
+import com.linkedin.data.schema.resolver.SchemaDirectoryName;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -128,4 +129,12 @@ public interface DataSchemaResolver
    * Return the list of records currently in the state of parsing.
    */
   LinkedHashMap<String, Boolean> getPendingSchemas();
+
+  /**
+   * Returns the schema file directory name for schemas location
+   */
+  default SchemaDirectoryName getSchemasDirectoryName()
+  {
+    return SchemaDirectoryName.PEGASUS;
+  }
 }

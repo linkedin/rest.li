@@ -22,9 +22,9 @@ package com.linkedin.internal.common;
 public final class InternalConstants
 {
   /**
-   * Directory within resource jar file that holds the pegasus schemas. Pegasus parsers and resolvers look for pegasus
-   * files(*.pdl, *.pdsc) only within this directory.
+   * @deprecated use `com.linkedin.data.schema.resolver.SchemaDirectoryName` instead
    */
+  @Deprecated
   public static final String PEGASUS_DIR_IN_JAR = "pegasus";
 
   private InternalConstants() {}

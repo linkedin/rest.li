@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Updated File and class path DataSchemaResolvers to resolve extension schemas from /extensions directory if specified.
 
 ## [29.5.4] - 2020-08-17
 - Increase default timeout for symbol table fetch to 1s.
@@ -515,7 +516,6 @@ Add an option in symbol table provider to pass in a list of overridden symbols i
 - Revert "LastSeenLoadBalancer: adding support for custom d2ServicePath on ZK. Add support for BackupStoreFilePath to LastSeen"
 
 ## [27.6.6]
-- <<<<<<< HEAD
 - LastSeenLoadBalancer: adding support for custom d2ServicePath on ZK. Add support for BackupStoreFilePath to LastSeen
 - Disable SymlinkAwareZooKeeperTest temporarily
 
