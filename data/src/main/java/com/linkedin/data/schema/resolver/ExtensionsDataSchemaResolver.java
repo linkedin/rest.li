@@ -49,4 +49,10 @@ public class ExtensionsDataSchemaResolver extends AbstractMultiFormatDataSchemaR
     resolver.setSchemasDirectoryName(SchemaDirectoryName.EXTENSIONS);
     return resolver;
   }
+
+  @Override
+  public SchemaDirectoryName getSchemasDirectoryName()
+  {
+    return SchemaDirectoryName.EXTENSIONS;
+  }
 }

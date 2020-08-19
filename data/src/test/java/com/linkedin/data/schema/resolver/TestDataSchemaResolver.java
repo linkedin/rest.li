@@ -841,8 +841,9 @@ public class TestDataSchemaResolver
   @Test
   public void testClasspathResourceDataSchemaResolver()
   {
-    final ClasspathResourceDataSchemaResolver resolver = new ClasspathResourceDataSchemaResolver();
-    final PegasusSchemaParser parser = new SchemaParser(resolver);
+    // Tests for data schemas
+    ClasspathResourceDataSchemaResolver resolver = new ClasspathResourceDataSchemaResolver();
+    PegasusSchemaParser parser = new SchemaParser(resolver);
 
     final List<String> existingSchemas = new ArrayList<>();
     Collections.addAll(existingSchemas, "com.linkedin.data.schema.ValidationDemo",

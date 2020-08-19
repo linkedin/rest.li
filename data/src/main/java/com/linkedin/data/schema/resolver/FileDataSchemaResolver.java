@@ -190,8 +190,6 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
 
   /**
    * Return the current schema file directory name for schemas location
-   *
-   * @return the current search paths.
    */
   public SchemaDirectoryName getSchemasDirectoryName()
   {
@@ -202,9 +200,9 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
    * Sets the file directory name for schemas location dir.
    * If not set Defaults to {@link SchemaDirectoryName#PEGASUS}
    *
-   * @param schemasDirectoryName path suffix.
+   * @param schemasDirectoryName schema directory name.
    */
-  public void setSchemasDirectoryName(SchemaDirectoryName schemasDirectoryName)
+  void setSchemasDirectoryName(SchemaDirectoryName schemasDirectoryName)
   {
     _schemasDirectoryName = schemasDirectoryName;
   }
