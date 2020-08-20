@@ -86,6 +86,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import javax.xml.ws.Service;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -1830,6 +1832,34 @@ public class SimpleLoadBalancerStateTest
 
     assertEquals(clusterListener1.getClusterRemovedCount(CLUSTER1_CLUSTER_NAME), 1, "expected 1 call indicating removal on shutdown");
     assertEquals(clusterListener1.getClusterRemovedCount(CLUSTER2_CLUSTER_NAME), 1, "expected 1 call indicating removal on shutdown");
+  }
+
+  @Test
+  public void testSchemeNotSupported()
+  {
+    reset();
+
+    // Create https uri and scheme only supports http
+    URI uri = URI.create("https://cluster-1/test1");
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
+    uriData.put(uri, partitionData);
+
+    schemes.add("http");
+    // set up state
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+    _state.listenToService("service-1", new NullStateListenerCallback());
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
+        "/test", Arrays.asList("random"), Collections.emptyMap(),
+        null, null, schemes, null));
+    assertNull(_state.getClient("service-1", uri));
+
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    TrackerClient client = _state.getClient("service-1", uri);
+    assertNull(client);
   }
 
   private static class TestShutdownCallback implements PropertyEventShutdownCallback
