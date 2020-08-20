@@ -1,5 +1,6 @@
 package com.linkedin.darkcluster;
 
+import com.linkedin.darkcluster.impl.DarkDispatcherVerifier;
 import java.net.URI;
 
 import com.linkedin.d2.DarkClusterConfig;
@@ -28,21 +29,31 @@ public class TestDarkClusterManager
   @DataProvider
   public Object[][] provideKeys()
   {
+    DarkDispatcherVerifier darkDispatcherVerifier = (request, requestContext) -> false;
     return new Object[][] {
-      // whitelist, blacklist, httpMethod, expected white count, expected black count
-      {null, null, METHOD_SAFE, 1, 1},
-      {null, null, METHOD_UNSAFE, 0, 0},
-      {".*white.*", null, METHOD_SAFE, 1, 1},
-      {".*white.*", null, METHOD_UNSAFE, 1, 0},
-      {".*white.*", ".*black.*", METHOD_SAFE, 1, 0},
-      {".*white.*", ".*black.*", METHOD_UNSAFE, 1, 0},
-      {null, ".*black.*", METHOD_SAFE, 1, 0},
-      {null, ".*black.*", METHOD_UNSAFE, 0, 0}
+      // whitelist, blacklist, httpMethod, darkDispatcherVerifier, expected white count, expected black count
+      {null, null, METHOD_SAFE, null, 1, 1},
+      {null, null, METHOD_UNSAFE, null, 0, 0},
+      {".*white.*", null, METHOD_SAFE, null, 1, 1},
+      {".*white.*", null, METHOD_UNSAFE, null, 1, 0},
+      {".*white.*", ".*black.*", METHOD_SAFE, null, 1, 0},
+      {".*white.*", ".*black.*", METHOD_UNSAFE, null, 1, 0},
+      {null, ".*black.*", METHOD_SAFE, null, 1, 0},
+      {null, ".*black.*", METHOD_UNSAFE, null, 0, 0},
+      {null, null, METHOD_SAFE, darkDispatcherVerifier, 0, 0},
+      {null, null, METHOD_UNSAFE, darkDispatcherVerifier, 0, 0},
+      {".*white.*", null, METHOD_SAFE, darkDispatcherVerifier, 0, 0},
+      {".*white.*", null, METHOD_UNSAFE, darkDispatcherVerifier, 0, 0},
+      {".*white.*", ".*black.*", METHOD_SAFE, darkDispatcherVerifier, 0, 0},
+      {".*white.*", ".*black.*", METHOD_UNSAFE, darkDispatcherVerifier, 0, 0},
+      {null, ".*black.*", METHOD_SAFE, darkDispatcherVerifier, 0, 0},
+      {null, ".*black.*", METHOD_UNSAFE, darkDispatcherVerifier, 0, 0}
     };
   }
 
   @Test(dataProvider = "provideKeys")
-  public void testBasic(String whitelist, String blacklist, String httpMethod, int expectedWhiteCount, int expectedBlackCount)
+  public void testBasic(String whitelist, String blacklist, String httpMethod, DarkDispatcherVerifier darkDispatcherVerifier,
+      int expectedWhiteCount, int expectedBlackCount)
   {
     MockClusterInfoProvider clusterInfoProvider = new MockClusterInfoProvider();
     Facilities facilities = new MockFacilities(clusterInfoProvider);
@@ -52,7 +63,8 @@ public class TestDarkClusterManager
                                                                        strategyFactory,
                                                                        whitelist,
                                                                        blacklist,
-                                                                       new DoNothingNotifier());
+                                                                       new DoNothingNotifier(),
+                                                                       darkDispatcherVerifier);
 
     strategyFactory.start();
 

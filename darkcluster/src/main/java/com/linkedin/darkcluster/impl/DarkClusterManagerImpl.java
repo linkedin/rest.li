@@ -54,12 +54,19 @@ public class DarkClusterManagerImpl implements DarkClusterManager
   private final Facilities _facilities;
   private final String _sourceClusterName;
   private final DarkClusterStrategyFactory _darkClusterStrategyFactory;
+  private final DarkDispatcherVerifier _darkDispatcherVerifier;
   private Map<String, AtomicReference<URIRewriter>> _uriRewriterMap;
 
   public DarkClusterManagerImpl(@Nonnull String sourceClusterName, @Nonnull Facilities facilities,
                                 @Nonnull DarkClusterStrategyFactory strategyFactory, String whiteListRegEx,
                                 String blackListRegEx, @Nonnull Notifier notifier)
   {
+    this(sourceClusterName, facilities, strategyFactory, whiteListRegEx, blackListRegEx, notifier, null);
+  }
+
+  public DarkClusterManagerImpl(@Nonnull String sourceClusterName, @Nonnull Facilities facilities,
+      @Nonnull DarkClusterStrategyFactory strategyFactory, String whiteListRegEx,
+      String blackListRegEx, @Nonnull Notifier notifier, DarkDispatcherVerifier darkDispatcherVerifier) {
     _whiteListRegEx = whiteListRegEx == null ? null : Pattern.compile(whiteListRegEx);
     _blackListRegEx = blackListRegEx == null ? null : Pattern.compile(blackListRegEx);
     _notifier = notifier;
@@ -67,6 +74,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     _sourceClusterName = sourceClusterName;
     _darkClusterStrategyFactory = strategyFactory;
     _uriRewriterMap = new HashMap<>();
+    _darkDispatcherVerifier = darkDispatcherVerifier;
   }
 
   @Override
@@ -78,7 +86,8 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     {
       final boolean whiteListed = _whiteListRegEx != null && _whiteListRegEx.matcher(uri).matches();
       final boolean blackedListed = _blackListRegEx != null && _blackListRegEx.matcher(uri).matches();
-      if ((isSafe(originalRequest) || whiteListed) && !blackedListed)
+      if ((isSafe(originalRequest) || whiteListed) && !blackedListed &&
+          (_darkDispatcherVerifier == null || (_darkDispatcherVerifier.shouldDispatchToDark(originalRequest, originalRequestContext))))
       {
         // the request is already immutable, and a new requestContext will be created in BaseDarkClusterDispatcher.
         // We don't need to copy them here, but doing it just for safety.
