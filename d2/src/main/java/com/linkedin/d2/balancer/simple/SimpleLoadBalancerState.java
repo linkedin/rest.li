@@ -778,9 +778,20 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   {
     LoadBalancerStateItem<ServiceProperties> servicePropertiesItem = _serviceProperties.get(serviceName);
     ServiceProperties serviceProperties = servicePropertiesItem == null ? null : servicePropertiesItem.getProperty();
+    return buildTrackerClient(uri, uriProperties, serviceName, serviceProperties);
+  }
 
+  @Nullable
+  private TrackerClient buildTrackerClient(URI uri, UriProperties uriProperties, String serviceName,
+      ServiceProperties serviceProperties)
+  {
     TransportClient transportClient = getTransportClient(serviceName, uri);
+    LoadBalancerStrategy loadBalancerStrategy = _serviceStrategies.get(serviceName).get(uri.getScheme().toLowerCase());
     if (transportClient == null)
+    {
+      return null;
+    }
+    if (loadBalancerStrategy == null)
     {
       return null;
     }
@@ -788,7 +799,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     return serviceProperties == null ? null : TrackerClientFactory.createTrackerClient(uri,
                                                                                        uriProperties,
                                                                                        serviceProperties,
-                                                                                       _serviceStrategies.get(serviceName).get(uri.getScheme()).getName(),
+                                                                                       loadBalancerStrategy.getName(),
                                                                                        transportClient);
   }
 
@@ -841,12 +852,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
       for (URI uri : uris)
       {
-
-        TrackerClient trackerClient = TrackerClientFactory.createTrackerClient(uri,
-                                                                               uriProperties,
-                                                                               serviceProperties,
-                                                                               _serviceStrategies.get(serviceName).get(uri.getScheme()).getName(),
-                                                                               _serviceClients.get(serviceName).get(uri.getScheme()));
+        TrackerClient trackerClient = buildTrackerClient(uri, uriProperties, serviceName, serviceProperties);
         if (trackerClient != null)
         {
           newTrackerClients.put(uri, trackerClient);
