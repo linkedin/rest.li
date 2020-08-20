@@ -8,7 +8,8 @@ import com.linkedin.r2.message.rest.RestRequest;
  * Interface that lets users define custom logic to determine if a given request is to be dispatched to dark cluster or not.
  */
 @FunctionalInterface
-public interface DarkDispatcherVerifier {
+public interface DarkDispatcherVerifier
+{
   /**
    * Determine if the request is to be dispatched or not
    * @param request original request

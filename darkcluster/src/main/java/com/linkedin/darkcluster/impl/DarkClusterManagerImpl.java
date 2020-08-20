@@ -86,6 +86,11 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     {
       final boolean whiteListed = _whiteListRegEx != null && _whiteListRegEx.matcher(uri).matches();
       final boolean blackedListed = _blackListRegEx != null && _blackListRegEx.matcher(uri).matches();
+      // send to dark iff:
+      // 1) request is safe
+      // 2) is whitelisted if whitelist regex is provided
+      // 3) not blacklisted if blacklist regex is provided
+      // 4) custom dark dispatcher verifier returns true for the given request / requestContext if the custom verifier is defined
       if ((isSafe(originalRequest) || whiteListed) && !blackedListed &&
           (_darkDispatcherVerifier == null || (_darkDispatcherVerifier.shouldDispatchToDark(originalRequest, originalRequestContext))))
       {
