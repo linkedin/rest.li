@@ -16,6 +16,7 @@
 
 package com.linkedin.darkcluster.impl;
 
+import com.linkedin.darkcluster.api.DarkDispatcherVerifier;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +26,6 @@ import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 
 import com.linkedin.common.util.Notifier;
-import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.util.D2URIRewriter;

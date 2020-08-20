@@ -1,4 +1,4 @@
-package com.linkedin.darkcluster.impl;
+package com.linkedin.darkcluster.api;
 
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;

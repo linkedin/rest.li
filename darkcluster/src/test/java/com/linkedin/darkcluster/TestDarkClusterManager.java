@@ -1,6 +1,6 @@
 package com.linkedin.darkcluster;
 
-import com.linkedin.darkcluster.impl.DarkDispatcherVerifier;
+import com.linkedin.darkcluster.api.DarkDispatcherVerifier;
 import java.net.URI;
 
 import com.linkedin.d2.DarkClusterConfig;
