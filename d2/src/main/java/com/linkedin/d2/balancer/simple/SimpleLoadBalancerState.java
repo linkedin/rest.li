@@ -782,7 +782,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   @Nullable
-  TrackerClient buildTrackerClient(URI uri, UriProperties uriProperties, String serviceName,
+  private TrackerClient buildTrackerClient(URI uri, UriProperties uriProperties, String serviceName,
       ServiceProperties serviceProperties)
   {
     TransportClient transportClient = getTransportClient(serviceName, uri);
@@ -797,10 +797,10 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     }
 
     return serviceProperties == null ? null : TrackerClientFactory.createTrackerClient(uri,
-        uriProperties,
-        serviceProperties,
-        loadBalancerStrategy.getName(),
-        transportClient);
+                                                                                       uriProperties,
+                                                                                       serviceProperties,
+                                                                                       loadBalancerStrategy.getName(),
+                                                                                       transportClient);
   }
 
   /**

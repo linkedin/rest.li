@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.6.0-rc.2] - 2020-08-20
-- Fixed uri scheme reading bug
+- Fixed uri scheme reading bug when creating TrackerClient objects.
 
 ## [29.6.0-rc.1] - 2020-08-17
 - Provide new load balancer option that uses average cluster latency as the latency baseline and calculates host latency relatively to the average cluster latency.
