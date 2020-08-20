@@ -21,8 +21,15 @@ if [ -z "$VERSION" ]; then
   exit 1
 fi
 
+# Determine if the version is a release candidate version
+RELEASE_CANDIDATE=false
+if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$ ]]; then
+  RELEASE_CANDIDATE=true
+fi
+
 # If the project version is being bumped in this PR, assert that the changelog contains an entry for it
-if (git diff ${TRAVIS_BRANCH}...HEAD -- gradle.properties | grep -F "+version=$VERSION" > /dev/null) &&
+if (! $RELEASE_CANDIDATE) &&
+    (git diff ${TRAVIS_BRANCH}...HEAD -- gradle.properties | grep -F "+version=$VERSION" > /dev/null) &&
     ! ( (cat CHANGELOG.md | grep -F "## [$VERSION] -" > /dev/null) &&
         (cat CHANGELOG.md | grep -F "[$VERSION]: https" > /dev/null) ); then
   echo "This change bumps the project version to $VERSION, but no changelog entry could be found for this version!"

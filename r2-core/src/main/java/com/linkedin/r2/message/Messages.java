@@ -173,7 +173,7 @@ public class Messages
       @Override
       public void onSuccess(RestResponse result)
       {
-        callback.onSuccess(new RestException(result, streamException.getMessage(), streamException.getCause()));
+        callback.onSuccess(new RestException(result, streamException.getMessage(), streamException.getCause(), false));
       }
     }, addContentLengthHeader);
   }
@@ -185,7 +185,7 @@ public class Messages
    */
   public static StreamException toStreamException(final RestException restException)
   {
-    return new StreamException(toStreamResponse(restException.getResponse()), restException.getMessage(), restException.getCause());
+    return new StreamException(toStreamResponse(restException.getResponse()), restException.getMessage(), restException.getCause(), false);
   }
 
   /**

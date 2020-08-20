@@ -84,7 +84,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
   /**
    * Default timeout in milliseconds to use when fetching symbols from other services.
    */
-  private static final long DEFAULT_TIMEOUT_MILLIS = 100;
+  private static final long DEFAULT_TIMEOUT_MILLIS = 1000;
 
   private final Client _client;
   private final String _uriPrefix;

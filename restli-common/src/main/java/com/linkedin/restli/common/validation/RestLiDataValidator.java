@@ -464,15 +464,20 @@ public class RestLiDataValidator
    * Checks that if the patch is applied to a valid entity, the modified entity will also be valid.
    * This method
    * (1) Checks that required/ReadOnly/CreateOnly fields are not deleted.
-   * (2) Checks that new values for record templates contain all required fields.
+   * (2) Checks that new values for record templates contain all required fields (treating ReadOnly fields as optional).
    * (3) Applies the patch to an empty entity and validates the entity for custom validation rules
    * and Rest.li annotations (Allows required fields to be absent by using {@link RequiredMode#IGNORE},
    * because a patch does not necessarily contain all fields).
    *
-   * NOTE: Updating a part of an array is not supported. So if the array contains a required field that is
-   * readonly or createonly, the field cannot be present (no partial updates on readonly/createonly)
-   * but cannot be absent either (no missing required fields). This means the array cannot be changed by a
-   * partial update request. This is something that should be fixed.
+   * NOTE: There are two remaining support gaps with this method:
+   * (1) Updating a part of an array is not supported if the object contains a descendant required CreateOnly field.
+   * Because of the current lack of support for patching array elements, setting an array field is always treated as
+   * setting the entire array with all-new elements. Since this is effectively a "Create", we should support setting
+   * CreateOnly fields in array patch operations. TODO: allow setting CreateOnly fields in array elements
+   * (2) Similar to the above problem, if an array element contains a ReadOnly field, then the user currently has no way
+   * to patch that array element while keeping the server-provided value. The user can omit the field in the patch
+   * request, but since the server has no concept of "patching elements", it can't assume a given element's existing
+   * value. TODO: allow setting ReadOnly fields in array elements
    *
    * @param patchRequest the patch
    * @return the final validation result
@@ -507,12 +512,14 @@ public class RestLiDataValidator
     {
       return validationResultWithErrorMessage("Error while applying patch: " + e.getMessage());
     }
+    // Check that required/ReadOnly/CreateOnly fields are not deleted
     ValidationErrorResult checkDeleteResult = new ValidationErrorResult();
     checkDeletesAreValid(entity.schema(), messages, checkDeleteResult);
     if (!checkDeleteResult.isValid())
     {
       return checkDeleteResult;
     }
+    // Check that new values for record templates contain all required fields
     ValidationResult checkSetResult = checkNewRecordsAreNotMissingFields(entity, messages);
     if (checkSetResult != null)
     {
@@ -524,6 +531,10 @@ public class RestLiDataValidator
         new ValidationOptions(RequiredMode.IGNORE), new DataValidator(entity.schema()));
   }
 
+  /**
+   * Validates that new whole records created as part of of a patch set operation aren't missing required fields,
+   * with ReadOnly fields being treated as optional.
+   */
   private ValidationResult checkNewRecordsAreNotMissingFields(RecordTemplate entity, MessageList<Message> messages)
   {
     for (Message message : messages)
@@ -534,7 +545,9 @@ public class RestLiDataValidator
         // Replace $set with the field name to get the full path
         path[path.length - 1] = message.getFormat();
         DataElement element = DataElementUtil.element(new SimpleDataElement(entity.data(), entity.schema()), path);
-        ValidationResult result = ValidateDataAgainstSchema.validate(element, new ValidationOptions());
+        ValidationOptions validationOptions = new ValidationOptions();
+        validationOptions.setTreatOptional(_readOnlyOptionalPredicate);
+        ValidationResult result = ValidateDataAgainstSchema.validate(element, validationOptions);
         if (!result.isValid())
         {
           return result;

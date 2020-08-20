@@ -3,7 +3,7 @@ package com.linkedin.d2.balancer.strategies.degrader;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.util.RateLimitedLogger;
+import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
 import com.linkedin.util.clock.Clock;

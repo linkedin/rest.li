@@ -68,8 +68,5 @@ public interface Facilities
    * Obtain a ClusterInfoProvider
    * @return ClusterInfoProvider
    */
-  default ClusterInfoProvider getClusterInfoProvider()
-  {
-    return (clusterName, scheme, partitionId) -> 0;
-  };
+  ClusterInfoProvider getClusterInfoProvider();
 }
