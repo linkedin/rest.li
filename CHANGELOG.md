@@ -13,7 +13,10 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.5.5] - 2020-08-20
 - Updated File and class path DataSchemaResolvers to resolve extension schemas from /extensions directory if specified.
+- Added DarkDispatcherVerifier to enable users to provide custom implementation to determine if requests are to dispatched to dark clusters.
 
 ## [29.5.4] - 2020-08-17
 - Increase default timeout for symbol table fetch to 1s.
@@ -4603,7 +4606,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.5...master
+[29.5.5]: https://github.com/linkedin/rest.li/compare/v29.5.4...v29.5.5
 [29.5.4]: https://github.com/linkedin/rest.li/compare/v29.5.3...v29.5.4
 [29.5.3]: https://github.com/linkedin/rest.li/compare/v29.5.2...v29.5.3
 [29.5.2]: https://github.com/linkedin/rest.li/compare/v29.5.1...v29.5.2
