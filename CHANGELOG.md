@@ -16,7 +16,7 @@ and what APIs have changed, if applicable.
 
 ## [29.5.5] - 2020-08-20
 - Updated File and class path DataSchemaResolvers to resolve extension schemas from /extensions directory if specified.
-- Added DarkDispatcherVerifier to enable users to provide custom implementation to determine if requests are to dispatched to dark clusters.
+- Added DarkGateKeeper to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
 
 ## [29.5.4] - 2020-08-17
 - Increase default timeout for symbol table fetch to 1s.

@@ -75,7 +75,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     _darkClusterStrategyFactory = strategyFactory;
     _uriRewriterMap = new HashMap<>();
     // if null, initialize this to a noop which returns true always
-    _darkGateKeeper = darkGateKeeper == null ? (req, context) -> true: darkGateKeeper;
+    _darkGateKeeper = darkGateKeeper == null ? (req, context) -> true : darkGateKeeper;
   }
 
   @Override
@@ -91,7 +91,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
       // 1) request is safe
       // 2) is whitelisted if whitelist regex is provided
       // 3) not blacklisted if blacklist regex is provided
-      // 4) custom dark gatekeeper returns true for the given request / requestContext
+      // 4) custom dark gatekeeper returns true for the given request and requestContext
       if ((isSafe(originalRequest) || whiteListed) && !blackedListed && (_darkGateKeeper.shouldDispatchToDark(originalRequest, originalRequestContext)))
       {
         // the request is already immutable, and a new requestContext will be created in BaseDarkClusterDispatcher.
