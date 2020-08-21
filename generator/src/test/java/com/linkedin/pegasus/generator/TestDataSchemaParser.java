@@ -19,6 +19,7 @@ package com.linkedin.pegasus.generator;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,6 +29,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,17 +53,20 @@ public class TestDataSchemaParser
   private static final String pegasusDir = testDir + FS + "resources" + FS + "generator";
 
   private File _tempDir;
+  private File _dataTemplateTargetDir;
 
   @BeforeMethod
   private void beforeMethod() throws IOException
   {
     _tempDir = Files.createTempDirectory(this.getClass().getSimpleName() + System.currentTimeMillis()).toFile();
+    _dataTemplateTargetDir = Files.createTempDirectory(this.getClass().getSimpleName() + System.currentTimeMillis()).toFile();
   }
 
   @AfterMethod
   private void afterMethod() throws IOException
   {
     FileUtils.forceDelete(_tempDir);
+    FileUtils.forceDelete(_dataTemplateTargetDir);
   }
 
   @DataProvider(name = "inputFiles")
@@ -131,7 +136,7 @@ public class TestDataSchemaParser
   }
 
   @Test(dataProvider = "entityRelationshipInputFiles")
-  public void testSchemaFilesInExtensionPath(String[] files, String[] expectedExtensions) throws Exception
+  public void testSchemaFilesInExtensionPathInJar(String[] files, String[] expectedExtensions) throws Exception
   {
     String tempDirectoryPath = _tempDir.getAbsolutePath();
     String jarFile = tempDirectoryPath + FS + "test.jar";
@@ -161,6 +166,36 @@ public class TestDataSchemaParser
       Assert.fail("Test failed");
     }
   }
+
+  @Test(dataProvider = "entityRelationshipInputFiles")
+  public void testSchemaFilesInExtensionPathInFolder(String[] files, String[] expectedExtensions) throws Exception
+  {
+    String resolverPath = "/Users/bpin/code/pegasus/pegasus/generator/src/test/resources/generator/extensionSchemas/extensions:"
+        + "/Users/bpin/code/pegasus/pegasus/generator/src/test/resources/generator/extensionSchemas/others:"
+        + "/Users/bpin/code/pegasus/pegasus/generator/src/test/resources/generator/extensionSchemas/pegasus";
+    ExtensionsDataSchemaResolver resolver = new ExtensionsDataSchemaResolver(resolverPath);
+    try
+    {
+      DataSchemaParser parser = new DataSchemaParser(resolverPath, resolver);
+      String[] schemaFiles = Arrays.stream(files).map(casename -> pegasusDir + FS + "extensionSchemas" + FS + casename).toArray(String[]::new);
+      DataSchemaParser.ParseResult parseResult = parser.parseSources(schemaFiles);
+      Map<DataSchema, DataSchemaLocation> extensions = parseResult.getExtensionDataSchemaAndLocations();
+      assertEquals(extensions.size(), 2);
+      Set<String> actualNames = extensions
+          .keySet()
+          .stream()
+          .map(dataSchema -> (NamedDataSchema) dataSchema)
+          .map(NamedDataSchema::getName)
+          .collect(Collectors.toSet());
+      assertEquals(actualNames, Arrays.stream(expectedExtensions).collect(Collectors.toSet()));
+    }
+    catch (Exception e)
+    {
+      Assert.fail("Test failed");
+    }
+
+  }
+
 
   @Test
   public void testParseFromJarFileWithTranslatedSchemas() throws Exception

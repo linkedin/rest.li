@@ -22,6 +22,7 @@ import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.resolver.AbstractMultiFormatDataSchemaResolver;
 import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
+import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.data.schema.resolver.SchemaDirectoryName;
@@ -227,6 +228,12 @@ public class DataSchemaParser
         {
           InJarFileDataSchemaLocation inJarFileDataSchemaLocation = (InJarFileDataSchemaLocation) dataSchemaLocation;
           return inJarFileDataSchemaLocation.getPathInJar().startsWith(SchemaDirectoryName.EXTENSIONS.getName());
+        }
+        else if (dataSchemaLocation instanceof FileDataSchemaLocation)
+        {
+          FileDataSchemaLocation fileDataSchemaLocation = (FileDataSchemaLocation) dataSchemaLocation;
+          return fileDataSchemaLocation.getSourceFile().getName().endsWith("Extension.pdl") &&
+            fileDataSchemaLocation.getSourceFile().getParent().indexOf(SchemaDirectoryName.EXTENSIONS.getName()) > 0;
         }
         return false;
       }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
