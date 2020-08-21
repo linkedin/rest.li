@@ -14,12 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.5.2] - 2020-08-18
-- Add feature for client controlled feature to add/patch default values in return records
-
-## [29.5.1] - 2020-08-17
-- Allow publishing unstable release candidate versions of Rest.li (e.g. `1.2.3-rc.1`) from non-master branches.
-    - It's _strongly_ suggested to only use a release candidate version if you have a specific reason to do so.
+## [29.5.7] - 2020-08-21
+- Add client controlled feature to add/patch default values in return records
 
 ## [29.5.6] - 2020-08-21
 - Add a constructor for DataSchemaParser, which is able to pass ExtensionsDataSchemaResolver to the DataSchemaParser to parse schemas from both extensions and pegasus directories.
