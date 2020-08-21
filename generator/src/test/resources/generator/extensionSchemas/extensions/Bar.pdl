@@ -1,3 +1,0 @@
-record Bar includes Foo {
-  b1: int
-}

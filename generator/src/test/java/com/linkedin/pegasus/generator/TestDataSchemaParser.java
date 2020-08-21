@@ -104,25 +104,27 @@ public class TestDataSchemaParser
         {
             {
                 new String[]{
-                    "extensions/Bar.pdl",
+                    "extensions/BarExtension.pdl",
                     "extensions/FooExtension.pdl",
-                    "pegasus/Foo.pdl"
+                    "pegasus/Foo.pdl",
+                    "pegasus/Bar.pdl"
                 },
                 new String[]{
                     "FooExtension",
-                    "Bar"
+                    "BarExtension"
                 }
             },
             {
                 new String[]{
-                    "extensions/Bar.pdl",
+                    "extensions/BarExtension.pdl",
                     "extensions/FooExtension.pdl",
+                    "pegasus/Bar.pdl",
                     "pegasus/Foo.pdl",
                     "others/FooBar.pdl"
                 },
                 new String[]{
                     "FooExtension",
-                    "Bar"
+                    "BarExtension"
                 }
             },
         };
