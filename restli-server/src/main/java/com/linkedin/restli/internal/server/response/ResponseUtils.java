@@ -93,6 +93,11 @@ public class ResponseUtils
     }
   }
 
+  /**
+   * @param schema schema for the companion data map
+   * @param dataWithoutDefault data map that is response for a restli request
+   * @return data object that filled in with default values on the field with default value set on the schema
+   */
   public static Object fillInDataDefault(DataSchema schema, Object dataWithoutDefault)
   {
     try
@@ -119,7 +124,7 @@ public class ResponseUtils
     }
   }
 
-  public static DataMap fillInDefaultOnRecord(RecordDataSchema schema, DataMap dataMap) throws CloneNotSupportedException
+  private static DataMap fillInDefaultOnRecord(RecordDataSchema schema, DataMap dataMap) throws CloneNotSupportedException
   {
     DataMap dataWithDefault = dataMap.clone();
     for (RecordDataSchema.Field field : schema.getFields())
@@ -133,7 +138,7 @@ public class ResponseUtils
     return dataWithDefault;
   }
 
-  public static DataMap fillInDefaultOnMap(MapDataSchema schema, DataMap dataMap) throws CloneNotSupportedException
+  private static DataMap fillInDefaultOnMap(MapDataSchema schema, DataMap dataMap) throws CloneNotSupportedException
   {
     DataSchema valueSchema = schema.getValues();
     DataMap dataWithDefault = dataMap.clone();
@@ -144,7 +149,7 @@ public class ResponseUtils
     return dataWithDefault;
   }
 
-  public static DataList fillInDefaultOnArray(ArrayDataSchema schema, DataList dataList)
+  private static DataList fillInDefaultOnArray(ArrayDataSchema schema, DataList dataList)
   {
     DataSchema itemDataSchema = schema.getItems();
     DataList dataListWithDefault = new DataList(dataList.size());
@@ -155,7 +160,7 @@ public class ResponseUtils
     return dataListWithDefault;
   }
 
-  public static DataMap fillInDefaultOnUnion(UnionDataSchema schema, DataMap dataMap) throws CloneNotSupportedException
+  private static DataMap fillInDefaultOnUnion(UnionDataSchema schema, DataMap dataMap) throws CloneNotSupportedException
   {
     DataMap dataWithDefault = dataMap.clone();
     if (dataWithDefault.size() == 1)
@@ -174,7 +179,7 @@ public class ResponseUtils
     return dataWithDefault;
   }
 
-  public static Object fillInDefaultOnTyperef(TyperefDataSchema typerefDataSchema, Object data) throws CloneNotSupportedException
+  private static Object fillInDefaultOnTyperef(TyperefDataSchema typerefDataSchema, Object data) throws CloneNotSupportedException
   {
     DataSchema dataSchema = typerefDataSchema.getDereferencedDataSchema();
     return fillInDataDefault(dataSchema, data);
