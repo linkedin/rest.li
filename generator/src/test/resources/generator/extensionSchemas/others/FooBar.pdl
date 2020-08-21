@@ -1,0 +1,3 @@
+record FooBar {
+  fooBar: string
+}

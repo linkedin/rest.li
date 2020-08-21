@@ -1,3 +1,0 @@
-record Bar {
-  b1: int
-}

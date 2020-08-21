@@ -19,11 +19,7 @@ package com.linkedin.pegasus.generator;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.resolver.AbstractMultiFormatDataSchemaResolver;
 import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
-import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
-import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -35,7 +31,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
@@ -118,6 +113,18 @@ public class TestDataSchemaParser
                     "Bar"
                 }
             },
+            {
+                new String[]{
+                    "extensions/Bar.pdl",
+                    "extensions/FooExtension.pdl",
+                    "pegasus/Foo.pdl",
+                    "others/FooBar.pdl"
+                },
+                new String[]{
+                    "FooExtension",
+                    "Bar"
+                }
+            },
         };
   }
 
@@ -126,7 +133,7 @@ public class TestDataSchemaParser
   {
     String tempDirectoryPath = _tempDir.getAbsolutePath();
     String jarFile = tempDirectoryPath + FS + "test.jar";
-    String schemaDir = pegasusDir + FS + "entity-relationship";
+    String schemaDir = pegasusDir + FS + "extensionSchemas";
     Map<String, String> entryToFileMap = Arrays.stream(files).collect(Collectors.toMap(
         filename -> schemaDir + FS + filename,
         filename -> filename));
