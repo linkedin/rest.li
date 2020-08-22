@@ -170,9 +170,10 @@ public class TestDataSchemaParser
   @Test(dataProvider = "entityRelationshipInputFiles")
   public void testSchemaFilesInExtensionPathInFolder(String[] files, String[] expectedExtensions) throws Exception
   {
-    String resolverPath = "/Users/bpin/code/pegasus/pegasus/generator/src/test/resources/generator/extensionSchemas/extensions:"
-        + "/Users/bpin/code/pegasus/pegasus/generator/src/test/resources/generator/extensionSchemas/others:"
-        + "/Users/bpin/code/pegasus/pegasus/generator/src/test/resources/generator/extensionSchemas/pegasus";
+    String pegasusWithFS = pegasusDir + FS;
+    String resolverPath = pegasusWithFS + "extensionSchemas/extensions:"
+        + pegasusWithFS + "extensionSchemas/others:"
+        + pegasusWithFS + "extensionSchemas/pegasus";
     ExtensionsDataSchemaResolver resolver = new ExtensionsDataSchemaResolver(resolverPath);
     try
     {
