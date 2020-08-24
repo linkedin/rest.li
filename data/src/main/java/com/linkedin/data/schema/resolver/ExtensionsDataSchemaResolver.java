@@ -46,7 +46,7 @@ public class ExtensionsDataSchemaResolver extends AbstractMultiFormatDataSchemaR
     FileDataSchemaResolver resolver =
         new FileDataSchemaResolver(PdlSchemaParserFactory.instance(), resolverPath, dependencyResolver);
     resolver.setExtension(PdlSchemaParser.FILE_EXTENSION);
-    resolver.setSchemasDirectoryName(SchemaDirectoryName.EXTENSIONS);
+    resolver.setSchemasDirectoryName(schemaDirectoryName);
     return resolver;
   }
 

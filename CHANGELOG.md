@@ -14,7 +14,10 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.5.5] - 2020-08-20
+## [29.5.6] - 2020-08-21
+- Add a constructor for DataSchemaParser, which is able to pass ExtensionsDataSchemaResolver to the DataSchemaParser to parse schemas from both extensions and pegasus directories.
+
+## [29.5.5] - 2020-08-21
 - Updated File and class path DataSchemaResolvers to resolve extension schemas from /extensions directory if specified.
 - Added DarkGateKeeper to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
 
@@ -33,6 +36,7 @@ and what APIs have changed, if applicable.
 
 ## [29.5.1] - 2020-08-14
 - Provide an option in `SmoothRateLimiter` to not drop tasks if going above the max buffered. Dropping tasks might be more diruptive to workflows compared to just not ratelimit.
+- Fix non-deterministic issues on generated java files to solve build performance issues.
 
 ## [29.5.0] - 2020-08-12
 - Add Callback method for `ClusterInfoProvider.getDarkClusterConfigMap`.
@@ -4606,7 +4610,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.6...master
+[29.5.6]: https://github.com/linkedin/rest.li/compare/v29.5.5...v29.5.6
 [29.5.5]: https://github.com/linkedin/rest.li/compare/v29.5.4...v29.5.5
 [29.5.4]: https://github.com/linkedin/rest.li/compare/v29.5.3...v29.5.4
 [29.5.3]: https://github.com/linkedin/rest.li/compare/v29.5.2...v29.5.3

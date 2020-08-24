@@ -20,7 +20,12 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
+import com.linkedin.data.schema.resolver.AbstractMultiFormatDataSchemaResolver;
+import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
+import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
+import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
+import com.linkedin.data.schema.resolver.SchemaDirectoryName;
 import com.linkedin.util.FileUtil;
 import java.io.File;
 import java.io.FileFilter;
@@ -30,11 +35,11 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 
 
@@ -47,31 +52,42 @@ public class DataSchemaParser
 {
   private final String _resolverPath;
   private final Map<String, FileFormatDataSchemaParser> _parserByFileExtension;
-  private final MultiFormatDataSchemaResolver _resolver;
+  private final AbstractMultiFormatDataSchemaResolver _resolver;
 
   /**
    * @param resolverPath provides the search paths separated by the system file separator, or null for no search paths.
    */
-  public DataSchemaParser(String resolverPath) {
-    this(resolverPath, MultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES);
+  public DataSchemaParser(String resolverPath)
+  {
+    this(resolverPath, AbstractMultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES);
   }
 
+  /**
+   * @param resolverPath provides the search paths separated by the system file separator, or null for no search paths.
+   * @param parserFactoriesForFromats list of different format that we want to parse
+   */
   public DataSchemaParser(
       String resolverPath,
       List<DataSchemaParserFactory> parserFactoriesForFromats)
   {
+    _parserByFileExtension = new HashMap<>();
     _resolverPath = resolverPath;
-
     MultiFormatDataSchemaResolver resolver =
       new MultiFormatDataSchemaResolver(resolverPath, parserFactoriesForFromats);
-    _parserByFileExtension = new HashMap<>();
-    for (DataSchemaParserFactory parserForFormat : parserFactoriesForFromats)
-    {
-      FileFormatDataSchemaParser fileFormatParser =
-        new FileFormatDataSchemaParser(resolverPath, resolver, parserForFormat);
-      _parserByFileExtension.put(parserForFormat.getLanguageExtension(), fileFormatParser);
-    }
     this._resolver = resolver;
+    init(resolver, resolverPath, parserFactoriesForFromats);
+  }
+
+  /**
+   * @param resolverPath provides the search paths separated by the system file separator, or null for no search paths.
+   * @param resolver A resolver that address its own specific requirement, for example, resolving extension schemas in a Jar file
+   */
+  public DataSchemaParser(String resolverPath, AbstractMultiFormatDataSchemaResolver resolver)
+  {
+    _parserByFileExtension = new HashMap<>();
+    _resolverPath = resolverPath;
+    this._resolver = resolver;
+    init(resolver, resolverPath, MultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES);
   }
 
   public String getResolverPath()
@@ -159,6 +175,18 @@ public class DataSchemaParser
     return combine(results);
   }
 
+  private void init(AbstractMultiFormatDataSchemaResolver resolver,
+      String resolverPath,
+      List<DataSchemaParserFactory> parserFactoriesForFromats)
+  {
+    for (DataSchemaParserFactory parserForFormat : parserFactoriesForFromats)
+    {
+      FileFormatDataSchemaParser fileFormatParser =
+          new FileFormatDataSchemaParser(resolverPath, resolver, parserForFormat);
+      _parserByFileExtension.put(parserForFormat.getLanguageExtension(), fileFormatParser);
+    }
+  }
+
   private static ParseResult combine(Collection<ParseResult> parseResults)
   {
     ParseResult combined = new ParseResult();
@@ -189,6 +217,26 @@ public class DataSchemaParser
     public Map<DataSchema, DataSchemaLocation> getSchemaAndLocations()
     {
       return _schemaAndLocations;
+    }
+
+    public Map<DataSchema, DataSchemaLocation> getExtensionDataSchemaAndLocations()
+    {
+      return _schemaAndLocations.entrySet().stream().filter(entry ->
+      {
+        DataSchemaLocation dataSchemaLocation = entry.getValue();
+        if (dataSchemaLocation instanceof InJarFileDataSchemaLocation)
+        {
+          InJarFileDataSchemaLocation inJarFileDataSchemaLocation = (InJarFileDataSchemaLocation) dataSchemaLocation;
+          return inJarFileDataSchemaLocation.getPathInJar().startsWith(SchemaDirectoryName.EXTENSIONS.getName());
+        }
+        else if (dataSchemaLocation instanceof FileDataSchemaLocation)
+        {
+          FileDataSchemaLocation fileDataSchemaLocation = (FileDataSchemaLocation) dataSchemaLocation;
+          return fileDataSchemaLocation.getSourceFile().getName().endsWith("Extension.pdl") &&
+            fileDataSchemaLocation.getSourceFile().getParent().indexOf(SchemaDirectoryName.EXTENSIONS.getName()) > 0;
+        }
+        return false;
+      }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     public Set<File> getSourceFiles()
