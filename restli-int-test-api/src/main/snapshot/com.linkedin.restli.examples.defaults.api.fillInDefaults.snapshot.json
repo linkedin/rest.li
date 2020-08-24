@@ -1,0 +1,137 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "HighLevelRecordWithDefault",
+    "namespace" : "com.linkedin.restli.examples.defaults.api",
+    "fields" : [ {
+      "name" : "noDefaultFieldA",
+      "type" : "int"
+    }, {
+      "name" : "intDefaultFieldB",
+      "type" : "int",
+      "default" : -1
+    }, {
+      "name" : "midLevelRecordWithoutDefault",
+      "type" : {
+        "type" : "record",
+        "name" : "MidLevelRecordWithDefault",
+        "fields" : [ {
+          "name" : "intWithDefault",
+          "type" : "int",
+          "default" : -1
+        }, {
+          "name" : "intWithoutDefault",
+          "type" : "int"
+        }, {
+          "name" : "lowLevelRecordWithDefault",
+          "type" : {
+            "type" : "record",
+            "name" : "LowLevelRecordWithDefault",
+            "fields" : [ {
+              "name" : "nameWithDefault",
+              "type" : "string",
+              "default" : "i_am_default_name"
+            }, {
+              "name" : "nameWithoutDefault",
+              "type" : "string"
+            } ]
+          },
+          "default" : {
+            "nameWithDefault" : "a",
+            "nameWithoutDefault" : "b"
+          },
+          "optional" : true
+        }, {
+          "name" : "lowLevelRecordWithoutDefault",
+          "type" : "LowLevelRecordWithDefault",
+          "optional" : true
+        } ]
+      }
+    }, {
+      "name" : "midLevelRecordWithDefault",
+      "type" : "MidLevelRecordWithDefault",
+      "default" : {
+        "intWithoutDefault" : 0,
+        "intWithDefault" : 0
+      }
+    }, {
+      "name" : "midLevelField",
+      "type" : "MidLevelRecordWithDefault",
+      "optional" : true
+    }, {
+      "name" : "testFieldArray",
+      "type" : {
+        "type" : "array",
+        "items" : "MidLevelRecordWithDefault"
+      },
+      "default" : [ {
+        "intWithoutDefault" : 0,
+        "intWithDefault" : 0
+      } ]
+    } ]
+  }, "com.linkedin.restli.examples.defaults.api.LowLevelRecordWithDefault", "com.linkedin.restli.examples.defaults.api.MidLevelRecordWithDefault", {
+    "type" : "record",
+    "name" : "RecordCriteria",
+    "namespace" : "com.linkedin.restli.examples.defaults.api",
+    "fields" : [ {
+      "name" : "intWithoutDefault",
+      "type" : "int"
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "Empty",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ ]
+  } ],
+  "schema" : {
+    "name" : "fillInDefaults",
+    "namespace" : "com.linkedin.restli.examples.defaults.api",
+    "path" : "/fillInDefaults",
+    "schema" : "com.linkedin.restli.examples.defaults.api.HighLevelRecordWithDefault",
+    "doc" : "generated from: com.linkedin.restli.examples.greetings.server.defaults.FieldFillInDefaultResources",
+    "collection" : {
+      "identifier" : {
+        "name" : "fillInDefaultsId",
+        "type" : "long"
+      },
+      "supports" : [ "batch_get", "get", "get_all" ],
+      "methods" : [ {
+        "method" : "get"
+      }, {
+        "method" : "batch_get"
+      }, {
+        "method" : "get_all",
+        "pagingSupported" : true
+      } ],
+      "finders" : [ {
+        "name" : "findRecords",
+        "parameters" : [ {
+          "name" : "noDefaultFieldA",
+          "type" : "int"
+        } ]
+      } ],
+      "batchFinders" : [ {
+        "name" : "searchRecords",
+        "parameters" : [ {
+          "name" : "criteria",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.defaults.api.RecordCriteria\" }"
+        } ],
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+        },
+        "batchParam" : "criteria"
+      } ],
+      "actions" : [ {
+        "name" : "defaultFillAction",
+        "parameters" : [ {
+          "name" : "actionParam",
+          "type" : "long"
+        } ],
+        "returns" : "com.linkedin.restli.examples.defaults.api.HighLevelRecordWithDefault"
+      } ],
+      "entity" : {
+        "path" : "/fillInDefaults/{fillInDefaultsId}"
+      }
+    }
+  }
+}

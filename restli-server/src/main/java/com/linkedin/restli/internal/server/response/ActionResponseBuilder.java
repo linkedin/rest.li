@@ -17,8 +17,10 @@
 package com.linkedin.restli.internal.server.response;
 
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.FieldDef;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.message.Request;
 import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -85,12 +87,37 @@ public class ActionResponseBuilder implements RestLiResponseBuilder<RestLiRespon
       status = HttpStatus.S_200_OK;
     }
     RecordDataSchema actionReturnRecordDataSchema = routingResult.getResourceMethod().getActionReturnRecordDataSchema();
+
+    final Object actionResponseValue;
+    if (value != null && RecordTemplate.class.isAssignableFrom(value.getClass())
+        && routingResult.getContext().isFillInDefaultsRequested())
+    {
+      RecordTemplate actionResponseRecordTemplate = (RecordTemplate) value;
+      DataMap dataMap = actionResponseRecordTemplate.data();
+      dataMap = (DataMap) ResponseUtils.fillInDataDefault(actionResponseRecordTemplate.schema(), dataMap);
+      Object valueWithDefault = null;
+      try
+      {
+        valueWithDefault = (Object) value.getClass().getConstructor(DataMap.class).newInstance(dataMap);
+      }
+      catch (Exception e)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+            "Unexpected error encountered. Can not create return value class " + value.getClass().getSimpleName()
+                + " with default filled  inside of an ActionResult returned by the resource method: "
+                + routingResult.getResourceMethod());
+      }
+      actionResponseValue = valueWithDefault;
+    }
+    else
+    {
+      actionResponseValue = value;
+    }
     @SuppressWarnings("unchecked")
     FieldDef<Object> actionReturnFieldDef =
         (FieldDef<Object>) routingResult.getResourceMethod().getActionReturnFieldDef();
     final ActionResponse<?> actionResponse =
-        new ActionResponse<>(value, actionReturnFieldDef, actionReturnRecordDataSchema);
-
+        new ActionResponse<>(actionResponseValue, actionReturnFieldDef, actionReturnRecordDataSchema);
     return new RestLiResponseDataImpl<>(new ActionResponseEnvelope(status, actionResponse), headers, cookies);
   }
 }

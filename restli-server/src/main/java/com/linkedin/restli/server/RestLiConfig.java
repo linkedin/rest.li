@@ -94,6 +94,9 @@ public class RestLiConfig
   // configuration for whether to validate any type of resource entity keys Ex. path keys or keys in batch request
   private boolean _validateResourceKeys = false;
 
+  // config flag for determine restli server to fill-in default values or not
+  private boolean _fillInDefaultValues = false;
+
   // resource method level configuration
   private RestLiMethodConfig _methodConfig;
 
@@ -559,14 +562,35 @@ public class RestLiConfig
   /**
    * Get whether fill in stacktrace for {@link com.linkedin.r2.message.rest.RestException}
    */
-  public boolean isWritableStackTrace() {
+  public boolean isWritableStackTrace()
+  {
     return _writableStackTrace;
   }
 
   /**
    * Set whether fill in stacktrace for {@link com.linkedin.r2.message.rest.RestException}
    */
-  public void setWritableStackTrace(boolean writableStackTrace) {
+  public void setWritableStackTrace(boolean writableStackTrace)
+  {
     _writableStackTrace = writableStackTrace;
+  }
+
+  /**
+   * Get/Set for filling default values in restli response
+   * check config to see if the data in result should fill in default in fields
+   * @return boolean
+   */
+  public boolean shouldFillInDefaultValues()
+  {
+    return _fillInDefaultValues;
+  }
+
+  /**
+   * set the flag to decide whether to fill in default values in result record's fields
+   * @param fillInDefaultValues a boolean for the flag
+   */
+  public void setFillInDefaultValues(boolean fillInDefaultValues)
+  {
+    _fillInDefaultValues = fillInDefaultValues;
   }
 }

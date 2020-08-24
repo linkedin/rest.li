@@ -1,0 +1,7 @@
+namespace com.linkedin.restli.examples.defaults.api
+
+record LowLevelRecordWithDefault {
+  nameWithDefault: string = "i_am_default_name",
+  nameWithoutDefault: string,
+}
+

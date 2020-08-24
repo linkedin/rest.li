@@ -69,6 +69,7 @@ abstract class BaseRestLiServer
   private final List<Filter> _filters;
   private final Set<String> _customContentTypes;
   private final ResourceMethodConfigProvider _methodConfigProvider;
+  private final boolean _fillInDefaultValueConfigured;
 
   BaseRestLiServer(RestLiConfig config,
       ResourceFactory resourceFactory,
@@ -88,6 +89,7 @@ abstract class BaseRestLiServer
     _responseHandler = new RestLiResponseHandler(_errorResponseBuilder);
 
     _filters = config.getFilters() != null ? config.getFilters() : new ArrayList<>();
+    _fillInDefaultValueConfigured = config.shouldFillInDefaultValues();
 
     _methodConfigProvider = ResourceMethodConfigProvider.build(config.getMethodConfig());
   }
@@ -140,6 +142,7 @@ abstract class BaseRestLiServer
       ResourceMethodConfig methodConfig = _methodConfigProvider.apply(method);
       context.setAlwaysProjectedFields(methodConfig.getAlwaysProjectedFields().getValue());
 
+      context.setFillInDefaultValues(_fillInDefaultValueConfigured);
       return new RoutingResult(context, method, methodConfig);
     }
     catch (RestLiSyntaxException e)

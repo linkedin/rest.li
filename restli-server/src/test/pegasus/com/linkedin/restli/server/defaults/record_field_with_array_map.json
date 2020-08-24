@@ -1,0 +1,10 @@
+{
+  "schema": "RecordB.pdl",
+  "context": "A case where array and map with default are tested",
+  "input": {
+  },
+  "expect": {
+    "field1": [-1],
+    "field2": {"defaultKey" : ["defaultValue1", "defaultValue2"]}
+  }
+}

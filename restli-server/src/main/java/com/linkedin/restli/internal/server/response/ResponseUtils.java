@@ -18,8 +18,16 @@ package com.linkedin.restli.internal.server.response;
 
 
 import com.linkedin.data.ByteString;
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.entitystream.StreamDataCodec;
+import com.linkedin.data.collections.CheckedUtil;
+import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.MapDataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.entitystream.EntityStream;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -32,7 +40,6 @@ import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.CookieUtil;
-import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceModel;
@@ -44,9 +51,10 @@ import com.linkedin.restli.server.RestLiServiceException;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import javax.activation.MimeTypeParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -54,6 +62,7 @@ import javax.activation.MimeTypeParseException;
  */
 public class ResponseUtils
 {
+  private static final Logger log = LoggerFactory.getLogger(ResponseUtils.class);
   /**
    * If needed, translate a given canonical key to its alternative format.
    *
@@ -82,6 +91,98 @@ public class ResponseUtils
     {
       return canonicalKey;
     }
+  }
+
+  /**
+   * @param schema schema for the companion data map
+   * @param dataWithoutDefault data map that is response for a restli request
+   * @return data object that filled in with default values on the field with default value set on the schema
+   */
+  public static Object fillInDataDefault(DataSchema schema, Object dataWithoutDefault)
+  {
+    try
+    {
+      switch (schema.getType())
+      {
+        case RECORD:
+          return fillInDefaultOnRecord((RecordDataSchema) schema, (DataMap) dataWithoutDefault);
+        case TYPEREF:
+          return fillInDefaultOnTyperef((TyperefDataSchema) schema, dataWithoutDefault);
+        case MAP:
+          return fillInDefaultOnMap((MapDataSchema) schema, (DataMap) dataWithoutDefault);
+        case UNION:
+          return fillInDefaultOnUnion((UnionDataSchema) schema, (DataMap) dataWithoutDefault);
+        case ARRAY:
+          return fillInDefaultOnArray((ArrayDataSchema) schema, (DataList) dataWithoutDefault);
+        default:
+          return dataWithoutDefault;
+      }
+    }
+    catch (CloneNotSupportedException ex)
+    {
+      throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, ex);
+    }
+  }
+
+  private static DataMap fillInDefaultOnRecord(RecordDataSchema schema, DataMap dataMap) throws CloneNotSupportedException
+  {
+    DataMap dataWithDefault = dataMap.clone();
+    for (RecordDataSchema.Field field : schema.getFields())
+    {
+      if (dataMap.containsKey(field.getName()) || field.getDefault() != null)
+      {
+        Object fieldData = dataMap.containsKey(field.getName()) ? dataMap.get(field.getName()) : field.getDefault();
+        CheckedUtil.putWithoutChecking(dataWithDefault, field.getName(), fillInDataDefault(field.getType(), fieldData));
+      }
+    }
+    return dataWithDefault;
+  }
+
+  private static DataMap fillInDefaultOnMap(MapDataSchema schema, DataMap dataMap) throws CloneNotSupportedException
+  {
+    DataSchema valueSchema = schema.getValues();
+    DataMap dataWithDefault = dataMap.clone();
+    for (Map.Entry<String, Object> entry : dataMap.entrySet())
+    {
+      CheckedUtil.putWithoutChecking(dataWithDefault, entry.getKey(), fillInDataDefault(valueSchema, entry.getValue()));
+    }
+    return dataWithDefault;
+  }
+
+  private static DataList fillInDefaultOnArray(ArrayDataSchema schema, DataList dataList)
+  {
+    DataSchema itemDataSchema = schema.getItems();
+    DataList dataListWithDefault = new DataList(dataList.size());
+    for (Object o : dataList)
+    {
+      CheckedUtil.addWithoutChecking(dataListWithDefault, fillInDataDefault(itemDataSchema, o));
+    }
+    return dataListWithDefault;
+  }
+
+  private static DataMap fillInDefaultOnUnion(UnionDataSchema schema, DataMap dataMap) throws CloneNotSupportedException
+  {
+    DataMap dataWithDefault = dataMap.clone();
+    if (dataWithDefault.size() == 1)
+    {
+      for (Map.Entry<String, Object> entry: dataWithDefault.entrySet())
+      {
+        String memberTypeKey = entry.getKey();
+        DataSchema memberDataSchema = schema.getTypeByMemberKey(memberTypeKey);
+        if (memberDataSchema == null)
+        {
+          return dataWithDefault;
+        }
+        CheckedUtil.putWithoutChecking(dataWithDefault, memberTypeKey, fillInDataDefault(memberDataSchema, entry.getValue()));
+      }
+    }
+    return dataWithDefault;
+  }
+
+  private static Object fillInDefaultOnTyperef(TyperefDataSchema typerefDataSchema, Object data) throws CloneNotSupportedException
+  {
+    DataSchema dataSchema = typerefDataSchema.getDereferencedDataSchema();
+    return fillInDataDefault(dataSchema, data);
   }
 
   public static RestResponse buildResponse(RoutingResult routingResult, RestLiResponse restLiResponse)

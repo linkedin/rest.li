@@ -227,4 +227,15 @@ public interface ResourceContext extends CustomRequestContext
    * specified at the service level and apply to all resources and methods.
    */
   Set<String> getAlwaysProjectedFields();
+
+  /**
+   * This is to determine whether the service will fill in default values when the returned value record has some missing
+   * field. In case:
+   * 1. the client is requesting that the default value to be returned. Reads the appropriate
+   * query parameter to determine this information, defaults to false if the query parameter isn't present.
+   * 2. the server is configured to return default value for every request-response pair
+   * @return true if the service need to fill in default value when the field of the return value record is absent
+   */
+  boolean isFillInDefaultsRequested();
+  void setFillInDefaultValues(boolean fillInDefaultValues);
 }

@@ -113,6 +113,9 @@ public class ResourceContextImpl implements ServerResourceContext
   // Request entity stream
   private EntityStream<ByteString> _requestEntityStream;
 
+  // Fill in default values
+  private boolean _fillInDefaultValues;
+
   /**
    * Default constructor.
    *
@@ -214,6 +217,7 @@ public class ResourceContextImpl implements ServerResourceContext
 
     _projectionMode = ProjectionMode.getDefault();
     _metadataProjectionMode = ProjectionMode.getDefault();
+    _fillInDefaultValues = getParameter(RestConstants.FILL_IN_DEFAULTS_PARAM) != null;
   }
 
   private static boolean isResponseAttachmentsAllowed(Request request)
@@ -627,6 +631,26 @@ public class ResourceContextImpl implements ServerResourceContext
       return true;
     }
     return ArgumentUtils.parseReturnEntityParameter(returnEntityValue);
+  }
+
+  @Override
+  public boolean isFillInDefaultsRequested()
+  {
+    return _fillInDefaultValues;
+  }
+
+  /**
+   * if a server has a configuration to set the flag to true, it will be set
+   * through this method, and if the request itself already has the flag set to true
+   * we will keep the flag remain true even the server config is not set.
+   * That is => either server config or client request param will be able to
+   * request fill in default values
+   * @param fillInDefaultValues boolean to set the flag for filling default values
+   */
+  @Override
+  public void setFillInDefaultValues(boolean fillInDefaultValues)
+  {
+    _fillInDefaultValues = fillInDefaultValues || _fillInDefaultValues;
   }
 
   @Override
