@@ -63,7 +63,7 @@ Based on these test suites, we've made the following compatibility matrices:
 | Typerefs | x | x | Typerefs.pdsc may need a different name in Python to avoid a naming conflict. If the filename is not changed, Python testsuite will have a folder for typeref resources, such as collectionTyperef, and it will also generate typeref.py from Typerefs.pdsc. |
 | Union&nbsp;of&nbsp;Complex Types | x | x | |
 | Union&nbsp;of&nbsp;Primitives | x | x | |
-| Union&nbsp;of&nbsp;Same&nbsp;Types | x | | Python does not support union of same types using aliases |
+| Union&nbsp;of&nbsp;Same&nbsp;Types | x | x | |
 | Url | x | x | |
 
 
