@@ -68,11 +68,7 @@ and what APIs have changed, if applicable.
 
 ## [29.4.6] - 2020-07-29
 - Provide a default symbol table provider implementation that doesn't use symbol tables for requests/responses of its own, but is able to retrieve remote symbol tables to decode responses from other services (#357)
-<<<<<<< HEAD
 - Provide public method in the `AbstractRequestBuilder` for adding field projections (#353)
-=======
-- Provide public method in the AbstractRequestBuilder for adding field projections (#353)
->>>>>>> d63ee8467... update changelog.md
 
 ## [29.4.5] - 2020-07-21
 - Update `ExtensionSchemaValidation` task to check extension schema annotation (#254)
