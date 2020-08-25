@@ -137,11 +137,23 @@ field is not present in the Create request data.
 
 ### Validation for Update Requests
 
-`@ReadOnly` and `@CreateOnly` does not affect input data validation for
-Rest.li update requests. This is because update is a PUT method and
-should contain the whole entity, unlike partial update where
-non-modified fields can be omitted. In the update request, the
-`@ReadOnly` or `@CreateOnly` field is expected to have the same value as
+Update methods can be used in two scenarios:
+1.  As a PUT method, that updates the whole entity. The client should've
+fetched the original entity, updated it and then called UPDATE with the
+full entity. In this case, both `@ReadOnly` and `@CreateOnly` marked fields
+should be present.
+2.  As CREATE when UPDATE is used to as UPSERT method. In this scenario, UPDATE
+is used both to update or create the entity (if it is not already present). When
+the entity is being created, the `@ReadOnly` fields may be absent and the `@CreateOnly`
+fields may be present. Similarly, when the entity is be updated, both sets of fields
+will be present (similar to scenario 1).
+
+So to support both these scenarios, the validation for Update requests is relaxed
+to allow `@ReadOnly` and `@CreateOnly` fields to be present and for `@ReadOnly`
+fields to be optional (when the field is marked as required in schema). 
+
+In the update request, when the `@ReadOnly` or `@CreateOnly` fields are present, and if 
+the request is updating an existing entity, they are expected to have the same value as
 the original entity (if the field was missing from the original entity,
 it should be missing in the update request too). *However, this is not
 checked by the Rest.li framework and should be checked manually in the
