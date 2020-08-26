@@ -225,16 +225,23 @@ public class RetryClient extends D2ClientDelegator
         if (targetHostUri == null)
         {
           Set<URI> exclusionSet = ExcludedHostHints.getRequestContextExcludedHosts(_context);
-          int attempts = exclusionSet.size();
-          if (attempts <= _limit)
+          if (exclusionSet == null || exclusionSet.isEmpty())
           {
-            LOG.warn("A retriable exception happens. Going to retry. This is attempt {}. Current exclusion set: ",
-                attempts, ". Current exclusion set: " + exclusionSet);
-            retry = doRetryRequest(_request, _context);
+            LOG.warn("Excluded hosts hint for retry is not set or is empty. This request will fail.");
           }
           else
           {
-            LOG.warn("Retry limit exceeded. This request will fail.");
+            int attempts = exclusionSet.size();
+            if (attempts <= _limit)
+            {
+              LOG.warn("A retriable exception happens. Going to retry. This is attempt {}. Current exclusion set: ",
+                  attempts, ". Current exclusion set: " + exclusionSet);
+              retry = doRetryRequest(_request, _context);
+            }
+            else
+            {
+              LOG.warn("Retry limit exceeded. This request will fail.");
+            }
           }
         }
       }
