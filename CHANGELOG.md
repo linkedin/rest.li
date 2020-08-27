@@ -13,6 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.5.7] - 2020-08-26
+- Add pdsc support for ExtensionsDataSchemaResolver for support legacy files in pdsc
 - Add/patch default values in restli response, controlled by $sendDefault flag in URL or server configs
 
 ## [29.5.6] - 2020-08-21
@@ -4611,7 +4614,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.7...master
+[29.5.7]: https://github.com/linkedin/rest.li/compare/v29.5.6...v29.5.7
 [29.5.6]: https://github.com/linkedin/rest.li/compare/v29.5.5...v29.5.6
 [29.5.5]: https://github.com/linkedin/rest.li/compare/v29.5.4...v29.5.5
 [29.5.4]: https://github.com/linkedin/rest.li/compare/v29.5.3...v29.5.4
