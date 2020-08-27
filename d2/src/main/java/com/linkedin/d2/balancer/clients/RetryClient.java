@@ -227,7 +227,7 @@ public class RetryClient extends D2ClientDelegator
           Set<URI> exclusionSet = ExcludedHostHints.getRequestContextExcludedHosts(_context);
           if (exclusionSet == null || exclusionSet.isEmpty())
           {
-            LOG.warn("Excluded hosts hint for retry is not set or is empty. This request will fail.");
+            LOG.warn("Excluded hosts hint for retry is not set or is empty. This failed request will not be retried.");
           }
           else
           {
