@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.SkipWhenEmpty;
@@ -20,6 +21,12 @@ public class ChangedFileReportTask extends DefaultTask
 
   private FileCollection _idlFiles = getProject().files();
   private FileCollection _snapshotFiles = getProject().files();
+
+  public ChangedFileReportTask()
+  {
+    //with Gradle 6.0, Declaring an incremental task without outputs is not allowed.
+    getOutputs().upToDateWhen(Specs.satisfyNone());
+  }
 
   @TaskAction
   public void checkFilesForChanges(IncrementalTaskInputs inputs)
