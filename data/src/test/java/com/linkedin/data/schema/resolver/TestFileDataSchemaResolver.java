@@ -43,6 +43,7 @@ public class TestFileDataSchemaResolver
   static
   {
     JAR_ENTRIES.put("pegasus/com/example/models/Foo.pdl", "namespace com.example.models @legit record Foo {}");
+    JAR_ENTRIES.put("extensions/com/example/models/FooExtension.pdl", "namespace com.example.models @legit record FooExtension {}");
     JAR_ENTRIES.put("legacyPegasusSchemas/com/example/models/Foo.pdl", "namespace com.example.models @impostor record Foo {}");
     JAR_ENTRIES.put("legacyPegasusSchemas/com/example/models/IgnoreAlternative.pdl", "namespace com.example.models record IgnoreAlternative {}");
     JAR_ENTRIES.put("com/example/models/Foo.pdl", "namespace com.example.models @impostor record Foo {}");
@@ -54,22 +55,12 @@ public class TestFileDataSchemaResolver
   @BeforeClass
   public void beforeClass() throws IOException
   {
-    // Write a temp JAR file using the entries defined above
-    _tempJar = File.createTempFile(getClass().getCanonicalName(), ".jar");
-    _tempJar.deleteOnExit();
-    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(_tempJar));
-    for (Map.Entry<String, String> entry : JAR_ENTRIES.entrySet())
-    {
-      jarOutputStream.putNextEntry(new ZipEntry(entry.getKey()));
-      jarOutputStream.write(entry.getValue().getBytes(Charset.defaultCharset()));
-      jarOutputStream.closeEntry();
-    }
-    jarOutputStream.finish();
-    jarOutputStream.close();
+    _tempJar = TestDataSchemaResolver.buildTempJar(JAR_ENTRIES);
   }
 
   /**
-   * Ensures that the resolver only detects schemas packaged under the root 'pegasus' directory in data template JARs.
+   * Ensures that the resolver only detects schemas packaged under the default root 'pegasus'
+   * or {@link FileDataSchemaResolver#getSchemasDirectoryName()} directory in data template JARs.
    * Any schemas placed at the root or under some alternative root directory should be ignored by the resolver.
    */
   @Test
@@ -83,6 +74,13 @@ public class TestFileDataSchemaResolver
     Assert.assertNotNull(schema);
     Assert.assertTrue(schema.getProperties().containsKey("legit"));
     Assert.assertFalse(schema.getProperties().containsKey("impostor"));
+    // Assert extension schemas are not searched.
+    Assert.assertNull(resolver.findDataSchema("com.example.models.FooExtension", new StringBuilder()));
+
+    // Assert that schemas are resolved from provided directory path
+    resolver.setSchemasDirectoryName(SchemaDirectoryName.EXTENSIONS);
+    schema = resolver.findDataSchema("com.example.models.FooExtension", new StringBuilder());
+    Assert.assertTrue(schema.getProperties().containsKey("legit"));
 
     // Assert that alternative root directories are not searched
     schema = resolver.findDataSchema("com.example.models.IgnoreAlternative", new StringBuilder());

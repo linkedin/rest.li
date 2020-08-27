@@ -1,0 +1,19 @@
+{
+  "schema": "Bar.pdl",
+  "context": "Test b1 will be filled because default is provided, b3 will add f1",
+  "input": {
+    "b3": {
+      "f2": 1
+    }
+  },
+  "expect": {
+    "b1": {
+      "f1": 5,
+      "f2": 10
+    },
+    "b3": {
+      "f2": 1,
+      "f1": 5
+    }
+  }
+}

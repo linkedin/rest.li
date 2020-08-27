@@ -17,19 +17,26 @@
 package com.linkedin.pegasus.generator;
 
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaLocation;
+import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.generator.AbstractGenerator;
+import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -42,21 +49,24 @@ import static org.testng.Assert.*;
 public class TestDataSchemaParser
 {
   private static final String FS = File.separator;
-  private static final String testDir = System.getProperty("testDir");
+  private static final String testDir = System.getProperty("testDir", new File("src/test").getAbsolutePath());
   private static final String pegasusDir = testDir + FS + "resources" + FS + "generator";
 
   private File _tempDir;
+  private File _dataTemplateTargetDir;
 
   @BeforeMethod
   private void beforeMethod() throws IOException
   {
     _tempDir = Files.createTempDirectory(this.getClass().getSimpleName() + System.currentTimeMillis()).toFile();
+    _dataTemplateTargetDir = Files.createTempDirectory(this.getClass().getSimpleName() + System.currentTimeMillis()).toFile();
   }
 
   @AfterMethod
   private void afterMethod() throws IOException
   {
     FileUtils.forceDelete(_tempDir);
+    FileUtils.forceDelete(_dataTemplateTargetDir);
   }
 
   @DataProvider(name = "inputFiles")
@@ -91,6 +101,107 @@ public class TestDataSchemaParser
     }
     parseResult.getSchemaAndLocations().values().forEach(loc -> assertEquals(loc.getSourceFile().getAbsolutePath(), jarFile));
   }
+
+  @DataProvider(name = "entityRelationshipInputFiles")
+  private Object[][] createResolverWithExtensionDirs()
+  {
+    return new Object[][]
+        {
+            {
+                new String[]{
+                    "extensions/BarExtension.pdl",
+                    "extensions/FooExtension.pdl",
+                    "extensions/FuzzExtension.pdl",
+                    "pegasus/Foo.pdl",
+                    "pegasus/Bar.pdl",
+                    "pegasus/Fuzz.pdsc"
+                },
+                new String[]{
+                    "FuzzExtension",
+                    "FooExtension",
+                    "BarExtension"
+                }
+            },
+            {
+                new String[]{
+                    "extensions/BarExtension.pdl",
+                    "extensions/FooExtension.pdl",
+                    "extensions/FuzzExtension.pdl",
+                    "pegasus/Foo.pdl",
+                    "pegasus/Bar.pdl",
+                    "pegasus/Fuzz.pdsc"
+                },
+                new String[]{
+                    "FooExtension",
+                    "FuzzExtension",
+                    "BarExtension"
+                }
+            },
+        };
+  }
+
+  @Test(dataProvider = "entityRelationshipInputFiles")
+  public void testSchemaFilesInExtensionPathInJar(String[] files, String[] expectedExtensions) throws Exception
+  {
+    String tempDirectoryPath = _tempDir.getAbsolutePath();
+    String jarFile = tempDirectoryPath + FS + "test.jar";
+    String schemaDir = pegasusDir + FS + "extensionSchemas";
+    Map<String, String> entryToFileMap = Arrays.stream(files).collect(Collectors.toMap(
+        filename -> schemaDir + FS + filename,
+        filename -> filename));
+    createTempJarFile(entryToFileMap, jarFile);
+
+    ExtensionsDataSchemaResolver resolver = new ExtensionsDataSchemaResolver(jarFile);
+    try
+    {
+      DataSchemaParser parser = new DataSchemaParser(jarFile, resolver);
+      DataSchemaParser.ParseResult parseResult = parser.parseSources(new String[]{jarFile});
+      Map<DataSchema, DataSchemaLocation> extensions = parseResult.getExtensionDataSchemaAndLocations();
+      assertEquals(extensions.size(), 3);
+      Set<String> actualNames = extensions
+          .keySet()
+          .stream()
+          .map(dataSchema -> (NamedDataSchema) dataSchema)
+          .map(NamedDataSchema::getName)
+          .collect(Collectors.toSet());
+      assertEquals(actualNames, Arrays.stream(expectedExtensions).collect(Collectors.toSet()));
+    }
+    catch (Exception e)
+    {
+      Assert.fail("Test failed");
+    }
+  }
+
+  @Test(dataProvider = "entityRelationshipInputFiles")
+  public void testSchemaFilesInExtensionPathInFolder(String[] files, String[] expectedExtensions) throws Exception
+  {
+    String pegasusWithFS = pegasusDir + FS;
+    String resolverPath = pegasusWithFS + "extensionSchemas/extensions:"
+        + pegasusWithFS + "extensionSchemas/others:"
+        + pegasusWithFS + "extensionSchemas/pegasus";
+    ExtensionsDataSchemaResolver resolver = new ExtensionsDataSchemaResolver(resolverPath);
+    try
+    {
+      DataSchemaParser parser = new DataSchemaParser(resolverPath, resolver);
+      String[] schemaFiles = Arrays.stream(files).map(casename -> pegasusDir + FS + "extensionSchemas" + FS + casename).toArray(String[]::new);
+      DataSchemaParser.ParseResult parseResult = parser.parseSources(schemaFiles);
+      Map<DataSchema, DataSchemaLocation> extensions = parseResult.getExtensionDataSchemaAndLocations();
+      assertEquals(extensions.size(), 3);
+      Set<String> actualNames = extensions
+          .keySet()
+          .stream()
+          .map(dataSchema -> (NamedDataSchema) dataSchema)
+          .map(NamedDataSchema::getName)
+          .collect(Collectors.toSet());
+      assertEquals(actualNames, Arrays.stream(expectedExtensions).collect(Collectors.toSet()));
+    }
+    catch (Exception e)
+    {
+      Assert.fail("Test failed");
+    }
+
+  }
+
 
   @Test
   public void testParseFromJarFileWithTranslatedSchemas() throws Exception

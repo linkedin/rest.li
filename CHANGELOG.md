@@ -14,20 +14,33 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.6.0-rc.2] - 2020-08-20
-- Fixed uri scheme reading bug when creating TrackerClient objects.
+## [29.5.7] - 2020-08-26
+- Add pdsc support for ExtensionsDataSchemaResolver for support legacy files in pdsc
+- Add/patch default values in restli response, controlled by $sendDefault flag in URL or server configs
 
-## [29.6.0-rc.1] - 2020-08-17
-- Provide new load balancer option that uses average cluster latency as the latency baseline and calculates host latency relatively to the average cluster latency.
+## [29.5.6] - 2020-08-21
+- Add a constructor for DataSchemaParser, which is able to pass ExtensionsDataSchemaResolver to the DataSchemaParser to parse schemas from both extensions and pegasus directories.
+
+## [29.5.5] - 2020-08-21
+- Updated File and class path DataSchemaResolvers to resolve extension schemas from /extensions directory if specified.
+- Added DarkGateKeeper to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
+
+## [29.5.4] - 2020-08-17
+- Increase default timeout for symbol table fetch to 1s.
+
+## [29.5.3] - 2020-08-17
+- Treat `ReadOnly` required fields as optional in `PARTIAL_UPDATE`/`BATCH_PARTIAL_UPDATE` patches.
+  This will allow such patches to set fields containing descendent `ReadOnly` required fields, which wasn't possible before.
 
 ## [29.5.2] - 2020-08-17
 - Allow publishing unstable release candidate versions of Rest.li (e.g. `1.2.3-rc.1`) from non-master branches.
     - It's _strongly_ suggested to only use a release candidate version if you have a specific reason to do so.
-- Put extension schemas into the dataTemplate jar under /extensions path instead of putting them into the extensionSchema jar.
-- Remove stacktrace when convert between RestException and Stream Exception
+- Put extension schemas into the `dataTemplate` jar under `/extensions` path instead of putting them into the `extensionSchema` jar.
+- Remove stacktrace when convert between `RestException` and `StreamException`.
 
 ## [29.5.1] - 2020-08-14
 - Provide an option in `SmoothRateLimiter` to not drop tasks if going above the max buffered. Dropping tasks might be more diruptive to workflows compared to just not ratelimit.
+- Fix non-deterministic issues on generated java files to solve build performance issues.
 
 ## [29.5.0] - 2020-08-12
 - Add Callback method for `ClusterInfoProvider.getDarkClusterConfigMap`.
@@ -514,7 +527,6 @@ Add an option in symbol table provider to pass in a list of overridden symbols i
 - Revert "LastSeenLoadBalancer: adding support for custom d2ServicePath on ZK. Add support for BackupStoreFilePath to LastSeen"
 
 ## [27.6.6]
-- <<<<<<< HEAD
 - LastSeenLoadBalancer: adding support for custom d2ServicePath on ZK. Add support for BackupStoreFilePath to LastSeen
 - Disable SymlinkAwareZooKeeperTest temporarily
 
@@ -4602,9 +4614,12 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.0-rc.2...master
-[29.6.0-rc.2]: https://github.com/linkedin/rest.li/compare/v29.6.0-rc.1...v29.6.0-rc.2
-[29.6.0-rc.1]: https://github.com/linkedin/rest.li/compare/v29.5.2...v29.6.0-rc.1
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.7...master
+[29.5.7]: https://github.com/linkedin/rest.li/compare/v29.5.6...v29.5.7
+[29.5.6]: https://github.com/linkedin/rest.li/compare/v29.5.5...v29.5.6
+[29.5.5]: https://github.com/linkedin/rest.li/compare/v29.5.4...v29.5.5
+[29.5.4]: https://github.com/linkedin/rest.li/compare/v29.5.3...v29.5.4
+[29.5.3]: https://github.com/linkedin/rest.li/compare/v29.5.2...v29.5.3
 [29.5.2]: https://github.com/linkedin/rest.li/compare/v29.5.1...v29.5.2
 [29.5.1]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.1
 [29.4.14]: https://github.com/linkedin/rest.li/compare/v29.4.13...v29.4.14

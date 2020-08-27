@@ -90,6 +90,11 @@ public class InJarFileDataSchemaLocation implements DataSchemaLocation, InputStr
     return inputStream;
   }
 
+  public String getPathInJar()
+  {
+    return _pathInJar;
+  }
+
   @Override
   public DataSchemaLocation getLightweightRepresentation() {
     if (_lightweightInJarFileDataSchemaLocation == null) {
