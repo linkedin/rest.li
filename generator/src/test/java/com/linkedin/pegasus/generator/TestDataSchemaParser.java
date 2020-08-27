@@ -111,10 +111,13 @@ public class TestDataSchemaParser
                 new String[]{
                     "extensions/BarExtension.pdl",
                     "extensions/FooExtension.pdl",
+                    "extensions/FuzzExtension.pdl",
                     "pegasus/Foo.pdl",
-                    "pegasus/Bar.pdl"
+                    "pegasus/Bar.pdl",
+                    "pegasus/Fuzz.pdsc"
                 },
                 new String[]{
+                    "FuzzExtension",
                     "FooExtension",
                     "BarExtension"
                 }
@@ -123,12 +126,14 @@ public class TestDataSchemaParser
                 new String[]{
                     "extensions/BarExtension.pdl",
                     "extensions/FooExtension.pdl",
-                    "pegasus/Bar.pdl",
+                    "extensions/FuzzExtension.pdl",
                     "pegasus/Foo.pdl",
-                    "others/FooBar.pdl"
+                    "pegasus/Bar.pdl",
+                    "pegasus/Fuzz.pdsc"
                 },
                 new String[]{
                     "FooExtension",
+                    "FuzzExtension",
                     "BarExtension"
                 }
             },
@@ -152,7 +157,7 @@ public class TestDataSchemaParser
       DataSchemaParser parser = new DataSchemaParser(jarFile, resolver);
       DataSchemaParser.ParseResult parseResult = parser.parseSources(new String[]{jarFile});
       Map<DataSchema, DataSchemaLocation> extensions = parseResult.getExtensionDataSchemaAndLocations();
-      assertEquals(extensions.size(), 2);
+      assertEquals(extensions.size(), 3);
       Set<String> actualNames = extensions
           .keySet()
           .stream()
@@ -181,7 +186,7 @@ public class TestDataSchemaParser
       String[] schemaFiles = Arrays.stream(files).map(casename -> pegasusDir + FS + "extensionSchemas" + FS + casename).toArray(String[]::new);
       DataSchemaParser.ParseResult parseResult = parser.parseSources(schemaFiles);
       Map<DataSchema, DataSchemaLocation> extensions = parseResult.getExtensionDataSchemaAndLocations();
-      assertEquals(extensions.size(), 2);
+      assertEquals(extensions.size(), 3);
       Set<String> actualNames = extensions
           .keySet()
           .stream()
