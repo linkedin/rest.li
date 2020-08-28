@@ -28,12 +28,12 @@ import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.MPConsistentHashRingFactory;
+import com.linkedin.d2.balancer.strategies.PointBasedConsistentHashRingFactory;
+import com.linkedin.d2.balancer.strategies.RingFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
-import com.linkedin.d2.balancer.strategies.degrader.MPConsistentHashRingFactory;
 import com.linkedin.d2.balancer.strategies.degrader.PartitionDegraderLoadBalancerStateListener;
-import com.linkedin.d2.balancer.strategies.degrader.PointBasedConsistentHashRingFactory;
-import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.HostToKeyResult;
 import com.linkedin.d2.balancer.util.KeysAndHosts;
@@ -717,18 +717,24 @@ public class ConsistentHashKeyMapperTest
     }
 
     @Override
+    public String getName()
+    {
+      return "TestLoadBalancerStrategy";
+    }
+
+    @Override
     public TrackerClient getTrackerClient(Request request,
         RequestContext requestContext,
         long clusterGenerationId,
         int partitionId,
-        List<TrackerClient> trackerClients)
+                                          Map<URI, TrackerClient> trackerClients)
     {
       throw new UnsupportedOperationException();
     }
 
     @Nonnull
     @Override
-    public Ring<URI> getRing(long clusterGenerationId, int partitionId, List<TrackerClient> trackerClients)
+    public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
     {
       if (_partitionData.containsKey(partitionId))
       {

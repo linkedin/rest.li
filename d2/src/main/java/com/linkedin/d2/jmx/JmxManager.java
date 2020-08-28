@@ -22,6 +22,7 @@ import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
@@ -105,6 +106,11 @@ public class JmxManager
     {
       checkReg(new DegraderLoadBalancerStrategyV3Jmx((DegraderLoadBalancerStrategyV3) strategy), name);
     }
+    else if (strategy instanceof RelativeLoadBalancerStrategy)
+    {
+      checkReg(new RelativeLoadBalancerStrategyJmx((RelativeLoadBalancerStrategy) strategy), name);
+
+    }
     else
     {
       warn(_log, "unable to register a jmx bean for unknown strategy: ", strategy);
@@ -117,6 +123,12 @@ public class JmxManager
    * Register the jmx bean passed in with the jmx manager.
    */
   public synchronized JmxManager registerLoadBalancerStrategyV3JmxBean(String name, DegraderLoadBalancerStrategyV3JmxMBean strategyJmx)
+  {
+    checkReg(strategyJmx, name);
+    return this;
+  }
+
+  public synchronized JmxManager registerRelativeLoadBalancerStrategyJmxBean(String name, RelativeLoadBalancerStrategyJmxMBean strategyJmx)
   {
     checkReg(strategyJmx, name);
     return this;

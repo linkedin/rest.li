@@ -18,10 +18,13 @@ package com.linkedin.d2.balancer.strategies.degrader;
 
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.event.NoopEventEmitter;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
@@ -60,18 +63,36 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
   }
 
   @Override
-  public DegraderLoadBalancerStrategyV3 newLoadBalancer(String serviceName,
-      Map<String, Object> strategyProperties, Map<String, String> degraderProperties)
+  public DegraderLoadBalancerStrategyV3 newLoadBalancer(ServiceProperties serviceProperties)
+  {
+    return newLoadBalancer(serviceProperties.getServiceName(),
+                           serviceProperties.getLoadBalancerStrategyProperties(),
+                           serviceProperties.getDegraderProperties(),
+                           serviceProperties.getPath(),
+                           serviceProperties.getClusterName());
+  }
+
+  private DegraderLoadBalancerStrategyV3 newLoadBalancer(String serviceName,
+      Map<String, Object> strategyProperties, Map<String, String> degraderProperties, String path, String clusterName)
   {
     debug(LOG, "created a degrader load balancer strategyV3");
 
-    final DegraderLoadBalancerStrategyConfig config =
-        DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(strategyProperties,
-            _healthCheckOperations, _executorService, degraderProperties, _eventEmitter);
+    Map<String, Object> strategyPropertiesCopy = new HashMap<>(strategyProperties);
+    // Save the service path as a property -- Quarantine may need this info to construct correct
+    // health checking path
+    strategyPropertiesCopy.put(PropertyKeys.PATH, path);
+    // Also save the clusterName as a property
+    strategyPropertiesCopy.put(PropertyKeys.CLUSTER_NAME, clusterName);
+
+    final DegraderLoadBalancerStrategyConfig config = DegraderLoadBalancerStrategyConfig.createHttpConfigFromMap(strategyPropertiesCopy,
+                                                                                                                 _healthCheckOperations,
+                                                                                                                 _executorService,
+                                                                                                                 degraderProperties,
+                                                                                                                 _eventEmitter);
 
     // Adds the default degrader state listener factories
     final List<PartitionDegraderLoadBalancerStateListener.Factory> listeners = new ArrayList<>();
-    listeners.add(new D2MonitorEventEmitter.Factory(serviceName));
+    listeners.add(new DegraderMonitorEventEmitter.Factory(serviceName));
     listeners.addAll(_degraderStateListenerFactories);
 
     return new DegraderLoadBalancerStrategyV3(config, serviceName, degraderProperties, listeners);

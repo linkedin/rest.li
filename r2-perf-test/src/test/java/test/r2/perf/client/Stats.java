@@ -21,8 +21,8 @@
 package test.r2.perf.client;
 
 import com.linkedin.common.stats.LongStats;
-import com.linkedin.common.stats.LongTracking;
 
+import com.linkedin.common.stats.LongTracking;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

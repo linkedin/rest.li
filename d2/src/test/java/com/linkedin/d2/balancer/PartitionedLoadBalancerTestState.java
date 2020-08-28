@@ -3,8 +3,11 @@ package com.linkedin.d2.balancer;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
+import com.linkedin.d2.balancer.clients.DegraderTrackerClientImpl;
 import com.linkedin.d2.balancer.clients.RetryTrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.clients.TrackerClientImpl;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -133,7 +136,7 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
       else
       {
         // shorten the update interval to 20ms in order to increase the possibility of deadlock
-        _trackerClients.putIfAbsent(uri, new TrackerClient(uri, _partitionDescriptions.get(uri), null, new SettableClock(), null, 20, null));
+        _trackerClients.putIfAbsent(uri, new DegraderTrackerClientImpl(uri, _partitionDescriptions.get(uri), null, new SettableClock(), null, 20, TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN));
       }
 
       return _trackerClients.get(uri);

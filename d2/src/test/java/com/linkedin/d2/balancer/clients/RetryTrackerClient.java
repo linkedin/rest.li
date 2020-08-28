@@ -35,19 +35,22 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+import com.linkedin.util.clock.SystemClock;
+
 import java.net.URI;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 
-public class RetryTrackerClient extends TrackerClient
+public class RetryTrackerClient extends DegraderTrackerClientImpl
 {
   private final URI _uri;
 
   public RetryTrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient)
   {
-    super(uri, partitionDataMap, wrappedClient);
+    super(uri, partitionDataMap, wrappedClient, SystemClock.instance(), null,
+          TrackerClientImpl.DEFAULT_CALL_TRACKER_INTERVAL, TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN);
     _uri = uri;
   }
 

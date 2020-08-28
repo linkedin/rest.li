@@ -1,12 +1,29 @@
-package com.linkedin.d2.balancer.strategies.degrader;
+/*
+   Copyright (c) 2020 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+package com.linkedin.d2.balancer.strategies;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.util.RateLimitedLogger;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
+import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.util.clock.Clock;
+import com.linkedin.util.RateLimitedLogger;
 import java.net.URISyntaxException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * DegraderLoadBalancerQuarantine quarantines the TrackerClients with problems. The advantages
+ * LoadBalancerQuarantine quarantines the TrackerClients with problems. The advantages
  * of using quarantine includes:
  *
  * . Quick isolating the single host/service failures
@@ -33,11 +50,10 @@ import org.slf4j.LoggerFactory;
  *     (exponential backoff before send req again)
  *
  *
- * Note: DegraderLoadBalancerQuarantine is not thread safe and supposed to updated only under the
- * lock of PartitionState update.
+ * Note: LoadBalancerQuarantine is not thread safe and supposed to updated only under the
+ * lock of partition state update.
  */
-
-public class DegraderLoadBalancerQuarantine
+public class LoadBalancerQuarantine
 {
   private enum QuarantineStates
   {
@@ -47,46 +63,71 @@ public class DegraderLoadBalancerQuarantine
     DISABLED,
   }
 
-  private static final Logger _log = LoggerFactory.getLogger(DegraderLoadBalancerQuarantine.class);
+  private static final Logger _log = LoggerFactory.getLogger(LoadBalancerQuarantine.class);
   private static final long ERROR_REPORT_PERIOD = 60 * 1000; // Millisecond = 1 minute
+  private static final long QUARANTINE_MIN_REENTRY_TIME_MS = 30000;
+
+  private final TrackerClient _trackerClient;
+  private final HealthCheck _healthCheckClient;
+  private final String _serviceName;
+
+  private final ScheduledExecutorService _executorService;
+  private final Clock _clock;
+
+  private final long _timeBetweenHC;
+  private final long _updateIntervalMs;
+
   private volatile QuarantineStates _quarantineState;
-  // TrackerClient with problem
-  final private TrackerClient _trackerClient;
-  final private HealthCheck _healthCheckClient;
-  final private String _serviceName;
-
-  final private ScheduledExecutorService _executorService;
-  final private Clock _clock;
-
-  final private long _timeBetweenHC;
-
   private volatile boolean _isShutdown;
 
   private long _lastChecked;
-  // Waiting duration, ie the exponential back off time
   private long _timeTilNextCheck;
 
-  final private DegraderLoadBalancerStrategyConfig _config;
   private final RateLimitedLogger _rateLimitedLogger;
 
-  DegraderLoadBalancerQuarantine(TrackerClientUpdater client, DegraderLoadBalancerStrategyConfig config,
-                                 String serviceName)
+  public LoadBalancerQuarantine(TrackerClient client,
+                         DegraderLoadBalancerStrategyConfig config,
+                         String serviceName)
   {
-    _trackerClient = client.getTrackerClient();
-    _config = config;
-    _executorService = config.getExecutorService();
-    _clock = config.getClock();
+    this(client,
+         config.getExecutorService(),
+         config.getClock(),
+         config.getUpdateIntervalMs(),
+         config.getQuarantineLatency(),
+         config.getHealthCheckMethod(),
+         config.getHealthCheckPath(),
+         serviceName,
+         config.getServicePath(),
+         config.getHealthCheckOperations());
+  }
+
+  public LoadBalancerQuarantine(TrackerClient trackerClient,
+                         ScheduledExecutorService executorService,
+                         Clock clock,
+                         long updateIntervalMs,
+                         long quarantineLatency,
+                         String healthCheckMethod,
+                         String healthCheckPath,
+                         String serviceName,
+                         String servicePath,
+                         HealthCheckOperations healthCheckOperations)
+  {
+    _trackerClient = trackerClient;
+
+    _executorService = executorService;
+    _clock = clock;
     _timeBetweenHC = DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_CHECK_INTERVAL;
     _serviceName = serviceName;
 
     _quarantineState = QuarantineStates.FAILURE;
     // Initial interval is the same as update interval
-    _timeTilNextCheck = config.getUpdateIntervalMs();
+    _timeTilNextCheck = updateIntervalMs;
+    _updateIntervalMs = updateIntervalMs;
     _lastChecked = Integer.MIN_VALUE;
     _isShutdown = false;
-    _rateLimitedLogger = new RateLimitedLogger(_log, ERROR_REPORT_PERIOD, config.getClock());
+    _rateLimitedLogger = new RateLimitedLogger(_log, ERROR_REPORT_PERIOD, clock);
 
-    if (_timeBetweenHC < _config.getQuarantineLatency())
+    if (_timeBetweenHC < quarantineLatency)
     {
       _log.error("Illegal quarantine configurations for service {}: Interval {} too short", _serviceName, _timeBetweenHC);
       throw new IllegalArgumentException("Quarantine interval too short");
@@ -98,12 +139,12 @@ public class DegraderLoadBalancerQuarantine
     try
     {
       healthCheckClient = new HealthCheckClientBuilder()
-          .setHealthCheckOperations(config.getHealthCheckOperations())
-          .setHealthCheckPath(config.getHealthCheckPath())
-          .setServicePath(config.getServicePath())
-          .setClock(config.getClock())
-          .setLatency(config.getQuarantineLatency())
-          .setMethod(config.getHealthCheckMethod())
+          .setHealthCheckOperations(healthCheckOperations)
+          .setHealthCheckPath(healthCheckPath)
+          .setServicePath(servicePath)
+          .setClock(clock)
+          .setLatency(quarantineLatency)
+          .setMethod(healthCheckMethod)
           .setClient(_trackerClient)
           .build();
     }
@@ -133,8 +174,7 @@ public class DegraderLoadBalancerQuarantine
       @Override
       public void onError(Throwable e)
       {
-        _rateLimitedLogger.warn("Healthchecking failed for {} (service={}): {}", new Object[] {_trackerClient.getUri(),
-                    _serviceName, e});
+        _rateLimitedLogger.warn("Healthchecking failed for {} (service={}): {}", _trackerClient.getUri(), _serviceName, e);
         _quarantineState = QuarantineStates.FAILURE;
       }
 
@@ -171,12 +211,11 @@ public class DegraderLoadBalancerQuarantine
 
   /**
    * Check and update the quarantine state
-   * @return: true if current client is ready to exist quarantine, false otherwise.
+   * @return true if current client is ready to exist quarantine, false otherwise.
    */
-  boolean checkUpdateQuarantineState()
+  public boolean checkUpdateQuarantineState()
   {
-    long currentTime = _config.getClock().currentTimeMillis();
-    _lastChecked = currentTime;
+    _lastChecked = _clock.currentTimeMillis();
     int repeatNum = DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_CHECKNUM;
 
     switch(_quarantineState)
@@ -203,8 +242,7 @@ public class DegraderLoadBalancerQuarantine
         if (_timeTilNextCheck > ERROR_REPORT_PERIOD)
         {
           _rateLimitedLogger.error("Client {}  for service {} is being kept in quarantine for {} seconds, "
-              + "Please check to make sure it is healthy", new Object[] {_trackerClient.getUri(), _serviceName,
-              (1.0 *_timeTilNextCheck / 1000)});
+              + "Please check to make sure it is healthy", _trackerClient.getUri(), _serviceName, (1.0 *_timeTilNextCheck / 1000));
         }
         break;
       case SUCCESS:
@@ -233,17 +271,19 @@ public class DegraderLoadBalancerQuarantine
   }
 
   /**
-   * When resetInterval set to true, reset the interval time to Update Interval time.
+   * Reset the interval time to the update interval time if it has been more than 30s since last checked
    * Otherwise reuse the existing interval time
-   * @param resetInterval
+   *
+   * @param currentTime The time of the quarantine check
    */
-  public void reset(boolean resetInterval)
+  public void reset(long currentTime)
   {
     _quarantineState = QuarantineStates.FAILURE;
+    boolean resetInterval = currentTime - this.getLastChecked() > QUARANTINE_MIN_REENTRY_TIME_MS;
 
     if (resetInterval)
     {
-      _timeTilNextCheck = _config.getUpdateIntervalMs();
+      _timeTilNextCheck = _updateIntervalMs;
     }
     else
     {
@@ -254,7 +294,7 @@ public class DegraderLoadBalancerQuarantine
     }
   }
 
-  long getLastChecked()
+  public long getLastChecked()
   {
     return _lastChecked;
   }
@@ -264,8 +304,13 @@ public class DegraderLoadBalancerQuarantine
     return _timeTilNextCheck;
   }
 
+  public boolean isInQuarantine()
+  {
+    return _quarantineState == QuarantineStates.FAILURE || _quarantineState == QuarantineStates.WAIT;
+  }
+
   // For testing only
-  HealthCheck getHealthCheckClient()
+  public HealthCheck getHealthCheckClient()
   {
     return _healthCheckClient;
   }
@@ -276,6 +321,6 @@ public class DegraderLoadBalancerQuarantine
     return "TrackerClientQuarantine [_client=" + _trackerClient.getUri()
         + ", _quarantineState=" + _quarantineState
         + ", _timeTilNextCheck=" + (_timeTilNextCheck / 1000) + "s"
-        +"]";
+        + "]";
   }
 }

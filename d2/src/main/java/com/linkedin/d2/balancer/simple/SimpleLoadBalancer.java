@@ -285,7 +285,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         Ring<URI> ring = null;
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          List<TrackerClient> clients = getPotentialClients(serviceName, service, cluster, uris, pair.getScheme(), partitionId);
+          Map<URI, TrackerClient> clients = getPotentialClients(serviceName, service, cluster, uris, pair.getScheme(), partitionId);
           ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, clients);
 
           if (!ring.isEmpty())
@@ -336,7 +336,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       {
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, cluster, uris,
+          Map<URI, TrackerClient> trackerClients = getPotentialClients(serviceName, service, cluster, uris,
               pair.getScheme(), partitionId);
           Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
           // ring will never be null; it can be empty
@@ -550,9 +550,9 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       {
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          List<TrackerClient> trackerClients = getPotentialClients(serviceName, service, cluster, uris,
+          Map<URI, TrackerClient> trackerClients = getPotentialClients(serviceName, service, cluster, uris,
               pair.getScheme(), partitionId);
-          int size = trackerClients.size() <= limitHostPerPartition ? trackerClients.size() : limitHostPerPartition;
+          int size = Math.min(trackerClients.size(), limitHostPerPartition);
           List<URI> rankedUri = new ArrayList<>(size);
 
           Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
@@ -709,7 +709,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   // supports partitioning
-  private List<TrackerClient> getPotentialClients(String serviceName,
+  private Map<URI, TrackerClient> getPotentialClients(String serviceName,
                                                   ServiceProperties serviceProperties,
                                                   ClusterProperties clusterProperties,
                                                   UriProperties uris,
@@ -718,7 +718,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   {
     Set<URI> possibleUris = uris.getUriBySchemeAndPartition(scheme, partitionId);
 
-    List<TrackerClient> clientsToBalance = getPotentialClients(serviceName, serviceProperties, clusterProperties, possibleUris);
+    Map<URI, TrackerClient> clientsToBalance = getPotentialClients(serviceName, serviceProperties, clusterProperties, possibleUris);
     if (clientsToBalance.isEmpty())
     {
       info(_log, "Can not find a host for service: ", serviceName, ", scheme: ", scheme, ", partition: ", partitionId);
@@ -726,20 +726,20 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     return clientsToBalance;
   }
 
-  private List<TrackerClient> getPotentialClients(String serviceName,
+  private Map<URI, TrackerClient> getPotentialClients(String serviceName,
                                                   ServiceProperties serviceProperties,
                                                   ClusterProperties clusterProperties,
                                                   Set<URI> possibleUris)
   {
-    List<TrackerClient> clientsToLoadBalance;
+    Map<URI, TrackerClient> clientsToLoadBalance;
     if (possibleUris == null)
     {
       // just return an empty list if possibleUris is 'null'.
-      clientsToLoadBalance = Collections.emptyList();
+      clientsToLoadBalance = Collections.emptyMap();
     }
     else
     {
-      clientsToLoadBalance = new ArrayList<>(possibleUris.size());
+      clientsToLoadBalance = new HashMap<>(possibleUris.size());
       for (URI possibleUri : possibleUris)
       {
         // don't pay attention to this uri if it's banned
@@ -749,7 +749,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
           if (possibleTrackerClient != null)
           {
-            clientsToLoadBalance.add(possibleTrackerClient);
+            clientsToLoadBalance.put(possibleUri, possibleTrackerClient);
           }
         }
         else
@@ -828,7 +828,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       }
     }
 
-    List<TrackerClient> clientsToLoadBalance = null;
+    Map<URI, TrackerClient> clientsToLoadBalance = null;
 
     for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
     {
