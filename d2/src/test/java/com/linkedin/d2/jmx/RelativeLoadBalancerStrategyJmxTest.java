@@ -29,7 +29,7 @@ import java.util.Map;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
-import static org.easymock.EasyMock.anyInt;
+import static org.mockito.Matchers.anyInt;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
