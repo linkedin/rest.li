@@ -16,10 +16,10 @@
 
 package com.linkedin.d2.util.hashing;
 
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
+import com.linkedin.d2.balancer.strategies.MPConsistentHashRingFactory;
+import com.linkedin.d2.balancer.strategies.RingFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
-import com.linkedin.d2.balancer.strategies.degrader.MPConsistentHashRingFactory;
-import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
 import com.linkedin.d2.balancer.util.hashing.BoundedLoadConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
@@ -221,7 +221,7 @@ public class ConsistentHashRingBenchmark {
 
   @State(Scope.Benchmark)
   public static class BoundedLoad_ConsistentHashRing_10Hosts_100PointsPerHost_State {
-    RingFactory<URI> factory = new DegraderRingFactory<>(getConfig("pointBased", 1, 1));
+    RingFactory<URI> factory = new DelegatingRingFactory<>(getConfig("pointBased", 1, 1));
     Map<URI, Integer> pointsMap = buildPointsMap(10, 100);
     Ring<URI> _ring = new BoundedLoadConsistentHashRing<>(factory, pointsMap, new HashMap<>(), 1.25);
     Random _random = new Random();
@@ -260,7 +260,7 @@ public class ConsistentHashRingBenchmark {
 
   @State(Scope.Benchmark)
   public static class BoundedLoad_ConsistentHashRing_100Hosts_100PointsPerHost_State {
-    RingFactory<URI> factory = new DegraderRingFactory<>(getConfig("pointBased", 1, 1));
+    RingFactory<URI> factory = new DelegatingRingFactory<>(getConfig("pointBased", 1, 1));
     Map<URI, Integer> pointsMap = buildPointsMap(100, 100);
     Ring<URI> _ring = new BoundedLoadConsistentHashRing<>(factory, pointsMap, new HashMap<>(), 1.25);
     Random _random = new Random();

@@ -184,67 +184,48 @@ public class ServicePropertiesJsonSerializer implements
     }
   }
 
-  // Need to work around a compiler bug that doesn't obey the SuppressWarnings("unchecked")
   @SuppressWarnings("unchecked")
-  private static <T> T mapGet(Map<String, Object> map, String key)
+  private static <T> T mapGetOrDefault(Map<String, Object> map, String key, T defaultValue)
   {
-    return (T) map.get(key);
+    T value = (T) map.get(key);
+    if (value == null)
+    {
+      value = defaultValue;
+    }
+    return value;
   }
 
   public ServiceProperties fromMap(Map<String,Object> map)
   {
-    Map<String,Object> loadBalancerStrategyProperties = mapGet(map,PropertyKeys.LB_STRATEGY_PROPERTIES);
-    if (loadBalancerStrategyProperties == null)
-    {
-      loadBalancerStrategyProperties = Collections.emptyMap();
-    }
-    List<String> loadBalancerStrategyList = mapGet(map, PropertyKeys.LB_STRATEGY_LIST);
-    if (loadBalancerStrategyList == null)
-    {
-      loadBalancerStrategyList = Collections.emptyList();
-    }
-    Map<String, Object> transportClientProperties = mapGet(map, PropertyKeys.TRANSPORT_CLIENT_PROPERTIES);
-    if (transportClientProperties == null)
-    {
-      transportClientProperties = Collections.emptyMap();
-    }
-    Map<String, String> degraderProperties = mapGet(map, PropertyKeys.DEGRADER_PROPERTIES);
-    if (degraderProperties == null)
-    {
-      degraderProperties = Collections.emptyMap();
-    }
-    List<URI> bannedList = mapGet(map, PropertyKeys.BANNED_URIS);
-    if (bannedList == null)
-    {
-      bannedList = Collections.emptyList();
-    }
-    Set<URI> banned = new HashSet<URI>(bannedList);
-    List<String> prioritizedSchemes = mapGet(map,PropertyKeys.PRIORITIZED_SCHEMES);
+    Map<String,Object> loadBalancerStrategyProperties = mapGetOrDefault(map, PropertyKeys.LB_STRATEGY_PROPERTIES, Collections.emptyMap());
+    List<String> loadBalancerStrategyList = mapGetOrDefault(map, PropertyKeys.LB_STRATEGY_LIST, Collections.emptyList());
+    Map<String, Object> transportClientProperties = mapGetOrDefault(map, PropertyKeys.TRANSPORT_CLIENT_PROPERTIES, Collections.emptyMap());
+    Map<String, String> degraderProperties = mapGetOrDefault(map, PropertyKeys.DEGRADER_PROPERTIES, Collections.emptyMap());
+    Map<String, Object> relativeStrategyProperties = mapGetOrDefault(map, PropertyKeys.RELATIVE_STRATEGY_PROPERTIES, Collections.emptyMap());
+
+    List<URI> bannedList = mapGetOrDefault(map, PropertyKeys.BANNED_URIS, Collections.emptyList());
+    Set<URI> banned = new HashSet<>(bannedList);
+    List<String> prioritizedSchemes = mapGetOrDefault(map, PropertyKeys.PRIORITIZED_SCHEMES, Collections.emptyList());
 
     Map<String, Object> metadataProperties = new HashMap<String,Object>();
-    String isDefaultService = mapGet(map, PropertyKeys.IS_DEFAULT_SERVICE);
-    if (isDefaultService != null && "true".equalsIgnoreCase(isDefaultService))
+    String isDefaultService = mapGetOrDefault(map, PropertyKeys.IS_DEFAULT_SERVICE, null);
+    if ("true".equalsIgnoreCase(isDefaultService))
     {
       metadataProperties.put(PropertyKeys.IS_DEFAULT_SERVICE, isDefaultService);
     }
-    String defaultRoutingToMaster = mapGet(map, PropertyKeys.DEFAULT_ROUTING_TO_MASTER);
-    if (Boolean.valueOf(defaultRoutingToMaster))
+    String defaultRoutingToMaster = mapGetOrDefault(map, PropertyKeys.DEFAULT_ROUTING_TO_MASTER, null);
+    if (Boolean.parseBoolean(defaultRoutingToMaster))
     {
       metadataProperties.put(PropertyKeys.DEFAULT_ROUTING_TO_MASTER, defaultRoutingToMaster);
     }
 
-    Map<String, Object> publishedMetadataProperties = mapGet(map, PropertyKeys.SERVICE_METADATA_PROPERTIES);
+    Map<String, Object> publishedMetadataProperties = mapGetOrDefault(map, PropertyKeys.SERVICE_METADATA_PROPERTIES, null);
     if (publishedMetadataProperties != null)
     {
       metadataProperties.putAll(publishedMetadataProperties);
     }
 
-    @SuppressWarnings("unchecked")
-    List<Map<String, Object>> backupRequests = (List<Map<String, Object>>) map.get(PropertyKeys.BACKUP_REQUESTS);
-    if (backupRequests == null)
-    {
-      backupRequests = Collections.emptyList();
-    }
+    List<Map<String, Object>> backupRequests = mapGetOrDefault(map, PropertyKeys.BACKUP_REQUESTS, Collections.emptyList());
 
     return new ServiceProperties((String) map.get(PropertyKeys.SERVICE_NAME),
                                  (String) map.get(PropertyKeys.CLUSTER_NAME),
@@ -256,7 +237,7 @@ public class ServicePropertiesJsonSerializer implements
                                  prioritizedSchemes,
                                  banned,
                                  metadataProperties,
-                                 backupRequests);
-
+                                 backupRequests,
+                                 relativeStrategyProperties);
   }
 }

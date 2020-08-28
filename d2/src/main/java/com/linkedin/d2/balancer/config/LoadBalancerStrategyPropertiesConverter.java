@@ -19,8 +19,8 @@ package com.linkedin.d2.balancer.config;
 import com.linkedin.d2.ConsistentHashAlgorithmEnum;
 import com.linkedin.d2.D2LoadBalancerStrategyProperties;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.hashConfigType;
 import com.linkedin.d2.hashMethodEnum;
@@ -133,13 +133,13 @@ public class LoadBalancerStrategyPropertiesConverter
       switch (config.getConsistentHashAlgorithm())
       {
         case MULTI_PROBE:
-          map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
+          map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DelegatingRingFactory.MULTI_PROBE_CONSISTENT_HASH);
           break;
         case POINT_BASED:
-          map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.POINT_BASED_CONSISTENT_HASH);
+          map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DelegatingRingFactory.POINT_BASED_CONSISTENT_HASH);
           break;
         case DISTRIBUTION_BASED:
-          map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.DISTRIBUTION_NON_HASH);
+          map.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DelegatingRingFactory.DISTRIBUTION_NON_HASH);
       }
     }
     if (config.hasNumberOfProbes())
@@ -273,15 +273,15 @@ public class LoadBalancerStrategyPropertiesConverter
     if (properties.containsKey(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM))
     {
       String consistentHashAlgorithm = coerce(properties.get(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM), String.class);
-      if (DegraderRingFactory.POINT_BASED_CONSISTENT_HASH.equalsIgnoreCase(consistentHashAlgorithm))
+      if (DelegatingRingFactory.POINT_BASED_CONSISTENT_HASH.equalsIgnoreCase(consistentHashAlgorithm))
       {
         config.setConsistentHashAlgorithm(ConsistentHashAlgorithmEnum.POINT_BASED);
       }
-      else if (DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH.equalsIgnoreCase(consistentHashAlgorithm))
+      else if (DelegatingRingFactory.MULTI_PROBE_CONSISTENT_HASH.equalsIgnoreCase(consistentHashAlgorithm))
       {
         config.setConsistentHashAlgorithm(ConsistentHashAlgorithmEnum.MULTI_PROBE);
       }
-      else if (DegraderRingFactory.DISTRIBUTION_NON_HASH.equalsIgnoreCase(consistentHashAlgorithm))
+      else if (DelegatingRingFactory.DISTRIBUTION_NON_HASH.equalsIgnoreCase(consistentHashAlgorithm))
       {
         config.setConsistentHashAlgorithm(ConsistentHashAlgorithmEnum.DISTRIBUTION_BASED);
       }

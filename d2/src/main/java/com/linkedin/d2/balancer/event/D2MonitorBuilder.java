@@ -1,5 +1,6 @@
 package com.linkedin.d2.balancer.event;
 
+import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.DegraderControl;
 import java.net.URI;
 import java.util.HashMap;
@@ -276,18 +277,18 @@ public class D2MonitorBuilder
           _90PctLatency, _95PctLatency, _99PctLatency, _quarantineDuration, _computedDropRate, _transmissionPoints);
     }
 
-    public void copyStats(DegraderControl degraderControl)
+    public void copyStats(CallTracker.CallStats callStats)
     {
-      int callCount = degraderControl.getCallCount();
+      int callCount = callStats.getCallCount();
       this.setCurrentCallCount(callCount)
-          .setCurrentLatency(degraderControl.getCallTimeStats().getAverage())
-          .setTotalCallCount(degraderControl.getCurrentCountTotal())
-          .setCurrentErrorCount((int)(degraderControl.getErrorRate() * callCount))
-          .setOutstandingCount(degraderControl.getOutstandingCount())
-          .set50PctLatency(degraderControl.getCallTimeStats().get50Pct())
-          .set90PctLatency(degraderControl.getCallTimeStats().get90Pct())
-          .set95PctLatency(degraderControl.getCallTimeStats().get95Pct())
-          .set99PctLatency(degraderControl.getCallTimeStats().get99Pct());
+          .setCurrentLatency(callStats.getCallTimeStats().getAverage())
+          .setTotalCallCount(callStats.getCallCountTotal())
+          .setCurrentErrorCount((int)(callStats.getErrorRate() * callCount))
+          .setOutstandingCount(callStats.getOutstandingCount())
+          .set50PctLatency(callStats.getCallTimeStats().get50Pct())
+          .set90PctLatency(callStats.getCallTimeStats().get90Pct())
+          .set95PctLatency(callStats.getCallTimeStats().get95Pct())
+          .set99PctLatency(callStats.getCallTimeStats().get99Pct());
     }
   }
 

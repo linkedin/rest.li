@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package com.linkedin.d2.balancer.strategies.degrader;
+package com.linkedin.d2.balancer.strategies;
 
 import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.Ring;
