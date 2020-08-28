@@ -23,7 +23,7 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.EventLoopGroup;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;
@@ -49,10 +49,10 @@ public class HttpClientBuilder
   private long _shutdownTimeout = 15000;
   private long _requestTimeout = 10000;
   private AbstractJmxManager _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
-  private final NioEventLoopGroup _eventLoopGroup;
+  private final EventLoopGroup _eventLoopGroup;
   private final ScheduledExecutorService _scheduler;
 
-  public HttpClientBuilder(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler)
+  public HttpClientBuilder(EventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler)
   {
     _eventLoopGroup = eventLoopGroup;
     _scheduler = scheduler;

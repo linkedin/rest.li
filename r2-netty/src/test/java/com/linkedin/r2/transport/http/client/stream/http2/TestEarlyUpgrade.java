@@ -25,6 +25,7 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImp
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
 import com.linkedin.test.util.AssertionMethods;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -48,7 +49,7 @@ public class TestEarlyUpgrade
 {
   private final boolean SSL_SESSION_RESUMPTION_ENABLED = true;
 
-  private NioEventLoopGroup _eventLoopGroup;
+  private EventLoopGroup _eventLoopGroup;
   private ScheduledExecutorService _scheduler;
   private final boolean _newPipelineEnabled;
 

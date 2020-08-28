@@ -58,7 +58,7 @@ import com.linkedin.util.clock.Clock;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.handler.codec.http.HttpScheme;
 import java.net.InetAddress;
@@ -93,7 +93,7 @@ public class HttpNettyClient implements TransportClient
   private static final int HTTPS_DEFAULT_PORT = 443;
   private static final int DEFAULT_STREAMING_TIMEOUT = -1;
 
-  private final NioEventLoopGroup _eventLoopGroup;
+  private final EventLoopGroup _eventLoopGroup;
   private final ScheduledExecutorService _scheduler;
   private final ExecutorService _callbackExecutor;
   private final ChannelPoolManager _channelPoolManager;
@@ -121,7 +121,7 @@ public class HttpNettyClient implements TransportClient
    * @param shutdownTimeout Client shutdown timeout
    */
   public HttpNettyClient(
-      NioEventLoopGroup eventLoopGroup,
+      EventLoopGroup eventLoopGroup,
       ScheduledExecutorService scheduler,
       ExecutorService callbackExecutor,
       ChannelPoolManager channelPoolManager,

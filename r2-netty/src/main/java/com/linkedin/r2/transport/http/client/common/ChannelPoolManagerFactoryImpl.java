@@ -23,8 +23,8 @@ import com.linkedin.r2.netty.client.http2.Http2ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamChannelPoolFactory;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +49,7 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
    */
   private static final int MAX_INITIAL_LINE_LENGTH = 4096;
 
-  private final NioEventLoopGroup _eventLoopGroup;
+  private final EventLoopGroup _eventLoopGroup;
   private final ScheduledExecutorService _scheduler;
   private final boolean _enableSSLSessionResumption;
   private final boolean _usePipelineV2;
@@ -58,14 +58,14 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
   private final int _sslHandShakeTimeout;
 
   /**
-   * @param eventLoopGroup The NioEventLoopGroup; it is the caller's responsibility to
-   *                       shut it down
+   * @param eventLoopGroup The EventLoopGroup; it is the caller's responsibility to shut
+   *                       it down
    * @param scheduler      An executor; it is the caller's responsibility to shut it down
    * @param usePipelineV2 build channel pool manager for the new Netty pipeline.
    * @param enableSSLSessionResumption Enable reuse of Ssl Session.
    * @param usePipelineV2 Use unified new code.
    */
-  public ChannelPoolManagerFactoryImpl(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
+  public ChannelPoolManagerFactoryImpl(EventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
       boolean enableSSLSessionResumption, boolean usePipelineV2, int channelPoolWaiterTimeout,
       int connectTimeout, int sslHandShakeTimeout)
   {
