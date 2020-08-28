@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Fix a RetryClient bug where NullPointerException is raised when excluded hosts hint is not set at retry
 
 ## [29.6.0] - 2020-08-28
 - Refactored the existing d2 degrader load balancer.
