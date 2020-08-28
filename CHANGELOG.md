@@ -14,9 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.6.0] - 2020-08-27
-- Refactored the existing d2 degrader load balancer.
-- Implemented a new load balancer that is based on average cluster latency.
+## [29.5.8] - 2020-08-27
+- Make `ChangedFileReportTask` gradle task compatible with Gradle 6.0
 
 ## [29.5.7] - 2020-08-26
 - Add pdsc support for ExtensionsDataSchemaResolver for support legacy files in pdsc
@@ -4618,8 +4617,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.0...master
-[29.6.0]: https://github.com/linkedin/rest.li/compare/v29.5.7...v29.6.0
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.8...master
+[29.5.8]: https://github.com/linkedin/rest.li/compare/v29.5.7...v29.5.8
 [29.5.7]: https://github.com/linkedin/rest.li/compare/v29.5.6...v29.5.7
 [29.5.6]: https://github.com/linkedin/rest.li/compare/v29.5.5...v29.5.6
 [29.5.5]: https://github.com/linkedin/rest.li/compare/v29.5.4...v29.5.5
