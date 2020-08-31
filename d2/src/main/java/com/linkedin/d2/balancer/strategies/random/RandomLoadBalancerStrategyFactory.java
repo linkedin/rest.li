@@ -21,6 +21,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.debug;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 
 import java.util.Map;
@@ -32,9 +33,7 @@ public class RandomLoadBalancerStrategyFactory implements
                                     LoggerFactory.getLogger(RandomLoadBalancerStrategyFactory.class);
 
   @Override
-  public RandomLoadBalancerStrategy newLoadBalancer(String serviceName,
-                                                    Map<String, Object> strategyProperties,
-                                                    Map<String, String> degraderProperties)
+  public RandomLoadBalancerStrategy newLoadBalancer(ServiceProperties serviceProperties)
   {
     debug(_log, "created a random load balancer strategy");
 

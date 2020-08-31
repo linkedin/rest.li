@@ -1,13 +1,12 @@
 package com.linkedin.d2.balancer.util.hashing;
 
-import com.linkedin.d2.balancer.strategies.degrader.DistributionNonDiscreteRingFactory;
+import com.linkedin.d2.balancer.strategies.DistributionNonDiscreteRingFactory;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

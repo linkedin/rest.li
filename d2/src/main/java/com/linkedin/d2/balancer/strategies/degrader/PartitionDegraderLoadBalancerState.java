@@ -16,7 +16,10 @@
 
 package com.linkedin.d2.balancer.strategies.degrader;
 
+import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
+import com.linkedin.d2.balancer.strategies.RingFactory;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.util.degrader.CallTracker;
 import java.net.URI;
@@ -55,12 +58,12 @@ public class PartitionDegraderLoadBalancerState
 
   // Used to keep track of Clients that have been ramped down to the minimum level in the hash
   // ring, and are slowly being ramped up until they start receiving traffic again.
-  private final Map<TrackerClient,Double>          _recoveryMap;
+  private final Map<DegraderTrackerClient,Double>          _recoveryMap;
 
   // quarantineMap is the active quarantine for trackerClient
-  private final Map<TrackerClient, DegraderLoadBalancerQuarantine> _quarantineMap;
+  private final Map<DegraderTrackerClient, LoadBalancerQuarantine> _quarantineMap;
   // quarantineHistory saves all previous trackerClients that are once quarantined
-  private final Map<TrackerClient, DegraderLoadBalancerQuarantine> _quarantineHistory;
+  private final Map<DegraderTrackerClient, LoadBalancerQuarantine> _quarantineHistory;
 
   // Because we will alternate between Load Balancing and Call Dropping strategies, we keep track of
   // the strategy to try to aid us in alternating strategies when updatingState. There is a setter
@@ -82,7 +85,7 @@ public class PartitionDegraderLoadBalancerState
 
   private final Map<TrackerClient, Double> _previousMaxDropRate;
 
-  private final Set<TrackerClient> _trackerClients;
+  private final Set<DegraderTrackerClient> _trackerClients;
 
   /**
    * This constructor will copy the internal data structure shallowly unlike the other constructor.
@@ -122,27 +125,27 @@ public class PartitionDegraderLoadBalancerState
       Strategy strategy,
       double currentOverrideDropRate,
       double currentAvgClusterLatency,
-      Map<TrackerClient,Double> recoveryMap,
+      Map<DegraderTrackerClient, Double> recoveryMap,
       String serviceName,
       Map<String, String> degraderProperties,
       long currentClusterCallCount,
       long currentClusterDropCount,
       long currentClusterErrorCount,
-      Map<TrackerClient, DegraderLoadBalancerQuarantine> quarantineMap,
-      Map<TrackerClient, DegraderLoadBalancerQuarantine> quarantineHistory,
-      Set<TrackerClient> trackerClients,
+      Map<DegraderTrackerClient, LoadBalancerQuarantine> quarantineMap,
+      Map<DegraderTrackerClient, LoadBalancerQuarantine> quarantineHistory,
+      Set<DegraderTrackerClient> trackerClients,
       int unHealthyClientNumber)
   {
     _clusterGenerationId = clusterGenerationId;
     _ringFactory = ringFactory;
     _pointsMap = (pointsMap != null) ?
-        Collections.unmodifiableMap(new HashMap<URI,Integer>(pointsMap)) :
+        Collections.unmodifiableMap(new HashMap<>(pointsMap)) :
         Collections.<URI,Integer>emptyMap();
 
     Map<URI, CallTracker> callTrackerMap = (trackerClients != null) ?
         Collections.unmodifiableMap(
             trackerClients.stream()
-                .collect(Collectors.toMap(TrackerClient::getUri, TrackerClient::getCallTracker))) :
+                .collect(Collectors.toMap(DegraderTrackerClient::getUri, DegraderTrackerClient::getCallTracker))) :
         Collections.<URI, CallTracker>emptyMap();
 
     _ring = ringFactory.createRing(pointsMap, callTrackerMap);
@@ -152,15 +155,15 @@ public class PartitionDegraderLoadBalancerState
     _currentClusterDropCount = currentClusterDropCount;
     _currentClusterErrorCount = currentClusterErrorCount;
     _recoveryMap = (recoveryMap != null) ?
-        Collections.unmodifiableMap(new HashMap<TrackerClient,Double>(recoveryMap)) :
-        Collections.<TrackerClient,Double>emptyMap();
+        Collections.unmodifiableMap(new HashMap<>(recoveryMap)) :
+        Collections.emptyMap();
     _initialized = initState;
     _lastUpdated = lastUpdated;
     _serviceName = serviceName;
     _degraderProperties = (degraderProperties != null) ?
-        Collections.unmodifiableMap(new HashMap<String, String>(degraderProperties)) :
-        Collections.<String, String>emptyMap();
-    _previousMaxDropRate = new HashMap<TrackerClient, Double>();
+        Collections.unmodifiableMap(new HashMap<>(degraderProperties)) :
+        Collections.emptyMap();
+    _previousMaxDropRate = new HashMap<>();
     _currentClusterCallCount = currentClusterCallCount;
     _quarantineMap = quarantineMap;
     _quarantineHistory = quarantineHistory;
@@ -208,17 +211,17 @@ public class PartitionDegraderLoadBalancerState
     return _strategy;
   }
 
-  public Map<TrackerClient,Double> getRecoveryMap()
+  public Map<DegraderTrackerClient,Double> getRecoveryMap()
   {
     return _recoveryMap;
   }
 
-  public Map<TrackerClient, DegraderLoadBalancerQuarantine> getQuarantineMap()
+  public Map<DegraderTrackerClient, LoadBalancerQuarantine> getQuarantineMap()
   {
     return _quarantineMap;
   }
 
-  public Map<TrackerClient, DegraderLoadBalancerQuarantine> getQuarantineHistory()
+  public Map<DegraderTrackerClient, LoadBalancerQuarantine> getQuarantineHistory()
   {
     return _quarantineHistory;
   }
@@ -262,7 +265,7 @@ public class PartitionDegraderLoadBalancerState
     return _unHealthyClientNumber;
   }
 
-  public Set<TrackerClient> getTrackerClients()
+  public Set<DegraderTrackerClient> getTrackerClients()
   {
     return Collections.unmodifiableSet(_trackerClients == null ? Collections.emptySet() : _trackerClients);
   }

@@ -24,10 +24,10 @@ import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerTest;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderRingFactory;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import java.net.URI;
 import java.util.ArrayList;
@@ -161,7 +161,7 @@ public class SimpleLoadBalancerDelayTest
     List<String> prioritizedSchemes = Collections.singletonList("http");
     // enable multi-probe consistent hashing
     Map<String, Object> lbStrategyProperties = new HashMap<>();
-    lbStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DegraderRingFactory.MULTI_PROBE_CONSISTENT_HASH);
+    lbStrategyProperties.put(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, DelegatingRingFactory.MULTI_PROBE_CONSISTENT_HASH);
     lbStrategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
     // set initial drop rate and slow start threshold
     Map<String, String> degraderProperties = DegraderLoadBalancerTest.degraderDefaultConfig();
@@ -996,8 +996,7 @@ public class SimpleLoadBalancerDelayTest
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
     Map<String, Object> strategyProperties = DegraderLoadBalancerTest.lbDefaultConfig();
-    // setting the event emitting interval to 10s vs 40s
-    strategyProperties.put(PropertyKeys.HTTP_LB_LOW_EVENT_EMITTING_INTERVAL, "10000");
+    // setting the event emitting interval to 40s
     strategyProperties.put(PropertyKeys.HTTP_LB_HIGH_EVENT_EMITTING_INTERVAL, "40000");
     strategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
 
@@ -1064,8 +1063,7 @@ public class SimpleLoadBalancerDelayTest
     assertTrue(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
         uri2) < 100);
     d2Monitors = _d2MonitorMap.get("foo");
-    assertTrue(d2Monitors != null);
-    assertFalse(_d2MonitorMap.get("foo").isEmpty()); // lowInterval emit
+    assertTrue(d2Monitors == null || d2Monitors.isEmpty());
     printStates(loadBalancerSimulator);
 
     loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 2);
@@ -1074,24 +1072,12 @@ public class SimpleLoadBalancerDelayTest
     assertTrue(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
         uri2) < 10);
     d2Monitors = _d2MonitorMap.get("foo");
+    assertTrue(d2Monitors == null || d2Monitors.isEmpty());
+
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 5);
+    d2Monitors = _d2MonitorMap.get("foo");
     assertTrue(d2Monitors != null);
-    assertFalse(d2Monitors.isEmpty()); // the first emitting
-    d2Monitor = d2Monitors.get(0);
-    assertTrue(d2Monitor.getClusterStats().getClusterCallCount() > 0);
-
-    uriList = d2Monitor.getUriList();
-    assertFalse(uriList.isEmpty());
-    D2Monitor.UriInfo goodUri = uriList.get(0).getCurrentAvgLatency() < uriList.get(0).getCurrentAvgLatency() ?
-        uriList.get(0) : uriList.get(1);
-    D2Monitor.UriInfo badUri = uriList.get(0).getCurrentAvgLatency() >= uriList.get(0).getCurrentAvgLatency() ?
-        uriList.get(0) : uriList.get(1);
-
-    assertTrue(goodUri.getCurrentAvgLatency() <= 80);
-    assertTrue(badUri.getCurrentCallCount() == 0 || badUri.getCurrentAvgLatency() > 100);
-    assertTrue(goodUri.getCurrentCallCount() > 1900);
-    assertTrue(badUri.getCurrentCallCount() < 100);
-    assertEquals(d2Monitor.getIntervalMs(), 10000);
-    printStates(loadBalancerSimulator);
+    assertFalse(d2Monitors.isEmpty());
 
     loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 8);
     // uri1 should fully recovered by now
@@ -1121,13 +1107,12 @@ public class SimpleLoadBalancerDelayTest
     // Construct the delay patterns: for each URI there is a list of delays for each interval
     Map<String, List<Long>> delayMaps = new HashMap<>();
     delayMaps.put("test.qa1.com:1234", Arrays.asList(80l, 30l, 30l, 30l, 30l, 80l, 30l, 30l, 30l, 30l, 30l, 80l, 60l, 80l, 80l, 60l, 80l, 80l, 60l, 80l, 80l));
-    delayMaps.put("test.qa2.com:2345", Arrays.asList(80l, 80l, 30l, 30l, 30l, 80l, 30l, 30l, 3060l, 4080l, 3050l, 3080l, 80l, 80l, 60l, 80l, 60l, 80l, 60l, 80l, 80l));
+    delayMaps.put("test.qa2.com:2345", Arrays.asList(80l, 80l, 30l, 30l, 30l, 80l, 30l, 30l, 3060l, 4080l, 3050l, 3080l, 4080l, 4080l, 4080l, 4080l, 60l, 80l, 60l, 80l, 80l));
     LoadBalancerSimulator.TimedValueGenerator<String, Long> delayGenerator = new DelayValueGenerator<>(delayMaps,
         DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
 
     Map<String, Object> strategyProperties = DegraderLoadBalancerTest.lbDefaultConfig();
-    // setting the event emitting interval to 10s vs 40s
-    strategyProperties.put(PropertyKeys.HTTP_LB_LOW_EVENT_EMITTING_INTERVAL, "10000");
+    // setting the event emitting interval to 40s
     strategyProperties.put(PropertyKeys.HTTP_LB_HIGH_EVENT_EMITTING_INTERVAL, "40000");
     strategyProperties.put(PropertyKeys.HTTP_LB_QUARANTINE_MAX_PERCENT, 0.05);
     strategyProperties.put(PropertyKeys.HTTP_LB_HASH_CONFIG, HASH_CONFIG_MAP);
@@ -1172,27 +1157,7 @@ public class SimpleLoadBalancerDelayTest
     assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
         uri2), 100);
 
-    // continue the simulation
-    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
-    assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
-        uri1), 100);
-    assertTrue(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
-        uri2) < 100);
-    d2Monitors = _d2MonitorMap.get("foo");
-    assertTrue(d2Monitors == null || d2Monitors.isEmpty());   // There's degrading, but no emitting yet
-    printStates(loadBalancerSimulator);
-
-    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS);
-    assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
-        uri1), 100);
-    assertTrue(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
-        uri2) < 100);
-    d2Monitors = _d2MonitorMap.get("foo");
-    assertTrue(d2Monitors != null);
-    assertFalse(_d2MonitorMap.get("foo").isEmpty()); // lowInterval emit
-    printStates(loadBalancerSimulator);
-
-    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 2);
+    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 8);
     assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
         uri1), 100);
     assertTrue(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
@@ -1214,18 +1179,7 @@ public class SimpleLoadBalancerDelayTest
     assertTrue(goodUri.getCurrentCallCount() > 1900);
     assertTrue(badUri.getCurrentCallCount() == 0);
     assertTrue(badUri.getQuarantineDuration() > 0);
-    assertEquals(d2Monitor.getIntervalMs(), 10000);
-    printStates(loadBalancerSimulator);
-
-    loadBalancerSimulator.runWait(DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS * 8);
-    // uri1 should fully recovered by now
-    assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
-        uri1), 100);
-    assertEquals(loadBalancerSimulator.getPoint("foo", DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
-        uri2), 100);
-    d2Monitors = _d2MonitorMap.get("foo");
-    assertTrue(d2Monitors != null);
-    assertFalse(_d2MonitorMap.get("foo").isEmpty());
+    assertEquals(d2Monitor.getIntervalMs(), 40000);
     printStates(loadBalancerSimulator);
 
     // Done. Shutdown the simulation

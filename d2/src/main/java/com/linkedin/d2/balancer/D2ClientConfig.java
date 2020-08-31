@@ -89,6 +89,7 @@ public class D2ClientConfig
   ScheduledExecutorService startUpExecutorService = null;
   JmxManager jmxManager = new NoOpJmxManager();
   String d2JmxManagerPrefix = "UnknownPrefix";
+  boolean enableRelativeLoadBalancer = false;
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -139,7 +140,8 @@ public class D2ClientConfig
                  ScheduledExecutorService startUpExecutorService,
                  JmxManager jmxManager,
                  String d2JmxManagerPrefix,
-                 int zookeeperReadWindowMs)
+                 int zookeeperReadWindowMs,
+                 boolean enableRelativeLoadBalancer)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -185,5 +187,6 @@ public class D2ClientConfig
     this.jmxManager = jmxManager;
     this.d2JmxManagerPrefix = d2JmxManagerPrefix;
     this.zookeeperReadWindowMs = zookeeperReadWindowMs;
+    this.enableRelativeLoadBalancer = enableRelativeLoadBalancer;
   }
 }

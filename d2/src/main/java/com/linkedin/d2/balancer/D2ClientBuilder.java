@@ -31,6 +31,8 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -45,6 +47,7 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.util.ArgumentUtil;
+import com.linkedin.util.clock.SystemClock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -163,7 +166,8 @@ public class D2ClientBuilder
                   _config.startUpExecutorService,
                   _config.jmxManager,
                   _config.d2JmxManagerPrefix,
-                  _config.zookeeperReadWindowMs);
+                  _config.zookeeperReadWindowMs,
+                  _config.enableRelativeLoadBalancer);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -476,6 +480,12 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setEnableRelativeLoadBalancer(boolean enableRelativeLoadBalancer)
+  {
+    _config.enableRelativeLoadBalancer = enableRelativeLoadBalancer;
+    return this;
+  }
+
   private Map<String, TransportClientFactory> createDefaultTransportClientFactories()
   {
     final Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
@@ -505,6 +515,15 @@ public class D2ClientBuilder
     loadBalancerStrategyFactories.putIfAbsent("degraderV2", degraderStrategyFactoryV3);
     loadBalancerStrategyFactories.putIfAbsent("degraderV3", degraderStrategyFactoryV3);
     loadBalancerStrategyFactories.putIfAbsent("degraderV2_1", degraderStrategyFactoryV3);
+
+    if (_config.enableRelativeLoadBalancer)
+    {
+      final RelativeLoadBalancerStrategyFactory relativeLoadBalancerStrategyFactory = new RelativeLoadBalancerStrategyFactory(
+          _config._executorService, _config.healthCheckOperations, Collections.emptyList(), _config.eventEmitter,
+          SystemClock.instance());
+      loadBalancerStrategyFactories.putIfAbsent(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME,
+          relativeLoadBalancerStrategyFactory);
+    }
 
     return loadBalancerStrategyFactories;
   }

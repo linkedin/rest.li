@@ -18,5 +18,6 @@ dependencies {
   testCompile project(path: ':d2', configuration: 'testArtifacts')
   testCompile project(':d2-test-api')
   testRuntime project(':r2-jetty')
+  testCompile project(':test-util')
 }
 

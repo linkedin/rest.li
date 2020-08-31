@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2018 LinkedIn Corp.
+   Copyright (c) 2020 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,16 +14,18 @@
    limitations under the License.
 */
 
-package com.linkedin.d2.balancer.strategies.degrader;
+package com.linkedin.d2.balancer.strategies.framework;
 
-import com.linkedin.d2.balancer.util.hashing.DistributionNonDiscreteRing;
-import com.linkedin.d2.balancer.util.hashing.Ring;
-import java.util.Map;
+/**
+ * The interface to manage the number of requests sent in each interval
+ */
+interface RequestCountManager
+{
 
-
-public class DistributionNonDiscreteRingFactory<T> implements RingFactory<T> {
-  @Override
-  public Ring<T> createRing(Map<T, Integer> points) {
-    return new DistributionNonDiscreteRing<>(points);
-  }
+  /**
+   * Provide the total request count for a given interval
+   * @param intervalIndex The index of the current interval
+   * @return The total call count that the test will send in the interval
+   */
+  int getRequestCount(int intervalIndex);
 }
