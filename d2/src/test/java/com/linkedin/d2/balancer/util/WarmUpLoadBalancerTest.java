@@ -219,9 +219,9 @@ public class WarmUpLoadBalancerTest
   }
 
   @Test(timeOut = 10000)
-  public void testThrottling() throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
+  public void testThrottling() throws InterruptedException
   {
-    int NRequests = 500;
+    int NRequests = 100;
     createNServicesIniFiles(NRequests);
 
     TestLoadBalancer balancer = new TestLoadBalancer(50);

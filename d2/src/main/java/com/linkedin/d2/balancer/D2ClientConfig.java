@@ -60,7 +60,7 @@ public class D2ClientConfig
   boolean shutdownAsynchronously = false;
   boolean isSymlinkAware = true;
   Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
-  boolean useNewEphemeralStoreWatcher = false;
+  boolean useNewEphemeralStoreWatcher = true;
   HealthCheckOperations healthCheckOperations = null;
   boolean enableSaveUriDataOnDisk = false;
   /**
@@ -70,7 +70,7 @@ public class D2ClientConfig
   ScheduledExecutorService _backupRequestsExecutorService = null;
   boolean retry = false;
   int retryLimit = DEAULT_RETRY_LIMIT;
-  boolean warmUp = false;
+  boolean warmUp = true;
   int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
   int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
@@ -83,7 +83,7 @@ public class D2ClientConfig
   PartitionAccessorRegistry partitionAccessorRegistry = null;
   Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
   Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories = Collections.emptyMap();
-  boolean requestTimeoutHandlerEnabled = false;
+  boolean requestTimeoutHandlerEnabled = true;
   SslSessionValidatorFactory sslSessionValidatorFactory = null;
   ZKPersistentConnection zkConnectionToUseForLB = null;
   ScheduledExecutorService startUpExecutorService = null;

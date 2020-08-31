@@ -57,8 +57,8 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
   /**
    * Default max of concurrent outstanding warm up requests
    */
-  public static final int DEFAULT_CONCURRENT_REQUESTS = 20;
-  public static final int DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS = 30;
+  public static final int DEFAULT_CONCURRENT_REQUESTS = 1;
+  public static final int DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS = 60;
 
   private final ConcurrentLinkedDeque<Future<?>> _outstandingRequests;
 
