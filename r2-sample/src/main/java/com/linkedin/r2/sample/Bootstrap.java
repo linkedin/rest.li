@@ -32,7 +32,7 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.EventLoopGroup;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -193,10 +193,10 @@ public class Bootstrap
   }
 
   public static HttpClientFactory createHttpClientFactory(FilterChain filters, boolean usePipelineV2,
-      NioEventLoopGroup nioEventLoopGroup)
+      EventLoopGroup eventLoopGroup)
   {
     return new HttpClientFactory.Builder().
-        setNioEventLoopGroup(nioEventLoopGroup).
+        setEventLoopGroup(eventLoopGroup).
         setFilterChain(filters).
         setShutDownFactory(false).
         setScheduleExecutorService(r2Scheduler).

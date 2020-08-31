@@ -29,6 +29,7 @@ import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.common.AbstractNettyClient;
 import com.linkedin.test.util.DataGeneration;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import java.io.IOException;
 import java.util.HashMap;
@@ -51,7 +52,7 @@ import static com.linkedin.test.util.ExceptionTestUtil.verifyCauseChain;
  */
 public class TestHttpNettyClientCommon
 {
-  private NioEventLoopGroup _eventLoop;
+  private EventLoopGroup _eventLoop;
   private ScheduledExecutorService _scheduler;
 
   @BeforeClass

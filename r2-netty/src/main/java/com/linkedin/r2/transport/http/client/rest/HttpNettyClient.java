@@ -40,15 +40,13 @@ import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import io.netty.channel.Channel;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.EventLoopGroup;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Steven Ihde
@@ -61,8 +59,8 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
 
   /**
    * Creates a new HttpNettyClient
-   *  @param eventLoopGroup            The NioEventLoopGroup; it is the caller's responsibility to
-   *                                  shut it down
+   * @param eventLoopGroup            The EventLoopGroup; it is the caller's responsibility to shut
+   *                                  it down
    * @param executor                  An executor; it is the caller's responsibility to shut it down
    * @param requestTimeout            Timeout, in ms, to get a connection from the pool or create one
    * @param shutdownTimeout           Timeout, in ms, the client should wait after shutdown is
@@ -73,7 +71,7 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
    * @param channelPoolManager        channelPoolManager instance to retrieve http only channels
    * @param sslChannelPoolManager     channelPoolManager instance to retrieve https only connection
    */
-  public HttpNettyClient(NioEventLoopGroup eventLoopGroup,
+  public HttpNettyClient(EventLoopGroup eventLoopGroup,
                          ScheduledExecutorService executor,
                          long requestTimeout,
                          long shutdownTimeout,

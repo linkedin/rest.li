@@ -46,7 +46,7 @@ import test.r2.perf.PerfConfig;
 public class PerfClients
 {
   private static final TransportClientFactory FACTORY = new HttpClientFactory.Builder()
-      .setNioEventLoopGroup(new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop")))
+      .setEventLoopGroup(new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop")))
       .setShutDownFactory(true)
       .setScheduleExecutorService(Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler")))
       .setShutdownScheduledExecutorService(true)
