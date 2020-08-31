@@ -6,11 +6,6 @@ namespace com.linkedin.restli.common
 record ExtensionSchemaAnnotation {
 
   /**
-   * Specifies resource name to avoid the ambiguity in multi-version scenario.
-   */
-  resource: string
-
-  /**
    * Specifies only for one to many relationship. It can use either GET_ALL("get_all") or a FINDER("finder:<method name>").
    */
   using: optional string
@@ -19,4 +14,9 @@ record ExtensionSchemaAnnotation {
    * Specifies parameters if any of them are specified. It is also used for FINDER.
    */
   params: optional map[string, string]
+
+  /**
+   * Specifies versionSuffix in multi-version scenario. If is is not provided, will pick first version by default.
+   */
+  versionSuffix: optional string
 }
