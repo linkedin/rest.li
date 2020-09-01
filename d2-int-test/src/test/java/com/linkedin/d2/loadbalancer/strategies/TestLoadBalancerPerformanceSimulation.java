@@ -371,7 +371,7 @@ public class TestLoadBalancerPerformanceSimulation {
 
     return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, numHosts)
         .setConstantRequestCount(DEFAULT_REQUESTS_PER_INTERVAL)
-        .setNumIntervals(100)
+        .setNumIntervals(200)
         .setDynamicLatency(latencyCorrelationList)
         .setRelativeLoadBalancerStrategies(relativeStrategyProperties)
         .build();
@@ -396,7 +396,7 @@ public class TestLoadBalancerPerformanceSimulation {
 
     return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, numHosts)
         .setConstantRequestCount(requestCountPerInterval)
-        .setNumIntervals(30)
+        .setNumIntervals(100)
         .setDynamicLatency(latencyCorrelationList)
         .setRelativeLoadBalancerStrategies(relativeStrategyProperties)
         .build();
@@ -416,7 +416,7 @@ public class TestLoadBalancerPerformanceSimulation {
 
     return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.DEGRADER, DEFAULT_SERVICE_NAME, numHosts)
         .setConstantRequestCount(requestCountPerInterval)
-        .setNumIntervals(30)
+        .setNumIntervals(100)
         .setDynamicLatency(latencyCorrelationList)
         .build();
   }
@@ -441,7 +441,7 @@ public class TestLoadBalancerPerformanceSimulation {
 
     return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, numHosts)
         .setConstantRequestCount(10000)
-        .setNumIntervals(30)
+        .setNumIntervals(100)
         .setDynamicLatency(latencyCorrelationList)
         .setRelativeLoadBalancerStrategies(relativeStrategyProperties)
         .build();
@@ -469,7 +469,7 @@ public class TestLoadBalancerPerformanceSimulation {
 
     return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, numHosts)
         .setConstantRequestCount(numRequestsPerInterval)
-        .setNumIntervals(100)
+        .setNumIntervals(200)
         .setDynamicLatency(latencyCorrelationList)
         .setRelativeLoadBalancerStrategies(relativeStrategyProperties)
         .build();
