@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.6.2] - 2020-08-31
-- Updated d2 client default config values
+- Updated d2 client default config values.
 
 ## [29.6.1] - 2020-08-31
 - Update R2's HTTP client API to support other Netty EventLoopGroup in addition to NioEventLoopGroup
