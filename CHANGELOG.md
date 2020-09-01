@@ -20,6 +20,7 @@ and what APIs have changed, if applicable.
 ## [29.6.1] - 2020-08-31
 - Update R2's HTTP client API to support other Netty EventLoopGroup in addition to NioEventLoopGroup
 - Fix a RetryClient bug where NullPointerException is raised when excluded hosts hint is not set at retry
+- Update ExtensionSchemaAnnotation schema: remove resource field, add versionSuffix as an optional field.
 
 ## [29.6.0] - 2020-08-28
 - Refactored the existing d2 degrader load balancer.
