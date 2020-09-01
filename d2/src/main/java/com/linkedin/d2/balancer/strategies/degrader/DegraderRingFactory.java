@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2016 LinkedIn Corp.
+   Copyright (c) 2020 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -16,89 +16,25 @@
 
 package com.linkedin.d2.balancer.strategies.degrader;
 
-import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
-import com.linkedin.d2.balancer.util.hashing.Ring;
-import com.linkedin.util.degrader.CallTracker;
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.linkedin.d2.D2RingProperties;
+import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
 
 
 /**
- * @author Ang Xu
+ * Please use {@link com.linkedin.d2.balancer.strategies.DelegatingRingFactory} instead
  */
-public class DegraderRingFactory<T> implements RingFactory<T>
+@Deprecated
+public class DegraderRingFactory<T> extends DelegatingRingFactory<T>
 {
-  public static final String POINT_BASED_CONSISTENT_HASH = "pointBased";
-  public static final String MULTI_PROBE_CONSISTENT_HASH = "multiProbe";
-  public static final String DISTRIBUTION_NON_HASH = "distributionBased";
+  public static final String POINT_BASED_CONSISTENT_HASH = DelegatingRingFactory.POINT_BASED_CONSISTENT_HASH;
+  public static final String MULTI_PROBE_CONSISTENT_HASH = DelegatingRingFactory.MULTI_PROBE_CONSISTENT_HASH;
+  public static final String DISTRIBUTION_NON_HASH = DelegatingRingFactory.DISTRIBUTION_NON_HASH;
 
-  private static final Logger _log = LoggerFactory.getLogger(DegraderRingFactory.class);
-
-  private final RingFactory<T> _ringFactory;
-
-  public DegraderRingFactory(DegraderLoadBalancerStrategyConfig config)
-  {
-    RingFactory<T> factory;
-
-    String consistentHashAlgorithm = config.getConsistentHashAlgorithm();
-    if (consistentHashAlgorithm == null)
-    {
-      // Choose the right algorithm if consistentHashAlgorithm is not specified
-      if (isAffinityRoutingEnabled(config))
-      {
-        _log.info("URI Regex hash is specified, use multiProbe algorithm for consistent hashing");
-        factory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
-      }
-      else
-      {
-        _log.info("DistributionBased algorithm is used for consistent hashing");
-        factory = new DistributionNonDiscreteRingFactory<>();
-      }
-    }
-    else if (consistentHashAlgorithm.equalsIgnoreCase(POINT_BASED_CONSISTENT_HASH))
-    {
-      factory = new PointBasedConsistentHashRingFactory<>(config);
-    }
-    else if (MULTI_PROBE_CONSISTENT_HASH.equalsIgnoreCase(consistentHashAlgorithm))
-    {
-      factory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
-    }
-    else if (DISTRIBUTION_NON_HASH.equalsIgnoreCase(consistentHashAlgorithm)) {
-      if (isAffinityRoutingEnabled((config)))
-      {
-        _log.warn("URI Regex hash is specified but distribution based ring is picked, falling back to multiProbe ring");
-        factory = new MPConsistentHashRingFactory<>(config.getNumProbes(), config.getPointsPerHost());
-      }
-      else
-      {
-        factory = new DistributionNonDiscreteRingFactory<>();
-      }
-    }
-    else
-    {
-      _log.warn("Unknown consistent hash algorithm {}, falling back to multiprobe hash ring with default settings", consistentHashAlgorithm);
-      factory = new MPConsistentHashRingFactory<>(MPConsistentHashRing.DEFAULT_NUM_PROBES, MPConsistentHashRing.DEFAULT_POINTS_PER_HOST);
-    }
-
-    if (config.getBoundedLoadBalancingFactor() > 1) {
-      factory = new BoundedLoadConsistentHashRingFactory<>(factory, config.getBoundedLoadBalancingFactor());
-    }
-
-    _ringFactory = factory;
+  public DegraderRingFactory(DegraderLoadBalancerStrategyConfig config) {
+    super(config);
   }
 
-  @Override
-  public Ring<T> createRing(Map<T, Integer> pointsMap) {
-    return _ringFactory.createRing(pointsMap);
-  }
-
-  @Override
-  public Ring<T> createRing(Map<T, Integer> pointsMap, Map<T, CallTracker> callTrackerMap) {
-    return _ringFactory.createRing(pointsMap, callTrackerMap);
-  }
-
-  private boolean isAffinityRoutingEnabled(DegraderLoadBalancerStrategyConfig config) {
-    return config.getHashMethod() != null && config.getHashMethod().equalsIgnoreCase(DegraderLoadBalancerStrategyV3.HASH_METHOD_URI_REGEX);
+  public DegraderRingFactory(D2RingProperties ringProperties) {
+    super(ringProperties);
   }
 }

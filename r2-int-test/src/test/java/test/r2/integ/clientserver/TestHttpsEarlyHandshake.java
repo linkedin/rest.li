@@ -26,6 +26,7 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImp
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
 import io.netty.channel.Channel;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
@@ -62,7 +63,7 @@ public class TestHttpsEarlyHandshake extends AbstractEchoServiceTest
   @Test
   public void testHttpsEarlyHandshakeHttp1() throws Exception
   {
-    NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup();
+    EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     ChannelPoolManagerFactoryImpl channelPoolManagerFactory =

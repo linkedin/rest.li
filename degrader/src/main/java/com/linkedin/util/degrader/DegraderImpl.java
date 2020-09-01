@@ -118,7 +118,6 @@ import com.linkedin.common.util.ConfigHelper;
  * is determined by the latencyToUse configuration parameter. It can be the average,
  * 50, 90, 95, 99th percentile latency.
  */
-
 public class DegraderImpl implements Degrader
 {
   private static final Logger LOG = LoggerFactory.getLogger(Degrader.class.getName());

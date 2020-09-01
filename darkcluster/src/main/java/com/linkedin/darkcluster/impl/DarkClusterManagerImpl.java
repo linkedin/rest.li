@@ -16,6 +16,7 @@
 
 package com.linkedin.darkcluster.impl;
 
+import com.linkedin.darkcluster.api.DarkGateKeeper;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +26,6 @@ import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 
 import com.linkedin.common.util.Notifier;
-import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.util.D2URIRewriter;
@@ -54,12 +54,19 @@ public class DarkClusterManagerImpl implements DarkClusterManager
   private final Facilities _facilities;
   private final String _sourceClusterName;
   private final DarkClusterStrategyFactory _darkClusterStrategyFactory;
+  private final DarkGateKeeper _darkGateKeeper;
   private Map<String, AtomicReference<URIRewriter>> _uriRewriterMap;
 
   public DarkClusterManagerImpl(@Nonnull String sourceClusterName, @Nonnull Facilities facilities,
                                 @Nonnull DarkClusterStrategyFactory strategyFactory, String whiteListRegEx,
                                 String blackListRegEx, @Nonnull Notifier notifier)
   {
+    this(sourceClusterName, facilities, strategyFactory, whiteListRegEx, blackListRegEx, notifier, null);
+  }
+
+  public DarkClusterManagerImpl(@Nonnull String sourceClusterName, @Nonnull Facilities facilities,
+      @Nonnull DarkClusterStrategyFactory strategyFactory, String whiteListRegEx,
+      String blackListRegEx, @Nonnull Notifier notifier, DarkGateKeeper darkGateKeeper) {
     _whiteListRegEx = whiteListRegEx == null ? null : Pattern.compile(whiteListRegEx);
     _blackListRegEx = blackListRegEx == null ? null : Pattern.compile(blackListRegEx);
     _notifier = notifier;
@@ -67,6 +74,8 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     _sourceClusterName = sourceClusterName;
     _darkClusterStrategyFactory = strategyFactory;
     _uriRewriterMap = new HashMap<>();
+    // if null, initialize this to a noop which returns true always
+    _darkGateKeeper = darkGateKeeper == null ? (req, context) -> true : darkGateKeeper;
   }
 
   @Override
@@ -78,7 +87,12 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     {
       final boolean whiteListed = _whiteListRegEx != null && _whiteListRegEx.matcher(uri).matches();
       final boolean blackedListed = _blackListRegEx != null && _blackListRegEx.matcher(uri).matches();
-      if ((isSafe(originalRequest) || whiteListed) && !blackedListed)
+      // send to dark iff:
+      // 1) request is safe
+      // 2) is whitelisted if whitelist regex is provided
+      // 3) not blacklisted if blacklist regex is provided
+      // 4) custom dark gatekeeper returns true for the given request and requestContext
+      if ((isSafe(originalRequest) || whiteListed) && !blackedListed && (_darkGateKeeper.shouldDispatchToDark(originalRequest, originalRequestContext)))
       {
         // the request is already immutable, and a new requestContext will be created in BaseDarkClusterDispatcher.
         // We don't need to copy them here, but doing it just for safety.

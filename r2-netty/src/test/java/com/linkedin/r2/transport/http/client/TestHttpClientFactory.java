@@ -32,6 +32,7 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.eclipse.jetty.server.Server;
 import org.testng.Assert;
@@ -81,7 +82,7 @@ public class TestHttpClientFactory
   @Test(dataProvider = "configsExpectedRequestCount")
   public void testSuccessfulRequest(boolean restOverStream, String protocolVersion, int expectedRequests) throws Exception
   {
-    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
+    EventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true);
 
@@ -137,7 +138,7 @@ public class TestHttpClientFactory
   @Test(dataProvider = "configs")
   public void testShutdownBeforeClients(boolean restOverStream, String protocolVersion) throws Exception
   {
-    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
+    EventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true);
     Server server = new HttpServerBuilder().build();
@@ -181,10 +182,10 @@ public class TestHttpClientFactory
 
   private void createRawClientHelper(String protocolVersion)
   {
-    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
+    EventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     HttpClientFactory factory = new HttpClientFactory.Builder()
-        .setNioEventLoopGroup(eventLoop)
+        .setEventLoopGroup(eventLoop)
         .setShutDownFactory(true)
         .setScheduleExecutorService(scheduler)
         .setShutdownScheduledExecutorService(true)
@@ -275,7 +276,7 @@ public class TestHttpClientFactory
   @Test(dataProvider = "configs")
   public void testShutdownTimeout(boolean restOverStream, String protocolVersion) throws Exception
   {
-    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
+    EventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true);
     Server server = new HttpServerBuilder().build();
@@ -313,7 +314,7 @@ public class TestHttpClientFactory
   @Test(dataProvider = "configs")
   public void testShutdownNoTimeout(boolean restOverStream, String protocolVersion) throws Exception
   {
-    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
+    EventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true);
     Server server = new HttpServerBuilder().build();
@@ -358,7 +359,7 @@ public class TestHttpClientFactory
   @Test(dataProvider = "configs")
   public void testShutdownIOThread(boolean restOverStream, String protocolVersion) throws Exception
   {
-    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
+    EventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     ExecutorService callbackExecutor = Executors.newFixedThreadPool(1);
     HttpClientFactory factory = getHttpClientFactory(eventLoop, true, scheduler, true, callbackExecutor, false);
@@ -409,7 +410,7 @@ public class TestHttpClientFactory
   public void testShutdownTimeoutDoesNotOccupyExecutors()
           throws InterruptedException, ExecutionException, TimeoutException
   {
-    NioEventLoopGroup eventLoop = new NioEventLoopGroup();
+    EventLoopGroup eventLoop = new NioEventLoopGroup();
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     HttpClientFactory factory = getHttpClientFactory(eventLoop, false, scheduler, false);
 
@@ -479,7 +480,7 @@ public class TestHttpClientFactory
     Assert.assertEquals(factory.getStreamRequestCompressionConfig(serviceName, StreamEncodingType.SNAPPY_FRAMED), expectedConfig);
   }
 
-  private static HttpClientFactory getHttpClientFactory(NioEventLoopGroup eventLoopGroup,
+  private static HttpClientFactory getHttpClientFactory(EventLoopGroup eventLoopGroup,
                                                         boolean shutdownFactory,
                                                         ScheduledExecutorService scheduler,
                                                         boolean shutdownScheduler)
@@ -488,7 +489,7 @@ public class TestHttpClientFactory
         Executors.newFixedThreadPool(1), true);
   }
 
-  private static HttpClientFactory getHttpClientFactory(NioEventLoopGroup eventLoopGroup,
+  private static HttpClientFactory getHttpClientFactory(EventLoopGroup eventLoopGroup,
                                                         boolean shutdownFactory,
                                                         ScheduledExecutorService scheduler,
                                                         boolean shutdownScheduler,
@@ -496,7 +497,7 @@ public class TestHttpClientFactory
                                                         boolean shutdownCallbackExecutor)
   {
     return new HttpClientFactory.Builder()
-        .setNioEventLoopGroup(eventLoopGroup)
+        .setEventLoopGroup(eventLoopGroup)
         .setShutDownFactory(shutdownFactory)
         .setScheduleExecutorService(scheduler)
         .setShutdownScheduledExecutorService(shutdownScheduler)

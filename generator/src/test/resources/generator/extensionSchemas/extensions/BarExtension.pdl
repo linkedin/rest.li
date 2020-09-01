@@ -1,0 +1,3 @@
+record BarExtension includes Bar {
+  b1: int
+}

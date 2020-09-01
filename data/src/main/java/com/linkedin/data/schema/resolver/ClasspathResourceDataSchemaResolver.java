@@ -30,7 +30,7 @@ import java.io.InputStream;
 
 
 /**
- * Resolve a data schema name into its data schema, assuming the data schema PDSC is loaded as resources using the {@link ClassLoader}.
+ * Resolve a data schema name into its data schema, assuming the data schema PDSC/PDL is loaded as resources using the {@link ClassLoader}.
  *
  * @author Min Chen
  */
@@ -44,6 +44,11 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
   public static final String DEFAULT_EXTENSION = SchemaParser.FILE_EXTENSION;
 
   private final ClassLoader _classLoader;
+  /**
+   * The file directory name for different types of schemas. Default is {@link SchemaDirectoryName#PEGASUS}
+   * Ex "pegasus" for data or "extensions" for relationship extension schema files
+   */
+  private SchemaDirectoryName _schemasDirectoryName = SchemaDirectoryName.PEGASUS;
 
 
   /**
@@ -52,6 +57,15 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
   public ClasspathResourceDataSchemaResolver()
   {
     this(Thread.currentThread().getContextClassLoader());
+  }
+
+  /**
+   * Construct a new instance that uses the {@link Thread#getContextClassLoader()} for the current thread.
+   * @param schemaDirectoryName resource directory name for the schemas to be parsed. Ex. pegasus or extensions.
+   */
+  public ClasspathResourceDataSchemaResolver(SchemaDirectoryName schemaDirectoryName)
+  {
+    this(Thread.currentThread().getContextClassLoader(), schemaDirectoryName);
   }
 
   /**
@@ -83,6 +97,38 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
   /**
    * Construct a new instance that uses the specified {@link ClassLoader}.
    *
+   * @param classLoader provides the {@link ClassLoader}.
+   * @param schemaDirectoryName The file directory name for different types of schemas.
+   *                            Default is {@link SchemaDirectoryName#PEGASUS}
+   */
+  public ClasspathResourceDataSchemaResolver(ClassLoader classLoader, SchemaDirectoryName schemaDirectoryName)
+  {
+    _schemasDirectoryName = schemaDirectoryName;
+    for (DataSchemaParserFactory parserForFormat: BUILTIN_FORMAT_PARSER_FACTORIES)
+    {
+      addResolver(new SingleFormatClasspathSchemaResolver(parserForFormat, _schemasDirectoryName));
+      if (schemaDirectoryName == SchemaDirectoryName.EXTENSIONS)
+      {
+        addResolver(new SingleFormatClasspathSchemaResolver(parserForFormat, SchemaDirectoryName.PEGASUS));
+      }
+    }
+    _classLoader = classLoader;
+  }
+
+  /**
+   * Return the current schema file directory name for schemas location
+   * If not set Defaults to {@link SchemaDirectoryName#PEGASUS}
+   */
+  @Override
+  public SchemaDirectoryName getSchemasDirectoryName()
+  {
+    return _schemasDirectoryName;
+  }
+
+
+   /**
+   * Construct a new instance that uses the specified {@link ClassLoader}.
+   *
    * @deprecated The parserFactory is not needed as this class now uses builtin parsers. Use
    * {@link #ClasspathResourceDataSchemaResolver(ClassLoader)} instead
    * @param classLoader provides the {@link ClassLoader}.
@@ -96,6 +142,11 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
   private class SingleFormatClasspathSchemaResolver extends DefaultDataSchemaResolver
   {
     private final String _extension;
+    /**
+     * The file directory name for different types of schemas. Default is {@link SchemaDirectoryName#PEGASUS}
+     * Ex "pegasus" for data or "extensions" for relationship extension schema files
+     */
+    private SchemaDirectoryName _schemasDirectoryName = SchemaDirectoryName.PEGASUS;
 
     /**
      * Construct a new instance that uses the {@link Thread#getContextClassLoader()} for the current thread.
@@ -106,9 +157,20 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
       this._extension = "." + parserFactory.getLanguageExtension();
     }
 
+    /**
+     * Construct a new instance that uses the {@link Thread#getContextClassLoader()} for the current thread.
+     */
+    public SingleFormatClasspathSchemaResolver(DataSchemaParserFactory parserFactory,
+        SchemaDirectoryName schemaDirectoryName)
+    {
+      super(parserFactory, ClasspathResourceDataSchemaResolver.this);
+      this._extension = "." + parserFactory.getLanguageExtension();
+      this._schemasDirectoryName = schemaDirectoryName;
+    }
+
     private String getDataSchemaResourcePath(String schemaName)
     {
-      return InternalConstants.PEGASUS_DIR_IN_JAR + "/" + schemaName.replace('.', '/') + _extension;
+      return _schemasDirectoryName.getName() + "/" + schemaName.replace('.', '/') + _extension;
     }
 
     @Override

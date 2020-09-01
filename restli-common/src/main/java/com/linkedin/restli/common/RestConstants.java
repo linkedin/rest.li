@@ -78,6 +78,7 @@ public interface RestConstants
   String QUERY_BATCH_IDS_PARAM = "ids";
   String FIELDS_PARAM = "fields";
   String ALT_KEY_PARAM = "altkey";
+  String FILL_IN_DEFAULTS_PARAM = "$fillInDefaults";
   String METADATA_FIELDS_PARAM = "metadataFields";
   String PAGING_FIELDS_PARAM = "pagingFields";
   String RETURN_ENTITY_PARAM = "$returnEntity";

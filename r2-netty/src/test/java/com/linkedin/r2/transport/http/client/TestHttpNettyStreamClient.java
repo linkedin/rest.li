@@ -50,6 +50,7 @@ import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.test.util.retry.SingleRetry;
 import io.netty.channel.Channel;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -105,7 +106,7 @@ public class TestHttpNettyStreamClient
   private static final int SMALL_CONTENT = 8 * 1024;
   private static final int LARGE_CONTENT = 128 * 1024;
 
-  private NioEventLoopGroup _eventLoop;
+  private EventLoopGroup _eventLoop;
   private ScheduledExecutorService _scheduler;
 
   private static final int TEST_MAX_RESPONSE_SIZE = 500000;

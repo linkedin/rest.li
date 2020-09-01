@@ -1,0 +1,16 @@
+{
+  "schema": "RecordC.pdl",
+  "context": "Test case where recursive filling is tested, in RecordC's field, there are RecordD and TypeRef",
+  "input": {
+    "name": "not-a-default",
+    "personalRecordD": {}
+  },
+  "expect": {
+    "name": "not-a-default",
+    "personalRecordD": {
+      "field3": 0,
+      "field4": "default",
+      "field5": "a-typeref-default"
+    }
+  }
+}

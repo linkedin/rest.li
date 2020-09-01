@@ -17,6 +17,14 @@
 package com.linkedin.d2.balancer.properties;
 
 
+import com.linkedin.d2.ConsistentHashAlgorithm;
+import com.linkedin.d2.D2QuarantineProperties;
+import com.linkedin.d2.D2RelativeStrategyProperties;
+import com.linkedin.d2.D2RingProperties;
+import com.linkedin.d2.HttpMethod;
+import com.linkedin.d2.HttpStatusCodeRange;
+import com.linkedin.d2.HttpStatusCodeRangeArray;
+import com.linkedin.d2.balancer.config.RelativeStrategyPropertiesConverter;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -66,6 +74,19 @@ public class ServicePropertiesSerializerTest
                                      Collections.<String>emptyList(),
                                      Collections.<URI>emptySet(),
                                      arbitraryProperties);
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+  }
+
+  @Test
+  public void testServicePropertiesSerializerWithRelativeStrategy() throws PropertySerializationException
+  {
+    ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
+
+    D2RelativeStrategyProperties relativeStrategyProperties = createRelativeStrategyProperties();
+    ServiceProperties property =
+        new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"), new HashMap<>(),
+            null, null, Arrays.asList("HTTPS"), Collections.emptySet(),
+            Collections.emptyMap(), Collections.emptyList(), RelativeStrategyPropertiesConverter.toMap(relativeStrategyProperties));
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
   }
 
@@ -148,5 +169,48 @@ public class ServicePropertiesSerializerTest
 
     Map<String, Object> transportProperties = servicePropertiesWithClientCfg.getTransportClientProperties();
     Assert.assertTrue(transportProperties != null && transportProperties.containsKey(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS));
+  }
+
+  private D2RelativeStrategyProperties createRelativeStrategyProperties()
+  {
+    double upStep = 0.2;
+    double downStep = 0.1;
+    double relativeLatencyHighThresholdFactor = 1.5;
+    double relativeLatencyLowThresholdFactor = 1.2;
+    double highErrorRate = 0.2;
+    double lowErrorRate = 0.1;
+    int minCallCount = 1000;
+    long updateIntervalMs = 5000;
+    double initialHealthScore = 0.0;
+    double slowStartThreshold = 0.32;
+    HttpStatusCodeRangeArray
+        errorStatusRange = new HttpStatusCodeRangeArray(new HttpStatusCodeRange().setLowerBound(500).setUpperBound(599));
+    double quarantineMaxPercent = 0.1;
+    HttpMethod quarantineMethod = HttpMethod.OPTIONS;
+    String healthCheckPath = "";
+    ConsistentHashAlgorithm consistentHashAlgorithm = ConsistentHashAlgorithm.POINT_BASED;
+
+    D2QuarantineProperties quarantineProperties = new D2QuarantineProperties()
+        .setQuarantineMaxPercent(quarantineMaxPercent)
+        .setHealthCheckMethod(quarantineMethod)
+        .setHealthCheckPath(healthCheckPath);
+
+    D2RingProperties ringProperties = new D2RingProperties()
+        .setConsistentHashAlgorithm(consistentHashAlgorithm);
+
+    return new D2RelativeStrategyProperties()
+        .setQuarantineProperties(quarantineProperties)
+        .setRingProperties(ringProperties)
+        .setUpStep(upStep)
+        .setDownStep(downStep)
+        .setRelativeLatencyHighThresholdFactor(relativeLatencyHighThresholdFactor)
+        .setRelativeLatencyLowThresholdFactor(relativeLatencyLowThresholdFactor)
+        .setHighErrorRate(highErrorRate)
+        .setLowErrorRate(lowErrorRate)
+        .setMinCallCount(minCallCount)
+        .setUpdateIntervalMs(updateIntervalMs)
+        .setInitialHealthScore(initialHealthScore)
+        .setSlowStartThreshold(slowStartThreshold)
+        .setErrorStatusFilter(errorStatusRange);
   }
 }

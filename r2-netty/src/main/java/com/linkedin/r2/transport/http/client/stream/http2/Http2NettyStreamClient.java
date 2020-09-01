@@ -38,15 +38,13 @@ import com.linkedin.r2.transport.http.client.stream.AbstractNettyStreamClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import io.netty.channel.Channel;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.EventLoopGroup;
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Steven Ihde
@@ -60,9 +58,9 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
   /**
    * Creates a new Http2NettyStreamClient
    *
-   * @param eventLoopGroup            The NioEventLoopGroup; it is the caller's responsibility to
-   *                                  shut it down
-   * @param scheduler                  An executor; it is the caller's responsibility to shut it down
+   * @param eventLoopGroup            The EventLoopGroup; it is the caller's responsibility to shut
+   *                                  it down
+   * @param scheduler                 An executor; it is the caller's responsibility to shut it down
    * @param requestTimeout            Timeout, in ms, to get a connection from the pool or create one
    * @param shutdownTimeout           Timeout, in ms, the client should wait after shutdown is
    *                                  initiated before terminating outstanding requests
@@ -72,7 +70,7 @@ public class Http2NettyStreamClient extends AbstractNettyStreamClient
    * @param channelPoolManager        channelPoolManager instance to retrieve http only channels
    * @param sslChannelPoolManager     channelPoolManager instance to retrieve https only connection
    */
-  public Http2NettyStreamClient(NioEventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
+  public Http2NettyStreamClient(EventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
                                 long requestTimeout, long shutdownTimeout,
                                 ExecutorService callbackExecutors,
                                 AbstractJmxManager jmxManager,

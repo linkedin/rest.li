@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "Fuzz",
+  "fields": [
+    {
+      "name": "fieldFuzz",
+      "type": {
+        "type": "record",
+        "name": "InlineRecord",
+        "fields": []
+      }
+    }
+  ]
+}

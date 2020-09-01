@@ -22,8 +22,10 @@ import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PegasusSchemaParser;
+import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
+import com.linkedin.data.schema.resolver.SchemaDirectoryName;
 import com.linkedin.internal.common.InternalConstants;
 import com.linkedin.util.FileUtil;
 
@@ -47,7 +49,8 @@ import java.util.jar.JarFile;
  * @author Joe Betz
  */
 public class FileFormatDataSchemaParser {
-  static final String SCHEMA_PATH_PREFIX = InternalConstants.PEGASUS_DIR_IN_JAR + "/";
+  static final String SCHEMA_PATH_PREFIX = SchemaDirectoryName.PEGASUS.getName() + "/";
+  static final String EXTENSION_PATH_ENTRY = SchemaDirectoryName.EXTENSIONS.getName() + "/";
   private final String _resolverPath;
   private final DataSchemaResolver _schemaResolver;
   private final DataSchemaParserFactory _schemaParserFactory;
@@ -90,7 +93,7 @@ public class FileFormatDataSchemaParser {
               {
                 final JarEntry entry = entries.nextElement();
                 if (!entry.isDirectory() && entry.getName().endsWith(_schemaParserFactory.getLanguageExtension()) &&
-                    entry.getName().startsWith(SCHEMA_PATH_PREFIX))
+                    (entry.getName().startsWith(_schemaResolver.getSchemasDirectoryName().getName()) || isExtensionEntry(entry)))
                 {
                   parseJarEntry(jarFile, entry, result);
                   result.getSourceFiles().add(sourceFile);
@@ -141,6 +144,21 @@ public class FileFormatDataSchemaParser {
       }
       throw e;
     }
+  }
+
+  /**
+   * Schema files when archived in a jar can start with pegasus/... or extensions/
+   * For the resolver that is supporting extensions as directory name, we like it to be included in the parsing
+   * @param entry an entry in the jar file, e.g. "pegasus/..." or "extensions/...."
+   * @return true if this entry starts with "extensions"
+   */
+  private boolean isExtensionEntry(JarEntry entry)
+  {
+    if (_schemaResolver.getSchemasDirectoryName() == SchemaDirectoryName.EXTENSIONS)
+    {
+      return entry.getName().startsWith(EXTENSION_PATH_ENTRY);
+    }
+    return false;
   }
 
   /**
