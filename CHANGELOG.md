@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.6.2] - 2020-08-31
+- Change error log to info log when channel timeout due to inactivity
+
 ## [29.6.1] - 2020-08-31
 - Update R2's HTTP client API to support other Netty EventLoopGroup in addition to NioEventLoopGroup
 - Fix a RetryClient bug where NullPointerException is raised when excluded hosts hint is not set at retry
@@ -4626,7 +4629,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.2...master
+[29.6.2]: https://github.com/linkedin/rest.li/compare/v29.6.1...v29.6.2
 [29.6.1]: https://github.com/linkedin/rest.li/compare/v29.6.0...v29.6.1
 [29.6.0]: https://github.com/linkedin/rest.li/compare/v29.5.8...v29.6.0
 [29.5.8]: https://github.com/linkedin/rest.li/compare/v29.5.7...v29.5.8
