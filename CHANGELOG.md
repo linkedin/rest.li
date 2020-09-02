@@ -14,6 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 - Fix a bug in `FileFormatDataSchemaParser` and remove `isExtensionEntry` method call to simplify the logic.
+- Update ExtensionSchemaValidationCmdLineApp with more validations.
 
 ## [29.6.3] - 2020-09-03
 - Updated HTTP/2 parent channel idle timeout logging level to info from error 

@@ -15,14 +15,19 @@
 */
 package com.linkedin.restli.tools.data;
 
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
+import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
+import com.linkedin.pegasus.generator.DataSchemaParser;
+import com.linkedin.pegasus.generator.FileFormatDataSchemaParser;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
@@ -51,11 +56,15 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * This class is used to validate extension schema, the validation covers following parts:
- * 1. The extension schema is a validate schema.
- * 2. The extension schema's fields should only be annotated by "extension" namespace.
- * 3. The extension schema's fields annotations should be {@link ExtensionSchemaAnnotation}.
- * 4. The extension schema's field's schema only be annotated by "resourceKey" namespace.
+ * This class is used to validate extension schemas, the validation covers following parts:
+ * 1. The extension schema is a valid schema.
+ * 2. The extension schema name has to follow the naming convention: <baseSchemaName> + "Extensions"
+ * 3. The extension schema can only include the base schema.
+ * 4. The extension schema's field annotation keys must be in the "extension" namespace
+ * 5. The extension schema's field annotations must conform to {@link ExtensionSchemaAnnotation}.
+ * 6. The extension schema's fields can only be Typeref or array of Typeref
+ * 7. The extension schema's field schema's annotation keys must be in the "resourceKey" namespace.
+ * 8. The extension schema's field annotation versionSuffix value has to match the versionSuffix value in "resourceKey" annotation on the field schema.
  *
  *
  * @author Yingjie Bi
@@ -67,6 +76,8 @@ public class ExtensionSchemaValidationCmdLineApp
   private static final String PDL = "pdl";
   private static final String EXTENSION_ANNOTATION_NAMESPACE= "extension";
   private static final String RESOURCE_KEY_ANNOTATION_NAMESPACE = "resourceKey";
+  private static final String EXTENSIONS_SUFFIX = "Extensions";
+  private static final String VERSION_SUFFIX = "versionSuffix";
 
   static
   {
@@ -77,7 +88,8 @@ public class ExtensionSchemaValidationCmdLineApp
 
   public static void main(String[] args) throws Exception
   {
-    try {
+    try
+    {
       final CommandLineParser parser = new GnuParser();
       CommandLine cl = parser.parse(_options, args);
 
@@ -112,44 +124,58 @@ public class ExtensionSchemaValidationCmdLineApp
       _logger.error("Invalid arguments: " + e.getMessage());
       System.exit(1);
     }
+    catch (InvalidExtensionSchemaException e)
+    {
+      _logger.error("Invalid extension schema: " + e.getMessage());
+      System.exit(1);
+    }
   }
 
-  private static void parseAndValidateExtensionSchemas(String resolverPath, File inputDir) throws IOException
-  {
-    // Parse each extension schema and validate it
-    Iterator<File> iterator = FileUtils.iterateFiles(inputDir, new String[]{PDL}, true);
-    while(iterator.hasNext())
-    {
-      File inputFile = iterator.next();
-      DataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(resolverPath);
-      PdlSchemaParser parser = new PdlSchemaParser(resolver);
-      parser.parse(new FileInputStream(inputFile));
-      if (parser.hasError())
-      {
-        _logger.error(parser.errorMessage());
-        System.exit(1);
-      }
+ static void parseAndValidateExtensionSchemas(String resolverPath, File inputDir)
+     throws IOException, InvalidExtensionSchemaException
+ {
+   // Parse each extension schema and validate it
+   Iterator<File> iterator = FileUtils.iterateFiles(inputDir, new String[]{PDL}, true);
+   DataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(resolverPath);
+   while (iterator.hasNext())
+   {
+     File inputFile = iterator.next();
+     PdlSchemaParser parser = new PdlSchemaParser(resolver);
+     parser.parse(new FileInputStream(inputFile));
+     if (parser.hasError())
+     {
+       throw new InvalidExtensionSchemaException(parser.errorMessage());
+     }
 
-      List<DataSchema> topLevelDataSchemas = parser.topLevelDataSchemas();
-      if (topLevelDataSchemas == null || topLevelDataSchemas.isEmpty() || topLevelDataSchemas.size() > 1)
-      {
-        _logger.error("Could not parse extension schema : " + inputFile.getAbsolutePath());
-        System.exit(1);
-      }
-      DataSchema topLevelDataSchema = topLevelDataSchemas.get(0);
-      if (!(topLevelDataSchema instanceof NamedDataSchema))
-      {
-        _logger.error("Invalid extension schema : [{}], the schema is not a named schema.", inputFile.getAbsolutePath());
-        System.exit(1);
-      }
-      if (!((NamedDataSchema) topLevelDataSchema).getFullName().endsWith("Extensions"))
-      {
-        _logger.error("Invalid extension schema name : [{}]. The name of the extension schema must be <baseSchemaName> + 'Extensions'", ((NamedDataSchema) topLevelDataSchema).getFullName());
-        System.exit(1);
-      }
+     List<DataSchema> topLevelDataSchemas = parser.topLevelDataSchemas();
+     if (topLevelDataSchemas == null || topLevelDataSchemas.isEmpty() || topLevelDataSchemas.size() > 1)
+     {
+       throw new InvalidExtensionSchemaException("Could not parse extension schema : " + inputFile.getAbsolutePath());
+     }
+     DataSchema topLevelDataSchema = topLevelDataSchemas.get(0);
+     if (!(topLevelDataSchema instanceof NamedDataSchema))
+     {
+       throw new InvalidExtensionSchemaException("Invalid extension schema : " + inputFile.getAbsolutePath() + ", the schema is not a named schema.");
+     }
+     if (!((NamedDataSchema) topLevelDataSchema).getName().endsWith(EXTENSIONS_SUFFIX))
+     {
+       throw new InvalidExtensionSchemaException(
+           "Invalid extension schema name: '" + ((NamedDataSchema) topLevelDataSchema).getName() + "'. The name of the extension schema must be <baseSchemaName> + 'Extensions'");
+     }
 
-      List<NamedDataSchema> includes = ((RecordDataSchema) topLevelDataSchema).getInclude();
-      // TODO: Check includes schemas can only be the resource schemas
+     List<NamedDataSchema> includes = ((RecordDataSchema) topLevelDataSchema).getInclude();
+     if (includes.size() != 1)
+     {
+       throw new InvalidExtensionSchemaException("The extension schema: '" + ((NamedDataSchema) topLevelDataSchema).getName() + "' should include and only include the base schema");
+     }
+
+     NamedDataSchema includeSchema = includes.get(0);
+     if (!((NamedDataSchema) topLevelDataSchema).getName().startsWith(includeSchema.getName()))
+     {
+       throw new InvalidExtensionSchemaException(
+           "Invalid extension schema name: '" + ((NamedDataSchema) topLevelDataSchema).getName() + "'. The name of the extension schema must be baseSchemaName: '"
+               + includeSchema.getName() + "' + 'Extensions");
+     }
 
       List<RecordDataSchema.Field> extensionSchemaFields = ((RecordDataSchema) topLevelDataSchema).getFields()
           .stream()
@@ -161,6 +187,7 @@ public class ExtensionSchemaValidationCmdLineApp
   }
 
   private static void checkExtensionSchemaFields(List<RecordDataSchema.Field> extensionSchemaFields)
+      throws InvalidExtensionSchemaException
   {
     for (RecordDataSchema.Field field : extensionSchemaFields)
     {
@@ -168,8 +195,7 @@ public class ExtensionSchemaValidationCmdLineApp
       Map<String, Object> properties = field.getProperties();
       if (properties.isEmpty() || properties.keySet().size() != 1 || !properties.containsKey(EXTENSION_ANNOTATION_NAMESPACE))
       {
-        _logger.error("The field [{}] of extension schema must and only be annotated with 'extension'", field.getName());
-        System.exit(1);
+        throw new InvalidExtensionSchemaException("The field : " + field.getName() + " of extension schema must and only be annotated with 'extension'");
       }
       Object dataElement = properties.get(EXTENSION_ANNOTATION_NAMESPACE);
 
@@ -179,48 +205,84 @@ public class ExtensionSchemaValidationCmdLineApp
       {
         if (!(dataElement instanceof DataMap))
         {
-          _logger.error("Extension schema annotation is not a datamap!");
-          System.exit(1);
+          throw new InvalidExtensionSchemaException("Extension schema annotation is not a datamap!");
         }
         DataSchema extensionSchemaAnnotationSchema = new ExtensionSchemaAnnotation().schema();
         ValidationResult result = ValidateDataAgainstSchema.validate(dataElement, extensionSchemaAnnotationSchema, validationOptions);
         if (!result.isValid())
         {
-          _logger.error("Extension schema annotation is not valid: " + result.getMessages());
-          System.exit(1);
+          throw new InvalidExtensionSchemaException("Extension schema annotation is not valid: " + result.getMessages());
         }
+      }
+      catch (InvalidExtensionSchemaException e)
+      {
+        throw e;
       }
       catch (Exception e)
       {
         _logger.error("Error while checking extension schema field annotation: " + e.getMessage());
         System.exit(1);
       }
+      checkExtensionSchemaFieldSchema(field.getType(), properties);
     }
   }
 
-  private static void checkExtensionSchemaFieldSchema(DataSchema fieldSchema)
+  private static void checkExtensionSchemaFieldSchema(DataSchema fieldSchema, Map<String, Object> extensionAnnotations)
+      throws InvalidExtensionSchemaException
   {
-    if (!isAnnotatedWithResourceKey(fieldSchema) && !arrayAndItemIsAnnotatedWithResourceKey(fieldSchema))
-    {
-        _logger.error("Field schema: [{}] is not annotated with 'resourceKey'", fieldSchema.toString());
-        System.exit(1);
-    }
+      if (fieldSchema.getType() == DataSchema.Type.ARRAY)
+      {
+        fieldSchema = ((ArrayDataSchema) fieldSchema).getItems();
+      }
+      if (fieldSchema.getType() != DataSchema.Type.TYPEREF)
+      {
+        throw new InvalidExtensionSchemaException("Field schema: '" + fieldSchema.toString() + "' is not a TypeRef type.");
+      }
+      isAnnotatedWithResourceKey(fieldSchema, extensionAnnotations);
   }
 
-  private static boolean arrayAndItemIsAnnotatedWithResourceKey(DataSchema schema)
-  {
-    if (schema.getType() == DataSchema.Type.ARRAY)
-    {
-      DataSchema itemSchema = ((ArrayDataSchema) schema).getItems();
-      return isAnnotatedWithResourceKey(itemSchema);
-    }
-    return false;
-  }
-
-  private static boolean isAnnotatedWithResourceKey(DataSchema fieldSchema)
+  private static void isAnnotatedWithResourceKey(DataSchema fieldSchema, Map<String, Object> extensionAnnotations)
+      throws InvalidExtensionSchemaException
   {
     Map<String, Object> fieldAnnotation = fieldSchema.getProperties();
-    return !fieldAnnotation.isEmpty() && fieldAnnotation.containsKey(RESOURCE_KEY_ANNOTATION_NAMESPACE);
+    if (!fieldAnnotation.isEmpty() && fieldAnnotation.containsKey(RESOURCE_KEY_ANNOTATION_NAMESPACE))
+    {
+     checkExtensionVersionSuffixValue(fieldAnnotation, extensionAnnotations);
+    }
+    else
+    {
+      throw new InvalidExtensionSchemaException("Field schema: " + fieldSchema.toString() + " is not annotated with 'resourceKey'");
+    }
+  }
+
+  private static void checkExtensionVersionSuffixValue(Map<String, Object> resourceKeyAnnotations, Map<String, Object> extensionAnnotations)
+      throws InvalidExtensionSchemaException
+  {
+    DataMap extensionAnnotationMap = (DataMap) extensionAnnotations.getOrDefault(EXTENSION_ANNOTATION_NAMESPACE, new DataMap());
+    if (extensionAnnotationMap.containsKey(VERSION_SUFFIX))
+    {
+      boolean versionSuffixValueIsValid = false;
+      DataList resourceKeyAnnotationList = (DataList) resourceKeyAnnotations.getOrDefault(RESOURCE_KEY_ANNOTATION_NAMESPACE, new DataList());
+      if (resourceKeyAnnotationList.size() < 2)
+      {
+        throw new InvalidExtensionSchemaException("resourceKey annotation: "+ resourceKeyAnnotations.toString()  + " is not defined as multiple versions");
+      }
+      for (int i = 1; i < resourceKeyAnnotationList.size(); i++)
+      {
+        DataMap resourceKeyAnnotation = (DataMap) resourceKeyAnnotationList.get(i);
+        String versionSuffixValueInResourceKey = (String) resourceKeyAnnotation.get(VERSION_SUFFIX);
+        if (((String)extensionAnnotationMap.get(VERSION_SUFFIX)).equals(versionSuffixValueInResourceKey))
+        {
+          versionSuffixValueIsValid = true;
+          break;
+        }
+      }
+      if (!versionSuffixValueIsValid)
+      {
+        throw new InvalidExtensionSchemaException("versionSuffix value: '" + (String)extensionAnnotationMap.get(VERSION_SUFFIX) +
+            "' does not match the versionSuffix value which was defined in resourceKey annotation");
+      }
+    }
   }
 
   private static void help()
@@ -232,5 +294,13 @@ public class ExtensionSchemaValidationCmdLineApp
          _options,
         "",
         true);
+  }
+
+  private static class InvalidExtensionSchemaException extends Exception
+  {
+    private static final long serialVersionUID = 1;
+    public InvalidExtensionSchemaException(String message) {
+      super(message);
+    }
   }
 }

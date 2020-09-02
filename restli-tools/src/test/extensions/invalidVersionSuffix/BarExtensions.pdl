@@ -1,0 +1,9 @@
+/**
+ * Invalid extension schema:
+ * The value of @extension.versionSuffix does not match the value of @resourceKey.versionSuffix on DummyKey
+ */
+record BarExtensions includes Bar {
+  @extension.versionSuffix = "V3"
+  @extension.using = "finder: test"
+  injectedField: DummyKey
+}

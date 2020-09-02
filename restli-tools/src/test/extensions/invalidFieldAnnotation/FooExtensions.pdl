@@ -1,0 +1,9 @@
+/**
+ * Invalid extension schema:
+ * The field type : DummyKeyWithoutAnnotation is not annotated with "resourceKey".
+ */
+record FooExtensions includes Foo {
+  @extension.versionSuffix = "V2"
+  @extension.using = "finder: test"
+  injectedField: DummyKeyWithoutAnnotation
+}

@@ -1,0 +1,32 @@
+/**
+ * A test schema which is used as a field type in extension schema.
+ */
+@resourceKey = [ {
+  "keyConfig" : {
+    "keys" : {
+      "profilesId" : {
+        "assocKey" : {
+          "authorId" : "fabricName",
+          "objectId" : "sessionId"
+        }
+      }
+    }
+  },
+  "entity" : "Profile",
+  "resourcePath" : "/profiles/{profilesId}"
+}, {
+  "keyConfig" : {
+    "keys" : {
+      "profilesId" : {
+        "assocKey" : {
+          "authorId" : "fabricName",
+          "objectId" : "sessionId"
+        }
+      }
+    }
+  },
+  "entity" : "ProfileV2",
+  "resourcePath" : "/profilesV2/{profilesId}",
+  "versionSuffix" : "V2"
+} ]
+typeref DummyKey = string

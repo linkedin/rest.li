@@ -1,0 +1,9 @@
+/**
+ * Invalid extension schema:
+ * The field type of extension schema is neither a Typeref nor any array of Typeref
+ */
+record FooExtensions includes Foo {
+  @extension.versionSuffix = "V2"
+  @extension.using = "finder: test"
+  injectedField: DummyKeyWithWrongType
+}
