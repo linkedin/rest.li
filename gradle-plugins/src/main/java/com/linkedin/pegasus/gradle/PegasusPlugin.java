@@ -57,8 +57,6 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.tasks.Copy;
-import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.Sync;
@@ -1593,14 +1591,6 @@ public class PegasusPlugin implements Plugin<Project>
     Task compileTask = project.getTasks().getByName(targetSourceSet.getCompileJavaTaskName());
     compileTask.dependsOn(generateDataTemplatesTask);
 
-    // Dummy task to maintain backward compatibility
-    // TODO: Delete this task once use cases have had time to reference the new task
-    Task destroyStaleFiles = project.getTasks().create(sourceSet.getName() + "DestroyStaleFiles", Delete.class);
-    destroyStaleFiles.onlyIf(task -> {
-      project.getLogger().lifecycle("{} task is a NO-OP task.", task.getPath());
-      return false;
-    });
-
     // Prepare schema files for publication by syncing schema folders.
     Task prepareSchemasForPublishTask = project.getTasks()
         .create(sourceSet.getName() + "CopySchemas", Sync.class, task ->
@@ -1632,7 +1622,6 @@ public class PegasusPlugin implements Plugin<Project>
           }
         });
 
-    prepareLegacySchemasForPublishTask.dependsOn(destroyStaleFiles);
     dataTemplateJarDepends.add(prepareLegacySchemasForPublishTask);
 
     // extension schema directory

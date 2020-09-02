@@ -18,8 +18,6 @@ package com.linkedin.pegasus.gradle;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.tasks.Copy;
-import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.Sync;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.testng.annotations.Test;
@@ -67,8 +65,7 @@ public final class TestPegasusPlugin
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(PegasusPlugin.class);
 
-    // Then: Validate the Delete/Sync Schema tasks are of the correct type.
-    assertTrue(project.getTasks().getByName("mainDestroyStaleFiles") instanceof Delete);
+    // Then: Validate the Sync Schema task is of the correct type.
     assertTrue(project.getTasks().getByName("mainCopySchemas") instanceof Sync);
   }
 }
