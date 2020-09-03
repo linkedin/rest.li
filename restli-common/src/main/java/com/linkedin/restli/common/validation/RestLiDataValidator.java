@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.common.validation;
 
-import com.linkedin.common.callback.Function;
 import com.linkedin.data.element.DataElement;
 import com.linkedin.data.element.DataElementUtil;
 import com.linkedin.data.element.SimpleDataElement;
@@ -60,6 +59,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 
 /**
@@ -437,31 +437,19 @@ public class RestLiDataValidator
    */
   protected ValidationResult validateOutputAgainstSchema(RecordTemplate dataTemplate, DataSchema validatingSchema)
   {
-    if (dataTemplate == null)
-    {
-      throw new IllegalArgumentException("Record template is null.");
-    }
-    if (dataTemplate.data() == null)
-    {
-      throw new IllegalArgumentException("Record template does not have data.");
-    }
-    if (validatingSchema == null)
-    {
-      throw new IllegalArgumentException("Validating schema is null");
-    }
-
-    if (METHODS_VALIDATED_ON_RESPONSE.contains(_resourceMethod))
-    {
-      return validateOutputEntity(dataTemplate, validatingSchema);
-    }
-    else
-    {
-      throw new IllegalArgumentException("Cannot perform Rest.li output validation for " + _resourceMethod.toString());
-    }
+    return validateOutputAgainstSchema(dataTemplate, validatingSchema,
+        () -> validateOutputEntity(dataTemplate, validatingSchema));
   }
 
   protected ValidationResult validateOutputAgainstSchema(RecordTemplate dataTemplate, DataSchema validatingSchema,
-      Function<DataSchema, DataSchemaAnnotationValidator> _validatorInitFunc)
+      DataSchemaAnnotationValidator schemaValidator)
+  {
+    return validateOutputAgainstSchema(dataTemplate, validatingSchema,
+        () -> validateOutputEntity(dataTemplate, validatingSchema, schemaValidator));
+  }
+
+  private ValidationResult validateOutputAgainstSchema(RecordTemplate dataTemplate, DataSchema validatingSchema,
+      Supplier<ValidationResult> validationResultSupplier)
   {
     if (dataTemplate == null)
     {
@@ -478,15 +466,13 @@ public class RestLiDataValidator
 
     if (METHODS_VALIDATED_ON_RESPONSE.contains(_resourceMethod))
     {
-      return validateOutputEntity(dataTemplate, validatingSchema, _validatorInitFunc.map(validatingSchema));
+      return validationResultSupplier.get();
     }
     else
     {
       throw new IllegalArgumentException("Cannot perform Rest.li output validation for " + _resourceMethod.toString());
     }
   }
-
-
 
   /**
    * Checks that if the patch is applied to a valid entity, the modified entity will also be valid.

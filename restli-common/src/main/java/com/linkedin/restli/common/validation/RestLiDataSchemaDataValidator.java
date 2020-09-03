@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.common.validation;
 
-import com.linkedin.common.callback.Function;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator;
@@ -34,7 +33,7 @@ import java.util.Collections;
  */
 public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
   private final DataSchema _validatingSchema;
-  private final Function<DataSchema, DataSchemaAnnotationValidator> _validatorInitFunc;
+  private final DataSchemaAnnotationValidator _schemaValidator;
 
   /**
    * Constructor.
@@ -56,7 +55,7 @@ public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
     }
 
     _validatingSchema = validatingSchema;
-    _validatorInitFunc = DataSchemaAnnotationValidator::new;
+    _schemaValidator = new DataSchemaAnnotationValidator(_validatingSchema);
   }
 
   /**
@@ -67,7 +66,7 @@ public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
   @Override
   public ValidationResult validateOutput(RecordTemplate dataTemplate)
   {
-    return super.validateOutputAgainstSchema(dataTemplate, _validatingSchema, _validatorInitFunc);
+    return super.validateOutputAgainstSchema(dataTemplate, _validatingSchema, _schemaValidator);
   }
 
   /**
