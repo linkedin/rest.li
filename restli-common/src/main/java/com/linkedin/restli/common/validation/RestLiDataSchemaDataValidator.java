@@ -17,6 +17,8 @@
 package com.linkedin.restli.common.validation;
 
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
+import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator;
 import com.linkedin.data.template.RecordTemplate;
@@ -66,7 +68,9 @@ public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
   @Override
   public ValidationResult validateOutput(RecordTemplate dataTemplate)
   {
-    return super.validateOutputAgainstSchema(dataTemplate, _validatingSchema, _schemaValidator);
+    return super.validateOutputAgainstSchema(dataTemplate,
+        () -> ValidateDataAgainstSchema.validate(dataTemplate.data(), _validatingSchema, new ValidationOptions(),
+            _schemaValidator));
   }
 
   /**
