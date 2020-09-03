@@ -49,6 +49,7 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.util.ProjectionMaskApplier;
 import com.linkedin.restli.restspec.RestSpecAnnotation;
+
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,7 +60,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 
 /**
@@ -274,9 +274,9 @@ public class RestLiDataValidator
     _validatorClassMap = Collections.unmodifiableMap(validatorClassMap);
   }
 
-  private class DataValidator extends DataSchemaAnnotationValidator
+  protected class DataValidator extends DataSchemaAnnotationValidator
   {
-    private DataValidator(DataSchema schema)
+    protected DataValidator(DataSchema schema)
     {
       super(schema, _validatorClassMap);
     }
@@ -323,8 +323,7 @@ public class RestLiDataValidator
       case BATCH_GET:
       case FINDER:
       case GET_ALL:
-        return ValidateDataAgainstSchema.validate(((RecordTemplate) dataTemplate).data(), null,
-            new ValidationOptions(), new DataSchemaAnnotationValidator(null));
+        return validateOutputEntity((RecordTemplate) dataTemplate, null);
       default:
         throw new IllegalArgumentException("Cannot perform Rest.li validation for " + _resourceMethod.toString());
     }
@@ -438,19 +437,6 @@ public class RestLiDataValidator
    */
   protected ValidationResult validateOutputAgainstSchema(RecordTemplate dataTemplate, DataSchema validatingSchema)
   {
-    if (validatingSchema == null)
-    {
-      throw new IllegalArgumentException("Validating schema is null");
-    }
-
-    return validateOutputAgainstSchema(dataTemplate,
-        () -> ValidateDataAgainstSchema.validate(dataTemplate.data(), validatingSchema, new ValidationOptions(),
-            new DataSchemaAnnotationValidator(validatingSchema)));
-  }
-
-  protected ValidationResult validateOutputAgainstSchema(RecordTemplate dataTemplate,
-      Supplier<ValidationResult> validationResultSupplier)
-  {
     if (dataTemplate == null)
     {
       throw new IllegalArgumentException("Record template is null.");
@@ -459,9 +445,14 @@ public class RestLiDataValidator
     {
       throw new IllegalArgumentException("Record template does not have data.");
     }
+    if (validatingSchema == null)
+    {
+      throw new IllegalArgumentException("Validating schema is null");
+    }
+
     if (METHODS_VALIDATED_ON_RESPONSE.contains(_resourceMethod))
     {
-      return validationResultSupplier.get();
+      return validateOutputEntity(dataTemplate, validatingSchema);
     }
     else
     {
@@ -537,7 +528,7 @@ public class RestLiDataValidator
     // Custom validation rules and Rest.li annotations for set operations are checked here.
     // It's okay if required fields are absent in a partial update request, so use ignore mode.
     return ValidateDataAgainstSchema.validate(new SimpleDataElement(entity.data(), entity.schema()),
-        new ValidationOptions(RequiredMode.IGNORE), new DataValidator(entity.schema()));
+        new ValidationOptions(RequiredMode.IGNORE), getValidatorForInput(entity.schema()));
   }
 
   /**
@@ -617,7 +608,21 @@ public class RestLiDataValidator
     //  the client cannot supply them in a create request, so they should be treated as optional.
     //  similarly for update requests used as upsert (update to create), they are treated as optional.
     validationOptions.setTreatOptional(_readOnlyOptionalPredicate);
-    return ValidateDataAgainstSchema.validate(entity, validationOptions, new DataValidator(entity.schema()));
+    return ValidateDataAgainstSchema.validate(entity, validationOptions, getValidatorForInput(entity.schema()));
+  }
+
+  private ValidationResult validateOutputEntity(RecordTemplate entity, DataSchema validatingSchema)
+  {
+    return ValidateDataAgainstSchema.validate(entity.data(), validatingSchema, new ValidationOptions(),
+        getValidatorForOutput(validatingSchema));
+  }
+
+  protected Validator getValidatorForOutput(DataSchema validatingSchema) {
+    return new DataSchemaAnnotationValidator(validatingSchema);
+  }
+
+  protected Validator getValidatorForInput(DataSchema validatingSchema) {
+    return new DataValidator(validatingSchema);
   }
 
   private static ValidationErrorResult validationResultWithErrorMessage(String errorMessage)

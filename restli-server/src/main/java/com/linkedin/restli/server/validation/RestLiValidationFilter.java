@@ -150,8 +150,7 @@ public class RestLiValidationFilter implements Filter
     }
 
     ResourceMethod method = requestContext.getMethodType();
-    RestLiDataValidator validator = new RestLiDataValidator(resourceClass.getAnnotations(),
-        requestContext.getFilterResourceModel().getValueClass(), method);
+    RestLiDataValidator validator = createRequestRestLiDataValidator(requestContext);
     RestLiRequestData requestData = requestContext.getRequestData();
 
     ValidationResult result;
@@ -282,7 +281,7 @@ public class RestLiValidationFilter implements Filter
     {
 
       ResourceMethod method = requestContext.getMethodType();
-      RestLiDataValidator validator = createRestLiDataValidator(requestContext);
+      RestLiDataValidator validator = createResponseRestLiDataValidator(requestContext);
 
       switch (method)
       {
@@ -470,13 +469,25 @@ public class RestLiValidationFilter implements Filter
   }
 
   /**
-   * Creates a {@link RestLiValidationFilter}.
+   * Creates a {@link RestLiValidationFilter} to use for validation onRequest.
    * Other implementations that extend this class can override this method to gain access to the validator.
    *
    * @param requestContext {@link FilterRequestContext} to provide input to the data validator
    * @return a {@link RestLiValidationFilter}
    */
-  protected RestLiDataValidator createRestLiDataValidator(FilterRequestContext requestContext) {
+  protected RestLiDataValidator createRequestRestLiDataValidator(FilterRequestContext requestContext) {
+    return new RestLiDataValidator(requestContext.getFilterResourceModel().getResourceClass().getAnnotations(),
+        requestContext.getFilterResourceModel().getValueClass(), requestContext.getMethodType());
+  }
+
+  /**
+   * Creates a {@link RestLiValidationFilter} to use for validation onResponse.
+   * Other implementations that extend this class can override this method to gain access to the validator.
+   *
+   * @param requestContext {@link FilterRequestContext} to provide input to the data validator
+   * @return a {@link RestLiValidationFilter}
+   */
+  protected RestLiDataValidator createResponseRestLiDataValidator(FilterRequestContext requestContext) {
     // Get validating schema if it was already built in onRequest
     DataSchema validatingSchema = (DataSchema) requestContext.getFilterScratchpad().get(VALIDATING_SCHEMA_KEY);
 

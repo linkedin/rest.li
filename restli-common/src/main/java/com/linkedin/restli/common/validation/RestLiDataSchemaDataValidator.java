@@ -17,10 +17,9 @@
 package com.linkedin.restli.common.validation;
 
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
-import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator;
+import com.linkedin.data.schema.validator.Validator;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.common.ResourceMethod;
@@ -35,7 +34,8 @@ import java.util.Collections;
  */
 public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
   private final DataSchema _validatingSchema;
-  private final DataSchemaAnnotationValidator _schemaValidator;
+  private final DataValidator _inputDataValidator;
+  private final DataSchemaAnnotationValidator _outputSchemaValidator;
 
   /**
    * Constructor.
@@ -57,7 +57,8 @@ public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
     }
 
     _validatingSchema = validatingSchema;
-    _schemaValidator = new DataSchemaAnnotationValidator(_validatingSchema);
+    _inputDataValidator = new DataValidator(_validatingSchema);
+    _outputSchemaValidator = new DataSchemaAnnotationValidator(_validatingSchema);
   }
 
   /**
@@ -68,9 +69,37 @@ public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
   @Override
   public ValidationResult validateOutput(RecordTemplate dataTemplate)
   {
-    return super.validateOutputAgainstSchema(dataTemplate,
-        () -> ValidateDataAgainstSchema.validate(dataTemplate.data(), _validatingSchema, new ValidationOptions(),
-            _schemaValidator));
+    return super.validateOutputAgainstSchema(dataTemplate, _validatingSchema);
+  }
+
+  /**
+   * Validator to use to validate the output.
+   * The validator is instantiated in the constructor, so directly returns that if input is equal to _validatingSchema.
+   * @param validatingSchema schema to validate against
+   * @return validator
+   */
+  @Override
+  protected Validator getValidatorForOutput(DataSchema validatingSchema) {
+    if (_validatingSchema.equals(validatingSchema))
+    {
+      return _outputSchemaValidator;
+    }
+    else
+    {
+      return super.getValidatorForOutput(validatingSchema);
+    }
+  }
+
+  @Override
+  protected Validator getValidatorForInput(DataSchema validatingSchema) {
+    if (_validatingSchema.equals(validatingSchema))
+    {
+      return _inputDataValidator;
+    }
+    else
+    {
+      return super.getValidatorForInput(validatingSchema);
+    }
   }
 
   /**
