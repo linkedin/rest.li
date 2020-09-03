@@ -150,8 +150,7 @@ public class RestLiValidationFilter implements Filter
     }
 
     ResourceMethod method = requestContext.getMethodType();
-    RestLiDataValidator validator = new RestLiDataValidator(resourceClass.getAnnotations(),
-        requestContext.getFilterResourceModel().getValueClass(), method);
+    RestLiDataValidator validator = createRestLiDataValidator(requestContext);
     RestLiRequestData requestData = requestContext.getRequestData();
 
     ValidationResult result;
@@ -486,5 +485,17 @@ public class RestLiValidationFilter implements Filter
     CompletableFuture<Void> future = new CompletableFuture<>();
     future.completeExceptionally(t);
     return future;
+  }
+
+  /**
+   * Creates a {@link RestLiValidationFilter}.
+   * Other implementations that extend this class can override this method to gain access to the validator.
+   *
+   * @param requestContext {@link FilterRequestContext} to provide input to the data validator
+   * @return a {@link RestLiValidationFilter}
+   */
+  protected RestLiDataValidator createRestLiDataValidator(FilterRequestContext requestContext) {
+    return new RestLiDataValidator(requestContext.getFilterResourceModel().getResourceClass().getAnnotations(),
+        requestContext.getFilterResourceModel().getValueClass(), requestContext.getMethodType());
   }
 }
