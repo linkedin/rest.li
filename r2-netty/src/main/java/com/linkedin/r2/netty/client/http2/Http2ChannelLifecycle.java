@@ -290,7 +290,7 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
       _childChannelCount = 0;
     }
 
-    LOG.error("Closing parent channel due to idle timeout !");
+    LOG.info("Closing parent channel due to idle timeout !");
     channel.close().addListener(future -> {
       if (!future.isSuccess())
       {
