@@ -168,12 +168,12 @@ public class RestLiDataValidator
         if (annotation.annotationType() == ReadOnly.class)
         {
           annotationMap.put(ReadOnly.class.getAnnotation(RestSpecAnnotation.class).name(),
-              Arrays.asList(((ReadOnly) annotation).value()));
+                            Arrays.asList(((ReadOnly) annotation).value()));
         }
         else if (annotation.annotationType() == CreateOnly.class)
         {
           annotationMap.put(CreateOnly.class.getAnnotation(RestSpecAnnotation.class).name(),
-              Arrays.asList(((CreateOnly) annotation).value()));
+                            Arrays.asList(((CreateOnly) annotation).value()));
         }
       }
     }
@@ -201,9 +201,9 @@ public class RestLiDataValidator
    * @param validatorClassMap custom validator class map (see {@link #RestLiDataValidator(Map, Class, ResourceMethod, Map)} for explanation)
    */
   public RestLiDataValidator(Annotation[] annotations,
-      Class<? extends RecordTemplate> valueClass,
-      ResourceMethod resourceMethod,
-      Map<String, Class<? extends Validator>> validatorClassMap)
+                             Class<? extends RecordTemplate> valueClass,
+                             ResourceMethod resourceMethod,
+                             Map<String, Class<? extends Validator>> validatorClassMap)
   {
     this(annotationsToMap(annotations), valueClass, resourceMethod, validatorClassMap);
   }
@@ -216,8 +216,8 @@ public class RestLiDataValidator
    * @param resourceMethod resource method type
    */
   public RestLiDataValidator(Map<String, List<String>> annotations,
-      Class<? extends RecordTemplate> valueClass,
-      ResourceMethod resourceMethod)
+                             Class<? extends RecordTemplate> valueClass,
+                             ResourceMethod resourceMethod)
   {
     this(annotations, valueClass, resourceMethod, Collections.emptyMap());
   }
@@ -233,9 +233,9 @@ public class RestLiDataValidator
    *                          (e.g. "strlen" as key and StrlenValidator.class as value)
    */
   public RestLiDataValidator(Map<String, List<String>> annotations,
-      Class<? extends RecordTemplate> valueClass,
-      ResourceMethod resourceMethod,
-      Map<String, Class<? extends Validator>> validatorClassMap)
+                             Class<? extends RecordTemplate> valueClass,
+                             ResourceMethod resourceMethod,
+                             Map<String, Class<? extends Validator>> validatorClassMap)
   {
     List<Predicate> readOnly = new ArrayList<>();
     List<Predicate> createOnly = new ArrayList<>();
