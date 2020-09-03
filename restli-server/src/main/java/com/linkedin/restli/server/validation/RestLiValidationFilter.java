@@ -150,7 +150,8 @@ public class RestLiValidationFilter implements Filter
     }
 
     ResourceMethod method = requestContext.getMethodType();
-    RestLiDataValidator validator = createRestLiDataValidator(requestContext);
+    RestLiDataValidator validator = new RestLiDataValidator(resourceClass.getAnnotations(),
+        requestContext.getFilterResourceModel().getValueClass(), method);
     RestLiRequestData requestData = requestContext.getRequestData();
 
     ValidationResult result;
