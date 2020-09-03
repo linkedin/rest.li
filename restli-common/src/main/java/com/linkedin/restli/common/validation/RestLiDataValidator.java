@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.common.validation;
 
+import com.linkedin.common.callback.Function;
 import com.linkedin.data.element.DataElement;
 import com.linkedin.data.element.DataElementUtil;
 import com.linkedin.data.element.SimpleDataElement;
@@ -49,7 +50,6 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.util.ProjectionMaskApplier;
 import com.linkedin.restli.restspec.RestSpecAnnotation;
-
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -460,6 +460,34 @@ public class RestLiDataValidator
     }
   }
 
+  protected ValidationResult validateOutputAgainstSchema(RecordTemplate dataTemplate, DataSchema validatingSchema,
+      Function<DataSchema, DataSchemaAnnotationValidator> _validatorInitFunc)
+  {
+    if (dataTemplate == null)
+    {
+      throw new IllegalArgumentException("Record template is null.");
+    }
+    if (dataTemplate.data() == null)
+    {
+      throw new IllegalArgumentException("Record template does not have data.");
+    }
+    if (validatingSchema == null)
+    {
+      throw new IllegalArgumentException("Validating schema is null");
+    }
+
+    if (METHODS_VALIDATED_ON_RESPONSE.contains(_resourceMethod))
+    {
+      return validateOutputEntity(dataTemplate, validatingSchema, _validatorInitFunc.map(validatingSchema));
+    }
+    else
+    {
+      throw new IllegalArgumentException("Cannot perform Rest.li output validation for " + _resourceMethod.toString());
+    }
+  }
+
+
+
   /**
    * Checks that if the patch is applied to a valid entity, the modified entity will also be valid.
    * This method
@@ -614,6 +642,11 @@ public class RestLiDataValidator
   private ValidationResult validateOutputEntity(RecordTemplate entity, DataSchema validatingSchema)
   {
     DataSchemaAnnotationValidator validator = new DataSchemaAnnotationValidator(validatingSchema);
+    return validateOutputEntity(entity, validatingSchema, validator);
+  }
+
+  private ValidationResult validateOutputEntity(RecordTemplate entity, DataSchema validatingSchema, DataSchemaAnnotationValidator validator)
+  {
     return ValidateDataAgainstSchema.validate(entity.data(), validatingSchema, new ValidationOptions(), validator);
   }
 
