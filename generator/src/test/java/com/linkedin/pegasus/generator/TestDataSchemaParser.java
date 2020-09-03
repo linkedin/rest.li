@@ -172,6 +172,54 @@ public class TestDataSchemaParser
     }
   }
 
+  @DataProvider(name = "PegasusSchemasWithExtensionResolver")
+  private Object[][] createPegasusSchemasWithExtensionResolver()
+  {
+    return new Object[][]
+        {
+            {
+                new String[]{
+                    "pegasus/Foo.pdl",
+                    "pegasus/Bar.pdl",
+                    "pegasus/Fuzz.pdsc"
+                },
+                new String[]{}
+            },
+        };
+  }
+
+  @Test(dataProvider = "PegasusSchemasWithExtensionResolver")
+  public void testBaseSchemaFilesInExtensionResolverInJar(String[] files, String[] expected) throws Exception
+  {
+    String tempDirectoryPath = _tempDir.getAbsolutePath();
+    String jarFile = tempDirectoryPath + FS + "test.jar";
+    String schemaDir = pegasusDir + FS + "extensionSchemas";
+    Map<String, String> entryToFileMap = Arrays.stream(files).collect(Collectors.toMap(
+        filename -> schemaDir + FS + filename,
+        filename -> filename));
+    createTempJarFile(entryToFileMap, jarFile);
+
+    ExtensionsDataSchemaResolver resolver = new ExtensionsDataSchemaResolver(jarFile);
+    try
+    {
+      DataSchemaParser parser = new DataSchemaParser(jarFile, resolver);
+      DataSchemaParser.ParseResult parseResult = parser.parseSources(new String[]{jarFile});
+      Map<DataSchema, DataSchemaLocation> schemas = parseResult.getSchemaAndLocations();
+      assertEquals(schemas.size(), expected.length);
+      Set<String> actualNames = schemas
+          .keySet()
+          .stream()
+          .map(dataSchema -> (NamedDataSchema) dataSchema)
+          .map(NamedDataSchema::getName)
+          .collect(Collectors.toSet());
+      assertEquals(actualNames, Arrays.stream(expected).collect(Collectors.toSet()));
+    }
+    catch (Exception e)
+    {
+      Assert.fail("Test failed");
+    }
+  }
+
   @Test(dataProvider = "entityRelationshipInputFiles")
   public void testSchemaFilesInExtensionPathInFolder(String[] files, String[] expectedExtensions) throws Exception
   {
