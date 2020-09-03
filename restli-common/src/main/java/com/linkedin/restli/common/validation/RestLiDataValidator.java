@@ -323,7 +323,7 @@ public class RestLiDataValidator
       case BATCH_GET:
       case FINDER:
       case GET_ALL:
-        return validateOutputEntity((RecordTemplate) dataTemplate, null);
+        return validateOutputEntity((RecordTemplate) dataTemplate, null, new DataSchemaAnnotationValidator(null));
       default:
         throw new IllegalArgumentException("Cannot perform Rest.li validation for " + _resourceMethod.toString());
     }
@@ -437,18 +437,32 @@ public class RestLiDataValidator
    */
   protected ValidationResult validateOutputAgainstSchema(RecordTemplate dataTemplate, DataSchema validatingSchema)
   {
-    return validateOutputAgainstSchema(dataTemplate, validatingSchema,
-        () -> validateOutputEntity(dataTemplate, validatingSchema));
+    if (validatingSchema == null)
+    {
+      throw new IllegalArgumentException("Validating schema is null");
+    }
+
+    return validateOutputAgainstSchema(dataTemplate,
+        () -> validateOutputEntity(dataTemplate, validatingSchema, new DataSchemaAnnotationValidator(validatingSchema)));
   }
 
+  /**
+   * Validate Rest.li output data (single entity) against a validating schema.
+   *
+   * @param dataTemplate data to validate
+   * @param validatingSchema schema to use when validating
+   * @param schemaValidator validator to use on the data
+   * @return validation result
+   * @throws IllegalArgumentException if any argument is null or if the provided data template has no data
+   */
   protected ValidationResult validateOutputAgainstSchema(RecordTemplate dataTemplate, DataSchema validatingSchema,
       DataSchemaAnnotationValidator schemaValidator)
   {
-    return validateOutputAgainstSchema(dataTemplate, validatingSchema,
+    return validateOutputAgainstSchema(dataTemplate,
         () -> validateOutputEntity(dataTemplate, validatingSchema, schemaValidator));
   }
 
-  private ValidationResult validateOutputAgainstSchema(RecordTemplate dataTemplate, DataSchema validatingSchema,
+  private ValidationResult validateOutputAgainstSchema(RecordTemplate dataTemplate,
       Supplier<ValidationResult> validationResultSupplier)
   {
     if (dataTemplate == null)
@@ -459,11 +473,6 @@ public class RestLiDataValidator
     {
       throw new IllegalArgumentException("Record template does not have data.");
     }
-    if (validatingSchema == null)
-    {
-      throw new IllegalArgumentException("Validating schema is null");
-    }
-
     if (METHODS_VALIDATED_ON_RESPONSE.contains(_resourceMethod))
     {
       return validationResultSupplier.get();
@@ -623,12 +632,6 @@ public class RestLiDataValidator
     //  similarly for update requests used as upsert (update to create), they are treated as optional.
     validationOptions.setTreatOptional(_readOnlyOptionalPredicate);
     return ValidateDataAgainstSchema.validate(entity, validationOptions, new DataValidator(entity.schema()));
-  }
-
-  private ValidationResult validateOutputEntity(RecordTemplate entity, DataSchema validatingSchema)
-  {
-    DataSchemaAnnotationValidator validator = new DataSchemaAnnotationValidator(validatingSchema);
-    return validateOutputEntity(entity, validatingSchema, validator);
   }
 
   private ValidationResult validateOutputEntity(RecordTemplate entity, DataSchema validatingSchema, DataSchemaAnnotationValidator validator)
