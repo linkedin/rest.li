@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Fix a bug in `FileFormatDataSchemaParser` and remove `isExtensionEntry` method call to simplify the logic.
 
 ## [29.6.3] - 2020-09-03
 - Updated HTTP/2 parent channel idle timeout logging level to info from error 
