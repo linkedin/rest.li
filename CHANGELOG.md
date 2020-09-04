@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Delete the mainCopyPdscSchemas Gradle task. mainCopySchemas is the replacement.
+- Delete the mainDestroyStaleSchemas Gradle task. mainCopySchemas is the replacement.
 
 ## [29.6.2] - 2020-08-31
 - Updated d2 client default config values.
