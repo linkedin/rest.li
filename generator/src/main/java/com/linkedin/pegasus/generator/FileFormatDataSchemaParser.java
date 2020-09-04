@@ -94,7 +94,7 @@ public class FileFormatDataSchemaParser {
                 final JarEntry entry = entries.nextElement();
                 if (!entry.isDirectory() &&
                     entry.getName().endsWith(_schemaParserFactory.getLanguageExtension()) &&
-                    (entry.getName().toLowerCase().startsWith(_schemaResolver.getSchemasDirectoryName().name().toLowerCase())))
+                    (entry.getName().toLowerCase().startsWith(_schemaResolver.getSchemasDirectoryName().name().toLowerCase() + "/")))
                 {
                   parseJarEntry(jarFile, entry, result);
                   result.getSourceFiles().add(sourceFile);
