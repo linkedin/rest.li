@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+Remove Guava dependency from data-avro module.
 
 ## [29.6.4] - 2020-09-08
 - Fix inconsistent issue in extension schema file names: from `Extension` to `Extensions`
