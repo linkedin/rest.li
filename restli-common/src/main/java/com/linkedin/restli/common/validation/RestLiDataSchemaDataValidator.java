@@ -34,7 +34,6 @@ import java.util.Collections;
  */
 public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
   private final DataSchema _validatingSchema;
-  private final DataValidator _inputDataValidator;
   private final DataSchemaAnnotationValidator _outputSchemaValidator;
 
   /**
@@ -57,7 +56,6 @@ public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
     }
 
     _validatingSchema = validatingSchema;
-    _inputDataValidator = new DataValidator(_validatingSchema);
     _outputSchemaValidator = new DataSchemaAnnotationValidator(_validatingSchema);
   }
 
@@ -87,18 +85,6 @@ public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
     else
     {
       return super.getValidatorForOutput(validatingSchema);
-    }
-  }
-
-  @Override
-  protected Validator getValidatorForInput(DataSchema validatingSchema) {
-    if (_validatingSchema.equals(validatingSchema))
-    {
-      return _inputDataValidator;
-    }
-    else
-    {
-      return super.getValidatorForInput(validatingSchema);
     }
   }
 
