@@ -79,7 +79,7 @@ public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
    */
   @Override
   protected Validator getValidatorForOutputEntityValidation(DataSchema validatingSchema) {
-    if (_validatingSchema.equals(validatingSchema))
+    if (_validatingSchema == validatingSchema)
     {
       return _outputSchemaValidator;
     }
