@@ -528,7 +528,7 @@ public class RestLiDataValidator
     // Custom validation rules and Rest.li annotations for set operations are checked here.
     // It's okay if required fields are absent in a partial update request, so use ignore mode.
     return ValidateDataAgainstSchema.validate(new SimpleDataElement(entity.data(), entity.schema()),
-        new ValidationOptions(RequiredMode.IGNORE), getValidatorForInput(entity.schema()));
+        new ValidationOptions(RequiredMode.IGNORE), getValidatorForInputEntityValidation(entity.schema()));
   }
 
   /**
@@ -608,20 +608,20 @@ public class RestLiDataValidator
     //  the client cannot supply them in a create request, so they should be treated as optional.
     //  similarly for update requests used as upsert (update to create), they are treated as optional.
     validationOptions.setTreatOptional(_readOnlyOptionalPredicate);
-    return ValidateDataAgainstSchema.validate(entity, validationOptions, getValidatorForInput(entity.schema()));
+    return ValidateDataAgainstSchema.validate(entity, validationOptions, getValidatorForInputEntityValidation(entity.schema()));
   }
 
   private ValidationResult validateOutputEntity(RecordTemplate entity, DataSchema validatingSchema)
   {
     return ValidateDataAgainstSchema.validate(entity.data(), validatingSchema, new ValidationOptions(),
-        getValidatorForOutput(validatingSchema));
+        getValidatorForOutputEntityValidation(validatingSchema));
   }
 
-  protected Validator getValidatorForOutput(DataSchema validatingSchema) {
+  protected Validator getValidatorForOutputEntityValidation(DataSchema validatingSchema) {
     return new DataSchemaAnnotationValidator(validatingSchema);
   }
 
-  protected Validator getValidatorForInput(DataSchema validatingSchema) {
+  protected Validator getValidatorForInputEntityValidation(DataSchema validatingSchema) {
     return new DataValidator(validatingSchema);
   }
 

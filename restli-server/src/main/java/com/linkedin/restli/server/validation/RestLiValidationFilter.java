@@ -469,11 +469,11 @@ public class RestLiValidationFilter implements Filter
   }
 
   /**
-   * Creates a {@link RestLiValidationFilter} to use for validation onRequest.
+   * Creates a {@link RestLiDataValidator} to use for validation onRequest.
    * Other implementations that extend this class can override this method to gain access to the validator.
    *
    * @param requestContext {@link FilterRequestContext} to provide input to the data validator
-   * @return a {@link RestLiValidationFilter}
+   * @return a {@link RestLiDataValidator}
    */
   protected RestLiDataValidator createRequestRestLiDataValidator(FilterRequestContext requestContext) {
     return new RestLiDataValidator(requestContext.getFilterResourceModel().getResourceClass().getAnnotations(),
@@ -481,11 +481,11 @@ public class RestLiValidationFilter implements Filter
   }
 
   /**
-   * Creates a {@link RestLiValidationFilter} to use for validation onResponse.
+   * Creates a {@link RestLiDataValidator} to use for validation onResponse.
    * Other implementations that extend this class can override this method to gain access to the validator.
    *
    * @param requestContext {@link FilterRequestContext} to provide input to the data validator
-   * @return a {@link RestLiValidationFilter}
+   * @return a {@link RestLiDataValidator}
    */
   protected RestLiDataValidator createResponseRestLiDataValidator(FilterRequestContext requestContext) {
     // Get validating schema if it was already built in onRequest
