@@ -104,6 +104,10 @@ public class RestLiDataValidator
   private static final Set<ResourceMethod> CREATE_ONLY_RESTRICTED_METHODS = new HashSet<>(Arrays.asList(
       ResourceMethod.PARTIAL_UPDATE, ResourceMethod.BATCH_PARTIAL_UPDATE));
 
+  // ReadOnly and CreateOnly fields descended from an array field can be specified for these types of requests
+  private static final Set<ResourceMethod> ARRAY_DESCENDANT_ACCEPTED_METHODS = new HashSet<>(Arrays.asList(
+      ResourceMethod.PARTIAL_UPDATE, ResourceMethod.BATCH_PARTIAL_UPDATE));
+
   // Resource methods that require validation on response
   public static final Set<ResourceMethod>  METHODS_VALIDATED_ON_RESPONSE = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
       ResourceMethod.GET, ResourceMethod.CREATE, ResourceMethod.PARTIAL_UPDATE, ResourceMethod.GET_ALL,
@@ -274,6 +278,11 @@ public class RestLiDataValidator
     _validatorClassMap = Collections.unmodifiableMap(validatorClassMap);
   }
 
+  /**
+   * Validates input data and patches using a given resource's {@link ReadOnly} and {@link CreateOnly} annotations.
+   * Since it's an extension of {@link DataSchemaAnnotationValidator}, it also validates the data using whatever custom
+   * validators are defined in the schema.
+   */
   protected class DataValidator extends DataSchemaAnnotationValidator
   {
     protected DataValidator(DataSchema schema)
@@ -286,14 +295,36 @@ public class RestLiDataValidator
     {
       super.validate(context);
       DataElement element = context.dataElement();
-      if (_readOnlyRestrictedPredicate.evaluate(element))
+      if (_readOnlyRestrictedPredicate.evaluate(element) && !grantArrayDescendantException(element))
       {
         context.addResult(new Message(element.path(), "ReadOnly field present in a %s request", _resourceMethod.toString()));
       }
-      if (_createOnlyPredicate.evaluate(element))
+      if (_createOnlyPredicate.evaluate(element) && !grantArrayDescendantException(element))
       {
         context.addResult(new Message(element.path(), "CreateOnly field present in a %s request", _resourceMethod.toString()));
       }
+    }
+
+    /**
+     * Determines if the given data element can be set despite being {@link ReadOnly} or {@link CreateOnly}.
+     * A given field is granted this exception if it's the descendant of an array field and if it's in a patch input
+     * (i.e. partial_update or batch_partial_update).
+     */
+    private boolean grantArrayDescendantException(DataElement element)
+    {
+      if (element == null || !ARRAY_DESCENDANT_ACCEPTED_METHODS.contains(_resourceMethod))
+      {
+        return false;
+      }
+      DataElement currentElement = element.getParent();
+      while (currentElement != null)
+      {
+        if (currentElement.getSchema().getType() == DataSchema.Type.ARRAY) {
+          return true;
+        }
+        currentElement = currentElement.getParent();
+      }
+      return false;
     }
   }
 
@@ -462,22 +493,14 @@ public class RestLiDataValidator
 
   /**
    * Checks that if the patch is applied to a valid entity, the modified entity will also be valid.
-   * This method
+   * This method...
    * (1) Checks that required/ReadOnly/CreateOnly fields are not deleted.
    * (2) Checks that new values for record templates contain all required fields (treating ReadOnly fields as optional).
    * (3) Applies the patch to an empty entity and validates the entity for custom validation rules
-   * and Rest.li annotations (Allows required fields to be absent by using {@link RequiredMode#IGNORE},
-   * because a patch does not necessarily contain all fields).
-   *
-   * NOTE: There are two remaining support gaps with this method:
-   * (1) Updating a part of an array is not supported if the object contains a descendant required CreateOnly field.
-   * Because of the current lack of support for patching array elements, setting an array field is always treated as
-   * setting the entire array with all-new elements. Since this is effectively a "Create", we should support setting
-   * CreateOnly fields in array patch operations. TODO: allow setting CreateOnly fields in array elements
-   * (2) Similar to the above problem, if an array element contains a ReadOnly field, then the user currently has no way
-   * to patch that array element while keeping the server-provided value. The user can omit the field in the patch
-   * request, but since the server has no concept of "patching elements", it can't assume a given element's existing
-   * value. TODO: allow setting ReadOnly fields in array elements
+   *     and Rest.li annotations, allowing the following exceptions:
+   *     - Allows required fields to be absent by using {@link RequiredMode#IGNORE},
+   *       because a patch does not necessarily contain all fields.
+   *     - Allows array-descendant ReadOnly/CreateOnly fields to be set, since there's currently no way to "patch" arrays.
    *
    * @param patchRequest the patch
    * @return the final validation result

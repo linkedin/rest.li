@@ -1,7 +1,7 @@
 {
   "annotations" : {
     "createOnly" : {
-      "value" : [ "stringB", "intB", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2", "MapWithTyperefs/*/id" ]
+      "value" : [ "stringB", "intB", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2", "MapWithTyperefs/*/id", "ArrayWithInlineRecord/*/bar3" ]
     },
     "readOnly" : {
       "value" : [ "stringA", "intA", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1", "ArrayWithInlineRecord/*/bar1", "validationDemoNext/stringB", "validationDemoNext/UnionFieldWithInlineRecord" ]

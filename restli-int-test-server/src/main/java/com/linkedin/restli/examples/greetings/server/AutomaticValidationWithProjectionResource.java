@@ -60,7 +60,7 @@ import com.linkedin.restli.server.resources.KeyValueResource;
 @ReadOnly({"stringA", "intA", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1",
            "ArrayWithInlineRecord/*/bar1", "validationDemoNext/stringB", "validationDemoNext/UnionFieldWithInlineRecord"})
 @CreateOnly({"stringB", "intB", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2",
-             "MapWithTyperefs/*/id"})
+             "MapWithTyperefs/*/id", "ArrayWithInlineRecord/*/bar3"})
 public class AutomaticValidationWithProjectionResource implements KeyValueResource<Integer, ValidationDemo>
 {
   // A return entity that contains mix of valid and invalid fields in all levels for projection testing.

@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Loosen `ReadOnly`/`CreateOnly` validation when setting array-descendant fields in a patch request.
 
 ## [29.6.5] - 2020-09-09
 - Update RestLiValidatorFilter and RestLiDataValidator to expose creation of restli validators
