@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Fix inconsistent issue in extension schema file names: from `Extension` to `Extensions`
 - Fix a bug in `FileFormatDataSchemaParser` and remove `isExtensionEntry` method call to simplify the logic.
 - Update ExtensionSchemaValidationCmdLineApp with more validations.
 
