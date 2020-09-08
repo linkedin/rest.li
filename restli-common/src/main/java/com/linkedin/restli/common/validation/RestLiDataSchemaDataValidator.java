@@ -29,6 +29,7 @@ import java.util.Collections;
 
 /**
  * Extension of {@link RestLiDataValidator} to allow for validation against a provided data schema.
+ * This validator is only used for output validation.
  *
  * @author Evan Williams
  */
