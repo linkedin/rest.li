@@ -109,32 +109,32 @@ public class TestDataSchemaParser
         {
             {
                 new String[]{
-                    "extensions/BarExtension.pdl",
-                    "extensions/FooExtension.pdl",
-                    "extensions/FuzzExtension.pdl",
+                    "extensions/BarExtensions.pdl",
+                    "extensions/FooExtensions.pdl",
+                    "extensions/FuzzExtensions.pdl",
                     "pegasus/Foo.pdl",
                     "pegasus/Bar.pdl",
                     "pegasus/Fuzz.pdsc"
                 },
                 new String[]{
-                    "FuzzExtension",
-                    "FooExtension",
-                    "BarExtension"
+                    "FuzzExtensions",
+                    "FooExtensions",
+                    "BarExtensions"
                 }
             },
             {
                 new String[]{
-                    "extensions/BarExtension.pdl",
-                    "extensions/FooExtension.pdl",
-                    "extensions/FuzzExtension.pdl",
+                    "extensions/BarExtensions.pdl",
+                    "extensions/FooExtensions.pdl",
+                    "extensions/FuzzExtensions.pdl",
                     "pegasus/Foo.pdl",
                     "pegasus/Bar.pdl",
                     "pegasus/Fuzz.pdsc"
                 },
                 new String[]{
-                    "FooExtension",
-                    "FuzzExtension",
-                    "BarExtension"
+                    "FooExtensions",
+                    "FuzzExtensions",
+                    "BarExtensions"
                 }
             },
             {

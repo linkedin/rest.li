@@ -209,6 +209,7 @@ public class DataSchemaParser
    */
   public static class ParseResult
   {
+    private static final String EXTENSION_FILENAME_SUFFIX = "Extensions.pdl";
     // The purpose of the sorting is to keep generated java meta classes consistent accross different input file orders
     private final Map<DataSchema, DataSchemaLocation> _schemaAndLocations = new TreeMap<>(Comparator.comparing(DataSchema::toString));
     private final Set<File> _sourceFiles = new HashSet<>();
@@ -232,7 +233,7 @@ public class DataSchemaParser
         else if (dataSchemaLocation instanceof FileDataSchemaLocation)
         {
           FileDataSchemaLocation fileDataSchemaLocation = (FileDataSchemaLocation) dataSchemaLocation;
-          return fileDataSchemaLocation.getSourceFile().getName().endsWith("Extension.pdl") &&
+          return fileDataSchemaLocation.getSourceFile().getName().endsWith(EXTENSION_FILENAME_SUFFIX) &&
             fileDataSchemaLocation.getSourceFile().getParent().indexOf(SchemaDirectoryName.EXTENSIONS.getName()) > 0;
         }
         return false;

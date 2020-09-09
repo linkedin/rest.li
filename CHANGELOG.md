@@ -13,6 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.6.4] - 2020-09-08
+- Fix inconsistent issue in extension schema file names: from `Extension` to `Extensions`
 - Fix a bug in `FileFormatDataSchemaParser` and remove `isExtensionEntry` method call to simplify the logic.
 - Update ExtensionSchemaValidationCmdLineApp with more validations.
 
@@ -4634,7 +4637,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.4...master
+[29.6.4]: https://github.com/linkedin/rest.li/compare/v29.6.3...v29.6.4
 [29.6.3]: https://github.com/linkedin/rest.li/compare/v29.6.2...v29.6.3
 [29.6.2]: https://github.com/linkedin/rest.li/compare/v29.6.1...v29.6.2
 [29.6.1]: https://github.com/linkedin/rest.li/compare/v29.6.0...v29.6.1
