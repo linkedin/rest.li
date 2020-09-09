@@ -19,10 +19,12 @@ package com.linkedin.pegasus.gradle;
 import com.linkedin.pegasus.gradle.PegasusOptions.IdlOptions;
 import com.linkedin.pegasus.gradle.tasks.ChangedFileReportTask;
 import com.linkedin.pegasus.gradle.tasks.CheckIdlTask;
+import com.linkedin.pegasus.gradle.tasks.CheckPegasusSnapshotTask;
 import com.linkedin.pegasus.gradle.tasks.CheckRestModelTask;
 import com.linkedin.pegasus.gradle.tasks.CheckSnapshotTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateAvroSchemaTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateDataTemplateTask;
+import com.linkedin.pegasus.gradle.tasks.GeneratePegasusSnapshotTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateRestClientTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateRestModelTask;
 import com.linkedin.pegasus.gradle.tasks.PublishRestModelTask;
@@ -32,6 +34,7 @@ import com.linkedin.pegasus.gradle.tasks.ValidateSchemaAnnotationTask;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,6 +68,7 @@ import org.gradle.api.tasks.Sync;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
+import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
@@ -571,6 +575,23 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static final String PEGASUS_PLUGIN_CONFIGURATION = "pegasusPlugin";
 
+  // Enable the use of generic pegasus schema compatibility checker
+  private static final String ENABLE_PEGASUS_SCHEMA_COMPATIBILITY_CHECK = "pegasusPlugin.enablePegasusSchemaCompatibilityCheck";
+
+  private static final String PEGASUS_SCHEMA_SNAPSHOT = "PegasusSchemaSnapshot";
+
+  private static final String PEGASUS_EXTENSION_SCHEMA_SNAPSHOT = "PegasusExtensionSchemaSnapshot";
+
+  private static final String PEGASUS_SCHEMA_SNAPSHOT_DIR = "pegasusSchemaSnapshot";
+
+  private static final String PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_DIR = "pegasusExtensionSchemaSnapshot";
+
+  private static final String PEGASUS_SCHEMA_SNAPSHOT_DIR_OVERRIDE = "overridePegasusSchemaSnapshotDir";
+
+  private static final String PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_DIR_OVERRIDE = "overridePegasusExtensionSchemaSnapshotDir";
+
+  private static final String SRC = "src";
+
   @SuppressWarnings("unchecked")
   private Class<? extends Plugin<Project>> _thisPluginType = (Class<? extends Plugin<Project>>)
       getClass().asSubclass(Plugin.class);
@@ -809,6 +830,14 @@ public class PegasusPlugin implements Plugin<Project>
       // rest model generation could fail on incompatibility
       // if it can fail, fail it early
       configureRestModelGeneration(project, sourceSet);
+
+      // Do compatibility check for schemas under "pegasus" directory if the configuration property is provided.
+      if (isPropertyTrue(project, ENABLE_PEGASUS_SCHEMA_COMPATIBILITY_CHECK))
+      {
+        configurePegasusSchemaSnapshotGeneration(project, sourceSet, false);
+      }
+
+      configurePegasusSchemaSnapshotGeneration(project, sourceSet, true);
 
       configureConversionUtilities(project, sourceSet);
 
@@ -1063,6 +1092,32 @@ public class PegasusPlugin implements Plugin<Project>
     if (override == null)
     {
       return "src" + File.separatorChar + sourceSet.getName() + File.separatorChar + "idl";
+    }
+    else
+    {
+      return override;
+    }
+  }
+
+  private static String getPegasusSchemaSnapshotPath(Project project, SourceSet sourceSet)
+  {
+    String override = getOverridePath(project, sourceSet, PEGASUS_SCHEMA_SNAPSHOT_DIR_OVERRIDE);
+    if (override == null)
+    {
+      return SRC + File.separatorChar + sourceSet.getName() + File.separatorChar + PEGASUS_SCHEMA_SNAPSHOT_DIR;
+    }
+    else
+    {
+      return override;
+    }
+  }
+
+  private static String getPegasusExtensionSchemaSnapshotPath(Project project, SourceSet sourceSet)
+  {
+    String override = getOverridePath(project, sourceSet, PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_DIR_OVERRIDE);
+    if (override == null)
+    {
+      return SRC + File.separatorChar + sourceSet.getName() + File.separatorChar + PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_DIR;
     }
     else
     {
@@ -1388,6 +1443,35 @@ public class PegasusPlugin implements Plugin<Project>
         }
       }));
     });
+  }
+
+  protected void configurePegasusSchemaSnapshotGeneration(Project project, SourceSet sourceSet, boolean isExtensionSchema)
+  {
+    File schemaDir = isExtensionSchema? project.file(getExtensionSchemaPath(project, sourceSet))
+        : project.file(getDataSchemaPath(project, sourceSet));
+    Path publishablePegasusSchemaSnapshotDir = project.getBuildDir().toPath().resolve(sourceSet.getName() +
+            (isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT));
+
+    Task generatePegasusSchemaSnapshot = generatePegasusSchemaSnapshot(project, sourceSet,
+        isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT, schemaDir,
+        publishablePegasusSchemaSnapshotDir.toFile(), isExtensionSchema);
+
+    Task checkSchemaSnapshot = project.getTasks().create(sourceSet.getTaskName("check",
+        isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT),
+        CheckPegasusSnapshotTask.class, task ->
+        {
+          task.dependsOn(generatePegasusSchemaSnapshot);
+          // TODO: update CheckPegasusSnapshotTask
+        });
+
+    File pegasusSchemaSnapshotDir = new File(isExtensionSchema ? getPegasusExtensionSchemaSnapshotPath(project, sourceSet)
+        : getPegasusSchemaSnapshotPath(project, sourceSet));
+
+    Task publishPegasusSchemaSnapshot = publishPegasusSchemaSnapshot(project, sourceSet,
+        isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT, checkSchemaSnapshot,
+        publishablePegasusSchemaSnapshotDir.toFile(), pegasusSchemaSnapshotDir);
+
+    project.getTasks().getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(publishPegasusSchemaSnapshot);
   }
 
   @SuppressWarnings("deprecation")
@@ -2094,5 +2178,34 @@ public class PegasusPlugin implements Plugin<Project>
         return exclude;
       });
     });
+  }
+
+  private Task generatePegasusSchemaSnapshot(Project project, SourceSet sourceSet, String taskName, File inputDir, File outputDir, boolean isExtensionSchema)
+  {
+    return project.getTasks().create(sourceSet.getTaskName("generate", taskName),
+        GeneratePegasusSnapshotTask.class, task ->
+        {
+          task.setInputDir(inputDir);
+          task.setResolverPath(getDataModelConfig(project, sourceSet).plus(project.files(getDataSchemaPath(project, sourceSet))));
+          task.setClassPath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
+          task.setPegasusSchemaSnapshotDestinationDir(outputDir);
+          task.setEnableArgFile(isExtensionSchema);
+          if (isPropertyTrue(project, ENABLE_ARG_FILE))
+          {
+            task.setEnableArgFile(true);
+          }
+        });
+  }
+
+  private Task publishPegasusSchemaSnapshot(Project project, SourceSet sourceSet, String taskName, Task checkPegasusSnapshotTask,
+      File inputDir, File outputDir)
+  {
+    return project.getTasks().create(sourceSet.getTaskName("publish", taskName),
+        Sync.class, task ->
+        {
+          task.dependsOn(checkPegasusSnapshotTask);
+          task.from(inputDir);
+          task.into(outputDir);
+        });
   }
 }
