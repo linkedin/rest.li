@@ -50,8 +50,10 @@ import com.linkedin.data.template.IntegerMap;
 import com.linkedin.data.template.LongArray;
 import com.linkedin.data.template.LongMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.RequiredFieldNotPresentException;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
+import com.linkedin.data.template.TemplateOutputCastException;
 import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.data.template.UnionTemplate;
 import com.linkedin.data.template.WrappingArrayTemplate;
@@ -68,7 +70,13 @@ import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
 import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
 import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
 
+import com.linkedin.util.ArgumentUtil;
+import com.sun.codemodel.JCase;
+import com.sun.codemodel.JConditional;
 import com.sun.codemodel.JFieldRef;
+import com.sun.codemodel.JOp;
+import com.sun.codemodel.JSwitch;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -284,10 +292,10 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     return inv;
   }
 
-  private static void generateCopierMethods(JDefinedClass templateClass)
+  private static void generateCopierMethods(JDefinedClass templateClass, Map<String, JVar> fieldsToReset)
   {
-    overrideCopierMethod(templateClass, "clone");
-    overrideCopierMethod(templateClass, "copy");
+    overrideCopierMethod(templateClass, "clone", Collections.emptyMap());
+    overrideCopierMethod(templateClass, "copy", fieldsToReset);
   }
 
   private static boolean hasNestedFields(DataSchema schema)
@@ -323,18 +331,27 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     noArgConstructor.body().invoke(THIS).arg(JExpr._new(newClass));
   }
 
-  private static void generateConstructorWithObjectArg(JDefinedClass cls, JVar schemaField)
+  private static void generateConstructorWithObjectArg(JDefinedClass cls, JVar schemaField, boolean registerChangeListeners)
   {
     final JMethod argConstructor = cls.constructor(JMod.PUBLIC);
     final JVar param = argConstructor.param(Object.class, "data");
     argConstructor.body().invoke(SUPER).arg(param).arg(schemaField);
+    if (registerChangeListeners)
+    {
+      addChangeListenerRegistration(argConstructor);
+    }
   }
 
-  private static void generateConstructorWithArg(JDefinedClass cls, JVar schemaField, JClass paramClass)
+  private static void generateConstructorWithArg(JDefinedClass cls, JVar schemaField, JClass paramClass, boolean needsChangeListener)
   {
     final JMethod argConstructor = cls.constructor(JMod.PUBLIC);
     final JVar param = argConstructor.param(paramClass, "data");
     argConstructor.body().invoke(SUPER).arg(param).arg(schemaField);
+
+    if (needsChangeListener)
+    {
+      addChangeListenerRegistration(argConstructor);
+    }
   }
 
   private static void generateConstructorWithArg(JDefinedClass cls, JVar schemaField, JClass paramClass, JClass elementClass, JClass dataClass)
@@ -343,6 +360,12 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JVar param = argConstructor.param(paramClass, "data");
     final JInvocation inv = argConstructor.body().invoke(SUPER).arg(param).arg(schemaField).arg(JExpr.dotclass(elementClass));
     dataClassArg(inv, dataClass);
+  }
+
+  private static void addChangeListenerRegistration(JMethod constructor)
+  {
+    // JCodeModel doesn't support function references yet, use direct source interpolation to work around this.
+    constructor.body().invoke("addChangeListener").arg(JExpr.direct("this::onUnderlyingMapChanged"));
   }
 
   /**
@@ -370,12 +393,22 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     return customInfo != null ? customInfo.getCustomSchema() : schema.getDereferencedDataSchema();
   }
 
-  private static void overrideCopierMethod(JDefinedClass templateClass, String methodName)
+  private static void overrideCopierMethod(JDefinedClass templateClass, String methodName, Map<String, JVar> fieldsToReset)
   {
     final JMethod copierMethod = templateClass.method(JMod.PUBLIC, templateClass, methodName);
     copierMethod.annotate(Override.class);
     copierMethod._throws(CloneNotSupportedException.class);
-    copierMethod.body()._return(JExpr.cast(templateClass, JExpr._super().invoke(methodName)));
+    if (fieldsToReset.isEmpty())
+    {
+      copierMethod.body()._return(JExpr.cast(templateClass, JExpr._super().invoke(methodName)));
+      return;
+    }
+
+    JVar copyVar = copierMethod.body().decl(templateClass, "__copy", JExpr.cast(templateClass, JExpr._super().invoke(methodName)));
+    fieldsToReset.values().forEach(var -> {
+      copierMethod.body().assign(copyVar.ref(var), JExpr._null());
+    });
+    copierMethod.body()._return(copyVar);
   }
 
   private static void setDeprecatedAnnotationAndJavadoc(DataSchema schema, JDefinedClass schemaClass)
@@ -494,7 +527,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JClass itemJClass = generate(arrayDataTemplateSpec.getItemClass());
     final JClass dataJClass = generate(arrayDataTemplateSpec.getItemDataClass());
 
-    if (CodeUtil.isDirectType(arrayDataTemplateSpec.getSchema().getItems()))
+    final boolean isDirect = CodeUtil.isDirectType(arrayDataTemplateSpec.getSchema().getItems());
+    if (isDirect)
     {
       arrayClass._extends(_directArrayBaseClass.narrow(itemJClass));
     }
@@ -522,8 +556,15 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     if (_copierMethods)
     {
-      generateCopierMethods(arrayClass);
+      generateCopierMethods(arrayClass, Collections.emptyMap());
     }
+
+    // Generate coercer overrides
+    generateCoercerOverrides(arrayClass,
+        arrayDataTemplateSpec.getItemClass(),
+        arrayDataTemplateSpec.getSchema().getItems(),
+        arrayDataTemplateSpec.getCustomInfo(),
+        false);
   }
 
   protected void extendWrappingArrayBaseClass(JClass itemJClass, JDefinedClass arrayClass)
@@ -574,11 +615,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JVar param = bytesConstructor.param(ByteString.class, "value");
     bytesConstructor.body().invoke(SUPER).arg(param).arg(schemaField);
 
-    generateConstructorWithObjectArg(fixedClass, schemaField);
+    generateConstructorWithObjectArg(fixedClass, schemaField, false);
 
     if (_copierMethods)
     {
-      generateCopierMethods(fixedClass);
+      generateCopierMethods(fixedClass, Collections.emptyMap());
     }
   }
 
@@ -588,7 +629,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JClass valueJClass = generate(mapSpec.getValueClass());
     final JClass dataJClass = generate(mapSpec.getValueDataClass());
 
-    if (CodeUtil.isDirectType(mapSpec.getSchema().getValues()))
+    final boolean isDirect = CodeUtil.isDirectType(mapSpec.getSchema().getValues());
+    if (isDirect)
     {
       mapClass._extends(_directMapBaseClass.narrow(valueJClass));
     }
@@ -615,8 +657,15 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     if (_copierMethods)
     {
-      generateCopierMethods(mapClass);
+      generateCopierMethods(mapClass, Collections.emptyMap());
     }
+
+    // Generate coercer overrides
+    generateCoercerOverrides(mapClass,
+        mapSpec.getValueClass(),
+        mapSpec.getSchema().getValues(),
+        mapSpec.getCustomInfo(),
+        true);
   }
 
   protected void extendWrappingMapBaseClass(JClass valueJClass, JDefinedClass mapClass)
@@ -669,12 +718,33 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
 
     final JFieldVar schemaFieldVar = generateSchemaField(templateClass, recordSpec.getSchema(), recordSpec.getSourceFileFormat());
-    generateDataMapConstructor(templateClass, schemaFieldVar, recordSpec.getFields().size(), recordSpec.getWrappedFields().size());
-    generateConstructorWithArg(templateClass, schemaFieldVar, _dataMapClass);
 
+    // Generate instance vars
+    Map<String, JVar> fieldVarMap = new HashMap<>();
     for (RecordTemplateSpec.Field field : recordSpec.getFields())
     {
-      generateRecordFieldAccessors(templateClass, field, generate(field.getType()), schemaFieldVar);
+      final String fieldName = field.getSchemaField().getName();
+      final JVar fieldVar =
+          templateClass.field(JMod.PRIVATE, generate(field.getType()), "_" + fieldName, JExpr._null());
+      fieldVarMap.put(fieldName, fieldVar);
+    }
+
+    final boolean needsChangeListener = !fieldVarMap.isEmpty();
+
+    // Generate on underlying map changed if there are any fields.
+    if  (needsChangeListener)
+    {
+      generateOnUnderlyingMapChanged(templateClass, fieldVarMap);
+    }
+    generateDataMapConstructor(templateClass, schemaFieldVar, recordSpec.getFields().size(), recordSpec.getWrappedFields().size(), needsChangeListener);
+    generateConstructorWithArg(templateClass, schemaFieldVar, _dataMapClass, needsChangeListener);
+
+    // Generate accessors
+    for (RecordTemplateSpec.Field field : recordSpec.getFields())
+    {
+      final String fieldName = field.getSchemaField().getName();
+      generateRecordFieldAccessors(templateClass, field, generate(field.getType()), schemaFieldVar,
+          fieldVarMap.get(fieldName));
     }
 
     recordSpec.getFields().stream()
@@ -684,7 +754,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     if (_copierMethods)
     {
-      generateCopierMethods(templateClass);
+      generateCopierMethods(templateClass, fieldVarMap);
     }
   }
 
@@ -697,8 +767,10 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
    *                           than {@link #DEFAULT_DATAMAP_INITIAL_CAPACITY}.
    * @param initialCacheSize Initial size for the cache, applied only if capacity derived from this is smaller than
    *                         {@link #DEFAULT_DATAMAP_INITIAL_CAPACITY}
+   * @param needsChangeListener True if this record/union needs a map change listener registered, false otherwise.
    */
-  private void generateDataMapConstructor(JDefinedClass cls, JVar schemaField, int initialDataMapSize, int initialCacheSize)
+  private void generateDataMapConstructor(JDefinedClass cls, JVar schemaField, int initialDataMapSize, int initialCacheSize,
+      boolean needsChangeListener)
   {
     final JMethod noArgConstructor = cls.constructor(JMod.PUBLIC);
     JInvocation superConstructorArg = JExpr._new(_dataMapClass);
@@ -723,6 +795,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     else
     {
       noArgConstructor.body().invoke(SUPER).arg(superConstructorArg).arg(schemaField);
+    }
+
+    if (needsChangeListener)
+    {
+      addChangeListenerRegistration(noArgConstructor);
     }
   }
 
@@ -782,33 +859,41 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     staticFieldsAccessor.body()._return(staticFields);
   }
 
-  private void generateRecordFieldAccessors(JDefinedClass templateClass, RecordTemplateSpec.Field field, JClass type, JVar schemaFieldVar)
+  private void generateRecordFieldAccessors(JDefinedClass templateClass, RecordTemplateSpec.Field field, JClass type, JVar schemaFieldVar,
+      JVar fieldVar)
   {
     final RecordDataSchema.Field schemaField = field.getSchemaField();
     final DataSchema fieldSchema = schemaField.getType();
-    final boolean isDirect = CodeUtil.isDirectType(fieldSchema);
-    final String wrappedOrDirect;
-    if (isDirect)
-    {
-      wrappedOrDirect = (field.getCustomInfo() == null ? "Direct" : "CustomType");
-    }
-    else
-    {
-      wrappedOrDirect = "Wrapped";
-    }
     final String capitalizedName = CodeUtil.capitalize(schemaField.getName());
 
+    final JExpression mapRef = JExpr._super().ref("_map");
+    final JExpression fieldNameExpr = JExpr.lit(schemaField.getName());
     final String fieldFieldName = "FIELD_" + capitalizedName;
     final JFieldVar fieldField = templateClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, RecordDataSchema.Field.class, fieldFieldName);
     fieldField.init(schemaFieldVar.invoke("getField").arg(schemaField.getName()));
+
+    // Generate default field if applicable
+    final String defaultFieldName = "DEFAULT_" + capitalizedName;
+    final JFieldVar defaultField;
+    if (field.getSchemaField().getDefault() != null)
+    {
+      defaultField =
+          templateClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, type, defaultFieldName,
+              getCoerceOutputExpression(fieldField.invoke("getDefault"), schemaField.getType(), type, field.getCustomInfo()));
+    }
+    else
+    {
+      defaultField = null;
+    }
 
     // Generate has method.
     final JMethod has = templateClass.method(JMod.PUBLIC, getCodeModel().BOOLEAN, "has" + capitalizedName);
     addAccessorDoc(templateClass, has, schemaField, "Existence checker");
     setDeprecatedAnnotationAndJavadoc(has, schemaField);
     final JBlock hasBody = has.body();
-    JExpression res = JExpr.invoke("contains").arg(fieldField);
-    hasBody._return(res);
+    final JBlock hasInstanceVarBody = hasBody._if(fieldVar.ne(JExpr._null()))._then();
+    hasInstanceVarBody._return(JExpr.lit(true));
+    hasBody._return(mapRef.invoke("containsKey").arg(fieldNameExpr));
 
     if (_recordFieldRemove)
     {
@@ -818,7 +903,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       addAccessorDoc(templateClass, remove, schemaField, "Remover");
       setDeprecatedAnnotationAndJavadoc(remove, schemaField);
       final JBlock removeBody = remove.body();
-      removeBody.invoke("remove").arg(fieldField);
+      removeBody.add(mapRef.invoke("remove").arg(fieldNameExpr));
     }
 
     final String getterName = JavaCodeUtil.getGetterName(getCodeModel(), type, capitalizedName);
@@ -831,8 +916,40 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       setDeprecatedAnnotationAndJavadoc(getterWithMode, schemaField);
       JVar modeParam = getterWithMode.param(_getModeClass, "mode");
       final JBlock getterWithModeBody = getterWithMode.body();
-      res = JExpr.invoke("obtain" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type)).arg(modeParam);
-      getterWithModeBody._return(res);
+
+      // If it is an optional field with no default, just call out to the getter without mode.
+      if (field.getSchemaField().getOptional() && defaultField == null)
+      {
+        getterWithModeBody._return(JExpr.invoke(getterName));
+      }
+      else
+      {
+        JSwitch modeSwitch = getterWithModeBody._switch(modeParam);
+        JCase strictCase = modeSwitch._case(JExpr.ref("STRICT"));
+        // If there is no default defined, call the getter without mode, else fall through to default.
+        if (defaultField == null)
+        {
+          strictCase.body()._return(JExpr.invoke(getterName));
+        }
+        JCase defaultCase = modeSwitch._case(JExpr.ref("DEFAULT"));
+        if (defaultField != null)
+        {
+          // If there is a default, then default is the same as strict, else we should fall through to null.
+          defaultCase.body()._return(JExpr.invoke(getterName));
+        }
+
+        JCase nullCase = modeSwitch._case(JExpr.ref("NULL"));
+        JConditional nullCaseConditional = nullCase.body()._if(fieldVar.ne(JExpr._null()));
+        nullCaseConditional._then()._return(fieldVar);
+        JBlock nullCaseConditionalElse = nullCaseConditional._else();
+        JVar rawValueVar = nullCaseConditionalElse.decl(
+            _objectClass, "__rawValue", mapRef.invoke("get").arg(fieldNameExpr));
+        nullCaseConditionalElse.assign(fieldVar,
+            getCoerceOutputExpression(rawValueVar, fieldSchema, type, field.getCustomInfo()));
+        nullCaseConditionalElse._return(fieldVar);
+
+        getterWithModeBody._throw(JExpr._new(getCodeModel().ref(IllegalStateException.class)).arg(JExpr.lit("Unknown mode ").plus(modeParam)));
+      }
     }
 
     // Getter method without mode.
@@ -851,11 +968,24 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       returnComment.add("Required field. Could be null for partial record.");
     }
     final JBlock getterWithoutModeBody = getterWithoutMode.body();
-    res = JExpr.invoke("obtain" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type)).arg(_strictGetMode);
-    getterWithoutModeBody._return(res);
+    JConditional getterWithoutModeBodyConditional = getterWithoutModeBody._if(fieldVar.ne(JExpr._null()));
+    getterWithoutModeBodyConditional._then()._return(fieldVar);
+    JBlock getterWithoutModeBodyConditionalElse = getterWithoutModeBodyConditional._else();
+    JVar rawValueVar = getterWithoutModeBodyConditionalElse.decl(
+        _objectClass, "__rawValue", mapRef.invoke("get").arg(fieldNameExpr));
+    if (schemaField.getDefault() != null)
+    {
+      getterWithoutModeBodyConditionalElse._if(rawValueVar.eq(JExpr._null()))._then()._return(defaultField);
+    }
+    else if (!schemaField.getOptional())
+    {
+      getterWithoutModeBodyConditionalElse._if(rawValueVar.eq(JExpr._null()))._then()._throw(
+          JExpr._new(getCodeModel().ref(RequiredFieldNotPresentException.class)).arg(fieldNameExpr));
+    }
+    getterWithoutModeBodyConditionalElse.assign(fieldVar,
+        getCoerceOutputExpression(rawValueVar, fieldSchema, type, field.getCustomInfo()));
+    getterWithoutModeBodyConditionalElse._return(fieldVar);
 
-    // Determine dataClass
-    final JClass dataClass = generate(field.getDataClass());
     final String setterName = "set" + capitalizedName;
 
     if (_recordFieldAccessorWithMode)
@@ -866,8 +996,41 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       setDeprecatedAnnotationAndJavadoc(setterWithMode, schemaField);
       JVar param = setterWithMode.param(type, "value");
       JVar modeParam = setterWithMode.param(_setModeClass, "mode");
-      JInvocation inv = setterWithMode.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
-      dataClassArg(inv, dataClass).arg(param).arg(modeParam);
+      JSwitch modeSwitch = setterWithMode.body()._switch(modeParam);
+      JCase disallowNullCase = modeSwitch._case(JExpr.ref("DISALLOW_NULL"));
+      disallowNullCase.body()._return(JExpr.invoke(setterName).arg(param));
+
+      // Generate remove optional if null, only for required fields. Optional fields will fall through to
+      // remove if null, which is the same behavior for them.
+      JCase removeOptionalIfNullCase = modeSwitch._case(JExpr.ref("REMOVE_OPTIONAL_IF_NULL"));
+      if (!schemaField.getOptional()) {
+        JConditional paramIsNull = removeOptionalIfNullCase.body()._if(param.eq(JExpr._null()));
+        paramIsNull._then()._throw(JExpr._new(getCodeModel().ref(IllegalArgumentException.class))
+            .arg(JExpr.lit("Cannot remove mandatory field " + schemaField.getName() + " of " + templateClass.fullName())));
+        paramIsNull._else()
+            .add(_checkedUtilClass.staticInvoke("putWithoutCheckingOrChangeNotification").arg(mapRef).arg(fieldNameExpr)
+                .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
+        paramIsNull._else().assign(fieldVar, param);
+        removeOptionalIfNullCase.body()._break();
+      }
+
+      JCase removeIfNullCase = modeSwitch._case(JExpr.ref("REMOVE_IF_NULL"));
+      JConditional paramIsNull = removeIfNullCase.body()._if(param.eq(JExpr._null()));
+      paramIsNull._then().invoke("remove" + capitalizedName);
+      paramIsNull._else()
+          .add(_checkedUtilClass.staticInvoke("putWithoutCheckingOrChangeNotification").arg(mapRef).arg(fieldNameExpr)
+              .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
+      paramIsNull._else().assign(fieldVar, param);
+      removeIfNullCase.body()._break();
+
+      JCase ignoreNullCase = modeSwitch._case(JExpr.ref("IGNORE_NULL"));
+      JConditional paramIsNotNull = ignoreNullCase.body()._if(param.ne(JExpr._null()));
+      paramIsNotNull._then()
+          .add(_checkedUtilClass.staticInvoke("putWithoutCheckingOrChangeNotification").arg(mapRef).arg(fieldNameExpr)
+              .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
+      paramIsNotNull._then().assign(fieldVar, param);
+      ignoreNullCase.body()._break();
+
       setterWithMode.body()._return(JExpr._this());
     }
 
@@ -879,8 +1042,13 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     param.annotate(Nonnull.class);
     JCommentPart paramDoc = setter.javadoc().addParam(param);
     paramDoc.add("Must not be null. For more control, use setters with mode instead.");
-    JInvocation inv = setter.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
-    dataClassArg(inv, dataClass).arg(param).arg(_disallowNullSetMode);
+    JConditional paramIsNull = setter.body()._if(param.eq(JExpr._null()));
+    paramIsNull._then()._throw(JExpr._new(getCodeModel().ref(NullPointerException.class))
+        .arg(JExpr.lit("Cannot set field " + schemaField.getName() + " of " + templateClass.fullName() + " to null")));
+    paramIsNull._else()
+        .add(_checkedUtilClass.staticInvoke("putWithoutCheckingOrChangeNotification").arg(mapRef).arg(fieldNameExpr)
+            .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
+    paramIsNull._else().assign(fieldVar, param);
     setter.body()._return(JExpr._this());
 
     // Setter method without mode for unboxified type
@@ -890,8 +1058,9 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       addAccessorDoc(templateClass, unboxifySetter, schemaField, "Setter");
       setDeprecatedAnnotationAndJavadoc(unboxifySetter, schemaField);
       param = unboxifySetter.param(type.unboxify(), "value");
-      inv = unboxifySetter.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
-      dataClassArg(inv, dataClass).arg(param).arg(_disallowNullSetMode);
+      unboxifySetter.body().add(_checkedUtilClass.staticInvoke("putWithoutCheckingOrChangeNotification").arg(mapRef).arg(fieldNameExpr)
+              .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
+      unboxifySetter.body().assign(fieldVar, param);
       unboxifySetter.body()._return(JExpr._this());
     }
   }
@@ -919,16 +1088,38 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     final JVar schemaField = generateSchemaField(unionClass, unionSpec.getSchema(), unionSpec.getSourceFileFormat());
 
+    // Generate instance vars for members.
+    Map<String, JVar> memberVarMap = new HashMap<>();
+    for (UnionTemplateSpec.Member member : unionSpec.getMembers())
+    {
+      if (member.getClassTemplateSpec() != null)
+      {
+        final String memberName = CodeUtil.uncapitalize(CodeUtil.getUnionMemberName(member));
+        final JVar memberVar =
+            unionClass.field(JMod.PRIVATE, generate(member.getClassTemplateSpec()), "_" + memberName, JExpr._null());
+        memberVarMap.put(member.getUnionMemberKey(), memberVar);
+      }
+    }
+
+    final boolean needsChangeListener = !memberVarMap.isEmpty();
+
+    // Generate on underlying map changed if there are any members.
+    if (needsChangeListener)
+    {
+      generateOnUnderlyingMapChanged(unionClass, memberVarMap);
+    }
+
     // Default union datamap size to 1 (last arg) as union can have at-most one element.
     // We don't need cache for unions, so pass in -1 for cache size to ignore size param.
-    generateDataMapConstructor(unionClass, schemaField, 1, -1);
-    generateConstructorWithObjectArg(unionClass, schemaField);
+    generateDataMapConstructor(unionClass, schemaField, 1, -1, needsChangeListener);
+    generateConstructorWithObjectArg(unionClass, schemaField, needsChangeListener);
 
     for (UnionTemplateSpec.Member member : unionSpec.getMembers())
     {
       if (member.getClassTemplateSpec() != null)
       {
-        generateUnionMemberAccessors(unionClass, member, generate(member.getClassTemplateSpec()), generate(member.getDataClass()), schemaField);
+        generateUnionMemberAccessors(unionClass, member, generate(member.getClassTemplateSpec()),
+            generate(member.getDataClass()), schemaField, memberVarMap.get(member.getUnionMemberKey()));
       }
     }
 
@@ -944,7 +1135,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     if (_copierMethods)
     {
-      generateCopierMethods(unionClass);
+      generateCopierMethods(unionClass, memberVarMap);
     }
 
     if (unionSpec.getTyperefClass() != null)
@@ -967,22 +1158,13 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     unionClass._extends(_unionBaseClass);
   }
 
-  private void generateUnionMemberAccessors(JDefinedClass unionClass, UnionTemplateSpec.Member member, JClass memberClass, JClass dataClass, JVar schemaField)
+  private void generateUnionMemberAccessors(JDefinedClass unionClass, UnionTemplateSpec.Member member,
+      JClass memberClass, JClass dataClass, JVar schemaField, JVar memberVar)
   {
     final DataSchema memberType = member.getSchema();
-    final boolean isDirect = CodeUtil.isDirectType(memberType);
-    final String wrappedOrDirect;
-    if (isDirect)
-    {
-      wrappedOrDirect = (member.getCustomInfo() == null ? "Direct" : "CustomType");
-    }
-    else
-    {
-      wrappedOrDirect = "Wrapped";
-    }
-
-    String memberKey = member.getUnionMemberKey();
-    String capitalizedName = CodeUtil.getUnionMemberName(member);
+    final String memberKey = member.getUnionMemberKey();
+    final String capitalizedName = CodeUtil.getUnionMemberName(member);
+    final JExpression mapRef = JExpr._super().ref("_map");
 
     final String memberFieldName = "MEMBER_" + capitalizedName;
     final JFieldVar memberField = unionClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, DataSchema.class, memberFieldName);
@@ -1002,7 +1184,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     final JMethod is = unionClass.method(JMod.PUBLIC, getCodeModel().BOOLEAN, "is" + capitalizedName);
     final JBlock isBody = is.body();
-    JExpression res = JExpr.invoke("memberIs").arg(memberKey);
+    JExpression res = JExpr.invoke("memberIs").arg(JExpr.lit(memberKey));
     isBody._return(res);
 
     // Getter method.
@@ -1010,15 +1192,23 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final String getterName = "get" + capitalizedName;
     final JMethod getter = unionClass.method(JMod.PUBLIC, memberClass, getterName);
     final JBlock getterBody = getter.body();
-    res = JExpr.invoke("obtain" + wrappedOrDirect).arg(memberField).arg(JExpr.dotclass(memberClass)).arg(memberKey);
-    getterBody._return(res);
+    getterBody.invoke("checkNotNull");
+    JBlock memberVarNonNullBlock = getterBody._if(memberVar.ne(JExpr._null()))._then();
+    memberVarNonNullBlock._return(memberVar);
+    JVar rawValueVar = getterBody.decl(_objectClass, "__rawValue", mapRef.invoke("get").arg(JExpr.lit(memberKey)));
+    getterBody.assign(memberVar, getCoerceOutputExpression(rawValueVar, memberType, memberClass, member.getCustomInfo()));
+    getterBody._return(memberVar);
 
     // Setter method.
 
     final JMethod setter = unionClass.method(JMod.PUBLIC, Void.TYPE, setterName);
     param = setter.param(memberClass, "value");
-    final JInvocation inv = setter.body().invoke("select" + wrappedOrDirect).arg(memberField).arg(JExpr.dotclass(memberClass));
-    dataClassArg(inv, dataClass).arg(memberKey).arg(param);
+    final JBlock setterBody = setter.body();
+    setterBody.invoke("checkNotNull");
+    setterBody.add(mapRef.invoke("clear"));
+    setterBody.assign(memberVar, param);
+    setterBody.add(_checkedUtilClass.staticInvoke("putWithoutCheckingOrChangeNotification").arg(mapRef).arg(JExpr.lit(memberKey))
+        .arg(getCoerceInputExpression(param, memberType, member.getCustomInfo())));
   }
 
   private void generatePathSpecMethodsForUnion(UnionTemplateSpec unionSpec, JDefinedClass unionClass)
@@ -1176,6 +1366,41 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
   }
 
+  protected void generateCoercerOverrides(JDefinedClass wrapperClass,
+      ClassTemplateSpec itemSpec,
+      DataSchema itemSchema,
+      CustomInfoSpec customInfoSpec,
+      boolean tolerateNullForCoerceOutput)
+  {
+    JClass valueType = generate(itemSpec);
+
+    // Generate coerce input only for direct types. Wrapped types will just call data().
+    if (CodeUtil.isDirectType(itemSchema))
+    {
+      JMethod coerceInput = wrapperClass.method(JMod.PROTECTED, _objectClass, "coerceInput");
+      JVar inputParam = coerceInput.param(valueType, "object");
+      coerceInput._throws(ClassCastException.class);
+      coerceInput.annotate(Override.class);
+      coerceInput.body().add(
+          getCodeModel().directClass(ArgumentUtil.class.getCanonicalName()).staticInvoke("notNull").arg(inputParam).arg("object"));
+      coerceInput.body()._return(getCoerceInputExpression(inputParam, itemSchema, customInfoSpec));
+    }
+
+    JMethod coerceOutput = wrapperClass.method(JMod.PROTECTED, valueType, "coerceOutput");
+    JVar outputParam = coerceOutput.param(_objectClass, "object");
+    coerceOutput._throws(TemplateOutputCastException.class);
+    coerceOutput.annotate(Override.class);
+    if (tolerateNullForCoerceOutput)
+    {
+      coerceOutput.body()._if(outputParam.eq(JExpr._null()))._then()._return(JExpr._null());
+    }
+    else
+    {
+      coerceOutput.body().directStatement("assert(object != null);");
+    }
+    coerceOutput.body()._return(getCoerceOutputExpression(outputParam, itemSchema, valueType, customInfoSpec));
+  }
+
   private void generateConstructorWithInitialCapacity(JDefinedClass cls, JClass elementClass)
   {
     final JMethod argConstructor = cls.constructor(JMod.PUBLIC);
@@ -1216,6 +1441,110 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JVar m = argConstructor.param(_mapClass.narrow(_stringClass, valueClass), "m");
     argConstructor.body().invoke(THIS).arg(JExpr.invoke("newDataMapOfSize").arg(m.invoke("size")));
     argConstructor.body().invoke("putAll").arg(m);
+  }
+
+  private void generateOnUnderlyingMapChanged(JDefinedClass cls, Map<String, JVar> fieldMap)
+  {
+    final JMethod method = cls.method(JMod.PRIVATE, Void.class, "onUnderlyingMapChanged");
+    final JVar keyParam = method.param(String.class, "key");
+    method.param(_objectClass, "value");
+    JSwitch keySwitch = method.body()._switch(keyParam);
+    fieldMap.forEach((key, field) -> {
+      JCase keyCase = keySwitch._case(JExpr.lit(key));
+      keyCase.body().assign(field, JExpr._null());
+      keyCase.body()._return(JExpr._null());
+    });
+
+    method.body()._return(JExpr._null());
+  }
+
+  private JExpression getCoerceOutputExpression(JExpression rawExpr, DataSchema schema, JClass typeClass,
+      CustomInfoSpec customInfoSpec)
+  {
+    if (CodeUtil.isDirectType(schema))
+    {
+      if (customInfoSpec == null)
+      {
+        switch (schema.getDereferencedType())
+        {
+          case INT:
+            return _dataTemplateUtilClass.staticInvoke("coerceIntOutput").arg(rawExpr);
+          case FLOAT:
+            return _dataTemplateUtilClass.staticInvoke("coerceFloatOutput").arg(rawExpr);
+          case LONG:
+            return _dataTemplateUtilClass.staticInvoke("coerceLongOutput").arg(rawExpr);
+          case DOUBLE:
+            return _dataTemplateUtilClass.staticInvoke("coerceDoubleOutput").arg(rawExpr);
+          case BYTES:
+            return _dataTemplateUtilClass.staticInvoke("coerceBytesOutput").arg(rawExpr);
+          case BOOLEAN:
+            return _dataTemplateUtilClass.staticInvoke("coerceBooleanOutput").arg(rawExpr);
+          case STRING:
+            return _dataTemplateUtilClass.staticInvoke("coerceStringOutput").arg(rawExpr);
+          case ENUM:
+            return _dataTemplateUtilClass.staticInvoke("coerceEnumOutput")
+                .arg(rawExpr)
+                .arg(typeClass.dotclass())
+                .arg(typeClass.staticRef(DataTemplateUtil.UNKNOWN_ENUM));
+        }
+      }
+
+      JClass customClass = generate(customInfoSpec.getCustomClass());
+      return _dataTemplateUtilClass.staticInvoke("coerceCustomOutput").arg(rawExpr).arg(customClass.dotclass());
+    }
+    else
+    {
+      switch (schema.getDereferencedType())
+      {
+        case MAP:
+        case RECORD:
+          return JOp.cond(rawExpr.eq(JExpr._null()), JExpr._null(), JExpr._new(typeClass)
+              .arg(_dataTemplateUtilClass.staticInvoke("castOrThrow").arg(rawExpr).arg(_dataMapClass.dotclass())));
+        case ARRAY:
+          return JOp.cond(rawExpr.eq(JExpr._null()), JExpr._null(), JExpr._new(typeClass)
+              .arg(_dataTemplateUtilClass.staticInvoke("castOrThrow").arg(rawExpr).arg(_dataListClass.dotclass())));
+        case FIXED:
+        case UNION:
+          return JOp.cond(rawExpr.eq(JExpr._null()), JExpr._null(), JExpr._new(typeClass).arg(rawExpr));
+        default:
+          throw new TemplateOutputCastException(
+              "Cannot handle wrapped schema of type " + schema.getDereferencedType());
+      }
+    }
+  }
+
+  private JExpression getCoerceInputExpression(JExpression objectExpr, DataSchema schema, CustomInfoSpec customInfoSpec)
+  {
+    if (CodeUtil.isDirectType(schema))
+    {
+      if (customInfoSpec == null)
+      {
+        switch (schema.getDereferencedType())
+        {
+          case INT:
+            return _dataTemplateUtilClass.staticInvoke("coerceIntInput").arg(objectExpr);
+          case FLOAT:
+            return _dataTemplateUtilClass.staticInvoke("coerceFloatInput").arg(objectExpr);
+          case LONG:
+            return _dataTemplateUtilClass.staticInvoke("coerceLongInput").arg(objectExpr);
+          case DOUBLE:
+            return _dataTemplateUtilClass.staticInvoke("coerceDoubleInput").arg(objectExpr);
+          case BYTES:
+          case BOOLEAN:
+          case STRING:
+            return objectExpr;
+          case ENUM:
+            return objectExpr.invoke("name");
+        }
+      }
+
+      JClass customClass = generate(customInfoSpec.getCustomClass());
+      return _dataTemplateUtilClass.staticInvoke("coerceCustomInput").arg(objectExpr).arg(customClass.dotclass());
+    }
+    else
+    {
+      return objectExpr.invoke("data");
+    }
   }
 
   public static class Config

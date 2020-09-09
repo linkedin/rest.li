@@ -18,6 +18,8 @@ package com.linkedin.data.template;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.DataMapBuilder;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.template.DataObjectToObjectCache;
@@ -47,9 +49,8 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
   protected WrappingMapTemplate(DataMap map, MapDataSchema schema, Class<V> valueClass)
       throws TemplateOutputCastException
   {
-    super(map, schema, valueClass, DataMap.class);
-    _constructor = DataTemplateUtil.templateConstructor(valueClass, schema.getValues());
-    _cache = new DataObjectToObjectCache<V>(data().size());
+    super(map, schema, valueClass, DataTemplateUtil.getDataClass(schema.getValues()));
+    _cache = new DataObjectToObjectCache<>(DataMapBuilder.getOptimumHashMapCapacityFromSize(map.size()));
     _entrySet = new EntrySet();
   }
 
@@ -95,7 +96,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
   public V put(String key, V value) throws ClassCastException, TemplateOutputCastException
   {
     Object unwrapped;
-    Object found = _map.put(key, unwrapped = unwrap(value));
+    Object found = CheckedUtil.putWithoutChecking(_map, key, unwrapped = unwrap(value));
     _cache.put(unwrapped, value);
     return cacheLookup(found, null);
   }
@@ -168,13 +169,23 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
     }
     else if ((wrapped = _cache.get(value)) == null || wrapped.data() != value)
     {
-      wrapped = DataTemplateUtil.wrap(value, _constructor);
+      wrapped = coerceOutput(value);
       if (key != null)
       {
         _cache.put(value, wrapped);
       }
     }
     return wrapped;
+  }
+
+  protected V coerceOutput(Object value) throws TemplateOutputCastException
+  {
+    if (_constructor == null)
+    {
+      _constructor = DataTemplateUtil.templateConstructor(valueClass(), schema().getValues());
+    }
+
+    return DataTemplateUtil.wrap(value, _constructor);
   }
 
   protected class EntrySet extends AbstractMapTemplate<V>.AbstractEntrySet
@@ -189,7 +200,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
     {
       V value = entry.getValue();
       Object unwrapped = unwrap(value);
-      boolean added = _map.entrySet().add(new AbstractMap.SimpleEntry<String, Object>(entry.getKey(), unwrapped));
+      boolean added = _map.entrySet().add(new AbstractMap.SimpleEntry<>(entry.getKey(), unwrapped));
       if (added)
       {
         _cache.put(unwrapped, value);
@@ -318,7 +329,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
 
   }
 
-  protected final Constructor<V> _constructor;
+  private Constructor<V> _constructor;
   protected EntrySet _entrySet;
   protected DataObjectToObjectCache<V> _cache;
 }

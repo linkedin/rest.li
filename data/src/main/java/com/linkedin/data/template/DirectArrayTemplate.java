@@ -18,6 +18,7 @@ package com.linkedin.data.template;
 
 
 import com.linkedin.data.DataList;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.util.ArgumentUtil;
@@ -59,13 +60,13 @@ public abstract class DirectArrayTemplate<E> extends AbstractArrayTemplate<E>
   @Override
   public boolean add(E element) throws ClassCastException
   {
-    return _list.add(coerceInput(element));
+    return CheckedUtil.addWithoutChecking(_list, safeCoerceInput(element));
   }
 
   @Override
   public void add(int index, E element) throws ClassCastException
   {
-    _list.add(index, coerceInput(element));
+    CheckedUtil.addWithoutChecking(_list, index, safeCoerceInput(element));
   }
 
   @Override
@@ -89,7 +90,25 @@ public abstract class DirectArrayTemplate<E> extends AbstractArrayTemplate<E>
   @Override
   public E set(int index, E element) throws ClassCastException, TemplateOutputCastException
   {
-    return coerceOutput(_list.set(index, coerceInput(element)));
+    return coerceOutput(CheckedUtil.setWithoutChecking(_list, index, safeCoerceInput(element)));
+  }
+
+  @SuppressWarnings("unchecked")
+  private Object safeCoerceInput(Object object) throws ClassCastException
+  {
+    //
+    // This UGLY hack is needed because we have code that expects some types to be artificially inter-fungible
+    // and even tests for it, for example coercing between number types.
+    //
+    ArgumentUtil.notNull(object, "object");
+    if (object.getClass() != _elementClass)
+    {
+      return DataTemplateUtil.coerceInput((E) object, _elementClass, _dataClass);
+    }
+    else
+    {
+      return coerceInput((E) object);
+    }
   }
 
   protected Object coerceInput(E object) throws ClassCastException

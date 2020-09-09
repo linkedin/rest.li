@@ -313,6 +313,22 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   }
 
   /**
+   * Add that does not invoke checker but does check for read-only, use with caution.
+   *
+   * This method skips all value checks.
+   *
+   * @param element provides the element to be added to the list.
+   * @param index Index to add at.
+   * @return true.
+   * @throws UnsupportedOperationException if the list is read-only.
+   */
+  protected void addWithoutChecking(int index, E element)
+  {
+    checkMutability();
+    _list.add(index, element);
+  }
+
+  /**
    * Set without checking, use with caution.
    *
    * This method skips all checks.
@@ -331,6 +347,12 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   {
     assert(assertCheck(element)) : "Check is failed";
     return addWithoutChecking(element);
+  }
+
+  void addWithAssertChecking(int index, E element)
+  {
+    assert(assertCheck(element)) : "Check is failed";
+    addWithoutChecking(index, element);
   }
 
   E setWithAssertChecking(int index, E element)

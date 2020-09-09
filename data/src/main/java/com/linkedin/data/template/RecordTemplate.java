@@ -19,6 +19,7 @@ package com.linkedin.data.template;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
+import java.util.function.BiFunction;
 
 
 /**
@@ -404,6 +405,21 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
   }
 
   /**
+   * Register a change listener to get notified when the underlying map changes.
+   */
+  protected void addChangeListener(BiFunction<String, Object, Void> listener)
+  {
+    //
+    // This UGLY hack is needed because IdResponse breaks the implicit RecordTemplate contract and passes in
+    // a null datamap. We even have a test for this obnoxious behavior.
+    //
+    if (_map != null)
+    {
+      _map.addChangeListener(listener);
+    }
+  }
+
+  /**
    * Obtain the value of field from the underlying {@link DataMap}.
    *
    * The mode argument determines what should happen if the field is
@@ -499,7 +515,7 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
     return _cache;
   }
 
-  private DataMap _map;
+  protected DataMap _map;
   private final RecordDataSchema _schema;
   private int _initialCacheCapacity;
   private DataObjectToObjectCache<Object> _cache;

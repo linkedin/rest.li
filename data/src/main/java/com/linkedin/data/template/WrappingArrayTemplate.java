@@ -16,11 +16,11 @@
 
 package com.linkedin.data.template;
 
-
 import com.linkedin.data.DataList;
+import com.linkedin.data.DataMapBuilder;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.template.DataObjectToObjectCache;
 import com.linkedin.util.ArgumentUtil;
 import java.lang.reflect.Constructor;
 
@@ -42,16 +42,15 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
   protected WrappingArrayTemplate(DataList list, ArrayDataSchema schema, Class<E> elementClass)
       throws TemplateOutputCastException
   {
-    super(list, schema, elementClass, DataList.class);
-    _constructor = DataTemplateUtil.templateConstructor(elementClass, schema.getItems());
-    _cache = new DataObjectToObjectCache<E>(data().size());
+    super(list, schema, elementClass, DataTemplateUtil.getDataClass(schema.getItems()));
+    _cache = new DataObjectToObjectCache<>(DataMapBuilder.getOptimumHashMapCapacityFromSize(list.size()));
   }
 
   @Override
   public boolean add(E element) throws ClassCastException
   {
     Object unwrapped;
-    boolean result = _list.add(unwrapped = unwrap(element));
+    boolean result = CheckedUtil.addWithoutChecking(_list, unwrapped = unwrap(element));
     _cache.put(unwrapped, element);
     modCount++;
     return result;
@@ -61,7 +60,7 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
   public void add(int index, E element) throws ClassCastException
   {
     Object unwrapped;
-    _list.add(index, unwrapped = unwrap(element));
+    CheckedUtil.addWithoutChecking(_list, index, unwrapped = unwrap(element));
     _cache.put(unwrapped, element);
     modCount++;
   }
@@ -90,7 +89,7 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
   @Override
   public E set(int index, E element) throws ClassCastException, TemplateOutputCastException
   {
-    Object replaced = _list.set(index, unwrap(element));
+    Object replaced = CheckedUtil.setWithoutChecking(_list, index, unwrap(element));
     modCount++;
     return cacheLookup(replaced, -1);
   }
@@ -153,7 +152,7 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
     assert(object != null);
     if ((wrapped = _cache.get(object)) == null || wrapped.data() != object)
     {
-      wrapped = DataTemplateUtil.wrap(object, _constructor);
+      wrapped = coerceOutput(object);
       if (index != -1)
       {
         _cache.put(object, wrapped);
@@ -162,7 +161,17 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
     return wrapped;
   }
 
-  protected final Constructor<E> _constructor;
+  protected E coerceOutput(Object value) throws TemplateOutputCastException
+  {
+    if (_constructor == null)
+    {
+      _constructor = DataTemplateUtil.templateConstructor(_elementClass, schema().getItems());
+    }
+
+    return DataTemplateUtil.wrap(value, _constructor);
+  }
+
+  private Constructor<E> _constructor;
   protected DataObjectToObjectCache<E> _cache;
 }
 
