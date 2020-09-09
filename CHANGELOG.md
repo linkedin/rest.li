@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.6.3] - 2020-09-09
+- Update RestLiValidatorFilter and RestLiDataValidator to expose creation of restli validators
+
 ## [29.6.2] - 2020-08-31
 - Updated d2 client default config values.
 
@@ -4629,7 +4632,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.3...master
+[29.6.3]: https://github.com/linkedin/rest.li/compare/v29.6.2...v29.6.3
 [29.6.2]: https://github.com/linkedin/rest.li/compare/v29.6.1...v29.6.2
 [29.6.1]: https://github.com/linkedin/rest.li/compare/v29.6.0...v29.6.1
 [29.6.0]: https://github.com/linkedin/rest.li/compare/v29.5.8...v29.6.0

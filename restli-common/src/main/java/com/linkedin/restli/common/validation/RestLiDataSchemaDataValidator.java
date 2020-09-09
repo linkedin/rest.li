@@ -78,7 +78,11 @@ public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
    * @return validator
    */
   @Override
-  protected Validator getValidatorForOutputEntityValidation(DataSchema validatingSchema) {
+  protected Validator getValidatorForOutputEntityValidation(DataSchema validatingSchema)
+  {
+    // Validates that the schema passed in is the same as the schema used in the constructor
+    // Intentionally does an == check to avoid a more computational heavy .equals for larger schemas
+    // Only if this is true, return the validator created in the constructor
     if (_validatingSchema == validatingSchema)
     {
       return _outputSchemaValidator;

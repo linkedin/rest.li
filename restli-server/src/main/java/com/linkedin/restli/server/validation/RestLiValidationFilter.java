@@ -475,7 +475,8 @@ public class RestLiValidationFilter implements Filter
    * @param requestContext {@link FilterRequestContext} to provide input to the data validator
    * @return a {@link RestLiDataValidator}
    */
-  protected RestLiDataValidator createRequestRestLiDataValidator(FilterRequestContext requestContext) {
+  protected RestLiDataValidator createRequestRestLiDataValidator(FilterRequestContext requestContext)
+  {
     return new RestLiDataValidator(requestContext.getFilterResourceModel().getResourceClass().getAnnotations(),
         requestContext.getFilterResourceModel().getValueClass(), requestContext.getMethodType());
   }
@@ -487,7 +488,8 @@ public class RestLiValidationFilter implements Filter
    * @param requestContext {@link FilterRequestContext} to provide input to the data validator
    * @return a {@link RestLiDataValidator}
    */
-  protected RestLiDataValidator createResponseRestLiDataValidator(FilterRequestContext requestContext) {
+  protected RestLiDataValidator createResponseRestLiDataValidator(FilterRequestContext requestContext)
+  {
     // Get validating schema if it was already built in onRequest
     DataSchema validatingSchema = (DataSchema) requestContext.getFilterScratchpad().get(VALIDATING_SCHEMA_KEY);
 
