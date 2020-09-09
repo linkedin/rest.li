@@ -92,8 +92,9 @@ public class FileFormatDataSchemaParser {
               while (entries.hasMoreElements())
               {
                 final JarEntry entry = entries.nextElement();
-                if (!entry.isDirectory() && entry.getName().endsWith(_schemaParserFactory.getLanguageExtension()) &&
-                    (entry.getName().startsWith(_schemaResolver.getSchemasDirectoryName().getName()) || isExtensionEntry(entry)))
+                if (!entry.isDirectory() &&
+                    entry.getName().endsWith(_schemaParserFactory.getLanguageExtension()) &&
+                    (entry.getName().startsWith(_schemaResolver.getSchemasDirectoryName().getName() + "/")))
                 {
                   parseJarEntry(jarFile, entry, result);
                   result.getSourceFiles().add(sourceFile);
@@ -144,21 +145,6 @@ public class FileFormatDataSchemaParser {
       }
       throw e;
     }
-  }
-
-  /**
-   * Schema files when archived in a jar can start with pegasus/... or extensions/
-   * For the resolver that is supporting extensions as directory name, we like it to be included in the parsing
-   * @param entry an entry in the jar file, e.g. "pegasus/..." or "extensions/...."
-   * @return true if this entry starts with "extensions"
-   */
-  private boolean isExtensionEntry(JarEntry entry)
-  {
-    if (_schemaResolver.getSchemasDirectoryName() == SchemaDirectoryName.EXTENSIONS)
-    {
-      return entry.getName().startsWith(EXTENSION_PATH_ENTRY);
-    }
-    return false;
   }
 
   /**

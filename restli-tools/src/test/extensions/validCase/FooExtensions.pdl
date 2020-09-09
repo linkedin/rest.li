@@ -1,0 +1,5 @@
+record FooExtensions includes Foo {
+  @extension.versionSuffix = "V2"
+  @extension.using = "finder: test"
+  injectedField: DummyKey
+}

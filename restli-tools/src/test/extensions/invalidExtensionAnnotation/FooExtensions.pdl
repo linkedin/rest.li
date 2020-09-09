@@ -1,0 +1,8 @@
+/**
+ * Invalid extension schema:
+ * @extension.bar is not a valid @extension annotation.
+ */
+record FooExtensions includes Foo {
+  @extension.bar = "finder: test"
+  injectedField: DummyKey
+}

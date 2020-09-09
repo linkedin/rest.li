@@ -1,0 +1,4 @@
+record BarExtensions includes Bar {
+  @extension.using = "finder: test"
+  injectedField: array[DummyKey]
+}

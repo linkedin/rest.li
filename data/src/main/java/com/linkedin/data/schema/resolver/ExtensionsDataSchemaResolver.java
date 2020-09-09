@@ -18,8 +18,6 @@ package com.linkedin.data.schema.resolver;
 
 import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.grammar.PdlSchemaParser;
-import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
 
 
 /**

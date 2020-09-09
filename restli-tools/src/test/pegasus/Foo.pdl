@@ -1,0 +1,7 @@
+/**
+ * A test schema which is used as a base schema in extension schema.
+ */
+record Foo {
+  foo: int
+  bar: string
+}

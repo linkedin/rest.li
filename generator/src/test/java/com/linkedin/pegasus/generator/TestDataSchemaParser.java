@@ -109,33 +109,41 @@ public class TestDataSchemaParser
         {
             {
                 new String[]{
-                    "extensions/BarExtension.pdl",
-                    "extensions/FooExtension.pdl",
-                    "extensions/FuzzExtension.pdl",
+                    "extensions/BarExtensions.pdl",
+                    "extensions/FooExtensions.pdl",
+                    "extensions/FuzzExtensions.pdl",
                     "pegasus/Foo.pdl",
                     "pegasus/Bar.pdl",
                     "pegasus/Fuzz.pdsc"
                 },
                 new String[]{
-                    "FuzzExtension",
-                    "FooExtension",
-                    "BarExtension"
+                    "FuzzExtensions",
+                    "FooExtensions",
+                    "BarExtensions"
                 }
             },
             {
                 new String[]{
-                    "extensions/BarExtension.pdl",
-                    "extensions/FooExtension.pdl",
-                    "extensions/FuzzExtension.pdl",
+                    "extensions/BarExtensions.pdl",
+                    "extensions/FooExtensions.pdl",
+                    "extensions/FuzzExtensions.pdl",
                     "pegasus/Foo.pdl",
                     "pegasus/Bar.pdl",
                     "pegasus/Fuzz.pdsc"
                 },
                 new String[]{
-                    "FooExtension",
-                    "FuzzExtension",
-                    "BarExtension"
+                    "FooExtensions",
+                    "FuzzExtensions",
+                    "BarExtensions"
                 }
+            },
+            {
+                new String[]{
+                    "pegasus/Foo.pdl",
+                    "pegasus/Bar.pdl",
+                    "pegasus/Fuzz.pdsc"
+                },
+                new String[]{}
             },
         };
   }
@@ -157,7 +165,7 @@ public class TestDataSchemaParser
       DataSchemaParser parser = new DataSchemaParser(jarFile, resolver);
       DataSchemaParser.ParseResult parseResult = parser.parseSources(new String[]{jarFile});
       Map<DataSchema, DataSchemaLocation> extensions = parseResult.getExtensionDataSchemaAndLocations();
-      assertEquals(extensions.size(), 3);
+      assertEquals(extensions.size(), expectedExtensions.length);
       Set<String> actualNames = extensions
           .keySet()
           .stream()
@@ -171,6 +179,7 @@ public class TestDataSchemaParser
       Assert.fail("Test failed");
     }
   }
+
 
   @Test(dataProvider = "entityRelationshipInputFiles")
   public void testSchemaFilesInExtensionPathInFolder(String[] files, String[] expectedExtensions) throws Exception
@@ -186,7 +195,7 @@ public class TestDataSchemaParser
       String[] schemaFiles = Arrays.stream(files).map(casename -> pegasusDir + FS + "extensionSchemas" + FS + casename).toArray(String[]::new);
       DataSchemaParser.ParseResult parseResult = parser.parseSources(schemaFiles);
       Map<DataSchema, DataSchemaLocation> extensions = parseResult.getExtensionDataSchemaAndLocations();
-      assertEquals(extensions.size(), 3);
+      assertEquals(extensions.size(), expectedExtensions.length);
       Set<String> actualNames = extensions
           .keySet()
           .stream()
