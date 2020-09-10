@@ -617,11 +617,13 @@ public class RestLiDataValidator
         getValidatorForOutputEntityValidation(validatingSchema));
   }
 
-  protected Validator getValidatorForOutputEntityValidation(DataSchema validatingSchema) {
+  protected Validator getValidatorForOutputEntityValidation(DataSchema validatingSchema)
+  {
     return new DataSchemaAnnotationValidator(validatingSchema);
   }
 
-  protected Validator getValidatorForInputEntityValidation(DataSchema validatingSchema) {
+  protected Validator getValidatorForInputEntityValidation(DataSchema validatingSchema)
+  {
     return new DataValidator(validatingSchema);
   }
 
