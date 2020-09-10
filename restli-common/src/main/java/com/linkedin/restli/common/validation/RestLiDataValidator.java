@@ -274,9 +274,9 @@ public class RestLiDataValidator
     _validatorClassMap = Collections.unmodifiableMap(validatorClassMap);
   }
 
-  private class DataValidator extends DataSchemaAnnotationValidator
+  protected class DataValidator extends DataSchemaAnnotationValidator
   {
-    private DataValidator(DataSchema schema)
+    protected DataValidator(DataSchema schema)
     {
       super(schema, _validatorClassMap);
     }
@@ -528,7 +528,7 @@ public class RestLiDataValidator
     // Custom validation rules and Rest.li annotations for set operations are checked here.
     // It's okay if required fields are absent in a partial update request, so use ignore mode.
     return ValidateDataAgainstSchema.validate(new SimpleDataElement(entity.data(), entity.schema()),
-        new ValidationOptions(RequiredMode.IGNORE), new DataValidator(entity.schema()));
+        new ValidationOptions(RequiredMode.IGNORE), getValidatorForInputEntityValidation(entity.schema()));
   }
 
   /**
@@ -608,13 +608,23 @@ public class RestLiDataValidator
     //  the client cannot supply them in a create request, so they should be treated as optional.
     //  similarly for update requests used as upsert (update to create), they are treated as optional.
     validationOptions.setTreatOptional(_readOnlyOptionalPredicate);
-    return ValidateDataAgainstSchema.validate(entity, validationOptions, new DataValidator(entity.schema()));
+    return ValidateDataAgainstSchema.validate(entity, validationOptions, getValidatorForInputEntityValidation(entity.schema()));
   }
 
   private ValidationResult validateOutputEntity(RecordTemplate entity, DataSchema validatingSchema)
   {
-    DataSchemaAnnotationValidator validator = new DataSchemaAnnotationValidator(validatingSchema);
-    return ValidateDataAgainstSchema.validate(entity.data(), validatingSchema, new ValidationOptions(), validator);
+    return ValidateDataAgainstSchema.validate(entity.data(), validatingSchema, new ValidationOptions(),
+        getValidatorForOutputEntityValidation(validatingSchema));
+  }
+
+  protected Validator getValidatorForOutputEntityValidation(DataSchema validatingSchema)
+  {
+    return new DataSchemaAnnotationValidator(validatingSchema);
+  }
+
+  protected Validator getValidatorForInputEntityValidation(DataSchema validatingSchema)
+  {
+    return new DataValidator(validatingSchema);
   }
 
   private static ValidationErrorResult validationResultWithErrorMessage(String errorMessage)

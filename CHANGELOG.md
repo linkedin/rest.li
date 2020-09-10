@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.6.5] - 2020-09-09
+- Update RestLiValidatorFilter and RestLiDataValidator to expose creation of restli validators
+
 ## [29.6.4] - 2020-09-08
 - Fix inconsistent issue in extension schema file names: from `Extension` to `Extensions`
 - Fix a bug in `FileFormatDataSchemaParser` and remove `isExtensionEntry` method call to simplify the logic.
@@ -4637,7 +4640,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.5...master
+[29.6.5]: https://github.com/linkedin/rest.li/compare/v29.6.5...master
 [29.6.4]: https://github.com/linkedin/rest.li/compare/v29.6.3...v29.6.4
 [29.6.3]: https://github.com/linkedin/rest.li/compare/v29.6.2...v29.6.3
 [29.6.2]: https://github.com/linkedin/rest.li/compare/v29.6.1...v29.6.2
