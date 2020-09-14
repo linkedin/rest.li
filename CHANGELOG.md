@@ -14,6 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 - Loosen `ReadOnly`/`CreateOnly` validation when setting array-descendant fields in a patch request.
+- Add generatePegasusSchemeSnapshot task.
 
 ## [29.6.5] - 2020-09-09
 - Update RestLiValidatorFilter and RestLiDataValidator to expose creation of restli validators
