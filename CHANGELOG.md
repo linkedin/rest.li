@@ -13,8 +13,11 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.6.6] - 2020-09-17
 - Loosen `ReadOnly`/`CreateOnly` validation when setting array-descendant fields in a patch request.
 - Add generatePegasusSchemeSnapshot task.
+- Remove final from nested generated classes, such as inline unions.
 
 ## [29.6.5] - 2020-09-09
 - Update RestLiValidatorFilter and RestLiDataValidator to expose creation of restli validators
@@ -4642,7 +4645,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.6...master
+[29.6.6]: https://github.com/linkedin/rest.li/compare/v29.6.5...v29.6.6
 [29.6.5]: https://github.com/linkedin/rest.li/compare/v29.6.5...master
 [29.6.4]: https://github.com/linkedin/rest.li/compare/v29.6.3...v29.6.4
 [29.6.3]: https://github.com/linkedin/rest.li/compare/v29.6.2...v29.6.3
