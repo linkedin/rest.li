@@ -179,7 +179,35 @@ public class BackupRequestsClient extends D2ClientDelegator
     }
 
     _d2Client.restRequest(request, requestContext,
-        decorateCallback(request, requestContext, _d2Client::restRequest, callback));
+        decorateCallbackSync(request, requestContext, _d2Client::restRequest, callback));
+  }
+
+  /*private*/ Optional<TrackingBackupRequestsStrategy> getStrategyAfterUpdate(final String serviceName, final String operation)
+  {
+    Map<String, BackupRequestsStrategyFromConfig> strategiesForOperation = _strategies.get(serviceName);
+    if (strategiesForOperation != null)
+    {
+      BackupRequestsStrategyFromConfig backupRequestsStrategyFromConfig = strategiesForOperation.get(operation);
+      if (backupRequestsStrategyFromConfig != null)
+      {
+        return backupRequestsStrategyFromConfig.getStrategy();
+      }
+    }
+    LOG.debug("No backup requests strategy found");
+    return Optional.empty();
+  }
+
+  private void updateServiceProperties(String serviceName, ServiceProperties serviceProperties)
+  {
+    List<Map<String, Object>> existing = _configs.get(serviceName);
+    if (serviceProperties != null)
+    {
+      if (existing != serviceProperties.getBackupRequests())
+      { // reference inequality check
+        update(serviceName, serviceProperties.getBackupRequests());
+        _configs.put(serviceName, serviceProperties.getBackupRequests());
+      }
+    }
   }
 
   /**
@@ -218,34 +246,14 @@ public class BackupRequestsClient extends D2ClientDelegator
       }
     };
 
-    getStrategy(serviceName, operation, maybeStrategyCallback);
-  }
-
-  private Optional<TrackingBackupRequestsStrategy> getStrategy(final String serviceName, final String operation)
-  {
-    updateIfNeeded(serviceName);
-    return getStrategyAfterUpdate(serviceName, operation);
-  }
-
-  /*private*/ Optional<TrackingBackupRequestsStrategy> getStrategyAfterUpdate(final String serviceName, final String operation)
-  {
-    Map<String, BackupRequestsStrategyFromConfig> strategiesForOperation = _strategies.get(serviceName);
-    if (strategiesForOperation != null)
-    {
-      BackupRequestsStrategyFromConfig backupRequestsStrategyFromConfig = strategiesForOperation.get(operation);
-      if (backupRequestsStrategyFromConfig != null)
-      {
-        return backupRequestsStrategyFromConfig.getStrategy();
-      }
-    }
-    LOG.debug("No backup requests strategy found");
-    return Optional.empty();
+    getStrategyAsync(serviceName, operation, maybeStrategyCallback);
   }
 
   /**
-   * Update backup strategies if configuration has changed (reference inequality check).
+   * Get backup request strategy after the D2 Zookeeper blocking call finishes
+   * TODO: Remove this blocking call once the async path has been verified
    */
-  private void updateIfNeeded(String serviceName)
+  private Optional<TrackingBackupRequestsStrategy> getStrategySync(final String serviceName, final String operation)
   {
     try
     {
@@ -256,55 +264,29 @@ public class BackupRequestsClient extends D2ClientDelegator
     {
       LOG.debug("Failed to fetch backup requests strategy ", e);
     }
+
+    return getStrategyAfterUpdate(serviceName, operation);
   }
 
-  private void updateServiceProperties(String serviceName, ServiceProperties serviceProperties)
-  {
-    List<Map<String, Object>> existing = _configs.get(serviceName);
-    if (serviceProperties != null)
-    {
-      if (existing != serviceProperties.getBackupRequests())
-      { // reference inequality check
-        update(serviceName, serviceProperties.getBackupRequests());
-        _configs.put(serviceName, serviceProperties.getBackupRequests());
-      }
+  void getStrategyAsync(final String serviceName, final String operation, Callback<Optional<TrackingBackupRequestsStrategy>> callback) {
+  Callback<ServiceProperties> servicePropertiesCallback = new Callback<ServiceProperties>() {
+    @Override
+    public void onError(Throwable e) {
+      LOG.debug("Failed to fetch backup requests strategy", e);
+      // Continue the call even if properties are not updated
+      callback.onSuccess(Optional.empty());
     }
-  }
 
-  void getStrategy(final String serviceName, final String operation, Callback<Optional<TrackingBackupRequestsStrategy>> callback) {
-    Callback<None> updatePropertiesCallback = new Callback<None>() {
-      @Override
-      public void onError(Throwable e) {
-        callback.onError(e);
-      }
+    @Override
+    public void onSuccess(ServiceProperties serviceProperties) {
+      updateServiceProperties(serviceName, serviceProperties);
+      Optional<TrackingBackupRequestsStrategy> maybeStrategy = getStrategyAfterUpdate(serviceName, operation);
+      callback.onSuccess(maybeStrategy);
+    }
+  };
 
-      @Override
-      public void onSuccess(None result) {
-        callback.onSuccess(getStrategyAfterUpdate(serviceName, operation));
-      }
-    };
-
-    updateIfNeeded(serviceName, updatePropertiesCallback);
-  }
-
-  private void updateIfNeeded(String serviceName, Callback<None> callback)
-  {
-    Callback<ServiceProperties> servicePropertiesCallback = new Callback<ServiceProperties>() {
-      @Override
-      public void onError(Throwable e) {
-        LOG.debug("Failed to fetch backup requests strategy", e);
-        // Continue the call even if properties are not updated
-        callback.onSuccess(null);
-      }
-
-      @Override
-      public void onSuccess(ServiceProperties serviceProperties) {
-        updateServiceProperties(serviceName, serviceProperties);
-        callback.onSuccess(null);
-      }
-    };
-    _loadBalancer.getLoadBalancedServiceProperties(serviceName, servicePropertiesCallback);
-  }
+  _loadBalancer.getLoadBalancedServiceProperties(serviceName, servicePropertiesCallback);
+}
 
   /*
    * List<Map<String, Object>> backupRequestsConfigs is coming from
@@ -405,10 +387,10 @@ public class BackupRequestsClient extends D2ClientDelegator
     }
 
     _d2Client.streamRequest(request, requestContext,
-        decorateCallback(request, requestContext, _d2Client::streamRequest, callback));
+        decorateCallbackSync(request, requestContext, _d2Client::streamRequest, callback));
   }
 
-  private <R extends Request, T> Callback<T> decorateCallback(R request, RequestContext requestContext,
+  private <R extends Request, T> Callback<T> decorateCallbackSync(R request, RequestContext requestContext,
       DecoratorClient<R, T> client, Callback<T> callback)
   {
     try
@@ -418,7 +400,7 @@ public class BackupRequestsClient extends D2ClientDelegator
       if (operationObject != null)
       {
         final String operation = operationObject.toString();
-        final Optional<TrackingBackupRequestsStrategy> strategy = getStrategy(serviceName, operation);
+        final Optional<TrackingBackupRequestsStrategy> strategy = getStrategySync(serviceName, operation);
         if (strategy.isPresent())
         {
           return decorateCallbackWithBackupRequest(request, requestContext, client, callback, strategy.get(), serviceName, operation);

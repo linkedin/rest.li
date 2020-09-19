@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.6.7] - 2020-09-18
+- Added async call to Zookeeper in backup request client.
+
 ## [29.6.6] - 2020-09-17
 - Loosen `ReadOnly`/`CreateOnly` validation when setting array-descendant fields in a patch request.
 - Add generatePegasusSchemeSnapshot task.
@@ -4645,7 +4648,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.7...master
+[29.6.7]: https://github.com/linkedin/rest.li/compare/v29.6.6...v29.6.7
 [29.6.6]: https://github.com/linkedin/rest.li/compare/v29.6.5...v29.6.6
 [29.6.5]: https://github.com/linkedin/rest.li/compare/v29.6.5...master
 [29.6.4]: https://github.com/linkedin/rest.li/compare/v29.6.3...v29.6.4
