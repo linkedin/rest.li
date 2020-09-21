@@ -79,11 +79,13 @@ public class D2ClientConfig
   BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer = null;
   long backupRequestsLatencyNotificationInterval = 1;
   TimeUnit backupRequestsLatencyNotificationIntervalUnit = TimeUnit.MINUTES;
+  // TODO: Once the change is fully verified, we should always enable the async feature
+  boolean enableBackupRequestsClientAsync = false;
   EventEmitter eventEmitter = null;
   PartitionAccessorRegistry partitionAccessorRegistry = null;
   Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
   Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories = Collections.emptyMap();
-  boolean requestTimeoutHandlerEnabled = true;
+  boolean requestTimeoutHandlerEnabled = false;
   SslSessionValidatorFactory sslSessionValidatorFactory = null;
   ZKPersistentConnection zkConnectionToUseForLB = null;
   ScheduledExecutorService startUpExecutorService = null;
@@ -128,6 +130,7 @@ public class D2ClientConfig
                  BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer,
                  long backupRequestsLatencyNotificationInterval,
                  TimeUnit backupRequestsLatencyNotificationIntervalUnit,
+                 boolean enableBackupRequestsClientAsync,
                  ScheduledExecutorService backupRequestsExecutorService,
                  EventEmitter emitter,
                  PartitionAccessorRegistry partitionAccessorRegistry,
@@ -174,6 +177,7 @@ public class D2ClientConfig
     this.backupRequestsStrategyStatsConsumer = backupRequestsStrategyStatsConsumer;
     this.backupRequestsLatencyNotificationInterval = backupRequestsLatencyNotificationInterval;
     this.backupRequestsLatencyNotificationIntervalUnit = backupRequestsLatencyNotificationIntervalUnit;
+    this.enableBackupRequestsClientAsync = enableBackupRequestsClientAsync;
     this._backupRequestsExecutorService = backupRequestsExecutorService;
     this.eventEmitter = emitter;
     this.partitionAccessorRegistry = partitionAccessorRegistry;

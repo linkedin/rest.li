@@ -154,6 +154,7 @@ public class D2ClientBuilder
                   _config.backupRequestsStrategyStatsConsumer,
                   _config.backupRequestsLatencyNotificationInterval,
                   _config.backupRequestsLatencyNotificationIntervalUnit,
+                  _config.enableBackupRequestsClientAsync,
                   _config._backupRequestsExecutorService,
                   _config.eventEmitter,
                   _config.partitionAccessorRegistry,
@@ -196,7 +197,7 @@ public class D2ClientBuilder
       }
       d2Client = new BackupRequestsClient(d2Client, loadBalancer, executor,
           _config.backupRequestsStrategyStatsConsumer, _config.backupRequestsLatencyNotificationInterval,
-          _config.backupRequestsLatencyNotificationIntervalUnit);
+          _config.backupRequestsLatencyNotificationIntervalUnit, _config.enableBackupRequestsClientAsync);
     }
 
     if (_config.retry)
@@ -357,6 +358,12 @@ public class D2ClientBuilder
   public D2ClientBuilder setBackupRequestsLatencyNotificationIntervalUnit(TimeUnit backupRequestsLatencyNotificationIntervalUnit)
   {
     _config.backupRequestsLatencyNotificationIntervalUnit = backupRequestsLatencyNotificationIntervalUnit;
+    return this;
+  }
+
+  public D2ClientBuilder setEnableBackupRequestsClientAsync(boolean enableBackupRequestsClientAsync)
+  {
+    _config.enableBackupRequestsClientAsync = enableBackupRequestsClientAsync;
     return this;
   }
 

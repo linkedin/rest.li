@@ -28,6 +28,7 @@ import com.linkedin.d2.balancer.strategies.framework.LoadBalancerStrategyTestRun
 import com.linkedin.d2.balancer.strategies.framework.LoadBalancerStrategyTestRunnerBuilder;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import com.linkedin.d2.loadBalancerStrategyType;
+import com.linkedin.test.util.retry.SingleRetry;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -386,7 +387,7 @@ public class TestLoadBalancerStrategy
     assertTrue(hasPointsInHistory(pointHistory, Arrays.asList(2)), "Fast recovery should recover the points from 1 to 2 initially");
   }
 
-  @Test(dataProvider = "strategy")
+  @Test(dataProvider = "strategy", retryAnalyzer = SingleRetry.class)
   public void testSlowStart(loadBalancerStrategyType type) {
     Map<String, String> degraderPropertiesWithSlowStart = new HashMap<>();
     D2RelativeStrategyProperties relativePropertiesWithSlowStart = new D2RelativeStrategyProperties();
