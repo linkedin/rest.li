@@ -21,7 +21,6 @@ import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.resolver.AbstractMultiFormatDataSchemaResolver;
-import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
@@ -35,6 +34,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -210,14 +210,23 @@ public class DataSchemaParser
   public static class ParseResult
   {
     private static final String EXTENSION_FILENAME_SUFFIX = "Extensions.pdl";
-    // The purpose of the sorting is to keep generated java meta classes consistent accross different input file orders
-    private final Map<DataSchema, DataSchemaLocation> _schemaAndLocations = new TreeMap<>(Comparator.comparing(DataSchema::toString));
+    private final Map<DataSchema, DataSchemaLocation> _schemaAndLocations = new LinkedHashMap<>();
     private final Set<File> _sourceFiles = new HashSet<>();
     protected final StringBuilder _messageBuilder = new StringBuilder();
 
     public Map<DataSchema, DataSchemaLocation> getSchemaAndLocations()
     {
       return _schemaAndLocations;
+    }
+
+    /**
+     * The purpose of the sorting is to keep generated java meta classes consistent across different input file orders.
+     */
+    public Map<DataSchema, DataSchemaLocation> getSortedSchemaAndLocations()
+    {
+      Map<DataSchema, DataSchemaLocation> treeMap = new TreeMap<>(Comparator.comparing(DataSchema::toString));
+      treeMap.putAll(_schemaAndLocations);
+      return treeMap;
     }
 
     public Map<DataSchema, DataSchemaLocation> getExtensionDataSchemaAndLocations()
