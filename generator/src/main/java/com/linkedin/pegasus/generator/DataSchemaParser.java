@@ -64,18 +64,18 @@ public class DataSchemaParser
 
   /**
    * @param resolverPath provides the search paths separated by the system file separator, or null for no search paths.
-   * @param parserFactoriesForFromats list of different format that we want to parse
+   * @param parserFactoriesForFormats list of different formats that we want to parse
    */
   public DataSchemaParser(
       String resolverPath,
-      List<DataSchemaParserFactory> parserFactoriesForFromats)
+      List<DataSchemaParserFactory> parserFactoriesForFormats)
   {
     _parserByFileExtension = new HashMap<>();
     _resolverPath = resolverPath;
     MultiFormatDataSchemaResolver resolver =
-      new MultiFormatDataSchemaResolver(resolverPath, parserFactoriesForFromats);
+      new MultiFormatDataSchemaResolver(resolverPath, parserFactoriesForFormats);
     this._resolver = resolver;
-    init(resolver, resolverPath, parserFactoriesForFromats);
+    init(resolver, resolverPath, parserFactoriesForFormats);
   }
 
   /**
@@ -125,6 +125,7 @@ public class DataSchemaParser
       byExtension.put(fileExtension, new ArrayList<>());
     }
 
+    // Extract all schema files from the given source paths and group by extension (JARs are handled specially)
     for (String source : sources)
     {
       final File sourceFile = new File(source);
@@ -132,8 +133,10 @@ public class DataSchemaParser
       {
         if (sourceFile.isDirectory())
         {
+          // Source path is a directory, so recursively find all schema files contained therein
           final FileExtensionFilter filter = new FileExtensionFilter(fileExtensions);
           final List<File> sourceFilesInDirectory = FileUtil.listFiles(sourceFile, filter);
+          // Add each schema to the corresponding extension's source list
           for (File f : sourceFilesInDirectory)
           {
             String ext = FilenameUtils.getExtension(f.getName());
@@ -146,12 +149,13 @@ public class DataSchemaParser
         }
         else if (sourceFile.getName().endsWith(".jar"))
         {
-          // Add jar files to each extension's source list. The file based parser for each extension will extract the
-          // jar and process only files that match the extension.
+          // Source path is a JAR, so add it to each extension's source list.
+          // The file-based parser for each extension will extract the JAR and process only files matching the extension
           byExtension.values().forEach(files -> files.add(sourceFile.getAbsolutePath()));
         }
         else
         {
+          // Source path is a non-JAR file, so add it to the corresponding extension's source list
           String ext = FilenameUtils.getExtension(sourceFile.getName());
           List<String> filesForExtension = byExtension.get(ext);
           if (filesForExtension != null)
@@ -162,41 +166,28 @@ public class DataSchemaParser
       }
     }
 
-    List<ParseResult> results = new ArrayList<>();
+    // Parse all schema files and JARs using the appropriate file format parser
+    final ParseResult result = new ParseResult();
     for (Map.Entry<String, List<String>> entry : byExtension.entrySet())
     {
       String ext = entry.getKey();
       List<String> files = entry.getValue();
-      ParseResult parseResult =
-        _parserByFileExtension.get(ext).parseSources(files.toArray(new String[files.size()]));
-      results.add(parseResult);
+      _parserByFileExtension.get(ext).parseSources(files.toArray(new String[files.size()]), result);
     }
 
-    return combine(results);
+    return result;
   }
 
   private void init(AbstractMultiFormatDataSchemaResolver resolver,
       String resolverPath,
-      List<DataSchemaParserFactory> parserFactoriesForFromats)
+      List<DataSchemaParserFactory> parserFactoriesForFormats)
   {
-    for (DataSchemaParserFactory parserForFormat : parserFactoriesForFromats)
+    for (DataSchemaParserFactory parserForFormat : parserFactoriesForFormats)
     {
       FileFormatDataSchemaParser fileFormatParser =
           new FileFormatDataSchemaParser(resolverPath, resolver, parserForFormat);
       _parserByFileExtension.put(parserForFormat.getLanguageExtension(), fileFormatParser);
     }
-  }
-
-  private static ParseResult combine(Collection<ParseResult> parseResults)
-  {
-    ParseResult combined = new ParseResult();
-    for (ParseResult result : parseResults)
-    {
-      combined.getSchemaAndLocations().putAll(result.getSchemaAndLocations());
-      combined.getSourceFiles().addAll((result.getSourceFiles()));
-      combined.addMessage(result.getMessage());
-    }
-    return combined;
   }
 
 
@@ -210,7 +201,7 @@ public class DataSchemaParser
   public static class ParseResult
   {
     private static final String EXTENSION_FILENAME_SUFFIX = "Extensions.pdl";
-    // The purpose of the sorting is to keep generated java meta classes consistent accross different input file orders
+    // Sort the results to ensure that the output is deterministic for a given set of source inputs
     private final Map<DataSchema, DataSchemaLocation> _schemaAndLocations = new TreeMap<>(Comparator.comparing(DataSchema::toString));
     private final Set<File> _sourceFiles = new HashSet<>();
     protected final StringBuilder _messageBuilder = new StringBuilder();
