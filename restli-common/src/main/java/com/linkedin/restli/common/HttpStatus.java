@@ -125,7 +125,7 @@ public enum HttpStatus
   public static HttpStatus fromCode(int code) {
     HttpStatus httpStatus = _lookup.get(code);
     if (httpStatus == null)
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException("Unrecognized HttpStatus Code:" + code);
 
     return httpStatus;
   }
