@@ -50,16 +50,22 @@ import java.util.jar.JarFile;
  */
 public class FileFormatDataSchemaParser {
   static final String SCHEMA_PATH_PREFIX = SchemaDirectoryName.PEGASUS.getName() + "/";
-  static final String EXTENSION_PATH_ENTRY = SchemaDirectoryName.EXTENSIONS.getName() + "/";
-  private final String _resolverPath;
   private final DataSchemaResolver _schemaResolver;
   private final DataSchemaParserFactory _schemaParserFactory;
 
-  public FileFormatDataSchemaParser(String resolverPath, DataSchemaResolver schemaResolver, DataSchemaParserFactory schemaParserFactory)
+  public FileFormatDataSchemaParser(DataSchemaResolver schemaResolver, DataSchemaParserFactory schemaParserFactory)
   {
-    _resolverPath = resolverPath;
     _schemaResolver = schemaResolver;
     _schemaParserFactory = schemaParserFactory;
+  }
+
+  /**
+   * @deprecated Use {@link #FileFormatDataSchemaParser(DataSchemaResolver, DataSchemaParserFactory)} instead.
+   */
+  @Deprecated
+  public FileFormatDataSchemaParser(String resolverPath, DataSchemaResolver schemaResolver, DataSchemaParserFactory schemaParserFactory)
+  {
+    this(schemaResolver, schemaParserFactory);
   }
 
   public DataSchemaParser.ParseResult parseSources(String sources[]) throws IOException

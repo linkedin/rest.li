@@ -75,7 +75,7 @@ public class DataSchemaParser
     MultiFormatDataSchemaResolver resolver =
       new MultiFormatDataSchemaResolver(resolverPath, parserFactoriesForFromats);
     this._resolver = resolver;
-    init(resolver, resolverPath, parserFactoriesForFromats);
+    init(resolver, parserFactoriesForFromats);
   }
 
   /**
@@ -87,7 +87,7 @@ public class DataSchemaParser
     _parserByFileExtension = new HashMap<>();
     _resolverPath = resolverPath;
     this._resolver = resolver;
-    init(resolver, resolverPath, MultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES);
+    init(resolver, MultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES);
   }
 
   public String getResolverPath()
@@ -176,13 +176,12 @@ public class DataSchemaParser
   }
 
   private void init(AbstractMultiFormatDataSchemaResolver resolver,
-      String resolverPath,
       List<DataSchemaParserFactory> parserFactoriesForFromats)
   {
     for (DataSchemaParserFactory parserForFormat : parserFactoriesForFromats)
     {
       FileFormatDataSchemaParser fileFormatParser =
-          new FileFormatDataSchemaParser(resolverPath, resolver, parserForFormat);
+          new FileFormatDataSchemaParser(resolver, parserForFormat);
       _parserByFileExtension.put(parserForFormat.getLanguageExtension(), fileFormatParser);
     }
   }
