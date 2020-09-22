@@ -144,6 +144,7 @@ public class DegraderImpl implements Degrader
   public static final double   DEFAULT_SLOW_START_THRESHOLD = 0.0d;
   public static final double   DEFAULT_LOG_THRESHOLD = 0.5d;
   public static final double   DEFAULT_PREEMPTIVE_REQUEST_TIMEOUT_RATE = 1.0d;
+  public static final Logger   DEFAULT_LOGGER = LoggerFactory.getLogger(ImmutableConfig.class);
 
   private ImmutableConfig _config;
   private String _name;
@@ -695,7 +696,7 @@ public class DegraderImpl implements Degrader
     protected int _overrideMinCallCount = DEFAULT_OVERRIDE_MIN_CALL_COUNT;
     protected double _initialDropRate = DEFAULT_INITIAL_DROP_RATE;
     protected double _slowStartThreshold = DEFAULT_SLOW_START_THRESHOLD;
-    protected Logger _logger = LoggerFactory.getLogger(ImmutableConfig.class);
+    protected Logger _logger = DEFAULT_LOGGER;
     protected double _logThreshold = DEFAULT_LOG_THRESHOLD;
     protected double _preemptiveRequestTimeoutRate = DEFAULT_PREEMPTIVE_REQUEST_TIMEOUT_RATE;
 

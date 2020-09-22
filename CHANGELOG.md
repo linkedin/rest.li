@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.6.8] - 2020-09-22
+- Optimized logger initialization in d2 degrader.
+
 ## [29.6.7] - 2020-09-18
 - Added async call to Zookeeper in backup request client.
 
@@ -4648,7 +4651,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.8...master
+[29.6.8]: https://github.com/linkedin/rest.li/compare/v29.6.7...v29.6.8
 [29.6.7]: https://github.com/linkedin/rest.li/compare/v29.6.6...v29.6.7
 [29.6.6]: https://github.com/linkedin/rest.li/compare/v29.6.5...v29.6.6
 [29.6.5]: https://github.com/linkedin/rest.li/compare/v29.6.5...master
