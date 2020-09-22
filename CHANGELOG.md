@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Include HttpStatus code while throwing IllegalArgumentException
 
 ## [29.6.8] - 2020-09-22
 - Optimized logger initialization in d2 degrader.
