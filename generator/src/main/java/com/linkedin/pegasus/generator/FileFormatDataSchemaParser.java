@@ -48,7 +48,8 @@ import java.util.jar.JarFile;
  * @author Keren Jin
  * @author Joe Betz
  */
-public class FileFormatDataSchemaParser {
+public class FileFormatDataSchemaParser
+{
   static final String SCHEMA_PATH_PREFIX = SchemaDirectoryName.PEGASUS.getName() + "/";
   static final String EXTENSION_PATH_ENTRY = SchemaDirectoryName.EXTENSIONS.getName() + "/";
   private final String _resolverPath;
@@ -62,10 +63,15 @@ public class FileFormatDataSchemaParser {
     _schemaParserFactory = schemaParserFactory;
   }
 
-  public DataSchemaParser.ParseResult parseSources(String sources[]) throws IOException
+  public DataSchemaParser.ParseResult parseSources(String[] sources) throws IOException
   {
     final DataSchemaParser.ParseResult result = new DataSchemaParser.ParseResult();
+    parseSources(sources, result);
+    return result;
+  }
 
+  void parseSources(String[] sources, DataSchemaParser.ParseResult result) throws IOException
+  {
     try
     {
       for (String source : sources)
@@ -132,8 +138,6 @@ public class FileFormatDataSchemaParser {
         final DataSchema schema = _schemaResolver.bindings().get(entry.getKey());
         result.getSchemaAndLocations().put(schema, entry.getValue());
       }
-
-      return result;
     }
     catch (RuntimeException e)
     {
