@@ -13,9 +13,12 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.6.9] - 2020-09-22
 - Mitigate schema parsing performance regression introduced in `29.5.1` by reusing `ParseResult` instances
   in `DataSchemaParser` to avoid unnecessary `TreeMap` sorting.
 - Include `HttpStatus` code while throwing `IllegalArgumentException`.
+- Add monitoring metrics for relative strategy in DegraderLoadBalancerStrategyV3Jmx
 
 ## [29.6.8] - 2020-09-22
 - Optimized logger initialization in d2 degrader.
@@ -4655,7 +4658,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.8...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.9...master
+[29.6.9]: https://github.com/linkedin/rest.li/compare/v29.6.8...v29.6.9
 [29.6.8]: https://github.com/linkedin/rest.li/compare/v29.6.7...v29.6.8
 [29.6.7]: https://github.com/linkedin/rest.li/compare/v29.6.6...v29.6.7
 [29.6.6]: https://github.com/linkedin/rest.li/compare/v29.6.5...v29.6.6
