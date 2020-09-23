@@ -57,7 +57,7 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
     double avgLatency = getAvgClusterLatency(stateMap.keySet());
 
     return stateMap.keySet().stream()
-        .filter(this::hasTraffic)
+        .filter(RelativeLoadBalancerStrategyJmx::hasTraffic)
         .map(trackerClient -> Math.abs(StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()) - avgLatency))
         .mapToDouble(Double::doubleValue)
         .average()
@@ -151,17 +151,17 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
         .sum();
   }
 
-  private boolean hasTraffic(TrackerClient trackerClient)
+  static boolean hasTraffic(TrackerClient trackerClient)
   {
     CallTracker.CallStats stats = trackerClient.getCallTracker().getCallStats();
     return stats.getOutstandingCount() + stats.getCallCount() > 0;
   }
 
-  private double calculateStandardDeviation(Set<TrackerClient> trackerClients)
+  static double calculateStandardDeviation(Set<? extends TrackerClient> trackerClients)
   {
     double avgLatency = getAvgClusterLatency(trackerClients);
     double variance = trackerClients.stream()
-        .filter(this::hasTraffic)
+        .filter(RelativeLoadBalancerStrategyJmx::hasTraffic)
         .map(trackerClient -> Math.pow(StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()) - avgLatency, 2))
         .mapToDouble(Double::doubleValue)
         .average()
@@ -170,7 +170,7 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
     return Math.sqrt(variance);
   }
 
-  private long getAvgClusterLatency(Set<TrackerClient> trackerClients)
+  static long getAvgClusterLatency(Set<? extends TrackerClient> trackerClients)
   {
     long latencySum = 0;
     long outstandingLatencySum = 0;

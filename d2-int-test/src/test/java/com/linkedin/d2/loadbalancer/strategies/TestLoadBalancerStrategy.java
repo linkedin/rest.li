@@ -534,7 +534,7 @@ public class TestLoadBalancerStrategy
     assertEquals(pointsMap.get(testRunner.getUri(4)).intValue(), HEALTHY_POINTS);
   }
 
-  @Test(dataProvider = "highFactor")
+  @Test(dataProvider = "highFactor", retryAnalyzer = SingleRetry.class)
   public void testDifferentHighLatencyFactors(double highFactor)
   {
     long unhealthyLatency = 800L;

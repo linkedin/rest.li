@@ -14,32 +14,41 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.6.9] - 2020-09-22
+- Mitigate schema parsing performance regression introduced in `29.5.1` by reusing `ParseResult` instances
+  in `DataSchemaParser` to avoid unnecessary `TreeMap` sorting.
+- Include `HttpStatus` code while throwing `IllegalArgumentException`.
+- Add monitoring metrics for relative strategy in DegraderLoadBalancerStrategyV3Jmx
+
+## [29.6.8] - 2020-09-22
+- Optimized logger initialization in d2 degrader.
+
 ## [29.6.7] - 2020-09-18
 - Added async call to Zookeeper in backup request client.
 
 ## [29.6.6] - 2020-09-17
 - Loosen `ReadOnly`/`CreateOnly` validation when setting array-descendant fields in a patch request.
-- Add generatePegasusSchemeSnapshot task.
-- Remove final from nested generated classes, such as inline unions.
+- Add `generatePegasusSchemaSnapshot` task.
+- Remove `final` from nested generated classes, such as inline unions.
 
 ## [29.6.5] - 2020-09-09
-- Update RestLiValidatorFilter and RestLiDataValidator to expose creation of restli validators
+- Update `RestLiValidationFilter` and `RestLiDataValidator` to expose creation of Rest.li validators.
 
 ## [29.6.4] - 2020-09-08
 - Fix inconsistent issue in extension schema file names: from `Extension` to `Extensions`
 - Fix a bug in `FileFormatDataSchemaParser` and remove `isExtensionEntry` method call to simplify the logic.
-- Update ExtensionSchemaValidationCmdLineApp with more validations.
+- Update `ExtensionSchemaValidationCmdLineApp` with more validations.
 
 ## [29.6.3] - 2020-09-03
-- Updated HTTP/2 parent channel idle timeout logging level to info from error 
+- Updated HTTP/2 parent channel idle timeout logging level to info from error.
 
 ## [29.6.2] - 2020-08-31
 - Updated d2 client default config values.
 
 ## [29.6.1] - 2020-08-31
-- Update R2's HTTP client API to support other Netty EventLoopGroup in addition to NioEventLoopGroup
-- Fix a RetryClient bug where NullPointerException is raised when excluded hosts hint is not set at retry
-- Update ExtensionSchemaAnnotation schema: remove resource field, add versionSuffix as an optional field.
+- Update R2's HTTP client API to support other Netty `EventLoopGroup` in addition to `NioEventLoopGroup`.
+- Fix a `RetryClient` bug where `NullPointerException` is raised when excluded hosts hint is not set at retry.
+- Update `ExtensionSchemaAnnotation` schema: remove resource field, add `versionSuffix` as an optional field.
 
 ## [29.6.0] - 2020-08-28
 - Refactored the existing d2 degrader load balancer.
@@ -49,15 +58,16 @@ and what APIs have changed, if applicable.
 - Make `ChangedFileReportTask` gradle task compatible with Gradle 6.0
 
 ## [29.5.7] - 2020-08-26
-- Add pdsc support for ExtensionsDataSchemaResolver for support legacy files in pdsc
-- Add/patch default values in restli response, controlled by $sendDefault flag in URL or server configs
+- Add pdsc support for `ExtensionsDataSchemaResolver` for support legacy files in pdsc.
+- Add/patch default values in Rest.li responses, controlled by the `$sendDefault` flag in the URL or server configs.
 
 ## [29.5.6] - 2020-08-21
-- Add a constructor for DataSchemaParser, which is able to pass ExtensionsDataSchemaResolver to the DataSchemaParser to parse schemas from both extensions and pegasus directories.
+- Add a constructor for `DataSchemaParser`, which is able to pass `ExtensionsDataSchemaResolver` to
+  the `DataSchemaParser` to parse schemas from both `extensions` and `pegasus` directories.
 
 ## [29.5.5] - 2020-08-21
-- Updated File and class path DataSchemaResolvers to resolve extension schemas from /extensions directory if specified.
-- Added DarkGateKeeper to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
+- Updated File and class path DataSchemaResolvers to resolve extension schemas from `/extensions` directory if specified.
+- Added `DarkGateKeeper` to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
 
 ## [29.5.4] - 2020-08-17
 - Increase default timeout for symbol table fetch to 1s.
@@ -4648,7 +4658,9 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.9...master
+[29.6.9]: https://github.com/linkedin/rest.li/compare/v29.6.8...v29.6.9
+[29.6.8]: https://github.com/linkedin/rest.li/compare/v29.6.7...v29.6.8
 [29.6.7]: https://github.com/linkedin/rest.li/compare/v29.6.6...v29.6.7
 [29.6.6]: https://github.com/linkedin/rest.li/compare/v29.6.5...v29.6.6
 [29.6.5]: https://github.com/linkedin/rest.li/compare/v29.6.5...master
@@ -4664,7 +4676,8 @@ patch operations can re-use these classes for generating patch messages.
 [29.5.4]: https://github.com/linkedin/rest.li/compare/v29.5.3...v29.5.4
 [29.5.3]: https://github.com/linkedin/rest.li/compare/v29.5.2...v29.5.3
 [29.5.2]: https://github.com/linkedin/rest.li/compare/v29.5.1...v29.5.2
-[29.5.1]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.1
+[29.5.1]: https://github.com/linkedin/rest.li/compare/v29.5.0...v29.5.1
+[29.5.0]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.0
 [29.4.14]: https://github.com/linkedin/rest.li/compare/v29.4.13...v29.4.14
 [29.4.13]: https://github.com/linkedin/rest.li/compare/v29.4.12...v29.4.13
 [29.4.12]: https://github.com/linkedin/rest.li/compare/v29.4.11...v29.4.12
