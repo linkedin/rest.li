@@ -18,6 +18,7 @@ package com.linkedin.data.template;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.MapDataSchema;
+import com.linkedin.util.ArgumentUtil;
 import java.util.Map;
 
 
@@ -64,5 +65,18 @@ public final class BooleanMap extends DirectMapTemplate<Boolean>
   public BooleanMap copy() throws CloneNotSupportedException
   {
     return (BooleanMap) super.copy();
+  }
+
+  @Override
+  protected Object coerceInput(Boolean object) throws ClassCastException
+  {
+    ArgumentUtil.notNull(object, "object");
+    return object;
+  }
+
+  @Override
+  protected Boolean coerceOutput(Object object) throws TemplateOutputCastException
+  {
+    return DataTemplateUtil.coerceBooleanOutput(object);
   }
 }

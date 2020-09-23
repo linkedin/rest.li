@@ -18,6 +18,7 @@ package com.linkedin.data.template;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.util.ArgumentUtil;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -67,5 +68,19 @@ public final class LongArray extends DirectArrayTemplate<Long>
   public LongArray copy() throws CloneNotSupportedException
   {
     return (LongArray) super.copy();
+  }
+
+  @Override
+  protected Object coerceInput(Long object) throws ClassCastException
+  {
+    ArgumentUtil.notNull(object, "object");
+    return DataTemplateUtil.coerceLongInput(object);
+  }
+
+  @Override
+  protected Long coerceOutput(Object object) throws TemplateOutputCastException
+  {
+    assert(object != null);
+    return DataTemplateUtil.coerceLongOutput(object);
   }
 }

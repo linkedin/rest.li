@@ -94,6 +94,24 @@ public class CodeUtil
   }
 
   /**
+   * Uncapitalize the input name.
+   *
+   * @param name the string whose first character will be converted to lowercase
+   * @return the converted name
+   */
+  public static String uncapitalize(String name)
+  {
+    if (name == null || name.isEmpty())
+    {
+      return name;
+    }
+    else
+    {
+      return Character.toLowerCase(name.charAt(0)) + name.substring(1);
+    }
+  }
+
+  /**
    * Determine if the {@link DataSchema} requires wrapping or not.
    *
    * @param schema to be tested

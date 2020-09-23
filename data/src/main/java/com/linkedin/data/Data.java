@@ -27,8 +27,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -331,6 +333,25 @@ public class Data
    */
   public static void traverse(Object obj, TraverseCallback callback) throws IOException
   {
+    //
+    // Maintain an identity set of data complexes we encounter as we parse, to detect cycles and error out
+    // on encountering them.
+    //
+    Set<DataComplex> ancestorSet = Collections.newSetFromMap(new IdentityHashMap<>());
+    traverse(obj, callback, ancestorSet, new LinkedList<>());
+  }
+
+  /**
+   * Traverse object and invoke the callback object with parse events.
+   *
+   * @param obj object to parse
+   * @param callback to receive parse events.
+   * @param ancestorSet Set of data complexes encountered in the current parse tree. Used for cycle detection.
+   * @param pathList Keeps track of the path when parsing. Used to populate a useful exception message on cycle detection.
+   */
+  private static void traverse(Object obj, TraverseCallback callback,
+      Set<DataComplex> ancestorSet, LinkedList<String> pathList) throws IOException
+  {
     if (obj == null || obj == Data.NULL)
     {
       callback.nullValue();
@@ -354,16 +375,20 @@ public class Data
         }
         else
         {
+          checkForCycles(map, ancestorSet, pathList);
+          ancestorSet.add(map);
           callback.startMap(map);
           Iterable<Map.Entry<String, Object>> orderedEntrySet = callback.orderMap(map);
           for (Map.Entry<String, Object> entry : orderedEntrySet)
           {
             callback.key(entry.getKey());
-            traverse(entry.getValue(), callback);
+            pathList.addLast(entry.getKey());
+            traverse(entry.getValue(), callback, ancestorSet, pathList);
+            pathList.removeLast();
           }
           callback.endMap();
+          ancestorSet.remove(map);
         }
-
         return;
       }
       case 4:
@@ -375,15 +400,19 @@ public class Data
         }
         else
         {
+          checkForCycles(list, ancestorSet, pathList);
+          ancestorSet.add(list);
           callback.startList(list);
           for (int index = 0; index < list.size(); index++)
           {
             callback.index(index);
-            traverse(list.get(index), callback);
+            pathList.addLast("[" + index + "]");
+            traverse(list.get(index), callback, ancestorSet, pathList);
+            pathList.removeLast();
           }
           callback.endList();
+          ancestorSet.remove(list);
         }
-
         return;
       }
       case 5:
@@ -691,6 +720,27 @@ public class Data
       }
     }
     return false;
+  }
+
+  /**
+   * Check for cycles.
+   *
+   * <p>This checks if the given {@link DataComplex} is present in the given set of ancestor complexes. If yes,
+   * then it indicates that a cycle exists and we throw an exception.</p>
+   *
+   * @param dataComplex The current {@link DataComplex}
+   * @param ancestorSet The set containing all ancestors of the {@link DataComplex}
+   * @param pathList The list of paths encountered so far. Used to populate a useful exception message when a cycle is
+   *                 detected.
+   * @throws IOException If this {@link DataComplex} is present in the ancestor set indicating a cycle.
+   */
+  private static void checkForCycles(DataComplex dataComplex,
+      Set<DataComplex> ancestorSet, List<String> pathList) throws IOException
+  {
+    if (ancestorSet.contains(dataComplex))
+    {
+      throw new IOException("Cycle detected. Path: " + pathList);
+    }
   }
 
   /**

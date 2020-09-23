@@ -16,11 +16,18 @@
 
 package com.linkedin.data.collections;
 
+import com.linkedin.data.Data;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
+
 
 /**
  * Checked Map.
@@ -53,7 +60,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public CheckedMap()
   {
     _checker = null;
-    _map = new HashMap<K,V>();
+    _map = new HashMap<>();
   }
 
   /**
@@ -65,7 +72,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     _checker = null;
     checkAll(map);
-    _map = new HashMap<K,V>(map);
+    _map = new HashMap<>(map);
   }
 
   /**
@@ -78,7 +85,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public CheckedMap(int initialCapacity)
   {
     _checker = null;
-    _map = new HashMap<K,V>(initialCapacity);
+    _map = new HashMap<>(initialCapacity);
   }
 
   /**
@@ -92,7 +99,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public CheckedMap(int initialCapacity, float loadFactor)
   {
     _checker = null;
-    _map = new HashMap<K,V>(initialCapacity, loadFactor);
+    _map = new HashMap<>(initialCapacity, loadFactor);
   }
 
   /**
@@ -103,7 +110,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public CheckedMap(MapChecker<K,V> checker)
   {
     _checker = checker;
-    _map = new HashMap<K,V>();
+    _map = new HashMap<>();
   }
 
   /**
@@ -119,7 +126,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     _checker = checker;
     checkAll(map);
-    _map = new HashMap<K,V>(map);
+    _map = new HashMap<>(map);
   }
 
   /**
@@ -134,7 +141,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public CheckedMap(int initialCapacity, MapChecker<K,V> checker)
   {
     _checker = checker;
-    _map = new HashMap<K,V>(initialCapacity);
+    _map = new HashMap<>(initialCapacity);
   }
 
   /**
@@ -149,14 +156,23 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public CheckedMap(int initialCapacity, float loadFactor, MapChecker<K,V> checker)
   {
     _checker = checker;
-    _map = new HashMap<K,V>(initialCapacity, loadFactor);
+    _map = new HashMap<>(initialCapacity, loadFactor);
   }
 
   @Override
   public void clear()
   {
     checkMutability();
+    Set<K> keys = null;
+    if (_changeListeners != null)
+    {
+      keys = new HashSet<>(keySet());
+    }
     _map.clear();
+    if (keys != null)
+    {
+      notifyChangeListenersOnClear(keys);
+    }
   }
 
   @Override
@@ -232,7 +248,9 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     checkKeyValue(key, value);
     checkMutability();
-    return _map.put(key, value);
+    V oldValue = _map.put(key, value);
+    notifyChangeListenersOnPut(key, value);
+    return oldValue;
   }
 
   @Override
@@ -241,13 +259,22 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     checkAll(m);
     checkMutability();
     _map.putAll(m);
+    notifyChangeListenersOnPutAll(m);
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public V remove(Object key)
   {
     checkMutability();
-    return _map.remove(key);
+    V oldValue = _map.remove(key);
+
+    if (!(oldValue == null || oldValue == Data.NULL))
+    {
+      notifyChangeListenersOnPut((K) key, null);
+    }
+
+    return oldValue;
   }
 
   @Override
@@ -299,6 +326,27 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     }
   }
 
+  /**
+   * Add a change listener to be notified of changes to the underlying map.
+   *
+   * <p>This class internally maintains weak references to the listeners to avoid leaking them.</p>
+   *
+   * @param listener The listener to register.
+   */
+  public final void addChangeListener(BiFunction<K, V, Void> listener)
+  {
+    if (_changeListeners == null)
+    {
+      // Change listeners are mostly used by map wrappers, and most maps will only have 1
+      // wrapper, so initialize list with a capacity of 1.
+      _changeListeners = new ArrayList<>(1);
+    }
+
+    // Maintain a weak reference to to the listener to avoid leaking the wrapper beyond its
+    // lifetime.
+    _changeListeners.add(new WeakReference<>(listener));
+  }
+
   final private void checkKeyValue(K key, V value)
   {
     if (_checker != null)
@@ -332,13 +380,33 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   protected V putWithoutChecking(K key, V value)
   {
     checkMutability();
-    return _map.put(key, value);
+    V oldValue = _map.put(key, value);
+    notifyChangeListenersOnPut(key, value);
+    return oldValue;
   }
 
   V putWithAssertedChecking(K key, V value)
   {
     assert(assertCheckKeyValue(key, value)) : "Check is failed";
     return putWithoutChecking(key, value);
+  }
+
+  /**
+   * Put that does not invoke checker or change notifications but does check for read-only, use with extreme caution.
+   *
+   * This method skips all checks.
+   *
+   * @param key key with which the specified value is to be associated.
+   * @param value to be associated with the specified key.
+   * @return the previous value associated with key, or null if there was no mapping for key.
+   *         A null return can also indicate that the map previously associated null with key.
+   * @throws UnsupportedOperationException if the map is read-only.
+   */
+  V putWithoutCheckingOrChangeNotification(K key, V value)
+  {
+    checkMutability();
+    assert(assertCheckKeyValue(key, value)) : "Check is failed";
+    return _map.put(key, value);
   }
 
   /**
@@ -350,6 +418,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     checkMutability();
     _map.putAll(src);
+    notifyChangeListenersOnPutAll(src);
   }
 
   void putAllWithAssertedChecking(Map<? extends K, ? extends V> src)
@@ -394,7 +463,56 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     }
   }
 
+  private void notifyChangeListenersOnPut(K key, V value)
+  {
+    if (_changeListeners == null)
+    {
+      return;
+    }
+
+    _changeListeners.forEach(listenerRef -> {
+      BiFunction<K, V, Void> listener = listenerRef.get();
+      if (listener != null)
+      {
+        listener.apply(key, value);
+      }
+    });
+  }
+
+  private void notifyChangeListenersOnPutAll(Map<? extends K, ? extends V> map)
+  {
+    if (_changeListeners == null)
+    {
+      return;
+    }
+
+    _changeListeners.forEach(listenerRef -> {
+      BiFunction<K, V, Void> listener = listenerRef.get();
+      if (listener != null)
+      {
+        map.forEach(listener::apply);
+      }
+    });
+  }
+
+  private void notifyChangeListenersOnClear(Set<? extends K> keys)
+  {
+    if (_changeListeners == null)
+    {
+      return;
+    }
+
+    _changeListeners.forEach(listenerRef -> {
+      BiFunction<K, V, Void> listener = listenerRef.get();
+      if (listener != null)
+      {
+        keys.forEach(key -> listener.apply(key, null));
+      }
+    });
+  }
+
   private boolean _readOnly = false;
   protected MapChecker<K,V> _checker;
   private HashMap<K,V> _map;
+  private List<WeakReference<BiFunction<K, V, Void>>> _changeListeners;
 }

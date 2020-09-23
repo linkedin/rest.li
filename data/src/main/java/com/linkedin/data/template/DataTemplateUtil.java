@@ -43,6 +43,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DataTemplateUtil
@@ -57,6 +58,28 @@ public class DataTemplateUtil
 
   private DataTemplateUtil()
   {
+  }
+
+  /**
+   * Cast the given value to the given class. If the cast fails, throw a {@link TemplateOutputCastException}. If the
+   * input is null, this method returns null.
+   *
+   * @param value   The given value.
+   * @param klass   The target class to cast to.
+   * @param <E>     The type of the object we want to cast to.
+   *
+   * @return The cast object.
+   */
+  public static <E> E castOrThrow(Object value, Class<E> klass)
+  {
+    try
+    {
+      return value == null ? null : klass.cast(value);
+    }
+    catch (ClassCastException e)
+    {
+      throw new TemplateOutputCastException("Cannot coerce " + value + " to desired class " + klass, e);
+    }
   }
 
   /**
@@ -393,6 +416,41 @@ public class DataTemplateUtil
   }
 
   /**
+   * @return The class for the raw in-memory representation for objects of the given schema.
+   */
+  public static Class<?> getDataClass(DataSchema schema)
+  {
+    DataSchema.Type type = Optional.ofNullable(schema.getDereferencedType()).orElse(DataSchema.Type.NULL);
+    switch (type)
+    {
+      case ENUM:
+      case STRING:
+        return String.class;
+      case MAP:
+      case UNION:
+      case RECORD:
+        return DataMap.class;
+      case ARRAY:
+        return DataList.class;
+      case BYTES:
+      case FIXED:
+        return ByteString.class;
+      case INT:
+        return Integer.class;
+      case LONG:
+        return Long.class;
+      case FLOAT:
+        return Float.class;
+      case DOUBLE:
+        return Double.class;
+      case BOOLEAN:
+        return Boolean.class;
+      default:
+        return Object.class;
+    }
+  }
+
+  /**
    * Gets the data schema for a given java type. We will first get cached data schema for the given type if it has already
    * been accessed before, otherwise we will use reflection to retrieve its data schema and cache it for later use.
    *
@@ -481,7 +539,11 @@ public class DataTemplateUtil
     @Override
     public Object coerceInput(T object) throws ClassCastException
     {
-      if (object instanceof Number)
+      if (object.getClass() == _targetClass)
+      {
+        return object;
+      }
+      else if (object instanceof Number)
       {
         return coerce(object);
       }
@@ -492,9 +554,14 @@ public class DataTemplateUtil
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public T coerceOutput(Object object) throws TemplateOutputCastException
     {
-      if (object instanceof Number)
+      if (object.getClass() == _targetClass)
+      {
+        return (T) object;
+      }
+      else if (object instanceof Number)
       {
         return coerce(object);
       }
@@ -604,6 +671,10 @@ public class DataTemplateUtil
     @Override
     public ByteString coerceOutput(Object object) throws TemplateOutputCastException
     {
+      if (object instanceof ByteString)
+      {
+        return (ByteString) object;
+      }
       if (object.getClass() == String.class)
       {
         String input = (String) object;
@@ -832,14 +903,46 @@ public class DataTemplateUtil
       if (fromClass.isEnum())
         return object.toString();
     }
-    @SuppressWarnings("unchecked") DirectCoercer<T> coercer = (DirectCoercer<T>) _classToCoercerMap.get(fromClass);
+
+    return coerceCustomInput(object, fromClass);
+  }
+
+  public static Object coerceIntInput(Integer value)
+  {
+    return value == null ? null : INTEGER_COERCER.coerceInput(value);
+  }
+
+  public static Object coerceLongInput(Long value)
+  {
+    return value == null ? null : LONG_COERCER.coerceInput(value);
+  }
+
+  public static Object coerceFloatInput(Float value)
+  {
+    return value == null ? null : FLOAT_COERCER.coerceInput(value);
+  }
+
+  public static Object coerceDoubleInput(Double value)
+  {
+    return value == null ? null : DOUBLE_COERCER.coerceInput(value);
+  }
+
+  public static <C> Object coerceCustomInput(C value, Class<C> customClass)
+  {
+    if (value == null)
+    {
+      return null;
+    }
+
+    @SuppressWarnings("unchecked") DirectCoercer<C> coercer = (DirectCoercer<C>) _classToCoercerMap.get(customClass);
     if (coercer == null)
     {
-      throw new ClassCastException("Input " + object + " has type " + fromClass.getName() + ", but does not have a registered coercer");
+      throw new ClassCastException("Input " + value + " has type " + value.getClass().getName() + ", but does not have a registered coercer");
+
     }
     else
     {
-      return coercer.coerceInput(object);
+      return coercer.coerceInput(value);
     }
   }
 
@@ -944,14 +1047,83 @@ public class DataTemplateUtil
       }
       throw new TemplateOutputCastException("Output " + object + " has type " + object.getClass().getName() + ", and cannot be coerced to enum type " + targetClass.getName());
     }
-    DirectCoercer<?> coercer = _classToCoercerMap.get(targetClass);
+
+    return coerceCustomOutput(object, targetClass);
+  }
+
+  public static Integer coerceIntOutput(Object value)
+  {
+    return value == null ? null : INTEGER_COERCER.coerceOutput(value);
+  }
+
+  public static Long coerceLongOutput(Object value)
+  {
+    return value == null ? null : LONG_COERCER.coerceOutput(value);
+  }
+
+  public static Float coerceFloatOutput(Object value)
+  {
+    return value == null ? null : FLOAT_COERCER.coerceOutput(value);
+  }
+
+  public static Double coerceDoubleOutput(Object value)
+  {
+    return value == null ? null : DOUBLE_COERCER.coerceOutput(value);
+  }
+
+  public static ByteString coerceBytesOutput(Object value)
+  {
+    return value == null ? null : BYTES_COERCER.coerceOutput(value);
+  }
+
+  public static Boolean coerceBooleanOutput(Object value)
+  {
+    return value == null ? null : BOOLEAN_COERCER.coerceOutput(value);
+  }
+
+  public static String coerceStringOutput(Object value)
+  {
+    return value == null ? null : STRING_COERCER.coerceOutput(value);
+  }
+
+  public static <E extends Enum<E>> E coerceEnumOutput(Object value, Class<E> targetClass, E fallback)
+  {
+    if (value == null)
+    {
+      return null;
+    }
+
+    if (value instanceof String)
+    {
+      try
+      {
+        return Enum.valueOf(targetClass, (String) value);
+      }
+      catch (IllegalArgumentException e)
+      {
+        return fallback;
+      }
+    }
+    throw new TemplateOutputCastException("Output " + value + " has type " + value.getClass().getName() + ", and cannot be coerced to enum type " + targetClass.getName());
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <C> C coerceCustomOutput(Object value, Class<C> customClass)
+  {
+    if (value == null)
+    {
+      return null;
+    }
+
+    DirectCoercer<?> coercer = _classToCoercerMap.get(customClass);
     if (coercer == null)
     {
-      throw new TemplateOutputCastException("Output " + object + " has type " + object.getClass().getName() + ", but does not have a registered coercer and cannot be coerced to type " + targetClass.getName());
+      throw new TemplateOutputCastException("Output " + value + " has type " + value.getClass().getName() +
+          ", but does not have a registered coercer and cannot be coerced to type " + customClass.getName());
     }
     else
     {
-      return (T) coercer.coerceOutput(object);
+      return (C) coercer.coerceOutput(value);
     }
   }
 
