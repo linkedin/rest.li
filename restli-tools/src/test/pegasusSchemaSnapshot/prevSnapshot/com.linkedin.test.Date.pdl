@@ -1,0 +1,9 @@
+/**
+ * This schema is used as a genereted pegasus schema snapshot(.pdl)
+ * to test pegasusSchemaSnapshotCompatibilityChecker
+ */
+record Date {
+  day: int
+  month: int
+  year: int
+}
