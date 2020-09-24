@@ -182,6 +182,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     CheckedMap<K,V> o = (CheckedMap<K,V>) super.clone();
     o._map = (HashMap<K,V>) _map.clone();
     o._readOnly = false;
+    o._changeListeners = null;
     return o;
   }
 

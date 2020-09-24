@@ -18,6 +18,7 @@
 
     { "name" : "enumField",      "type" : "EnumFruits" },
     { "name" : "recordField",    "type" : "RecordBar" },
+    { "name" : "recordOptionalField", "type" : "RecordBar", "optional" : true },
     { "name" : "fixedField",     "type" : "FixedMD5" },
 
     { "name" : "enumInlineField", "type" :
