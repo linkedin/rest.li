@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.1] - 2020-09-24
+- Handle setting map change listener correctly on copy and clone
+
 ## [29.7.0] - 2020-09-23
 - Generate code to avoid reflection and map access to improve generated data template runtime performance.
     - Use member variables to avoid looking in to DataMap for every read calls. ChangeListeners on Map added to invalidate these fields when underlying map changes.
@@ -4664,7 +4667,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.1...master
+[29.7.1]: https://github.com/linkedin/rest.li/compare/v29.7.0...v29.7.1
 [29.7.0]: https://github.com/linkedin/rest.li/compare/v29.6.9...v29.7.0
 [29.6.9]: https://github.com/linkedin/rest.li/compare/v29.6.8...v29.6.9
 [29.6.8]: https://github.com/linkedin/rest.li/compare/v29.6.7...v29.6.8

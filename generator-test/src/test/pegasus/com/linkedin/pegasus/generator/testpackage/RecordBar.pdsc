@@ -5,6 +5,7 @@
   "namespace" : "com.linkedin.pegasus.generator.testpackage",
   "package" : "com.linkedin.pegasus.generator.override",
   "fields" : [
-    { "name" : "location", "type" : "string" }
+    { "name" : "location", "type" : "string" },
+    { "name" : "optionalLocation", "type" : "string", "optional": true }
   ]
 }

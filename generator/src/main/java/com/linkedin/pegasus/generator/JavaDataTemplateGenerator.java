@@ -292,10 +292,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     return inv;
   }
 
-  private static void generateCopierMethods(JDefinedClass templateClass, Map<String, JVar> fieldsToReset)
+  private static void generateCopierMethods(JDefinedClass templateClass, Map<String, JVar> fields)
   {
-    overrideCopierMethod(templateClass, "clone", Collections.emptyMap());
-    overrideCopierMethod(templateClass, "copy", fieldsToReset);
+    // Clone is a shallow copy and shouldn't reset fields, copy is a deep copy and should.
+    overrideCopierMethod(templateClass, "clone", fields, false);
+    overrideCopierMethod(templateClass, "copy", fields, true);
   }
 
   private static boolean hasNestedFields(DataSchema schema)
@@ -393,21 +394,26 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     return customInfo != null ? customInfo.getCustomSchema() : schema.getDereferencedDataSchema();
   }
 
-  private static void overrideCopierMethod(JDefinedClass templateClass, String methodName, Map<String, JVar> fieldsToReset)
+  private static void overrideCopierMethod(JDefinedClass templateClass, String methodName, Map<String, JVar> fields, boolean resetFields)
   {
     final JMethod copierMethod = templateClass.method(JMod.PUBLIC, templateClass, methodName);
     copierMethod.annotate(Override.class);
     copierMethod._throws(CloneNotSupportedException.class);
-    if (fieldsToReset.isEmpty())
+    JVar copyVar = copierMethod.body().decl(templateClass, "__" + methodName, JExpr.cast(templateClass, JExpr._super().invoke(methodName)));
+
+    if (!fields.isEmpty())
     {
-      copierMethod.body()._return(JExpr.cast(templateClass, JExpr._super().invoke(methodName)));
-      return;
+      if (resetFields)
+      {
+        fields.values().forEach(var -> {
+          copierMethod.body().assign(copyVar.ref(var), JExpr._null());
+        });
+      }
+
+      // JCodeModel doesn't support function references yet, use direct source interpolation to work around this.
+      copierMethod.body().add(copyVar.invoke("addChangeListener").arg(JExpr.direct(copyVar.name() + "::onUnderlyingMapChanged")));
     }
 
-    JVar copyVar = copierMethod.body().decl(templateClass, "__copy", JExpr.cast(templateClass, JExpr._super().invoke(methodName)));
-    fieldsToReset.values().forEach(var -> {
-      copierMethod.body().assign(copyVar.ref(var), JExpr._null());
-    });
     copierMethod.body()._return(copyVar);
   }
 
