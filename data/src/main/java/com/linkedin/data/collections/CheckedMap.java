@@ -26,7 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
 
 
 /**
@@ -334,7 +333,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
    *
    * @param listener The listener to register.
    */
-  public final void addChangeListener(BiFunction<K, V, Void> listener)
+  public final void addChangeListener(ChangeListener<K, V> listener)
   {
     if (_changeListeners == null)
     {
@@ -472,10 +471,10 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     }
 
     _changeListeners.forEach(listenerRef -> {
-      BiFunction<K, V, Void> listener = listenerRef.get();
+      ChangeListener<K, V> listener = listenerRef.get();
       if (listener != null)
       {
-        listener.apply(key, value);
+        listener.onUnderlyingMapChanged(key, value);
       }
     });
   }
@@ -488,10 +487,10 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     }
 
     _changeListeners.forEach(listenerRef -> {
-      BiFunction<K, V, Void> listener = listenerRef.get();
+      ChangeListener<K, V> listener = listenerRef.get();
       if (listener != null)
       {
-        map.forEach(listener::apply);
+        map.forEach(listener::onUnderlyingMapChanged);
       }
     });
   }
@@ -504,16 +503,24 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     }
 
     _changeListeners.forEach(listenerRef -> {
-      BiFunction<K, V, Void> listener = listenerRef.get();
+      ChangeListener<K, V> listener = listenerRef.get();
       if (listener != null)
       {
-        keys.forEach(key -> listener.apply(key, null));
+        keys.forEach(key -> listener.onUnderlyingMapChanged(key, null));
       }
     });
+  }
+
+  /**
+   * Change listener interface invoked when the underlying map changes.
+   */
+  public interface ChangeListener<K, V>
+  {
+    void onUnderlyingMapChanged(K key, V value);
   }
 
   private boolean _readOnly = false;
   protected MapChecker<K,V> _checker;
   private HashMap<K,V> _map;
-  private List<WeakReference<BiFunction<K, V, Void>>> _changeListeners;
+  private List<WeakReference<ChangeListener<K, V>>> _changeListeners;
 }

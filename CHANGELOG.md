@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.2] - 2020-09-25
+- Move from lambdas to explicit change listeners since lambda garbage collection is unreliable in Java
+
 ## [29.7.1] - 2020-09-24
 - Handle setting map change listener correctly on copy and clone
 
@@ -4667,7 +4670,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.2...master
+[29.7.2]: https://github.com/linkedin/rest.li/compare/v29.7.1...v29.7.2
 [29.7.1]: https://github.com/linkedin/rest.li/compare/v29.7.0...v29.7.1
 [29.7.0]: https://github.com/linkedin/rest.li/compare/v29.6.9...v29.7.0
 [29.6.9]: https://github.com/linkedin/rest.li/compare/v29.6.8...v29.6.9

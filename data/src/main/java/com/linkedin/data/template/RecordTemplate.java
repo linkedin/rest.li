@@ -18,8 +18,8 @@ package com.linkedin.data.template;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedMap;
 import com.linkedin.data.schema.RecordDataSchema;
-import java.util.function.BiFunction;
 
 
 /**
@@ -407,7 +407,7 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
   /**
    * Register a change listener to get notified when the underlying map changes.
    */
-  protected void addChangeListener(BiFunction<String, Object, Void> listener)
+  protected void addChangeListener(CheckedMap.ChangeListener<String, Object> listener)
   {
     //
     // This UGLY hack is needed because IdResponse breaks the implicit RecordTemplate contract and passes in

@@ -20,6 +20,7 @@ package com.linkedin.pegasus.generator;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.DataMapBuilder;
+import com.linkedin.data.collections.CheckedMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
@@ -292,11 +293,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     return inv;
   }
 
-  private static void generateCopierMethods(JDefinedClass templateClass, Map<String, JVar> fields)
+  private static void generateCopierMethods(JDefinedClass templateClass, Map<String, JVar> fields, JClass changeListenerClass)
   {
     // Clone is a shallow copy and shouldn't reset fields, copy is a deep copy and should.
-    overrideCopierMethod(templateClass, "clone", fields, false);
-    overrideCopierMethod(templateClass, "copy", fields, true);
+    overrideCopierMethod(templateClass, "clone", fields, false, changeListenerClass);
+    overrideCopierMethod(templateClass, "copy", fields, true, changeListenerClass);
   }
 
   private static boolean hasNestedFields(DataSchema schema)
@@ -332,26 +333,26 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     noArgConstructor.body().invoke(THIS).arg(JExpr._new(newClass));
   }
 
-  private static void generateConstructorWithObjectArg(JDefinedClass cls, JVar schemaField, boolean registerChangeListeners)
+  private static void generateConstructorWithObjectArg(JDefinedClass cls, JVar schemaField, JVar changeListenerVar)
   {
     final JMethod argConstructor = cls.constructor(JMod.PUBLIC);
     final JVar param = argConstructor.param(Object.class, "data");
     argConstructor.body().invoke(SUPER).arg(param).arg(schemaField);
-    if (registerChangeListeners)
+    if (changeListenerVar != null)
     {
-      addChangeListenerRegistration(argConstructor);
+      addChangeListenerRegistration(argConstructor, changeListenerVar);
     }
   }
 
-  private static void generateConstructorWithArg(JDefinedClass cls, JVar schemaField, JClass paramClass, boolean needsChangeListener)
+  private static void generateConstructorWithArg(JDefinedClass cls, JVar schemaField, JClass paramClass, JVar changeListenerVar)
   {
     final JMethod argConstructor = cls.constructor(JMod.PUBLIC);
     final JVar param = argConstructor.param(paramClass, "data");
     argConstructor.body().invoke(SUPER).arg(param).arg(schemaField);
 
-    if (needsChangeListener)
+    if (changeListenerVar != null)
     {
-      addChangeListenerRegistration(argConstructor);
+      addChangeListenerRegistration(argConstructor, changeListenerVar);
     }
   }
 
@@ -363,10 +364,9 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     dataClassArg(inv, dataClass);
   }
 
-  private static void addChangeListenerRegistration(JMethod constructor)
+  private static void addChangeListenerRegistration(JMethod constructor, JVar changeListenerVar)
   {
-    // JCodeModel doesn't support function references yet, use direct source interpolation to work around this.
-    constructor.body().invoke("addChangeListener").arg(JExpr.direct("this::onUnderlyingMapChanged"));
+    constructor.body().invoke("addChangeListener").arg(changeListenerVar);
   }
 
   /**
@@ -394,7 +394,9 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     return customInfo != null ? customInfo.getCustomSchema() : schema.getDereferencedDataSchema();
   }
 
-  private static void overrideCopierMethod(JDefinedClass templateClass, String methodName, Map<String, JVar> fields, boolean resetFields)
+  private static void overrideCopierMethod(JDefinedClass templateClass, String methodName, Map<String, JVar> fields,
+      boolean resetFields,
+      JClass changeListenerClass)
   {
     final JMethod copierMethod = templateClass.method(JMod.PUBLIC, templateClass, methodName);
     copierMethod.annotate(Override.class);
@@ -410,8 +412,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
         });
       }
 
-      // JCodeModel doesn't support function references yet, use direct source interpolation to work around this.
-      copierMethod.body().add(copyVar.invoke("addChangeListener").arg(JExpr.direct(copyVar.name() + "::onUnderlyingMapChanged")));
+      copierMethod.body().assign(copyVar.ref("__changeListener"), JExpr._new(changeListenerClass).arg(copyVar));
+      copierMethod.body().add(copyVar.invoke("addChangeListener").arg(copyVar.ref("__changeListener")));
     }
 
     copierMethod.body()._return(copyVar);
@@ -562,7 +564,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     if (_copierMethods)
     {
-      generateCopierMethods(arrayClass, Collections.emptyMap());
+      generateCopierMethods(arrayClass, Collections.emptyMap(), null);
     }
 
     // Generate coercer overrides
@@ -621,11 +623,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JVar param = bytesConstructor.param(ByteString.class, "value");
     bytesConstructor.body().invoke(SUPER).arg(param).arg(schemaField);
 
-    generateConstructorWithObjectArg(fixedClass, schemaField, false);
+    generateConstructorWithObjectArg(fixedClass, schemaField, null);
 
     if (_copierMethods)
     {
-      generateCopierMethods(fixedClass, Collections.emptyMap());
+      generateCopierMethods(fixedClass, Collections.emptyMap(), null);
     }
   }
 
@@ -663,7 +665,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     if (_copierMethods)
     {
-      generateCopierMethods(mapClass, Collections.emptyMap());
+      generateCopierMethods(mapClass, Collections.emptyMap(), null);
     }
 
     // Generate coercer overrides
@@ -735,15 +737,22 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       fieldVarMap.put(fieldName, fieldVar);
     }
 
-    final boolean needsChangeListener = !fieldVarMap.isEmpty();
-
-    // Generate on underlying map changed if there are any fields.
-    if  (needsChangeListener)
+    final JVar changeListenerVar;
+    final JClass changeListenerClass;
+    // Generate a change listener if there are any fields.
+    if (!fieldVarMap.isEmpty())
     {
-      generateOnUnderlyingMapChanged(templateClass, fieldVarMap);
+      changeListenerClass = generateChangeListener(templateClass, fieldVarMap);
+      changeListenerVar = templateClass.field(JMod.PRIVATE, changeListenerClass, "__changeListener",
+          JExpr._new(changeListenerClass).arg(JExpr._this()));
     }
-    generateDataMapConstructor(templateClass, schemaFieldVar, recordSpec.getFields().size(), recordSpec.getWrappedFields().size(), needsChangeListener);
-    generateConstructorWithArg(templateClass, schemaFieldVar, _dataMapClass, needsChangeListener);
+    else
+    {
+      changeListenerClass = null;
+      changeListenerVar = null;
+    }
+    generateDataMapConstructor(templateClass, schemaFieldVar, recordSpec.getFields().size(), recordSpec.getWrappedFields().size(), changeListenerVar);
+    generateConstructorWithArg(templateClass, schemaFieldVar, _dataMapClass, changeListenerVar);
 
     // Generate accessors
     for (RecordTemplateSpec.Field field : recordSpec.getFields())
@@ -760,7 +769,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     if (_copierMethods)
     {
-      generateCopierMethods(templateClass, fieldVarMap);
+      generateCopierMethods(templateClass, fieldVarMap, changeListenerClass);
     }
   }
 
@@ -773,10 +782,10 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
    *                           than {@link #DEFAULT_DATAMAP_INITIAL_CAPACITY}.
    * @param initialCacheSize Initial size for the cache, applied only if capacity derived from this is smaller than
    *                         {@link #DEFAULT_DATAMAP_INITIAL_CAPACITY}
-   * @param needsChangeListener True if this record/union needs a map change listener registered, false otherwise.
+   * @param changeListenerVar The map change listener variable if any.
    */
   private void generateDataMapConstructor(JDefinedClass cls, JVar schemaField, int initialDataMapSize, int initialCacheSize,
-      boolean needsChangeListener)
+      JVar changeListenerVar)
   {
     final JMethod noArgConstructor = cls.constructor(JMod.PUBLIC);
     JInvocation superConstructorArg = JExpr._new(_dataMapClass);
@@ -803,9 +812,9 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       noArgConstructor.body().invoke(SUPER).arg(superConstructorArg).arg(schemaField);
     }
 
-    if (needsChangeListener)
+    if (changeListenerVar != null)
     {
-      addChangeListenerRegistration(noArgConstructor);
+      addChangeListenerRegistration(noArgConstructor, changeListenerVar);
     }
   }
 
@@ -1107,18 +1116,26 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       }
     }
 
-    final boolean needsChangeListener = !memberVarMap.isEmpty();
+    final JClass changeListenerClass;
+    final JVar changeListenerVar;
 
-    // Generate on underlying map changed if there are any members.
-    if (needsChangeListener)
+    // Generate change listener if there are any members.
+    if (!memberVarMap.isEmpty())
     {
-      generateOnUnderlyingMapChanged(unionClass, memberVarMap);
+      changeListenerClass = generateChangeListener(unionClass, memberVarMap);
+      changeListenerVar = unionClass.field(JMod.PRIVATE, changeListenerClass, "__changeListener",
+          JExpr._new(changeListenerClass).arg(JExpr._this()));
+    }
+    else
+    {
+      changeListenerClass = null;
+      changeListenerVar = null;
     }
 
     // Default union datamap size to 1 (last arg) as union can have at-most one element.
     // We don't need cache for unions, so pass in -1 for cache size to ignore size param.
-    generateDataMapConstructor(unionClass, schemaField, 1, -1, needsChangeListener);
-    generateConstructorWithObjectArg(unionClass, schemaField, needsChangeListener);
+    generateDataMapConstructor(unionClass, schemaField, 1, -1, changeListenerVar);
+    generateConstructorWithObjectArg(unionClass, schemaField, changeListenerVar);
 
     for (UnionTemplateSpec.Member member : unionSpec.getMembers())
     {
@@ -1141,7 +1158,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     if (_copierMethods)
     {
-      generateCopierMethods(unionClass, memberVarMap);
+      generateCopierMethods(unionClass, memberVarMap, changeListenerClass);
     }
 
     if (unionSpec.getTyperefClass() != null)
@@ -1449,19 +1466,30 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     argConstructor.body().invoke("putAll").arg(m);
   }
 
-  private void generateOnUnderlyingMapChanged(JDefinedClass cls, Map<String, JVar> fieldMap)
+  private JClass generateChangeListener(JDefinedClass cls, Map<String, JVar> fieldMap) throws JClassAlreadyExistsException
   {
-    final JMethod method = cls.method(JMod.PRIVATE, Void.class, "onUnderlyingMapChanged");
+    final JClass changeListenerInterface = getCodeModel().ref(CheckedMap.ChangeListener.class);
+    final JDefinedClass changeListenerClass = cls._class(JMod.PRIVATE | JMod.STATIC, "ChangeListener");
+    changeListenerClass._implements(changeListenerInterface.narrow(String.class, Object.class));
+
+    final JFieldVar objectRefVar = changeListenerClass.field(JMod.PRIVATE | JMod.FINAL, cls, "__objectRef");
+
+    final JMethod constructor = changeListenerClass.constructor(JMod.PRIVATE);
+    JVar refParam = constructor.param(cls, "reference");
+    constructor.body().assign(objectRefVar, refParam);
+
+    final JMethod method = changeListenerClass.method(JMod.PUBLIC, void.class, "onUnderlyingMapChanged");
+    method.annotate(Override.class);
     final JVar keyParam = method.param(String.class, "key");
     method.param(_objectClass, "value");
     JSwitch keySwitch = method.body()._switch(keyParam);
     fieldMap.forEach((key, field) -> {
       JCase keyCase = keySwitch._case(JExpr.lit(key));
-      keyCase.body().assign(field, JExpr._null());
-      keyCase.body()._return(JExpr._null());
+      keyCase.body().assign(objectRefVar.ref(field.name()), JExpr._null());
+      keyCase.body()._break();
     });
 
-    method.body()._return(JExpr._null());
+    return changeListenerClass;
   }
 
   private JExpression getCoerceOutputExpression(JExpression rawExpr, DataSchema schema, JClass typeClass,
