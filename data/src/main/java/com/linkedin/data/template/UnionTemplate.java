@@ -18,10 +18,10 @@ package com.linkedin.data.template;
 
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.UnionDataSchema;
-import java.util.function.BiFunction;
 
 
 /**
@@ -443,7 +443,7 @@ public class UnionTemplate implements DataTemplate<Object>
   /**
    * Register a change listener to get notified when the underlying map changes.
    */
-  protected void addChangeListener(BiFunction<String, Object, Void> listener)
+  protected void addChangeListener(CheckedMap.ChangeListener<String, Object> listener)
   {
     //
     // This UGLY hack is needed because IdResponse breaks the implicit RecordTemplate contract and passes in
