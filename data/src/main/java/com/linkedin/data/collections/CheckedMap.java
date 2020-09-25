@@ -516,6 +516,12 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
    */
   public interface ChangeListener<K, V>
   {
+    /**
+     * Listener method called whenever an entry in the underlying map is updated or removed.
+     * 
+     * @param key Key being updated.
+     * @param value Updated value, can be null when entries are removed.
+     */
     void onUnderlyingMapChanged(K key, V value);
   }
 
