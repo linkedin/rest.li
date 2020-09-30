@@ -85,7 +85,7 @@ public class CheckPegasusSnapshotTask extends DefaultTask
     }
     catch (IOException e)
     {
-      new GradleException("Error whiling processing compatibility report: " + e.getMessage());
+      throw new GradleException("Error while processing compatibility report: " + e.getMessage());
     }
     if (!logChecker.isModelCompatible())
     {
