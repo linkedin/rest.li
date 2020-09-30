@@ -52,7 +52,15 @@ public class CompatibilityMessage extends Message
     /**
      * Numeric promotion.
      */
-    VALUES_MAY_BE_TRUNCATED_OR_OVERFLOW(false);
+    VALUES_MAY_BE_TRUNCATED_OR_OVERFLOW(false),
+    /**
+     * Adding new schema is compatible change.
+     */
+    NEW_SCHEMA_ADDED(false),
+    /**
+     * Deleting an schema is incompatible change, it breaks old clients.
+     */
+    BREAK_OLD_CLIENTS(true);
 
     private final boolean _error;
 
