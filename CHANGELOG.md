@@ -18,6 +18,7 @@ and what APIs have changed, if applicable.
    - The task will be used to check any pegasus schema compatible and incompatible changes.
    - The pegasus schema may or may not be part of a Rest.li resource.
    - The task will be triggered at build time, if user provides gradle property: `pegasusPlugin.enablePegasusSchemaCompatibilityCheck=true`.
+- Fix task caching issue by using the output file instead of task properties. Task properties will not reflect the correct state when a task is loaded from cache.
 
 ## [29.7.2] - 2020-09-25
 - Move from lambdas to explicit change listeners since lambda garbage collection is unreliable in Java

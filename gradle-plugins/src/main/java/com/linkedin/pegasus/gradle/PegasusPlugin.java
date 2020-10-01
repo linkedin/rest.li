@@ -17,6 +17,7 @@
 package com.linkedin.pegasus.gradle;
 
 import com.linkedin.pegasus.gradle.PegasusOptions.IdlOptions;
+import com.linkedin.pegasus.gradle.internal.CompatibilityLogChecker;
 import com.linkedin.pegasus.gradle.tasks.ChangedFileReportTask;
 import com.linkedin.pegasus.gradle.tasks.CheckIdlTask;
 import com.linkedin.pegasus.gradle.tasks.CheckPegasusSnapshotTask;
@@ -34,6 +35,7 @@ import com.linkedin.pegasus.gradle.tasks.ValidateSchemaAnnotationTask;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1163,7 +1165,30 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static boolean isTaskSuccessful(Task task)
   {
-    return task.getState().getExecuted() && !task.getState().getSkipped() && task.getState().getFailure() == null;
+    return task.getState().getExecuted()
+            // Task is not successful if it is not upto date and is skipped.
+            && !(task.getState().getSkipped() && !task.getState().getUpToDate())
+            && task.getState().getFailure() == null;
+  }
+
+  private static boolean isResultEquivalent(File compatibilityLogFile)
+  {
+      return isResultEquivalent(compatibilityLogFile, false);
+  }
+
+  private static boolean isResultEquivalent(File compatibilityLogFile, boolean restSpecOnly)
+  {
+    CompatibilityLogChecker logChecker = new CompatibilityLogChecker();
+    try
+    {
+      logChecker.write(Files.readAllBytes(compatibilityLogFile.toPath()));
+    }
+    catch (IOException e)
+    {
+      throw new GradleException("Error while processing compatibility report: " + e.getMessage());
+    }
+    return logChecker.getRestSpecCompatibility().isEmpty() &&
+            (restSpecOnly || logChecker.getModelCompatibility().isEmpty());
   }
 
   protected void configureRestModelGeneration(Project project, SourceSet sourceSet)
@@ -1325,45 +1350,19 @@ public class PegasusPlugin implements Plugin<Project>
             task.setSuffix(SNAPSHOT_FILE_SUFFIX);
 
             task.onlyIf(t ->
-            {
-              project.getLogger().info(
-                  "IDL_NO_PUBLISH: {}\n" +
-                  "SNAPSHOT_NO_PUBLISH: {}\n" +
-                  "checkRestModelTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is Not Equivalent: {}\n" +
-                  "checkSnapshotTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is Not Equivalent: {}\n",
-                  isPropertyTrue(project, IDL_NO_PUBLISH),
-                  isPropertyTrue(project, SNAPSHOT_NO_PUBLISH),
-                  checkRestModelTask.getState().getExecuted(),
-                  !checkRestModelTask.getState().getSkipped(),
-                  checkRestModelTask.getState().getFailure() == null,
-                  !checkRestModelTask.isEquivalent(),
-                  checkSnapshotTask.getState().getExecuted(),
-                  !checkSnapshotTask.getState().getSkipped(),
-                  checkSnapshotTask.getState().getFailure() == null,
-                  !checkSnapshotTask.isEquivalent());
-
-              return !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
-              (
-                (
-                   isPropertyTrue(project, SKIP_IDL_CHECK) &&
-                   isTaskSuccessful(checkSnapshotTask) &&
-                   !(checkSnapshotTask.isEquivalent())
-                ) ||
-                (
-                  !isPropertyTrue(project, SKIP_IDL_CHECK) &&
-                  isTaskSuccessful(checkRestModelTask) &&
-                  !(checkRestModelTask.isEquivalent())
-                )
-              );
-            });
+                    !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
+                    (
+                      (
+                         isPropertyTrue(project, SKIP_IDL_CHECK) &&
+                         isTaskSuccessful(checkSnapshotTask) &&
+                         !isResultEquivalent(checkSnapshotTask.getSummaryTarget())
+                      ) ||
+                      (
+                        !isPropertyTrue(project, SKIP_IDL_CHECK) &&
+                        isTaskSuccessful(checkRestModelTask) &&
+                        !isResultEquivalent(checkRestModelTask.getSummaryTarget())
+                      )
+                    ));
           });
 
       Task publishRestliIdlTask = project.getTasks()
@@ -1374,58 +1373,21 @@ public class PegasusPlugin implements Plugin<Project>
             task.setSuffix(IDL_FILE_SUFFIX);
 
             task.onlyIf(t ->
-            {
-              project.getLogger().info(
-                  "SKIP_IDL: {}\n" +
-                  "IDL_NO_PUBLISH: {}\n" +
-                  "SNAPSHOT_NO_PUBLISH: {}\n" +
-                  "checkRestModelTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is Not Equivalent: {}\n" +
-                  "checkIdlTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is Not Equivalent: {}\n" +
-                  "checkSnapshotTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is RestSpec Not Equivalent: {}\n",
-                  isPropertyTrue(project, SKIP_IDL_CHECK),
-                  isPropertyTrue(project, IDL_NO_PUBLISH),
-                  isPropertyTrue(project, SNAPSHOT_NO_PUBLISH),
-                  checkRestModelTask.getState().getExecuted(),
-                  !checkRestModelTask.getState().getSkipped(),
-                  checkRestModelTask.getState().getFailure() == null,
-                  !checkRestModelTask.isEquivalent(),
-                  checkIdlTask.getState().getExecuted(),
-                  !checkIdlTask.getState().getSkipped(),
-                  checkIdlTask.getState().getFailure() == null,
-                  !checkIdlTask.isEquivalent(),
-                  checkSnapshotTask.getState().getExecuted(),
-                  !checkSnapshotTask.getState().getSkipped(),
-                  checkSnapshotTask.getState().getFailure() == null,
-                  !checkSnapshotTask.isEquivalent());
-
-              return !isPropertyTrue(project, IDL_NO_PUBLISH) &&
-              (
-                (
-                   isPropertyTrue(project, SKIP_IDL_CHECK) &&
-                   isTaskSuccessful(checkSnapshotTask) &&
-                   !(checkSnapshotTask.isRestSpecEquivalent())
-                ) ||
-                (
-                   !isPropertyTrue(project, SKIP_IDL_CHECK) &&
-                   (
-                      (isTaskSuccessful(checkRestModelTask) && !(checkRestModelTask.isRestSpecEquivalent())) ||
-                      (isTaskSuccessful(checkIdlTask) && !(checkIdlTask.isEquivalent()))
-                   )
-                )
-              );
-            });
+                    !isPropertyTrue(project, IDL_NO_PUBLISH) &&
+                    (
+                      (
+                         isPropertyTrue(project, SKIP_IDL_CHECK) &&
+                         isTaskSuccessful(checkSnapshotTask) &&
+                         !isResultEquivalent(checkSnapshotTask.getSummaryTarget(), true)
+                      ) ||
+                      (
+                         !isPropertyTrue(project, SKIP_IDL_CHECK) &&
+                         (
+                            (isTaskSuccessful(checkRestModelTask) && !isResultEquivalent(checkRestModelTask.getSummaryTarget(), true)) ||
+                            (isTaskSuccessful(checkIdlTask) && !isResultEquivalent(checkIdlTask.getSummaryTarget()))
+                         )
+                      )
+                    ));
           });
 
       project.getLogger().info("API project selected for {} is {}",
