@@ -82,10 +82,11 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   {
     final Request<String> req =
         builders.<String>action("Parseq").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
-    final Promise<Response<String>> promise = _restClient.sendRequest(req);
-    promise.await();
-    Assert.assertFalse(promise.isFailed());
-    final Response<String> response = promise.get();
+    final Task<Response<String>> task = _restClient.createTask(req);
+    _engine.run(task);
+    task.await();
+    Assert.assertFalse(task.isFailed());
+    final Response<String> response = task.get();
     Assert.assertEquals("101 YAY false", response.getEntity());
   }
 
@@ -141,10 +142,11 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   public void testFailPromise(RootBuilderWrapper<?, ?> builders) throws InterruptedException
   {
     final Request<Void> req = builders.<Void>action("FailPromiseCall").build();
-    final Promise<Response<Void>> promise = _restClient.sendRequest(req);
-    promise.await();
-    Assert.assertTrue(promise.isFailed());
-    final Throwable t = promise.getError();
+    final Task<Response<Void>> task = _restClient.createTask(req);
+    _engine.run(task);
+    task.await();
+    Assert.assertTrue(task.isFailed());
+    final Throwable t = task.getError();
     Assert.assertTrue(t instanceof RestLiResponseException);
   }
 
