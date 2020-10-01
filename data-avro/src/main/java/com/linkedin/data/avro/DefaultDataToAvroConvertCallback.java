@@ -114,7 +114,7 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
     {
       throw new IllegalArgumentException(
           message(path,
-              "cannot translate union value %1$s because it's type is not the 1st member type of the union %2$s",
+              "cannot translate union value %1$s because its type is not the 1st member type of the union %2$s",
               value, unionDataSchema));
     }
     path.add(key);
