@@ -13,10 +13,11 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Bump `parseq` dependency from `2.6.31` to `4.1.6`.
 - Add `checkPegasusSchemaSnapshot` task. 
    - The task will be used to check any pegasus schema compatible and incompatible changes.
-   - The pegasus schema may or may not be part of a rest.li resource.
-   - The task will be triggered at build time, if user provides gradle property: "pegasusPlugin.enablePegasusSchemaCompatibilityCheck=true".
+   - The pegasus schema may or may not be part of a Rest.li resource.
+   - The task will be triggered at build time, if user provides gradle property: `pegasusPlugin.enablePegasusSchemaCompatibilityCheck=true`.
 - Fix task caching issue by using the output file instead of task properties. Task properties will not reflect the correct state when a task is loaded from cache.
 
 ## [29.7.2] - 2020-09-25
