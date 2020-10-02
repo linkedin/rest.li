@@ -204,17 +204,31 @@ public class DataSchemaParser
     private final Set<File> _sourceFiles = new HashSet<>();
     protected final StringBuilder _messageBuilder = new StringBuilder();
 
+    /**
+     * Get all schema and schemaLocations in one shot
+     * @return a map of data schema locations keyed by DataSchema object
+     */
     public Map<DataSchema, DataSchemaLocation> getSchemaAndLocations()
     {
       return _schemaAndLocations;
     }
 
+    /**
+     * Get all base schemas from the parsing result. The base schema is judged by non-extension schemas.
+     * @return a map of non-extension data schema locations keyed by DataSchema object
+     */
     public Map<DataSchema, DataSchemaLocation> getBaseDataSchemaAndLocations()
     {
       return _schemaAndLocations.entrySet().stream().filter(entry -> !isExtensionSchemaLocation(entry))
           .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    /**
+     * Get all extension schema, the criteria is as:
+     * 1. The path suffix is like Extensions.pdl
+     * 2. The path prefix contains "extensions" substring.
+     * @return a map of extension schema and location
+     */
     public Map<DataSchema, DataSchemaLocation> getExtensionDataSchemaAndLocations()
     {
       return _schemaAndLocations.entrySet().stream().filter(DataSchemaParser.ParseResult::isExtensionSchemaLocation)
