@@ -13,12 +13,16 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.7.3] - 2020-10-02
 - Bump `parseq` dependency from `2.6.31` to `4.1.6`.
 - Add `checkPegasusSchemaSnapshot` task. 
    - The task will be used to check any pegasus schema compatible and incompatible changes.
    - The pegasus schema may or may not be part of a Rest.li resource.
    - The task will be triggered at build time, if user provides gradle property: `pegasusPlugin.enablePegasusSchemaCompatibilityCheck=true`.
 - Fix task caching issue by using the output file instead of task properties. Task properties will not reflect the correct state when a task is loaded from cache.
+- Add method in ParseResult class to get base schema
+- Fix collectionMetadata missing link issue when collection count is 0
 
 ## [29.7.2] - 2020-09-25
 - Move from lambdas to explicit change listeners since lambda garbage collection is unreliable in Java
@@ -4676,7 +4680,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.3...master
+[29.7.3]: https://github.com/linkedin/rest.li/compare/v29.7.2...v29.7.3
 [29.7.2]: https://github.com/linkedin/rest.li/compare/v29.7.1...v29.7.2
 [29.7.1]: https://github.com/linkedin/rest.li/compare/v29.7.0...v29.7.1
 [29.7.0]: https://github.com/linkedin/rest.li/compare/v29.6.9...v29.7.0
