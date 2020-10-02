@@ -212,6 +212,59 @@ public class TestDataSchemaParser
   }
 
 
+  @DataProvider(name = "ERFilesForBaseSchema")
+  private Object[][] dataSchemaFiles()
+  {
+    return new Object[][]
+        {
+            {
+                new String[]{
+                    "extensions/BarExtensions.pdl",
+                    "extensions/FooExtensions.pdl",
+                    "extensions/FuzzExtensions.pdl",
+                    "pegasus/Foo.pdl",
+                    "pegasus/Bar.pdl",
+                    "pegasus/Fuzz.pdsc"
+                },
+                new String[]{
+                    "Foo",
+                    "Bar",
+                    "Fuzz",
+                    "InlineRecord"
+                }
+            }
+        };
+  }
+
+  @Test(dataProvider = "ERFilesForBaseSchema")
+  public void testParseResultToGetBaseSchemas(String[] files, String[] expectedSchemaNames) throws Exception
+  {
+    String pegasusWithFS = pegasusDir + FS;
+    String resolverPath = pegasusWithFS + "extensionSchemas/extensions:"
+        + pegasusWithFS + "extensionSchemas/others:"
+        + pegasusWithFS + "extensionSchemas/pegasus";
+    try
+    {
+      DataSchemaParser parser = new DataSchemaParser(resolverPath);
+      String[] schemaFiles = Arrays.stream(files).map(casename -> pegasusDir + FS + "extensionSchemas" + FS + casename).toArray(String[]::new);
+      DataSchemaParser.ParseResult parseResult = parser.parseSources(schemaFiles);
+      Map<DataSchema, DataSchemaLocation> bases = parseResult.getBaseDataSchemaAndLocations();
+      assertEquals(bases.size(), expectedSchemaNames.length);
+      Set<String> actualNames = bases
+          .keySet()
+          .stream()
+          .map(dataSchema -> (NamedDataSchema) dataSchema)
+          .map(NamedDataSchema::getName)
+          .collect(Collectors.toSet());
+      assertEquals(actualNames, Arrays.stream(expectedSchemaNames).collect(Collectors.toSet()));
+    }
+    catch (Exception e)
+    {
+      Assert.fail("Test failed");
+    }
+
+  }
+
   @Test
   public void testParseFromJarFileWithTranslatedSchemas() throws Exception
   {
