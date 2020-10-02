@@ -93,7 +93,6 @@ public class RestUtils
 
     String bestEncoding = pickBestEncoding(resourceContext.getRequestHeaders().get(RestConstants.HEADER_ACCEPT), Collections.emptySet());
 
-    //links use count as the step interval, so links don't make sense with count==0
     if (pagingContext.getCount() > 0)
     {
       // prev link
@@ -124,8 +123,10 @@ public class RestUtils
         links.add(nextLink);
       }
 
-      metadata.setLinks(links);
     }
+    // even when we are getting count = 0, we should honor that links
+    // is a required field in the CollectionMetadata record
+    metadata.setLinks(links);
     return metadata;
   }
 
