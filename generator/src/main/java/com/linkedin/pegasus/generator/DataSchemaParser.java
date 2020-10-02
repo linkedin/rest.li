@@ -21,7 +21,6 @@ import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.resolver.AbstractMultiFormatDataSchemaResolver;
-import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
@@ -31,7 +30,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -206,29 +204,52 @@ public class DataSchemaParser
     private final Set<File> _sourceFiles = new HashSet<>();
     protected final StringBuilder _messageBuilder = new StringBuilder();
 
+    /**
+     * Get all schema and schemaLocations in one shot
+     * @return a map of data schema locations keyed by DataSchema object
+     */
     public Map<DataSchema, DataSchemaLocation> getSchemaAndLocations()
     {
       return _schemaAndLocations;
     }
 
+    /**
+     * Get all base schemas from the parsing result. The base schema is judged by non-extension schemas.
+     * @return a map of non-extension data schema locations keyed by DataSchema object
+     */
+    public Map<DataSchema, DataSchemaLocation> getBaseDataSchemaAndLocations()
+    {
+      return _schemaAndLocations.entrySet().stream().filter(entry -> !isExtensionSchemaLocation(entry))
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    /**
+     * Get all extension schema, the criteria is as:
+     * 1. The path suffix is like Extensions.pdl
+     * 2. The path prefix contains "extensions" substring.
+     * @return a map of extension schema and location
+     */
     public Map<DataSchema, DataSchemaLocation> getExtensionDataSchemaAndLocations()
     {
-      return _schemaAndLocations.entrySet().stream().filter(entry ->
+      return _schemaAndLocations.entrySet().stream().filter(DataSchemaParser.ParseResult::isExtensionSchemaLocation)
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    static boolean isExtensionSchemaLocation(Map.Entry<DataSchema, DataSchemaLocation> entry)
+    {
+      DataSchemaLocation dataSchemaLocation = entry.getValue();
+      if (dataSchemaLocation instanceof InJarFileDataSchemaLocation)
       {
-        DataSchemaLocation dataSchemaLocation = entry.getValue();
-        if (dataSchemaLocation instanceof InJarFileDataSchemaLocation)
-        {
-          InJarFileDataSchemaLocation inJarFileDataSchemaLocation = (InJarFileDataSchemaLocation) dataSchemaLocation;
-          return inJarFileDataSchemaLocation.getPathInJar().startsWith(SchemaDirectoryName.EXTENSIONS.getName());
-        }
-        else if (dataSchemaLocation instanceof FileDataSchemaLocation)
-        {
-          FileDataSchemaLocation fileDataSchemaLocation = (FileDataSchemaLocation) dataSchemaLocation;
-          return fileDataSchemaLocation.getSourceFile().getName().endsWith(EXTENSION_FILENAME_SUFFIX) &&
+        InJarFileDataSchemaLocation inJarFileDataSchemaLocation = (InJarFileDataSchemaLocation) dataSchemaLocation;
+        return inJarFileDataSchemaLocation.getPathInJar().startsWith(SchemaDirectoryName.EXTENSIONS.getName());
+      }
+      else if (dataSchemaLocation instanceof FileDataSchemaLocation)
+      {
+        FileDataSchemaLocation fileDataSchemaLocation = (FileDataSchemaLocation) dataSchemaLocation;
+        return fileDataSchemaLocation.getSourceFile().getName().endsWith(EXTENSION_FILENAME_SUFFIX) &&
             fileDataSchemaLocation.getSourceFile().getParent().indexOf(SchemaDirectoryName.EXTENSIONS.getName()) > 0;
-        }
-        return false;
-      }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      }
+      return false;
     }
 
     public Set<File> getSourceFiles()
