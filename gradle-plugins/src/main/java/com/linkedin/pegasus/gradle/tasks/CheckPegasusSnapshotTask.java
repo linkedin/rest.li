@@ -17,13 +17,20 @@ package com.linkedin.pegasus.gradle.tasks;
 
 
 import com.linkedin.pegasus.gradle.PathingJarUtil;
+import com.linkedin.pegasus.gradle.SchemaAnnotationHandlerClassUtil;
 import com.linkedin.pegasus.gradle.internal.CompatibilityLogChecker;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.artifacts.configurations.DefaultConfiguration;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
@@ -43,6 +50,7 @@ public class CheckPegasusSnapshotTask extends DefaultTask
   private FileCollection _codegenClasspath;
   private String _compatibilityMode;
   private FileCollection _handlerJarPath;
+  private List<String> _handlerClassNames;
   private boolean _isExtensionSchema = false;
   private static String PEGASUS_SCHEMA_COMPATIBILITY_SUMMARY_FILE = "reports/checkPegasusSchema/compatibilityReport.txt";
   private static String PEGASUS_EXTENSION_SCHEMA_COMPATIBILITY_SUMMARY_FILE = "reports/checkPegasusExtensionSchema/compatibilityReport.txt";
@@ -76,6 +84,15 @@ public class CheckPegasusSnapshotTask extends DefaultTask
       javaExecSpec.args("--report", reportOutput);
       javaExecSpec.args(_previousSnapshotDirectory);
       javaExecSpec.args(_currentSnapshotDirectory);
+      if (_isExtensionSchema)
+      {
+        javaExecSpec.args("--extensionSchema");
+      }
+      else if(hasSchemaAnnotationHandler())
+      {
+        javaExecSpec.args("--handlerJarPath", _handlerJarPath);
+        javaExecSpec.args("--handlerClassName", String.join(File.pathSeparator, _handlerClassNames));
+      }
     });
 
     CompatibilityLogChecker logChecker = new CompatibilityLogChecker();
@@ -87,7 +104,7 @@ public class CheckPegasusSnapshotTask extends DefaultTask
     {
       throw new GradleException("Error while processing compatibility report: " + e.getMessage());
     }
-    if (!logChecker.isModelCompatible())
+    if (!logChecker.isModelCompatible() || !logChecker.isAnnotationCompatible())
     {
       throw new GradleException("There are incompatible changes, find details in " + reportOutput.getAbsolutePath());
     }
@@ -172,5 +189,32 @@ public class CheckPegasusSnapshotTask extends DefaultTask
   public void setHandlerJarPath(FileCollection handlerJarPath)
   {
     _handlerJarPath = handlerJarPath;
+  }
+
+  private boolean hasSchemaAnnotationHandler()
+  {
+    int expectedHandlersNumber = ((DefaultConfiguration) _handlerJarPath).getAllDependencies().size();
+    // skip if no handlers configured
+    if (expectedHandlersNumber == 0)
+    {
+      getLogger().info("no schema annotation handlers configured for schema annotation compatibility check");
+      return false;
+    }
+
+    List<URL> handlerJarPathUrls = SchemaAnnotationHandlerClassUtil.getAnnotationHandlerJarPathUrls(_handlerJarPath);
+
+    ClassLoader classLoader = new URLClassLoader(handlerJarPathUrls.toArray(new URL[handlerJarPathUrls.size()]), getClass().getClassLoader());
+
+    try
+    {
+      _handlerClassNames = SchemaAnnotationHandlerClassUtil.getAnnotationHandlerClassNames(_handlerJarPath, classLoader, getProject());
+    }
+    catch (IOException e)
+    {
+      throw new GradleException("Annotation compatibility check: could not get annotation handler class name. " + e.getMessage());
+    }
+
+    SchemaAnnotationHandlerClassUtil.checkAnnotationClassNumber(_handlerClassNames, expectedHandlersNumber);
+    return true;
   }
 }

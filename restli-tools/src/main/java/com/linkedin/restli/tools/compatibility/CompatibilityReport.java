@@ -55,11 +55,27 @@ public class CompatibilityReport
         .map(it -> "[MD-I]:" + it)
         .collect(Collectors.joining("\n"));
 
+    String annotationCompat = "";
+    String annotationIncompat = "";
+    String annotationIsCompat = "";
+    if(_infoMap.getAnnotationInfo(CompatibilityInfo.Level.INCOMPATIBLE).size() > 0 || _infoMap.getAnnotationInfo(CompatibilityInfo.Level.COMPATIBLE).size() > 0)
+    {
+      annotationCompat = _infoMap.getAnnotationInfo(CompatibilityInfo.Level.COMPATIBLE)
+          .stream()
+          .map(it -> "[SCHEMA-ANNOTATION-C]:" + it)
+          .collect(Collectors.joining("\n"));
+      annotationIncompat = _infoMap.getAnnotationInfo(CompatibilityInfo.Level.INCOMPATIBLE)
+          .stream()
+          .map(it -> "[SCHEMA-ANNOTATION-I]:" + it)
+          .collect(Collectors.joining("\n"));
+      annotationIsCompat = String.format("[SCHEMA-ANNOTATION-COMPAT]: %b", _infoMap.isAnnotationCompatible());
+    }
+
     String restSpecIsCompat = String.format("[RS-COMPAT]: %b", _infoMap.isRestSpecCompatible(_compatibilityLevel));
 
     String modelIsCompat = String.format("[MD-COMPAT]: %b", _infoMap.isModelCompatible(_compatibilityLevel));
 
-    return Arrays.asList(restSpecIsCompat, modelIsCompat, restSpecCompat, restSpecIncompat, modelCompat, modelIncompat)
+    return Arrays.asList(restSpecIsCompat, modelIsCompat, restSpecCompat, restSpecIncompat, modelCompat, modelIncompat, annotationIsCompat, annotationCompat, annotationIncompat)
         .stream()
         .filter(it -> !it.isEmpty())
         .collect(Collectors.joining("\n")) + '\n';

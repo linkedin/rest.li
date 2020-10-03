@@ -13,6 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Extend checkPegasusSchemaSnapshot task to be enable to check schema annotation compatibility.
+  - The annotation compatibility will be triggered if SchemaANnotationHandler config is provided.
+  - Update SchemaAnnotationHandler interface to have a new api - annotationCompatibilityCheck, which can be used to check the custom annotation compatibility check.
 
 ## [29.7.8] - 2020-10-12
 - Encoding performance improvements
@@ -21,14 +24,14 @@ and what APIs have changed, if applicable.
 - Adding dark cluster response validation metrics
 
 ## [29.7.6] - 2020-10-05
-Fix bug referring to coercer before registration.
+- Fix bug referring to coercer before registration.
 
 ## [29.7.5] - 2020-10-05
 - Add an option to configure ProtoWriter buffer size. Set the default to 4096 to prevent thrashing.
 - Use an identity hashmap implementation that uses DataComplex#dataComplexHashCode under the hood for better performance
 
 ## [29.7.4] - 2020-10-03
-Fix bug affecting record fields named "fields".
+- Fix bug affecting record fields named "fields".
 
 ## [29.7.3] - 2020-10-02
 - Bump `parseq` dependency from `2.6.31` to `4.1.6`.

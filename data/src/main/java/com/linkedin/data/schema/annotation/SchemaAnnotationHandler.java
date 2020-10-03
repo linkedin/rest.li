@@ -18,6 +18,11 @@ package com.linkedin.data.schema.annotation;
 import com.linkedin.data.message.Message;
 import com.linkedin.data.message.MessageList;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.data.schema.compatibility.CompatibilityMessage;
+import com.linkedin.data.schema.compatibility.CompatibilityResult;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -144,6 +149,122 @@ public interface SchemaAnnotationHandler
     return new PathSpecBasedSchemaAnnotationVisitor(this);
   }
 
+  /**
+   * This method is used to indicate whether the schema annotation handler implements the checkCompatibility method.
+   * @return false by default. Subclasses should override this method to return true, if they implement the checkCompatibility method.
+   */
+  default boolean implementsCheckCompatibility()
+  {
+    return false;
+  }
+
+  /**
+   * Check annotations changes are compatible or not.
+   * Also override implementsCheckCompatibility method to return true, after implementing this method.
+   *
+   * @param prevResolvedProperties the previous resolvedProperties.
+   *                               If an annotation is added on an existing field or a new field is added with an annotation,
+   *                               prevResolvedProperties#(annotationSpace) == null.
+   * @param currResolvedProperties the current resolvedProperties.
+   *                               If a field is deleted or the field presents but the annotation is deleted,
+   *                               currResolvedProperties#get(annotationSpace) == null.
+   * @param prevContext the previous annotationCheck context.
+   *                    If an annotation is added on an existing field, preContext will contain pathSpec and field schema information.
+   *                    If a field is added with an annotation, preContext will not contain any schema information(dataSchema, schemaField, pathSpecToSchema etc).
+   * @param currContext the current annotationCheck context
+   *                    if an annotation is deleted, currContext will contain pathSpec and field schema information.
+   *                    if a field with an annotation is deleted, currContext will not contain any schema information(dataSchema, schemaField, pathSpecToSchema etc).
+   * @return {@link AnnotationCompatibilityResult}
+   */
+  default AnnotationCompatibilityResult checkCompatibility(Map<String, Object> prevResolvedProperties, Map<String, Object> currResolvedProperties,
+      CompatibilityCheckContext prevContext, CompatibilityCheckContext currContext)
+  {
+    return new AnnotationCompatibilityResult();
+  }
+
+  /**
+   * CompatibilityCheckContext which contains metadata information:
+   * dataSchema, schemaField, unionMember and pathSpecToSchema.
+   */
+  class CompatibilityCheckContext
+  {
+    DataSchema _currentSchema;
+    RecordDataSchema.Field _schemaField;
+    UnionDataSchema.Member _unionMember;
+    PathSpec _pathSpecToSchema;
+
+    public DataSchema getCurrentDataSchema()
+    {
+      return _currentSchema;
+    }
+
+    public void setCurrentDataSchema(DataSchema currentSchema)
+    {
+      _currentSchema = currentSchema;
+    }
+
+    public RecordDataSchema.Field getSchemaField()
+    {
+      return _schemaField;
+    }
+
+    public void setSchemaField(RecordDataSchema.Field schemaField)
+    {
+      _schemaField = schemaField;
+    }
+
+    public UnionDataSchema.Member getUnionMember()
+    {
+     return _unionMember;
+    }
+
+    public void setUnionMember(UnionDataSchema.Member unionMember)
+    {
+      _unionMember = unionMember;
+    }
+
+    public PathSpec getPathSpecToSchema()
+    {
+      return _pathSpecToSchema;
+    }
+
+    public void setPathSpecToSchema(PathSpec pathSpecToSchema)
+    {
+      _pathSpecToSchema = pathSpecToSchema;
+    }
+  }
+
+  /**
+   * AnnotationCompatibilityResult
+   * it contains a list of {@link CompatibilityMessage}
+   * CompatibilityMessage describes the change is compatible or not
+   */
+  class AnnotationCompatibilityResult implements CompatibilityResult
+  {
+    private final MessageList<CompatibilityMessage> _messages;
+
+    public AnnotationCompatibilityResult()
+    {
+      _messages = new MessageList<CompatibilityMessage>();
+    }
+
+    public void addMessage(CompatibilityMessage message)
+    {
+      _messages.add(message);
+    }
+
+    @Override
+    public Collection<CompatibilityMessage> getMessages()
+    {
+      return _messages;
+    }
+
+    @Override
+    public boolean isError()
+    {
+      return _messages.isError();
+    }
+  }
 
   /**
    * Result the {@link #resolve(List, ResolutionMetaData)} function should return after it is called
