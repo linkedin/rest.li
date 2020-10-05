@@ -733,7 +733,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       final String fieldName = field.getSchemaField().getName();
       final JVar fieldVar =
-          templateClass.field(JMod.PRIVATE, generate(field.getType()), "_" + fieldName, JExpr._null());
+          templateClass.field(JMod.PRIVATE, generate(field.getType()), "_" + fieldName + "Field", JExpr._null());
       fieldVarMap.put(fieldName, fieldVar);
     }
 
@@ -1111,7 +1111,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       {
         final String memberName = CodeUtil.uncapitalize(CodeUtil.getUnionMemberName(member));
         final JVar memberVar =
-            unionClass.field(JMod.PRIVATE, generate(member.getClassTemplateSpec()), "_" + memberName, JExpr._null());
+            unionClass.field(JMod.PRIVATE, generate(member.getClassTemplateSpec()), "_" + memberName + "Member", JExpr._null());
         memberVarMap.put(member.getUnionMemberKey(), memberVar);
       }
     }
