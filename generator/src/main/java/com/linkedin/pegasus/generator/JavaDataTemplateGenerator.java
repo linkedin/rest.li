@@ -754,6 +754,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     generateDataMapConstructor(templateClass, schemaFieldVar, recordSpec.getFields().size(), recordSpec.getWrappedFields().size(), changeListenerVar);
     generateConstructorWithArg(templateClass, schemaFieldVar, _dataMapClass, changeListenerVar);
 
+    recordSpec.getFields().stream()
+        .map(RecordTemplateSpec.Field::getCustomInfo)
+        .distinct()
+        .forEach(customInfo -> generateCustomClassInitialization(templateClass, customInfo));
+
     // Generate accessors
     for (RecordTemplateSpec.Field field : recordSpec.getFields())
     {
@@ -761,11 +766,6 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       generateRecordFieldAccessors(templateClass, field, generate(field.getType()), schemaFieldVar,
           fieldVarMap.get(fieldName));
     }
-
-    recordSpec.getFields().stream()
-        .map(RecordTemplateSpec.Field::getCustomInfo)
-        .distinct()
-        .forEach(customInfo -> generateCustomClassInitialization(templateClass, customInfo));
 
     if (_copierMethods)
     {
@@ -892,9 +892,10 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JFieldVar defaultField;
     if (field.getSchemaField().getDefault() != null)
     {
-      defaultField =
-          templateClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, type, defaultFieldName,
-              getCoerceOutputExpression(fieldField.invoke("getDefault"), schemaField.getType(), type, field.getCustomInfo()));
+      defaultField = templateClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, type, defaultFieldName);
+
+      templateClass.init().assign(defaultField, getCoerceOutputExpression(
+          fieldField.invoke("getDefault"), schemaField.getType(), type, field.getCustomInfo()));
     }
     else
     {
