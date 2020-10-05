@@ -14,6 +14,10 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.5] - 2020-10-05
+- Add an option to configure ProtoWriter buffer size. Set the default to 4096 to prevent thrashing.
+- Use an identity hashmap implementation that uses DataComplex#dataComplexHashCode under the hood for better performance
+
 ## [29.7.4] - 2020-10-03
 Fix bug affecting record fields named "fields".
 
@@ -4683,7 +4687,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.5...master
+[29.7.5]: https://github.com/linkedin/rest.li/compare/v29.7.4...v29.7.5
 [29.7.4]: https://github.com/linkedin/rest.li/compare/v29.7.3...v29.7.4
 [29.7.3]: https://github.com/linkedin/rest.li/compare/v29.7.2...v29.7.3
 [29.7.2]: https://github.com/linkedin/rest.li/compare/v29.7.1...v29.7.2

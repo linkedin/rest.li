@@ -16,7 +16,6 @@
 
 package com.linkedin.data;
 
-
 import com.linkedin.util.ArgumentUtil;
 import java.io.Closeable;
 import java.io.IOException;
@@ -26,11 +25,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 
 /**
@@ -337,7 +334,7 @@ public class Data
     // Maintain an identity set of data complexes we encounter as we parse, to detect cycles and error out
     // on encountering them.
     //
-    Set<DataComplex> ancestorSet = Collections.newSetFromMap(new IdentityHashMap<>());
+    DataComplexIdentitySet ancestorSet = new DataComplexIdentitySet();
     traverse(obj, callback, ancestorSet, new LinkedList<>());
   }
 
@@ -350,7 +347,7 @@ public class Data
    * @param pathList Keeps track of the path when parsing. Used to populate a useful exception message on cycle detection.
    */
   private static void traverse(Object obj, TraverseCallback callback,
-      Set<DataComplex> ancestorSet, LinkedList<String> pathList) throws IOException
+      DataComplexIdentitySet ancestorSet, LinkedList<String> pathList) throws IOException
   {
     if (obj == null || obj == Data.NULL)
     {
@@ -375,8 +372,7 @@ public class Data
         }
         else
         {
-          checkForCycles(map, ancestorSet, pathList);
-          ancestorSet.add(map);
+          checkForCyclesAndAdd(map, ancestorSet, pathList);
           callback.startMap(map);
           Iterable<Map.Entry<String, Object>> orderedEntrySet = callback.orderMap(map);
           for (Map.Entry<String, Object> entry : orderedEntrySet)
@@ -400,8 +396,7 @@ public class Data
         }
         else
         {
-          checkForCycles(list, ancestorSet, pathList);
-          ancestorSet.add(list);
+          checkForCyclesAndAdd(list, ancestorSet, pathList);
           callback.startList(list);
           for (int index = 0; index < list.size(); index++)
           {
@@ -723,10 +718,11 @@ public class Data
   }
 
   /**
-   * Check for cycles.
+   * Check for cycles and add the given {@link DataComplex} to the ancestor set.
    *
    * <p>This checks if the given {@link DataComplex} is present in the given set of ancestor complexes. If yes,
-   * then it indicates that a cycle exists and we throw an exception.</p>
+   * then it indicates that a cycle exists and we throw an exception. If not, the object is added to the ancestor
+   * set.</p>
    *
    * @param dataComplex The current {@link DataComplex}
    * @param ancestorSet The set containing all ancestors of the {@link DataComplex}
@@ -734,10 +730,10 @@ public class Data
    *                 detected.
    * @throws IOException If this {@link DataComplex} is present in the ancestor set indicating a cycle.
    */
-  private static void checkForCycles(DataComplex dataComplex,
-      Set<DataComplex> ancestorSet, List<String> pathList) throws IOException
+  private static void checkForCyclesAndAdd(DataComplex dataComplex,
+      DataComplexIdentitySet ancestorSet, List<String> pathList) throws IOException
   {
-    if (ancestorSet.contains(dataComplex))
+    if (ancestorSet.add(dataComplex))
     {
       throw new IOException("Cycle detected. Path: " + pathList);
     }
@@ -1041,61 +1037,38 @@ public class Data
   /**
    * Validate that the Data object is acyclic, i.e. has no loops.
    *
-   * @param o is the Data object to validate.
+   * @param object is the Data object to validate.
    * @return true if the Data object is a acyclic, else return false.
    */
-  static boolean objectIsAcyclic(Object o)
+  static boolean objectIsAcyclic(Object object)
   {
-    return new Object()
+    if (object == null)
     {
-      private IdentityHashMap<DataComplex, Boolean> _visited = new IdentityHashMap<DataComplex, Boolean>();
-      private IdentityHashMap<DataComplex, Boolean> _path = new IdentityHashMap<DataComplex, Boolean>();
+      return true;
+    }
 
-      boolean objectIsAcyclic(Object object)
+    Class<?> klass = object.getClass();
+    if (isPrimitiveClass(klass))
+    {
+      return true;
+    }
+    else if (isComplexClass(klass))
+    {
+      DataComplex complex = (DataComplex) object;
+      try
       {
-        if (object == null)
-        {
-          return true;
-        }
-        Class<?> clas = object.getClass();
-        if (isPrimitiveClass(clas))
-        {
-          return true;
-        }
-        else if (isComplex(object))
-        {
-          DataComplex mutable = (DataComplex) object;
-          Collection<Object> values = mutable.values();
-          Boolean loop = _path.put(mutable, Boolean.TRUE);
-          if (loop == Boolean.TRUE)
-          {
-            // already seen this object in path to root
-            // must be in a loop
-            return false;
-          }
-          // mark as visited to avoid traversing again
-          Boolean visited = _visited.put(mutable, Boolean.TRUE);
-          if (visited == null)
-          {
-            // have not visited this object
-            for (Object value : values)
-            {
-              if (objectIsAcyclic(value) == false)
-              {
-                return false;
-              }
-            }
-            // remove object from path to root
-          }
-          _path.remove(mutable);
-          return true;
-        }
-        else
-        {
-          throw new IllegalStateException("Object of unknown type: " + object);
-        }
+        Data.traverse(complex, new TraverseCallback() {});
+        return true;
       }
-    }.objectIsAcyclic(o);
+      catch (IOException e)
+      {
+        return false;
+      }
+    }
+    else
+    {
+      throw new IllegalStateException("Object of unknown type: " + object);
+    }
   }
 
   /**

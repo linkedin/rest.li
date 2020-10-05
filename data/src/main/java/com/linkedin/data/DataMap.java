@@ -431,5 +431,5 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
   private boolean _madeReadOnly = false;
   private boolean _instrumented = false;
   private Map<String, Integer> _accessMap;
-  private int _dataComplexHashCode = DataComplexHashCode.nextHashCode();
+  int _dataComplexHashCode = DataComplexHashCode.nextHashCode();
 }
