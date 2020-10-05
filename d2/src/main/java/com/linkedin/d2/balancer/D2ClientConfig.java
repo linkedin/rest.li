@@ -31,14 +31,18 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpJmxManager;
+import com.linkedin.r2.RetriableRequestException;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 
 public class D2ClientConfig
 {
@@ -70,6 +74,7 @@ public class D2ClientConfig
   ScheduledExecutorService _backupRequestsExecutorService = null;
   boolean retry = false;
   int retryLimit = DEAULT_RETRY_LIMIT;
+  Predicate<Throwable> isRetryableException = e -> ExceptionUtils.indexOfType(e, RetriableRequestException.class) != -1;
   boolean warmUp = true;
   int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
@@ -122,6 +127,7 @@ public class D2ClientConfig
                  ScheduledExecutorService executorService,
                  boolean retry,
                  int retryLimit,
+                 Predicate<Throwable> isRetryableException,
                  boolean warmUp,
                  int warmUpTimeoutSeconds,
                  int warmUpConcurrentRequests,
@@ -169,6 +175,7 @@ public class D2ClientConfig
     this._executorService = executorService;
     this.retry = retry;
     this.retryLimit = retryLimit;
+    this.isRetryableException = isRetryableException;
     this.warmUp = warmUp;
     this.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     this.warmUpConcurrentRequests = warmUpConcurrentRequests;

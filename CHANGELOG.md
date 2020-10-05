@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Make `isRetryException` in RetryClient configurable
 
 ## [29.7.5] - 2020-10-05
 - Add an option to configure ProtoWriter buffer size. Set the default to 4096 to prevent thrashing.

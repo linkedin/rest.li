@@ -24,7 +24,6 @@ import com.linkedin.d2.balancer.D2ClientDelegator;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy.ExcludedHostHints;
 import com.linkedin.data.ByteString;
-import com.linkedin.r2.RetriableRequestException;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
@@ -40,7 +39,7 @@ import java.net.URI;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,11 +62,14 @@ public class RetryClient extends D2ClientDelegator
 
   private final int _limit;
 
-  public RetryClient(D2Client d2Client, int limit)
+  private final Predicate<Throwable> _isRetryable;
+
+  public RetryClient(D2Client d2Client, int limit, Predicate<Throwable> isRetryable)
   {
     super(d2Client);
     _limit = limit;
-    LOG.debug("Retry client created with limit set to: ", _limit);
+    _isRetryable = isRetryable;
+    LOG.debug("Retry client created with limit set to: " + _limit);
   }
 
   @Override
@@ -216,10 +218,10 @@ public class RetryClient extends D2ClientDelegator
     public void onError(Throwable e)
     {
       // Retry will be triggered if and only if:
-      // 1. A RetriableRequestException is thrown
+      // 1. An exception is retryable, as defined by _isRetryableException
       // 2. There is no target host hint
       boolean retry = false;
-      if (isRetryException(e))
+      if (_isRetryable.test(e))
       {
         URI targetHostUri = KeyMapper.TargetHostHints.getRequestContextTargetHost(_context);
         if (targetHostUri == null)
@@ -250,11 +252,6 @@ public class RetryClient extends D2ClientDelegator
         ExcludedHostHints.clearRequestContextExcludedHosts(_context);
         _callback.onError(e);
       }
-    }
-
-    private boolean isRetryException(Throwable e)
-    {
-      return ExceptionUtils.indexOfType(e, RetriableRequestException.class) != -1;
     }
 
     /**
