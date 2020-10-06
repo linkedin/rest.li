@@ -67,7 +67,7 @@ import java.util.Set;
 @ReadOnly({"stringA", "intA", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1",
            "ArrayWithInlineRecord/*/bar1", "validationDemoNext/stringB", "validationDemoNext/UnionFieldWithInlineRecord"})
 @CreateOnly({"stringB", "intB", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2",
-             "MapWithTyperefs/*/id"})
+             "MapWithTyperefs/*/id", "ArrayWithInlineRecord/*/bar3"})
 public class ValidationDemoResource implements KeyValueResource<Integer, ValidationDemo>
 {
   @RestMethod.Create

@@ -126,7 +126,6 @@ public class DegraderLoadBalancerStrategyConfig
   public static final double MAX_BOUNDED_LOAD_BALANCING_FACTOR = 5.0;
 
   public static final double DEFAULT_QUARANTINE_MAXPERCENT = 0.0;  // 0 means disable quarantine
-  public static final long DEFAULT_QUARANTINE_REENTRY_TIME = 30000;  // Milliseconds
   public static final int DEFAULT_QUARANTINE_CHECKNUM = 5;
   public static final long DEFAULT_QUARANTINE_CHECK_INTERVAL = 1000; // Milliseconds
   public static final long MAX_QUARANTINE_LATENCY = 1000;         // Milliseconds

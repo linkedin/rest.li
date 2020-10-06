@@ -21,7 +21,11 @@
 package com.linkedin.d2.jmx;
 
 
+import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
+import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
+import com.linkedin.d2.balancer.strategies.relative.StateUpdater;
+import com.linkedin.d2.balancer.strategies.relative.TrackerClientState;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 
@@ -29,6 +33,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 public class DegraderLoadBalancerStrategyV3Jmx implements DegraderLoadBalancerStrategyV3JmxMBean
@@ -112,4 +118,51 @@ public class DegraderLoadBalancerStrategyV3Jmx implements DegraderLoadBalancerSt
     return currentAvgClusterLatency;
   }
 
+  @Override
+  public double getLatencyStandardDeviation()
+  {
+    Set<DegraderTrackerClient> trackerClients = _strategy.getState()
+        .getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClients();
+
+    return RelativeLoadBalancerStrategyJmx.calculateStandardDeviation(trackerClients);
+  }
+
+  @Override
+  public double getMaxLatencyRelativeFactor()
+  {
+    Set<DegraderTrackerClient> trackerClients = _strategy.getState()
+        .getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClients();
+
+    double avgLatency = RelativeLoadBalancerStrategyJmx.getAvgClusterLatency(trackerClients);
+    long maxLatency = trackerClients.stream()
+        .map(trackerClient -> StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()))
+        .mapToLong(Long::longValue)
+        .max()
+        .orElse(0L);
+
+    return avgLatency == 0 ? 0 : maxLatency / avgLatency;
+  }
+
+  @Override
+  public double getNthPercentileLatencyRelativeFactor(double pct)
+  {
+    Set<DegraderTrackerClient> trackerClients = _strategy.getState()
+        .getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClients();
+
+    if (trackerClients.size() == 0)
+    {
+      return 0.0;
+    }
+
+    double avgLatency = RelativeLoadBalancerStrategyJmx.getAvgClusterLatency(trackerClients);
+    List<Long> weightedLatencies = trackerClients.stream()
+        .map(trackerClient -> StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()))
+        .sorted()
+        .collect(Collectors.toList());
+
+    int nth = Math.max((int) (pct * weightedLatencies.size()) - 1, 0);
+    long nthLatency = weightedLatencies.get(nth);
+
+    return avgLatency == 0 ? 0 : nthLatency / avgLatency;
+  }
 }

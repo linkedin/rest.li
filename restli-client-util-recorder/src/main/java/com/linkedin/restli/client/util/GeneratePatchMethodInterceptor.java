@@ -85,6 +85,8 @@ final class GeneratePatchMethodInterceptor implements MethodInterceptor
       return handleGet(method);
     else if (methodName.startsWith("remove"))
       return handleRemove(methodName);
+    else if (methodName.equals("addChangeListener") && args.length == 1)
+      return null;
     return ObjectProxyHelper.handleObjectMethods(_clazz, obj, method, args);
   }
 

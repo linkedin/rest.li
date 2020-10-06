@@ -22,18 +22,22 @@ import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
+import com.linkedin.data.ByteString;
 import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.message.rest.RestResponseFactory;
 import com.linkedin.r2.message.stream.StreamException;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.StreamResponseBuilder;
+import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.DrainReader;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
@@ -49,11 +53,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
 
 public class TrackerClientTest
 {
@@ -65,12 +71,12 @@ public class TrackerClientTest
     TestClient wrappedClient = new TestClient(true);
     Clock clock = new SettableClock();
     Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(3d);
-    TrackerClient client = new TrackerClient(uri, partitionDataMap, wrappedClient, clock, null);
+    DegraderTrackerClient client = new DegraderTrackerClientImpl(uri, partitionDataMap, wrappedClient, clock, null);
 
     Assert.assertEquals(client.getUri(), uri);
     Double clientWeight = client.getPartitionWeight(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Assert.assertEquals(clientWeight, weight);
-    Assert.assertEquals(client.getWrappedClient(), wrappedClient);
+    Assert.assertEquals(client.getTransportClient(), wrappedClient);
 
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
     Map<String, String> restWireAttrs = new HashMap<String, String>();
@@ -92,12 +98,12 @@ public class TrackerClientTest
     TestClient wrappedClient = new TestClient();
     Clock clock = new SettableClock();
     Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(3d);
-    TrackerClient client = new TrackerClient(uri, partitionDataMap, wrappedClient, clock, null);
+    DegraderTrackerClient client = new DegraderTrackerClientImpl(uri, partitionDataMap, wrappedClient, clock, null);
 
     Assert.assertEquals(client.getUri(), uri);
     Double clientWeight = client.getPartitionWeight(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Assert.assertEquals(clientWeight, weight);
-    Assert.assertEquals(client.getWrappedClient(), wrappedClient);
+    Assert.assertEquals(client.getTransportClient(), wrappedClient);
 
     RestRequest restRequest = new RestRequestBuilder(uri).build();
     Map<String, String> restWireAttrs = new HashMap<String, String>();
@@ -142,7 +148,7 @@ public class TrackerClientTest
       public void shutdown(Callback<None> callback) {}
     };
 
-    TrackerClient client = createTrackerClient(tc, clock, uri);
+    DegraderTrackerClientImpl client = (DegraderTrackerClientImpl) createTrackerClient(tc, clock, uri);
     CallTracker callTracker = client.getCallTracker();
     CallTracker.CallStats stats;
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
@@ -222,7 +228,7 @@ public class TrackerClientTest
       public void shutdown(Callback<None> callback) {}
     };
 
-    TrackerClient client = createTrackerClient(tc, clock, uri);
+    DegraderTrackerClientImpl client = (DegraderTrackerClientImpl) createTrackerClient(tc, clock, uri);
     CallTracker callTracker = client.getCallTracker();
     CallTracker.CallStats stats;
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
@@ -300,9 +306,9 @@ public class TrackerClientTest
     double initialDropRate = 0.99d;
     config.setInitialDropRate(initialDropRate);
 
-    TrackerClient client = new TrackerClient(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
-        new TestClient(), new SettableClock(), config, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
-        TrackerClient.DEFAULT_ERROR_STATUS_REGEX, uriSpecificProperties);
+    DegraderTrackerClient client = new DegraderTrackerClientImpl(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
+                                                             new TestClient(), new SettableClock(), config, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
+                                                             TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, uriSpecificProperties);
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Assert.assertEquals(degraderControl.getInitialDropRate(), DegraderImpl.DEFAULT_DO_NOT_SLOW_START_INITIAL_DROP_RATE,
         "Initial drop rate in config should have been overridden by doNotSlowStart uri property.");
@@ -320,9 +326,9 @@ public class TrackerClientTest
     double initialDropRate = 0.99d;
     config.setInitialDropRate(initialDropRate);
 
-    TrackerClient client = new TrackerClient(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
-        new TestClient(), new SettableClock(), config, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
-        TrackerClient.DEFAULT_ERROR_STATUS_REGEX, uriSpecificProperties);
+    DegraderTrackerClient client = new DegraderTrackerClientImpl(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
+                                                             new TestClient(), new SettableClock(), config, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
+                                                             TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, uriSpecificProperties);
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Assert.assertEquals(degraderControl.getInitialDropRate(), initialDropRate,
         "Initial drop rate in config should not have been overridden by doNotSlowStart uri property.");
@@ -335,7 +341,7 @@ public class TrackerClientTest
     return partitionDataMap;
   }
 
-  private TrackerClient createTrackerClient(TransportClient tc, Clock clock, URI uri)
+  private DegraderTrackerClient createTrackerClient(TransportClient tc, Clock clock, URI uri)
   {
     Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(3d);
     DegraderImpl.Config config = new DegraderImpl.Config();
@@ -343,10 +349,118 @@ public class TrackerClientTest
     config.setLowErrorRate(0.0);
     config.setMinCallCount(1);
     config.setDownStep(0.20);
-    return new TrackerClient(uri, partitionDataMap, tc, clock, config);
+    return new DegraderTrackerClientImpl(uri, partitionDataMap, tc, clock, config);
   }
 
+  public static class TestClient implements TransportClient
+  {
+    public static final int DEFAULT_REQUEST_TIMEOUT = 500;
+    public StreamRequest                   streamRequest;
+    public RestRequest                     restRequest;
+    public RequestContext                  restRequestContext;
+    public Map<String, String>             restWireAttrs;
+    public TransportCallback<StreamResponse> streamCallback;
+    public TransportCallback<RestResponse>   restCallback;
+    public ScheduledExecutorService _scheduler;
 
+    public boolean                         shutdownCalled;
+    private final boolean _emptyResponse;
+    private boolean _dontCallCallback;
+    private int _minRequestTimeout;
+
+    public TestClient() { this(true);}
+
+    public TestClient(boolean emptyResponse)
+    {
+      this(emptyResponse, false, DEFAULT_REQUEST_TIMEOUT);
+    }
+
+    public TestClient(boolean emptyResponse, boolean dontCallCallback, int minRequestTimeout)
+    {
+      this(emptyResponse, dontCallCallback, minRequestTimeout, Executors.newSingleThreadScheduledExecutor());
+    }
+
+    public TestClient(boolean emptyResponse, boolean dontCallCallback, int minRequestTimeout, ScheduledExecutorService scheduler)
+    {
+      _emptyResponse = emptyResponse;
+      _dontCallCallback = dontCallCallback;
+
+      // this parameter is important to respect the contract between R2 and D2 to never have a connection shorter than
+      // the request timeout to not affect the D2 loadbalancing/degrading
+      _minRequestTimeout = minRequestTimeout;
+      _scheduler = scheduler;
+    }
+
+    @Override
+    public void restRequest(RestRequest request,
+                     RequestContext requestContext,
+                     Map<String, String> wireAttrs,
+                     TransportCallback<RestResponse> callback)
+    {
+      restRequest = request;
+      restRequestContext = requestContext;
+      restWireAttrs = wireAttrs;
+      restCallback = callback;
+      RestResponseBuilder builder = new RestResponseBuilder();
+      RestResponse response = _emptyResponse ? builder.build() :
+          builder.setEntity("This is not empty".getBytes()).build();
+      if (_dontCallCallback)
+      {
+        scheduleTimeout(requestContext, callback);
+        return;
+      }
+      callback.onResponse(TransportResponseImpl.success(response));
+    }
+
+    @Override
+    public void streamRequest(StreamRequest request,
+                            RequestContext requestContext,
+                            Map<String, String> wireAttrs,
+                            TransportCallback<StreamResponse> callback)
+    {
+      streamRequest = request;
+      restRequestContext = requestContext;
+      restWireAttrs = wireAttrs;
+      streamCallback = callback;
+
+      StreamResponseBuilder builder = new StreamResponseBuilder();
+      StreamResponse response = _emptyResponse ? builder.build(EntityStreams.emptyStream())
+          : builder.build(EntityStreams.newEntityStream(new ByteStringWriter(ByteString.copy("This is not empty".getBytes()))));
+      if (_dontCallCallback)
+      {
+        scheduleTimeout(requestContext, callback);
+        return;
+      }
+      callback.onResponse(TransportResponseImpl.success(response, wireAttrs));
+    }
+
+    private <T> void scheduleTimeout(RequestContext requestContext, TransportCallback<T> callback)
+    {
+      Integer requestTimeout = (Integer) requestContext.getLocalAttr(R2Constants.REQUEST_TIMEOUT);
+      if (requestTimeout == null)
+      {
+        requestTimeout = DEFAULT_REQUEST_TIMEOUT;
+      }
+      if (requestTimeout < _minRequestTimeout)
+      {
+        throw new RuntimeException(
+            "The timeout is always supposed to be greater than the timeout defined by the service."
+                + " This error is enforced in the tests");
+      }
+      Integer finalRequestTimeout = requestTimeout;
+      _scheduler.schedule(() -> callback.onResponse(
+        TransportResponseImpl.error(new TimeoutException("Timeout expired after " + finalRequestTimeout + "ms"))),
+          requestTimeout, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public void shutdown(Callback<None> callback)
+    {
+      shutdownCalled = true;
+
+      callback.onSuccess(None.none());
+    }
+  }
 
   public static class TestTransportCallback<T> implements TransportCallback<T>
   {

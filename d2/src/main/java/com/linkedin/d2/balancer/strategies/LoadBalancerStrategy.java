@@ -25,6 +25,7 @@ import com.linkedin.r2.message.RequestContext;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -38,6 +39,10 @@ import javax.annotation.Nullable;
  */
 public interface LoadBalancerStrategy
 {
+  /**
+   * @return Name of the strategy.
+   */
+  String getName();
 
   /**
    * Given a list of tracker clients this return one tracker client to use
@@ -54,7 +59,7 @@ public interface LoadBalancerStrategy
                                  RequestContext requestContext,
                                  long clusterGenerationId,
                                  int partitionId,
-                                 List<TrackerClient> trackerClients);
+                                 Map<URI, TrackerClient> trackerClients);
 
   /**
    * Returns a ring that can be used to choose a host. The ring will contain all the
@@ -72,7 +77,7 @@ public interface LoadBalancerStrategy
   @Nonnull
   Ring<URI> getRing(long clusterGenerationId,
                     int partitionId,
-                    List<TrackerClient> trackerClients);
+                    Map<URI, TrackerClient> trackerClients);
 
   /**
    * Return the hashFunction which will be applied on {@code Request} to find the host for routing purpose

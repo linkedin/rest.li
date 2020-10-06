@@ -1,0 +1,5 @@
+record Bar {
+  f1: int,
+  f2: string
+}
+

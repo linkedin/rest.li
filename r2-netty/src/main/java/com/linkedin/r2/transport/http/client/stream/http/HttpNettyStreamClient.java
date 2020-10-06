@@ -39,7 +39,7 @@ import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.r2.util.Timeout;
 import io.netty.channel.Channel;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.EventLoopGroup;
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -59,8 +59,8 @@ public class HttpNettyStreamClient extends AbstractNettyStreamClient
   /**
    * Creates a new HttpNettyStreamClient
    *
-   * @param eventLoopGroup            The NioEventLoopGroup; it is the caller's responsibility to
-   *                                  shut it down
+   * @param eventLoopGroup            The EventLoopGroup; it is the caller's responsibility to shut
+   *                                  it down
    * @param executor                  An executor; it is the caller's responsibility to shut it down
    * @param requestTimeout            Timeout, in ms, to get a connection from the pool or create one
    * @param shutdownTimeout           Timeout, in ms, the client should wait after shutdown is
@@ -71,7 +71,7 @@ public class HttpNettyStreamClient extends AbstractNettyStreamClient
    * @param channelPoolManager        channelPoolManager instance to retrieve http only channels
    * @param sslChannelPoolManager     channelPoolManager instance to retrieve https only connection
    */
-  public HttpNettyStreamClient(NioEventLoopGroup eventLoopGroup,
+  public HttpNettyStreamClient(EventLoopGroup eventLoopGroup,
                                ScheduledExecutorService executor,
                                long requestTimeout,
                                long shutdownTimeout,

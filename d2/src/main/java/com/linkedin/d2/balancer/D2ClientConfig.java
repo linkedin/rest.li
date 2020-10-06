@@ -60,7 +60,7 @@ public class D2ClientConfig
   boolean shutdownAsynchronously = false;
   boolean isSymlinkAware = true;
   Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
-  boolean useNewEphemeralStoreWatcher = false;
+  boolean useNewEphemeralStoreWatcher = true;
   HealthCheckOperations healthCheckOperations = null;
   boolean enableSaveUriDataOnDisk = false;
   /**
@@ -70,7 +70,7 @@ public class D2ClientConfig
   ScheduledExecutorService _backupRequestsExecutorService = null;
   boolean retry = false;
   int retryLimit = DEAULT_RETRY_LIMIT;
-  boolean warmUp = false;
+  boolean warmUp = true;
   int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
   int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
@@ -79,6 +79,8 @@ public class D2ClientConfig
   BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer = null;
   long backupRequestsLatencyNotificationInterval = 1;
   TimeUnit backupRequestsLatencyNotificationIntervalUnit = TimeUnit.MINUTES;
+  // TODO: Once the change is fully verified, we should always enable the async feature
+  boolean enableBackupRequestsClientAsync = false;
   EventEmitter eventEmitter = null;
   PartitionAccessorRegistry partitionAccessorRegistry = null;
   Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
@@ -89,6 +91,7 @@ public class D2ClientConfig
   ScheduledExecutorService startUpExecutorService = null;
   JmxManager jmxManager = new NoOpJmxManager();
   String d2JmxManagerPrefix = "UnknownPrefix";
+  boolean enableRelativeLoadBalancer = false;
 
   private static final int DEAULT_RETRY_LIMIT = 3;
 
@@ -127,6 +130,7 @@ public class D2ClientConfig
                  BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer,
                  long backupRequestsLatencyNotificationInterval,
                  TimeUnit backupRequestsLatencyNotificationIntervalUnit,
+                 boolean enableBackupRequestsClientAsync,
                  ScheduledExecutorService backupRequestsExecutorService,
                  EventEmitter emitter,
                  PartitionAccessorRegistry partitionAccessorRegistry,
@@ -139,7 +143,8 @@ public class D2ClientConfig
                  ScheduledExecutorService startUpExecutorService,
                  JmxManager jmxManager,
                  String d2JmxManagerPrefix,
-                 int zookeeperReadWindowMs)
+                 int zookeeperReadWindowMs,
+                 boolean enableRelativeLoadBalancer)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -172,6 +177,7 @@ public class D2ClientConfig
     this.backupRequestsStrategyStatsConsumer = backupRequestsStrategyStatsConsumer;
     this.backupRequestsLatencyNotificationInterval = backupRequestsLatencyNotificationInterval;
     this.backupRequestsLatencyNotificationIntervalUnit = backupRequestsLatencyNotificationIntervalUnit;
+    this.enableBackupRequestsClientAsync = enableBackupRequestsClientAsync;
     this._backupRequestsExecutorService = backupRequestsExecutorService;
     this.eventEmitter = emitter;
     this.partitionAccessorRegistry = partitionAccessorRegistry;
@@ -185,5 +191,6 @@ public class D2ClientConfig
     this.jmxManager = jmxManager;
     this.d2JmxManagerPrefix = d2JmxManagerPrefix;
     this.zookeeperReadWindowMs = zookeeperReadWindowMs;
+    this.enableRelativeLoadBalancer = enableRelativeLoadBalancer;
   }
 }

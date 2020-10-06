@@ -1,20 +1,33 @@
 namespace com.linkedin.restli.examples.greetings.api
 
+/**
+ * Sample record for testing Rest.li validation. Comments indicate how fields are treated in ValidationDemoResource,
+ * AutomaticValidationDemoResource, and AutomaticValidationWithProjectionResource.
+ */
 record ValidationDemo includes IncludeMe {
 
+  // ReadOnly at the root
   @validate.strlen = {
     "max" : 10,
     "min" : 1
   }
   stringA: string
+
+  // ReadOnly at the root
   intA: optional int
+
+  // CreateOnly at the root, ReadOnly when inside field validationDemoNext
   stringB: string
 
+  // CreateOnly at the root
   @validate.seven = { }
   intB: optional int
 
+  // ReadOnly when inside field validationDemoNext
   UnionFieldWithInlineRecord: union[record myRecord {
+    // ReadOnly at the root
     foo1: int
+    // CreateOnly at the root
     foo2: optional int
   }, enum myEnum {
     FOOFOO
@@ -22,10 +35,14 @@ record ValidationDemo includes IncludeMe {
   }]
 
   ArrayWithInlineRecord: optional array[record myItem {
+    // ReadOnly at the root
     bar1: string
     bar2: string
+    // CreateOnly at the root
+    bar3: optional string
   }]
 
+  // Greeting field id is CreateOnly at the root
   MapWithTyperefs: optional map[string, typeref myGreeting = Greeting]
   validationDemoNext: optional ValidationDemo
 }

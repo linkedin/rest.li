@@ -1,0 +1,6 @@
+/**
+ * A test schema which is used as a base schema in extension schema.
+ */
+record Bar {
+  testField: int
+}

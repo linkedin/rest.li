@@ -17,6 +17,11 @@
 package com.linkedin.d2.balancer.properties;
 
 
+import com.linkedin.d2.D2QuarantineProperties;
+import com.linkedin.d2.D2RelativeStrategyProperties;
+import com.linkedin.d2.D2RingProperties;
+import com.linkedin.d2.HttpStatusCodeRange;
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
 
@@ -66,6 +71,7 @@ public class PropertyKeys
   public static final String DEFAULT_ROUTING = "defaultRouting";
   public static final String ALLOWED_CLIENT_OVERRIDE_KEYS = "allowedClientOverrideKeys";
   public static final String SERVICE_METADATA_PROPERTIES = "serviceMetadataProperties";
+  public static final String RELATIVE_STRATEGY_PROPERTIES = "relativeStrategyProperties";
 
   //load balancer specific properties
   public static final String LB_STRATEGY_LIST = "loadBalancerStrategyList";
@@ -98,6 +104,36 @@ public class PropertyKeys
   public static final String HTTP_LB_ERROR_STATUS_REGEX = "http.loadBalancer.errorStatusRegex";
   public static final String HTTP_LB_LOW_EVENT_EMITTING_INTERVAL = "http.loadBalancer.lowEmittingInterval";
   public static final String HTTP_LB_HIGH_EVENT_EMITTING_INTERVAL = "http.loadBalancer.highEmittingInterval";
+
+  // Relative load balancer specific properties
+  public static final String UP_STEP = getFieldName(D2RelativeStrategyProperties.fields().upStep());
+  public static final String DOWN_STEP = getFieldName(D2RelativeStrategyProperties.fields().downStep());
+  public static final String RELATIVE_LATENCY_HIGH_THRESHOLD_FACTOR = getFieldName(D2RelativeStrategyProperties.fields().relativeLatencyHighThresholdFactor());
+  public static final String RELATIVE_LATENCY_LOW_THRESHOLD_FACTOR = getFieldName(D2RelativeStrategyProperties.fields().relativeLatencyLowThresholdFactor());
+  public static final String HIGH_ERROR_RATE = getFieldName(D2RelativeStrategyProperties.fields().highErrorRate());
+  public static final String LOW_ERROR_RATE = getFieldName(D2RelativeStrategyProperties.fields().lowErrorRate());
+  public static final String MIN_CALL_COUNT = getFieldName(D2RelativeStrategyProperties.fields().minCallCount());
+  public static final String UPDATE_INTERVAL_MS = getFieldName(D2RelativeStrategyProperties.fields().updateIntervalMs());
+  public static final String INITIAL_HEALTH_SCORE = getFieldName(D2RelativeStrategyProperties.fields().initialHealthScore());
+  public static final String SLOW_START_THRESHOLD = getFieldName(D2RelativeStrategyProperties.fields().slowStartThreshold());
+  public static final String ERROR_STATUS_FILTER = getFieldName(D2RelativeStrategyProperties.fields().errorStatusFilter());
+  public static final String ERROR_STATUS_LOWER_BOUND = getFieldName(HttpStatusCodeRange.fields().lowerBound());
+  public static final String ERROR_STATUS_UPPER_BOUND = getFieldName(HttpStatusCodeRange.fields().upperBound());
+  public static final String EMITTING_INTERVAL_MS = getFieldName(D2RelativeStrategyProperties.fields().emittingIntervalMs());
+  public static final String ENABLE_FAST_RECOVERY = getFieldName(D2RelativeStrategyProperties.fields().enableFastRecovery());
+  public static final String QUARANTINE_PROPERTIES = getFieldName(D2RelativeStrategyProperties.fields().quarantineProperties());
+  public static final String QUARANTINE_MAX_PERCENT = getFieldName(D2QuarantineProperties.fields().quarantineMaxPercent());
+  public static final String QUARANTINE_HEALTH_CHECK_METHOD = getFieldName(D2QuarantineProperties.fields().healthCheckMethod());
+  public static final String QUARANTINE_HEALTH_CHECK_PATH = getFieldName(D2QuarantineProperties.fields().healthCheckPath());
+  public static final String RING_PROPERTIES = getFieldName(D2RelativeStrategyProperties.fields().ringProperties());
+  public static final String RING_POINTS_PER_WEIGHT = getFieldName(D2RingProperties.fields().pointsPerWeight());
+  public static final String RING_HASH_METHOD = getFieldName(D2RingProperties.fields().hashMethod());
+  public static final String RING_HASH_CONFIG = getFieldName(D2RingProperties.fields().hashConfig());
+  public static final String RING_HASH_RING_POINT_CLEANUP_RATE = getFieldName(D2RingProperties.fields().hashRingPointCleanupRate());
+  public static final String RING_CONSISTENT_HASH_ALGORITHM = getFieldName(D2RingProperties.fields().consistentHashAlgorithm());
+  public static final String RING_NUMBER_OF_PROBES = getFieldName(D2RingProperties.fields().numberOfProbes());
+  public static final String RING_NUMBER_OF_POINTS_PER_HOST = getFieldName(D2RingProperties.fields().numberOfPointsPerHost());
+  public static final String RING_BOUNDED_LOAD_BALANCING_FACTOR = getFieldName(D2RingProperties.fields().boundedLoadBalancingFactor());
 
   //used by service metadata properties
   public static final String SERVICE_FOLLOW_REDIRECTION_MAX_HOP = "followRedirection.maxHop";
@@ -185,4 +221,13 @@ public class PropertyKeys
   // used by ClusterInfoProvider
   public static final String HTTP_SCHEME = "http";
   public static final String HTTPS_SCHEME = "https";
+
+  private static String getFieldName(PathSpec pathSpec)
+  {
+    if (pathSpec.getPathComponents().size() != 1)
+    {
+      throw new IllegalArgumentException("Field name can not be converted.");
+    }
+    return pathSpec.getPathComponents().get(0);
+  }
 }

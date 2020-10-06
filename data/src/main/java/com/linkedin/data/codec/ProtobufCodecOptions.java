@@ -28,6 +28,11 @@ import com.linkedin.data.codec.symbol.SymbolTable;
 public class ProtobufCodecOptions
 {
   /**
+   * Default protobuf writer buffer size.
+   */
+  public static final int DEFAULT_BUFFER_SIZE = 4096;
+
+  /**
    * The symbol table to use for serialization and deserialization.
    *
    * <p>Set to {@link EmptySymbolTable#SHARED}, if unspecified.</p>
@@ -65,15 +70,23 @@ public class ProtobufCodecOptions
    */
   private final boolean _shouldTolerateInvalidSurrogatePairs;
 
+  /**
+   * The size of the {@link com.linkedin.data.protobuf.ProtoWriter} buffer when serializing payloads. Defaults to
+   * {@link #DEFAULT_BUFFER_SIZE}.
+   */
+  private final int _protoWriterBufferSize;
+
   private ProtobufCodecOptions(SymbolTable symbolTable,
                                boolean enableASCIIOnlyStrings,
                                boolean enableFixedLengthFloatDoubles,
-                               boolean tolerateInvalidSurrogatePairs)
+                               boolean tolerateInvalidSurrogatePairs,
+                               int protoWriterBufferSize)
   {
     _symbolTable = symbolTable == null ? EmptySymbolTable.SHARED : symbolTable;
     _enableASCIIOnlyStrings = enableASCIIOnlyStrings;
     _enableFixedLengthFloatDoubles = enableFixedLengthFloatDoubles;
     _shouldTolerateInvalidSurrogatePairs = tolerateInvalidSurrogatePairs;
+    _protoWriterBufferSize = protoWriterBufferSize;
   }
 
   /**
@@ -108,6 +121,13 @@ public class ProtobufCodecOptions
    */
   public boolean shouldTolerateInvalidSurrogatePairs() {
     return _shouldTolerateInvalidSurrogatePairs;
+  }
+
+  /**
+   * @return The size of the {@link com.linkedin.data.protobuf.ProtoWriter} buffer when serializing payloads.
+   */
+  public int getProtoWriterBufferSize() {
+    return _protoWriterBufferSize;
   }
 
   /**
@@ -154,12 +174,19 @@ public class ProtobufCodecOptions
      */
     private boolean _shouldTolerateInvalidSurrogatePairs;
 
+    /**
+     * The size of the {@link com.linkedin.data.protobuf.ProtoWriter} buffer when serializing payloads. Defaults to
+     * {@link #DEFAULT_BUFFER_SIZE}.
+     */
+    private int _protoWriterBufferSize;
+
     public Builder()
     {
       _symbolTable = null;
       _enableASCIIOnlyStrings = false;
       _enableFixedLengthFloatDoubles = false;
       _shouldTolerateInvalidSurrogatePairs = true;
+      _protoWriterBufferSize = DEFAULT_BUFFER_SIZE;
     }
 
     /**
@@ -209,6 +236,16 @@ public class ProtobufCodecOptions
     }
 
     /**
+     * Set the size of the {@link com.linkedin.data.protobuf.ProtoWriter} buffer when serializing payloads.
+     */
+    public Builder setProtoWriterBufferSize(int protoWriterBufferSize)
+    {
+      assert protoWriterBufferSize > 0;
+      this._protoWriterBufferSize = protoWriterBufferSize;
+      return this;
+    }
+
+    /**
      * Build an options instance.
      */
     public ProtobufCodecOptions build()
@@ -216,7 +253,8 @@ public class ProtobufCodecOptions
       return new ProtobufCodecOptions(_symbolTable,
           _enableASCIIOnlyStrings,
           _enableFixedLengthFloatDoubles,
-          _shouldTolerateInvalidSurrogatePairs);
+          _shouldTolerateInvalidSurrogatePairs,
+          _protoWriterBufferSize);
     }
   }
 }

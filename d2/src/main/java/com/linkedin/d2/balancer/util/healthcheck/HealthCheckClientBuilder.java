@@ -29,7 +29,7 @@ public class HealthCheckClientBuilder
   }
 
   public HealthCheckClientBuilder(HealthCheckOperations ops, String path, String servicePath,
-      Clock clk, long latency, TrackerClient client, String method)
+                                  Clock clk, long latency, TrackerClient client, String method)
   {
     _healthOperations = ops;
     _healthCheckPath = path;
@@ -65,7 +65,7 @@ public class HealthCheckClientBuilder
     }
 
     return new TransportHealthCheck(_clock,
-                                    _client.getWrappedClient(),
+                                    _client.getTransportClient(),
                                     operations.buildRestRequest(_method, newUri),
                                     operations.buildRequestContextSupplier(),
                                     operations.buildWireAttributesSupplier(),

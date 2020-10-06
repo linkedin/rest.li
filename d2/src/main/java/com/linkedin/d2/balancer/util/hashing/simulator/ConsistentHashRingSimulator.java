@@ -17,7 +17,7 @@
 package com.linkedin.d2.balancer.util.hashing.simulator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.linkedin.d2.balancer.strategies.degrader.RingFactory;
+import com.linkedin.d2.balancer.strategies.RingFactory;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.util.degrader.CallCompletion;
 import com.linkedin.util.degrader.CallTracker;

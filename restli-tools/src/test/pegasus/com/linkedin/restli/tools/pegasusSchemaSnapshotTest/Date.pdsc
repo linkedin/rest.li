@@ -1,0 +1,14 @@
+{
+  "type" : "record",
+  "name" : "Date",
+  "fields" : [ {
+    "name" : "day",
+    "type" : "int"
+  }, {
+    "name" : "month",
+    "type" : "int"
+  }, {
+    "name" : "year",
+    "type" : "int"
+  } ]
+}

@@ -16,11 +16,9 @@
 
 package com.linkedin.data;
 
-
+import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.collections.CheckedMap;
-
-import org.testng.annotations.Test;
-
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -33,9 +31,9 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import org.testng.annotations.Test;
 
-import static com.linkedin.data.TestUtil.asMap;
-import static com.linkedin.data.TestUtil.noCommonDataComplex;
+import static com.linkedin.data.TestUtil.*;
 import static org.testng.Assert.*;
 
 public class TestData
@@ -1879,5 +1877,42 @@ public class TestData
       assertEquals(noCommonDataComplex(o1, o2), expected);
       assertEquals(noCommonDataComplex(o2, o1), expected);
     }
+  }
+
+  @Test(expectedExceptions = IOException.class)
+  public void testMapCycleDetection() throws Exception
+  {
+    DataMap root = new DataMap();
+    root.getUnderlying().put("child", root);
+    new JacksonDataCodec().mapToString(root);
+  }
+
+  @Test(expectedExceptions = IOException.class)
+  public void testListCycleDetection() throws Exception
+  {
+    DataList root = new DataList();
+    root.getUnderlying().add(root);
+    new JacksonDataCodec().listToString(root);
+  }
+
+  @Test(expectedExceptions = IOException.class)
+  public void testMixedCycleDetection() throws Exception
+  {
+    DataMap root = new DataMap();
+    DataList list = new DataList();
+    list.getUnderlying().add(root);
+    root.getUnderlying().put("child", list);
+    new JacksonDataCodec().mapToString(root);
+  }
+
+  @Test
+  public void testNonCyclicDuplicates() throws Exception
+  {
+    DataMap root = new DataMap();
+    DataMap sub = new DataMap();
+    sub.put("a", "b");
+    root.put("c", sub);
+    root.put("d", sub);
+    new JacksonDataCodec().mapToString(root);
   }
 }

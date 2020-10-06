@@ -29,17 +29,18 @@ import org.slf4j.LoggerFactory;
 /**
  * Subscriber to the service data to update the SimpleLoadBalancerState
  */
-class ServiceLoadBalancerSubscriber extends
-  AbstractLoadBalancerSubscriber<ServiceProperties>
+class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<ServiceProperties>
 {
   private static final Logger _log =
     LoggerFactory.getLogger(ServiceLoadBalancerSubscriber.class);
 
   private SimpleLoadBalancerState _simpleLoadBalancerState;
 
-  public ServiceLoadBalancerSubscriber(PropertyEventBus<ServiceProperties> eventBus, SimpleLoadBalancerState simpleLoadBalancerState)
+  public ServiceLoadBalancerSubscriber(PropertyEventBus<ServiceProperties> eventBus,
+                                       SimpleLoadBalancerState simpleLoadBalancerState)
   {
     super(LoadBalancerState.LoadBalancerStateListenerCallback.SERVICE, eventBus);
+
     _simpleLoadBalancerState = simpleLoadBalancerState;
   }
 
@@ -75,7 +76,7 @@ class ServiceLoadBalancerSubscriber extends
       }
 
       _simpleLoadBalancerState.refreshServiceStrategies(discoveryProperties);
-      _simpleLoadBalancerState.refreshTransportClientsPerService(discoveryProperties);
+      _simpleLoadBalancerState.refreshClients(discoveryProperties);
 
       // refresh state for which services are on which clusters
       Set<String> serviceNames =
@@ -84,7 +85,7 @@ class ServiceLoadBalancerSubscriber extends
       if (serviceNames == null)
       {
         serviceNames =
-          Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+          Collections.newSetFromMap(new ConcurrentHashMap<>());
         _simpleLoadBalancerState.getServicesPerCluster().put(discoveryProperties.getClusterName(), serviceNames);
       }
 

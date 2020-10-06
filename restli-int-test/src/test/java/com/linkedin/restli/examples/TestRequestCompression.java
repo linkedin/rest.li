@@ -233,7 +233,7 @@ public class TestRequestCompression extends RestLiIntegrationTest
     }
     HttpClientFactory httpClientFactory = new HttpClientFactory.Builder()
         .setFilterChain(FilterChains.empty())
-        .setNioEventLoopGroup(new NioEventLoopGroup())
+        .setEventLoopGroup(new NioEventLoopGroup())
         .setShutDownFactory(true)
         .setScheduleExecutorService(executor)
         .setShutdownScheduledExecutorService(true)

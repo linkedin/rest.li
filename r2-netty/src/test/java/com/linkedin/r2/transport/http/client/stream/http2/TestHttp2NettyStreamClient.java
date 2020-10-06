@@ -35,6 +35,7 @@ import com.linkedin.r2.transport.http.client.HttpClientBuilder;
 import com.linkedin.r2.testutils.server.HttpServerBuilder;
 import com.linkedin.test.util.ExceptionTestUtil;
 import com.linkedin.test.util.retry.SingleRetry;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http2.Http2Exception;
@@ -70,7 +71,7 @@ public class TestHttp2NettyStreamClient
   private static final String URL = SCHEME + "://" + HOST + ":" + PORT + "/any";
   private static final AsciiString HOST_NAME = new AsciiString(HOST + ':' + PORT);
 
-  private NioEventLoopGroup _eventLoop;
+  private EventLoopGroup _eventLoop;
   private ScheduledExecutorService _scheduler;
 
   @BeforeClass

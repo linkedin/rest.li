@@ -202,7 +202,7 @@ public class TestResponseCompression extends RestLiIntegrationTest
       responseCompressionConfigs.put(SERVICE_NAME, responseCompressionConfig);
     }
     HttpClientFactory httpClientFactory = new HttpClientFactory.Builder()
-        .setNioEventLoopGroup(new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop")))
+        .setEventLoopGroup(new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop")))
         .setShutDownFactory(true)
         .setScheduleExecutorService(executor)
         .setShutdownScheduledExecutorService(true)

@@ -17,12 +17,15 @@
 package com.linkedin.pegasus.gradle;
 
 import com.linkedin.pegasus.gradle.PegasusOptions.IdlOptions;
+import com.linkedin.pegasus.gradle.internal.CompatibilityLogChecker;
 import com.linkedin.pegasus.gradle.tasks.ChangedFileReportTask;
 import com.linkedin.pegasus.gradle.tasks.CheckIdlTask;
+import com.linkedin.pegasus.gradle.tasks.CheckPegasusSnapshotTask;
 import com.linkedin.pegasus.gradle.tasks.CheckRestModelTask;
 import com.linkedin.pegasus.gradle.tasks.CheckSnapshotTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateAvroSchemaTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateDataTemplateTask;
+import com.linkedin.pegasus.gradle.tasks.GeneratePegasusSnapshotTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateRestClientTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateRestModelTask;
 import com.linkedin.pegasus.gradle.tasks.PublishRestModelTask;
@@ -32,6 +35,8 @@ import com.linkedin.pegasus.gradle.tasks.ValidateSchemaAnnotationTask;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -55,6 +60,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaBasePlugin;
+import org.gradle.api.plugins.JavaPlatformPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.Copy;
@@ -65,6 +71,7 @@ import org.gradle.api.tasks.Sync;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
+import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
@@ -534,6 +541,10 @@ public class PegasusPlugin implements Plugin<Project>
   public static final String SNAPSHOT_FILE_SUFFIX = ".snapshot.json";
   public static final String SNAPSHOT_COMPAT_REQUIREMENT = "rest.model.compatibility";
   public static final String IDL_COMPAT_REQUIREMENT = "rest.idl.compatibility";
+  // Pegasus schema compatibility level configuration, which is used to define the {@link CompatibilityLevel}.
+  public static final String PEGASUS_SCHEMA_SNAPSHOT_REQUIREMENT = "pegasusPlugin.pegasusSchema.compatibility";
+  // CompatibilityOptions Mode configuration, which is used to define the {@link CompatibilityOptions#Mode} in the compatibility checker.
+  private static final String PEGASUS_COMPATIBILITY_MODE = "pegasusPlugin.pegasusSchemaCompatibilityCheckMode";
 
   private static final Pattern TEST_DIR_REGEX = Pattern.compile("^(integ)?[Tt]est");
   private static final String SNAPSHOT_NO_PUBLISH = "rest.model.noPublish";
@@ -570,6 +581,29 @@ public class PegasusPlugin implements Plugin<Project>
   private static final String ENABLE_ARG_FILE = "pegasusPlugin.enableArgFile";
 
   private static final String PEGASUS_PLUGIN_CONFIGURATION = "pegasusPlugin";
+
+  // Enable the use of generic pegasus schema compatibility checker
+  private static final String ENABLE_PEGASUS_SCHEMA_COMPATIBILITY_CHECK = "pegasusPlugin.enablePegasusSchemaCompatibilityCheck";
+
+  private static final String PEGASUS_SCHEMA_SNAPSHOT = "PegasusSchemaSnapshot";
+
+  private static final String PEGASUS_EXTENSION_SCHEMA_SNAPSHOT = "PegasusExtensionSchemaSnapshot";
+
+  private static final String PEGASUS_SCHEMA_SNAPSHOT_DIR = "pegasusSchemaSnapshot";
+
+  private static final String PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_DIR = "pegasusExtensionSchemaSnapshot";
+
+  private static final String PEGASUS_SCHEMA_SNAPSHOT_DIR_OVERRIDE = "overridePegasusSchemaSnapshotDir";
+
+  private static final String PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_DIR_OVERRIDE = "overridePegasusExtensionSchemaSnapshotDir";
+
+  private static final String SRC = "src";
+
+  private static final String SCHEMA_ANNOTATION_HANDLER_CONFIGURATION = "schemaAnnotationHandler";
+
+  private static final String COMPATIBILITY_OPTIONS_MODE_DATA = "DATA";
+
+  private static final String COMPATIBILITY_LEVEL_BACKWARDS = "BACKWARDS";
 
   @SuppressWarnings("unchecked")
   private Class<? extends Plugin<Project>> _thisPluginType = (Class<? extends Plugin<Project>>)
@@ -729,7 +763,7 @@ public class PegasusPlugin implements Plugin<Project>
     //
     // The configuration contains dependencies to schema annotation handlers which would process schema annotations
     // and validate.
-    Configuration schemaAnnotationHandler = configurations.maybeCreate("schemaAnnotationHandler");
+    Configuration schemaAnnotationHandler = configurations.maybeCreate(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION);
 
     // configuration for publishing jars containing rest idl and generated client builders
     // to the project artifacts for including in the ivy.xml
@@ -810,6 +844,14 @@ public class PegasusPlugin implements Plugin<Project>
       // if it can fail, fail it early
       configureRestModelGeneration(project, sourceSet);
 
+      // Do compatibility check for schemas under "pegasus" directory if the configuration property is provided.
+      if (isPropertyTrue(project, ENABLE_PEGASUS_SCHEMA_COMPATIBILITY_CHECK))
+      {
+        configurePegasusSchemaSnapshotGeneration(project, sourceSet, false);
+      }
+
+      configurePegasusSchemaSnapshotGeneration(project, sourceSet, true);
+
       configureConversionUtilities(project, sourceSet);
 
       GenerateDataTemplateTask generateDataTemplateTask = configureDataTemplateGeneration(project, sourceSet);
@@ -854,10 +896,10 @@ public class PegasusPlugin implements Plugin<Project>
                 {
                   task.setInputDir(generateDataTemplatesTask.getInputDir());
                   task.setResolverPath(getDataModelConfig(project, sourceSet)); // same resolver path as generateDataTemplatesTask
-                  task.setClassPath(project.getConfigurations() .getByName("schemaAnnotationHandler")
+                  task.setClassPath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION)
                                            .plus(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION))
-                                           .plus(project.getConfigurations().getByName("runtime")));
-                  task.setHandlerJarPath(project.getConfigurations() .getByName("schemaAnnotationHandler"));
+                                           .plus(project.getConfigurations().getByName(JavaPlatformPlugin.RUNTIME_CONFIGURATION_NAME)));
+                  task.setHandlerJarPath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION));
                   if (isPropertyTrue(project, ENABLE_ARG_FILE))
                   {
                     task.setEnableArgFile(true);
@@ -1070,6 +1112,32 @@ public class PegasusPlugin implements Plugin<Project>
     }
   }
 
+  private static String getPegasusSchemaSnapshotPath(Project project, SourceSet sourceSet)
+  {
+    String override = getOverridePath(project, sourceSet, PEGASUS_SCHEMA_SNAPSHOT_DIR_OVERRIDE);
+    if (override == null)
+    {
+      return SRC + File.separatorChar + sourceSet.getName() + File.separatorChar + PEGASUS_SCHEMA_SNAPSHOT_DIR;
+    }
+    else
+    {
+      return override;
+    }
+  }
+
+  private static String getPegasusExtensionSchemaSnapshotPath(Project project, SourceSet sourceSet)
+  {
+    String override = getOverridePath(project, sourceSet, PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_DIR_OVERRIDE);
+    if (override == null)
+    {
+      return SRC + File.separatorChar + sourceSet.getName() + File.separatorChar + PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_DIR;
+    }
+    else
+    {
+      return override;
+    }
+  }
+
   private static String getOverridePath(Project project, SourceSet sourceSet, String overridePropertyName)
   {
     String sourceSetPropertyName = sourceSet.getName() + '.' + overridePropertyName;
@@ -1097,7 +1165,30 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static boolean isTaskSuccessful(Task task)
   {
-    return task.getState().getExecuted() && !task.getState().getSkipped() && task.getState().getFailure() == null;
+    return task.getState().getExecuted()
+            // Task is not successful if it is not upto date and is skipped.
+            && !(task.getState().getSkipped() && !task.getState().getUpToDate())
+            && task.getState().getFailure() == null;
+  }
+
+  private static boolean isResultEquivalent(File compatibilityLogFile)
+  {
+      return isResultEquivalent(compatibilityLogFile, false);
+  }
+
+  private static boolean isResultEquivalent(File compatibilityLogFile, boolean restSpecOnly)
+  {
+    CompatibilityLogChecker logChecker = new CompatibilityLogChecker();
+    try
+    {
+      logChecker.write(Files.readAllBytes(compatibilityLogFile.toPath()));
+    }
+    catch (IOException e)
+    {
+      throw new GradleException("Error while processing compatibility report: " + e.getMessage());
+    }
+    return logChecker.getRestSpecCompatibility().isEmpty() &&
+            (restSpecOnly || logChecker.getModelCompatibility().isEmpty());
   }
 
   protected void configureRestModelGeneration(Project project, SourceSet sourceSet)
@@ -1259,45 +1350,19 @@ public class PegasusPlugin implements Plugin<Project>
             task.setSuffix(SNAPSHOT_FILE_SUFFIX);
 
             task.onlyIf(t ->
-            {
-              project.getLogger().info(
-                  "IDL_NO_PUBLISH: {}\n" +
-                  "SNAPSHOT_NO_PUBLISH: {}\n" +
-                  "checkRestModelTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is Not Equivalent: {}\n" +
-                  "checkSnapshotTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is Not Equivalent: {}\n",
-                  isPropertyTrue(project, IDL_NO_PUBLISH),
-                  isPropertyTrue(project, SNAPSHOT_NO_PUBLISH),
-                  checkRestModelTask.getState().getExecuted(),
-                  !checkRestModelTask.getState().getSkipped(),
-                  checkRestModelTask.getState().getFailure() == null,
-                  !checkRestModelTask.isEquivalent(),
-                  checkSnapshotTask.getState().getExecuted(),
-                  !checkSnapshotTask.getState().getSkipped(),
-                  checkSnapshotTask.getState().getFailure() == null,
-                  !checkSnapshotTask.isEquivalent());
-
-              return !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
-              (
-                (
-                   isPropertyTrue(project, SKIP_IDL_CHECK) &&
-                   isTaskSuccessful(checkSnapshotTask) &&
-                   !(checkSnapshotTask.isEquivalent())
-                ) ||
-                (
-                  !isPropertyTrue(project, SKIP_IDL_CHECK) &&
-                  isTaskSuccessful(checkRestModelTask) &&
-                  !(checkRestModelTask.isEquivalent())
-                )
-              );
-            });
+                    !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
+                    (
+                      (
+                         isPropertyTrue(project, SKIP_IDL_CHECK) &&
+                         isTaskSuccessful(checkSnapshotTask) &&
+                         !isResultEquivalent(checkSnapshotTask.getSummaryTarget())
+                      ) ||
+                      (
+                        !isPropertyTrue(project, SKIP_IDL_CHECK) &&
+                        isTaskSuccessful(checkRestModelTask) &&
+                        !isResultEquivalent(checkRestModelTask.getSummaryTarget())
+                      )
+                    ));
           });
 
       Task publishRestliIdlTask = project.getTasks()
@@ -1308,58 +1373,21 @@ public class PegasusPlugin implements Plugin<Project>
             task.setSuffix(IDL_FILE_SUFFIX);
 
             task.onlyIf(t ->
-            {
-              project.getLogger().info(
-                  "SKIP_IDL: {}\n" +
-                  "IDL_NO_PUBLISH: {}\n" +
-                  "SNAPSHOT_NO_PUBLISH: {}\n" +
-                  "checkRestModelTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is Not Equivalent: {}\n" +
-                  "checkIdlTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is Not Equivalent: {}\n" +
-                  "checkSnapshotTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is RestSpec Not Equivalent: {}\n",
-                  isPropertyTrue(project, SKIP_IDL_CHECK),
-                  isPropertyTrue(project, IDL_NO_PUBLISH),
-                  isPropertyTrue(project, SNAPSHOT_NO_PUBLISH),
-                  checkRestModelTask.getState().getExecuted(),
-                  !checkRestModelTask.getState().getSkipped(),
-                  checkRestModelTask.getState().getFailure() == null,
-                  !checkRestModelTask.isEquivalent(),
-                  checkIdlTask.getState().getExecuted(),
-                  !checkIdlTask.getState().getSkipped(),
-                  checkIdlTask.getState().getFailure() == null,
-                  !checkIdlTask.isEquivalent(),
-                  checkSnapshotTask.getState().getExecuted(),
-                  !checkSnapshotTask.getState().getSkipped(),
-                  checkSnapshotTask.getState().getFailure() == null,
-                  !checkSnapshotTask.isEquivalent());
-
-              return !isPropertyTrue(project, IDL_NO_PUBLISH) &&
-              (
-                (
-                   isPropertyTrue(project, SKIP_IDL_CHECK) &&
-                   isTaskSuccessful(checkSnapshotTask) &&
-                   !(checkSnapshotTask.isRestSpecEquivalent())
-                ) ||
-                (
-                   !isPropertyTrue(project, SKIP_IDL_CHECK) &&
-                   (
-                      (isTaskSuccessful(checkRestModelTask) && !(checkRestModelTask.isRestSpecEquivalent())) ||
-                      (isTaskSuccessful(checkIdlTask) && !(checkIdlTask.isEquivalent()))
-                   )
-                )
-              );
-            });
+                    !isPropertyTrue(project, IDL_NO_PUBLISH) &&
+                    (
+                      (
+                         isPropertyTrue(project, SKIP_IDL_CHECK) &&
+                         isTaskSuccessful(checkSnapshotTask) &&
+                         !isResultEquivalent(checkSnapshotTask.getSummaryTarget(), true)
+                      ) ||
+                      (
+                         !isPropertyTrue(project, SKIP_IDL_CHECK) &&
+                         (
+                            (isTaskSuccessful(checkRestModelTask) && !isResultEquivalent(checkRestModelTask.getSummaryTarget(), true)) ||
+                            (isTaskSuccessful(checkIdlTask) && !isResultEquivalent(checkIdlTask.getSummaryTarget()))
+                         )
+                      )
+                    ));
           });
 
       project.getLogger().info("API project selected for {} is {}",
@@ -1388,6 +1416,54 @@ public class PegasusPlugin implements Plugin<Project>
         }
       }));
     });
+  }
+
+  protected void configurePegasusSchemaSnapshotGeneration(Project project, SourceSet sourceSet, boolean isExtensionSchema)
+  {
+    File schemaDir = isExtensionSchema? project.file(getExtensionSchemaPath(project, sourceSet))
+        : project.file(getDataSchemaPath(project, sourceSet));
+
+    Path publishablePegasusSchemaSnapshotDir = project.getBuildDir().toPath().resolve(sourceSet.getName() +
+            (isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT));
+
+    Task generatePegasusSchemaSnapshot = generatePegasusSchemaSnapshot(project, sourceSet,
+        isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT, schemaDir,
+        publishablePegasusSchemaSnapshotDir.toFile(), isExtensionSchema);
+
+    File pegasusSchemaSnapshotDir = project.file(isExtensionSchema ? getPegasusExtensionSchemaSnapshotPath(project, sourceSet)
+        : getPegasusSchemaSnapshotPath(project, sourceSet));
+    pegasusSchemaSnapshotDir.mkdirs();
+
+    Task checkSchemaSnapshot = project.getTasks().create(sourceSet.getTaskName("check",
+        isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT),
+        CheckPegasusSnapshotTask.class, task ->
+        {
+          task.dependsOn(generatePegasusSchemaSnapshot);
+          task.setCurrentSnapshotDirectory(publishablePegasusSchemaSnapshotDir.toFile());
+          task.setPreviousSnapshotDirectory(pegasusSchemaSnapshotDir);
+          task.setCodegenClasspath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION)
+              .plus(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION))
+              .plus(project.getConfigurations().getByName(JavaPlatformPlugin.RUNTIME_CONFIGURATION_NAME)));
+          task.setCompatibilityLevel(isExtensionSchema ? COMPATIBILITY_LEVEL_BACKWARDS
+              :PropertyUtil.findCompatLevel(project, FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT));
+          task.setCompatibilityMode(isExtensionSchema ? COMPATIBILITY_OPTIONS_MODE_DATA :
+              PropertyUtil.findCompatMode(project, PEGASUS_COMPATIBILITY_MODE));
+          task.setExtensionSchema(isExtensionSchema);
+          task.setHandlerJarPath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION));
+
+          task.onlyIf(t ->
+          {
+            String pegasusSnapshotCompatPropertyName = findProperty(FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT);
+            return isExtensionSchema || !project.hasProperty(pegasusSnapshotCompatPropertyName) ||
+                !"off".equalsIgnoreCase((String) project.property(pegasusSnapshotCompatPropertyName));
+          });
+        });
+
+    Task publishPegasusSchemaSnapshot = publishPegasusSchemaSnapshot(project, sourceSet,
+        isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT, checkSchemaSnapshot,
+        publishablePegasusSchemaSnapshotDir.toFile(), pegasusSchemaSnapshotDir);
+
+    project.getTasks().getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(publishPegasusSchemaSnapshot);
   }
 
   @SuppressWarnings("deprecation")
@@ -2039,6 +2115,9 @@ public class PegasusPlugin implements Plugin<Project>
       case IDL:
         property = IDL_COMPAT_REQUIREMENT;
         break;
+      case PEGASUS_SCHEMA_SNAPSHOT:
+        property = PEGASUS_SCHEMA_SNAPSHOT_REQUIREMENT;
+        break;
       default:
         throw new GradleException("No property defined for compatibility type " + type);
     }
@@ -2094,5 +2173,36 @@ public class PegasusPlugin implements Plugin<Project>
         return exclude;
       });
     });
+  }
+
+  private Task generatePegasusSchemaSnapshot(Project project, SourceSet sourceSet, String taskName, File inputDir, File outputDir,
+      boolean isExtensionSchema)
+  {
+    return project.getTasks().create(sourceSet.getTaskName("generate", taskName),
+        GeneratePegasusSnapshotTask.class, task ->
+        {
+          task.setInputDir(inputDir);
+          task.setResolverPath(getDataModelConfig(project, sourceSet).plus(project.files(getDataSchemaPath(project, sourceSet))));
+          task.setClassPath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
+          task.setPegasusSchemaSnapshotDestinationDir(outputDir);
+          task.setExtensionSchema(isExtensionSchema);
+          if (isPropertyTrue(project, ENABLE_ARG_FILE))
+          {
+            task.setEnableArgFile(true);
+          }
+        });
+  }
+
+  private Task publishPegasusSchemaSnapshot(Project project, SourceSet sourceSet, String taskName, Task checkPegasusSnapshotTask,
+      File inputDir, File outputDir)
+  {
+    return project.getTasks().create(sourceSet.getTaskName("publish", taskName),
+        Sync.class, task ->
+        {
+          task.dependsOn(checkPegasusSnapshotTask);
+          task.from(inputDir);
+          task.into(outputDir);
+          task.onlyIf(t -> !SharedFileUtils.getSuffixedFiles(project, inputDir, PDL_FILE_SUFFIX).isEmpty());
+        });
   }
 }

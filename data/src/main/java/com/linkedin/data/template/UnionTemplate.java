@@ -18,9 +18,11 @@ package com.linkedin.data.template;
 
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.UnionDataSchema;
+
 
 /**
  * Abstract {@link DataTemplate} for unions.
@@ -436,6 +438,21 @@ public class UnionTemplate implements DataTemplate<Object>
       _cache = wrapped;
     }
     return wrapped;
+  }
+
+  /**
+   * Register a change listener to get notified when the underlying map changes.
+   */
+  protected void addChangeListener(CheckedMap.ChangeListener<String, Object> listener)
+  {
+    //
+    // This UGLY hack is needed because IdResponse breaks the implicit RecordTemplate contract and passes in
+    // a null datamap. We even have a test for this obnoxious behavior.
+    //
+    if (_map != null)
+    {
+      _map.addChangeListener(listener);
+    }
   }
 
   protected Object _data;

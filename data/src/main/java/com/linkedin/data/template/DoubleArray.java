@@ -18,6 +18,7 @@ package com.linkedin.data.template;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.util.ArgumentUtil;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -67,5 +68,19 @@ public final class DoubleArray extends DirectArrayTemplate<Double>
   public DoubleArray copy() throws CloneNotSupportedException
   {
     return (DoubleArray) super.copy();
+  }
+
+  @Override
+  protected Object coerceInput(Double object) throws ClassCastException
+  {
+    ArgumentUtil.notNull(object, "object");
+    return DataTemplateUtil.coerceDoubleInput(object);
+  }
+
+  @Override
+  protected Double coerceOutput(Object object) throws TemplateOutputCastException
+  {
+    assert(object != null);
+    return DataTemplateUtil.coerceDoubleOutput(object);
   }
 }

@@ -5,6 +5,7 @@ plugins {
 jmh {
   include = '.*ConsistentHashRingBenchmark.*'
   include = '.*URIMapperVSKeyMapperBenchmark.*'
+  include = '.*LoadBalancerStrategyBenchmark.*'
   zip64 = true
 }
 

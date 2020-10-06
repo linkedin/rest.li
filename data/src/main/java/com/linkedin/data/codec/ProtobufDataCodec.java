@@ -129,7 +129,7 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public byte[] mapToBytes(DataMap map) throws IOException
   {
-    FastByteArrayOutputStream baos = new FastByteArrayOutputStream();
+    FastByteArrayOutputStream baos = new FastByteArrayOutputStream(_options.getProtoWriterBufferSize());
     writeMap(map, baos);
     return baos.toByteArray();
   }
@@ -137,7 +137,7 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public byte[] listToBytes(DataList list) throws IOException
   {
-    FastByteArrayOutputStream baos = new FastByteArrayOutputStream();
+    FastByteArrayOutputStream baos = new FastByteArrayOutputStream(_options.getProtoWriterBufferSize());
     writeList(list, baos);
     return baos.toByteArray();
   }
@@ -145,7 +145,7 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public void writeMap(DataMap map, OutputStream out) throws IOException
   {
-    try(TraverseCallback callback = createTraverseCallback(new ProtoWriter(out)))
+    try(TraverseCallback callback = createTraverseCallback(new ProtoWriter(out, _options.getProtoWriterBufferSize())))
     {
       Data.traverse(map, callback);
     }
@@ -154,7 +154,7 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public void writeList(DataList list, OutputStream out) throws IOException
   {
-    try(TraverseCallback callback = createTraverseCallback(new ProtoWriter(out)))
+    try(TraverseCallback callback = createTraverseCallback(new ProtoWriter(out, _options.getProtoWriterBufferSize())))
     {
       Data.traverse(list, callback);
     }

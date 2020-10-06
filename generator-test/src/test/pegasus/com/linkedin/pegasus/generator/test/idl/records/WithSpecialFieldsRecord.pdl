@@ -1,0 +1,7 @@
+record WithSpecialFieldsRecord {
+  /**
+   * This tests that field with name "fields" does not conflict with
+   * the static member "_fields" generated in the Java template class.
+   */
+  fields: string
+}

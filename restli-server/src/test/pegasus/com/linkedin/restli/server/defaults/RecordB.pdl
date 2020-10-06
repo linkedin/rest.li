@@ -1,0 +1,6 @@
+namespace com.linkedin.restli.server.defaults
+
+record RecordB {
+  field1: array[int] = [-1],
+  field2: map[string, array[string]] = {"defaultKey" : ["defaultValue1", "defaultValue2"]}
+}

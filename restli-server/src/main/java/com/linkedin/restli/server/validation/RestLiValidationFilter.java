@@ -150,8 +150,7 @@ public class RestLiValidationFilter implements Filter
     }
 
     ResourceMethod method = requestContext.getMethodType();
-    RestLiDataValidator validator = new RestLiDataValidator(resourceClass.getAnnotations(),
-        requestContext.getFilterResourceModel().getValueClass(), method);
+    RestLiDataValidator validator = createRequestRestLiDataValidator(requestContext);
     RestLiRequestData requestData = requestContext.getRequestData();
 
     ValidationResult result;
@@ -280,28 +279,9 @@ public class RestLiValidationFilter implements Filter
 
     if (shouldValidateOnResponse(requestContext))
     {
-      // Get validating schema if it was already built in onRequest
-      DataSchema validatingSchema = (DataSchema) requestContext.getFilterScratchpad().get(VALIDATING_SCHEMA_KEY);
 
-      // Otherwise, build validating schema from original schema
-      if (validatingSchema == null)
-      {
-        try
-        {
-          // Value class from resource model is the only source of truth for record schema.
-          // Schema from the record template itself should not be used.
-          validatingSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
-        }
-        catch (TemplateRuntimeException e)
-        {
-          throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, TEMPLATE_RUNTIME_EXCEPTION_MESSAGE);
-        }
-      }
-
-      Class<?> resourceClass = requestContext.getFilterResourceModel().getResourceClass();
       ResourceMethod method = requestContext.getMethodType();
-      RestLiDataValidator validator = new RestLiDataSchemaDataValidator(resourceClass.getAnnotations(),
-          method, validatingSchema);
+      RestLiDataValidator validator = createResponseRestLiDataValidator(requestContext);
 
       switch (method)
       {
@@ -486,5 +466,49 @@ public class RestLiValidationFilter implements Filter
     CompletableFuture<Void> future = new CompletableFuture<>();
     future.completeExceptionally(t);
     return future;
+  }
+
+  /**
+   * Creates a {@link RestLiDataValidator} to use for validation onRequest.
+   * Other implementations that extend this class can override this method to gain access to the validator.
+   *
+   * @param requestContext {@link FilterRequestContext} to provide input to the data validator
+   * @return a {@link RestLiDataValidator}
+   */
+  protected RestLiDataValidator createRequestRestLiDataValidator(FilterRequestContext requestContext)
+  {
+    return new RestLiDataValidator(requestContext.getFilterResourceModel().getResourceClass().getAnnotations(),
+        requestContext.getFilterResourceModel().getValueClass(), requestContext.getMethodType());
+  }
+
+  /**
+   * Creates a {@link RestLiDataValidator} to use for validation onResponse.
+   * Other implementations that extend this class can override this method to gain access to the validator.
+   *
+   * @param requestContext {@link FilterRequestContext} to provide input to the data validator
+   * @return a {@link RestLiDataValidator}
+   */
+  protected RestLiDataValidator createResponseRestLiDataValidator(FilterRequestContext requestContext)
+  {
+    // Get validating schema if it was already built in onRequest
+    DataSchema validatingSchema = (DataSchema) requestContext.getFilterScratchpad().get(VALIDATING_SCHEMA_KEY);
+
+    // Otherwise, build validating schema from original schema
+    if (validatingSchema == null)
+    {
+      try
+      {
+        // Value class from resource model is the only source of truth for record schema.
+        // Schema from the record template itself should not be used.
+        validatingSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
+      }
+      catch (TemplateRuntimeException e)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, TEMPLATE_RUNTIME_EXCEPTION_MESSAGE);
+      }
+    }
+
+    return new RestLiDataSchemaDataValidator(requestContext.getFilterResourceModel().getResourceClass().getAnnotations(),
+        requestContext.getMethodType(), validatingSchema);
   }
 }

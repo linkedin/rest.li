@@ -1013,6 +1013,34 @@ public class TestSchemaTranslator
               null
           },
           {
+              // required array of record field with default.
+              "{ " +
+                  "  \"type\" : \"record\", " +
+                  "  \"name\" : \"foo\", " +
+                  "  \"fields\" : [ " +
+                  "    { " +
+                  "      \"name\" : \"f1\", " +
+                  "      \"type\" : { " +
+                  "         \"type\": \"array\", " +
+                  "         \"items\": { " +
+                  "           \"type\" : \"record\", " +
+                  "           \"name\" : \"bar\", " +
+                  "           \"fields\" : [ " +
+                  "             { \"name\" : \"b1\", \"type\" : \"int\" } " +
+                  "            ] " +
+                  "          } " +
+                  "       }, " +
+                  "       \"default\": [] " +
+                  "    } "+
+                  "  ] " +
+                  "}",
+              allModes,
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"bar\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : \"int\" } ] } }, \"default\" : [  ] } ] }",
+              null,
+              null,
+              null
+          },
+          {
               // include
               "{ " +
                   "  \"type\" : \"record\", " +

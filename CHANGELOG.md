@@ -14,9 +14,90 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.5.5] - 2020-08-20
-- Updated File and class path DataSchemaResolvers to resolve extension schemas from /extensions directory if specified.
-- Added DarkGateKeeper to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
+## [29.7.5] - 2020-10-05
+- Add an option to configure ProtoWriter buffer size. Set the default to 4096 to prevent thrashing.
+- Use an identity hashmap implementation that uses DataComplex#dataComplexHashCode under the hood for better performance
+
+## [29.7.4] - 2020-10-03
+Fix bug affecting record fields named "fields".
+
+## [29.7.3] - 2020-10-02
+- Bump `parseq` dependency from `2.6.31` to `4.1.6`.
+- Add `checkPegasusSchemaSnapshot` task. 
+   - The task will be used to check any pegasus schema compatible and incompatible changes.
+   - The pegasus schema may or may not be part of a Rest.li resource.
+   - The task will be triggered at build time, if user provides gradle property: `pegasusPlugin.enablePegasusSchemaCompatibilityCheck=true`.
+- Fix task caching issue by using the output file instead of task properties. Task properties will not reflect the correct state when a task is loaded from cache.
+- Add method in ParseResult class to get base schema
+- Fix collectionMetadata missing link issue when collection count is 0
+
+## [29.7.2] - 2020-09-25
+- Move from lambdas to explicit change listeners since lambda garbage collection is unreliable in Java
+
+## [29.7.1] - 2020-09-24
+- Handle setting map change listener correctly on copy and clone
+
+## [29.7.0] - 2020-09-23
+- Generate code to avoid reflection and map access to improve generated data template runtime performance.
+    - Use member variables to avoid looking in to DataMap for every read calls. ChangeListeners on Map added to invalidate these fields when underlying map changes.
+    - Use optimized coercion methods for primitive fields.
+    - Use generated constants for default values for faster lookup.
+
+## [29.6.9] - 2020-09-22
+- Mitigate schema parsing performance regression introduced in `29.5.1` by reusing `ParseResult` instances
+  in `DataSchemaParser` to avoid unnecessary `TreeMap` sorting.
+- Include `HttpStatus` code while throwing `IllegalArgumentException`.
+- Add monitoring metrics for relative strategy in DegraderLoadBalancerStrategyV3Jmx
+
+## [29.6.8] - 2020-09-22
+- Optimized logger initialization in d2 degrader.
+
+## [29.6.7] - 2020-09-18
+- Added async call to Zookeeper in backup request client.
+
+## [29.6.6] - 2020-09-17
+- Loosen `ReadOnly`/`CreateOnly` validation when setting array-descendant fields in a patch request.
+- Add `generatePegasusSchemaSnapshot` task.
+- Remove `final` from nested generated classes, such as inline unions.
+
+## [29.6.5] - 2020-09-09
+- Update `RestLiValidationFilter` and `RestLiDataValidator` to expose creation of Rest.li validators.
+
+## [29.6.4] - 2020-09-08
+- Fix inconsistent issue in extension schema file names: from `Extension` to `Extensions`
+- Fix a bug in `FileFormatDataSchemaParser` and remove `isExtensionEntry` method call to simplify the logic.
+- Update `ExtensionSchemaValidationCmdLineApp` with more validations.
+
+## [29.6.3] - 2020-09-03
+- Updated HTTP/2 parent channel idle timeout logging level to info from error.
+
+## [29.6.2] - 2020-08-31
+- Updated d2 client default config values.
+
+## [29.6.1] - 2020-08-31
+- Update R2's HTTP client API to support other Netty `EventLoopGroup` in addition to `NioEventLoopGroup`.
+- Fix a `RetryClient` bug where `NullPointerException` is raised when excluded hosts hint is not set at retry.
+- Update `ExtensionSchemaAnnotation` schema: remove resource field, add `versionSuffix` as an optional field.
+
+## [29.6.0] - 2020-08-28
+- Refactored the existing d2 degrader load balancer.
+- Implemented a new load balancer that is based on average cluster latency.
+
+## [29.5.8] - 2020-08-27
+- Make `ChangedFileReportTask` gradle task compatible with Gradle 6.0
+
+## [29.5.7] - 2020-08-26
+- Add pdsc support for `ExtensionsDataSchemaResolver` for support legacy files in pdsc.
+- Add/patch default values in Rest.li responses, controlled by the `$sendDefault` flag in the URL or server configs.
+
+## [29.5.6] - 2020-08-21
+- Add a constructor for `DataSchemaParser`, which is able to pass `ExtensionsDataSchemaResolver` to
+  the `DataSchemaParser` to parse schemas from both `extensions` and `pegasus` directories.
+
+## [29.5.5] - 2020-08-21
+- Updated File and class path DataSchemaResolvers to resolve extension schemas from `/extensions` directory if specified.
+- Added `DarkGateKeeper` to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
+>>>>>>> upstream/master
 
 ## [29.5.4] - 2020-08-17
 - Increase default timeout for symbol table fetch to 1s.
@@ -33,6 +114,7 @@ and what APIs have changed, if applicable.
 
 ## [29.5.1] - 2020-08-14
 - Provide an option in `SmoothRateLimiter` to not drop tasks if going above the max buffered. Dropping tasks might be more diruptive to workflows compared to just not ratelimit.
+- Fix non-deterministic issues on generated java files to solve build performance issues.
 
 ## [29.5.0] - 2020-08-12
 - Add Callback method for `ClusterInfoProvider.getDarkClusterConfigMap`.
@@ -4606,12 +4688,32 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.5.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.5...master
+[29.7.5]: https://github.com/linkedin/rest.li/compare/v29.7.4...v29.7.5
+[29.7.4]: https://github.com/linkedin/rest.li/compare/v29.7.3...v29.7.4
+[29.7.3]: https://github.com/linkedin/rest.li/compare/v29.7.2...v29.7.3
+[29.7.2]: https://github.com/linkedin/rest.li/compare/v29.7.1...v29.7.2
+[29.7.1]: https://github.com/linkedin/rest.li/compare/v29.7.0...v29.7.1
+[29.7.0]: https://github.com/linkedin/rest.li/compare/v29.6.9...v29.7.0
+[29.6.9]: https://github.com/linkedin/rest.li/compare/v29.6.8...v29.6.9
+[29.6.8]: https://github.com/linkedin/rest.li/compare/v29.6.7...v29.6.8
+[29.6.7]: https://github.com/linkedin/rest.li/compare/v29.6.6...v29.6.7
+[29.6.6]: https://github.com/linkedin/rest.li/compare/v29.6.5...v29.6.6
+[29.6.5]: https://github.com/linkedin/rest.li/compare/v29.6.5...master
+[29.6.4]: https://github.com/linkedin/rest.li/compare/v29.6.3...v29.6.4
+[29.6.3]: https://github.com/linkedin/rest.li/compare/v29.6.2...v29.6.3
+[29.6.2]: https://github.com/linkedin/rest.li/compare/v29.6.1...v29.6.2
+[29.6.1]: https://github.com/linkedin/rest.li/compare/v29.6.0...v29.6.1
+[29.6.0]: https://github.com/linkedin/rest.li/compare/v29.5.8...v29.6.0
+[29.5.8]: https://github.com/linkedin/rest.li/compare/v29.5.7...v29.5.8
+[29.5.7]: https://github.com/linkedin/rest.li/compare/v29.5.6...v29.5.7
+[29.5.6]: https://github.com/linkedin/rest.li/compare/v29.5.5...v29.5.6
 [29.5.5]: https://github.com/linkedin/rest.li/compare/v29.5.4...v29.5.5
 [29.5.4]: https://github.com/linkedin/rest.li/compare/v29.5.3...v29.5.4
 [29.5.3]: https://github.com/linkedin/rest.li/compare/v29.5.2...v29.5.3
 [29.5.2]: https://github.com/linkedin/rest.li/compare/v29.5.1...v29.5.2
-[29.5.1]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.1
+[29.5.1]: https://github.com/linkedin/rest.li/compare/v29.5.0...v29.5.1
+[29.5.0]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.0
 [29.4.14]: https://github.com/linkedin/rest.li/compare/v29.4.13...v29.4.14
 [29.4.13]: https://github.com/linkedin/rest.li/compare/v29.4.12...v29.4.13
 [29.4.12]: https://github.com/linkedin/rest.li/compare/v29.4.11...v29.4.12

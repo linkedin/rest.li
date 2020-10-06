@@ -792,7 +792,7 @@ public class TemplateSpecGenerator
         // enclosingClass flag indicates whether a class is nested or not.
         classTemplateSpec.setEnclosingClass(enclosingClass);
         classTemplateSpec.setClassName(classInfo.name);
-        classTemplateSpec.setModifiers(ModifierSpec.PUBLIC, ModifierSpec.STATIC, ModifierSpec.FINAL);
+        classTemplateSpec.setModifiers(ModifierSpec.PUBLIC, ModifierSpec.STATIC);
       }
       else
       {

@@ -55,6 +55,7 @@ import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.util.clock.SystemClock;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -77,7 +78,7 @@ import org.slf4j.LoggerFactory;
  * A factory for HttpNettyClient instances.
  *
  * All clients created by the factory will share the same resources, in particular the
- * {@link io.netty.channel.nio.NioEventLoopGroup} and {@link ScheduledExecutorService}.
+ * {@link io.netty.channel.EventLoopGroup} and {@link ScheduledExecutorService}.
  *
  * In order to shutdown cleanly, all clients issued by the factory should be shutdown via
  * {@link TransportClient#shutdown(com.linkedin.common.callback.Callback)} and the factory
@@ -172,7 +173,7 @@ public class HttpClientFactory implements TransportClientFactory
 
   private static final String LIST_SEPARATOR = ",";
 
-  private final NioEventLoopGroup          _eventLoopGroup;
+  private final EventLoopGroup             _eventLoopGroup;
   private final ScheduledExecutorService   _executor;
   private final ExecutorService            _callbackExecutorGroup;
   private final boolean                    _shutdownFactory;
@@ -265,7 +266,7 @@ public class HttpClientFactory implements TransportClientFactory
    * Creates a new HttpClientFactory.
    *
    * @param filters the filter chain shared by all Clients created by this factory
-   * @param eventLoopGroup the {@link NioEventLoopGroup} that all Clients created by this
+   * @param eventLoopGroup the {@link EventLoopGroup} that all Clients created by this
    *          factory will share
    * @param shutdownFactory if true, the channelFactory will be shut down when this
    *          factory is shut down
@@ -277,7 +278,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor)
@@ -295,7 +296,7 @@ public class HttpClientFactory implements TransportClientFactory
    * Creates a new HttpClientFactory.
    *
    * @param filters the filter chain shared by all Clients created by this factory
-   * @param eventLoopGroup the {@link NioEventLoopGroup} that all Clients created by this
+   * @param eventLoopGroup the {@link EventLoopGroup} that all Clients created by this
    *          factory will share
    * @param shutdownFactory if true, the channelFactory will be shut down when this
    *          factory is shut down
@@ -311,7 +312,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
@@ -333,7 +334,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
@@ -350,7 +351,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
@@ -370,7 +371,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
@@ -391,7 +392,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
@@ -414,7 +415,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
@@ -432,7 +433,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
@@ -454,7 +455,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
@@ -477,7 +478,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
@@ -501,7 +502,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
@@ -524,7 +525,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
@@ -548,7 +549,7 @@ public class HttpClientFactory implements TransportClientFactory
    */
   @Deprecated
   public HttpClientFactory(FilterChain filters,
-                           NioEventLoopGroup eventLoopGroup,
+                           EventLoopGroup eventLoopGroup,
                            boolean shutdownFactory,
                            ScheduledExecutorService executor,
                            boolean shutdownExecutor,
@@ -569,7 +570,7 @@ public class HttpClientFactory implements TransportClientFactory
   }
 
   private HttpClientFactory(FilterChain filters,
-                            NioEventLoopGroup eventLoopGroup,
+                            EventLoopGroup eventLoopGroup,
                             boolean shutdownFactory,
                             ScheduledExecutorService executor,
                             boolean shutdownExecutor,
@@ -593,7 +594,7 @@ public class HttpClientFactory implements TransportClientFactory
   }
 
   private HttpClientFactory(FilterChain filters,
-      NioEventLoopGroup eventLoopGroup,
+      EventLoopGroup eventLoopGroup,
       boolean shutdownFactory,
       ScheduledExecutorService executor,
       boolean shutdownExecutor,
@@ -619,7 +620,7 @@ public class HttpClientFactory implements TransportClientFactory
   }
 
   private HttpClientFactory(FilterChain filters,
-                            NioEventLoopGroup eventLoopGroup,
+                            EventLoopGroup eventLoopGroup,
                             boolean shutdownFactory,
                             ScheduledExecutorService executor,
                             boolean shutdownExecutor,
@@ -685,7 +686,7 @@ public class HttpClientFactory implements TransportClientFactory
 
   public static class Builder
   {
-    private NioEventLoopGroup          _eventLoopGroup = null;
+    private EventLoopGroup             _eventLoopGroup = null;
     private ScheduledExecutorService   _executor = null;
     private ExecutorService            _callbackExecutorGroup = null;
     private boolean                    _shutdownFactory = true;
@@ -710,9 +711,21 @@ public class HttpClientFactory implements TransportClientFactory
     private int _channelPoolWaiterTimeout = DEFAULT_CHANNELPOOL_WAITER_TIMEOUT;
 
     /**
+     * @param eventLoopGroup the {@link EventLoopGroup} that all Clients created by this
+     *                       factory will share
+     */
+    public Builder setEventLoopGroup(EventLoopGroup eventLoopGroup)
+    {
+      _eventLoopGroup = eventLoopGroup;
+      return this;
+    }
+
+    /**
      * @param nioEventLoopGroup the {@link NioEventLoopGroup} that all Clients created by this
      *                          factory will share
+     * @deprecated Use {@link #setEventLoopGroup} instead
      */
+    @Deprecated
     public Builder setNioEventLoopGroup(NioEventLoopGroup nioEventLoopGroup)
     {
       _eventLoopGroup = nioEventLoopGroup;
@@ -882,7 +895,7 @@ public class HttpClientFactory implements TransportClientFactory
     {
       List<ExecutorService> executorsToShutDown = new ArrayList<>();
 
-      NioEventLoopGroup eventLoopGroup = _eventLoopGroup;
+      EventLoopGroup eventLoopGroup = _eventLoopGroup;
       if (eventLoopGroup == null)
       {
         eventLoopGroup = new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop"));

@@ -150,6 +150,7 @@ public class TestGetResponseBuilder
     EasyMock.expect(mockContext.getProjectionMode()).andReturn(projectionMode).once();
     EasyMock.expect(mockContext.getProjectionMask()).andReturn(maskTree).once();
     EasyMock.expect(mockContext.getAlwaysProjectedFields()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.expect(mockContext.isFillInDefaultsRequested()).andReturn(false).anyTimes();
     EasyMock.replay(mockContext);
     return mockContext;
   }

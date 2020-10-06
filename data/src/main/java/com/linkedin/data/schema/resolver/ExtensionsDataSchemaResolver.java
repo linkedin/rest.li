@@ -16,9 +16,8 @@
 
 package com.linkedin.data.schema.resolver;
 
+import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.grammar.PdlSchemaParser;
-import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
 
 
 /**
@@ -30,23 +29,29 @@ public class ExtensionsDataSchemaResolver extends AbstractMultiFormatDataSchemaR
 {
   public ExtensionsDataSchemaResolver(String resolverPath)
   {
-    addResolver(createSchemaResolver(resolverPath, SchemaDirectoryName.PEGASUS, this));
-    addResolver(createSchemaResolver(resolverPath, SchemaDirectoryName.EXTENSIONS, this));
+    for (DataSchemaParserFactory parserFactory : AbstractMultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES)
+    {
+      addResolver(createSchemaResolver(resolverPath, SchemaDirectoryName.PEGASUS, this, parserFactory));
+      addResolver(createSchemaResolver(resolverPath, SchemaDirectoryName.EXTENSIONS, this, parserFactory));
+    }
   }
 
   public ExtensionsDataSchemaResolver(String resolverPath, DataSchemaResolver dependencyResolver)
   {
-    addResolver(createSchemaResolver(resolverPath, SchemaDirectoryName.PEGASUS, dependencyResolver));
-    addResolver(createSchemaResolver(resolverPath, SchemaDirectoryName.EXTENSIONS, dependencyResolver));
+    for (DataSchemaParserFactory parserFactory : AbstractMultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES)
+    {
+      addResolver(createSchemaResolver(resolverPath, SchemaDirectoryName.PEGASUS, dependencyResolver, parserFactory));
+      addResolver(createSchemaResolver(resolverPath, SchemaDirectoryName.EXTENSIONS, dependencyResolver, parserFactory));
+    }
   }
 
   private FileDataSchemaResolver createSchemaResolver(String resolverPath, SchemaDirectoryName schemaDirectoryName,
-      DataSchemaResolver dependencyResolver)
+      DataSchemaResolver dependencyResolver, DataSchemaParserFactory parserFactory)
   {
     FileDataSchemaResolver resolver =
-        new FileDataSchemaResolver(PdlSchemaParserFactory.instance(), resolverPath, dependencyResolver);
-    resolver.setExtension(PdlSchemaParser.FILE_EXTENSION);
-    resolver.setSchemasDirectoryName(SchemaDirectoryName.EXTENSIONS);
+        new FileDataSchemaResolver(parserFactory, resolverPath, dependencyResolver);
+    resolver.setExtension("." + parserFactory.getLanguageExtension());
+    resolver.setSchemasDirectoryName(schemaDirectoryName);
     return resolver;
   }
 

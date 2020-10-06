@@ -25,6 +25,7 @@ import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsCallbackBuilders;
 
+import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -201,8 +202,20 @@ public class TestMultiplexerIntegration extends RestLiIntegrationTest
     Response<Greeting> directResponse = getResult(directCallback);
     Assert.assertEquals(muxResponse.getStatus(), directResponse.getStatus());
     Assert.assertEquals(muxResponse.getEntity(), directResponse.getEntity());
-    // multiplexed response headers is a subset of direct response headers (direct response has more due to transport level headers)
-    Assert.assertTrue(directResponse.getHeaders().entrySet().containsAll(muxResponse.getHeaders().entrySet()), directResponse.getHeaders().toString() + ":" + muxResponse.getHeaders().toString());
+
+    // Multiplexed response headers are a subset of direct response headers (direct response has more due to transport-level headers)
+    Map<String, String> directResponseHeaders = directResponse.getHeaders();
+    Assert.assertTrue(directResponseHeaders.keySet().containsAll(muxResponse.getHeaders().keySet()));
+    for (Map.Entry<String, String> entry : muxResponse.getHeaders().entrySet())
+    {
+      final String header = entry.getKey();
+      Assert.assertTrue(directResponseHeaders.containsKey(header), String.format("Unexpected mux response header \"%s\".", header));
+      // In rare cases the date can be off by a second, so ignore the value
+      if (!header.equalsIgnoreCase("Date"))
+      {
+        Assert.assertEquals(entry.getValue(), directResponseHeaders.get(header), String.format("Mismatched value for header \"%s\".", header));
+      }
+    }
   }
 
   private Response<Greeting> getResult(FutureCallback<Response<Greeting>> callback) throws InterruptedException, ExecutionException, TimeoutException
