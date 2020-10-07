@@ -1,6 +1,7 @@
 package com.linkedin.darkcluster.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.linkedin.darkcluster.api.DarkClusterConstants;
 import com.linkedin.darkcluster.api.DarkRequestHeaderGenerator;
 import com.linkedin.darkcluster.api.DispatcherResponseValidationMetricsHolder;
 import com.linkedin.darkcluster.api.ResponseValidationMetricsHeader;

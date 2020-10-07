@@ -1,4 +1,4 @@
-package com.linkedin.darkcluster.impl;
+package com.linkedin.darkcluster.api;
 
 /**
  * constants for dark cluster

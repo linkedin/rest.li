@@ -12,7 +12,7 @@ import java.util.Objects;
 /**
  * This represents the response validation metrics sent to dark clusters in the form of a request header
  * This header stores two fields:
- * 1) source: uniquely identifying the instance of the application running on a dispatcher. It will be a combination of hostname and instanceId (i000, i001...)
+ * 1) source: uniquely identifying the instance of the application running on a dispatcher. For eg: combination of hostname and instance identifier
  * 2) metrics: the metrics collected so far on the dispatcher
  * 3) timestamp: when the metrics were updated
  */

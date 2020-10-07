@@ -2,7 +2,7 @@ package com.linkedin.darkcluster.filter;
 
 import com.linkedin.darkcluster.api.DarkClusterResponseValidationMetricsCollector;
 import com.linkedin.darkcluster.api.ResponseValidationMetricsHeader;
-import com.linkedin.darkcluster.impl.DarkClusterConstants;
+import com.linkedin.darkcluster.api.DarkClusterConstants;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.message.rest.RestFilter;
 import com.linkedin.r2.message.RequestContext;

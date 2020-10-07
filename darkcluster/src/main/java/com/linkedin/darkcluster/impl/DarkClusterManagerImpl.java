@@ -128,10 +128,9 @@ public class DarkClusterManagerImpl implements DarkClusterManager
         for (String darkClusterName : configMap.keySet())
         {
           RestRequest newD2Request = rewriteRequest(reqCopy, darkClusterName);
-          RestRequest d2RequestWithHeaders = addDarkRequestHeaders(darkClusterName, newD2Request);
           // now find the strategy appropriate for each dark cluster
           DarkClusterStrategy strategy = _darkClusterStrategyFactory.get(darkClusterName);
-          darkRequestSent = strategy.handleRequest(reqCopy, d2RequestWithHeaders, newRequestContext);
+          darkRequestSent = strategy.handleRequest(reqCopy, newD2Request, newRequestContext);
         }
 
       }
@@ -193,26 +192,12 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     }
 
     URIRewriter rewriter = _uriRewriterMap.get(darkServiceName).get();
-    return originalRequest.builder().setURI(rewriter.rewriteURI(originalRequest.getURI())).build();
-  }
-
-  /**
-   * Add headers to the dark request corresponding to the dark cluster name
-   */
-  private RestRequest addDarkRequestHeaders(String darkClusterName, RestRequest darkRequest)
-  {
-    if (!_darkRequestHeaderGenerators.isEmpty()) {
-      List<DarkRequestHeaderGenerator.HeaderNameValuePair> nameValuePairs = _darkRequestHeaderGenerators.stream()
-          .map(darkRequestHeaderGenerator -> darkRequestHeaderGenerator.get(darkClusterName))
-          .filter(Optional::isPresent)
-          .map(Optional::get)
-          .collect(Collectors.toList());
-      if (!nameValuePairs.isEmpty()) {
-        RestRequestBuilder builder = darkRequest.builder();
-        nameValuePairs.forEach(nameValuePair -> builder.setHeader(nameValuePair.getName(), nameValuePair.getValue()));
-        return builder.build();
-      }
-    }
-    return darkRequest;
+    RestRequestBuilder darkRequestBuilder = originalRequest.builder().setURI(rewriter.rewriteURI(originalRequest.getURI()));
+    _darkRequestHeaderGenerators.forEach(darkRequestHeaderGenerator -> {
+      darkRequestHeaderGenerator.get(darkServiceName).ifPresent(headerNameValuePair -> {
+        darkRequestBuilder.setHeader(headerNameValuePair.getName(), headerNameValuePair.getValue());
+      });
+    });
+    return darkRequestBuilder.build();
   }
 }

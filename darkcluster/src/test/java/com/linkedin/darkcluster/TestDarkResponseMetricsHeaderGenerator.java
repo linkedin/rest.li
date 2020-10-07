@@ -3,7 +3,7 @@ package com.linkedin.darkcluster;
 import com.linkedin.darkcluster.api.DarkRequestHeaderGenerator;
 import com.linkedin.darkcluster.api.DispatcherResponseValidationMetricsHolder;
 import com.linkedin.darkcluster.api.ResponseValidationMetricsHeader;
-import com.linkedin.darkcluster.impl.DarkClusterConstants;
+import com.linkedin.darkcluster.api.DarkClusterConstants;
 import com.linkedin.darkcluster.impl.DarkResponseMetricsHeaderGenerator;
 import java.util.HashMap;
 import java.util.Map;
