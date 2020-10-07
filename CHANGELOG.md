@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.7] - 2020-10-06
+- Adding dark cluster response validation metrics
+
 ## [29.7.6] - 2020-10-05
 Fix bug referring to coercer before registration.
 
@@ -4691,7 +4694,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.7...master
+[29.7.7]: https://github.com/linkedin/rest.li/compare/v29.7.6...v29.7.7
 [29.7.6]: https://github.com/linkedin/rest.li/compare/v29.7.5...v29.7.6
 [29.7.5]: https://github.com/linkedin/rest.li/compare/v29.7.4...v29.7.5
 [29.7.4]: https://github.com/linkedin/rest.li/compare/v29.7.3...v29.7.4
