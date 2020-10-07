@@ -3,7 +3,11 @@ package com.linkedin.darkcluster.api;
 import java.util.Map;
 
 /**
- * Collector of incoming response validation metrics from dispatchers.
+ * Collector of incoming response validation metrics from dispatchers. This allows response comparison metrics about a dark cluster
+ * to be displayed (via a monitoring/graphing system) with all other system metrics in a dark cluster host.
+ * These response comparison metrics are not specific to this dark cluster host, but that should be sufficient for most cases,
+ * and further granularity can be achieved by having separate dark clusters.
+ *
  * This is meant to be called on the dark cluster hosts where the request headers containing response validation metrics are read.
  * A dark cluster host may receive metrics from multiple dispatchers and this interface defines method for collecting these
  * incoming metrics.

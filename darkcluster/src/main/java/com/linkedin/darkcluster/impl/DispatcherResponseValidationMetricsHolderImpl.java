@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.linkedin.util.clock.Clock;
@@ -28,7 +29,7 @@ public class DispatcherResponseValidationMetricsHolderImpl implements Dispatcher
 
   private static final Logger LOG = LoggerFactory.getLogger(DispatcherResponseValidationMetricsHolderImpl.class);
 
-  public DispatcherResponseValidationMetricsHolderImpl(Clock clock) {
+  public DispatcherResponseValidationMetricsHolderImpl(@Nonnull Clock clock) {
     _clock = clock;
   }
 

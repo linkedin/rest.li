@@ -10,6 +10,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.linkedin.util.clock.Clock;
@@ -40,7 +41,7 @@ public class DarkResponseValidationMetricsCollectorImpl implements DarkClusterRe
 
   private static final Logger LOG = LoggerFactory.getLogger(DarkResponseValidationMetricsCollectorImpl.class);
 
-  public DarkResponseValidationMetricsCollectorImpl(Clock clock, long collectionFrequencyInMillis) {
+  public DarkResponseValidationMetricsCollectorImpl(@Nonnull Clock clock, @Nonnull long collectionFrequencyInMillis) {
     _clock = clock;
     _collectionFrequencyInMillis = collectionFrequencyInMillis;
   }

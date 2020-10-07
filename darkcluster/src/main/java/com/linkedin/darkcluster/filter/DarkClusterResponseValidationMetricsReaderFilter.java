@@ -10,6 +10,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +26,8 @@ public class DarkClusterResponseValidationMetricsReaderFilter implements RestFil
   private static final Logger LOG = LoggerFactory.getLogger(DarkClusterResponseValidationMetricsReaderFilter.class);
 
   public DarkClusterResponseValidationMetricsReaderFilter(
-      DarkClusterResponseValidationMetricsCollector metricsCollector,
-      ExecutorService executorService) {
+      @Nonnull DarkClusterResponseValidationMetricsCollector metricsCollector,
+      @Nonnull ExecutorService executorService) {
     _metricsCollector = metricsCollector;
     _executorService = executorService;
   }

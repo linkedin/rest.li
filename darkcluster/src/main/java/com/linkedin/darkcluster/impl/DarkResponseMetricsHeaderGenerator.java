@@ -7,6 +7,7 @@ import com.linkedin.darkcluster.api.DispatcherResponseValidationMetricsHolder;
 import com.linkedin.darkcluster.api.ResponseValidationMetricsHeader;
 import java.util.Optional;
 import java.util.function.Supplier;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +28,8 @@ public class DarkResponseMetricsHeaderGenerator implements DarkRequestHeaderGene
    * @param sourceSupplier a supplier of source identifier that can uniquely identify a dispatcher instance sending out
    *                       validation metrics
    */
-  public DarkResponseMetricsHeaderGenerator(DispatcherResponseValidationMetricsHolder metricsHolder,
-      Supplier<String> sourceSupplier) {
+  public DarkResponseMetricsHeaderGenerator(@Nonnull DispatcherResponseValidationMetricsHolder metricsHolder,
+      @Nonnull Supplier<String> sourceSupplier) {
     _metricsHolder = metricsHolder;
     _sourceSupplier = sourceSupplier;
   }
