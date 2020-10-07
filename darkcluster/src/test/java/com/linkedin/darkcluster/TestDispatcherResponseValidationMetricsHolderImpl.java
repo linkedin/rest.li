@@ -18,7 +18,7 @@ import com.linkedin.util.clock.Clock;
 import static org.mockito.Mockito.*;
 
 
-public class DispatcherResponseValidationMetricsHolderImplTest {
+public class TestDispatcherResponseValidationMetricsHolderImpl {
   @Mock
   private Clock _clock;
 

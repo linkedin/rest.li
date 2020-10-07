@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 import com.linkedin.util.clock.Clock;
 
 
-public class DarkResponseValidationMetricsCollectorImplTest {
+public class TestDarkResponseValidationMetricsCollectorImpl {
   @Mock
   private Clock _clock;
   private long _collectionFrequencyInMillis = 1;

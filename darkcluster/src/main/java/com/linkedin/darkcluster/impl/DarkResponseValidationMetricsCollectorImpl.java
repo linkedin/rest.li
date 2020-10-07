@@ -10,6 +10,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.linkedin.util.clock.Clock;
@@ -23,8 +24,8 @@ import com.linkedin.util.clock.Clock;
  * count metrics from the same source.
  * 2. A single threaded getter to retrieve the aggregated metrics from across all sources. This is single threaded to ensure
  * that the consumer of metrics is always called synchronously so that the consumer receives metrics that are increasing
- * monotonically. This is all the more important if the consumer emits ingraph metrics (most consumers use this to emit to ingraphs)
- * as counters where counters are meant to be increasing monotonically.
+ * monotonically. This is all the more important if the consumer emits metrics to monitoring systems as counters where counters
+ * are meant to be increasing monotonically.
  */
 public class DarkResponseValidationMetricsCollectorImpl implements DarkClusterResponseValidationMetricsCollector {
   /**
@@ -40,7 +41,7 @@ public class DarkResponseValidationMetricsCollectorImpl implements DarkClusterRe
 
   private static final Logger LOG = LoggerFactory.getLogger(DarkResponseValidationMetricsCollectorImpl.class);
 
-  public DarkResponseValidationMetricsCollectorImpl(Clock clock, long collectionFrequencyInMillis) {
+  public DarkResponseValidationMetricsCollectorImpl(@Nonnull Clock clock, @Nonnull long collectionFrequencyInMillis) {
     _clock = clock;
     _collectionFrequencyInMillis = collectionFrequencyInMillis;
   }
@@ -158,7 +159,7 @@ public class DarkResponseValidationMetricsCollectorImpl implements DarkClusterRe
    * host2 -> (success_count -> 20, failure_count -> 2)
    * result -> (success_count -> 40, failure_count -> 12) => success rate = 40 / 52 ~ 0.76
    * Note that the consumer calling this method should do so in a single thread so as to guarantee that all metrics are increasing monotonically.
-   * A consumer (typically one that emits ingraphs) can emit the metrics as counters.
+   * A consumer (typically one that emits to monitoring systems) can emit the metrics as counters.
    * Also, we do not lock the in-memory map here so as to not impact performance. We only read the snapshot
    * of the metrics at a given time and emit them although there might be simultaneous updates to these metrics
    */
