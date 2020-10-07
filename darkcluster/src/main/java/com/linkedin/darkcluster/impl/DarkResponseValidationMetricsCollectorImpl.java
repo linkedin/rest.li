@@ -159,7 +159,7 @@ public class DarkResponseValidationMetricsCollectorImpl implements DarkClusterRe
    * host2 -> (success_count -> 20, failure_count -> 2)
    * result -> (success_count -> 40, failure_count -> 12) => success rate = 40 / 52 ~ 0.76
    * Note that the consumer calling this method should do so in a single thread so as to guarantee that all metrics are increasing monotonically.
-   * A consumer (typically one that emits to monitoring systems) can emit the metrics as counters.
+   * A consumer (typically one that emits metrics to monitoring systems) can emit the metrics as counters.
    * Also, we do not lock the in-memory map here so as to not impact performance. We only read the snapshot
    * of the metrics at a given time and emit them although there might be simultaneous updates to these metrics
    */
