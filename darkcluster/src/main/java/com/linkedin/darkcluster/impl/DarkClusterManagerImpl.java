@@ -17,12 +17,19 @@
 package com.linkedin.darkcluster.impl;
 
 import com.linkedin.darkcluster.api.DarkGateKeeper;
+import com.linkedin.darkcluster.api.DarkRequestHeaderGenerator;
+import com.linkedin.r2.message.rest.RestRequestBuilder;
 import java.net.URI;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 import com.linkedin.common.util.Notifier;
@@ -55,6 +62,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
   private final String _sourceClusterName;
   private final DarkClusterStrategyFactory _darkClusterStrategyFactory;
   private final DarkGateKeeper _darkGateKeeper;
+  private final List<DarkRequestHeaderGenerator> _darkRequestHeaderGenerators;
   private Map<String, AtomicReference<URIRewriter>> _uriRewriterMap;
 
   public DarkClusterManagerImpl(@Nonnull String sourceClusterName, @Nonnull Facilities facilities,
@@ -64,9 +72,26 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     this(sourceClusterName, facilities, strategyFactory, whiteListRegEx, blackListRegEx, notifier, null);
   }
 
-  public DarkClusterManagerImpl(@Nonnull String sourceClusterName, @Nonnull Facilities facilities,
-      @Nonnull DarkClusterStrategyFactory strategyFactory, String whiteListRegEx,
-      String blackListRegEx, @Nonnull Notifier notifier, DarkGateKeeper darkGateKeeper) {
+  public DarkClusterManagerImpl(@Nonnull String sourceClusterName,
+      @Nonnull Facilities facilities,
+      @Nonnull DarkClusterStrategyFactory strategyFactory,
+      String whiteListRegEx,
+      String blackListRegEx,
+      @Nonnull Notifier notifier,
+      DarkGateKeeper darkGateKeeper)
+  {
+    this(sourceClusterName, facilities, strategyFactory, whiteListRegEx, blackListRegEx, notifier, darkGateKeeper, null);
+  }
+
+  public DarkClusterManagerImpl(@Nonnull String sourceClusterName,
+      @Nonnull Facilities facilities,
+      @Nonnull DarkClusterStrategyFactory strategyFactory,
+      String whiteListRegEx,
+      String blackListRegEx,
+      @Nonnull Notifier notifier,
+      DarkGateKeeper darkGateKeeper,
+      List<DarkRequestHeaderGenerator> darkRequestHeaderGenerators)
+  {
     _whiteListRegEx = whiteListRegEx == null ? null : Pattern.compile(whiteListRegEx);
     _blackListRegEx = blackListRegEx == null ? null : Pattern.compile(blackListRegEx);
     _notifier = notifier;
@@ -76,6 +101,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     _uriRewriterMap = new HashMap<>();
     // if null, initialize this to a noop which returns true always
     _darkGateKeeper = darkGateKeeper == null ? (req, context) -> true : darkGateKeeper;
+    _darkRequestHeaderGenerators = darkRequestHeaderGenerators == null ? Collections.emptyList() : darkRequestHeaderGenerators;
   }
 
   @Override
@@ -102,9 +128,10 @@ public class DarkClusterManagerImpl implements DarkClusterManager
         for (String darkClusterName : configMap.keySet())
         {
           RestRequest newD2Request = rewriteRequest(reqCopy, darkClusterName);
+          RestRequest d2RequestWithHeaders = addDarkRequestHeaders(darkClusterName, newD2Request);
           // now find the strategy appropriate for each dark cluster
           DarkClusterStrategy strategy = _darkClusterStrategyFactory.get(darkClusterName);
-          darkRequestSent = strategy.handleRequest(reqCopy, newD2Request, newRequestContext);
+          darkRequestSent = strategy.handleRequest(reqCopy, d2RequestWithHeaders, newRequestContext);
         }
 
       }
@@ -167,5 +194,25 @@ public class DarkClusterManagerImpl implements DarkClusterManager
 
     URIRewriter rewriter = _uriRewriterMap.get(darkServiceName).get();
     return originalRequest.builder().setURI(rewriter.rewriteURI(originalRequest.getURI())).build();
+  }
+
+  /**
+   * Add headers to the dark request corresponding to the dark cluster name
+   */
+  private RestRequest addDarkRequestHeaders(String darkClusterName, RestRequest darkRequest)
+  {
+    if (!_darkRequestHeaderGenerators.isEmpty()) {
+      List<DarkRequestHeaderGenerator.HeaderNameValuePair> nameValuePairs = _darkRequestHeaderGenerators.stream()
+          .map(darkRequestHeaderGenerator -> darkRequestHeaderGenerator.get(darkClusterName))
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .collect(Collectors.toList());
+      if (!nameValuePairs.isEmpty()) {
+        RestRequestBuilder builder = darkRequest.builder();
+        nameValuePairs.forEach(nameValuePair -> builder.setHeader(nameValuePair.getName(), nameValuePair.getValue()));
+        return builder.build();
+      }
+    }
+    return darkRequest;
   }
 }
