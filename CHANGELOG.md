@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.7] - 2020-10-06
+- Adding dark cluster response validation metrics
+
 ## [29.7.6] - 2020-10-05
 Fix bug referring to coercer before registration.
 
@@ -100,6 +103,7 @@ Fix bug affecting record fields named "fields".
 ## [29.5.5] - 2020-08-21
 - Updated File and class path DataSchemaResolvers to resolve extension schemas from `/extensions` directory if specified.
 - Added `DarkGateKeeper` to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
+>>>>>>> upstream/master
 
 ## [29.5.4] - 2020-08-17
 - Increase default timeout for symbol table fetch to 1s.
@@ -4690,7 +4694,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.7...master
+[29.7.7]: https://github.com/linkedin/rest.li/compare/v29.7.6...v29.7.7
 [29.7.6]: https://github.com/linkedin/rest.li/compare/v29.7.5...v29.7.6
 [29.7.5]: https://github.com/linkedin/rest.li/compare/v29.7.4...v29.7.5
 [29.7.4]: https://github.com/linkedin/rest.li/compare/v29.7.3...v29.7.4
