@@ -40,7 +40,7 @@ public class TestDarkClusterResponseValidationMetricsReaderFilter {
   public void testOnRestRequestWithValidationMetricsHeader() throws JsonProcessingException, InterruptedException {
     RestRequest request = Mockito.mock(RestRequest.class);
     RequestContext context = Mockito.mock(RequestContext.class);
-    NextFilter<RestRequest, RestResponse> nextFilter = Mockito.mock(NextFilter.class);
+    NextFilter<RestRequest, RestResponse> nextFilter = new MockNextFilter();
     Map<String, Long> metrics = ImmutableMap.of("SUCCESS_COUNT", 10L, "FAILURE_COUNT", 1L);
     ResponseValidationMetricsHeader header = new ResponseValidationMetricsHeader("host",
         new ResponseValidationMetricsHeader.ResponseValidationMetrics(metrics, 1L));
@@ -48,7 +48,6 @@ public class TestDarkClusterResponseValidationMetricsReaderFilter {
         .thenReturn(header.serialize());
     _filter.onRestRequest(request, context, null, nextFilter);
     waitForLatch();
-    Mockito.verify(nextFilter).onRequest(request, context, null);
     Mockito.verify(_metricsAggregator).collect(header);
   }
 
@@ -56,20 +55,18 @@ public class TestDarkClusterResponseValidationMetricsReaderFilter {
   public void testOnRestRequestWithNoValidationMetricsHeader() {
     RestRequest request = Mockito.mock(RestRequest.class);
     RequestContext context = Mockito.mock(RequestContext.class);
-    NextFilter<RestRequest, RestResponse> nextFilter = Mockito.mock(NextFilter.class);
+    NextFilter<RestRequest, RestResponse> nextFilter = new MockNextFilter();
     _filter.onRestRequest(request, context, null, nextFilter);
-    Mockito.verify(nextFilter).onRequest(request, context, null);
   }
 
   @Test
   public void testOnRestRequestWithInvalidMetricsInHeader() {
     RestRequest request = Mockito.mock(RestRequest.class);
     RequestContext context = Mockito.mock(RequestContext.class);
-    NextFilter<RestRequest, RestResponse> nextFilter = Mockito.mock(NextFilter.class);
+    NextFilter<RestRequest, RestResponse> nextFilter = new MockNextFilter();
     Mockito.when(request.getHeader(DarkClusterConstants.RESPONSE_VALIDATION_METRICS_HEADER_NAME))
         .thenReturn("metrics");
     _filter.onRestRequest(request, context, null, nextFilter);
-    Mockito.verify(nextFilter).onRequest(request, context, null);
     Mockito.verifyZeroInteractions(_metricsAggregator);
   }
 
@@ -79,6 +76,24 @@ public class TestDarkClusterResponseValidationMetricsReaderFilter {
     _executorService.submit(runnable);
     if (!latch.await(60, TimeUnit.SECONDS)) {
       Assert.fail("Unable to execute task");
+    }
+  }
+
+  private static class MockNextFilter implements NextFilter<RestRequest, RestResponse> {
+
+    @Override
+    public void onRequest(RestRequest request, RequestContext requestContext, Map<String, String> wireAttrs) {
+      // do nothing
+    }
+
+    @Override
+    public void onResponse(RestResponse restResponse, RequestContext requestContext, Map<String, String> wireAttrs) {
+      // do nothing
+    }
+
+    @Override
+    public void onError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs) {
+      // do nothing
     }
   }
 }
