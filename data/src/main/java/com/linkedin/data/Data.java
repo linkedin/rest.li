@@ -20,14 +20,15 @@ import com.linkedin.util.ArgumentUtil;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 
 /**
@@ -104,6 +105,37 @@ import java.util.Map;
 public class Data
 {
   /**
+   * Placeholder object populated inside {@link DataList#_isTraversing} or {@link DataMap#_isTraversing} by the
+   * default implementation of {@link CycleChecker} to indicate that the given {@link DataList} or {@link DataMap}
+   * is being traversed.
+   */
+  private static final Object TRAVERSAL_INDICATOR = new Object();
+
+  /**
+   * Supplier for cycle checker used when traversing instances using a {@link Data.TraverseCallback}. Applications can
+   * choose to replace this with a supplier vending custom implementations, at their own risk of ensuring correctness.
+   */
+  private static Supplier<CycleChecker> CYCLE_CHECKER_SUPPLIER = DefaultCycleChecker::new;
+
+  /**
+   * Override the default cycle checker supplier. Applications using this assume responsibility for correctness of their
+   * {@link CycleChecker} implementations provided by this supplier.
+   *
+   * @param supplier The cycle checker supplier to use. Should not be null.
+   *
+   * @throws IllegalArgumentException if a null supplier is passed in.
+   */
+  public static void setCycleCheckerSupplier(Supplier<CycleChecker> supplier)
+  {
+    if (supplier == null)
+    {
+      throw new IllegalArgumentException("Cycle checker supplier cannot be null");
+    }
+
+    CYCLE_CHECKER_SUPPLIER = supplier;
+  }
+
+  /**
    * Constant value used to indicate that a null value was de-serialized.
    */
   public static final Null NULL = Null.getInstance();
@@ -111,7 +143,7 @@ public class Data
   /**
    * Charset UTF-8
    */
-  public static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
+  public static final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
 
   /**
    * A map of all underlying types supported by Data objects.
@@ -128,6 +160,89 @@ public class Data
     TYPE_MAP.put(Float.class, (byte) 7);
     TYPE_MAP.put(Double.class, (byte) 8);
     TYPE_MAP.put(ByteString.class, (byte) 9);
+  }
+
+  /**
+   * Interface to be implemented by cycle checkers.
+   */
+  public interface CycleChecker
+  {
+    /**
+     * Invoked when the start of {@link DataMap} is traversed.
+     *
+     * @param map provides the {@link DataMap} to be traversed.
+     *
+     * @throws IOException If a cycle was detected when processing this.
+     */
+    void startMap(DataMap map) throws IOException;
+
+    /**
+     * Invoked when the end of {@link DataMap} is traversed.
+     *
+     * @param map provides the {@link DataMap} that ended traversal.
+     *
+     * @throws IOException If a cycle was detected when processing this.
+     */
+    void endMap(DataMap map) throws IOException;
+
+    /**
+     * Invoked when the start of {@link DataList} is traversed.
+     *
+     * @param list provides the {@link DataList} to be traversed.
+     *
+     * @throws IOException If a cycle was detected when processing this.
+     */
+    void startList(DataList list) throws IOException;
+
+    /**
+     * Invoked when the end of {@link DataList} is traversed.
+     *
+     * @param list provides the {@link DataList} that ended traversal.
+     *
+     * @throws IOException If a cycle was detected when processing this.
+     */
+    void endList(DataList list) throws IOException;
+  }
+
+  /**
+   * The default {@link CycleChecker} implementation that leverages {@link DataList#_isTraversing} and
+   * {@link DataMap#_isTraversing} to detect cycles.
+   */
+  private static class DefaultCycleChecker implements CycleChecker
+  {
+    @Override
+    public void startMap(DataMap map) throws IOException
+    {
+      if (map._isTraversing.get() == TRAVERSAL_INDICATOR)
+      {
+        throw new IOException("Cycle detected!");
+      }
+
+      map._isTraversing.set(TRAVERSAL_INDICATOR);
+    }
+
+    @Override
+    public void endMap(DataMap map) throws IOException
+    {
+      map._isTraversing.set(null);
+    }
+
+    @Override
+    public void startList(DataList list) throws IOException
+    {
+      if (list._isTraversing.get() == TRAVERSAL_INDICATOR)
+      {
+        throw new IOException("Cycle detected!");
+      }
+
+      list._isTraversing.set(TRAVERSAL_INDICATOR);
+    }
+
+    @Override
+    public void endList(DataList list) throws IOException
+    {
+      list._isTraversing.set(null);
+    }
   }
 
   /**
@@ -330,24 +445,23 @@ public class Data
    */
   public static void traverse(Object obj, TraverseCallback callback) throws IOException
   {
-    //
-    // Maintain an identity set of data complexes we encounter as we parse, to detect cycles and error out
-    // on encountering them.
-    //
-    DataComplexIdentitySet ancestorSet = new DataComplexIdentitySet();
-    traverse(obj, callback, ancestorSet, new LinkedList<>());
+    CycleChecker cycleChecker = CYCLE_CHECKER_SUPPLIER.get();
+    if (cycleChecker == null)
+    {
+      throw new IllegalArgumentException("Supplier returned a null cycle checker");
+    }
+
+    traverse(obj, callback, cycleChecker);
   }
 
   /**
-   * Traverse object and invoke the callback object with parse events.
+   * Traverse object and invoke the callback object with parse events with the given cycle checker.
    *
    * @param obj object to parse
    * @param callback to receive parse events.
-   * @param ancestorSet Set of data complexes encountered in the current parse tree. Used for cycle detection.
-   * @param pathList Keeps track of the path when parsing. Used to populate a useful exception message on cycle detection.
+   * @param cycleChecker to detect cycles when processing the object
    */
-  private static void traverse(Object obj, TraverseCallback callback,
-      DataComplexIdentitySet ancestorSet, LinkedList<String> pathList) throws IOException
+  private static void traverse(Object obj, TraverseCallback callback, CycleChecker cycleChecker) throws IOException
   {
     if (obj == null || obj == Data.NULL)
     {
@@ -372,18 +486,22 @@ public class Data
         }
         else
         {
-          checkForCyclesAndAdd(map, ancestorSet, pathList);
-          callback.startMap(map);
-          Iterable<Map.Entry<String, Object>> orderedEntrySet = callback.orderMap(map);
-          for (Map.Entry<String, Object> entry : orderedEntrySet)
+          try
           {
-            callback.key(entry.getKey());
-            pathList.addLast(entry.getKey());
-            traverse(entry.getValue(), callback, ancestorSet, pathList);
-            pathList.removeLast();
+            cycleChecker.startMap(map);
+            callback.startMap(map);
+            Iterable<Map.Entry<String, Object>> orderedEntrySet = callback.orderMap(map);
+            for (Map.Entry<String, Object> entry : orderedEntrySet)
+            {
+              callback.key(entry.getKey());
+              traverse(entry.getValue(), callback, cycleChecker);
+            }
+            callback.endMap();
           }
-          callback.endMap();
-          ancestorSet.remove(map);
+          finally
+          {
+            cycleChecker.endMap(map);
+          }
         }
         return;
       }
@@ -396,17 +514,23 @@ public class Data
         }
         else
         {
-          checkForCyclesAndAdd(list, ancestorSet, pathList);
-          callback.startList(list);
-          for (int index = 0; index < list.size(); index++)
+          try
           {
-            callback.index(index);
-            pathList.addLast("[" + index + "]");
-            traverse(list.get(index), callback, ancestorSet, pathList);
-            pathList.removeLast();
+            cycleChecker.startList(list);
+            callback.startList(list);
+            int index = 0;
+            for (Object element : list)
+            {
+              callback.index(index);
+              traverse(element, callback, cycleChecker);
+              index++;
+            }
+            callback.endList();
           }
-          callback.endList();
-          ancestorSet.remove(list);
+          finally
+          {
+            cycleChecker.endList(list);
+          }
         }
         return;
       }
@@ -715,28 +839,6 @@ public class Data
       }
     }
     return false;
-  }
-
-  /**
-   * Check for cycles and add the given {@link DataComplex} to the ancestor set.
-   *
-   * <p>This checks if the given {@link DataComplex} is present in the given set of ancestor complexes. If yes,
-   * then it indicates that a cycle exists and we throw an exception. If not, the object is added to the ancestor
-   * set.</p>
-   *
-   * @param dataComplex The current {@link DataComplex}
-   * @param ancestorSet The set containing all ancestors of the {@link DataComplex}
-   * @param pathList The list of paths encountered so far. Used to populate a useful exception message when a cycle is
-   *                 detected.
-   * @throws IOException If this {@link DataComplex} is present in the ancestor set indicating a cycle.
-   */
-  private static void checkForCyclesAndAdd(DataComplex dataComplex,
-      DataComplexIdentitySet ancestorSet, List<String> pathList) throws IOException
-  {
-    if (ancestorSet.add(dataComplex))
-    {
-      throw new IOException("Cycle detected. Path: " + pathList);
-    }
   }
 
   /**

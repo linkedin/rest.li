@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.8] - 2020-10-12
+- Encoding performance improvements
+
 ## [29.7.7] - 2020-10-06
 - Adding dark cluster response validation metrics
 
@@ -4694,7 +4697,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.8...master
+[29.7.8]: https://github.com/linkedin/rest.li/compare/v29.7.7...v29.7.8
 [29.7.7]: https://github.com/linkedin/rest.li/compare/v29.7.6...v29.7.7
 [29.7.6]: https://github.com/linkedin/rest.li/compare/v29.7.5...v29.7.6
 [29.7.5]: https://github.com/linkedin/rest.li/compare/v29.7.4...v29.7.5

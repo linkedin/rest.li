@@ -909,22 +909,22 @@ public class DataTemplateUtil
 
   public static Object coerceIntInput(Integer value)
   {
-    return value == null ? null : INTEGER_COERCER.coerceInput(value);
+    return value;
   }
 
   public static Object coerceLongInput(Long value)
   {
-    return value == null ? null : LONG_COERCER.coerceInput(value);
+    return value;
   }
 
   public static Object coerceFloatInput(Float value)
   {
-    return value == null ? null : FLOAT_COERCER.coerceInput(value);
+    return value;
   }
 
   public static Object coerceDoubleInput(Double value)
   {
-    return value == null ? null : DOUBLE_COERCER.coerceInput(value);
+    return value;
   }
 
   public static <C> Object coerceCustomInput(C value, Class<C> customClass)
