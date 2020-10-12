@@ -68,6 +68,11 @@ public abstract class LoadBalancerWithFacilitiesDelegator implements LoadBalance
   }
 
   @Override
+  public void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback) {
+    _loadBalancer.getClient(request, requestContext, clientCallback);
+  }
+
+  @Override
   public void start(Callback<None> callback)
   {
     _loadBalancer.start(callback);

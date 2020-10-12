@@ -23,6 +23,7 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -123,8 +125,8 @@ public class WarmUpLoadBalancerTest
    * require additional services at runtime, we have to check that those services are not cleared from the cache
    * otherwise it would incur in a penalty at the next deployment
    */
-  @Test(timeOut = 10000)
-  public void testNotDeletingFilesGetClient() throws InterruptedException, ExecutionException, TimeoutException, ServiceUnavailableException
+  @Test(timeOut = 10000, dataProvider = "isD2CallAsync")
+  public void testNotDeletingFilesGetClient(boolean isD2CallAsync) throws InterruptedException, ExecutionException, TimeoutException, ServiceUnavailableException
   {
     createDefaultServicesIniFiles();
     TestLoadBalancer balancer = new TestLoadBalancer();
@@ -143,7 +145,17 @@ public class WarmUpLoadBalancerTest
     warmUpLoadBalancer.start(callback);
     callback.get(5000, TimeUnit.MILLISECONDS);
 
-    warmUpLoadBalancer.getClient(new URIRequest("d2://" + pickOneService), new RequestContext());
+    if (isD2CallAsync)
+    {
+      FutureCallback<TransportClient> clientCallback = new FutureCallback<>();
+      warmUpLoadBalancer.getClient(new URIRequest("d2://" + pickOneService), new RequestContext(), clientCallback);
+      clientCallback.get();
+    }
+    else
+    {
+      warmUpLoadBalancer.getClient(new URIRequest("d2://" + pickOneService), new RequestContext());
+    }
+
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     warmUpLoadBalancer.shutdown(() -> shutdownCallback.onSuccess(None.none()));
@@ -152,6 +164,16 @@ public class WarmUpLoadBalancerTest
     List<String> allServicesAfterShutdown = getAllDownstreamServices();
 
     Assert.assertEquals(1, allServicesAfterShutdown.size(), "After shutdown there should be just one service, the one that we 'get the client' on");
+  }
+
+  @DataProvider(name = "isD2CallAsync")
+  public Object[][] isD2CallAsync()
+  {
+    return new Object[][]
+        {
+            {true},
+            {false}
+        };
   }
 
   private List<String> getAllDownstreamServices() throws InterruptedException, ExecutionException, TimeoutException

@@ -288,4 +288,22 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
     _usedServices.add(serviceName);
     return client;
   }
+
+  @Override
+  public void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback)
+  {
+    _loadBalancer.getClient(request, requestContext, new Callback<TransportClient>() {
+      @Override
+      public void onError(Throwable e) {
+        clientCallback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(TransportClient result) {
+        String serviceName = LoadBalancerUtil.getServiceNameFromUri(request.getURI());
+        _usedServices.add(serviceName);
+        clientCallback.onSuccess(result);
+      }
+    });
+  }
 }

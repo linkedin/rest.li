@@ -20,6 +20,9 @@ and what APIs have changed, if applicable.
 ## [29.7.8] - 2020-10-12
 - Encoding performance improvements
 
+## [29.7.8] - 2020-10-11
+- Adding async implementation of getClient call in warmup load balancer.
+
 ## [29.7.7] - 2020-10-06
 - Adding dark cluster response validation metrics
 
