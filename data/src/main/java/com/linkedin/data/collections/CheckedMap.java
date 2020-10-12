@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -337,9 +338,9 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     if (_changeListeners == null)
     {
-      // Change listeners are mostly used by map wrappers, and most maps will only have 1
-      // wrapper, so initialize list with a capacity of 1.
-      _changeListeners = new ArrayList<>(1);
+      // Change listeners are mostly used by map wrappers, and we always iterate through them
+      // linearly, so use a linked list.
+      _changeListeners = new LinkedList<>();
     }
 
     // Maintain a weak reference to to the listener to avoid leaking the wrapper beyond its
@@ -518,7 +519,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     /**
      * Listener method called whenever an entry in the underlying map is updated or removed.
-     * 
+     *
      * @param key Key being updated.
      * @param value Updated value, can be null when entries are removed.
      */

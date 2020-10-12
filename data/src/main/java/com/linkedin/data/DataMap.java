@@ -428,6 +428,14 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
     }
   };
 
+  /**
+   * Indicates if this {@link DataMap} is currently being traversed by a {@link Data.TraverseCallback} if this value is
+   * not null, or not if this value is null. This is internally marked package private, used for cycle detection and
+   * not meant for use by external callers. This is maintained as a {@link ThreadLocal} to allow for concurrent
+   * traversals of the same {@link DataMap} from multiple threads.
+   */
+  ThreadLocal<Object> _isTraversing = new ThreadLocal<>();
+
   private boolean _madeReadOnly = false;
   private boolean _instrumented = false;
   private Map<String, Integer> _accessMap;

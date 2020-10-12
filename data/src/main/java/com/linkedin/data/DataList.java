@@ -266,6 +266,14 @@ public final class DataList extends CheckedList<Object> implements DataComplex
     }
   };
 
+  /**
+   * Indicates if this {@link DataList} is currently being traversed by a {@link Data.TraverseCallback} if this value is
+   * not null, or not if this value is null. This is internally marked package private, used for cycle detection and
+   * not meant for use by external callers. This is maintained as a {@link ThreadLocal} to allow for concurrent
+   * traversals of the same {@link DataList} from multiple threads.
+   */
+  ThreadLocal<Object> _isTraversing = new ThreadLocal<>();
+
   private boolean _madeReadOnly = false;
   private boolean _instrumented = false;
   private ArrayList<Integer> _accessList;
