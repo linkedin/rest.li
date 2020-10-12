@@ -1,0 +1,4 @@
+record TestSchema3 {
+  @bar.foo = 1
+  field1: string
+}

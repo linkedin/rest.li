@@ -37,6 +37,7 @@ public class CompatibilityInfoMap
 {
   private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _restSpecMap = new HashMap<CompatibilityInfo.Level, Collection<CompatibilityInfo>>();
   private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _modelMap = new HashMap<CompatibilityInfo.Level, Collection<CompatibilityInfo>>();
+  private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _annotationMap = new HashMap<>();
 
   public CompatibilityInfoMap()
   {
@@ -45,6 +46,9 @@ public class CompatibilityInfoMap
 
     _modelMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
     _modelMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
+
+    _annotationMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
+    _annotationMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
   }
 
   public void addRestSpecInfo(CompatibilityInfo.Type infoType, Stack<Object> path,
@@ -113,6 +117,9 @@ public class CompatibilityInfoMap
           break;
         case BREAKS_NEW_AND_OLD_READERS:
           infoType = CompatibilityInfo.Type.TYPE_BREAKS_NEW_AND_OLD_READERS;
+          break;
+        case BREAK_OLD_CLIENTS:
+          infoType = CompatibilityInfo.Type.BREAK_OLD_CLIENTS;
           break;
         default:
           infoType = CompatibilityInfo.Type.OTHER_ERROR;
@@ -295,5 +302,41 @@ public class CompatibilityInfoMap
       entry.getValue().addAll(other.getModelInfo(entry.getKey()));
     }
     return true;
+  }
+
+  public void addAnnotation(CompatibilityMessage message)
+  {
+    final CompatibilityInfo.Type infoType;
+    CompatibilityInfo info;
+    String infoMessage = String.format(message.getFormat(), message.getArgs());
+
+    if (message.isError())
+    {
+      switch (message.getImpact())
+      {
+        case ANNOTATION_INCOMPATIBLE_CHANGE:
+          infoType = CompatibilityInfo.Type.SCHEMA_ANNOTATION_INCOMPATIBLE_CHANGE;
+          break;
+        default:
+          infoType = CompatibilityInfo.Type.OTHER_ERROR;
+          break;
+      }
+    }
+    else
+    {
+      infoType = CompatibilityInfo.Type.TYPE_INFO;
+    }
+    info = new CompatibilityInfo(Arrays.asList(message.getPath()), infoType, infoMessage);
+    _annotationMap.get(infoType.getLevel()).add(info);
+  }
+
+  public boolean isAnnotationCompatible()
+  {
+    return _annotationMap.get(CompatibilityInfo.Level.INCOMPATIBLE).size() == 0;
+  }
+
+  public Collection<CompatibilityInfo> getAnnotationInfo(CompatibilityInfo.Level level)
+  {
+    return _annotationMap.get(level);
   }
 }
