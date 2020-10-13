@@ -1,0 +1,3 @@
+record DeprecatedReference {
+  field: <warning descr="'Deprecated' is deprecated">Deprecated</warning>
+}

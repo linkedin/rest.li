@@ -1,0 +1,5 @@
+namespace parser.fixtures
+
+record IncludesBefore includes Message {
+  foo: int
+}

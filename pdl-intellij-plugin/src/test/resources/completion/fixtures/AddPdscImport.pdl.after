@@ -1,0 +1,7 @@
+namespace ns
+
+import org.example.ToImport
+
+record AddPdscImport {
+  field: ToImport<caret>
+}

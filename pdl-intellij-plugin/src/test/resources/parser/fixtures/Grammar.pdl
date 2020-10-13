@@ -1,0 +1,44 @@
+namespace org.example
+package org.example.`package`
+
+import Fruits
+
+@property.x = { "int" : 1, "float": 1.23e10, "escaping": "\n\t", "array": [1, 2, 3] }
+@property.y = { "more": { "depth": "testing" }, "true": true, "false": false, "null": null }
+record Grammar {
+  /**
+   * Field comment
+   */
+  @fieldProperty = ["one", "two"]
+  @`escaped.property` = true
+  @property.`escaped.property`.mixed = true
+  @`namespace`.`escaped.property`.multiple = true
+  @`namespace.escaped.property`.includeKeyword = true
+  @propWithPaths.`foo/*/bar` = "abc"
+  @nonIdentifierProps.123.1-abc._123 = true
+  `union`: union[string, Grammar]
+  `map`: optional map[string, long] = { "1": 1, "2": 2 }
+  `fixed`: fixed Fixed 5
+  `typeref`: typeref Example = Grammar
+  inline: record Inline {
+
+  }
+  // single line comment
+  `string`: optional string = "default"
+  `int`: optional int = 1
+  `float`: optional float = 1.23e10
+
+  arrayField:
+    @validate.minSize = 1
+    array[int]
+
+  mapField:
+    @validate.minSize = 1
+    map[string, int]
+
+  unionField:
+    @validate.minValue = 0
+    union[float, int]
+
+  /* multiline comment */
+}

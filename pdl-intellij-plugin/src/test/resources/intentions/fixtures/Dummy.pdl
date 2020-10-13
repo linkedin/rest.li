@@ -1,0 +1,6 @@
+namespace org.example
+
+/**
+ * Dummy helper record.
+ */
+record Dummy {}

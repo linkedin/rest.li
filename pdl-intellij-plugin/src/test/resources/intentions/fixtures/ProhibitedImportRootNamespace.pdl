@@ -1,0 +1,19 @@
+namespace org.example
+
+import org.example.Dummy<caret>
+
+record ProhibitedImportRootNamespace {
+  x: Dummy,
+
+  inner: {
+    namespace com.overridden
+
+    record InnerTypeA {
+      x: Dummy,
+
+      y: int
+    }
+  },
+
+  y: string
+}

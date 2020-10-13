@@ -1,0 +1,6 @@
+namespace org.example.common
+
+/**
+ * Helper type for testing completion with subpackages.
+ */
+record Dummy {}

@@ -1,0 +1,5 @@
+namespace org.example
+
+record MismatchedFoilgnome<caret> {
+  x: int
+}

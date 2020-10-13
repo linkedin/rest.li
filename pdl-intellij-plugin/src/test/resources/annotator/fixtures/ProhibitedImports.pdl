@@ -1,0 +1,27 @@
+namespace <error descr="Namespace 'annotator.fixtures' does not correspond to file path ''">annotator.fixtures</error>
+// The unit test expects an error for the above namespace because '/annotator/fixtures/' is the package root
+
+import <error descr="Cannot import types within the file's root namespace">annotator.fixtures.Dummy</error>
+import <error descr="Import references locally declared type">com.overridden.Gummy</error>
+import <error descr="Import conflicts with locally declared type 'OtherDummy'">com.example.other.OtherDummy</error>
+
+/**
+ * Ensures that prohibited imports are correctly marked as errors.
+ */
+record ProhibitedImports {
+  x: Dummy,
+
+  locallyDeclaredType: {
+    namespace com.overridden
+
+    record Gummy {}
+  },
+
+  conflictingType: record <error descr="Type declaration conflicts with import 'com.example.other.OtherDummy'">OtherDummy</error> {}
+
+  conflictingOverriddenType: {
+    namespace com.overridden
+
+    record <error descr="Type declaration conflicts with import 'com.example.other.OtherDummy'">OtherDummy</error> {}
+  }
+}

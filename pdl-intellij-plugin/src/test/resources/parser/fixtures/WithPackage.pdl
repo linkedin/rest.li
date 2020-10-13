@@ -1,0 +1,4 @@
+namespace parser.fixtures
+package parser.pkg
+
+record WithPackage { }

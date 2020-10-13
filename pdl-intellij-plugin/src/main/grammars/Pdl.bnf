@@ -1,0 +1,157 @@
+{
+  parserClass="com.linkedin.intellij.pegasusplugin.parser.Parser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="Pdl"
+  psiImplClassSuffix="Impl"
+  psiPackage="com.linkedin.intellij.pegasusplugin.psi"
+  psiImplPackage="com.linkedin.intellij.pegasusplugin.psi.impl"
+
+  elementTypeHolderClass="com.linkedin.intellij.pegasusplugin.psi.Types"
+  elementTypeClass="com.linkedin.intellij.pegasusplugin.psi.PdlElementType"
+  tokenTypeClass="com.linkedin.intellij.pegasusplugin.psi.PdlTokenType"
+}
+
+document ::= topLevel
+
+topLevel ::= namespaceDeclaration? packageDeclaration? importDeclarations typeDeclaration {
+  extends="com.linkedin.intellij.pegasusplugin.psi.PdlTopLevelBase"
+  implements="com.linkedin.intellij.pegasusplugin.psi.PdlTopLevelInterface"
+}
+
+namespaceDeclaration ::= NAMESPACE_KEYWORD namespace
+
+packageDeclaration ::= PACKAGE_KEYWORD namespace
+
+importDeclarations ::= importDeclaration*
+
+importDeclaration ::= IMPORT_KEYWORD fullyQualifiedName {
+  extends="com.linkedin.intellij.pegasusplugin.psi.PdlNamedElementImportBase"
+  implements="com.linkedin.intellij.pegasusplugin.psi.PdlNamedElementImport"
+}
+
+namespace ::= IDENTIFIER (DOT IDENTIFIER)*
+
+typeReference ::= jsonNull | fullyQualifiedName {
+  extends="com.linkedin.intellij.pegasusplugin.psi.PdlNamedElementTypeReferenceBase"
+  implements="com.linkedin.intellij.pegasusplugin.psi.PdlNamedElementTypeReference"
+}
+
+typeDeclaration ::= namedTypeDeclaration | anonymousTypeDeclaration | scopedTypeNameDeclaration
+
+namedTypeDeclaration ::= annotations? (recordDeclaration | enumDeclaration | typerefDeclaration | fixedDeclaration) {
+  extends="com.linkedin.intellij.pegasusplugin.psi.PdlNamedTypeDeclarationBase"
+  implements="com.linkedin.intellij.pegasusplugin.psi.PdlNamedTypeDeclarationInterface"
+}
+
+// Why can named type declarations be scoped with an alternate namespace and package?
+// Begrudgingly, for compatibility with .pdsc. In .pdsc all type declarations may specify a namespace and package,
+// even if they are inline declarations.
+scopedTypeNameDeclaration ::= OPEN_BRACE namespaceDeclaration packageDeclaration? namedTypeDeclaration CLOSE_BRACE {pin=2}
+
+anonymousTypeDeclaration ::= annotations? (unionDeclaration | arrayDeclaration | mapDeclaration)
+
+typeAssignment ::= typeReference | typeDeclaration
+
+propDeclaration ::= propNameDeclaration propJsonValue?
+
+propSegment ::= IDENTIFIER | PROPERTY_KEY | ESCAPED_PROPERTY_KEY
+propName ::= propSegment (DOT propSegment)*
+
+propNameDeclaration ::= AT propName
+
+typeNameDeclaration ::= simpleName {
+  extends="com.linkedin.intellij.pegasusplugin.psi.PdlTypeNameDeclarationBase"
+  implements="com.linkedin.intellij.pegasusplugin.psi.PdlTypeNameDeclarationInterface"
+  stubClass="com.linkedin.intellij.pegasusplugin.psi.PdlTypeNameDeclarationStub"
+  elementTypeClass="com.linkedin.intellij.pegasusplugin.psi.PdlTypeDeclarationStubType"
+}
+
+simpleName ::= IDENTIFIER
+
+fullyQualifiedName ::= IDENTIFIER (DOT IDENTIFIER)*
+
+annotations ::= /*schemadoc?*/ propDeclaration*
+
+//schemadoc ::= DOC_COMMENT
+
+propJsonValue ::= EQUALS jsonValue | propJsonValueWithParams
+
+// TODO(jbetz): Remove this and use only equals form
+propJsonValueWithParams ::= OPEN_PAREN jsonValue CLOSE_PAREN {pin=1}
+
+recordDeclaration ::= RECORD_KEYWORD typeNameDeclaration fieldIncludes? fieldSelection fieldIncludes? {pin=1}
+
+enumDeclaration ::= ENUM_KEYWORD typeNameDeclaration enumSymbolDeclarations {pin=1}
+
+enumSymbolDeclarations ::= OPEN_BRACE enumSymbolDeclaration* CLOSE_BRACE {pin=1}
+
+enumSymbolDeclaration ::= annotations? enumSymbol
+
+enumSymbol ::= IDENTIFIER {
+  extends="com.linkedin.intellij.pegasusplugin.psi.PdlEnumSymbolBase"
+  implements="com.linkedin.intellij.pegasusplugin.psi.PdlEnumSymbolInterface"
+}
+
+typerefDeclaration ::= TYPEREF_KEYWORD typeNameDeclaration EQUALS typeAssignment {pin=1}
+
+fixedDeclaration ::= FIXED_KEYWORD typeNameDeclaration NUMBER_LITERAL {pin=1} // TODO(jbetz): force to be non-negative number
+
+unionDeclaration ::= UNION_KEYWORD unionTypeAssignments {
+  pin=1
+  extends="com.linkedin.intellij.pegasusplugin.psi.PdlUnionDeclarationBase"
+  implements="com.linkedin.intellij.pegasusplugin.psi.PdlUnionDeclarationInterface"
+}
+
+unionTypeAssignments ::= OPEN_BRACKET unionMemberDeclaration* CLOSE_BRACKET {pin=1}
+
+unionMemberDeclaration ::= unionMemberAlias? typeAssignment {
+  pin=2
+  extends="com.linkedin.intellij.pegasusplugin.psi.PdlUnionMemberDeclarationBase"
+  implements="com.linkedin.intellij.pegasusplugin.psi.PdlUnionMemberDeclarationInterface"
+}
+
+unionMemberAlias ::= annotations? unionMemberAliasName COLON {pin=3}
+
+unionMemberAliasName ::= IDENTIFIER
+
+arrayDeclaration ::= ARRAY_KEYWORD arrayTypeAssignments {pin=1}
+
+arrayTypeAssignments ::= OPEN_BRACKET typeAssignment CLOSE_BRACKET {pin=1}
+
+mapDeclaration ::= MAP_KEYWORD mapTypeAssignments {pin=1}
+
+mapTypeAssignments ::= OPEN_BRACKET typeAssignment typeAssignment CLOSE_BRACKET {pin=1}
+
+fieldSelection ::= OPEN_BRACE fieldSelectionElement* CLOSE_BRACE {pin=1}
+
+fieldSelectionElement ::= fieldDeclaration
+
+fieldIncludes ::= INCLUDES_KEYWORD typeAssignment+
+
+fieldDeclaration ::= annotations? fieldName COLON OPTIONAL? typeAssignment (EQUALS literal)? {pin=2}
+
+fieldName ::= IDENTIFIER
+
+literal ::= jsonValue
+
+lineComment ::= SINGLE_LINE_COMMENT
+blockComment ::= BLOCK_COMMENT_EMPTY | BLOCK_COMMENT_NON_EMPTY
+commentString ::= COMMA | lineComment | blockComment
+
+jsonKeyValue ::= jsonString COLON jsonValue
+
+jsonObject ::= OPEN_BRACE jsonKeyValue* CLOSE_BRACE {pin=1}
+
+jsonArray ::= OPEN_BRACKET  jsonValue* CLOSE_BRACKET {pin=1}
+
+jsonValue ::= jsonString | jsonNumber | jsonBoolean | jsonObject | jsonArray | jsonNull
+
+jsonString ::= STRING
+
+jsonNumber ::= NUMBER_LITERAL
+
+jsonNull ::= NULL
+
+jsonBoolean ::= TRUE | FALSE

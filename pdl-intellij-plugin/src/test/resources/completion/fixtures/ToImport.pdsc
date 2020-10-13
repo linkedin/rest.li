@@ -1,0 +1,6 @@
+{
+  "name": "ToImport",
+  "namespace": "org.example",
+  "type": "record",
+  "fields": []
+}

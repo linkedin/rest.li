@@ -1,0 +1,4 @@
+#if(${PACKAGE_NAME} && ${PACKAGE_NAME} != "")namespace ${PACKAGE_NAME}
+
+#end
+typeref ${NAME} = union[]

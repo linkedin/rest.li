@@ -1,0 +1,17 @@
+namespace org.example
+
+record ProhibitedImportConflictsLocal {
+  x: Dummy,
+
+  inner: {
+    namespace com.overridden
+
+    record UnusedImport {
+      x: org.example.Dummy,
+
+      y: int
+    }
+  },
+
+  y: string
+}

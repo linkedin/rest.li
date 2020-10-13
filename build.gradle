@@ -126,7 +126,7 @@ if (!project.ext.isDefaultEnvironment)
   }
 }
 
-allprojects {
+allprojects { proj ->
   apply plugin: 'idea'
 
   tasks.withType(JavaCompile).all { JavaCompile compile ->
@@ -136,7 +136,12 @@ allprojects {
       throw new GradleScriptException("Pegasus required Java 8 or later to build, current version: ${JavaVersion.current()}", null)
     }
     // for all supported versions that we test build, fail the build if any compilation warnings are reported
-    compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static', '-Werror']
+    compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static']
+
+    // TODO enable Werror for this project. It was developed internally at LinkedIn and then copied to open source.
+    if (proj != project(':pdl-intellij-plugin')) {
+      compile.options.compilerArgs += '-Werror'
+    }
   }
 
   tasks.withType(Javadoc)

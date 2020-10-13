@@ -1,0 +1,11 @@
+namespace parser.fixtures
+
+record WithPrimitivesArray {
+  ints: array[int]
+  longs: array[long]
+  floats: array[float]
+  doubles: array[double]
+  booleans: array[boolean]
+  strings: array[string]
+  bytes: array[bytes]
+}

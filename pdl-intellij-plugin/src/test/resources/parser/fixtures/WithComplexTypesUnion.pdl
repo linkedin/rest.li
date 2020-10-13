@@ -1,0 +1,8 @@
+namespace parser.fixtures
+
+import parser.fixtures.Fruits
+import parser.fixtures.Message
+
+record WithComplexTypesUnion {
+  `union`: union[Empty, Fruits, array[Message], map[string, Message]]
+}

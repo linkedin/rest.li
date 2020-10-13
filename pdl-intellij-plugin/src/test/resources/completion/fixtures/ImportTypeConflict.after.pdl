@@ -1,0 +1,9 @@
+namespace org.example.extras
+
+/**
+ * Tests a FQN is used instead of import when there is another identifier matching the same name.
+ */
+record ImportTypeConflict {
+  field1: Dummy
+  field2: org.example.common.Dummy<caret>
+}

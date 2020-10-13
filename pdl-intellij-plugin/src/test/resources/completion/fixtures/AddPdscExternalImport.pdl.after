@@ -1,0 +1,7 @@
+namespace ns
+
+import org.example.ExternalPdsc
+
+record AddPdscExternalImport {
+  field: ExternalPdsc<caret>
+}

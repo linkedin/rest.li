@@ -1,0 +1,91 @@
+plugins {
+  id "org.jetbrains.intellij" version "0.5.0"
+  id "org.jetbrains.grammarkit" version "2020.2.1"
+}
+
+apply plugin: 'org.jetbrains.grammarkit'
+apply plugin: 'org.jetbrains.intellij'
+
+/*
+ * This is needed in order to use Java-related functionality.
+ * See: https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin/
+ */
+intellij {
+  plugins 'java'
+}
+
+final String grammarPath = 'src/main/grammars'
+final String generatedGrammarPath = 'src/mainGeneratedGrammar'
+final String generatedGrammarJavaPath = "${generatedGrammarPath}/java"
+final String basePackagePath = 'com/linkedin/intellij/pegasusplugin'
+
+// Without this, the build will fail when the IDEA version "expires"
+buildSearchableOptions.enabled = false
+
+
+// Grammar generation tasks
+import org.jetbrains.grammarkit.tasks.GenerateLexer
+import org.jetbrains.grammarkit.tasks.GenerateParser
+
+task generatePdlLexer(type: GenerateLexer) {
+  source = "${grammarPath}/Pdl.flex"
+  targetDir = "${generatedGrammarJavaPath}/${basePackagePath}/"
+  targetClass = "PdlLexer"
+  purgeOldFiles = true
+}
+
+task generatePdlParser(type: GenerateParser) {
+  source = "${grammarPath}/Pdl.bnf"
+  targetRoot = "${generatedGrammarJavaPath}"
+  pathToParser = "/${basePackagePath}/parser/Parser.java"
+  pathToPsiRoot = "/${basePackagePath}/psi"
+  purgeOldFiles = true
+}
+
+task generateDocCommentLexer(type: GenerateLexer) {
+  source = "${grammarPath}/DocCommentLexer.flex"
+  targetDir = "${generatedGrammarJavaPath}/${basePackagePath}/schemadoc/"
+  targetClass = "DocCommentLexer"
+  purgeOldFiles = true
+}
+
+task generateSchemaDocParser(type: GenerateParser) {
+  source = "${grammarPath}/schemadoc.bnf"
+  targetRoot = "${generatedGrammarJavaPath}"
+  pathToParser = "/${basePackagePath}/schemadoc/parser/SchemadocParser.java"
+  pathToPsiRoot = "/${basePackagePath}/schemadoc/psi"
+  purgeOldFiles = true
+}
+
+// Unified grammar generation task
+task generateGrammar {
+  dependsOn generatePdlLexer
+  dependsOn generatePdlParser
+  dependsOn generateDocCommentLexer
+  dependsOn generateSchemaDocParser
+}
+
+// Ensure that grammar generation runs before idea/build
+tasks.idea.dependsOn generateGrammar
+compileJava.dependsOn generateGrammar
+
+// Ensure generated grammar sources are available during compile time
+sourceSets.main.java {
+  srcDirs file(generatedGrammarJavaPath)
+}
+
+idea.module.iml.withXml {
+  // Mark generated grammar source as generated sources root
+  def content = it.asNode().component.content
+  def node = content.get(0)
+  node.appendNode('sourceFolder',
+      ['url': "file://\$MODULE_DIR\$/${generatedGrammarJavaPath}", 'isTestSource': 'false', 'generated': 'true'])
+}
+
+// Disable checkstyle since generated code is ugly
+tasks.findByName('forkedCheckstyleMain')?.enabled = false
+
+// Delete generated grammar sources as part of the clean task
+clean {
+  delete file(generatedGrammarPath)
+}

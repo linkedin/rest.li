@@ -1,0 +1,4 @@
+namespace org.example
+
+enum ExampleEnum {
+}

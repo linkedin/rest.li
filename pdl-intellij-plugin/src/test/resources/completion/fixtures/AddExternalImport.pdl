@@ -1,0 +1,5 @@
+namespace ns
+
+record AddExternalImport {
+  field: ExternalPdl<caret>
+}

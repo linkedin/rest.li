@@ -1,0 +1,5 @@
+namespace ns
+
+record AddPdscImport {
+  field: ToImport<caret>
+}

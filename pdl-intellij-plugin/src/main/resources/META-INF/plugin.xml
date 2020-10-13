@@ -1,0 +1,87 @@
+<idea-plugin version="2">
+  <id>com.linkedin.intellij.pegasusplugin</id>
+  <name>Pegasus data language</name>
+  <version>0.0.1</version>
+  <description><![CDATA[
+      Pegasus Data Language plugin.<br>
+      <em>See github.com/linkedin/rest.li</em>
+  ]]></description>
+  <change-notes><![CDATA[
+    ]]>
+  </change-notes>
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <!--
+    This is needed in order to use Java-related functionality.
+    See: https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin/
+  -->
+  <depends>com.intellij.modules.java</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileTypeFactory implementation="com.linkedin.intellij.pegasusplugin.PdlFileTypeFactory"/>
+    <annotator language="Pdl" implementationClass="com.linkedin.intellij.pegasusplugin.PdlAnnotator"/>
+    <colorSettingsPage implementation="com.linkedin.intellij.pegasusplugin.codestyle.PdlColorSettingsPage"/>
+    <lang.parserDefinition language="Pdl" implementationClass="com.linkedin.intellij.pegasusplugin.PdlParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="Pdl" implementationClass="com.linkedin.intellij.pegasusplugin.codestyle.PdlSyntaxHighlighterFactory"/>
+    <lang.commenter language="Pdl" implementationClass="com.linkedin.intellij.pegasusplugin.formatter.PdlCommenter"/>
+    <lang.braceMatcher language="Pdl" implementationClass="com.linkedin.intellij.pegasusplugin.PdlBraceMatcher"/>
+    <quoteHandler fileType="Pdl" className="com.linkedin.intellij.pegasusplugin.PdlQuoteHandler" />
+
+    <lang.formatter language="Pdl" implementationClass="com.linkedin.intellij.pegasusplugin.formatter.PdlFormattingModelBuilder"/>
+    <codeStyleSettingsProvider implementation="com.linkedin.intellij.pegasusplugin.codestyle.PdlCodeStyleSettingsProvider" />
+    <langCodeStyleSettingsProvider implementation="com.linkedin.intellij.pegasusplugin.codestyle.PdlLanguageCodeStyleSettingsProvider"/>
+    <commentCompleteHandler implementation="com.linkedin.intellij.pegasusplugin.formatter.PdlCommentCompleteHandler" />
+    <completion.contributor language="Pdl"
+                            implementationClass="com.linkedin.intellij.pegasusplugin.completion.PdlCompletionContributor"
+                            order="first"/>
+
+    <lang.refactoringSupport language="Pdl" implementationClass="com.linkedin.intellij.pegasusplugin.PdlRefactoringSupportProvider"/>
+    <lang.findUsagesProvider language="Pdl" implementationClass="com.linkedin.intellij.pegasusplugin.PdlFindUsagesProvider"/>
+    <gotoClassContributor implementation="com.linkedin.intellij.pegasusplugin.PdlChooseByNameContributor"/>
+
+    <lang.foldingBuilder language="Pdl" implementationClass="com.linkedin.intellij.pegasusplugin.PdlFoldingBuilder" />
+    <lang.importOptimizer language="Pdl" implementationClass="com.linkedin.intellij.pegasusplugin.PdlImportOptimizer" />
+
+    <stubElementTypeHolder class="com.linkedin.intellij.pegasusplugin.psi.Types" />
+
+    <localInspection language="Pdl" shortName="PdlInvalidImport" bundle="messages.pdlplugin"
+                     key="inspection.imports.unused.name" groupKey="inspection.pdl.group"
+                     enabledByDefault="true"
+                     implementationClass="com.linkedin.intellij.pegasusplugin.inspections.imports.UnusedImportInspection"/>
+    <localInspection language="Pdl" shortName="PdlProhibitedImport" bundle="messages.pdlplugin"
+                     key="inspection.imports.prohibited.name" groupKey="inspection.pdl.group"
+                     enabledByDefault="true"
+                     implementationClass="com.linkedin.intellij.pegasusplugin.inspections.imports.ProhibitedImportInspection"/>
+    <localInspection language="Pdl" shortName="PdlHeterogeneouslyAliasedUnion" bundle="messages.pdlplugin"
+                     key="inspection.union.heterogeneously_aliased.name" groupKey="inspection.pdl.group"
+                     enabledByDefault="true"
+                     implementationClass="com.linkedin.intellij.pegasusplugin.inspections.union.HeterogeneouslyAliasedUnionInspection"/>
+    <localInspection language="Pdl" shortName="PdlFilename" bundle="messages.pdlplugin"
+                     key="inspection.filename.name" groupKey="inspection.pdl.group"
+                     enabledByDefault="true"
+                     implementationClass="com.linkedin.intellij.pegasusplugin.inspections.FilenameInspection"/>
+
+    <stubIndex implementation="com.linkedin.intellij.pegasusplugin.psi.PdlNameStubIndex" />
+    <stubIndex implementation="com.linkedin.intellij.pegasusplugin.psi.PdlFullnameStubIndex" />
+
+    <lang.documentationProvider language="Pdl" implementationClass="com.linkedin.intellij.pegasusplugin.PdlDocumentationProvider"/>
+    <problemFileHighlightFilter implementation="com.linkedin.intellij.pegasusplugin.PdlProblemFileHighlightFilter"/>
+    <!-- Pdl Doc string sub-language -->
+    <lang.formatter language="PdlDocComments" implementationClass="com.linkedin.intellij.pegasusplugin.formatter.SchemadocFormattingModelBuilder"/>
+  </extensions>
+
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+  </project-components>
+
+  <actions>
+    <action id="Pdl.NewType" class="com.linkedin.intellij.pegasusplugin.NewPegasusTypeAction">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFile"/>
+    </action>
+  </actions>
+</idea-plugin>

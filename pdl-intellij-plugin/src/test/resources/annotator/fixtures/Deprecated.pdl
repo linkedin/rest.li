@@ -1,0 +1,3 @@
+@deprecated
+record Deprecated {
+}

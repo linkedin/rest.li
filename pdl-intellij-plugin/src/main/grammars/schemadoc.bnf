@@ -1,0 +1,22 @@
+{
+  parserClass="com.linkedin.intellij.pegasusplugin.schemadoc.parser.SchemadocParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="Schemadoc"
+  psiImplClassSuffix="Impl"
+  psiPackage="com.linkedin.intellij.pegasusplugin.schemadoc.psi"
+  psiImplPackage="com.linkedin.intellij.pegasusplugin.schemadoc.psi.impl"
+
+  elementTypeHolderClass="com.linkedin.intellij.pegasusplugin.schemadoc.psi.SchemadocTypes"
+  elementTypeClass="com.linkedin.intellij.pegasusplugin.schemadoc.psi.SchemadocElementType"
+  tokenTypeClass="com.linkedin.intellij.pegasusplugin.schemadoc.psi.SchemadocTokenType"
+}
+
+pdlPsiFile ::= comment
+
+comment ::= DOC_COMMENT_START (DOC_COMMENT_CONTENT | DOC_COMMENT_LEADING_ASTRISK)* DOC_COMMENT_END? {
+  extends="com.linkedin.intellij.pegasusplugin.schemadoc.psi.SchemadocCommentBase"
+  implements="com.linkedin.intellij.pegasusplugin.schemadoc.psi.SchemadocCommentInterface"
+
+}

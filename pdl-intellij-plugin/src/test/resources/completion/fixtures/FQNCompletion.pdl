@@ -1,0 +1,10 @@
+namespace org.example
+
+/**
+ * Ensures that completion works correctly when manually typing out FQNs.
+ * Also tests this for external PDL, external PDSC, and in-project PDSC.
+ */
+record FQNCompletion {
+  x: <caret>
+}
+

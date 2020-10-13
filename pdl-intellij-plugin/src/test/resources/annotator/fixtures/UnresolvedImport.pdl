@@ -1,0 +1,4 @@
+import <error descr="Cannot resolve import 'org.example.Unresolved'">org.example.Unresolved</error>
+
+record UnresolvedImport {
+}

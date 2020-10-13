@@ -1,0 +1,19 @@
+namespace org.example
+
+import org.example.Dummy<caret>
+
+record ProhibitedImportConflictsLocal {
+  x: Dummy,
+
+  inner: {
+    namespace com.overridden
+
+    record UnusedImport {
+      x: Dummy,
+
+      y: int
+    }
+  },
+
+  y: string
+}

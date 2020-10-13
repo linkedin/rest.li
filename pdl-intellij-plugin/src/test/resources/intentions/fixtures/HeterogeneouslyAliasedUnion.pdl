@@ -1,0 +1,19 @@
+namespace org.example
+
+import org.joda.DateTime
+
+record HetergeneouslyAliasedUnion {
+  good: union[null, A: int, B: string],
+
+  badFix: union[
+    null,
+    int,
+    alias2: string,<caret>
+    long,
+    bytes,
+    foo: float
+    DateTime
+  ],
+
+  badIgnore: union[A: int, string]
+}

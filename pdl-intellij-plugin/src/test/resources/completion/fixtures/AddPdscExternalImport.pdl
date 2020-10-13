@@ -1,0 +1,5 @@
+namespace ns
+
+record AddPdscExternalImport {
+  field: ExternalPdsc<caret>
+}

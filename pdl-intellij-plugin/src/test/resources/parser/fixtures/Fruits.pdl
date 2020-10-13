@@ -1,0 +1,15 @@
+namespace parser.fixtures
+
+/**
+ * An enum dedicated to the finest of the food groups.
+ */
+enum Fruits {
+  /**
+   * An Apple.
+   */
+  APPLE
+
+  BANANA
+  ORANGE
+  PINEAPPLE
+}

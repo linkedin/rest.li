@@ -1,0 +1,10 @@
+ namespace org.example
+
+    /**
+* Comment.
+  */
+ @property
+   record Formatter{
+field1: string
+     field2: int
+}

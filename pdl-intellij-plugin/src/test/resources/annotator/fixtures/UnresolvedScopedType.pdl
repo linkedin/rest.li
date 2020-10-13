@@ -1,0 +1,48 @@
+namespace <error descr="Namespace 'annotator.fixtures' does not correspond to file path ''">annotator.fixtures</error>
+// The unit test expects an error for the above namespace because '/annotator/fixtures/' is the package root
+
+/**
+ * Ensures that type references and type declarations can correctly inherit their namespaces from either a scoped
+ * namespace declaration or from the root namespace declaration.
+ */
+record UnresolvedScopedType {
+  // Inner overridden namespace
+  inner: {
+    namespace com.overridden
+
+    // Define the inner type
+    record UnresolvedScopedInnerType {
+      // Innermost overridden namespace
+      innermost: {
+        namespace com.doubly.overridden
+
+        // Buffer to test that the innermost type can traverse the tree to inherit its namespace
+        record Buffer {
+          // Define the innermost type
+          type: record UnresolvedScopedInnermostType {
+            // Try referencing the outer type and the inner type
+            correctOuterReference: annotator.fixtures.UnresolvedScopedType
+            correctInnerReference: com.overridden.UnresolvedScopedInnerType
+            brokenOuterReference: <error descr="Cannot resolve type 'UnresolvedScopedType'">UnresolvedScopedType</error>
+            brokenInnerReference: <error descr="Cannot resolve type 'UnresolvedScopedInnerType'">UnresolvedScopedInnerType</error>
+          }
+        }
+      }
+
+      // Buffer to ensure that references can traverse the tree to inherit their namespaces
+      references: record Buffer {
+        // Try referencing the outer type and the innermost type
+        correctOuterReference: annotator.fixtures.UnresolvedScopedType
+        correctInnermostReference: com.doubly.overridden.UnresolvedScopedInnermostType
+        brokenOuterReference: <error descr="Cannot resolve type 'UnresolvedScopedType'">UnresolvedScopedType</error>
+        brokenInnermostReference: <error descr="Cannot resolve type 'UnresolvedScopedInnermostType'">UnresolvedScopedInnermostType</error>
+      }
+    }
+  }
+
+  // Try referencing the inner type and the innermost type
+  correctInnerReference: com.overridden.UnresolvedScopedInnerType
+  correctInnermostReference: com.doubly.overridden.UnresolvedScopedInnermostType
+  brokenInnerReference: <error descr="Cannot resolve type 'UnresolvedScopedInnerType'">UnresolvedScopedInnerType</error>
+  brokenInnermostReference: <error descr="Cannot resolve type 'UnresolvedScopedInnermostType'">UnresolvedScopedInnermostType</error>
+}

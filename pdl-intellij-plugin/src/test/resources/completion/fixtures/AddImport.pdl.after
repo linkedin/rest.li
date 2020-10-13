@@ -1,0 +1,7 @@
+namespace org.example
+
+import org.joda.DateTime
+
+record AddImport {
+  field: DateTime<caret>
+}

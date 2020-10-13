@@ -1,0 +1,7 @@
+namespace org.example.other
+
+import org.example.Example
+
+record WithUsages1 {
+  field: Example
+}

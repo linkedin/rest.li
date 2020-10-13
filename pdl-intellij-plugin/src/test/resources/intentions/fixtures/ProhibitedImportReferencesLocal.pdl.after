@@ -1,0 +1,17 @@
+namespace org.example
+
+record ProhibitedImportReferencesLocal {
+  x: com.overridden.InnerTypeB,
+
+  inner: {
+    namespace com.overridden
+
+    record InnerTypeB {
+      x: InnerTypeB,
+
+      y: int
+    }
+  },
+
+  y: string
+}

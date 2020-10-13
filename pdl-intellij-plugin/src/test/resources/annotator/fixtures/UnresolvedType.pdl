@@ -1,0 +1,3 @@
+record UnresolvedType {
+  field: <error descr="Cannot resolve type 'Unresolved'">Unresolved</error>
+}

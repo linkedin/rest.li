@@ -1,0 +1,6 @@
+namespace parser.fixtures
+
+record Message {
+  title: optional string
+  body: optional string
+}

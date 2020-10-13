@@ -1,0 +1,7 @@
+namespace org.example
+
+record Rename {
+  field1: Rename
+  field2: union[Rename]
+  field3: array[Rename<caret>]
+}

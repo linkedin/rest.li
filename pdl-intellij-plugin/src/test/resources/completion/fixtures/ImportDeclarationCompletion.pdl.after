@@ -1,0 +1,16 @@
+namespace org.example
+
+import org.example.extras.Dummy
+
+/**
+ * Ensures that completion works correctly for import declarations when:
+ * (1) Manually typing out the FQN.
+ * (2) Typing the simple name.
+ *
+ * The test also includes external PDL, external PDSC, and in-project PDSC types; and it ensures that types within the
+ * file's root namespace aren't included in the completion set.
+ */
+record ImportDeclarationCompletion {
+  x: Dummy
+}
+

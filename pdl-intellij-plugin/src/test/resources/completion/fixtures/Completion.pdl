@@ -1,0 +1,5 @@
+record Completion {
+  one: record Data {}
+  two: record Date {}
+  incomplete: Dat<caret>
+}
