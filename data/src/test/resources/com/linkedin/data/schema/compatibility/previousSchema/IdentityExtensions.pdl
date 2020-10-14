@@ -1,0 +1,10 @@
+record IdentityExtensions includes
+record Identity {
+  name: string,
+  id: long
+}
+{
+  @extension.using = "finder:test"
+  @extension.params = {"id" : "$URN.identityId"}
+  testField: array[typeref TestUrn = string]
+}

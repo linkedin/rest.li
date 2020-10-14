@@ -1,0 +1,10 @@
+record TestSchema6 {
+  field1:
+  union[
+    @baz.foo = 2
+    u1:
+    @bar.foo = 2
+    record A{},
+    u2: record B{}
+    ]
+}

@@ -134,7 +134,7 @@ public class AnnotationCompatibilityChecker
       {
         String annotationNamespace = handler.getAnnotationNamespace();
         Map<String, Object> currResolvedProperties = currCheckContextAndResolvedProperty.getValue();
-        if (currResolvedPropertiesMap.containsKey(annotationNamespace))
+        if (currResolvedProperties.containsKey(annotationNamespace))
         {
           // currResolvedPropertiesMap has a PathSpec which the prevResolvedPropertiesMap does not have,
           // it means there is a new field with new annotations,

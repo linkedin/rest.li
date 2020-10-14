@@ -1,0 +1,9 @@
+record FruitExtensions includes
+  record Fruit {
+    name: string,
+    id: long
+  }
+{
+  @extension.using = "finder:test"
+  testField: array[typeref TestUrn = string]
+}

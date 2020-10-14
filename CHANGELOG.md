@@ -14,6 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 - Clear the destination directory for generateRestClientTask before the task runs.
+- Add 'ExtensionSchemaAnnotationHandler' for extension schema annotation compatibility check
 
 ## [29.7.10] - 2020-10-15
 - Minimize memory copies and object creation during encoding.

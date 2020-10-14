@@ -1,0 +1,10 @@
+record FooExtensions includes
+record Foo {
+  name: string,
+  id: long
+}
+{
+  @extension.using = "finder:test"
+  @extension.params = {"id" : "$URN.fooId"}
+  testField: array[typeref TestUrn = string]
+}
