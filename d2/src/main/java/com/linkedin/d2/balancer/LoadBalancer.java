@@ -47,17 +47,7 @@ public interface LoadBalancer
    * @throws ServiceUnavailableException If the load balancer can't figure out how to reach a service for the given
    *                                     URN, an ServiceUnavailableException will be thrown.
    */
-  default void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback)
-  {
-    try
-    {
-      clientCallback.onSuccess(getClient(request, requestContext));
-    }
-    catch (ServiceUnavailableException e)
-    {
-      clientCallback.onError(e);
-    }
-  }
+  void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback);
 
   /**
    * Given a Service name, returns a TransportClient that can handle requests for the Request.
@@ -72,17 +62,7 @@ public interface LoadBalancer
    * @throws ServiceUnavailableException If the load balancer can't figure out how to reach a service for the given
    *                                     URN, an ServiceUnavailableException will be thrown.
    */
-  default void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
-  {
-    try
-    {
-      clientCallback.onSuccess(getLoadBalancedServiceProperties(serviceName));
-    }
-    catch (ServiceUnavailableException e)
-    {
-      clientCallback.onError(e);
-    }
-  }
+  void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback);
 
   void start(Callback<None> callback);
 

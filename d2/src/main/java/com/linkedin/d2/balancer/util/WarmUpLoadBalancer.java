@@ -306,4 +306,9 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
       }
     });
   }
+
+  @Override
+  public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback) {
+    _loadBalancer.getLoadBalancedServiceProperties(serviceName, clientCallback);
+  }
 }

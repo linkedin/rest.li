@@ -89,4 +89,9 @@ public abstract class LoadBalancerWithFacilitiesDelegator implements LoadBalance
   {
     return _loadBalancer.getLoadBalancedServiceProperties(serviceName);
   }
+
+  @Override
+  public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback) {
+    _loadBalancer.getLoadBalancedServiceProperties(serviceName, clientCallback);
+  }
 }
