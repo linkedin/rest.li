@@ -17,7 +17,6 @@
 package com.linkedin.data;
 
 import com.linkedin.data.collections.CheckedMap;
-import com.linkedin.data.collections.CommonMap;
 import com.linkedin.data.collections.MapChecker;
 import java.util.HashMap;
 import java.util.Map;
@@ -118,7 +117,8 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
     o._madeReadOnly = false;
     o._instrumented = false;
     o._accessMap = null;
-    o._dataComplexHashCode = DataComplexHashCode.nextHashCode();
+    o._dataComplexHashCode = 0;
+    o._isTraversing = new ThreadLocal<>();
 
     return o;
   }
@@ -391,6 +391,19 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
   @Override
   public int dataComplexHashCode()
   {
+    if (_dataComplexHashCode != 0)
+    {
+      return _dataComplexHashCode;
+    }
+
+    synchronized (this)
+    {
+      if (_dataComplexHashCode == 0)
+      {
+        _dataComplexHashCode = DataComplexHashCode.nextHashCode();
+      }
+    }
+
     return _dataComplexHashCode;
   }
 
@@ -415,17 +428,12 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
     }
   }
 
-  private final static MapChecker<String,Object> _checker = new MapChecker<String,Object>()
-  {
-    @Override
-    public void checkKeyValue(CommonMap<String, Object> map, String key, Object value)
+  private final static MapChecker<String, Object> _checker = (map, key, value) -> {
+    if (key.getClass() != String.class)
     {
-      if (key.getClass() != String.class)
-      {
-        throw new IllegalArgumentException("Key must be a string");
-      }
-      Data.checkAllowed((DataComplex) map, value);
+      throw new IllegalArgumentException("Key must be a string");
     }
+    Data.checkAllowed((DataComplex) map, value);
   };
 
   /**
@@ -439,5 +447,5 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
   private boolean _madeReadOnly = false;
   private boolean _instrumented = false;
   private Map<String, Integer> _accessMap;
-  int _dataComplexHashCode = DataComplexHashCode.nextHashCode();
+  int _dataComplexHashCode = 0;
 }

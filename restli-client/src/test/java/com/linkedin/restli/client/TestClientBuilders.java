@@ -975,7 +975,7 @@ public class TestClientBuilders
     testRecord.data().makeReadOnly();
     request = builder.build();
     createInput = (CollectionRequest<TestRecord>) request.getInputRecord();
-    Assert.assertSame(createInput.getElements().get(0), testRecord);
+    Assert.assertEquals(createInput.getElements().get(0), testRecord);
   }
 
   @Test
@@ -998,7 +998,7 @@ public class TestClientBuilders
     testRecord.data().makeReadOnly();
     request = builder.build();
     createInput = (CollectionRequest<TestRecord>) request.getInputRecord();
-    Assert.assertSame(createInput.getElements().get(0), testRecord);
+    Assert.assertEquals(createInput.getElements().get(0), testRecord);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")

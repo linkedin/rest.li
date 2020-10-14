@@ -20,6 +20,7 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 
 /**
@@ -259,6 +260,12 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   public int size()
   {
     return _list.size();
+  }
+
+  @Override
+  public void forEach(Consumer<? super E> action)
+  {
+    _list.forEach(action);
   }
 
   @Override

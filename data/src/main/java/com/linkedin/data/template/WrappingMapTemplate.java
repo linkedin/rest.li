@@ -95,9 +95,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
   @Override
   public V put(String key, V value) throws ClassCastException, TemplateOutputCastException
   {
-    Object unwrapped;
-    Object found = CheckedUtil.putWithoutChecking(_map, key, unwrapped = unwrap(value));
-    _cache.put(unwrapped, value);
+    Object found = CheckedUtil.putWithoutChecking(_map, key, unwrap(value));
     return cacheLookup(found, null);
   }
 
@@ -200,12 +198,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
     {
       V value = entry.getValue();
       Object unwrapped = unwrap(value);
-      boolean added = _map.entrySet().add(new AbstractMap.SimpleEntry<>(entry.getKey(), unwrapped));
-      if (added)
-      {
-        _cache.put(unwrapped, value);
-      }
-      return added;
+      return _map.entrySet().add(new AbstractMap.SimpleEntry<>(entry.getKey(), unwrapped));
     }
 
     @Override
@@ -318,9 +311,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
         @Override
         public V setValue(V value) throws ClassCastException, TemplateOutputCastException
         {
-          Object unwrapped;
-          Object ret =_entry.setValue(unwrapped = unwrap(value));
-          _cache.put(unwrapped, value);
+          Object ret =_entry.setValue(unwrap(value));
           _value = null;
           return cacheLookup(ret, null);
         }

@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 
 /**
@@ -282,6 +283,12 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public String toString()
   {
     return _map.toString();
+  }
+
+  @Override
+  public void forEach(BiConsumer<? super K, ? super V> action)
+  {
+    _map.forEach(action);
   }
 
   @Override

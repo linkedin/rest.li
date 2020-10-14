@@ -14,6 +14,13 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.10] - 2020-10-15
+- Minimize memory copies and object creation during encoding.
+- Use String switch instead of map lookup in traverse callback for better performance
+- Reset isTraversing when cloning
+- Cache data objects in wrapped mapped/lists lazily on get.
+- Compute dataComplexHashCode lazily for DataList and DataMap
+
 ## [29.7.9] - 2020-10-15
 - Add partition validation when getting relative load balancer metrics.
 - Extend checkPegasusSchemaSnapshot task to be enable to check schema annotation compatibility.
@@ -4703,7 +4710,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.9...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.10...master
+[29.7.10]: https://github.com/linkedin/rest.li/compare/v29.7.9...v29.7.10
 [29.7.9]: https://github.com/linkedin/rest.li/compare/v29.7.8...v29.7.9
 [29.7.8]: https://github.com/linkedin/rest.li/compare/v29.7.7...v29.7.8
 [29.7.7]: https://github.com/linkedin/rest.li/compare/v29.7.6...v29.7.7
