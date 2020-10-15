@@ -1905,6 +1905,7 @@ public class PegasusPlugin implements Plugin<Project>
           {
             task.setEnableArgFile(true);
           }
+          task.doFirst(new CacheableAction<>(t -> project.delete(generatedRestClientDir)));
         });
 
     if (dataTemplateJarTask != null)
