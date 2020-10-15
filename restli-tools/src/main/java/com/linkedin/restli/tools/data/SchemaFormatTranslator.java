@@ -17,24 +17,26 @@
 package com.linkedin.restli.tools.data;
 
 import com.linkedin.data.schema.AbstractSchemaEncoder;
-import com.linkedin.data.schema.AbstractSchemaParser;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaLocation;
+import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.SchemaParser;
+import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.SchemaToPdlEncoder;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
+import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
+import com.linkedin.pegasus.generator.DataSchemaParser;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -207,32 +209,31 @@ public class SchemaFormatTranslator
   private Map<String, SchemaInfo> getTopLevelSchemaToTranslatedSchemaMap() throws IOException
   {
     Map<String, SchemaInfo> topLevelTranslatedSchemas = new HashMap<>();
+    DataSchemaParser dataSchemaParser = new DataSchemaParser(_resolverPath);
+    DataSchemaParser.ParseResult parsedSources = dataSchemaParser.parseSources(
+        new String[]{_sourceDir.getAbsolutePath()});
 
-    Iterator<File> iter = FileUtils.iterateFiles(_sourceDir, new String[]{_sourceFormat}, true);
-    StringBuilder errorMessages = new StringBuilder();
-    while(iter.hasNext())
+    for(Map.Entry<DataSchema, DataSchemaLocation> entry : parsedSources.getSchemaAndLocations().entrySet())
     {
-      File sourceFile = iter.next();
-      String relativePath = _sourceDir.toURI().relativize(sourceFile.toURI()).getPath();
-      String relativeMinusExt = trimFileExtension(relativePath);
-      String schemaFullname = relativeMinusExt.replace(File.separatorChar, '.');
-
-      // When translating files 1:1, a new resolver and parser are required for each file translated
-      // so that a single top level output schema is matched to each input file.
-      MultiFormatDataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(_resolverPath);
-      PegasusSchemaParser parser = AbstractSchemaParser.parserForFileExtension(_sourceFormat, resolver);
-      parser.parse(new FileInputStream(sourceFile));
-      LOGGER.debug("Loaded source schema: {}, from location: {}", schemaFullname, sourceFile.getAbsolutePath());
-      NamedDataSchema schema = checkForErrorsAndGetTopLevelSchema(sourceFile, schemaFullname, parser, errorMessages);
-      if (schema != null)
+      DataSchema schema = entry.getKey();
+      DataSchemaLocation location = entry.getValue();
+      if (!location.getSourceFile().getAbsolutePath().endsWith(_sourceFormat))
       {
-        topLevelTranslatedSchemas.put(schemaFullname, new SchemaInfo(schema, sourceFile, encode(schema)));
+        // Skip source files not matching the format specified.
+        continue;
       }
-    }
-    if (errorMessages.length() > 0)
-    {
-      LOGGER.error(errorMessages.toString());
-      System.exit(1);
+      if (schema instanceof NamedDataSchema)
+      {
+        NamedDataSchema namedDataSchema = (NamedDataSchema) schema;
+        String schemaFullname = namedDataSchema.getFullName();
+        LOGGER.debug("Loaded source schema: {}, from location: {}", schemaFullname, location.getSourceFile().getAbsolutePath());
+        topLevelTranslatedSchemas.put(schemaFullname, new SchemaInfo(namedDataSchema, location.getSourceFile(), encode(schema)));
+      }
+      else
+      {
+        LOGGER.error("Parsed a non-named schema as top-level schema.");
+        System.exit(1);
+      }
     }
     return topLevelTranslatedSchemas;
   }
@@ -343,46 +344,6 @@ public class SchemaFormatTranslator
           schemaInfo.getDestEncodedSchemaString();
       FileUtils.writeStringToFile(destinationFile, fileContent);
     }
-  }
-
-  private static NamedDataSchema checkForErrorsAndGetTopLevelSchema(
-      File file, String schemaFullname, PegasusSchemaParser parser, StringBuilder errorMessages)
-  {
-    StringBuilder errorMessageBuilder = parser.errorMessageBuilder();
-    if (errorMessageBuilder.length() > 0)
-    {
-      errorMessages.append("Failed to parse schema: ")
-          .append(file.getAbsolutePath())
-          .append("\nfullname: ")
-          .append(schemaFullname)
-          .append("\nerrors: ")
-          .append(errorMessageBuilder.toString())
-          .append("\n");
-      return null;
-    }
-    List<DataSchema> topLevelSchemas = parser.topLevelDataSchemas();
-    if (topLevelSchemas.size() != 1)
-    {
-      errorMessages.append("Expected one top level schema for: ")
-          .append(file.getAbsolutePath())
-          .append(" but got ")
-          .append(topLevelSchemas.size())
-          .append(" schemas.")
-          .append("\n");
-      return  null;
-    }
-    DataSchema sourceSchema = topLevelSchemas.get(0);
-    if (!(sourceSchema instanceof NamedDataSchema) ||
-        !((NamedDataSchema) sourceSchema).getFullName().equals(schemaFullname))
-    {
-      errorMessages.append("Parsed top-level schema does not match the schema file name. File: ")
-          .append(file.getAbsolutePath())
-          .append("\n parsedSchemaName: ")
-          .append(sourceSchema.getUnionMemberKey())
-          .append("\n");
-      return null;
-    }
-    return (NamedDataSchema) sourceSchema;
   }
 
   private String encode(DataSchema schema) throws IOException

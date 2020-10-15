@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Improve performance of schema format translator.
 
 ## [29.7.13] - 2020-10-22
 - Improve relative load balancer logging.
