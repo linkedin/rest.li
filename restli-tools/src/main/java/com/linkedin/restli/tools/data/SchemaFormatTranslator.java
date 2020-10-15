@@ -19,23 +19,20 @@ package com.linkedin.restli.tools.data;
 import com.linkedin.data.schema.AbstractSchemaEncoder;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
-import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
-import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.SchemaToPdlEncoder;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
-import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.pegasus.generator.DataSchemaParser;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
+import com.linkedin.util.FileUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -213,13 +210,19 @@ public class SchemaFormatTranslator
     DataSchemaParser.ParseResult parsedSources = dataSchemaParser.parseSources(
         new String[]{_sourceDir.getAbsolutePath()});
 
-    for(Map.Entry<DataSchema, DataSchemaLocation> entry : parsedSources.getSchemaAndLocations().entrySet())
+    for (Map.Entry<DataSchema, DataSchemaLocation> entry : parsedSources.getSchemaAndLocations().entrySet())
     {
       DataSchema schema = entry.getKey();
       DataSchemaLocation location = entry.getValue();
-      if (!location.getSourceFile().getAbsolutePath().endsWith(_sourceFormat))
+      // DataSchemaParse::parseSources returns all schemas from the source dir and the schemas referenced by it.
+      // For translation we need to skip the following schemas:
+      //   - From source files not matching the source format specified.
+      //   - Schemas not loaded from the source dir provided as input.
+      //   - Nested schemas.
+      if (!location.getSourceFile().getAbsolutePath().endsWith(_sourceFormat) ||
+          !location.toString().startsWith(_sourceDir.getAbsolutePath()) ||
+          !isTopLevelSchema(schema, location))
       {
-        // Skip source files not matching the format specified.
         continue;
       }
       if (schema instanceof NamedDataSchema)
@@ -231,12 +234,38 @@ public class SchemaFormatTranslator
       }
       else
       {
-        LOGGER.error("Parsed a non-named schema as top-level schema.");
+        LOGGER.error("Parsed a non-named schema as top-level schema. Location: {}", location.getSourceFile().getAbsolutePath());
         System.exit(1);
       }
     }
     return topLevelTranslatedSchemas;
   }
+
+  /**
+   * Returns true if the schema name matches the file name of the location, indicating the schema is a top-level
+   * schema.
+   */
+  private boolean isTopLevelSchema(DataSchema schema, DataSchemaLocation location)
+  {
+    if (!(schema instanceof NamedDataSchema))
+    {
+      // Top-level schemas should be named.
+      return false;
+    }
+    NamedDataSchema namedDataSchema = (NamedDataSchema) schema;
+    String namespace = namedDataSchema.getNamespace();
+    String path = location.toString();
+    if (!FileUtil.removeFileExtension(path.substring(path.lastIndexOf(File.separator) + 1)).equalsIgnoreCase(namedDataSchema.getName()))
+    {
+      // Schema name didn't match.
+      return false;
+    }
+
+    final String parent = path.substring(0, path.lastIndexOf(File.separator));
+    // Finally check if namespace matches.
+    return parent.endsWith(namespace.replace('.', File.separatorChar));
+  }
+
 
   private void verifyTranslatedSchemas(Map<String, SchemaInfo> topLevelTranslatedSchemas) throws IOException, InterruptedException
   {
