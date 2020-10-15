@@ -63,9 +63,11 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
     {
       DataSchema fieldSchema = field.getType().getDereferencedDataSchema();
 
-      Map<String, Object>  propagatedProperties = new HashMap<>();
+      Map<String, Object>  propagatedProperties = fieldSchema.getProperties();
       if (field.getType().getType() == DataSchema.Type.TYPEREF)
       {
+        // If the field schema type is TypeRef,
+        // then use the merged typeref properties instead
         propagatedProperties = ((TyperefDataSchema) field.getType()).getMergedTyperefProperties();
       }
 
@@ -185,6 +187,7 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
    * @param field Reference to the field whose schema and default value is being overridden
    * @param modifiedSchema The override schema to use for the specified field
    * @param modifiedDefaultValue The override default value to use for the specified field
+   * @param propagatedProperties The properties value to use for the specified field
    */
   private void overrideUnionFieldSchemaAndDefault(RecordDataSchema.Field field,
       DataSchema modifiedSchema, Object modifiedDefaultValue, Map<String, Object> propagatedProperties)

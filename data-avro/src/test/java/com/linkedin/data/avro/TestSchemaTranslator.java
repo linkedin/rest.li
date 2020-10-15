@@ -69,8 +69,9 @@ public class TestSchemaTranslator
 
     assertSame(DataToAvroSchemaTranslationOptions.DEFAULT_OPTIONAL_DEFAULT_MODE, OptionalDefaultMode.TRANSLATE_DEFAULT);
   }
+
   @DataProvider
-  public Object[][] toAvroSchemaData_testTypeRefAnnotationPropagationUnionWithAlias()
+  public Object[][] toAvroSchemaDataTestTypeRefAnnotationPropagationUnionWithAlias()
   {
     return new Object[][]
         {
@@ -282,7 +283,7 @@ public class TestSchemaTranslator
  }
 
  @DataProvider
- public Object[][] toAvroSchemaData_testTypeRefAnnotationPropagation()
+ public Object[][] toAvroSchemaDataTestTypeRefAnnotationPropagation()
  {
    //These test were specially moved out from "toAvroSchemaData" tests because custom logic needed to validate the correctness
    //of those properties
@@ -519,7 +520,7 @@ public class TestSchemaTranslator
 
  }
 
- @Test(dataProvider = "toAvroSchemaData_testTypeRefAnnotationPropagationUnionWithAlias")
+ @Test(dataProvider = "toAvroSchemaDataTestTypeRefAnnotationPropagationUnionWithAlias")
  public void testToAvroSchema_testTypeRefAnnotationPropagationUnionWithAlias(String schemaBeforeTranslation,
                                                                String expectedAvroSchemaAsString) throws Exception
  {
@@ -533,7 +534,7 @@ public class TestSchemaTranslator
    assertEquals(fieldsPropertiesMap, avroSchemaAsDataMap);
  }
 
-  @Test(dataProvider = "toAvroSchemaData_testTypeRefAnnotationPropagation")
+  @Test(dataProvider = "toAvroSchemaDataTestTypeRefAnnotationPropagation")
   public void testToAvroSchema_testTypeRefAnnotationPropagation(String schemaBeforeTranslation,
       String expectedAvroSchemaAsString) throws Exception
   {
