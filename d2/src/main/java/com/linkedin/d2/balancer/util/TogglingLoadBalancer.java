@@ -54,7 +54,7 @@ import java.util.Map;
 
 public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider, WarmUpService, ClusterInfoProvider
 {
-  private final LoadBalancer _balancer;
+  private final SimpleLoadBalancer _balancer;
   private final WarmUpService _warmUpService;
   private final HashRingProvider _hashRingProvider;
   private final PartitionInfoProvider _partitionInfoProvider;

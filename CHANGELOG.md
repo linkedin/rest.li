@@ -13,12 +13,18 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [30.0.0] - 2020-10-15
+- Backward incompatible change: Removed D2 default async implementation. Implemented async call in warm up load balancer.
 - Extend checkPegasusSchemaSnapshot task to be enable to check schema annotation compatibility.
-  - The annotation compatibility will be triggered if SchemaANnotationHandler config is provided.
-  - Update SchemaAnnotationHandler interface to have a new api - annotationCompatibilityCheck, which can be used to check the custom annotation compatibility check.
+- The annotation compatibility will be triggered if SchemaANnotationHandler config is provided.
+- Update SchemaAnnotationHandler interface to have a new api - annotationCompatibilityCheck, which can be used to check the custom annotation compatibility check.
 
 ## [29.7.8] - 2020-10-12
 - Encoding performance improvements
+
+## [29.7.8] - 2020-10-11
+- Adding async implementation of getClient call in warmup load balancer.
 
 ## [29.7.7] - 2020-10-06
 - Adding dark cluster response validation metrics
@@ -4700,7 +4706,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.8...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v30.0.0...master
+[30.0.0]: https://github.com/linkedin/rest.li/compare/v29.7.8...v30.0.0
 [29.7.8]: https://github.com/linkedin/rest.li/compare/v29.7.7...v29.7.8
 [29.7.7]: https://github.com/linkedin/rest.li/compare/v29.7.6...v29.7.7
 [29.7.6]: https://github.com/linkedin/rest.li/compare/v29.7.5...v29.7.6
