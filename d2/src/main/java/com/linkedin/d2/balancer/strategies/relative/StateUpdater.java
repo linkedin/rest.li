@@ -149,7 +149,7 @@ public class StateUpdater
   /**
    * Return the first valid partition id. This is mainly used for monitoring at least one valid partition.
    */
-  int getValidPartitionId()
+  int getFirstValidPartitionId()
   {
     return _firstPartitionId;
   }

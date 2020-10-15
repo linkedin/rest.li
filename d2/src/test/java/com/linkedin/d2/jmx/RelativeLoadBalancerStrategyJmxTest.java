@@ -47,7 +47,7 @@ public class RelativeLoadBalancerStrategyJmxTest {
     RelativeLoadBalancerStrategy strategy = Mockito.mock(RelativeLoadBalancerStrategy.class);
     PartitionState state = Mockito.mock(PartitionState.class);
     Mockito.when(state.getTrackerClientStateMap()).thenReturn(trackerClientsMap);
-    Mockito.when(strategy.getValidPartitionId()).thenReturn(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+    Mockito.when(strategy.getFirstValidPartitionId()).thenReturn(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Mockito.when(strategy.getPartitionState(anyInt())).thenReturn(state);
 
     return new RelativeLoadBalancerStrategyJmx(strategy);
@@ -148,7 +148,7 @@ public class RelativeLoadBalancerStrategyJmxTest {
   public void testNoValidPartitionData()
   {
     RelativeLoadBalancerStrategy strategy = Mockito.mock(RelativeLoadBalancerStrategy.class);
-    Mockito.when(strategy.getValidPartitionId()).thenReturn(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+    Mockito.when(strategy.getFirstValidPartitionId()).thenReturn(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Mockito.when(strategy.getPartitionState(anyInt())).thenReturn(null);
 
     RelativeLoadBalancerStrategyJmx jmx = new RelativeLoadBalancerStrategyJmx(strategy);

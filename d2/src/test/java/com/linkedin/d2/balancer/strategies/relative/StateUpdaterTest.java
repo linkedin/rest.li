@@ -83,7 +83,7 @@ public class StateUpdaterTest
 
     assertEquals(_stateUpdater.getPointsMap(partitionId).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
     assertEquals(_stateUpdater.getPointsMap(partitionId).get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
-    assertEquals(_stateUpdater.getValidPartitionId(), partitionId);
+    assertEquals(_stateUpdater.getFirstValidPartitionId(), partitionId);
   }
 
   @DataProvider(name = "partitionId")
