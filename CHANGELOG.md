@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Check if debug logging is enabled before calling debug log message in TimingContextUtil to avoid unnecessary exception instantiation.
 
 ## [29.7.9] - 2020-10-15
 - Add partition validation when getting relative load balancer metrics.
