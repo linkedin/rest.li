@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.13] - 2020-10-21
+- Check if debug logging is enabled before calling debug log message in TimingContextUtil to avoid unnecessary exception instantiation.
+
 ## [29.7.12] - 2020-10-20
 Fix the bug of not propagating schema properties in typeref with UnionWithAlias during pegasus to avro translation
 
@@ -4717,9 +4720,14 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
+<<<<<<< HEAD
 [Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.12...master
 [29.7.12]: https://github.com/linkedin/rest.li/compare/v29.7.11...v29.7.12
 [29.7.11]: https://github.com/linkedin/rest.li/compare/v29.7.10...v29.7.11
+=======
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.13...master
+[29.7.13]: https://github.com/linkedin/rest.li/compare/v>>>>>>> c5ae5a980... Check if debug logging is enabled before calling debug log method in TimingContextUtil to avoid unnecessary exception instantiation....v29.7.13
+>>>>>>> c5ae5a980... Check if debug logging is enabled before calling debug log method in TimingContextUtil to avoid unnecessary exception instantiation.
 [29.7.10]: https://github.com/linkedin/rest.li/compare/v29.7.9...v29.7.10
 [29.7.9]: https://github.com/linkedin/rest.li/compare/v29.7.8...v29.7.9
 [29.7.8]: https://github.com/linkedin/rest.li/compare/v29.7.7...v29.7.8
