@@ -82,9 +82,13 @@ public class TestCodec
     TestUtil.assertEquivalent(map3, map);
     TestUtil.assertEquivalent(map3, map2);
 
+    // test mapToByteString
+
+    ByteString byteString = codec.mapToByteString(map);
+
     // test readMap (ByteString)
 
-    DataMap map4 = codec.readMap(toByteString(outputStreamBytes));
+    DataMap map4 = codec.readMap(byteString);
     StringBuilder sb4 = new StringBuilder();
     Data.dump("map", map4, "", sb4);
 
@@ -153,6 +157,18 @@ public class TestCodec
 
     assertEquals(sb3.toString(), sb1.toString());
 
+    // test listToByteString
+
+    ByteString byteString = codec.listToByteString(list);
+
+    // test readList (ByteString)
+
+    DataList list4 = codec.readList(byteString);
+    StringBuilder sb4 = new StringBuilder();
+    Data.dump("list", list4, "", sb4);
+
+    TestUtil.assertEquivalent(list4, list);
+    TestUtil.assertEquivalent(list4, list2);
 
     if (codec instanceof TextDataCodec)
     {
@@ -164,10 +180,10 @@ public class TestCodec
 
       // test stringToList
 
-      DataList list4 = textCodec.stringToList(string);
-      StringBuilder sb4 = new StringBuilder();
-      Data.dump("list", list4, "", sb4);
-      assertEquals(sb4.toString(), sb1.toString());
+      DataList list5 = textCodec.stringToList(string);
+      StringBuilder sb5 = new StringBuilder();
+      Data.dump("list", list5, "", sb5);
+      assertEquals(sb5.toString(), sb1.toString());
 
       // test writeList
 
@@ -178,9 +194,9 @@ public class TestCodec
       // test readList
 
       StringReader reader = new StringReader(string);
-      DataList list5 = textCodec.readList(reader);
-      StringBuilder sb5 = new StringBuilder();
-      Data.dump("list", list5, "", sb5);
+      DataList list6 = textCodec.readList(reader);
+      StringBuilder sb6 = new StringBuilder();
+      Data.dump("list", list6, "", sb6);
     }
   }
 

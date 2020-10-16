@@ -270,6 +270,25 @@ public final class ByteString
     return new ByteString(bos.getBytes(), 0, bos.getBytesCount());
   }
 
+  /**
+   * This is used to get a {@link ByteString} from a {@link com.linkedin.util.FastByteArrayOutputStream}.
+   */
+  public ByteString(List<byte[]> chunks, int lastChunkLength)
+  {
+    ArgumentUtil.notNull(chunks, "chunks");
+    ByteArray[] byteArrays = new ByteArray[chunks.size()];
+
+    int index = 0;
+    for (byte[] chunk : chunks)
+    {
+      final int length = (index == chunks.size() - 1) ? lastChunkLength : chunk.length;
+      byteArrays[index] = new ByteArray(chunk, 0, length);
+      index++;
+    }
+
+    _byteArrays = new ByteArrayVector(byteArrays);
+  }
+
   private ByteString(byte[] bytes)
   {
     this(ArgumentUtil.ensureNotNull(bytes, "bytes"), 0, bytes.length);

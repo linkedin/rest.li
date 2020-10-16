@@ -96,7 +96,8 @@ public final class DataList extends CheckedList<Object> implements DataComplex
     o._madeReadOnly = false;
     o._instrumented = false;
     o._accessList = null;
-    o._dataComplexHashCode = DataComplexHashCode.nextHashCode();
+    o._dataComplexHashCode = 0;
+    o._isTraversing = new ThreadLocal<>();
 
     return o;
   }
@@ -222,6 +223,19 @@ public final class DataList extends CheckedList<Object> implements DataComplex
   @Override
   public int dataComplexHashCode()
   {
+    if (_dataComplexHashCode != 0)
+    {
+      return _dataComplexHashCode;
+    }
+
+    synchronized (this)
+    {
+      if (_dataComplexHashCode == 0)
+      {
+        _dataComplexHashCode = DataComplexHashCode.nextHashCode();
+      }
+    }
+
     return _dataComplexHashCode;
   }
 
@@ -257,14 +271,7 @@ public final class DataList extends CheckedList<Object> implements DataComplex
     }
   }
 
-  private final static ListChecker<Object> _checker = new ListChecker<Object>()
-  {
-    @Override
-    public void check(CommonList<Object> list, Object e)
-    {
-      Data.checkAllowed((DataComplex) list, e);
-    }
-  };
+  private final static ListChecker<Object> _checker = (list, e) -> Data.checkAllowed((DataComplex) list, e);
 
   /**
    * Indicates if this {@link DataList} is currently being traversed by a {@link Data.TraverseCallback} if this value is
@@ -277,5 +284,5 @@ public final class DataList extends CheckedList<Object> implements DataComplex
   private boolean _madeReadOnly = false;
   private boolean _instrumented = false;
   private ArrayList<Integer> _accessList;
-  private int _dataComplexHashCode = DataComplexHashCode.nextHashCode();
+  private int _dataComplexHashCode = 0;
 }

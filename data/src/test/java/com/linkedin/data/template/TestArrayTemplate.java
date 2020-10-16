@@ -139,8 +139,9 @@ public class TestArrayTemplate
       {
         E value = adds.get(i);
         assertTrue(array3.add(value));
+        Object getValue = array3.get(i);
         assertEquals(array3.get(i), value);
-        assertSame(array3.get(i), value);
+        assertSame(array3.get(i), getValue);
         assertTrue(array3.toString().contains(value.toString()));
       }
       assertEquals(array3, adds);
@@ -151,8 +152,9 @@ public class TestArrayTemplate
       {
         E value = adds.get(adds.size() - i - 1);
         array4.add(0, value);
+        Object getValue = array4.get(0);
         assertEquals(array4.get(0), value);
-        assertSame(array4.get(0), value);
+        assertSame(array4.get(0), getValue);
       }
       assertEquals(array4, adds);
 

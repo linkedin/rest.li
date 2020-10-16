@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.internal.server.response;
 
-
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
@@ -49,7 +48,6 @@ import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.RestLiServiceException;
 
-import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.util.Map;
 import javax.activation.MimeTypeParseException;
@@ -220,8 +218,7 @@ public class ResponseUtils
               "Requested mime type for encoding is not supported. Mimetype: " + mimeType));
       assert type != null;
       builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
-      // Use unsafe wrap to avoid copying the bytes when request builder creates ByteString.
-      builder.setEntity(ByteString.unsafeWrap(DataMapUtils.mapToBytes(dataMap, type.getCodec())));
+      builder.setEntity(DataMapUtils.mapToByteString(dataMap, type.getCodec()));
     }
     catch (MimeTypeParseException e)
     {
@@ -247,10 +244,7 @@ public class ResponseUtils
 
     if (restLiResponse.hasData())
     {
-      DataMap dataMap = restLiResponse.getDataMap();
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(4096);
-      DataMapUtils.write(dataMap, baos, responseBuilder.getHeaders());
-      responseBuilder.setEntity(ByteString.unsafeWrap(baos.toByteArray()));
+      responseBuilder.setEntity(DataMapUtils.mapToByteString(restLiResponse.getDataMap(), responseBuilder.getHeaders()));
     }
 
     RestResponse restResponse = responseBuilder.build();

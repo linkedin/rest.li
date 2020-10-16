@@ -224,7 +224,7 @@ public class TestMultiplexedRequestHandlerImpl
         .andReturn(individualRequestMap);
     // Map request from /modifiedRequest to FOO_URL so that mock handler will be able to handle the request.
     // Map response's body from FOO_ENTITY to BAR_JSON_BODY to simulate filtering on response
-    expect(mockMuxFilter.filterIndividualRequest(EasyMock.same(modifiedRequest)))
+    expect(mockMuxFilter.filterIndividualRequest(EasyMock.eq(modifiedRequest)))
                         .andReturn(fakeIndRequest(FOO_URL))
                         .once();
     expect(mockMuxFilter.filterIndividualResponse(EasyMock.anyObject(IndividualResponse.class)))
