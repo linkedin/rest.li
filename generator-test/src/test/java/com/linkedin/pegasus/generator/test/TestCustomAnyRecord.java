@@ -122,7 +122,7 @@ public class TestCustomAnyRecord
     input = new CustomAnyRecord();
     array.add(input);
     CustomAnyRecord output = array.get(0);
-    assertSame(input, output);
+    assertEquals(input, output);
 
     // test array field
     r.setArray(array);
@@ -133,7 +133,7 @@ public class TestCustomAnyRecord
     input = new CustomAnyRecord();
     map.put("0", input);
     output = map.get("0");
-    assertSame(input, output);
+    assertEquals(input, output);
 
     // test map field
     r.setMap(map);

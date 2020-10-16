@@ -344,7 +344,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
       }
       else
       {
-        return map.entrySet();
+        return null;
       }
     }
 

@@ -49,9 +49,7 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
   @Override
   public boolean add(E element) throws ClassCastException
   {
-    Object unwrapped;
-    boolean result = CheckedUtil.addWithoutChecking(_list, unwrapped = unwrap(element));
-    _cache.put(unwrapped, element);
+    boolean result = CheckedUtil.addWithoutChecking(_list, unwrap(element));
     modCount++;
     return result;
   }
@@ -59,9 +57,7 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
   @Override
   public void add(int index, E element) throws ClassCastException
   {
-    Object unwrapped;
-    CheckedUtil.addWithoutChecking(_list, index, unwrapped = unwrap(element));
-    _cache.put(unwrapped, element);
+    CheckedUtil.addWithoutChecking(_list, index, unwrap(element));
     modCount++;
   }
 

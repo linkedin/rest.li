@@ -36,6 +36,7 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.DataMapConverter;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.server.RoutingException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -290,7 +291,7 @@ public class DataMapUtils
     try
     {
       DataMap dataMap = CODEC.readMap(stream);
-      return new CollectionResponse<T>(dataMap, recordClass);
+      return new CollectionResponse<>(dataMap, recordClass);
     }
     catch (IOException e)
     {
@@ -311,7 +312,7 @@ public class DataMapUtils
                                                                                         final Class<T> recordClass)
   {
     DataMap dataMap = readMap(message);
-    return new CollectionResponse<T>(dataMap, recordClass);
+    return new CollectionResponse<>(dataMap, recordClass);
   }
 
   public static void write(final DataTemplate<?> record,
@@ -421,7 +422,7 @@ public class DataMapUtils
   }
 
   /**
-   * Encode {@link DataMap} as a JSON ByteString using {@link ByteString} unsafeWrap.
+   * Encode {@link DataMap} as a JSON ByteString.
    *
    * @param dataMap input {@link DataMap}
    * @return ByteString
@@ -431,11 +432,18 @@ public class DataMapUtils
   @Deprecated
   public static ByteString mapToByteString(final DataMap dataMap)
   {
-    return ByteString.unsafeWrap(DataMapUtils.mapToBytes(dataMap));
+    try
+    {
+      return CODEC.mapToByteString(dataMap);
+    }
+    catch (IOException e)
+    {
+      throw new RestLiInternalException(e);
+    }
   }
 
   /**
-   * Encode {@link DataMap} as a ByteString using {@link ByteString} unsafeWrap.
+   * Encode {@link DataMap} as a ByteString.
    *
    * @param dataMap input {@link DataMap}
    * @param headers Request or response headers. This is used to determine the codec to use to encode.
@@ -443,7 +451,14 @@ public class DataMapUtils
    */
   public static ByteString mapToByteString(final DataMap dataMap, final Map<String, String> headers)
   {
-    return ByteString.unsafeWrap(DataMapUtils.mapToBytes(dataMap, headers));
+    try
+    {
+      return DataMapConverter.getContentType(headers).getCodec().mapToByteString(dataMap);
+    }
+    catch (IOException | MimeTypeParseException e)
+    {
+      throw new RestLiInternalException(e);
+    }
   }
 
   @Deprecated
@@ -495,14 +510,21 @@ public class DataMapUtils
   }
 
   /**
-   * Encode the {@link DataMap} as a ByteString using {@link ByteString} unsafeWrap.
+   * Encode the {@link DataMap} as a ByteString.
    *
    * @param dataMap input {@link DataMap}
    * @return ByteString
    */
   public static ByteString mapToPsonByteString(final DataMap dataMap)
   {
-    return ByteString.unsafeWrap(DataMapUtils.mapToPsonBytes(dataMap));
+    try
+    {
+      return PSON_DATA_CODEC.mapToByteString(dataMap);
+    }
+    catch (IOException e)
+    {
+      throw new RestLiInternalException(e);
+    }
   }
 
   /**
@@ -525,10 +547,30 @@ public class DataMapUtils
   }
 
   /**
+   * Encode {@link DataMap} as a {@link ByteString} using the provided codec.
+   *
+   * @param dataMap input {@link DataMap}
+   * @param customCodec custom CODEC to use for encoding.
+   * @return encoded {@link ByteString}
+   */
+  public static ByteString mapToByteString(final DataMap dataMap, DataCodec customCodec)
+  {
+    try
+    {
+      return customCodec.mapToByteString(dataMap);
+    }
+    catch (IOException e)
+    {
+      throw new RestLiInternalException(e);
+    }
+  }
+
+  /**
    * Remove {@link Data#NULL} from the input DataMap.
    * @param dataMap input data map which may contain {@link Data#NULL} values.
    */
-  public static void removeNulls(DataMap dataMap) {
+  public static void removeNulls(DataMap dataMap)
+  {
     try
     {
       Data.traverse(dataMap, new NullRemover());
