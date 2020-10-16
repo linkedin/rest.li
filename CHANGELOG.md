@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Clear the destination directory for generateRestClientTask before the task runs.
 
 ## [29.7.10] - 2020-10-15
 - Minimize memory copies and object creation during encoding.
