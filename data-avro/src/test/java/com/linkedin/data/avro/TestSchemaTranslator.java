@@ -521,7 +521,7 @@ public class TestSchemaTranslator
  }
 
  @Test(dataProvider = "toAvroSchemaDataTestTypeRefAnnotationPropagationUnionWithAlias")
- public void testToAvroSchema_testTypeRefAnnotationPropagationUnionWithAlias(String schemaBeforeTranslation,
+ public void testToAvroSchemaTestTypeRefAnnotationPropagationUnionWithAlias(String schemaBeforeTranslation,
                                                                String expectedAvroSchemaAsString) throws Exception
  {
    DataSchema schema = TestUtil.dataSchemaFromPdlString(schemaBeforeTranslation);
