@@ -262,6 +262,7 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
     fields.add(discriminatorField);
 
     recordDataSchema.setFields(fields, errorMessageBuilder);
+    recordDataSchema.setProperties(unionDataSchema.getProperties());
     return  recordDataSchema;
   }
 
