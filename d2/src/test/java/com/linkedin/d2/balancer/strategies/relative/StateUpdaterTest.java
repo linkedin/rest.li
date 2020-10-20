@@ -52,6 +52,7 @@ import static org.testng.Assert.fail;
 public class StateUpdaterTest
 {
   private static final int DEFAULT_PARTITION_ID = 0;
+  private static final int CUSTOMIZED_PARTITION_ID = 1;
   private static final long DEFAULT_CLUSTER_GENERATION_ID = 0;
   private static final int HEALTHY_POINTS = 100;
   private static final int INITIAL_RECOVERY_POINTS = 1;
@@ -68,20 +69,31 @@ public class StateUpdaterTest
         partitionLoadBalancerStateMap, Collections.emptyList());
   }
 
-  @Test
-  public void testInitializePartition()
+  @Test(dataProvider = "partitionId")
+  public void testInitializePartition(int partitionId)
   {
     setup(new D2RelativeStrategyProperties(), new ConcurrentHashMap<>());
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
         Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0));
 
-    assertTrue(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty(), "There should be no state before initialization");
+    assertTrue(_stateUpdater.getPointsMap(partitionId).isEmpty(), "There should be no state before initialization");
 
-    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID);
+    _stateUpdater.updateState(new HashSet<>(trackerClients), partitionId, DEFAULT_CLUSTER_GENERATION_ID);
 
-    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
-    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+    assertEquals(_stateUpdater.getPointsMap(partitionId).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
+    assertEquals(_stateUpdater.getPointsMap(partitionId).get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+    assertEquals(_stateUpdater.getFirstValidPartitionId(), partitionId);
+  }
+
+  @DataProvider(name = "partitionId")
+  public Object[][] partitionId()
+  {
+    return new Object[][]
+        {
+            {DEFAULT_PARTITION_ID},
+            {CUSTOMIZED_PARTITION_ID}
+        };
   }
 
   @Test

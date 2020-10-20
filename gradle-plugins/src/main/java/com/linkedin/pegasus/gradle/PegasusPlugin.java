@@ -1668,8 +1668,14 @@ public class PegasusPlugin implements Plugin<Project>
         getDataModelConfig(project, sourceSet),
         project.getConfigurations().getByName("dataTemplateCompile")));
 
+    // Set source compatibility to 1.8 as the data-templates now generate code with Java 8 features.
+    JavaCompile compileTask = project.getTasks()
+        .withType(JavaCompile.class).getByName(targetSourceSet.getCompileJavaTaskName());
+    compileTask.doFirst(new CacheableAction<>(task -> {
+      ((JavaCompile) task).setSourceCompatibility("1.8");
+      ((JavaCompile) task).setTargetCompatibility("1.8");
+    }));
     // make sure that java source files have been generated before compiling them
-    Task compileTask = project.getTasks().getByName(targetSourceSet.getCompileJavaTaskName());
     compileTask.dependsOn(generateDataTemplatesTask);
 
     // Dummy task to maintain backward compatibility
@@ -1905,6 +1911,7 @@ public class PegasusPlugin implements Plugin<Project>
           {
             task.setEnableArgFile(true);
           }
+          task.doFirst(new CacheableAction<>(t -> project.delete(generatedRestClientDir)));
         });
 
     if (dataTemplateJarTask != null)

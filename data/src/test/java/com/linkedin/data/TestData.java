@@ -1915,4 +1915,22 @@ public class TestData
     root.put("d", sub);
     new JacksonDataCodec().mapToString(root);
   }
+
+  @Test
+  public void testNonCyclicMapWithClone() throws Exception
+  {
+    DataMap root = new DataMap();
+    root.put("key", "a");
+    root.put("map", root.clone());
+    new JacksonDataCodec().mapToString(root);
+  }
+
+  @Test
+  public void testNonCyclicListWithClone() throws Exception
+  {
+    DataList list = new DataList();
+    list.add("a");
+    list.add(list.clone());
+    new JacksonDataCodec().listToString(list);
+  }
 }

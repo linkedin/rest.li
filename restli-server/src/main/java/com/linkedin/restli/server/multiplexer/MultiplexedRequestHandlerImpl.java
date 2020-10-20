@@ -17,6 +17,7 @@
 package com.linkedin.restli.server.multiplexer;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.parseq.Engine;
@@ -294,7 +295,7 @@ public class MultiplexedRequestHandlerImpl implements MultiplexedRequestHandler
   {
     MultiplexedResponseContent aggregatedResponseContent = new MultiplexedResponseContent();
     aggregatedResponseContent.setResponses(responses);
-    byte[] aggregatedResponseData = DataMapUtils.mapToBytes(aggregatedResponseContent.data(),
+    ByteString aggregatedResponseData = DataMapUtils.mapToByteString(aggregatedResponseContent.data(),
         Collections.singletonMap(RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON));
     return new RestResponseBuilder()
         .setStatus(HttpStatus.S_200_OK.getCode())

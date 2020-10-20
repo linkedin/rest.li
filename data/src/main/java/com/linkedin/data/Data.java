@@ -21,14 +21,12 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 
 /**
@@ -264,18 +262,14 @@ public class Data
      * Return an {@link Iterable} with the
      * desired output order of the entries in the traversed {@link DataMap}.
      *
-     * If the order is not significant, then this method should return
-     * the result of {@link DataMap#entrySet()}.
-     *
-     * This interface provides default NoOp for all operations except
-     * {@link TraverseCallback#orderMap(DataMap)}.
+     * If the order is not significant, then this method should return null.
      *
      * @param map provides the {@link DataMap}.
-     * @return entries of the {@link DataMap} entries in the desired output order.
+     * @return entries of the {@link DataMap} entries in the desired output order, null to use the default map ordering.
      */
     default Iterable<Map.Entry<String, Object>> orderMap(DataMap map)
     {
-      return map.entrySet();
+      return null;
     }
 
     /**
@@ -469,15 +463,16 @@ public class Data
       return;
     }
 
-    switch (Data.TYPE_MAP.get(obj.getClass()))
+    // We intentionally use a string switch here for performance.
+    switch (obj.getClass().getName())
     {
-      case 1:
+      case "java.lang.String":
         callback.stringValue((String) obj);
         return;
-      case 2:
+      case "java.lang.Integer":
         callback.integerValue((Integer) obj);
         return;
-      case 3:
+      case "com.linkedin.data.DataMap":
       {
         DataMap map = (DataMap) obj;
         if (map.isEmpty())
@@ -491,11 +486,49 @@ public class Data
             cycleChecker.startMap(map);
             callback.startMap(map);
             Iterable<Map.Entry<String, Object>> orderedEntrySet = callback.orderMap(map);
-            for (Map.Entry<String, Object> entry : orderedEntrySet)
+
+            //
+            // If the ordered entry set is null, use Java 8 forEach to avoid intermediary object
+            // creation for better performance.
+            //
+            if (orderedEntrySet == null)
             {
-              callback.key(entry.getKey());
-              traverse(entry.getValue(), callback, cycleChecker);
+              try
+              {
+                map.forEach((key, value) ->
+                {
+                  try
+                  {
+                    callback.key(key);
+                    traverse(value, callback, cycleChecker);
+                  }
+                  catch (IOException e)
+                  {
+                    throw new IllegalStateException(e);
+                  }
+                });
+              }
+              catch (IllegalStateException e)
+              {
+                if (e.getCause() instanceof IOException)
+                {
+                  throw (IOException) e.getCause();
+                }
+                else
+                {
+                  throw new IOException(e);
+                }
+              }
             }
+            else
+            {
+              for (Map.Entry<String, Object> entry : orderedEntrySet)
+              {
+                callback.key(entry.getKey());
+                traverse(entry.getValue(), callback, cycleChecker);
+              }
+            }
+
             callback.endMap();
           }
           finally
@@ -505,7 +538,7 @@ public class Data
         }
         return;
       }
-      case 4:
+      case "com.linkedin.data.DataList":
       {
         DataList list = (DataList) obj;
         if (list.isEmpty())
@@ -518,12 +551,35 @@ public class Data
           {
             cycleChecker.startList(list);
             callback.startList(list);
-            int index = 0;
-            for (Object element : list)
+
+            // Use Java 8 forEach to minimize intermediary object creation for better performance.
+            final int[] index = {0};
+            try
             {
-              callback.index(index);
-              traverse(element, callback, cycleChecker);
-              index++;
+              list.forEach((element) ->
+              {
+                try
+                {
+                  callback.index(index[0]);
+                  traverse(element, callback, cycleChecker);
+                  index[0]++;
+                }
+                catch (IOException e)
+                {
+                  throw new IllegalStateException(e);
+                }
+              });
+            }
+            catch (IllegalStateException e)
+            {
+              if (e.getCause() instanceof IOException)
+              {
+                throw (IOException) e.getCause();
+              }
+              else
+              {
+                throw new IOException(e);
+              }
             }
             callback.endList();
           }
@@ -534,19 +590,19 @@ public class Data
         }
         return;
       }
-      case 5:
+      case "java.lang.Boolean":
         callback.booleanValue((Boolean) obj);
         return;
-      case 6:
+      case "java.lang.Long":
         callback.longValue((Long) obj);
         return;
-      case 7:
+      case "java.lang.Float":
         callback.floatValue((Float) obj);
         return;
-      case 8:
+      case "java.lang.Double":
         callback.doubleValue((Double) obj);
         return;
-      case 9:
+      case "com.linkedin.data.ByteString":
         callback.byteStringValue((ByteString) obj);
         return;
     }
@@ -596,20 +652,9 @@ public class Data
    * @param map provide the {@link DataMap}.
    * @return a list of the entries of the {@link DataMap} sorted by the map's keys.
    */
-  public static List<Map.Entry<String,Object>> orderMapEntries(DataMap map)
+  public static List<Map.Entry<String, Object>> orderMapEntries(DataMap map)
   {
-    List<Map.Entry<String,Object>> copy = new ArrayList<Map.Entry<String,Object>>(map.entrySet());
-    Collections.sort(copy,
-                     new Comparator<Map.Entry<String, Object>>()
-                     {
-                       @Override
-                       public int compare(Map.Entry<String, Object> o1,
-                                          Map.Entry<String, Object> o2)
-                       {
-                         return o1.getKey().compareTo(o2.getKey());
-                       }
-                     });
-    return copy;
+    return map.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList());
   }
 
   /**

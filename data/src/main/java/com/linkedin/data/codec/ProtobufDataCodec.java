@@ -145,7 +145,7 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public void writeMap(DataMap map, OutputStream out) throws IOException
   {
-    try(TraverseCallback callback = createTraverseCallback(new ProtoWriter(out, _options.getProtoWriterBufferSize())))
+    try (TraverseCallback callback = createTraverseCallback(new ProtoWriter(out, _options.getProtoWriterBufferSize())))
     {
       Data.traverse(map, callback);
     }
@@ -154,7 +154,7 @@ public class ProtobufDataCodec implements DataCodec
   @Override
   public void writeList(DataList list, OutputStream out) throws IOException
   {
-    try(TraverseCallback callback = createTraverseCallback(new ProtoWriter(out, _options.getProtoWriterBufferSize())))
+    try (TraverseCallback callback = createTraverseCallback(new ProtoWriter(out, _options.getProtoWriterBufferSize())))
     {
       Data.traverse(list, callback);
     }

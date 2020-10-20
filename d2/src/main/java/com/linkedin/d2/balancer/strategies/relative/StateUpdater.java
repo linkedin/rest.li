@@ -62,6 +62,7 @@ public class StateUpdater
   private final List<PartitionStateUpdateListener.Factory<PartitionState>> _listenerFactories;
 
   private ConcurrentMap<Integer, PartitionState> _partitionLoadBalancerStateMap;
+  private int _firstPartitionId = -1;
 
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
                        QuarantineManager quarantineManager,
@@ -140,12 +141,17 @@ public class StateUpdater
         : _partitionLoadBalancerStateMap.get(partitionId).getPointsMap();
   }
 
-  /**
-   * Exposed for testings
-   */
   PartitionState getPartitionState(int partitionId)
   {
     return _partitionLoadBalancerStateMap.get(partitionId);
+  }
+
+  /**
+   * Return the first valid partition id. This is mainly used for monitoring at least one valid partition.
+   */
+  int getFirstValidPartitionId()
+  {
+    return _firstPartitionId;
   }
 
   /**
@@ -270,6 +276,12 @@ public class StateUpdater
           // If it is above high latency, we reduce the health score by down step
           newHealthScore = Double.max(trackerClientState.getHealthScore() - _relativeStrategyProperties.getDownStep(), MIN_HEALTH_SCORE);
           trackerClientState.setHealthState(TrackerClientState.HealthState.UNHEALTHY);
+
+          LOG.debug("Host is unhealthy. Host: " + trackerClient.toString()
+                  + ", errorRate: " + errorRate
+                  + ", latency: " + avgClusterLatency
+                  + ", callCount: " + callCount
+                  + ", healthScore dropped from " + trackerClientState.getHealthScore() + " to " + newHealthScore);
         }
         else if (trackerClientState.getHealthScore() < MAX_HEALTH_SCORE
             && isHealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
@@ -393,6 +405,11 @@ public class StateUpdater
           _listenerFactories.stream().map(factory -> factory.create(partitionId)).collect(Collectors.toList()));
 
       updateStateForPartition(trackerClients, partitionId, partitionState, clusterGenerationId);
+
+      if (_firstPartitionId < 0)
+      {
+        _firstPartitionId = partitionId;
+      }
     }
   }
 

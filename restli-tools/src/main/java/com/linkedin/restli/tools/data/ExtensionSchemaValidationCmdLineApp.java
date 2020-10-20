@@ -22,12 +22,8 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
-import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
-import com.linkedin.pegasus.generator.DataSchemaParser;
-import com.linkedin.pegasus.generator.FileFormatDataSchemaParser;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
@@ -54,6 +50,8 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.linkedin.data.schema.annotation.ExtensionSchemaAnnotationHandler.EXTENSION_ANNOTATION_NAMESPACE;
+
 
 /**
  * This class is used to validate extension schemas, the validation covers following parts:
@@ -74,7 +72,6 @@ public class ExtensionSchemaValidationCmdLineApp
   private static final Logger _logger = LoggerFactory.getLogger(ExtensionSchemaValidationCmdLineApp.class);
   private static final Options _options = new Options();
   private static final String PDL = "pdl";
-  private static final String EXTENSION_ANNOTATION_NAMESPACE= "extension";
   private static final String RESOURCE_KEY_ANNOTATION_NAMESPACE = "resourceKey";
   private static final String EXTENSIONS_SUFFIX = "Extensions";
   private static final String VERSION_SUFFIX = "versionSuffix";
@@ -193,7 +190,8 @@ public class ExtensionSchemaValidationCmdLineApp
     {
       // check extension schema field annotation
       Map<String, Object> properties = field.getProperties();
-      if (properties.isEmpty() || properties.keySet().size() != 1 || !properties.containsKey(EXTENSION_ANNOTATION_NAMESPACE))
+      if (properties.isEmpty() || properties.keySet().size() != 1 || !properties.containsKey(
+          EXTENSION_ANNOTATION_NAMESPACE))
       {
         throw new InvalidExtensionSchemaException("The field : " + field.getName() + " of extension schema must and only be annotated with 'extension'");
       }
