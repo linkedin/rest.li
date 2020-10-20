@@ -13,8 +13,11 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.7.11] - 2020-10-19
 - Clear the destination directory for generateRestClientTask before the task runs.
 - Add 'ExtensionSchemaAnnotationHandler' for extension schema annotation compatibility check
+- Set javac source and target compatibility of dataTemplate compile task to "1.8" as the cogen changes in 29.7.0 is using Java 8 features.
 
 ## [29.7.10] - 2020-10-15
 - Minimize memory copies and object creation during encoding.
@@ -121,7 +124,6 @@ and what APIs have changed, if applicable.
 ## [29.5.5] - 2020-08-21
 - Updated File and class path DataSchemaResolvers to resolve extension schemas from `/extensions` directory if specified.
 - Added `DarkGateKeeper` to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
->>>>>>> upstream/master
 
 ## [29.5.4] - 2020-08-17
 - Increase default timeout for symbol table fetch to 1s.
@@ -4712,7 +4714,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.10...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.11...master
+[29.7.11]: https://github.com/linkedin/rest.li/compare/v29.7.10...v29.7.11
 [29.7.10]: https://github.com/linkedin/rest.li/compare/v29.7.9...v29.7.10
 [29.7.9]: https://github.com/linkedin/rest.li/compare/v29.7.8...v29.7.9
 [29.7.8]: https://github.com/linkedin/rest.li/compare/v29.7.7...v29.7.8
