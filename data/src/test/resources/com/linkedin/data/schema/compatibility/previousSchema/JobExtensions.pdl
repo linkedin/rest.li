@@ -1,0 +1,8 @@
+record JobExtensions includes
+record Job {
+  name: string,
+  id: long
+}
+{
+  testField: typeref BarUrn = string
+}

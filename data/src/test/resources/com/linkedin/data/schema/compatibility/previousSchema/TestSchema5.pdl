@@ -1,0 +1,6 @@
+record TestSchema5 {
+  @bar.foo = 1
+  field1:
+  @baz.foo = 1
+  typeref Test = string
+}

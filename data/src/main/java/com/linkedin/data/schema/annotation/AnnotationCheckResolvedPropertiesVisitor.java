@@ -20,6 +20,8 @@ import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.schema.annotation.SchemaAnnotationHandler.CompatibilityCheckContext;
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -38,6 +40,10 @@ public class AnnotationCheckResolvedPropertiesVisitor implements SchemaVisitor
 {
   private Map<PathSpec, Pair<CompatibilityCheckContext, Map<String, Object>>> _nodeToResolvedPropertiesMap = new HashMap<>();
 
+  private final String FIELD_INDICATOR = "$field";
+  private final String UNION_MEMBER_KEY_INDICATOR = "$unionMemberKey";
+  private final String TYPEREF_INDICATOR = "$typeref";
+
   @Override
   public void callbackOnContext(TraverserContext context, DataSchemaTraverse.Order order)
   {
@@ -49,36 +55,48 @@ public class AnnotationCheckResolvedPropertiesVisitor implements SchemaVisitor
     }
 
     DataSchema currentSchema = context.getCurrentSchema();
+    RecordDataSchema.Field schemaField = context.getEnclosingField();
+    UnionDataSchema.Member unionMember = context.getEnclosingUnionMember();
 
     ArrayDeque<String> pathToSchema = context.getSchemaPathSpec().clone();
     pathToSchema.addFirst(((NamedDataSchema)context.getTopLevelSchema()).getName());
+
+    // If current schema is a typeref schema, add TYPEREF_INDICATOR in the pathSpec
+    // to avoid this node and it's child node have the same pathSpec.
+    if (currentSchema instanceof TyperefDataSchema)
+    {
+      context.getSchemaPathSpec().addLast(TYPEREF_INDICATOR);
+    }
+
+
+    if (schemaField != null && pathToSchema.getLast().equals(context.getEnclosingField().getName()))
+    {
+      // Current node is a field of a record schema, get the field's annotation.
+      // Add FIELD_INDICATOR in the pathSpec to differentiate field annotation and field type schema annotation.
+      pathToSchema.addLast(FIELD_INDICATOR);
+      PathSpec pathSpec = new PathSpec(pathToSchema);
+
+      _nodeToResolvedPropertiesMap.put(pathSpec,
+          new ImmutablePair<>(generateCompatibilityCheckContext(schemaField, unionMember, currentSchema, pathSpec),
+              chooseProperties(schemaField.getResolvedProperties(), schemaField.getProperties())));
+      pathToSchema.removeLast();
+    }
+    else if (unionMember!= null && pathToSchema.getLast().equals(context.getEnclosingUnionMember().getUnionMemberKey()))
+    {
+      // Current node is a union member, get the union member key's annotation.
+      // Add UNION_MEMBER_KEY_INDICATOR in the pathSpec to differentiate union member key annotation and union type schema annotation.
+      pathToSchema.addLast(UNION_MEMBER_KEY_INDICATOR);
+      PathSpec pathSpec = new PathSpec(pathToSchema);
+
+      _nodeToResolvedPropertiesMap.put(pathSpec,
+              new ImmutablePair<>(generateCompatibilityCheckContext(schemaField, unionMember, currentSchema, pathSpec), unionMember.getProperties()));
+      pathToSchema.removeLast();
+    }
+
+    // If there are no resolvedProperties but properties, used the properties for annotation check.
+    Map<String, Object> properties = chooseProperties(currentSchema.getResolvedProperties(), currentSchema.getProperties());
     PathSpec pathSpec = new PathSpec(pathToSchema);
-
-    CompatibilityCheckContext compatibilityCheckContext = new CompatibilityCheckContext();
-
-    compatibilityCheckContext.setCurrentDataSchema(currentSchema);
-    compatibilityCheckContext.setSchemaField(context.getEnclosingField());
-    compatibilityCheckContext.setUnionMember(context.getEnclosingUnionMember());
-    compatibilityCheckContext.setPathSpecToSchema(pathSpec);
-
-    // If there is no resolvedProperties but properties, used the properties for annotation check.
-    Map<String, Object> properties;
-    if (context.getEnclosingField() != null)
-    {
-      RecordDataSchema.Field field = context.getEnclosingField();
-      properties = chooseProperties(field.getResolvedProperties(), field.getProperties());
-    }
-    else if (context.getEnclosingUnionMember() != null)
-    {
-      // There is no resolvedProperty for unionMember
-      properties = context.getEnclosingUnionMember().getProperties();
-    }
-    else
-    {
-      properties = chooseProperties(currentSchema.getResolvedProperties(), currentSchema.getProperties());
-    }
-
-    _nodeToResolvedPropertiesMap.put(pathSpec, new ImmutablePair<>(compatibilityCheckContext, properties));
+    _nodeToResolvedPropertiesMap.put(pathSpec, new ImmutablePair<>(generateCompatibilityCheckContext(schemaField, unionMember, currentSchema, pathSpec), properties));
   }
 
   @Override
@@ -101,5 +119,15 @@ public class AnnotationCheckResolvedPropertiesVisitor implements SchemaVisitor
   private Map<String, Object> chooseProperties(Map<String, Object> preferredProperties, Map<String, Object> fallbackProperties)
   {
     return preferredProperties.isEmpty() ? fallbackProperties : preferredProperties;
+  }
+
+  private CompatibilityCheckContext generateCompatibilityCheckContext(RecordDataSchema.Field schemaField, UnionDataSchema.Member unionMember, DataSchema currentSchema, PathSpec pathSpec)
+  {
+    CompatibilityCheckContext checkContext = new CompatibilityCheckContext();
+    checkContext.setPathSpecToSchema(pathSpec);
+    checkContext.setCurrentDataSchema(currentSchema);
+    checkContext.setSchemaField(schemaField);
+    checkContext.setUnionMember(unionMember);
+    return checkContext;
   }
 }

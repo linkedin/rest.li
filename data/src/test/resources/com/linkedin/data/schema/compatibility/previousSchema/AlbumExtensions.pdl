@@ -1,0 +1,9 @@
+record AlbumExtensions includes
+record Album {
+  name: string,
+  id: long
+}
+{
+  @extension.params = {"id" : "$URN.albumId"}
+  testField: array[typeref TestUrn = string]
+}

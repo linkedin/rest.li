@@ -17,6 +17,7 @@ package com.linkedin.restli.tools.snapshot.check;
 
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.annotation.ExtensionSchemaAnnotationHandler;
 import com.linkedin.data.schema.annotation.SchemaAnnotationHandler;
 import com.linkedin.data.schema.compatibility.AnnotationCompatibilityChecker;
 import com.linkedin.data.schema.compatibility.CompatibilityChecker;
@@ -33,8 +34,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,9 +41,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.StringJoiner;
-import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
@@ -69,12 +66,9 @@ public class PegasusSchemaSnapshotCompatibilityChecker
   private static final Logger _logger = LoggerFactory.getLogger(
       PegasusSchemaSnapshotCompatibilityChecker.class);
   private final CompatibilityInfoMap _infoMap = new CompatibilityInfoMap();
-  private static boolean _checkExtensionSchemaAnnotation = false;
   private static List<SchemaAnnotationHandler> _handlers = new ArrayList<>();
 
   private static final String PDL = ".pdl";
-
-  private static List<SchemaAnnotationHandler.AnnotationCompatibilityResult> annotationCompatibilityResults = new ArrayList<>();
 
 
   static
@@ -177,9 +171,9 @@ public class PegasusSchemaSnapshotCompatibilityChecker
       compatMode = CompatibilityOptions.Mode.SCHEMA;
     }
 
-    if(cl.hasOption('e'))
+    if (cl.hasOption('e'))
     {
-      _checkExtensionSchemaAnnotation = true;
+      _handlers.add(new ExtensionSchemaAnnotationHandler());
     }
 
     if (cl.hasOption("jar") && cl.hasOption("className"))
