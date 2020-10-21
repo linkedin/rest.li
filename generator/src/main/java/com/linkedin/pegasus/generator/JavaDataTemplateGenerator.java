@@ -84,6 +84,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -1474,7 +1475,32 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     changeListenerClass._implements(changeListenerInterface.narrow(String.class, Object.class));
 
     final JFieldVar objectRefVar = changeListenerClass.field(JMod.PRIVATE | JMod.FINAL, cls, "__objectRef");
+    JClass consumerClass = getCodeModel().ref(Consumer.class).narrow(cls);
+    JClass mapClass =
+        getCodeModel().ref(Map.class).narrow(getCodeModel().ref(String.class), consumerClass);
+    // Map keyed by the field names and contains change handlers for each field
+    final JFieldVar fieldChangeHandlers = changeListenerClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, mapClass, "FIELD_CHANGE_HANDLERS");
 
+    // static init block
+    // Creates a handler for each field and adds it to FIELD_CHANGE_HANDLERS map.
+    final JBlock staticBlock = changeListenerClass.init();
+    staticBlock.assign(fieldChangeHandlers,
+        JExpr._new(getCodeModel().ref(HashMap.class).narrow(getCodeModel().ref(String.class), consumerClass))
+            .arg(JExpr.lit(DataMapBuilder.getOptimumHashMapCapacityFromSize(fieldMap.size()))));
+    fieldMap.forEach((key, field) -> {
+      JDefinedClass anonymousConsumerClass = getCodeModel().anonymousClass(consumerClass);
+
+      final JMethod acceptMethod = anonymousConsumerClass.method(JMod.PUBLIC, getCodeModel().VOID, "accept");
+      JVar objectVar = acceptMethod.param(cls, "objectVar");
+      acceptMethod.annotate(Override.class);
+      acceptMethod.body().assign(objectVar.ref(field.name()), JExpr._null());
+
+      JInvocation put = staticBlock.invoke(fieldChangeHandlers, "put");
+      put.arg(JExpr.lit(key));
+      put.arg(JExpr._new(anonymousConsumerClass));
+    });
+
+    // Constructor
     final JMethod constructor = changeListenerClass.constructor(JMod.PRIVATE);
     JVar refParam = constructor.param(cls, "reference");
     constructor.body().assign(objectRefVar, refParam);
@@ -1483,12 +1509,9 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     method.annotate(Override.class);
     final JVar keyParam = method.param(String.class, "key");
     method.param(_objectClass, "value");
-    JSwitch keySwitch = method.body()._switch(keyParam);
-    fieldMap.forEach((key, field) -> {
-      JCase keyCase = keySwitch._case(JExpr.lit(key));
-      keyCase.body().assign(objectRefVar.ref(field.name()), JExpr._null());
-      keyCase.body()._break();
-    });
+    final JVar handler = method.body().decl(consumerClass, "fieldHandler", fieldChangeHandlers.invoke("get").arg(keyParam));
+
+    method.body()._if(handler.ne(JExpr._null()))._then().invoke(handler, "accept").arg(objectRefVar);
 
     return changeListenerClass;
   }
