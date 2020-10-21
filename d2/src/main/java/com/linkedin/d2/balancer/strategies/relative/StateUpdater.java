@@ -60,6 +60,7 @@ public class StateUpdater
   private final ScheduledExecutorService _executorService;
   private final Lock _lock;
   private final List<PartitionStateUpdateListener.Factory<PartitionState>> _listenerFactories;
+  private final String _serviceName;
 
   private ConcurrentMap<Integer, PartitionState> _partitionLoadBalancerStateMap;
   private int _firstPartitionId = -1;
@@ -67,16 +68,18 @@ public class StateUpdater
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
                        QuarantineManager quarantineManager,
                        ScheduledExecutorService executorService,
-                       List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories)
+                       List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
+                       String serviceName)
   {
-    this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories);
+    this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories, serviceName);
   }
 
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
       QuarantineManager quarantineManager,
       ScheduledExecutorService executorService,
       ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap,
-      List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories)
+      List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
+      String serviceName)
   {
     _relativeStrategyProperties = relativeStrategyProperties;
     _quarantineManager = quarantineManager;
@@ -84,6 +87,7 @@ public class StateUpdater
     _listenerFactories = listenerFactories;
     _partitionLoadBalancerStateMap = partitionLoadBalancerStateMap;
     _lock = new ReentrantLock();
+    _serviceName = serviceName;
 
     _executorService.scheduleWithFixedDelay(this::updateState, EXECUTOR_INITIAL_DELAY,
         _relativeStrategyProperties.getUpdateIntervalMs(), TimeUnit.MILLISECONDS);
@@ -413,7 +417,7 @@ public class StateUpdater
     }
   }
 
-  private static void logState(PartitionState oldState,
+  private void logState(PartitionState oldState,
       PartitionState newState,
       int partitionId)
   {
@@ -428,17 +432,25 @@ public class StateUpdater
 
     if (LOG.isDebugEnabled())
     {
-      LOG.debug("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", unhealthyClients = ["
-          + (newUnhealthyClients.stream().map(client -> getClientStats(client, newTrackerClientStateMap))
-          .collect(Collectors.joining(","))) + "]");
+      LOG.debug("Strategy updated: service=" + _serviceName + ", partitionId=" + partitionId
+          + "unhealthyClientNumber=" + newUnhealthyClients.size()
+          + "newState=" + newState
+          +", unhealthyClients={" + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
+          .map(client -> getClientStats(client, newTrackerClientStateMap)).collect(Collectors.joining(",")))
+          + (newUnhealthyClients.size() > LOG_UNHEALTHY_CLIENT_NUMBERS ? "...(total "
+          + newUnhealthyClients.size() + ")" : "") + "},"
+          + "oldState=" + oldState);
     }
     else if (allowToLog(oldState, newState, newUnhealthyClients, oldUnhealthyClients))
     {
-      LOG.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", unhealthyClients = ["
-          + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
-          .map(client -> getClientStats(client, newTrackerClientStateMap)).collect(Collectors.joining(",")))
+      LOG.info("Strategy updated: service=" + _serviceName + ", partitionId=" + partitionId
+          + "unhealthyClientNumber=" + newUnhealthyClients.size()
+          + "newState=" + newState
+          +", unhealthyClients={" + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
+              .map(client -> getClientStats(client, newTrackerClientStateMap)).collect(Collectors.joining(",")))
           + (newUnhealthyClients.size() > LOG_UNHEALTHY_CLIENT_NUMBERS ? "...(total "
-          + newUnhealthyClients.size() + ")" : "") + "]");
+          + newUnhealthyClients.size() + ")" : "") + "},"
+          + "oldState=" + oldState);
     }
   }
 

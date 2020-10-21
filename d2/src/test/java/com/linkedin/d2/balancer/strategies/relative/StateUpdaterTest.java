@@ -56,6 +56,7 @@ public class StateUpdaterTest
   private static final long DEFAULT_CLUSTER_GENERATION_ID = 0;
   private static final int HEALTHY_POINTS = 100;
   private static final int INITIAL_RECOVERY_POINTS = 1;
+  private static final String SERVICE_NAME = "DUMMY_SERVICE";
 
   private StateUpdater _stateUpdater;
   private ScheduledExecutorService _executorService = Mockito.mock(ScheduledExecutorService.class);
@@ -66,7 +67,7 @@ public class StateUpdaterTest
   {
     RelativeLoadBalancerStrategyFactory.putDefaultValues(relativeStrategyProperties);
     _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, _executorService,
-        partitionLoadBalancerStateMap, Collections.emptyList());
+        partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME);
   }
 
   @Test(dataProvider = "partitionId")
@@ -170,7 +171,7 @@ public class StateUpdaterTest
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     D2RelativeStrategyProperties relativeStrategyProperties = RelativeLoadBalancerStrategyFactory.putDefaultValues(new D2RelativeStrategyProperties());
     _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, executorService,
-        partitionLoadBalancerStateMap, Collections.emptyList());
+        partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME);
 
     // update will be scheduled twice, once from interval update, once from cluster change
     CountDownLatch countDownLatch = new CountDownLatch(2);
@@ -471,7 +472,7 @@ public class StateUpdaterTest
 
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     D2RelativeStrategyProperties relativeStrategyProperties = RelativeLoadBalancerStrategyFactory.putDefaultValues(new D2RelativeStrategyProperties());
-    _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, executorService, stateMap, Collections.emptyList());
+    _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, executorService, stateMap, Collections.emptyList(), SERVICE_NAME);
 
     // In 6 seconds, the update should be executed twice
     CountDownLatch countDownLatch = new CountDownLatch(2);
