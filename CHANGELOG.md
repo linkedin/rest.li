@@ -16,6 +16,7 @@ and what APIs have changed, if applicable.
 
 ## [29.7.12] - 2020-10-20
 - Modify the change listener implementation in generated data templates to avoid using java 8 features.
+- Fix the bug of not propagating schema properties in typeref with UnionWithAlias during pegasus to avro translation
 
 ## [29.7.11] - 2020-10-19
 - Clear the destination directory for generateRestClientTask before the task runs.
