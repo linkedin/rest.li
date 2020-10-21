@@ -206,7 +206,7 @@ public class PartitionState
     return "PartitionRelativeLoadBalancerState={" + "_partitionId=" + _partitionId
         + ", _clusterGenerationId=" + _clusterGenerationId
         + ", _numHostsInCluster=" + (getTrackerClients().size())
-        + ", _partitionStats={" + _partitionStats + "}}"
+        + ", _partitionStats={" + _partitionStats + "}"
         + ", _recoveryTrackerClients={" + _recoveryTrackerClients
             .stream().limit(LOG_SIZE_LIMIT).map(client -> client.getUri().toString()).collect(Collectors.joining(","))
         + (_recoveryTrackerClients.size() > LOG_SIZE_LIMIT ? "...(total " + _recoveryTrackerClients.size() + ")" : "") + "}"

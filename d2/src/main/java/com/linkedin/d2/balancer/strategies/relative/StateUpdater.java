@@ -432,25 +432,25 @@ public class StateUpdater
 
     if (LOG.isDebugEnabled())
     {
-      LOG.debug("Strategy updated: service=" + _serviceName + ", partitionId=" + partitionId
-          + "unhealthyClientNumber=" + newUnhealthyClients.size()
-          + "newState=" + newState
-          +", unhealthyClients={" + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
+      LOG.debug("Strategy updated: service=" + _serviceName
+          + ", unhealthyClientNumber=" + newUnhealthyClients.size()
+          + ", newState=" + newState
+          + ", unhealthyClients={" + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
           .map(client -> getClientStats(client, newTrackerClientStateMap)).collect(Collectors.joining(",")))
           + (newUnhealthyClients.size() > LOG_UNHEALTHY_CLIENT_NUMBERS ? "...(total "
           + newUnhealthyClients.size() + ")" : "") + "},"
-          + "oldState=" + oldState);
+          + ", oldState=" + oldState);
     }
     else if (allowToLog(oldState, newState, newUnhealthyClients, oldUnhealthyClients))
     {
-      LOG.info("Strategy updated: service=" + _serviceName + ", partitionId=" + partitionId
-          + "unhealthyClientNumber=" + newUnhealthyClients.size()
-          + "newState=" + newState
-          +", unhealthyClients={" + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
-              .map(client -> getClientStats(client, newTrackerClientStateMap)).collect(Collectors.joining(",")))
+      LOG.debug("Strategy updated: service=" + _serviceName
+          + ", unhealthyClientNumber=" + newUnhealthyClients.size()
+          + ", newState=" + newState
+          + ", unhealthyClients={" + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
+          .map(client -> getClientStats(client, newTrackerClientStateMap)).collect(Collectors.joining(",")))
           + (newUnhealthyClients.size() > LOG_UNHEALTHY_CLIENT_NUMBERS ? "...(total "
           + newUnhealthyClients.size() + ")" : "") + "},"
-          + "oldState=" + oldState);
+          + ", oldState=" + oldState);
     }
   }
 
