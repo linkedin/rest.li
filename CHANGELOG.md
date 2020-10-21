@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.12] - 2020-10-21
+- Check if debug logging is enabled before calling debug log message in TimingContextUtil to avoid unnecessary exception instantiation.
+
 ## [29.7.11] - 2020-10-19
 - Clear the destination directory for generateRestClientTask before the task runs.
 - Add 'ExtensionSchemaAnnotationHandler' for extension schema annotation compatibility check
@@ -4714,7 +4717,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.11...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.12...master
+[29.7.12]: https://github.com/linkedin/rest.li/compare/v29.7.11...v29.7.12
 [29.7.11]: https://github.com/linkedin/rest.li/compare/v29.7.10...v29.7.11
 [29.7.10]: https://github.com/linkedin/rest.li/compare/v29.7.9...v29.7.10
 [29.7.9]: https://github.com/linkedin/rest.li/compare/v29.7.8...v29.7.9
