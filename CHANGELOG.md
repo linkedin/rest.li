@@ -21,6 +21,7 @@ Log Streaming Error or Timeout Error in Jetty SyncIOHandler
 - Improve performance of schema format translator.
 
 ## [29.7.13] - 2020-10-22
+- Check if debug logging is enabled before calling debug log message in TimingContextUtil to avoid unnecessary exception instantiation.
 - Improve relative load balancer logging.
 
 ## [29.7.12] - 2020-10-20
