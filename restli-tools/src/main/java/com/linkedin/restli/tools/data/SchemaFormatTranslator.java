@@ -225,18 +225,10 @@ public class SchemaFormatTranslator
       {
         continue;
       }
-      if (schema instanceof NamedDataSchema)
-      {
-        NamedDataSchema namedDataSchema = (NamedDataSchema) schema;
-        String schemaFullname = namedDataSchema.getFullName();
-        LOGGER.debug("Loaded source schema: {}, from location: {}", schemaFullname, location.getSourceFile().getAbsolutePath());
-        topLevelTranslatedSchemas.put(schemaFullname, new SchemaInfo(namedDataSchema, location.getSourceFile(), encode(schema)));
-      }
-      else
-      {
-        LOGGER.error("Parsed a non-named schema as top-level schema. Location: {}", location.getSourceFile().getAbsolutePath());
-        System.exit(1);
-      }
+      NamedDataSchema namedDataSchema = (NamedDataSchema) schema;
+      String schemaFullname = namedDataSchema.getFullName();
+      LOGGER.debug("Loaded source schema: {}, from location: {}", schemaFullname, location.getSourceFile().getAbsolutePath());
+      topLevelTranslatedSchemas.put(schemaFullname, new SchemaInfo(namedDataSchema, location.getSourceFile(), encode(schema)));
     }
     return topLevelTranslatedSchemas;
   }
@@ -265,7 +257,6 @@ public class SchemaFormatTranslator
     // Finally check if namespace matches.
     return parent.endsWith(namespace.replace('.', File.separatorChar));
   }
-
 
   private void verifyTranslatedSchemas(Map<String, SchemaInfo> topLevelTranslatedSchemas) throws IOException, InterruptedException
   {
