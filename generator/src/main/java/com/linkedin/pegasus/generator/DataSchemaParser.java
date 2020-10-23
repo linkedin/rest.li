@@ -114,7 +114,13 @@ public class DataSchemaParser
     return _resolver;
   }
 
-  public DataSchemaParser.ParseResult parseSources(String sources[]) throws IOException
+  /**
+   * Parses all schemas from the specified sources. Sources can be schema files, jars containing schemas or directories
+   * with schema files.
+   *
+   * @param sources sources to scan and parse for pegasus schemas.
+   */
+  public DataSchemaParser.ParseResult parseSources(String[] sources) throws IOException
   {
     Set<String> fileExtensions = _parserByFileExtension.keySet();
     Map<String, List<String>> byExtension = new HashMap<>(fileExtensions.size());
