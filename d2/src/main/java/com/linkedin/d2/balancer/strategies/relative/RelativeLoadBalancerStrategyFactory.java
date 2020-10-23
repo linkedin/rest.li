@@ -112,7 +112,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     {
       listenerFactories.addAll(_stateListenerFactories);
     }
-    return new StateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories);
+    return new StateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories, serviceName);
   }
 
   private ClientSelector getClientSelector(D2RelativeStrategyProperties relativeStrategyProperties)

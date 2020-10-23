@@ -14,8 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.13] - 2020-10-22
+- Improve relative load balancer logging.
+
 ## [29.7.12] - 2020-10-20
-Fix the bug of not propagating schema properties in typeref with UnionWithAlias during pegasus to avro translation
+- Fix the bug of not propagating schema properties in typeref with UnionWithAlias during pegasus to avro translation
 
 ## [29.7.11] - 2020-10-19
 - Clear the destination directory for generateRestClientTask before the task runs.
@@ -4717,7 +4720,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.12...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.13...master
+[29.7.13]: https://github.com/linkedin/rest.li/compare/v29.7.12...v29.7.13
 [29.7.12]: https://github.com/linkedin/rest.li/compare/v29.7.11...v29.7.12
 [29.7.11]: https://github.com/linkedin/rest.li/compare/v29.7.10...v29.7.11
 [29.7.10]: https://github.com/linkedin/rest.li/compare/v29.7.9...v29.7.10
