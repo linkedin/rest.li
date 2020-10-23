@@ -22,11 +22,9 @@ import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PegasusSchemaParser;
-import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.SchemaDirectoryName;
-import com.linkedin.internal.common.InternalConstants;
 import com.linkedin.util.FileUtil;
 
 import java.io.File;
@@ -134,7 +132,8 @@ public class FileFormatDataSchemaParser
         throw new IOException(result.getMessage());
       }
 
-      for (Map.Entry<String, DataSchemaLocation> entry : _schemaResolver.nameToDataSchemaLocations().entrySet()) {
+      for (Map.Entry<String, DataSchemaLocation> entry : _schemaResolver.nameToDataSchemaLocations().entrySet())
+      {
         final DataSchema schema = _schemaResolver.bindings().get(entry.getKey());
         result.getSchemaAndLocations().put(schema, entry.getValue());
       }

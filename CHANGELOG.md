@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.14] - 2020-10-22
+- Improve performance of schema format translator.
+
 ## [29.7.13] - 2020-10-22
 - Improve relative load balancer logging.
 
@@ -4720,7 +4723,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.13...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.14...master
+[29.7.14]: https://github.com/linkedin/rest.li/compare/v29.7.13...v29.7.14
 [29.7.13]: https://github.com/linkedin/rest.li/compare/v29.7.12...v29.7.13
 [29.7.12]: https://github.com/linkedin/rest.li/compare/v29.7.11...v29.7.12
 [29.7.11]: https://github.com/linkedin/rest.li/compare/v29.7.10...v29.7.11
