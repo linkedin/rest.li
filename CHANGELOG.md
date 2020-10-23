@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.15] - 2020-10-23
+Log Streaming Error or Timeout Error in Jetty SyncIOHandler
+
 ## [29.7.14] - 2020-10-22
 - Improve performance of schema format translator.
 
@@ -4724,7 +4727,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.14...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.15...master
+[29.7.15]: https://github.com/linkedin/rest.li/compare/v29.7.14...v29.7.15
 [29.7.14]: https://github.com/linkedin/rest.li/compare/v29.7.13...v29.7.14
 [29.7.13]: https://github.com/linkedin/rest.li/compare/v29.7.12...v29.7.13
 [29.7.12]: https://github.com/linkedin/rest.li/compare/v29.7.11...v29.7.12
