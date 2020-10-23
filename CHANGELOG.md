@@ -14,8 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.7.16] - 2020-10-23
+- Improve array and map template performance by caching the wrapped types when they are added.
+
 ## [29.7.15] - 2020-10-23
-Log Streaming Error or Timeout Error in Jetty SyncIOHandler
+- Log Streaming Error or Timeout Error in Jetty SyncIOHandler
 
 ## [29.7.14] - 2020-10-22
 - Improve performance of schema format translator.
@@ -4727,7 +4730,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.15...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.16...master
+[29.7.16]: https://github.com/linkedin/rest.li/compare/v29.7.15...v29.7.16
 [29.7.15]: https://github.com/linkedin/rest.li/compare/v29.7.14...v29.7.15
 [29.7.14]: https://github.com/linkedin/rest.li/compare/v29.7.13...v29.7.14
 [29.7.13]: https://github.com/linkedin/rest.li/compare/v29.7.12...v29.7.13

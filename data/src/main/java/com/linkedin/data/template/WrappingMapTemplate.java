@@ -16,13 +16,11 @@
 
 package com.linkedin.data.template;
 
-
 import com.linkedin.data.DataMap;
 import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.MapDataSchema;
-import com.linkedin.data.template.DataObjectToObjectCache;
 import com.linkedin.util.ArgumentUtil;
 import java.lang.reflect.Constructor;
 import java.util.AbstractMap;
@@ -95,7 +93,9 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
   @Override
   public V put(String key, V value) throws ClassCastException, TemplateOutputCastException
   {
-    Object found = CheckedUtil.putWithoutChecking(_map, key, unwrap(value));
+    Object unwrapped = unwrap(value);
+    Object found = CheckedUtil.putWithoutChecking(_map, key, unwrapped);
+    _cache.put(unwrapped, value);
     return cacheLookup(found, null);
   }
 

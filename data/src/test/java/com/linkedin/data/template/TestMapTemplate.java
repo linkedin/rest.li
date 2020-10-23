@@ -205,7 +205,7 @@ public class TestMapTemplate
         assertTrue(replaced == null);
         E got = map3.get(key);
         assertTrue(got != null);
-        assertEquals(value, got);
+        assertSame(value, got);
         assertSame(map3.get(key), got);
         assertTrue(map3.containsKey(key));
         assertTrue(map3.containsValue(value));
@@ -229,7 +229,7 @@ public class TestMapTemplate
         assertTrue(map3.containsValue(value));
         E replaced = map3.put(key, newValue);
         assertTrue(replaced != null);
-        assertEquals(replaced, value);
+        assertSame(replaced, value);
         E got = map3.get(key);
         assertSame(map3.get(key), got);
         assertTrue(map3.containsKey(key));
@@ -247,7 +247,7 @@ public class TestMapTemplate
         E putResult = map3.put(testKey, e.getValue());
         if (lastValue != null)
         {
-          assertEquals(putResult, lastValue);
+          assertSame(putResult, lastValue);
         }
         lastValue = e.getValue();
       }
@@ -264,7 +264,7 @@ public class TestMapTemplate
         assertTrue(map4.containsValue(value));
         E removed = map4.remove(key);
         assertTrue(removed != null);
-        assertEquals(value, removed);
+        assertSame(value, removed);
         assertFalse(map4.containsKey(key));
         assertFalse(map4.containsValue(value));
         map4Size--;
