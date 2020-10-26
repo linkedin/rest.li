@@ -111,7 +111,14 @@ public final class ValidateDataAgainstSchema
   public static ValidationResult validate(DataElement element, ValidationOptions options, Validator validator)
   {
     State state = new State(options, validator);
-    state.validate(element);
+    try
+    {
+      state.validate(element);
+    }
+    catch (IllegalArgumentException e)
+    {
+      state._valid = false;
+    }
     return state;
   }
 
