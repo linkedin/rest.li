@@ -733,7 +733,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
             LOG.debug(_poolName + ": object creation failed", e);
             callback.onDone();
           }
-        }, new ObjectCreationTimeoutException(
+        }, () -> new ObjectCreationTimeoutException(
             "Exceeded creation timeout of " + _creationTimeout + "ms: in Pool: "+ _poolName)));
       }
     });

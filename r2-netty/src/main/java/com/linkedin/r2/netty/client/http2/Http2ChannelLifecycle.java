@@ -221,7 +221,7 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
           }
         });
       }
-    }, new ObjectCreationTimeoutException(
+    }, () -> new ObjectCreationTimeoutException(
     "Exceeded creation timeout of " + _channelCreationTimeoutMs + "ms: for HTTP/2 parent channel, remote=" + _address)));
   }
 
