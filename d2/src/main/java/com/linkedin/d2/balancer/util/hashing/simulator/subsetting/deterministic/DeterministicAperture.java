@@ -16,7 +16,7 @@ public class DeterministicAperture
   {
     _ring = new Ring(trackerClients.size());
     _coordinate = coordinate;
-    double apertureWidth = apertureWidth(coordinate.getUnitWidth(), _ring.getUnitWidth(), 3);
+    double apertureWidth = apertureWidth(coordinate.getUnitWidth(), _ring.getUnitWidth(), 10);
     _trackerClientsSubset = calculateSubset(trackerClients, coordinate.getOffset(), apertureWidth);
   }
 
