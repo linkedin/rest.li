@@ -20,11 +20,15 @@ import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.strategies.framework.LatencyCorrelation;
 import com.linkedin.d2.balancer.strategies.framework.LoadBalancerStrategyTestRunner;
 import com.linkedin.d2.balancer.strategies.framework.LoadBalancerStrategyTestRunnerBuilder;
+import com.linkedin.d2.balancer.util.hashing.simulator.subsetting.deterministic.Coordinate;
+import com.linkedin.d2.balancer.util.hashing.simulator.subsetting.deterministic.DeterministicAperture;
 import com.linkedin.d2.loadBalancerStrategyType;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -345,6 +349,17 @@ public class TestLoadBalancerPerformanceSimulation {
     }
   }
 
+  @Test
+  public void testLowQpsWithHealthyHostsAndSubsetting()
+  {
+    LoadBalancerStrategyTestRunner testRunner = buildRelativeRunnerWithLatencyLowQpsAndSubsetting();
+    testRunner.runWait();
+    for (URI uri : testRunner.getPointHistory().keySet())
+    {
+      System.out.println(testRunner.getPointHistory().get(uri));
+    }
+  }
+
   private LoadBalancerStrategyTestRunner buildDefaultRunnerWithConstantBadHost(int numHosts, long badHostLatency,
       double relativeLatencyHighThresholdFactor)
   {
@@ -510,6 +525,45 @@ public class TestLoadBalancerPerformanceSimulation {
         .setEnableFastRecovery(true);
 
     return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, numHosts)
+        .setConstantRequestCount(numRequestsPerInterval)
+        .setNumIntervals(20)
+        .setDynamicLatency(latencyCorrelationList)
+        .setRelativeLoadBalancerStrategies(relativeStrategyProperties)
+        .build();
+  }
+
+  private LoadBalancerStrategyTestRunner buildRelativeRunnerWithLatencyLowQpsAndSubsetting()
+  {
+    int numHosts = 480;
+    int numPeers = 20;
+    int numRequestsPerInterval = 1000;
+
+    List<Integer> trackerClients = IntStream.range(0, numHosts).boxed().collect(Collectors.toList());
+    Coordinate coordinate = Coordinate.fromInstaceId(0, numPeers);
+
+    DeterministicAperture aperture = new DeterministicAperture(trackerClients, coordinate);
+    Map<Integer, Double> subset = aperture.getTrackerClientsSubset();
+
+    System.out.println(subset);
+
+    List<LatencyCorrelation> latencyCorrelationList = new ArrayList<>();
+    long writeLatency = 25L;
+    long readLatency = 8L;
+    double readCallPercentage = 0.7;
+
+    for (int i = 0; i < subset.size(); i ++)
+    {
+      latencyCorrelationList.add((requestsPerInterval, intervalIndex) ->
+      {
+        double randomDouble = Math.random();
+        return randomDouble < readCallPercentage ? readLatency : writeLatency;
+      });
+    }
+
+    D2RelativeStrategyProperties relativeStrategyProperties = new D2RelativeStrategyProperties()
+        .setEnableFastRecovery(true);
+
+    return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, subset.size())
         .setConstantRequestCount(numRequestsPerInterval)
         .setNumIntervals(20)
         .setDynamicLatency(latencyCorrelationList)
