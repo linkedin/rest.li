@@ -1,0 +1,8 @@
+record AlbumExtensions includes
+record Album {
+  name: string,
+  id: long
+}
+{
+  testField: array[typeref TestUrn = string]
+}

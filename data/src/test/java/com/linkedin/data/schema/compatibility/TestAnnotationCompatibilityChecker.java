@@ -20,6 +20,7 @@ import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.annotation.IdentitySchemaVisitor;
+import com.linkedin.data.schema.annotation.ExtensionSchemaAnnotationHandler;
 import com.linkedin.data.schema.annotation.PegasusSchemaAnnotationHandlerImpl;
 import com.linkedin.data.schema.annotation.SchemaAnnotationHandler;
 import com.linkedin.data.schema.annotation.SchemaAnnotationHandler.CompatibilityCheckContext;
@@ -65,8 +66,8 @@ public class TestAnnotationCompatibilityChecker
   @DataProvider
   private Object[][] annotationCompatibilityCheckTestData() throws IOException {
     // Set up expected result: both previous schema and current schema contain the same PathSpecs.
-    CompatibilityCheckContext checkContext = generateAnnotationCheckContext(new PathSpec("TestSchema1/field1"));
-    CompatibilityCheckContext checkContext1 = generateAnnotationCheckContext(new PathSpec("TestSchema1/field2"));
+    CompatibilityCheckContext checkContext = generateAnnotationCheckContext(new PathSpec("TestSchema1/field1/$field"));
+    CompatibilityCheckContext checkContext1 = generateAnnotationCheckContext(new PathSpec("TestSchema1/field2/$field"));
 
     AnnotationCompatibilityResult expectResultWithCompatibleChange1 = generateExpectResult(new CompatibilityMessage(checkContext.getPathSpecToSchema(),
       CompatibilityMessage.Impact.ANNOTATION_COMPATIBLE_CHANGE,
@@ -76,25 +77,86 @@ public class TestAnnotationCompatibilityChecker
         "Deleting existed annotation \"%s\" is backward incompatible change", BAR_ANNOTATION_NAMESPACE));
 
     // Set up expected result: only previous schema contains the resolvedProperty with the same annotation namespace as SchemaAnnotationHandler
-    CompatibilityCheckContext checkContext2 = generateAnnotationCheckContext(new PathSpec("TestSchema2/field1"));
+    CompatibilityCheckContext checkContext2 = generateAnnotationCheckContext(new PathSpec("TestSchema2/field1/$field"));
 
     AnnotationCompatibilityResult expectResult2 = generateExpectResult(new CompatibilityMessage(checkContext2.getPathSpecToSchema(),
       CompatibilityMessage.Impact.ANNOTATION_INCOMPATIBLE_CHANGE,
         "Adding new annotation \"%s\" is backward compatible change", BAR_ANNOTATION_NAMESPACE));
 
     // Set up expected result: only current schema contains the resolvedProperty with the same annotation namespace as SchemaAnnotationHandler
-    CompatibilityCheckContext checkContext3 = generateAnnotationCheckContext(new PathSpec("TestSchema3/field1"));
+    CompatibilityCheckContext checkContext3 = generateAnnotationCheckContext(new PathSpec("TestSchema3/field1/$field"));
     AnnotationCompatibilityResult expectResult3 = generateExpectResult(new CompatibilityMessage(checkContext3.getPathSpecToSchema(),
         CompatibilityMessage.Impact.ANNOTATION_INCOMPATIBLE_CHANGE, "Deleting existed annotation \"%s\" is backward incompatible change", BAR_ANNOTATION_NAMESPACE));
 
     // Set up expected results: multiple handlers.
-    CompatibilityCheckContext checkContext4 = generateAnnotationCheckContext(new PathSpec("TestSchema4/field1"));
+    CompatibilityCheckContext checkContext4 = generateAnnotationCheckContext(new PathSpec("TestSchema4/field1/$field"));
     AnnotationCompatibilityResult barHandlerExpectResult = generateExpectResult(new CompatibilityMessage(checkContext4.getPathSpecToSchema(),
         CompatibilityMessage.Impact.ANNOTATION_INCOMPATIBLE_CHANGE,
         "Adding new annotation \"%s\" is backward compatible change", BAR_ANNOTATION_NAMESPACE));
     AnnotationCompatibilityResult bazHandlerExpectResult = generateExpectResult(new CompatibilityMessage(checkContext4.getPathSpecToSchema(),
         CompatibilityMessage.Impact.ANNOTATION_COMPATIBLE_CHANGE,
         "Updating annotation field \"%s\" value is backward compatible change", ANNOTATION_FIELD_NAME));
+
+    // Set up expected results: field has annotation, field type schema also has annotation.
+    AnnotationCompatibilityResult fieldAnnotationResult = new AnnotationCompatibilityResult();
+    CompatibilityCheckContext checkContext5 = generateAnnotationCheckContext(new PathSpec("TestSchema5/field1"));
+    AnnotationCompatibilityResult fieldTypeSchemaAnnotationResult = generateExpectResult(new CompatibilityMessage(checkContext5.getPathSpecToSchema(),
+        CompatibilityMessage.Impact.ANNOTATION_COMPATIBLE_CHANGE,
+        "Updating annotation field \"%s\" value is backward compatible change", ANNOTATION_FIELD_NAME));
+
+    // Set up expected results: field has annotation, field type schema also has annotation.
+    CompatibilityCheckContext unionMemberKeyCheckContext = generateAnnotationCheckContext(new PathSpec("TestSchema6/field1/u1/$unionMemberKey"));
+    AnnotationCompatibilityResult unionMemberKeyAnnotationResult = generateExpectResult(new CompatibilityMessage(unionMemberKeyCheckContext.getPathSpecToSchema(),
+        CompatibilityMessage.Impact.ANNOTATION_COMPATIBLE_CHANGE,
+        "Updating annotation field \"%s\" value is backward compatible change", ANNOTATION_FIELD_NAME));
+    CompatibilityCheckContext unionMemberSchemaCheckContext = generateAnnotationCheckContext(new PathSpec("TestSchema6/field1/u1"));
+    AnnotationCompatibilityResult unionMemberSchemaAnnotationResult = generateExpectResult(new CompatibilityMessage(unionMemberSchemaCheckContext.getPathSpecToSchema(),
+        CompatibilityMessage.Impact.ANNOTATION_COMPATIBLE_CHANGE,
+        "Updating annotation field \"%s\" value is backward compatible change", ANNOTATION_FIELD_NAME));
+
+    // Set up expected result: an extension annotation field value is updated.
+    CompatibilityCheckContext schoolContext = generateAnnotationCheckContext(new PathSpec("SchoolExtensions/testField/$field"));
+    AnnotationCompatibilityResult schoolExtensionExpectResult = generateExpectResult(new CompatibilityMessage(schoolContext.getPathSpecToSchema(),
+        CompatibilityMessage.Impact.ANNOTATION_INCOMPATIBLE_CHANGE,
+        "Updating extension annotation field: \"%s\" value is considering as a backward incompatible change.", "using"));
+
+    // Set up expected result: an extension annotation field is removed.
+    CompatibilityCheckContext fruitContext = generateAnnotationCheckContext(new PathSpec("FruitExtensions/testField/$field"));
+    AnnotationCompatibilityResult fruitExtensionExpectResult = generateExpectResult(new CompatibilityMessage(fruitContext.getPathSpecToSchema(),
+        CompatibilityMessage.Impact.ANNOTATION_INCOMPATIBLE_CHANGE,
+        "Removing extension annotation field: \"%s\" is considering as a backward incompatible change.", "params"));
+
+    // Set up expected result: a new field with annotation is added.
+    CompatibilityCheckContext fooContext = generateAnnotationCheckContext(new PathSpec("FooExtensions/barField/$field"));
+    AnnotationCompatibilityResult fooExtensionExpectResult = generateExpectResult(new CompatibilityMessage(fooContext.getPathSpecToSchema(),
+        CompatibilityMessage.Impact.ANNOTATION_COMPATIBLE_CHANGE,
+        "Adding extension annotation on new field: \"%s\" is backward compatible change", "barField"));
+    // Existing fields annotations do not change, checkCompatibility will return an empty result.
+    AnnotationCompatibilityResult emptyResult = new AnnotationCompatibilityResult();
+
+    // Set up expected result: an extension annotation is removed.
+    CompatibilityCheckContext albumContext = generateAnnotationCheckContext(new PathSpec("AlbumExtensions/testField/$field"));
+    AnnotationCompatibilityResult albumExtensionExpectResult = generateExpectResult(new CompatibilityMessage(albumContext.getPathSpecToSchema(),
+        CompatibilityMessage.Impact.ANNOTATION_INCOMPATIBLE_CHANGE,
+        "Removing extension annotation is a backward incompatible change.", ""));
+
+    // Set up expected result: an extension annotation is removed.
+    CompatibilityCheckContext companyContext = generateAnnotationCheckContext(new PathSpec("CompanyExtensions/testField/$field"));
+    AnnotationCompatibilityResult companyExtensionExpectResult = generateExpectResult(new CompatibilityMessage(companyContext.getPathSpecToSchema(),
+        CompatibilityMessage.Impact.ANNOTATION_INCOMPATIBLE_CHANGE,
+        "Adding extension annotation field: \"%s\" is a backward incompatible change.", "using"));
+
+    // Set up expected result: a field with extension annotation is removed.
+    CompatibilityCheckContext bookContext = generateAnnotationCheckContext(new PathSpec("BookExtensions/testField/$field"));
+    AnnotationCompatibilityResult bookExtensionExpectResult = generateExpectResult(new CompatibilityMessage(bookContext.getPathSpecToSchema(),
+        CompatibilityMessage.Impact.ANNOTATION_INCOMPATIBLE_CHANGE,
+        "Removing field: \"%s\" with extension annotation is a backward incompatible change.", "testField"));
+
+    // Set up expected result: adding extension annotation on an existing field
+    CompatibilityCheckContext jobContext = generateAnnotationCheckContext(new PathSpec("JobExtensions/testField/$field"));
+    AnnotationCompatibilityResult jobExtensionExpectResult = generateExpectResult(new CompatibilityMessage(jobContext.getPathSpecToSchema(),
+        CompatibilityMessage.Impact.ANNOTATION_INCOMPATIBLE_CHANGE,
+        "Adding extension annotation on an existing field: \"%s\" is backward incompatible change", "testField"));
 
     return new Object[][]
         {
@@ -121,6 +183,66 @@ public class TestAnnotationCompatibilityChecker
                 "currentSchema/TestSchema4.pdl",
                 Arrays.asList(generateSchemaAnnotationHandler(BAR_ANNOTATION_NAMESPACE), generateSchemaAnnotationHandler(BAZ_ANNOTATION_NAMESPACE)),
                 Arrays.asList(barHandlerExpectResult, bazHandlerExpectResult)
+            },
+            {
+                "previousSchema/TestSchema5.pdl",
+                "currentSchema/TestSchema5.pdl",
+                Arrays.asList(generateSchemaAnnotationHandler(BAR_ANNOTATION_NAMESPACE), generateSchemaAnnotationHandler(BAZ_ANNOTATION_NAMESPACE)),
+                Arrays.asList(fieldAnnotationResult, fieldTypeSchemaAnnotationResult)
+            },
+            {
+                "previousSchema/TestSchema6.pdl",
+                "currentSchema/TestSchema6.pdl",
+                Arrays.asList(generateSchemaAnnotationHandler(BAR_ANNOTATION_NAMESPACE), generateSchemaAnnotationHandler(BAZ_ANNOTATION_NAMESPACE)),
+                Arrays.asList(unionMemberSchemaAnnotationResult, unionMemberKeyAnnotationResult)
+            },
+            {
+                "previousSchema/SchoolExtensions.pdl",
+                "currentSchema/SchoolExtensions.pdl",
+                Collections.singletonList(new ExtensionSchemaAnnotationHandler()),
+                Collections.singletonList(schoolExtensionExpectResult)
+            },
+            {
+                "previousSchema/FruitExtensions.pdl",
+                "currentSchema/FruitExtensions.pdl",
+                Collections.singletonList(new ExtensionSchemaAnnotationHandler()),
+                Collections.singletonList(fruitExtensionExpectResult)
+            },
+            {
+                "previousSchema/FooExtensions.pdl",
+                "currentSchema/FooExtensions.pdl",
+                Collections.singletonList(new ExtensionSchemaAnnotationHandler()),
+                Arrays.asList(emptyResult, fooExtensionExpectResult)
+            },
+            {
+                "previousSchema/AlbumExtensions.pdl",
+                "currentSchema/AlbumExtensions.pdl",
+                Collections.singletonList(new ExtensionSchemaAnnotationHandler()),
+                Collections.singletonList(albumExtensionExpectResult)
+            },
+            {
+                "previousSchema/CompanyExtensions.pdl",
+                "currentSchema/CompanyExtensions.pdl",
+                Collections.singletonList(new ExtensionSchemaAnnotationHandler()),
+                Collections.singletonList(companyExtensionExpectResult)
+            },
+            {
+                "previousSchema/BookExtensions.pdl",
+                "currentSchema/BookExtensions.pdl",
+                Collections.singletonList(new ExtensionSchemaAnnotationHandler()),
+                Arrays.asList(bookExtensionExpectResult, emptyResult)
+            },
+            {
+                "previousSchema/JobExtensions.pdl",
+                "currentSchema/JobExtensions.pdl",
+                Collections.singletonList(new ExtensionSchemaAnnotationHandler()),
+                Collections.singletonList(jobExtensionExpectResult)
+            },
+            {
+                "previousSchema/IdentityExtensions.pdl",
+                "currentSchema/IdentityExtensions.pdl",
+                Collections.singletonList(new ExtensionSchemaAnnotationHandler()),
+                Collections.singletonList(emptyResult)
             },
         };
   }

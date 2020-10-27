@@ -13,7 +13,24 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.7.15] - 2020-10-23
+Log Streaming Error or Timeout Error in Jetty SyncIOHandler
+
+## [29.7.14] - 2020-10-22
+- Improve performance of schema format translator.
+
+## [29.7.13] - 2020-10-22
+- Check if debug logging is enabled before calling debug log message in TimingContextUtil to avoid unnecessary exception instantiation.
+- Improve relative load balancer logging.
+
+## [29.7.12] - 2020-10-20
+- Fix the bug of not propagating schema properties in typeref with UnionWithAlias during pegasus to avro translation
+
+## [29.7.11] - 2020-10-19
 - Clear the destination directory for generateRestClientTask before the task runs.
+- Add 'ExtensionSchemaAnnotationHandler' for extension schema annotation compatibility check
+- Set javac source and target compatibility of dataTemplate compile task to "1.8" as the cogen changes in 29.7.0 is using Java 8 features.
 
 ## [29.7.10] - 2020-10-15
 - Minimize memory copies and object creation during encoding.
@@ -120,7 +137,6 @@ and what APIs have changed, if applicable.
 ## [29.5.5] - 2020-08-21
 - Updated File and class path DataSchemaResolvers to resolve extension schemas from `/extensions` directory if specified.
 - Added `DarkGateKeeper` to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
->>>>>>> upstream/master
 
 ## [29.5.4] - 2020-08-17
 - Increase default timeout for symbol table fetch to 1s.
@@ -4711,7 +4727,12 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.10...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.15...master
+[29.7.15]: https://github.com/linkedin/rest.li/compare/v29.7.14...v29.7.15
+[29.7.14]: https://github.com/linkedin/rest.li/compare/v29.7.13...v29.7.14
+[29.7.13]: https://github.com/linkedin/rest.li/compare/v29.7.12...v29.7.13
+[29.7.12]: https://github.com/linkedin/rest.li/compare/v29.7.11...v29.7.12
+[29.7.11]: https://github.com/linkedin/rest.li/compare/v29.7.10...v29.7.11
 [29.7.10]: https://github.com/linkedin/rest.li/compare/v29.7.9...v29.7.10
 [29.7.9]: https://github.com/linkedin/rest.li/compare/v29.7.8...v29.7.9
 [29.7.8]: https://github.com/linkedin/rest.li/compare/v29.7.7...v29.7.8

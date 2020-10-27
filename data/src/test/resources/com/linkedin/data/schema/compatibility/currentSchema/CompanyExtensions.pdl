@@ -1,0 +1,10 @@
+record CompanyExtensions includes
+record Company {
+  name: string,
+  id: long
+}
+{
+  @extension.using = "test"
+  @extension.params = {"id" : "$URN.companyId"}
+  testField: array[typeref TestUrn = string]
+}
