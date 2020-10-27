@@ -164,6 +164,8 @@ public class RestRequestBuilderGenerator
     final ClassLoader classLoader = JavaCodeUtil.classLoaderFromResolverPath(resolverPath);
 
     final RestSpecParser.ParseResult parseResult = parser.parseSources(sources);
+    System.out.println("\n**********\ntargetDirectoryPath : " + targetDirectoryPath);
+    System.out.println("**********\nsources: " + Arrays.toString(sources)+"========\n");
 
     final StringBuilder message = new StringBuilder();
     for (CodeUtil.Pair<ResourceSchema, File> pair : parseResult.getSchemaAndFiles())

@@ -1,0 +1,24 @@
+{
+  "name" : "arrayDuplicateA",
+  "path" : "/arrayDuplicateA",
+  "schema" : "com.linkedin.greetings.api.Greeting",
+  "namespace" : "com.linkedin.greetings.api",
+  "doc" : "This idl is for testing array and items fields.",
+  "collection" : {
+    "identifier" : {
+      "name" : "id",
+      "type" : "string"
+    },
+    "supports" : [ ],
+    "finders" : [ {
+      "name" : "test",
+      "parameters" : [ {
+        "name" : "param",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.greetings.api.ArrayTestRecord\" }"
+      } ]
+    } ],
+    "entity" : {
+      "path" : "/arrayDuplicateA/{id}"
+    }
+  }
+}
