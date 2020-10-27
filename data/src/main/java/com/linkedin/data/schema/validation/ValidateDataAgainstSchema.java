@@ -166,9 +166,22 @@ public final class ValidateDataAgainstSchema
       _fixed = element.getValue();
       UnrecognizedFieldMode unrecognizedFieldMode = _options.getUnrecognizedFieldMode();
       ObjectIterator it = new ObjectIterator(element, IterationOrder.POST_ORDER);
-      DataElement nextElement;
-      while ((nextElement = it.next()) != null)
+      DataElement nextElement = null;
+      while (true)
       {
+        try
+        {
+          if ((nextElement = it.next()) == null)
+          {
+            break;
+          }
+        }
+        catch (IllegalArgumentException e)
+        {
+          addMessage(nextElement, e.getMessage());
+          return;
+        }
+
         DataSchema nextElementSchema = nextElement.getSchema();
         if (nextElementSchema != null)
         {
