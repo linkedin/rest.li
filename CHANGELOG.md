@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.8.0] - 2020-10-29
-- Empty commit to bump pegasus minor version
+- Empty commit to bump pegasus minor version. LinkedIn internal service needs the new minor version to prevent client version downgrade, since the LinkedIn internal services only notice on minor version discrepancy.
 
 ## [29.7.15] - 2020-10-23
 Log Streaming Error or Timeout Error in Jetty SyncIOHandler
