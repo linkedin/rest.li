@@ -1,0 +1,24 @@
+{
+  "name" : "namespaceCase",
+  "path" : "/namespaceCase",
+  "schema" : "com.linkedin.greetings.api.Greeting",
+  "doc" : "This idl is for testing array and items fields.",
+  "namespace": "com.LINKEDIN.greetings.API.builders",
+  "collection" : {
+    "identifier" : {
+      "name" : "id",
+      "type" : "string"
+    },
+    "supports" : [ ],
+    "finders" : [ {
+      "name" : "test",
+      "parameters" : [ {
+        "name" : "param",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.greetings.api.Tone\" }"
+      } ]
+    } ],
+    "entity" : {
+      "path" : "/namespaceCase/{id}"
+    }
+  }
+}

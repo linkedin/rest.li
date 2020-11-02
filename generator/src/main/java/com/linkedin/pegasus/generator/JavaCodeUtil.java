@@ -146,7 +146,12 @@ public class JavaCodeUtil
         }
         else if (definedClass.outer() == null)
         {
-          final File file = new File(targetDirectory, definedClass.fullName().replace('.', File.separatorChar) + ".java");
+          // This seems like the safer approach to create path since fullName() has a recursive call.
+          String fullName = definedClass.fullName();
+          String name = definedClass.name();
+          String packageName = fullName.substring(0, fullName.length() - name.length());
+          String path = packageName.toLowerCase() + name;
+          final File file = new File(targetDirectory, path.replace('.', File.separatorChar) + ".java");
           generatedFiles.add(file);
         }
       }

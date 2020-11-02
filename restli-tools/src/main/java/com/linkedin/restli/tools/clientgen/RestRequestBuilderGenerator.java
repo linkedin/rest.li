@@ -18,8 +18,8 @@ package com.linkedin.restli.tools.clientgen;
 
 
 import com.linkedin.common.Version;
-import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.internal.tools.ArgumentFileProcessor;
+import com.linkedin.pegasus.generator.LowercasePathFileCodeWriter;
 import com.linkedin.pegasus.generator.CodeUtil;
 import com.linkedin.pegasus.generator.DefaultGeneratorResult;
 import com.linkedin.pegasus.generator.GeneratorResult;
@@ -40,7 +40,6 @@ import java.util.List;
 
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.writer.FileCodeWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -235,8 +234,8 @@ public class RestRequestBuilderGenerator
       modifiedFiles = targetFiles;
       _log.info("Generating " + targetFiles.size() + " files");
       _log.debug("Files: " + targetFiles);
-      requestBuilderCodeModel.build(new FileCodeWriter(targetDirectory, true));
-      dataTemplateCodeModel.build(new FileCodeWriter(targetDirectory, true));
+      requestBuilderCodeModel.build(new LowercasePathFileCodeWriter(targetDirectory, true));
+      dataTemplateCodeModel.build(new LowercasePathFileCodeWriter(targetDirectory, true));
     }
     return new DefaultGeneratorResult(parseResult.getSourceFiles(), targetFiles, modifiedFiles);
   }

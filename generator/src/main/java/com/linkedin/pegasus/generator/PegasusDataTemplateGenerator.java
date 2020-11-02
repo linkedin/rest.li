@@ -25,7 +25,6 @@ import com.linkedin.util.FileUtil;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JPackage;
-import com.sun.codemodel.writer.FileCodeWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -156,7 +155,7 @@ public class PegasusDataTemplateGenerator
       _log.debug("Files: "+ targetFiles);
       validateDefinedClassRegistration(dataTemplateGenerator.getCodeModel(), dataTemplateGenerator.getGeneratedClasses().keySet());
       targetDirectory.mkdirs();
-      dataTemplateGenerator.getCodeModel().build(new FileCodeWriter(targetDirectory, true));
+      dataTemplateGenerator.getCodeModel().build(new LowercasePathFileCodeWriter(targetDirectory, true));
     }
 
     return new DefaultGeneratorResult(parseResult.getSourceFiles(), targetFiles, modifiedFiles);

@@ -3,6 +3,7 @@ package com.linkedin.restli.tools.clientgen;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.linkedin.pegasus.generator.GeneratorResult;
 import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.tools.ExporterTestUtils;
 
@@ -11,7 +12,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -28,6 +31,14 @@ import org.testng.collections.Lists;
  */
 public class TestRestRequestBuilderGenerator
 {
+  private static final String FS = File.separator;
+  private static final String RESOURCES_DIR = "src" + FS + "test" + FS + "resources";
+  private static final Pattern LOWERCASE_PATH_PATTERN = Pattern.compile("^[a-z/]*$");
+
+  private File outdir;
+  private File outdir2;
+  private String moduleDir;
+
   @BeforeClass
   public void setUp() throws IOException
   {
@@ -119,6 +130,63 @@ public class TestRestRequestBuilderGenerator
     Assert.assertTrue(aBuilderFileContent.contains("Generated from " + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateA.restspec.json"));
     final String bBuilderFileContent = IOUtils.toString(new FileInputStream(bBuilderFile));
     Assert.assertTrue(bBuilderFileContent.contains("Generated from " + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateB.restspec.json"));
+  }
+
+  /**
+   * Testing case sensitivity of generated files. Typically a Mac/Windows system will have a case insensitive file
+   * system, whereas a Linux system will have a case sensitive file system. For a case insensitive file system,
+   * "~/com/astro" and "~/com/ASTRO" point to the same folder. For a case sensitive file system, "~/com/astro" and "~/com/ASTRO"
+   * will be different folders.
+   *
+   * Example:
+   *   File1: namespace = com.ASTRO.generator
+   *
+   *   The following files would be generated with the path specified.
+   *   1) if run before changes:
+   *       com/ASTRO/file
+   *   2) if run after changes:
+   *       com/astro/file
+   *
+   * @param version RestLi version
+   * @param restspec restli spec to generate - spec contains namespace with non-lowercase path.
+   */
+  @Test(dataProvider = "arrayNamespaceCaseDataProvider")
+  public void testGenerationPathIsLowercase(RestliVersion version, String restspec) throws Exception
+  {
+    // Given: RestLi version and spec files.
+    File tmpDir = ExporterTestUtils.createTmpDir();
+    final String pegasusDir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
+    final String tmpPath = tmpDir.getPath();
+    final String restspecFile = moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + restspec;
+
+    // When: Generate the files defined by spec.
+    GeneratorResult r = RestRequestBuilderGenerator.run(pegasusDir,
+            null,
+            moduleDir,
+            true,
+            false,
+            version,
+            null,
+            tmpPath,
+            new String[] { restspecFile });
+
+    int c = tmpDir.getCanonicalPath().length();
+
+    // Then: Validate the Builder files were created with the correct paths.
+    for (File f : r.getModifiedFiles()) {
+      // Validate file exists.
+      Assert.assertTrue(f.exists());
+
+      // Validate path is lowercase.
+      String path = f.getCanonicalPath().substring(c);
+      int idx = path.lastIndexOf("/") + 1;
+      path = path.substring(0, idx);
+      Matcher matcher = LOWERCASE_PATH_PATTERN.matcher(path);
+      Assert.assertTrue(matcher.find());
+    }
+
+    // Clean up.
+    ExporterTestUtils.rmdir(tmpDir);
   }
 
   @Test(dataProvider = "deprecatedByVersionDataProvider")
@@ -216,6 +284,14 @@ public class TestRestRequestBuilderGenerator
   }
 
   @DataProvider
+  private static Object[][] arrayNamespaceCaseDataProvider() {
+    return new Object[][] {
+      { RestliVersion.RESTLI_1_0_0, "namespace-case.restspec.json" },
+      { RestliVersion.RESTLI_2_0_0, "namespace-case.restspec.json" },
+    };
+  }
+
+  @DataProvider
   private static Object[][] deprecatedByVersionDataProvider()
   {
     return new Object[][] {
@@ -232,11 +308,4 @@ public class TestRestRequestBuilderGenerator
       { RestliVersion.RESTLI_2_0_0, "AssocKeysPathRequestBuilders.java", "SubRequestBuilders.java", "SubGetRequestBuilder.java", }
     };
   }
-
-  private static final String FS = File.separator;
-  private static final String RESOURCES_DIR = "src" + FS + "test" + FS + "resources";
-
-  private File outdir;
-  private File outdir2;
-  private String moduleDir;
 }
