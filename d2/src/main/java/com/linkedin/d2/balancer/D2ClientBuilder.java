@@ -146,6 +146,7 @@ public class D2ClientBuilder
                   _config._executorService,
                   _config.retry,
                   _config.retryLimit,
+                  _config.isRetryableException,
                   _config.warmUp,
                   _config.warmUpTimeoutSeconds,
                   _config.warmUpConcurrentRequests,
@@ -202,7 +203,7 @@ public class D2ClientBuilder
 
     if (_config.retry)
     {
-      d2Client = new RetryClient(d2Client, _config.retryLimit);
+      d2Client = new RetryClient(d2Client, _config.retryLimit, _config.isRetryableException);
     }
 
     // If we created default transport client factories, we need to shut them down when d2Client

@@ -28,6 +28,7 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategy
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.data.ByteString;
+import com.linkedin.r2.RetriableRequestException;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -49,6 +50,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Predicate;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -64,6 +66,7 @@ import static org.testng.Assert.assertTrue;
 public class RetryClientTest
 {
   private static final ByteString CONTENT = ByteString.copy(new byte[8092]);
+  public static final Predicate<Throwable> DEFAULT_RETRYABLE_PREDICATE = e -> e instanceof RetriableRequestException;
 
   private ScheduledExecutorService _executor;
 
@@ -85,7 +88,7 @@ public class RetryClientTest
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"));
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, 3);
+    RetryClient client = new RetryClient(dynamicClient, 3, DEFAULT_RETRYABLE_PREDICATE);
     URI uri = URI.create("d2://retryService?arg1arg2");
     RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
     TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
@@ -101,7 +104,7 @@ public class RetryClientTest
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"));
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, 3);
+    RetryClient client = new RetryClient(dynamicClient, 3, DEFAULT_RETRYABLE_PREDICATE);
     URI uri = URI.create("d2://retryService?arg1arg2");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.newEntityStream(new ByteStringWriter(CONTENT)));
     TrackerClientTest.TestCallback<StreamResponse> restCallback = new TrackerClientTest.TestCallback<StreamResponse>();
@@ -117,7 +120,7 @@ public class RetryClientTest
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/bad"));
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, 3);
+    RetryClient client = new RetryClient(dynamicClient, 3, DEFAULT_RETRYABLE_PREDICATE);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
     TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
@@ -137,7 +140,7 @@ public class RetryClientTest
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/bad"));
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, 3);
+    RetryClient client = new RetryClient(dynamicClient, 3, DEFAULT_RETRYABLE_PREDICATE);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
     TrackerClientTest.TestCallback<StreamResponse> streamCallback = new TrackerClientTest.TestCallback<StreamResponse>();
@@ -157,7 +160,7 @@ public class RetryClientTest
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/retry2"));
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, 1);
+    RetryClient client = new RetryClient(dynamicClient, 1, DEFAULT_RETRYABLE_PREDICATE);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
     TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
@@ -174,7 +177,7 @@ public class RetryClientTest
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/retry2"));
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, 1);
+    RetryClient client = new RetryClient(dynamicClient, 1, DEFAULT_RETRYABLE_PREDICATE);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
     TrackerClientTest.TestCallback<StreamResponse> streamCallback = new TrackerClientTest.TestCallback<StreamResponse>();
@@ -191,7 +194,7 @@ public class RetryClientTest
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/retry2"));
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, 3);
+    RetryClient client = new RetryClient(dynamicClient, 3, DEFAULT_RETRYABLE_PREDICATE);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
     TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
@@ -208,7 +211,7 @@ public class RetryClientTest
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/retry2"));
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, 3);
+    RetryClient client = new RetryClient(dynamicClient, 3, DEFAULT_RETRYABLE_PREDICATE);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
     FutureCallback<StreamResponse> streamCallback = new FutureCallback<>();

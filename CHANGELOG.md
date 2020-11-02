@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Make `isRetryException` in RetryClient configurable
 
 ## [29.8.0] - 2020-10-29
 - Empty commit to bump pegasus minor version. LinkedIn internal service needs the new minor version to prevent client version downgrade, since the LinkedIn internal services only notice on minor version discrepancy.
