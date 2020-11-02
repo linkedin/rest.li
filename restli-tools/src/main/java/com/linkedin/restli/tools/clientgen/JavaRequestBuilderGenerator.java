@@ -17,119 +17,39 @@
 package com.linkedin.restli.tools.clientgen;
 
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.ArrayDataSchema;
-import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.DataSchemaLocation;
-import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.PrimitiveDataSchema;
-import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.schema.*;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
-import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.template.DynamicRecordMetadata;
-import com.linkedin.data.template.FieldDef;
-import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.data.template.StringArray;
+import com.linkedin.data.template.*;
 import com.linkedin.jersey.api.uri.UriTemplate;
-import com.linkedin.pegasus.generator.CodeUtil;
-import com.linkedin.pegasus.generator.JavaCodeGeneratorBase;
-import com.linkedin.pegasus.generator.JavaCodeUtil;
-import com.linkedin.pegasus.generator.JavaDataTemplateGenerator;
-import com.linkedin.pegasus.generator.TemplateSpecGenerator;
+import com.linkedin.pegasus.generator.*;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.client.OptionsRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
-import com.linkedin.restli.client.base.ActionRequestBuilderBase;
-import com.linkedin.restli.client.base.BatchCreateIdEntityRequestBuilderBase;
-import com.linkedin.restli.client.base.BatchCreateIdRequestBuilderBase;
-import com.linkedin.restli.client.base.BatchDeleteRequestBuilderBase;
-import com.linkedin.restli.client.base.BatchFindRequestBuilderBase;
-import com.linkedin.restli.client.base.BatchGetEntityRequestBuilderBase;
-import com.linkedin.restli.client.base.BatchPartialUpdateEntityRequestBuilderBase;
-import com.linkedin.restli.client.base.BatchPartialUpdateRequestBuilderBase;
-import com.linkedin.restli.client.base.BatchUpdateRequestBuilderBase;
-import com.linkedin.restli.client.base.BuilderBase;
-import com.linkedin.restli.client.base.CreateIdEntityRequestBuilderBase;
-import com.linkedin.restli.client.base.CreateIdRequestBuilderBase;
-import com.linkedin.restli.client.base.DeleteRequestBuilderBase;
-import com.linkedin.restli.client.base.FindRequestBuilderBase;
-import com.linkedin.restli.client.base.GetAllRequestBuilderBase;
-import com.linkedin.restli.client.base.GetRequestBuilderBase;
-import com.linkedin.restli.client.base.PartialUpdateEntityRequestBuilderBase;
-import com.linkedin.restli.client.base.PartialUpdateRequestBuilderBase;
-import com.linkedin.restli.client.base.UpdateRequestBuilderBase;
-import com.linkedin.restli.common.ComplexResourceKey;
-import com.linkedin.restli.common.CompoundKey;
+import com.linkedin.restli.client.base.*;
+import com.linkedin.restli.common.*;
 import com.linkedin.restli.common.CompoundKey.TypeInfo;
-import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.common.ResourceSpec;
-import com.linkedin.restli.common.ResourceSpecImpl;
-import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.model.ResourceModelEncoder;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
-import com.linkedin.restli.restspec.ActionSchema;
-import com.linkedin.restli.restspec.ActionSchemaArray;
-import com.linkedin.restli.restspec.ActionsSetSchema;
-import com.linkedin.restli.restspec.AssocKeySchema;
-import com.linkedin.restli.restspec.AssociationSchema;
-import com.linkedin.restli.restspec.BatchFinderSchema;
-import com.linkedin.restli.restspec.BatchFinderSchemaArray;
-import com.linkedin.restli.restspec.CollectionSchema;
-import com.linkedin.restli.restspec.FinderSchema;
-import com.linkedin.restli.restspec.FinderSchemaArray;
-import com.linkedin.restli.restspec.ParameterSchema;
-import com.linkedin.restli.restspec.ParameterSchemaArray;
-import com.linkedin.restli.restspec.ResourceSchema;
-import com.linkedin.restli.restspec.ResourceSchemaArray;
-import com.linkedin.restli.restspec.RestMethodSchema;
-import com.linkedin.restli.restspec.RestMethodSchemaArray;
-import com.linkedin.restli.restspec.RestSpecCodec;
-import com.linkedin.restli.restspec.SimpleSchema;
+import com.linkedin.restli.restspec.*;
 import com.linkedin.restli.server.annotations.ReturnEntity;
 import com.linkedin.util.CustomTypeUtil;
+import com.sun.codemodel.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.sun.codemodel.JBlock;
-import com.sun.codemodel.JClass;
-import com.sun.codemodel.JClassAlreadyExistsException;
-import com.sun.codemodel.JConditional;
-import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.JExpr;
-import com.sun.codemodel.JExpression;
-import com.sun.codemodel.JFieldRef;
-import com.sun.codemodel.JFieldVar;
-import com.sun.codemodel.JInvocation;
-import com.sun.codemodel.JMethod;
-import com.sun.codemodel.JMod;
-import com.sun.codemodel.JPackage;
-import com.sun.codemodel.JVar;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 
 /**
@@ -205,15 +125,8 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                      boolean generateDataTemplates,
                                      RestliVersion version,
                                      RestliVersion deprecatedByVersion,
-                                     String rootPath)
-  {
-    super(defaultPackage);
-    _schemaResolver = CodeUtil.createSchemaResolver(resolverPath);
-    _specGenerator = new TemplateSpecGenerator(_schemaResolver);
-    _javaDataTemplateGenerator = new JavaDataTemplateGenerator(defaultPackage, rootPath);
-    _generateDataTemplates = generateDataTemplates;
-    _version = version;
-    _deprecatedByVersion = deprecatedByVersion;
+                                     String rootPath) {
+    this(resolverPath, defaultPackage, generateDataTemplates, version, deprecatedByVersion, rootPath, false);
   }
 
   /**
@@ -232,6 +145,33 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                      RestliVersion deprecatedByVersion)
   {
     this(resolverPath, defaultPackage, generateDataTemplates, version, deprecatedByVersion, null);
+  }
+
+  /**
+   * @param resolverPath colon-separated string containing all paths of schema source to resolve
+   * @param defaultPackage package to be used when a {@link NamedDataSchema} does not specify a namespace
+   * @param generateDataTemplates true if the related data template source files will be generated as well, false otherwise.
+   *                              if null is assigned to this value, by default it returns true.
+   * @param version {@link RestliVersion} of the generated builder format
+   * @param deprecatedByVersion this version of builder format will be generated, but will be annotated as deprecated.
+   *                            also will reference to the non-deprecated version.
+   * @param rootPath root path to relativize
+   * @param generateLowercasePath true, create generated files with lower case path; false, creates path as stated in spec.
+   */
+  public JavaRequestBuilderGenerator(String resolverPath,
+                                     String defaultPackage,
+                                     boolean generateDataTemplates,
+                                     RestliVersion version,
+                                     RestliVersion deprecatedByVersion,
+                                     String rootPath,
+                                     boolean generateLowercasePath) {
+    super(defaultPackage);
+    _schemaResolver = CodeUtil.createSchemaResolver(resolverPath);
+    _specGenerator = new TemplateSpecGenerator(_schemaResolver, generateLowercasePath);
+    _javaDataTemplateGenerator = new JavaDataTemplateGenerator(defaultPackage, rootPath);
+    _generateDataTemplates = generateDataTemplates;
+    _version = version;
+    _deprecatedByVersion = deprecatedByVersion;
   }
 
   public boolean isGeneratedArrayClass(JClass clazz)

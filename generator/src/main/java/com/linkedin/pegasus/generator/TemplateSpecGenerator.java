@@ -18,46 +18,14 @@ package com.linkedin.pegasus.generator;
 
 
 import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.ArrayDataSchema;
-import com.linkedin.data.schema.ComplexDataSchema;
-import com.linkedin.data.schema.DataSchema;
-import com.linkedin.data.schema.DataSchemaLocation;
-import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.EnumDataSchema;
-import com.linkedin.data.schema.FixedDataSchema;
-import com.linkedin.data.schema.MapDataSchema;
-import com.linkedin.data.schema.NamedDataSchema;
-import com.linkedin.data.schema.PrimitiveDataSchema;
-import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.SchemaFormatType;
-import com.linkedin.data.schema.TyperefDataSchema;
-import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.data.schema.*;
 import com.linkedin.data.template.DataTemplate;
-import com.linkedin.pegasus.generator.spec.ArrayTemplateSpec;
-import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
-import com.linkedin.pegasus.generator.spec.CustomInfoSpec;
-import com.linkedin.pegasus.generator.spec.EnumTemplateSpec;
-import com.linkedin.pegasus.generator.spec.FixedTemplateSpec;
-import com.linkedin.pegasus.generator.spec.MapTemplateSpec;
-import com.linkedin.pegasus.generator.spec.ModifierSpec;
-import com.linkedin.pegasus.generator.spec.PrimitiveTemplateSpec;
-import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
-import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
-import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
+import com.linkedin.pegasus.generator.spec.*;
 import com.linkedin.util.CustomTypeUtil;
-
-import java.io.File;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 
 /**
@@ -72,6 +40,10 @@ public class TemplateSpecGenerator
   private static final String MAP_SUFFIX = "Map";
   private static final String[] SPECIAL_SUFFIXES = {ARRAY_SUFFIX, MAP_SUFFIX};
 
+  /**
+   * Generate files with lowercase namespace.
+   */
+  private boolean _lowercaseNamespace;
   private final Collection<ClassTemplateSpec> _classTemplateSpecs = new LinkedHashSet<>();
   /**
    * Map of {@link ClassTemplateSpec} to {@link DataSchemaLocation}.
@@ -100,8 +72,25 @@ public class TemplateSpecGenerator
     this(schemaResolver, CustomTypeUtil.JAVA_PROPERTY, DataTemplate.class.getPackage().getName());
   }
 
+  /**
+   * @param lowercaseNamespace Generate classes with a lower case namespace.
+   */
+  public TemplateSpecGenerator(DataSchemaResolver schemaResolver, boolean lowercaseNamespace)
+  {
+    this(schemaResolver, CustomTypeUtil.JAVA_PROPERTY, DataTemplate.class.getPackage().getName(), lowercaseNamespace);
+  }
+
   public TemplateSpecGenerator(DataSchemaResolver schemaResolver, String customTypeLanguage, String templatePackageName)
   {
+    this(schemaResolver, CustomTypeUtil.JAVA_PROPERTY, DataTemplate.class.getPackage().getName(), false);
+  }
+
+  /**
+   * @param lowercaseNamespace Generate classes with a lower case namespace.
+   */
+  public TemplateSpecGenerator(DataSchemaResolver schemaResolver, String customTypeLanguage, String templatePackageName, boolean lowercaseNamespace)
+  {
+    _lowercaseNamespace = lowercaseNamespace;
     _schemaResolver = schemaResolver;
     _customTypeLanguage = customTypeLanguage;
     _templatePackageName = templatePackageName;
@@ -187,7 +176,7 @@ public class TemplateSpecGenerator
     return type == DataSchema.Type.TYPEREF ? ((TyperefDataSchema) schema).getRef() : null;
   }
 
-  /*
+  /**
    * Return exception for trying to use null type outside of a union.
    */
   private static IllegalArgumentException nullTypeNotAllowed(ClassTemplateSpec enclosingClass, String memberName)
@@ -195,7 +184,7 @@ public class TemplateSpecGenerator
     return new IllegalArgumentException("The null type can only be used in unions, null found" + enclosingClassAndMemberNameToString(enclosingClass, memberName));
   }
 
-  /*
+  /**
    * Return exception for unrecognized schema type.
    */
   private static IllegalStateException unrecognizedSchemaType(ClassTemplateSpec enclosingClass, String memberName, DataSchema schema)
@@ -204,7 +193,7 @@ public class TemplateSpecGenerator
                                          enclosingClassAndMemberNameToString(enclosingClass, memberName));
   }
 
-  /*
+  /**
    * Generate human consumable representation of enclosing class and field name.
    */
   private static String enclosingClassAndMemberNameToString(ClassTemplateSpec enclosingClass, String memberName)
@@ -635,7 +624,8 @@ public class TemplateSpecGenerator
     pushCurrentLocation(_schemaResolver.nameToDataSchemaLocations().get(typerefDataSchema.getFullName()));
 
     final UnionTemplateSpec unionClass = new UnionTemplateSpec(schema);
-    unionClass.setNamespace(typerefDataSchema.getNamespace());
+    String namespace = _lowercaseNamespace ? typerefDataSchema.getNamespace().toLowerCase() : typerefDataSchema.getNamespace();
+    unionClass.setNamespace(namespace);
     unionClass.setPackage(typerefDataSchema.getPackage());
     unionClass.setClassName(typerefDataSchema.getName());
     unionClass.setModifiers(ModifierSpec.PUBLIC);
@@ -690,7 +680,8 @@ public class TemplateSpecGenerator
   private ClassTemplateSpec generateEnum(EnumDataSchema schema)
   {
     final EnumTemplateSpec enumClass = new EnumTemplateSpec(schema);
-    enumClass.setNamespace(schema.getNamespace());
+    String namespace = _lowercaseNamespace ? schema.getNamespace().toLowerCase() : schema.getNamespace();
+    enumClass.setNamespace(namespace);
     enumClass.setPackage(schema.getPackage());
     enumClass.setClassName(schema.getName());
     enumClass.setModifiers(ModifierSpec.PUBLIC);
@@ -701,7 +692,8 @@ public class TemplateSpecGenerator
   private ClassTemplateSpec generateFixed(FixedDataSchema schema)
   {
     final FixedTemplateSpec fixedClass = new FixedTemplateSpec(schema);
-    fixedClass.setNamespace(schema.getNamespace());
+    String namespace = _lowercaseNamespace ? schema.getNamespace().toLowerCase() : schema.getNamespace();
+    fixedClass.setNamespace(namespace);
     fixedClass.setPackage(schema.getPackage());
     fixedClass.setClassName(schema.getName());
     fixedClass.setModifiers(ModifierSpec.PUBLIC);
@@ -715,7 +707,8 @@ public class TemplateSpecGenerator
     pushCurrentLocation(_schemaResolver.nameToDataSchemaLocations().get(schema.getFullName()));
     final TyperefTemplateSpec typerefClass = new TyperefTemplateSpec(schema);
     typerefClass.setOriginalTyperefSchema(originalTyperefSchema);
-    typerefClass.setNamespace(schema.getNamespace());
+    String namespace = _lowercaseNamespace ? schema.getNamespace().toLowerCase() : schema.getNamespace();
+    typerefClass.setNamespace(namespace);
     typerefClass.setPackage(schema.getPackage());
     typerefClass.setClassName(schema.getName());
     typerefClass.setModifiers(ModifierSpec.PUBLIC);
@@ -730,7 +723,8 @@ public class TemplateSpecGenerator
   private RecordTemplateSpec generateRecord(RecordDataSchema schema)
   {
     final RecordTemplateSpec recordClass = new RecordTemplateSpec(schema);
-    recordClass.setNamespace(schema.getNamespace());
+    String namespace = _lowercaseNamespace ? schema.getNamespace().toLowerCase() : schema.getNamespace();
+    recordClass.setNamespace(namespace);
     recordClass.setPackage(schema.getPackage());
     recordClass.setClassName(schema.getName());
     recordClass.setModifiers(ModifierSpec.PUBLIC);
@@ -796,7 +790,8 @@ public class TemplateSpecGenerator
       }
       else
       {
-        classTemplateSpec.setNamespace(classInfo.namespace);
+        String namespace = _lowercaseNamespace ? classInfo.namespace.toLowerCase() : classInfo.namespace;
+        classTemplateSpec.setNamespace(namespace);
         classTemplateSpec.setClassName(classInfo.name);
         classTemplateSpec.setPackage(classInfo.packageName);
         classTemplateSpec.setModifiers(ModifierSpec.PUBLIC);

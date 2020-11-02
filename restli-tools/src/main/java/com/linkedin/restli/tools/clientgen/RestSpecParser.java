@@ -45,6 +45,15 @@ public class RestSpecParser
    */
   public ParseResult parseSources(String[] sourcePaths)
   {
+    return parseSources(sourcePaths, false);
+  }
+
+  /**
+   * @param sourcePaths can be either a directory (all idl files from it) or individual idl files
+   * @param generateLowercasePath when reading resources, if true, would string.toLower certain map values; Otherwise NOP
+   */
+  public ParseResult parseSources(String[] sourcePaths, boolean generateLowercasePath)
+  {
     final ParseResult result = new ParseResult();
 
     for (String sourcePath : sourcePaths)
@@ -73,7 +82,7 @@ public class RestSpecParser
         {
           try
           {
-            final ResourceSchema resource = _codec.readResourceSchema(new FileInputStream(sourceFile));
+            final ResourceSchema resource = _codec.readResourceSchema(new FileInputStream(sourceFile), generateLowercasePath);
             result._schemaAndFiles.add(new CodeUtil.Pair<ResourceSchema, File>(resource, sourceFile));
             result._sourceFiles.add(sourceFile);
           }

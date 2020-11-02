@@ -3,19 +3,12 @@ package com.linkedin.restli.tools.clientgen;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.linkedin.pegasus.generator.GeneratorResult;
 import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.tools.ExporterTestUtils;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -23,17 +16,32 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.testng.collections.Lists;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 /**
  * @author Keren Jin
  */
 public class TestRestRequestBuilderGenerator
 {
+  private static final String FS = File.separator;
+  private static final String RESOURCES_DIR = "src" + FS + "test" + FS + "resources";
+
+  private File outdir;
+  private File outdir2;
+  private String moduleDir;
+  private boolean isFileSystemCaseSensitive;
+
   @BeforeClass
   public void setUp() throws IOException
   {
     outdir = ExporterTestUtils.createTmpDir();
     outdir2 = ExporterTestUtils.createTmpDir();
     moduleDir = System.getProperty("user.dir");
+    isFileSystemCaseSensitive = isFileSystemCaseSensitive();
   }
 
   @AfterClass
@@ -120,6 +128,84 @@ public class TestRestRequestBuilderGenerator
     final String bBuilderFileContent = IOUtils.toString(new FileInputStream(bBuilderFile));
     Assert.assertTrue(bBuilderFileContent.contains("Generated from " + RESOURCES_DIR + FS + "idls" + FS + "arrayDuplicateB.restspec.json"));
   }
+
+  /**
+   * Testing case sensitivity of generated files. Typically a Mac/Windows system will have a case insensitive file
+   * system, whereas a Linux system will have a case sensitive file system. For a case insensitive file system,
+   * "~/com/astro" and "~/com/ASTRO" point to the same folder. For a case sensitive file system, "~/com/astro" and "~/com/ASTRO"
+   * will be different folders.
+   *
+   * Example:
+   *   File1: namespace = com.astro.file1
+   *   File2: namespace = com.aSTRo.file2
+   *
+   *   The following files would be generated with the path specified.
+   *   1) Case insensitive (if file1 is generated first):
+   *       com/astro/file1
+   *                /file2
+   *   2) Case insensitive (if file2 is generated first):
+   *       com/aSTRo/file1
+   *                /file2
+   *   3) Case sensitive:
+   *       com/astro/file1
+   *           aSTRo/file2
+   *
+   * @param version RestLi version
+   * @param restspec1 First restli spec to generate
+   * @param restspec2 Second restli spec to generate
+   * @param generateLowercasePath True, generate path lowercase; False, generate path as spec specifies.
+   */
+  @Test(dataProvider = "arrayDuplicateDataProvider2")
+  public void testGenerationPathOrder(RestliVersion version, String restspec1, String restspec2, boolean generateLowercasePath) throws Exception
+  {
+    // Given: RestLi version and spec files.
+    File tmpDir = ExporterTestUtils.createTmpDir();
+    final String pegasusDir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
+    final String tmpPath = tmpDir.getPath();
+    final String file1 = moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + restspec1;
+    final String file2 = moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + restspec2;
+
+    // When: Generate the files defined by spec.
+    GeneratorResult r = RestRequestBuilderGenerator.run(pegasusDir,
+            null,
+            moduleDir,
+            true,
+            false,
+            version,
+            null,
+            tmpPath,
+            new String[] { file1 },
+            generateLowercasePath);
+    GeneratorResult r2 = RestRequestBuilderGenerator.run(pegasusDir,
+            null,
+            moduleDir,
+            true,
+            false,
+            version,
+            null,
+            tmpPath,
+            new String[] { file2 },
+            generateLowercasePath);
+
+    // Then: Validate the Builder files were created with the correct paths.
+    ArrayList<File> files = new ArrayList<>(r.getModifiedFiles());
+    files.addAll(r2.getModifiedFiles());
+    for (File f : files) {
+      Assert.assertTrue(f.exists());
+      if (!f.getPath().endsWith("Builder.java") && !f.getPath().endsWith("Builders.java")) {
+        // Skip all files that are not builders.
+        continue;
+      } else if (!isFileSystemCaseSensitive && !generateLowercasePath) {
+        // Is tested with the f.exists above since this is a case insensitive file system.
+        continue;
+      }
+      Assert.assertTrue(f.getCanonicalPath().endsWith(f.getAbsolutePath()));
+    }
+
+    // Clean up.
+    ExporterTestUtils.rmdir(tmpDir);
+  }
+
 
   @Test(dataProvider = "deprecatedByVersionDataProvider")
   public void testDeprecatedByVersion(String idlName, String buildersName, String substituteClassName) throws Exception
@@ -216,6 +302,20 @@ public class TestRestRequestBuilderGenerator
   }
 
   @DataProvider
+  private static Object[][] arrayDuplicateDataProvider2() {
+    return new Object[][]{
+            { RestliVersion.RESTLI_1_0_0, "arrayDuplicateA.namespace.restspec.json", "arrayDuplicateB.namespace.restspec.json", true},
+            { RestliVersion.RESTLI_1_0_0, "arrayDuplicateA.namespace.restspec.json", "arrayDuplicateB.namespace.restspec.json", false},
+            { RestliVersion.RESTLI_1_0_0, "arrayDuplicateB.namespace.restspec.json", "arrayDuplicateA.namespace.restspec.json", true},
+            { RestliVersion.RESTLI_1_0_0, "arrayDuplicateB.namespace.restspec.json", "arrayDuplicateA.namespace.restspec.json", false},
+            { RestliVersion.RESTLI_2_0_0, "arrayDuplicateA.namespace.restspec.json", "arrayDuplicateB.namespace.restspec.json", true},
+            { RestliVersion.RESTLI_2_0_0, "arrayDuplicateA.namespace.restspec.json", "arrayDuplicateB.namespace.restspec.json", false},
+            { RestliVersion.RESTLI_2_0_0, "arrayDuplicateB.namespace.restspec.json", "arrayDuplicateA.namespace.restspec.json", true},
+            { RestliVersion.RESTLI_2_0_0, "arrayDuplicateB.namespace.restspec.json", "arrayDuplicateA.namespace.restspec.json", false},
+    };
+  }
+
+  @DataProvider
   private static Object[][] deprecatedByVersionDataProvider()
   {
     return new Object[][] {
@@ -233,10 +333,15 @@ public class TestRestRequestBuilderGenerator
     };
   }
 
-  private static final String FS = File.separator;
-  private static final String RESOURCES_DIR = "src" + FS + "test" + FS + "resources";
-
-  private File outdir;
-  private File outdir2;
-  private String moduleDir;
+  /**
+   * @return typically false for mac/windows; true for linux
+   */
+  private static boolean isFileSystemCaseSensitive() throws IOException {
+    File tmpDir = ExporterTestUtils.createTmpDir();
+    File caseSensitiveTestFile = new File(tmpDir + FS + "a");
+    caseSensitiveTestFile.createNewFile();
+    boolean caseSensitive = !new File(tmpDir + FS + "A" ).exists();
+    caseSensitiveTestFile.delete();
+    return caseSensitive;
+  }
 }

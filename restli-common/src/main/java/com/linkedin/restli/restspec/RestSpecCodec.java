@@ -21,6 +21,7 @@
 package com.linkedin.restli.restspec;
 
 
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
@@ -36,8 +37,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
-
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 
 
 /**
@@ -81,8 +80,27 @@ public class RestSpecCodec
   public ResourceSchema readResourceSchema(InputStream inputStream)
           throws IOException
   {
+    return readResourceSchema(inputStream, false);
+  }
+
+  /**
+   * Reads a ResourceSchema from the given input stream, fixes it if necessary, and returns it.
+   *
+   * @param inputStream inputStream to read the ResourceSchema from
+   * @param generateLowercasePath if true and namespace exists in data map, then lower case the namespace value; Otherwise, no change
+   * @return a ResourceSchema
+   * @throws IOException
+   */
+  public ResourceSchema readResourceSchema(InputStream inputStream, boolean generateLowercasePath)
+          throws IOException{
     final DataMap data = _dataCodec.readMap(inputStream);
     fixupLegacyRestspec(data);
+    if (generateLowercasePath && data.containsKey("namespace")) {
+      String namespace = data.getString("namespace");
+      if (namespace != null) {
+        data.put("namespace", namespace.toLowerCase());
+      }
+    }
     return new ResourceSchema(data);
   }
 

@@ -26,17 +26,12 @@ import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.writer.FileCodeWriter;
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Generate Java data template files from Pegasus Data Model schema files.
@@ -49,6 +44,7 @@ public class PegasusDataTemplateGenerator
    * The system property that specifies whether to generate classes for externally resolved schemas
    */
   public static final String GENERATOR_GENERATE_IMPORTED = "generator.generate.imported";
+  public static final String GENERATOR_GENERATE_PATH_LOWERCASE = "generator.generate.path.lowercase";
 
   private static final Logger _log = LoggerFactory.getLogger(PegasusDataTemplateGenerator.class);
 
@@ -98,6 +94,8 @@ public class PegasusDataTemplateGenerator
 
     final String generateImportedProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED);
     final boolean generateImported = generateImportedProperty == null ? true : Boolean.parseBoolean(generateImportedProperty);
+    final String generateLowercasePathProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_PATH_LOWERCASE);
+    final boolean generateLowercasePath = generateLowercasePathProperty == null ?  false : Boolean.parseBoolean(generateLowercasePathProperty);
     String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
     if (resolverPath != null && ArgumentFileProcessor.isArgFile(resolverPath))
     {
@@ -112,14 +110,15 @@ public class PegasusDataTemplateGenerator
                                      System.getProperty(JavaCodeGeneratorBase.ROOT_PATH),
                                      generateImported,
                                      args[0],
-                                     schemaFiles);
+                                     schemaFiles,
+                                     generateLowercasePath);
   }
 
-  public static GeneratorResult run(String resolverPath, String defaultPackage, String rootPath, final boolean generateImported, String targetDirectoryPath, String[] sources)
+  public static GeneratorResult run(String resolverPath, String defaultPackage, String rootPath, final boolean generateImported, String targetDirectoryPath, String[] sources, boolean generateLowercasePath)
       throws IOException
   {
     final DataSchemaParser schemaParser = new DataSchemaParser(resolverPath);
-    final TemplateSpecGenerator specGenerator = new TemplateSpecGenerator(schemaParser.getSchemaResolver());
+    final TemplateSpecGenerator specGenerator = new TemplateSpecGenerator(schemaParser.getSchemaResolver(), generateLowercasePath);
     final JavaDataTemplateGenerator dataTemplateGenerator = new JavaDataTemplateGenerator(defaultPackage, rootPath);
 
     for (DataSchema predefinedSchema : JavaDataTemplateGenerator.PredefinedJavaClasses.keySet())
@@ -141,7 +140,7 @@ public class PegasusDataTemplateGenerator
     final JavaCodeUtil.PersistentClassChecker checker = new DataTemplatePersistentClassChecker(generateImported, specGenerator, dataTemplateGenerator, parseResult.getSourceFiles());
 
     final File targetDirectory = new File(targetDirectoryPath);
-    final List<File> targetFiles = JavaCodeUtil.targetFiles(targetDirectory, dataTemplateGenerator.getCodeModel(), JavaCodeUtil.classLoaderFromResolverPath(schemaParser.getResolverPath()), checker);
+    final List<File> targetFiles = JavaCodeUtil.targetFiles(targetDirectory, dataTemplateGenerator.getCodeModel(), JavaCodeUtil.classLoaderFromResolverPath(schemaParser.getResolverPath()), checker, generateLowercasePath);
 
     final List<File> modifiedFiles;
     if (FileUtil.upToDate(parseResult.getSourceFiles(), targetFiles))
