@@ -41,7 +41,7 @@ as a user friendly and concise format replacement for the older JSON based
 Pegasus supports different types of schemas: [Records](#record-type),
 [Primitive types](#primitive-types), [Enums](#enum-type), [Arrays](#array-type),
 [Maps](#map-type), [Unions](#union-type), [Fixed](#fixed-type) and
-[Typerefs](#typerefs). Records, Enums and Typerefs have names (Named schemas)
+[Typerefs](#typerefs). Records, Enums, and Typerefs have names (Named schemas)
 and thus can be defined as top-level schemas. Named schemas can specify an
 optional namespace to avoid naming conflict between schemas with same name.
 The name prefixed with the namespace using the dot(`.`) separator becomes the
@@ -494,12 +494,13 @@ record User {
 
 ## Array Type
 
-Pegasus Arrays are defined as a homogeneous collection of "items" type. Arrays
-are ordered, as in the items in an array have specific ordering and the ordering
-will be honored when the data is serialized, sent over the wire and
-de-serialized.
+Pegasus Arrays are defined as a homogeneous collection of some "items" type,
+which can be [any valid PDL type](#creating-a-schema). Arrays are ordered,
+as in the items in an array have a specific ordering and this ordering will
+be honored when the data is serialized, sent over the wire, and de-serialized.
 
 Some examples below for defining arrays and default values for them.
+
 Primitive arrays:
 ```pdl
 namespace com.example.models
@@ -552,12 +553,14 @@ record SuspendedUsersReport {
 
 ## Map Type
 
-Maps are defined with a key type and a value type. The value type can be any
-valid PDL type, but currently `string` is the only supported key type. Entries
-in a Map are not ordered and the order can change when the data is
-serialized/deserialized.
+Maps are defined with a key type and a value type. The value type can
+be [any valid PDL type](#creating-a-schema), but currently `string` is
+the only supported key type. Entries in a Map are _not_ ordered and the
+order can change when the data is serialized/de-serialized.
 
-For example:
+Some examples below for defining maps and default values for them.
+
+Primitive maps:
 ```pdl
 namespace com.example.models
 
@@ -902,7 +905,7 @@ referenced must be referenced by fully qualified name.
 be careful when adding an import that conflicts with types in the same namespace
 of the root-document.
 - Using imports in the following ways will lead to PDL parser errors. You should
-avoid to do so.
+avoid doing so.
 1. Importing types declared inside the document.
 2. Importing types within the root namespace of the document.
 3. Declaring types that conflict with existing imports.
@@ -1051,8 +1054,8 @@ record User {
 If package is not specified, language binding class for the named schema will
 use `namespace` as its default namespace.
 
-In [Java binding](https://linkedin.github.io/rest.li/java_binding) the package
-of the generated class will be determined by the package specified in the
+In [Java binding](https://linkedin.github.io/rest.li/java_binding), the package
+of the generated class will be determined by the `package` specified in the
 schema.
 
 ## Escaping
