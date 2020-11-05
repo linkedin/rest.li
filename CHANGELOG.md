@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.8.1] - 2020-11-05
+- Check whether schemas exist or not before running pegasusSchemaSnapshotCheck task
+
 ## [29.8.0] - 2020-10-29
 - Empty commit to bump pegasus minor version. LinkedIn internal service needs the new minor version to prevent client version downgrade, since the LinkedIn internal services only notice on minor version discrepancy.
 
@@ -4730,7 +4733,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.8.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.8.1...master
+[29.8.1]: https://github.com/linkedin/rest.li/compare/v29.8.0...v29.8.1
 [29.8.0]: https://github.com/linkedin/rest.li/compare/v29.7.15...v29.8.0
 [29.7.15]: https://github.com/linkedin/rest.li/compare/v29.7.14...v29.7.15
 [29.7.14]: https://github.com/linkedin/rest.li/compare/v29.7.13...v29.7.14

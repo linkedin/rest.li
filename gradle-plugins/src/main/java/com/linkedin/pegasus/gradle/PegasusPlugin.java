@@ -1423,6 +1423,12 @@ public class PegasusPlugin implements Plugin<Project>
     File schemaDir = isExtensionSchema? project.file(getExtensionSchemaPath(project, sourceSet))
         : project.file(getDataSchemaPath(project, sourceSet));
 
+    if ((isExtensionSchema && !SharedFileUtils.getSuffixedFiles(project, schemaDir, PDL_FILE_SUFFIX).isEmpty()) ||
+            (!isExtensionSchema && !SharedFileUtils.getSuffixedFiles(project, schemaDir, DATA_TEMPLATE_FILE_SUFFIXES).isEmpty()))
+    {
+        return;
+    }
+
     Path publishablePegasusSchemaSnapshotDir = project.getBuildDir().toPath().resolve(sourceSet.getName() +
             (isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT));
 
@@ -1441,8 +1447,8 @@ public class PegasusPlugin implements Plugin<Project>
           task.dependsOn(generatePegasusSchemaSnapshot);
           task.setCurrentSnapshotDirectory(publishablePegasusSchemaSnapshotDir.toFile());
           task.setPreviousSnapshotDirectory(pegasusSchemaSnapshotDir);
-          task.setCodegenClasspath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION)
-              .plus(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION))
+          task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION)
+              .plus(project.getConfigurations().getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION))
               .plus(project.getConfigurations().getByName(JavaPlatformPlugin.RUNTIME_CONFIGURATION_NAME)));
           task.setCompatibilityLevel(isExtensionSchema ? COMPATIBILITY_LEVEL_BACKWARDS
               :PropertyUtil.findCompatLevel(project, FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT));
