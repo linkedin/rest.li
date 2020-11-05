@@ -654,8 +654,7 @@ public class TemplateSpecGenerator
     pushCurrentLocation(_schemaResolver.nameToDataSchemaLocations().get(typerefDataSchema.getFullName()));
 
     final UnionTemplateSpec unionClass = new UnionTemplateSpec(schema);
-    String namespace = _lowercaseNamespace ? typerefDataSchema.getNamespace().toLowerCase() : typerefDataSchema.getNamespace();
-    unionClass.setNamespace(namespace);
+    unionClass.setNamespace(typerefDataSchema.getNamespace());
     unionClass.setPackage(typerefDataSchema.getPackage());
     unionClass.setClassName(typerefDataSchema.getName());
     unionClass.setModifiers(ModifierSpec.PUBLIC);
