@@ -19,23 +19,29 @@ package com.linkedin.restli.tools.clientgen;
 
 import com.linkedin.common.Version;
 import com.linkedin.internal.tools.ArgumentFileProcessor;
-import com.linkedin.pegasus.generator.*;
+import com.linkedin.pegasus.generator.CodeUtil;
+import com.linkedin.pegasus.generator.DefaultGeneratorResult;
+import com.linkedin.pegasus.generator.GeneratorResult;
+import com.linkedin.pegasus.generator.JavaCodeGeneratorBase;
+import com.linkedin.pegasus.generator.JavaCodeUtil;
+import com.linkedin.pegasus.generator.PegasusDataTemplateGenerator;
 import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.util.FileUtil;
-import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.writer.FileCodeWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.writer.FileCodeWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**

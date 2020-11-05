@@ -18,14 +18,44 @@ package com.linkedin.pegasus.generator;
 
 
 import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.*;
+import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.data.schema.ComplexDataSchema;
+import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaLocation;
+import com.linkedin.data.schema.DataSchemaResolver;
+import com.linkedin.data.schema.EnumDataSchema;
+import com.linkedin.data.schema.FixedDataSchema;
+import com.linkedin.data.schema.MapDataSchema;
+import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.PrimitiveDataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.template.DataTemplate;
-import com.linkedin.pegasus.generator.spec.*;
+import com.linkedin.pegasus.generator.spec.ArrayTemplateSpec;
+import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
+import com.linkedin.pegasus.generator.spec.CustomInfoSpec;
+import com.linkedin.pegasus.generator.spec.EnumTemplateSpec;
+import com.linkedin.pegasus.generator.spec.FixedTemplateSpec;
+import com.linkedin.pegasus.generator.spec.MapTemplateSpec;
+import com.linkedin.pegasus.generator.spec.ModifierSpec;
+import com.linkedin.pegasus.generator.spec.PrimitiveTemplateSpec;
+import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
+import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
+import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
 import com.linkedin.util.CustomTypeUtil;
+
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
 
 
 /**

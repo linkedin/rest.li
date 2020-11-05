@@ -21,7 +21,6 @@
 package com.linkedin.restli.restspec;
 
 
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
@@ -37,6 +36,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 
 
 /**
