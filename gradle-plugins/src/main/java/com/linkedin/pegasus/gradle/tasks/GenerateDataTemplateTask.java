@@ -183,7 +183,7 @@ public class GenerateDataTemplateTask extends DefaultTask
       javaExecSpec.setClasspath(_pathedCodegenClasspath);
       javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathArg);
       if (_generateLowercasePath != null) {
-        javaExecSpec.jvmArgs("-Dgenerator.generate.path.lowercase=" + _generateLowercasePath); //.run(generateLowercasePath)
+        javaExecSpec.jvmArgs("-Dgenerator.generate.lowercase.path=" + _generateLowercasePath); //.run(generateLowercasePath)
       }
       javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
       javaExecSpec.args(_destinationDir.getPath());

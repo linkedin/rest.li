@@ -49,7 +49,7 @@ public class PegasusDataTemplateGenerator
    * The system property that specifies whether to generate classes for externally resolved schemas
    */
   public static final String GENERATOR_GENERATE_IMPORTED = "generator.generate.imported";
-  public static final String GENERATOR_GENERATE_PATH_LOWERCASE = "generator.generate.path.lowercase";
+  public static final String GENERATOR_GENERATE_LOWERCASE_PATH = "generator.generate.lowercase.path";
 
   private static final Logger _log = LoggerFactory.getLogger(PegasusDataTemplateGenerator.class);
 
@@ -99,7 +99,7 @@ public class PegasusDataTemplateGenerator
 
     final String generateImportedProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED);
     final boolean generateImported = generateImportedProperty == null ? true : Boolean.parseBoolean(generateImportedProperty);
-    final String generateLowercasePathProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_PATH_LOWERCASE);
+    final String generateLowercasePathProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_LOWERCASE_PATH);
     final boolean generateLowercasePath = generateLowercasePathProperty == null ?  false : Boolean.parseBoolean(generateLowercasePathProperty);
     String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
     if (resolverPath != null && ArgumentFileProcessor.isArgFile(resolverPath))

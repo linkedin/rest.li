@@ -53,7 +53,7 @@ public class RestRequestBuilderGenerator
 {
   static final String GENERATOR_REST_GENERATE_DATATEMPLATES = "generator.rest.generate.datatemplates";
   static final String GENERATOR_REST_GENERATE_VERSION = "generator.rest.generate.version";
-  public static final String GENERATOR_REST_GENERATE_PATH_LOWERCASE = "generator.rest.generate.path.lowercase";
+  public static final String GENERATOR_REST_GENERATE_LOWERCASE_PATH = "generator.rest.generate.lowercase.path";
   private static final String GENERATOR_REST_GENERATE_DEPRECATED_VERSION = "generator.rest.generate.deprecated.version";
   private static final Logger _log = LoggerFactory.getLogger(RestRequestBuilderGenerator.class);
 
@@ -89,7 +89,7 @@ public class RestRequestBuilderGenerator
     final String generateImported = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED);
     final String generateDataTemplates = System.getProperty(GENERATOR_REST_GENERATE_DATATEMPLATES);
     final String versionString = System.getProperty(GENERATOR_REST_GENERATE_VERSION);
-    final String generateLowercasePath = System.getProperty(GENERATOR_REST_GENERATE_PATH_LOWERCASE);
+    final String generateLowercasePath = System.getProperty(GENERATOR_REST_GENERATE_LOWERCASE_PATH);
     final RestliVersion version = RestliVersion.lookUpRestliVersion(new Version(versionString));
     if (version == null)
     {

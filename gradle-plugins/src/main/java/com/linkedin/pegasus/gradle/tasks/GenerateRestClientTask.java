@@ -161,7 +161,7 @@ public class GenerateRestClientTask extends DefaultTask
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.version=1.0.0"); //RestRequestBuilderGenerator.run(version)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.deprecated.version=" + deprecatedVersion); //RestRequestBuilderGenerator.run(deprecatedByVersion)
         if (_generateLowercasePath != null) {
-          javaExecSpec.jvmArgs("-Dgenerator.rest.generate.path.lowercase=" + _generateLowercasePath); //RestRequestBuilderGenerator.run(generateLowercasePath)
+          javaExecSpec.jvmArgs("-Dgenerator.rest.generate.lowercase.path=" + _generateLowercasePath); //RestRequestBuilderGenerator.run(generateLowercasePath)
         }
         javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
         javaExecSpec.args(_destinationDir.getAbsolutePath());
@@ -188,7 +188,7 @@ public class GenerateRestClientTask extends DefaultTask
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.datatemplates=false"); //RestRequestBuilderGenerator.run(generateDataTemplates)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.version=2.0.0"); //RestRequestBuilderGenerator.run(version)
         if (_generateLowercasePath != null) {
-          javaExecSpec.jvmArgs("-Dgenerator.rest.generate.path.lowercase=" + _generateLowercasePath); //RestRequestBuilderGenerator.run(generateLowercasePath)
+          javaExecSpec.jvmArgs("-Dgenerator.rest.generate.lowercase.path=" + _generateLowercasePath); //RestRequestBuilderGenerator.run(generateLowercasePath)
         }
         javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
         javaExecSpec.args(_destinationDir.getAbsolutePath());
