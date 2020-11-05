@@ -220,7 +220,7 @@ public class SchemaFormatTranslator
       //   - Schemas not loaded from the source dir provided as input.
       //   - Nested schemas.
       if (!location.getSourceFile().getAbsolutePath().endsWith(_sourceFormat) ||
-          !location.toString().startsWith(_sourceDir.getAbsolutePath()) ||
+          !location.toString().startsWith(_sourceDir.getCanonicalPath()) ||
           !isTopLevelSchema(schema, location))
       {
         continue;
