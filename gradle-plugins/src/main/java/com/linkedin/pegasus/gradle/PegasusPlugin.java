@@ -1423,8 +1423,8 @@ public class PegasusPlugin implements Plugin<Project>
     File schemaDir = isExtensionSchema? project.file(getExtensionSchemaPath(project, sourceSet))
         : project.file(getDataSchemaPath(project, sourceSet));
 
-    if ((isExtensionSchema && !SharedFileUtils.getSuffixedFiles(project, schemaDir, PDL_FILE_SUFFIX).isEmpty()) ||
-            (!isExtensionSchema && !SharedFileUtils.getSuffixedFiles(project, schemaDir, DATA_TEMPLATE_FILE_SUFFIXES).isEmpty()))
+    if ((isExtensionSchema && SharedFileUtils.getSuffixedFiles(project, schemaDir, PDL_FILE_SUFFIX).isEmpty()) ||
+            (!isExtensionSchema && SharedFileUtils.getSuffixedFiles(project, schemaDir, DATA_TEMPLATE_FILE_SUFFIXES).isEmpty()))
     {
         return;
     }
