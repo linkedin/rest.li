@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.8.2] - 2020-11-06
+- Fix bug: if there is no input schema, do not run pegasusSchemaSnapshotCheck. The check statement was wrong.
+
 ## [29.8.1] - 2020-11-05
 - Check whether schemas exist or not before running pegasusSchemaSnapshotCheck task
 
@@ -4733,7 +4736,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.8.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.8.2...master
+[29.8.2]: https://github.com/linkedin/rest.li/compare/v29.8.1...v29.8.2
 [29.8.1]: https://github.com/linkedin/rest.li/compare/v29.8.0...v29.8.1
 [29.8.0]: https://github.com/linkedin/rest.li/compare/v29.7.15...v29.8.0
 [29.7.15]: https://github.com/linkedin/rest.li/compare/v29.7.14...v29.7.15
