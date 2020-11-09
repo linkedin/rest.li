@@ -79,7 +79,12 @@ public class CompatibilityOptions
      * Check whether the schema is compatible, includes checking
      * typeref compatibility.
      */
-    SCHEMA
+    SCHEMA,
+
+    /**
+     * Check whether the schema is compatible for extension schemas, allowing adding required record field.
+     */
+    EXTENSION
   }
 
   /**

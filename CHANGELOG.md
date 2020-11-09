@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.8.4] - 2020-11-09
+- Adding required record field is allowed and should be considered as backward compatible change in extension schemas. 
+
 ## [29.8.3] - 2020-11-09
 - Support symbolTable requests with suffixes
 
@@ -4739,7 +4742,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.8.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.8.4...master
+[29.8.4]: https://github.com/linkedin/rest.li/compare/v29.8.3...v29.8.4
 [29.8.3]: https://github.com/linkedin/rest.li/compare/v29.8.2...v29.8.3
 [29.8.2]: https://github.com/linkedin/rest.li/compare/v29.8.1...v29.8.2
 [29.8.1]: https://github.com/linkedin/rest.li/compare/v29.8.0...v29.8.1

@@ -601,7 +601,7 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static final String SCHEMA_ANNOTATION_HANDLER_CONFIGURATION = "schemaAnnotationHandler";
 
-  private static final String COMPATIBILITY_OPTIONS_MODE_DATA = "DATA";
+  private static final String COMPATIBILITY_OPTIONS_MODE_EXTENSION = "EXTENSION";
 
   private static final String COMPATIBILITY_LEVEL_BACKWARDS = "BACKWARDS";
 
@@ -1452,7 +1452,7 @@ public class PegasusPlugin implements Plugin<Project>
               .plus(project.getConfigurations().getByName(JavaPlatformPlugin.RUNTIME_CONFIGURATION_NAME)));
           task.setCompatibilityLevel(isExtensionSchema ? COMPATIBILITY_LEVEL_BACKWARDS
               :PropertyUtil.findCompatLevel(project, FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT));
-          task.setCompatibilityMode(isExtensionSchema ? COMPATIBILITY_OPTIONS_MODE_DATA :
+          task.setCompatibilityMode(isExtensionSchema ? COMPATIBILITY_OPTIONS_MODE_EXTENSION :
               PropertyUtil.findCompatMode(project, PEGASUS_COMPATIBILITY_MODE));
           task.setExtensionSchema(isExtensionSchema);
           task.setHandlerJarPath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION));
