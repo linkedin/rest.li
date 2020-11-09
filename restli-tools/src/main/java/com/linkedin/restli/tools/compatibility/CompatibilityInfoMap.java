@@ -101,9 +101,28 @@ public class CompatibilityInfoMap
    */
   public void addModelInfo(CompatibilityMessage message)
   {
+    addModelInfo(message, CompatibilityLevel.DEFAULT);
+  }
+
+  /**
+   * Add info used for adding errors related to {@link com.linkedin.data.schema.NamedDataSchema} compatibility.
+   * The path will be the path to the relevant field within the NamedDataSchema.
+   * @param message {@link CompatibilityMessage}
+   * @param level {@link CompatibilityLevel}
+   * if level is EXTENSION, adding required record field is allowed, this message will not be written into info map.
+   */
+  public void addModelInfo(CompatibilityMessage message, CompatibilityLevel level)
+  {
     final CompatibilityInfo.Type infoType;
     CompatibilityInfo info;
     String infoMessage = String.format(message.getFormat(), message.getArgs());
+
+    // Adding required record field is allowed in the pegasus extension schemas and considered as backward compatible change.
+    // If compatibilityLevel is EXTENSION, filter it out from CompatibilityMessage.
+    if (level == CompatibilityLevel.EXTENSION && infoMessage.contains("new record added required fields"))
+    {
+      return;
+    }
 
     if (message.isError())
     {

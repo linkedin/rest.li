@@ -197,7 +197,7 @@ public class PegasusSchemaSnapshotCompatibilityChecker
     {
       String prevSnapshot = prevSnapshotAndCurrSnapshotPairs.get(i-1);
       String currentSnapshot = prevSnapshotAndCurrSnapshotPairs.get(i);
-      compatibilityChecker.checkPegasusSchemaCompatibility(prevSnapshot, currentSnapshot, compatMode);
+      compatibilityChecker.checkPegasusSchemaCompatibility(prevSnapshot, currentSnapshot, compatMode, compatLevel);
     }
 
     if (cl.hasOption("report"))
@@ -220,7 +220,7 @@ public class PegasusSchemaSnapshotCompatibilityChecker
    * @return CompatibilityInfoMap which contains information whether the given two files are compatible or not.
    */
   public CompatibilityInfoMap checkPegasusSchemaCompatibility(String prevPegasusSchemaPath, String currentPegasusSchemaPath,
-      CompatibilityOptions.Mode compatMode)
+      CompatibilityOptions.Mode compatMode, CompatibilityLevel compatLevel)
   {
     boolean newSchemaCreated = false;
     boolean preSchemaRemoved = false;
@@ -266,7 +266,7 @@ public class PegasusSchemaSnapshotCompatibilityChecker
 
     if (!result.getMessages().isEmpty())
     {
-      result.getMessages().forEach(message -> _infoMap.addModelInfo(message));
+      result.getMessages().forEach(message -> _infoMap.addModelInfo(message, compatLevel));
     }
 
     if (!_handlers.isEmpty())

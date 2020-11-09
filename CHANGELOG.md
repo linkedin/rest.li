@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Adding required record field is allowed and should be considered as backward compatible change in extension schemas. 
 
 ## [29.8.2] - 2020-11-06
 - Fix bug: if there is no input schema, do not run pegasusSchemaSnapshotCheck. The check statement was wrong.

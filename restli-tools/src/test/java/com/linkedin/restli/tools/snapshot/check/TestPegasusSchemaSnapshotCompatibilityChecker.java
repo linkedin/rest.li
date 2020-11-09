@@ -38,12 +38,12 @@ public class TestPegasusSchemaSnapshotCompatibilityChecker
   private String snapshotDir = testDir + FS + "pegasusSchemaSnapshot";
 
   @Test(dataProvider = "compatibleInputFiles")
-  public void testCompatiblePegasusSchemaSnapshot(String prevSchema, String currSchema)
+  public void testCompatiblePegasusSchemaSnapshot(String prevSchema, String currSchema, CompatibilityLevel compatLevel)
   {
     PegasusSchemaSnapshotCompatibilityChecker checker = new PegasusSchemaSnapshotCompatibilityChecker();
     CompatibilityInfoMap infoMap = checker.checkPegasusSchemaCompatibility(snapshotDir + FS + prevSchema, snapshotDir + FS + currSchema,
-        CompatibilityOptions.Mode.DATA);
-    Assert.assertTrue(infoMap.isModelCompatible(CompatibilityLevel.EQUIVALENT));
+        CompatibilityOptions.Mode.DATA, compatLevel);
+    Assert.assertTrue(infoMap.isModelCompatible(compatLevel));
   }
 
   @Test(dataProvider = "incompatibleInputFiles")
@@ -52,7 +52,7 @@ public class TestPegasusSchemaSnapshotCompatibilityChecker
   {
     PegasusSchemaSnapshotCompatibilityChecker checker = new PegasusSchemaSnapshotCompatibilityChecker();
     CompatibilityInfoMap infoMap = checker.checkPegasusSchemaCompatibility(snapshotDir + FS + prevSchema, snapshotDir + FS + currSchema,
-        CompatibilityOptions.Mode.DATA);
+        CompatibilityOptions.Mode.DATA, CompatibilityLevel.BACKWARDS);
     Assert.assertFalse(infoMap.isModelCompatible(CompatibilityLevel.BACKWARDS));
     Assert.assertFalse(infoMap.isModelCompatible(CompatibilityLevel.EQUIVALENT));
     Assert.assertTrue(infoMap.isModelCompatible(CompatibilityLevel.IGNORE));
@@ -145,7 +145,8 @@ public class TestPegasusSchemaSnapshotCompatibilityChecker
   {
     return new Object[][]
         {
-            { "BirthInfo.pdl", "compatibleSchemaSnapshot/BirthInfo.pdl"},
+            { "BirthInfo.pdl", "compatibleSchemaSnapshot/BirthInfo.pdl", CompatibilityLevel.EQUIVALENT },
+            { "Foo.pdl", "compatibleSchemaSnapshot/Foo.pdl", CompatibilityLevel.EXTENSION },
         };
   }
 

@@ -28,6 +28,7 @@ public enum CompatibilityLevel
 {
   OFF,
   IGNORE,
+  EXTENSION,
   BACKWARDS,
   EQUIVALENT;
 
