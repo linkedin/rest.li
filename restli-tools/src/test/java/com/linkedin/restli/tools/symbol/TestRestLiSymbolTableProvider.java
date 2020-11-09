@@ -29,6 +29,7 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.server.ResourceDefinition;
+import com.linkedin.restli.server.symbol.RestLiSymbolTableRequestHandler;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
@@ -141,7 +142,7 @@ public class TestRestLiSymbolTableProvider
     builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF2.getCodec(), symbolTable));
     builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF2.getHeaderKey());
     when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://someservice/symbolTable"))
-        .setHeaders(Collections.singletonMap(RestConstants.HEADER_SERVICE_SCOPED_PATH, "true")).build())))
+        .build())))
         .thenReturn(CompletableFuture.completedFuture(builder.build()));
 
     SymbolTable remoteSymbolTable = _provider.getRequestSymbolTable(URI.create("d2://someservice/path"));

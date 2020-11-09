@@ -26,7 +26,6 @@ import com.linkedin.data.codec.symbol.SymbolTableMetadata;
 import com.linkedin.data.codec.symbol.SymbolTableProvider;
 import com.linkedin.data.codec.symbol.SymbolTableSerializer;
 import com.linkedin.data.schema.DataSchema;
-import com.linkedin.parseq.function.Tuple3;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
@@ -40,6 +39,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +85,6 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
    * Default timeout in milliseconds to use when fetching symbols from other services.
    */
   private static final long DEFAULT_TIMEOUT_MILLIS = 1000;
-
   private final Client _client;
   private final String _uriPrefix;
   private final SymbolTableNameHandler _symbolTableNameHandler;
@@ -236,8 +235,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
     try
     {
       URI symbolTableUri = new URI(_uriPrefix + serviceName + "/" + RestLiSymbolTableRequestHandler.SYMBOL_TABLE_URI_PATH);
-      symbolTable = fetchRemoteSymbolTable(symbolTableUri,
-          Collections.singletonMap(RestConstants.HEADER_SERVICE_SCOPED_PATH, Boolean.TRUE.toString()));
+      symbolTable = fetchRemoteSymbolTable(symbolTableUri, Collections.emptyMap());
 
       if (symbolTable != null)
       {
