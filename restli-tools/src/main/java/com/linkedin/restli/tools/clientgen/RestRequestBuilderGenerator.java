@@ -170,7 +170,7 @@ public class RestRequestBuilderGenerator
                deprecatedByVersion,
                targetDirectoryPath,
                sources,
-               false);
+               true);
   }
 
   /**
