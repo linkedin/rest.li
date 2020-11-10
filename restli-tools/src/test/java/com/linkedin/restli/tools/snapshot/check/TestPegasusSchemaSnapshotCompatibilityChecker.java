@@ -38,12 +38,12 @@ public class TestPegasusSchemaSnapshotCompatibilityChecker
   private String snapshotDir = testDir + FS + "pegasusSchemaSnapshot";
 
   @Test(dataProvider = "compatibleInputFiles")
-  public void testCompatiblePegasusSchemaSnapshot(String prevSchema, String currSchema)
+  public void testCompatiblePegasusSchemaSnapshot(String prevSchema, String currSchema, CompatibilityLevel compatLevel, CompatibilityOptions.Mode mode)
   {
     PegasusSchemaSnapshotCompatibilityChecker checker = new PegasusSchemaSnapshotCompatibilityChecker();
     CompatibilityInfoMap infoMap = checker.checkPegasusSchemaCompatibility(snapshotDir + FS + prevSchema, snapshotDir + FS + currSchema,
-        CompatibilityOptions.Mode.DATA);
-    Assert.assertTrue(infoMap.isModelCompatible(CompatibilityLevel.EQUIVALENT));
+        mode);
+    Assert.assertTrue(infoMap.isModelCompatible(compatLevel));
   }
 
   @Test(dataProvider = "incompatibleInputFiles")
@@ -145,7 +145,8 @@ public class TestPegasusSchemaSnapshotCompatibilityChecker
   {
     return new Object[][]
         {
-            { "BirthInfo.pdl", "compatibleSchemaSnapshot/BirthInfo.pdl"},
+            { "BirthInfo.pdl", "compatibleSchemaSnapshot/BirthInfo.pdl", CompatibilityLevel.EQUIVALENT, CompatibilityOptions.Mode.DATA },
+            { "Foo.pdl", "compatibleSchemaSnapshot/Foo.pdl", CompatibilityLevel.BACKWARDS, CompatibilityOptions.Mode.EXTENSION },
         };
   }
 
