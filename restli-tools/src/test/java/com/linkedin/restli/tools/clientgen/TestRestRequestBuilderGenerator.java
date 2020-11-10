@@ -141,19 +141,19 @@ public class TestRestRequestBuilderGenerator
    * will be different folders.
    *
    * Example:
-   *   File1: namespace = com.astro.file1
-   *   File2: namespace = com.aSTRo.file2
+   *   file1: namespace = com.astro
+   *   file2: namespace = com.ASTRO
    *
    *   The following files would be generated with the path specified.
    *   1) Case insensitive (if file1 is generated first):
    *       com/astro/file1
    *                /file2
    *   2) Case insensitive (if file2 is generated first):
-   *       com/aSTRo/file1
+   *       com/ASTRO/file1
    *                /file2
    *   3) Case sensitive:
    *       com/astro/file1
-   *           aSTRo/file2
+   *           ASTRO/file2
    *
    * @param version RestLi version
    * @param restspec1 First restli spec to generate
@@ -197,6 +197,7 @@ public class TestRestRequestBuilderGenerator
     // Then: Validate the Builder files were created with the correct paths.
     ArrayList<File> files = new ArrayList<>(r.getModifiedFiles());
     files.addAll(r2.getModifiedFiles());
+    Assert.assertTrue(files.size() > 0);
     for (File f : files) {
       Assert.assertTrue(f.exists());
       if (!isFileSystemCaseSensitive && !generateLowercasePath) {
@@ -215,6 +216,52 @@ public class TestRestRequestBuilderGenerator
 
     // Clean up.
     ExporterTestUtils.rmdir(tmpDir);
+  }
+
+  /**
+   * Validate the lowercase path creation does not effect the target path.
+   */
+  @Test
+  public void testLowercasePathForGeneratedFileDoesNotEffectTargetDirectory() throws IOException
+  {
+    if (!isFileSystemCaseSensitive) {
+        // If system is case insensitive, then this test is a NOP.
+        return;
+    }
+
+    // Given: Path with upper case letters as part of the target directory's path.
+    final File root = ExporterTestUtils.createTmpDir();
+    final String pathWithUpperCase = "mainGenerated";
+    final String tmpPath = root.getPath() + FS + pathWithUpperCase;
+    final File tmpDir = new File(tmpPath);
+    tmpDir.mkdir();
+
+    // Given: spec files.
+    final String pegasusDir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
+    final String restspec = "arrayDuplicateB.namespace.restspec.json";
+    final String file1 = moduleDir + FS + RESOURCES_DIR + FS + "idls" + FS + restspec;
+
+    // When: Generate the files defined by spec.
+    GeneratorResult r = RestRequestBuilderGenerator.run(pegasusDir,
+            null,
+            moduleDir,
+            true,
+            false,
+            RestliVersion.RESTLI_2_0_0,
+            null,
+            tmpPath,
+            new String[] { file1 },
+            true);
+
+    // Then: Validate generated files are created in the path without modifying the root path's case.
+    Assert.assertTrue(r.getModifiedFiles().size() > 0);
+    for (File f : r.getModifiedFiles()) {
+      Assert.assertTrue(f.getCanonicalPath().contains(pathWithUpperCase));
+      Assert.assertTrue(f.getAbsolutePath().contains(pathWithUpperCase));
+    }
+
+    // Clean up.
+    ExporterTestUtils.rmdir(root);
   }
 
   @Test(dataProvider = "deprecatedByVersionDataProvider")
