@@ -346,7 +346,8 @@ public class TestRestRequestBuilderGenerator
   /**
    * @return typically false for mac/windows; true for linux
    */
-  private static boolean isFileSystemCaseSensitive() throws IOException {
+  private static boolean isFileSystemCaseSensitive() throws IOException
+  {
     File tmpDir = ExporterTestUtils.createTmpDir();
     File caseSensitiveTestFile = new File(tmpDir + FS + "random_file");
     caseSensitiveTestFile.createNewFile();

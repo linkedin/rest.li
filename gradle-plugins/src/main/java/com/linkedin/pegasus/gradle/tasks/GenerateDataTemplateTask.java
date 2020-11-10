@@ -128,11 +128,13 @@ public class GenerateDataTemplateTask extends DefaultTask
 
   @Optional
   @Input
-  public Boolean generateLowercasePath() {
+  public Boolean generateLowercasePath()
+  {
     return _generateLowercasePath;
   }
 
-  public void setGenerateLowercasePath(Boolean enable) {
+  public void setGenerateLowercasePath(Boolean enable)
+  {
     _generateLowercasePath = enable;
   }
 
@@ -182,7 +184,8 @@ public class GenerateDataTemplateTask extends DefaultTask
       javaExecSpec.setMain("com.linkedin.pegasus.generator.PegasusDataTemplateGenerator");
       javaExecSpec.setClasspath(_pathedCodegenClasspath);
       javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathArg);
-      if (_generateLowercasePath != null) {
+      if (_generateLowercasePath != null)
+      {
         javaExecSpec.jvmArgs("-Dgenerator.generate.lowercase.path=" + _generateLowercasePath); //.run(generateLowercasePath)
       }
       javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());

@@ -160,7 +160,8 @@ public class GenerateRestClientTask extends DefaultTask
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.datatemplates=false"); //RestRequestBuilderGenerator.run(generateDataTemplates)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.version=1.0.0"); //RestRequestBuilderGenerator.run(version)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.deprecated.version=" + deprecatedVersion); //RestRequestBuilderGenerator.run(deprecatedByVersion)
-        if (_generateLowercasePath != null) {
+        if (_generateLowercasePath != null)
+        {
           javaExecSpec.jvmArgs("-Dgenerator.rest.generate.lowercase.path=" + _generateLowercasePath); //RestRequestBuilderGenerator.run(generateLowercasePath)
         }
         javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
@@ -187,7 +188,8 @@ public class GenerateRestClientTask extends DefaultTask
         javaExecSpec.jvmArgs("-Dgenerator.generate.imported=false"); //RestRequestBuilderGenerator.run(generateImported)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.datatemplates=false"); //RestRequestBuilderGenerator.run(generateDataTemplates)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.version=2.0.0"); //RestRequestBuilderGenerator.run(version)
-        if (_generateLowercasePath != null) {
+        if (_generateLowercasePath != null)
+        {
           javaExecSpec.jvmArgs("-Dgenerator.rest.generate.lowercase.path=" + _generateLowercasePath); //RestRequestBuilderGenerator.run(generateLowercasePath)
         }
         javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
@@ -257,11 +259,13 @@ public class GenerateRestClientTask extends DefaultTask
 
   @Optional
   @Input
-  public Boolean generateLowercasePath() {
+  public Boolean generateLowercasePath()
+  {
     return _generateLowercasePath;
   }
 
-  public void setGenerateLowercasePath(Boolean enable) {
+  public void setGenerateLowercasePath(Boolean enable)
+  {
     _generateLowercasePath = enable;
   }
 

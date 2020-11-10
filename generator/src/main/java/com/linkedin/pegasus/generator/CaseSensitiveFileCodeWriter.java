@@ -26,7 +26,8 @@ public class CaseSensitiveFileCodeWriter extends CodeWriter {
     /** True, generated directories to be created in lower case; False, otherwise. */
     private boolean generateLowercasePath;
 
-    public CaseSensitiveFileCodeWriter(File target, boolean readOnly, boolean generateLowercasePath) throws IOException {
+    public CaseSensitiveFileCodeWriter(File target, boolean readOnly, boolean generateLowercasePath) throws IOException
+    {
         this.target = target;
         this.readOnly = readOnly;
         if (!target.exists() || !target.isDirectory()) {
@@ -35,11 +36,13 @@ public class CaseSensitiveFileCodeWriter extends CodeWriter {
         this.generateLowercasePath = generateLowercasePath;
     }
 
-    public OutputStream openBinary(JPackage pkg, String fileName) throws IOException {
+    public OutputStream openBinary(JPackage pkg, String fileName) throws IOException
+    {
         return new FileOutputStream(getFile(pkg, fileName));
     }
 
-    protected File getFile(JPackage pkg, String fileName) throws IOException {
+    protected File getFile(JPackage pkg, String fileName) throws IOException
+    {
         File dir;
         if (pkg.isUnnamed()) {
             dir = target;
@@ -64,7 +67,8 @@ public class CaseSensitiveFileCodeWriter extends CodeWriter {
         return fn;
     }
 
-    public void close() throws IOException {
+    public void close() throws IOException
+    {
         // mark files as read-only if necessary
         for (File f : readonlyFiles) {
             f.setReadOnly();
@@ -72,7 +76,8 @@ public class CaseSensitiveFileCodeWriter extends CodeWriter {
     }
 
     /** Converts a package name to the directory name. */
-    private String toDirName(JPackage pkg) {
+    private String toDirName(JPackage pkg)
+    {
         String packageName = generateLowercasePath ? pkg.name().toLowerCase() : pkg.name();
         return packageName.replace('.', File.separatorChar);
     }

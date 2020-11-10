@@ -162,13 +162,16 @@ public class JavaCodeUtil
         else if (definedClass.outer() == null)
         {
           String path;
-          if (generateLowercasePath) {
+          if (generateLowercasePath)
+          {
             // Create path this way since fullName() has a recursive call.
             String fullName = definedClass.fullName();
             String name = definedClass.name();
             String packageName = fullName.substring(0, fullName.length() - name.length());
             path = packageName.toLowerCase() + name;
-          } else {
+          }
+          else
+          {
             path = definedClass.fullName();
           }
           final File file = new File(targetDirectory, path.replace('.', File.separatorChar) + ".java");

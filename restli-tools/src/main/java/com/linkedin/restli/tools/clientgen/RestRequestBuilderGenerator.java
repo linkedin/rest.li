@@ -159,7 +159,8 @@ public class RestRequestBuilderGenerator
                                     RestliVersion deprecatedByVersion,
                                     String targetDirectoryPath,
                                     String[] sources)
-          throws IOException {
+      throws IOException
+  {
     return run(resolverPath,
                defaultPackage,
                rootPath,
