@@ -20,6 +20,7 @@ import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
@@ -47,15 +48,21 @@ import static com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator.getArgF
 @CacheableTask
 public class GenerateRestClientTask extends DefaultTask
 {
+  // Input Task Property
   private File _inputDir;
   private FileCollection _resolverPath;
   private FileCollection _runtimeClasspath;
   private FileCollection _codegenClasspath;
+  private boolean _enableArgFile;
+  private Boolean _generateLowercasePath;
+
+  // Output Task Property
   private File _destinationDir;
+
+  // Internal Task Properties
   private boolean _restli1FormatSuppressed;
   private boolean _restli2FormatSuppressed;
   private boolean _restli1BuildersDeprecated = true;
-  private boolean _enableArgFile;
 
   @TaskAction
   public void generate()
@@ -153,6 +160,10 @@ public class GenerateRestClientTask extends DefaultTask
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.datatemplates=false"); //RestRequestBuilderGenerator.run(generateDataTemplates)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.version=1.0.0"); //RestRequestBuilderGenerator.run(version)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.deprecated.version=" + deprecatedVersion); //RestRequestBuilderGenerator.run(deprecatedByVersion)
+        if (_generateLowercasePath != null)
+        {
+          javaExecSpec.jvmArgs("-Dgenerator.rest.generate.lowercase.path=" + _generateLowercasePath); //RestRequestBuilderGenerator.run(generateLowercasePath)
+        }
         javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
         javaExecSpec.args(_destinationDir.getAbsolutePath());
         javaExecSpec.args(sources);
@@ -177,6 +188,10 @@ public class GenerateRestClientTask extends DefaultTask
         javaExecSpec.jvmArgs("-Dgenerator.generate.imported=false"); //RestRequestBuilderGenerator.run(generateImported)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.datatemplates=false"); //RestRequestBuilderGenerator.run(generateDataTemplates)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.version=2.0.0"); //RestRequestBuilderGenerator.run(version)
+        if (_generateLowercasePath != null)
+        {
+          javaExecSpec.jvmArgs("-Dgenerator.rest.generate.lowercase.path=" + _generateLowercasePath); //RestRequestBuilderGenerator.run(generateLowercasePath)
+        }
         javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
         javaExecSpec.args(_destinationDir.getAbsolutePath());
         javaExecSpec.args(sources);
@@ -240,6 +255,18 @@ public class GenerateRestClientTask extends DefaultTask
   public void setEnableArgFile(boolean enable)
   {
     _enableArgFile = enable;
+  }
+
+  @Optional
+  @Input
+  public Boolean generateLowercasePath()
+  {
+    return _generateLowercasePath;
+  }
+
+  public void setGenerateLowercasePath(Boolean enable)
+  {
+    _generateLowercasePath = enable;
   }
 
   @OutputDirectory
