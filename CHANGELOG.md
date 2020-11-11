@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.8.5] - 2020-11-10
+## [29.9.0] - 2020-11-10
 - By default, Pegasus Plugin's generated files (for GenerateDataTemplateTask and GenerateRestClientTask Gradle Tasks) are created with lower case file system paths. (There is an optional flag at the Gradle task level to change this behavior.)
 
 ## [29.8.4] - 2020-11-09
@@ -4745,7 +4745,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.8.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.9.0...master
+[29.9.0]: https://github.com/linkedin/rest.li/compare/v29.8.5...v29.9.0
 [29.8.5]: https://github.com/linkedin/rest.li/compare/v29.8.4...v29.8.5
 [29.8.4]: https://github.com/linkedin/rest.li/compare/v29.8.3...v29.8.4
 [29.8.3]: https://github.com/linkedin/rest.li/compare/v29.8.2...v29.8.3
