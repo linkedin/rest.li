@@ -313,9 +313,16 @@ public class StateUpdater
       }
       else
       {
-        // If it is a new client, we directly set health score as the initial health score to initialize
-        trackerClientStateMap.put(trackerClient, new TrackerClientState(_relativeStrategyProperties.getInitialHealthScore(),
-            _relativeStrategyProperties.getMinCallCount()));
+        // Initializing a new client score
+        if (trackerClient.doNotSlowStart())
+        {
+          trackerClientStateMap.put(trackerClient, new TrackerClientState(MAX_HEALTH_SCORE,
+              _relativeStrategyProperties.getMinCallCount()));
+        }
+        else {
+          trackerClientStateMap.put(trackerClient,
+              new TrackerClientState(_relativeStrategyProperties.getInitialHealthScore(), _relativeStrategyProperties.getMinCallCount()));
+        }
       }
     }
     partitionState.setPartitionStats(avgClusterLatency, clusterCallCount, clusterErrorCount);
