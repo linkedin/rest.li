@@ -14,8 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.9.2] - 2020-11-16
+- Implemented doNotSlowStart in relative load balancer.
+
 ## [29.9.1] - 2020-11-12
-Performance improved: add lazy instantiation of Throwable objects for timeout errors
+- Performance improved: add lazy instantiation of Throwable objects for timeout errors
 
 ## [29.9.0] - 2020-11-10
 - By default, Pegasus Plugin's generated files (for GenerateDataTemplateTask and GenerateRestClientTask Gradle Tasks) are created with lower case file system paths. (There is an optional flag at the Gradle task level to change this behavior.)
@@ -4748,7 +4751,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.9.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.9.2...master
+[29.9.2]: https://github.com/linkedin/rest.li/compare/v29.9.1...v29.9.2
 [29.9.1]: https://github.com/linkedin/rest.li/compare/v29.9.0...v29.9.1
 [29.9.0]: https://github.com/linkedin/rest.li/compare/v29.8.5...v29.9.0
 [29.8.5]: https://github.com/linkedin/rest.li/compare/v29.8.4...v29.8.5

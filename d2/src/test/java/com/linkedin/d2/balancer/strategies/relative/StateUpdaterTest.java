@@ -97,8 +97,8 @@ public class StateUpdaterTest
         };
   }
 
-  @Test
-  public void testInitializePartitionWithSlowStartInitialHealthScore()
+  @Test(dataProvider = "doNotSlowStart")
+  public void testInitializePartitionWithSlowStartInitialHealthScore(boolean doNotSlowStart)
   {
     double initialHealthScore = 0.01;
     D2RelativeStrategyProperties relativeStrategyProperties = new D2RelativeStrategyProperties()
@@ -106,16 +106,35 @@ public class StateUpdaterTest
     setup(relativeStrategyProperties, new ConcurrentHashMap<>());
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
-        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0));
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0), doNotSlowStart);
 
     assertTrue(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty(), "There should be no state before initialization");
 
     _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID);
 
-    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(),
-        (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
-    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(),
-        (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
+    if (!doNotSlowStart)
+    {
+      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(),
+          (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
+      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(),
+          (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
+    }
+    else
+    {
+      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+    }
+
+  }
+
+  @DataProvider(name = "doNotSlowStart")
+  public Object[][] doNotSlowStart()
+  {
+    return new Object[][]
+        {
+            {true},
+            {false}
+        };
   }
 
   @Test
