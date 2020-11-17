@@ -319,7 +319,8 @@ public class StateUpdater
           trackerClientStateMap.put(trackerClient, new TrackerClientState(MAX_HEALTH_SCORE,
               _relativeStrategyProperties.getMinCallCount()));
         }
-        else {
+        else
+        {
           trackerClientStateMap.put(trackerClient,
               new TrackerClientState(_relativeStrategyProperties.getInitialHealthScore(), _relativeStrategyProperties.getMinCallCount()));
         }
