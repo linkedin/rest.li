@@ -18,6 +18,7 @@
 package com.linkedin.d2.balancer.clients;
 
 import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.d2.balancer.D2ClientConfig;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
@@ -38,6 +39,7 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.util.NamedThreadFactory;
+import com.linkedin.test.util.ClockedExecutor;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -49,6 +51,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -224,6 +227,80 @@ public class RetryClientTest
     }
   }
 
+  @Test
+  public void testRestRetryExceedsClientRetryRatio() throws Exception
+  {
+    SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"));
+    ClockedExecutor clock = new ClockedExecutor();
+    DynamicClient dynamicClient = new DynamicClient(balancer, null);
+    RetryClient client = new RetryClient(
+        dynamicClient,
+        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        RetryClient.DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO,
+        RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        clock);
+    URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
+    RestRequest restRequest = new RestRequestBuilder(uri).build();
+
+    clock.schedule(() ->
+    {
+      TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
+      client.restRequest(restRequest, restCallback);
+
+      // This request will be retried and route to the good host
+      assertNull(restCallback.e);
+      assertNotNull(restCallback.t);
+
+      restCallback = new TrackerClientTest.TestCallback<RestResponse>();
+      client.restRequest(restRequest, restCallback);
+
+      // This request will not be retried because the retry ratio is exceeded
+      assertNull(restCallback.t);
+      assertNotNull(restCallback.e);
+      assertTrue(restCallback.e.getMessage().contains("Data not available"));
+    }, 0, TimeUnit.MILLISECONDS);
+
+    clock.schedule(() ->
+    {
+      TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
+      client.restRequest(restRequest, restCallback);
+
+      // After 5s interval, retry counter is reset and this request will be retried again
+      assertNull(restCallback.e);
+      assertNotNull(restCallback.t);
+    }, RetryClient.DEFAULT_UPDATE_INTERVAL_MS, TimeUnit.MILLISECONDS);
+
+    clock.runFor(RetryClient.DEFAULT_UPDATE_INTERVAL_MS * 2);
+  }
+
+  @Test
+  public void testRestRetryUnlimitedClientRetryRatio() throws Exception
+  {
+    SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"));
+    ClockedExecutor clock = new ClockedExecutor();
+    DynamicClient dynamicClient = new DynamicClient(balancer, null);
+    RetryClient client = new RetryClient(
+        dynamicClient,
+        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        RetryClient.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO,
+        RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        clock);
+    URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
+    RestRequest restRequest = new RestRequestBuilder(uri).build();
+
+    clock.scheduleWithFixedDelay(() ->
+    {
+      TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
+      client.restRequest(restRequest, restCallback);
+
+      // This request will be retried and route to the good host
+      assertNull(restCallback.e);
+      assertNotNull(restCallback.t);
+    }, 0, 100, TimeUnit.MILLISECONDS);
+
+    clock.runFor(RetryClient.DEFAULT_UPDATE_INTERVAL_MS * 2);
+  }
+
   public SimpleLoadBalancer prepareLoadBalancer(List<String> uris) throws URISyntaxException
   {
     String serviceName = "retryService";
@@ -237,7 +314,9 @@ public class RetryClientTest
     {
       final URI foo = URI.create(uri);
       Map<Integer, PartitionData> foo1Data = new HashMap<Integer, PartitionData>();
-      foo1Data.put(0, new PartitionData(1.0));
+      // ensure that we first route to the retry uris before the good uris
+      double weight = uri.contains("good") ? 0.001 : 1.0;
+      foo1Data.put(0, new PartitionData(weight));
       partitionDescriptions.put(foo, foo1Data);
     }
 

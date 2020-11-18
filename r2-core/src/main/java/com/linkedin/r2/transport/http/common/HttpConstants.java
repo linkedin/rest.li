@@ -12,6 +12,11 @@ public interface HttpConstants
   public static final String HEADER_RESPONSE_COMPRESSION_THRESHOLD = "X-Response-Compression-Threshold";
 
   /**
+   * Custom header for the number of retries.
+   */
+  public static final String HEADER_NUMBER_OF_RETRY_ATTEMPTS = "X-Number-Of-Retries-Attempts";
+
+  /**
    * HTTP Cookie header name. See RFC 2109.
    */
   public static final String REQUEST_COOKIE_HEADER_NAME = "Cookie";

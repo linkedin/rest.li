@@ -29,6 +29,8 @@ public class RetriableRequestException extends RemoteInvocationException
 {
   private static final long serialVersionUID = 1L;
 
+  private boolean _doNotRetryOverride = false;
+
   /**
    * Construct a new instance.
    */
@@ -65,5 +67,15 @@ public class RetriableRequestException extends RemoteInvocationException
   public RetriableRequestException(Throwable cause)
   {
     super(cause);
+  }
+
+  public void setDoNotRetryOverride(boolean doNotRetryOverride)
+  {
+    _doNotRetryOverride = doNotRetryOverride;
+  }
+
+  public boolean getDoNotRetryOverride()
+  {
+   return _doNotRetryOverride;
   }
 }

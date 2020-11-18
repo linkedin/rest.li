@@ -36,6 +36,9 @@ import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.FullEntityObserver;
+import com.linkedin.r2.transport.http.common.HttpConstants;
+import com.linkedin.util.clock.Clock;
+import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -59,15 +62,39 @@ import org.slf4j.LoggerFactory;
  */
 public class RetryClient extends D2ClientDelegator
 {
+  public static final long DEFAULT_UPDATE_INTERVAL_MS = 5000L;
+  public static final double UNLIMITED_CLIENT_REQUEST_RETRY_RATIO = 1.0;
+  public static final double DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO = 0.2;
   private static final Logger LOG = LoggerFactory.getLogger(RetryClient.class);
 
+  private final Clock _clock;
+  private final Object _lock = new Object();
   private final int _limit;
+  private final double _maxClientRequestRetryRatio;
+  private final long _updateIntervalMs;
+
+  private long _lastResetTime;
+  private int _totalRequestCount;
+  private int _retryRequestCount;
 
   public RetryClient(D2Client d2Client, int limit)
   {
+    this(d2Client, limit, UNLIMITED_CLIENT_REQUEST_RETRY_RATIO, DEFAULT_UPDATE_INTERVAL_MS, SystemClock.instance());
+  }
+
+  public RetryClient(D2Client d2Client, int limit, double maxClientRequestRetryRatio, long updateIntervalMs, Clock clock)
+  {
     super(d2Client);
     _limit = limit;
-    LOG.debug("Retry client created with limit set to: ", _limit);
+    _maxClientRequestRetryRatio = maxClientRequestRetryRatio;
+    _updateIntervalMs = updateIntervalMs;
+    _clock = clock;
+
+    _lastResetTime = _clock.currentTimeMillis();
+    _totalRequestCount = 0;
+    _retryRequestCount = 0;
+
+    LOG.debug("Retry client created with limit={}, maxRetryThreshold={}", _limit, _maxClientRequestRetryRatio);
   }
 
   @Override
@@ -95,6 +122,7 @@ public class RetryClient extends D2ClientDelegator
                           final RequestContext requestContext,
                           final Callback<RestResponse> callback)
   {
+    addRequestCount(false);
     final Callback<RestResponse> transportCallback = new RestRetryRequestCallback(request, requestContext, callback);
     _d2Client.restRequest(request, requestContext, transportCallback);
   }
@@ -108,8 +136,42 @@ public class RetryClient extends D2ClientDelegator
   @Override
   public void streamRequest(StreamRequest request, RequestContext requestContext, Callback<StreamResponse> callback)
   {
+    addRequestCount(false);
     final Callback<StreamResponse> transportCallback = new StreamRetryRequestCallback(request, requestContext, callback);
     _d2Client.streamRequest(request, requestContext, transportCallback);
+  }
+
+  private void addRequestCount(boolean isRetry)
+  {
+    long currentTime = _clock.currentTimeMillis();
+
+    synchronized (_lock)
+    {
+      // Check if the current interval is stale
+      if (currentTime >= _lastResetTime + _updateIntervalMs)
+      {
+        _totalRequestCount = 0;
+        _retryRequestCount = 0;
+        _lastResetTime = currentTime;
+      }
+
+      _totalRequestCount += 1;
+
+      if (isRetry)
+      {
+        _retryRequestCount += 1;
+      }
+    }
+  }
+
+  private boolean isBelowClientRetryRatio()
+  {
+    if (_totalRequestCount == 0)
+    {
+      return true;
+    }
+
+    return (double) _retryRequestCount / _totalRequestCount <= _maxClientRequestRetryRatio;
   }
 
   /**
@@ -154,11 +216,14 @@ public class RetryClient extends D2ClientDelegator
     }
 
     @Override
-    public boolean doRetryRequest(StreamRequest request, RequestContext context)
+    public boolean doRetryRequest(StreamRequest request, RequestContext context, int numberOfRetryAttempts)
     {
       if (_recorded == true && _content != null)
       {
-        final StreamRequest newRequest = request.builder().build(EntityStreams.newEntityStream(new ByteStringWriter(_content)));
+        final StreamRequest newRequest = request.builder()
+            .addHeaderValue(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, Integer.toString(numberOfRetryAttempts))
+            .build(EntityStreams.newEntityStream(new ByteStringWriter(_content)));
+        addRequestCount(true);
         _d2Client.streamRequest(newRequest, new RequestContext(context), this);
         return true;
       }
@@ -179,9 +244,13 @@ public class RetryClient extends D2ClientDelegator
     }
 
     @Override
-    public boolean doRetryRequest(RestRequest request, RequestContext context)
+    public boolean doRetryRequest(RestRequest request, RequestContext context, int numberOfRetryAttempts)
     {
-      _d2Client.restRequest(request, context, this);
+      RestRequest newRequest = request.builder()
+          .addHeaderValue(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, Integer.toString(numberOfRetryAttempts))
+          .build();
+      addRequestCount(true);
+      _d2Client.restRequest(newRequest, context, this);
       return true;
     }
   }
@@ -234,9 +303,16 @@ public class RetryClient extends D2ClientDelegator
             int attempts = exclusionSet.size();
             if (attempts <= _limit)
             {
-              LOG.warn("A retriable exception happens. Going to retry. This is attempt {}. Current exclusion set: ",
-                  attempts, ". Current exclusion set: " + exclusionSet);
-              retry = doRetryRequest(_request, _context);
+              if (isBelowClientRetryRatio())
+              {
+                LOG.warn("A retriable exception happens. Going to retry. This is attempt {}. Current exclusion set: {}",
+                    attempts, exclusionSet);
+                retry = doRetryRequest(_request, _context, attempts);
+              }
+              else
+              {
+                LOG.warn("Client retry ratio exceeded. This request will fail.");
+              }
             }
             else
             {
@@ -254,7 +330,23 @@ public class RetryClient extends D2ClientDelegator
 
     private boolean isRetryException(Throwable e)
     {
-      return ExceptionUtils.indexOfType(e, RetriableRequestException.class) != -1;
+      Throwable[] throwables = ExceptionUtils.getThrowables(e);
+      boolean hasRetriableRequestException = false;
+
+      for (Throwable throwable: throwables)
+      {
+        if (throwable instanceof RetriableRequestException)
+        {
+          hasRetriableRequestException = true;
+
+          if (((RetriableRequestException) throwable).getDoNotRetryOverride())
+          {
+            return false;
+          }
+        }
+      }
+
+      return hasRetriableRequestException;
     }
 
     /**
@@ -262,8 +354,9 @@ public class RetryClient extends D2ClientDelegator
      *
      * @param request Request to retry.
      * @param context Context of the retry request.
+     * @param numberOfRetryAttempts Number of retry attempts.
      * @return {@code true} if a request can be retried; {@code false} otherwise;
      */
-    public abstract boolean doRetryRequest(REQ request, RequestContext context);
+    public abstract boolean doRetryRequest(REQ request, RequestContext context, int numberOfRetryAttempts);
   }
 }

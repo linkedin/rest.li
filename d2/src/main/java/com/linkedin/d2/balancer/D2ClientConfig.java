@@ -16,6 +16,7 @@
 package com.linkedin.d2.balancer;
 
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
+import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -70,6 +71,8 @@ public class D2ClientConfig
   ScheduledExecutorService _backupRequestsExecutorService = null;
   boolean retry = false;
   int retryLimit = DEAULT_RETRY_LIMIT;
+  double maxClientRequestRetryRatio = RetryClient.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO;
+  long retryUpdateIntervalMs = RetryClient.DEFAULT_UPDATE_INTERVAL_MS;
   boolean warmUp = true;
   int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
@@ -93,7 +96,7 @@ public class D2ClientConfig
   String d2JmxManagerPrefix = "UnknownPrefix";
   boolean enableRelativeLoadBalancer = false;
 
-  private static final int DEAULT_RETRY_LIMIT = 3;
+  public static final int DEAULT_RETRY_LIMIT = 3;
 
   public D2ClientConfig()
   {
@@ -122,6 +125,8 @@ public class D2ClientConfig
                  ScheduledExecutorService executorService,
                  boolean retry,
                  int retryLimit,
+                 double maxClientRequestRetryRatio,
+                 long retryUpdateIntervalMs,
                  boolean warmUp,
                  int warmUpTimeoutSeconds,
                  int warmUpConcurrentRequests,
@@ -169,6 +174,8 @@ public class D2ClientConfig
     this._executorService = executorService;
     this.retry = retry;
     this.retryLimit = retryLimit;
+    this.maxClientRequestRetryRatio = maxClientRequestRetryRatio;
+    this.retryUpdateIntervalMs = retryUpdateIntervalMs;
     this.warmUp = warmUp;
     this.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     this.warmUpConcurrentRequests = warmUpConcurrentRequests;

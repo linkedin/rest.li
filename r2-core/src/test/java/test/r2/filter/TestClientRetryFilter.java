@@ -24,16 +24,10 @@ import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.message.rest.RestFilter;
-import com.linkedin.r2.filter.message.stream.StreamFilter;
 import com.linkedin.r2.filter.transport.ClientRetryFilter;
-import com.linkedin.r2.filter.transport.ServerRetryFilter;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.r2.message.stream.StreamException;
-import com.linkedin.r2.message.stream.StreamRequest;
-import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.testutils.filter.FilterUtil;
 import java.util.HashMap;
 import java.util.Map;
@@ -76,6 +70,26 @@ public class TestClientRetryFilter
           NextFilter<RestRequest, RestResponse> nextFilter)
       {
         Assert.assertEquals(exception, ex);
+      }
+    };
+    FilterChain filterChain = FilterChains.createRestChain(captureFilter, clientRetryFilter);
+    FilterUtil.fireRestError(filterChain, exception, new HashMap<>());
+  }
+
+  @Test
+  public void testAddDoNotRetryOverride()
+  {
+    ClientRetryFilter clientRetryFilter = new ClientRetryFilter();
+    RemoteInvocationException exception = new RemoteInvocationException("exception", new RetriableRequestException("retry"));
+    Assert.assertFalse(((RetriableRequestException) exception.getCause()).getDoNotRetryOverride());
+    RestFilter captureFilter = new RestFilter()
+    {
+      @Override
+      public void onRestError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
+          NextFilter<RestRequest, RestResponse> nextFilter)
+      {
+        Assert.assertEquals(exception, ex);
+        Assert.assertTrue(((RetriableRequestException) exception.getCause()).getDoNotRetryOverride());
       }
     };
     FilterChain filterChain = FilterChains.createRestChain(captureFilter, clientRetryFilter);
