@@ -119,16 +119,16 @@ validator](https://github.com/linkedin/rest.li/blob/master/restli-common/src/mai
 will enforce the following rules for fields in request data based on the
 annotation:
 
+**Note that validation is not turned on by default, and servers have to manually call the validator or use the validation filter.**
+
+
 |                          | Create                                | Partial Update      |
 | ------------------------ | ------------------------------------- | ------------------- |
 | `@ReadOnly`   | Must not be present (See notes below) | Must not be present |
 | `@CreateOnly` | N/A                                   | Must not be present |
 
 Batch create, batch update, and batch partial update are treated the
-same as create, update, and partial update respectively. Note that
-validation is not turned on by default, and servers have to manually
-call the validator or use the validation filter.
-
+same as create, update, and partial update respectively. 
 ### Notes on @ReadOnly Validation Rules for Create Request
 
 If `@ReadOnly` is specified to a field that is required in schema, the
