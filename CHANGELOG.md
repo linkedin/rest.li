@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.9.3] - 2020-11-17
+- Fixed log in relative load balancer.
+
 ## [29.9.2] - 2020-11-16
 - Implemented doNotSlowStart in relative load balancer.
 
@@ -4751,7 +4754,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.9.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.9.3...master
+[29.9.3]: https://github.com/linkedin/rest.li/compare/v29.9.2...v29.9.3
 [29.9.2]: https://github.com/linkedin/rest.li/compare/v29.9.1...v29.9.2
 [29.9.1]: https://github.com/linkedin/rest.li/compare/v29.9.0...v29.9.1
 [29.9.0]: https://github.com/linkedin/rest.li/compare/v29.8.5...v29.9.0
