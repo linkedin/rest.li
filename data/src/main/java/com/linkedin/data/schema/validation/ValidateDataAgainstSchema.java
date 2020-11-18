@@ -505,6 +505,7 @@ public final class ValidateDataAgainstSchema
       {
         // Pegasus mode
         DataMap map = (DataMap) object;
+        // we allow empty union
         if (map.size() > 1)
         {
           addMessage(element, "DataMap should have no more than one entry for a union type");
