@@ -1111,7 +1111,6 @@ public class TestValidation
         new Double(1),
         new String(),
         new DataList(),
-        new DataMap(),
         new DataMap(asMap("int", new Boolean(true))),
         new DataMap(asMap("int", new String("1"))),
         new DataMap(asMap("int", new Long(1L))),

@@ -505,11 +505,11 @@ public final class ValidateDataAgainstSchema
       {
         // Pegasus mode
         DataMap map = (DataMap) object;
-        if (map.size() != 1)
+        if (map.size() > 1)
         {
-          addMessage(element, "DataMap should have exactly one entry for a union type");
+          addMessage(element, "DataMap should have no more than one entry for a union type");
         }
-        else
+        else if (map.size() == 1)
         {
           Map.Entry<String, Object> entry = map.entrySet().iterator().next();
           String key = entry.getKey();

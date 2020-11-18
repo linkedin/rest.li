@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Fix the issue when validation on empty union will fail
 
 ## [29.10.1] - 2020-11-19
 - Fix bug where records wrapping the same map were not updated when setter was invoked on one record. 
