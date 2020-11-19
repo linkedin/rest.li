@@ -1024,7 +1024,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
         paramIsNull._then()._throw(JExpr._new(getCodeModel().ref(IllegalArgumentException.class))
             .arg(JExpr.lit("Cannot remove mandatory field " + schemaField.getName() + " of " + templateClass.fullName())));
         paramIsNull._else()
-            .add(_checkedUtilClass.staticInvoke("putWithoutCheckingOrChangeNotification").arg(mapRef).arg(fieldNameExpr)
+            .add(_checkedUtilClass.staticInvoke("putWithoutChecking").arg(mapRef).arg(fieldNameExpr)
                 .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
         paramIsNull._else().assign(fieldVar, param);
         removeOptionalIfNullCase.body()._break();
@@ -1034,7 +1034,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       JConditional paramIsNull = removeIfNullCase.body()._if(param.eq(JExpr._null()));
       paramIsNull._then().invoke("remove" + capitalizedName);
       paramIsNull._else()
-          .add(_checkedUtilClass.staticInvoke("putWithoutCheckingOrChangeNotification").arg(mapRef).arg(fieldNameExpr)
+          .add(_checkedUtilClass.staticInvoke("putWithoutChecking").arg(mapRef).arg(fieldNameExpr)
               .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
       paramIsNull._else().assign(fieldVar, param);
       removeIfNullCase.body()._break();
@@ -1042,7 +1042,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       JCase ignoreNullCase = modeSwitch._case(JExpr.ref("IGNORE_NULL"));
       JConditional paramIsNotNull = ignoreNullCase.body()._if(param.ne(JExpr._null()));
       paramIsNotNull._then()
-          .add(_checkedUtilClass.staticInvoke("putWithoutCheckingOrChangeNotification").arg(mapRef).arg(fieldNameExpr)
+          .add(_checkedUtilClass.staticInvoke("putWithoutChecking").arg(mapRef).arg(fieldNameExpr)
               .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
       paramIsNotNull._then().assign(fieldVar, param);
       ignoreNullCase.body()._break();
@@ -1062,7 +1062,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     paramIsNull._then()._throw(JExpr._new(getCodeModel().ref(NullPointerException.class))
         .arg(JExpr.lit("Cannot set field " + schemaField.getName() + " of " + templateClass.fullName() + " to null")));
     paramIsNull._else()
-        .add(_checkedUtilClass.staticInvoke("putWithoutCheckingOrChangeNotification").arg(mapRef).arg(fieldNameExpr)
+        .add(_checkedUtilClass.staticInvoke("putWithoutChecking").arg(mapRef).arg(fieldNameExpr)
             .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
     paramIsNull._else().assign(fieldVar, param);
     setter.body()._return(JExpr._this());
@@ -1074,7 +1074,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       addAccessorDoc(templateClass, unboxifySetter, schemaField, "Setter");
       setDeprecatedAnnotationAndJavadoc(unboxifySetter, schemaField);
       param = unboxifySetter.param(type.unboxify(), "value");
-      unboxifySetter.body().add(_checkedUtilClass.staticInvoke("putWithoutCheckingOrChangeNotification").arg(mapRef).arg(fieldNameExpr)
+      unboxifySetter.body().add(_checkedUtilClass.staticInvoke("putWithoutChecking").arg(mapRef).arg(fieldNameExpr)
               .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
       unboxifySetter.body().assign(fieldVar, param);
       unboxifySetter.body()._return(JExpr._this());
@@ -1231,7 +1231,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     setterBody.invoke("checkNotNull");
     setterBody.add(mapRef.invoke("clear"));
     setterBody.assign(memberVar, param);
-    setterBody.add(_checkedUtilClass.staticInvoke("putWithoutCheckingOrChangeNotification").arg(mapRef).arg(JExpr.lit(memberKey))
+    setterBody.add(_checkedUtilClass.staticInvoke("putWithoutChecking").arg(mapRef).arg(JExpr.lit(memberKey))
         .arg(getCoerceInputExpression(param, memberType, member.getCustomInfo())));
   }
 
