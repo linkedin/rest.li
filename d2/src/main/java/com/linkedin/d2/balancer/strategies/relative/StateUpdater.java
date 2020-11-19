@@ -441,6 +441,7 @@ public class StateUpdater
     if (LOG.isDebugEnabled())
     {
       LOG.debug("Strategy updated: service=" + _serviceName
+          + ", partitionId=" + partitionId
           + ", unhealthyClientNumber=" + newUnhealthyClients.size()
           + ", newState=" + newState
           + ", unhealthyClients={" + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
@@ -451,7 +452,8 @@ public class StateUpdater
     }
     else if (allowToLog(oldState, newState, newUnhealthyClients, oldUnhealthyClients))
     {
-      LOG.debug("Strategy updated: service=" + _serviceName
+      LOG.info("Strategy updated: service=" + _serviceName
+          + ", partitionId=" + partitionId
           + ", unhealthyClientNumber=" + newUnhealthyClients.size()
           + ", newState=" + newState
           + ", unhealthyClients={" + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
