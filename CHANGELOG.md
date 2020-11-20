@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.11.1] - 2020-11-20
 - Fix the issue when validation on empty union will fail
 
 ## [29.10.1] - 2020-11-19
@@ -4758,7 +4760,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.10.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.11.1...master
+[29.11.1]: https://github.com/linkedin/rest.li/compare/v29.10.1...v29.11.1
 [29.10.1]: https://github.com/linkedin/rest.li/compare/v29.10.0...v29.10.1
 [29.10.0]: https://github.com/linkedin/rest.li/compare/v29.9.2...v29.10.0
 [29.9.2]: https://github.com/linkedin/rest.li/compare/v29.9.1...v29.9.2
