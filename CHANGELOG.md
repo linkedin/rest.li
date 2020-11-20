@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.10.1] - 2020-11-19
+- Fix bug where records wrapping the same map were not updated when setter was invoked on one record. 
+
 ## [29.10.0] - 2020-11-18
 - Fix relative load balancer log. Bumping the minor version so that it can be picked up by LinkedIn internal services.
 
@@ -4754,7 +4757,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.10.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.10.1...master
+[29.10.1]: https://github.com/linkedin/rest.li/compare/v29.10.0...v29.10.1
 [29.10.0]: https://github.com/linkedin/rest.li/compare/v29.9.2...v29.10.0
 [29.9.2]: https://github.com/linkedin/rest.li/compare/v29.9.1...v29.9.2
 [29.9.1]: https://github.com/linkedin/rest.li/compare/v29.9.0...v29.9.1
