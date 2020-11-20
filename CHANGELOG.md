@@ -15,7 +15,9 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.11.1] - 2020-11-20
-- Fix the issue when validation on empty union will fail
+- When we do validation on response, in the past empty unions will fail the validation and client will
+  - fail. Now we do not treat empty union as a failure, and just return the empty map as is.
+  - Also, if there are projection, the projection will apply to empty union if it is projected.
 
 ## [29.10.1] - 2020-11-19
 - Fix bug where records wrapping the same map were not updated when setter was invoked on one record. 
