@@ -14,6 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.11.1] - 2020-11-20
+- When we do validation on response, in the past empty unions will fail the validation and client will
+  - fail. Now we do not treat empty union as a failure, and just return the empty map as is.
+  - Also, if there are projection, the projection will apply to empty union if it is projected.
+
 ## [29.10.1] - 2020-11-19
 - Fix bug where records wrapping the same map were not updated when setter was invoked on one record. 
 
@@ -4757,7 +4762,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.10.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.11.1...master
+[29.11.1]: https://github.com/linkedin/rest.li/compare/v29.10.1...v29.11.1
 [29.10.1]: https://github.com/linkedin/rest.li/compare/v29.10.0...v29.10.1
 [29.10.0]: https://github.com/linkedin/rest.li/compare/v29.9.2...v29.10.0
 [29.9.2]: https://github.com/linkedin/rest.li/compare/v29.9.1...v29.9.2
