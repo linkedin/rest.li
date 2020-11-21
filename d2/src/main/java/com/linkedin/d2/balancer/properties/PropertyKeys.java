@@ -183,6 +183,7 @@ public class PropertyKeys
   public static final String HTTP_MAX_CONCURRENT_CONNECTIONS = HttpClientFactory.HTTP_MAX_CONCURRENT_CONNECTIONS;
   public static final String HTTP_TCP_NO_DELAY = HttpClientFactory.HTTP_TCP_NO_DELAY;
   public static final String HTTP_PROTOCOL_VERSION = HttpClientFactory.HTTP_PROTOCOL_VERSION;
+  public static final String HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO = HttpClientFactory.HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO;
 
   //used for multi colo
   public static final String DEFAULT_COLO = "defaultColo";

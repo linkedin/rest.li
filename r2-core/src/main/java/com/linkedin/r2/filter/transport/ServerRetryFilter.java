@@ -34,9 +34,10 @@ import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import org.checkerframework.checker.lock.qual.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * Filter implementation that processes a retrieable response. Our contracts requires user to throw
@@ -50,19 +51,11 @@ public class ServerRetryFilter implements RestFilter, StreamFilter
 {
   private static final Logger LOG = LoggerFactory.getLogger(ServerRetryFilter.class);
   private static final int DEFAULT_RETRY_LIMIT = 3;
-  private static final long DEFAULT_UPDATE_INTERVAL_MS = 5000L;
+  private static final long DEFAULT_UPDATE_INTERVAL_MS = TimeUnit.SECONDS.toMillis(5);
   private static final int DEFAULT_AGGREGATED_INTERVAL_NUM = 5;
   private static final double DEFAULT_MAX_REQUEST_RETRY_RATIO = 0.1;
 
-  private final Clock _clock;
   private final ServerRetryTracker _serverRetryTracker;
-  private final double _maxRequestRetryRatio;
-
-  private final Object _lock = new Object();
-  private final long _updateIntervalMs;
-
-  private long _lastRollOverTime;
-  private boolean _doNotRetry;
 
   public ServerRetryFilter()
   {
@@ -71,12 +64,7 @@ public class ServerRetryFilter implements RestFilter, StreamFilter
 
   public ServerRetryFilter(Clock clock, int retryLimit, double maxRequestRetryRatio, long updateIntervalMs, int aggregatedIntervalNum)
   {
-    _clock = clock;
-    _serverRetryTracker = new ServerRetryTracker(retryLimit, aggregatedIntervalNum);
-    _maxRequestRetryRatio = maxRequestRetryRatio;
-    _updateIntervalMs = updateIntervalMs;
-    _lastRollOverTime = _clock.currentTimeMillis();
-    _doNotRetry = false;
+    _serverRetryTracker = new ServerRetryTracker(retryLimit, aggregatedIntervalNum, maxRequestRetryRatio, updateIntervalMs, clock);
   }
 
   @Override
@@ -85,8 +73,7 @@ public class ServerRetryFilter implements RestFilter, StreamFilter
       Map<String, String> wireAttrs,
       NextFilter<RestRequest, RestResponse> nextFilter)
   {
-    _serverRetryTracker.add(getRetryAttempts(req));
-    updateRetryDecision();
+    updateRetryTracker(req);
     nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
@@ -96,8 +83,7 @@ public class ServerRetryFilter implements RestFilter, StreamFilter
       Map<String, String> wireAttrs,
       NextFilter<StreamRequest, StreamResponse> nextFilter)
   {
-    _serverRetryTracker.add(getRetryAttempts(req));
-    updateRetryDecision();
+    updateRetryTracker(req);
     nextFilter.onRequest(req, requestContext, wireAttrs);
   }
 
@@ -129,18 +115,16 @@ public class ServerRetryFilter implements RestFilter, StreamFilter
     {
       if (cause instanceof RetriableRequestException)
       {
-        updateRetryDecision();
-
         String message = cause.getMessage();
-        if (_doNotRetry)
-        {
-          LOG.debug("Max request retry ratio exceeded! Will not retry. Error message: {}", message);
-          wireAttrs.remove(R2Constants.RETRY_MESSAGE_ATTRIBUTE_KEY);
-        }
-        else
+        if (_serverRetryTracker.isBelowRetryRatio())
         {
           LOG.debug("RetriableRequestException caught! Do retry. Error message: {}", message);
           wireAttrs.put(R2Constants.RETRY_MESSAGE_ATTRIBUTE_KEY, message);
+        }
+        else
+        {
+          LOG.debug("Max request retry ratio exceeded! Will not retry. Error message: {}", message);
+          wireAttrs.remove(R2Constants.RETRY_MESSAGE_ATTRIBUTE_KEY);
         }
         break;
       }
@@ -150,37 +134,19 @@ public class ServerRetryFilter implements RestFilter, StreamFilter
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 
-  private int getRetryAttempts(Request req)
+  private void updateRetryTracker(Request req)
   {
     String retryAttemptsHeader = req.getHeader(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS);
-    return retryAttemptsHeader == null ? 0 : Integer.parseInt(retryAttemptsHeader);
-  }
-
-  private void updateRetryDecision()
-  {
-    long currentTime = _clock.currentTimeMillis();
-
-    synchronized (_lock)
+    if (retryAttemptsHeader != null)
     {
-      // Check if the current interval is stale
-      if (currentTime >= _lastRollOverTime + _updateIntervalMs)
-      {
-          // Rollover stale intervals until the current interval is reached
-          for (long time = currentTime; time >= _lastRollOverTime + _updateIntervalMs; time -= _updateIntervalMs)
-          {
-            _serverRetryTracker.rollOverStats();
-          }
-
-          _doNotRetry = _serverRetryTracker.getRetryRatio() > _maxRequestRetryRatio;
-          _lastRollOverTime = currentTime;
-      }
+      _serverRetryTracker.add(Integer.parseInt(retryAttemptsHeader));
     }
   }
 
   /**
    * Stores the number of requests categorized by number of retry attempts. It uses the information to estimate
    * a ratio of how many requests are being retried in the cluster. The ratio is then compared with
-   * {@link ServerRetryFilter#_maxRequestRetryRatio} to make a decision on whether or not to retry in the
+   * {@link ServerRetryTracker#_maxRequestRetryRatio} to make a decision on whether or not to retry in the
    * next interval. When calculating the ratio, it looks at the last {@link ServerRetryTracker#_aggregatedIntervalNum}
    * intervals by aggregating the recorded requests.
    */
@@ -188,55 +154,104 @@ public class ServerRetryFilter implements RestFilter, StreamFilter
   {
     private final int _retryLimit;
     private final int _aggregatedIntervalNum;
+    private final double _maxRequestRetryRatio;
+    private final long _updateIntervalMs;
+    private final Clock _clock;
 
+    private final Object _counterLock = new Object();
+    private final Object _updateLock = new Object();
+
+    @GuardedBy("_updateLock")
+    private volatile long _lastRollOverTime;
+    private boolean _isBelowRetryRatio;
+
+    @GuardedBy("_counterLock")
     private final LinkedList<int[]> _retryAttemptsCounter;
     private final int[] _aggregatedRetryAttemptsCounter;
 
-    private ServerRetryTracker(int retryLimit, int aggregatedIntervalNum)
+    private ServerRetryTracker(int retryLimit, int aggregatedIntervalNum, double maxRequestRetryRatio, long updateIntervalMs, Clock clock)
     {
       _retryLimit = retryLimit;
       _aggregatedIntervalNum = aggregatedIntervalNum;
+      _maxRequestRetryRatio = maxRequestRetryRatio;
+      _updateIntervalMs = updateIntervalMs;
+      _clock = clock;
 
       _aggregatedRetryAttemptsCounter = new int[_retryLimit + 1];
       _retryAttemptsCounter = new LinkedList<>();
       _retryAttemptsCounter.add(new int[_retryLimit + 1]);
     }
 
-    public synchronized void add(int numberOfRetryAttempts)
+    public void add(int numberOfRetryAttempts)
     {
       if (numberOfRetryAttempts <= _retryLimit)
       {
-        _retryAttemptsCounter.getLast()[numberOfRetryAttempts] += 1;
+        synchronized (_counterLock)
+        {
+          _retryAttemptsCounter.getLast()[numberOfRetryAttempts] += 1;
+        }
       } else
       {
         LOG.warn("Unexpected number of retry attempts: " + numberOfRetryAttempts + ", current retry limit: " + _retryLimit);
       }
+
+      updateRetryDecision();
     }
 
-    public synchronized void rollOverStats()
+    public void rollOverStats()
     {
       // rollover the current interval to the aggregated counter
-      int[] intervalToAggregate = _retryAttemptsCounter.getLast();
-      for (int i = 0; i < _retryLimit; i++)
+      synchronized (_counterLock)
       {
-        _aggregatedRetryAttemptsCounter[i] += intervalToAggregate[i];
-      }
-
-      if (_retryAttemptsCounter.size() > _aggregatedIntervalNum)
-      {
-        // discard the oldest interval
-        int[] intervalToDiscard = _retryAttemptsCounter.removeFirst();
+        int[] intervalToAggregate = _retryAttemptsCounter.getLast();
         for (int i = 0; i < _retryLimit; i++)
         {
-          _aggregatedRetryAttemptsCounter[i] -= intervalToDiscard[i];
+          _aggregatedRetryAttemptsCounter[i] += intervalToAggregate[i];
         }
-      }
 
-      // append a new interval
-      _retryAttemptsCounter.addLast(new int[_retryLimit + 1]);
+        if (_retryAttemptsCounter.size() > _aggregatedIntervalNum)
+        {
+          // discard the oldest interval
+          int[] intervalToDiscard = _retryAttemptsCounter.removeFirst();
+          for (int i = 0; i < _retryLimit; i++)
+          {
+            _aggregatedRetryAttemptsCounter[i] -= intervalToDiscard[i];
+          }
+        }
+
+        // append a new interval
+        _retryAttemptsCounter.addLast(new int[_retryLimit + 1]);
+      }
     }
 
-    public double getRetryRatio()
+    public boolean isBelowRetryRatio()
+    {
+      updateRetryDecision();
+      return _isBelowRetryRatio;
+    }
+
+    private void updateRetryDecision()
+    {
+      long currentTime = _clock.currentTimeMillis();
+
+      synchronized (_updateLock)
+      {
+        // Check if the current interval is stale
+        if (currentTime >= _lastRollOverTime + _updateIntervalMs)
+        {
+          // Rollover stale intervals until the current interval is reached
+          for (long time = currentTime; time >= _lastRollOverTime + _updateIntervalMs; time -= _updateIntervalMs)
+          {
+            rollOverStats();
+          }
+
+          _isBelowRetryRatio = getRetryRatio() <= _maxRequestRetryRatio;
+          _lastRollOverTime = currentTime;
+        }
+      }
+    }
+
+    private double getRetryRatio()
     {
       double retryRatioSum = 0.0;
       int i;

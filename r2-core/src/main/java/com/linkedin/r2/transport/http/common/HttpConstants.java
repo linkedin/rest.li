@@ -14,7 +14,7 @@ public interface HttpConstants
   /**
    * Custom header for the number of retries.
    */
-  public static final String HEADER_NUMBER_OF_RETRY_ATTEMPTS = "X-Number-Of-Retries-Attempts";
+  public static final String HEADER_NUMBER_OF_RETRY_ATTEMPTS = "X-Number-Of-Retry-Attempts";
 
   /**
    * HTTP Cookie header name. See RFC 2109.

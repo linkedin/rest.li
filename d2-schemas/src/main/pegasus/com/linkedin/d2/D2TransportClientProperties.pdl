@@ -141,4 +141,9 @@ record D2TransportClientProperties {
      */
     HTTP_2
   }
+
+  /**
+   * Maximum ratio of retried requests to total requests per client
+   */
+  maxClientRequestRetryRatio: optional double
 }

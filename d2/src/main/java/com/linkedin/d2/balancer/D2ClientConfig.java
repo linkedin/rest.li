@@ -71,7 +71,6 @@ public class D2ClientConfig
   ScheduledExecutorService _backupRequestsExecutorService = null;
   boolean retry = false;
   int retryLimit = DEAULT_RETRY_LIMIT;
-  double maxClientRequestRetryRatio = RetryClient.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO;
   long retryUpdateIntervalMs = RetryClient.DEFAULT_UPDATE_INTERVAL_MS;
   boolean warmUp = true;
   int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
@@ -125,7 +124,6 @@ public class D2ClientConfig
                  ScheduledExecutorService executorService,
                  boolean retry,
                  int retryLimit,
-                 double maxClientRequestRetryRatio,
                  long retryUpdateIntervalMs,
                  boolean warmUp,
                  int warmUpTimeoutSeconds,
@@ -174,7 +172,6 @@ public class D2ClientConfig
     this._executorService = executorService;
     this.retry = retry;
     this.retryLimit = retryLimit;
-    this.maxClientRequestRetryRatio = maxClientRequestRetryRatio;
     this.retryUpdateIntervalMs = retryUpdateIntervalMs;
     this.warmUp = warmUp;
     this.warmUpTimeoutSeconds = warmUpTimeoutSeconds;

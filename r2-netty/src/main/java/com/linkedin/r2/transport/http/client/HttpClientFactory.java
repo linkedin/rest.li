@@ -131,6 +131,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_MAX_CONCURRENT_CONNECTIONS = "http.maxConcurrentConnections";
   public static final String HTTP_TCP_NO_DELAY = "http.tcpNoDelay";
   public static final String HTTP_PROTOCOL_VERSION = "http.protocolVersion";
+  public static final String HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO = "http.maxClientRequestRetryRatio";
 
   public static final int DEFAULT_QUERY_POST_THRESHOLD = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
@@ -152,6 +153,8 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_CONNECT_TIMEOUT = 30000;
   public static final int DEFAULT_SSL_HANDSHAKE_TIMEOUT = 10000;
   public static final int DEFAULT_CHANNELPOOL_WAITER_TIMEOUT = Integer.MAX_VALUE;
+  public static final double DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO = 0.2;
+  public static final double UNLIMITED_CLIENT_REQUEST_RETRY_RATIO = 1.0;
   /**
    * Helper constant to allow specify which version of pipeline v2 the code is running on. Since it is a feature in active development,
    * we want to be able to enable the pipeline through configs, only for clients that have loaded a specific version of code

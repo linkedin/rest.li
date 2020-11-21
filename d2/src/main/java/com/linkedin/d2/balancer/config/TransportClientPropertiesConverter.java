@@ -147,6 +147,10 @@ public class TransportClientPropertiesConverter
       prop.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS,
           config.getAllowedClientOverrideKeys().stream().collect(Collectors.joining(",")));
     }
+    if (config.hasMaxClientRequestRetryRatio())
+    {
+      prop.put(PropertyKeys.HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO, config.getMaxClientRequestRetryRatio().toString());
+    }
     return prop;
   }
 
@@ -261,6 +265,10 @@ public class TransportClientPropertiesConverter
       config.setAllowedClientOverrideKeys(new StringArray(
           ConfigValueExtractor.buildList(properties.get(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS), ",")
       ));
+    }
+    if (properties.containsKey(PropertyKeys.HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO))
+    {
+      config.setMaxClientRequestRetryRatio(coerce(properties.get(PropertyKeys.HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO), Double.class));
     }
     return config;
   }

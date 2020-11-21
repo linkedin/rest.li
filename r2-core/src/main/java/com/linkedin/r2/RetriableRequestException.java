@@ -69,6 +69,13 @@ public class RetriableRequestException extends RemoteInvocationException
     super(cause);
   }
 
+  /**
+   * Based on the availability of entire backend cluster, a retriable request may be retried or not.
+   * The doNotRetryOverride flag will be set to true when {@link com.linkedin.r2.filter.transport.ClientRetryFilter}
+   * decides not to retry the request.
+   *
+   * @param doNotRetryOverride true if decided not to retry
+   */
   public void setDoNotRetryOverride(boolean doNotRetryOverride)
   {
     _doNotRetryOverride = doNotRetryOverride;

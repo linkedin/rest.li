@@ -146,7 +146,6 @@ public class D2ClientBuilder
                   _config._executorService,
                   _config.retry,
                   _config.retryLimit,
-                  _config.maxClientRequestRetryRatio,
                   _config.retryUpdateIntervalMs,
                   _config.warmUp,
                   _config.warmUpTimeoutSeconds,
@@ -204,8 +203,7 @@ public class D2ClientBuilder
 
     if (_config.retry)
     {
-      d2Client = new RetryClient(d2Client, _config.retryLimit, _config.maxClientRequestRetryRatio,
-          _config.retryUpdateIntervalMs, SystemClock.instance());
+      d2Client = new RetryClient(d2Client, loadBalancer, _config.retryLimit, _config.retryUpdateIntervalMs, SystemClock.instance());
     }
 
     // If we created default transport client factories, we need to shut them down when d2Client
@@ -373,12 +371,6 @@ public class D2ClientBuilder
   public D2ClientBuilder setRetryLimit(int retryLimit)
   {
     _config.retryLimit = retryLimit;
-    return this;
-  }
-
-  public D2ClientBuilder setMaxClientRequestRetryRatio(double maxClientRequestRetryRatio)
-  {
-    _config.maxClientRequestRetryRatio = maxClientRequestRetryRatio;
     return this;
   }
 
