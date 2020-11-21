@@ -14,6 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.11.2] - 2020-11-23
+- Enhance request symbol table fetch. 
+  - Return null if uri prefix doesn't match. 
+  - If the fetch call 404s internally store an empty symbol table and return null. This will avoid repeated invocations to services that are not yet ready to support symbol tables
+
 ## [29.11.1] - 2020-11-20
 - When we do validation on response, in the past empty unions will fail the validation and client will
   - fail. Now we do not treat empty union as a failure, and just return the empty map as is.
@@ -4762,7 +4767,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.11.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.11.2...master
+[29.11.2]: https://github.com/linkedin/rest.li/compare/v29.11.1...v29.11.2
 [29.11.1]: https://github.com/linkedin/rest.li/compare/v29.10.1...v29.11.1
 [29.10.1]: https://github.com/linkedin/rest.li/compare/v29.10.0...v29.10.1
 [29.10.0]: https://github.com/linkedin/rest.li/compare/v29.9.2...v29.10.0
