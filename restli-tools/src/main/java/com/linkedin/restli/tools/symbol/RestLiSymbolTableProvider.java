@@ -20,6 +20,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.data.ByteString;
+import com.linkedin.data.codec.symbol.EmptySymbolTable;
 import com.linkedin.data.codec.symbol.InMemorySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTableMetadata;
@@ -200,7 +201,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
 
       // Ok, we didn't find it in the cache, let's go query the service the table was served from.
       URI symbolTableUri = new URI(serverNodeUri + "/" + RestLiSymbolTableRequestHandler.SYMBOL_TABLE_URI_PATH + "/" + tableName);
-      symbolTable = fetchRemoteSymbolTable(symbolTableUri, Collections.emptyMap());
+      symbolTable = fetchRemoteSymbolTable(symbolTableUri, Collections.emptyMap(), false);
 
       if (symbolTable != null)
       {
@@ -220,13 +221,21 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
   @Override
   public SymbolTable getRequestSymbolTable(URI requestUri)
   {
+    // If the URI prefix doesn't match, return null.
+    if (!requestUri.toString().startsWith(_uriPrefix))
+    {
+      return null;
+    }
+
     String serviceName = LoadBalancerUtil.getServiceNameFromUri(requestUri);
 
     // First check the cache.
     SymbolTable symbolTable = _serviceNameToSymbolTableCache.getIfPresent(serviceName);
     if (symbolTable != null)
     {
-      return symbolTable;
+      // If we got a 404, we will cache an empty symbol table. For such cases, just return null, so that no
+      // symbol table is used.
+      return symbolTable == EmptySymbolTable.SHARED ? null : symbolTable;
     }
 
     // Ok, we didn't find it in the cache, let's go query the other service using the URI prefix. In this case, we
@@ -235,14 +244,29 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
     try
     {
       URI symbolTableUri = new URI(_uriPrefix + serviceName + "/" + RestLiSymbolTableRequestHandler.SYMBOL_TABLE_URI_PATH);
-      symbolTable = fetchRemoteSymbolTable(symbolTableUri, Collections.emptyMap());
+
+      //
+      // Fetch remote symbol table, configuring the fetch to return an empty table on 404. This will ensure that
+      // for services that don't have symbol tables enabled yet, we will not use any symbol tables when encoding.
+      //
+      symbolTable = fetchRemoteSymbolTable(symbolTableUri, Collections.emptyMap(), true);
 
       if (symbolTable != null)
       {
         // Cache the retrieved table.
         _serviceNameToSymbolTableCache.put(serviceName, symbolTable);
-        _symbolTableNameToSymbolTableCache.put(
-            _symbolTableNameHandler.extractMetadata(symbolTable.getName()).getSymbolTableName(), symbolTable);
+
+        // If this symbol table is not the shared empty table, also cache it by symbol table name, else return null
+        // to not use any symbol tables when encoding.
+        if (symbolTable != EmptySymbolTable.SHARED)
+        {
+          _symbolTableNameToSymbolTableCache.put(
+              _symbolTableNameHandler.extractMetadata(symbolTable.getName()).getSymbolTableName(), symbolTable);
+        }
+        else
+        {
+          return null;
+        }
       }
 
       return symbolTable;
@@ -276,13 +300,19 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
         _symbolTableNameHandler.extractMetadata(_defaultResponseSymbolTable.getName()).getSymbolTableName();
   }
 
-  SymbolTable fetchRemoteSymbolTable(URI symbolTableUri, Map<String, String> requestHeaders)
+  SymbolTable fetchRemoteSymbolTable(URI symbolTableUri, Map<String, String> requestHeaders, boolean returnEmptyOn404)
   {
     try
     {
       Future<RestResponse> future = _client.restRequest(new RestRequestBuilder(symbolTableUri).setHeaders(requestHeaders).build());
       RestResponse restResponse = future.get(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
       int status = restResponse.getStatus();
+
+      if (returnEmptyOn404 && status == HttpStatus.S_404_NOT_FOUND.getCode())
+      {
+        return EmptySymbolTable.SHARED;
+      }
+
       if (status == HttpStatus.S_200_OK.getCode())
       {
         ByteString byteString = restResponse.getEntity();

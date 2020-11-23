@@ -36,6 +36,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -160,13 +163,44 @@ public class TestRestLiSymbolTableProvider
   }
 
   @Test
-  public void testGetRemoteRequestSymbolTableFetchError()
+  public void testGetRemoteRequestSymbolTableDifferentUriPrefix()
+  {
+    Assert.assertNull(_provider.getRequestSymbolTable(URI.create("http://blah:100/bleh")));
+  }
+
+  @Test
+  public void testGetRemoteRequestSymbolTableFetch404Error()
   {
     RestResponseBuilder builder = new RestResponseBuilder();
     builder.setStatus(404);
-    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://someservice/symbolTable/Test--332004310")).build())))
+    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://serviceName/symbolTable")).build())))
         .thenReturn(CompletableFuture.completedFuture(builder.build()));
 
-    Assert.assertNull(_provider.getRequestSymbolTable(URI.create("d2://someservice/path")));
+    Assert.assertNull(_provider.getRequestSymbolTable(URI.create("d2://serviceName")));
+
+    // Subsequent fetch should not trigger network fetch and get the table from the cache.
+    when(_client.restRequest(any(RestRequest.class))).thenThrow(new IllegalStateException());
+    Assert.assertNull(_provider.getRequestSymbolTable(URI.create("d2://serviceName")));
+  }
+
+  @Test
+  public void testGetRemoteRequestSymbolTableFetchNon404Error()
+  {
+    AtomicInteger networkCallCount = new AtomicInteger(0);
+    RestResponseBuilder builder = new RestResponseBuilder();
+    builder.setStatus(500);
+    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://serviceName/symbolTable")).build()))).thenAnswer(
+        invocation -> {
+          networkCallCount.incrementAndGet();
+          return CompletableFuture.completedFuture(builder.build());
+        });
+
+    // First fetch should trigger a network request.
+    Assert.assertNull(_provider.getRequestSymbolTable(URI.create("d2://serviceName")));
+    Assert.assertEquals(networkCallCount.get(), 1);
+
+    // Subsequent fetch should also trigger a network request because response should not have been cached.
+    Assert.assertNull(_provider.getRequestSymbolTable(URI.create("d2://serviceName")));
+    Assert.assertEquals(networkCallCount.get(), 2);
   }
 }
