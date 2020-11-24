@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.11.3] - 2020-11-25
+- Add support for fetching content types announced by the server when encoding request bodies.
+
 ## [29.11.2] - 2020-11-23
 - Enhance request symbol table fetch. 
   - Return null if uri prefix doesn't match. 
@@ -4767,7 +4770,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.11.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.11.3...master
+[29.11.3]: https://github.com/linkedin/rest.li/compare/v29.11.2...v29.11.3
 [29.11.2]: https://github.com/linkedin/rest.li/compare/v29.11.1...v29.11.2
 [29.11.1]: https://github.com/linkedin/rest.li/compare/v29.10.1...v29.11.1
 [29.10.1]: https://github.com/linkedin/rest.li/compare/v29.10.0...v29.10.1

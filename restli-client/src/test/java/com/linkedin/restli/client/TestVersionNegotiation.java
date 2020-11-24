@@ -20,6 +20,8 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
+import java.util.List;
+import org.apache.commons.lang3.tuple.Pair;
 import org.mockito.Mockito;
 import com.linkedin.common.callback.Callback;
 import org.testng.Assert;
@@ -204,7 +206,7 @@ public class TestVersionNegotiation
   }
 
   @Test
-  public void testAnnouncedVersionCacheBehavior() {
+  public void testServiceMetadataCacheBehavior() {
     com.linkedin.r2.transport.common.Client mockClient = Mockito.mock(com.linkedin.r2.transport.common.Client.class);
     Request<?> mockRequest = Mockito.mock(Request.class);
     RestliRequestOptions mockRequestOptions = Mockito.mock(RestliRequestOptions.class);
@@ -222,19 +224,20 @@ public class TestVersionNegotiation
     }).when(mockClient).getMetadata(any(), any());
 
     @SuppressWarnings("unchecked")
-    final Callback<ProtocolVersion> mockCallback = Mockito.mock(Callback.class);
+    final Callback<Pair<ProtocolVersion, List<String>>> mockCallback = Mockito.mock(Callback.class);
     // make multiple requests to test the cache behavior
-    restClient.getProtocolVersionForService(mockRequest, mockRequestContext, mockCallback);
-    restClient.getProtocolVersionForService(mockRequest, mockRequestContext, mockCallback);
-    restClient.getProtocolVersionForService(mockRequest, mockRequestContext, mockCallback);
+    restClient.getServiceMetadata(mockRequest, mockRequestContext, mockCallback);
+    restClient.getServiceMetadata(mockRequest, mockRequestContext, mockCallback);
+    restClient.getServiceMetadata(mockRequest, mockRequestContext, mockCallback);
     // verify getMetadata is invoked only once. second request MUST be served from the cache.
     Mockito.verify(mockClient, times(1)).getMetadata(any(), any());
     // verify all same protocolVersion is returned all the 3 times.
-    Mockito.verify(mockCallback, times(3)).onSuccess(AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
+    Mockito.verify(mockCallback, times(3)).onSuccess(
+        Pair.of(AllProtocolVersions.BASELINE_PROTOCOL_VERSION, null));
   }
 
   @Test
-  public void testAnnouncedVersionCacheBehaviorOnError() throws Exception {
+  public void testServiceMetadataCacheBehaviorOnError() throws Exception {
     com.linkedin.r2.transport.common.Client mockClient = Mockito.mock(com.linkedin.r2.transport.common.Client.class);
     Request<?> mockRequest = Mockito.mock(Request.class);
     RestliRequestOptions mockRequestOptions = Mockito.mock(RestliRequestOptions.class);
@@ -253,15 +256,15 @@ public class TestVersionNegotiation
     }).when(mockClient).getMetadata(any(), any());
 
     @SuppressWarnings("unchecked")
-    final Callback<ProtocolVersion> mockCallback = Mockito.mock(Callback.class);
+    final Callback<Pair<ProtocolVersion, List<String>>> mockCallback = Mockito.mock(Callback.class);
     // make multiple requests to test the cache behavior
-    restClient.getProtocolVersionForService(mockRequest, mockRequestContext, mockCallback);
-    restClient.getProtocolVersionForService(mockRequest, mockRequestContext, mockCallback);
-    restClient.getProtocolVersionForService(mockRequest, mockRequestContext, mockCallback);
+    restClient.getServiceMetadata(mockRequest, mockRequestContext, mockCallback);
+    restClient.getServiceMetadata(mockRequest, mockRequestContext, mockCallback);
+    restClient.getServiceMetadata(mockRequest, mockRequestContext, mockCallback);
     // getMetadata should be called all 3 times as cache will be invalidated after each error.
     Mockito.verify(mockClient, times(3)).getMetadata(any(), any());
     Mockito.verify(mockCallback, times(3)).onError(any(Throwable.class));
-    Mockito.verify(mockCallback, times(0)).onSuccess(any(ProtocolVersion.class));
+    Mockito.verify(mockCallback, times(0)).onSuccess(any());
   }
 
   @DataProvider(name = "testForceUseNextVersionOverrideData")

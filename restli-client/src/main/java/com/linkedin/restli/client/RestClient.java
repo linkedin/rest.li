@@ -26,7 +26,6 @@ import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.URIKeyPair;
 import com.linkedin.d2.balancer.util.URIMappingResult;
-import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.multipart.MultiPartMIMEUtils;
@@ -73,6 +72,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -81,6 +81,7 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.activation.MimeTypeParseException;
+import org.apache.commons.lang3.tuple.Pair;
 
 import static com.linkedin.r2.disruptor.DisruptContext.*;
 
@@ -147,7 +148,7 @@ public class RestClient implements Client {
       "true".equalsIgnoreCase(System.getProperty(RestConstants.RESTLI_FORCE_USE_NEXT_VERSION_OVERRIDE));
 
   // using Caffeine cache with expiration enabled. Cached data will auto expire and invalidates itself.
-  private final Cache<String, ProtocolVersion> _announcedProtocolVersionCache = Caffeine.newBuilder()
+  private final Cache<String, Pair<ProtocolVersion, List<String>>> _serviceMetadataCache = Caffeine.newBuilder()
       .maximumSize(1000)
       .expireAfterWrite(Duration.ofSeconds(30))
       .build();
@@ -220,7 +221,6 @@ public class RestClient implements Client {
     _contentType = contentType;
     _restLiClientConfig = restLiClientConfig == null ? new RestLiClientConfig() : restLiClientConfig;
   }
-
 
   @Override
   public void shutdown(Callback<None> callback)
@@ -328,7 +328,7 @@ public class RestClient implements Client {
                                      Callback<StreamResponse> callback)
   {
     RecordTemplate input = request.getInputRecord();
-    getProtocolVersionForService(request, requestContext, new Callback<ProtocolVersion>()
+    getServiceMetadata(request, requestContext, new Callback<Pair<ProtocolVersion, List<String>>>()
     {
       @Override
       public void onError(Throwable e)
@@ -337,8 +337,10 @@ public class RestClient implements Client {
       }
 
       @Override
-      public void onSuccess(ProtocolVersion protocolVersion)
+      public void onSuccess(Pair<ProtocolVersion, List<String>> metadata)
       {
+        ProtocolVersion protocolVersion = metadata.getLeft();
+        List<String> serverAnnouncedContentTypeHeaders = metadata.getRight();
         TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_URI_ENCODE.key());
         URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
         TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_URI_ENCODE.key());
@@ -354,6 +356,7 @@ public class RestClient implements Client {
           CookieUtil.encodeCookies(request.getCookies()),
           methodName,
           protocolVersion,
+          serverAnnouncedContentTypeHeaders,
           request.getRequestOptions(),
           request.getStreamingAttachments(),
           callback);
@@ -389,7 +392,7 @@ public class RestClient implements Client {
     }
 
     RecordTemplate input = request.getInputRecord();
-    getProtocolVersionForService(request, requestContext, new Callback<ProtocolVersion>()
+    getServiceMetadata(request, requestContext, new Callback<Pair<ProtocolVersion, List<String>>>()
     {
       @Override
       public void onError(Throwable e)
@@ -398,8 +401,10 @@ public class RestClient implements Client {
       }
 
       @Override
-      public void onSuccess(ProtocolVersion protocolVersion)
+      public void onSuccess(Pair<ProtocolVersion, List<String>> metadata)
       {
+        ProtocolVersion protocolVersion = metadata.getLeft();
+        List<String> serverAnnouncedContentTypeHeaders = metadata.getRight();
         TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_URI_ENCODE.key());
         URI requestUri = RestliUriBuilderUtil.createUriBuilder(request, _uriPrefix, protocolVersion).build();
         TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_URI_ENCODE.key());
@@ -414,6 +419,7 @@ public class RestClient implements Client {
           CookieUtil.encodeCookies(request.getCookies()),
           methodName,
           protocolVersion,
+          serverAnnouncedContentTypeHeaders,
           request.getRequestOptions(),
           callback);
       }
@@ -421,46 +427,53 @@ public class RestClient implements Client {
 
   }
 
-  /*package private*/ void getProtocolVersionForService(final Request<?> request, final RequestContext requestContext,
-      Callback<ProtocolVersion> callback)
+  /*package private*/ void getServiceMetadata(final Request<?> request, final RequestContext requestContext,
+      Callback<Pair<ProtocolVersion, List<String>>> callback)
   {
     TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_GET_PROTOCOL.key());
     ProtocolVersionOption versionOption = request.getRequestOptions().getProtocolVersionOption();
-    ProtocolVersion announcedProtocolVersion = null;
-    // fetch server announced version only for 'ProtocolVersionOption.USE_LATEST_IF_AVAILABLE'
-    if (versionOption == ProtocolVersionOption.USE_LATEST_IF_AVAILABLE) {
-      final String serviceName = request.getServiceName();
-      // check cache first.
-      announcedProtocolVersion = _announcedProtocolVersionCache.getIfPresent(serviceName);
-      if (announcedProtocolVersion == null) {
-        // if announcedProtocolVersion is not available in cache find and cache it.
-        try {
-          _client.getMetadata(new URI(_uriPrefix + serviceName), Callbacks.handle(metadata -> {
-            ProtocolVersion announcedVersion = getAnnouncedVersion(metadata);
-            _announcedProtocolVersionCache.put(serviceName, announcedVersion);
-            final ProtocolVersion protocolVersion = getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
-                AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
-                AllProtocolVersions.LATEST_PROTOCOL_VERSION,
-                AllProtocolVersions.NEXT_PROTOCOL_VERSION,
-                announcedVersion,
-                versionOption,
-                _forceUseNextVersionOverride);
-            TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_GET_PROTOCOL.key());
-            callback.onSuccess(protocolVersion);
-          }, callback));
-        } catch (URISyntaxException e) {
-          throw new RuntimeException("Failed to create a valid URI to fetch properties for!");
-        }
-        return;
-      }
+
+    // First check cache.
+    final String serviceName = request.getServiceName();
+    Pair<ProtocolVersion, List<String>> cachedMetadata = _serviceMetadataCache.getIfPresent(serviceName);
+    if (cachedMetadata != null)
+    {
+      callback.onSuccess(Pair.of(getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
+          AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
+          AllProtocolVersions.LATEST_PROTOCOL_VERSION,
+          AllProtocolVersions.NEXT_PROTOCOL_VERSION,
+          cachedMetadata.getLeft(),
+          versionOption,
+          _forceUseNextVersionOverride),
+          cachedMetadata.getRight()));
+      TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_GET_PROTOCOL.key());
+      return;
     }
-    callback.onSuccess(getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
-        AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
-        AllProtocolVersions.LATEST_PROTOCOL_VERSION,
-        AllProtocolVersions.NEXT_PROTOCOL_VERSION,
-        announcedProtocolVersion,
-        versionOption,
-        _forceUseNextVersionOverride));
+
+    // Else fetch from server.
+    try
+    {
+      _client.getMetadata(new URI(_uriPrefix + serviceName), Callbacks.handle(metadata ->
+      {
+        final ProtocolVersion announcedVersion = getAnnouncedVersion(metadata);
+        final List<String> serverAnnouncedContentTypeHeaders = getServerAnnouncedContentTypeHeaders(metadata);
+        // Cache to optimize future invocations.
+        _serviceMetadataCache.put(serviceName, Pair.of(announcedVersion, serverAnnouncedContentTypeHeaders));
+        final ProtocolVersion protocolVersion = getProtocolVersion(AllProtocolVersions.BASELINE_PROTOCOL_VERSION,
+            AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION,
+            AllProtocolVersions.LATEST_PROTOCOL_VERSION,
+            AllProtocolVersions.NEXT_PROTOCOL_VERSION,
+            announcedVersion,
+            versionOption,
+            _forceUseNextVersionOverride);
+        TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_GET_PROTOCOL.key());
+        callback.onSuccess(Pair.of(protocolVersion, serverAnnouncedContentTypeHeaders));
+      }, callback));
+    }
+    catch (URISyntaxException e)
+    {
+      throw new RuntimeException("Failed to create a valid URI to fetch properties for!");
+    }
   }
 
   /**
@@ -497,6 +510,48 @@ public class RestClient implements Client {
       // if the server announces a incorrect protocol version percentage we assume it is running the baseline version
       return AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
     }
+  }
+
+  /**
+   * @param properties The server properties
+   * @return the list of headers of content types supported by the server in decreasing order of server preference.
+   */
+  /*package private*/ static List<String> getServerAnnouncedContentTypeHeaders(Map<String, Object> properties)
+  {
+    if (properties == null)
+    {
+      throw new RuntimeException("No valid properties found!");
+    }
+
+    Object rawContentTypes = properties.get(RestConstants.RESTLI_SERVER_ANNOUNCED_CONTENT_TYPES_PROPERTY);
+
+    // if the server doesn't announce a list of experimental content types, return null.
+    if (rawContentTypes == null)
+    {
+      return null;
+    }
+
+    // Ensure that the raw value is a list.
+    if (!(rawContentTypes instanceof List))
+    {
+      throw new RuntimeException("Unexpected non-list property for experimental content types");
+    }
+
+    @SuppressWarnings("unchecked")
+    List<Object> rawContentTypesList = (List<Object>) rawContentTypes;
+
+    List<String> serverAnnouncedContentTypeHeaders = new ArrayList<>(rawContentTypesList.size());
+    for (Object contentTypeHeader : rawContentTypesList)
+    {
+      if (!(contentTypeHeader instanceof String))
+      {
+        throw new RuntimeException("Unexpected non-string property for experimental content type");
+      }
+
+      serverAnnouncedContentTypeHeaders.add((String) contentTypeHeader);
+    }
+
+    return serverAnnouncedContentTypeHeaders;
   }
 
   /**
@@ -622,8 +677,13 @@ public class RestClient implements Client {
   // Request content type resolution follows similar precedence order to accept type:
   // 1. Request header
   // 2. RestLiRequestOption
-  // 3. RestClient configuration
-  private ContentType resolveContentType(MessageHeadersBuilder<?> builder, DataMap dataMap, ContentType contentType,
+  // 3. RestClient configuration for explicit content type
+  // 4. Server announced content types in order preferred by the server
+  // 5. Default content type
+  /*package private*/ ContentType resolveContentType(MessageHeadersBuilder<?> builder,
+      DataMap dataMap,
+      ContentType contentType,
+      List<String> serverAnnouncedContentTypeHeaders,
       URI requestUri)
       throws IOException
   {
@@ -640,7 +700,26 @@ public class RestClient implements Client {
         {
           header = _contentType.getHeaderKey();
         }
-        else
+        else if (serverAnnouncedContentTypeHeaders != null)
+        {
+          for (String contentTypeHeader : serverAnnouncedContentTypeHeaders)
+          {
+            try
+            {
+              if (ContentType.getContentType(contentTypeHeader).isPresent())
+              {
+                header = contentTypeHeader;
+                break;
+              }
+            }
+            catch (MimeTypeParseException ignored)
+            {
+              // Ignore
+            }
+          }
+        }
+
+        if (header == null)
         {
           header = DEFAULT_CONTENT_TYPE.getHeaderKey();
         }
@@ -740,8 +819,9 @@ public class RestClient implements Client {
     addAcceptHeaders(requestBuilder, multiplexedRequest.getRequestOptions().getAcceptTypes(), false);
 
     final DataMap multiplexedPayload = multiplexedRequest.getContent().data();
+    // Multiplexer does not support any content type except JSON, so pass in server announced content types as null.
     final ContentType type = resolveContentType(
-        requestBuilder, multiplexedPayload, multiplexedRequest.getRequestOptions().getContentType(), requestUri);
+        requestBuilder, multiplexedPayload, multiplexedRequest.getRequestOptions().getContentType(), null, requestUri);
     assert (type != null);
     requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
     requestBuilder.setEntity(type.getCodec().mapToByteString(multiplexedPayload));
@@ -763,6 +843,7 @@ public class RestClient implements Client {
    * @param cookies the cookies to be sent with the request
    * @param methodName the method name (used for finders and actions)
    * @param protocolVersion the version of the Rest.li protocol used to build this request
+   * @param serverAnnouncedContentTypeHeaders the headers of content types supported by the server
    * @param requestOptions contains compression force on/off overrides, request content type and accept types
    * @param callback to call on request completion. In the event of an error, the callback
    *                 will receive a {@link com.linkedin.r2.RemoteInvocationException}. If a valid
@@ -777,6 +858,7 @@ public class RestClient implements Client {
                                    List<String> cookies,
                                    String methodName,
                                    ProtocolVersion protocolVersion,
+                                   List<String> serverAnnouncedContentTypeHeaders,
                                    RestliRequestOptions requestOptions,
                                    Callback<RestResponse> callback)
   {
@@ -784,8 +866,8 @@ public class RestClient implements Client {
     {
       TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_SERIALIZATION.key());
       RestRequest request =
-          buildRestRequest(uri, method, dataMap, headers, cookies, protocolVersion, requestOptions.getContentType(),
-                           requestOptions.getAcceptTypes(), false);
+          buildRestRequest(uri, method, dataMap, headers, cookies, protocolVersion, serverAnnouncedContentTypeHeaders,
+                          requestOptions.getContentType(), requestOptions.getAcceptTypes(), false);
       TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_SERIALIZATION.key());
 
       String operation = OperationNameGenerator.generate(method, methodName);
@@ -820,6 +902,7 @@ public class RestClient implements Client {
    * @param cookies the cookies to be sent with the request
    * @param methodName the method name (used for finders and actions)
    * @param protocolVersion the version of the Rest.li protocol used to build this request
+   * @param serverAnnouncedContentTypeHeaders the headers of content types supported by the server
    * @param requestOptions contains compression force on/off overrides, request content type and accept types
    * @param callback to call on request completion. In the event of an error, the callback
    *                 will receive a {@link com.linkedin.r2.RemoteInvocationException}. If a valid
@@ -834,6 +917,7 @@ public class RestClient implements Client {
                                      List<String> cookies,
                                      String methodName,
                                      ProtocolVersion protocolVersion,
+                                     List<String> serverAnnouncedContentTypeHeaders,
                                      RestliRequestOptions requestOptions,
                                      List<Object> streamingAttachments,
                                      Callback<StreamResponse> callback)
@@ -842,7 +926,8 @@ public class RestClient implements Client {
     {
       TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_SERIALIZATION.key());
       final StreamRequest request =
-          buildStreamRequest(uri, method, dataMap, headers, cookies, protocolVersion, requestOptions.getContentType(),
+          buildStreamRequest(uri, method, dataMap, headers, cookies, protocolVersion, serverAnnouncedContentTypeHeaders,
+                             requestOptions.getContentType(),
                              requestOptions.getAcceptTypes(), requestOptions.getAcceptResponseAttachments(),
                              streamingAttachments);
       TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.CLIENT_REQUEST_RESTLI_SERIALIZATION.key());
@@ -877,6 +962,7 @@ public class RestClient implements Client {
                                        Map<String, String> headers,
                                        List<String> cookies,
                                        ProtocolVersion protocolVersion,
+                                       List<String> serverAnnouncedContentTypeHeaders,
                                        ContentType contentType,
                                        List<ContentType> acceptTypes,
                                        boolean acceptResponseAttachments) throws Exception
@@ -888,7 +974,8 @@ public class RestClient implements Client {
 
     addAcceptHeaders(requestBuilder, acceptTypes, acceptResponseAttachments);
 
-    final ContentType type = resolveContentType(requestBuilder, dataMap, contentType, uri);
+    final ContentType type =
+        resolveContentType(requestBuilder, dataMap, contentType, serverAnnouncedContentTypeHeaders, uri);
     if (type != null)
     {
       requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
@@ -911,6 +998,7 @@ public class RestClient implements Client {
                                            Map<String, String> headers,
                                            List<String> cookies,
                                            ProtocolVersion protocolVersion,
+                                           List<String> serverAnnouncedContentTypeHeaders,
                                            ContentType contentType,
                                            List<ContentType> acceptTypes,
                                            boolean acceptResponseAttachments,
@@ -928,7 +1016,8 @@ public class RestClient implements Client {
       requestBuilder.setHeader(RestConstants.HEADER_RESTLI_REQUEST_METHOD, method.toString());
     }
 
-    final ContentType type = resolveContentType(requestBuilder, dataMap, contentType, uri);
+    final ContentType type =
+        resolveContentType(requestBuilder, dataMap, contentType, serverAnnouncedContentTypeHeaders, uri);
 
     //If we have attachments outbound we use multipart related. If we don't, we just stream out our traditional
     //wire protocol. Also note that it is not possible for streaming attachments to be non-null and have 0 attachments.
@@ -979,8 +1068,8 @@ public class RestClient implements Client {
       else
       {
         return Messages.toStreamRequest(
-            buildRestRequest(uri, method, dataMap, headers, cookies, protocolVersion, contentType, acceptTypes,
-                acceptResponseAttachments));
+            buildRestRequest(uri, method, dataMap, headers, cookies, protocolVersion, serverAnnouncedContentTypeHeaders,
+                contentType, acceptTypes, acceptResponseAttachments));
       }
     }
   }
@@ -1072,7 +1161,7 @@ public class RestClient implements Client {
       final ScatterGatherStrategy strategy,
       final Callback<Response<T>> callback)
   {
-    getProtocolVersionForService(request, requestContext, new Callback<ProtocolVersion>()
+    getServiceMetadata(request, requestContext, new Callback<Pair<ProtocolVersion, List<String>>>()
     {
       @Override
       public void onError(Throwable e)
@@ -1081,8 +1170,9 @@ public class RestClient implements Client {
       }
 
       @Override
-      public void onSuccess(ProtocolVersion protocolVersion)
+      public void onSuccess(Pair<ProtocolVersion, List<String>> metadata)
       {
+        ProtocolVersion protocolVersion = metadata.getLeft();
         List<URIKeyPair<K>> scatteredKeys = strategy.getUris(request, protocolVersion);
         URIMappingResult<K> mappingResults;
         try

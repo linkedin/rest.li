@@ -108,4 +108,5 @@ public interface RestConstants
   String RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY = "restli.protocol.percentage";
   String RESTLI_FORCE_USE_NEXT_VERSION_OVERRIDE = "restli.forceUseNextVersionOverride";
   String D2_URI_PREFIX = "d2://";
+  String RESTLI_SERVER_ANNOUNCED_CONTENT_TYPES_PROPERTY = "restli.serverAnnouncedContentTypes";
 }
