@@ -110,8 +110,10 @@ public class TestRestLiSymbolTableProvider
         Collections.unmodifiableList(Arrays.asList("Haha", "Hehe")));
     builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF2.getCodec(), symbolTable));
     builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF2.getHeaderKey());
-    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("https://OtherHost:100/service/symbolTable/Test--332004310")).build())))
-        .thenReturn(CompletableFuture.completedFuture(builder.build()));
+    when(_client.restRequest(eq(new RestRequestBuilder(
+            URI.create("https://OtherHost:100/service/symbolTable/Test--332004310"))
+            .setHeaders(Collections.singletonMap(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString()))
+            .build()))).thenReturn(CompletableFuture.completedFuture(builder.build()));
 
     SymbolTable remoteSymbolTable = _provider.getSymbolTable("https://OtherHost:100/service|Test--332004310");
     Assert.assertNotNull(remoteSymbolTable);
@@ -145,7 +147,7 @@ public class TestRestLiSymbolTableProvider
     builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF2.getCodec(), symbolTable));
     builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF2.getHeaderKey());
     when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://someservice/symbolTable"))
-        .build())))
+        .setHeaders(Collections.singletonMap(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString())).build())))
         .thenReturn(CompletableFuture.completedFuture(builder.build()));
 
     SymbolTable remoteSymbolTable = _provider.getRequestSymbolTable(URI.create("d2://someservice/path"));

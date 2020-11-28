@@ -68,14 +68,16 @@ public class TestRestLiSymbolTableRequestHandler
   @DataProvider
   public Object[][] uris()
   {
+    Map<String, String> requestHeaders = Collections.singletonMap(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString());
     return new Object[][] {
         // do not handle empty path
         { "/", Collections.emptyMap(), false },
         // non symbolTable path
         { "/someResource", Collections.emptyMap(), false },
+        { "/service/someReource/foo", requestHeaders, false },
         { "/symbolTable", Collections.emptyMap(), true },
-        { "/service/symbolTable", Collections.emptyMap(), true },
-        { "/service/foo/symbolTable", Collections.emptyMap(), true },
+        { "/service/symbolTable", requestHeaders, true },
+        { "/service/symbolTable/foo", requestHeaders, true },
     };
   }
 

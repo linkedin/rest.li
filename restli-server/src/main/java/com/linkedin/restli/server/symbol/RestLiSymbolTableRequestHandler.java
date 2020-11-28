@@ -90,11 +90,20 @@ public class RestLiSymbolTableRequestHandler implements NonResourceRequestHandle
       return false;
     }
 
-    //
     // When path is service scoped, URI is in the form of /<SERVICE>/symbolTable, else it
     // is in the form of /symbolTable or /symbolTable/<TABLENAME>
-    return pathSegments.get(pathSegments.size() - 1).getPath().equals(SYMBOL_TABLE_URI_PATH)
-        || pathSegments.get(pathSegments.size() - 2).getPath().equals(SYMBOL_TABLE_URI_PATH);
+    boolean isSymbolTableRequest = request.getHeaders().containsKey(RestConstants.HEADER_FETCH_SYMBOL_TABLE);
+    if (isSymbolTableRequest)
+    {
+      return pathSegments.get(pathSegments.size() - 1).getPath().equals(SYMBOL_TABLE_URI_PATH)
+              || pathSegments.get(pathSegments.size() - 2).getPath().equals(SYMBOL_TABLE_URI_PATH);
+    }
+    boolean isServiceScopedPath = request.getHeaders().containsKey(RestConstants.HEADER_SERVICE_SCOPED_PATH);
+    if (isServiceScopedPath)
+    {
+      return (pathSegments.size() == 3) && pathSegments.get(2).getPath().equals(SYMBOL_TABLE_URI_PATH);
+    }
+    return ((pathSegments.size() == 2 || pathSegments.size() == 3) && pathSegments.get(1).getPath().equals(SYMBOL_TABLE_URI_PATH));
   }
 
   @Override

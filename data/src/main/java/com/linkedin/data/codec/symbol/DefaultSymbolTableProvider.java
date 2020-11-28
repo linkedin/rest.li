@@ -48,6 +48,11 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
   private static final String ACCEPT_HEADER = "Accept";
 
   /**
+   * Symbol table request header
+   */
+  private static final String SYMBOL_TABLE_HEADER = "X-Restli-Symbol-Table-Request";
+
+  /**
    * Logger.
    */
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSymbolTableProvider.class.getSimpleName());
@@ -134,6 +139,7 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
       try
       {
         connection.setRequestProperty(ACCEPT_HEADER, ProtobufDataCodec.DEFAULT_HEADER);
+        connection.setRequestProperty(SYMBOL_TABLE_HEADER, Boolean.toString(true));
         int responseCode = connection.getResponseCode();
 
         if (responseCode == HttpURLConnection.HTTP_OK)

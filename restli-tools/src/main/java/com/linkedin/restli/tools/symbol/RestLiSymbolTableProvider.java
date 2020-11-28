@@ -226,7 +226,6 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
     {
       return null;
     }
-
     String serviceName = LoadBalancerUtil.getServiceNameFromUri(requestUri);
 
     // First check the cache.
@@ -238,9 +237,6 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
       return symbolTable == EmptySymbolTable.SHARED ? null : symbolTable;
     }
 
-    // Ok, we didn't find it in the cache, let's go query the other service using the URI prefix. In this case, we
-    // make sure to set the {@link RestConstants#HEADER_SERVICE_SCOPED_PATH} header to true to indicate that this
-    // path, post resolution must be interpreted as a service scoped path.
     try
     {
       URI symbolTableUri = new URI(_uriPrefix + serviceName + "/" + RestLiSymbolTableRequestHandler.SYMBOL_TABLE_URI_PATH);
@@ -304,7 +300,9 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
   {
     try
     {
-      Future<RestResponse> future = _client.restRequest(new RestRequestBuilder(symbolTableUri).setHeaders(requestHeaders).build());
+      Map<String, String> headers = new HashMap<>(requestHeaders);
+      headers.put(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString());
+      Future<RestResponse> future = _client.restRequest(new RestRequestBuilder(symbolTableUri).setHeaders(headers).build());
       RestResponse restResponse = future.get(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
       int status = restResponse.getStatus();
 
