@@ -50,7 +50,7 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
   /**
    * Symbol table request header
    */
-  private static final String SYMBOL_TABLE_HEADER = "X-Restli-Symbol-Table-Request";
+  private static final String SYMBOL_TABLE_HEADER = "x-restli-symbol-table-request";
 
   /**
    * Logger.

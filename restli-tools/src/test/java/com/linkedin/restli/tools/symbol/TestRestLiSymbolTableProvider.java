@@ -175,8 +175,6 @@ public class TestRestLiSymbolTableProvider
   {
     RestResponseBuilder builder = new RestResponseBuilder();
     builder.setStatus(404);
-    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://serviceName/symbolTable")).build())))
-        .thenReturn(CompletableFuture.completedFuture(builder.build()));
 
     Assert.assertNull(_provider.getRequestSymbolTable(URI.create("d2://serviceName")));
 
@@ -191,7 +189,9 @@ public class TestRestLiSymbolTableProvider
     AtomicInteger networkCallCount = new AtomicInteger(0);
     RestResponseBuilder builder = new RestResponseBuilder();
     builder.setStatus(500);
-    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://serviceName/symbolTable")).build()))).thenAnswer(
+    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://serviceName/symbolTable"))
+        .setHeaders(Collections.singletonMap(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString()))
+        .build()))).thenAnswer(
         invocation -> {
           networkCallCount.incrementAndGet();
           return CompletableFuture.completedFuture(builder.build());

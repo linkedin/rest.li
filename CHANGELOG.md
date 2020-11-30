@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add a boolean flag as header for symbol table request to avoid conflict with resource requests.
 
 ## [29.11.3] - 2020-11-25
 - Enable cycle check when serializing only when assertions are enabled, to avoid severe performance degradation at high QPS due to ThreadLocal slowdown.
