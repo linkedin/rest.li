@@ -118,7 +118,7 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
     o._instrumented = false;
     o._accessMap = null;
     o._dataComplexHashCode = 0;
-    o._isTraversing = new ThreadLocal<>();
+    o._isTraversing = null;
 
     return o;
   }
@@ -436,13 +436,31 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
     Data.checkAllowed((DataComplex) map, value);
   };
 
+  ThreadLocal<Object> isTraversing()
+  {
+    if (_isTraversing == null)
+    {
+      synchronized (this)
+      {
+        if (_isTraversing == null)
+        {
+          _isTraversing = new ThreadLocal<>();
+        }
+      }
+    }
+
+    return _isTraversing;
+  }
+
   /**
    * Indicates if this {@link DataMap} is currently being traversed by a {@link Data.TraverseCallback} if this value is
    * not null, or not if this value is null. This is internally marked package private, used for cycle detection and
    * not meant for use by external callers. This is maintained as a {@link ThreadLocal} to allow for concurrent
    * traversals of the same {@link DataMap} from multiple threads.
+   *
+   * <p>This variable is lazy instantiated since ThreadLocal instantiation can be expensive under thread contention.</p>
    */
-  ThreadLocal<Object> _isTraversing = new ThreadLocal<>();
+  private volatile ThreadLocal<Object> _isTraversing = null;
 
   private boolean _madeReadOnly = false;
   private boolean _instrumented = false;
