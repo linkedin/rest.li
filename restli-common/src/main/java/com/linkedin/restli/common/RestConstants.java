@@ -58,6 +58,8 @@ public interface RestConstants
   String HEADER_RESTLI_PROTOCOL_VERSION = "X-RestLi-Protocol-Version";
   String CONTENT_TYPE_PARAM_SYMBOL_TABLE = "symbol-table";
   String HEADER_CONTENT_ID = "Content-ID";
+  String HEADER_SERVICE_SCOPED_PATH = "x-restli-service-scoped-path";
+  String HEADER_FETCH_SYMBOL_TABLE = "x-restli-symbol-table-request";
 
   // Default supported mime types.
   Set<String> SUPPORTED_MIME_TYPES = new LinkedHashSet<>(

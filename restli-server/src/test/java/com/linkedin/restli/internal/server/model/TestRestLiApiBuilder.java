@@ -103,20 +103,30 @@ public class TestRestLiApiBuilder
     Assert.assertNotNull(parentResource.getSubResource("TestResource"));
   }
 
-  @Test
-  public void testBadResource()
+  @DataProvider(name = "badResources")
+  public Object[][] badResources()
+  {
+    return new Object[][]
+        {
+            { BadResource.class, "bogusKey not found in path keys"},
+            { SymbolsResource.class, "\"symbolTable\" is reserved for internal use"},
+        };
+  }
+
+  @Test(dataProvider = "badResources")
+  public void testBadResource(Class<?> resourceClass, String errorMsg)
   {
     Set<Class<?>> set = new HashSet<>();
     set.add(ParentResource.class);
-    set.add(BadResource.class);
-
+    set.add(resourceClass);
     try
     {
       RestLiApiBuilder.buildResourceModels(set);
       Assert.fail("Building api with BadResource should throw " + ResourceConfigException.class);
     }
-    catch (ResourceConfigException e)  {
-      Assert.assertTrue(e.getMessage().contains("bogusKey not found in path keys"));
+    catch (ResourceConfigException e)
+    {
+      Assert.assertTrue(e.getMessage().contains(errorMsg));
     }
   }
 
