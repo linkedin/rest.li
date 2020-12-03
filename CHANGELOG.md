@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.12.0] - 2020-12-02
 - Add a boolean flag as header for symbol table request to avoid conflict with resource requests.
 
 ## [29.11.3] - 2020-11-25
@@ -4771,7 +4773,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.11.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.12.0...master
+[29.12.0]: https://github.com/linkedin/rest.li/compare/v29.11.3...v29.12.0
 [29.11.3]: https://github.com/linkedin/rest.li/compare/v29.11.2...v29.11.3
 [29.11.2]: https://github.com/linkedin/rest.li/compare/v29.11.1...v29.11.2
 [29.11.1]: https://github.com/linkedin/rest.li/compare/v29.10.1...v29.11.1
