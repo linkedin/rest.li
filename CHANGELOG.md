@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Bump `javax.mail:mail` dependency from `1.4.1` to `1.4.4` to avoid classloader issues in `javax.activation` code with Java 11.
 
 ## [29.12.0] - 2020-12-02
 - Add a boolean flag as header for symbol table request to avoid conflict with resource requests.
