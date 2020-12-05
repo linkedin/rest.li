@@ -89,6 +89,13 @@ public class TestCallTracker
     Assert.assertEquals(_callTracker.getCallStats().getErrorRate(), 0.0,
                         "Empty error rate is incorrect");
 
+    Assert.assertEquals(_callTracker.getCallStats().getRetryCount(), 0,
+        "Empty retry count is incorrect");
+    Assert.assertEquals(_callTracker.getCallStats().getRetryCountTotal(), 0,
+        "Empty retry count total is incorrect");
+    Assert.assertEquals(_callTracker.getCallStats().getRetryRate(), 0.0,
+        "Empty retry rate is incorrect");
+
     Assert.assertEquals(_callTracker.getCallStats().getConcurrentMax(), 0,
                         "Empty max concurrent is incorrect");
 
@@ -122,6 +129,8 @@ public class TestCallTracker
                         "Empty total call starts is incorrect");
     Assert.assertEquals(_callTracker.getCurrentErrorCountTotal(), 0,
                         "Empty total errors is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentRetryCountTotal(), 0,
+        "Empty total retries is incorrect");
   }
 
   @org.testng.annotations.Test public void testCallTracker()
@@ -210,7 +219,7 @@ public class TestCallTracker
     CallTracker.CallStats stats1 = _callTracker.getCallStats();
 
     _clock.addDuration(FIVE_MS);
-    List<CallCompletion> dones2 = startCall(_callTracker, 4);
+    List<CallCompletion> dones2 = startCall(_callTracker, 4, true);
     _clock.addDuration(FIVE_MS);
     _clock.addDuration(FIVE_MS);
     _clock.addDuration(FIVE_MS);
@@ -218,6 +227,8 @@ public class TestCallTracker
     Assert.assertEquals(_callTracker.getTimeSinceLastCallStart(), 15,
                         "Time since last call is incorrect");
     Assert.assertEquals(_callTracker.getCurrentConcurrency(), 4, "Concurrency is incorrect");
+    Assert.assertEquals(_callTracker.getCurrentRetryCountTotal(), 4,
+                        "Current retry count is incorrect");
 
     endCall(dones2, 4);
 
@@ -246,10 +257,17 @@ public class TestCallTracker
 
     Assert.assertEquals(_callTracker.getCallStats().getErrorCount(), 0,
                         "Interval error count is incorrect");
-    Assert.assertEquals(_callTracker.getCallStats().getErrorCount(), startErrorCountTotal + 0,
+    Assert.assertEquals(_callTracker.getCallStats().getErrorCountTotal(), startErrorCountTotal + 0,
                         "Interval error count total is incorrect");
     Assert.assertEquals(_callTracker.getCallStats().getErrorRate(), 0.0,
                         "Interval error rate is incorrect");
+
+    Assert.assertEquals(_callTracker.getCallStats().getRetryCount(), 4,
+                        "Interval retry count is incorrect");
+    Assert.assertEquals(_callTracker.getCallStats().getRetryCountTotal(), 4,
+                        "Interval retry count total is incorrect");
+    Assert.assertEquals(_callTracker.getCallStats().getRetryRate(), 1.0,
+                        "Interval retry rate is incorrect");
 
     Assert.assertEquals(_callTracker.getCallStats().getConcurrentMax(), 4,
                         "Interval concurrent max  is incorrect");
@@ -289,6 +307,10 @@ public class TestCallTracker
                         "Interval 2nd notification call count is incorrect");
     Assert.assertEquals(listener.getRecord(1).getCallStats().getCallCountTotal(), 7,
                         "Interval 2nd notification total call count is incorrect");
+    Assert.assertEquals(listener.getRecord(1).getCallStats().getRetryCount(), 4,
+                        "Interval 2nd notification retry count is incorrect");
+    Assert.assertEquals(listener.getRecord(1).getCallStats().getRetryCountTotal(), 4,
+                        "Interval 2nd notification total retry count is incorrect");
 
     Assert.assertEquals(listener.getRecord(2).getCallStats().getIntervalStartTime(),
                         startTime + INTERVAL * 2,
@@ -299,6 +321,10 @@ public class TestCallTracker
                         "Interval 3rd notification call count is incorrect");
     Assert.assertEquals(listener.getRecord(2).getCallStats().getCallCountTotal(), 7,
                         "Interval 3rd notification total call count is incorrect");
+    Assert.assertEquals(listener.getRecord(2).getCallStats().getRetryCount(), 0,
+                        "Interval 3nd notification retry count is incorrect");
+    Assert.assertEquals(listener.getRecord(2).getCallStats().getRetryCountTotal(), 4,
+                        "Interval 3nd notification total retry count is incorrect");
 
     Assert.assertEquals(listener.getRecord(3).getCallStats().getIntervalStartTime(),
                         startTime + INTERVAL * 9,
@@ -309,6 +335,10 @@ public class TestCallTracker
                         "Interval 4th notification call count is incorrect");
     Assert.assertEquals(listener.getRecord(3).getCallStats().getCallCountTotal(), 7,
                         "Interval 4th notification total call count is incorrect");
+    Assert.assertEquals(listener.getRecord(3).getCallStats().getRetryCount(), 0,
+                        "Interval 4nd notification retry count is incorrect");
+    Assert.assertEquals(listener.getRecord(3).getCallStats().getRetryCountTotal(), 4,
+                        "Interval 4nd notification total retry count is incorrect");
 
     // unregister listener
     _callTracker.removeStatsRolloverEventListener(listener);
@@ -1275,12 +1305,17 @@ public class TestCallTracker
                         "Interval standard deviation is incorrect");
   }
 
-   private List<CallCompletion> startCall(CallTracker callTracker, int count)
+  private List<CallCompletion> startCall(CallTracker callTracker, int count)
+  {
+    return startCall(callTracker, count, false);
+  }
+
+  private List<CallCompletion> startCall(CallTracker callTracker, int count, boolean isRetry)
   {
     List<CallCompletion> dones = new ArrayList<CallCompletion>();
     for (int x = 0; x < count; x++)
     {
-       dones.add(callTracker.startCall());
+      dones.add(callTracker.startCall(isRetry));
     }
     return dones;
   }

@@ -24,6 +24,7 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategy
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -36,6 +37,7 @@ import com.linkedin.r2.message.stream.entitystream.Observer;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
+import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.degrader.CallCompletion;
 import com.linkedin.util.degrader.CallTracker;
@@ -127,7 +129,7 @@ public class TrackerClientImpl implements TrackerClient
                           Map<String, String> wireAttrs,
                           TransportCallback<RestResponse> callback)
   {
-    _transportClient.restRequest(request, requestContext, wireAttrs, new TrackerClientRestCallback(callback, _callTracker.startCall()));
+    _transportClient.restRequest(request, requestContext, wireAttrs, new TrackerClientRestCallback(callback, startCall(request)));
   }
 
   @Override
@@ -136,7 +138,7 @@ public class TrackerClientImpl implements TrackerClient
                             Map<String, String> wireAttrs,
                             TransportCallback<StreamResponse> callback)
   {
-    _transportClient.streamRequest(request, requestContext, wireAttrs, new TrackerClientStreamCallback(callback, _callTracker.startCall()));
+    _transportClient.streamRequest(request, requestContext, wireAttrs, new TrackerClientStreamCallback(callback, startCall(request)));
   }
 
   @Override
@@ -306,5 +308,18 @@ public class TrackerClientImpl implements TrackerClient
       }
     }
     return false;
+  }
+
+  private CallCompletion startCall(Request request)
+  {
+    String retryHeader = request.getHeader(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS);
+    if (retryHeader != null && Integer.parseInt(retryHeader) > 0)
+    {
+      return _callTracker.startCall(true);
+    }
+    else
+    {
+      return _callTracker.startCall();
+    }
   }
 }

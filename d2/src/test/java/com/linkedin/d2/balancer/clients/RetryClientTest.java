@@ -44,6 +44,7 @@ import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.test.util.ClockedExecutor;
+import com.linkedin.util.clock.SettableClock;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -244,7 +245,7 @@ public class RetryClientTest
   {
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"),
         HttpClientFactory.DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO);
-    ClockedExecutor clock = new ClockedExecutor();
+    SettableClock clock = new SettableClock();
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
     RetryClient client = new RetryClient(
         dynamicClient,
@@ -258,42 +259,38 @@ public class RetryClientTest
     URI uri2 = URI.create("d2://retryService2?arg1=empty&arg2=empty");
     RestRequest restRequest2 = new RestRequestBuilder(uri2).build();
 
-    clock.schedule(() ->
-    {
-      TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
-      client.restRequest(restRequest1, restCallback);
+    // This request will be retried and route to the good host
+    TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
+    client.restRequest(restRequest1, restCallback);
 
-      // This request will be retried and route to the good host
-      assertNull(restCallback.e);
-      assertNotNull(restCallback.t);
+    assertNull(restCallback.e);
+    assertNotNull(restCallback.t);
 
-      restCallback = new TrackerClientTest.TestCallback<RestResponse>();
-      client.restRequest(restRequest1, restCallback);
+    // This request will not be retried because the retry ratio is exceeded
+    clock.addDuration(RetryClient.DEFAULT_UPDATE_INTERVAL_MS);
 
-      // This request will not be retried because the retry ratio is exceeded
-      assertNull(restCallback.t);
-      assertNotNull(restCallback.e);
-      assertTrue(restCallback.e.getMessage().contains("Data not available"));
+    restCallback = new TrackerClientTest.TestCallback<RestResponse>();
+    client.restRequest(restRequest1, restCallback);
 
-      // If the client sends request to a different service endpoint, the retry ratio should not interfere
-      restCallback = new TrackerClientTest.TestCallback<RestResponse>();
-      client.restRequest(restRequest2, restCallback);
+    assertNull(restCallback.t);
+    assertNotNull(restCallback.e);
+    assertTrue(restCallback.e.getMessage().contains("Data not available"));
 
-      assertNull(restCallback.e);
-      assertNotNull(restCallback.t);
-    }, 0, TimeUnit.MILLISECONDS);
+    // If the client sends request to a different service endpoint, the retry ratio should not interfere
+    restCallback = new TrackerClientTest.TestCallback<RestResponse>();
+    client.restRequest(restRequest2, restCallback);
 
-    clock.schedule(() ->
-    {
-      TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
-      client.restRequest(restRequest1, restCallback);
+    assertNull(restCallback.e);
+    assertNotNull(restCallback.t);
 
-      // After 5s interval, retry counter is reset and this request will be retried again
-      assertNull(restCallback.e);
-      assertNotNull(restCallback.t);
-    }, RetryClient.DEFAULT_UPDATE_INTERVAL_MS, TimeUnit.MILLISECONDS);
+    // After 5s interval, retry counter is reset and this request will be retried again
+    clock.addDuration(RetryClient.DEFAULT_UPDATE_INTERVAL_MS);
 
-    clock.runFor(RetryClient.DEFAULT_UPDATE_INTERVAL_MS * 2);
+    restCallback = new TrackerClientTest.TestCallback<RestResponse>();
+    client.restRequest(restRequest1, restCallback);
+
+    assertNull(restCallback.e);
+    assertNotNull(restCallback.t);
   }
 
   @Test
