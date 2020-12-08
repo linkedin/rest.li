@@ -14,6 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 - Bump `javax.mail:mail` dependency from `1.4.1` to `1.4.4` to avoid classloader issues in `javax.activation` code with Java 11.
+- Bump arvo compatibility layer `avroutil` dependency from `0.1.11` to `0.2.17` for Arvo Upgrade HI.
 
 ## [29.12.0] - 2020-12-02
 - Add a boolean flag as header for symbol table request to avoid conflict with resource requests.
