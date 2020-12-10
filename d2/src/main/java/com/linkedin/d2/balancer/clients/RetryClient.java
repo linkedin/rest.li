@@ -24,8 +24,8 @@ import com.linkedin.d2.balancer.D2ClientConfig;
 import com.linkedin.d2.balancer.D2ClientDelegator;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancer;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy.ExcludedHostHints;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.data.ByteString;
@@ -45,18 +45,18 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
-import com.linkedin.util.degrader.CallCompletion;
-import com.linkedin.util.degrader.CallTracker;
-import com.linkedin.util.degrader.CallTrackerImpl;
 import java.net.URI;
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.ThreadSafe;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.checkerframework.checker.lock.qual.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,29 +75,32 @@ import org.slf4j.LoggerFactory;
  */
 public class RetryClient extends D2ClientDelegator
 {
-  public static final long DEFAULT_UPDATE_INTERVAL_MS = TimeUnit.SECONDS.toMillis(5);
+  public static final long DEFAULT_UPDATE_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
+  public static final int DEFAULT_AGGREGATED_INTERVAL_NUM = 5;
   private static final Logger LOG = LoggerFactory.getLogger(RetryClient.class);
 
   private final Clock _clock;
   private final LoadBalancer _balancer;
   private final int _limit;
   private final long _updateIntervalMs;
+  private final int _aggregatedIntervalNum;
 
-  Map<String, CallTracker> _retryTrackerMap;
+  ConcurrentMap<String, ClientRetryTracker> _retryTrackerMap;
 
   public RetryClient(D2Client d2Client, LoadBalancer balancer, int limit)
   {
-    this(d2Client, balancer, limit, DEFAULT_UPDATE_INTERVAL_MS, SystemClock.instance());
+    this(d2Client, balancer, limit, DEFAULT_UPDATE_INTERVAL_MS, DEFAULT_AGGREGATED_INTERVAL_NUM, SystemClock.instance());
   }
 
-  public RetryClient(D2Client d2Client, LoadBalancer balancer, int limit, long updateIntervalMs, Clock clock)
+  public RetryClient(D2Client d2Client, LoadBalancer balancer, int limit, long updateIntervalMs, int aggregatedIntervalNum, Clock clock)
   {
     super(d2Client);
     _balancer = balancer;
     _limit = limit;
     _updateIntervalMs = updateIntervalMs;
+    _aggregatedIntervalNum = aggregatedIntervalNum;
     _clock = clock;
-    _retryTrackerMap = new HashMap<>();
+    _retryTrackerMap = new ConcurrentHashMap<>();
 
     LOG.debug("Retry client created with limit={}", _limit);
   }
@@ -124,15 +127,14 @@ public class RetryClient extends D2ClientDelegator
 
   @Override
   public void restRequest(final RestRequest request,
-                          final RequestContext requestContext,
-                          final Callback<RestResponse> callback)
+      final RequestContext requestContext,
+      final Callback<RestResponse> callback)
   {
     RestRequest newRequest = request.builder()
         .addHeaderValue(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, "0")
         .build();
-    CallCompletion callCompletion = startCall(newRequest.getURI(), false);
-    final Callback<RestResponse> transportCallback =
-        new RestRetryRequestCallback(newRequest, requestContext, callback, callCompletion);
+    ClientRetryTracker retryTracker = updateRetryTracker(newRequest.getURI(), false);
+    final Callback<RestResponse> transportCallback = new RestRetryRequestCallback(newRequest, requestContext, callback, retryTracker);
     _d2Client.restRequest(newRequest, requestContext, transportCallback);
   }
 
@@ -148,18 +150,18 @@ public class RetryClient extends D2ClientDelegator
     StreamRequest newRequest = request.builder()
         .addHeaderValue(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, "0")
         .build(request.getEntityStream());
-    CallCompletion callCompletion = startCall(newRequest.getURI(), false);
-    final Callback<StreamResponse> transportCallback =
-        new StreamRetryRequestCallback(newRequest, requestContext, callback, callCompletion);
+    ClientRetryTracker retryTracker = updateRetryTracker(newRequest.getURI(), false);
+    final Callback<StreamResponse> transportCallback = new StreamRetryRequestCallback(newRequest, requestContext, callback, retryTracker);
     _d2Client.streamRequest(newRequest, requestContext, transportCallback);
   }
 
-  private CallCompletion startCall(URI uri, boolean isRetry)
+  private ClientRetryTracker updateRetryTracker(URI uri, boolean isRetry)
   {
     String serviceName = LoadBalancerUtil.getServiceNameFromUri(uri);
-    CallTracker callTracker = _retryTrackerMap.computeIfAbsent(serviceName,
-            name -> new CallTrackerImpl(_updateIntervalMs, _clock, false));
-    return callTracker.startCall(isRetry);
+    _retryTrackerMap.putIfAbsent(serviceName, new ClientRetryTracker(_aggregatedIntervalNum, _updateIntervalMs, _clock));
+    ClientRetryTracker retryTracker = _retryTrackerMap.get(serviceName);
+    retryTracker.add(isRetry);
+    return retryTracker;
   }
 
   /**
@@ -171,12 +173,9 @@ public class RetryClient extends D2ClientDelegator
     private volatile boolean _recorded = false;
     private ByteString _content = null;
 
-    public StreamRetryRequestCallback(StreamRequest request,
-                                      RequestContext context,
-                                      Callback<StreamResponse> callback,
-                                      CallCompletion callCompletion)
+    public StreamRetryRequestCallback(StreamRequest request, RequestContext context, Callback<StreamResponse> callback, ClientRetryTracker retryTracker)
     {
-      super(request, context, callback, callCompletion);
+      super(request, context, callback, retryTracker);
 
       final FullEntityObserver observer = new FullEntityObserver(new Callback<ByteString>()
       {
@@ -209,11 +208,12 @@ public class RetryClient extends D2ClientDelegator
     @Override
     public boolean doRetryRequest(StreamRequest request, RequestContext context, int numberOfRetryAttempts)
     {
-      if (_recorded == true && _content != null) {
+      if (_recorded == true && _content != null)
+      {
         final StreamRequest newRequest = request.builder()
             .addHeaderValue(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, Integer.toString(numberOfRetryAttempts))
             .build(EntityStreams.newEntityStream(new ByteStringWriter(_content)));
-        _callCompletion = startCall(request.getURI(), true);
+        updateRetryTracker(request.getURI(), true);
         _d2Client.streamRequest(newRequest, new RequestContext(context), this);
         return true;
       }
@@ -228,12 +228,9 @@ public class RetryClient extends D2ClientDelegator
    */
   private class RestRetryRequestCallback extends RetryRequestCallback<RestRequest, RestResponse>
   {
-    public RestRetryRequestCallback(RestRequest request,
-                                    RequestContext context,
-                                    Callback<RestResponse> callback,
-                                    CallCompletion callCompletion)
+    public RestRetryRequestCallback(RestRequest request, RequestContext context, Callback<RestResponse> callback, ClientRetryTracker retryTracker)
     {
-      super(request, context, callback, callCompletion);
+      super(request, context, callback, retryTracker);
     }
 
     @Override
@@ -242,7 +239,7 @@ public class RetryClient extends D2ClientDelegator
       RestRequest newRequest = request.builder()
           .addHeaderValue(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, Integer.toString(numberOfRetryAttempts))
           .build();
-      _callCompletion = startCall(request.getURI(), true);
+      updateRetryTracker(request.getURI(), true);
       _d2Client.restRequest(newRequest, context, this);
       return true;
     }
@@ -260,19 +257,17 @@ public class RetryClient extends D2ClientDelegator
     private final RequestContext _context;
     private final Callback<RESP> _callback;
     private final String _serviceName;
+    private final ClientRetryTracker _retryTracker;
 
-    CallCompletion _callCompletion;
+    private Map<String, Object> _transportClientProperties;
 
-    public RetryRequestCallback(REQ request,
-                                RequestContext context,
-                                Callback<RESP> callback,
-                                CallCompletion callCompletion)
+    public RetryRequestCallback(REQ request, RequestContext context, Callback<RESP> callback, ClientRetryTracker retryTracker)
     {
       _request = request;
       _context = context;
       _callback = callback;
       _serviceName = LoadBalancerUtil.getServiceNameFromUri(request.getURI());
-      _callCompletion = callCompletion;
+      _retryTracker = retryTracker;
     }
 
     @Override
@@ -280,7 +275,6 @@ public class RetryClient extends D2ClientDelegator
     {
       ExcludedHostHints.clearRequestContextExcludedHosts(_context);
       _callback.onSuccess(result);
-      _callCompletion.endCall();
     }
 
     @Override
@@ -303,27 +297,36 @@ public class RetryClient extends D2ClientDelegator
           else
           {
             double maxClientRequestRetryRatio;
-            try
+            _balancer.getLoadBalancedServiceProperties(_serviceName, new Callback<ServiceProperties>() {
+              @Override
+              public void onError(Throwable e) {
+                LOG.warn("Failed to fetch transportClientProperties ", e);
+              }
+
+              @Override
+              public void onSuccess(ServiceProperties result) {
+                _transportClientProperties = result.getTransportClientProperties();
+              }
+            });
+
+            if (_transportClientProperties == null)
             {
-              Map<String, Object> transportClientProperties =
-                  _balancer.getLoadBalancedServiceProperties(_serviceName).getTransportClientProperties();
-              maxClientRequestRetryRatio = MapUtil.getWithDefault(transportClientProperties, PropertyKeys.HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO,
-                  HttpClientFactory.DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO, Double.class);
-            } catch (ServiceUnavailableException ex)
-            {
-              LOG.warn("Failed to fetch transportClientProperties ", ex);
               maxClientRequestRetryRatio = HttpClientFactory.DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO;
+            }
+            else
+            {
+              maxClientRequestRetryRatio = MapUtil.getWithDefault(_transportClientProperties,
+                  PropertyKeys.HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO,
+                  HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO, Double.class);
             }
 
             int attempts = exclusionSet.size();
             if (attempts <= _limit)
             {
-              CallTracker callTracker = _retryTrackerMap.get(_serviceName);
-              if (callTracker.getCallStats().getRetryRate() <= maxClientRequestRetryRatio)
+              if (_retryTracker.isBelowRetryRatio(maxClientRequestRetryRatio))
               {
                 LOG.warn("A retriable exception occurred. Going to retry. This is attempt {}. Current exclusion set: {}",
                     attempts, exclusionSet);
-                _callCompletion.endCall();
                 retry = doRetryRequest(_request, _context, attempts);
               }
               else
@@ -342,7 +345,6 @@ public class RetryClient extends D2ClientDelegator
       {
         ExcludedHostHints.clearRequestContextExcludedHosts(_context);
         _callback.onError(e);
-        _callCompletion.endCallWithError();
       }
     }
 
@@ -350,7 +352,7 @@ public class RetryClient extends D2ClientDelegator
     {
       Throwable[] throwables = ExceptionUtils.getThrowables(e);
 
-      for (Throwable throwable : throwables)
+      for (Throwable throwable: throwables)
       {
         if (throwable instanceof RetriableRequestException)
         {
@@ -370,5 +372,112 @@ public class RetryClient extends D2ClientDelegator
      * @return {@code true} if a request can be retried; {@code false} otherwise;
      */
     public abstract boolean doRetryRequest(REQ request, RequestContext context, int numberOfRetryAttempts);
+  }
+
+  @ThreadSafe
+  private static class ClientRetryTracker
+  {
+    private static final int COUNTER_TOTAL_COUNT_INDEX = 0;
+    private static final int COUNTER_RETRY_COUNT_INDEX = 1;
+
+    private final int _aggregatedIntervalNum;
+    private final long _updateIntervalMs;
+    private final Clock _clock;
+
+    private final Object _counterLock = new Object();
+    private final Object _updateLock = new Object();
+
+    @GuardedBy("_updateLock")
+    private volatile long _lastRollOverTime;
+    private double _currentAggregatedRetryRatio;
+
+    @GuardedBy("_counterLock")
+    private final LinkedList<int[]> _retryCounter;
+    private final int[] _aggregatedRetryCounter;
+
+    private ClientRetryTracker(int aggregatedIntervalNum, long updateIntervalMs, Clock clock)
+    {
+      _aggregatedIntervalNum = aggregatedIntervalNum;
+      _updateIntervalMs = updateIntervalMs;
+      _clock = clock;
+
+      _lastRollOverTime = clock.currentTimeMillis();
+      _currentAggregatedRetryRatio = 0;
+
+      _aggregatedRetryCounter = new int[2];
+      _retryCounter = new LinkedList<>();
+      _retryCounter.add(new int[2]);
+    }
+
+    public void add(boolean isRetry)
+    {
+      synchronized (_counterLock)
+      {
+        if (isRetry)
+        {
+          _retryCounter.getLast()[COUNTER_RETRY_COUNT_INDEX] += 1;
+        }
+
+        _retryCounter.getLast()[COUNTER_TOTAL_COUNT_INDEX] += 1;
+      }
+      updateRetryDecision();
+    }
+
+    public void rollOverStats()
+    {
+      // rollover the current interval to the aggregated counter
+      synchronized (_counterLock)
+      {
+        int[] intervalToAggregate = _retryCounter.getLast();
+        _aggregatedRetryCounter[COUNTER_TOTAL_COUNT_INDEX] += intervalToAggregate[COUNTER_TOTAL_COUNT_INDEX];
+        _aggregatedRetryCounter[COUNTER_RETRY_COUNT_INDEX] += intervalToAggregate[COUNTER_RETRY_COUNT_INDEX];
+
+        if (_retryCounter.size() > _aggregatedIntervalNum)
+        {
+          // discard the oldest interval
+          int[] intervalToDiscard = _retryCounter.removeFirst();
+          _aggregatedRetryCounter[COUNTER_TOTAL_COUNT_INDEX] -= intervalToDiscard[COUNTER_TOTAL_COUNT_INDEX];
+          _aggregatedRetryCounter[COUNTER_RETRY_COUNT_INDEX] -= intervalToDiscard[COUNTER_RETRY_COUNT_INDEX];
+        }
+
+        // append a new interval
+        _retryCounter.addLast(new int[2]);
+      }
+    }
+
+    public boolean isBelowRetryRatio(double maxClientRequestRetryRatio)
+    {
+      updateRetryDecision();
+      return _currentAggregatedRetryRatio <= maxClientRequestRetryRatio;
+    }
+
+    private void updateRetryDecision()
+    {
+      long currentTime = _clock.currentTimeMillis();
+
+      synchronized (_updateLock)
+      {
+        // Check if the current interval is stale
+        if (currentTime >= _lastRollOverTime + _updateIntervalMs)
+        {
+          // Rollover stale intervals until the current interval is reached
+          for (long time = currentTime; time >= _lastRollOverTime + _updateIntervalMs; time -= _updateIntervalMs)
+          {
+            rollOverStats();
+          }
+
+          _currentAggregatedRetryRatio = getRetryRatio();
+          _lastRollOverTime = currentTime;
+        }
+      }
+    }
+
+    private double getRetryRatio()
+    {
+      int aggregatedTotalCount = _aggregatedRetryCounter[COUNTER_TOTAL_COUNT_INDEX];
+      int aggregatedRetryCount = _aggregatedRetryCounter[COUNTER_RETRY_COUNT_INDEX];
+
+      return aggregatedTotalCount == 0 ? 0 : (double) aggregatedRetryCount / aggregatedTotalCount;
+    }
   }
 }

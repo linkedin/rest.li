@@ -20,15 +20,12 @@ package com.linkedin.d2.balancer.clients;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.d2.balancer.D2ClientConfig;
 import com.linkedin.d2.balancer.KeyMapper;
-import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
-import com.linkedin.d2.balancer.clients.stub.LoadBalancerMock;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
-import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.data.ByteString;
@@ -252,6 +249,7 @@ public class RetryClientTest
         balancer,
         D2ClientConfig.DEAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
         clock);
     URI uri1 = URI.create("d2://retryService1?arg1=empty&arg2=empty");
     RestRequest restRequest1 = new RestRequestBuilder(uri1).build();
@@ -284,7 +282,7 @@ public class RetryClientTest
     assertNotNull(restCallback.t);
 
     // After 5s interval, retry counter is reset and this request will be retried again
-    clock.addDuration(RetryClient.DEFAULT_UPDATE_INTERVAL_MS);
+    clock.addDuration(RetryClient.DEFAULT_UPDATE_INTERVAL_MS * RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM);
 
     restCallback = new TrackerClientTest.TestCallback<RestResponse>();
     client.restRequest(restRequest1, restCallback);
@@ -305,6 +303,7 @@ public class RetryClientTest
         balancer,
         D2ClientConfig.DEAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
         clock);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     RestRequest restRequest = new RestRequestBuilder(uri).build();

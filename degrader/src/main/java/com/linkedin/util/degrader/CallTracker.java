@@ -97,12 +97,6 @@ public interface CallTracker
   Map<ErrorType, Integer> getCurrentErrorTypeCountsTotal();
 
   /**
-   * Returns the number of retries reported by calls since last reset.
-   * @return the number of retries reported by calls since last reset.
-   */
-  long getCurrentRetryCountTotal();
-
-  /**
    * Returns the current number of concurrent calls.
    * @return the current number of concurrent calls.
    */
@@ -121,17 +115,10 @@ public interface CallTracker
   void trackCallWithError(long duration);
 
   /**
-   * Indicates the start of a non-retry method invocation
+   * Indicates the start of a method invocation
    * @return an object that can be used to indicate completion of the call
    */
   CallCompletion startCall();
-
-  /**
-   * Indicates the start of a method invocation
-   * @param isRetry whether the call is a retry
-   * @return an object that can be used to indicate completion of the call
-   */
-  CallCompletion startCall(boolean isRetry);
 
   interface CallStats
   {
@@ -225,27 +212,6 @@ public interface CallTracker
      * @return the error rate of the sample.
      */
     double getErrorRate();
-
-    /**
-     * Returns the number of retries in the sample.
-     * @return the number of retries in the sample.
-     */
-    int getRetryCount();
-
-    /**
-     * Returns the number of retries (since last reset) at the end of sampling interval.
-     * @return the number of retries (since last reset) at the end of sampling interval.
-     */
-    long getRetryCountTotal();
-
-    /**
-     * Returns the retry rate of the sample.
-     *
-     * This is derived data from retry count divided by call count.
-     *
-     * @return the retry rate of the sample.
-     */
-    double getRetryRate();
 
     /**
      * Returns the maximum number of concurrently active calls in the sample.

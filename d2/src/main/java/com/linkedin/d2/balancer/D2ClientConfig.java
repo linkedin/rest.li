@@ -72,6 +72,7 @@ public class D2ClientConfig
   boolean retry = false;
   int retryLimit = DEAULT_RETRY_LIMIT;
   long retryUpdateIntervalMs = RetryClient.DEFAULT_UPDATE_INTERVAL_MS;
+  int retryAggregatedIntervalNum = RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM;
   boolean warmUp = true;
   int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
@@ -125,6 +126,7 @@ public class D2ClientConfig
                  boolean retry,
                  int retryLimit,
                  long retryUpdateIntervalMs,
+                 int retryAggregatedIntervalNum,
                  boolean warmUp,
                  int warmUpTimeoutSeconds,
                  int warmUpConcurrentRequests,
@@ -173,6 +175,7 @@ public class D2ClientConfig
     this.retry = retry;
     this.retryLimit = retryLimit;
     this.retryUpdateIntervalMs = retryUpdateIntervalMs;
+    this.retryAggregatedIntervalNum = retryAggregatedIntervalNum;
     this.warmUp = warmUp;
     this.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     this.warmUpConcurrentRequests = warmUpConcurrentRequests;

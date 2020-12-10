@@ -68,7 +68,6 @@ public class CallTrackerImpl implements CallTracker
   private long _callCountTotal;
   private long _callStartCountTotal;
   private long _errorCountTotal;
-  private long _retryCountTotal;
   private int _concurrency;
   private long _sumOfOutstandingStartTimes;
   //Total counts of specific types of error like RemoteInvocation error, 400 errors, 500 errors
@@ -102,12 +101,6 @@ public class CallTrackerImpl implements CallTracker
   @Override
   public CallCompletion startCall()
   {
-    return startCall(false);
-  }
-
-  @Override
-  public CallCompletion startCall(boolean isRetry)
-  {
     long currentTime;
     Pending pending;
     synchronized (_lock)
@@ -123,11 +116,6 @@ public class CallTrackerImpl implements CallTracker
       }
       _lastStartTime = currentTime;
       _sumOfOutstandingStartTimes += currentTime;
-      if (isRetry)
-      {
-        _retryCountTotal++;
-        _tracker._retryCount++;
-      }
       pending = checkForPending();
     }
     if (pending != null)
@@ -224,12 +212,6 @@ public class CallTrackerImpl implements CallTracker
   }
 
   @Override
-  public long getCurrentRetryCountTotal()
-  {
-    return _retryCountTotal;
-  }
-
-  @Override
   public Map<ErrorType, Integer> getCurrentErrorTypeCountsTotal()
   {
     return Collections.unmodifiableMap(new HashMap<ErrorType, Integer>(_errorTypeCountsTotal));
@@ -259,7 +241,6 @@ public class CallTrackerImpl implements CallTracker
       _callCountTotal = 0;
       _callStartCountTotal = 0;
       _errorCountTotal = 0;
-      _retryCountTotal = 0;
       _tracker.reset();
       _errorTypeCountsTotal.clear();
       pending = checkForPending();
@@ -463,7 +444,6 @@ public class CallTrackerImpl implements CallTracker
     private long _startTime;
     private int _callStartCount;
     private int _errorCount;
-    private int _retryCount;
     private int _concurrentMax;
     private final LongTracker _callTimeTracking;
     //this map is used to store the number of specific errors that happened in one interval only
@@ -487,7 +467,6 @@ public class CallTrackerImpl implements CallTracker
       _startTime = startTime;
       _callStartCount = 0;
       _errorCount = 0;
-      _retryCount = 0;
       _concurrentMax = _concurrency;
       _callTimeTracking.reset();
       _errorTypeCounts.clear();
@@ -513,8 +492,6 @@ public class CallTrackerImpl implements CallTracker
         _callStartCountTotal,
         _errorCount,
         _errorCountTotal,
-        _retryCount,
-        _retryCountTotal,
         _concurrentMax,
         _concurrency == 0 ? 0 : (_sumOfOutstandingStartTimes / _concurrency),
         _concurrency,
@@ -649,8 +626,6 @@ public class CallTrackerImpl implements CallTracker
     private final long      _callStartCountTotal;
     private final int       _errorCount;
     private final long      _errorCountTotal;
-    private final int       _retryCount;
-    private final long      _retryCountTotal;
     private final int       _concurrentMax;
     private final long      _outstandingStartTimeAvg;
     private final int       _outstandingCount;
@@ -674,8 +649,6 @@ public class CallTrackerImpl implements CallTracker
       _callStartCountTotal = 0;
       _errorCount = 0;
       _errorCountTotal = 0;
-      _retryCount = 0;
-      _retryCountTotal = 0;
       _concurrentMax = 0;
 
       _outstandingStartTimeAvg = 0;
@@ -687,28 +660,6 @@ public class CallTrackerImpl implements CallTracker
     }
 
     public CallTrackerStats(
-        long intervalConfigured,
-        long intervalStartTime,
-        long intervalEndTime,
-        long callCountTotal,
-        int  callStartCount,
-        long callStartCountTotal,
-        int  errorCount,
-        long errorCountTotal,
-        int  concurrentMax,
-        long outstandingStartTimeAvg,
-        int  outstandingCount,
-        LongStats callTimeStats,
-        Map<ErrorType, Integer> errorTypeCounts,
-        Map<ErrorType, Integer> errorTypeCountsTotal
-    )
-    {
-      this(intervalConfigured, intervalStartTime, intervalEndTime, callCountTotal, callStartCount, callStartCountTotal,
-          errorCount, errorCountTotal, 0, 0, concurrentMax, outstandingStartTimeAvg, outstandingCount,
-          callTimeStats, errorTypeCounts, errorTypeCountsTotal);
-    }
-
-    public CallTrackerStats(
       long intervalConfigured,
       long intervalStartTime,
       long intervalEndTime,
@@ -717,8 +668,6 @@ public class CallTrackerImpl implements CallTracker
       long callStartCountTotal,
       int  errorCount,
       long errorCountTotal,
-      int retryCount,
-      long retryCountTotal,
       int  concurrentMax,
       long outstandingStartTimeAvg,
       int  outstandingCount,
@@ -736,8 +685,6 @@ public class CallTrackerImpl implements CallTracker
       _callStartCountTotal = callStartCountTotal;
       _errorCount = errorCount;
       _errorCountTotal = errorCountTotal;
-      _retryCount = retryCount;
-      _retryCountTotal = retryCountTotal;
       _concurrentMax = concurrentMax;
 
       _outstandingStartTimeAvg = outstandingStartTimeAvg;
@@ -826,24 +773,6 @@ public class CallTrackerImpl implements CallTracker
     }
 
     @Override
-    public int getRetryCount()
-    {
-      return _retryCount;
-    }
-
-    @Override
-    public long getRetryCountTotal()
-    {
-      return _retryCountTotal;
-    }
-
-    @Override
-    public double getRetryRate()
-    {
-      return safeDivide(_retryCount, getCallCount());
-    }
-
-    @Override
     public double getErrorRate()
     {
       return safeDivide(_errorCount, getCallCount());
@@ -893,9 +822,6 @@ public class CallTrackerImpl implements CallTracker
           ", ErrorCount=" + this.getErrorCount() +
           ", ErrorCountTotal=" + this.getErrorCountTotal() +
           ", ErrorRate=" + this.getErrorRate() +
-          ", RetryCount=" + this.getRetryCount() +
-          ", RetryCountTotal=" + this.getRetryCountTotal() +
-          ", RetryRate=" + this.getRetryRate() +
           ", ConcurrentMax=" + this.getConcurrentMax() +
           ", OutstandingStartTimeAvg=" + this.getOutstandingStartTimeAvg() +
               ", OutstandingCount=" + this.getOutstandingCount() +
