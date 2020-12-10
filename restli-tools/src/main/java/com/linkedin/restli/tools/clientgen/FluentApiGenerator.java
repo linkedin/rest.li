@@ -79,17 +79,24 @@ public class FluentApiGenerator
   public static void main(String[] args) throws Exception
   {
     OPTIONS.addOption("h", "help", false, "Show help.");
+    OptionBuilder.withArgName("Directory");
     OptionBuilder.withLongOpt("targetDir");
     OptionBuilder.hasArgs(1);
     OptionBuilder.isRequired();
     OptionBuilder.withDescription("Target directory in which the classes should be generated.");
     OPTIONS.addOption(OptionBuilder.create('t'));
+    OptionBuilder.withArgName("Path|ArgFile");
     OptionBuilder.withLongOpt("resolverPath");
     OptionBuilder.hasArgs(1);
     OptionBuilder.isRequired();
-    OptionBuilder.withDescription("Resolver path for loading data schemas");
+    OptionBuilder.withDescription("Resolver path for loading data schemas. This can also be an arg file with path written per "
+        + "line in the file. Use the syntax @[filename] for this arg when using the arg file.");
     OPTIONS.addOption(OptionBuilder.create('p'));
-    OPTIONS.addOption("r", "rootPath", true, "Root path to use for generating relative path for source location");
+    OptionBuilder.withArgName("Path");
+    OptionBuilder.withLongOpt("rootPath");
+    OptionBuilder.hasArgs(1);
+    OptionBuilder.withDescription("Root path to use for generating relative path for source location");
+    OPTIONS.addOption(OptionBuilder.create('r'));
 
     try
     {
@@ -120,6 +127,7 @@ public class FluentApiGenerator
     catch (ParseException e)
     {
       LOGGER.error("Invalid arguments: " + e.getMessage());
+      help();
       System.exit(1);
     }
 
@@ -249,9 +257,10 @@ public class FluentApiGenerator
     final HelpFormatter formatter = new HelpFormatter();
     formatter.printHelp(120,
         FluentApiGenerator.class.getSimpleName(),
-        "",
+        "Command should be followed by one or more source files to process.",
         OPTIONS,
-        "[sources]+",
+        "[sources]+          List of source files to process, specified at the end. Source file list can also be "
+            + "provided as a single arg file, specified as @<arg filename>. The file should list source files one per line.",
         true);
   }
 }
