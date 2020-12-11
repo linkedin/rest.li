@@ -579,6 +579,8 @@ public class PegasusPlugin implements Plugin<Project>
   private static final String TRANSLATED_SCHEMAS_DIR = "legacyPegasusSchemas";
   // Enable the use of argFiles for the tasks that support them
   private static final String ENABLE_ARG_FILE = "pegasusPlugin.enableArgFile";
+  // Enable the generation of fluent APIs
+  private static final String ENABLE_FLUENT_API = "pegasusPlugin.enableFluentApi";
 
   private static final String PEGASUS_PLUGIN_CONFIGURATION = "pegasusPlugin";
 
@@ -1916,6 +1918,10 @@ public class PegasusPlugin implements Plugin<Project>
           if (isPropertyTrue(project, ENABLE_ARG_FILE))
           {
             task.setEnableArgFile(true);
+          }
+          if (isPropertyTrue(project, ENABLE_FLUENT_API))
+          {
+            task.setGenerateFluentApi(true);
           }
           task.doFirst(new CacheableAction<>(t -> project.delete(generatedRestClientDir)));
         });
