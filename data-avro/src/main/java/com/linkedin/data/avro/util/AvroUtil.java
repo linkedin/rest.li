@@ -64,7 +64,7 @@ public class AvroUtil
   public static GenericRecord genericRecordFromJson(String json, Schema schema) throws IOException
   {
     GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>();
-    Decoder jsonDecoder = AvroCompatibilityHelper.newJsonDecoder(schema, json);
+    Decoder jsonDecoder = AvroCompatibilityHelper.newCompatibleJsonDecoder(schema, json);
     reader.setSchema(schema);
     GenericRecord record = reader.read(null, jsonDecoder);
     return record;

@@ -13,6 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.13.0] - 2020-12-12
+- Change AvroUtil to use newCompatibleJsonDecoder from avro-util
 - Bump `javax.mail:mail` dependency from `1.4.1` to `1.4.4` to avoid classloader issues in `javax.activation` code with Java 11.
 - Bump arvo compatibility layer `avroutil` dependency from `0.1.11` to `0.2.17` for Arvo Upgrade HI.
 - Setup the base infra for generating new fluent api client bindings.
@@ -4776,7 +4779,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.12.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.0...master
+[29.13.0]: https://github.com/linkedin/rest.li/compare/v29.12.0...v29.13.0
 [29.12.0]: https://github.com/linkedin/rest.li/compare/v29.11.3...v29.12.0
 [29.11.3]: https://github.com/linkedin/rest.li/compare/v29.11.2...v29.11.3
 [29.11.2]: https://github.com/linkedin/rest.li/compare/v29.11.1...v29.11.2
