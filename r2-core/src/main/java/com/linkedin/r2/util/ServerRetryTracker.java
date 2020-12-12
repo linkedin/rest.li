@@ -77,7 +77,10 @@ public class ServerRetryTracker
     } else
     {
       LOG.warn("Unexpected number of retry attempts: " + numberOfRetryAttempts + ", current retry limit: " + _retryLimit);
-      _retryAttemptsCounter.getLast()[_retryLimit] += 1;
+      synchronized (_counterLock)
+      {
+        _retryAttemptsCounter.getLast()[_retryLimit] += 1;
+      }
     }
 
     updateRetryDecision();

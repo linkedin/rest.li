@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.clients;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.callback.SuccessCallback;
 import com.linkedin.common.util.MapUtil;
 import com.linkedin.d2.balancer.D2Client;
 import com.linkedin.d2.balancer.D2ClientConfig;
@@ -158,7 +159,7 @@ public class RetryClient extends D2ClientDelegator
   private ClientRetryTracker updateRetryTracker(URI uri, boolean isRetry)
   {
     String serviceName = LoadBalancerUtil.getServiceNameFromUri(uri);
-    _retryTrackerMap.putIfAbsent(serviceName, new ClientRetryTracker(_aggregatedIntervalNum, _updateIntervalMs, _clock));
+    _retryTrackerMap.putIfAbsent(serviceName, new ClientRetryTracker(_aggregatedIntervalNum, _updateIntervalMs, _clock, serviceName));
     ClientRetryTracker retryTracker = _retryTrackerMap.get(serviceName);
     retryTracker.add(isRetry);
     return retryTracker;
@@ -296,43 +297,30 @@ public class RetryClient extends D2ClientDelegator
           }
           else
           {
-            double maxClientRequestRetryRatio;
-            _balancer.getLoadBalancedServiceProperties(_serviceName, new Callback<ServiceProperties>() {
-              @Override
-              public void onError(Throwable e) {
-                LOG.warn("Failed to fetch transportClientProperties ", e);
-              }
-
-              @Override
-              public void onSuccess(ServiceProperties result) {
-                _transportClientProperties = result.getTransportClientProperties();
-              }
-            });
-
-            if (_transportClientProperties == null)
-            {
-              maxClientRequestRetryRatio = HttpClientFactory.DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO;
-            }
-            else
-            {
-              maxClientRequestRetryRatio = MapUtil.getWithDefault(_transportClientProperties,
-                  PropertyKeys.HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO,
-                  HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO, Double.class);
-            }
-
             int attempts = exclusionSet.size();
             if (attempts <= _limit)
             {
-              if (_retryTracker.isBelowRetryRatio(maxClientRequestRetryRatio))
+              retry = true;
+              _retryTracker.isBelowRetryRatio(isBelowRetryRatio ->
               {
-                LOG.warn("A retriable exception occurred. Going to retry. This is attempt {}. Current exclusion set: {}",
-                    attempts, exclusionSet);
-                retry = doRetryRequest(_request, _context, attempts);
-              }
-              else
-              {
-                LOG.warn("Client retry ratio exceeded. This request will fail.");
-              }
+                boolean doRetry;
+                if (isBelowRetryRatio)
+                {
+                  LOG.warn("A retriable exception occurred. Going to retry. This is attempt {}. Current exclusion set: {}",
+                      attempts, exclusionSet);
+                  doRetry = doRetryRequest(_request, _context, attempts);
+                }
+                else
+                {
+                  LOG.warn("Client retry ratio exceeded. This request will fail.");
+                  doRetry = false;
+                }
+                if (!doRetry)
+                {
+                  ExcludedHostHints.clearRequestContextExcludedHosts(_context);
+                  _callback.onError(e);
+                }
+              });
             }
             else
             {
@@ -375,14 +363,12 @@ public class RetryClient extends D2ClientDelegator
   }
 
   @ThreadSafe
-  private static class ClientRetryTracker
+  private class ClientRetryTracker
   {
-    private static final int COUNTER_TOTAL_COUNT_INDEX = 0;
-    private static final int COUNTER_RETRY_COUNT_INDEX = 1;
-
     private final int _aggregatedIntervalNum;
     private final long _updateIntervalMs;
     private final Clock _clock;
+    private final String _serviceName;
 
     private final Object _counterLock = new Object();
     private final Object _updateLock = new Object();
@@ -392,21 +378,22 @@ public class RetryClient extends D2ClientDelegator
     private double _currentAggregatedRetryRatio;
 
     @GuardedBy("_counterLock")
-    private final LinkedList<int[]> _retryCounter;
-    private final int[] _aggregatedRetryCounter;
+    private final LinkedList<RetryCounter> _retryCounter;
+    private final RetryCounter _aggregatedRetryCounter;
 
-    private ClientRetryTracker(int aggregatedIntervalNum, long updateIntervalMs, Clock clock)
+    private ClientRetryTracker(int aggregatedIntervalNum, long updateIntervalMs, Clock clock, String serviceName)
     {
       _aggregatedIntervalNum = aggregatedIntervalNum;
       _updateIntervalMs = updateIntervalMs;
       _clock = clock;
+      _serviceName = serviceName;
 
       _lastRollOverTime = clock.currentTimeMillis();
       _currentAggregatedRetryRatio = 0;
 
-      _aggregatedRetryCounter = new int[2];
+      _aggregatedRetryCounter = new RetryCounter();
       _retryCounter = new LinkedList<>();
-      _retryCounter.add(new int[2]);
+      _retryCounter.add(new RetryCounter());
     }
 
     public void add(boolean isRetry)
@@ -415,10 +402,10 @@ public class RetryClient extends D2ClientDelegator
       {
         if (isRetry)
         {
-          _retryCounter.getLast()[COUNTER_RETRY_COUNT_INDEX] += 1;
+          _retryCounter.getLast().addToRetryRequestCount(1);
         }
 
-        _retryCounter.getLast()[COUNTER_TOTAL_COUNT_INDEX] += 1;
+        _retryCounter.getLast().addToTotalRequestCount(1);
       }
       updateRetryDecision();
     }
@@ -428,27 +415,53 @@ public class RetryClient extends D2ClientDelegator
       // rollover the current interval to the aggregated counter
       synchronized (_counterLock)
       {
-        int[] intervalToAggregate = _retryCounter.getLast();
-        _aggregatedRetryCounter[COUNTER_TOTAL_COUNT_INDEX] += intervalToAggregate[COUNTER_TOTAL_COUNT_INDEX];
-        _aggregatedRetryCounter[COUNTER_RETRY_COUNT_INDEX] += intervalToAggregate[COUNTER_RETRY_COUNT_INDEX];
+        RetryCounter intervalToAggregate = _retryCounter.getLast();
+        _aggregatedRetryCounter.addToTotalRequestCount(intervalToAggregate.getTotalRequestCount());
+        _aggregatedRetryCounter.addToRetryRequestCount(intervalToAggregate.getRetryRequestCount());
 
         if (_retryCounter.size() > _aggregatedIntervalNum)
         {
           // discard the oldest interval
-          int[] intervalToDiscard = _retryCounter.removeFirst();
-          _aggregatedRetryCounter[COUNTER_TOTAL_COUNT_INDEX] -= intervalToDiscard[COUNTER_TOTAL_COUNT_INDEX];
-          _aggregatedRetryCounter[COUNTER_RETRY_COUNT_INDEX] -= intervalToDiscard[COUNTER_RETRY_COUNT_INDEX];
+          RetryCounter intervalToDiscard = _retryCounter.removeFirst();
+          _aggregatedRetryCounter.subtractFromTotalRequestCount(intervalToDiscard.getTotalRequestCount());
+          _aggregatedRetryCounter.subtractFromRetryRequestCount(intervalToDiscard.getRetryRequestCount());;
         }
 
         // append a new interval
-        _retryCounter.addLast(new int[2]);
+        _retryCounter.addLast(new RetryCounter());
       }
     }
 
-    public boolean isBelowRetryRatio(double maxClientRequestRetryRatio)
+    public void isBelowRetryRatio(SuccessCallback<Boolean> callback)
     {
-      updateRetryDecision();
-      return _currentAggregatedRetryRatio <= maxClientRequestRetryRatio;
+      _balancer.getLoadBalancedServiceProperties(_serviceName, new Callback<ServiceProperties>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          LOG.warn("Failed to fetch transportClientProperties ", e);
+          double maxClientRequestRetryRatio = HttpClientFactory.DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO;
+          callback.onSuccess(_currentAggregatedRetryRatio <= maxClientRequestRetryRatio);
+        }
+
+        @Override
+        public void onSuccess(ServiceProperties result)
+        {
+          Map<String, Object> transportClientProperties = result.getTransportClientProperties();
+          double maxClientRequestRetryRatio;
+          if (transportClientProperties == null)
+          {
+            maxClientRequestRetryRatio = HttpClientFactory.DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO;
+          }
+          else
+          {
+            maxClientRequestRetryRatio = MapUtil.getWithDefault(transportClientProperties,
+                PropertyKeys.HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO,
+                HttpClientFactory.DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO, Double.class);
+          }
+          callback.onSuccess(_currentAggregatedRetryRatio <= maxClientRequestRetryRatio);
+        }
+      });
     }
 
     private void updateRetryDecision()
@@ -474,10 +487,52 @@ public class RetryClient extends D2ClientDelegator
 
     private double getRetryRatio()
     {
-      int aggregatedTotalCount = _aggregatedRetryCounter[COUNTER_TOTAL_COUNT_INDEX];
-      int aggregatedRetryCount = _aggregatedRetryCounter[COUNTER_RETRY_COUNT_INDEX];
+      int aggregatedTotalCount = _aggregatedRetryCounter.getTotalRequestCount();
+      int aggregatedRetryCount = _aggregatedRetryCounter.getRetryRequestCount();
 
       return aggregatedTotalCount == 0 ? 0 : (double) aggregatedRetryCount / aggregatedTotalCount;
+    }
+  }
+
+  private static class RetryCounter
+  {
+    private int _retryRequestCount;
+    private int _totalRequestCount;
+
+    public RetryCounter()
+    {
+      _retryRequestCount = 0;
+      _totalRequestCount = 0;
+    }
+
+    public int getRetryRequestCount()
+    {
+      return _retryRequestCount;
+    }
+
+    public int getTotalRequestCount()
+    {
+      return _totalRequestCount;
+    }
+
+    public void addToRetryRequestCount(int count)
+    {
+      _retryRequestCount += count;
+    }
+
+    public void addToTotalRequestCount(int count)
+    {
+      _totalRequestCount += count;
+    }
+
+    public void subtractFromRetryRequestCount(int count)
+    {
+      _retryRequestCount -= count;
+    }
+
+    public void subtractFromTotalRequestCount(int count)
+    {
+      _totalRequestCount -= count;
     }
   }
 }
