@@ -143,7 +143,7 @@ record D2TransportClientProperties {
   }
 
   /**
-   * Maximum ratio of retried requests to total requests per client
+   * Maximum ratio of retry requests to total requests per client
    */
   maxClientRequestRetryRatio: optional double
 }
