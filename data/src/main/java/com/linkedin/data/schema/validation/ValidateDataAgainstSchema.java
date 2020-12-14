@@ -526,6 +526,10 @@ public final class ValidateDataAgainstSchema
             validate(memberElement, memberSchema, value);
           }
         }
+        else if (!schema.isAllowEmptyUnionResponse())
+        {
+          addMessage(element, "DataMap should have at least one entry for a union type or specify the member in projection");
+        }
       }
       else
       {

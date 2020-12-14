@@ -37,6 +37,11 @@ import static com.linkedin.data.schema.DataSchemaConstants.RESTRICTED_UNION_ALIA
 public final class UnionDataSchema extends ComplexDataSchema
 {
   /**
+   *
+   */
+  private boolean allowEmptyUnionResponse = false;
+
+  /**
    * Class for representing a member inside a Union
    */
   public static class Member implements Cloneable
@@ -457,4 +462,14 @@ public final class UnionDataSchema extends ComplexDataSchema
   private boolean _membersAliased = false;
 
   private static final Map<String, Integer> _emptyTypesToIndexMap = Collections.emptyMap();
+
+  public void setAllowEmptyUnionResponse(boolean allowEmptyUnionResponse)
+  {
+    this.allowEmptyUnionResponse = allowEmptyUnionResponse;
+  }
+
+  public boolean isAllowEmptyUnionResponse()
+  {
+    return this.allowEmptyUnionResponse;
+  }
 }

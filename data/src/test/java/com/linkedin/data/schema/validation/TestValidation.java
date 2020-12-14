@@ -1096,7 +1096,6 @@ public class TestValidation
     Object goodObjects[] =
     {
         Data.NULL,
-        new DataMap(),
         new DataMap(asMap("int", new Integer(1))),
         new DataMap(asMap("string", "x")),
         new DataMap(asMap("Fruits", "APPLE")),
@@ -1112,6 +1111,7 @@ public class TestValidation
         new Double(1),
         new String(),
         new DataList(),
+        new DataMap(),
         new DataMap(asMap("int", new Boolean(true))),
         new DataMap(asMap("int", new String("1"))),
         new DataMap(asMap("int", new Long(1L))),
