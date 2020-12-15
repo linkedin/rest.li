@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2018 LinkedIn Corp.
+   Copyright (c) 2020 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -19,26 +19,16 @@ package com.linkedin.restli.examples;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.GetRequest;
-import com.linkedin.restli.client.Request;
-import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.common.BatchCollectionResponse;
-import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.ValidateEmptyUnion;
-import com.linkedin.restli.examples.greetings.api.ValidationDemo;
-import com.linkedin.restli.examples.greetings.api.ValidationDemoCriteria;
 import com.linkedin.restli.examples.greetings.client.EmptyUnionRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
-import com.linkedin.restli.examples.greetings.client.ValidationDemosRequestBuilders;
 import com.linkedin.restli.server.validation.RestLiValidationFilter;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
