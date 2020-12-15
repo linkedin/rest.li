@@ -69,10 +69,23 @@ public class TestEmptyUnionValidation extends RestLiIntegrationTest
   }
 
   @Test(expectedExceptions = RestLiResponseException.class)
-  public void testUnionEmptyWithoutProjection() throws RemoteInvocationException {
+  public void testUnionEmptyWithoutProjection() throws RemoteInvocationException
+  {
     String expectedSuffix = "projection";
     EmptyUnionRequestBuilders requestBuilders = new EmptyUnionRequestBuilders();
     GetRequest<ValidateEmptyUnion> req = requestBuilders.get().id(1L).build();
     ValidateEmptyUnion res = getClient().sendRequest(req).getResponse().getEntity();
+  }
+
+  @Test(expectedExceptions = RestLiResponseException.class)
+  public void testFailValidationWithFullUnionMemberProjection() throws RemoteInvocationException {
+    ValidateEmptyUnion expected = new ValidateEmptyUnion();
+    expected.setFoo(new ValidateEmptyUnion.Foo());
+    List<PathSpec> spec = Arrays.asList(
+        ValidateEmptyUnion.fields().foo().Fuzz(),
+        ValidateEmptyUnion.fields().foo().Bar());
+    EmptyUnionRequestBuilders requestBuilders = new EmptyUnionRequestBuilders();
+    GetRequest<ValidateEmptyUnion> req = requestBuilders.get().id(1L).fields(spec.toArray(new PathSpec[spec.size()])).build();
+    ValidateEmptyUnion actual = getClient().sendRequest(req).getResponse().getEntity();
   }
 }

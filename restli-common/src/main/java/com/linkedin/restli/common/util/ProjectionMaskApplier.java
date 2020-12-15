@@ -215,9 +215,9 @@ public class ProjectionMaskApplier
 
     UnionDataSchema newUnionDataSchema = new UnionDataSchema();
     newUnionDataSchema.setMembers(newUnionMembers, errorMessageBuilder);
-    if (newUnionMembers.size() > 0)
+    if (newUnionMembers.size() > 0 && unionDataSchema.getMembers().size() > newUnionMembers.size())
     {
-      newUnionDataSchema.setAllowEmptyUnionResponse(true);
+      newUnionDataSchema.setPartialSchema(true);
     }
 
     if (unionDataSchema.getProperties() != null)
