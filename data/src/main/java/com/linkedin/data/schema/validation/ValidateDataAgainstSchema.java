@@ -527,7 +527,7 @@ public final class ValidateDataAgainstSchema
         }
         else if (!schema.isPartialSchema())
         {
-          addMessage(element, "DataMap should have at least one entry for a union type or specify the member in projection");
+          addMessage(element, "DataMap should have at least one entry for a union type");
         }
       }
       else

@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.13.1] - 2020-12-14
 - Fix the restriction of empty union validation from wide open to only allow when there is a projection in the union
 
 ## [29.13.0] - 2020-12-12
@@ -4784,7 +4786,8 @@ patch operations can re-use these classes for generating patch messages.
 [Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.0...master
 [29.13.0]: https://github.com/linkedin/rest.li/compare/v29.12.0...v29.13.0
 =======
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.12.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.1...master
+[29.13.1]: https://github.com/linkedin/rest.li/compare/v29.12.1...v29.13.1
 [29.12.1]: https://github.com/linkedin/rest.li/compare/v29.12.0...v29.12.1
 >>>>>>> bd549e7ff (bump version)
 [29.12.0]: https://github.com/linkedin/rest.li/compare/v29.11.3...v29.12.0
