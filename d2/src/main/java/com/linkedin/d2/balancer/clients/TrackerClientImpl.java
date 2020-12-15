@@ -72,6 +72,7 @@ public class TrackerClientImpl implements TrackerClient
   private final Map<Integer, PartitionData> _partitionData;
   private final URI _uri;
   private final Predicate<Integer> _isErrorStatus;
+  private final boolean _doNotSlowStart;
   final CallTracker _callTracker;
 
   private volatile CallTracker.CallStats _latestCallStats;
@@ -79,11 +80,11 @@ public class TrackerClientImpl implements TrackerClient
   public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
       Clock clock, long interval, Predicate<Integer> isErrorStatus)
   {
-    this(uri, partitionDataMap, transportClient, clock, interval, isErrorStatus, true);
+    this(uri, partitionDataMap, transportClient, clock, interval, isErrorStatus, true, false);
   }
 
   public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
-      Clock clock, long interval, Predicate<Integer> isErrorStatus, boolean percentileTrackingEnabled)
+      Clock clock, long interval, Predicate<Integer> isErrorStatus, boolean percentileTrackingEnabled, boolean doNotSlowStart)
   {
     _uri = uri;
     _transportClient = transportClient;
@@ -91,6 +92,7 @@ public class TrackerClientImpl implements TrackerClient
     _isErrorStatus = isErrorStatus;
     _partitionData = Collections.unmodifiableMap(partitionDataMap);
     _latestCallStats = _callTracker.getCallStats();
+    _doNotSlowStart = doNotSlowStart;
 
     _callTracker.addStatsRolloverEventListener(event -> _latestCallStats = event.getCallStats());
 
@@ -184,6 +186,12 @@ public class TrackerClientImpl implements TrackerClient
 
       _wrappedCallback.onResponse(response);
     }
+  }
+
+  @Override
+  public boolean doNotSlowStart()
+  {
+    return _doNotSlowStart;
   }
 
   private class TrackerClientStreamCallback implements TransportCallback<StreamResponse>

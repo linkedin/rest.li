@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server.model;
 
 
+import com.linkedin.data.codec.symbol.DefaultSymbolTableProvider;
 import com.linkedin.restli.server.ResourceConfigException;
 import com.linkedin.restli.server.RestLiConfig;
 
@@ -119,6 +120,12 @@ public class RestLiApiBuilder implements RestApiBuilder
     if (model.isRoot())
     {
       String path = "/" + model.getName();
+      if (model.getName().equals(DefaultSymbolTableProvider.SYMBOL_TABLE_URI_PATH))
+      {
+        String errorMessage = String.format("Resource class \"%s\" API name \"symbolTable\" is reserved for internal use",
+            model.getResourceClass().getCanonicalName());
+        throw new ResourceConfigException(errorMessage);
+      }
       final ResourceModel existingResource = rootResourceModels.get(path);
       if (existingResource != null)
       {

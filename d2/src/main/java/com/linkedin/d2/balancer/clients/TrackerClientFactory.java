@@ -86,16 +86,26 @@ public class TrackerClientFactory
   {
     TrackerClient trackerClient;
 
+    boolean doNotSlowStart = false;
+    Map<String, Object> uriSpecificProperties = uriProperties.getUriSpecificProperties().get(uri);
+    if (uriSpecificProperties != null && uriSpecificProperties.containsKey(PropertyKeys.DO_NOT_SLOW_START)
+        && Boolean.parseBoolean(uriSpecificProperties.get(PropertyKeys.DO_NOT_SLOW_START).toString()))
+    {
+      doNotSlowStart = true;
+    }
+
     switch (loadBalancerStrategyName)
     {
       case (DegraderLoadBalancerStrategyV3.DEGRADER_STRATEGY_NAME):
-        trackerClient = createDegraderTrackerClient(uri, uriProperties, serviceProperties,  loadBalancerStrategyName, transportClient, clock);
+        trackerClient = createDegraderTrackerClient(uri, uriProperties, serviceProperties,  loadBalancerStrategyName, transportClient, clock, doNotSlowStart);
         break;
       case (RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME):
-        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, clock, false);
+        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName,
+            transportClient, clock, false, doNotSlowStart);
         break;
       default:
-        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, clock, true);
+        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName,
+            transportClient, clock, true, doNotSlowStart);
     }
 
     return trackerClient;
@@ -106,7 +116,8 @@ public class TrackerClientFactory
                                                                    ServiceProperties serviceProperties,
                                                                    String loadBalancerStrategyName,
                                                                    TransportClient transportClient,
-                                                                   Clock clock)
+                                                                   Clock clock,
+                                                                   boolean doNotSlowStart)
   {
     DegraderImpl.Config config = null;
 
@@ -133,7 +144,7 @@ public class TrackerClientFactory
                                      config,
                                      trackerClientInterval,
                                      errorStatusPattern,
-                                     uriProperties.getUriSpecificProperties().get(uri));
+                                     doNotSlowStart);
   }
 
   private static long getInterval(String loadBalancerStrategyName, ServiceProperties serviceProperties)
@@ -210,7 +221,8 @@ public class TrackerClientFactory
                                                            String loadBalancerStrategyName,
                                                            TransportClient transportClient,
                                                            Clock clock,
-                                                           boolean percentileTrackingEnabled)
+                                                           boolean percentileTrackingEnabled,
+                                                           boolean doNotSlowStart)
   {
     List<HttpStatusCodeRange> errorStatusCodeRanges = getErrorStatusRanges(serviceProperties);
     Predicate<Integer> isErrorStatus = (status) -> {
@@ -230,6 +242,7 @@ public class TrackerClientFactory
                                  clock,
                                  getInterval(loadBalancerStrategyName, serviceProperties),
                                  isErrorStatus,
-                                 percentileTrackingEnabled);
+                                 percentileTrackingEnabled,
+                                 doNotSlowStart);
   }
 }

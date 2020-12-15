@@ -57,6 +57,13 @@ public class TrackerClientMockHelper
     return trackerClients;
   }
 
+  public static List<TrackerClient> mockTrackerClients(int numTrackerClients, List<Integer> callCountList,
+      List<Integer> outstandingCallCountList, List<Long> latencyList, List<Long> outstandingLatencyList,
+      List<Integer> errorCountList)
+  {
+    return mockTrackerClients(numTrackerClients, callCountList, outstandingCallCountList, latencyList, outstandingLatencyList, errorCountList, false);
+  }
+
   /**
    * Mock a list of {@link TrackerClient} for testing
    *
@@ -70,7 +77,7 @@ public class TrackerClientMockHelper
    */
   public static List<TrackerClient> mockTrackerClients(int numTrackerClients, List<Integer> callCountList,
       List<Integer> outstandingCallCountList, List<Long> latencyList, List<Long> outstandingLatencyList,
-      List<Integer> errorCountList)
+      List<Integer> errorCountList, boolean doNotSlowStart)
   {
     List<TrackerClient> trackerClients = new ArrayList<>();
     for (int index = 0; index < numTrackerClients; index ++)
@@ -102,6 +109,7 @@ public class TrackerClientMockHelper
       Mockito.when(callTracker.getCallStats()).thenReturn(callStats);
       Mockito.when(trackerClient.getUri()).thenReturn(uri);
       Mockito.when(trackerClient.getPartitionWeight(anyInt())).thenReturn(1.0);
+      Mockito.when(trackerClient.doNotSlowStart()).thenReturn(doNotSlowStart);
       trackerClients.add(trackerClient);
     }
     return trackerClients;

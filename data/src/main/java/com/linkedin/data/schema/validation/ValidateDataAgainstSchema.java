@@ -166,9 +166,22 @@ public final class ValidateDataAgainstSchema
       _fixed = element.getValue();
       UnrecognizedFieldMode unrecognizedFieldMode = _options.getUnrecognizedFieldMode();
       ObjectIterator it = new ObjectIterator(element, IterationOrder.POST_ORDER);
-      DataElement nextElement;
-      while ((nextElement = it.next()) != null)
+      DataElement nextElement = null;
+      while (true)
       {
+        try
+        {
+          if ((nextElement = it.next()) == null)
+          {
+            break;
+          }
+        }
+        catch (IllegalArgumentException e)
+        {
+          addMessage(nextElement, e.getMessage());
+          return;
+        }
+
         DataSchema nextElementSchema = nextElement.getSchema();
         if (nextElementSchema != null)
         {
@@ -492,11 +505,12 @@ public final class ValidateDataAgainstSchema
       {
         // Pegasus mode
         DataMap map = (DataMap) object;
-        if (map.size() != 1)
+        // we allow empty union
+        if (map.size() > 1)
         {
-          addMessage(element, "DataMap should have exactly one entry for a union type");
+          addMessage(element, "DataMap should have no more than one entry for a union type");
         }
-        else
+        else if (map.size() == 1)
         {
           Map.Entry<String, Object> entry = map.entrySet().iterator().next();
           String key = entry.getKey();

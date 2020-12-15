@@ -46,6 +46,11 @@ public interface TrackerClient extends LoadBalancerClient
   TransportClient getTransportClient();
 
   /**
+   * @return Should the host skip performing slow start
+   */
+  boolean doNotSlowStart();
+
+  /**
    * @param partitionId Partition ID key.
    * @return Weight of specified partition or null if no partition with the ID exists.
    */

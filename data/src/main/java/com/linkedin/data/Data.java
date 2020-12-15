@@ -103,17 +103,29 @@ import java.util.stream.Collectors;
 public class Data
 {
   /**
-   * Placeholder object populated inside {@link DataList#_isTraversing} or {@link DataMap#_isTraversing} by the
+   * Placeholder object populated inside {@link DataList#isTraversing()} or {@link DataMap#isTraversing()} by the
    * default implementation of {@link CycleChecker} to indicate that the given {@link DataList} or {@link DataMap}
    * is being traversed.
    */
   private static final Object TRAVERSAL_INDICATOR = new Object();
 
   /**
+   * A no-op cycle checker.
+   */
+  private static final CycleChecker NO_OP_CYCLE_CHECKER = new CycleChecker() {};
+
+  /**
    * Supplier for cycle checker used when traversing instances using a {@link Data.TraverseCallback}. Applications can
    * choose to replace this with a supplier vending custom implementations, at their own risk of ensuring correctness.
+   *
+   * <p>The default implementation uses a {@link ThreadLocal} in every {@link DataList} and {@link DataMap} to detect
+   * and record cycles when assertions are enabled, and does NO checks when assertions are disabled.</p>
    */
-  private static Supplier<CycleChecker> CYCLE_CHECKER_SUPPLIER = DefaultCycleChecker::new;
+  private static Supplier<CycleChecker> CYCLE_CHECKER_SUPPLIER = () -> {
+    boolean assertionsEnabled = false;
+    assert assertionsEnabled = true;
+    return assertionsEnabled ? DefaultCycleChecker.SHARED_INSTANCE : NO_OP_CYCLE_CHECKER;
+  };
 
   /**
    * Override the default cycle checker supplier. Applications using this assume responsibility for correctness of their
@@ -172,7 +184,10 @@ public class Data
      *
      * @throws IOException If a cycle was detected when processing this.
      */
-    void startMap(DataMap map) throws IOException;
+    default void startMap(DataMap map) throws IOException
+    {
+
+    }
 
     /**
      * Invoked when the end of {@link DataMap} is traversed.
@@ -181,7 +196,10 @@ public class Data
      *
      * @throws IOException If a cycle was detected when processing this.
      */
-    void endMap(DataMap map) throws IOException;
+    default void endMap(DataMap map) throws IOException
+    {
+
+    }
 
     /**
      * Invoked when the start of {@link DataList} is traversed.
@@ -190,7 +208,10 @@ public class Data
      *
      * @throws IOException If a cycle was detected when processing this.
      */
-    void startList(DataList list) throws IOException;
+    default void startList(DataList list) throws IOException
+    {
+
+    }
 
     /**
      * Invoked when the end of {@link DataList} is traversed.
@@ -199,47 +220,52 @@ public class Data
      *
      * @throws IOException If a cycle was detected when processing this.
      */
-    void endList(DataList list) throws IOException;
+    default void endList(DataList list) throws IOException
+    {
+
+    }
   }
 
   /**
-   * The default {@link CycleChecker} implementation that leverages {@link DataList#_isTraversing} and
-   * {@link DataMap#_isTraversing} to detect cycles.
+   * The default {@link CycleChecker} implementation that leverages {@link DataList#isTraversing()} and
+   * {@link DataMap#isTraversing()} to detect cycles.
    */
   private static class DefaultCycleChecker implements CycleChecker
   {
+    private static final CycleChecker SHARED_INSTANCE = new DefaultCycleChecker();
+
     @Override
     public void startMap(DataMap map) throws IOException
     {
-      if (map._isTraversing.get() == TRAVERSAL_INDICATOR)
+      if (map.isTraversing().get() == TRAVERSAL_INDICATOR)
       {
         throw new IOException("Cycle detected!");
       }
 
-      map._isTraversing.set(TRAVERSAL_INDICATOR);
+      map.isTraversing().set(TRAVERSAL_INDICATOR);
     }
 
     @Override
     public void endMap(DataMap map) throws IOException
     {
-      map._isTraversing.set(null);
+      map.isTraversing().set(null);
     }
 
     @Override
     public void startList(DataList list) throws IOException
     {
-      if (list._isTraversing.get() == TRAVERSAL_INDICATOR)
+      if (list.isTraversing().get() == TRAVERSAL_INDICATOR)
       {
         throw new IOException("Cycle detected!");
       }
 
-      list._isTraversing.set(TRAVERSAL_INDICATOR);
+      list.isTraversing().set(TRAVERSAL_INDICATOR);
     }
 
     @Override
     public void endList(DataList list) throws IOException
     {
-      list._isTraversing.set(null);
+      list.isTraversing().set(null);
     }
   }
 

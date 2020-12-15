@@ -272,4 +272,15 @@ public class TestUnion
     assertEquals(unionCopy.getRecordBar().getLocation(), "far");
     assertEquals(union.getRecordBar().getLocation(), "near");
   }
+
+  @Test
+  public void testSetOnUnionWrappingSameMap()
+  {
+    UnionTest.UnionWithNull union = new UnionTest.UnionWithNull();
+    union.setInt(100);
+    UnionTest.UnionWithNull copy = new UnionTest.UnionWithNull(union.data());
+    assertEquals((int) copy.getInt(), 100);
+    copy.setString("haha");
+    assertEquals(union.getString(), "haha");
+  }
 }

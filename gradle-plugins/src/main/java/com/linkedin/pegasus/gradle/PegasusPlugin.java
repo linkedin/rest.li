@@ -579,6 +579,8 @@ public class PegasusPlugin implements Plugin<Project>
   private static final String TRANSLATED_SCHEMAS_DIR = "legacyPegasusSchemas";
   // Enable the use of argFiles for the tasks that support them
   private static final String ENABLE_ARG_FILE = "pegasusPlugin.enableArgFile";
+  // Enable the generation of fluent APIs
+  private static final String ENABLE_FLUENT_API = "pegasusPlugin.enableFluentApi";
 
   private static final String PEGASUS_PLUGIN_CONFIGURATION = "pegasusPlugin";
 
@@ -601,7 +603,7 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static final String SCHEMA_ANNOTATION_HANDLER_CONFIGURATION = "schemaAnnotationHandler";
 
-  private static final String COMPATIBILITY_OPTIONS_MODE_DATA = "DATA";
+  private static final String COMPATIBILITY_OPTIONS_MODE_EXTENSION = "EXTENSION";
 
   private static final String COMPATIBILITY_LEVEL_BACKWARDS = "BACKWARDS";
 
@@ -1423,6 +1425,12 @@ public class PegasusPlugin implements Plugin<Project>
     File schemaDir = isExtensionSchema? project.file(getExtensionSchemaPath(project, sourceSet))
         : project.file(getDataSchemaPath(project, sourceSet));
 
+    if ((isExtensionSchema && SharedFileUtils.getSuffixedFiles(project, schemaDir, PDL_FILE_SUFFIX).isEmpty()) ||
+            (!isExtensionSchema && SharedFileUtils.getSuffixedFiles(project, schemaDir, DATA_TEMPLATE_FILE_SUFFIXES).isEmpty()))
+    {
+        return;
+    }
+
     Path publishablePegasusSchemaSnapshotDir = project.getBuildDir().toPath().resolve(sourceSet.getName() +
             (isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT));
 
@@ -1441,12 +1449,12 @@ public class PegasusPlugin implements Plugin<Project>
           task.dependsOn(generatePegasusSchemaSnapshot);
           task.setCurrentSnapshotDirectory(publishablePegasusSchemaSnapshotDir.toFile());
           task.setPreviousSnapshotDirectory(pegasusSchemaSnapshotDir);
-          task.setCodegenClasspath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION)
-              .plus(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION))
+          task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION)
+              .plus(project.getConfigurations().getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION))
               .plus(project.getConfigurations().getByName(JavaPlatformPlugin.RUNTIME_CONFIGURATION_NAME)));
           task.setCompatibilityLevel(isExtensionSchema ? COMPATIBILITY_LEVEL_BACKWARDS
               :PropertyUtil.findCompatLevel(project, FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT));
-          task.setCompatibilityMode(isExtensionSchema ? COMPATIBILITY_OPTIONS_MODE_DATA :
+          task.setCompatibilityMode(isExtensionSchema ? COMPATIBILITY_OPTIONS_MODE_EXTENSION :
               PropertyUtil.findCompatMode(project, PEGASUS_COMPATIBILITY_MODE));
           task.setExtensionSchema(isExtensionSchema);
           task.setHandlerJarPath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION));
@@ -1910,6 +1918,10 @@ public class PegasusPlugin implements Plugin<Project>
           if (isPropertyTrue(project, ENABLE_ARG_FILE))
           {
             task.setEnableArgFile(true);
+          }
+          if (isPropertyTrue(project, ENABLE_FLUENT_API))
+          {
+            task.setGenerateFluentApi(true);
           }
           task.doFirst(new CacheableAction<>(t -> project.delete(generatedRestClientDir)));
         });

@@ -162,6 +162,9 @@ class SampleResources
   @RestLiCollection(name = "FOO")
   static class FOOResource extends CollectionResourceTemplate<Long, EmptyRecord> {}
 
+  @RestLiCollection(name = "symbolTable")
+  static class SymbolsResource extends CollectionResourceTemplate<Long, EmptyRecord> {}
+
   @RestLiCollection(
     name = "TestResource",
     namespace = "com.linkedin.restli.internal.server.model",

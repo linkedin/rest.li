@@ -530,4 +530,15 @@ public class TestRecord
     assertEquals(record.getRecordOptionalField().getLocation(), "near");
     assertNull(recordCopy.getRecordOptionalField());
   }
+
+  @Test
+  public void testSetOnRecordWrappingSameMap()
+  {
+    RecordBar bar = new RecordBar();
+    bar.setLocation("some");
+    RecordBar copy = new RecordBar(bar.data());
+    assertEquals(copy.getLocation(), "some");
+    copy.setLocation("other");
+    assertEquals(bar.getLocation(), "other");
+  }
 }

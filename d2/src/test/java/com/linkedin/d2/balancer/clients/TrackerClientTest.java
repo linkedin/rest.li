@@ -297,9 +297,6 @@ public class TrackerClientTest
   @Test
   public void testDoNotSlowStartWhenTrue()
   {
-    Map<String, Object> uriSpecificProperties = new HashMap<>();
-    uriSpecificProperties.put(PropertyKeys.DO_NOT_SLOW_START, true);
-
     Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(1d);
 
     DegraderImpl.Config config = new DegraderImpl.Config();
@@ -308,7 +305,7 @@ public class TrackerClientTest
 
     DegraderTrackerClient client = new DegraderTrackerClientImpl(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
                                                              new TestClient(), new SettableClock(), config, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
-                                                             TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, uriSpecificProperties);
+                                                             TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, true);
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Assert.assertEquals(degraderControl.getInitialDropRate(), DegraderImpl.DEFAULT_DO_NOT_SLOW_START_INITIAL_DROP_RATE,
         "Initial drop rate in config should have been overridden by doNotSlowStart uri property.");
@@ -317,9 +314,6 @@ public class TrackerClientTest
   @Test
   public void testDoNotSlowStartWhenFalse()
   {
-    Map<String, Object> uriSpecificProperties = new HashMap<>();
-    uriSpecificProperties.put(PropertyKeys.DO_NOT_SLOW_START, false);
-
     Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(1d);
 
     DegraderImpl.Config config = new DegraderImpl.Config();
@@ -328,7 +322,7 @@ public class TrackerClientTest
 
     DegraderTrackerClient client = new DegraderTrackerClientImpl(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
                                                              new TestClient(), new SettableClock(), config, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
-                                                             TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, uriSpecificProperties);
+                                                             TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, false);
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Assert.assertEquals(degraderControl.getInitialDropRate(), initialDropRate,
         "Initial drop rate in config should not have been overridden by doNotSlowStart uri property.");

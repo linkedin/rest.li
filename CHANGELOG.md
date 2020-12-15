@@ -14,6 +14,58 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.13.0] - 2020-12-12
+- Change AvroUtil to use newCompatibleJsonDecoder from avro-util
+- Bump `javax.mail:mail` dependency from `1.4.1` to `1.4.4` to avoid classloader issues in `javax.activation` code with Java 11.
+- Bump arvo compatibility layer `avroutil` dependency from `0.1.11` to `0.2.17` for Arvo Upgrade HI.
+- Setup the base infra for generating new fluent api client bindings.
+
+## [29.12.0] - 2020-12-02
+- Add a boolean flag as header for symbol table request to avoid conflict with resource requests.
+
+## [29.11.3] - 2020-11-25
+- Enable cycle check when serializing only when assertions are enabled, to avoid severe performance degradation at high QPS due to ThreadLocal slowdown.
+
+## [29.11.2] - 2020-11-23
+- Enhance request symbol table fetch. 
+  - Return null if uri prefix doesn't match. 
+  - If the fetch call 404s internally store an empty symbol table and return null. This will avoid repeated invocations to services that are not yet ready to support symbol tables
+
+## [29.11.1] - 2020-11-20
+- When we do validation on response, in the past empty unions will fail the validation and client will
+  - fail. Now we do not treat empty union as a failure, and just return the empty map as is.
+  - Also, if there are projection, the projection will apply to empty union if it is projected.
+
+## [29.10.1] - 2020-11-19
+- Fix bug where records wrapping the same map were not updated when setter was invoked on one record. 
+
+## [29.10.0] - 2020-11-18
+- Fix relative load balancer log. Bumping the minor version so that it can be picked up by LinkedIn internal services.
+
+## [29.9.2] - 2020-11-16
+- Implemented doNotSlowStart in relative load balancer.
+
+## [29.9.1] - 2020-11-12
+- Performance improved: add lazy instantiation of Throwable objects for timeout errors
+
+## [29.9.0] - 2020-11-10
+- By default, Pegasus Plugin's generated files (for GenerateDataTemplateTask and GenerateRestClientTask Gradle Tasks) are created with lower case file system paths. (There is an optional flag at the Gradle task level to change this behavior.)
+
+## [29.8.4] - 2020-11-09
+- Adding required record field is allowed and should be considered as backward compatible change in extension schemas. 
+
+## [29.8.3] - 2020-11-09
+- Support symbolTable requests with suffixes
+
+## [29.8.2] - 2020-11-06
+- Fix bug: if there is no input schema, do not run pegasusSchemaSnapshotCheck. The check statement was wrong.
+
+## [29.8.1] - 2020-11-05
+- Check whether schemas exist or not before running pegasusSchemaSnapshotCheck task
+
+## [29.8.0] - 2020-10-29
+- Empty commit to bump pegasus minor version. LinkedIn internal service needs the new minor version to prevent client version downgrade, since the LinkedIn internal services only notice on minor version discrepancy.
+
 ## [29.7.15] - 2020-10-23
 Log Streaming Error or Timeout Error in Jetty SyncIOHandler
 
@@ -4727,7 +4779,23 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.7.15...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.0...master
+[29.13.0]: https://github.com/linkedin/rest.li/compare/v29.12.0...v29.13.0
+[29.12.0]: https://github.com/linkedin/rest.li/compare/v29.11.3...v29.12.0
+[29.11.3]: https://github.com/linkedin/rest.li/compare/v29.11.2...v29.11.3
+[29.11.2]: https://github.com/linkedin/rest.li/compare/v29.11.1...v29.11.2
+[29.11.1]: https://github.com/linkedin/rest.li/compare/v29.10.1...v29.11.1
+[29.10.1]: https://github.com/linkedin/rest.li/compare/v29.10.0...v29.10.1
+[29.10.0]: https://github.com/linkedin/rest.li/compare/v29.9.2...v29.10.0
+[29.9.2]: https://github.com/linkedin/rest.li/compare/v29.9.1...v29.9.2
+[29.9.1]: https://github.com/linkedin/rest.li/compare/v29.9.0...v29.9.1
+[29.9.0]: https://github.com/linkedin/rest.li/compare/v29.8.5...v29.9.0
+[29.8.5]: https://github.com/linkedin/rest.li/compare/v29.8.4...v29.8.5
+[29.8.4]: https://github.com/linkedin/rest.li/compare/v29.8.3...v29.8.4
+[29.8.3]: https://github.com/linkedin/rest.li/compare/v29.8.2...v29.8.3
+[29.8.2]: https://github.com/linkedin/rest.li/compare/v29.8.1...v29.8.2
+[29.8.1]: https://github.com/linkedin/rest.li/compare/v29.8.0...v29.8.1
+[29.8.0]: https://github.com/linkedin/rest.li/compare/v29.7.15...v29.8.0
 [29.7.15]: https://github.com/linkedin/rest.li/compare/v29.7.14...v29.7.15
 [29.7.14]: https://github.com/linkedin/rest.li/compare/v29.7.13...v29.7.14
 [29.7.13]: https://github.com/linkedin/rest.li/compare/v29.7.12...v29.7.13

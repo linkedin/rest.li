@@ -111,7 +111,7 @@ public class CompatibilityChecker
     }
 
     int pathCount = 1;
-    if (_options.getMode() == CompatibilityOptions.Mode.DATA)
+    if (_options.getMode() == CompatibilityOptions.Mode.DATA || _options.getMode() == CompatibilityOptions.Mode.EXTENSION )
     {
       older = older.getDereferencedDataSchema();
       while (newer.getType() == DataSchema.Type.TYPEREF)
@@ -370,7 +370,7 @@ public class CompatibilityChecker
       }
     }
 
-    if (newerRequiredAdded.isEmpty() == false)
+    if (newerRequiredAdded.isEmpty() == false && _options.getMode() != CompatibilityOptions.Mode.EXTENSION)
     {
       appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_READER,
                     "new record added required fields %s",
