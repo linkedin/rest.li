@@ -23,7 +23,6 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.Null;
 import com.linkedin.data.element.DataElement;
-import com.linkedin.data.element.DataElementUtil;
 import com.linkedin.data.element.MutableDataElement;
 import com.linkedin.data.element.SimpleDataElement;
 import com.linkedin.data.it.IterationOrder;
@@ -525,6 +524,10 @@ public final class ValidateDataAgainstSchema
             MutableDataElement memberElement = new MutableDataElement(value, key, memberSchema, element);
             validate(memberElement, memberSchema, value);
           }
+        }
+        else if (!schema.isPartialSchema())
+        {
+          addMessage(element, "DataMap should have at least one entry for a union type");
         }
       }
       else
