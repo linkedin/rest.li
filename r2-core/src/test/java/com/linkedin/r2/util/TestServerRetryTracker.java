@@ -38,6 +38,57 @@ public class TestServerRetryTracker
   }
 
   @Test
+  public void testServerRetryTrackerWithNoRetry()
+  {
+    _serverRetryTracker = new ServerRetryTracker(ServerRetryFilter.DEFAULT_RETRY_LIMIT,
+        ServerRetryFilter.DEFAULT_AGGREGATED_INTERVAL_NUM, 0.0,
+        ServerRetryFilter.DEFAULT_UPDATE_INTERVAL_MS, _clock);
+
+    for (int i = 0; i < 10; i++)
+    {
+      _serverRetryTracker.add(0);
+    }
+
+    Assert.assertTrue(_serverRetryTracker.isBelowRetryRatio());
+    Assert.assertEquals(_serverRetryTracker.getRetryRatio(),0.0, 0.0001);
+
+    _clock.addDuration(ServerRetryFilter.DEFAULT_UPDATE_INTERVAL_MS);
+    _serverRetryTracker.updateRetryDecision();
+
+    Assert.assertTrue(_serverRetryTracker.isBelowRetryRatio());
+    Assert.assertEquals(_serverRetryTracker.getRetryRatio(),0.0, 0.0001);
+
+    _serverRetryTracker.add(1);
+    _clock.addDuration(ServerRetryFilter.DEFAULT_UPDATE_INTERVAL_MS);
+    _serverRetryTracker.updateRetryDecision();
+
+    Assert.assertFalse(_serverRetryTracker.isBelowRetryRatio());
+    // The aggregated retry counter is [2, 1, 0]. Retry ratio = 1/10 = 0.1
+    Assert.assertEquals(_serverRetryTracker.getRetryRatio(),0.1, 0.0001);
+  }
+
+  @Test
+  public void testServerRetryTrackerWithUnlimitedRetry()
+  {
+    _serverRetryTracker = new ServerRetryTracker(ServerRetryFilter.DEFAULT_RETRY_LIMIT,
+        ServerRetryFilter.DEFAULT_AGGREGATED_INTERVAL_NUM, 1.0,
+        ServerRetryFilter.DEFAULT_UPDATE_INTERVAL_MS, _clock);
+
+    for (int i = 0; i < 10; i++)
+    {
+      _serverRetryTracker.add(0);
+      _serverRetryTracker.add(1);
+      _serverRetryTracker.add(2);
+    }
+
+    _clock.addDuration(ServerRetryFilter.DEFAULT_UPDATE_INTERVAL_MS);
+    _serverRetryTracker.updateRetryDecision();
+
+    Assert.assertTrue(_serverRetryTracker.isBelowRetryRatio());
+    Assert.assertEquals(_serverRetryTracker.getRetryRatio(),1.0, 0.0001);
+  }
+
+  @Test
   public void testEmptyServerRetryTracker()
   {
     for (int i = 0; i < 10; i++)
@@ -49,7 +100,7 @@ public class TestServerRetryTracker
   }
 
   @Test
-  public void testServerRetryTracker()
+  public void testServerRetryTrackerSingleWindow()
   {
     _serverRetryTracker.add(0);
     _serverRetryTracker.add(0);
@@ -64,10 +115,22 @@ public class TestServerRetryTracker
     Assert.assertFalse(_serverRetryTracker.isBelowRetryRatio());
     // The aggregated retry counter is [2, 1, 0]. Retry ratio = 1/2 = 0.5
     Assert.assertEquals(_serverRetryTracker.getRetryRatio(),0.5, 0.0001);
+  }
+
+  @Test
+  public void testServerRetryTrackerMultipleWindow()
+  {
+    _serverRetryTracker.add(0);
+    _serverRetryTracker.add(0);
+    _serverRetryTracker.add(1);
+
+    _clock.addDuration(ServerRetryFilter.DEFAULT_UPDATE_INTERVAL_MS);
+    _serverRetryTracker.updateRetryDecision();
 
     _serverRetryTracker.add(1);
     _serverRetryTracker.add(2);
     _serverRetryTracker.add(2);
+
     _clock.addDuration(ServerRetryFilter.DEFAULT_UPDATE_INTERVAL_MS);
     _serverRetryTracker.updateRetryDecision();
 
@@ -102,5 +165,26 @@ public class TestServerRetryTracker
     Assert.assertTrue(_serverRetryTracker.isBelowRetryRatio());
     // Now all the previous intervals are discarded, and the aggregated retry counter is [0, 0, 0]. Retry ratio = 0
     Assert.assertEquals(_serverRetryTracker.getRetryRatio(),0.0, 0.0001);
+  }
+
+  @Test
+  public void testServerRetryTrackerAboveRetryLimit()
+  {
+    _serverRetryTracker = new ServerRetryTracker(2,
+        ServerRetryFilter.DEFAULT_AGGREGATED_INTERVAL_NUM, ServerRetryFilter.DEFAULT_MAX_REQUEST_RETRY_RATIO,
+        ServerRetryFilter.DEFAULT_UPDATE_INTERVAL_MS, _clock);
+
+    _serverRetryTracker.add(0);
+    _serverRetryTracker.add(0);
+    _serverRetryTracker.add(1);
+    // This number of attempts is above retry limit
+    _serverRetryTracker.add(3);
+
+    _clock.addDuration(ServerRetryFilter.DEFAULT_UPDATE_INTERVAL_MS);
+    _serverRetryTracker.updateRetryDecision();
+
+    Assert.assertFalse(_serverRetryTracker.isBelowRetryRatio());
+    // The aggregated retry counter is [2, 1, 1]. Retry ratio = ((1/2) + 1) / 2 = 0.75
+    Assert.assertEquals(_serverRetryTracker.getRetryRatio(),0.75, 0.0001);
   }
 }

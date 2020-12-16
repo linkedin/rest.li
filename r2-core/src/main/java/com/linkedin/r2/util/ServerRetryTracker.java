@@ -17,6 +17,7 @@
 package com.linkedin.r2.util;
 
 import com.linkedin.util.clock.Clock;
+import java.util.Arrays;
 import java.util.LinkedList;
 import org.checkerframework.checker.lock.qual.GuardedBy;
 import org.slf4j.Logger;
@@ -68,21 +69,16 @@ public class ServerRetryTracker
 
   public void add(int numberOfRetryAttempts)
   {
-    if (numberOfRetryAttempts <= _retryLimit)
-    {
-      synchronized (_counterLock)
-      {
-        _retryAttemptsCounter.getLast()[numberOfRetryAttempts] += 1;
-      }
-    } else
+    if (numberOfRetryAttempts > _retryLimit)
     {
       LOG.warn("Unexpected number of retry attempts: " + numberOfRetryAttempts + ", current retry limit: " + _retryLimit);
-      synchronized (_counterLock)
-      {
-        _retryAttemptsCounter.getLast()[_retryLimit] += 1;
-      }
+      numberOfRetryAttempts = _retryLimit;
     }
 
+    synchronized (_counterLock)
+    {
+      _retryAttemptsCounter.getLast()[numberOfRetryAttempts] += 1;
+    }
     updateRetryDecision();
   }
 
@@ -97,7 +93,7 @@ public class ServerRetryTracker
     synchronized (_counterLock)
     {
       int[] intervalToAggregate = _retryAttemptsCounter.getLast();
-      for (int i = 0; i < _retryLimit; i++)
+      for (int i = 0; i <= _retryLimit; i++)
       {
         _aggregatedRetryAttemptsCounter[i] += intervalToAggregate[i];
       }
@@ -106,7 +102,7 @@ public class ServerRetryTracker
       {
         // discard the oldest interval
         int[] intervalToDiscard = _retryAttemptsCounter.removeFirst();
-        for (int i = 0; i < _retryLimit; i++)
+        for (int i = 0; i <= _retryLimit; i++)
         {
           _aggregatedRetryAttemptsCounter[i] -= intervalToDiscard[i];
         }
