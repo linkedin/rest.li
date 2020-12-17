@@ -9,14 +9,14 @@ excerpt: Rest.li PDSC Syntax.
 
 ## Contents
 
--   [PDSC Schema Definition](#pdsc__schema_definition)
--   [Creating a Schema](#creating_a_schema)
+-   [PDSC Schema Definition](#pdsc-schema-definition)
+-   [Creating a Schema](#creating-a-schema)
 -   [Typeref](#typeref)
--   [Record Field Attributes](#record_field_attributes)
--   [Optional Fields](#optional_fields)
+-   [Record Field Attributes](#record-field-attributes)
+-   [Optional Fields](#optional-fields)
 -   [Union](#union)
--   [Default Values](#default_values)
--   [Including Fields from Another Record](#including_fields_from_another_record)
+-   [Default Values](#default-values)
+-   [Including Fields from Another Record](#including-fields-from-another-record)
 -   [Deprecation](#deprecation)
 
 
