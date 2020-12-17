@@ -39,7 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Filter implementation that processes a retrieable response. Our contracts requires user to throw
+ * Filter implementation that processes a retriable response. Our contracts requires user to throw
  * {@link RetriableRequestException} when they want to request a retry. This filter catches that exception
  * and converts it to a wire attributes that will be sent back to the client side.
  *

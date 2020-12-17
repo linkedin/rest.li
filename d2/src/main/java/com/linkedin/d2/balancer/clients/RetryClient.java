@@ -47,10 +47,7 @@ import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,9 +79,6 @@ public class RetryClient extends D2ClientDelegator
   public static final long DEFAULT_UPDATE_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
   public static final int DEFAULT_AGGREGATED_INTERVAL_NUM = 5;
   private static final Logger LOG = LoggerFactory.getLogger(RetryClient.class);
-
-  private final Object _lock = new Object();
-  private volatile List<RetryRequestListener> _listeners = new ArrayList<>();
 
   private final Clock _clock;
   private final LoadBalancer _balancer;
@@ -121,7 +115,7 @@ public class RetryClient extends D2ClientDelegator
   @Override
   public Future<RestResponse> restRequest(RestRequest request, RequestContext requestContext)
   {
-    final FutureCallback<RestResponse> future = new FutureCallback<RestResponse>();
+    final FutureCallback<RestResponse> future = new FutureCallback<>();
     restRequest(request, requestContext, future);
     return future;
   }
@@ -221,10 +215,6 @@ public class RetryClient extends D2ClientDelegator
             .addHeaderValue(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, Integer.toString(numberOfRetryAttempts))
             .build(EntityStreams.newEntityStream(new ByteStringWriter(_content)));
         updateRetryTracker(request.getURI(), true);
-        for (RetryRequestListener listener : _listeners)
-        {
-          listener.onRetryRequest(request, numberOfRetryAttempts);
-        }
         _d2Client.streamRequest(newRequest, new RequestContext(context), this);
         return true;
       }
@@ -251,10 +241,6 @@ public class RetryClient extends D2ClientDelegator
           .addHeaderValue(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, Integer.toString(numberOfRetryAttempts))
           .build();
       updateRetryTracker(request.getURI(), true);
-      for (RetryRequestListener listener : _listeners)
-      {
-        listener.onRetryRequest(request, numberOfRetryAttempts);
-      }
       _d2Client.restRequest(newRequest, context, this);
       return true;
     }
@@ -271,17 +257,13 @@ public class RetryClient extends D2ClientDelegator
     private final REQ _request;
     private final RequestContext _context;
     private final Callback<RESP> _callback;
-    private final String _serviceName;
     private final ClientRetryTracker _retryTracker;
-
-    private Map<String, Object> _transportClientProperties;
 
     public RetryRequestCallback(REQ request, RequestContext context, Callback<RESP> callback, ClientRetryTracker retryTracker)
     {
       _request = request;
       _context = context;
       _callback = callback;
-      _serviceName = LoadBalancerUtil.getServiceNameFromUri(request.getURI());
       _retryTracker = retryTracker;
     }
 
@@ -438,7 +420,7 @@ public class RetryClient extends D2ClientDelegator
           // discard the oldest interval
           RetryCounter intervalToDiscard = _retryCounter.removeFirst();
           _aggregatedRetryCounter.subtractFromTotalRequestCount(intervalToDiscard.getTotalRequestCount());
-          _aggregatedRetryCounter.subtractFromRetryRequestCount(intervalToDiscard.getRetryRequestCount());;
+          _aggregatedRetryCounter.subtractFromRetryRequestCount(intervalToDiscard.getRetryRequestCount());
         }
 
         // append a new interval
@@ -547,39 +529,5 @@ public class RetryClient extends D2ClientDelegator
     {
       _totalRequestCount -= count;
     }
-  }
-
-  public interface RetryRequestListener
-  {
-    void onRetryRequest(Request request, int numberOfRetryAttempts);
-  }
-
-  public void addRetryRequestListener(RetryRequestListener listener)
-  {
-    synchronized (_lock)
-    {
-      // Since addListener and removeListener should be rare,
-      // copy-on-write is implemented for _listeners.
-      List<RetryRequestListener> copy = new ArrayList<>(_listeners);
-      copy.add(listener);
-      _listeners = Collections.unmodifiableList(copy);
-    }
-  }
-
-  public boolean removeRetryRequestListener(RetryRequestListener listener)
-  {
-    boolean removed = false;
-    synchronized (_lock)
-    {
-      // Since addListener and removeListener should be rare,
-      // copy-on-write is implemented for _listeners.
-      if (_listeners.contains(listener))
-      {
-        List<RetryRequestListener> copy = new ArrayList<>(_listeners);
-        removed = copy.remove(listener);
-        _listeners = Collections.unmodifiableList(copy);
-      }
-    }
-    return removed;
   }
 }
