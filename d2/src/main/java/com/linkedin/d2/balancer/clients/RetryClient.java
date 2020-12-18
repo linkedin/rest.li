@@ -159,8 +159,8 @@ public class RetryClient extends D2ClientDelegator
   private ClientRetryTracker updateRetryTracker(URI uri, boolean isRetry)
   {
     String serviceName = LoadBalancerUtil.getServiceNameFromUri(uri);
-    _retryTrackerMap.putIfAbsent(serviceName, new ClientRetryTracker(_aggregatedIntervalNum, _updateIntervalMs, _clock, serviceName));
-    ClientRetryTracker retryTracker = _retryTrackerMap.get(serviceName);
+    ClientRetryTracker retryTracker = _retryTrackerMap.computeIfAbsent(serviceName,
+        k -> new ClientRetryTracker(_aggregatedIntervalNum, _updateIntervalMs, _clock, k));
     retryTracker.add(isRetry);
     return retryTracker;
   }
@@ -358,6 +358,12 @@ public class RetryClient extends D2ClientDelegator
     public abstract boolean doRetryRequest(REQ request, RequestContext context, int numberOfRetryAttempts);
   }
 
+  /**
+   * Stores the ratio of retry requests to total requests. It reads maxClientRequestRetryRatio
+   * from {@link com.linkedin.d2.D2TransportClientProperties} and compares with the current retry ratio to
+   * decide whether or not to retry in the next interval. When calculating the ratio, it looks at the last
+   * {@link ClientRetryTracker#_aggregatedIntervalNum} intervals by aggregating the recorded requests.
+   */
   @ThreadSafe
   private class ClientRetryTracker
   {
@@ -371,10 +377,12 @@ public class RetryClient extends D2ClientDelegator
 
     @GuardedBy("_updateLock")
     private volatile long _lastRollOverTime;
+    @GuardedBy("_updateLock")
     private double _currentAggregatedRetryRatio;
 
     @GuardedBy("_counterLock")
     private final LinkedList<RetryCounter> _retryCounter;
+    @GuardedBy("_counterLock")
     private final RetryCounter _aggregatedRetryCounter;
 
     private ClientRetryTracker(int aggregatedIntervalNum, long updateIntervalMs, Clock clock, String serviceName)

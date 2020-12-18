@@ -17,7 +17,6 @@
 package com.linkedin.r2.util;
 
 import com.linkedin.util.clock.Clock;
-import java.util.Arrays;
 import java.util.LinkedList;
 import org.checkerframework.checker.lock.qual.GuardedBy;
 import org.slf4j.Logger;
