@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.13.1] - 2020-12-14
+- Fix the restriction of empty union validation from wide open to only allow when there is a projection in the union
+
 ## [29.13.0] - 2020-12-12
 - Change AvroUtil to use newCompatibleJsonDecoder from avro-util
 - Bump `javax.mail:mail` dependency from `1.4.1` to `1.4.4` to avoid classloader issues in `javax.activation` code with Java 11.
@@ -27,8 +30,8 @@ and what APIs have changed, if applicable.
 - Enable cycle check when serializing only when assertions are enabled, to avoid severe performance degradation at high QPS due to ThreadLocal slowdown.
 
 ## [29.11.2] - 2020-11-23
-- Enhance request symbol table fetch. 
-  - Return null if uri prefix doesn't match. 
+- Enhance request symbol table fetch.
+  - Return null if uri prefix doesn't match.
   - If the fetch call 404s internally store an empty symbol table and return null. This will avoid repeated invocations to services that are not yet ready to support symbol tables
 
 ## [29.11.1] - 2020-11-20
@@ -37,7 +40,7 @@ and what APIs have changed, if applicable.
   - Also, if there are projection, the projection will apply to empty union if it is projected.
 
 ## [29.10.1] - 2020-11-19
-- Fix bug where records wrapping the same map were not updated when setter was invoked on one record. 
+- Fix bug where records wrapping the same map were not updated when setter was invoked on one record.
 
 ## [29.10.0] - 2020-11-18
 - Fix relative load balancer log. Bumping the minor version so that it can be picked up by LinkedIn internal services.
@@ -52,7 +55,7 @@ and what APIs have changed, if applicable.
 - By default, Pegasus Plugin's generated files (for GenerateDataTemplateTask and GenerateRestClientTask Gradle Tasks) are created with lower case file system paths. (There is an optional flag at the Gradle task level to change this behavior.)
 
 ## [29.8.4] - 2020-11-09
-- Adding required record field is allowed and should be considered as backward compatible change in extension schemas. 
+- Adding required record field is allowed and should be considered as backward compatible change in extension schemas.
 
 ## [29.8.3] - 2020-11-09
 - Support symbolTable requests with suffixes
@@ -115,7 +118,7 @@ Log Streaming Error or Timeout Error in Jetty SyncIOHandler
 
 ## [29.7.3] - 2020-10-02
 - Bump `parseq` dependency from `2.6.31` to `4.1.6`.
-- Add `checkPegasusSchemaSnapshot` task. 
+- Add `checkPegasusSchemaSnapshot` task.
    - The task will be used to check any pegasus schema compatible and incompatible changes.
    - The pegasus schema may or may not be part of a Rest.li resource.
    - The task will be triggered at build time, if user provides gradle property: `pegasusPlugin.enablePegasusSchemaCompatibilityCheck=true`.
@@ -4779,7 +4782,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.1...master
+[29.13.1]: https://github.com/linkedin/rest.li/compare/v29.13.0...v29.13.1
 [29.13.0]: https://github.com/linkedin/rest.li/compare/v29.12.0...v29.13.0
 [29.12.0]: https://github.com/linkedin/rest.li/compare/v29.11.3...v29.12.0
 [29.11.3]: https://github.com/linkedin/rest.li/compare/v29.11.2...v29.11.3

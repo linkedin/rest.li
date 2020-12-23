@@ -37,6 +37,13 @@ import static com.linkedin.data.schema.DataSchemaConstants.RESTRICTED_UNION_ALIA
 public final class UnionDataSchema extends ComplexDataSchema
 {
   /**
+   * If this is set to true, this is schema will be  a partial schema
+   * created from projection. It is internal use only to represent a
+   * subset of members in the union.
+   */
+  private boolean isPartialSchema = false;
+
+  /**
    * Class for representing a member inside a Union
    */
   public static class Member implements Cloneable
@@ -457,4 +464,19 @@ public final class UnionDataSchema extends ComplexDataSchema
   private boolean _membersAliased = false;
 
   private static final Map<String, Integer> _emptyTypesToIndexMap = Collections.emptyMap();
+
+  /**
+   * This set/get pair methods are used internal only to specify a boolean flag
+   * for partial union schema.
+   * @param partialSchema
+   */
+  public void setPartialSchema(boolean partialSchema)
+  {
+    this.isPartialSchema = partialSchema;
+  }
+
+  public boolean isPartialSchema()
+  {
+    return this.isPartialSchema;
+  }
 }
