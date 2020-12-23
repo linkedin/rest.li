@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.13.2] - 2020-12-23
+- Implement overload failure client-side retry.
+
 ## [29.13.1] - 2020-12-14
 - Fix the restriction of empty union validation from wide open to only allow when there is a projection in the union
 
@@ -4782,7 +4785,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.2...master
+[29.13.2]: https://github.com/linkedin/rest.li/compare/v29.13.1...v29.13.2
 [29.13.1]: https://github.com/linkedin/rest.li/compare/v29.13.0...v29.13.1
 [29.13.0]: https://github.com/linkedin/rest.li/compare/v29.12.0...v29.13.0
 [29.12.0]: https://github.com/linkedin/rest.li/compare/v29.11.3...v29.12.0
