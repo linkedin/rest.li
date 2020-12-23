@@ -30,6 +30,7 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import java.util.Map;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,8 +74,14 @@ public class ClientRetryFilter implements RestFilter, StreamFilter
     {
       nextFilter.onError(new RetriableRequestException(retryAttr), requestContext, wireAttrs);
     }
-    else
-    {
+    else {
+      Throwable[] throwables = ExceptionUtils.getThrowables(ex);
+      for (Throwable throwable : throwables) {
+        if (throwable instanceof RetriableRequestException) {
+          ((RetriableRequestException) throwable).setDoNotRetryOverride(true);
+          break;
+        }
+      }
       nextFilter.onError(ex, requestContext, wireAttrs);
     }
   }

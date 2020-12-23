@@ -246,7 +246,7 @@ public class TestCallTracker
 
     Assert.assertEquals(_callTracker.getCallStats().getErrorCount(), 0,
                         "Interval error count is incorrect");
-    Assert.assertEquals(_callTracker.getCallStats().getErrorCount(), startErrorCountTotal + 0,
+    Assert.assertEquals(_callTracker.getCallStats().getErrorCountTotal(), startErrorCountTotal + 0,
                         "Interval error count total is incorrect");
     Assert.assertEquals(_callTracker.getCallStats().getErrorRate(), 0.0,
                         "Interval error rate is incorrect");

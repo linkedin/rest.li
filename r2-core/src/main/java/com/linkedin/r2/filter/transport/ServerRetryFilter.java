@@ -29,13 +29,17 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.transport.http.common.HttpConstants;
+import com.linkedin.r2.util.ServerRetryTracker;
+import com.linkedin.util.clock.Clock;
+import com.linkedin.util.clock.SystemClock;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
- * Filter implementation that processes a retrieable response. Our contracts requires user to throw
+ * Filter implementation that processes a retriable response. Our contracts requires user to throw
  * {@link RetriableRequestException} when they want to request a retry. This filter catches that exception
  * and converts it to a wire attributes that will be sent back to the client side.
  *
@@ -45,6 +49,43 @@ import org.slf4j.LoggerFactory;
 public class ServerRetryFilter implements RestFilter, StreamFilter
 {
   private static final Logger LOG = LoggerFactory.getLogger(ServerRetryFilter.class);
+
+  public static final int DEFAULT_RETRY_LIMIT = 3;
+  public static final long DEFAULT_UPDATE_INTERVAL_MS = TimeUnit.SECONDS.toMillis(5);
+  public static final int DEFAULT_AGGREGATED_INTERVAL_NUM = 5;
+  public static final double DEFAULT_MAX_REQUEST_RETRY_RATIO = 0.1;
+
+  private final ServerRetryTracker _serverRetryTracker;
+
+  public ServerRetryFilter()
+  {
+    this(SystemClock.instance(), DEFAULT_RETRY_LIMIT, DEFAULT_MAX_REQUEST_RETRY_RATIO, DEFAULT_UPDATE_INTERVAL_MS, DEFAULT_AGGREGATED_INTERVAL_NUM);
+  }
+
+  public ServerRetryFilter(Clock clock, int retryLimit, double maxRequestRetryRatio, long updateIntervalMs, int aggregatedIntervalNum)
+  {
+    _serverRetryTracker = new ServerRetryTracker(retryLimit, aggregatedIntervalNum, maxRequestRetryRatio, updateIntervalMs, clock);
+  }
+
+  @Override
+  public void onRestRequest(RestRequest req,
+      RequestContext requestContext,
+      Map<String, String> wireAttrs,
+      NextFilter<RestRequest, RestResponse> nextFilter)
+  {
+    updateRetryTracker(req);
+    nextFilter.onRequest(req, requestContext, wireAttrs);
+  }
+
+  @Override
+  public void onStreamRequest(StreamRequest req,
+      RequestContext requestContext,
+      Map<String, String> wireAttrs,
+      NextFilter<StreamRequest, StreamResponse> nextFilter)
+  {
+    updateRetryTracker(req);
+    nextFilter.onRequest(req, requestContext, wireAttrs);
+  }
 
   @Override
   public void onRestError(Throwable ex,
@@ -75,13 +116,30 @@ public class ServerRetryFilter implements RestFilter, StreamFilter
       if (cause instanceof RetriableRequestException)
       {
         String message = cause.getMessage();
-        LOG.debug("RetriableRequestException caught! Error message: {}", message);
-        wireAttrs.put(R2Constants.RETRY_MESSAGE_ATTRIBUTE_KEY, message);
+        if (_serverRetryTracker.isBelowRetryRatio())
+        {
+          LOG.debug("RetriableRequestException caught! Do retry. Error message: {}", message);
+          wireAttrs.put(R2Constants.RETRY_MESSAGE_ATTRIBUTE_KEY, message);
+        }
+        else
+        {
+          LOG.debug("Max request retry ratio exceeded! Will not retry. Error message: {}", message);
+          wireAttrs.remove(R2Constants.RETRY_MESSAGE_ATTRIBUTE_KEY);
+        }
         break;
       }
       cause = cause.getCause();
     }
 
     nextFilter.onError(ex, requestContext, wireAttrs);
+  }
+
+  private void updateRetryTracker(Request req)
+  {
+    String retryAttemptsHeader = req.getHeader(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS);
+    if (retryAttemptsHeader != null)
+    {
+      _serverRetryTracker.add(Integer.parseInt(retryAttemptsHeader));
+    }
   }
 }
