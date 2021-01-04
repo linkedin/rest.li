@@ -1,6 +1,7 @@
 language: java
 jdk:
   - oraclejdk8
+  - openjdk11
 
 # Anything after trusty doesn't have Java 8
 dist: trusty
