@@ -27,7 +27,6 @@ import java.util.Map;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.runtime.log.Log4JLogChute;
 import org.apache.velocity.runtime.resource.loader.JarResourceLoader;
 
 /**
@@ -79,9 +78,6 @@ public class VelocityTemplatingEngine implements TemplatingEngine
     {
       throw new IllegalArgumentException("Unsupported template path scheme");
     }
-
-    _velocity.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, Log4JLogChute.class.getName());
-    _velocity.setProperty(Log4JLogChute.RUNTIME_LOG_LOG4J_LOGGER, getClass().getName());
 
     try
     {

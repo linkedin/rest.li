@@ -37,7 +37,7 @@ import java.util.Set;
  */
 public class CreateIdEntityRequest<K, V extends RecordTemplate> extends Request<IdEntityResponse<K, V>>
 {
-  CreateIdEntityRequest(V input,
+  public CreateIdEntityRequest(V input,
                         Map<String, String> headers,
                         List<HttpCookie> cookies,
                         RestResponseDecoder<IdEntityResponse<K, V>> decoder,

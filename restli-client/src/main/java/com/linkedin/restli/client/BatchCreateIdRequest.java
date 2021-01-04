@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public class BatchCreateIdRequest<K,T extends RecordTemplate> extends Request<BatchCreateIdResponse<K>>
 {
-  BatchCreateIdRequest(Map<String, String> headers,
+  public BatchCreateIdRequest(Map<String, String> headers,
                        List<HttpCookie> cookies,
                        BatchCreateIdDecoder<K> decoder,
                        CollectionRequest<T> input,
