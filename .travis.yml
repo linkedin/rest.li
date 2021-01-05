@@ -1,7 +1,6 @@
 language: java
 jdk:
   - oraclejdk8
-  - openjdk11
 
 # Anything after trusty doesn't have Java 8
 dist: trusty
@@ -11,7 +10,10 @@ dist: trusty
 install: true
 
 # Build commits to master, PRs to master, and release tags
-script: ./scripts/travis/build.sh
+script:
+  - export JAVA11_HOME=$HOME/openjdk11
+  - $TRAVIS_BUILD_DIR/install-jdk.sh --install openjdk11 --target $JAVA11_HOME
+  - ./scripts/travis/build.sh
 branches:
   only:
     - master
