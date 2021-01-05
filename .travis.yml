@@ -11,6 +11,7 @@ install: true
 
 # Build commits to master, PRs to master, and release tags
 script:
+  - ls $HOME/.jabba/
   - export JAVA11_HOME=$HOME/openjdk11
   - ~/bin/install-jdk.sh --install openjdk11 --target $JAVA11_HOME
   - ./scripts/travis/build.sh
@@ -24,6 +25,26 @@ env:
   global:
     - secure: "nWfVV8tA9njefTyPrQc03XCdE83Ep3XvQYvx+ABmoS9NwUrbHf0koKtchgrmATVELTXCrdmoFSh8CfXdwlYz26XMzho+jdXyLv5aR1SeRHgN+uR+l3MvnNaOm1xQUapXF5E2M0X9dgBfGdiYJBSgpW3iceWKs2Jb0/U7wdVtVbaNX5icLAaegaelzsF54QxI37g9SpImpnMZP0YwrD2Kt+eVwqIlCiBfYvjbxnKd/h+zZCYwH1hdtBG8Ce/e95/CcMg9/YwMWDCLkUBnFHZBiGR5WsN9i6d7lwZ/KjsXlwVSnFFFR98mXuWjCTjgqsbgT5GTKtUHuyoC6gMIAifajr+y7Zhf1f9HTHPNFgxSXDSM/rIIYcx88gwbfCDkV8VPKpojSJZwfO/gunHSS0bEnKBKNyD8sz6ObAjH+TYvYZulOcec59KBhQ1hLMnTlaWumFdxxFWNvp8tcqnYM4UcIZrX/shEYKtkqBvgWXwP80g+u9EyHYW2z682cd8ynRt5xP9X0M5LJTHlfmWb3Hv18sn4vkLBXkpUokzfZzxff/63j+FdYNbG4jsJEeAxqa46NtkZcjIMddfp0GobKMgfj+CfWJoHueYucGPkaD1FQ5r4SrtSgnrShRZjvgF2sbSosbanbrmdAQtYfSqPV/H16iezSUMn9EDSfkuOp/a0maU="
     - secure: "k0njGMbUMDbAmZjp+wWKkQXfENmpLqS86xPP5PRcLty6sG6Y3L9wGy9krGTKuny+vVVxtNmbEweyHLv8k1aoN3fDJc+ixQEHcjYGwdNoJlHaxRax3JDb8yNclzTrArob5gTJGlV3zbbaY+a81qrJ0LAfWNrLQSEgtrrBRh44lQwx3ZZ0g84jGC0m+uHwixI3G2rqERJ+Gkngp0yq+zcERv46k3xAbmh/0vtDlrbgVqVN+FtiAkQjqK3MPSj+zkAQ433D31f1nShPGch8iUFa562ghmnH3HJMSm99aEyo25jVl+vzajxzdp9HBwyT+tbFtQ/Vz36PqwRkEHP4bsa1zTdKHrqIdVWDD2525vruuWz8VavSaxGSlyeTHCKzh+i5zlhQIYc474y1Zr5bDBMWZRHHKKf649dgItWN4u8p+ays0KIuClTXjzrobHEZ2iN7lAa3kT0o4guL2z8wh73GFVdBImXwL8lqadsq54kNu9B6oLYsMnD4K+xpWebel5WvVjklczY5OXIVLPBmal3GGo0/rW0YQzO8tT5D90lO4UJvGyO+fMlOSt8jR0jTk3ox0HT80qWegYv6MvrGG/6L0dO7/GaWYTpj41JvWC/k9A0mUUiUTqEGZzTM8VbDgusUBR5SrEPwm1K5DrLzBoTEqxAS4aHgniFz39tVMMmak2k="
+    - GRAVIS_REPO="https://github.com/DanySK/Gravis-CI.git"
+    - GRAVIS="$HOME/gravis"
+  matrix:
+    # You can see the list of supported environments by installing Jabba and using ls-remote:
+    # https://github.com/shyiko/jabba#usage
+    - JDK="openjdk@~1.8.172"
+    # Partial versions are allowed. They are dynamically resoved by launching jabba ls-remote,
+    # filtering for the provided JDK string, then picking the *first* match. This is useful if
+    # the intent is to target the latest release of some Java major release, or if the latest
+    # available build differs among platforms.
+    - JDK="openjdk@1.11-9"
+
+before_install:
+  # Check out the gravis script set
+  - travis_retry git clone --depth 1 $GRAVIS_REPO $GRAVIS
+  # Install the JDK you configured in the $JDK environment variable
+  # Never use travis_retry: hides failures. travis_retry is used internally where possible.
+  - source $GRAVIS/install-jdk
+  - jabba ls-remote
+  - ls $HOME/.jabba/
 
 # Publish a new version on tag push
 deploy:
