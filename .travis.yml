@@ -12,7 +12,7 @@ install: true
 # Build commits to master, PRs to master, and release tags
 script:
   - export JAVA11_HOME=$HOME/openjdk11
-  - $TRAVIS_BUILD_DIR/install-jdk.sh --install openjdk11 --target $JAVA11_HOME
+  - ~/bin/install-jdk.sh --install openjdk11 --target $JAVA11_HOME
   - ./scripts/travis/build.sh
 branches:
   only:
