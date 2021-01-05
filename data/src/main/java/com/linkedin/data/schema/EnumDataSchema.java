@@ -17,6 +17,7 @@
 package com.linkedin.data.schema;
 
 
+import com.linkedin.data.DataMap;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.linkedin.data.schema.DataSchemaConstants.ENUM_SYMBOL_PATTERN;
+import static com.linkedin.data.schema.DataSchemaConstants.SYMBOL_PROPERTIES_KEY;
 
 /**
  * {@link DataSchema} for enum.
@@ -168,6 +170,25 @@ public final class EnumDataSchema extends NamedDataSchema
   public boolean contains(String symbol)
   {
     return _symbolToIndexMap.containsKey(symbol);
+  }
+
+  /**
+   * Returns properties for the given symbol.
+   * @param symbol to get properties for.
+   * @return properties for the symbol (empty map if no properties defined). null for invalid symbols.
+   */
+  public Map<String, Object> getSymbolProperties(String symbol)
+  {
+    if (!_symbolToIndexMap.containsKey(symbol))
+    {
+      return null;
+    }
+    Object prop = getProperties().get(SYMBOL_PROPERTIES_KEY);
+    if(prop instanceof DataMap)
+    {
+      return ((DataMap) prop).getDataMap(symbol);
+    }
+    return Collections.emptyMap();
   }
 
   @Override

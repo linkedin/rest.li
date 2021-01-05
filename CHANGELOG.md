@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add support for accessing schema statically from generated template classes and for getting symbol properties from enum schema properties.
 
 ## [29.13.2] - 2020-12-23
 - Implement overload failure client-side retry.
