@@ -1336,6 +1336,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     // Generate the schema field initialization
     schemaField.init(JExpr.cast(getCodeModel()._ref(schema.getClass()), parseSchemaInvocation));
 
+    // Using "dataSchema" as method name since "schema" conflicts with RecordTemplate::schema and "getSchema" conflicts
+    // with TyperefInfo::getSchema
+    final JMethod staticFieldsAccessor = templateClass.method(JMod.PUBLIC | JMod.STATIC, schema.getClass(), "dataSchema");
+    staticFieldsAccessor.body()._return(schemaField);
+
     return schemaField;
   }
 

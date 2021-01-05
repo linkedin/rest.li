@@ -20,11 +20,15 @@ package com.linkedin.pegasus.generator.test;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.pegasus.generator.test.idl.enums.EnumProperties;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import org.testng.annotations.Test;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -67,5 +71,26 @@ public class TestEnum
   {
     testEnum(EnumFruits.class);
     testEnum(EnumEmpty.class);
+  }
+
+  @Test
+  public void testEnumProperties()
+  {
+    EnumDataSchema enumPropertiesSchema = EnumProperties.dataSchema();
+    assertNotNull(enumPropertiesSchema);
+
+    Map<String, Object> appleProps = enumPropertiesSchema.getSymbolProperties(EnumProperties.APPLE.name());
+    assertNotNull(appleProps);
+    assertEquals(appleProps.get("color"), "red");
+
+    assertNull(enumPropertiesSchema.getSymbolProperties("unknown"));
+
+    // Fruits.pdl enum doesn't have symbol properties.
+    EnumDataSchema fruitsSchema = Fruits.dataSchema();
+    assertNotNull(fruitsSchema);
+
+    appleProps = fruitsSchema.getSymbolProperties(Fruits.APPLE.name());
+    assertNotNull(appleProps);
+    assertTrue(appleProps.isEmpty());
   }
 }

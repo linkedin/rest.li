@@ -541,8 +541,9 @@ public class PdlSchemaParser extends AbstractSchemaParser
         }
         else
         {
-          List<String> path = new ArrayList<>(prop.path);
-          path.add(0, symbol);
+          List<String> path = new ArrayList<>(prop.path.size() + 1);
+          path.add(symbol);
+          path.addAll(prop.path);
           addPropertiesAtPath(prop, symbolProperties, path, value);
         }
       }
