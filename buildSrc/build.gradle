@@ -1,5 +1,22 @@
+plugins {
+  id 'java-gradle-plugin'
+}
+
 // add gradle-plugins to the source of buildSrc
 // this allows buildSrc to use the up-to-date pegasus plugin code without duplication
 project.sourceSets.main.java {
   srcDir '../gradle-plugins/src/main/java'
+}
+
+gradlePlugin {
+  plugins {
+    myPlugins {
+      id = 'alternateJvmTest'
+      implementationClass = 'com.linkedin.pegasus.gradle.AlternateJvmTestPlugin'
+    }
+  }
+}
+
+dependencies {
+  compileOnly gradleApi()
 }
