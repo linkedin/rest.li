@@ -27,10 +27,6 @@ env:
     - secure: "k0njGMbUMDbAmZjp+wWKkQXfENmpLqS86xPP5PRcLty6sG6Y3L9wGy9krGTKuny+vVVxtNmbEweyHLv8k1aoN3fDJc+ixQEHcjYGwdNoJlHaxRax3JDb8yNclzTrArob5gTJGlV3zbbaY+a81qrJ0LAfWNrLQSEgtrrBRh44lQwx3ZZ0g84jGC0m+uHwixI3G2rqERJ+Gkngp0yq+zcERv46k3xAbmh/0vtDlrbgVqVN+FtiAkQjqK3MPSj+zkAQ433D31f1nShPGch8iUFa562ghmnH3HJMSm99aEyo25jVl+vzajxzdp9HBwyT+tbFtQ/Vz36PqwRkEHP4bsa1zTdKHrqIdVWDD2525vruuWz8VavSaxGSlyeTHCKzh+i5zlhQIYc474y1Zr5bDBMWZRHHKKf649dgItWN4u8p+ays0KIuClTXjzrobHEZ2iN7lAa3kT0o4guL2z8wh73GFVdBImXwL8lqadsq54kNu9B6oLYsMnD4K+xpWebel5WvVjklczY5OXIVLPBmal3GGo0/rW0YQzO8tT5D90lO4UJvGyO+fMlOSt8jR0jTk3ox0HT80qWegYv6MvrGG/6L0dO7/GaWYTpj41JvWC/k9A0mUUiUTqEGZzTM8VbDgusUBR5SrEPwm1K5DrLzBoTEqxAS4aHgniFz39tVMMmak2k="
     - GRAVIS_REPO="https://github.com/DanySK/Gravis-CI.git"
     - GRAVIS="$HOME/gravis"
-  matrix:
-    # You can see the list of supported environments by installing Jabba and using ls-remote:
-    # https://github.com/shyiko/jabba#usage
-    - JDK="adopt@1.8.0-232"
 
 before_install:
   # Check out the gravis script set
@@ -39,6 +35,7 @@ before_install:
   # Never use travis_retry: hides failures. travis_retry is used internally where possible.
   - source $GRAVIS/install-jdk
   - jabba install adopt@1.11-9
+  - jabba install adopt@1.8.0-232
 
 # Publish a new version on tag push
 deploy:
