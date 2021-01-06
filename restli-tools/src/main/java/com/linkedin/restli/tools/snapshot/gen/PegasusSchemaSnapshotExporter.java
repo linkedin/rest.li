@@ -115,9 +115,12 @@ public class PegasusSchemaSnapshotExporter
     schemaToPdlEncoder.setTypeReferenceFormat(AbstractSchemaEncoder.TypeReferenceFormat.DENORMALIZE);
     schemaToPdlEncoder.encode(dataSchema);
 
+    // Remove extra whitespace at the end of each line
+    String fileString = stringWriter.toString().replaceAll(" " + System.lineSeparator(), System.lineSeparator());
+
     File generatedSnapshotFile = new File(outputDir, fileName + PDL);
 
-    Files.write(generatedSnapshotFile.toPath(), stringWriter.toString().getBytes(StandardCharsets.UTF_8));
+    Files.write(generatedSnapshotFile.toPath(), fileString.getBytes(StandardCharsets.UTF_8));
   }
 
   private static String getFileExtension(String fileName)
