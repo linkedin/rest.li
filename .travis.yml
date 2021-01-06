@@ -39,7 +39,8 @@ before_install:
   # Never use travis_retry: hides failures. travis_retry is used internally where possible.
   - source $GRAVIS/install-jdk
   - jabba ls-remote
-  - ls $HOME/.jabba/
+  - jabba install adopt@1.11-9
+  - ls $HOME/.jabba/jdk
 
 # Publish a new version on tag push
 deploy:
