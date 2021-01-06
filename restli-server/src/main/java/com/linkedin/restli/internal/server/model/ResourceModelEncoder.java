@@ -56,6 +56,7 @@ import com.linkedin.restli.restspec.EntitySchema;
 import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.FinderSchemaArray;
 import com.linkedin.restli.restspec.IdentifierSchema;
+import com.linkedin.restli.restspec.MaxBatchSizeSchema;
 import com.linkedin.restli.restspec.MetadataSchema;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ParameterSchemaArray;
@@ -940,6 +941,12 @@ public class ResourceModelEncoder
       batchFinder.setPagingSupported(true);
     }
 
+    MaxBatchSizeSchema maxBatchSize = resourceMethodDescriptor.getMaxBatchSize();
+    if (maxBatchSize != null)
+    {
+      batchFinder.setMaxBatchSize(maxBatchSize);
+    }
+
     appendServiceErrors(batchFinder, resourceMethodDescriptor.getServiceErrors());
     appendSuccessStatuses(batchFinder, resourceMethodDescriptor.getSuccessStatuses());
 
@@ -1095,6 +1102,12 @@ public class ResourceModelEncoder
         {
           restMethod.setPagingSupported(true);
         }
+      }
+
+      MaxBatchSizeSchema maxBatchSize = descriptor.getMaxBatchSize();
+      if (maxBatchSize != null)
+      {
+        restMethod.setMaxBatchSize(maxBatchSize);
       }
 
       appendServiceErrors(restMethod, descriptor.getServiceErrors());

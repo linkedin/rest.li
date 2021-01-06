@@ -25,6 +25,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.restspec.MaxBatchSizeSchema;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.ServiceErrors;
 import com.linkedin.restli.server.errors.ServiceError;
@@ -75,6 +76,7 @@ public class ResourceMethodDescriptor
   // Method-level service error definitions
   private List<ServiceError>                            _serviceErrors;
   private List<HttpStatus>                              _successStatuses;
+  private MaxBatchSizeSchema                            _maxBatchSize;
 
   /**
    * Finder resource method descriptor factory.
@@ -587,6 +589,23 @@ public class ResourceMethodDescriptor
   public void setSuccessStatuses(final Collection<HttpStatus> successStatuses)
   {
     _successStatuses = successStatuses == null ? null : new ArrayList<>(successStatuses);
+  }
+
+  /**
+   * Gets the max batch size for this resource method, or null if it is not defined.
+   * @return {@link MaxBatchSizeSchema}
+   */
+  public MaxBatchSizeSchema getMaxBatchSize()
+  {
+    return _maxBatchSize;
+  }
+
+  /**
+   * Sets the max batch size for this resource method
+   */
+  public void setMaxBatchSize(MaxBatchSizeSchema maxBatchSize)
+  {
+    _maxBatchSize = maxBatchSize;
   }
 
   @Override

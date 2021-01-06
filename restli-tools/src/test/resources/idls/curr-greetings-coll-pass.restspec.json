@@ -11,7 +11,7 @@
       "type" : "long",
       "params" : "string"
     },
-    "supports" : [ "batch_get", "create", "delete", "get", "update", "get_all" ],
+    "supports" : [ "batch_get", "create", "delete", "get", "update", "get_all", "batch_create", "batch_update", "batch_partial_update", "batch_delete" ],
     "methods" : [ {
       "method" : "batch_get"
     }, {
@@ -28,6 +28,30 @@
         "type" : { "type" : "array", "items" : "int" }
       },
       "pagingSupported" : true
+    }, {
+      "method" : "batch_create",
+      "maxBatchSize" : {
+        "value" : 5,
+        "validate" : false
+      }
+    }, {
+      "method" : "batch_update",
+      "maxBatchSize" : {
+        "value" : 10,
+        "validate" : false
+      }
+    }, {
+      "method" : "batch_partial_update",
+      "maxBatchSize" : {
+        "value" : 15,
+        "validate" : true
+      }
+    }, {
+      "method" : "batch_delete",
+      "maxBatchSize" : {
+        "value" : 10,
+        "validate" : false
+      }
     } ],
     "finders" : [ {
       "name" : "search",
@@ -71,6 +95,21 @@
         "default" : "none"
       } ],
       "pagingSupported" : true
+    } ],
+    "batchFinders" : [ {
+      "name" : "searchGreetings",
+      "parameters" : [ {
+        "name" : "criteria",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.greetings.api.ArrayTestRecord\" }"
+      } ],
+      "metadata" : {
+        "type" : "com.linkedin.greetings.api.Tone"
+      },
+      "batchParam" : "criteria",
+      "maxBatchSize" : {
+        "value" : 10,
+        "validate" : false
+      }
     } ],
     "actions" : [ {
       "name" : "oneAction",
