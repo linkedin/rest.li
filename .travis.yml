@@ -11,9 +11,8 @@ install: true
 
 # Build commits to master, PRs to master, and release tags
 script:
-  - ls $HOME/.jabba/
-  - export JAVA11_HOME=$HOME/openjdk11
-  - ~/bin/install-jdk.sh --install openjdk11 --target $JAVA11_HOME
+  - export JAVA11_HOME=$HOME/.jabba/jdk/adopt@1.11.0-9
+  - $JAVA11_HOME/bin/java -version
   - ./scripts/travis/build.sh
 branches:
   only:
@@ -38,9 +37,7 @@ before_install:
   # Install the JDK you configured in the $JDK environment variable
   # Never use travis_retry: hides failures. travis_retry is used internally where possible.
   - source $GRAVIS/install-jdk
-  - jabba ls-remote
   - jabba install adopt@1.11-9
-  - ls $HOME/.jabba/jdk
 
 # Publish a new version on tag push
 deploy:
