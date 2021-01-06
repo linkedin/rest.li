@@ -13,6 +13,7 @@ install: true
 script:
   - export JAVA11_HOME=$HOME/.jabba/jdk/adopt@1.11.0-9
   - $JAVA11_HOME/bin/java -version
+  - java -version
   - ./scripts/travis/build.sh
 branches:
   only:
