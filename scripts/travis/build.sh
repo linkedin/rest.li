@@ -39,7 +39,7 @@ if (! $RELEASE_CANDIDATE) &&
 fi
 
 # Output something every 9 minutes, otherwise Travis will abort after 10 minutes of no output
-while sleep 9m; do echo "[Ping] Keeping Travis job alive ($((SECONDS / 60)) minutes)"; done &
+while sleep 5m; do echo "[Ping] Keeping Travis job alive ($((SECONDS / 60)) minutes)"; done &
 WAITER_PID=$!
 
 # Skip tests if building a tag to prevent flaky releases
