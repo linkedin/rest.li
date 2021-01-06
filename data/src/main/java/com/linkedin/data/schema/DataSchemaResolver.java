@@ -97,6 +97,21 @@ public interface DataSchemaResolver
   NamedDataSchema existingDataSchema(String name);
 
   /**
+   * Lookup existing {@link NamedDataSchema}'s location with the specified name.
+   *
+   * This is a pure lookup operation. If a {@link NamedDataSchema} with the specified
+   * name does not already exist, then this method will return null, else it
+   * returns the location of the existing {@link NamedDataSchema}.
+   *
+   * @param name of the schema to find.
+   * @return the {@link DataSchemaLocation} if the schema already exists, else return null.
+   */
+  default DataSchemaLocation existingSchemaLocation(String name)
+  {
+    return nameToDataSchemaLocations().get(name);
+  }
+
+  /**
    * Return whether the specified {@link DataSchemaLocation} has been associated with a name.
    *
    * @param location provides the {@link DataSchemaLocation} to check.

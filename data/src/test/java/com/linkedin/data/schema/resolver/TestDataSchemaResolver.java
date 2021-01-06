@@ -245,7 +245,7 @@ public class TestDataSchemaResolver
       {
         "redefine1",
         ERROR,
-        "already defined as"
+        "\"redefine1\" already defined at"
       },
   };
 

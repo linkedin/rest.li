@@ -44,7 +44,7 @@ public class TranslateSchemasTask extends DefaultTask {
     getProject().getLogger().info("Translating data schemas ...");
     _destinationDir.mkdirs();
 
-    String resolverPathStr = _resolverPath.plus(getProject().files(_inputDir)).getAsPath();
+    String resolverPathStr = getProject().files(_inputDir).plus(_resolverPath).getAsPath();
 
     FileCollection _pathedCodegenClasspath;
     try
