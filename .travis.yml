@@ -1,5 +1,6 @@
 language: java
 jdk:
+  # JDKs will be maintained by jabba so this entry doesn't do anything
   - oraclejdk8
 
 # Anything after trusty doesn't have Java 8
@@ -11,8 +12,11 @@ install: true
 
 # Build commits to master, PRs to master, and release tags
 script:
-  - export JAVA11_HOME=$HOME/.jabba/jdk/adopt@1.11.0-9
+  # This variable is used by the build script in order to run tests with Java 11
+  - export JAVA11_HOME=$HOME/.jabba/jdk/$JDK11
+  - echo "Java 11 version used for tests:"
   - $JAVA11_HOME/bin/java -version
+  - echo "Java 8 version used for compilation and tests:"
   - java -version
   - ./scripts/travis/build.sh
 branches:
@@ -27,7 +31,9 @@ env:
     - secure: "k0njGMbUMDbAmZjp+wWKkQXfENmpLqS86xPP5PRcLty6sG6Y3L9wGy9krGTKuny+vVVxtNmbEweyHLv8k1aoN3fDJc+ixQEHcjYGwdNoJlHaxRax3JDb8yNclzTrArob5gTJGlV3zbbaY+a81qrJ0LAfWNrLQSEgtrrBRh44lQwx3ZZ0g84jGC0m+uHwixI3G2rqERJ+Gkngp0yq+zcERv46k3xAbmh/0vtDlrbgVqVN+FtiAkQjqK3MPSj+zkAQ433D31f1nShPGch8iUFa562ghmnH3HJMSm99aEyo25jVl+vzajxzdp9HBwyT+tbFtQ/Vz36PqwRkEHP4bsa1zTdKHrqIdVWDD2525vruuWz8VavSaxGSlyeTHCKzh+i5zlhQIYc474y1Zr5bDBMWZRHHKKf649dgItWN4u8p+ays0KIuClTXjzrobHEZ2iN7lAa3kT0o4guL2z8wh73GFVdBImXwL8lqadsq54kNu9B6oLYsMnD4K+xpWebel5WvVjklczY5OXIVLPBmal3GGo0/rW0YQzO8tT5D90lO4UJvGyO+fMlOSt8jR0jTk3ox0HT80qWegYv6MvrGG/6L0dO7/GaWYTpj41JvWC/k9A0mUUiUTqEGZzTM8VbDgusUBR5SrEPwm1K5DrLzBoTEqxAS4aHgniFz39tVMMmak2k="
     - GRAVIS_REPO="https://github.com/DanySK/Gravis-CI.git"
     - GRAVIS="$HOME/gravis"
-    - JDK8=adopt@1.8.0-232
+    # Select the versions of Java 8 and Java 11 that is to be used. A list of available versions can be seen with "jabba ls-remote"
+    - JDK8="adopt@1.8.0-232"
+    - JDK11="adopt@1.11-9"
 
 before_install:
   # Check out the gravis script set
@@ -35,8 +41,9 @@ before_install:
   # Install the JDK you configured in the $JDK environment variable
   # Never use travis_retry: hides failures. travis_retry is used internally where possible.
   - source $GRAVIS/install-jdk
-  - jabba install adopt@1.11-9
-  - jabba install adopt@1.8.0-232
+  # Install Java 8 and Java 11
+  - jabba install $JDK11
+  - jabba install $JDK8
 
 # Publish a new version on tag push
 deploy:

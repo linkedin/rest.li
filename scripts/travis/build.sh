@@ -63,6 +63,7 @@ if [ ! -z "$JAVA11_HOME" ]; then
 fi
 
 # Kill the waiter job
+echo "[Ping] Killing the waiter job"
 kill $WAITER_PID
 
 if [ $EXIT_CODE != 0 ] || [ $EXIT_CODE_JAVA11 != 0 ]; then
