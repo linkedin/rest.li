@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.13.6] - 2021-01-07
 - Fix for "pegasus to avro translation of UnionWithAlias RecordFeidls does not have field properties"
 
 ## [29.13.5] - 2021-01-06
@@ -4796,7 +4798,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.6...master
+[29.13.6]: https://github.com/linkedin/rest.li/compare/v29.13.5...v29.13.6
 [29.13.5]: https://github.com/linkedin/rest.li/compare/v29.13.4...v29.13.5
 [29.13.4]: https://github.com/linkedin/rest.li/compare/v29.13.3...v29.13.4
 [29.13.3]: https://github.com/linkedin/rest.li/compare/v29.13.2...v29.13.3
