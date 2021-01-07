@@ -924,8 +924,7 @@ public class TemplateSpecGenerator
       if (ancestorClass.getClassName().equals(className))
       {
         className = className + CLASS_NAME_SUFFIX_SEPARATOR + suffix;
-        // Check for name conflict from the immediate enclosing class again.
-        ancestorClass = enclosingClass;
+        break;
       }
       else
       {
