@@ -343,6 +343,14 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
    */
   public final void addChangeListener(ChangeListener<K, V> listener)
   {
+    //
+    // Read only maps cannot be mutated, so they don't need change listeners.
+    //
+    if (_readOnly)
+    {
+      return;
+    }
+
     if (_changeListeners == null)
     {
       // Change listeners are mostly used by map wrappers, and we always iterate through them
@@ -535,6 +543,6 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
 
   private boolean _readOnly = false;
   protected MapChecker<K,V> _checker;
+  protected List<WeakReference<ChangeListener<K, V>>> _changeListeners;
   private HashMap<K,V> _map;
-  private List<WeakReference<ChangeListener<K, V>>> _changeListeners;
 }
