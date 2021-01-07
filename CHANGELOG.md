@@ -13,7 +13,10 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.13.3] - 2021-01-06
 - Add support for accessing schema statically from generated template classes and for getting symbol properties from enum schema properties.
+- Fix extra whitespaces at the end of the line in the pegasus snapshot files.
 
 ## [29.13.2] - 2020-12-23
 - Implement overload failure client-side retry.
@@ -4786,7 +4789,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.3...master
+[29.13.3]: https://github.com/linkedin/rest.li/compare/v29.13.2...v29.13.3
 [29.13.2]: https://github.com/linkedin/rest.li/compare/v29.13.1...v29.13.2
 [29.13.1]: https://github.com/linkedin/rest.li/compare/v29.13.0...v29.13.1
 [29.13.0]: https://github.com/linkedin/rest.li/compare/v29.12.0...v29.13.0
