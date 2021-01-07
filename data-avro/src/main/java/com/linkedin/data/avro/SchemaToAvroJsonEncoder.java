@@ -404,7 +404,6 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
    * @param field RecordDataSchema's field
    * @throws IOException
    */
-  @SuppressWarnings("unchecked")
   @Override
   protected void encodeFieldProperties(RecordDataSchema.Field field) throws IOException
   {
@@ -413,6 +412,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
     _builder.writeProperties(filteredMap);
   }
 
+  @SuppressWarnings("unchecked")
   /* package private */
   static Map<String, ?> produceFieldProperties(RecordDataSchema.Field field, DataToAvroSchemaTranslationOptions options)
   {

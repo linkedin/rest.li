@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Fix for "pegasus to avro translation of UnionWithAlias RecordFeidls does not have field properties"
 
 ## [29.13.4] - 2021-01-07
 - Change listeners should not be added to readonly maps.
