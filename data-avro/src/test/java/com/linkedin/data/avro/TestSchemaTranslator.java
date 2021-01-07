@@ -141,7 +141,7 @@ public class TestSchemaTranslator
                     "    \"/string\": \"NONE\"" +
                     "  }" +
                     "  typeref unionRefNoAlias =" +
-                    "  union[int, string]" +
+                    "  union[a:int, b:string]" +
                     "}"
               ,
                 "{" +
@@ -150,10 +150,40 @@ public class TestSchemaTranslator
                     "  \"fields\": [" +
                     "    {" +
                     "      \"name\": \"unionTyperef\"," +
-                    "      \"type\": [" +
-                    "        \"int\"," +
-                    "        \"string\"" +
-                    "      ]," +
+                    "      \"type\": {" +
+                    "        \"type\": \"record\"," +
+                    "        \"name\": \"testUnionTyperef\"," +
+                    "        \"fields\": [" +
+                    "          {" +
+                    "            \"name\": \"a\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"int\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"b\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"string\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"fieldDiscriminator\"," +
+                    "            \"type\": {" +
+                    "              \"type\": \"enum\"," +
+                    "              \"name\": \"testUnionTyperefDiscriminator\"," +
+                    "              \"symbols\": [" +
+                    "                \"a\"," +
+                    "                \"b\"" +
+                    "              ]" +
+                    "            }," +
+                    "            \"doc\": \"Contains the name of the field that has its value set.\"" +
+                    "          }" +
+                    "        ]" +
+                    "      }," +
                     "      \"compliance\": {" +
                     "        \"/fieldDiscriminator\": \"NONE\"," +
                     "        \"/string\": \"NONE\"" +
@@ -175,7 +205,7 @@ public class TestSchemaTranslator
                     "    \"/string\": \"NONE\"" +
                     "  }" +
                     "  typeref unionRefNoAlias =" +
-                    "  union[int, string]" +
+                    "  union[a:int, b:string]" +
                     "}"
               ,
                 "{" +
@@ -184,10 +214,40 @@ public class TestSchemaTranslator
                     "  \"fields\": [" +
                     "    {" +
                     "      \"name\": \"unionTyperef\"," +
-                    "      \"type\": [" +
-                    "        \"int\"," +
-                    "        \"string\"" +
-                    "      ]," +
+                    "      \"type\": {" +
+                    "        \"type\": \"record\"," +
+                    "        \"name\": \"testUnionTyperef\"," +
+                    "        \"fields\": [" +
+                    "          {" +
+                    "            \"name\": \"a\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"int\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"b\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"string\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"fieldDiscriminator\"," +
+                    "            \"type\": {" +
+                    "              \"type\": \"enum\"," +
+                    "              \"name\": \"testUnionTyperefDiscriminator\"," +
+                    "              \"symbols\": [" +
+                    "                \"a\"," +
+                    "                \"b\"" +
+                    "              ]" +
+                    "            }," +
+                    "            \"doc\": \"Contains the name of the field that has its value set.\"" +
+                    "          }" +
+                    "        ]" +
+                    "      }," +
                     "      \"compliance\": {" +
                     "        \"/fieldDiscriminator\": \"NONE\"," +
                     "        \"/string\": \"Overriden\"" +
@@ -208,7 +268,7 @@ public class TestSchemaTranslator
                     "    \"/string\": \"NONE\"" +
                     "  }" +
                     "  typeref unionRefNoAlias =" +
-                    "  union[int, string]" +
+                    "  union[a:int, b:string]" +
                     "}"
                 ,
                 "{" +
@@ -217,10 +277,40 @@ public class TestSchemaTranslator
                     "  \"fields\": [" +
                     "    {" +
                     "      \"name\": \"unionTyperef\"," +
-                    "      \"type\": [" +
-                    "        \"int\"," +
-                    "        \"string\"" +
-                    "      ]," +
+                    "      \"type\": {" +
+                    "        \"type\": \"record\"," +
+                    "        \"name\": \"testUnionTyperef\"," +
+                    "        \"fields\": [" +
+                    "          {" +
+                    "            \"name\": \"a\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"int\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"b\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"string\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"fieldDiscriminator\"," +
+                    "            \"type\": {" +
+                    "              \"type\": \"enum\"," +
+                    "              \"name\": \"testUnionTyperefDiscriminator\"," +
+                    "              \"symbols\": [" +
+                    "                \"a\"," +
+                    "                \"b\"" +
+                    "              ]" +
+                    "            }," +
+                    "            \"doc\": \"Contains the name of the field that has its value set.\"" +
+                    "          }" +
+                    "        ]" +
+                    "      }," +
                     "      \"compliance\": {" +
                     "        \"/string\": \"NONE\"" +
                     "      }," +
