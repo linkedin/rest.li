@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Java does not allow inner class names to be same as enclosing classes. Detect and resolve such naming conflits for unnamed inner types(array, map and union).
 
 ## [29.13.6] - 2021-01-07
 - Fix for "pegasus to avro translation of UnionWithAlias RecordFeidls does not have field properties"
