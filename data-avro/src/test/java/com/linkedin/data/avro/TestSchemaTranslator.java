@@ -140,7 +140,7 @@ public class TestSchemaTranslator
                     "  @compliance = {" +
                     "    \"/string\": \"NONE\"" +
                     "  }" +
-                    "  typeref unionRefNoAlias =" +
+                    "  typeref unionRefWithAlias =" +
                     "  union[a:int, b:string]" +
                     "}"
               ,
@@ -204,7 +204,7 @@ public class TestSchemaTranslator
                     "  @compliance = {" +
                     "    \"/string\": \"NONE\"" +
                     "  }" +
-                    "  typeref unionRefNoAlias =" +
+                    "  typeref unionRefWithAlias =" +
                     "  union[a:int, b:string]" +
                     "}"
               ,
@@ -267,7 +267,7 @@ public class TestSchemaTranslator
                     "  @compliance = {" +
                     "    \"/string\": \"NONE\"" +
                     "  }" +
-                    "  typeref unionRefNoAlias =" +
+                    "  typeref unionRefWithAlias =" +
                     "  union[a:int, b:string]" +
                     "}"
                 ,
@@ -327,7 +327,7 @@ public class TestSchemaTranslator
                     "  @compliance = {" +
                     "    \"/string\": \"NONE\"" +
                     "  }" +
-                    "  typeref unionRefNoAlias =" +
+                    "  typeref unionRefWithAlias =" +
                     "  union[int, string]" +
                     "}",
                 "{" +
