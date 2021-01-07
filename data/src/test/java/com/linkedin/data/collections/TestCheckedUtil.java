@@ -151,6 +151,17 @@ public class TestCheckedUtil
     testPutAllCycleWithAssertChecking();
   }
 
+  @Test
+  public void testNoChangeListenerOnReadOnlyMap()
+  {
+    final DataMap map = new DataMap();
+    map.setReadOnly();
+    map.addChangeListener((key, value) -> {
+      // Do nothing.
+    });
+    Assert.assertNull(map._changeListeners);
+  }
+
   private void mutateMap(Map<String, String> map)
   {
     map.put("key", "value");

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.13.4] - 2021-01-07
+- Change listeners should not be added to readonly maps.
+
 ## [29.13.3] - 2021-01-06
 - Add support for accessing schema statically from generated template classes and for getting symbol properties from enum schema properties.
 - Fix extra whitespaces at the end of the line in the pegasus snapshot files.
@@ -4789,7 +4792,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.4...master
+[29.13.4]: https://github.com/linkedin/rest.li/compare/v29.13.3...v29.13.4
 [29.13.3]: https://github.com/linkedin/rest.li/compare/v29.13.2...v29.13.3
 [29.13.2]: https://github.com/linkedin/rest.li/compare/v29.13.1...v29.13.2
 [29.13.1]: https://github.com/linkedin/rest.li/compare/v29.13.0...v29.13.1
