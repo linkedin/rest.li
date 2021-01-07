@@ -157,10 +157,18 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
     }
     if (ok)
     {
-      DataSchema found = getResolver().existingDataSchema(name.getFullName());
+      DataSchemaLocation found = getResolver().existingSchemaLocation(name.getFullName());
       if (found != null)
       {
-        startErrorMessage(name).append("\"").append(name.getFullName()).append("\" already defined as " + found + ".\n");
+        if (found == DataSchemaLocation.NO_LOCATION)
+        {
+          startErrorMessage(name).append("\"").append(name.getFullName())
+                  .append("\" already defined as " + getResolver().existingDataSchema(name.getFullName()) + ".\n");
+        }
+        else
+        {
+          startErrorMessage(name).append("\"").append(name.getFullName()).append("\" already defined at " + found + ".\n");
+        }
         ok = false;
       }
       else

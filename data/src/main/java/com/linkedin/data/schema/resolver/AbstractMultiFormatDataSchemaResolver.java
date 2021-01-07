@@ -131,6 +131,20 @@ public abstract class AbstractMultiFormatDataSchemaResolver implements DataSchem
   }
 
   @Override
+  public DataSchemaLocation existingSchemaLocation(String name)
+  {
+    for (DataSchemaResolver resolver: _resolvers)
+    {
+      DataSchemaLocation result = resolver.existingSchemaLocation(name);
+      if (result != null)
+      {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  @Override
   public boolean locationResolved(DataSchemaLocation location)
   {
     for (DataSchemaResolver resolver: _resolvers)

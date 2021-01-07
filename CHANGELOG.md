@@ -15,6 +15,9 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 - Fix for "pegasus to avro translation of UnionWithAlias RecordFeidls does not have field properties"
 
+## [29.13.5] - 2021-01-06
+- Improve logging when conflicts are detected during parsing. Update translate schemas task to look in the input folder first when resolving schemas.
+
 ## [29.13.4] - 2021-01-07
 - Change listeners should not be added to readonly maps.
 
@@ -4793,7 +4796,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.5...master
+[29.13.5]: https://github.com/linkedin/rest.li/compare/v29.13.4...v29.13.5
 [29.13.4]: https://github.com/linkedin/rest.li/compare/v29.13.3...v29.13.4
 [29.13.3]: https://github.com/linkedin/rest.li/compare/v29.13.2...v29.13.3
 [29.13.2]: https://github.com/linkedin/rest.li/compare/v29.13.1...v29.13.2

@@ -191,7 +191,7 @@ public class TestAbstractGenerator
 
   Map<String, String> _badPegasusSchemas = asMap(
     "/error/b/c/error.pdsc", "size must not be negative",
-    "/error/b/c/redefine1.pdsc", "already defined as",
+    "/error/b/c/redefine1.pdsc", "already defined at",
     "/error/b/c/enumValueDocError.pdsc", "symbol has an invalid documentation value"
   );
 
