@@ -75,6 +75,162 @@ public class TestSchemaTranslator
   {
     return new Object[][]
         {
+            // Test : field properties will be present
+            {
+                "record test {" +
+                    "  @customAnnotation = {" +
+                    "    \"/annotationKey\": \"annotationValue\"" +
+                    "  }" +
+                    "  unionWithAliasField:" +
+                    "  union[a1:int, a2:string]" +
+                    "}"
+                ,
+                "{" +
+                    "  \"type\": \"record\"," +
+                    "  \"name\": \"test\"," +
+                    "  \"fields\": [" +
+                    "    {" +
+                    "      \"name\": \"unionWithAliasField\"," +
+                    "      \"type\": {" +
+                    "        \"type\": \"record\"," +
+                    "        \"name\": \"testUnionWithAliasField\"," +
+                    "        \"fields\": [" +
+                    "          {" +
+                    "            \"name\": \"a1\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"int\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"a2\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"string\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"fieldDiscriminator\"," +
+                    "            \"type\": {" +
+                    "              \"type\": \"enum\"," +
+                    "              \"name\": \"testUnionWithAliasFieldDiscriminator\"," +
+                    "              \"symbols\": [" +
+                    "                \"a1\"," +
+                    "                \"a2\"" +
+                    "              ]" +
+                    "            }," +
+                    "            \"doc\": \"Contains the name of the field that has its value set.\"" +
+                    "          }" +
+                    "        ]" +
+                    "      }," +
+                    "      \"customAnnotation\": {" +
+                    "        \"/annotationKey\": \"annotationValue\"" +
+                    "      }" +
+                    "    }" +
+                    "  ]" +
+                    "}"
+            },
+             // Test : field properties merged with Typeref properties
+            {
+                "record test {" +
+                    "  @compliance.`/fieldDiscriminator` = \"NONE\" " +
+                    "  unionTyperef:" +
+                    "  @compliance = {" +
+                    "    \"/string\": \"NONE\"" +
+                    "  }" +
+                    "  typeref unionRefNoAlias =" +
+                    "  union[int, string]" +
+                    "}"
+              ,
+                "{" +
+                    "  \"type\": \"record\"," +
+                    "  \"name\": \"test\"," +
+                    "  \"fields\": [" +
+                    "    {" +
+                    "      \"name\": \"unionTyperef\"," +
+                    "      \"type\": [" +
+                    "        \"int\"," +
+                    "        \"string\"" +
+                    "      ]," +
+                    "      \"compliance\": {" +
+                    "        \"/fieldDiscriminator\": \"NONE\"," +
+                    "        \"/string\": \"NONE\"" +
+                    "      }" +
+                    "    }" +
+                    "  ]" +
+                    "}"
+            },
+            // Test : field properties overrides Typeref properties
+            {
+                "record test {" +
+                    "  @compliance = {" +
+                    "  \"/fieldDiscriminator\" : \"NONE\" ," +
+                    "  \"/string\" : \"Overriden\"" +
+                    "  }" +
+                    "" +
+                    "  unionTyperef:" +
+                    "  @compliance = {" +
+                    "    \"/string\": \"NONE\"" +
+                    "  }" +
+                    "  typeref unionRefNoAlias =" +
+                    "  union[int, string]" +
+                    "}"
+              ,
+                "{" +
+                    "  \"type\": \"record\"," +
+                    "  \"name\": \"test\"," +
+                    "  \"fields\": [" +
+                    "    {" +
+                    "      \"name\": \"unionTyperef\"," +
+                    "      \"type\": [" +
+                    "        \"int\"," +
+                    "        \"string\"" +
+                    "      ]," +
+                    "      \"compliance\": {" +
+                    "        \"/fieldDiscriminator\": \"NONE\"," +
+                    "        \"/string\": \"Overriden\"" +
+                    "      }" +
+                    "    }" +
+                    "  ]" +
+                    "}"
+            },
+            // Test : different annotation namespace are not conflicting each other
+            {
+                "record test {" +
+                    "  @customAnnotation= {" +
+                    "  \"/string\" : \"WillNotOverride\"" +
+                    "  }" +
+                    "" +
+                    "  unionTyperef:" +
+                    "  @compliance = {" +
+                    "    \"/string\": \"NONE\"" +
+                    "  }" +
+                    "  typeref unionRefNoAlias =" +
+                    "  union[int, string]" +
+                    "}"
+                ,
+                "{" +
+                    "  \"type\": \"record\"," +
+                    "  \"name\": \"test\"," +
+                    "  \"fields\": [" +
+                    "    {" +
+                    "      \"name\": \"unionTyperef\"," +
+                    "      \"type\": [" +
+                    "        \"int\"," +
+                    "        \"string\"" +
+                    "      ]," +
+                    "      \"compliance\": {" +
+                    "        \"/string\": \"NONE\"" +
+                    "      }," +
+                    "      \"customAnnotation\": {" +
+                    "        \"/string\": \"WillNotOverride\"" +
+                    "      }" +
+                    "    }" +
+                    "  ]" +
+                    "}"
+            },
             {
                 "record test {" +
                     "  unionTyperef:" +

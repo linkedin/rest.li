@@ -12,7 +12,6 @@ import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,6 +42,7 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
     _schemaOverrides = schemaOverrides;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void callback(List<String> path, DataSchema schema)
   {
@@ -63,13 +63,8 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
     {
       DataSchema fieldSchema = field.getType().getDereferencedDataSchema();
 
-      Map<String, Object>  propagatedProperties = fieldSchema.getProperties();
-      if (field.getType().getType() == DataSchema.Type.TYPEREF)
-      {
-        // If the field schema type is TypeRef,
-        // then use the merged typeref properties instead
-        propagatedProperties = ((TyperefDataSchema) field.getType()).getMergedTyperefProperties();
-      }
+      Map<String, Object> propagatedProperties =
+          (Map<String, Object>) SchemaToAvroJsonEncoder.produceFieldProperties(field, _options);
 
       // The conversion from Pegasus union type to an Avro record is performed when the union appears as either the
       // field's direct type or when the field's type is an array or a map whose (nested) elements is of union type.

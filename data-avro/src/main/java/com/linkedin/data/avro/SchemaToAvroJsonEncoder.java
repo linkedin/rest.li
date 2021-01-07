@@ -29,7 +29,6 @@ import com.linkedin.data.schema.SchemaToJsonEncoder;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 
-import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -409,6 +408,15 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   @Override
   protected void encodeFieldProperties(RecordDataSchema.Field field) throws IOException
   {
+    final Map<String, ?> filteredMap = produceFieldProperties(field, _options);
+
+    _builder.writeProperties(filteredMap);
+  }
+
+  /* package private */
+  static Map<String, ?> produceFieldProperties(RecordDataSchema.Field field, DataToAvroSchemaTranslationOptions options)
+  {
+
     Stream<Map.Entry<String, Object>> toBeFiltered = field.getProperties().entrySet().stream();
 
     // If a record field's type is a TypeRef, will need to propagate TypeRef's properties to current record field
@@ -417,30 +425,27 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
     {
       toBeFiltered = Stream.concat(toBeFiltered,
           ((TyperefDataSchema) field.getType()).getMergedTyperefProperties().entrySet().stream())
-          .filter(entry -> !_options.getTyperefPropertiesExcludeSet().contains(entry.getKey()));
+          .filter(entry -> !options.getTyperefPropertiesExcludeSet().contains(entry.getKey()));
     }
     // Property merge rule:
     // For property content inherited from TypeRef that appears to be have same property name as the record field:
     //    if the two property contents are Map type, they will be merged at this level,
     //    otherwise Typeref field property content will be overridden by record field property's content.
-    BinaryOperator<Object> propertyMergeLogic = (originalPropertyContent, inheritedPropertyContent) -> {
+    BinaryOperator<Object> propertyMergeLogic = (originalPropertyContent, inheritedPropertyContent) ->
+    {
       if (originalPropertyContent instanceof Map && inheritedPropertyContent instanceof Map)
       {
         Map<String, Object> mergedMap = new DataMap((Map<String, Object>) originalPropertyContent);
         ((Map<String, Object>) inheritedPropertyContent).forEach(mergedMap::putIfAbsent);
         return mergedMap;
-      }
-      else
+      } else
       {
         return originalPropertyContent;
       }
     };
 
-    final Map<String, ?> filteredMap = toBeFiltered
-        .filter(entry -> !RESERVED_DATA_PROPERTIES.contains(entry.getKey()))
+    return toBeFiltered.filter(entry -> !RESERVED_DATA_PROPERTIES.contains(entry.getKey()))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, propertyMergeLogic));
-
-    _builder.writeProperties(filteredMap);
   }
 
   /**
