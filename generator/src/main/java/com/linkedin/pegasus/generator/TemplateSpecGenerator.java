@@ -29,7 +29,6 @@ import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.template.DataTemplate;
@@ -70,6 +69,10 @@ public class TemplateSpecGenerator
   private static final Logger _log = LoggerFactory.getLogger(TemplateSpecGenerator.class);
   private static final String ARRAY_SUFFIX = "Array";
   private static final String MAP_SUFFIX = "Map";
+  private static final String UNION_SUFFIX = "Union";
+  // Separator to add with the suffix for unnamed types. This should be a character allowed in java type names but not
+  // allowed in pdl identifiers.
+  private static final String CLASS_NAME_SUFFIX_SEPARATOR = "$";
   private static final String[] SPECIAL_SUFFIXES = {ARRAY_SUFFIX, MAP_SUFFIX};
 
   private final Collection<ClassTemplateSpec> _classTemplateSpecs = new LinkedHashSet<>();
@@ -827,7 +830,15 @@ public class TemplateSpecGenerator
         else
         {
           final ClassInfo classInfo = classNameForUnnamedTraverse(enclosingClass, memberName, arraySchema.getItems());
-          classInfo.name += ARRAY_SUFFIX;
+          // Add just the "Array" suffix first. This is to ensure backwards compatibility with the old codegen logic.
+          String className = classInfo.name + ARRAY_SUFFIX;
+          // If this array is for an unnamed inner type (e.g, union) then this will be inner class. So, ensure the Array
+          // class name doesn't conflict with ancestor class names.
+          if (enclosingClass != null && classInfo.namespace.equals(enclosingClass.getFullName()))
+          {
+            className = resolveInnerClassName(enclosingClass, className, ARRAY_SUFFIX);
+          }
+          classInfo.name = className;
           return classInfo;
         }
       case MAP:
@@ -840,7 +851,15 @@ public class TemplateSpecGenerator
         else
         {
           final ClassInfo classInfo = classNameForUnnamedTraverse(enclosingClass, memberName, mapSchema.getValues());
-          classInfo.name += MAP_SUFFIX;
+          // Add just the "Map" suffix first. This is to ensure backwards compatibility with the old codegen logic.
+          String className = classInfo.name + MAP_SUFFIX;
+          // If this map is for an unnamed inner type (e.g, union), then ensure the Map's class name doesn't conflict
+          // with ancestor class names.
+          if (enclosingClass != null && classInfo.namespace.equals(enclosingClass.getFullName()))
+          {
+            className = resolveInnerClassName(enclosingClass, className, MAP_SUFFIX);
+          }
+          classInfo.name = className;
           return classInfo;
         }
 
@@ -857,7 +876,8 @@ public class TemplateSpecGenerator
         }
         else
         {
-          return new ClassInfo(enclosingClass.getFullName(), CodeUtil.capitalize(memberName));
+          String className = resolveInnerClassName(enclosingClass, CodeUtil.capitalize(memberName), UNION_SUFFIX);
+          return new ClassInfo(enclosingClass.getFullName(), className);
         }
 
       case FIXED:
@@ -894,6 +914,34 @@ public class TemplateSpecGenerator
       default:
         throw unrecognizedSchemaType(enclosingClass, memberName, dereferencedDataSchema);
     }
+  }
+
+  /**
+   * Java doesn't allow inner-classnames to be same as the enclosing or ancestor class. This method takes a candidate
+   * class name for an inner class and its enclosing class and resolves to a name that doesn't conflict. It does this
+   * by adding a special separator {@link #CLASS_NAME_SUFFIX_SEPARATOR} and the provided suffix to the classname
+   * whenever a conflict is detected.
+   * The special separator is needed to ensure the new name does not conflict with classes generated from other fields.
+   * @param enclosingClass Class enclosing the inner class.
+   * @param className Candidate name for the innerclass
+   * @param suffix Suffix to add to the className if a conflict is found.
+   * @return a class name that doesn't conflict with any of the ancestor classes.
+   */
+  private String resolveInnerClassName(ClassTemplateSpec enclosingClass, String className, String suffix) {
+    ClassTemplateSpec ancestorClass = enclosingClass;
+    while (ancestorClass != null)
+    {
+      if (ancestorClass.getClassName().equals(className))
+      {
+        className = className + CLASS_NAME_SUFFIX_SEPARATOR + suffix;
+        break;
+      }
+      else
+      {
+        ancestorClass = ancestorClass.getEnclosingClass();
+      }
+    }
+    return className;
   }
 
   private static class CustomClasses

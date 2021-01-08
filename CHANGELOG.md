@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.13.7] - 2021-01-08
+- Java does not allow inner class names to be same as enclosing classes. Detect and resolve such naming conflits for unnamed inner types(array, map and union).
+
 ## [29.13.6] - 2021-01-07
 - Fix for "pegasus to avro translation of UnionWithAlias RecordFeidls does not have field properties"
 
@@ -4798,7 +4801,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.7...master
+[29.13.7]: https://github.com/linkedin/rest.li/compare/v29.13.6...v29.13.7
 [29.13.6]: https://github.com/linkedin/rest.li/compare/v29.13.5...v29.13.6
 [29.13.5]: https://github.com/linkedin/rest.li/compare/v29.13.4...v29.13.5
 [29.13.4]: https://github.com/linkedin/rest.li/compare/v29.13.3...v29.13.4
