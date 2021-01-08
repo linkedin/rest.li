@@ -7,6 +7,7 @@ import com.linkedin.pegasus.generator.test.StringUnionRecord;
 import com.linkedin.pegasus.generator.test.unnamed.UnionNameConflict;
 import com.linkedin.pegasus.generator.test.unnamed.UnionNameConflictArray;
 import com.linkedin.pegasus.generator.test.unnamed.UnionNameConflictMap;
+import com.linkedin.pegasus.generator.test.unnamed.records.SimpleArray;
 import java.io.IOException;
 
 import org.testng.annotations.Test;
@@ -40,5 +41,6 @@ public class TestPegasusDataTemplateGenerator
     UnionNameConflictMap.UnionNameConflictMap$Map unionMap;
     UnionNameConflictMap.UnionNameConflictMap$Union unionMapUnion;
     UnionNameConflictMap.UnionNameConflictMap$UnionMap unionMap2;
+    SimpleArray simpleArray;
   }
 }

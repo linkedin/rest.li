@@ -832,7 +832,12 @@ public class TemplateSpecGenerator
           final ClassInfo classInfo = classNameForUnnamedTraverse(enclosingClass, memberName, arraySchema.getItems());
           // Add just the "Array" suffix first. This is to ensure backwards compatibility with the old codegen logic.
           String className = classInfo.name + ARRAY_SUFFIX;
-          className = resolveInnerClassName(enclosingClass, className, ARRAY_SUFFIX);
+          // If this array is for an unnamed inner type (e.g, union) then this will be inner class. So, ensure the Array
+          // class name doesn't conflict with ancestor class names.
+          if (enclosingClass != null && classInfo.namespace.equals(enclosingClass.getFullName()))
+          {
+            className = resolveInnerClassName(enclosingClass, className, ARRAY_SUFFIX);
+          }
           classInfo.name = className;
           return classInfo;
         }
@@ -848,7 +853,12 @@ public class TemplateSpecGenerator
           final ClassInfo classInfo = classNameForUnnamedTraverse(enclosingClass, memberName, mapSchema.getValues());
           // Add just the "Map" suffix first. This is to ensure backwards compatibility with the old codegen logic.
           String className = classInfo.name + MAP_SUFFIX;
-          className = resolveInnerClassName(enclosingClass, className, MAP_SUFFIX);
+          // If this map is for an unnamed inner type (e.g, union), then ensure the Map's class name doesn't conflict
+          // with ancestor class names.
+          if (enclosingClass != null && classInfo.namespace.equals(enclosingClass.getFullName()))
+          {
+            className = resolveInnerClassName(enclosingClass, className, MAP_SUFFIX);
+          }
           classInfo.name = className;
           return classInfo;
         }
