@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.13.8] - 2021-01-13
+- Fix a critical bug in RetryClient to set retry header instead of adding a value to retry header
+
 ## [29.13.7] - 2021-01-08
 - Java does not allow inner class names to be same as enclosing classes. Detect and resolve such naming conflits for unnamed inner types(array, map and union).
 
@@ -4801,7 +4804,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.8...master
+[29.13.8]: https://github.com/linkedin/rest.li/compare/v29.13.7...v29.13.8
 [29.13.7]: https://github.com/linkedin/rest.li/compare/v29.13.6...v29.13.7
 [29.13.6]: https://github.com/linkedin/rest.li/compare/v29.13.5...v29.13.6
 [29.13.5]: https://github.com/linkedin/rest.li/compare/v29.13.4...v29.13.5

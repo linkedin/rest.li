@@ -132,7 +132,7 @@ public class RetryClient extends D2ClientDelegator
       final Callback<RestResponse> callback)
   {
     RestRequest newRequest = request.builder()
-        .addHeaderValue(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, "0")
+        .setHeader(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, "0")
         .build();
     ClientRetryTracker retryTracker = updateRetryTracker(newRequest.getURI(), false);
     final Callback<RestResponse> transportCallback = new RestRetryRequestCallback(newRequest, requestContext, callback, retryTracker);
@@ -149,7 +149,7 @@ public class RetryClient extends D2ClientDelegator
   public void streamRequest(StreamRequest request, RequestContext requestContext, Callback<StreamResponse> callback)
   {
     StreamRequest newRequest = request.builder()
-        .addHeaderValue(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, "0")
+        .setHeader(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, "0")
         .build(request.getEntityStream());
     ClientRetryTracker retryTracker = updateRetryTracker(newRequest.getURI(), false);
     final Callback<StreamResponse> transportCallback = new StreamRetryRequestCallback(newRequest, requestContext, callback, retryTracker);
@@ -212,7 +212,7 @@ public class RetryClient extends D2ClientDelegator
       if (_recorded == true && _content != null)
       {
         final StreamRequest newRequest = request.builder()
-            .addHeaderValue(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, Integer.toString(numberOfRetryAttempts))
+            .setHeader(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, Integer.toString(numberOfRetryAttempts))
             .build(EntityStreams.newEntityStream(new ByteStringWriter(_content)));
         updateRetryTracker(request.getURI(), true);
         _d2Client.streamRequest(newRequest, new RequestContext(context), this);
@@ -238,7 +238,7 @@ public class RetryClient extends D2ClientDelegator
     public boolean doRetryRequest(RestRequest request, RequestContext context, int numberOfRetryAttempts)
     {
       RestRequest newRequest = request.builder()
-          .addHeaderValue(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, Integer.toString(numberOfRetryAttempts))
+          .setHeader(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, Integer.toString(numberOfRetryAttempts))
           .build();
       updateRetryTracker(request.getURI(), true);
       _d2Client.restRequest(newRequest, context, this);
