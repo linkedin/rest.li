@@ -137,6 +137,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.altKey.altKeySub", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.defaults.api.fillInDefaults", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.emptyUnion", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.batchGreeting", ResourceType.COLLECTION);
 
     for (Map.Entry<String, ResourceSchema> entry: _schemas.getResources().entrySet())
     {

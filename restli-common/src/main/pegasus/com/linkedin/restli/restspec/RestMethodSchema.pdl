@@ -29,4 +29,10 @@ record RestMethodSchema includes CustomAnnotationSchema, ServiceErrorsSchema, Su
    * Indicates if this rest method has paging support using the start and count parameters
    */
   pagingSupported: optional boolean
+
+  /**
+   * Specifies the max batch size allowed for this method. It supports BATCH_GET, BATCH_CREATE, BATCH_DELETE,
+   * BATCH_UPDATE and BATCH_PARTIAL_UPDATE methods.
+   */
+  maxBatchSize: optional MaxBatchSizeSchema
 }

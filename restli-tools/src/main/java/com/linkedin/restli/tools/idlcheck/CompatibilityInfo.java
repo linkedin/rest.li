@@ -67,7 +67,15 @@ public class CompatibilityInfo
     SERVICE_ERROR_ADDED(Level.INCOMPATIBLE, "Service error \"%s\" now applies"),
     SERVICE_ERROR_REMOVED(Level.COMPATIBLE, "Service error \"%s\" no longer applies"),
     BREAK_OLD_CLIENTS(Level.INCOMPATIBLE, "Deleting a schema is incompatible change, it breaks old clients"),
-    SCHEMA_ANNOTATION_INCOMPATIBLE_CHANGE(Level.INCOMPATIBLE, "Schema annotation incompatible change: %s");
+    SCHEMA_ANNOTATION_INCOMPATIBLE_CHANGE(Level.INCOMPATIBLE, "Schema annotation incompatible change: %s"),
+    MAX_BATCH_SIZE_ADDED_WITH_VALIDATION_ON(Level.INCOMPATIBLE, "Method added MaxBatchSize with validation"),
+    MAX_BATCH_SIZE_ADDED_WITH_VALIDATION_OFF(Level.COMPATIBLE, "Method added MaxBatchSize without validation"),
+    MAX_BATCH_SIZE_REMOVED(Level.COMPATIBLE, "Method removed MaxBatchSize"),
+    MAX_BATCH_SIZE_VALUE_INCREASED(Level.COMPATIBLE, "Method increased MaxBatchSize value"),
+    MAX_BATCH_SIZE_VALUE_DECREASED_WITH_VALIDATION_OFF(Level.COMPATIBLE, "Method decreased MaxBatchSize value when validation is off"),
+    MAX_BATCH_SIZE_VALUE_DECREASED_WITH_VALIDATION_ON(Level.INCOMPATIBLE, "Method decreased MaxBatchSize value when validation is on"),
+    MAX_BATCH_SIZE_TURN_ON_VALIDATION(Level.INCOMPATIBLE, "Method updated MaxBatchSize validation from off to on"),
+    MAX_BATCH_SIZE_TURN_OFF_VALIDATION(Level.COMPATIBLE, "Method updated MaxBatchSize validation from on to off");
 
     public String getDescription(Object[] parameters)
     {

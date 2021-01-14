@@ -50,6 +50,7 @@ import com.linkedin.restli.restspec.CustomAnnotationContentSchemaMap;
 import com.linkedin.restli.restspec.EntitySchema;
 import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.IdentifierSchema;
+import com.linkedin.restli.restspec.MaxBatchSizeSchema;
 import com.linkedin.restli.restspec.MetadataSchema;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ParameterSchemaArray;
@@ -837,6 +838,9 @@ public class ResourceCompatibilityChecker
     checkMethodServiceErrors(prevRec.schema().getField("serviceErrors"),
         prevRec.getServiceErrors(GetMode.DEFAULT),
         currRec.getServiceErrors(GetMode.DEFAULT));
+
+    checkMaxBatchSizeAnnotation(prevRec.getMaxBatchSize(GetMode.DEFAULT),
+        currRec.getMaxBatchSize(GetMode.DEFAULT));
   }
 
   private void checkFindersAssocKey(String prevAssocKey,
@@ -1208,6 +1212,9 @@ public class ResourceCompatibilityChecker
     checkMethodServiceErrors(prevRec.schema().getField("serviceErrors"),
         prevRec.getServiceErrors(GetMode.DEFAULT),
         currRec.getServiceErrors(GetMode.DEFAULT));
+
+    checkMaxBatchSizeAnnotation(prevRec.getMaxBatchSize(GetMode.DEFAULT),
+        currRec.getMaxBatchSize(GetMode.DEFAULT));
   }
 
   /**
@@ -1380,6 +1387,72 @@ public class ResourceCompatibilityChecker
     {
       _prevResourceLevelErrors = new ServiceErrorsSchema(previousRecord.data()).getServiceErrors(GetMode.DEFAULT);
       _currResourceLevelErrors = new ServiceErrorsSchema(currentRecord.data()).getServiceErrors(GetMode.DEFAULT);
+    }
+  }
+
+  /**
+   * Checks the compatibility of max batch size.
+   *
+   * @param prevMaxBatchSize previous max batch size
+   * @param currMaxBatchSize current max batch size
+   */
+  private void checkMaxBatchSizeAnnotation(MaxBatchSizeSchema prevMaxBatchSize, MaxBatchSizeSchema currMaxBatchSize)
+  {
+    if (prevMaxBatchSize == currMaxBatchSize)
+    {
+      return;
+    }
+
+    if (prevMaxBatchSize == null)
+    {
+      // Adding MaxBatchSize
+      if (currMaxBatchSize.isValidate())
+      {
+        // Adding MaxBatchSize with validation on
+        _infoMap.addRestSpecInfo(CompatibilityInfo.Type.MAX_BATCH_SIZE_ADDED_WITH_VALIDATION_ON, _infoPath);
+      }
+      else
+      {
+        // Adding MaxBatchSize with validation off
+        _infoMap.addRestSpecInfo(CompatibilityInfo.Type.MAX_BATCH_SIZE_ADDED_WITH_VALIDATION_OFF, _infoPath);
+      }
+    }
+    else if (currMaxBatchSize == null)
+    {
+      // Removing MaxBatchSize
+      _infoMap.addRestSpecInfo(CompatibilityInfo.Type.MAX_BATCH_SIZE_REMOVED, _infoPath);
+    }
+    else
+    {
+      int prevValue = prevMaxBatchSize.getValue();
+      int currValue = currMaxBatchSize.getValue();
+      boolean prevValidate = prevMaxBatchSize.isValidate();
+      boolean currValidate = currMaxBatchSize.isValidate();
+      if (prevValidate && !currValidate)
+      {
+        _infoMap.addRestSpecInfo(CompatibilityInfo.Type.MAX_BATCH_SIZE_TURN_OFF_VALIDATION, _infoPath);
+      }
+      else if (!prevValidate && currValidate)
+      {
+        _infoMap.addRestSpecInfo(CompatibilityInfo.Type.MAX_BATCH_SIZE_TURN_ON_VALIDATION, _infoPath);
+      }
+      else if(prevValue < currValue)
+      {
+        // Increasing max batch size value
+        _infoMap.addRestSpecInfo(CompatibilityInfo.Type.MAX_BATCH_SIZE_VALUE_INCREASED, _infoPath);
+      }
+      else if (prevValue > currValue)
+      {
+        // Decreasing max batch size value
+        if (currValidate)
+        {
+          _infoMap.addRestSpecInfo(CompatibilityInfo.Type.MAX_BATCH_SIZE_VALUE_DECREASED_WITH_VALIDATION_ON, _infoPath);
+        }
+        else
+        {
+          _infoMap.addRestSpecInfo(CompatibilityInfo.Type.MAX_BATCH_SIZE_VALUE_DECREASED_WITH_VALIDATION_OFF, _infoPath);
+        }
+      }
     }
   }
 }

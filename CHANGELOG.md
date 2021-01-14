@@ -14,6 +14,12 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.13.9] - 2021-01-13
+- Add max batch size support on rest.li server.
+  - Introduce MaxBatchSize annotation, which can be added on batch methods.
+  - Add batch size validation based on the allowed max batch size.
+  - Add resource compatibility check rules for the max batch size.
+
 ## [29.13.8] - 2021-01-13
 - Fix a critical bug in RetryClient to set retry header instead of adding a value to retry header
 
@@ -4804,7 +4810,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.8...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.9...master
+[29.13.9]: https://github.com/linkedin/rest.li/compare/v29.13.8...v29.13.9
 [29.13.8]: https://github.com/linkedin/rest.li/compare/v29.13.7...v29.13.8
 [29.13.7]: https://github.com/linkedin/rest.li/compare/v29.13.6...v29.13.7
 [29.13.6]: https://github.com/linkedin/rest.li/compare/v29.13.5...v29.13.6

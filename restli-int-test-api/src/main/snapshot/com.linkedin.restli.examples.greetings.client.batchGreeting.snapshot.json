@@ -1,0 +1,119 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "Empty",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ ]
+  }, {
+    "type" : "record",
+    "name" : "Greeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A greeting",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long"
+    }, {
+      "name" : "message",
+      "type" : "string"
+    }, {
+      "name" : "tone",
+      "type" : {
+        "type" : "enum",
+        "name" : "Tone",
+        "symbols" : [ "FRIENDLY", "SINCERE", "INSULTING" ]
+      },
+      "doc" : "tone"
+    }, {
+      "name" : "senders",
+      "type" : {
+        "type" : "array",
+        "items" : "string"
+      },
+      "doc" : "Sender(s) of the message",
+      "optional" : true
+    } ]
+  }, {
+    "type" : "record",
+    "name" : "GreetingCriteria",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "A search criteria to filter greetings.",
+    "fields" : [ {
+      "name" : "id",
+      "type" : "long",
+      "doc" : "Greeting ID to filter on"
+    }, {
+      "name" : "tone",
+      "type" : "Tone",
+      "doc" : "Greeting tone to filter on"
+    } ]
+  }, "com.linkedin.restli.examples.greetings.api.Tone" ],
+  "schema" : {
+    "name" : "batchGreeting",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/batchGreeting",
+    "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+    "doc" : "Class for testing @MaxBatchSize annotation on batch methods\n\ngenerated from: com.linkedin.restli.examples.greetings.server.BatchGreetingResource",
+    "collection" : {
+      "identifier" : {
+        "name" : "key",
+        "type" : "long"
+      },
+      "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "get", "partial_update", "update" ],
+      "methods" : [ {
+        "method" : "get"
+      }, {
+        "method" : "update"
+      }, {
+        "method" : "partial_update"
+      }, {
+        "method" : "batch_create",
+        "maxBatchSize" : {
+          "value" : 2,
+          "validate" : true
+        }
+      }, {
+        "method" : "batch_get",
+        "maxBatchSize" : {
+          "value" : 2,
+          "validate" : true
+        }
+      }, {
+        "method" : "batch_update",
+        "maxBatchSize" : {
+          "value" : 2,
+          "validate" : false
+        }
+      }, {
+        "method" : "batch_partial_update",
+        "maxBatchSize" : {
+          "value" : 2,
+          "validate" : true
+        }
+      }, {
+        "method" : "batch_delete",
+        "maxBatchSize" : {
+          "value" : 2,
+          "validate" : true
+        }
+      } ],
+      "batchFinders" : [ {
+        "name" : "searchGreetings",
+        "parameters" : [ {
+          "name" : "criteria",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.GreetingCriteria\" }"
+        } ],
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.greetings.api.Empty"
+        },
+        "batchParam" : "criteria",
+        "maxBatchSize" : {
+          "value" : 2,
+          "validate" : true
+        }
+      } ],
+      "entity" : {
+        "path" : "/batchGreeting/{key}"
+      }
+    }
+  }
+}

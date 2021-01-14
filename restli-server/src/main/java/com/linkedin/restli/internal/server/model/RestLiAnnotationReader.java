@@ -53,6 +53,7 @@ import com.linkedin.restli.internal.common.ReflectionUtils;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
+import com.linkedin.restli.restspec.MaxBatchSizeSchema;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BatchCreateRequest;
@@ -79,6 +80,7 @@ import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.HeaderParam;
+import com.linkedin.restli.server.annotations.MaxBatchSize;
 import com.linkedin.restli.server.annotations.MetadataProjectionParam;
 import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.PagingContextParam;
@@ -157,6 +159,13 @@ public final class RestLiAnnotationReader
                                                                                                       ResourceMethod.CREATE,
                                                                                                       ResourceMethod.PARTIAL_UPDATE,
                                                                                                       ResourceMethod.UPDATE));
+
+  private static final Set<ResourceMethod> BATCH_METHODS = new HashSet<>(Arrays.asList(ResourceMethod.BATCH_CREATE,
+                                                                                       ResourceMethod.BATCH_PARTIAL_UPDATE,
+                                                                                       ResourceMethod.BATCH_UPDATE,
+                                                                                       ResourceMethod.BATCH_DELETE,
+                                                                                       ResourceMethod.BATCH_GET,
+                                                                                       ResourceMethod.BATCH_FINDER));
 
   /**
    * This is a utility class.
@@ -2165,6 +2174,8 @@ public final class RestLiAnnotationReader
       addServiceErrors(batchFinderMethodDescriptor, method);
       addSuccessStatuses(batchFinderMethodDescriptor, method);
 
+      addMaxBatchSize(batchFinderMethodDescriptor, method, ResourceMethod.BATCH_FINDER);
+
       model.addResourceMethodDescriptor(batchFinderMethodDescriptor);
     }
   }
@@ -2234,6 +2245,8 @@ public final class RestLiAnnotationReader
 
       addServiceErrors(resourceMethodDescriptor, method);
       addSuccessStatuses(resourceMethodDescriptor, method);
+
+      addMaxBatchSize(resourceMethodDescriptor, method, resourceMethod);
 
       model.addResourceMethodDescriptor(resourceMethodDescriptor);
     }
@@ -2322,6 +2335,8 @@ public final class RestLiAnnotationReader
 
         addServiceErrors(resourceMethodDescriptor, method);
         addSuccessStatuses(resourceMethodDescriptor, method);
+
+        addMaxBatchSize(resourceMethodDescriptor, method, resourceMethod);
 
         model.addResourceMethodDescriptor(resourceMethodDescriptor);
       }
@@ -3200,5 +3215,43 @@ public final class RestLiAnnotationReader
     }
 
     return String.format("method '%s' of resource '%s'", method.getName(), resourceClass.getName());
+  }
+
+  /**
+   * Reads annotations on a given method in order to get max batch size, which are then added to
+   * a given resource method descriptor.
+   *
+   * @param resourceMethodDescriptor resource method descriptor to add max batch size to
+   * @param method method annotated with max batch size
+   * @param resourceMethod resource method which is used to validate the method with max batch size annotation
+   *                       is a supported method.
+   */
+  private static void addMaxBatchSize(ResourceMethodDescriptor resourceMethodDescriptor, Method method,
+      ResourceMethod resourceMethod)
+  {
+    final MaxBatchSize maxBatchSizeAnnotation = method.getAnnotation(MaxBatchSize.class);
+    if (maxBatchSizeAnnotation == null)
+    {
+      return;
+    }
+
+    // Only batch methods are allowed to use MaxBatchSize annotation.
+    if (!BATCH_METHODS.contains(resourceMethod))
+    {
+      throw new ResourceConfigException(String.format("The resource method: %s cannot specify MaxBatchSize.",
+          resourceMethod.toString()));
+    }
+    int maxBatchSizeValue = maxBatchSizeAnnotation.value();
+
+    // Max batch size value should always be greater than 0
+    if (maxBatchSizeValue <= 0)
+    {
+      throw new ResourceConfigException(String.format("The resource method: %s max batch size value is %s, " +
+                      "it should be greater than 0.", resourceMethod.toString(), maxBatchSizeValue));
+    }
+    MaxBatchSizeSchema maxBatchSizeSchema = new MaxBatchSizeSchema();
+    maxBatchSizeSchema.setValue(maxBatchSizeAnnotation.value());
+    maxBatchSizeSchema.setValidate(maxBatchSizeAnnotation.validate());
+    resourceMethodDescriptor.setMaxBatchSize(maxBatchSizeSchema);
   }
 }

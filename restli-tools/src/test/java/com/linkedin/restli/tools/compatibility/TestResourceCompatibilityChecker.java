@@ -98,6 +98,16 @@ public class TestResourceCompatibilityChecker
                                                 CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods"),
                                                 CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods", "batch_get"),
+                                                CompatibilityInfo.Type.MAX_BATCH_SIZE_REMOVED));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods", "batch_create"),
+                                                CompatibilityInfo.Type.MAX_BATCH_SIZE_VALUE_DECREASED_WITH_VALIDATION_OFF));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods", "batch_update"),
+                                                CompatibilityInfo.Type.MAX_BATCH_SIZE_ADDED_WITH_VALIDATION_OFF));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods", "batch_partial_update"),
+                                                CompatibilityInfo.Type.MAX_BATCH_SIZE_VALUE_INCREASED));
+    resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "batchFinders", "searchGreetings"),
+                                                CompatibilityInfo.Type.MAX_BATCH_SIZE_TURN_OFF_VALIDATION));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "search", "parameters", "tone"),
                                                 CompatibilityInfo.Type.OPTIONAL_PARAMETER));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "search", "parameters"),
@@ -350,13 +360,20 @@ public class TestResourceCompatibilityChecker
                             CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from string to long"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "supports"),
                                          CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
-                                         new StringArray("batch_get", "create", "delete", "get", "get_all")));
+                                         new StringArray("batch_get", "create", "delete", "get", "get_all",
+                                                 "batch_create", "batch_update", "batch_partial_update", "batch_delete")));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods"),
                                          CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "batch_get"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "search", "metadata", "type"),
                                                  CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from array to int"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods", "get_all", "metadata", "type"),
                                                  CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from array to int"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods","batch_create"),
+                                                 CompatibilityInfo.Type.MAX_BATCH_SIZE_TURN_ON_VALIDATION));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods","batch_update"),
+                                                 CompatibilityInfo.Type.MAX_BATCH_SIZE_ADDED_WITH_VALIDATION_ON));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods","batch_partial_update"),
+                                                 CompatibilityInfo.Type.MAX_BATCH_SIZE_VALUE_DECREASED_WITH_VALIDATION_ON));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "search", "assocKeys"),
                                                  CompatibilityInfo.Type.VALUE_NOT_EQUAL,
                                                  new StringArray("q", "s"), new StringArray("q", "changed_key")));
