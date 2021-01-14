@@ -1493,9 +1493,13 @@ public final class RestLiAnnotationReader
     return param;
   }
 
-  private static void checkIfKeyIsValid(String paramName, final Class<?> paramType, ResourceModel model)
+  /**
+   * For a given path key name and resource model, returns true if the path key exists in the resource,
+   * its parent, or any of its super-parents (if applicable).
+   */
+  private static void checkIfKeyIsValid(String keyName, ResourceModel model)
   {
-    ResourceModel nextModel = model.getParentResourceModel();
+    ResourceModel nextModel = model;
 
     while (nextModel != null)
     {
@@ -1503,7 +1507,7 @@ public final class RestLiAnnotationReader
 
       for (Key key : keys)
       {
-        if (key.getName().equals(paramName))
+        if (key.getName().equals(keyName))
         {
           return;
         }
@@ -1512,7 +1516,7 @@ public final class RestLiAnnotationReader
       nextModel = nextModel.getParentResourceModel();
     }
 
-    throw new ResourceConfigException("Parameter " + paramName + " not found in path keys of class " + model.getResourceClass());
+    throw new ResourceConfigException("Parameter " + keyName + " not found in path keys of class " + model.getResourceClass());
   }
 
   private static Parameter<?> buildPathKeyParam(final ResourceModel model,
@@ -1522,7 +1526,7 @@ public final class RestLiAnnotationReader
   {
     String paramName = annotations.get(PathKeyParam.class).value();
 
-    checkIfKeyIsValid(paramName, paramType, model);
+    checkIfKeyIsValid(paramName, model);
 
     Parameter<?> param = new Parameter<>(paramName,
                                         paramType,

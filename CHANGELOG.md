@@ -13,21 +13,23 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Fix bug which prevented using the `@PathKeyParam` resource method parameter annotation for a non-parent path key (i.e. path key defined in the same resource).
+  - Users will no longer have to rely on `@PathKeysParam` as a workaround.
 
 ## [29.13.9] - 2021-01-13
-- Add max batch size support on rest.li server.
-  - Introduce MaxBatchSize annotation, which can be added on batch methods.
+- Add max batch size support on Rest.li server.
+  - Introduce the `@MaxBatchSize` annotation, which can be added on batch methods.
   - Add batch size validation based on the allowed max batch size.
   - Add resource compatibility check rules for the max batch size.
 
 ## [29.13.8] - 2021-01-13
-- Fix a critical bug in RetryClient to set retry header instead of adding a value to retry header
+- Fix a critical bug in `RetryClient` to set retry header instead of adding a value to retry header
 
 ## [29.13.7] - 2021-01-08
-- Java does not allow inner class names to be same as enclosing classes. Detect and resolve such naming conflits for unnamed inner types(array, map and union).
+- Java does not allow inner class names to be same as enclosing classes. Detect and resolve such naming conflits for unnamed inner types (array, map and union).
 
 ## [29.13.6] - 2021-01-07
-- Fix for "pegasus to avro translation of UnionWithAlias RecordFeidls does not have field properties"
+- Fix for "pegasus to avro translation of UnionWithAlias RecordFields does not have field properties"
 
 ## [29.13.5] - 2021-01-06
 - Improve logging when conflicts are detected during parsing. Update translate schemas task to look in the input folder first when resolving schemas.
