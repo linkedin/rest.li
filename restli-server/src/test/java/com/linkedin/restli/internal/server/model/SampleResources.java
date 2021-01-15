@@ -32,6 +32,7 @@ import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ResourceContext;
+import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.UnstructuredDataReactiveReader;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.UpdateResponse;
@@ -368,6 +369,27 @@ class SampleResources
   {
     @Action(name = "void")
     public void doVoid() {}
+  }
+
+  /**
+   * The following resource is used by {@link TestRestLiApiBuilder#testPathKeyParamAnnotations()}.
+   */
+
+  @RestLiCollection(name = "pathKeyParamAnnotations")
+  class PathKeyParamAnnotationsResource implements KeyValueResource<Long, EmptyRecord>
+  {
+    @Action(name = "withPathKeyParam", resourceLevel = ResourceLevel.ENTITY)
+    public void withPathKeyParam(@PathKeyParam("pathKeyParamAnnotationsId") Long id) {}
+
+    @Action(name = "withPathKeysParam", resourceLevel = ResourceLevel.ENTITY)
+    public void withPathKeysParam(@PathKeysParam PathKeys pathKeys) {}
+  }
+
+  @RestLiCollection(name = "badPathKeyParamAnnotations")
+  class BadPathKeyParamAnnotationsResource implements KeyValueResource<Long, EmptyRecord>
+  {
+    @Action(name = "withPathKeyParam", resourceLevel = ResourceLevel.ENTITY)
+    public void withPathKeyParam(@PathKeyParam("unknownId") Long id) {}
   }
 
   /**
