@@ -19,10 +19,12 @@ package com.linkedin.restli.server.filter;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.transform.ImmutableList;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.server.CustomRequestContext;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ProjectionMode;
@@ -31,6 +33,7 @@ import com.linkedin.restli.server.errors.ServiceError;
 
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -251,6 +254,17 @@ public interface FilterRequestContext extends CustomRequestContext
    * @return {@link Method}
    */
   Method getMethod();
+
+  /**
+   * Gets an immutable view of the parameters defined for the target resource method.
+   * TODO: Remove the "default" implementation in the next major version.
+   *
+   * @return list of method parameters
+   */
+  default List<Parameter<?>> getMethodParameters()
+  {
+    return Collections.unmodifiableList(Collections.emptyList());
+  }
 
   /**
    * Return the attributes from R2 RequestContext.
