@@ -24,6 +24,7 @@ import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.PathKeys;
 import com.linkedin.restli.server.ProjectionMode;
@@ -258,6 +259,12 @@ public class FilterRequestContextInternalImpl implements FilterRequestContextInt
   public Method getMethod()
   {
     return _resourceMethod.getMethod();
+  }
+
+  @Override
+  public List<Parameter<?>> getMethodParameters()
+  {
+    return Collections.unmodifiableList(_resourceMethod.getParameters());
   }
 
   @Override

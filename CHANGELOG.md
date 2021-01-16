@@ -15,6 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 - Fix bug which prevented using the `@PathKeyParam` resource method parameter annotation for a non-parent path key (i.e. path key defined in the same resource).
   - Users will no longer have to rely on `@PathKeysParam` as a workaround.
+- Expose resource method parameters in the `FilterRequestContext` interface.
 
 ## [29.13.9] - 2021-01-13
 - Add max batch size support on Rest.li server.
