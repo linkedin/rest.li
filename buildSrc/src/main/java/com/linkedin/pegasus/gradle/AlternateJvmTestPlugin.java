@@ -12,12 +12,6 @@ import org.gradle.api.tasks.testing.Test;
  * This task will only run if and only if the alternateJvm project property is set.
  * You can use it manually like this: "ligradle -PalternateJvm=/export/apps/jdk/JDK-11_0_5-zulu/bin/java check".
  *
- * The alternateJvm property takes either a jvm_version (can be found in ~/jdk-versions.json) or a direct path to a
- * java executable.
- *
- * You can also add this command to whatever mint command you wish to.
- *
- *
  * WARNING: Please do not set this in gradle.properties because this would set that JVM for ALL your tests.
  **/
 public class AlternateJvmTestPlugin implements Plugin<Project> {
