@@ -65,7 +65,7 @@ fi
 # Run tests with Java 11
 # .travis.yml provides this environment variable
 EXIT_CODE_JAVA11=0
-if [ ! -z "$JAVA11_HOME" ]; then
+if [ ! -z "$JAVA11_HOME" ] && [ -z $EXTRA_ARGS ]; then
   echo "Running tests with Java 11"
   ./gradlew check -PalternateJvm=$JAVA11_HOME/bin/java
   EXIT_CODE_JAVA11=$?
