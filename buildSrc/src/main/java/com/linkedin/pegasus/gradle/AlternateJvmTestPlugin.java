@@ -10,7 +10,7 @@ import org.gradle.api.tasks.testing.Test;
  * This plugin configures the alternateJvmTest task. This allows users to run their tests with a different JVM.
  * This will allow users to support multiple JVMs if their libraries have upstreams in multiple JVM versions.
  * This task will only run if and only if the alternateJvm project property is set.
- * You can use it manually like this: "ligradle -PalternateJvm=/export/apps/jdk/JDK-11_0_5-zulu/bin/java check".
+ * You can use it manually like this: "./gradlew -PalternateJvm=/export/apps/jdk/JDK-11_0_5-zulu/bin/java check".
  *
  * WARNING: Please do not set this in gradle.properties because this would set that JVM for ALL your tests.
  **/
