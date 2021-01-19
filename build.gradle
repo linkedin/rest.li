@@ -158,6 +158,7 @@ idea {
 
 subprojects {
   apply plugin: 'java'
+  apply plugin: 'alternateJvmTest'
   apply plugin: 'eclipse'
   apply from: "${buildScriptDirPath}/cleanGenerated.gradle"
 

@@ -53,9 +53,29 @@ fi
 ./gradlew build $EXTRA_ARGS
 EXIT_CODE=$?
 
+if [ $EXIT_CODE != 0 ]; then
+  # Kill the waiter job
+  echo "[Ping] Killing the waiter job"
+  kill $WAITER_PID
+
+  echo "Java 8 build and test failed"
+  exit 1
+fi
+
+# Run tests with Java 11
+# .travis.yml provides this environment variable
+EXIT_CODE_JAVA11=0
+if [ ! -z "$JAVA11_HOME" ]; then
+  echo "Running tests with Java 11"
+  ./gradlew check -PalternateJvm=$JAVA11_HOME/bin/java
+  EXIT_CODE_JAVA11=$?
+fi
+
 # Kill the waiter job
+echo "[Ping] Killing the waiter job"
 kill $WAITER_PID
 
-if [ $EXIT_CODE != 0 ]; then
+if [ $EXIT_CODE_JAVA11 != 0 ]; then
+  echo "Java 11 tests failed"
   exit 1
 fi
