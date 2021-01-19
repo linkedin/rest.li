@@ -33,6 +33,7 @@ env:
     - GRAVIS="$HOME/gravis"
     # Select the versions of Java 8 and Java 11 that is to be used. A list of available versions can be seen with "jabba ls-remote"
     - JDK8="adopt@1.8.0-232"
+    - JDK=$JDK8
     - JDK11="adopt@1.11.0-9"
 
 before_install:
