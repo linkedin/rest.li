@@ -18,6 +18,11 @@ package com.linkedin.data;
 
 import java.util.HashMap;
 
+
+/**
+ * Custom hash table when {@link DataComplex} objects are used as keys. This utilizes the custom
+ * {@link DataComplex#dataComplexHashCode()} as the hash for improved performance.
+ */
 class DataComplexTable
 {
   private final HashMap<DataComplexKey, DataComplex> _map;
@@ -57,6 +62,8 @@ class DataComplexTable
     @Override
     public boolean equals(Object other)
     {
+      // "other" is guaranteed to be DataComplex as this class is "private" scoped within DataComplexTable, which only
+      // supports DataComplex objects.
       return _dataObject == ((DataComplexKey) other)._dataObject;
     }
   }
