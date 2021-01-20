@@ -13,9 +13,13 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.13.10] - 2021-01-20
 - Fix bug which prevented using the `@PathKeyParam` resource method parameter annotation for a non-parent path key (i.e. path key defined in the same resource).
   - Users will no longer have to rely on `@PathKeysParam` as a workaround.
 - Expose resource method parameters in the `FilterRequestContext` interface.
+- Fix bug in `DataComplexTable` that breaks `Data::copy` if there are hash collisions.
+  - Hashcodes for `DataComplex` objects are generated using a thread local, and there can be collisions if multiple threads are used to construct a `DataComplex` object.
 
 ## [29.13.9] - 2021-01-13
 - Add max batch size support on Rest.li server.
@@ -4813,7 +4817,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.9...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.10...master
+[29.13.10]: https://github.com/linkedin/rest.li/compare/v29.13.9...v29.13.10
 [29.13.9]: https://github.com/linkedin/rest.li/compare/v29.13.8...v29.13.9
 [29.13.8]: https://github.com/linkedin/rest.li/compare/v29.13.7...v29.13.8
 [29.13.7]: https://github.com/linkedin/rest.li/compare/v29.13.6...v29.13.7

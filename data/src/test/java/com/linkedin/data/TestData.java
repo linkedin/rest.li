@@ -866,6 +866,23 @@ public class TestData
     }
   }
 
+  // Tests copy method in the presence of hash collisions in the data objects
+  @Test
+  public void testCopyHashCollisions() throws Exception
+  {
+    DataMap a = new DataMap();
+    a.put("b", new DataMap());
+    a.put("c", new DataMap());
+
+    // Use the next hashcode to cause collision.
+    a.getDataMap("c")._dataComplexHashCode = DataComplexHashCode.nextHashCode() + 1;
+    DataMap copy = a.copy();
+    assertNotNull(copy.get("b"));
+    assertNotNull(copy.get("c"));
+    assertNotSame(copy.get("b"), copy);
+    assertNotSame(copy.get("c"), copy);
+  }
+
   @Test
   public void mapClonesHaveDifferentHashValues() throws CloneNotSupportedException
   {
