@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Update 'CreateOnly' and 'ReadOnly' javadocs to be more accurate that the validation is performed by 'RestLiValidationFilter'.
 
 ## [29.13.10] - 2021-01-20
 - Fix bug which prevented using the `@PathKeyParam` resource method parameter annotation for a non-parent path key (i.e. path key defined in the same resource).

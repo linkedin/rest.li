@@ -32,7 +32,8 @@ import java.lang.annotation.Target;
  * ReadOnly fields should not be specified in a create or partial update request.
  * They should be specified in update requests, but they should have the same value as the original entity
  * (if an optional field was missing from the entity, it should be missing in the update request too).
- * <b>This is not checked by the Rest.li framework and should be checked in the resource implementation.</b>
+ * <b>This is not validated by default in Rest.li, but such validation can be enabled by adding {@RestLiValidationFilter}.
+ * Or it could be checked in the resource implementation.</b>
  * <p>
  * See {@link RestLiDataValidator} for details on how to format paths.
  *
