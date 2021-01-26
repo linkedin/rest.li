@@ -67,9 +67,16 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
 
   protected final JsonFactory _factory;
 
+  private boolean _sortKeys;
+
   protected AbstractJacksonDataCodec(JsonFactory factory)
   {
     _factory = factory;
+  }
+
+  public void setSortKeys(boolean sortKeys)
+  {
+    _sortKeys = sortKeys;
   }
 
   @Override
@@ -135,7 +142,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
 
   protected Data.TraverseCallback createTraverseCallback(JsonGenerator generator)
   {
-    return createTraverseCallback(generator, false);
+    return createTraverseCallback(generator, _sortKeys);
   }
 
   /**
@@ -167,10 +174,6 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     {
       return new Parser().parse(jsonParser, expectType);
     }
-    catch (IOException e)
-    {
-      throw e;
-    }
     finally
     {
       DataCodec.closeQuietly(jsonParser);
@@ -196,10 +199,6 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     try
     {
       return new Parser(true).parse(jsonParser, mesg, locationMap);
-    }
-    catch (IOException e)
-    {
-      throw e;
     }
     finally
     {

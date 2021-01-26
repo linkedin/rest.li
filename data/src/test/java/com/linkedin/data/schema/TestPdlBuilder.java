@@ -66,12 +66,11 @@ public class TestPdlBuilder
               "@flatten.`array` = [ 1, 2, 3 ]\n",
               "@flatten.`array`=[1,2,3]"
             },
-            /* TODO Add test case for multiple properties in a map level once iteration logic is fixed to be deterministic
             {
               jsonValueProp,
               "@nested = {\n  \"array\" : [ 1, 2, 3 ],\n  \"empty\" : { }\n}\n",
               "@nested={\"array\":[1,2,3],\"empty\":{}}"
-            }*/
+            }
         };
   }
 

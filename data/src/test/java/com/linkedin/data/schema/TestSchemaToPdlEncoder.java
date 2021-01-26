@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.testng.annotations.Test;
 
 import static org.junit.Assert.*;
@@ -49,5 +51,146 @@ public class TestSchemaToPdlEncoder
     assertTrue(encoded instanceof RecordDataSchema);
     assertEquals(source.getProperties(), encoded.getProperties());
     assertEquals(source, encoded);
+  }
+
+  @Test
+  public void testEncodeSortsNestedPropertyMap() throws IOException
+  {
+    String inputSchema = String.join("\n",
+        "@nested = {",
+        "  \"c\" : [ \"z\", \"y\" ],",
+        "  \"b\" : \"b\",",
+        "  \"a\" : \"a\"",
+        "}",
+        "record A {}");
+
+    DataSchema schema = TestUtil.dataSchemaFromPdlString(inputSchema);
+
+    String indentedSchema = SchemaToPdlEncoder.schemaToPdl(schema, SchemaToPdlEncoder.EncodingStyle.INDENTED);
+
+    assertEquals(String.join("\n",
+        "@nested = {",
+        "  \"a\" : \"a\",",
+        "  \"b\" : \"b\",",
+        "  \"c\" : [ \"z\", \"y\" ]",
+        "}",
+        "record A {}"), indentedSchema);
+
+    String compactSchema = SchemaToPdlEncoder.schemaToPdl(schema, SchemaToPdlEncoder.EncodingStyle.COMPACT);
+
+    assertEquals("@nested={\"a\":\"a\",\"b\":\"b\",\"c\":[\"z\",\"y\"]}record A{}", compactSchema);
+  }
+
+  @Test
+  public void testEncodeSortsMultiLevelNestedPropertyMap() throws IOException
+  {
+    String inputSchema = String.join("\n",
+        "@nested = {",
+        "  \"b\" : \"b\",",
+        "  \"a\" : {",
+        "    \"d\" : \"d\",",
+        "    \"c\" : \"c\"",
+        "  }",
+        "}",
+        "record A {}");
+
+    DataSchema schema = TestUtil.dataSchemaFromPdlString(inputSchema);
+
+    String indentedSchema = SchemaToPdlEncoder.schemaToPdl(schema, SchemaToPdlEncoder.EncodingStyle.INDENTED);
+
+    assertEquals(String.join("\n",
+        "@nested = {",
+        "  \"a\" : {",
+        "    \"c\" : \"c\",",
+        "    \"d\" : \"d\"",
+        "  },",
+        "  \"b\" : \"b\"",
+        "}",
+        "record A {}"), indentedSchema);
+
+    String compactSchema = SchemaToPdlEncoder.schemaToPdl(schema, SchemaToPdlEncoder.EncodingStyle.COMPACT);
+
+    assertEquals("@nested={\"a\":{\"c\":\"c\",\"d\":\"d\"},\"b\":\"b\"}record A{}", compactSchema);
+  }
+
+  @Test
+  public void testEncodeDefaultValueFieldsInSchemaOrder() throws IOException
+  {
+    String inputSchema = String.join("\n",
+        "record A {",
+        "",
+        "  b: record B {",
+        "    b1: string",
+        "",
+        "    c: record C {",
+        "      c2: int",
+        "      c1: boolean",
+        "",
+        "      c3: array[string]",
+        "    }",
+        "    b2: double",
+        "  } = {",
+        "    \"b1\" : \"hello\",",
+        "    \"b2\" : 0.05,",
+        "    \"c\" : {",
+        "      \"c1\" : true,",
+        "      \"c2\" : 100,",
+        "      \"c3\" : [ \"one\", \"two\" ]",
+        "    }",
+        "  }",
+        "}");
+
+    DataSchema schema = TestUtil.dataSchemaFromPdlString(inputSchema);
+
+    String indentedSchema = SchemaToPdlEncoder.schemaToPdl(schema, SchemaToPdlEncoder.EncodingStyle.INDENTED);
+
+    assertEquals(String.join("\n",
+        "record A {",
+        "",
+        "  b: record B {",
+        "    b1: string",
+        "",
+        "    c: record C {",
+        "      c2: int",
+        "      c1: boolean",
+        "",
+        "      c3: array[string]",
+        "    }",
+        "    b2: double",
+        "  } = {",
+        "    \"b1\" : \"hello\",",
+        "    \"c\" : {",
+        "      \"c2\" : 100,",
+        "      \"c1\" : true,",
+        "      \"c3\" : [ \"one\", \"two\" ]",
+        "    },",
+        "    \"b2\" : 0.05",
+        "  }",
+        "}"), indentedSchema);
+
+    String compactSchema = SchemaToPdlEncoder.schemaToPdl(schema, SchemaToPdlEncoder.EncodingStyle.COMPACT);
+
+    assertEquals(Stream.of(
+        "record A{",
+        "  b:record B{",
+        "    b1:string,",
+        "    c:record C{",
+        "    c2:int,",
+        "    c1:boolean,",
+        "    c3:array[string]",
+        "  }",
+        "  b2:double",
+        "  }={",
+        "    \"b1\":\"hello\",",
+        "    \"c\":{",
+        "      \"c2\":100,",
+        "      \"c1\":true,",
+        "      \"c3\":[\"one\",\"two\"]",
+        "    },",
+        "    \"b2\":0.05",
+        "  }",
+        "}")
+        .map(String::trim)
+        .collect(Collectors.joining()), compactSchema);
   }
 }
