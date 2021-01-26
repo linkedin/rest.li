@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.strategies.relative;
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.test.util.retry.SingleRetry;
+import com.linkedin.test.util.retry.ThreeRetries;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
@@ -176,7 +177,7 @@ public class StateUpdaterTest
     executorService.shutdown();
   }
 
-  @Test(retryAnalyzer = SingleRetry.class) // May need a warmup iteration
+  @Test(retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
   public void testClusterGenerationIdChange() throws InterruptedException {
     PartitionState state = new PartitionStateTestDataBuilder()
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)

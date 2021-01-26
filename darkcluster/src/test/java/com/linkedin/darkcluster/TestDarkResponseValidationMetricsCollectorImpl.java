@@ -3,6 +3,7 @@ package com.linkedin.darkcluster;
 import com.google.common.collect.ImmutableMap;
 import com.linkedin.darkcluster.api.ResponseValidationMetricsHeader;
 import com.linkedin.darkcluster.impl.DarkResponseValidationMetricsCollectorImpl;
+import com.linkedin.test.util.retry.SingleRetry;
 import com.linkedin.util.clock.SystemClock;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -147,7 +148,7 @@ public class TestDarkResponseValidationMetricsCollectorImpl {
   }
 
   @Test(description = "1000 incoming headers at times t1 to t10 randomly with varying metrics from varying hosts, and doing a get randomly "
-      + "at any time should always result in monotonically increasing metrics")
+      + "at any time should always result in monotonically increasing metrics", retryAnalyzer = SingleRetry.class) // Known to be flaky in CI
   public void testMonotonicityWithAggregateAndGetWithMultipleThreads() {
     DarkResponseValidationMetricsCollectorImpl collector = new DarkResponseValidationMetricsCollectorImpl(
         SystemClock.instance(),
