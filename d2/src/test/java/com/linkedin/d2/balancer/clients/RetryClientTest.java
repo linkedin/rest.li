@@ -41,6 +41,7 @@ import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.test.util.ClockedExecutor;
+import com.linkedin.test.util.retry.SingleRetry;
 import com.linkedin.util.clock.SettableClock;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -237,7 +238,7 @@ public class RetryClientTest
     }
   }
 
-  @Test
+  @Test(retryAnalyzer = SingleRetry.class) // Known to be flaky in CI
   public void testRestRetryExceedsClientRetryRatio() throws Exception
   {
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"),

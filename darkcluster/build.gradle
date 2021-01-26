@@ -6,6 +6,7 @@ dependencies {
   compile project(':pegasus-common')
   testCompile externalDependency.testng
   testCompile project(':darkcluster-test-api')
+  testCompile project(':test-util')
   testCompile project(path: ':d2', configuration: 'testArtifacts')
   testCompile externalDependency.mockito
   testCompile externalDependency.guava
