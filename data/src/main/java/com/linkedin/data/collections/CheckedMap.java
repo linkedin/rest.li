@@ -23,9 +23,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -166,7 +163,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     checkMutability();
     Set<K> keys = null;
-    if (_changeListeners != null)
+    if (_changeListenerHead != null)
     {
       keys = new HashSet<>(keySet());
     }
@@ -184,7 +181,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     CheckedMap<K,V> o = (CheckedMap<K,V>) super.clone();
     o._map = (HashMap<K,V>) _map.clone();
     o._readOnly = false;
-    o._changeListeners = null;
+    o._changeListenerHead = null;
     o._changeListenerReferenceQueue = null;
     return o;
   }
@@ -353,26 +350,18 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
       return;
     }
 
-    if (_changeListeners == null)
+    if (_changeListenerReferenceQueue == null)
     {
-      // Change listeners are mostly used by map wrappers, and we always iterate through them
-      // linearly, so use a linked list.
-      _changeListeners = new LinkedList<>();
       _changeListenerReferenceQueue = new ReferenceQueue<>();
     }
-
+    else
+    {
+      purgeStaleChangeListeners();
+    }
     // Maintain a weak reference to to the listener to avoid leaking the wrapper beyond its
     // lifetime.
-    _changeListeners.add(new WeakReference<>(listener, _changeListenerReferenceQueue));
-    // Clear finalized weak references.
-    if (_changeListenerReferenceQueue.poll() != null)
-    {
-      while (_changeListenerReferenceQueue.poll() != null)
-      {
-        // Do nothing, as we are just clearing the reference queue.
-      }
-      _changeListeners.removeIf(weakReference -> weakReference.get() == null);
-    }
+    _changeListenerHead = new  WeakListNode<>(
+        new WeakReference<>(listener, _changeListenerReferenceQueue), _changeListenerHead);
   }
 
   final private void checkKeyValue(K key, V value)
@@ -493,70 +482,63 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
 
   private void notifyChangeListenersOnPut(K key, V value)
   {
-    if (_changeListeners == null)
+    purgeStaleChangeListeners();
+    if (_changeListenerHead == null)
     {
       return;
     }
-
-    Iterator<WeakReference<ChangeListener<K, V>>> itr = _changeListeners.iterator();
-    while (itr.hasNext())
+    WeakListNode<ChangeListener<K, V>> node = _changeListenerHead;
+    while (node != null)
     {
-      WeakReference<ChangeListener<K, V>> listenerRef = itr.next();
+      WeakReference<ChangeListener<K, V>> listenerRef = node._object;
       ChangeListener<K, V> listener = listenerRef.get();
       if (listener != null)
       {
         listener.onUnderlyingMapChanged(key, value);
       }
-      else
-      {
-        itr.remove();
-      }
+      node = node._next;
     }
   }
 
   private void notifyChangeListenersOnPutAll(Map<? extends K, ? extends V> map)
   {
-    if (_changeListeners == null)
+    purgeStaleChangeListeners();
+    if (_changeListenerHead == null)
     {
       return;
     }
 
-    Iterator<WeakReference<ChangeListener<K, V>>> itr = _changeListeners.iterator();
-    while (itr.hasNext())
+    WeakListNode<ChangeListener<K, V>> node = _changeListenerHead;
+    while (node != null)
     {
-      WeakReference<ChangeListener<K, V>> listenerRef = itr.next();
+      WeakReference<ChangeListener<K, V>> listenerRef = node._object;
       ChangeListener<K, V> listener = listenerRef.get();
       if (listener != null)
       {
         map.forEach(listener::onUnderlyingMapChanged);
       }
-      else
-      {
-        itr.remove();
-      }
+      node = node._next;
     }
   }
 
   private void notifyChangeListenersOnClear(Set<? extends K> keys)
   {
-    if (_changeListeners == null)
+    purgeStaleChangeListeners();
+    if (_changeListenerHead == null)
     {
       return;
     }
 
-    Iterator<WeakReference<ChangeListener<K, V>>> itr = _changeListeners.iterator();
-    while (itr.hasNext())
+    WeakListNode<ChangeListener<K, V>> node = _changeListenerHead;
+    while (node != null)
     {
-      WeakReference<ChangeListener<K, V>> listenerRef = itr.next();
+      WeakReference<ChangeListener<K, V>> listenerRef = node._object;
       ChangeListener<K, V> listener = listenerRef.get();
       if (listener != null)
       {
         keys.forEach(key -> listener.onUnderlyingMapChanged(key, null));
       }
-      else
-      {
-        itr.remove();
-      }
+      node = node._next;
     }
   }
 
@@ -574,11 +556,60 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     void onUnderlyingMapChanged(K key, V value);
   }
 
+  private void purgeStaleChangeListeners()
+  {
+    if (_changeListenerReferenceQueue != null && _changeListenerReferenceQueue.poll() != null)
+    {
+      // Clear finalized weak references.
+      while (_changeListenerReferenceQueue.poll() != null)
+      {
+        // Do nothing, as we are just clearing the reference queue.
+      }
+      // Now iterate over change listeners and purge stale references.
+      WeakListNode<ChangeListener<K, V>> node = _changeListenerHead,  prev = null;
+      while (node != null)
+      {
+        if (node._object.get() == null)
+        {
+          if (prev == null)
+          {
+            _changeListenerHead = node._next;
+          }
+          else
+          {
+            prev._next = node._next;
+          }
+        }
+        else
+        {
+          prev = node;
+        }
+        node = node._next;
+      }
+    }
+  }
+
   private boolean _readOnly = false;
   protected MapChecker<K,V> _checker;
-  protected List<WeakReference<ChangeListener<K, V>>> _changeListeners;
+  // Change listeners are mostly used by map wrappers, and we always iterate through them
+  // linearly, so use a linked list.
+  protected WeakListNode<ChangeListener<K, V>> _changeListenerHead;
   // Reference queue holds any change listener weak references finalized by GC. It being non-empty is a signal
   // to purge change listeners of stale entries.
   private ReferenceQueue<ChangeListener<K, V>> _changeListenerReferenceQueue;
   private HashMap<K,V> _map;
+
+  /**
+   * A singly-linked list node that holds weak references to objects.
+   */
+  static class WeakListNode<T> {
+    final WeakReference<T> _object;
+    WeakListNode<T> _next;
+
+    WeakListNode(WeakReference<T> object, WeakListNode<T> next)
+    {
+      this._object = object;
+      this._next = next;
+    }
+  }
 }

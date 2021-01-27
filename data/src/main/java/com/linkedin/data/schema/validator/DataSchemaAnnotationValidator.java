@@ -424,6 +424,7 @@ public class DataSchemaAnnotationValidator implements Validator
         {
           Constructor<? extends Validator> ctor = clazz.getConstructor(DataMap.class);
           DataMap configDataMap = (DataMap) config;
+          configDataMap.makeReadOnly();
           Integer priority = configDataMap.getInteger(VALIDATOR_PRIORITY);
           Validator validator = ctor.newInstance(configDataMap);
           validatorInfoList.add(new ValidatorInfo(priority, validator));

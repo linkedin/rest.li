@@ -44,7 +44,7 @@ public class TestCheckedMap
       checkedMap.addChangeListener(listener);
     }
     // Run gc to finalize weak references.
-    while(checkedMap._changeListeners.get(0).get() != null)
+    while(checkedMap._changeListenerHead._object.get() != null)
     {
       System.gc();
     }
@@ -55,7 +55,18 @@ public class TestCheckedMap
     {
       // Do nothing.
     });
-    Assert.assertTrue(checkedMap._changeListeners.size() < 1000);
+    Assert.assertTrue(sizeOf(checkedMap._changeListenerHead) < 1000);
+  }
+
+  private static int sizeOf(CheckedMap.WeakListNode<CheckedMap.ChangeListener<String, Object>> node)
+  {
+    int count = 0;
+    while (node != null)
+    {
+      count++;
+      node = node._next;
+    }
+    return count;
   }
 
   @Test
@@ -67,6 +78,6 @@ public class TestCheckedMap
     {
       // Do nothing.
     });
-    Assert.assertNull(map._changeListeners);
+    Assert.assertNull(map._changeListenerHead);
   }
 }
