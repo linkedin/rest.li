@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 
 /**
@@ -487,17 +488,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     {
       return;
     }
-    WeakListNode<ChangeListener<K, V>> node = _changeListenerHead;
-    while (node != null)
-    {
-      WeakReference<ChangeListener<K, V>> listenerRef = node._object;
-      ChangeListener<K, V> listener = listenerRef.get();
-      if (listener != null)
-      {
-        listener.onUnderlyingMapChanged(key, value);
-      }
-      node = node._next;
-    }
+    forEachChangeListener(listener -> listener.onUnderlyingMapChanged(key, value));
   }
 
   private void notifyChangeListenersOnPutAll(Map<? extends K, ? extends V> map)
@@ -507,18 +498,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     {
       return;
     }
-
-    WeakListNode<ChangeListener<K, V>> node = _changeListenerHead;
-    while (node != null)
-    {
-      WeakReference<ChangeListener<K, V>> listenerRef = node._object;
-      ChangeListener<K, V> listener = listenerRef.get();
-      if (listener != null)
-      {
-        map.forEach(listener::onUnderlyingMapChanged);
-      }
-      node = node._next;
-    }
+    forEachChangeListener(listener -> map.forEach(listener::onUnderlyingMapChanged));
   }
 
   private void notifyChangeListenersOnClear(Set<? extends K> keys)
@@ -529,17 +509,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
       return;
     }
 
-    WeakListNode<ChangeListener<K, V>> node = _changeListenerHead;
-    while (node != null)
-    {
-      WeakReference<ChangeListener<K, V>> listenerRef = node._object;
-      ChangeListener<K, V> listener = listenerRef.get();
-      if (listener != null)
-      {
-        keys.forEach(key -> listener.onUnderlyingMapChanged(key, null));
-      }
-      node = node._next;
-    }
+    forEachChangeListener(listener -> keys.forEach(key -> listener.onUnderlyingMapChanged(key, null)));
   }
 
   /**
@@ -586,6 +556,21 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
         }
         node = node._next;
       }
+    }
+  }
+
+  private void forEachChangeListener(Consumer<ChangeListener<K, V>> listenerConsumer)
+  {
+    WeakListNode<ChangeListener<K, V>> node = _changeListenerHead;
+    while (node != null)
+    {
+      WeakReference<ChangeListener<K, V>> listenerRef = node._object;
+      ChangeListener<K, V> listener = listenerRef.get();
+      if (listener != null)
+      {
+        listenerConsumer.accept(listener);
+      }
+      node = node._next;
     }
   }
 

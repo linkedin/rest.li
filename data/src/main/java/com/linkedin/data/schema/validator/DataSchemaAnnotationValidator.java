@@ -424,6 +424,8 @@ public class DataSchemaAnnotationValidator implements Validator
         {
           Constructor<? extends Validator> ctor = clazz.getConstructor(DataMap.class);
           DataMap configDataMap = (DataMap) config;
+          // Marking the config read-only as this is being shared by all validators (across multiple threads).
+          // This also ensures change listeners on the map are not created everytime a validator warps it in a record.
           configDataMap.makeReadOnly();
           Integer priority = configDataMap.getInteger(VALIDATOR_PRIORITY);
           Validator validator = ctor.newInstance(configDataMap);
