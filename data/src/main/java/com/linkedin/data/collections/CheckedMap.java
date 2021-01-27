@@ -17,12 +17,13 @@
 package com.linkedin.data.collections;
 
 import com.linkedin.data.Data;
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -184,6 +185,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     o._map = (HashMap<K,V>) _map.clone();
     o._readOnly = false;
     o._changeListeners = null;
+    o._changeListenerReferenceQueue = null;
     return o;
   }
 
@@ -356,11 +358,21 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
       // Change listeners are mostly used by map wrappers, and we always iterate through them
       // linearly, so use a linked list.
       _changeListeners = new LinkedList<>();
+      _changeListenerReferenceQueue = new ReferenceQueue<>();
     }
 
     // Maintain a weak reference to to the listener to avoid leaking the wrapper beyond its
     // lifetime.
-    _changeListeners.add(new WeakReference<>(listener));
+    _changeListeners.add(new WeakReference<>(listener, _changeListenerReferenceQueue));
+    // Clear finalized weak references.
+    if (_changeListenerReferenceQueue.poll() != null)
+    {
+      while (_changeListenerReferenceQueue.poll() != null)
+      {
+        // Do nothing, as we are just clearing the reference queue.
+      }
+      _changeListeners.removeIf(weakReference -> weakReference.get() == null);
+    }
   }
 
   final private void checkKeyValue(K key, V value)
@@ -486,13 +498,20 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
       return;
     }
 
-    _changeListeners.forEach(listenerRef -> {
+    Iterator<WeakReference<ChangeListener<K, V>>> itr = _changeListeners.iterator();
+    while (itr.hasNext())
+    {
+      WeakReference<ChangeListener<K, V>> listenerRef = itr.next();
       ChangeListener<K, V> listener = listenerRef.get();
       if (listener != null)
       {
         listener.onUnderlyingMapChanged(key, value);
       }
-    });
+      else
+      {
+        itr.remove();
+      }
+    }
   }
 
   private void notifyChangeListenersOnPutAll(Map<? extends K, ? extends V> map)
@@ -502,13 +521,20 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
       return;
     }
 
-    _changeListeners.forEach(listenerRef -> {
+    Iterator<WeakReference<ChangeListener<K, V>>> itr = _changeListeners.iterator();
+    while (itr.hasNext())
+    {
+      WeakReference<ChangeListener<K, V>> listenerRef = itr.next();
       ChangeListener<K, V> listener = listenerRef.get();
       if (listener != null)
       {
         map.forEach(listener::onUnderlyingMapChanged);
       }
-    });
+      else
+      {
+        itr.remove();
+      }
+    }
   }
 
   private void notifyChangeListenersOnClear(Set<? extends K> keys)
@@ -518,13 +544,20 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
       return;
     }
 
-    _changeListeners.forEach(listenerRef -> {
+    Iterator<WeakReference<ChangeListener<K, V>>> itr = _changeListeners.iterator();
+    while (itr.hasNext())
+    {
+      WeakReference<ChangeListener<K, V>> listenerRef = itr.next();
       ChangeListener<K, V> listener = listenerRef.get();
       if (listener != null)
       {
         keys.forEach(key -> listener.onUnderlyingMapChanged(key, null));
       }
-    });
+      else
+      {
+        itr.remove();
+      }
+    }
   }
 
   /**
@@ -544,5 +577,8 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   private boolean _readOnly = false;
   protected MapChecker<K,V> _checker;
   protected List<WeakReference<ChangeListener<K, V>>> _changeListeners;
+  // Reference queue holds any change listener weak references finalized by GC. It being non-empty is a signal
+  // to purge change listeners of stale entries.
+  private ReferenceQueue<ChangeListener<K, V>> _changeListenerReferenceQueue;
   private HashMap<K,V> _map;
 }
