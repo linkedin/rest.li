@@ -13,7 +13,11 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.13.11] - 2021-01-27
 - Update 'CreateOnly' and 'ReadOnly' javadocs to be more accurate that the validation is performed by 'RestLiValidationFilter'.
+- Fix memory leak in `CheckedMap` when one map is used to create multiple record templates.
+  - Change listener list now clears finalized weak references when it detects any change listener was finalized or when listeners are notified.
 
 ## [29.13.10] - 2021-01-20
 - Fix bug which prevented using the `@PathKeyParam` resource method parameter annotation for a non-parent path key (i.e. path key defined in the same resource).
@@ -4818,7 +4822,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.10...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.11...master
+[29.13.11]: https://github.com/linkedin/rest.li/compare/v29.13.10...v29.13.11
 [29.13.10]: https://github.com/linkedin/rest.li/compare/v29.13.9...v29.13.10
 [29.13.9]: https://github.com/linkedin/rest.li/compare/v29.13.8...v29.13.9
 [29.13.8]: https://github.com/linkedin/rest.li/compare/v29.13.7...v29.13.8
