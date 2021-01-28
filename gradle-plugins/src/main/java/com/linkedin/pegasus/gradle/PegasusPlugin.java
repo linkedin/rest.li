@@ -655,7 +655,7 @@ public class PegasusPlugin implements Plugin<Project>
           gradle.getRootProject().subprojects(subproject ->
             UNUSED_CONFIGURATIONS.forEach(configurationName -> {
               Configuration conf = subproject.getConfigurations().findByName(configurationName);
-              if (conf != null && !conf.isEmpty()) {
+              if (conf != null && !conf.getDependencies().isEmpty()) {
                 subproject.getLogger().warn("*** Project {} declares dependency to unused configuration \"{}\". "
                     + "This configuration is deprecated and you can safely remove the dependency. ***",
                     subproject.getPath(), configurationName);

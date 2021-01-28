@@ -25,6 +25,7 @@ import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
+import com.linkedin.test.util.retry.SingleRetry;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
@@ -73,7 +74,7 @@ public class TestJetty404
   }
 
   // make sure jetty's default behavior will read all the request bytes in case of 404
-  @Test
+  @Test(retryAnalyzer = SingleRetry.class) // Known to be flaky in CI
   public void testJetty404() throws Exception
   {
     BytesWriter writer = new BytesWriter(200 * 1024, (byte)100);
@@ -99,7 +100,7 @@ public class TestJetty404
     latch.await(5000, TimeUnit.MILLISECONDS);
     Assert.assertTrue(writer.isDone());
     Throwable ex = exRef.get();
-    Assert.assertTrue( ex instanceof StreamException, "Expected StreamException but found: " + ex);
+    Assert.assertTrue(ex instanceof StreamException, "Expected StreamException but found: " + ex);
     StreamResponse response = ((StreamException) ex).getResponse();
     Assert.assertEquals(response.getStatus(), RestStatus.NOT_FOUND);
     response.getEntityStream().setReader(new DrainReader());
