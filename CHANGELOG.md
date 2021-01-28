@@ -13,9 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
-- Update 'CreateOnly' and 'ReadOnly' javadocs to be more accurate that the validation is performed by 'RestLiValidationFilter'.
 
 ## [29.13.11] - 2021-01-27
+- Update 'CreateOnly' and 'ReadOnly' javadocs to be more accurate that the validation is performed by 'RestLiValidationFilter'.
 - Fix memory leak in `CheckedMap` when one map is used to create multiple record templates.
   - Change listener list now clears finalized weak references when it detects any change listener was finalized or when listeners are notified.
 
