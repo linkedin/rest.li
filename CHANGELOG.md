@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.13.12] - 2021-01-29
+Fix a bug of losing HTTP status code when a retriable response goes through ClientRetryFilter
+
 ## [29.13.11] - 2021-01-27
 - Update 'CreateOnly' and 'ReadOnly' javadocs to be more accurate that the validation is performed by 'RestLiValidationFilter'.
 - Fix memory leak in `CheckedMap` when one map is used to create multiple record templates.
@@ -4822,7 +4825,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.11...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.12...master
+[29.13.12]: https://github.com/linkedin/rest.li/compare/v29.13.11...v29.13.12
 [29.13.11]: https://github.com/linkedin/rest.li/compare/v29.13.10...v29.13.11
 [29.13.10]: https://github.com/linkedin/rest.li/compare/v29.13.9...v29.13.10
 [29.13.9]: https://github.com/linkedin/rest.li/compare/v29.13.8...v29.13.9
