@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+ - Generate fluent client APIs get and create methods of collection resources.
 
 ## [29.13.12] - 2021-01-29
 Fix a bug of losing HTTP status code when a retriable response goes through ClientRetryFilter

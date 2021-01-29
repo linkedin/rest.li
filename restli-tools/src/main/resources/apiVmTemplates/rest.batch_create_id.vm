@@ -1,0 +1,68 @@
+#*
+   Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*#
+  #doc($method.schema.doc)
+  public CompletionStage<List<CreateIdStatus<${spec.keyClassName}>>> batchCreate(
+      List<${spec.entityClassName}> entities#if( $method.hasParams()),#end
+      #**##methodParams($method)##
+      ) {
+    Map<String, Object> queryParams = new HashMap<>();
+    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>();#else Collections.emptyMap();#end
+    #fillQueryParams($method)
+    queryParams.put(RestConstants.RETURN_ENTITY_PARAM, false);
+    @SuppressWarnings("unchecked")
+    BatchCreateIdDecoder<${spec.keyClassName}> idResponseDecoder = new BatchCreateIdDecoder<>(
+        (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
+        _resourceSpec.getKeyParts(),
+        _resourceSpec.getComplexKeyType());
+    DataMap map = new DataMap();
+    CollectionRequest<${spec.entityClassName}> input = new CollectionRequest<>(map, ${spec.entityClassName}.class);
+    for (${spec.entityClassName} entity : entities)
+    {
+      input.getElements().add(entity);
+    }
+
+    BatchCreateIdRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchCreateIdRequest<>(
+        Collections.emptyMap(),
+        Collections.emptyList(),
+        idResponseDecoder,
+        input,
+        _resourceSpec,
+        queryParams,
+        queryParamClasses,
+        ORIGINAL_RESOURCE_PATH,
+        Collections.emptyMap(),
+        RestliRequestOptions.DEFAULT_OPTIONS,
+        ## Streaming attachments
+        null);
+    CompletableFuture<List<CreateIdStatus<${spec.keyClassName}>>> result = new CompletableFuture<>();
+    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
+        responseTry -> {
+          if (responseTry.isFailed()) {
+            result.completeExceptionally(responseTry.getError());
+          } else {
+            Response<BatchCreateIdResponse<${spec.keyClassName}>> response = responseTry.get();
+            if (response.hasError()) {
+              result.completeExceptionally(response.getError());
+            } else {
+              result.complete(response.getEntity().getElements());
+            }
+          }
+          return Success.of((Void) null);
+        });
+    _engine.run(responseTask);
+    return result;
+  }
+  #optionalParamClass($method)

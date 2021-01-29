@@ -41,7 +41,7 @@ import java.util.Set;
  */
 public class BatchGetEntityRequest<K, V extends RecordTemplate> extends BatchRequest<BatchKVResponse<K, EntityResponse<V>>>
 {
-  BatchGetEntityRequest(Map<String, String> headers,
+  public BatchGetEntityRequest(Map<String, String> headers,
                         List<HttpCookie> cookies,
                         RestResponseDecoder<BatchKVResponse<K, EntityResponse<V>>> decoder,
                         Map<String, Object> queryParams,

@@ -1,0 +1,60 @@
+#*
+   Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*#
+  #doc($method.schema.doc)
+  public CompletionStage<${spec.keyClassName}> create(
+      ${spec.entityClassName} entity#if( $method.hasParams()),#end
+      #**##methodParams($method)##
+      ) {
+    Map<String, Object> queryParams = new HashMap<>();
+    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>();#else Collections.emptyMap();#end
+    #fillQueryParams($method)
+    queryParams.put(RestConstants.RETURN_ENTITY_PARAM, false);
+    @SuppressWarnings("unchecked")
+    IdResponseDecoder<${spec.keyClassName}> idResponseDecoder = new IdResponseDecoder<>(
+        (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
+        _resourceSpec.getKeyParts(),
+        _resourceSpec.getComplexKeyType());
+    CreateIdRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new CreateIdRequest<>(
+        entity,
+        Collections.emptyMap(),
+        Collections.emptyList(),
+        idResponseDecoder,
+        _resourceSpec,
+        queryParams,
+        queryParamClasses,
+        ORIGINAL_RESOURCE_PATH,
+        Collections.emptyMap(),
+        RestliRequestOptions.DEFAULT_OPTIONS,
+        null);
+    CompletableFuture<${spec.keyClassName}> result = new CompletableFuture<>();
+    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
+        responseTry -> {
+          if (responseTry.isFailed()) {
+            result.completeExceptionally(responseTry.getError());
+          } else {
+            Response<IdResponse<${spec.keyClassName}>> response = responseTry.get();
+            if (response.hasError()) {
+              result.completeExceptionally(response.getError());
+            } else {
+              result.complete(response.getEntity().getId());
+            }
+          }
+          return Success.of((Void) null);
+        });
+    _engine.run(responseTask);
+    return result;
+  }
+  #optionalParamClass($method)
