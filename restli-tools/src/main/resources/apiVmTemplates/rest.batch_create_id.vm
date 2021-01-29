@@ -16,7 +16,7 @@
   #doc($method.schema.doc)
   public CompletionStage<List<CreateIdStatus<${spec.keyClassName}>>> batchCreate(
       List<${spec.entityClassName}> entities#if( $method.hasParams()),#end
-      #methodParams($method)
+      #**##methodParams($method)##
       ) {
     Map<String, Object> queryParams = new HashMap<>();
     Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>();#else Collections.emptyMap();#end

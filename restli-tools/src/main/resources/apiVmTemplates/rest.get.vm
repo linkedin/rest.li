@@ -16,10 +16,9 @@
   #doc($method.schema.doc)
   public CompletionStage<${spec.entityClassName}> get(
       $spec.keyClassName $spec.idName#if( $method.hasParams()),#end
-      #methodParams($method)
+      #**##methodParams($method)##
       ) {
-    #paramsRequestMap($method)
-
+    #**##paramsRequestMap($method)##
     GetRequest<${spec.entityClassName}> request = new GetRequest<>(
         Collections.emptyMap(),
         Collections.emptyList(),

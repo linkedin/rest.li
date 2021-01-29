@@ -47,25 +47,26 @@
   #end
   #set($className = "${util.restMethodToClassPrefix($method.method)}OptionalParameters")
   #if($method.optionalParams.size() > 0)
-      $className optionalParams
+    $className optionalParams
   #end
 #end
 
 #macro(fillQueryParams $method)
-  #foreach($param in $method.requiredParams)
+#**#
+    #foreach($param in $method.requiredParams)
       queryParams.put("$param.paramName", $param.paramName);
       queryParamClasses.put("$param.paramName", ${param.paramClassName}.class);
-  #end
-  #foreach($param in $method.optionalParams)
+    #end
+    #foreach($param in $method.optionalParams)
       if (optionalParams.$param.paramName != null) {
         queryParams.put("$param.paramName", optionalParams.$param.paramName);
         queryParamClasses.put("$param.paramName", ${param.paramClassName}.class);
       }
-  #end
+    #end
 #end
 
 #macro(paramsRequestMap $method)
-    Map<String, Object> queryParams = #if($method.hasParams())new HashMap<>();#else Collections.emptyMap();#end
+#**#Map<String, Object> queryParams = #if($method.hasParams())new HashMap<>();#else Collections.emptyMap();#end
     Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>();#else Collections.emptyMap();#end
-    #fillQueryParams($method)
+#**##fillQueryParams($method)
 #end
