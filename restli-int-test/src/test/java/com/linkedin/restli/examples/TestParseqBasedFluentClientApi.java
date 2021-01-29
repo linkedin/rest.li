@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
 import org.testng.collections.Sets;
 
 
-public class TestGreetingsFluentClient extends RestLiIntegrationTest
+public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
 {
   public static final String MESSAGE = "Create a new greeting";
   ParSeqUnitTestHelper _parSeqUnitTestHelper;
