@@ -51,6 +51,13 @@
   #end
 #end
 
+#macro(pagingParams $method)
+  #if($method.schema.isPagingSupported())
+    int start,
+    int count
+  #end
+#end
+
 #macro(fillQueryParams $method)
 #**#
     #foreach($param in $method.requiredParams)
@@ -66,7 +73,12 @@
 #end
 
 #macro(paramsRequestMap $method)
-#**#Map<String, Object> queryParams = #if($method.hasParams())new HashMap<>();#else Collections.emptyMap();#end
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>();#else Collections.emptyMap();#end
+#**#Map<String, Object> queryParams = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
+    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
 #**##fillQueryParams($method)
+#end
+
+#macro(returnEntityParam $value)
+#**#queryParams.put(RestConstants.RETURN_ENTITY_PARAM, $value);
+    queryParamClasses.put(RestConstants.RETURN_ENTITY_PARAM, Boolean.class);
 #end

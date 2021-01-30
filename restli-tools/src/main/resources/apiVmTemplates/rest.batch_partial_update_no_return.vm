@@ -13,9 +13,16 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
+  @SuppressWarnings("unchecked")
+  private static final KeyValueRecordFactory<${spec.keyClassName}, PatchRequest<${spec.entityClassName}>> PATCH_VALUE_FACTORY = new KeyValueRecordFactory<${spec.keyClassName}, PatchRequest<${spec.entityClassName}>>(
+        (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
+        _resourceSpec.getComplexKeyType(),
+        _resourceSpec.getKeyParts(),
+        (TypeSpec<PatchRequest<${spec.entityClassName}>>) (Object) new TypeSpec<>(PatchRequest.class));
+
   #doc($method.schema.doc)
-  public CompletionStage<${spec.keyClassName}> create(
-      ${spec.entityClassName} entity#if( $method.hasParams()),#end
+  public CompletionStage<Map<$spec.keyClassName, UpdateStatus>> batchPartialUpdate(
+      Map<$spec.keyClassName, PatchRequest<${spec.entityClassName}>> patches#if( $method.hasParams()),#end
       #**##methodParams($method)##
       ) {
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
@@ -24,34 +31,33 @@
     #if($method.returnsEntity())
       #**##returnEntityParam("false")
     #end
-    @SuppressWarnings("unchecked")
-    IdResponseDecoder<${spec.keyClassName}> idResponseDecoder = new IdResponseDecoder<>(
-        (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
-        _resourceSpec.getKeyParts(),
-        _resourceSpec.getComplexKeyType());
-    CreateIdRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new CreateIdRequest<>(
-        entity,
+    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, patches.keySet());
+    CollectionRequest<KeyValueRecord<$spec.keyClassName, PatchRequest<${spec.entityClassName}>>> inputs = FluentClientUtils.buildBatchKVInputs(
+        patches, PATCH_VALUE_FACTORY);
+
+    BatchPartialUpdateRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchPartialUpdateRequest<>(
         Collections.emptyMap(),
         Collections.emptyList(),
-        idResponseDecoder,
-        _resourceSpec,
+        inputs,
         queryParams,
         queryParamClasses,
+        _resourceSpec,
         ORIGINAL_RESOURCE_PATH,
         Collections.emptyMap(),
         RestliRequestOptions.DEFAULT_OPTIONS,
+        patches,
         null);
-    CompletableFuture<${spec.keyClassName}> result = new CompletableFuture<>();
+    CompletableFuture<Map<$spec.keyClassName, UpdateStatus>> result = new CompletableFuture<>();
     Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
         responseTry -> {
           if (responseTry.isFailed()) {
             result.completeExceptionally(responseTry.getError());
           } else {
-            Response<IdResponse<${spec.keyClassName}>> response = responseTry.get();
+            Response<BatchKVResponse<$spec.keyClassName, UpdateStatus>> response = responseTry.get();
             if (response.hasError()) {
               result.completeExceptionally(response.getError());
             } else {
-              result.complete(response.getEntity().getId());
+              result.complete(response.getEntity().getResults());
             }
           }
           return Success.of((Void) null);

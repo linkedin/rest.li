@@ -13,7 +13,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
+#if ($spec.resource.namespace)
 package $spec.resource.namespace;
+#end
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -22,15 +24,20 @@ import com.linkedin.data.template.FieldDef;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.function.Success;
-import com.linkedin.parseq.function.Try;
 import com.linkedin.restli.client.ParSeqRestliClient;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestliRequestOptions;
+import com.linkedin.restli.common.FluentClientUtils;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
+#foreach($import in $spec.importsForRestMethods)
+  import ${import};
+#end
+import ${spec.entityClass.fullName};
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,38 +49,6 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Generated;
-import ${spec.entityClass.fullName};
-#foreach($method in $spec.restMethods)
-  #if($method.method.equals("get"))
-    import com.linkedin.restli.client.GetRequest;
-  #elseif($method.method.equals("batch_get"))
-    import com.linkedin.restli.client.BatchGetEntityRequest;
-    import com.linkedin.restli.client.response.BatchKVResponse;
-    import com.linkedin.restli.common.EntityResponse;
-    import com.linkedin.restli.internal.client.BatchEntityResponseDecoder;
-  #elseif($method.method.equals("create"))
-    import com.linkedin.restli.client.CreateIdRequest;
-    import com.linkedin.restli.common.IdResponse;
-    import com.linkedin.restli.internal.client.IdResponseDecoder;
-    #if($method.returnsEntity())
-      import com.linkedin.restli.client.CreateIdEntityRequest;
-      import com.linkedin.restli.common.IdEntityResponse;
-      import com.linkedin.restli.internal.client.IdEntityResponseDecoder;
-    #end
-  #elseif($method.method.equals("batch_create"))
-    import com.linkedin.restli.common.CollectionRequest;
-    import com.linkedin.restli.client.BatchCreateIdRequest;
-    import com.linkedin.restli.common.CreateIdStatus;
-    import com.linkedin.restli.common.BatchCreateIdResponse;
-    import com.linkedin.restli.internal.client.BatchCreateIdDecoder;
-    #if($method.returnsEntity())
-      import com.linkedin.restli.client.BatchCreateIdEntityRequest;
-      import com.linkedin.restli.common.CreateIdEntityStatus;
-      import com.linkedin.restli.common.BatchCreateIdEntityResponse;
-      import com.linkedin.restli.internal.client.BatchCreateIdEntityDecoder;
-    #end
-  #end
-#end
 
 @Generated("Generated from $spec.sourceIdlName")
 public class $spec.className {
@@ -98,7 +73,7 @@ public class $spec.className {
         responseMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", Collections.emptyList()));
       #end
     #end
-    _resourceSpec=new ResourceSpecImpl(
+    _resourceSpec = new ResourceSpecImpl(
         #if($spec.restMethods.size() > 0)
           EnumSet.of(
               #foreach($method in $spec.restMethods)
@@ -127,9 +102,6 @@ public class $spec.className {
   }
   // CRUD methods
   #foreach($method in $spec.restMethods)
-    #if($method.method.equals("get") || $method.method.equals("batch_get") ||
-      $method.method.equals("create") || $method.method.equals("batch_create"))
-      #parse("apiVmTemplates/rest.${method.method}.vm")
-    #end
+    #parse("apiVmTemplates/rest.${method.method}.vm")
   #end
 }

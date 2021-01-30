@@ -42,7 +42,7 @@ import java.util.Map;
 public class BatchDeleteRequest<K, V extends RecordTemplate> extends BatchRequest<BatchKVResponse<K, UpdateStatus>>
 {
   @SuppressWarnings("unchecked")
-  BatchDeleteRequest(Map<String, String> headers,
+  public BatchDeleteRequest(Map<String, String> headers,
                      List<HttpCookie> cookies,
                      Map<String, Object> queryParams,
                      Map<String, Class<?>> queryParamClasses,

@@ -49,7 +49,7 @@ public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
   private final Map<K, PatchRequest<V>> _partialUpdateInputMap;
 
   @SuppressWarnings("unchecked")
-  BatchPartialUpdateRequest(Map<String, String> headers,
+  public BatchPartialUpdateRequest(Map<String, String> headers,
                             List<HttpCookie> cookies,
                             CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> entities,
                             Map<String, Object> queryParams,

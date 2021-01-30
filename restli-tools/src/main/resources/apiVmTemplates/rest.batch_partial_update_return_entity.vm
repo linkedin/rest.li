@@ -14,39 +14,40 @@
    limitations under the License.
 *#
   #doc($method.schema.doc)
-  public CompletionStage<Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>> batchGet(
-      Set<$spec.keyClassName> ids#if( $method.hasParams()),#end
+  public CompletionStage<Map<$spec.keyClassName, UpdateEntityStatus<${spec.entityClassName}>>> batchPartialUpdateAndGet(
+      Map<$spec.keyClassName, PatchRequest<${spec.entityClassName}>> patches#if( $method.hasParams()),#end
       #**##methodParams($method)##
       ) {
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
+    Map<String, Class<?>> queryParamClasses = new HashMap<>($method.getQueryParamMapSize());
     #fillQueryParams($method)
-    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
-    @SuppressWarnings("unchecked")
-    BatchGetEntityRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchGetEntityRequest<>(
+    #**##returnEntityParam("true")
+    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, patches.keySet());
+    CollectionRequest<KeyValueRecord<$spec.keyClassName, PatchRequest<${spec.entityClassName}>>> inputs = FluentClientUtils.buildBatchKVInputs(
+        patches, PATCH_VALUE_FACTORY);
+
+    BatchPartialUpdateEntityRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchPartialUpdateEntityRequest<>(
         Collections.emptyMap(),
         Collections.emptyList(),
-        new BatchEntityResponseDecoder<>(
-            (TypeSpec<${spec.entityClassName}>) _resourceSpec.getValueType(),
-            (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
-            _resourceSpec.getKeyParts(),
-            _resourceSpec.getComplexKeyType()),
+        inputs,
         queryParams,
         queryParamClasses,
         _resourceSpec,
         ORIGINAL_RESOURCE_PATH,
         Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS);
-    CompletableFuture<Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>> result = new CompletableFuture<>();
+        RestliRequestOptions.DEFAULT_OPTIONS,
+        patches,
+        null);
+    CompletableFuture<Map<$spec.keyClassName, UpdateEntityStatus<${spec.entityClassName}>>> result = new CompletableFuture<>();
     Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
         responseTry -> {
           if (responseTry.isFailed()) {
             result.completeExceptionally(responseTry.getError());
           } else {
-            Response<BatchKVResponse<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>> response = responseTry.get();
+            Response<BatchKVResponse<$spec.keyClassName, UpdateEntityStatus<${spec.entityClassName}>>> response = responseTry.get();
             if (response.hasError()) {
               result.completeExceptionally(response.getError());
-            } else{
+            } else {
               result.complete(response.getEntity().getResults());
             }
           }

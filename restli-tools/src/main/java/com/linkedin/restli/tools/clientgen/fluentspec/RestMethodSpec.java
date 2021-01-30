@@ -16,6 +16,11 @@
 
 package com.linkedin.restli.tools.clientgen.fluentspec;
 
+import com.linkedin.data.DataMapBuilder;
+import com.linkedin.data.schema.DataSchemaConstants;
+import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.server.annotations.ReturnEntity;
 import java.util.Collections;
@@ -29,6 +34,12 @@ public class RestMethodSpec
   private final BaseResourceSpec _root;
   private List<ParameterSpec> _requiredParams;
   private List<ParameterSpec> _optionalParams;
+  public static final ParameterSchema START_SCHEMA = new ParameterSchema().setOptional(true)
+      .setName(RestConstants.START_PARAM)
+      .setType(DataSchemaConstants.INTEGER_TYPE);
+  public static final ParameterSchema COUNT_SCHEMA = new ParameterSchema().setOptional(true)
+      .setName(RestConstants.COUNT_PARAM)
+      .setType(DataSchemaConstants.INTEGER_TYPE);
 
   public RestMethodSpec(RestMethodSchema schema, BaseResourceSpec root)
   {
@@ -80,11 +91,37 @@ public class RestMethodSpec
     _optionalParams = _schema.getParameters().stream().filter(p -> p.hasOptional() && p.isOptional())
         .map(p -> new ParameterSpec(p, _root))
         .collect(Collectors.toList());
+    if (_schema.getMethod().equals("get_all") && _schema.hasPagingSupported() && _schema.isPagingSupported())
+    {
+      _optionalParams.add(new ParameterSpec(START_SCHEMA, _root));
+      _optionalParams.add(new ParameterSpec(COUNT_SCHEMA, _root));
+    }
     return _optionalParams;
   }
 
   public boolean returnsEntity()
   {
     return _schema.getAnnotations() != null && _schema.getAnnotations().containsKey(ReturnEntity.NAME);
+  }
+
+  /**
+   * Returns the optimum size to initialize the maps for query param and query param classes.
+   */
+  public int getQueryParamMapSize()
+  {
+    int params = hasParams() ? _schema.getParameters().size() : 0;
+    if (returnsEntity()){
+      params++;
+    }
+    switch (ResourceMethod.fromString(_schema.getMethod()))
+    {
+      case BATCH_PARTIAL_UPDATE:
+      case BATCH_UPDATE:
+      case BATCH_DELETE:
+      case BATCH_GET:
+        // Batch requests send ids as query parameter.
+        params++;
+    }
+    return DataMapBuilder.getOptimumHashMapCapacityFromSize(params);
   }
 }

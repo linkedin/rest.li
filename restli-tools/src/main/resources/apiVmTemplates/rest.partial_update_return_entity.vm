@@ -14,40 +14,42 @@
    limitations under the License.
 *#
   #doc($method.schema.doc)
-  public CompletionStage<Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>> batchGet(
-      Set<$spec.keyClassName> ids#if( $method.hasParams()),#end
+  public CompletionStage<${spec.entityClassName}> partialUpdateAndGet(
+      $spec.keyClassName $spec.idName,
+      PatchRequest<${spec.entityClassName}> entity#if( $method.hasParams()),#end
       #**##methodParams($method)##
       ) {
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
+    Map<String, Class<?>> queryParamClasses = new HashMap<>($method.getQueryParamMapSize());
     #fillQueryParams($method)
-    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
+    #**##returnEntityParam("true")
     @SuppressWarnings("unchecked")
-    BatchGetEntityRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchGetEntityRequest<>(
+    EntityResponseDecoder<${spec.entityClassName}> entityResponseDecoder = new EntityResponseDecoder<>(
+        (Class<${spec.entityClassName}>) _resourceSpec.getValueClass());
+    PartialUpdateEntityRequest<${spec.entityClassName}> request = new PartialUpdateEntityRequest<>(
+        entity,
         Collections.emptyMap(),
         Collections.emptyList(),
-        new BatchEntityResponseDecoder<>(
-            (TypeSpec<${spec.entityClassName}>) _resourceSpec.getValueType(),
-            (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
-            _resourceSpec.getKeyParts(),
-            _resourceSpec.getComplexKeyType()),
+        entityResponseDecoder,
+        _resourceSpec,
         queryParams,
         queryParamClasses,
-        _resourceSpec,
         ORIGINAL_RESOURCE_PATH,
         Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS);
-    CompletableFuture<Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>> result = new CompletableFuture<>();
+        RestliRequestOptions.DEFAULT_OPTIONS,
+        $spec.idName,
+        null);
+    CompletableFuture<${spec.entityClassName}> result = new CompletableFuture<>();
     Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
         responseTry -> {
           if (responseTry.isFailed()) {
             result.completeExceptionally(responseTry.getError());
           } else {
-            Response<BatchKVResponse<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>> response = responseTry.get();
+            Response<${spec.entityClassName}> response = responseTry.get();
             if (response.hasError()) {
               result.completeExceptionally(response.getError());
-            } else{
-              result.complete(response.getEntity().getResults());
+            } else {
+              result.complete(response.getEntity());
             }
           }
           return Success.of((Void) null);
