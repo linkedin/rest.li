@@ -16,9 +16,11 @@
 
 package com.linkedin.data.schema;
 
+import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.template.JacksonDataTemplateCodec;
 import java.io.IOException;
 import java.io.Writer;
 import org.apache.commons.lang3.StringUtils;
@@ -122,15 +124,30 @@ class IndentedPdlBuilder extends PdlBuilder
   }
 
   @Override
-  PdlBuilder writeJson(Object value) throws IOException
+  PdlBuilder writeJson(Object value, DataSchema schema) throws IOException
   {
-    JacksonDataCodec jsonCodec = new JacksonDataCodec();
+    if (schema != null)
+    {
+      JacksonDataTemplateCodec jsonCodec = new JacksonDataTemplateCodec();
+      jsonCodec.setPrettyPrinter(getPrettyPrinter());
+      write(toJson(value, jsonCodec, schema));
+    }
+    else
+    {
+      JacksonDataCodec jsonCodec = new JacksonDataCodec();
+      jsonCodec.setPrettyPrinter(getPrettyPrinter());
+      jsonCodec.setSortKeys(true);
+      write(toJson(value, jsonCodec));
+    }
+    return this;
+  }
+
+  private PrettyPrinter getPrettyPrinter()
+  {
     DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter();
     prettyPrinter.indentObjectsWith(
         new DefaultIndenter(getIndentSpaces(1), DefaultIndenter.SYS_LF + getIndentSpaces(_indentDepth)));
-    jsonCodec.setPrettyPrinter(prettyPrinter);
-    write(toJson(value, jsonCodec));
-    return this;
+    return prettyPrinter;
   }
 
   /**

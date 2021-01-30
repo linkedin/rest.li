@@ -21,7 +21,9 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.Null;
 import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.template.JacksonDataTemplateCodec;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,6 +53,7 @@ abstract class PdlBuilder
   ));
   private static final char ESCAPE_CHAR = '`';
   private static final Pattern IDENTIFIER_CHARS = Pattern.compile("[0-9a-zA-Z_-]*");
+  private static final int DEFAULT_JSON_CODEC_BUFFER_SIZE = 4096;
 
   /**
    * Each subclass must define a provider for creating new instances.
@@ -254,13 +257,33 @@ abstract class PdlBuilder
    * Writes an object as raw encoded JSON text.
    * Valid types: DataList, DataMap, String, Int, Long, Float, Double, Boolean, ByteArray
    *
+   * The keys in DataMaps will be sorted in alphabetic order.
+   *
    * @param value JSON object to write
    */
-  abstract PdlBuilder writeJson(Object value) throws IOException;
+  PdlBuilder writeJson(Object value) throws IOException
+  {
+    return writeJson(value, null);
+  }
+
+  /**
+   * Writes an object as raw encoded JSON text.
+   * Valid types: DataList, DataMap, String, Int, Long, Float, Double, Boolean, ByteArray
+   *
+   * When a {@code schema} is present, keys in a DataMap will be sorted in the
+   * order of fields in the corresponding schema. When it is missing, keys in a
+   * DataMap will be sorted in alphabetic order.
+   *
+   * @param value JSON object to write
+   * @param schema an optional schema to use for sorting
+   */
+  abstract PdlBuilder writeJson(Object value, DataSchema schema) throws IOException;
 
   /**
    * Serializes a pegasus Data binding type to JSON.
    * Valid types: DataMap, DataList, String, Number, Boolean, ByteString, Null
+   *
+   * The keys in a DataMap will be sorted in alphabetic order.
    *
    * @param value the value to serialize to JSON.
    * @return a JSON serialized string representation of the data value.
@@ -303,6 +326,29 @@ abstract class PdlBuilder
   }
 
   /**
+   * Serializes a pegasus Data binding type to JSON.
+   * Valid types: DataMap, DataList, String, Number, Boolean, ByteString, Null
+   *
+   * The keys in a DataMap will be sorted in the order of fields in the
+   * corresponding schema.
+   *
+   * @param value the value to serialize to JSON.
+   * @return a JSON serialized string representation of the data value.
+   */
+  protected String toJson(Object value, JacksonDataTemplateCodec jsonCodec, DataSchema schema)
+      throws IOException
+  {
+    if (value instanceof DataMap || value instanceof DataList)
+    {
+      StringWriter out = new StringWriter(DEFAULT_JSON_CODEC_BUFFER_SIZE);
+      jsonCodec.writeDataTemplate(value, schema, out, true);
+      return out.toString();
+    }
+
+    return toJson(value, jsonCodec);
+  }
+
+  /**
    * JSON also allows the '/' char to be written in strings both unescaped ("/") and escaped ("\/").
    * StringEscapeUtils.escapeJson always escapes '/' so we deliberately use escapeJava instead, which
    * is exactly like escapeJson but without the '/' escaping.
@@ -310,7 +356,7 @@ abstract class PdlBuilder
    * @param value unescaped string
    * @return escaped and quoted JSON string
    */
-  private String escapeJsonString(String value)
+  private static String escapeJsonString(String value)
   {
     return "\"" + StringEscapeUtils.escapeJava(value) + "\"";
   }

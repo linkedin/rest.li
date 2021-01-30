@@ -13,7 +13,12 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
- - Generate fluent client APIs get and create methods of collection resources.
+
+## [29.14.0] - 2021-01-29
+- Generate fluent client APIs get and create methods of collection resources.
+- Encode JSON values in PDLs deterministically:
+  - Annotation maps are now sorted alphabetically (to arbitrary depth).
+  - Default values of fields with record type are sorted by the field order of the record schema.
 
 ## [29.13.12] - 2021-01-29
 Fix a bug of losing HTTP status code when a retriable response goes through ClientRetryFilter
@@ -4826,7 +4831,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.13.12...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.14.0...master
+[29.14.0]: https://github.com/linkedin/rest.li/compare/v29.13.12...v29.14.0
 [29.13.12]: https://github.com/linkedin/rest.li/compare/v29.13.11...v29.13.12
 [29.13.11]: https://github.com/linkedin/rest.li/compare/v29.13.10...v29.13.11
 [29.13.10]: https://github.com/linkedin/rest.li/compare/v29.13.9...v29.13.10
