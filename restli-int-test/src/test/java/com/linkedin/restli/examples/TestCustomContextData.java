@@ -21,13 +21,11 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -63,9 +61,11 @@ public class TestCustomContextData extends RestLiIntegrationTest
   {
     List<Filter> filters = Arrays.asList(new TestFilter());
     init(filters);
-    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new GreetingsBuilders());
-    final Request<Object> req = builders.action("modifyCustomContext").build();
-    Response<Object> response = getClient().sendRequest(req).getResponse();
+
+    final Request<Void> req = new GreetingsRequestBuilders()
+        .actionModifyCustomContext()
+        .build();
+    Response<Void> response = getClient().sendRequest(req).getResponse();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
   }
 

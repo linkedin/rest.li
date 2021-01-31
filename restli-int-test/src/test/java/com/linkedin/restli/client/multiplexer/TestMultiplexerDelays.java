@@ -23,7 +23,7 @@ import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
-import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
+import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
 
 import com.linkedin.test.util.retry.SingleRetry;
 import java.util.concurrent.ExecutionException;
@@ -45,7 +45,7 @@ public class TestMultiplexerDelays extends RestLiIntegrationTest
   private static final int NUM_REQUESTS = 10;
   private static final double TOLERANCE = 0.5; // +/- 50%
 
-  private final ActionsBuilders actionsBuilders = new ActionsBuilders();
+  private final ActionsRequestBuilders actionsBuilders = new ActionsRequestBuilders();
 
   @BeforeClass
   public void initClass() throws Exception
@@ -65,7 +65,7 @@ public class TestMultiplexerDelays extends RestLiIntegrationTest
     MultiplexedRequestBuilder muxRequestBuilder = MultiplexedRequestBuilder.createParallelRequest();
     for (int i = 0; i < NUM_REQUESTS; i++)
     {
-      ActionRequest<Void> request = actionsBuilders.actionTaskCreationDelay().paramDelay(DELAY_MILLIS).build();
+      ActionRequest<Void> request = actionsBuilders.actionTaskCreationDelay().delayParam(DELAY_MILLIS).build();
       muxRequestBuilder.addRequest(request, Callbacks.<Response<Void>>empty());
     }
     long actualTime = measureExecutionTime(muxRequestBuilder.build());
@@ -80,7 +80,7 @@ public class TestMultiplexerDelays extends RestLiIntegrationTest
     MultiplexedRequestBuilder muxRequestBuilder = MultiplexedRequestBuilder.createParallelRequest();
     for (int i = 0; i < NUM_REQUESTS; i++)
     {
-      ActionRequest<Void> request = actionsBuilders.actionTaskExecutionDelay().paramDelay(DELAY_MILLIS).build();
+      ActionRequest<Void> request = actionsBuilders.actionTaskExecutionDelay().delayParam(DELAY_MILLIS).build();
       muxRequestBuilder.addRequest(request, Callbacks.<Response<Void>>empty());
     }
     long actualTime = measureExecutionTime(muxRequestBuilder.build());

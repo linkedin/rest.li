@@ -19,20 +19,14 @@ package com.linkedin.restli.examples;
 
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.BatchGetEntityRequest;
-import com.linkedin.restli.client.BatchGetKVRequest;
-import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.CreateIdRequest;
-import com.linkedin.restli.client.CreateRequest;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.TyperefKeysBuilders;
 import com.linkedin.restli.examples.greetings.client.TyperefKeysRequestBuilders;
 import com.linkedin.restli.internal.common.TestConstants;
 
@@ -63,18 +57,7 @@ public class TestTyperefKeysResource extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  @SuppressWarnings("deprecation")
   public void testCreate(RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
-    Greeting greeting = new Greeting().setId(1L).setMessage("Foo").setTone(Tone.FRIENDLY);
-    CreateRequest<Greeting> req = new TyperefKeysBuilders(requestOptions).create().input(greeting).build();
-
-    Response<EmptyRecord> resp = getClient().sendRequest(req).getResponse();
-    Assert.assertEquals(resp.getId(), "1");
-  }
-
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testCreateId(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting().setId(1L).setMessage("Foo").setTone(Tone.FRIENDLY);
     CreateIdRequest<Long, Greeting> req = new TyperefKeysRequestBuilders(requestOptions).create().input(greeting).build();
@@ -85,28 +68,6 @@ public class TestTyperefKeysResource extends RestLiIntegrationTest
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   public void testBatchGet(RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
-    BatchGetRequest<Greeting> req = new TyperefKeysBuilders(requestOptions).batchGet().ids(1L, 2L).build();
-    Response<BatchResponse<Greeting>> resp = getClient().sendRequest(req).getResponse();
-
-    Map<String, Greeting> results = resp.getEntity().getResults();
-    Assert.assertEquals(results.get("1").getId(), new Long(1L));
-    Assert.assertEquals(results.get("2").getId(), new Long(2L));
-  }
-
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testBatchGetKV(RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
-    BatchGetKVRequest<Long,Greeting> req = new TyperefKeysBuilders(requestOptions).batchGet().ids(1L, 2L).buildKV();
-    Response<BatchKVResponse<Long, Greeting>> resp = getClient().sendRequest(req).getResponse();
-
-    Map<Long, Greeting> results = resp.getEntity().getResults();
-    Assert.assertEquals(results.get(1L).getId(), new Long(1L));
-    Assert.assertEquals(results.get(2L).getId(), new Long(2L));
-  }
-
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testBatchGetEntity(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
     BatchGetEntityRequest<Long,Greeting> req = new TyperefKeysRequestBuilders(requestOptions).batchGet().ids(1L, 2L).build();
     Response<BatchKVResponse<Long, EntityResponse<Greeting>>> resp = getClient().sendRequest(req).getResponse();

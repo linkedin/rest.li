@@ -36,9 +36,7 @@ import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.MessageCriteria;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.AssociationsBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.AssociationsSubBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -138,24 +136,6 @@ public class TestAssociationsResource extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   public void testBatchGet(RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
-    Request<BatchKVResponse<CompoundKey, Message>> request = new AssociationsBuilders(requestOptions).batchGet().ids(DB.keySet()).buildKV();
-    ResponseFuture<BatchKVResponse<CompoundKey, Message>> responseFuture = getClient().sendRequest(request);
-    Response<BatchKVResponse<CompoundKey, Message>> response = responseFuture.getResponse();
-
-    BatchKVResponse<CompoundKey, Message> entity = response.getEntity();
-
-    Assert.assertEquals(entity.getErrors().size(), 0);
-    Assert.assertEquals(entity.getResults().size(), 2);
-    for (CompoundKey id: DB.keySet())
-    {
-      Assert.assertTrue(entity.getResults().containsKey(id));
-      Assert.assertEquals(entity.getResults().get(id), DB.get(id));
-    }
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testBatchGetEntity(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
     Request<BatchKVResponse<CompoundKey, EntityResponse<Message>>> request = new AssociationsRequestBuilders(requestOptions).batchGet().ids(DB.keySet()).build();
     ResponseFuture<BatchKVResponse<CompoundKey, EntityResponse<Message>>> responseFuture = getClient().sendRequest(request);
@@ -268,8 +248,6 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsBuilders()) },
-      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders()) },
       { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
@@ -288,8 +266,6 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   private static Object[][] requestSubBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<String, Message>(new AssociationsSubBuilders()) },
-      { new RootBuilderWrapper<String, Message>(new AssociationsSubBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<String, Message>(new AssociationsSubRequestBuilders()) },
       { new RootBuilderWrapper<String, Message>(new AssociationsSubRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };

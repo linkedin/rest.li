@@ -29,15 +29,10 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
-import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
 import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.AssociationsBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.ComplexKeysBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.StringKeysBuilders;
 import com.linkedin.restli.examples.greetings.client.StringKeysRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.StringKeysSubBuilders;
 import com.linkedin.restli.examples.greetings.client.StringKeysSubRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -107,32 +102,6 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysOptionsDataProvider")
   public void testBatchGetWithSimpleKey(RestliRequestOptions requestOptions) throws Exception
-  {
-    Set<String> keys = new HashSet<String>();
-    keys.add(key1());
-    keys.add(key2());
-    Request<BatchResponse<Message>> req = new StringKeysBuilders(requestOptions).batchGet().ids(keys).build();
-    BatchResponse<Message> response = getClient().sendRequest(req).get().getEntity();
-    Map<String, Message> results = response.getResults();
-    Assert.assertEquals(results.get(key1()).getMessage(), key1(), "Message should match key for key1");
-    Assert.assertEquals(results.get(key2()).getMessage(), key2(), "Message should match key for key2");
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysOptionsDataProvider")
-  public void testBatchGetKVWithSimpleKey(RestliRequestOptions requestOptions) throws Exception
-  {
-    Set<String> keys = new HashSet<String>();
-    keys.add(key1());
-    keys.add(key2());
-    Request<BatchKVResponse<String, Message>> req = new StringKeysBuilders(requestOptions).batchGet().ids(keys).buildKV();
-    BatchKVResponse<String,Message> response = getClient().sendRequest(req).get().getEntity();
-    Map<String, Message> results = response.getResults();
-    Assert.assertEquals(results.get(key1()).getMessage(), key1(), "Message should match key for key1");
-    Assert.assertEquals(results.get(key2()).getMessage(), key2(), "Message should match key for key2");
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysOptionsDataProvider")
-  public void testBatchGetEntityWithSimpleKey(RestliRequestOptions requestOptions) throws Exception
   {
     Set<String> keys = new HashSet<String>();
     keys.add(key1());
@@ -210,8 +179,6 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   private static Object[][] requestStringKeysBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<String, Message>(new StringKeysBuilders()) },
-      { new RootBuilderWrapper<String, Message>(new StringKeysBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<String, Message>(new StringKeysRequestBuilders()) },
       { new RootBuilderWrapper<String, Message>(new StringKeysRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
@@ -230,8 +197,6 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   private static Object[][] requestStringKeysSubBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<String, Message>(new StringKeysSubBuilders()) },
-      { new RootBuilderWrapper<String, Message>(new StringKeysSubBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<String, Message>(new StringKeysSubRequestBuilders()) },
       { new RootBuilderWrapper<String, Message>(new StringKeysSubRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
@@ -241,8 +206,6 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   private static Object[][] requestAssociationsSubBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsBuilders()) },
-      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders()) },
       { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
@@ -252,8 +215,6 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   private static Object[][] requestComplexKeysBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysBuilders()) },
-      { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysRequestBuilders()) },
       { new RootBuilderWrapper<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(new ComplexKeysRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
@@ -263,8 +224,6 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   private static Object[][] requestActionBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()) },
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()) },
       { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };

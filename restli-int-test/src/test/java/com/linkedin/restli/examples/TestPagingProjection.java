@@ -24,7 +24,7 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.PagingMetadataProjectionsBuilders;
+import com.linkedin.restli.examples.greetings.client.PagingMetadataProjectionsRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import org.testng.Assert;
@@ -559,10 +559,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
     return new Object[][]
     {
         {
-            new RootBuilderWrapper<Long, Greeting>(new PagingMetadataProjectionsBuilders())
+            new RootBuilderWrapper<Long, Greeting>(new PagingMetadataProjectionsRequestBuilders())
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new PagingMetadataProjectionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS))
+            new RootBuilderWrapper<Long, Greeting>(new PagingMetadataProjectionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS))
         }
     };
   }

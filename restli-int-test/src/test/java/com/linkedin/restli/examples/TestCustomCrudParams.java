@@ -23,7 +23,6 @@ import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.GreetingsAuthBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsAuthRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -88,8 +87,6 @@ public class TestCustomCrudParams extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthRequestBuilders()) },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };

@@ -32,7 +32,7 @@ import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReaderCallback;
 import com.linkedin.restli.common.attachments.SingleRestLiAttachmentReaderCallback;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.StreamingGreetingsBuilders;
+import com.linkedin.restli.examples.greetings.client.StreamingGreetingsRequestBuilders;
 import com.linkedin.restli.internal.testutils.RestLiTestAttachmentDataSource;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
@@ -266,10 +266,10 @@ public class TestStreamingGreetings extends RestLiIntegrationTest
     return new Object[][]
         {
             {
-                new RootBuilderWrapper<Long, Greeting>(new StreamingGreetingsBuilders(defaultOptions))
+                new RootBuilderWrapper<Long, Greeting>(new StreamingGreetingsRequestBuilders(defaultOptions))
             },
             {
-                new RootBuilderWrapper<Long, Greeting>(new StreamingGreetingsBuilders(nextOptions))
+                new RootBuilderWrapper<Long, Greeting>(new StreamingGreetingsRequestBuilders(nextOptions))
             }
         };
   }

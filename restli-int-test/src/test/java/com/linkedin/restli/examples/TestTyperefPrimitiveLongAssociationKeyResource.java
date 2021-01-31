@@ -27,7 +27,7 @@ import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.examples.greetings.api.Message;
-import com.linkedin.restli.examples.greetings.client.TyperefPrimitiveLongAssociationKeyResourceBuilders;
+import com.linkedin.restli.examples.greetings.client.TyperefPrimitiveLongAssociationKeyResourceRequestBuilders;
 import com.linkedin.restli.internal.common.TestConstants;
 
 import java.util.Collections;
@@ -65,10 +65,10 @@ public class TestTyperefPrimitiveLongAssociationKeyResource extends RestLiIntegr
   public void testGet(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
     GetRequest<Message> req =
-        new TyperefPrimitiveLongAssociationKeyResourceBuilders(requestOptions).get()
-                                                                              .id(new CompoundKey().append("src", 1)
-                                                                                                   .append("dest", 2))
-                                                                              .build();
+        new TyperefPrimitiveLongAssociationKeyResourceRequestBuilders(requestOptions).get()
+                                                                                     .id(new CompoundKey().append("src", 1)
+                                                                                                          .append("dest", 2))
+                                                                                     .build();
     Response<Message> resp = REST_CLIENT.sendRequest(req).getResponse();
     Message result = resp.getEntity();
     Assert.assertEquals(result.getId(), "1->2");

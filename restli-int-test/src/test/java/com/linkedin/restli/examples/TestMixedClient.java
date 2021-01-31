@@ -23,7 +23,6 @@ import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.MixedBuilders;
 import com.linkedin.restli.examples.greetings.client.MixedRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -115,8 +114,6 @@ public class TestMixedClient extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new MixedBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new MixedBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Long, Greeting>(new MixedRequestBuilders()) },
       { new RootBuilderWrapper<Long, Greeting>(new MixedRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };

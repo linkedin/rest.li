@@ -42,7 +42,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.examples.instrumentation.api.InstrumentationControl;
-import com.linkedin.restli.examples.instrumentation.client.LatencyInstrumentationBuilders;
+import com.linkedin.restli.examples.instrumentation.client.LatencyInstrumentationRequestBuilders;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateEntityResult;
 import com.linkedin.restli.server.CreateKVResponse;
@@ -86,8 +86,12 @@ public class LatencyInstrumentationResource extends ResourceContextHolder implem
 {
   public static final String HAS_CLIENT_TIMINGS_HEADER = "X-RestLi-Test-HasClientTimings";
   public static final String UPSTREAM_ERROR_CODE = "UPSTREAM_ERROR";
+
   private static final String DOWNSTREAM_ERROR_CODE = "DOWNSTREAM_ERROR";
   private static final int DOWNSTREAM_BATCH_SIZE = 10;
+
+  private static final LatencyInstrumentationRequestBuilders REQUEST_BUILDERS =
+      new LatencyInstrumentationRequestBuilders();
 
   /**
    * This is the "upstream endpoint" which is queried directly by the integration test.
@@ -103,8 +107,8 @@ public class LatencyInstrumentationResource extends ResourceContextHolder implem
     final String uriPrefix = control.getServiceUriPrefix();
 
     // Build the downstream request
-    final BatchPartialUpdateEntityRequestBuilder<Long, InstrumentationControl> builder = new LatencyInstrumentationBuilders()
-        .batchPartialUpdateAndGet();
+    final BatchPartialUpdateEntityRequestBuilder<Long, InstrumentationControl> builder =
+        REQUEST_BUILDERS.batchPartialUpdateAndGet();
     final PatchRequest<InstrumentationControl> patch = PatchGenerator.diffEmpty(control);
     for (long i = 0; i < DOWNSTREAM_BATCH_SIZE; i++)
     {

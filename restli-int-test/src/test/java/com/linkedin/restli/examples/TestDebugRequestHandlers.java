@@ -33,7 +33,6 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.GreetingsPromiseBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsPromiseRequestBuilders;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
@@ -261,8 +260,6 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()) },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };

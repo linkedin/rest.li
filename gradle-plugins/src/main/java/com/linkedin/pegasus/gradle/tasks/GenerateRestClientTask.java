@@ -60,9 +60,6 @@ public class GenerateRestClientTask extends DefaultTask
   private File _destinationDir;
 
   // Internal Task Properties
-  private boolean _restli1FormatSuppressed;
-  private boolean _restli2FormatSuppressed;
-  private boolean _restli1BuildersDeprecated = true;
   private boolean _generateFluentApi = false;
 
   @TaskAction
@@ -96,8 +93,7 @@ public class GenerateRestClientTask extends DefaultTask
     String resolverPathStr = _resolverPath.getAsPath();
     _destinationDir.mkdirs();
 
-    Map<String, List<String>> version1Files = new HashMap<>();
-    Map<String, List<String>> version2Files = new HashMap<>();
+    Map<String, List<String>> packageToFiles = new HashMap<>();
     List<String> fluentApiFiles = new ArrayList<>();
 
     getProject().getLogger().lifecycle("Destination directory: {}", _destinationDir);
@@ -121,24 +117,13 @@ public class GenerateRestClientTask extends DefaultTask
 
       String restModelFilePath = _inputDir.toString() + File.separatorChar + clientItem.restModelFileName;
 
-      if (!_restli1FormatSuppressed)
-      {
-        version1Files.computeIfAbsent(defaultPackage, key -> new ArrayList<>()).add(restModelFilePath);
-      }
-
-      if (!_restli2FormatSuppressed)
-      {
-        version2Files.computeIfAbsent(defaultPackage, key -> new ArrayList<>())
-            .add(restModelFilePath);
-      }
+      packageToFiles.computeIfAbsent(defaultPackage, key -> new ArrayList<>()).add(restModelFilePath);
 
       if (_generateFluentApi)
       {
         fluentApiFiles.add(restModelFilePath);
       }
     }
-
-    String deprecatedVersion = _restli1BuildersDeprecated ? "2.0.0" : null;
 
     FileCollection _pathedCodegenClasspath;
     try {
@@ -149,36 +134,8 @@ public class GenerateRestClientTask extends DefaultTask
     {
       throw new GradleException("Error occurred generating pathing JAR.", e);
     }
-    version1Files.forEach((defaultPackage, files) ->
-      getProject().javaexec(javaExecSpec ->
-      {
-        List<String> sources = files;
-        String resolverPathArg = resolverPathStr;
-        if (isEnableArgFile())
-        {
-          sources = Collections.singletonList(getArgFileSyntax(createArgFile("v1_" + defaultPackage, files, getTemporaryDir())));
-          resolverPathArg = ArgumentFileGenerator.getArgFileSyntax(ArgumentFileGenerator.createArgFile(
-              "generateRestClient_resolverPath_v1", Collections.singletonList(resolverPathArg), getTemporaryDir()));
-        }
-        javaExecSpec.setClasspath(_pathedCodegenClasspath);
-        javaExecSpec.setMain("com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator");
-        javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathArg); //RestRequestBuilderGenerator.run(resolverPath)
-        javaExecSpec.jvmArgs("-Dgenerator.default.package=" + defaultPackage); //RestRequestBuilderGenerator.run(defaultPackage)
-        javaExecSpec.jvmArgs("-Dgenerator.generate.imported=false"); //RestRequestBuilderGenerator.run(generateImported)
-        javaExecSpec.jvmArgs("-Dgenerator.rest.generate.datatemplates=false"); //RestRequestBuilderGenerator.run(generateDataTemplates)
-        javaExecSpec.jvmArgs("-Dgenerator.rest.generate.version=1.0.0"); //RestRequestBuilderGenerator.run(version)
-        javaExecSpec.jvmArgs("-Dgenerator.rest.generate.deprecated.version=" + deprecatedVersion); //RestRequestBuilderGenerator.run(deprecatedByVersion)
-        if (_generateLowercasePath != null)
-        {
-          javaExecSpec.jvmArgs("-Dgenerator.rest.generate.lowercase.path=" + _generateLowercasePath); //RestRequestBuilderGenerator.run(generateLowercasePath)
-        }
-        javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
-        javaExecSpec.args(_destinationDir.getAbsolutePath());
-        javaExecSpec.args(sources);
-      }).assertNormalExitValue()
-    );
 
-    version2Files.forEach((defaultPackage, files) ->
+    packageToFiles.forEach((defaultPackage, files) ->
       getProject().javaexec(javaExecSpec ->
       {
         List<String> sources = files;
@@ -313,70 +270,6 @@ public class GenerateRestClientTask extends DefaultTask
     _destinationDir = destinationDir;
   }
 
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isRestli2FormatSuppressed()} instead
-   */
-  @Deprecated
-  public boolean getIsRestli2FormatSuppressed()
-  {
-    return isRestli2FormatSuppressed();
-  }
-
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isRestli2FormatSuppressed()} instead
-   */
-  @Deprecated
-  public boolean isIsRestli2FormatSuppressed()
-  {
-    return isRestli2FormatSuppressed();
-  }
-
-  @Internal
-  public boolean isRestli2FormatSuppressed()
-  {
-    return _restli2FormatSuppressed;
-  }
-
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * setter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #setRestli2FormatSuppressed(boolean)} instead
-   */
-  @Deprecated
-  public void setIsRestli2FormatSuppressed(boolean restli2FormatSuppressed)
-  {
-    setRestli2FormatSuppressed(restli2FormatSuppressed);
-  }
-
-  public void setRestli2FormatSuppressed(boolean restli2FormatSuppressed)
-  {
-    _restli2FormatSuppressed = restli2FormatSuppressed;
-  }
-
-  @Internal
-  public boolean isRestli1FormatSuppressed()
-  {
-    return _restli1FormatSuppressed;
-  }
-
-  public void setRestli1FormatSuppressed(boolean restli1FormatSuppressed)
-  {
-    _restli1FormatSuppressed = restli1FormatSuppressed;
-  }
-
   @Internal
   public boolean isGenerateFluentApi()
   {
@@ -386,58 +279,5 @@ public class GenerateRestClientTask extends DefaultTask
   public void setGenerateFluentApi(boolean generateFluentApi)
   {
     _generateFluentApi = generateFluentApi;
-  }
-
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isRestli1BuildersDeprecated()} instead
-   */
-  @Deprecated
-  public boolean get_isRestli1BuildersDeprecated()
-  {
-    return isRestli1BuildersDeprecated();
-  }
-
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isRestli1BuildersDeprecated()} instead
-   */
-  @Deprecated
-  public boolean is_isRestli1BuildersDeprecated()
-  {
-    return isRestli1BuildersDeprecated();
-  }
-
-  @Internal
-  public boolean isRestli1BuildersDeprecated()
-  {
-    return _restli1BuildersDeprecated;
-  }
-
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * setter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #setRestli1BuildersDeprecated(boolean)} instead
-   */
-  @Deprecated
-  public void set_isRestli1BuildersDeprecated(boolean restli1BuildersDeprecated)
-  {
-    setRestli1BuildersDeprecated(restli1BuildersDeprecated);
-  }
-
-  public void setRestli1BuildersDeprecated(boolean restli1BuildersDeprecated)
-  {
-    _restli1BuildersDeprecated = restli1BuildersDeprecated;
   }
 }

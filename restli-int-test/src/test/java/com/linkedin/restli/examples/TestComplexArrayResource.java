@@ -32,7 +32,6 @@ import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.examples.greetings.api.ComplexArray;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.ComplexArrayBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexArrayRequestBuilders;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
@@ -90,46 +89,6 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "versionWithRequestOptionsDataProvider")
   public void testBatchGet(ProtocolVersion version, RestliRequestOptions options)
-    throws RemoteInvocationException
-  {
-    List<ComplexResourceKey<ComplexArray, ComplexArray>> complexKeys = getBatchCompleKeys();
-
-    ComplexArrayBuilders builders = new ComplexArrayBuilders(options);
-    Request<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>> request =
-        builders.batchGet().ids(complexKeys).buildKV();
-
-    Response<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>> response =
-        getClient().sendRequest(request).getResponse();
-
-    Greeting greeting1 = response.getEntity().getResults().get(complexKeys.get(0));
-    Assert.assertNotNull(greeting1);
-
-    Greeting greeting2 = response.getEntity().getResults().get(complexKeys.get(1));
-    Assert.assertNotNull(greeting2);
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "versionWithRequestOptionsDataProvider")
-  public void testBatchGetKV(ProtocolVersion version, RestliRequestOptions options)
-    throws RemoteInvocationException
-  {
-    List<ComplexResourceKey<ComplexArray, ComplexArray>> complexKeys = getBatchCompleKeys();
-
-    ComplexArrayBuilders builders = new ComplexArrayBuilders(options);
-    Request<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>> request2 =
-      builders.batchGet().ids(complexKeys).buildKV();
-
-    Response<BatchKVResponse<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>> response2 =
-      getClient().sendRequest(request2).getResponse();
-
-    Greeting greeting1 = response2.getEntity().getResults().get(complexKeys.get(0));
-    Assert.assertNotNull(greeting1);
-    Greeting greeting2 = response2.getEntity().getResults().get(complexKeys.get(1));
-    Assert.assertNotNull(greeting2);
-
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "versionWithRequestOptionsDataProvider")
-  public void testBatchGetEntity(ProtocolVersion version, RestliRequestOptions options)
     throws RemoteInvocationException
   {
     List<ComplexResourceKey<ComplexArray, ComplexArray>> complexKeys = getBatchCompleKeys();
@@ -197,8 +156,6 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayBuilders()) },
-      { new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayRequestBuilders()) },
       { new RootBuilderWrapper<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>(new ComplexArrayRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };

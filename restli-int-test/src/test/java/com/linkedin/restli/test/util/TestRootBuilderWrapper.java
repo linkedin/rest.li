@@ -18,8 +18,6 @@ package com.linkedin.restli.test.util;
 
 
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 
 import org.testng.Assert;
@@ -31,15 +29,11 @@ public class TestRootBuilderWrapper
   @Test
   public void testBuilderVersion()
   {
-    RootBuilderWrapper<Long, Greeting> rootBuilderWrapper1 =
-        new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders());
     RootBuilderWrapper<Long, Greeting> rootBuilderWrapper2 =
         new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders());
 
-    Assert.assertFalse(rootBuilderWrapper1.areRestLi2Builders());
     Assert.assertTrue(rootBuilderWrapper2.areRestLi2Builders());
 
-    Assert.assertFalse(rootBuilderWrapper1.get().isRestLi2Builder());
     Assert.assertTrue(rootBuilderWrapper2.get().isRestLi2Builder());
 
     RootBuilderWrapper<Long, Greeting> dummyBuilder =
@@ -50,19 +44,10 @@ public class TestRootBuilderWrapper
   @Test
   public void testWrapperMethodNameGeneration()
   {
-    RootBuilderWrapper<Long, Greeting> rootBuilderWrapper1 =
-        new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders());
     RootBuilderWrapper<Long, Greeting> rootBuilderWrapper2 =
         new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders());
 
-    rootBuilderWrapper1.findBy("searchWithTones").addQueryParam("tones", Tone.FRIENDLY);
-    rootBuilderWrapper1.findBy("searchWithTones").setParam("Tones", new Tone[3]);
-    rootBuilderWrapper1.findBy("SearchWithTones").addQueryParam("Tones", Tone.FRIENDLY);
-    rootBuilderWrapper1.findBy("SearchWithTones").setParam("tones", new Tone[3]);
-
-    rootBuilderWrapper1.action("someAction").setParam("a", 5);
     rootBuilderWrapper2.action("someAction").setParam("a", 5);
-    rootBuilderWrapper1.action("SomeAction").setParam("A", 5);
     rootBuilderWrapper2.action("SomeAction").setParam("A", 5);
   }
 

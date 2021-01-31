@@ -36,7 +36,6 @@ import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
@@ -211,8 +210,6 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE).build())), AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build())), AllProtocolVersions.LATEST_PROTOCOL_VERSION },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE).build())), AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build())), AllProtocolVersions.LATEST_PROTOCOL_VERSION },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build())), AllProtocolVersions.NEXT_PROTOCOL_VERSION },

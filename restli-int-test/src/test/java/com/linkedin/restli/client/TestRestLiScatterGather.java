@@ -29,7 +29,6 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.util.RestLiClientConfig;
 import com.linkedin.restli.common.BatchCreateIdResponse;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.PatchRequest;
@@ -38,7 +37,6 @@ import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingRequestBuilders;
 import com.linkedin.restli.internal.common.TestConstants;
@@ -102,9 +100,10 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "scatterGatherDataProvider",
       retryAnalyzer = SingleRetry.class) // Known to be flaky in CI
-  public static void testSendScatterGatherRequest(URIMapper mapper, RootBuilderWrapper<Long, Greeting> builders)
-          throws RemoteInvocationException
+  public static void testSendScatterGatherRequest(URIMapper mapper) throws RemoteInvocationException
   {
+    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new GreetingsRequestBuilders());
+
     RestLiClientConfig config = new RestLiClientConfig();
     config.setScatterGatherStrategy(new DefaultScatterGatherStrategy(mapper));
     RestClient restClient = new AlwaysD2RestClient(CLIENT, URI_PREFIX, config);
@@ -114,9 +113,7 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
     Long[] requestIds = prepareData(restClient, entities);
 
     // BATCH_GET
-    testSendSGGetRequests(restClient, requestIds);
     testSendSGGetEntityRequests(restClient, requestIds);
-    testSendSGGetKVRequests(restClient, requestIds);
 
     // BATCH_UPDATE
     Map<Long, Greeting> input = generateUpdates(requestIds);
@@ -161,19 +158,6 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
     return requestIds;
   }
 
-  // BatchGetRequest
-  private static void testSendSGGetRequests(RestClient restClient, Long[] requestIds) throws RemoteInvocationException
-  {
-    BatchGetRequest<Greeting> request =
-            new GreetingsBuilders().batchGet().ids(requestIds).fields(Greeting.fields().message()).setParam("foo", "bar").build();
-    BatchResponse<Greeting> result = restClient.sendRequest(request).getResponse().getEntity();
-    Assert.assertEquals(result.getResults().size(), requestIds.length);
-    Greeting item = result.getResults().values().iterator().next();
-    Assert.assertNotNull(item);
-    Assert.assertNotNull(item.getMessage());
-    Assert.assertEquals(result.getErrors().size(), 0);
-  }
-
   // BatchGetEntityRequest
   private static void testSendSGGetEntityRequests(RestClient restClient, Long[] requestIds) throws RemoteInvocationException
   {
@@ -185,19 +169,6 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
     Assert.assertNotNull(item.getEntity());
     Assert.assertNotNull(item.getEntity().getMessage());
     Assert.assertTrue(result.getResults().values().iterator().next().getEntity() instanceof Greeting);
-    Assert.assertEquals(result.getErrors().size(), 0);
-  }
-
-  // BatchGetKVRequest
-  private static void testSendSGGetKVRequests(RestClient restClient, Long[] requestIds) throws RemoteInvocationException
-  {
-    BatchGetKVRequest<Long, Greeting> request =
-            new GreetingsBuilders().batchGet().ids(requestIds).fields(Greeting.fields().message()).setParam("foo", "bar").buildKV();
-    BatchKVResponse<Long, Greeting> result = restClient.sendRequest(request).getResponse().getEntity();
-    Assert.assertEquals(result.getResults().size(), requestIds.length);
-    Greeting item = result.getResults().values().iterator().next();
-    Assert.assertNotNull(item);
-    Assert.assertNotNull(item.getMessage());
     Assert.assertEquals(result.getErrors().size(), 0);
   }
 
@@ -314,17 +285,13 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
   {
     return new Object[][]{
             // partition Only
-            {getURIMapper(false, true, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())},
-            {getURIMapper(false, true, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())},
+            {getURIMapper(false, true, GREETING_URI_REG)},
             // sticky Only
-            {getURIMapper(true, false, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())},
-            {getURIMapper(true, false, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())},
+            {getURIMapper(true, false, GREETING_URI_REG)},
             // both sticky and partition
-            {getURIMapper(true, true, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())},
-            {getURIMapper(true, true, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())},
+            {getURIMapper(true, true, GREETING_URI_REG)},
             // neither sticky nor partition
-            {getURIMapper(false, false, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders())},
-            {getURIMapper(false, false, GREETING_URI_REG), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders())}
+            {getURIMapper(false, false, GREETING_URI_REG)}
     };
   }
 

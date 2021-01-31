@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.examples;
 
-import com.linkedin.data.schema.PathSpec;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
@@ -27,12 +26,10 @@ import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.BatchFinderCriteriaResult;
-import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingCriteria;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.BatchfindersBuilders;
 import com.linkedin.restli.examples.greetings.client.BatchfindersRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -42,7 +39,6 @@ import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -65,9 +61,11 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchFindersRequestBuilderDataProvider")
-  public void testBatchFinder(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test
+  public void testBatchFinder() throws RemoteInvocationException
   {
+    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new BatchfindersRequestBuilders());
+
     GreetingCriteria c1 = new GreetingCriteria().setId(1L).setTone(Tone.SINCERE);
     GreetingCriteria c2 = new GreetingCriteria().setId(2L).setTone(Tone.FRIENDLY);
 
@@ -87,9 +85,11 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
     Assert.assertTrue(greetings2.get(0).getTone().equals(Tone.FRIENDLY));
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchFindersRequestBuilderDataProvider")
-  public void testBatchFinderWithProjection(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test
+  public void testBatchFinderWithProjection() throws RemoteInvocationException
   {
+    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new BatchfindersRequestBuilders());
+
     GreetingCriteria c1 = new GreetingCriteria().setId(1L).setTone(Tone.SINCERE);
     GreetingCriteria c2 = new GreetingCriteria().setId(2L).setTone(Tone.FRIENDLY);
 
@@ -113,9 +113,11 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
     Assert.assertFalse(greetings2.get(0).hasTone());
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchFindersRequestBuilderDataProvider")
-  public void testBatchFinderWithError(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test
+  public void testBatchFinderWithError() throws RemoteInvocationException
   {
+    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new BatchfindersRequestBuilders());
+
     GreetingCriteria c3 = new GreetingCriteria().setId(100L);
 
     Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
@@ -130,9 +132,11 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
     Assert.assertEquals(error.getMessage(), "Fail to find Greeting!");
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchFindersRequestBuilderDataProvider")
-  public void testBatchFinderWithErrorAndProjection(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test
+  public void testBatchFinderWithErrorAndProjection() throws RemoteInvocationException
   {
+    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new BatchfindersRequestBuilders());
+
     GreetingCriteria c3 = new GreetingCriteria().setId(100L);
 
     Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
@@ -147,8 +151,10 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
     Assert.assertEquals(error.getMessage(), "Fail to find Greeting!");
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchFindersRequestBuilderDataProvider")
-  public void testBatchFinderWithNotFoundCriteria(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException {
+  @Test
+  public void testBatchFinderWithNotFoundCriteria() throws RemoteInvocationException {
+    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new BatchfindersRequestBuilders());
+
     GreetingCriteria c4 = new GreetingCriteria().setId(0L);
 
     Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
@@ -217,14 +223,5 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
     ErrorResponse error = batchResult.get(2).getError();
     Assert.assertTrue(batchResult.get(2).isError());
     Assert.assertEquals(error.getMessage(), "Fail to find Greeting!");
-  }
-
-  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchFindersRequestBuilderDataProvider")
-  private static Object[][] batchFindersRequestBuilderDataProvider()
-  {
-    return new Object[][] {
-        { new RootBuilderWrapper<Long, Greeting>(new BatchfindersBuilders())},
-        { new RootBuilderWrapper<Long, Greeting>(new BatchfindersRequestBuilders())}
-    };
   }
 }

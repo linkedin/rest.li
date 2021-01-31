@@ -24,9 +24,7 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
 import com.linkedin.restli.examples.greetings.api.ValidationDemo;
-import com.linkedin.restli.examples.greetings.client.AutoValidationDemosBuilders;
 import com.linkedin.restli.examples.greetings.client.AutoValidationDemosRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.ValidationDemosBuilders;
 import com.linkedin.restli.examples.greetings.client.ValidationDemosCreateRequestBuilder;
 import com.linkedin.restli.examples.greetings.client.ValidationDemosPartialUpdateRequestBuilder;
 import com.linkedin.restli.examples.greetings.client.ValidationDemosRequestBuilders;
@@ -50,8 +48,8 @@ import java.util.Map;
 public class TestRestLiValidationFromClient
 {
   private static final Object[] BUILDERS = new Object[] {
-      new ValidationDemosBuilders(), new ValidationDemosRequestBuilders(),
-      new AutoValidationDemosBuilders(), new AutoValidationDemosRequestBuilders()
+      new ValidationDemosRequestBuilders(),
+      new AutoValidationDemosRequestBuilders()
   };
 
   private static Object[][] wrapFailureCases(Object[][] failureCases, Object[] builders)

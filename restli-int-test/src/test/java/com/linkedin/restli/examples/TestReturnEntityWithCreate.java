@@ -76,7 +76,7 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newBuildersClientDataDataProvider")
-  public void testCreateIdEntity(RestClient restClient, String expectedContentType, CreateGreetingRequestBuilders builders) throws RemoteInvocationException
+  public void testCreateEntity(RestClient restClient, String expectedContentType, CreateGreetingRequestBuilders builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("second time!");
@@ -225,7 +225,7 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
    * @throws RemoteInvocationException
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newBuildersClientDataDataProvider")
-  public void testCreateId(RestClient restClient, String expectedContentType, CreateGreetingRequestBuilders builders) throws RemoteInvocationException
+  public void testCreate(RestClient restClient, String expectedContentType, CreateGreetingRequestBuilders builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("first time!");
@@ -251,7 +251,7 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
    * @throws RemoteInvocationException
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "newBuildersClientDataDataProvider")
-  public void testBatchCreateId(RestClient restClient, String expectedContentType, CreateGreetingRequestBuilders builders) throws RemoteInvocationException
+  public void testBatchCreate(RestClient restClient, String expectedContentType, CreateGreetingRequestBuilders builders) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("first time!");

@@ -25,7 +25,6 @@ import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
 
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -37,22 +36,15 @@ import org.testng.annotations.Test;
  */
 public class ArrayTest
 {
-  @Test(dataProvider = "requestBuilderDataProvider")
-  public void testIterable(RootBuilderWrapper<Integer, Greeting> builders)
+  @Test
+  public void testIterable()
   {
+    RootBuilderWrapper<Integer, Greeting> builders = new RootBuilderWrapper<>(new ArrayTestRequestBuilders());
+
     builders.findBy("Test")
       .setQueryParam("primitive", Arrays.asList(1, 2, 3))
       .setQueryParam("enum", Arrays.asList(Tone.FRIENDLY, Tone.SINCERE))
       .setQueryParam("record" ,Arrays.asList(new Message(), new Message()))
       .setQueryParam("existing", Arrays.asList(new ToneFacet(), new ToneFacet()));
-  }
-
-  @DataProvider
-  private static Object[][] requestBuilderDataProvider()
-  {
-    return new Object[][] {
-      { new RootBuilderWrapper<Integer, Greeting>(new ArrayTestBuilders()) },
-      { new RootBuilderWrapper<Integer, Greeting>(new ArrayTestRequestBuilders()) }
-    };
   }
 }

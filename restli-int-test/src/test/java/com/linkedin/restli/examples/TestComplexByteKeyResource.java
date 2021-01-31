@@ -24,7 +24,6 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
-import com.linkedin.restli.examples.greetings.client.ComplexByteKeysBuilders;
 import com.linkedin.restli.examples.greetings.client.ComplexByteKeysRequestBuilders;
 import com.linkedin.restli.examples.typeref.api.TyperefRecord;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
@@ -76,8 +75,6 @@ public class TestComplexByteKeyResource extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<ComplexResourceKey<TyperefRecord, TwoPartKey>, TyperefRecord>(new ComplexByteKeysBuilders()) },
-      { new RootBuilderWrapper<ComplexResourceKey<TyperefRecord, TwoPartKey>, TyperefRecord>(new ComplexByteKeysBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<ComplexResourceKey<TyperefRecord, TwoPartKey>, TyperefRecord>(new ComplexByteKeysRequestBuilders()) },
       { new RootBuilderWrapper<ComplexResourceKey<TyperefRecord, TwoPartKey>, TyperefRecord>(new ComplexByteKeysRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };

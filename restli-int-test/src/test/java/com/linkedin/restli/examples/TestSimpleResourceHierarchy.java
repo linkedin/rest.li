@@ -38,11 +38,8 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.GreetingBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.SubgreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.SubgreetingsRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.SubsubgreetingBuilders;
 import com.linkedin.restli.examples.greetings.client.SubsubgreetingRequestBuilders;
 import com.linkedin.restli.test.util.BatchCreateHelper;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
@@ -189,28 +186,6 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   public void testSubCollectionBatchGet(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchResponse<Greeting>> request = new SubgreetingsBuilders(requestOptions).batchGet().ids(ids).build();
-
-    Response<BatchResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
-    BatchResponse<Greeting> batchResponse = response.getEntity();
-    Assert.assertEquals(batchResponse.getResults().size(), ids.size());
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testSubCollectionBatchGetKV(RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
-    List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchKVResponse<Long, Greeting>> request = new SubgreetingsBuilders(requestOptions).batchGet().ids(ids).buildKV();
-
-    Response<BatchKVResponse<Long, Greeting>> response = getClient().sendRequest(request).getResponse();
-    BatchKVResponse<Long, Greeting> batchResponse = response.getEntity();
-    Assert.assertEquals(batchResponse.getResults().size(), ids.size());
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testSubCollectionBatchGetEntity(RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
-    List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
     Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = new SubgreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
 
     Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = getClient().sendRequest(request).getResponse();
@@ -292,35 +267,6 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   public void testSubCollectionCreate(RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
-    Greeting greeting = new Greeting();
-    greeting.setMessage("Hello there!");
-    greeting.setTone(Tone.FRIENDLY);
-
-    final SubgreetingsBuilders builders = new SubgreetingsBuilders(requestOptions);
-
-    //POST
-    Request<EmptyRecord> createRequest = builders.create().input(greeting).build();
-    Response<EmptyRecord> response = getClient().sendRequest(createRequest).getResponse();
-    Assert.assertNull(response.getHeader(RestConstants.HEADER_CONTENT_TYPE));
-    @SuppressWarnings("unchecked")
-    CreateResponse<Long> createResponse = (CreateResponse<Long>)response.getEntity();
-    long id = createResponse.getId();
-    @SuppressWarnings("deprecation")
-    String stringId = response.getId();
-    Assert.assertEquals(id, Long.parseLong(stringId));
-
-    //GET again to verify that the create has worked.
-    Request<Greeting> getRequest = builders.get().id(id).build();
-    Response<Greeting> getResponse = getClient().sendRequest(getRequest).getResponse();
-    Greeting responseGreeting = getResponse.getEntity();
-
-    Assert.assertEquals(responseGreeting.getMessage(), greeting.getMessage());
-    Assert.assertEquals(responseGreeting.getTone(), greeting.getTone());
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testSubCollectionCreateId(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
     Greeting greeting = new Greeting();
     greeting.setMessage("Hello there!");
@@ -516,8 +462,6 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingRequestBuilders()) },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
@@ -536,8 +480,6 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   private static Object[][] requestSubBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new SubgreetingsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new SubgreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Long, Greeting>(new SubgreetingsRequestBuilders()) },
       { new RootBuilderWrapper<Long, Greeting>(new SubgreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
@@ -547,8 +489,6 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   private static Object[][] requestSubSubBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Void, Greeting>(new SubsubgreetingBuilders()) },
-      { new RootBuilderWrapper<Void, Greeting>(new SubsubgreetingBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Void, Greeting>(new SubsubgreetingRequestBuilders()) },
       { new RootBuilderWrapper<Void, Greeting>(new SubsubgreetingRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };

@@ -24,13 +24,11 @@ import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.DynamicRecordTemplate;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RequestBuilder;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EmptyRecord;
@@ -42,18 +40,12 @@ import com.linkedin.restli.examples.groups.api.GroupContact;
 import com.linkedin.restli.examples.groups.api.GroupMembership;
 import com.linkedin.restli.examples.groups.api.MembershipSortOrder;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
-import com.linkedin.restli.examples.groups.client.ContactsBuilders;
 import com.linkedin.restli.examples.groups.client.ContactsRequestBuilders;
-import com.linkedin.restli.examples.groups.client.GroupMembershipsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupMembershipsRequestBuilders;
-import com.linkedin.restli.examples.groups.client.GroupsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsRequestBuilders;
 import com.linkedin.restli.internal.client.ActionResponseDecoder;
 import com.linkedin.restli.internal.client.BatchEntityResponseDecoder;
-import com.linkedin.restli.internal.client.BatchKVResponseDecoder;
-import com.linkedin.restli.internal.client.BatchResponseDecoder;
 import com.linkedin.restli.internal.client.CollectionResponseDecoder;
-import com.linkedin.restli.internal.client.CreateResponseDecoder;
 import com.linkedin.restli.internal.client.EmptyResponseDecoder;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.IdResponseDecoder;
@@ -63,8 +55,6 @@ import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.testutils.URIDetails;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -87,28 +77,20 @@ public class TestGroupsRequestBuilders
 {
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderEntity")
   public void testEntityGet(RootBuilderWrapper<Integer, Group> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<Group> request = builders.get().id(1).build();
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedURIDetails, null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderEntityWithFields")
-  public void testEntityGetWithFields(RootBuilderWrapper<Integer, Group> builders, URIDetails expectedURIDetails) throws IOException, RestException
+  public void testEntityGetWithFields(RootBuilderWrapper<Integer, Group> builders, URIDetails expectedURIDetails)
   {
     Request<Group> request = builders.get().id(1).fields(Group.fields().badge()).build();
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedURIDetails, null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderNonEntity")
-  public void testEntityCreate(URIDetails expectedURIDetails) throws IOException, RestException
-  {
-    Request<EmptyRecord> request = new GroupsBuilders().create().input(new Group()).build();
-    checkRequestBuilder(request, ResourceMethod.CREATE, CreateResponseDecoder.class, expectedURIDetails, new Group());
-  }
-
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderNonEntity")
-  public void testEntityCreateId(URIDetails expectedURIDetails) throws IOException, RestException
+  public void testEntityCreate(URIDetails expectedURIDetails)
   {
     CreateIdRequest<Integer, Group> request = new GroupsRequestBuilders().create().input(new Group()).build();
     checkRequestBuilder(request, ResourceMethod.CREATE, IdResponseDecoder.class, expectedURIDetails, new Group());
@@ -116,7 +98,6 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderEntity")
   public void testEntityUpdate(RootBuilderWrapper<Integer, Group> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<EmptyRecord>  request = builders.partialUpdate().id(1).input(new PatchRequest<Group>()).build();
     checkRequestBuilder(request, ResourceMethod.PARTIAL_UPDATE, EmptyResponseDecoder.class, expectedURIDetails, new Group());
@@ -124,7 +105,6 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderEntity")
   public void testEntityDelete(RootBuilderWrapper<Integer, Group> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<EmptyRecord>  request = builders.delete().id(1).build();
     checkRequestBuilder(request, ResourceMethod.DELETE, EmptyResponseDecoder.class, expectedURIDetails, null);
@@ -132,7 +112,6 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderFindByEmailDomainWithFields")
   public void testCollectionFinderByEmailDomainWithFields(RootBuilderWrapper<Integer, Group> builders, URIDetails expectedURIDetailsDetails)
-    throws IOException, RestException
   {
     // Find by email domain with some debug, pagination and projection
     Request<CollectionResponse<Group>> request =
@@ -148,7 +127,6 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderFindByManagerId")
   public void testCollectionFinderByManagerId(RootBuilderWrapper<Integer, Group> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     // Find by email domain with some debug, pagination and projection
     Request<CollectionResponse<Group>> request = builders.findBy("Manager").setQueryParam("managerMemberId", 1).build();
@@ -157,7 +135,6 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderSearch")
   public void testCollectionFinderBySearch_AllValues(RootBuilderWrapper<Integer, Group> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     RequestBuilder<? extends Request<CollectionResponse<Group>>> findRequestBuilder =
       builders.findBy("Search")
@@ -170,7 +147,6 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderSearchWithOptional1")
   public void testCollectionFinderBySearchWithOptionalParamsTest1(RootBuilderWrapper<Integer, Group> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException, URISyntaxException
   {
     Request<CollectionResponse<Group>> request = builders.findBy("Search").setQueryParam("keywords", "linkedin").build();
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedURIDetails, null);
@@ -178,7 +154,6 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderSearchWithOptional2")
   public void testCollectionFinderBySearchWithOptionalParamsTest2(RootBuilderWrapper<Integer, Group> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<CollectionResponse<Group>> request = builders.findBy("Search")
       .setQueryParam("keywords", "linkedin")
@@ -189,66 +164,50 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBuilderDataProviderSearchWithOptional3")
   public void testCollectionFinderBySearchWithOptionalParamsTest3(RootBuilderWrapper<Integer, Group> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<CollectionResponse<Group>> request = builders.findBy("Search").setQueryParam("groupId", 1).build();
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedURIDetails, null);
   }
 
-  @Test(dataProvider = "requestGroupsBuilderDataProvider", expectedExceptions = NullPointerException.class)
-  public void testCollectionFinderOmittingRequiredParams(RootBuilderWrapper<Integer, Group> builders) throws IOException, RestException
+  @Test(expectedExceptions = NullPointerException.class)
+  public void testCollectionFinderOmittingRequiredParams()
   {
-    builders.findBy("Manager").setQueryParam("managerMemberId", null);
+    new GroupsRequestBuilders().findByManager().managerMemberIdParam(null);
   }
 
-  @Test(dataProvider = "requestContactsBuilderDataProvider", expectedExceptions = IllegalStateException.class)
-  public void testCollectionEntityOmittingRequiredIdParam(RootBuilderWrapper<Integer, GroupContact> builders) throws IOException, RestException
+  @Test(expectedExceptions = IllegalStateException.class)
+  public void testCollectionEntityOmittingRequiredIdParam()
   {
-    builders.get().id(1).build();
+    new ContactsRequestBuilders().get().id(1).build();
   }
 
-  @Test(dataProvider = "requestContactsBuilderDataProvider", expectedExceptions = IllegalStateException.class)
-  public void testCollectionEntityNullIdParam(RootBuilderWrapper<Integer, GroupContact> builders) throws IOException, RestException
+  @Test(expectedExceptions = IllegalStateException.class)
+  public void testCollectionEntityNullIdParam()
   {
-    builders.get().setPathKey("groupId", null).id(1).build();
-  }
-
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBatchDataProvider")
-  public void testBatchGet(URIDetails expectedURIDetails) throws IOException, RestException
-  {
-    Request<BatchResponse<Group>> request = new GroupsBuilders().batchGet().ids(1, 3).fields(Group.fields().approvalModes()).build();
-    checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchResponseDecoder.class, expectedURIDetails, null);
+    new ContactsRequestBuilders().get().groupIdKey(null).id(1).build();
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBatchDataProvider")
-  public void testBatchGetKV(URIDetails expectedURIDetails) throws IOException, RestException
-  {
-    Request<BatchKVResponse<Integer, Group>> request = new GroupsBuilders().batchGet().ids(1, 3).fields(Group.fields().approvalModes()).buildKV();
-    checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchKVResponseDecoder.class, expectedURIDetails, null);
-  }
-
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestGroupsBatchDataProvider")
-  public void testBatchGetEntity(URIDetails expectedURIDetails) throws IOException, RestException
+  public void testBatchGet(URIDetails expectedURIDetails)
   {
     Request<BatchKVResponse<Integer, EntityResponse<Group>>> request = new GroupsRequestBuilders().batchGet().ids(1, 3).fields(Group.fields().approvalModes()).build();
     checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchEntityResponseDecoder.class, expectedURIDetails, null);
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void testBatchGetWithSelectedNullValues() throws IOException, RestException
+  public void testBatchGetWithSelectedNullValues()
   {
-    new GroupsBuilders().batchGet().ids(1, null, 3).fields(Group.fields().approvalModes());
+    new GroupsRequestBuilders().batchGet().ids(1, null, 3).fields(Group.fields().approvalModes());
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void testBatchGetEntityWithSelectedNullValues() throws IOException, RestException
+  public void testBatchGetEntityWithSelectedNullValues()
   {
     new GroupsRequestBuilders().batchGet().ids(1, null, 3).fields(Group.fields().approvalModes());
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBuilderDataProviderEntity")
   public void testSubResourceGet(RootBuilderWrapper<Integer, GroupContact> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<GroupContact> request = builders.get().setPathKey("groupId", 1).id(1).build();
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedURIDetails, null);
@@ -256,7 +215,6 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBuilderDataProviderEntity")
   public void testSubResourceGetParamReordering(RootBuilderWrapper<Integer, GroupContact> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<GroupContact> request = builders.get().id(1).setPathKey("groupId", 1).build();
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedURIDetails, null);
@@ -264,7 +222,6 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBuilderDataProviderEntityWithFields")
   public void testSubResourceGetWithFields(RootBuilderWrapper<Integer, GroupContact> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<GroupContact> request = builders.get()
       .setPathKey("groupId", 1)
@@ -277,66 +234,19 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBatchDataProvider")
   public void testSubResourceBatchGet(URIDetails expectedURIDetails)
-    throws IOException, RestException
-  {
-    Request<BatchResponse<GroupContact>> request = new ContactsBuilders().batchGet().groupIdKey(1).ids(1, 3).build();
-    checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchResponseDecoder.class, expectedURIDetails, null);
-  }
-
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBatchDataProvider")
-  public void testSubResourceBatchGetKV(URIDetails expectedURIDetails)
-    throws IOException, RestException
-  {
-    Request<BatchKVResponse<Integer, GroupContact>> request = new ContactsBuilders().batchGet().groupIdKey(1).ids(1, 3).buildKV();
-    checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchKVResponseDecoder.class, expectedURIDetails, null);
-  }
-
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBatchDataProvider")
-  public void testSubResourceBatchGetEntity(URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<BatchKVResponse<Integer, EntityResponse<GroupContact>>> request = new ContactsRequestBuilders().batchGet().groupIdKey(1).ids(1, 3).build();
     checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchEntityResponseDecoder.class, expectedURIDetails, null);
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void testSubResourceBatchGetWithSelectedNullValues() throws IOException, RestException
-  {
-    new ContactsBuilders().batchGet().groupIdKey(1).ids(1, null, 3).build();
-  }
-
-  @Test(expectedExceptions = IllegalArgumentException.class)
-  public void testSubResourceBatchGetKVWithSelectedNullValues() throws IOException, RestException
-  {
-    new ContactsBuilders().batchGet().groupIdKey(1).ids(1, null, 3).buildKV();
-  }
-
-  @Test(expectedExceptions = IllegalArgumentException.class)
-  public void testSubResourceBatchGetEntityWithSelectedNullValues() throws IOException, RestException
+  public void testSubResourceBatchGetWithSelectedNullValues()
   {
     new ContactsRequestBuilders().batchGet().groupIdKey(1).ids(1, null, 3).build();
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBuilderDataProviderNonEntity")
   public void testSubResourceCreate(URIDetails expectedURIDetails)
-    throws IOException, RestException
-  {
-    GroupContact contact = new GroupContact();
-    contact.setContactID(3);
-    contact.setGroupID(1);
-    contact.setMemberID(3);
-    contact.setFirstName("Laura");
-    contact.setLastName("Smith");
-    contact.setIsPreapproved(true);
-    contact.setIsInvited(true);
-
-    Request<EmptyRecord> oldRequest = new ContactsBuilders().create().groupIdKey(1).input(contact).build();
-    checkRequestBuilder(oldRequest, ResourceMethod.CREATE, CreateResponseDecoder.class, expectedURIDetails, contact);
-  }
-
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBuilderDataProviderNonEntity")
-  public void testSubResourceCreateId(URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     GroupContact contact = new GroupContact();
     contact.setContactID(3);
@@ -353,7 +263,6 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBuilderDataProviderEntity")
   public void testSubResourceUpdate(RootBuilderWrapper<Integer, GroupContact> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     GroupContact contact = new GroupContact();
     contact.setLastName("Anderson");
@@ -365,7 +274,6 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestContactsBuilderDataProviderEntity")
   public void testSubResourceDelete(RootBuilderWrapper<Integer, GroupContact> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<EmptyRecord>  request = builders.delete().setPathKey("groupId", 1).id(1).build();
     checkRequestBuilder(request, ResourceMethod.DELETE, EmptyResponseDecoder.class, expectedURIDetails, null);
@@ -401,33 +309,18 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBuilderDataProviderEntity")
   public void testAssociationEntityGet(RootBuilderWrapper<CompoundKey, GroupMembership> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
-    GroupMembershipsBuilders.Key key = new GroupMembershipsBuilders.Key().setGroupId(7).setMemberId(1);
+    GroupMembershipsRequestBuilders.Key key = new GroupMembershipsRequestBuilders.Key().setGroupId(7).setMemberId(1);
     Request<GroupMembership> request = builders.get().id(key).build();
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedURIDetails, null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBatchDataProvider")
-  public void testAssociationBatchGetByAssociationMultipleCompoundKeys2(URIDetails expectedURIDetails)
-    throws IOException, RestException
-  {
-    GroupMembershipsBuilders.Key key1 = new GroupMembershipsBuilders.Key().setGroupId(1).setMemberId(1);
-    GroupMembershipsBuilders.Key key2 = new GroupMembershipsBuilders.Key().setGroupId(2).setMemberId(1);
-    GroupMembershipsBuilders.Key key3 = new GroupMembershipsBuilders.Key().setGroupId(2).setMemberId(2);
-
-    Request<BatchKVResponse<CompoundKey, GroupMembership>> request =
-        new GroupMembershipsBuilders().batchGet().ids(key1, key2, key3).buildKV();
-    checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchKVResponseDecoder.class, expectedURIDetails, null);
-  }
-
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBatchDataProvider")
   public void testAssociationBatchGetEntityByAssociationMultipleCompoundKeys2(URIDetails expectedURIDetails)
-    throws IOException, RestException, URISyntaxException
   {
-    GroupMembershipsBuilders.Key key1 = new GroupMembershipsBuilders.Key().setGroupId(1).setMemberId(1);
-    GroupMembershipsBuilders.Key key2 = new GroupMembershipsBuilders.Key().setGroupId(2).setMemberId(1);
-    GroupMembershipsBuilders.Key key3 = new GroupMembershipsBuilders.Key().setGroupId(2).setMemberId(2);
+    GroupMembershipsRequestBuilders.Key key1 = new GroupMembershipsRequestBuilders.Key().setGroupId(1).setMemberId(1);
+    GroupMembershipsRequestBuilders.Key key2 = new GroupMembershipsRequestBuilders.Key().setGroupId(2).setMemberId(1);
+    GroupMembershipsRequestBuilders.Key key3 = new GroupMembershipsRequestBuilders.Key().setGroupId(2).setMemberId(2);
 
     Request<BatchKVResponse<CompoundKey, EntityResponse<GroupMembership>>> request = new GroupMembershipsRequestBuilders().batchGet().ids(key1, key2, key3).build();
 
@@ -435,12 +328,12 @@ public class TestGroupsRequestBuilders
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBuilderDataProviderEntity")
-  public void testAssociationEntityUpdate(RootBuilderWrapper<CompoundKey, GroupMembership> builders, URIDetails expectedURIDetails) throws IOException, RestException
+  public void testAssociationEntityUpdate(RootBuilderWrapper<CompoundKey, GroupMembership> builders, URIDetails expectedURIDetails)
   {
     GroupMembership membership = new GroupMembership();
     membership.setLastName("Anderson");
     PatchRequest<GroupMembership> patch = PatchGenerator.diffEmpty(membership);
-    GroupMembershipsBuilders.Key key = new GroupMembershipsBuilders.Key().setGroupId(7).setMemberId(1);
+    GroupMembershipsRequestBuilders.Key key = new GroupMembershipsRequestBuilders.Key().setGroupId(7).setMemberId(1);
 
     Request<EmptyRecord>  request = builders.partialUpdate().id(key).input(patch).build();
     checkRequestBuilder(request, ResourceMethod.PARTIAL_UPDATE, EmptyResponseDecoder.class, expectedURIDetails, patch);
@@ -448,16 +341,14 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBuilderDataProviderEntity")
   public void testAssociationEntityDelete(RootBuilderWrapper<CompoundKey, GroupMembership> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
-    GroupMembershipsBuilders.Key key = new GroupMembershipsBuilders.Key().setGroupId(7).setMemberId(1);
+    GroupMembershipsRequestBuilders.Key key = new GroupMembershipsRequestBuilders.Key().setGroupId(7).setMemberId(1);
     Request<EmptyRecord>  request = builders.delete().id(key).build();
     checkRequestBuilder(request, ResourceMethod.DELETE, EmptyResponseDecoder.class, expectedURIDetails, null);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBuilderDataProviderEntityFinderByMember")
   public void testAssociationFinderByMemberID(RootBuilderWrapper<CompoundKey, GroupMembership> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<CollectionResponse<GroupMembership>> request = builders.findBy("Member").setPathKey("memberId", 1).build();
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedURIDetails, null);
@@ -465,7 +356,6 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBuilderDataProviderEntityFinderByGroup")
   public void testAssociationFinderByGroup(RootBuilderWrapper<CompoundKey, GroupMembership> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<CollectionResponse<GroupMembership>> request = builders.findBy("Group")
       .setPathKey("groupId", 1)
@@ -481,19 +371,18 @@ public class TestGroupsRequestBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestMembershipsBuilderDataProviderEntityFinderByGroupWithOptional")
   public void testAssociationFinderByGroupWithSomeOptionalParameters(RootBuilderWrapper<CompoundKey, GroupMembership> builders, URIDetails expectedURIDetails)
-    throws IOException, RestException
   {
     Request<CollectionResponse<GroupMembership>> request =
       builders.findBy("Group").setPathKey("groupId", 1).setQueryParam("firstName", "Bruce").build();
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedURIDetails, null);
   }
 
-  @Test(dataProvider = "requestGroupsBuilderDataProvider")
-  public void testRequestHeaderSupport(RootBuilderWrapper<Integer, Group> builders)
+  @Test
+  public void testRequestHeaderSupport()
   {
     final String X_LI_D2_TARGET_HOST = "X-LI-D2-Target-Host";
     final String TEST_HOST_VALUE = "http://test.linkedin.com/";
-    Request<Group> request = builders.get().id(1).setHeader(X_LI_D2_TARGET_HOST, TEST_HOST_VALUE).build();
+    Request<Group> request = new GroupsRequestBuilders().get().id(1).setHeader(X_LI_D2_TARGET_HOST, TEST_HOST_VALUE).build();
 
     Assert.assertTrue(request.getHeaders().containsKey(X_LI_D2_TARGET_HOST));
     assertEquals(request.getHeaders().get(X_LI_D2_TARGET_HOST), TEST_HOST_VALUE);
@@ -556,8 +445,6 @@ public class TestGroupsRequestBuilders
         null, null, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails2 }
     };
@@ -580,8 +467,6 @@ public class TestGroupsRequestBuilders
         null, null, fieldSet);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails2 }
     };
@@ -630,8 +515,6 @@ public class TestGroupsRequestBuilders
         null, queryParamsMap, fieldSet);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails2 }
     };
@@ -655,8 +538,6 @@ public class TestGroupsRequestBuilders
         null, queryParamsMap, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails2 }
     };
@@ -682,8 +563,6 @@ public class TestGroupsRequestBuilders
         null, queryParamsMap, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails2 }
     };
@@ -707,8 +586,6 @@ public class TestGroupsRequestBuilders
         null, queryParamsMap, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails2 }
     };
@@ -733,8 +610,6 @@ public class TestGroupsRequestBuilders
         null, queryParamsMap, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails2 }
     };
@@ -758,8 +633,6 @@ public class TestGroupsRequestBuilders
         null, queryParamsMap, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails2 }
     };
@@ -805,8 +678,6 @@ public class TestGroupsRequestBuilders
         null, null, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders()), uriDetails2 }
     };
@@ -830,8 +701,6 @@ public class TestGroupsRequestBuilders
         null, null, fieldSet);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders()), uriDetails2 }
     };
@@ -896,8 +765,6 @@ public class TestGroupsRequestBuilders
         null, queryParamsMap, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()), uriDetails2 }
     };
@@ -917,8 +784,6 @@ public class TestGroupsRequestBuilders
         "groupMemberships/(groupID:7,memberID:1)", null, null, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()), uriDetails2 }
     };
@@ -981,8 +846,6 @@ public class TestGroupsRequestBuilders
         "groupMemberships/(memberID:1)", null, queryParamsMap, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()), uriDetails2 }
     };
@@ -1010,8 +873,6 @@ public class TestGroupsRequestBuilders
         null, queryParamsMap, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()), uriDetails2 }
     };
@@ -1035,8 +896,6 @@ public class TestGroupsRequestBuilders
         null, queryParamsMap, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()), uriDetails2 }
     };
@@ -1064,10 +923,6 @@ public class TestGroupsRequestBuilders
         "SpecialGroups/1/contacts/42", null, null, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders("SpecialGroups")), new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders("SpecialGroups")),
-        uriDetailsV1_1, uriDetailsV1_2 },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders("SpecialGroups")), new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders("SpecialGroups")),
-        uriDetailsV2_1, uriDetailsV2_2 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders("SpecialGroups")), new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders("SpecialGroups")),
         uriDetailsV1_1, uriDetailsV1_2 },
       { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders("SpecialGroups")), new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders("SpecialGroups")),
@@ -1085,35 +940,15 @@ public class TestGroupsRequestBuilders
     final Map<String, String> queryParamsMap = new HashMap<String, String>();
     queryParamsMap.put("action", "spamContacts");
 
-    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), 
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
         "groups/42/contacts", null, queryParamsMap, null);
 
     final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
         "groups/42/contacts", null, queryParamsMap, null);
 
     return new Object[][] {
-      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders()), uriDetails1 },
-      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders()), uriDetails2 },
       { new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders()), uriDetails1 },
       { new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders()), uriDetails2 }
-    };
-  }
-
-  @DataProvider
-  private static Object[][] requestGroupsBuilderDataProvider()
-  {
-    return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()) },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsRequestBuilders()) }
-    };
-  }
-
-  @DataProvider
-  private static Object[][] requestContactsBuilderDataProvider()
-  {
-    return new Object[][] {
-      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsBuilders()) },
-      { new RootBuilderWrapper<Integer, GroupContact>(new ContactsRequestBuilders()) }
     };
   }
 }

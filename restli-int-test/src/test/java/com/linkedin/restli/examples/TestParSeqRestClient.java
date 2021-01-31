@@ -21,12 +21,10 @@ import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.EngineBuilder;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.Tasks;
-import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.client.ParSeqRestClient;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
 import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -172,8 +170,6 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   {
     return new Object[][]
       {
-        { new RootBuilderWrapper<>(new ActionsBuilders()) },
-        { new RootBuilderWrapper<>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
         { new RootBuilderWrapper<>(new ActionsRequestBuilders()) },
         { new RootBuilderWrapper<>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
       };

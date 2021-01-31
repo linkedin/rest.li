@@ -20,12 +20,10 @@ package com.linkedin.restli.examples.greetings;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.ExceptionsBuilders;
 import com.linkedin.restli.examples.greetings.client.ExceptionsRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -34,19 +32,11 @@ import org.testng.annotations.Test;
  */
 public class TestExceptionRequestBuilders
 {
-  @Test(dataProvider = "requestBuilderDataProvider")
-  public void testUnbatchable(RootBuilderWrapper<Long, Greeting> builders)
+  @Test
+  public void testUnbatchable()
   {
+    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new ExceptionsRequestBuilders());
     Request<Greeting> request = builders.get().id(1L).build();
     Assert.assertFalse(request.getResourceProperties().getSupportedMethods().contains(ResourceMethod.BATCH_GET));
-  }
-
-  @DataProvider
-  private static Object[][] requestBuilderDataProvider()
-  {
-    return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) }
-    };
   }
 }

@@ -25,7 +25,6 @@ import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
@@ -67,35 +66,6 @@ public class TestGreetingsClientAcceptContentTypeHeader extends RestLiIntegratio
   private static Object[][] acceptContentTypeDataProvider()
   {
     return new Object[][] {
-        {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.emptyList()).build())),
-            RestConstants.HEADER_VALUE_APPLICATION_JSON
-        },
-        {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
-                ContentType.ACCEPT_TYPE_ANY)).build())),
-            RestConstants.HEADER_VALUE_APPLICATION_JSON
-        },
-        {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
-                ContentType.JSON)).build())),
-            RestConstants.HEADER_VALUE_APPLICATION_JSON
-        },
-        {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
-                ContentType.PSON)).build())),
-            RestConstants.HEADER_VALUE_APPLICATION_PSON
-        },
-        {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Arrays.asList(
-                ContentType.PSON, ContentType.JSON)).build())),
-            RestConstants.HEADER_VALUE_APPLICATION_PSON
-        },
-        {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Arrays.asList(
-                ContentType.JSON, ContentType.PSON)).build())),
-            RestConstants.HEADER_VALUE_APPLICATION_JSON
-        },
         {
             new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.emptyList()).build())),
             RestConstants.HEADER_VALUE_APPLICATION_JSON

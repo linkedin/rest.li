@@ -6,9 +6,8 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.server.RestLiConfig;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 import java.util.HashMap;
 import java.util.Map;
 import org.testng.Assert;
@@ -38,8 +37,7 @@ public class TestHttp11With204AndException extends RestLiIntegrationTest
   @Test
   public void test204ExceptionWithHttp11() throws Exception
   {
-    RootBuilderWrapper<Long, Greeting> builderWrapper = new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders());
-    Request<Greeting> request = builderWrapper.get()
+    Request<Greeting> request = new GreetingsRequestBuilders().get()
         .id(204L)
         .build();
 

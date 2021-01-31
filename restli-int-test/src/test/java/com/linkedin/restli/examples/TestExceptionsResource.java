@@ -29,16 +29,13 @@ import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.BatchResponse;
-import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateIdStatus;
-import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.ExceptionsBuilders;
 import com.linkedin.restli.examples.greetings.client.ExceptionsRequestBuilders;
 import com.linkedin.restli.examples.greetings.server.ExceptionsResource;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
@@ -207,49 +204,6 @@ public class TestExceptionsResource extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   public void testBatchCreateErrors(RestliRequestOptions requestOptions) throws Exception
   {
-    ExceptionsBuilders builders = new ExceptionsBuilders(requestOptions);
-
-    Request<CollectionResponse<CreateStatus>> batchCreateRequest = builders.batchCreate()
-      .input(new Greeting().setId(10L).setMessage("Greetings.").setTone(Tone.SINCERE))
-      .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
-      .build();
-
-    Response<CollectionResponse<CreateStatus>> response = getClient().sendRequest(batchCreateRequest).getResponse();
-    List<CreateStatus> createStatuses = response.getEntity().getElements();
-    Assert.assertEquals(createStatuses.size(), 2);
-
-    @SuppressWarnings("unchecked")
-    CreateIdStatus<Long> status0 =  (CreateIdStatus<Long>)createStatuses.get(0);
-    Assert.assertEquals(status0.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
-    Assert.assertEquals(status0.getKey(), new Long(10));
-    @SuppressWarnings("deprecation")
-    String id = status0.getId();
-    Assert.assertEquals(BatchResponse.keyToString(status0.getKey(), ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())),
-                        id);
-    Assert.assertFalse(status0.hasError());
-
-    CreateStatus status1 = createStatuses.get(1);
-    Assert.assertEquals(status1.getStatus().intValue(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
-    Assert.assertTrue(status1.hasError());
-    ErrorResponse error = status1.getError();
-    Assert.assertEquals(error.getStatus().intValue(), HttpStatus.S_406_NOT_ACCEPTABLE.getCode());
-    Assert.assertEquals(error.getMessage(), "I will not tolerate your insolence!");
-    Assert.assertEquals(error.getServiceErrorCode().intValue(), 999);
-    Assert.assertEquals(error.getExceptionClass(), "com.linkedin.restli.server.RestLiServiceException");
-    Assert.assertEquals(error.getErrorDetails().data().getString("reason"), "insultingGreeting");
-    Assert.assertTrue(error.getStackTrace().startsWith(
-      "com.linkedin.restli.server.RestLiServiceException [HTTP Status:406, serviceErrorCode:999]: I will not tolerate your insolence!"),
-                      "stacktrace mismatch:" + error.getStackTrace());
-    Assert.assertFalse(error.hasCode());
-    Assert.assertFalse(error.hasDocUrl());
-    Assert.assertFalse(error.hasRequestId());
-    Assert.assertEquals(error.getErrorDetailType(), EmptyRecord.class.getCanonicalName());
-  }
-
-  @SuppressWarnings("deprecation")
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testBatchCreateIdErrors(RestliRequestOptions requestOptions) throws Exception
-  {
     ExceptionsRequestBuilders builders = new ExceptionsRequestBuilders(requestOptions);
 
     BatchCreateIdRequest<Long, Greeting> batchCreateRequest = builders.batchCreate()
@@ -330,7 +284,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
   @Test
   public void testExceptionsWithNullStatus() throws Exception
   {
-    ActionRequest<?> actionRequest = new ExceptionsBuilders().actionErrorWithEmptyStatus().build();
+    ActionRequest<?> actionRequest = new ExceptionsRequestBuilders().actionErrorWithEmptyStatus().build();
 
     try
     {
@@ -348,7 +302,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
   @Test
   public void testBadInputErrorResponse() throws IOException
   {
-    HttpPost post = new HttpPost(URI_PREFIX + ExceptionsBuilders.getPrimaryResource());
+    HttpPost post = new HttpPost(URI_PREFIX + ExceptionsRequestBuilders.getPrimaryResource());
     post.setEntity(new StringEntity("{\"foo\",\"bar\"}"));
     try (CloseableHttpClient httpClient = HttpClients.createDefault();
         CloseableHttpResponse response = httpClient.execute(post))
@@ -363,16 +317,10 @@ public class TestExceptionsResource extends RestLiIntegrationTest
   public Object[][] exceptionHandlingModesDataProvider()
   {
     return new Object[][] {
-      { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders()) },
-      { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) },
       { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-      { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders()) },
-      { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) },
       { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-      { false, null, new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders()) },
-      { false, null, new RootBuilderWrapper<Long, Greeting>(new ExceptionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { false, null, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) },
       { false, null, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
@@ -391,31 +339,31 @@ public class TestExceptionsResource extends RestLiIntegrationTest
   @DataProvider(name = "errorResponseFormatData")
   private static Object[][] provideErrorResponseFormatData()
   {
-    final ExceptionsBuilders exceptionsBuilders = new ExceptionsBuilders();
+    final ExceptionsRequestBuilders exceptionsRequestBuilders = new ExceptionsRequestBuilders();
     return new Object[][]
       {
         {
-          exceptionsBuilders.actionErrorResponseFormatMinimal(),
+          exceptionsRequestBuilders.actionErrorResponseFormatMinimal(),
           ErrorResponseFormat.MINIMAL,
           "com.linkedin.restli.client.RestLiResponseException: Response status 500"
         },
         {
-          exceptionsBuilders.actionErrorResponseFormatMessageOnly(),
+          exceptionsRequestBuilders.actionErrorResponseFormatMessageOnly(),
           ErrorResponseFormat.MESSAGE_ONLY,
           "com.linkedin.restli.client.RestLiResponseException: Response status 500, serviceErrorMessage: This is an exception, you dummy!"
         },
         {
-          exceptionsBuilders.actionErrorResponseFormatMessageAndDetails(),
+          exceptionsRequestBuilders.actionErrorResponseFormatMessageAndDetails(),
           ErrorResponseFormat.MESSAGE_AND_DETAILS,
           "com.linkedin.restli.client.RestLiResponseException: Response status 500, serviceErrorMessage: This is an exception, you dummy!"
         },
         {
-          exceptionsBuilders.actionErrorResponseFormatMessageAndServiceCode(),
+          exceptionsRequestBuilders.actionErrorResponseFormatMessageAndServiceCode(),
           ErrorResponseFormat.MESSAGE_AND_SERVICECODE,
           "com.linkedin.restli.client.RestLiResponseException: Response status 500, serviceErrorMessage: This is an exception, you dummy!, serviceErrorCode: 2147, code: DUMMY_EXCEPTION"
         },
         {
-          exceptionsBuilders.actionErrorResponseFormatMessageAndServiceCodeAndExceptionClass(),
+          exceptionsRequestBuilders.actionErrorResponseFormatMessageAndServiceCodeAndExceptionClass(),
           ErrorResponseFormat.MESSAGE_AND_SERVICECODE_AND_EXCEPTIONCLASS,
           "com.linkedin.restli.client.RestLiResponseException: Response status 500, serviceErrorMessage: This is an exception, you dummy!, serviceErrorCode: 2147, code: DUMMY_EXCEPTION"
         }

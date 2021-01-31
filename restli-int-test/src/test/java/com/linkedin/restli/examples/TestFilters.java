@@ -34,15 +34,10 @@ import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsCallbackBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsCallbackRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsPromiseBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsPromiseCtxBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsPromiseCtxRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsPromiseRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsTaskBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsTaskRequestBuilders;
 import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.server.RestLiResponseData;
@@ -289,25 +284,15 @@ public class TestFilters extends RestLiIntegrationTest
   private Object[][] requestBuilderDataProvider()
   {
     Object[] builders = new Object[]{
-        new GreetingsBuilders(),
         new GreetingsRequestBuilders(),
-        new GreetingsPromiseBuilders(),
         new GreetingsPromiseRequestBuilders(),
-        new GreetingsCallbackBuilders(),
         new GreetingsCallbackRequestBuilders(),
-        new GreetingsPromiseCtxBuilders(),
         new GreetingsPromiseCtxRequestBuilders(),
-        new GreetingsTaskBuilders(),
         new GreetingsTaskRequestBuilders(),
-        new GreetingsBuilders(FORCE_USE_NEXT_OPTIONS),
         new GreetingsRequestBuilders(FORCE_USE_NEXT_OPTIONS),
-        new GreetingsPromiseBuilders(FORCE_USE_NEXT_OPTIONS),
         new GreetingsPromiseRequestBuilders(FORCE_USE_NEXT_OPTIONS),
-        new GreetingsCallbackBuilders(FORCE_USE_NEXT_OPTIONS),
         new GreetingsCallbackRequestBuilders(FORCE_USE_NEXT_OPTIONS),
-        new GreetingsPromiseCtxBuilders(FORCE_USE_NEXT_OPTIONS),
         new GreetingsPromiseCtxRequestBuilders(FORCE_USE_NEXT_OPTIONS),
-        new GreetingsTaskBuilders(FORCE_USE_NEXT_OPTIONS),
         new GreetingsTaskRequestBuilders(FORCE_USE_NEXT_OPTIONS)
     };
     Set<Object> builderWrapperSet = new HashSet<Object>();

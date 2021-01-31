@@ -37,13 +37,11 @@ import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.RequestContext;
-import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchCreateIdResponse;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EntityResponse;
@@ -54,7 +52,6 @@ import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.TestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.internal.client.CollectionRequestUtil;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
@@ -125,101 +122,23 @@ public class TestScatterGather extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testBuildSGRequests(RootBuilderWrapper<Long, Greeting> builders)
-    throws URISyntaxException, RestException, ServiceUnavailableException
-  {
-    testBuildSGRequests(10, 0, builders);
-  }
-
-  @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testBuildSGKVRequests(RootBuilderWrapper<Long, Greeting> builders)
-      throws URISyntaxException, RestException, ServiceUnavailableException
-  {
-    testBuildSGKVRequests(10, 0, builders);
-  }
-
-  @Test(dataProvider = "requestBuilderDataProvider")
   public static void testBuildSGEntityRequests(RootBuilderWrapper<Long, Greeting> builders)
-    throws URISyntaxException, RestException, ServiceUnavailableException
+    throws URISyntaxException, ServiceUnavailableException
   {
     testBuildSGEntityRequests(10, 0, builders);
   }
 
   @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testBuildSGRequestsWithPartitions(RootBuilderWrapper<Long, Greeting> builders)
-    throws URISyntaxException, RestException, ServiceUnavailableException
-  {
-    testBuildSGRequests(12, 3, builders);
-  }
-
-  @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testBuildSGKVRequestsWithPartitions(RootBuilderWrapper<Long, Greeting> builders)
-      throws URISyntaxException, RestException, ServiceUnavailableException
-  {
-    testBuildSGKVRequests(12, 3, builders);
-  }
-
-  @Test(dataProvider = "requestBuilderDataProvider")
   public static void testBuildSGEntityRequestsWithPartitions(RootBuilderWrapper<Long, Greeting> builders)
-    throws URISyntaxException, RestException, ServiceUnavailableException
+    throws URISyntaxException, ServiceUnavailableException
   {
     testBuildSGEntityRequests(12, 3, builders);
-  }
-
-  public static void testBuildSGRequests(int endPointsNum,
-                                         int partitionNum,
-                                         RootBuilderWrapper<Long, Greeting> builders)
-    throws URISyntaxException, RestException, ServiceUnavailableException
-  {
-    final int NUM_ENDPOINTS = endPointsNum;
-    ConsistentHashKeyMapper mapper;
-    if (partitionNum > 0)
-    {
-      mapper = getKeyToHostMapper(endPointsNum, partitionNum);
-    }
-    else
-    {
-      mapper = getKeyToHostMapper(endPointsNum);
-    }
-    ScatterGatherBuilder<Greeting> sg = new ScatterGatherBuilder<Greeting>(mapper);
-
-    final int NUM_IDS = 100;
-    Long[] ids = generateIds(NUM_IDS);
-    Map<Long, Greeting> updates = generateUpdates(ids);
-    testBuildSGGetRequests(NUM_ENDPOINTS, sg, ids);
-    testBuildSGDeleteRequests(NUM_ENDPOINTS, sg, ids, builders);
-    testBuildSGUpdateRequests(NUM_ENDPOINTS, sg, updates, builders);
-  }
-
-  public static void testBuildSGKVRequests(int endPointsNum,
-                                         int partitionNum,
-                                         RootBuilderWrapper<Long, Greeting> builders)
-      throws URISyntaxException, RestException, ServiceUnavailableException
-  {
-    final int NUM_ENDPOINTS = endPointsNum;
-    ConsistentHashKeyMapper mapper;
-    if (partitionNum > 0)
-    {
-      mapper = getKeyToHostMapper(endPointsNum, partitionNum);
-    }
-    else
-    {
-      mapper = getKeyToHostMapper(endPointsNum);
-    }
-    ScatterGatherBuilder<Greeting> sg = new ScatterGatherBuilder<Greeting>(mapper);
-
-    final int NUM_IDS = 100;
-    Long[] ids = generateIds(NUM_IDS);
-    Map<Long, Greeting> updates = generateUpdates(ids);
-    testBuildSGGetKVRequests(NUM_ENDPOINTS, sg, ids);
-    testBuildSGDeleteRequests(NUM_ENDPOINTS, sg, ids, builders);
-    testBuildSGUpdateRequests(NUM_ENDPOINTS, sg, updates, builders);
   }
 
   public static void testBuildSGEntityRequests(int endPointsNum,
                                                int partitionNum,
                                                RootBuilderWrapper<Long, Greeting> builders)
-    throws URISyntaxException, RestException, ServiceUnavailableException
+    throws URISyntaxException, ServiceUnavailableException
   {
     final int NUM_ENDPOINTS = endPointsNum;
     ConsistentHashKeyMapper mapper;
@@ -290,32 +209,6 @@ public class TestScatterGather extends RestLiIntegrationTest
     Assert.assertEquals(requestIds.size(), ids.size());
   }
 
-  private static void testBuildSGGetRequests(int numEndpoints,
-                                             ScatterGatherBuilder<Greeting> sg,
-                                             Long[] ids)
-    throws ServiceUnavailableException
-  {
-    Collection<ScatterGatherBuilder.RequestInfo<Greeting>> requests = buildScatterGatherGetRequests(sg, ids);
-    Assert.assertEquals(requests.size(), numEndpoints);
-
-    Set<Set<String>> requestIdSets = new HashSet<Set<String>>();
-    Set<Long> requestIds = new HashSet<Long>();
-    for (ScatterGatherBuilder.RequestInfo<Greeting> requestInfo : requests)
-    {
-      //URI will be something like "greetings/?ids=21&ids=4&ids=53&ids=60&ids=66&ids=88&ids=93&foo=bar"
-      BatchRequest<BatchResponse<Greeting>> request = requestInfo.getBatchRequest();
-      Set<String> expectedParams = new HashSet<String>();
-      expectedParams.add(RestConstants.QUERY_BATCH_IDS_PARAM);
-      expectedParams.add("foo");
-      expectedParams.add(RestConstants.FIELDS_PARAM);
-      Set<PathSpec> expectedFields = Collections.singleton(new PathSpec("message"));
-
-      testRequest(request, expectedParams, expectedFields, null, requestIdSets, requestIds);
-    }
-    Assert.assertTrue(requestIds.containsAll(Arrays.asList(ids)));
-    Assert.assertEquals(requestIds.size(), ids.length);
-  }
-
   private static void testBuildSGGetEntityRequests(int numEndpoints,
                                                    ScatterGatherBuilder<Greeting> sg,
                                                    Long[] ids)
@@ -330,32 +223,6 @@ public class TestScatterGather extends RestLiIntegrationTest
     {
       //URI will be something like "greetings/?ids=21&ids=4&ids=53&ids=60&ids=66&ids=88&ids=93&foo=bar"
       BatchRequest<BatchKVResponse<Long, EntityResponse<Greeting>>> request = requestInfo.getRequest();
-      Set<String> expectedParams = new HashSet<String>();
-      expectedParams.add(RestConstants.QUERY_BATCH_IDS_PARAM);
-      expectedParams.add("foo");
-      expectedParams.add(RestConstants.FIELDS_PARAM);
-      Set<PathSpec> expectedFields = Collections.singleton(new PathSpec("message"));
-
-      testRequest(request, expectedParams, expectedFields, null, requestIdSets, requestIds);
-    }
-    Assert.assertTrue(requestIds.containsAll(Arrays.asList(ids)));
-    Assert.assertEquals(requestIds.size(), ids.length);
-  }
-
-  private static void testBuildSGGetKVRequests(int numEndpoints,
-                                             ScatterGatherBuilder<Greeting> sg,
-                                             Long[] ids)
-      throws ServiceUnavailableException
-  {
-    Collection<ScatterGatherBuilder.KVRequestInfo<Long, Greeting>> requests = buildScatterGatherGetKVRequests(sg, ids);
-    Assert.assertEquals(requests.size(), numEndpoints);
-
-    Set<Set<String>> requestIdSets = new HashSet<Set<String>>();
-    Set<Long> requestIds = new HashSet<Long>();
-    for (ScatterGatherBuilder.KVRequestInfo<Long, Greeting> requestInfo : requests)
-    {
-      //URI will be something like "greetings/?ids=21&ids=4&ids=53&ids=60&ids=66&ids=88&ids=93&foo=bar"
-      BatchRequest<BatchKVResponse<Long, Greeting>> request = requestInfo.getRequest();
       Set<String> expectedParams = new HashSet<String>();
       expectedParams.add(RestConstants.QUERY_BATCH_IDS_PARAM);
       expectedParams.add("foo");
@@ -439,23 +306,6 @@ public class TestScatterGather extends RestLiIntegrationTest
     }
   }
 
-  // TODO modify this method to accept a CollectionRequest as it's first parameter once our server code has been
-  //      updated to work with the new representation of BatchUpdateRequests and BatchPartialUpdateRequests. As of now
-  //      we are still converting to the old representation using CollectionRequestUtil.convertToBatchRequest
-  private static void checkEntityInput(DataMap dataMap, Map<Long, Greeting> inputMap, Collection<Long> uriIds)
-  {
-    Assert.assertEquals(dataMap.size(), uriIds.size());
-
-    for(String key : dataMap.keySet())
-    {
-      DataMap inputDM = dataMap.getDataMap(key);
-      Long longKey = Long.parseLong(key);
-      Greeting expectedGreeting = inputMap.get(longKey);
-      Assert.assertTrue(uriIds.contains(longKey));
-      Assert.assertTrue(inputDM.equals(expectedGreeting.data()));
-    }
-  }
-
   @Test(dataProvider = "requestBuilderDataProvider")
   public static void testSendSGRequests(RootBuilderWrapper<Long, Greeting> builders)
     throws URISyntaxException, InterruptedException, RemoteInvocationException
@@ -468,8 +318,6 @@ public class TestScatterGather extends RestLiIntegrationTest
 
     List<Greeting> entities = generateCreate(NUM_IDS);
     Long[] requestIds = prepareData(entities, builders.getRequestOptions());
-    testSendGetSGRequests(sg, requestIds);
-    testSendGetKVSGRequests(sg, requestIds);
 
     Map<Long, Greeting> input = generateUpdates(requestIds);
     testSendSGUpdateRequests(sg, input, builders);
@@ -492,138 +340,6 @@ public class TestScatterGather extends RestLiIntegrationTest
       requestIds[i] = status.getKey();
     }
     return requestIds;
-  }
-
-  private static void testSendGetSGRequests(ScatterGatherBuilder<Greeting> sg,
-                                            Long[] requestIds)
-    throws ServiceUnavailableException, InterruptedException
-  {
-    Collection<ScatterGatherBuilder.RequestInfo<Greeting>> scatterGatherRequests =
-      buildScatterGatherGetRequests(sg, requestIds);
-
-    final Map<String, Greeting> results = new ConcurrentHashMap<String, Greeting>();
-    final CountDownLatch latch = new CountDownLatch(scatterGatherRequests.size());
-    final List<Throwable> errors = new ArrayList<Throwable>();
-
-    final List<BatchResponse<Greeting>> responses = new ArrayList<BatchResponse<Greeting>>();
-    for (ScatterGatherBuilder.RequestInfo<Greeting> requestInfo : scatterGatherRequests)
-    {
-      Callback<Response<BatchResponse<Greeting>>> cb = new Callback<Response<BatchResponse<Greeting>>>()
-      {
-        @Override
-        public void onSuccess(Response<BatchResponse<Greeting>> response)
-        {
-          results.putAll(response.getEntity().getResults());
-          synchronized (responses)
-          {
-            responses.add(response.getEntity());
-          }
-          latch.countDown();
-        }
-
-        @Override
-        public void onError(Throwable e)
-        {
-          synchronized (errors)
-          {
-            errors.add(e);
-          }
-          latch.countDown();
-        }
-      };
-
-      REST_CLIENT.sendRequest(requestInfo.getRequest(), requestInfo.getRequestContext(), cb);
-    }
-    latch.await();
-
-    if (!errors.isEmpty())
-    {
-      Assert.fail("Errors in scatter/gather: " + errors.toString());
-    }
-
-    Assert.assertEquals(results.values().size(), requestIds.length);
-
-    Set<Set<String>> responseIdSets = new HashSet<Set<String>>();
-    Set<Long> responseIds = new HashSet<Long>();
-    for (BatchResponse<Greeting> response : responses)
-    {
-      Set<String> theseIds = response.getResults().keySet();
-      Assert.assertFalse(responseIdSets.contains(theseIds)); //no duplicate requests
-      for (String id : theseIds)
-      {
-        Assert.assertFalse(responseIds.contains(Long.parseLong(id))); //no duplicate ids
-        responseIds.add(Long.parseLong(id));
-      }
-      responseIdSets.add(theseIds);
-    }
-    Assert.assertTrue(responseIds.containsAll(Arrays.asList(requestIds)));
-    Assert.assertEquals(responseIds.size(), requestIds.length);
-  }
-
-  private static void testSendGetKVSGRequests(ScatterGatherBuilder<Greeting> sg,
-                                            Long[] requestIds)
-      throws ServiceUnavailableException, InterruptedException
-  {
-    Collection<ScatterGatherBuilder.KVRequestInfo<Long, Greeting>> scatterGatherRequests =
-        buildScatterGatherGetKVRequests(sg, requestIds);
-
-    final Map<Long, Greeting> results = new ConcurrentHashMap<Long, Greeting>();
-    final CountDownLatch latch = new CountDownLatch(scatterGatherRequests.size());
-    final List<Throwable> errors = new ArrayList<Throwable>();
-
-    final List<BatchKVResponse<Long, Greeting>> responses = new ArrayList<BatchKVResponse<Long, Greeting>>();
-    for (ScatterGatherBuilder.KVRequestInfo<Long, Greeting> requestInfo : scatterGatherRequests)
-    {
-      Callback<Response<BatchKVResponse<Long, Greeting>>> cb = new Callback<Response<BatchKVResponse<Long, Greeting>>>()
-      {
-        @Override
-        public void onSuccess(Response<BatchKVResponse<Long, Greeting>> response)
-        {
-          results.putAll(response.getEntity().getResults());
-          synchronized (responses)
-          {
-            responses.add(response.getEntity());
-          }
-          latch.countDown();
-        }
-
-        @Override
-        public void onError(Throwable e)
-        {
-          synchronized (errors)
-          {
-            errors.add(e);
-          }
-          latch.countDown();
-        }
-      };
-
-      REST_CLIENT.sendRequest(requestInfo.getRequest(), requestInfo.getRequestContext(), cb);
-    }
-    latch.await();
-
-    if (!errors.isEmpty())
-    {
-      Assert.fail("Errors in scatter/gather: " + errors.toString());
-    }
-
-    Assert.assertEquals(results.values().size(), requestIds.length);
-
-    Set<Set<Long>> responseIdSets = new HashSet<Set<Long>>();
-    Set<Long> responseIds = new HashSet<Long>();
-    for (BatchKVResponse<Long, Greeting> response : responses)
-    {
-      Set<Long> theseIds = response.getResults().keySet();
-      Assert.assertFalse(responseIdSets.contains(theseIds)); //no duplicate requests
-      for (Long id : theseIds)
-      {
-        Assert.assertFalse(responseIds.contains(id)); //no duplicate ids
-        responseIds.add(id);
-      }
-      responseIdSets.add(theseIds);
-    }
-    Assert.assertTrue(responseIds.containsAll(Arrays.asList(requestIds)));
-    Assert.assertEquals(responseIds.size(), requestIds.length);
   }
 
   public static void testSendSGUpdateRequests(ScatterGatherBuilder<Greeting> sg,
@@ -712,58 +428,8 @@ public class TestScatterGather extends RestLiIntegrationTest
     Assert.assertEquals(responseIds.size(), requestIds.length);
   }
 
-  @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testScatterGatherLoadBalancerIntegration(RootBuilderWrapper<Long, Greeting> builders) throws Exception
-  {
-    SimpleLoadBalancer loadBalancer = MockLBFactory.createLoadBalancer();
-
-    KeyMapper keyMapper = new ConsistentHashKeyMapper(loadBalancer, new TestPartitionInfoProvider());
-
-    try
-    {
-      keyMapper.mapKeysV2(URI.create("http://badurischeme/"), new HashSet<String>());
-      Assert.fail("keyMapper should reject non-D2 URI scheme");
-    }
-    catch (IllegalArgumentException e)
-    {
-      //expected
-    }
-
-    ScatterGatherBuilder<Greeting> sg = new ScatterGatherBuilder<Greeting>(keyMapper);
-
-    final int NUM_IDS = 20;
-    Long[] requestIds = generateIds(NUM_IDS);
-    Collection<ScatterGatherBuilder.RequestInfo<Greeting>> scatterGatherRequests =
-      buildScatterGatherGetRequests(sg, requestIds);
-  }
-
-  @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testScatterGatherKVLoadBalancerIntegration(RootBuilderWrapper<Long, Greeting> builders) throws Exception
-  {
-    SimpleLoadBalancer loadBalancer = MockLBFactory.createLoadBalancer();
-
-    KeyMapper keyMapper = new ConsistentHashKeyMapper(loadBalancer, new TestPartitionInfoProvider());
-
-    try
-    {
-      keyMapper.mapKeysV2(URI.create("http://badurischeme/"), new HashSet<String>());
-      Assert.fail("keyMapper should reject non-D2 URI scheme");
-    }
-    catch (IllegalArgumentException e)
-    {
-      //expected
-    }
-
-    ScatterGatherBuilder<Greeting> sg = new ScatterGatherBuilder<Greeting>(keyMapper);
-
-    final int NUM_IDS = 20;
-    Long[] requestIds = generateIds(NUM_IDS);
-    Collection<ScatterGatherBuilder.KVRequestInfo<Long, Greeting>> scatterGatherRequests =
-        buildScatterGatherGetKVRequests(sg, requestIds);
-  }
-
-  @Test(dataProvider = "requestBuilderDataProvider")
-  public static void testScatterGatherEntityLoadBalancerIntegration(RootBuilderWrapper<Long, Greeting> builders) throws Exception
+  @Test
+  public static void testScatterGatherEntityLoadBalancerIntegration() throws Exception
   {
     SimpleLoadBalancer loadBalancer = MockLBFactory.createLoadBalancer();
 
@@ -787,16 +453,6 @@ public class TestScatterGather extends RestLiIntegrationTest
         buildScatterGatherGetEntityRequests(sg, requestIds);
   }
 
-  private static Collection<ScatterGatherBuilder.RequestInfo<Greeting>> buildScatterGatherGetRequests(
-    ScatterGatherBuilder<Greeting> sg,
-    Long[] ids)
-    throws ServiceUnavailableException
-  {
-    Request<BatchResponse<Greeting>> request = new GreetingsBuilders().batchGet().ids(ids).fields(Greeting.fields().message()).setParam("foo", "bar").build();
-
-    return sg.buildRequestsV2((BatchGetRequest<Greeting>) request, new RequestContext()).getRequestInfo();
-  }
-
   private static Collection<ScatterGatherBuilder.KVRequestInfo<Long, EntityResponse<Greeting>>> buildScatterGatherGetEntityRequests(
     ScatterGatherBuilder<Greeting> sg,
     Long[] ids)
@@ -806,16 +462,6 @@ public class TestScatterGather extends RestLiIntegrationTest
       new GreetingsRequestBuilders().batchGet().ids(ids).fields(Greeting.fields().message()).setParam("foo", "bar").build();
 
     return sg.buildRequests(request, new RequestContext()).getRequestInfo();
-  }
-
-  private static Collection<ScatterGatherBuilder.KVRequestInfo<Long, Greeting>> buildScatterGatherGetKVRequests(
-      ScatterGatherBuilder<Greeting> sg,
-      Long[] ids)
-      throws ServiceUnavailableException
-  {
-    Request<BatchKVResponse<Long, Greeting>> request = new GreetingsBuilders().batchGet().ids(ids).fields(Greeting.fields().message()).setParam("foo", "bar").buildKV();
-
-    return sg.buildRequestsKV((BatchGetKVRequest<Long, Greeting>) request, new RequestContext()).getRequestInfo();
   }
 
   private static Collection<ScatterGatherBuilder.KVRequestInfo<Long, UpdateStatus>> buildScatterGatherUpdateRequests(
@@ -929,8 +575,6 @@ public class TestScatterGather extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
       { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };

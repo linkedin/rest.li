@@ -31,13 +31,11 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.groups.api.Group;
 import com.linkedin.restli.examples.groups.api.GroupMembership;
-import com.linkedin.restli.examples.groups.client.GroupMembershipsBuilders;
 import com.linkedin.restli.examples.groups.client.GroupMembershipsRequestBuilders;
-import com.linkedin.restli.examples.groups.client.GroupsBuilders;
+import com.linkedin.restli.examples.groups.client.GroupsRequestBuilders;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -49,7 +47,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -98,9 +95,11 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     latch.await();
   }
 
-  @Test(dataProvider = "requestGreetingBuilderDataProvider", retryAnalyzer = SingleRetry.class) // Allow retry due to CI timeouts
-  public void testSuccessfulCall(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test(retryAnalyzer = SingleRetry.class) // Allow retry due to CI timeouts
+  public void testSuccessfulCall() throws RemoteInvocationException
   {
+    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new GreetingsRequestBuilders());
+
     Request<Greeting> request = builders.get().id(1L).build();
     ResponseFuture<Greeting> future = _restClient.sendRequest(request);
     Greeting g = future.getResponse().getEntity();
@@ -110,9 +109,11 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
                         AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
   }
 
-  @Test(dataProvider = "requestGroupBuilderDataProvider")
-  public void testRemoteInvocationException(RootBuilderWrapper<Integer, Group> builders)
+  @Test
+  public void testRemoteInvocationException()
   {
+    RootBuilderWrapper<Integer, Group> builders = new RootBuilderWrapper<>(new GroupsRequestBuilders());
+
     Request<Group> request = builders.get().id(1).build();
     ResponseFuture<Group> future = _restClient.sendRequest(request);
     try
@@ -127,10 +128,12 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "requestGroupMembershipBuilderDataProvider")
-  public void testServiceUnavailableException(RootBuilderWrapper<CompoundKey, GroupMembership> builders)
+  @Test
+  public void testServiceUnavailableException()
   {
-    Request<GroupMembership> request = builders.get().id(new GroupMembershipsBuilders.Key().setMemberId(1).setGroupId(2)).build();
+    RootBuilderWrapper<CompoundKey, GroupMembership> builders = new RootBuilderWrapper<>(new GroupMembershipsRequestBuilders());
+
+    Request<GroupMembership> request = builders.get().id(new GroupMembershipsRequestBuilders.Key().setMemberId(1).setGroupId(2)).build();
     ResponseFuture<GroupMembership> future = _restClient.sendRequest(request);
     try
     {
@@ -141,32 +144,5 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
     {
       Assert.assertTrue(e.getCause() instanceof ServiceUnavailableException);
     }
-  }
-
-  @DataProvider
-  private static Object[][] requestGreetingBuilderDataProvider()
-  {
-    return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }
-    };
-  }
-
-  @DataProvider
-  private static Object[][] requestGroupBuilderDataProvider()
-  {
-    return new Object[][] {
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()) },
-      { new RootBuilderWrapper<Integer, Group>(new GroupsBuilders()) }
-    };
-  }
-
-  @DataProvider
-  private static Object[][] requestGroupMembershipBuilderDataProvider()
-  {
-    return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsBuilders()) },
-      { new RootBuilderWrapper<CompoundKey, GroupMembership>(new GroupMembershipsRequestBuilders()) }
-    };
   }
 }

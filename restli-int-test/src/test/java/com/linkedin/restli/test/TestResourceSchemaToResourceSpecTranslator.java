@@ -47,20 +47,20 @@ import com.linkedin.restli.common.util.ResourceSchemaToResourceSpecTranslator.Cl
 import com.linkedin.restli.common.util.RichResourceSchema;
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
-import com.linkedin.restli.examples.greetings.client.AssociationsBuilders;
-import com.linkedin.restli.examples.greetings.client.ComplexArrayBuilders;
-import com.linkedin.restli.examples.greetings.client.ComplexKeysBuilders;
-import com.linkedin.restli.examples.greetings.client.CustomTypesBuilders;
-import com.linkedin.restli.examples.greetings.client.FindersBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsAuthBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
-import com.linkedin.restli.examples.greetings.client.SubgreetingsBuilders;
-import com.linkedin.restli.examples.groups.client.ContactsBuilders;
-import com.linkedin.restli.examples.groups.client.GroupMembershipsBuilders;
-import com.linkedin.restli.examples.groups.client.GroupMembershipsComplexBuilders;
-import com.linkedin.restli.examples.groups.client.GroupsBuilders;
+import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.AssociationsRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.ComplexArrayRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.ComplexKeysRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.CustomTypesRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.FindersRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsAuthRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.SubgreetingsRequestBuilders;
+import com.linkedin.restli.examples.groups.client.ContactsRequestBuilders;
+import com.linkedin.restli.examples.groups.client.GroupMembershipsRequestBuilders;
+import com.linkedin.restli.examples.groups.client.GroupMembershipsComplexRequestBuilders;
+import com.linkedin.restli.examples.groups.client.GroupsRequestBuilders;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionSchemaArray;
@@ -110,20 +110,20 @@ public class TestResourceSchemaToResourceSpecTranslator
   public Object[][] restspecsAndBuilders() throws Exception
   {
     return new Object[][] {
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.greetings.restspec.json"), null, GreetingsBuilders.class},
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.complexArray.restspec.json"), null, ComplexArrayBuilders.class},
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.complexKeys.restspec.json"), null, ComplexKeysBuilders.class},
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.associations.restspec.json"), null, AssociationsBuilders.class},
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.actions.restspec.json"), null, ActionsBuilders.class},
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.customTypes.restspec.json"), null, CustomTypesBuilders.class},
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.finders.restspec.json"), null, FindersBuilders.class},
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.greeting.restspec.json"), null, GreetingBuilders.class},
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.greeting.restspec.json"), "subgreetings", SubgreetingsBuilders.class },
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.greetingsAuth.restspec.json"), null, GreetingsAuthBuilders.class },
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.groups.client.groupMemberships.restspec.json"), null, GroupMembershipsBuilders.class },
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.groups.client.groupMembershipsComplex.restspec.json"), null, GroupMembershipsComplexBuilders.class },
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.groups.client.groups.restspec.json"), null, GroupsBuilders.class },
-      new Object[] {loadResourceSchema("com.linkedin.restli.examples.groups.client.groups.restspec.json"), "contacts", ContactsBuilders.class }
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.greetings.restspec.json"), null, GreetingsRequestBuilders.class},
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.complexArray.restspec.json"), null, ComplexArrayRequestBuilders.class},
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.complexKeys.restspec.json"), null, ComplexKeysRequestBuilders.class},
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.associations.restspec.json"), null, AssociationsRequestBuilders.class},
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.actions.restspec.json"), null, ActionsRequestBuilders.class},
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.customTypes.restspec.json"), null, CustomTypesRequestBuilders.class},
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.finders.restspec.json"), null, FindersRequestBuilders.class},
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.greeting.restspec.json"), null, GreetingRequestBuilders.class},
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.greeting.restspec.json"), "subgreetings", SubgreetingsRequestBuilders.class },
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.greetings.client.greetingsAuth.restspec.json"), null, GreetingsAuthRequestBuilders.class },
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.groups.client.groupMemberships.restspec.json"), null, GroupMembershipsRequestBuilders.class },
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.groups.client.groupMembershipsComplex.restspec.json"), null, GroupMembershipsComplexRequestBuilders.class },
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.groups.client.groups.restspec.json"), null, GroupsRequestBuilders.class },
+      new Object[] {loadResourceSchema("com.linkedin.restli.examples.groups.client.groups.restspec.json"), "contacts", ContactsRequestBuilders.class }
     };
   }
 

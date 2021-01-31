@@ -21,7 +21,7 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.AsyncErrorsBuilders;
+import com.linkedin.restli.examples.greetings.client.AsyncErrorsRequestBuilders;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -50,8 +50,8 @@ public class TestAsyncExceptions extends RestLiIntegrationTest
   @Test(dataProvider = "exceptionProvider")
   public void testPromise(String key, int expectedStatus) throws RemoteInvocationException
   {
-    AsyncErrorsBuilders builder = new AsyncErrorsBuilders();
-    Request<Greeting> request = builder.actionPromise().paramId(key).build();
+    AsyncErrorsRequestBuilders builder = new AsyncErrorsRequestBuilders();
+    Request<Greeting> request = builder.actionPromise().idParam(key).build();
 
     try
     {
@@ -67,8 +67,8 @@ public class TestAsyncExceptions extends RestLiIntegrationTest
   @Test(dataProvider = "exceptionProvider")
   public void testCallback(String key, int expectedStatus) throws RemoteInvocationException
   {
-    AsyncErrorsBuilders builder = new AsyncErrorsBuilders();
-    Request<Greeting> request = builder.actionCallback().paramId(key).build();
+    AsyncErrorsRequestBuilders builder = new AsyncErrorsRequestBuilders();
+    Request<Greeting> request = builder.actionCallback().idParam(key).build();
 
     try
     {
@@ -84,8 +84,8 @@ public class TestAsyncExceptions extends RestLiIntegrationTest
   @Test(dataProvider = "exceptionProvider")
   public void testTask(String key, int expectedStatus) throws RemoteInvocationException
   {
-    AsyncErrorsBuilders builder = new AsyncErrorsBuilders();
-    Request<Greeting> request = builder.actionTask().paramId(key).build();
+    AsyncErrorsRequestBuilders builder = new AsyncErrorsRequestBuilders();
+    Request<Greeting> request = builder.actionTask().idParam(key).build();
 
     try
     {

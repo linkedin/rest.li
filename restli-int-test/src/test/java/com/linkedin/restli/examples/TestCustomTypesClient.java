@@ -46,15 +46,10 @@ import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.custom.types.CustomNonNegativeLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.ChainedTyperefsBuilders;
 import com.linkedin.restli.examples.greetings.client.ChainedTyperefsRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.CustomTypes2Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes2RequestBuilders;
-import com.linkedin.restli.examples.greetings.client.CustomTypes3Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes3RequestBuilders;
-import com.linkedin.restli.examples.greetings.client.CustomTypes4Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes4RequestBuilders;
-import com.linkedin.restli.examples.greetings.client.CustomTypesBuilders;
 import com.linkedin.restli.examples.greetings.client.CustomTypesRequestBuilders;
 import com.linkedin.restli.examples.typeref.api.CalendarRefArray;
 import com.linkedin.restli.examples.typeref.api.CustomLongRefArray;
@@ -217,32 +212,6 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   public void testCollectionBatchGet(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
-    Request<BatchResponse<Greeting>> request =
-      new CustomTypes2Builders(requestOptions).batchGet().ids(new CustomLong(1L), new CustomLong(2L), new CustomLong(3L)).build();
-    Map<String, Greeting> greetings = getClient().sendRequest(request).getResponse().getEntity().getResults();
-
-    Assert.assertEquals(greetings.size(), 3);
-    Assert.assertEquals(greetings.get("1").getId().longValue(), 1L);
-    Assert.assertEquals(greetings.get("2").getId().longValue(), 2L);
-    Assert.assertEquals(greetings.get("3").getId().longValue(), 3L);
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testCollectionBatchGetKV(RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
-    Request<BatchKVResponse<CustomLong, Greeting>> request =
-      new CustomTypes2Builders(requestOptions).batchGet().ids(new CustomLong(1L), new CustomLong(2L), new CustomLong(3L)).buildKV();
-    Map<CustomLong, Greeting> greetings = getClient().sendRequest(request).getResponse().getEntity().getResults();
-
-    Assert.assertEquals(greetings.size(), 3);
-    Assert.assertEquals(greetings.get(new CustomLong(1L)).getId().longValue(), 1L);
-    Assert.assertEquals(greetings.get(new CustomLong(2L)).getId().longValue(), 2L);
-    Assert.assertEquals(greetings.get(new CustomLong(3L)).getId().longValue(), 3L);
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testCollectionBatchGetEntity(RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
     Request<BatchKVResponse<CustomLong, EntityResponse<Greeting>>> request =
       new CustomTypes2RequestBuilders(requestOptions).batchGet().ids(new CustomLong(1L), new CustomLong(2L), new CustomLong(3L)).build();
     Map<CustomLong, EntityResponse<Greeting>> greetings = getClient().sendRequest(request).getResponse().getEntity().getResults();
@@ -292,19 +261,6 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   public void testCollectionCreate(RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
-    CreateRequest<Greeting> request = new CustomTypes2Builders(requestOptions).create().input(new Greeting().setId(10)).build();
-    Response<EmptyRecord> response = getClient().sendRequest(request).getResponse();
-
-    Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
-
-    @SuppressWarnings("unchecked")
-    CreateResponse<CustomLong> createResponse = (CreateResponse<CustomLong>)response.getEntity();
-    Assert.assertEquals(createResponse.getId(), new CustomLong(10L));
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testCollectionCreateId(RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
     CreateIdRequest<CustomLong, Greeting> request = new CustomTypes2RequestBuilders(requestOptions).create().input(new Greeting().setId(10)).build();
     Response<IdResponse<CustomLong>> response = getClient().sendRequest(request).getResponse();
 
@@ -314,33 +270,6 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   public void testCollectionBatchCreate(RestliRequestOptions options) throws RemoteInvocationException
-  {
-    CustomTypes2Builders builders = new CustomTypes2Builders(options);
-    BatchCreateRequest<Greeting> request = builders.batchCreate().input(new Greeting().setId(1)).input(new Greeting().setId(2)).build();
-    Response<CollectionResponse<CreateStatus>> response = getClient().sendRequest(request).getResponse();
-    List<CreateStatus> results = response.getEntity().getElements();
-
-    Set<CustomLong> expectedKeys = new HashSet<CustomLong>();
-    expectedKeys.add(new CustomLong(1L));
-    expectedKeys.add(new CustomLong(2L));
-
-    for(CreateStatus status: results)
-    {
-      @SuppressWarnings("unchecked")
-      CreateIdStatus<CustomLong> createIdStatus = (CreateIdStatus<CustomLong>) status;
-      Assert.assertEquals(createIdStatus.getStatus().intValue(), HttpStatus.S_204_NO_CONTENT.getCode());
-      Assert.assertTrue(expectedKeys.contains(createIdStatus.getKey()));
-      @SuppressWarnings("deprecation")
-      String id = createIdStatus.getId();
-      Assert.assertEquals(BatchResponse.keyToString(createIdStatus.getKey(), ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())),
-                          id);
-      expectedKeys.remove(createIdStatus.getKey());
-    }
-    Assert.assertTrue(expectedKeys.isEmpty());
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
-  public void testCollectionBatchCreateId(RestliRequestOptions options) throws RemoteInvocationException
   {
     CustomTypes2RequestBuilders builders = new CustomTypes2RequestBuilders(options);
     BatchCreateIdRequest<CustomLong, Greeting> request = builders.batchCreate().input(new Greeting().setId(1)).input(new Greeting().setId(2)).build();
@@ -380,7 +309,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   {
     Long lo = 5L;
     Long date = 13L;
-    CustomTypes3Builders.Key key = new CustomTypes3Builders.Key().setLongId(new CustomLong(lo)).setDateId(new Date(date));
+    CustomTypes3RequestBuilders.Key key = new CustomTypes3RequestBuilders.Key().setLongId(new CustomLong(lo)).setDateId(new Date(date));
 
     Request<Greeting> request = builders.get().id(key).build();
     Greeting result = getClient().sendRequest(request).getResponse().getEntity();
@@ -393,7 +322,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   {
     Long lo = 5L;
     Long date = 13L;
-    CustomTypes3Builders.Key key = new CustomTypes3Builders.Key().setLongId(new CustomLong(lo)).setDateId(new Date(date));
+    CustomTypes3RequestBuilders.Key key = new CustomTypes3RequestBuilders.Key().setLongId(new CustomLong(lo)).setDateId(new Date(date));
 
     RequestBuilder<? extends Request<BatchKVResponse<CompoundKey, UpdateStatus>>> batchUpdateRequest = builders.batchUpdate().input(key, new Greeting().setId(1).setMessage("foo")).getBuilder();
     BatchKVResponse<CompoundKey, UpdateStatus> response = getClient().sendRequest(batchUpdateRequest).getResponse().getEntity();
@@ -410,7 +339,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   {
     Long lo = 29L;
     Long date = 10L;
-    ChainedTyperefsBuilders.Key key = new ChainedTyperefsBuilders.Key().setAge(new CustomNonNegativeLong(lo)).setBirthday(new Date(date));
+    ChainedTyperefsRequestBuilders.Key key = new ChainedTyperefsRequestBuilders.Key().setAge(new CustomNonNegativeLong(lo)).setBirthday(new Date(date));
 
     RequestBuilder<? extends Request<BatchKVResponse<CompoundKey, UpdateStatus>>> batchUpdateRequest = builders.batchUpdate().input(key, new Greeting().setId(1).setMessage("foo")).getBuilder();
     BatchKVResponse<CompoundKey, UpdateStatus> response = getClient().sendRequest(batchUpdateRequest).getResponse().getEntity();
@@ -445,8 +374,6 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesBuilders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Long, Greeting>(new CustomTypesRequestBuilders()) },
       { new RootBuilderWrapper<Long, Greeting>(new CustomTypesRequestBuilders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
@@ -456,8 +383,6 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   private static Object[][] request2BuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2Builders()) },
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2Builders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2RequestBuilders()) },
       { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2RequestBuilders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
@@ -467,8 +392,6 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   private static Object[][] request3BuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3Builders()) },
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3Builders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3RequestBuilders()) },
       { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3RequestBuilders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
@@ -478,8 +401,6 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   private static Object[][] request4BuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes4Builders()) },
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes4Builders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes4RequestBuilders()) },
       { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes4RequestBuilders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
@@ -489,8 +410,6 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   private static Object[][] requestChainedTyperefsBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new ChainedTyperefsBuilders()) },
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new ChainedTyperefsBuilders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<CompoundKey, Greeting>(new ChainedTyperefsRequestBuilders()) },
       { new RootBuilderWrapper<CompoundKey, Greeting>(new ChainedTyperefsRequestBuilders(com.linkedin.restli.examples.TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };

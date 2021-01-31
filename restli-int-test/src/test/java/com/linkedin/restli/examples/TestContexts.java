@@ -22,7 +22,6 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.WithContextBuilders;
 import com.linkedin.restli.examples.greetings.client.WithContextRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -111,8 +110,6 @@ public class TestContexts extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new WithContextBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new WithContextBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Long, Greeting>(new WithContextRequestBuilders()) },
       { new RootBuilderWrapper<Long, Greeting>(new WithContextRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };

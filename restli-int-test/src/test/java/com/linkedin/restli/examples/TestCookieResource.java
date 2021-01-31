@@ -21,15 +21,13 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 
-import com.linkedin.restli.client.GetRequest;
-import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.RestClient;
-import com.linkedin.restli.client.BatchGetRequest;
+import com.linkedin.restli.client.*;
 
-import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.CookieBuilders;
-import com.linkedin.restli.examples.greetings.client.CookieGetBuilder;
+import com.linkedin.restli.examples.greetings.client.CookieGetRequestBuilder;
+import com.linkedin.restli.examples.greetings.client.CookieRequestBuilders;
 import com.linkedin.restli.internal.common.CookieUtil;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -72,7 +70,7 @@ public class TestCookieResource extends RestLiIntegrationTest
   public void testCookiesNormal() throws RemoteInvocationException
   {
     List<HttpCookie> requestCookies = Arrays.asList(new HttpCookie("GET", "10"));
-    GetRequest<Greeting> req = new CookieBuilders().get().id(1L).setCookies(requestCookies).build();
+    GetRequest<Greeting> req = new CookieRequestBuilders().get().id(1L).setCookies(requestCookies).build();
     Response<Greeting> resp = REST_CLIENT.sendRequest(req).getResponse();
 
     Assert.assertEquals(resp.getCookies(), Collections.singletonList(new HttpCookie("10", "GET")));
@@ -91,8 +89,8 @@ public class TestCookieResource extends RestLiIntegrationTest
                                                     new HttpCookie("G", "3"),
                                                     new HttpCookie("E", "4"),
                                                     new HttpCookie("T", "5"));
-    BatchGetRequest<Greeting> req = new CookieBuilders().batchGet().ids(1L, 2L).setCookies(requestCookies).build();
-    Response<BatchResponse<Greeting>> resp = REST_CLIENT.sendRequest(req).getResponse();
+    BatchGetEntityRequest<Long, Greeting> req = new CookieRequestBuilders().batchGet().ids(1L, 2L).setCookies(requestCookies).build();
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> resp = REST_CLIENT.sendRequest(req).getResponse();
 
     List<HttpCookie> getBackResponseCookie = Arrays.asList(new HttpCookie("1", "B"), new HttpCookie("2", "A"), new HttpCookie("3", "G"),new HttpCookie("4", "E"), new HttpCookie("5", "T"));;
     Assert.assertEquals(resp.getCookies(), getBackResponseCookie);
@@ -106,7 +104,7 @@ public class TestCookieResource extends RestLiIntegrationTest
   @Test
   public void testAddCookies() throws RemoteInvocationException
   {
-    CookieGetBuilder builderTmp = new CookieBuilders().get().id(1L);
+    CookieGetRequestBuilder builderTmp = new CookieRequestBuilders().get().id(1L);
     builderTmp.addCookie(new HttpCookie("C", "3"));
     builderTmp.addCookie(new HttpCookie("B", "2"));
     builderTmp.addCookie(new HttpCookie("A", "1"));
@@ -128,7 +126,7 @@ public class TestCookieResource extends RestLiIntegrationTest
   {
     List<HttpCookie> requestCookies = Arrays.asList(new HttpCookie("will", "1"), new HttpCookie("lost", "1"));
 
-    GetRequest<Greeting> req = new CookieBuilders().get().id(1L).setCookies(requestCookies).clearCookies().build();
+    GetRequest<Greeting> req = new CookieRequestBuilders().get().id(1L).setCookies(requestCookies).clearCookies().build();
     Response<Greeting> resp = REST_CLIENT.sendRequest(req).getResponse();
 
     List<String> responseCookies = CookieUtil.encodeSetCookies(resp.getCookies());

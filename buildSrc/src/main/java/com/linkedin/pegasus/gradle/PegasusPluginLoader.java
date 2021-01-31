@@ -15,12 +15,8 @@
  */
 package com.linkedin.pegasus.gradle;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.tasks.SourceSet;
 
 
@@ -32,39 +28,6 @@ public class PegasusPluginLoader implements Plugin<Project>
     PegasusPlugin plugin = new PegasusPlugin();
     plugin.setPluginType(getClass());
     plugin.apply(project);
-
-    Class<? extends Task> generateRestClientTaskClass;
-    try
-    {
-      generateRestClientTaskClass = (Class<? extends Task>) Class
-          .forName("com.linkedin.pegasus.gradle.tasks.GenerateRestClientTask");
-    }
-    catch (ClassNotFoundException e)
-    {
-      throw new GradleException("Could not load GenerateRestClientTask class.");
-    }
-
-    project.afterEvaluate(proj -> proj.getTasks().withType(generateRestClientTaskClass, task -> {
-      Method method;
-      try
-      {
-        method = generateRestClientTaskClass
-            .getDeclaredMethod("setRestli1BuildersDeprecated", boolean.class);
-      }
-      catch (NoSuchMethodException e)
-      {
-        throw new GradleException("Could not find method setRestli1BuildersDeprecated.");
-      }
-
-      try
-      {
-        method.invoke(task, false);
-      }
-      catch (IllegalAccessException | InvocationTargetException e)
-      {
-        throw new GradleException("Could not invoke method setRestli1BuildersDeprecated.");
-      }
-    }));
   }
 
   /**

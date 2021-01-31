@@ -36,7 +36,6 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.NullGreetingBuilders;
 import com.linkedin.restli.examples.greetings.client.NullGreetingRequestBuilders;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
@@ -607,7 +606,7 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
     return new Object[][]
         {
             {
-                new RootBuilderWrapper<Long, Greeting>(new NullGreetingBuilders())
+                new RootBuilderWrapper<Long, Greeting>(new NullGreetingRequestBuilders())
             },
             {
                 new RootBuilderWrapper<Long, Greeting>(new NullGreetingRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS))

@@ -4,7 +4,6 @@ package com.linkedin.restli.examples;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.ManualProjectionsBuilders;
 import com.linkedin.restli.examples.greetings.client.ManualProjectionsRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -90,8 +89,6 @@ public class TestManualProjections extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
       { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsRequestBuilders()) },
       { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };

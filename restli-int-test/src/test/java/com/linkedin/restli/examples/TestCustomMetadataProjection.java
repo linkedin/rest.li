@@ -23,7 +23,7 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.CustomMetadataProjectionsBuilders;
+import com.linkedin.restli.examples.greetings.client.CustomMetadataProjectionsRequestBuilders;
 import com.linkedin.restli.examples.groups.api.Group;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 
@@ -415,10 +415,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
     return new Object[][]
     {
         {
-            new RootBuilderWrapper<Long, Greeting>(new CustomMetadataProjectionsBuilders())
+            new RootBuilderWrapper<Long, Greeting>(new CustomMetadataProjectionsRequestBuilders())
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new CustomMetadataProjectionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS))
+            new RootBuilderWrapper<Long, Greeting>(new CustomMetadataProjectionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS))
         }
     };
   }

@@ -28,7 +28,6 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.Exceptions3Builders;
 import com.linkedin.restli.examples.greetings.client.Exceptions3RequestBuilders;
 import com.linkedin.restli.examples.greetings.server.ExceptionsResource3;
 import com.linkedin.restli.server.filter.Filter;
@@ -209,16 +208,10 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
   {
     return new Object[][]
         {
-            { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders()) },
-            { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
             { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders()) },
             { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-            { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders()) },
-            { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
             { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders()) },
             { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-            { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders()) },
-            { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
             { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders()) },
             { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
         };
