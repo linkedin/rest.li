@@ -25,7 +25,6 @@ import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.CustomMetadataProjectionsRequestBuilders;
 import com.linkedin.restli.examples.groups.api.Group;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.List;
 
@@ -60,10 +59,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * entity field
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootAutomaticMetadataAutomaticSingleRootSingleMeta(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootAutomaticMetadataAutomaticSingleRootSingleMeta(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("rootAutomaticMetadataAutomatic")
+    final Request<CollectionResponse<Greeting>> request = builders.findByRootAutomaticMetadataAutomatic()
             .fields(Greeting.fields().tone())
             .metadataFields(Greeting.fields().message())
             .build();
@@ -80,10 +79,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * Calls the resource method rootAutomaticMetadataAutomatic with no fields specified in any projection
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootAutomaticMetadataAutomaticNoFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootAutomaticMetadataAutomaticNoFields(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> findRequest = builders.findBy("rootAutomaticMetadataAutomatic")
+    final Request<CollectionResponse<Greeting>> findRequest = builders.findByRootAutomaticMetadataAutomatic()
         .build();
 
     final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
@@ -99,10 +98,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * root object entity projection field
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootAutomaticMetadataAutomaticAllFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootAutomaticMetadataAutomaticAllFields(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> findRequest = builders.findBy("rootAutomaticMetadataAutomatic")
+    final Request<CollectionResponse<Greeting>> findRequest = builders.findByRootAutomaticMetadataAutomatic()
         .fields(Greeting.fields().tone())
         .metadataFields(Greeting.fields().tone(), Greeting.fields().id(), Greeting.fields().message())
         .build();
@@ -120,10 +119,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * metadata. This will leave just the query string parameter by itself in the URI, e.g "...&metadataFields&...
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootAutomaticMetadataAutomaticSingleRootEmptyMeta(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootAutomaticMetadataAutomaticSingleRootEmptyMeta(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("rootAutomaticMetadataAutomatic")
+    final Request<CollectionResponse<Greeting>> request = builders.findByRootAutomaticMetadataAutomatic()
         .fields(Greeting.fields().tone())
         .metadataFields()
         .build();
@@ -145,10 +144,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * entity field
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootAutomaticMetadataManualSingleRootSingleMeta(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootAutomaticMetadataManualSingleRootSingleMeta(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("rootAutomaticMetadataManual")
+    final Request<CollectionResponse<Greeting>> request = builders.findByRootAutomaticMetadataManual()
         .fields(Greeting.fields().tone())
         .metadataFields(Greeting.fields().message())
         .build();
@@ -166,10 +165,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * Calls the resource method rootAutomaticMetadataManual with no fields specified in any projection
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootAutomaticMetadataManualNoFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootAutomaticMetadataManualNoFields(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> findRequest = builders.findBy("rootAutomaticMetadataManual")
+    final Request<CollectionResponse<Greeting>> findRequest = builders.findByRootAutomaticMetadataManual()
         .build();
 
     final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
@@ -187,10 +186,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * root object entity projection field
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootAutomaticMetadataManualAllFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootAutomaticMetadataManualAllFields(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> findRequest = builders.findBy("rootAutomaticMetadataManual")
+    final Request<CollectionResponse<Greeting>> findRequest = builders.findByRootAutomaticMetadataManual()
         .fields(Greeting.fields().tone())
         .metadataFields(Greeting.fields().tone(), Greeting.fields().id(), Greeting.fields().message())
         .build();
@@ -210,10 +209,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * custom metadata field which does not exist in Greeting. This is a negative test.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootAutomaticMetadataManualSingleRootNonexistentMeta(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootAutomaticMetadataManualSingleRootNonexistentMeta(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("rootAutomaticMetadataManual")
+    final Request<CollectionResponse<Greeting>> request = builders.findByRootAutomaticMetadataManual()
         .metadataFields(Group.fields().description()) //Note the use of Group here instead of Greeting
         .build();
 
@@ -235,10 +234,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * entity field
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootManualMetadataAutomaticSingleRootSingleMeta(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootManualMetadataAutomaticSingleRootSingleMeta(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("rootManualMetadataAutomatic")
+    final Request<CollectionResponse<Greeting>> request = builders.findByRootManualMetadataAutomatic()
         .fields(Greeting.fields().message())
         .metadataFields(Greeting.fields().message())
         .build();
@@ -257,10 +256,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * Calls the resource method rootManualMetadataAutomatic with no fields specified in any projection
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootManualMetadataAutomaticNoFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootManualMetadataAutomaticNoFields(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> findRequest = builders.findBy("rootManualMetadataAutomatic")
+    final Request<CollectionResponse<Greeting>> findRequest = builders.findByRootManualMetadataAutomatic()
         .build();
 
     final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
@@ -276,10 +275,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * root object entity projection field
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootManualMetadataAutomaticAllFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootManualMetadataAutomaticAllFields(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> findRequest = builders.findBy("rootManualMetadataAutomatic")
+    final Request<CollectionResponse<Greeting>> findRequest = builders.findByRootManualMetadataAutomatic()
         .fields(Greeting.fields().tone())
         .metadataFields(Greeting.fields().tone(), Greeting.fields().id(), Greeting.fields().message())
         .build();
@@ -301,10 +300,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * entity field
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootManualMetadataManualSingleRootSingleMeta(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootManualMetadataManualSingleRootSingleMeta(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("rootManualMetadataManual")
+    final Request<CollectionResponse<Greeting>> request = builders.findByRootManualMetadataManual()
         .fields(Greeting.fields().message())
         .metadataFields(Greeting.fields().message())
         .build();
@@ -324,10 +323,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * Calls the resource method rootManualMetadataManual with no fields specified in any projection
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootManualMetadataManualNoFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootManualMetadataManualNoFields(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> findRequest = builders.findBy("rootManualMetadataManual")
+    final Request<CollectionResponse<Greeting>> findRequest = builders.findByRootManualMetadataManual()
         .build();
 
     final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(findRequest).getResponse();
@@ -343,10 +342,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * root object entity projection field
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootManualMetadataManualAllFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootManualMetadataManualAllFields(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> findRequest = builders.findBy("rootManualMetadataManual")
+    final Request<CollectionResponse<Greeting>> findRequest = builders.findByRootManualMetadataManual()
         .fields(Greeting.fields().tone())
         .metadataFields(Greeting.fields().tone(), Greeting.fields().id(), Greeting.fields().message())
         .build();
@@ -369,7 +368,7 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * for metadata projection calculation also works as intended.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testGetAllRootAutomaticMetadataManual(RootBuilderWrapper<Long, Greeting> builders)
+  public void testGetAllRootAutomaticMetadataManual(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
     final Request<CollectionResponse<Greeting>> request = builders.getAll()
@@ -394,10 +393,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
    * server.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRootAutomaticMetadataAutomaticNullSingleRootSingleMeta(RootBuilderWrapper<Long, Greeting> builders)
+  public void testRootAutomaticMetadataAutomaticNullSingleRootSingleMeta(CustomMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("rootAutomaticMetadataAutomaticNull")
+    final Request<CollectionResponse<Greeting>> request = builders.findByRootAutomaticMetadataAutomaticNull()
         .fields(Greeting.fields().message())
         .metadataFields(Greeting.fields().message())
         .build();
@@ -415,10 +414,10 @@ public class TestCustomMetadataProjection extends RestLiIntegrationTest
     return new Object[][]
     {
         {
-            new RootBuilderWrapper<Long, Greeting>(new CustomMetadataProjectionsRequestBuilders())
+            new CustomMetadataProjectionsRequestBuilders()
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new CustomMetadataProjectionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS))
+            new CustomMetadataProjectionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)
         }
     };
   }

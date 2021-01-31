@@ -24,15 +24,7 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.common.BatchCollectionResponse;
-import com.linkedin.restli.common.BatchCreateIdEntityResponse;
-import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CreateStatus;
-import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.IdEntityResponse;
-import com.linkedin.restli.common.OptionsResponse;
-import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.common.*;
 import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
 import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
@@ -46,9 +38,6 @@ import java.util.Map;
 
 /**
  * Wrapper of the root request builders for testing purpose.
- *
- * This wrapper allows same test logic to be used on both Rest.li 2 and legacy request builders
- * that are generated for same resource.
  *
  * For the wrapper of method specific builder, check {@link MethodBuilderWrapper}.
  *
@@ -69,13 +58,11 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
   public static class MethodBuilderWrapper<K, V extends RecordTemplate, R>
   {
     private final RequestBuilder<? extends Request<R>> _methodBuilder;
-    private final boolean _isRestLi2Builder;
     private final Class<V> _valueClass;
 
-    public MethodBuilderWrapper(RequestBuilder<? extends Request<R>> builder, boolean isRestLi2Builder, Class<V> valueClass)
+    public MethodBuilderWrapper(RequestBuilder<? extends Request<R>> builder, Class<V> valueClass)
     {
       _methodBuilder = builder;
-      _isRestLi2Builder = isRestLi2Builder;
       _valueClass = valueClass;
     }
 
@@ -238,14 +225,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
 
     public MethodBuilderWrapper<K, V, R> setActionParam(String name, Object value)
     {
-      if (isRestLi2Builder())
-      {
-        return invoke(findMethod(RestLiToolsUtils.nameCamelCase(name + "Param"), value), value);
-      }
-      else
-      {
-        return invoke(findMethod("param" + Character.toUpperCase(name.charAt(0)) + name.substring(1), value), value);
-      }
+      return invoke(findMethod(RestLiToolsUtils.nameCamelCase(name + "Param"), value), value);
     }
 
     public MethodBuilderWrapper<K, V, R> setPathKey(String name, Object value)
@@ -257,9 +237,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
     {
       try
       {
-        @SuppressWarnings("unchecked")
-        final ValidationResult result = (ValidationResult) getMethod("validateInput", _valueClass).invoke(_methodBuilder, entity);
-        return result;
+        return (ValidationResult) getMethod("validateInput", _valueClass).invoke(_methodBuilder, entity);
       }
       catch (IllegalAccessException e)
       {
@@ -275,9 +253,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
     {
       try
       {
-        @SuppressWarnings("unchecked")
-        final ValidationResult result = (ValidationResult) getMethod("validateInput", PatchRequest.class).invoke(_methodBuilder, patch);
-        return result;
+        return (ValidationResult) getMethod("validateInput", PatchRequest.class).invoke(_methodBuilder, patch);
       }
       catch (IllegalAccessException e)
       {
@@ -289,11 +265,6 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
       }
     }
 
-    public boolean isRestLi2Builder()
-    {
-      return _isRestLi2Builder;
-    }
-
     private MethodBuilderWrapper<K, V, R> invoke(Method method, Object... args)
     {
       try
@@ -301,7 +272,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
         @SuppressWarnings("unchecked")
         final RequestBuilder<? extends Request<R>> builder =
             (RequestBuilder<? extends Request<R>>) method.invoke(_methodBuilder, args);
-        return new MethodBuilderWrapper<K, V, R>(builder, _isRestLi2Builder, _valueClass);
+        return new MethodBuilderWrapper<>(builder, _valueClass);
       }
       catch (IllegalAccessException e)
       {
@@ -392,7 +363,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
     return invoke("partialUpdate");
   }
 
-  public MethodBuilderWrapper<K, V, CollectionResponse<CreateStatus>> batchCreate()
+  public MethodBuilderWrapper<K, V, BatchCreateIdResponse<K>> batchCreate()
   {
     return invoke("batchCreate");
   }
@@ -448,11 +419,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
     {
       return (RestliRequestOptions) _rootBuilder.getClass().getMethod("getRequestOptions").invoke(_rootBuilder);
     }
-    catch (NoSuchMethodException e)
-    {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e)
+    catch (IllegalAccessException | NoSuchMethodException e)
     {
       throw new RuntimeException(e);
     }
@@ -462,13 +429,6 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
     }
   }
 
-  boolean areRestLi2Builders()
-  {
-    String buildersClassName = _rootBuilder.getClass().getSimpleName();
-
-    return buildersClassName.substring(getResourceName().length()).equals("RequestBuilders");
-  }
-
   private <R> MethodBuilderWrapper<K, V, R> invoke(String methodName)
   {
     try
@@ -476,16 +436,9 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
       @SuppressWarnings("unchecked")
       final RequestBuilder<? extends Request<R>> builder =
           (RequestBuilder<? extends Request<R>>) _rootBuilder.getClass().getMethod(methodName).invoke(_rootBuilder);
-      return new MethodBuilderWrapper<K, V, R>(
-          builder,
-          areRestLi2Builders(),
-          _valueClass);
+      return new MethodBuilderWrapper<>(builder, _valueClass);
     }
-    catch (NoSuchMethodException e)
-    {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e)
+    catch (IllegalAccessException | NoSuchMethodException e)
     {
       throw new RuntimeException(e);
     }
@@ -505,27 +458,6 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
     else
     {
       return new RuntimeException(e.getTargetException());
-    }
-  }
-
-  private String getResourceName()
-  {
-    try
-    {
-      final String[] pathComponents = (String[]) _rootBuilder.getClass().getMethod("getPathComponents").invoke(_rootBuilder);
-      return pathComponents[pathComponents.length - 1];
-    }
-    catch (NoSuchMethodException e)
-    {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e)
-    {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e)
-    {
-      throw handleInvocationTargetException(e);
     }
   }
 

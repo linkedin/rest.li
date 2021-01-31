@@ -21,7 +21,6 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.ExceptionsRequestBuilders;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -35,8 +34,7 @@ public class TestExceptionRequestBuilders
   @Test
   public void testUnbatchable()
   {
-    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new ExceptionsRequestBuilders());
-    Request<Greeting> request = builders.get().id(1L).build();
+    Request<Greeting> request = new ExceptionsRequestBuilders().get().id(1L).build();
     Assert.assertFalse(request.getResourceProperties().getSupportedMethods().contains(ResourceMethod.BATCH_GET));
   }
 }

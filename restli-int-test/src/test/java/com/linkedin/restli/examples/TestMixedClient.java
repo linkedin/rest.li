@@ -24,7 +24,6 @@ import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.MixedRequestBuilders;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -56,7 +55,7 @@ public class TestMixedClient extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testGet(RootBuilderWrapper<Long, Greeting> builders) throws InterruptedException,
+  public void testGet(MixedRequestBuilders builders) throws InterruptedException,
       ExecutionException
   {
     Request<Greeting> req = builders.get().id(42L).build();
@@ -66,18 +65,18 @@ public class TestMixedClient extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testCreate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException,
+  public void testCreate(MixedRequestBuilders builders) throws RemoteInvocationException,
       InterruptedException,
       ExecutionException
   {
-    Request<EmptyRecord> req = builders.create().input(new Greeting()).build();
-    ResponseFuture<EmptyRecord> response = getClient().sendRequest(req);
+    Request<?> req = builders.create().input(new Greeting()).build();
+    ResponseFuture<?> response = getClient().sendRequest(req);
     response.getResponse().getHeaders();
     response.get().getEntity();
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testUpdate(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException,
+  public void testUpdate(MixedRequestBuilders builders) throws RemoteInvocationException,
       InterruptedException,
       ExecutionException
   {
@@ -88,7 +87,7 @@ public class TestMixedClient extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testDelete(RootBuilderWrapper<Long, Greeting> builders) throws InterruptedException,
+  public void testDelete(MixedRequestBuilders builders) throws InterruptedException,
       ExecutionException,
       RemoteInvocationException
   {
@@ -99,10 +98,10 @@ public class TestMixedClient extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testSearch(RootBuilderWrapper<Long, Greeting> builders) throws InterruptedException,
+  public void testSearch(MixedRequestBuilders builders) throws InterruptedException,
       ExecutionException
   {
-    Request<CollectionResponse<Greeting>> req = builders.findBy("Search").setQueryParam("what", "yay").build();
+    Request<CollectionResponse<Greeting>> req = builders.findBySearch().whatParam("yay").build();
     ResponseFuture<CollectionResponse<Greeting>> response = getClient().sendRequest(req);
     List<Greeting> elems = response.get().getEntity().getElements();
     Assert.assertEquals(elems.size(), 1);
@@ -114,8 +113,8 @@ public class TestMixedClient extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new MixedRequestBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new MixedRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      { new MixedRequestBuilders() },
+      { new MixedRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 }

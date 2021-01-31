@@ -21,7 +21,6 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -35,8 +34,7 @@ public class TestGreetingsRequestBuilders
   @Test
   public void testBatchable()
   {
-    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new GreetingsRequestBuilders());
-    Request<Greeting> request = builders.get().id(1L).build();
+    Request<Greeting> request = new GreetingsRequestBuilders().get().id(1L).build();
     Assert.assertTrue(request.getResourceProperties().getSupportedMethods().contains(ResourceMethod.BATCH_GET));
   }
 }

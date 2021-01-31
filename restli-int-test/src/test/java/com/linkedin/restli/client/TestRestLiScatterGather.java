@@ -40,7 +40,6 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingRequestBuilders;
 import com.linkedin.restli.internal.common.TestConstants;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 import com.linkedin.test.util.retry.SingleRetry;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -102,7 +101,7 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
       retryAnalyzer = SingleRetry.class) // Known to be flaky in CI
   public static void testSendScatterGatherRequest(URIMapper mapper) throws RemoteInvocationException
   {
-    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new GreetingsRequestBuilders());
+    GreetingsRequestBuilders builders = new GreetingsRequestBuilders();
 
     RestLiClientConfig config = new RestLiClientConfig();
     config.setScatterGatherStrategy(new DefaultScatterGatherStrategy(mapper));
@@ -190,12 +189,10 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
   // BatchUpdateRequest
   private static void testSendSGUpdateRequests(RestClient restClient,
                                                Map<Long, Greeting> inputs,
-                                               RootBuilderWrapper<Long, Greeting> builders)
+                                               GreetingsRequestBuilders builders)
           throws RemoteInvocationException
   {
-    @SuppressWarnings("unchecked")
-    BatchUpdateRequest<Long, Greeting> request =
-            (BatchUpdateRequest<Long, Greeting>) builders.batchUpdate().inputs(inputs).setParam("foo", "bar").build();
+    BatchUpdateRequest<Long, Greeting> request = builders.batchUpdate().inputs(inputs).setParam("foo", "bar").build();
     BatchKVResponse<Long, UpdateStatus> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), inputs.size());
     UpdateStatus item = result.getResults().values().iterator().next();
@@ -206,12 +203,13 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
   // BatchPartialUpdateRequest
   private static void testSendSGPartialUpdateRequests(RestClient restClient,
                                                       Map<Long, PatchRequest<Greeting>> inputs,
-                                                      RootBuilderWrapper<Long, Greeting> builders)
+                                                      GreetingsRequestBuilders builders)
           throws RemoteInvocationException
   {
-    @SuppressWarnings("unchecked")
-    BatchPartialUpdateRequest<Long, Greeting> request =
-            (BatchPartialUpdateRequest<Long, Greeting>) builders.batchPartialUpdate().patchInputs(inputs).setParam("foo", "bar").build();
+    BatchPartialUpdateRequest<Long, Greeting> request = builders.batchPartialUpdate()
+        .inputs(inputs)
+        .setParam("foo", "bar")
+        .build();
     BatchKVResponse<Long, UpdateStatus> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), inputs.size());
     UpdateStatus item = result.getResults().values().iterator().next();
@@ -222,12 +220,10 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
   // BatchDeleteRequest
   private static void testSendSGDeleteRequests(RestClient restClient,
                                                Long[] requestIds,
-                                               RootBuilderWrapper<Long, Greeting> builders)
+                                               GreetingsRequestBuilders builders)
           throws RemoteInvocationException
   {
-    @SuppressWarnings("unchecked")
-    BatchDeleteRequest<Long, Greeting> request =
-            (BatchDeleteRequest<Long, Greeting>) builders.batchDelete().ids(requestIds).setParam("foo", "bar").build();
+    BatchDeleteRequest<Long, Greeting> request = builders.batchDelete().ids(requestIds).setParam("foo", "bar").build();
     BatchKVResponse<Long, UpdateStatus> result = restClient.sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(result.getResults().size(), requestIds.length);
     UpdateStatus item = result.getResults().values().iterator().next();

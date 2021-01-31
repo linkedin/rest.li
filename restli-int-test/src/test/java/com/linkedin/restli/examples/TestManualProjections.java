@@ -5,7 +5,6 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.ManualProjectionsRequestBuilders;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -37,7 +36,7 @@ public class TestManualProjections extends RestLiIntegrationTest
    * @throws RemoteInvocationException
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testGetWithProjection(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testGetWithProjection(ManualProjectionsRequestBuilders builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(1L)
         .fields(Greeting.fields().message())
@@ -54,7 +53,7 @@ public class TestManualProjections extends RestLiIntegrationTest
    * @throws RemoteInvocationException
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testGetFull(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testGetFull(ManualProjectionsRequestBuilders builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(1L).build();
     Greeting greeting = getClient().sendRequest(request).getResponseEntity();
@@ -72,10 +71,10 @@ public class TestManualProjections extends RestLiIntegrationTest
    * @throws RemoteInvocationException
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testDisableAutomaticProjection(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testDisableAutomaticProjection(ManualProjectionsRequestBuilders builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(1L)
-        .setQueryParam("ignoreProjection", true)
+        .ignoreProjectionParam(true)
         .fields(Greeting.fields().message())
         .build();
     Greeting greeting = getClient().sendRequest(request).getResponseEntity();
@@ -89,8 +88,8 @@ public class TestManualProjections extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsRequestBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new ManualProjectionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      { new ManualProjectionsRequestBuilders() },
+      { new ManualProjectionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 }

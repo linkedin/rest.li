@@ -25,7 +25,6 @@ import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.PagingMetadataProjectionsRequestBuilders;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -58,10 +57,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * field for 'count'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataAutomaticPagingFullyAutomaticSingleMetaPagingCount(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataAutomaticPagingFullyAutomaticSingleMetaPagingCount(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataAutomaticPagingFullyAutomatic")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataAutomaticPagingFullyAutomatic()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().count())
         .build();
@@ -78,10 +77,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * field for 'total'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataAutomaticPagingFullyAutomaticSingleMetaPagingTotal(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataAutomaticPagingFullyAutomaticSingleMetaPagingTotal(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataAutomaticPagingFullyAutomatic")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataAutomaticPagingFullyAutomatic()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().total())
         .build();
@@ -100,10 +99,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * fields using 'links' and 'total'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataAutomaticPagingFullyAutomaticSingleMetaMultiplePaging(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataAutomaticPagingFullyAutomaticSingleMetaMultiplePaging(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataAutomaticPagingFullyAutomatic")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataAutomaticPagingFullyAutomatic()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().total(), CollectionMetadata.fields().links())
         .build();
@@ -121,10 +120,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * Calls the resource method metadataAutomaticPagingFullyAutomatic without any projection fields specified
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataAutomaticPagingFullyAutomaticNoFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataAutomaticPagingFullyAutomaticNoFields(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataAutomaticPagingFullyAutomatic")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataAutomaticPagingFullyAutomatic()
         .metadataFields()
         .pagingFields()
         .build();
@@ -144,10 +143,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * field for 'count'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataAutomaticPagingAutomaticPartialNullSingleMetaPagingCount(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataAutomaticPagingAutomaticPartialNullSingleMetaPagingCount(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataAutomaticPagingAutomaticPartialNull")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataAutomaticPagingAutomaticPartialNull()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().count())
         .build();
@@ -164,10 +163,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * field for 'total'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataAutomaticPagingAutomaticPartialNullSingleMetaPagingTotal(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataAutomaticPagingAutomaticPartialNullSingleMetaPagingTotal(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataAutomaticPagingAutomaticPartialNull")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataAutomaticPagingAutomaticPartialNull()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().total())
         .build();
@@ -186,10 +185,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * fields using 'links' and 'total'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataAutomaticPagingAutomaticPartialNullSingleMetaMultiplePaging(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataAutomaticPagingAutomaticPartialNullSingleMetaMultiplePaging(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataAutomaticPagingAutomaticPartialNull")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataAutomaticPagingAutomaticPartialNull()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().total(), CollectionMetadata.fields().links())
         .build();
@@ -207,10 +206,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * Calls the resource method metadataAutomaticPagingAutomaticPartialNull without any projection fields specified
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataAutomaticPagingAutomaticPartialNullNoFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataAutomaticPagingAutomaticPartialNullNoFields(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataAutomaticPagingAutomaticPartialNull")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataAutomaticPagingAutomaticPartialNull()
         .metadataFields()
         .pagingFields()
         .build();
@@ -230,10 +229,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * and a single paging field for 'count'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataAutomaticPagingAutomaticPartialNullIncorrectSingleMetaPagingCount(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataAutomaticPagingAutomaticPartialNullIncorrectSingleMetaPagingCount(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataAutomaticPagingAutomaticPartialNullIncorrect")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataAutomaticPagingAutomaticPartialNullIncorrect()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().count())
         .build();
@@ -250,10 +249,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * field for 'total'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataAutomaticPagingAutomaticPartialNullIncorrectSingleMetaPagingTotal(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataAutomaticPagingAutomaticPartialNullIncorrectSingleMetaPagingTotal(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataAutomaticPagingAutomaticPartialNullIncorrect")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataAutomaticPagingAutomaticPartialNullIncorrect()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().total())
         .build();
@@ -274,10 +273,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * fields using 'links' and 'total'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataAutomaticPagingAutomaticPartialNullIncorrectSingleMetaMultiplePaging(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataAutomaticPagingAutomaticPartialNullIncorrectSingleMetaMultiplePaging(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataAutomaticPagingAutomaticPartialNullIncorrect")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataAutomaticPagingAutomaticPartialNullIncorrect()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().total(), CollectionMetadata.fields().links())
         .build();
@@ -293,10 +292,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * Calls the resource method metadataAutomaticPagingAutomaticPartialNullIncorrect without any projection fields specified
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataAutomaticPagingAutomaticPartialNullIncorrectNoFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataAutomaticPagingAutomaticPartialNullIncorrectNoFields(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataAutomaticPagingAutomaticPartialNullIncorrect")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataAutomaticPagingAutomaticPartialNullIncorrect()
         .metadataFields()
         .pagingFields()
         .build();
@@ -316,10 +315,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * field for 'count'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataManualPagingFullyAutomaticSingleMetaPagingCount(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataManualPagingFullyAutomaticSingleMetaPagingCount(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataManualPagingFullyAutomatic")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataManualPagingFullyAutomatic()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().count())
         .build();
@@ -338,10 +337,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * field for 'total'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataManualPagingFullyAutomaticSingleMetaPagingTotal(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataManualPagingFullyAutomaticSingleMetaPagingTotal(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataManualPagingFullyAutomatic")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataManualPagingFullyAutomatic()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().total())
         .build();
@@ -362,10 +361,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * fields using 'links' and 'total'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataManualPagingFullyAutomaticSingleMetaMultiplePaging(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataManualPagingFullyAutomaticSingleMetaMultiplePaging(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataManualPagingFullyAutomatic")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataManualPagingFullyAutomatic()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().total(), CollectionMetadata.fields().links())
         .build();
@@ -385,10 +384,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * Calls the resource method metadataManualPagingFullyAutomatic without any projection fields specified
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataManualPagingFullyAutomaticNoFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataManualPagingFullyAutomaticNoFields(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataManualPagingFullyAutomatic")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataManualPagingFullyAutomatic()
         .metadataFields()
         .pagingFields()
         .build();
@@ -408,10 +407,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * field for 'count'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataManualPagingAutomaticPartialNullSingleMetaPagingCount(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataManualPagingAutomaticPartialNullSingleMetaPagingCount(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataManualPagingAutomaticPartialNull")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataManualPagingAutomaticPartialNull()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().count())
         .build();
@@ -430,10 +429,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * field for 'total'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataManualPagingAutomaticPartialNullSingleMetaPagingTotal(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataManualPagingAutomaticPartialNullSingleMetaPagingTotal(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataManualPagingAutomaticPartialNull")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataManualPagingAutomaticPartialNull()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().total())
         .build();
@@ -454,10 +453,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * fields using 'links' and 'total'.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataManualPagingAutomaticPartialNullSingleMetaMultiplePaging(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataManualPagingAutomaticPartialNullSingleMetaMultiplePaging(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataManualPagingAutomaticPartialNull")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataManualPagingAutomaticPartialNull()
         .metadataFields(Greeting.fields().message())
         .pagingFields(CollectionMetadata.fields().total(), CollectionMetadata.fields().links())
         .build();
@@ -475,10 +474,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * Calls the resource method metadataManualPagingAutomaticPartialNull without any projection fields specified
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataManualPagingAutomaticPartialNullNoFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataManualPagingAutomaticPartialNullNoFields(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataManualPagingAutomaticPartialNull")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataManualPagingAutomaticPartialNull()
         .metadataFields()
         .pagingFields()
         .build();
@@ -494,10 +493,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * Calls the resource method metadataManualPagingAutomaticPartialNull without even specifying projection fields
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMetadataManualPagingAutomaticPartialNullNonExistentFields(RootBuilderWrapper<Long, Greeting> builders)
+  public void testMetadataManualPagingAutomaticPartialNullNonExistentFields(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("metadataManualPagingAutomaticPartialNull")
+    final Request<CollectionResponse<Greeting>> request = builders.findByMetadataManualPagingAutomaticPartialNull()
         .build();
 
     final Response<CollectionResponse<Greeting>> response = getClient().sendRequest(request).getResponse();
@@ -516,7 +515,7 @@ public class TestPagingProjection extends RestLiIntegrationTest
    * for paging projection calculation also works as intended.
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testGetAllMetadataManualPagingAutomaticPartialNull(RootBuilderWrapper<Long, Greeting> builders)
+  public void testGetAllMetadataManualPagingAutomaticPartialNull(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
     final Request<CollectionResponse<Greeting>> request = builders.getAll()
@@ -535,10 +534,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testProjectionPagingLinkField(RootBuilderWrapper<Long, Greeting> builders)
+  public void testProjectionPagingLinkField(PagingMetadataProjectionsRequestBuilders builders)
       throws RemoteInvocationException
   {
-    final Request<CollectionResponse<Greeting>> request = builders.findBy("searchWithLinksResult")
+    final Request<CollectionResponse<Greeting>> request = builders.findBySearchWithLinksResult()
         .pagingFields(CollectionMetadata.fields().count(), new PathSpec("links", PathSpec.WILDCARD, "rel"))
         .build();
 
@@ -559,10 +558,10 @@ public class TestPagingProjection extends RestLiIntegrationTest
     return new Object[][]
     {
         {
-            new RootBuilderWrapper<Long, Greeting>(new PagingMetadataProjectionsRequestBuilders())
+            new PagingMetadataProjectionsRequestBuilders()
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new PagingMetadataProjectionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS))
+            new PagingMetadataProjectionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)
         }
     };
   }

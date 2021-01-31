@@ -24,7 +24,6 @@ import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsAuthRequestBuilders;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -48,7 +47,7 @@ public class TestCustomCrudParams extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testCookbookCrudParams(RootBuilderWrapper<Long, Greeting> builders) throws Exception
+  public void testCookbookCrudParams(GreetingsAuthRequestBuilders builders) throws Exception
   {
     try
     {
@@ -64,7 +63,7 @@ public class TestCustomCrudParams extends RestLiIntegrationTest
     }
 
     // GET
-    Request<Greeting> request = builders.get().id(1L).setQueryParam("auth", "PLEASE").build();
+    Request<Greeting> request = builders.get().id(1L).authParam("PLEASE").build();
     ResponseFuture<Greeting> future = getClient().sendRequest(request);
     Response<Greeting> greetingResponse = future.getResponse();
 
@@ -73,11 +72,11 @@ public class TestCustomCrudParams extends RestLiIntegrationTest
     greeting.setMessage("This is a new message!");
 
     Request<EmptyRecord>  writeRequest = builders.update().id(1L).input(greeting)
-      .setQueryParam("auth", "PLEASE").build();
+      .authParam("PLEASE").build();
     getClient().sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
-    Request<Greeting> request2 = builders.get().id(1L).setQueryParam("auth", "PLEASE").build();
+    Request<Greeting> request2 = builders.get().id(1L).authParam("PLEASE").build();
     ResponseFuture<Greeting> future2 = getClient().sendRequest(request2);
     greetingResponse = future2.get();
     Assert.assertEquals(greetingResponse.getEntity().getMessage(), "This is a new message!");
@@ -87,8 +86,8 @@ public class TestCustomCrudParams extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthRequestBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsAuthRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      { new GreetingsAuthRequestBuilders() },
+      { new GreetingsAuthRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 }

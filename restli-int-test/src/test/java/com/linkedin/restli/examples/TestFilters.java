@@ -27,7 +27,6 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
@@ -203,27 +202,13 @@ public class TestFilters extends RestLiIntegrationTest
   private Long createTestData(RootBuilderWrapper<Long, Greeting> builders, Greeting greeting) throws RemoteInvocationException
   {
     RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, EmptyRecord> createBuilderWrapper = builders.create();
-    Long createdId;
-    if (createBuilderWrapper.isRestLi2Builder())
-    {
-      Object objBuilder = createBuilderWrapper.getBuilder();
-      @SuppressWarnings("unchecked")
-      CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder =
-          (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
-      CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(greeting).build();
-      Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
-      createdId = response.getEntity().getId();
-    }
-    else
-    {
-      Request<EmptyRecord> request = createBuilderWrapper.input(greeting).build();
-      Response<EmptyRecord> response = getClient().sendRequest(request).getResponse();
-      @SuppressWarnings("unchecked")
-      CreateResponse<Long> createResponse = (CreateResponse<Long>) response.getEntity();
-      createdId = createResponse.getId();
-    }
-    return createdId;
-
+    Object objBuilder = createBuilderWrapper.getBuilder();
+    @SuppressWarnings("unchecked")
+    CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder =
+        (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
+    CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(greeting).build();
+    Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
+    return response.getEntity().getId();
   }
 
   private void verifyFilters(Tone tone, boolean respFilter)

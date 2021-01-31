@@ -27,7 +27,6 @@ import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.internal.common.TestConstants;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,62 +66,62 @@ public class TestGreetingsClientAcceptContentTypeHeader extends RestLiIntegratio
   {
     return new Object[][] {
         {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.emptyList()).build())),
+            new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.emptyList()).build()),
             RestConstants.HEADER_VALUE_APPLICATION_JSON
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
-                ContentType.ACCEPT_TYPE_ANY)).build())),
+            new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
+                ContentType.ACCEPT_TYPE_ANY)).build()),
             RestConstants.HEADER_VALUE_APPLICATION_JSON
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
-                ContentType.JSON)).build())),
+            new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
+                ContentType.JSON)).build()),
             RestConstants.HEADER_VALUE_APPLICATION_JSON
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
-                ContentType.PSON)).build())),
+            new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
+                ContentType.PSON)).build()),
             RestConstants.HEADER_VALUE_APPLICATION_PSON
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Arrays.asList(
-                ContentType.PSON, ContentType.JSON)).build())),
+            new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Arrays.asList(
+                ContentType.PSON, ContentType.JSON)).build()),
             RestConstants.HEADER_VALUE_APPLICATION_PSON
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Arrays.asList(
-                ContentType.JSON, ContentType.PSON)).build())),
+            new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Arrays.asList(
+                ContentType.JSON, ContentType.PSON)).build()),
             RestConstants.HEADER_VALUE_APPLICATION_JSON
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
-                ContentType.LICOR_TEXT)).build())),
+            new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
+                ContentType.LICOR_TEXT)).build()),
             RestConstants.HEADER_VALUE_APPLICATION_LICOR_TEXT
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
-                ContentType.LICOR_BINARY)).build())),
+            new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
+                ContentType.LICOR_BINARY)).build()),
             RestConstants.HEADER_VALUE_APPLICATION_LICOR_BINARY
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
-                ContentType.PROTOBUF)).build())),
+            new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
+                ContentType.PROTOBUF)).build()),
             RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF
         },
         {
-            new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
-                ContentType.PROTOBUF2)).build())),
+            new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setAcceptTypes(Collections.singletonList(
+                ContentType.PROTOBUF2)).build()),
             RestConstants.HEADER_VALUE_APPLICATION_PROTOBUF2
         }
     };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "acceptContentTypeDataProvider")
-  public void testAcceptContentTypeHeaderRoundtrip(RootBuilderWrapper<Long, Greeting> builder, String expectedContentType)
+  public void testAcceptContentTypeHeaderRoundtrip(GreetingsRequestBuilders builders, String expectedContentType)
       throws RemoteInvocationException
   {
-    final Request<Greeting> getRequest = builder.get().id(10L).build();
+    final Request<Greeting> getRequest = builders.get().id(10L).build();
     ResponseFuture<Greeting> responseFuture = REST_CLIENT.sendRequest(getRequest);
     Response<Greeting> response = responseFuture.getResponse();
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType.toString());

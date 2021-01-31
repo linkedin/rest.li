@@ -35,7 +35,6 @@ import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.StreamingGreetingsRequestBuilders;
 import com.linkedin.restli.internal.testutils.RestLiTestAttachmentDataSource;
 import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
@@ -78,25 +77,24 @@ public class TestStreamingGreetings extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void fullStreamTest(final RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void fullStreamTest(final StreamingGreetingsRequestBuilders builders) throws RemoteInvocationException
   {
     //Perform a create to the server to store some bytes via an attachment.
     final byte[] clientSuppliedBytes = "ClientSupplied".getBytes();
     final RestLiTestAttachmentDataSource greetingAttachment =
             new RestLiTestAttachmentDataSource("1", ByteString.copy(clientSuppliedBytes));
 
-    final RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, EmptyRecord> methodBuilderWrapper = builders.create();
-
-    methodBuilderWrapper.appendSingleAttachment(greetingAttachment);
-
-    //Provide a header to verify the server's ability to transform the first part into the RestRequest.
-    methodBuilderWrapper.setHeader("createHeader", "createHeaderValue");
     final Greeting greeting = new Greeting().setMessage("A greeting with an attachment");
 
-    final Request<EmptyRecord> createRequest = methodBuilderWrapper.input(greeting).build();
+    final Request<?> createRequest = builders.create()
+        .appendSingleAttachment(greetingAttachment)
+        //Provide a header to verify the server's ability to transform the first part into the RestRequest.
+        .setHeader("createHeader", "createHeaderValue")
+        .input(greeting)
+        .build();
     try
     {
-      final Response<EmptyRecord> createResponse = getClient().sendRequest(createRequest).getResponse();
+      final Response<?> createResponse = getClient().sendRequest(createRequest).getResponse();
       Assert.assertEquals(createResponse.getStatus(), 201);
       //Verify that headers propagate properly.
       Assert.assertEquals(createResponse.getHeader("createHeader"), "createHeaderValue");
@@ -109,7 +107,7 @@ public class TestStreamingGreetings extends RestLiIntegrationTest
     //Then perform a GET and verify the bytes are present
     try
     {
-      final Request<Greeting> getRequest = builders.get().id(1l).setHeader("getHeader", "getHeaderValue").build();
+      final Request<Greeting> getRequest = builders.get().id(1L).setHeader("getHeader", "getHeaderValue").build();
       final Response<Greeting> getResponse = getClient().sendRequest(getRequest).getResponse();
       Assert.assertEquals(getResponse.getStatus(), 200);
 
@@ -146,13 +144,13 @@ public class TestStreamingGreetings extends RestLiIntegrationTest
   //brevity DELETE and UPDATE are used as examples.
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testDeleteReturnAttachments(final RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testDeleteReturnAttachments(final StreamingGreetingsRequestBuilders builders)
   {
     try
     {
       final String headerAndAttachment = "someValue"; //This will be echoed back in the form of an attachment.
       final Request<EmptyRecord> deleteRequest =
-          builders.delete().id(1l).setHeader("getHeader", headerAndAttachment).build();
+          builders.delete().id(1L).setHeader("getHeader", headerAndAttachment).build();
       sendNonTypicalRequestAndVerifyAttachments(deleteRequest, headerAndAttachment);
     }
     catch (Exception exception)
@@ -163,13 +161,13 @@ public class TestStreamingGreetings extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testUpdateReturnAttachments(final RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testUpdateReturnAttachments(final StreamingGreetingsRequestBuilders builders)
   {
     try
     {
       final String headerAndAttachment = "someValue"; //This will be echoed back in the form of an attachment.
       final Request<EmptyRecord> updateRequest =
-          builders.update().id(1l).input(new Greeting()).setHeader("getHeader", headerAndAttachment).build();
+          builders.update().id(1L).input(new Greeting()).setHeader("getHeader", headerAndAttachment).build();
       sendNonTypicalRequestAndVerifyAttachments(updateRequest, headerAndAttachment);
     }
     catch (Exception exception)
@@ -198,19 +196,17 @@ public class TestStreamingGreetings extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
           + "requestBuilderDataProvider")
-  public void resourceMethodDoesNotAcceptAttachments(final RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void resourceMethodDoesNotAcceptAttachments(final StreamingGreetingsRequestBuilders builders) throws RemoteInvocationException
   {
     //Resource method does not desire request attachments. Assert that all the attachments are drained and that a 400
     //bad request is observed.
     final RestLiTestAttachmentDataSource greetingAttachment =
             new RestLiTestAttachmentDataSource("1", ByteString.copyString("clientData", Charset.defaultCharset()));
 
-    RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, Object> methodBuilderWrapper =
-            builders.action("actionNoAttachmentsAllowed");
+    final Request<Integer> request = builders.actionActionNoAttachmentsAllowed()
+        .appendSingleAttachment(greetingAttachment)
+        .build();
 
-    methodBuilderWrapper.appendSingleAttachment(greetingAttachment);
-
-    final Request<Object> request = methodBuilderWrapper.build();
     try
     {
       getClient().sendRequest(request).getResponse().getEntity();
@@ -229,19 +225,18 @@ public class TestStreamingGreetings extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
           + "requestBuilderDataProvider")
-  public void verifyNoAttachmentProvidedToResourceMethod(final RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void verifyNoAttachmentProvidedToResourceMethod(final StreamingGreetingsRequestBuilders builders) throws RemoteInvocationException
   {
     //This test will call an endpoint that accepts attachments but without any attachments.
     //Verify that the resource method receives null.
-    RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, Object> methodBuilderWrapper =
-            builders.action("actionAttachmentsAllowedButDisliked");
+    final Request<Boolean> actionRequest = builders.actionActionAttachmentsAllowedButDisliked()
+        .build();
 
-    final Request<Object> actionRequest = methodBuilderWrapper.build();
     try
     {
-      final Response<Object> response = getClient().sendRequest(actionRequest).getResponse();
+      final Response<Boolean> response = getClient().sendRequest(actionRequest).getResponse();
       Assert.assertEquals(response.getStatus(), 200);
-      Assert.assertTrue((Boolean)response.getEntity());
+      Assert.assertTrue(response.getEntity());
     }
     catch (final RestLiResponseException responseException)
     {
@@ -266,10 +261,10 @@ public class TestStreamingGreetings extends RestLiIntegrationTest
     return new Object[][]
         {
             {
-                new RootBuilderWrapper<Long, Greeting>(new StreamingGreetingsRequestBuilders(defaultOptions))
+                new StreamingGreetingsRequestBuilders(defaultOptions)
             },
             {
-                new RootBuilderWrapper<Long, Greeting>(new StreamingGreetingsRequestBuilders(nextOptions))
+                new StreamingGreetingsRequestBuilders(nextOptions)
             }
         };
   }

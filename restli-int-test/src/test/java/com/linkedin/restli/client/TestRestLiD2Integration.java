@@ -37,9 +37,8 @@ import com.linkedin.restli.examples.groups.api.GroupMembership;
 import com.linkedin.restli.examples.groups.client.GroupMembershipsRequestBuilders;
 import com.linkedin.restli.examples.groups.client.GroupsRequestBuilders;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
-
 import com.linkedin.test.util.retry.SingleRetry;
+
 import java.util.concurrent.CountDownLatch;
 
 import org.testng.Assert;
@@ -98,9 +97,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
   @Test(retryAnalyzer = SingleRetry.class) // Allow retry due to CI timeouts
   public void testSuccessfulCall() throws RemoteInvocationException
   {
-    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new GreetingsRequestBuilders());
-
-    Request<Greeting> request = builders.get().id(1L).build();
+    Request<Greeting> request = new GreetingsRequestBuilders().get().id(1L).build();
     ResponseFuture<Greeting> future = _restClient.sendRequest(request);
     Greeting g = future.getResponse().getEntity();
     Assert.assertEquals(g.getId().longValue(), 1L);
@@ -112,9 +109,7 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
   @Test
   public void testRemoteInvocationException()
   {
-    RootBuilderWrapper<Integer, Group> builders = new RootBuilderWrapper<>(new GroupsRequestBuilders());
-
-    Request<Group> request = builders.get().id(1).build();
+    Request<Group> request = new GroupsRequestBuilders().get().id(1).build();
     ResponseFuture<Group> future = _restClient.sendRequest(request);
     try
     {
@@ -131,9 +126,10 @@ public class TestRestLiD2Integration extends RestLiIntegrationTest
   @Test
   public void testServiceUnavailableException()
   {
-    RootBuilderWrapper<CompoundKey, GroupMembership> builders = new RootBuilderWrapper<>(new GroupMembershipsRequestBuilders());
+    Request<GroupMembership> request = new GroupMembershipsRequestBuilders().get()
+        .id(new GroupMembershipsRequestBuilders.Key().setMemberId(1).setGroupId(2))
+        .build();
 
-    Request<GroupMembership> request = builders.get().id(new GroupMembershipsRequestBuilders.Key().setMemberId(1).setGroupId(2)).build();
     ResponseFuture<GroupMembership> future = _restClient.sendRequest(request);
     try
     {

@@ -19,21 +19,11 @@ package com.linkedin.restli.examples;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.linkedin.data.template.StringArray;
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.restli.client.BatchGetEntityRequest;
-import com.linkedin.restli.client.BatchGetEntityRequestBuilder;
-import com.linkedin.restli.client.CreateIdRequest;
-import com.linkedin.restli.client.CreateIdRequestBuilder;
-import com.linkedin.restli.client.Request;
-import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.RestLiResponseException;
+import com.linkedin.restli.client.*;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.EntityResponse;
-import com.linkedin.restli.common.ErrorResponse;
-import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.common.*;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.NullGreetingRequestBuilders;
@@ -41,8 +31,6 @@ import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
 import com.linkedin.restli.server.filter.FilterResponseContext;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
-import com.linkedin.restli.test.util.BatchCreateHelper;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -102,60 +90,38 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testNullCreateResponse(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testNullCreateResponse(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     //Forces the server to return a null CreateResponse
-    final RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, EmptyRecord> methodBuilderWrapper = builders.create();
     final Greeting illGreeting = new Greeting().setMessage("nullCreateResponse").setTone(Tone.INSULTING);
-    createAndAssertNullMessages(methodBuilderWrapper, illGreeting);
+    createAndAssertNullMessages(builders, illGreeting);
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testNullHttpStatusCreateResponse(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testNullHttpStatusCreateResponse(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     //Forces the server to return a valid CreateResponse but with a null HttpStatus inside of it
-    final RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, EmptyRecord> methodBuilderWrapper = builders.create();
     final Greeting illGreeting = new Greeting().setMessage("nullHttpStatus").setTone(Tone.INSULTING);
-    createAndAssertNullMessages(methodBuilderWrapper, illGreeting);
+    createAndAssertNullMessages(builders, illGreeting);
   }
 
   private void createAndAssertNullMessages(
-      final RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, EmptyRecord> methodBuilderWrapper,
+      final NullGreetingRequestBuilders builders,
       final Greeting illGreeting)
       throws RemoteInvocationException
   {
-    if (methodBuilderWrapper.isRestLi2Builder())
+    final CreateIdRequest<Long, Greeting> request = builders.create().input(illGreeting).build();
+    try
     {
-      final Object objBuilder = methodBuilderWrapper.getBuilder();
-      @SuppressWarnings("unchecked")
-      final CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder =
-          (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
-      final CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(illGreeting).build();
-      try
-      {
-        getClient().sendRequest(request).getResponse();
-        Assert.fail("We should not reach here!");
-      }
-      catch (final RestLiResponseException responseException)
-      {
-        assertCorrectInternalServerMessageForNull(responseException, "create");
-      }
+      getClient().sendRequest(request).getResponse();
+      Assert.fail("We should not reach here!");
     }
-    else
+    catch (final RestLiResponseException responseException)
     {
-      final Request<EmptyRecord> request = methodBuilderWrapper.input(illGreeting).build();
-      try
-      {
-        getClient().sendRequest(request).getResponse();
-        Assert.fail("We should not reach here!");
-      }
-      catch (final RestLiResponseException responseException)
-      {
-        assertCorrectInternalServerMessageForNull(responseException, "create");
-      }
+      assertCorrectInternalServerMessageForNull(responseException, "create");
     }
   }
 
@@ -164,14 +130,14 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testFinderNullListResponse(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testFinderNullListResponse(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     //Here we force the server resource class to return null list
-    finderAndAssertNullMessages(builders.findBy("searchReturnNullList").setQueryParam("tone", Tone.INSULTING).build());
+    finderAndAssertNullMessages(builders.findBySearchReturnNullList().toneParam(Tone.INSULTING).build());
 
     //Here we force the server resource class to return a list with a null element inside of it
-    finderAndAssertNullMessages(builders.findBy("searchReturnNullList").setQueryParam("tone", Tone.SINCERE).build());
+    finderAndAssertNullMessages(builders.findBySearchReturnNullList().toneParam(Tone.SINCERE).build());
   }
 
   /*
@@ -179,15 +145,15 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testCallBackFinderNullListResponse(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testCallBackFinderNullListResponse(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     //Here we force the server resource class to return null list from the callback
     finderAndAssertNullMessages(
-        builders.findBy("finderCallbackNullList").setQueryParam("tone", Tone.INSULTING).build());
+        builders.findByFinderCallbackNullList().toneParam(Tone.INSULTING).build());
 
     //Here we force the server resource class to return a list from the callback with a null element inside of it
-    finderAndAssertNullMessages(builders.findBy("finderCallbackNullList").setQueryParam("tone", Tone.SINCERE).build());
+    finderAndAssertNullMessages(builders.findByFinderCallbackNullList().toneParam(Tone.SINCERE).build());
   }
 
   /*
@@ -195,14 +161,14 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testPromiseFinderNullListResponse(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testPromiseFinderNullListResponse(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     //Here we force the server resource class to return null list from the promise
-    finderAndAssertNullMessages(builders.findBy("finderPromiseNullList").setQueryParam("tone", Tone.INSULTING).build());
+    finderAndAssertNullMessages(builders.findByFinderPromiseNullList().toneParam(Tone.INSULTING).build());
 
     //Here we force the server resource class to return a list from the promise with a null element inside of it
-    finderAndAssertNullMessages(builders.findBy("finderPromiseNullList").setQueryParam("tone", Tone.SINCERE).build());
+    finderAndAssertNullMessages(builders.findByFinderPromiseNullList().toneParam(Tone.SINCERE).build());
   }
 
   /*
@@ -210,14 +176,14 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testTaskFinderNullListResponse(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testTaskFinderNullListResponse(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     //Here we force the server resource class to return null list from the promise
-    finderAndAssertNullMessages(builders.findBy("finderTaskNullList").setQueryParam("tone", Tone.INSULTING).build());
+    finderAndAssertNullMessages(builders.findByFinderTaskNullList().toneParam(Tone.INSULTING).build());
 
     //Here we force the server resource class to return a list from the promise with a null element inside of it
-    finderAndAssertNullMessages(builders.findBy("finderTaskNullList").setQueryParam("tone", Tone.SINCERE).build());
+    finderAndAssertNullMessages(builders.findByFinderTaskNullList().toneParam(Tone.SINCERE).build());
   }
 
   /*
@@ -225,21 +191,21 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testNullsInCollectionResult(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testNullsInCollectionResult(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     //Here we force the server resource class to return null CollectionResult
     finderAndAssertNullMessages(
-        builders.findBy("searchReturnNullCollectionList").setQueryParam("tone", Tone.INSULTING).build());
+        builders.findBySearchReturnNullCollectionList().toneParam(Tone.INSULTING).build());
 
     //Here we force the server resource class to return a CollectionResult that has a null list inside of it
     finderAndAssertNullMessages(
-        builders.findBy("searchReturnNullCollectionList").setQueryParam("tone", Tone.SINCERE).build());
+        builders.findBySearchReturnNullCollectionList().toneParam(Tone.SINCERE).build());
 
     //Here we force the server resource class to return a CollectionResult that has a list inside of it which contains a
     //null element
     finderAndAssertNullMessages(
-        builders.findBy("searchReturnNullCollectionList").setQueryParam("tone", Tone.FRIENDLY).build());
+        builders.findBySearchReturnNullCollectionList().toneParam(Tone.FRIENDLY).build());
   }
 
   private void finderAndAssertNullMessages(final Request<CollectionResponse<Greeting>> req)
@@ -261,13 +227,13 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testGetNull(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testGetNull(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     try
     {
       //Forces the server to return null from the resource method
-      getClient().sendRequest(builders.get().id(1l).build()).getResponse();
+      getClient().sendRequest(builders.get().id(1L).build()).getResponse();
       Assert.fail("We should not reach here!");
     }
     catch (final RestLiResponseException responseException)
@@ -287,7 +253,7 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testGetAllNull(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testGetAllNull(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     try
@@ -307,17 +273,17 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testUpdateNull(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testUpdateNull(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     //Force the server to return a null UpdateResponse
-    sendUpdateAndAssert(builders, 1l);
+    sendUpdateAndAssert(builders, 1L);
 
     //Forces the server to return a valid UpdateResponse but with a null status
-    sendUpdateAndAssert(builders, 2l);
+    sendUpdateAndAssert(builders, 2L);
   }
 
-  private void sendUpdateAndAssert(final RootBuilderWrapper<Long, Greeting> builders, Long id)
+  private void sendUpdateAndAssert(final NullGreetingRequestBuilders builders, Long id)
       throws RemoteInvocationException
   {
     try
@@ -338,29 +304,29 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testBatchUpdate(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testBatchUpdate(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     //Forces the server to return a null BatchUpdateResult
-    sendBatchUpdateAndAssert(builders, 1l);
+    sendBatchUpdateAndAssert(builders, 1L);
 
     //Forces the server to return a BatchUpdateResult with a null Map
-    sendBatchUpdateAndAssert(builders, 2l);
+    sendBatchUpdateAndAssert(builders, 2L);
 
     //Forces the server to return a BatchUpdateResult with a null errors Map
-    sendBatchUpdateAndAssert(builders, 3l);
+    sendBatchUpdateAndAssert(builders, 3L);
 
     //Forces the server to return a BatchUpdateResult with an errors Map that has a null key
-    sendBatchUpdateAndAssert(builders, 4l);
+    sendBatchUpdateAndAssert(builders, 4L);
 
     //Forces the server to return a BatchUpdateResult with an errors Map that has a null value
-    sendBatchUpdateAndAssert(builders, 5l);
+    sendBatchUpdateAndAssert(builders, 5L);
 
     //Forces the server to return a BatchUpdateResult with a results Map that has a null key in it
-    sendBatchUpdateAndAssert(builders, 6l);
+    sendBatchUpdateAndAssert(builders, 6L);
   }
 
-  private void sendBatchUpdateAndAssert(final RootBuilderWrapper<Long, Greeting> builders, Long id)
+  private void sendBatchUpdateAndAssert(final NullGreetingRequestBuilders builders, Long id)
       throws RemoteInvocationException
   {
     try
@@ -383,11 +349,11 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testBatchUpdateUnsupportedNullKeyMap(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testBatchUpdateUnsupportedNullKeyMap(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     Greeting someGreeting = new Greeting().setMessage("Hello").setTone(Tone.INSULTING);
-    Request<BatchKVResponse<Long, UpdateStatus>> writeRequest = builders.batchUpdate().input(7l, someGreeting).build();
+    Request<BatchKVResponse<Long, UpdateStatus>> writeRequest = builders.batchUpdate().input(7L, someGreeting).build();
     Response<BatchKVResponse<Long, UpdateStatus>> response = getClient().sendRequest(writeRequest).getResponse();
 
     Map<Long, ErrorResponse> actualErrors = response.getEntity().getErrors();
@@ -396,7 +362,7 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
     Map<Long, UpdateStatus> actualResults = response.getEntity().getResults();
     Map<Long, UpdateStatus> expectedResults = new HashMap<Long, UpdateStatus>();
     UpdateStatus updateStatus = new UpdateStatus().setStatus(201);
-    expectedResults.put(3l, updateStatus);
+    expectedResults.put(3L, updateStatus);
     Assert.assertEquals(actualResults, expectedResults, "The results map should be correct");
   }
 
@@ -405,31 +371,31 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testBatchPartialUpdate(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testBatchPartialUpdate(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     //Forces the server to return a null BatchUpdateResult
-    sendBatchPartialUpdateAndAssert(builders, 1l);
+    sendBatchPartialUpdateAndAssert(builders, 1L);
 
     //Forces the server to return a BatchUpdateResult with a null Map
-    sendBatchPartialUpdateAndAssert(builders, 2l);
+    sendBatchPartialUpdateAndAssert(builders, 2L);
 
     //Forces the server to return a BatchUpdateResult with a null errors Map
-    sendBatchPartialUpdateAndAssert(builders, 3l);
+    sendBatchPartialUpdateAndAssert(builders, 3L);
 
     //Forces the server to return a BatchUpdateResult with a map that has a null key in it
-    sendBatchPartialUpdateAndAssert(builders, 4l);
+    sendBatchPartialUpdateAndAssert(builders, 4L);
   }
 
-  private void sendBatchPartialUpdateAndAssert(final RootBuilderWrapper<Long, Greeting> builders, Long id)
+  private void sendBatchPartialUpdateAndAssert(final NullGreetingRequestBuilders builders, Long id)
       throws RemoteInvocationException
   {
     try
     {
-      final Map<Long, PatchRequest<Greeting>> patchedGreetingsDiffs = new HashMap<Long, PatchRequest<Greeting>>();
-      patchedGreetingsDiffs.put(id, new PatchRequest<Greeting>());
+      final Map<Long, PatchRequest<Greeting>> patchedGreetingsDiffs = new HashMap<>();
+      patchedGreetingsDiffs.put(id, new PatchRequest<>());
       final Request<BatchKVResponse<Long, UpdateStatus>> batchUpdateRequest =
-          builders.batchPartialUpdate().patchInputs(patchedGreetingsDiffs).build();
+          builders.batchPartialUpdate().inputs(patchedGreetingsDiffs).build();
       getClient().sendRequest(batchUpdateRequest).getResponse();
     }
     catch (final RestLiResponseException responseException)
@@ -443,13 +409,13 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testDeleteNull(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testDeleteNull(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     try
     {
       //Forces the server to return null from the resource method
-      getClient().sendRequest(builders.delete().id(1l).build()).getResponse();
+      getClient().sendRequest(builders.delete().id(1L).build()).getResponse();
       Assert.fail("We should not reach here!");
     }
     catch (final RestLiResponseException responseException)
@@ -463,14 +429,14 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testBatchDeleteNull(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testBatchDeleteNull(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     try
     {
       //Forces the server to return null from the resource method
       final Request<BatchKVResponse<Long, UpdateStatus>> deleteRequest =
-          builders.batchDelete().ids(ImmutableList.of(1l)).build();
+          builders.batchDelete().ids(ImmutableList.of(1L)).build();
       getClient().sendRequest(deleteRequest).getResponse();
       Assert.fail("We should not reach here!");
     }
@@ -485,35 +451,35 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testNullStringArray(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testNullStringArray(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     //This forces the server to return a null StringArray from the resource method
-    final Request<Integer> request = builders.<Integer>action("returnNullStringArray").build();
-    final Response<Integer> response = getClient().sendRequest(request).getResponse();
+    final Request<StringArray> request = builders.actionReturnNullStringArray().build();
+    final Response<StringArray> response = getClient().sendRequest(request).getResponse();
     Assert.assertEquals(response.getStatus(), 200, "We should have gotten a 200 back");
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testNullActionResult(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testNullActionResult(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     //This forces the server to return a null ActionResult from the resource method
-    final Request<Integer> request = builders.<Integer>action("returnNullActionResult").build();
+    final Request<Integer> request = builders.actionReturnNullActionResult().build();
     final Response<Integer> response = getClient().sendRequest(request).getResponse();
     Assert.assertEquals(response.getStatus(), 200, "We should have gotten a 200 back");
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testStringArrayNullElement(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testStringArrayNullElement(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     try
     {
       //This forces the server to return a valid StringArray but with a null element inside of it
-      final Request<Integer> request = builders.<Integer>action("returnStringArrayWithNullElement").build();
+      final Request<StringArray> request = builders.actionReturnStringArrayWithNullElement().build();
       getClient().sendRequest(request).getResponse();
       Assert.fail("We should not reach here!");
     }
@@ -526,13 +492,13 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testActionResultNullValue(RootBuilderWrapper<Long, Greeting> builders)
+  public void testActionResultNullValue(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     try
     {
       //This forces the server to return an ActionResult with a null value inside of it
-      final Request<Integer> request = builders.<Integer>action("returnActionResultWithNullValue").build();
+      final Request<Integer> request = builders.actionReturnActionResultWithNullValue().build();
       getClient().sendRequest(request).getResponse();
       Assert.fail("We should not reach here!");
     }
@@ -547,13 +513,13 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testActionResultNullStatus(RootBuilderWrapper<Long, Greeting> builders)
+  public void testActionResultNullStatus(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     try
     {
       //This forces the server to return an ActionResult with a null HttpStatus inside of it
-      final Request<Integer> request = builders.<Integer>action("returnActionResultWithNullStatus").build();
+      final Request<Integer> request = builders.actionReturnActionResultWithNullStatus().build();
       getClient().sendRequest(request).getResponse();
       Assert.fail("We should not reach here!");
     }
@@ -568,7 +534,7 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "requestBuilderDataProvider")
-  public void testBatchCreateNulls(final RootBuilderWrapper<Long, Greeting> builders)
+  public void testBatchCreateNulls(final NullGreetingRequestBuilders builders)
       throws RemoteInvocationException
   {
     final Greeting firstGreeting = new Greeting().setMessage("first").setTone(Tone.INSULTING);
@@ -584,13 +550,19 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
     sendBatchCreateAndAssert(builders, ImmutableList.of(firstGreeting, secondGreeting));
   }
 
-  private void sendBatchCreateAndAssert(final RootBuilderWrapper<Long, Greeting> builders,
+  private void sendBatchCreateAndAssert(final NullGreetingRequestBuilders builders,
                                         final List<Greeting> greetingList)
       throws RemoteInvocationException
   {
     try
     {
-      BatchCreateHelper.batchCreate(getClient(), builders, greetingList, false);
+      BatchCreateIdRequest<Long, Greeting> request = builders
+          .batchCreate()
+          .inputs(greetingList)
+          .build();
+
+      getClient().sendRequest(request).getResponse();
+
       Assert.fail("We should not reach here!");
     }
     catch (final RestLiResponseException responseException)
@@ -606,10 +578,10 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
     return new Object[][]
         {
             {
-                new RootBuilderWrapper<Long, Greeting>(new NullGreetingRequestBuilders())
+                new NullGreetingRequestBuilders()
             },
             {
-                new RootBuilderWrapper<Long, Greeting>(new NullGreetingRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS))
+                new NullGreetingRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)
             }
         };
   }
@@ -711,7 +683,7 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX
       + "batchGetRequestBuilderDataProvider")
   public void testBatchGetUnsupportedNullKeyMap(final BatchGetEntityRequestBuilder<Long, Greeting> builder)
-      throws RemoteInvocationException, CloneNotSupportedException
+      throws RemoteInvocationException
   {
     BatchGetEntityRequest<Long, Greeting> request =
         builder.ids(ImmutableSet.of(5l)).fields(Greeting.fields().id(), Greeting.fields().message()).build();

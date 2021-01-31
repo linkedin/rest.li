@@ -17,11 +17,9 @@
 package com.linkedin.restli.test;
 
 
-import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.ToneFacet;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
 
@@ -39,12 +37,10 @@ public class ArrayTest
   @Test
   public void testIterable()
   {
-    RootBuilderWrapper<Integer, Greeting> builders = new RootBuilderWrapper<>(new ArrayTestRequestBuilders());
-
-    builders.findBy("Test")
-      .setQueryParam("primitive", Arrays.asList(1, 2, 3))
-      .setQueryParam("enum", Arrays.asList(Tone.FRIENDLY, Tone.SINCERE))
-      .setQueryParam("record" ,Arrays.asList(new Message(), new Message()))
-      .setQueryParam("existing", Arrays.asList(new ToneFacet(), new ToneFacet()));
+    new ArrayTestRequestBuilders().findByTest()
+      .primitiveParam(Arrays.asList(1, 2, 3))
+      .enumParam(Arrays.asList(Tone.FRIENDLY, Tone.SINCERE))
+      .recordParam(Arrays.asList(new Message(), new Message()))
+      .existingParam(Arrays.asList(new ToneFacet(), new ToneFacet()));
   }
 }

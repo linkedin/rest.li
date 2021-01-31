@@ -26,7 +26,6 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -76,10 +75,10 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
    * Request that should succeed, using promise
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testPromise(RootBuilderWrapper<?, ?> builders) throws InterruptedException
+  public void testPromise(ActionsRequestBuilders builders) throws InterruptedException
   {
     final Request<String> req =
-        builders.<String>action("Parseq").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
+        builders.actionParseq().aParam(5).bParam("yay").cParam(false).build();
     final Task<Response<String>> task = _restClient.createTask(req);
     _engine.run(task);
     task.await();
@@ -92,10 +91,10 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
    * Request that should succeed, using task
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testTask(RootBuilderWrapper<?, ?> builders) throws InterruptedException
+  public void testTask(ActionsRequestBuilders builders) throws InterruptedException
   {
     final Request<String> req =
-        builders.<String>action("Parseq").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
+        builders.actionParseq().aParam(5).bParam("yay").cParam(false).build();
     final Task<Response<String>> task = _restClient.createTask(req);
 
     _engine.run(task);
@@ -110,16 +109,16 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
    * Multiple requests that should succeed, using task
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testMultipleTask(RootBuilderWrapper<?, ?> builders) throws InterruptedException
+  public void testMultipleTask(ActionsRequestBuilders builders) throws InterruptedException
   {
     final Request<String> req1 =
-        builders.<String>action("Parseq").setActionParam("A", 5).setActionParam("B", "yay").setActionParam("C", false).build();
+        builders.actionParseq().aParam(5).bParam("yay").cParam(false).build();
     final Task<Response<String>> task1 = _restClient.createTask(req1);
     final Request<String> req2 =
-        builders.<String>action("Parseq").setActionParam("A", 6).setActionParam("B", "wohoo").setActionParam("C", true).build();
+        builders.actionParseq().aParam(6).bParam("wohoo").cParam(true).build();
     final Task<Response<String>> task2 = _restClient.createTask(req2);
     final Request<String> req3 =
-        builders.<String>action("Parseq").setActionParam("A", 7).setActionParam("B", "rawr").setActionParam("C", false).build();
+        builders.actionParseq().aParam(7).bParam("rawr").cParam(false).build();
     final Task<Response<String>> task3 = _restClient.createTask(req3);
 
     @SuppressWarnings("deprecation")
@@ -137,9 +136,9 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
    * Request that should fail, using promise
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testFailPromise(RootBuilderWrapper<?, ?> builders) throws InterruptedException
+  public void testFailPromise(ActionsRequestBuilders builders) throws InterruptedException
   {
-    final Request<Void> req = builders.<Void>action("FailPromiseCall").build();
+    final Request<Void> req = builders.actionFailPromiseCall().build();
     final Task<Response<Void>> task = _restClient.createTask(req);
     _engine.run(task);
     task.await();
@@ -152,9 +151,9 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
    * Request that should fail, using task
    */
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testFailTask(RootBuilderWrapper<?, ?> builders) throws InterruptedException
+  public void testFailTask(ActionsRequestBuilders builders) throws InterruptedException
   {
-    final Request<Void> req = builders.<Void>action("FailPromiseCall").build();
+    final Request<Void> req = builders.actionFailPromiseCall().build();
     final Task<Response<Void>> task = _restClient.createTask(req);
 
     _engine.run(task);
@@ -170,8 +169,8 @@ public class TestParSeqRestClient extends RestLiIntegrationTest
   {
     return new Object[][]
       {
-        { new RootBuilderWrapper<>(new ActionsRequestBuilders()) },
-        { new RootBuilderWrapper<>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+        { new ActionsRequestBuilders() },
+        { new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
       };
   }
 }

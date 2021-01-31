@@ -241,10 +241,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   public void testBatchCreateManualFailure(List<ValidationDemo> validationDemos, List<String> errorMessages)
       throws RemoteInvocationException
   {
-    Response<CollectionResponse<CreateStatus>> response = _restClientManual.sendRequest(new RootBuilderWrapper<Integer, ValidationDemo>(
-        new ValidationDemosRequestBuilders()).batchCreate().inputs(validationDemos).build()).getResponse();
-    @SuppressWarnings("unchecked")
-    List<CreateIdStatus<Integer>> results2 = ((BatchCreateIdResponse<Integer>) (Object) response.getEntity()).getElements();
+    Response<BatchCreateIdResponse<Integer>> response = _restClientManual.sendRequest(new ValidationDemosRequestBuilders()
+        .batchCreate().inputs(validationDemos).build())
+        .getResponse();
+
+    List<CreateIdStatus<Integer>> results2 = response.getEntity().getElements();
     int i = 0;
     for (CreateIdStatus<Integer> result : results2)
     {

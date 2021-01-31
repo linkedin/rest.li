@@ -26,7 +26,6 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
 import com.linkedin.restli.examples.greetings.client.ComplexByteKeysRequestBuilders;
 import com.linkedin.restli.examples.typeref.api.TyperefRecord;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -49,15 +48,10 @@ public class TestComplexByteKeyResource extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testGet(RootBuilderWrapper<ComplexResourceKey<TyperefRecord, TwoPartKey>, TyperefRecord> builders) throws RemoteInvocationException
-  {
-    testGetMain(builders.get());
-  }
-
-  private void testGetMain(RootBuilderWrapper.MethodBuilderWrapper<ComplexResourceKey<TyperefRecord, TwoPartKey>, TyperefRecord, TyperefRecord> requestBuilder) throws RemoteInvocationException
+  public void testGet(ComplexByteKeysRequestBuilders builders) throws RemoteInvocationException
   {
     final ByteString byteData = ByteString.copy(new byte[] {0, 32, -95});
-    Request<TyperefRecord> request = requestBuilder.id(getComplexKey(byteData)).build();
+    Request<TyperefRecord> request = builders.get().id(getComplexKey(byteData)).build();
     ResponseFuture<TyperefRecord> future = getClient().sendRequest(request);
     Response<TyperefRecord> response = future.getResponse();
 
@@ -75,8 +69,8 @@ public class TestComplexByteKeyResource extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<ComplexResourceKey<TyperefRecord, TwoPartKey>, TyperefRecord>(new ComplexByteKeysRequestBuilders()) },
-      { new RootBuilderWrapper<ComplexResourceKey<TyperefRecord, TwoPartKey>, TyperefRecord>(new ComplexByteKeysRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      { new ComplexByteKeysRequestBuilders() },
+      { new ComplexByteKeysRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 }

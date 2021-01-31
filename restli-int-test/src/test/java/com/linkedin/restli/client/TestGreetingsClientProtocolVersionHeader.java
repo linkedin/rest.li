@@ -40,7 +40,6 @@ import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -121,7 +120,7 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
   }
 
   @Test(dataProvider = "requestBuilderDataProvider")
-  public void testProtocolVersionHeaderRoundtrip(RootBuilderWrapper<Long, Greeting> builders, ProtocolVersion version)
+  public void testProtocolVersionHeaderRoundtrip(GreetingsRequestBuilders builders, ProtocolVersion version)
       throws RemoteInvocationException
   {
     final Request<Greeting> getRequest = builders.get().id(1L).build();
@@ -130,7 +129,7 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
   }
 
   @Test(dataProvider = "requestBuilderDataProvider")
-  public void testForceUseNextVersionOverride(RootBuilderWrapper<Long, Greeting> builders, ProtocolVersion version)
+  public void testForceUseNextVersionOverride(GreetingsRequestBuilders builders, ProtocolVersion version)
       throws RemoteInvocationException
   {
     final Request<Greeting> getRequest = builders.get().id(1L).build();
@@ -210,10 +209,10 @@ public class TestGreetingsClientProtocolVersionHeader extends RestLiIntegrationT
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE).build())), AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build())), AllProtocolVersions.LATEST_PROTOCOL_VERSION },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build())), AllProtocolVersions.NEXT_PROTOCOL_VERSION },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_PREVIOUS).build())), AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION }
+      { new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.USE_LATEST_IF_AVAILABLE).build()), AllProtocolVersions.BASELINE_PROTOCOL_VERSION },
+      { new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_LATEST).build()), AllProtocolVersions.LATEST_PROTOCOL_VERSION },
+      { new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build()), AllProtocolVersions.NEXT_PROTOCOL_VERSION },
+      { new GreetingsRequestBuilders(new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_PREVIOUS).build()), AllProtocolVersions.PREVIOUS_PROTOCOL_VERSION }
     };
   }
 }

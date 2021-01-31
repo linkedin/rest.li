@@ -24,18 +24,13 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.restli.client.CreateIdRequest;
-import com.linkedin.restli.client.CreateIdRequestBuilder;
-import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.IdResponse;
-import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsPromiseRequestBuilders;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,7 +79,7 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testParseqTraceDebugPutRequestHandlerTracevis(RootBuilderWrapper<Long, Greeting> builders)
+  public void testParseqTraceDebugPutRequestHandlerTracevis(GreetingsPromiseRequestBuilders builders)
       throws URISyntaxException, ExecutionException, InterruptedException, RemoteInvocationException
   {
     Long newId = createNewGreetingOnTheServer(builders);
@@ -114,7 +109,7 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testParseqTraceDebugDeleteRequestHandlerTracevis(RootBuilderWrapper<Long, Greeting> builders)
+  public void testParseqTraceDebugDeleteRequestHandlerTracevis(GreetingsPromiseRequestBuilders builders)
       throws URISyntaxException, ExecutionException, InterruptedException, RemoteInvocationException
   {
     Long newId = createNewGreetingOnTheServer(builders);
@@ -143,7 +138,7 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testParseqTraceDebugPutRequestHandlerRaw(RootBuilderWrapper<Long, Greeting> builders)
+  public void testParseqTraceDebugPutRequestHandlerRaw(GreetingsPromiseRequestBuilders builders)
       throws URISyntaxException, ExecutionException, InterruptedException, RemoteInvocationException
   {
     Long newId = createNewGreetingOnTheServer(builders);
@@ -173,7 +168,7 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testParseqTraceDebugDeleteRequestHandlerRaw(RootBuilderWrapper<Long, Greeting> builders)
+  public void testParseqTraceDebugDeleteRequestHandlerRaw(GreetingsPromiseRequestBuilders builders)
       throws URISyntaxException, ExecutionException, InterruptedException, RemoteInvocationException
   {
     Long newId = createNewGreetingOnTheServer(builders);
@@ -231,37 +226,20 @@ public class TestDebugRequestHandlers extends RestLiIntegrationTest
     Assert.assertEquals(contentTypeValues.get(0), HEADER_VALUE_TEXT_HTML);
   }
 
-  private Long createNewGreetingOnTheServer(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  private Long createNewGreetingOnTheServer(GreetingsPromiseRequestBuilders builders) throws RemoteInvocationException
   {
     Greeting newGreeting = new Greeting().setMessage("New Greeting!").setTone(Tone.FRIENDLY);
-    RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, EmptyRecord> createBuilderWrapper = builders.create();
-    Long createdId;
-    if (createBuilderWrapper.isRestLi2Builder())
-    {
-      Object objBuilder = createBuilderWrapper.getBuilder();
-      @SuppressWarnings("unchecked")
-      CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder = (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
-      CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(newGreeting).build();
-      Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
-      createdId = response.getEntity().getId();
-    }
-    else
-    {
-      Request<EmptyRecord> request = createBuilderWrapper.input(newGreeting).build();
-      Response<EmptyRecord> response = getClient().sendRequest(request).getResponse();
-      @SuppressWarnings("unchecked")
-      CreateResponse<Long> createResponse = (CreateResponse<Long>) response.getEntity();
-      createdId= createResponse.getId();
-    }
-    return createdId;
+    CreateIdRequest<Long, Greeting> request = builders.create().input(newGreeting).build();
+    Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
+    return response.getEntity().getId();
   }
 
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      { new GreetingsPromiseRequestBuilders() },
+      { new GreetingsPromiseRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 }

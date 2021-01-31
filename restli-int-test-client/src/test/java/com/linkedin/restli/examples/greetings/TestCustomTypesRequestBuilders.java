@@ -24,7 +24,6 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
@@ -39,7 +38,6 @@ import com.linkedin.restli.examples.typeref.api.UnionRefInline;
 import com.linkedin.restli.internal.client.*;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -59,29 +57,36 @@ public class TestCustomTypesRequestBuilders
 {
   // test correct request is built for customLong
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request1BuilderDataProviderCustomLongFinder")
-  public void testFinderCustomLong(RootBuilderWrapper<Long, Greeting> builders, ProtocolVersion version, String expectedUri)
+  public void testFinderCustomLong(ProtocolVersion version, String expectedUri)
   {
-    Request<CollectionResponse<Greeting>> request = builders.findBy("CustomLong").setQueryParam("l", new CustomLong(20L)).build();
+    Request<CollectionResponse<Greeting>> request = new CustomTypesRequestBuilders()
+        .findByCustomLong()
+        .lParam(new CustomLong(20L))
+        .build();
 
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
   }
 
   // test correct request is built for customLongArray
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request1BuilderDataProviderCustomLongArrayFinder")
-  public void testFinderCustomLongArray(RootBuilderWrapper<Long, Greeting> builders, ProtocolVersion version, String expectedUri)
+  public void testFinderCustomLongArray(ProtocolVersion version, String expectedUri)
   {
     List<CustomLong> ls = new ArrayList<CustomLong>(2);
     ls.add(new CustomLong(2L));
     ls.add(new CustomLong(4L));
-    Request<CollectionResponse<Greeting>> request = builders.findBy("CustomLongArray").setQueryParam("ls", ls).build();
+
+    Request<CollectionResponse<Greeting>> request = new CustomTypesRequestBuilders()
+        .findByCustomLongArray()
+        .lsParam(ls)
+        .build();
 
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request2BuilderDataProviderEntity")
-  public void testCollectionGetKey(RootBuilderWrapper<CustomLong, Greeting> builders, ProtocolVersion version, String expectedUri)
+  public void testCollectionGetKey(ProtocolVersion version, String expectedUri)
   {
-    Request<Greeting> request = builders.get().id(new CustomLong(5L)).build();
+    Request<Greeting> request = new CustomTypes2RequestBuilders().get().id(new CustomLong(5L)).build();
 
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedUri, null, version);
   }
@@ -104,15 +109,18 @@ public class TestCustomTypesRequestBuilders
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request4BuilderDataProviderEntity")
-  public void testCollectionChildGetKey(RootBuilderWrapper<CustomLong, Greeting> builders, ProtocolVersion version, String expectedUri)
+  public void testCollectionChildGetKey(ProtocolVersion version, String expectedUri)
   {
-    Request<Greeting> request = builders.get().setPathKey("customTypes2Id", new CustomLong(1L)).id(new CustomLong(7L)).build();
+    Request<Greeting> request = new CustomTypes4RequestBuilders().get()
+        .customTypes2IdKey(new CustomLong(1L))
+        .id(new CustomLong(7L))
+        .build();
 
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedUri, null, version);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request3BuilderDataProviderEntity")
-  public void testAssociationKeys(RootBuilderWrapper<CompoundKey, Greeting> builders, ProtocolVersion version, String expectedUri)
+  public void testAssociationKeys(ProtocolVersion version, String expectedUri)
   {
     // normally coercer registration is handled in RestliAnnotationReader,
     // but that isn't run here because this is just a unit test.  So, we need to
@@ -120,20 +128,23 @@ public class TestCustomTypesRequestBuilders
     new DateCoercer();
 
     CustomTypes3RequestBuilders.Key key = new CustomTypes3RequestBuilders.Key().setLongId(new CustomLong(5L)).setDateId(new Date(13L));
-    Request<Greeting> request = builders.get().id(key).build();
+    Request<Greeting> request = new CustomTypes3RequestBuilders().get().id(key).build();
 
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedUri, null, version);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request3BuilderDataProviderEntityFinder")
-  public void testAssocKey(RootBuilderWrapper<CompoundKey, Greeting> builders, ProtocolVersion version, String expectedUri)
+  public void testAssocKey(ProtocolVersion version, String expectedUri)
   {
     // normally coercer registration is handled in RestliAnnotationReader,
     // but that isn't run here because this is just a unit test.  So, we need to
     // force registration of the DateCoercer because it isn't contained in Date itself.
     new DateCoercer();
 
-    Request<CollectionResponse<Greeting>> request = builders.findBy("DateOnly").setPathKey("dateId", new Date(13L)).build();
+    Request<CollectionResponse<Greeting>> request = new CustomTypes3RequestBuilders()
+        .findByDateOnly()
+        .dateIdKey(new Date(13L))
+        .build();
 
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
 
@@ -158,8 +169,8 @@ public class TestCustomTypesRequestBuilders
     String uriV1 = "customTypes?l=20&q=customLong";
     String uriV2 = "customTypes?l=20&q=customLong";
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesRequestBuilders()) , AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1},
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesRequestBuilders()) , AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2}
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 
@@ -169,8 +180,8 @@ public class TestCustomTypesRequestBuilders
     String uriV1 = "customTypes?ls=2&ls=4&q=customLongArray";
     String uriV2 = "customTypes?ls=List(2,4)&q=customLongArray";
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesRequestBuilders()) , AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1},
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesRequestBuilders()) , AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2}
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 
@@ -180,8 +191,8 @@ public class TestCustomTypesRequestBuilders
     String uriV1 = "customTypes2/5";
     String uriV2 = "customTypes2/5";
     return new Object[][] {
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 
@@ -213,8 +224,8 @@ public class TestCustomTypesRequestBuilders
     String uriV1 = "customTypes2/1/customTypes4/7";
     String uriV2 = "customTypes2/1/customTypes4/7";
     return new Object[][] {
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes4RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes4RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 
@@ -224,8 +235,8 @@ public class TestCustomTypesRequestBuilders
     String uriV1 = "customTypes3/dateId=13&longId=5";
     String uriV2 = "customTypes3/(dateId:13,longId:5)";
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 
@@ -235,8 +246,8 @@ public class TestCustomTypesRequestBuilders
     String uriV1 = "customTypes3/dateId=13?q=dateOnly";
     String uriV2 = "customTypes3/(dateId:13)?q=dateOnly";
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 }

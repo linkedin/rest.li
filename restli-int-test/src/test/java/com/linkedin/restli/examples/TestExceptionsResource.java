@@ -41,7 +41,6 @@ import com.linkedin.restli.examples.greetings.server.ExceptionsResource;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.server.ErrorResponseFormat;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 import java.io.IOException;
 import java.util.List;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -75,7 +74,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
 
   @SuppressWarnings("deprecation")
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
-  public void testException(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testException(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, ExceptionsRequestBuilders builders) throws RemoteInvocationException
   {
     Response<Greeting> response = null;
     RestLiResponseException exception = null;
@@ -136,17 +135,17 @@ public class TestExceptionsResource extends RestLiIntegrationTest
 
   @SuppressWarnings("deprecation")
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
-  public void testCreateError(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws Exception
+  public void testCreateError(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, ExceptionsRequestBuilders builders) throws Exception
   {
-    Response<EmptyRecord> response = null;
+    Response<?> response = null;
     RestLiResponseException exception = null;
 
     try
     {
-      Request<EmptyRecord> createRequest = builders.create()
+      Request<?> createRequest = builders.create()
           .input(new Greeting().setId(11L).setMessage("@#$%@!$%").setTone(Tone.INSULTING))
           .build();
-      ResponseFuture<EmptyRecord> future;
+      ResponseFuture<?> future;
 
       if (explicit)
       {
@@ -317,12 +316,12 @@ public class TestExceptionsResource extends RestLiIntegrationTest
   public Object[][] exceptionHandlingModesDataProvider()
   {
     return new Object[][] {
-      { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) },
-      { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-      { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) },
-      { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-      { false, null, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders()) },
-      { false, null, new RootBuilderWrapper<Long, Greeting>(new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new ExceptionsRequestBuilders() },
+      { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) },
+      { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new ExceptionsRequestBuilders() },
+      { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) },
+      { false, null, new ExceptionsRequestBuilders() },
+      { false, null, new ExceptionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 

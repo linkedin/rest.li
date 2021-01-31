@@ -27,32 +27,10 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.restli.client.BatchGetEntityRequestBuilder;
-import com.linkedin.restli.client.CreateIdRequest;
-import com.linkedin.restli.client.CreateIdRequestBuilder;
-import com.linkedin.restli.client.OptionsRequestBuilder;
-import com.linkedin.restli.client.Request;
-import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.client.RestliRequestOptions;
+import com.linkedin.restli.client.*;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
-import com.linkedin.restli.common.BatchCreateIdResponse;
-import com.linkedin.restli.common.CollectionMetadata;
-import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CreateIdStatus;
-import com.linkedin.restli.common.EmptyRecord;
-import com.linkedin.restli.common.EntityResponse;
-import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.IdResponse;
-import com.linkedin.restli.common.Link;
-import com.linkedin.restli.common.OptionsResponse;
-import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.common.*;
 import com.linkedin.restli.examples.greetings.api.Empty;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Message;
@@ -68,7 +46,6 @@ import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.testutils.URIDetails;
 import com.linkedin.restli.restspec.ResourceSchema;
-import com.linkedin.restli.test.util.BatchCreateHelper;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -720,24 +697,12 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     for (Greeting greeting: greetings)
     {
       RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, EmptyRecord> createBuilder = builders.create();
-      Long createdId;
-      if (createBuilder.isRestLi2Builder())
-      {
-        Object objBuilder = createBuilder.getBuilder();
-        @SuppressWarnings("unchecked")
-        CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder = (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
-        CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(greeting).build();
-        Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
-        createdId = response.getEntity().getId();
-      }
-      else
-      {
-        Request<EmptyRecord> request = createBuilder.input(greeting).build();
-        Response<EmptyRecord> response = getClient().sendRequest(request).getResponse();
-        @SuppressWarnings("unchecked")
-        CreateResponse<Long> createResponse = (CreateResponse<Long>)response.getEntity();
-        createdId = createResponse.getId();
-      }
+      Object objBuilder = createBuilder.getBuilder();
+      @SuppressWarnings("unchecked")
+      CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder = (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
+      CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(greeting).build();
+      Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
+      Long createdId = response.getEntity().getId();
       createdIds.add(createdId);
     }
 
@@ -766,7 +731,11 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchCreate", Tone.FRIENDLY);
 
-    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(getClient(), builders, greetings, false);
+    Request<BatchCreateIdResponse<Long>> request = builders.batchCreate()
+        .inputs(greetings)
+        .build();
+
+    List<CreateIdStatus<Long>> statuses = getClient().sendRequest(request).getResponseEntity().getElements();
     List<Long> createdIds = new ArrayList<Long>(statuses.size());
 
     for (CreateIdStatus<Long> status: statuses)
@@ -790,7 +759,13 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   {
     List<Greeting> greetings = generateBatchTestData(3, "BatchCreate", Tone.FRIENDLY);
 
-    List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(getClient(), builders, greetings, true);
+    Request<BatchCreateIdResponse<Long>> request = builders.batchCreate()
+        .inputs(greetings)
+        .setParam("useless", "param")
+        .setParam("foo", 2)
+        .build();
+
+    List<CreateIdStatus<Long>> statuses = getClient().sendRequest(request).getResponseEntity().getElements();
 
     for (CreateIdStatus<Long> status: statuses)
     {

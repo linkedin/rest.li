@@ -31,7 +31,6 @@ import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingCriteria;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.BatchfindersRequestBuilders;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -64,13 +63,14 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
   @Test
   public void testBatchFinder() throws RemoteInvocationException
   {
-    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new BatchfindersRequestBuilders());
-
     GreetingCriteria c1 = new GreetingCriteria().setId(1L).setTone(Tone.SINCERE);
     GreetingCriteria c2 = new GreetingCriteria().setId(2L).setTone(Tone.FRIENDLY);
 
-    Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings").setQueryParam("criteria",
-        Arrays.asList(c1, c2)).setQueryParam("message", "hello world").build();
+    Request<BatchCollectionResponse<Greeting>> request = new BatchfindersRequestBuilders()
+        .batchFindBySearchGreetings()
+        .criteriaParam(Arrays.asList(c1, c2))
+        .messageParam("hello world")
+        .build();
     ResponseFuture<BatchCollectionResponse<Greeting>> future = getClient().sendRequest(request);
     BatchCollectionResponse<Greeting> response = future.getResponse().getEntity();
 
@@ -88,14 +88,13 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
   @Test
   public void testBatchFinderWithProjection() throws RemoteInvocationException
   {
-    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new BatchfindersRequestBuilders());
-
     GreetingCriteria c1 = new GreetingCriteria().setId(1L).setTone(Tone.SINCERE);
     GreetingCriteria c2 = new GreetingCriteria().setId(2L).setTone(Tone.FRIENDLY);
 
-    Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
-        .setQueryParam("criteria", Arrays.asList(c1, c2))
-        .setQueryParam("message", "hello world")
+    Request<BatchCollectionResponse<Greeting>> request = new BatchfindersRequestBuilders()
+        .batchFindBySearchGreetings()
+        .criteriaParam(Arrays.asList(c1, c2))
+        .messageParam("hello world")
         .fields(Greeting.fields().id())
         .build();
     ResponseFuture<BatchCollectionResponse<Greeting>> future = getClient().sendRequest(request);
@@ -116,12 +115,13 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
   @Test
   public void testBatchFinderWithError() throws RemoteInvocationException
   {
-    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new BatchfindersRequestBuilders());
-
     GreetingCriteria c3 = new GreetingCriteria().setId(100L);
 
-    Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
-        .addQueryParam("criteria", c3).setQueryParam("message", "hello world").build();
+    Request<BatchCollectionResponse<Greeting>> request = new BatchfindersRequestBuilders()
+        .batchFindBySearchGreetings()
+        .addCriteriaParam(c3)
+        .messageParam("hello world")
+        .build();
 
     ResponseFuture<BatchCollectionResponse<Greeting>> future = getClient().sendRequest(request);
     BatchCollectionResponse<Greeting> response = future.getResponse().getEntity();
@@ -135,12 +135,14 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
   @Test
   public void testBatchFinderWithErrorAndProjection() throws RemoteInvocationException
   {
-    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new BatchfindersRequestBuilders());
-
     GreetingCriteria c3 = new GreetingCriteria().setId(100L);
 
-    Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
-        .addQueryParam("criteria", c3).setQueryParam("message", "hello world").fields(Greeting.fields().id()).build();
+    Request<BatchCollectionResponse<Greeting>> request = new BatchfindersRequestBuilders()
+        .batchFindBySearchGreetings()
+        .addCriteriaParam(c3)
+        .messageParam("hello world")
+        .fields(Greeting.fields().id())
+        .build();
 
     ResponseFuture<BatchCollectionResponse<Greeting>> future = getClient().sendRequest(request);
     BatchCollectionResponse<Greeting> response = future.getResponse().getEntity();
@@ -153,12 +155,13 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
 
   @Test
   public void testBatchFinderWithNotFoundCriteria() throws RemoteInvocationException {
-    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new BatchfindersRequestBuilders());
-
     GreetingCriteria c4 = new GreetingCriteria().setId(0L);
 
-    Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
-        .addQueryParam("criteria", c4).setQueryParam("message", "hello world").build();
+    Request<BatchCollectionResponse<Greeting>> request = new BatchfindersRequestBuilders()
+        .batchFindBySearchGreetings()
+        .addCriteriaParam(c4)
+        .messageParam("hello world")
+        .build();
 
     ResponseFuture<BatchCollectionResponse<Greeting>> future = getClient().sendRequest(request);
     BatchCollectionResponse<Greeting> response = future.getResponse().getEntity();

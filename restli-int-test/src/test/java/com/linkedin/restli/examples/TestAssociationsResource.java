@@ -28,7 +28,6 @@ import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.BatchFinderCriteriaResult;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.PatchRequest;
@@ -38,7 +37,6 @@ import com.linkedin.restli.examples.greetings.api.MessageCriteria;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.AssociationsRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubRequestBuilders;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -72,35 +70,35 @@ public class TestAssociationsResource extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider", expectedExceptions = UnsupportedOperationException.class)
   @SuppressWarnings("deprecation")
-  public void testCreate(RootBuilderWrapper<CompoundKey, Message> builders) throws Exception
+  public void testCreate(AssociationsRequestBuilders builders) throws Exception
   {
     // Associations should never support create operations. This is a bug in Rest.li that will be fixed. For now we want
     // to make sure that creating and then calling getId() on the response throws an exception.
-    Request<EmptyRecord> request = builders.create().input(new Message().setMessage("foo")).build();
+    Request<?> request = builders.create().input(new Message().setMessage("foo")).build();
     getClient().sendRequest(request).getResponse().getId();
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testOptionalAssociationKeyInFinder(RootBuilderWrapper<CompoundKey, Message> builders) throws Exception
+  public void testOptionalAssociationKeyInFinder(AssociationsRequestBuilders builders) throws Exception
   {
     // optional and present
-    RequestBuilder<? extends Request<CollectionResponse<Message>>> finder = builders.findBy("AssocKeyFinderOpt").assocKey("src", "KEY1").getBuilder();
+    RequestBuilder<? extends Request<CollectionResponse<Message>>> finder = builders.findByAssocKeyFinderOpt().srcKey("KEY1");
     Assert.assertEquals(200, getClient().sendRequest(finder).getResponse().getStatus());
 
     // optional and not present
-    RequestBuilder<? extends Request<CollectionResponse<Message>>> finderNoAssocKey = builders.findBy("AssocKeyFinderOpt").getBuilder();
+    RequestBuilder<? extends Request<CollectionResponse<Message>>> finderNoAssocKey = builders.findByAssocKeyFinderOpt();
     Assert.assertEquals(200, getClient().sendRequest(finderNoAssocKey).getResponse().getStatus());
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testRequiredAssociationKeyInFinder(RootBuilderWrapper<CompoundKey, Message> builders) throws Exception
+  public void testRequiredAssociationKeyInFinder(AssociationsRequestBuilders builders) throws Exception
   {
     // required and present
-    RequestBuilder<? extends Request<CollectionResponse<Message>>> finder = builders.findBy("AssocKeyFinder").assocKey("src", "KEY1").getBuilder();
+    RequestBuilder<? extends Request<CollectionResponse<Message>>> finder = builders.findByAssocKeyFinder().srcKey("KEY1");
     Assert.assertEquals(200, getClient().sendRequest(finder).getResponse().getStatus());
 
     // required and not present
-    RequestBuilder<? extends Request<CollectionResponse<Message>>> finderNoAssocKey = builders.findBy("AssocKeyFinder").getBuilder();
+    RequestBuilder<? extends Request<CollectionResponse<Message>>> finderNoAssocKey = builders.findByAssocKeyFinder();
     try
     {
       getClient().sendRequest(finderNoAssocKey).getResponse();
@@ -113,12 +111,14 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchFinder(RootBuilderWrapper<CompoundKey, Message> builders) throws RemoteInvocationException
+  public void testBatchFinder(AssociationsRequestBuilders builders) throws RemoteInvocationException
   {
     MessageCriteria m1 = new MessageCriteria().setMessage("hello").setTone(Tone.FRIENDLY);
     MessageCriteria m2 = new MessageCriteria().setMessage("world").setTone(Tone.SINCERE);
-    Request<BatchCollectionResponse<Message>> request = builders.batchFindBy("searchMessages").assocKey("src", "KEY1")
-        .setQueryParam("criteria", Arrays.asList(m1, m2)).build();
+    Request<BatchCollectionResponse<Message>> request = builders.batchFindBySearchMessages()
+        .srcKey("KEY1")
+        .criteriaParam(Arrays.asList(m1, m2))
+        .build();
     ResponseFuture<BatchCollectionResponse<Message>> future = getClient().sendRequest(request);
     BatchCollectionResponse<Message> response = future.getResponse().getEntity();
 
@@ -154,27 +154,27 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
-  public void testSubresourceGet(RootBuilderWrapper<String, Message> builders) throws RemoteInvocationException
+  public void testSubresourceGet(AssociationsSubRequestBuilders builders) throws RemoteInvocationException
   {
-    Request<Message> request = builders.get().setPathKey("dest", "dest").setPathKey("src", "src").id("id").build();
+    Request<Message> request = builders.get().destKey("dest").srcKey("src").id("id").build();
     Message message = getClient().sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(message.getId(), "src");
     Assert.assertEquals(message.getMessage(), "dest");
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
-  public void testSubresourceGetForbiddenCharacters(RootBuilderWrapper<String, Message> builders) throws RemoteInvocationException
+  public void testSubresourceGetForbiddenCharacters(AssociationsSubRequestBuilders builders) throws RemoteInvocationException
   {
-    Request<Message> request = builders.get().setPathKey("dest", "d&est").setPathKey("src", "s&rc").id("id").build();
+    Request<Message> request = builders.get().destKey("d&est").srcKey("s&rc").id("id").build();
     Message message = getClient().sendRequest(request).getResponse().getEntity();
     Assert.assertEquals(message.getId(), "s&rc");
     Assert.assertEquals(message.getMessage(), "d&est");
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
-  public void testSubresourceFinder(RootBuilderWrapper<String, Message> builders) throws RemoteInvocationException
+  public void testSubresourceFinder(AssociationsSubRequestBuilders builders) throws RemoteInvocationException
   {
-    Request<CollectionResponse<Message>> request = builders.findBy("Tone").setPathKey("dest", "dest").setPathKey("src", "src").setQueryParam("tone", Tone.FRIENDLY).build();
+    Request<CollectionResponse<Message>> request = builders.findByTone().destKey("dest").srcKey("src").toneParam(Tone.FRIENDLY).build();
     List<Message> messages = getClient().sendRequest(request).getResponse().getEntity().getElements();
 
     for (Message message : messages)
@@ -184,36 +184,36 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
-  public void testSubresourceAction(RootBuilderWrapper<CompoundKey, Message> builders) throws RemoteInvocationException
+  public void testSubresourceAction(AssociationsSubRequestBuilders builders) throws RemoteInvocationException
   {
-    Request<Integer> request = builders.<Integer>action("Action").setPathKey("dest", "dest").setPathKey("src", "src").build();
+    Request<Integer> request = builders.actionAction().destKey("dest").srcKey("src").build();
     Integer integer = getClient().sendRequest(request).getResponse().getEntity();
 
     Assert.assertEquals(integer, new Integer(1));
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
-  public void testSubresourcePathKeyAction(RootBuilderWrapper<CompoundKey, Message> builders) throws RemoteInvocationException
+  public void testSubresourcePathKeyAction(AssociationsSubRequestBuilders builders) throws RemoteInvocationException
   {
-    Request<String> request = builders.<String>action("GetSource").setPathKey("dest", "dest").setPathKey("src", "src").build();
+    Request<String> request = builders.actionGetSource().destKey("dest").srcKey("src").build();
     String source = getClient().sendRequest(request).getResponse().getEntity();
 
     Assert.assertEquals(source, "src");
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
-  public void testSubresourcePathKeySingularAction(RootBuilderWrapper<CompoundKey, Message> builders) throws RemoteInvocationException
+  public void testSubresourcePathKeySingularAction(AssociationsSubRequestBuilders builders) throws RemoteInvocationException
   {
     String srcValue = "src-test";
     String destValue = "dest-test";
-    Request<String> request = builders.<String>action("ConcatenateStrings").setPathKey("dest", destValue).setPathKey("src", srcValue).build();
+    Request<String> request = builders.actionConcatenateStrings().destKey(destValue).srcKey(srcValue).build();
     String returnValue = getClient().sendRequest(request).getResponse().getEntity();
 
     Assert.assertEquals(returnValue, srcValue + destValue);
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchUpdate(RootBuilderWrapper<CompoundKey, Message> builders)
+  public void testBatchUpdate(AssociationsRequestBuilders builders)
       throws RemoteInvocationException
   {
     Request<BatchKVResponse<CompoundKey, UpdateStatus>> request = builders.batchUpdate().inputs(DB).build();
@@ -224,7 +224,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchPartialUpdate(RootBuilderWrapper<CompoundKey, PatchRequest<Message>> builders)
+  public void testBatchPartialUpdate(AssociationsRequestBuilders builders)
       throws RemoteInvocationException
   {
     Map<CompoundKey, PatchRequest<Message>> patches = new HashMap<CompoundKey, PatchRequest<Message>>();
@@ -248,8 +248,8 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders()) },
-      { new RootBuilderWrapper<CompoundKey, Message>(new AssociationsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      { new AssociationsRequestBuilders() },
+      { new AssociationsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 
@@ -266,8 +266,8 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   private static Object[][] requestSubBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<String, Message>(new AssociationsSubRequestBuilders()) },
-      { new RootBuilderWrapper<String, Message>(new AssociationsSubRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      { new AssociationsSubRequestBuilders() },
+      { new AssociationsSubRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 }
