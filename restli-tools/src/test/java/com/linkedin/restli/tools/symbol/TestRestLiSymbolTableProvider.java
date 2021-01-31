@@ -29,7 +29,6 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.server.ResourceDefinition;
-import com.linkedin.restli.server.symbol.RestLiSymbolTableRequestHandler;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
@@ -37,8 +36,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -50,6 +47,7 @@ public class TestRestLiSymbolTableProvider
 {
   private Client _client;
   private RestLiSymbolTableProvider _provider;
+  private RestLiSymbolTableProvider _nullServerNodeUriProvider;
   private ResourceDefinition _resourceDefinition;
 
   @SuppressWarnings("unchecked")
@@ -58,6 +56,7 @@ public class TestRestLiSymbolTableProvider
   {
     _client = mock(Client.class);
     _provider = new RestLiSymbolTableProvider(_client, "d2://", 10, "Test", "https://Host:100/service");
+    _nullServerNodeUriProvider = new RestLiSymbolTableProvider(_client, "d2://", 10, "Test", (String) null);
 
     _resourceDefinition = mock(ResourceDefinition.class);
     doAnswer(invocation -> {
@@ -76,6 +75,12 @@ public class TestRestLiSymbolTableProvider
   }
 
   @Test
+  public void testGetResponseSymbolTableBeforeInitNullServerNodeUriProvider()
+  {
+    Assert.assertNull(_nullServerNodeUriProvider.getResponseSymbolTable(URI.create("https://Host:100/service/symbolTable"), Collections.emptyMap()));
+  }
+
+  @Test
   public void testGetResponseSymbolTableAfterInit()
   {
     _provider.onInitialized(Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
@@ -84,6 +89,13 @@ public class TestRestLiSymbolTableProvider
     Assert.assertNotNull(symbolTable);
     Assert.assertEquals(39, symbolTable.size());
     Assert.assertEquals("https://Host:100/service|Test--332004310", symbolTable.getName());
+  }
+
+  @Test
+  public void testGetResponseSymbolTableAfterInitNullServerNodeUriProvider()
+  {
+    _nullServerNodeUriProvider.onInitialized(Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
+    Assert.assertNull(_nullServerNodeUriProvider.getResponseSymbolTable(URI.create("https://Host:100/service/symbolTable"), Collections.emptyMap()));
   }
 
   @Test
