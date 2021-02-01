@@ -201,7 +201,7 @@ public class TestFilters extends RestLiIntegrationTest
 
   private Long createTestData(RootBuilderWrapper<Long, Greeting> builders, Greeting greeting) throws RemoteInvocationException
   {
-    RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, EmptyRecord> createBuilderWrapper = builders.create();
+    RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, IdResponse<Long>> createBuilderWrapper = builders.create();
     Object objBuilder = createBuilderWrapper.getBuilder();
     @SuppressWarnings("unchecked")
     CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder =

@@ -19,7 +19,6 @@ package com.linkedin.restli.client.testutils;
 
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
@@ -154,21 +153,11 @@ public class MockResponseBuilder<K, V>
 
     int status = (_status == 0) ? DEFAULT_HTTP_STATUS : _status;
 
-    if (_entity instanceof CreateResponse || _entity instanceof IdResponse)
+    if (_entity instanceof IdResponse)
     {
-      final K id;
-      if (_entity instanceof CreateResponse)
-      {
-        @SuppressWarnings("unchecked")
-        final CreateResponse<K> createResponse = (CreateResponse<K>) _entity;
-        id = createResponse.getId();
-      }
-      else
-      {
-        @SuppressWarnings("unchecked")
-        final IdResponse<K> idResponse = (IdResponse<K>) _entity;
-        id = idResponse.getId();
-      }
+      @SuppressWarnings("unchecked")
+      final IdResponse<K> idResponse = (IdResponse<K>) _entity;
+      final K id = idResponse.getId();
       headers.put(HeaderUtil.getIdHeaderName(protocolVersion), URIParamUtils.encodeKeyForBody(id, false, protocolVersion));
     }
     List<HttpCookie> cookies = _cookies == null ? Collections.<HttpCookie>emptyList() : _cookies;

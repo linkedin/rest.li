@@ -19,16 +19,10 @@ package com.linkedin.restli.client.multiplexer;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.template.StringMap;
-import com.linkedin.restli.client.CreateRequest;
-import com.linkedin.restli.client.GetRequestBuilder;
-import com.linkedin.restli.client.Request;
-import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.RestLiCallbackAdapter;
-import com.linkedin.restli.client.RestLiEncodingException;
-import com.linkedin.restli.client.RestliRequestOptions;
+import com.linkedin.restli.client.*;
 import com.linkedin.restli.client.test.TestRecord;
-import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpMethod;
+import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
@@ -116,8 +110,8 @@ public class TestMultiplexedRequestBuilder extends MultiplexerTestBase
   public void testBody() throws IOException
   {
     TestRecord entity = fakeEntity(0);
-    CreateRequest<TestRecord> request = fakeCreateRequest(entity);
-    NoOpCallback<EmptyRecord> callback = new NoOpCallback<EmptyRecord>();
+    CreateIdRequest<Integer, TestRecord> request = fakeCreateRequest(entity);
+    NoOpCallback<IdResponse<Integer>> callback = new NoOpCallback<>();
 
     MultiplexedRequest multiplexedRequest = MultiplexedRequestBuilder
         .createSequentialRequest()

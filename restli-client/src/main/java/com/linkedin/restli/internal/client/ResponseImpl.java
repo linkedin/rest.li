@@ -19,16 +19,8 @@ package com.linkedin.restli.internal.client;
 
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.client.response.CreateResponse;
-import com.linkedin.restli.common.IdResponse;
-import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.ComplexResourceKey;
-import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.common.IdEntityResponse;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
-import com.linkedin.restli.internal.common.ProtocolVersionUtil;
-import com.linkedin.restli.internal.common.URIParamUtils;
 
 import java.net.HttpCookie;
 import java.net.URI;
@@ -49,7 +41,7 @@ import java.util.ArrayList;
  */
 public class ResponseImpl<T> implements Response<T>
 {
-  private int _status = 102;  // SC_PROCESSING
+  private final int _status;
   private final TreeMap<String, String> _headers;
   private final List<HttpCookie> _cookies;
   private T _entity;
@@ -87,9 +79,9 @@ public class ResponseImpl<T> implements Response<T>
   ResponseImpl(int status, Map<String, String> headers, List<HttpCookie> cookies)
   {
     _status = status;
-    _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    _headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     _headers.putAll(headers);
-    _cookies = new ArrayList<HttpCookie>(cookies);
+    _cookies = new ArrayList<>(cookies);
   }
 
   /**
@@ -133,68 +125,6 @@ public class ResponseImpl<T> implements Response<T>
   public List<HttpCookie> getCookies()
   {
     return Collections.unmodifiableList(_cookies);
-  }
-
-  /**
-   * Specific getter for the 'X-LinkedIn-Id' header
-   *
-   * @throws UnsupportedOperationException if the entity returned is a {@link CreateResponse} or {@link IdResponse}
-   * and the key is a {@link ComplexResourceKey} or {@link CompoundKey}.
-   *
-   * @deprecated
-   * @see com.linkedin.restli.client.Response#getId()
-   */
-  @Override
-  @Deprecated
-  public String getId()
-  {
-    if (_entity instanceof CreateResponse<?> || _entity instanceof IdResponse<?> || _entity instanceof IdEntityResponse<?, ?>)
-    {
-      final Object id = checkAndReturnId();
-      final ProtocolVersion protocolVersion = ProtocolVersionUtil.extractProtocolVersion(_headers);
-      return URIParamUtils.encodeKeyForHeader(id, protocolVersion);
-    }
-    else
-    {
-      return null;
-    }
-  }
-
-  /**
-   * Checks if getId() is supported for this type of {@link Response} and returns the ID if it is.
-   *
-   * @return The ID if it is supported.
-   */
-  private Object checkAndReturnId()
-  {
-    final Object id;
-    final String castMessage;
-
-    if (_entity instanceof CreateResponse)
-    {
-      CreateResponse<?> createResponse = (CreateResponse<?>)_entity;
-      id = createResponse.getId();
-      castMessage = "CreateResponse";
-    }
-    else if (_entity instanceof IdEntityResponse)
-    {
-      IdEntityResponse<?, ?> idEntityResponse = (IdEntityResponse<?, ?>)_entity;
-      id = idEntityResponse.getId();
-      castMessage = "IdEntityResponse";
-    }
-    else
-    {
-      IdResponse<?> idResponse = (IdResponse<?>)_entity;
-      id = idResponse.getId();
-      castMessage = "IdResponse";
-    }
-    if (id instanceof CompoundKey || id instanceof ComplexResourceKey)
-    {
-      String baseErrorMessage = "Cannot call getId() for complex or compound keys! Please cast the object returned by" +
-          " getEntity() to a %s and call the getId() method on that.";
-      throw new UnsupportedOperationException(String.format(baseErrorMessage, castMessage));
-    }
-    return id;
   }
 
   /**

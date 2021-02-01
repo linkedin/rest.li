@@ -254,15 +254,6 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Request<IdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> request = createRequestBuilder.input(message).build();
     ResponseFuture<IdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> future = getClient().sendRequest(request);
     Response<IdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> response = future.getResponse();
-    try
-    {
-      response.getId();
-      Assert.fail("getId() for a complex key is not allowed!");
-    }
-    catch (UnsupportedOperationException e)
-    {
-      // expected
-    }
 
     Assert.assertEquals(response.getStatus(), 201);
     IdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>> entity = response.getEntity();

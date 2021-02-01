@@ -156,8 +156,7 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
   {
     checkBatchRequest(batchRequest);
 
-    if (batchRequest instanceof BatchGetRequest || batchRequest instanceof BatchGetEntityRequest
-            || batchRequest instanceof BatchGetKVRequest)
+    if (batchRequest instanceof BatchGetEntityRequest)
     {
       return new GetRequestBuilder(batchRequest.getBaseUriTemplate(),
           batchRequest.getResourceSpec().getValueClass(),
@@ -250,21 +249,7 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
   private BatchKVRequestBuilder getBatchBuilder(BatchRequest<?> batchRequest, Set<?> keys, Map<?, ?> body)
   {
     checkBatchRequest(batchRequest);
-    if (batchRequest instanceof BatchGetRequest || batchRequest instanceof BatchGetKVRequest )
-    {
-      if (keys == null)
-      {
-        throw new IllegalArgumentException("Missing keys for BatchGetRequest or BatchGetKVRequest!");
-      }
-      // both BatchGetRequest and BatchGetKVRequest are built from BatchGetRequestBuilder, through
-      // build() and buildKV() respectively. BatchGetKVRequest is used to adapt rest.li 1.0.0
-      // batch_get response to use new BatchKVResponse class introduced in rest.li 2.0.0
-      return new BatchGetRequestBuilder(batchRequest.getBaseUriTemplate(),
-            batchRequest.getResourceSpec().getValueClass(),
-            batchRequest.getResourceSpec(),
-            batchRequest.getRequestOptions()).ids(keys);
-    }
-    else if (batchRequest instanceof BatchGetEntityRequest)
+    if (batchRequest instanceof BatchGetEntityRequest)
     {
       if (keys == null)
       {
@@ -343,16 +328,7 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
         .forEach(queryParam -> builder.setParam(queryParam.getKey(), queryParam.getValue()));
     // keep all headers
     batchRequest.getHeaders().forEach(builder::setHeader);
-    if (batchRequest instanceof BatchGetKVRequest)
-    {
-      // this is very special BATCH_GET request
-      assert builder instanceof BatchGetRequestBuilder;
-      return ((BatchGetRequestBuilder)builder).buildKV();
-    }
-    else
-    {
-      return builder.build();
-    }
+    return builder.build();
   }
 
   /**
@@ -447,9 +423,7 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
       {
         // we only scatter batched requests when D2 host mapping result contains keys, empty key indicates
         // custom partition id specified in ScatterGatherStrategy.getUris method.
-        if (request instanceof BatchGetRequest ||
-            request instanceof BatchGetKVRequest ||
-            request instanceof BatchGetEntityRequest ||
+        if (request instanceof BatchGetEntityRequest ||
             request instanceof BatchDeleteRequest)
         {
           scatteredRequest = buildScatterBatchRequestByKeys((BatchRequest) request, entry.getValue(), null);
@@ -503,8 +477,8 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
 
   /**
    * Construct a final response object from accumulated data map gathered from scattered requests from original request.
-   * For BatchRequest, it can be either BatchResponse (only for BatchGetRequest) or BatchKVResponse. For non-batch
-   * request, it should be customized by individual application.
+   * For BatchRequest, it will be BatchEntityResponse. For non-batch request, it should be customized by individual
+   * application.
    * @param request original request to be scattered.
    * @param protocolVersion rest.li protocol version.
    * @param data gathered response data map.
@@ -512,24 +486,10 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
    */
   @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
   private <T> T constructResponseFromDataMap(BatchRequest<T> request, ProtocolVersion protocolVersion, DataMap data) {
-    if (request instanceof BatchGetRequest)
+    if (request instanceof BatchGetEntityRequest)
     {
       // BATCH_GET request built from rest.li 2.0.0 request builder.
-      return (T) new BatchResponse(data,
-              request.getResponseDecoder().getEntityClass());
-    }
-    else if (request instanceof BatchGetEntityRequest)
-    {
-      // BATCH_GET request built from rest.li 1.0.0 request builder.
       return (T) new BatchEntityResponse<>(data,
-              request.getResourceSpec().getKeyType(),
-              request.getResourceSpec().getValueType(), request.getResourceSpec().getKeyParts(),
-              request.getResourceSpec().getComplexKeyType(), protocolVersion);
-    }
-    else if (request instanceof BatchGetKVRequest)
-    {
-      // Special BATCH_GET request built from 1.0.0 BatchGetRequestBuilder to use 2.0.0 BatchKVResponse.
-      return (T) new BatchKVResponse<>(data,
               request.getResourceSpec().getKeyType(),
               request.getResourceSpec().getValueType(), request.getResourceSpec().getKeyParts(),
               request.getResourceSpec().getComplexKeyType(), protocolVersion);

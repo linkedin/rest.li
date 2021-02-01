@@ -26,19 +26,15 @@ import com.linkedin.data.schema.validator.ValidatorContext;
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.BatchGetEntityRequest;
-import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.BatchCreateIdResponse;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateIdStatus;
-import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -362,17 +358,10 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   @SuppressWarnings("unchecked")
   public void testCreateSuccess(RestClient restClient, Object builder, ValidationDemo validationDemo) throws RemoteInvocationException
   {
-    Request<EmptyRecord> createRequest = new RootBuilderWrapper<Integer, ValidationDemo>(builder).create().input(validationDemo).build();
-    Response<EmptyRecord> response = restClient.sendRequest(createRequest).getResponse();
+    Request<IdResponse<Integer>> createRequest = new RootBuilderWrapper<Integer, ValidationDemo>(builder).create().input(validationDemo).build();
+    Response<IdResponse<Integer>> response = restClient.sendRequest(createRequest).getResponse();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
-    if (response.getEntity() instanceof CreateResponse)
-    {
-      Assert.assertEquals(((CreateResponse<Integer>)response.getEntity()).getId(), new Integer(1234));
-    }
-    else
-    {
-      Assert.assertEquals(((IdResponse<Integer>)(Object)response.getEntity()).getId(), new Integer(1234));
-    }
+    Assert.assertEquals(response.getEntity().getId(), Integer.valueOf(1234));
   }
 
   @DataProvider

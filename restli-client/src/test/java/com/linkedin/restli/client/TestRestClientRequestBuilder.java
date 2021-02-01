@@ -57,7 +57,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -124,7 +123,7 @@ public class TestRestClientRequestBuilder
     Assert.assertEquals(restRequest.getEntity().length(), 0);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
-    RestRequest restRequestBatch = clientGeneratedRestRequest(BatchGetRequest.class, ResourceMethod.BATCH_GET, null,
+    RestRequest restRequestBatch = clientGeneratedRestRequest(BatchGetEntityRequest.class, ResourceMethod.BATCH_GET, null,
                                                               contentType, acceptTypes, acceptContentTypePerClient, useNonEmptyPathKeys);
     Assert.assertNull(restRequestBatch.getHeader(CONTENT_TYPE_HEADER));
     Assert.assertEquals(restRequestBatch.getEntity().length(), 0);
@@ -329,13 +328,13 @@ public class TestRestClientRequestBuilder
     //its a RestRequest.
     if (streamAttachments == false && acceptResponseAttachments == false)
     {
-      RestRequest restRequest = clientGeneratedRestRequest(CreateRequest.class, ResourceMethod.CREATE, ENTITY_BODY,
+      RestRequest restRequest = clientGeneratedRestRequest(CreateIdRequest.class, ResourceMethod.CREATE, ENTITY_BODY,
                                                            contentType, acceptTypes, acceptContentTypePerClient, useNonEmptyPathKeys);
       Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
       Assert.assertEquals(restRequest.getEntity().asAvroString(), expectedRequestBody);
       Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
 
-      RestRequest restRequestBatch = clientGeneratedRestRequest(BatchCreateRequest.class, ResourceMethod.BATCH_CREATE,
+      RestRequest restRequestBatch = clientGeneratedRestRequest(BatchCreateIdRequest.class, ResourceMethod.BATCH_CREATE,
                                                                 ENTITY_BODY, contentType, acceptTypes,
                                                                 acceptContentTypePerClient, useNonEmptyPathKeys);
       Assert.assertEquals(restRequestBatch.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
@@ -344,14 +343,14 @@ public class TestRestClientRequestBuilder
     }
     else
     {
-      StreamRequest streamRequest = clientGeneratedStreamRequest(CreateRequest.class, ResourceMethod.CREATE, ENTITY_BODY,
+      StreamRequest streamRequest = clientGeneratedStreamRequest(CreateIdRequest.class, ResourceMethod.CREATE, ENTITY_BODY,
                                                                  contentType, acceptTypes, acceptContentTypePerClient,
                                                                  streamAttachments ? generateRequestAttachments() : null,
                                                                  acceptResponseAttachments);
       verifyStreamRequest(streamRequest, acceptResponseAttachments, expectedAcceptHeader, streamAttachments,
                           expectedContentTypeHeader, expectedRequestBody);
 
-      StreamRequest streamRequestBatch = clientGeneratedStreamRequest(BatchCreateRequest.class, ResourceMethod.BATCH_CREATE,
+      StreamRequest streamRequestBatch = clientGeneratedStreamRequest(BatchCreateIdRequest.class, ResourceMethod.BATCH_CREATE,
                                                                       ENTITY_BODY, contentType, acceptTypes,
                                                                       acceptContentTypePerClient,
                                                                       streamAttachments ? generateRequestAttachments() : null,
@@ -404,7 +403,7 @@ public class TestRestClientRequestBuilder
       String expectedAcceptHeader) throws URISyntaxException, IOException
   {
     RestRequest restRequest = clientGeneratedMultiplexedRestRequest(
-        BatchGetRequest.class, ResourceMethod.BATCH_GET, null, contentType, acceptTypes);
+        BatchGetEntityRequest.class, ResourceMethod.BATCH_GET, null, contentType, acceptTypes);
     Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
     // This assumes that the content type is always JSON-like
@@ -418,7 +417,7 @@ public class TestRestClientRequestBuilder
       String expectedAcceptHeader) throws URISyntaxException, IOException
   {
     RestRequest restRequest = clientGeneratedMultiplexedRestRequest(
-        CreateRequest.class, ResourceMethod.CREATE, ENTITY_BODY, contentType, acceptTypes);
+        CreateIdRequest.class, ResourceMethod.CREATE, ENTITY_BODY, contentType, acceptTypes);
     Assert.assertEquals(restRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
     Assert.assertEquals(restRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
     // This assumes that the content type is always JSON-like

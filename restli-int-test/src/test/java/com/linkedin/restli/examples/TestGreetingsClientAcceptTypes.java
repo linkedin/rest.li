@@ -141,9 +141,6 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
     Response<IdResponse<Long>> response = restClient.sendRequest(createRequest).getResponse();
     Assert.assertNull(response.getHeader(RestConstants.HEADER_CONTENT_TYPE));
     long id = response.getEntity().getId();
-    @SuppressWarnings("deprecation")
-    String stringId = response.getId();
-    Assert.assertEquals(id, Long.parseLong(stringId));
 
     Request<Greeting> getRequest = builders.get().id(id).build();
     Response<Greeting> getResponse = restClient.sendRequest(getRequest).getResponse();

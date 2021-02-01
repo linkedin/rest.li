@@ -338,7 +338,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
     return invoke("get");
   }
 
-  public MethodBuilderWrapper<K, V, EmptyRecord> create()
+  public MethodBuilderWrapper<K, V, IdResponse<K>> create()
   {
     return invoke("create");
   }

@@ -19,22 +19,6 @@ package com.linkedin.restli.examples;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.examples.greetings.api.Message;
-import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
-import com.linkedin.data.schema.PathSpec;
->>>>>>> 8ebe756e0 (Reduce usage of RootBuilderWrapper.)
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
@@ -49,7 +33,8 @@ import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.ValidationDemo;
 import com.linkedin.restli.examples.greetings.api.myEnum;
-import com.linkedin.restli.examples.greetings.client.AutoValidationWithProjectionBuilders;
+import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.AutoValidationWithProjectionRequestBuilders;
 import com.linkedin.restli.server.validation.RestLiValidationFilter;
 
 import java.util.Arrays;

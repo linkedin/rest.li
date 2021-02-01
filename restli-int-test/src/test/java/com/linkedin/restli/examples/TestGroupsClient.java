@@ -29,7 +29,6 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.groups.api.ComplexKeyGroupMembership;
 import com.linkedin.restli.examples.groups.api.EmailDigestFrequency;
@@ -120,12 +119,8 @@ public class TestGroupsClient extends RestLiIntegrationTest
                                                                .input(group)
                                                                .build()).getResponse();
     Assert.assertEquals(response.getStatus(), 201);
-    @SuppressWarnings("unchecked")
     IdResponse<Integer> createResponse = response.getEntity();
     Assert.assertNotNull(createResponse.getId());
-    @SuppressWarnings("deprecation")
-    String stringId = response.getId();
-    Assert.assertEquals(createResponse.getId().intValue(), Integer.parseInt(stringId));
 
     // Get newly created group and verify name
     Integer createdId = createResponse.getId();
@@ -203,9 +198,6 @@ public class TestGroupsClient extends RestLiIntegrationTest
     Assert.assertEquals(response.getStatus(), 201);
     Integer createdId = response.getEntity().getId();
     Assert.assertNotNull(createdId);
-    @SuppressWarnings("deprecation")
-    String stringId = response.getId();
-    Assert.assertEquals(createdId.intValue(), Integer.parseInt(stringId));
 
     // Get newly created group and verify name
 

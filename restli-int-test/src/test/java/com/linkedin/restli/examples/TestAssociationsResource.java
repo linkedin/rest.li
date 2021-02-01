@@ -68,16 +68,6 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider", expectedExceptions = UnsupportedOperationException.class)
-  @SuppressWarnings("deprecation")
-  public void testCreate(AssociationsRequestBuilders builders) throws Exception
-  {
-    // Associations should never support create operations. This is a bug in Rest.li that will be fixed. For now we want
-    // to make sure that creating and then calling getId() on the response throws an exception.
-    Request<?> request = builders.create().input(new Message().setMessage("foo")).build();
-    getClient().sendRequest(request).getResponse().getId();
-  }
-
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testOptionalAssociationKeyInFinder(AssociationsRequestBuilders builders) throws Exception
   {

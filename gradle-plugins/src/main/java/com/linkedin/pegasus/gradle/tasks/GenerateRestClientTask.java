@@ -152,7 +152,6 @@ public class GenerateRestClientTask extends DefaultTask
         javaExecSpec.jvmArgs("-Dgenerator.default.package=" + defaultPackage); //RestRequestBuilderGenerator.run(defaultPackage)
         javaExecSpec.jvmArgs("-Dgenerator.generate.imported=false"); //RestRequestBuilderGenerator.run(generateImported)
         javaExecSpec.jvmArgs("-Dgenerator.rest.generate.datatemplates=false"); //RestRequestBuilderGenerator.run(generateDataTemplates)
-        javaExecSpec.jvmArgs("-Dgenerator.rest.generate.version=2.0.0"); //RestRequestBuilderGenerator.run(version)
         if (_generateLowercasePath != null)
         {
           javaExecSpec.jvmArgs("-Dgenerator.rest.generate.lowercase.path=" + _generateLowercasePath); //RestRequestBuilderGenerator.run(generateLowercasePath)

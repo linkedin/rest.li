@@ -22,7 +22,6 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
-import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
@@ -33,7 +32,6 @@ import com.linkedin.pegasus.generator.TemplateSpecGenerator;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ActionSchema;
 import com.linkedin.restli.restspec.ActionSchemaArray;
@@ -88,8 +86,6 @@ public class RequestBuilderSpecGenerator
 {
   private static final Logger log = LoggerFactory.getLogger(RequestBuilderSpecGenerator.class);
 
-  private static final Map<RestliVersion, String> ROOT_BUILDERS_SUFFIX;
-  private static final Map<RestliVersion, String> METHOD_BUILDER_SUFFIX;
   private final String _customMethodBuilderSuffix;
 
   // use LinkedHashSet to keep insertion order to avoid randomness in generated code in giant root builder case.
@@ -97,40 +93,25 @@ public class RequestBuilderSpecGenerator
 
   private final DataSchemaResolver _schemaResolver;
   private final TemplateSpecGenerator _templateSpecGenerator;
-  private final RestliVersion _version;
   private final Map<ResourceMethod, String> _builderBaseMap;
 
   // idl schema location under process
   private DataSchemaLocation _currentSchemaLocation;
 
-  static
-  {
-    ROOT_BUILDERS_SUFFIX = new HashMap<RestliVersion, String>();
-    ROOT_BUILDERS_SUFFIX.put(RestliVersion.RESTLI_1_0_0, "Builders");
-    ROOT_BUILDERS_SUFFIX.put(RestliVersion.RESTLI_2_0_0, "RequestBuilders");
-
-    METHOD_BUILDER_SUFFIX = new HashMap<RestliVersion, String>();
-    METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_1_0_0, "Builder");
-    METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_2_0_0, "RequestBuilder");
-  }
-
   public RequestBuilderSpecGenerator(DataSchemaResolver schemaResolver,
                                      TemplateSpecGenerator templateSpecGenerator,
-                                     RestliVersion version,
                                      Map<ResourceMethod, String> builderBaseMap)
   {
-    this(schemaResolver, templateSpecGenerator, version, builderBaseMap, null);
+    this(schemaResolver, templateSpecGenerator, builderBaseMap, null);
   }
 
   public RequestBuilderSpecGenerator(DataSchemaResolver schemaResolver,
                                      TemplateSpecGenerator templateSpecGenerator,
-                                     RestliVersion version,
                                      Map<ResourceMethod, String> builderBaseMap,
                                      String customMethodBuilderSuffix)
   {
     _schemaResolver = schemaResolver;
     _templateSpecGenerator = templateSpecGenerator;
-    _version = version;
     _builderBaseMap = builderBaseMap;
     _customMethodBuilderSuffix = customMethodBuilderSuffix;
   }
@@ -154,15 +135,13 @@ public class RequestBuilderSpecGenerator
     return _builderSpecs;
   }
 
-  private static String getBuilderClassNameByVersion(RestliVersion version,
-                                                     String namespace,
-                                                     String builderName,
-                                                     boolean isRootBuilders)
+  private static String getBuilderClassName(String namespace,
+                                            String builderName,
+                                            boolean isRootBuilders)
   {
     final String className =
         (namespace == null || namespace.trim().isEmpty() ? "" : namespace + ".") + CodeUtil.capitalize(builderName);
-    final Map<RestliVersion, String> suffixMap = (isRootBuilders ? ROOT_BUILDERS_SUFFIX : METHOD_BUILDER_SUFFIX);
-    return className + suffixMap.get(version);
+    return className + (isRootBuilders ? "RequestBuilders" : "RequestBuilder");
   }
 
   public void generate(ResourceSchema resource, File sourceFile)
@@ -194,17 +173,9 @@ public class RequestBuilderSpecGenerator
 
     String packageName = resource.getNamespace();
     String resourceName = CodeUtil.capitalize(resource.getName());
-    String className;
-    if (_version == RestliVersion.RESTLI_2_0_0)
-    {
-      className = getBuilderClassNameByVersion(RestliVersion.RESTLI_2_0_0, null, resource.getName(), true);
-    }
-    else
-    {
-      className = getBuilderClassNameByVersion(RestliVersion.RESTLI_1_0_0, null, resource.getName(), true);
-    }
+    String className = getBuilderClassName(null, resource.getName(), true);
 
-    RootBuilderSpec rootBuilderSpec = null;
+    RootBuilderSpec rootBuilderSpec;
     if (resource.hasCollection())
     {
       rootBuilderSpec = new CollectionRootBuilderSpec(resource);
@@ -224,10 +195,7 @@ public class RequestBuilderSpecGenerator
     }
     rootBuilderSpec.setNamespace(packageName);
     rootBuilderSpec.setClassName(className);
-    if (_version == RestliVersion.RESTLI_2_0_0)
-    {
-      rootBuilderSpec.setBaseClassName("BuilderBase");
-    }
+    rootBuilderSpec.setBaseClassName("BuilderBase");
     rootBuilderSpec.setSourceIdlName(sourceFile);
     String resourcePath = getResourcePath(resource.getPath());
     rootBuilderSpec.setResourcePath(resourcePath);
@@ -745,6 +713,6 @@ public class RequestBuilderSpecGenerator
 
   private String getMethodBuilderSuffix()
   {
-    return _customMethodBuilderSuffix == null ? METHOD_BUILDER_SUFFIX.get(_version) : _customMethodBuilderSuffix;
+    return _customMethodBuilderSuffix == null ? "RequestBuilder" : _customMethodBuilderSuffix;
   }
 }

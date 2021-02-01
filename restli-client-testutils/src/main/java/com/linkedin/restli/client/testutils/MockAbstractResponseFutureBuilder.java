@@ -20,7 +20,6 @@ package com.linkedin.restli.client.testutils;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
-import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
@@ -32,7 +31,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 
 /**
@@ -63,13 +61,7 @@ public abstract class MockAbstractResponseFutureBuilder<K, V extends RecordTempl
 
   protected K getId()
   {
-    if (_entity instanceof CreateResponse<?>)
-    {
-      @SuppressWarnings("unchecked")
-      final CreateResponse<K> createResponse = (CreateResponse<K>) _entity;
-      return createResponse.getId();
-    }
-    else if (_entity instanceof IdResponse<?>)
+    if (_entity instanceof IdResponse<?>)
     {
       @SuppressWarnings("unchecked")
       final IdResponse<K> idResponse = (IdResponse<K>) _entity;
@@ -207,8 +199,7 @@ public abstract class MockAbstractResponseFutureBuilder<K, V extends RecordTempl
       }
 
       @Override
-      public Response<T> get()
-          throws InterruptedException, ExecutionException
+      public Response<T> get() throws ExecutionException
       {
         if (exception != null)
         {
@@ -219,7 +210,7 @@ public abstract class MockAbstractResponseFutureBuilder<K, V extends RecordTempl
 
       @Override
       public Response<T> get(long timeout, TimeUnit unit)
-          throws InterruptedException, ExecutionException, TimeoutException
+          throws InterruptedException, ExecutionException
       {
         return get();
       }

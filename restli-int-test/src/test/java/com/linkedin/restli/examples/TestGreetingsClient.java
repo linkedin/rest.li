@@ -696,7 +696,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
 
     for (Greeting greeting: greetings)
     {
-      RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, EmptyRecord> createBuilder = builders.create();
+      RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, IdResponse<Long>> createBuilder = builders.create();
       Object objBuilder = createBuilder.getBuilder();
       @SuppressWarnings("unchecked")
       CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder = (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
@@ -1020,12 +1020,12 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   public void testCreateWithNullId(RootBuilderWrapper<Long, Greeting> builders)
       throws RemoteInvocationException
   {
-    Request<EmptyRecord> request = builders.create()
-                                           .input(new Greeting().setId(1L).setMessage("foo"))
-                                           .setQueryParam("isNullId", true)
-                                           .build();
-    Response<EmptyRecord> response = getClient().sendRequest(request).getResponse();
-    Assert.assertNull(response.getId());
+    Request<IdResponse<Long>> request = builders.create()
+        .input(new Greeting().setId(1L).setMessage("foo"))
+        .setQueryParam("isNullId", true)
+        .build();
+    Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
+    Assert.assertNull(response.getEntity().getId());
   }
 
   @SuppressWarnings("deprecation")
@@ -1033,12 +1033,14 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   public void testCreateLocationHeader(RootBuilderWrapper<Long, Greeting> builders)
       throws RemoteInvocationException
   {
-    Request<EmptyRecord> request = builders.create()
+    Request<IdResponse<Long>> request = builders.create()
         .input(new Greeting().setId(1L).setMessage("foo"))
         .setQueryParam("isNullId", false)
         .build();
-    Response<EmptyRecord> response = getClient().sendRequest(request).getResponse();
-    Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + request.getBaseUriTemplate() + "/" + response.getId());
+    Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
+    Assert.assertEquals(
+        response.getHeader(RestConstants.HEADER_LOCATION),
+        "/" + request.getBaseUriTemplate() + "/" + response.getEntity().getId());
   }
 
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")

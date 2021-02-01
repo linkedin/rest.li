@@ -44,51 +44,12 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
-import com.linkedin.restli.client.AbstractRequestBuilder;
-import com.linkedin.restli.client.ActionRequest;
-import com.linkedin.restli.client.ActionRequestBuilder;
-import com.linkedin.restli.client.BatchCreateRequest;
-import com.linkedin.restli.client.BatchCreateRequestBuilder;
-import com.linkedin.restli.client.BatchDeleteRequest;
-import com.linkedin.restli.client.BatchDeleteRequestBuilder;
-import com.linkedin.restli.client.BatchFindRequest;
-import com.linkedin.restli.client.BatchFindRequestBuilder;
-import com.linkedin.restli.client.BatchGetKVRequest;
-import com.linkedin.restli.client.BatchGetRequestBuilder;
-import com.linkedin.restli.client.BatchPartialUpdateRequest;
-import com.linkedin.restli.client.BatchPartialUpdateRequestBuilder;
-import com.linkedin.restli.client.BatchUpdateRequest;
-import com.linkedin.restli.client.BatchUpdateRequestBuilder;
-import com.linkedin.restli.client.CreateRequest;
-import com.linkedin.restli.client.CreateRequestBuilder;
-import com.linkedin.restli.client.DeleteRequest;
-import com.linkedin.restli.client.DeleteRequestBuilder;
-import com.linkedin.restli.client.FindRequest;
-import com.linkedin.restli.client.FindRequestBuilder;
-import com.linkedin.restli.client.GetAllRequest;
-import com.linkedin.restli.client.GetAllRequestBuilder;
-import com.linkedin.restli.client.GetRequest;
-import com.linkedin.restli.client.GetRequestBuilder;
-import com.linkedin.restli.client.OptionsRequest;
-import com.linkedin.restli.client.OptionsRequestBuilder;
-import com.linkedin.restli.client.PartialUpdateRequest;
-import com.linkedin.restli.client.PartialUpdateRequestBuilder;
-import com.linkedin.restli.client.Request;
-import com.linkedin.restli.client.RestfulRequestBuilder;
-import com.linkedin.restli.client.RestliRequestOptions;
-import com.linkedin.restli.client.UpdateRequest;
-import com.linkedin.restli.client.UpdateRequestBuilder;
+import com.linkedin.restli.client.*;
+import com.linkedin.restli.client.base.BatchCreateIdRequestBuilderBase;
+import com.linkedin.restli.client.base.CreateIdRequestBuilderBase;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
 import com.linkedin.restli.client.util.PatchGenerator;
-import com.linkedin.restli.common.ComplexResourceKey;
-import com.linkedin.restli.common.CompoundKey;
-import com.linkedin.restli.common.HttpMethod;
-import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.ProtocolVersion;
-import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.common.ResourceSpec;
-import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.common.TypeSpec;
+import com.linkedin.restli.common.*;
 import com.linkedin.restli.common.util.ResourceSchemaToResourceSpecTranslator;
 import com.linkedin.restli.common.util.ResourceSchemaToResourceSpecTranslator.ClassBindingResolver;
 import com.linkedin.restli.common.util.RichResourceSchema;
@@ -355,14 +316,14 @@ public class ExampleRequestResponseGenerator
   public ExampleRequestResponse create()
   {
     checkSupports(ResourceMethod.CREATE);
-    CreateRequestBuilder<Object, RecordTemplatePlaceholder> create =
-      new CreateRequestBuilder<Object, RecordTemplatePlaceholder>(
+    CreateIdRequestBuilder<Object, RecordTemplatePlaceholder> create =
+      new CreateIdRequestBuilderBase<>(
         _uriTemplate,
         RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
     create.input(generateEntity());
     addParams(create, ResourceMethod.CREATE);
     addPathKeys(create);
-    CreateRequest<RecordTemplatePlaceholder> request = create.build();
+    CreateIdRequest<Object, RecordTemplatePlaceholder> request = create.build();
     return buildRequestResponse(request, new CreateResponse(generateKey(), HttpStatus.S_201_CREATED), buildResourceMethodDescriptorForRestMethod(request));
   }
 
@@ -422,16 +383,15 @@ public class ExampleRequestResponseGenerator
   public ExampleRequestResponse batchGet()
   {
     checkSupports(ResourceMethod.BATCH_GET);
-    BatchGetRequestBuilder<Object, RecordTemplatePlaceholder> batchGet =
-      new BatchGetRequestBuilder<Object, RecordTemplatePlaceholder>(
-        _uriTemplate,
-        RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
+    BatchGetEntityRequestBuilder<Object, RecordTemplatePlaceholder> batchGet =
+      new BatchGetEntityRequestBuilder<>(
+        _uriTemplate, _resourceSpec, _requestOptions);
     Object id1 = generateKey(0);
     Object id2 = generateKey(1);
     batchGet.ids(id1, id2);
     addParams(batchGet, ResourceMethod.BATCH_GET);
     addPathKeys(batchGet);
-    BatchGetKVRequest<Object, RecordTemplatePlaceholder> request = batchGet.buildKV();
+    BatchGetEntityRequest<Object, RecordTemplatePlaceholder> request = batchGet.build();
 
     final Map<Object, RecordTemplatePlaceholder> bgResponseData = new HashMap<Object, RecordTemplatePlaceholder>();
     bgResponseData.put(id1, generateEntity());
@@ -443,15 +403,15 @@ public class ExampleRequestResponseGenerator
   public ExampleRequestResponse batchCreate()
   {
     checkSupports(ResourceMethod.BATCH_CREATE);
-    BatchCreateRequestBuilder<Object, RecordTemplatePlaceholder> create =
-      new BatchCreateRequestBuilder<Object, RecordTemplatePlaceholder>(
+    BatchCreateIdRequestBuilder<Object, RecordTemplatePlaceholder> create =
+      new BatchCreateIdRequestBuilderBase<>(
         _uriTemplate,
         RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
     create.input(generateEntity());
     create.input(generateEntity());
     addParams(create, ResourceMethod.BATCH_CREATE);
     addPathKeys(create);
-    BatchCreateRequest<RecordTemplatePlaceholder> request = create.build();
+    BatchCreateIdRequest<Object, RecordTemplatePlaceholder> request = create.build();
     BatchCreateResult<Object, RecordTemplatePlaceholder> result = new BatchCreateResult<Object, RecordTemplatePlaceholder>(Arrays.asList(
         new CreateResponse(generateKey(), HttpStatus.S_201_CREATED),
         new CreateResponse(generateKey(), HttpStatus.S_201_CREATED)));

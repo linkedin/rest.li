@@ -59,48 +59,6 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     _mapper = mapper;
   }
 
-  // return value contains the request info and the unmapped keys (also the cause)
-  // V2 is here to differentiate it from the older API
-  @SuppressWarnings("deprecation")
-  public ScatterGatherResult<T> buildRequestsV2(BatchGetRequest<T> request, RequestContext requestContext)
-    throws ServiceUnavailableException
-  {
-    Set<Object> idObjects = request.getObjectIds();
-
-    MapKeyResult<URI, Object> mapKeyResult = mapKeys(request, idObjects);
-
-    Map<URI, Collection<Object>> batches = mapKeyResult.getMapResult();
-    Collection<RequestInfo<T>> scatterGatherRequests = new ArrayList<RequestInfo<T>>(batches.size());
-
-    for (Map.Entry<URI, Collection<Object>> batch : batches.entrySet())
-    {
-      BatchGetRequestBuilder<Object, T> builder = new BatchGetRequestBuilder<Object, T>(request.getBaseUriTemplate(),
-                                                                                        request.getResponseDecoder(),
-                                                                                        request.getResourceSpec(),
-                                                                                        request.getRequestOptions());
-      builder.ids(batch.getValue());
-      for (Map.Entry<String, Object> param : request.getQueryParamsObjects().entrySet())
-      {
-        if (!param.getKey().equals(RestConstants.QUERY_BATCH_IDS_PARAM))
-        {
-          // keep all non-batch query parameters since they could be request specific
-          builder.setParam(param.getKey(), param.getValue());
-        }
-      }
-      for (Map.Entry<String, String> header : request.getHeaders().entrySet())
-      {
-        builder.setHeader(header.getKey(), header.getValue());
-      }
-
-      RequestContext context = requestContext.clone();
-      KeyMapper.TargetHostHints.setRequestContextTargetHost(context, batch.getKey());
-
-      scatterGatherRequests.add(new RequestInfo<T>(builder.build(), context));
-    }
-
-    return new ScatterGatherResult<T>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
-  }
-
   @SuppressWarnings("deprecation")
   public <K> KVScatterGatherResult<K, EntityResponse<T>> buildRequests(BatchGetEntityRequest<K, T> request, RequestContext requestContext)
     throws ServiceUnavailableException
@@ -140,48 +98,6 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     }
 
     return new KVScatterGatherResult<K, EntityResponse<T>>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
-  }
-
-  @SuppressWarnings({ "unchecked", "deprecation" })
-  public <K> KVScatterGatherResult<K, T> buildRequestsKV(BatchGetKVRequest<K, T> request, RequestContext requestContext)
-      throws ServiceUnavailableException
-  {
-    Set<K> idObjects = (Set<K>) request.getObjectIds();
-
-    MapKeyResult<URI, K> mapKeyResult = mapKeys(request, idObjects);
-
-    Map<URI, Collection<K>> batches = mapKeyResult.getMapResult();
-    Collection<KVRequestInfo<K, T>> scatterGatherRequests = new ArrayList<KVRequestInfo<K, T>>(batches.size());
-
-    for (Map.Entry<URI, Collection<K>> batch : batches.entrySet())
-    {
-      BatchGetRequestBuilder<K, T> builder =
-          new BatchGetRequestBuilder<K, T>(request.getBaseUriTemplate(),
-            (Class<T>)request.getResourceProperties().getValueType().getType(),
-            request.getResourceSpec(),
-            request.getRequestOptions());
-
-      builder.ids(batch.getValue());
-      for (Map.Entry<String, Object> param : request.getQueryParamsObjects().entrySet())
-      {
-        if (!param.getKey().equals(RestConstants.QUERY_BATCH_IDS_PARAM))
-        {
-          // keep all non-batch query parameters since they could be request specific
-          builder.setParam(param.getKey(), param.getValue());
-        }
-      }
-      for (Map.Entry<String, String> header : request.getHeaders().entrySet())
-      {
-        builder.setHeader(header.getKey(), header.getValue());
-      }
-
-      RequestContext context = requestContext.clone();
-      KeyMapper.TargetHostHints.setRequestContextTargetHost(context, batch.getKey());
-
-      scatterGatherRequests.add(new KVRequestInfo<K, T>(builder.buildKV(), context));
-    }
-
-    return new KVScatterGatherResult<K, T>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
   }
 
   @SuppressWarnings("deprecation")
@@ -351,31 +267,15 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
    * @param callback - callback to be used for each request
    * @throws ServiceUnavailableException
    */
-  public void sendRequests(RestClient client, BatchGetRequest<T> request, RequestContext requestContext, Callback<Response<BatchResponse<T>>> callback)
+  public <K> void sendRequests(
+      RestClient client,
+      BatchGetEntityRequest<K, T> request,
+      RequestContext requestContext,
+      Callback<Response<BatchKVResponse<K, EntityResponse<T>>>> callback)
     throws ServiceUnavailableException
   {
-    ScatterGatherResult<T> scatterGatherResult = buildRequestsV2(request, requestContext);
-    for (RequestInfo<T> requestInfo : scatterGatherResult.getRequestInfo())
-    {
-      client.sendRequest(requestInfo.getRequest(), requestInfo.getRequestContext(), callback);
-    }
-  }
-
-  /**
-   * A convenience function for caller to issue batch request with one call.
-   * If finer-grain control is required, users should call buildRequests instead and send requests by themselves
-   *
-   * @param client - the RestClient to use
-   * @param request - the batch get request
-   * @param requestContext - the original request context
-   * @param callback - callback to be used for each request
-   * @throws ServiceUnavailableException
-   */
-  public <K> void sendRequests(RestClient client, BatchGetKVRequest<K, T> request, RequestContext requestContext, Callback<Response<BatchKVResponse<K, T>>> callback)
-      throws ServiceUnavailableException
-  {
-    KVScatterGatherResult<K, T> scatterGatherResult = buildRequestsKV(request, requestContext);
-    for (KVRequestInfo<K, T> requestInfo : scatterGatherResult.getRequestInfo())
+    KVScatterGatherResult<K, EntityResponse<T>> scatterGatherResult = buildRequests(request, requestContext);
+    for (KVRequestInfo<K, EntityResponse<T>> requestInfo : scatterGatherResult.getRequestInfo())
     {
       client.sendRequest(requestInfo.getRequest(), requestInfo.getRequestContext(), callback);
     }

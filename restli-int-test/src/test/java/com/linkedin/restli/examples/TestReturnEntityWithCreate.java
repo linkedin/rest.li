@@ -86,11 +86,8 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     Response<IdEntityResponse<Long, Greeting>> response = restClient.sendRequest(createIdEntityRequest).getResponse();
 
     long id = response.getEntity().getId();
-    @SuppressWarnings("deprecation")
-    String stringId = response.getId();
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + builders.getPrimaryResource() + "/" + id);
-    Assert.assertEquals(id, Long.parseLong(stringId));
     Assert.assertEquals("second time!", response.getEntity().getEntity().getMessage());
   }
 
@@ -106,11 +103,8 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     Response<IdEntityResponse<Long, Greeting>> response = restClient.sendRequest(createIdEntityRequest).getResponse();
 
     long id = response.getEntity().getId();
-    @SuppressWarnings("deprecation")
-    String stringId = response.getId();
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + builders.getPrimaryResource() + "/" + id);
-    Assert.assertEquals(id, Long.parseLong(stringId));
     Assert.assertEquals(false, response.getEntity().getEntity().hasMessage());
     Assert.assertEquals(Tone.FRIENDLY, response.getEntity().getEntity().getTone());
   }
@@ -237,9 +231,6 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_CONTENT_TYPE), expectedContentType);
 
     long id = response.getEntity().getId();
-    @SuppressWarnings("deprecation")
-    String stringId = response.getId();
-    Assert.assertEquals(id, Long.parseLong(stringId));
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + builders.getPrimaryResource() + "/" + id);
   }
 
@@ -532,11 +523,8 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     Response<IdEntityResponse<Long, Greeting>> response = getClient().sendRequest(createIdEntityRequest).getResponse();
 
     long id = response.getEntity().getId();
-    @SuppressWarnings("deprecation")
-    String stringId = response.getId();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
     Assert.assertEquals(response.getHeader(RestConstants.HEADER_LOCATION), "/" + CreateGreetingRequestBuilders.getPrimaryResource() + "/" + id);
-    Assert.assertEquals(id, Long.parseLong(stringId));
 
     if (expectReturnEntity)
     {
