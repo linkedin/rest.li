@@ -12,7 +12,6 @@ dependencies {
   compile externalDependency.commonsHttpClient
   compile externalDependency.zookeeper
   compile externalDependency.jdkTools
-  compile externalDependency.netty
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo
   testCompile project(path: ':d2', configuration: 'testArtifacts')
@@ -20,4 +19,3 @@ dependencies {
   testRuntime project(':r2-jetty')
   testCompile project(':test-util')
 }
-

@@ -26,6 +26,7 @@ dependencies {
   testCompile externalDependency.junit
   testCompile externalDependency.mockito
   testCompile externalDependency.httpclient
+  testCompile externalDependency.nettyTransport
   testCompile externalDependency.parseq_restClient
   testCompile externalDependency.parseq_testApi
   testDataModel project(path: ':restli-int-test-api', configuration: 'dataTemplate')

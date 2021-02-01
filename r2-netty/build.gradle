@@ -6,7 +6,13 @@ dependencies {
   compile project(':r2-filter-compression')
 
   compile externalDependency.commonsLang
-  compile externalDependency.netty
+  compile externalDependency.nettyBuffer
+  compile externalDependency.nettyCodec
+  compile externalDependency.nettyCodecHttp
+  compile externalDependency.nettyCodecHttp2
+  compile externalDependency.nettyCommon
+  compile externalDependency.nettyHandler
+  compile externalDependency.nettyTransport
 
   testCompile project(path: ':r2-core', configuration: 'testArtifacts')
   testCompile externalDependency.mockito
