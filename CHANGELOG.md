@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.14.1] - 2021-01-31
+- Gracefully degrade symbol tables when server node URI is null
+
 ## [29.14.0] - 2021-01-29
 - Generate fluent client APIs get and create methods of collection resources.
 - Encode JSON values in PDLs deterministically:
@@ -4831,7 +4834,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.14.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.14.1...master
+[29.14.1]: https://github.com/linkedin/rest.li/compare/v29.14.0...v29.14.1
 [29.14.0]: https://github.com/linkedin/rest.li/compare/v29.13.12...v29.14.0
 [29.13.12]: https://github.com/linkedin/rest.li/compare/v29.13.11...v29.13.12
 [29.13.11]: https://github.com/linkedin/rest.li/compare/v29.13.10...v29.13.11

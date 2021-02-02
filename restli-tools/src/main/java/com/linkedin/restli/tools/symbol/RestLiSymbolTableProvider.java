@@ -88,6 +88,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
   private static final long DEFAULT_TIMEOUT_MILLIS = 1000;
   private final Client _client;
   private final String _uriPrefix;
+  private final String _serverNodeUri;
   private final SymbolTableNameHandler _symbolTableNameHandler;
   private final Cache<String, SymbolTable> _serviceNameToSymbolTableCache;
   private final Cache<String, SymbolTable> _symbolTableNameToSymbolTableCache;
@@ -133,11 +134,12 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
   {
     _client = client;
     _uriPrefix = uriPrefix;
+    _serverNodeUri = serverNodeUri;
     _symbolTableNameHandler = new SymbolTableNameHandler(symbolTablePrefix, serverNodeUri);
     _serviceNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
     _symbolTableNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
 
-    if (overriddenSymbols != null)
+    if (serverNodeUri != null && overriddenSymbols != null)
     {
       String symbolTableName = _symbolTableNameHandler.generateName(overriddenSymbols);
       _defaultResponseSymbolTable = new InMemorySymbolTable(symbolTableName, overriddenSymbols);
@@ -163,11 +165,16 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
   {
     _client = client;
     _uriPrefix = uriPrefix;
+    _serverNodeUri = serverNodeUri;
     _symbolTableNameHandler = new SymbolTableNameHandler(responseSymbolTable.getName(), serverNodeUri);
     _serviceNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
     _symbolTableNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
-    _defaultResponseSymbolTable = responseSymbolTable;
-    _defaultResponseSymbolTableName = responseSymbolTable.getName();
+    
+    if (_serverNodeUri != null)
+    {
+      _defaultResponseSymbolTable = responseSymbolTable;
+      _defaultResponseSymbolTableName = responseSymbolTable.getName();
+    }
   }
 
   @Override
@@ -284,8 +291,10 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
   @Override
   public void onInitialized(Map<String, ResourceDefinition> resourceDefinitions)
   {
-    // Do nothing if an overridden list of symbols was passed and the default response symbol table was already built.
-    if (_defaultResponseSymbolTable != null) {
+    // Do nothing if the server node URI was null or if an overridden list of symbols was passed and the default
+    // response symbol table was already built.
+    if (_serverNodeUri == null || _defaultResponseSymbolTable != null)
+    {
       return;
     }
 
