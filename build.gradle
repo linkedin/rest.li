@@ -197,6 +197,7 @@ subprojects {
     all*.exclude group: 'javax.jms', module: 'jms'
     all*.exclude group: 'com.sun.jdmk', module: 'jmxtools'
     all*.exclude group: 'com.sun.jmx', module: 'jmxri'
+    all*.exclude group: 'org.apache.velocity', module: 'velocity'
   }
 
   if (!(it.name in ['data-avro', 'restli-int-test'])) {
