@@ -2,6 +2,7 @@ apply plugin: 'pegasus'
 
 dependencies {
   compile project(path: ':restli-example-api', configuration: 'restClient')
+  compile project(':restli-example-server')
   compile project(':pegasus-common')
   compile project(':r2-core')
   compile project(':r2-netty')

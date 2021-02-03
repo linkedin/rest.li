@@ -45,6 +45,7 @@ public interface RestConstants
   String HEADER_VALUE_APPLICATION_LICOR_TEXT = "application/licor";
   String HEADER_VALUE_APPLICATION_LICOR_BINARY = "application/x-licor";
   String HEADER_VALUE_APPLICATION_PSON = "application/x-pson";
+  String HEADER_RESTLI_SCHEMA_VERSION = "X-RestLi-Schema-Version";
 
   /**
    * @deprecated Use {@link #HEADER_VALUE_APPLICATION_PROTOBUF2} instead.

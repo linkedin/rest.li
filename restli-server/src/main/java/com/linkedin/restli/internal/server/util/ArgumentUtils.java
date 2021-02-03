@@ -52,6 +52,7 @@ import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.util.Collection;
@@ -100,9 +101,20 @@ public class ArgumentUtils
    * @param routingResult {@link RoutingResult}
    * @return value class of the resource addressed by this method
    */
+  @SuppressWarnings("unchecked")
   public static Class<? extends RecordTemplate> getValueClass(final RoutingResult routingResult)
   {
-    return routingResult.getResourceMethod().getResourceModel().getValueClass();
+    Class<? extends RecordTemplate> valueClass =  routingResult.getResourceMethod().getResourceModel().getValueClass();
+    if (routingResult.getContext().getRequestHeaders().containsKey(RestConstants.HEADER_RESTLI_SCHEMA_VERSION)) {
+      int version = Integer.parseInt(routingResult.getContext().getRequestHeaders().get(RestConstants.HEADER_RESTLI_SCHEMA_VERSION));
+      try {
+        return (Class<? extends RecordTemplate>) valueClass.getDeclaredMethod("getVersionedClass", int.class).invoke(null, version);
+      } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+      }
+    } else {
+      return valueClass;
+    }
   }
 
   /**

@@ -24,6 +24,7 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.DataSchemaUtil;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.validation.CoercionMode;
@@ -40,6 +41,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -346,6 +348,15 @@ public class DataTemplateUtil
     return parseSchema(schemaText, null, schemaFormatType);
   }
 
+  public static RecordDataSchema versionedSchema(RecordDataSchema current, RecordDataSchema... versions) throws IllegalArgumentException
+  {
+    for(RecordDataSchema ver : versions)
+    {
+      current.addVersion(ver);
+    }
+    return current;
+  }
+
   /**
    * Parse data schema encoded in any format to obtain a {@link DataSchema}.
    *
@@ -475,11 +486,16 @@ public class DataTemplateUtil
     DataSchema typeSchema = _classToSchemaMap.get(type);
     return (typeSchema != null) ? typeSchema : _classToSchemaMap.computeIfAbsent(type, key ->
     {
-      try
-      {
+      try {
+        DataSchema schema = null;
+      try {
+        Method dataSchemaMethod = type.getDeclaredMethod("dataSchema");
+        schema = (DataSchema) dataSchemaMethod.invoke(null);
+      } catch (NoSuchMethodException e) {
         Field schemaField = type.getDeclaredField(SCHEMA_FIELD_NAME);
         schemaField.setAccessible(true);
-        DataSchema schema = (DataSchema) schemaField.get(null);
+        schema = (DataSchema) schemaField.get(null);
+      }
         if (schema == null)
         {
           throw new TemplateRuntimeException("Schema field is not set in class: " + type.getName());
@@ -487,7 +503,7 @@ public class DataTemplateUtil
 
         return schema;
       }
-      catch (IllegalAccessException | NoSuchFieldException e)
+      catch (IllegalAccessException | NoSuchFieldException | InvocationTargetException e)
       {
         throw new TemplateRuntimeException("Error accessing schema field in class: " + type.getName(), e);
       }

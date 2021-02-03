@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.example.impl;
 
+import com.linkedin.restli.example.Album_$Versioned;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,7 +52,7 @@ public class AlbumDatabaseImpl implements AlbumDatabase
   }
 
   @Override
-  public Map<Long, Album> getData()
+  public Map<Long, Album_$Versioned> getData()
   {
     return _data;
   }
@@ -61,5 +62,5 @@ public class AlbumDatabaseImpl implements AlbumDatabase
   // database instances and hash maps are the same for all sessions.
   // These shared variables need synchronization for consistency.
   private final AtomicLong       _currId = new AtomicLong();
-  private final Map<Long, Album> _data   = new ConcurrentHashMap<Long, Album>();
+  private final Map<Long, Album_$Versioned> _data   = new ConcurrentHashMap<Long, Album_$Versioned>();
 }

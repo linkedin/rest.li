@@ -29,6 +29,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.common.util.ProjectionMaskApplier;
 import com.linkedin.restli.common.util.ProjectionMaskApplier.InvalidProjectionException;
@@ -124,7 +125,7 @@ public class RestLiValidationFilter implements Filter
         {
           // Value class from resource model is the only source of truth for record schema.
           // Schema from the record template itself should not be used.
-          DataSchema originalSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
+          DataSchema originalSchema = DataTemplateUtil.getSchema(requestContext.getValueClass());
 
           DataSchema validatingSchema = constructValidatingSchema(requestContext, originalSchema,
               projectionMask.getDataMap(), _nonSchemaFieldsToAllowInProjectionMask);
@@ -478,7 +479,7 @@ public class RestLiValidationFilter implements Filter
   protected RestLiDataValidator createRequestRestLiDataValidator(FilterRequestContext requestContext)
   {
     return new RestLiDataValidator(requestContext.getFilterResourceModel().getResourceClass().getAnnotations(),
-        requestContext.getFilterResourceModel().getValueClass(), requestContext.getMethodType());
+        requestContext.getValueClass(), requestContext.getMethodType());
   }
 
   /**
@@ -500,7 +501,7 @@ public class RestLiValidationFilter implements Filter
       {
         // Value class from resource model is the only source of truth for record schema.
         // Schema from the record template itself should not be used.
-        validatingSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
+        validatingSchema = DataTemplateUtil.getSchema(requestContext.getValueClass());
       }
       catch (TemplateRuntimeException e)
       {

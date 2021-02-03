@@ -25,16 +25,19 @@ import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
+import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.PatchRequest;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.example.photos.AlbumEntryRequestBuilders;
 import com.linkedin.restli.example.photos.AlbumsRequestBuilders;
 import com.linkedin.restli.example.photos.PhotosRequestBuilders;
@@ -95,6 +98,10 @@ public class RestLiExampleBasicClient
       if (pathInfo.equals("/fail"))
       {
         getNonPhoto();
+      }
+      else if (pathInfo.equals("version"))
+      {
+        versioning(respWriter);
       }
       else
       {
@@ -212,19 +219,51 @@ public class RestLiExampleBasicClient
     });
   }
 
-  /**
-   * Retrieve the album information and each photo in the album. The photos are retrieved in parallel.
-   */
+  private void versioning(PrintWriter respWriter) throws RemoteInvocationException {
+    // get the specific album
+    Album album = new Album();
+    album.setTitle("test ver");
+    try {
+      final CreateIdRequest<Long, Album_$Versioned> createAlbumReq = _albumBuilders.create().input(album).build();
+      final ResponseFuture<IdResponse<Long>> createAlbumFuture = _restClient.sendRequest(createAlbumReq);
+      final Response<IdResponse<Long>> createResp = createAlbumFuture.getResponse();
+    } catch (RestLiResponseException e) {
+      // This should fail as the current version requires "createTime" field to be set.
+      System.out.println(e.getMessage());
+    }
+    Album_$1 album1 = new Album_$1();
+    final CreateIdRequest<Long, Album_$Versioned> createAlbumReq = _albumBuilders.create().input(album1).build();
+    final ResponseFuture<IdResponse<Long>> createAlbumFuture = _restClient.sendRequest(createAlbumReq);
+    final Response<IdResponse<Long>> createResp = createAlbumFuture.getResponse();
+    final Long albumId = createResp.getEntity().getId();
+
+    // get the specific album, use version header to get the correct template class
+    final Request<Album_$Versioned> getAlbumReq = _albumBuilders.get().id(albumId)
+        .setHeader(RestConstants.HEADER_RESTLI_SCHEMA_VERSION, "1")
+        .build();
+    final ResponseFuture<Album_$Versioned> getAlbumFuture = _restClient.sendRequest(getAlbumReq);
+    final Response<Album_$Versioned> getResp = getAlbumFuture.getResponse();
+    final Album_$Versioned album2 = getResp.getEntity();
+
+    if (album2 instanceof Album_$1) {
+      respWriter.println(((Album_$1) album2).getId());
+      respWriter.println("Urn: " + ((Album_$1) album2).getUrn());
+    }
+  }
+    /**
+     * Retrieve the album information and each photo in the album. The photos are retrieved in parallel.
+     */
   private void getAlbum(PrintWriter respWriter, long albumId) throws RemoteInvocationException
   {
     // get the specific album
-    final Request<Album> getAlbumReq = _albumBuilders.get().id(albumId).build();
-    final ResponseFuture<Album> getAlbumFuture = _restClient.sendRequest(getAlbumReq);
-    final Response<Album> getResp = getAlbumFuture.getResponse();
-    final Album album = getResp.getEntity();
-
-    respWriter.println(album.getTitle());
-    respWriter.println("Created on " + new Date(album.getCreationTime()));
+    final Request<Album_$Versioned> getAlbumReq = _albumBuilders.get().id(albumId).build();
+    final ResponseFuture<Album_$Versioned> getAlbumFuture = _restClient.sendRequest(getAlbumReq);
+    final Response<Album_$Versioned> getResp = getAlbumFuture.getResponse();
+    final Album_$Versioned album = getResp.getEntity();
+    if (album instanceof Album) {
+      respWriter.println(((Album) album).getTitle());
+      respWriter.println("Created on " + new Date(((Album) album).getCreationTime()));
+    }
 
     // get the album's entries
     final FindRequest<AlbumEntry> searchReq = _albumEntryBuilders.findBySearch().albumIdParam(albumId).build();
@@ -330,9 +369,9 @@ public class RestLiExampleBasicClient
    */
   private void getAlbumSummary(PrintWriter respWriter, long newAlbumId) throws RemoteInvocationException
   {
-    final Request<Album> getReq = _albumBuilders.get().id(newAlbumId).build();
-    final ResponseFuture<Album> getFuture = _restClient.sendRequest(getReq);
-    final Response<Album> getResp = getFuture.getResponse();
+    final Request<Album_$Versioned> getReq = _albumBuilders.get().id(newAlbumId).build();
+    final ResponseFuture<Album_$Versioned> getFuture = _restClient.sendRequest(getReq);
+    final Response<Album_$Versioned> getResp = getFuture.getResponse();
     respWriter.println("Album: " + getResp.getEntity().toString());
   }
 
