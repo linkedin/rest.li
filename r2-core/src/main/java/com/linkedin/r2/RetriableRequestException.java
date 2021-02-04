@@ -60,6 +60,20 @@ public class RetriableRequestException extends RemoteInvocationException
   }
 
   /**
+   * Construct a new instance with specified message, cause, and an option to disable
+   * stacktrace. Consider setting {@code writableStackTrace} to {@code false} to conserve
+   * computation cost if the stacktrace does not contribute meaningful insights.
+   *
+   * @param message the message to be used for this exception.
+   * @param cause the cause to be used for this exception.
+   * @param writableStackTrace the exception stacktrace is filled in if true; false otherwise.
+   */
+  public RetriableRequestException(String message, Throwable cause, boolean writableStackTrace)
+  {
+    super(message, cause, writableStackTrace);
+  }
+
+  /**
    * Construct a new instance with specified cause.
    *
    * @param cause the cause to be used for this exception.
