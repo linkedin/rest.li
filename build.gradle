@@ -197,6 +197,10 @@ subprojects {
     all*.exclude group: 'javax.jms', module: 'jms'
     all*.exclude group: 'com.sun.jdmk', module: 'jmxtools'
     all*.exclude group: 'com.sun.jmx', module: 'jmxri'
+    // Exclude older versions of velocity engine under a different module name
+    // so they don't conflict with "velocity-engine-core" module used
+    // for versions >=2.0
+    all*.exclude group: 'org.apache.velocity', module: 'velocity'
   }
 
   if (!(it.name in ['data-avro', 'restli-int-test'])) {
