@@ -200,6 +200,10 @@ class GreetingsResourceImpl implements KeyValueResource<Long,Greeting>
   @RestMethod.Get
   public Greeting get(Long key)
   {
+    if (key == 204L)
+    {
+      throw new RestLiServiceException(HttpStatus.S_204_NO_CONTENT);
+    }
     return _db.get(key);
   }
 

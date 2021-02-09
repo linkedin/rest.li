@@ -63,6 +63,9 @@ public class GreetingUnstructuredDataAssociationResource extends UnstructuredDat
       case "exception":
         throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR,
                                          "internal service exception");
+      case "exception_204":
+        throw new RestLiServiceException(HttpStatus.S_204_NO_CONTENT,
+            "internal service exception with 204");
       default:
         throw new RestLiServiceException(HttpStatus.S_503_SERVICE_UNAVAILABLE,
                                          "unexpected unstructured data key, something wrong with the test.");
