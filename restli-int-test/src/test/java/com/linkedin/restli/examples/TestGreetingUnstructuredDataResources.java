@@ -22,9 +22,12 @@ import java.io.InputStreamReader;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static com.linkedin.restli.common.RestConstants.*;
-import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.*;
-import static org.testng.Assert.*;
+import static com.linkedin.restli.common.RestConstants.HEADER_CONTENT_DISPOSITION;
+import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.MIME_TYPE;
+import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.UNSTRUCTURED_DATA_BYTES;
+import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.CONTENT_DISPOSITION_VALUE;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 
 /**
@@ -132,7 +135,8 @@ public class TestGreetingUnstructuredDataResources extends UnstructuredDataResou
       BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
       String inputLine;
       StringBuffer response = new StringBuffer();
-      while ((inputLine = in.readLine()) != null) {
+      while ((inputLine = in.readLine()) != null)
+      {
         response.append(inputLine);
       }
       in.close();
