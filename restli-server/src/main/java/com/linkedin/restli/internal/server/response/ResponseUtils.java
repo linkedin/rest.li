@@ -242,7 +242,7 @@ public class ResponseUtils
         .setStatus(restLiResponse.getStatus() == null ? HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode()
             : restLiResponse.getStatus().getCode());
 
-    if (restLiResponse.hasData())
+    if (restLiResponse.hasData() && restLiResponse.getStatus() != HttpStatus.S_204_NO_CONTENT)
     {
       responseBuilder.setEntity(DataMapUtils.mapToByteString(restLiResponse.getDataMap(), responseBuilder.getHeaders()));
     }

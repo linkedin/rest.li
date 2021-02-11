@@ -16,17 +16,18 @@
 
 package com.linkedin.restli.examples;
 
-
 import com.linkedin.restli.common.RestConstants;
-
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.UNSTRUCTURED_DATA_BYTES;
 import static com.linkedin.restli.common.RestConstants.HEADER_CONTENT_DISPOSITION;
-import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.CONTENT_DISPOSITION_VALUE;
 import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.MIME_TYPE;
+import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.UNSTRUCTURED_DATA_BYTES;
+import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.CONTENT_DISPOSITION_VALUE;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 
 /**
@@ -112,6 +113,35 @@ public class TestGreetingUnstructuredDataResources extends UnstructuredDataResou
   {
     sendGet(resourceURL, (conn) -> {
       assertEquals(conn.getResponseCode(), 500);
+    });
+  }
+
+  @DataProvider(name = "exceptionNoContentURLs")
+  private static Object[][] exceptionNoContentURLs()
+  {
+    return new Object[][] {
+        { "/greetingAssociationUnstructuredData/src=exception_204&dest=bar" }
+    };
+  }
+
+  @Test(dataProvider = "exceptionNoContentURLs")
+  public void testGetInternalServiceExceptionWithNoContent(String resourceURL)
+      throws Throwable
+  {
+    sendGet(resourceURL, (conn) -> {
+      conn.setDoInput(true);
+      int serverStatusCode = conn.getResponseCode();
+      assertEquals(serverStatusCode, 204);
+      BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+      String inputLine;
+      StringBuffer response = new StringBuffer();
+      while ((inputLine = in.readLine()) != null)
+      {
+        response.append(inputLine);
+      }
+      in.close();
+      assertEquals(response.length(), 0);
+      assertTrue(conn.getHeaderField("X-LinkedIn-Error-Response").equalsIgnoreCase("true"));
     });
   }
 }
