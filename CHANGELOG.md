@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.14.3] - 2021-02-10
 - Add PathSpecSet, an immutable set of PathSpecs that is convenient to use when building logic based on Rest.li projection
 
 ## [29.14.2] - 2021-02-03
@@ -4838,7 +4840,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.14.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.14.3...master
+[29.14.3]: https://github.com/linkedin/rest.li/compare/v29.14.2...v29.14.3
 [29.14.2]: https://github.com/linkedin/rest.li/compare/v29.14.1...v29.14.2
 [29.14.1]: https://github.com/linkedin/rest.li/compare/v29.14.0...v29.14.1
 [29.14.0]: https://github.com/linkedin/rest.li/compare/v29.13.12...v29.14.0
