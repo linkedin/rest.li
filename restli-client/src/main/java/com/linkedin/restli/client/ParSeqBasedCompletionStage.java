@@ -80,7 +80,7 @@ public class ParSeqBasedCompletionStage<T> extends CompletableFuture<T>
   }
 
   protected Engine _engine = null;
-  protected Task<T> _task = null;
+  protected Task<T> _task = null; // The underlying ParSeq task to acquire the value this completionStage needs
   protected Executor _asyncExecutor = null;
 
   /**
@@ -230,18 +230,31 @@ public class ParSeqBasedCompletionStage<T> extends CompletableFuture<T>
 
   @Override
   public <U> ParSeqBasedCompletionStage<U> thenCompose(Function<? super T, ? extends CompletionStage<U>> fn) {
-    return null;
-  }
-
-  @Override
-  public <U> ParSeqBasedCompletionStage<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn) {
-    return null;
+    return nextStageByComposingTask(_task.flatMap("thenCompose", t -> Task.fromCompletionStage(() -> fn.apply(t))));
   }
 
   @Override
   public <U> ParSeqBasedCompletionStage<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn,
       Executor executor) {
-    return null;
+    return nextStageByComposingTask(_task.flatMap("thenCompose", t -> Task.async(() -> {
+      final SettablePromise<U> promise = Promises.settable();
+      executor.execute(() -> {
+        CompletionStage<? extends U> future = fn.apply(t);
+        future.whenComplete((value, exception) -> {
+          if (exception != null) {
+            promise.fail(exception);
+          } else {
+            promise.done(value);
+          }
+        });
+      });
+      return promise;
+    })));
+  }
+
+  @Override
+  public <U> ParSeqBasedCompletionStage<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn) {
+    return thenComposeAsync(fn, _asyncExecutor);
   }
 //
 //  @Override
@@ -341,6 +354,8 @@ public class ParSeqBasedCompletionStage<T> extends CompletableFuture<T>
 //  public CompletionStage<Void> runAfterEitherAsync(CompletionStage<?> other, Runnable action, Executor executor) {
 //    return null;
 //  }
+
+  /* ------------- Exception handling -------------- */
 //
 //  @Override
 //  public CompletionStage<T> exceptionally(Function<Throwable, ? extends T> fn) {
