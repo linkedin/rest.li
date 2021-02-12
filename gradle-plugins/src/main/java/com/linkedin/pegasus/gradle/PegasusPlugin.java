@@ -1183,6 +1183,10 @@ public class PegasusPlugin implements Plugin<Project>
     CompatibilityLogChecker logChecker = new CompatibilityLogChecker();
     try
     {
+      if (!compatibilityLogFile.exists())
+      {
+          return true;
+      }
       logChecker.write(Files.readAllBytes(compatibilityLogFile.toPath()));
     }
     catch (IOException e)

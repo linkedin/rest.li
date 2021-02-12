@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.14.6] - 2021-02-12
+- Fix for idl/snapshot task failing with IOException when compat summary is not generated/ or is empty.
+
 ## [29.14.5] - 2021-02-11
 - Shortcircuit already serialized projection params
 
@@ -4846,7 +4849,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.14.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.14.6...master
+[29.14.6]: https://github.com/linkedin/rest.li/compare/v29.14.5...v29.14.6
 [29.14.5]: https://github.com/linkedin/rest.li/compare/v29.14.4...v29.14.5
 [29.14.4]: https://github.com/linkedin/rest.li/compare/v29.14.3...v29.14.4
 [29.14.3]: https://github.com/linkedin/rest.li/compare/v29.14.2...v29.14.3
