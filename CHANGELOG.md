@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.14.5] - 2021-02-11
+- Shortcircuit already serialized projection params
+
 ## [29.14.4] - 2021-02-10
 - Deal with status code 204, when we see 204 in error path, we will not return data (from data layer only)
 
@@ -4843,7 +4846,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.14.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.14.5...master
+[29.14.5]: https://github.com/linkedin/rest.li/compare/v29.14.4...v29.14.5
 [29.14.4]: https://github.com/linkedin/rest.li/compare/v29.14.3...v29.14.4
 [29.14.3]: https://github.com/linkedin/rest.li/compare/v29.14.2...v29.14.3
 [29.14.2]: https://github.com/linkedin/rest.li/compare/v29.14.1...v29.14.2

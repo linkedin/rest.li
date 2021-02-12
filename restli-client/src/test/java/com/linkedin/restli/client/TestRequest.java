@@ -26,6 +26,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceProperties;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
 
@@ -243,6 +244,22 @@ public class TestRequest
     GetRequest<TestRecord> getRequest = generateDummyRequestBuilder().build();
     getRequest.setProjectionDataMapSerializer(customSerializer);
     assertEquals(getRequest.getRequestOptions().getProjectionDataMapSerializer(), customSerializer);
+  }
+
+  @Test
+  public void testStringFieldsParam()
+  {
+    GetRequest<TestRecord> getRequest =
+        generateDummyRequestBuilder().setParam(RestConstants.FIELDS_PARAM, "id").build();
+    assertEquals(getRequest.getFields(), Collections.singleton(new PathSpec("id")));
+  }
+
+  @Test(expectedExceptions = {IllegalArgumentException.class})
+  public void testInvalidFieldsParam()
+  {
+    GetRequest<TestRecord> getRequest =
+        generateDummyRequestBuilder().setParam(RestConstants.FIELDS_PARAM, 100).build();
+    getRequest.getFields();
   }
 
   private GetRequestBuilder<Long, TestRecord> generateDummyRequestBuilder ()
