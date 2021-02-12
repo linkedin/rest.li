@@ -318,18 +318,20 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testGetAndThenPartialUpdate() throws Exception
+  public void testPartialUpdateAfterCreateAndGet() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-
-    CompletionStage<Greeting> result = greetings.get(1L);
-    CompletionStage<Void> updateResult = result.thenCompose(greeting ->
+    // Create a new greeting to use for partial update test.
+    CompletionStage<Long> createResult = greetings.create(getGreeting(), false);
+    CompletionStage<Void> updateResult = createResult.thenCompose(greetings::get).thenCompose(greeting ->
     {
-      try {
+      try
+      {
         Greeting update = greeting.copy();
         greeting.setMessage("Partial update message");
         return greetings.partialUpdate(1L, PatchGenerator.diff(greeting, update));
-      } catch (CloneNotSupportedException e) {
+      } catch (CloneNotSupportedException e)
+      {
         throw new RuntimeException(e);
       }
     });
@@ -342,11 +344,10 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   public void testPartialUpdateAndGet() throws Exception
   {
     PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
     Greeting update = getGreeting(message);
-    CompletionStage<Greeting> result = greetings.partialUpdateAndGet(1L, PatchGenerator.diff(original, update));
+    CompletionStage<Greeting> result = greetings.partialUpdateAndGet(21L, PatchGenerator.diff(original, update));
     CompletableFuture<Greeting> future = result.toCompletableFuture();
     Assert.assertEquals(future.get(5000, TimeUnit.MILLISECONDS).getMessage(), message);
   }
@@ -380,13 +381,13 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
     Greeting update = getGreeting(message);
-    inputs.put(1L, PatchGenerator.diff(original, update));
-    inputs.put(2L, PatchGenerator.diff(original, update));
+    inputs.put(21L, PatchGenerator.diff(original, update));
+    inputs.put(22L, PatchGenerator.diff(original, update));
     CompletionStage<Map<Long, UpdateStatus>> result = greetings.batchPartialUpdate(inputs);
     CompletableFuture<Map<Long, UpdateStatus>> future = result.toCompletableFuture();
     Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
-    Assert.assertEquals(future.get().get(1L).getStatus().intValue(), 200);
-    Assert.assertEquals(future.get().get(2L).getStatus().intValue(), 200);
+    Assert.assertEquals(future.get().get(21L).getStatus().intValue(), 200);
+    Assert.assertEquals(future.get().get(22L).getStatus().intValue(), 200);
   }
 
   @Test
@@ -398,12 +399,12 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
     Greeting update = getGreeting(message);
-    inputs.put(1L, PatchGenerator.diff(original, update));
+    inputs.put(21L, PatchGenerator.diff(original, update));
     inputs.put(-2L, PatchGenerator.diff(original, update));
     CompletionStage<Map<Long, UpdateStatus>> result = greetings.batchPartialUpdate(inputs);
     CompletableFuture<Map<Long, UpdateStatus>> future = result.toCompletableFuture();
     Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
-    Assert.assertEquals(future.get().get(1L).getStatus().intValue(), 200);
+    Assert.assertEquals(future.get().get(21L).getStatus().intValue(), 200);
     Assert.assertEquals(future.get().get(-2L).getStatus().intValue(), 404);
   }
 
@@ -416,15 +417,15 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
     Greeting update = getGreeting(message);
-    inputs.put(1L, PatchGenerator.diff(original, update));
-    inputs.put(2L, PatchGenerator.diff(original, update));
+    inputs.put(21L, PatchGenerator.diff(original, update));
+    inputs.put(22L, PatchGenerator.diff(original, update));
     CompletionStage<Map<Long, UpdateEntityStatus<Greeting>>> result = greetings.batchPartialUpdateAndGet(inputs);
     CompletableFuture<Map<Long, UpdateEntityStatus<Greeting>>> future = result.toCompletableFuture();
     Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
-    Assert.assertEquals(future.get().get(1L).getEntity().getId().longValue(), 1L);
-    Assert.assertEquals(future.get().get(1L).getEntity().getMessage(), message);
-    Assert.assertEquals(future.get().get(2L).getEntity().getId().longValue(), 2L);
-    Assert.assertEquals(future.get().get(2L).getEntity().getMessage(), message);
+    Assert.assertEquals(future.get().get(21L).getEntity().getId().longValue(), 21L);
+    Assert.assertEquals(future.get().get(21L).getEntity().getMessage(), message);
+    Assert.assertEquals(future.get().get(22L).getEntity().getId().longValue(), 22L);
+    Assert.assertEquals(future.get().get(22L).getEntity().getMessage(), message);
   }
 
   @Test
@@ -436,14 +437,14 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
     Greeting update = getGreeting(message);
-    inputs.put(1L, PatchGenerator.diff(original, update));
+    inputs.put(21L, PatchGenerator.diff(original, update));
     inputs.put(-2L, PatchGenerator.diff(original, update));
     CompletionStage<Map<Long, UpdateEntityStatus<Greeting>>> result = greetings.batchPartialUpdateAndGet(inputs);
     CompletableFuture<Map<Long, UpdateEntityStatus<Greeting>>> future = result.toCompletableFuture();
     Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
-    Assert.assertEquals(future.get().get(1L).getStatus().intValue(), 200);
-    Assert.assertEquals(future.get().get(1L).getEntity().getId().longValue(), 1L);
-    Assert.assertEquals(future.get().get(1L).getEntity().getMessage(), message);
+    Assert.assertEquals(future.get().get(21L).getStatus().intValue(), 200);
+    Assert.assertEquals(future.get().get(21L).getEntity().getId().longValue(), 21L);
+    Assert.assertEquals(future.get().get(21L).getEntity().getMessage(), message);
     Assert.assertEquals(future.get().get(-2L).getStatus().intValue(), 404);
     Assert.assertFalse(future.get().get(-2L).hasEntity());
   }
@@ -452,29 +453,45 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   public void testBatchUpdate() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    Map<Long, Greeting> inputs = new HashMap<>();
-    inputs.put(5L, getGreeting());
-    inputs.put(6L, getGreeting());
-    CompletionStage<Map<Long, UpdateStatus>> result = greetings.batchUpdate(inputs);
+    CompletionStage<List<CreateIdStatus<Long>>>
+        createResult = greetings.batchCreate(Arrays.asList(getGreeting(), getGreeting()));
+
+    final Map<Long, Greeting> inputs = new HashMap<>();
+    CompletionStage<Map<Long, UpdateStatus>> result = createResult.thenCompose(idStatuses ->
+    {
+      for (CreateIdStatus<Long> idStatus : idStatuses)
+      {
+        inputs.put(idStatus.getKey(), getGreeting("Batch update test"));
+      }
+      return greetings.batchUpdate(inputs);
+    });
     CompletableFuture<Map<Long, UpdateStatus>> future = result.toCompletableFuture();
     Map<Long, UpdateStatus> ids = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(ids.size(), 2);
-    Assert.assertEquals(ids.get(5L).getStatus().intValue(), 204);
-    Assert.assertEquals(ids.get(6L).getStatus().intValue(), 204);
+    for (Long id : inputs.keySet())
+    {
+      Assert.assertEquals(ids.get(id).getStatus().intValue(), 204);
+    }
   }
 
   @Test
   public void testBatchUpdateWithErrors() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    Map<Long, Greeting> inputs = new HashMap<>();
-    inputs.put(5L, getGreeting());
+
+    final Map<Long, Greeting> inputs = new HashMap<>();
     inputs.put(-6L, getGreeting());
-    CompletionStage<Map<Long, UpdateStatus>> result = greetings.batchUpdate(inputs);
+    CompletionStage<Long> createResult = greetings.create(getGreeting(), false);
+
+    CompletionStage<Map<Long, UpdateStatus>> result = createResult.thenCompose(id ->
+    {
+      inputs.put(id, getGreeting("Batch update test"));
+      return greetings.batchUpdate(inputs);
+    });
     CompletableFuture<Map<Long, UpdateStatus>> future = result.toCompletableFuture();
     Map<Long, UpdateStatus> ids = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(ids.size(), 2);
-    Assert.assertEquals(ids.get(5L).getStatus().intValue(), 204);
+    Assert.assertEquals(ids.get(createResult.toCompletableFuture().get()).getStatus().intValue(), 204);
     Assert.assertEquals(ids.get(-6L).getStatus().intValue(), 404);
   }
 
@@ -482,10 +499,15 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   public void testUpdate() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    CompletionStage<Void> result = greetings.update(7L, getGreeting());
-    CompletableFuture<Void> future = result.toCompletableFuture();
+    CompletionStage<Long> createResult = greetings.create(getGreeting(), false);
+    final String message = "Update test";
+    CompletionStage<Void> updateResult = createResult.thenCompose(id -> greetings.update(id, getGreeting(message)));
+    CompletionStage<Greeting> getResult = createResult.thenCombine(updateResult, (id, v) -> id).thenCompose(greetings::get);
+
+    CompletableFuture<Greeting> future = getResult.toCompletableFuture();
     future.get(5000, TimeUnit.MILLISECONDS);
-    Assert.assertFalse(future.isCompletedExceptionally());
+    // Get the greeting to test updated value
+    Assert.assertEquals(future.get().getMessage(), message);
   }
 
   @Test

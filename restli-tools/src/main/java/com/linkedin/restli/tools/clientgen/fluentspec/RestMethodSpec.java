@@ -34,10 +34,10 @@ public class RestMethodSpec
   private final BaseResourceSpec _root;
   private List<ParameterSpec> _requiredParams;
   private List<ParameterSpec> _optionalParams;
-  public static final ParameterSchema START_SCHEMA = new ParameterSchema().setOptional(true)
+  private static final ParameterSchema START_SCHEMA = new ParameterSchema().setOptional(true)
       .setName(RestConstants.START_PARAM)
       .setType(DataSchemaConstants.INTEGER_TYPE);
-  public static final ParameterSchema COUNT_SCHEMA = new ParameterSchema().setOptional(true)
+  private static final ParameterSchema COUNT_SCHEMA = new ParameterSchema().setOptional(true)
       .setName(RestConstants.COUNT_PARAM)
       .setType(DataSchemaConstants.INTEGER_TYPE);
 

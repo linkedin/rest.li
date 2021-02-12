@@ -27,7 +27,7 @@ import com.linkedin.parseq.function.Success;
 import com.linkedin.restli.client.ParSeqRestliClient;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestliRequestOptions;
-import com.linkedin.restli.common.FluentClientUtils;
+import com.linkedin.restli.client.util.FluentClientUtils;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;

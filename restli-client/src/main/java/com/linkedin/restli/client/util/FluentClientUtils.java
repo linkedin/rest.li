@@ -1,7 +1,10 @@
-package com.linkedin.restli.common;
+package com.linkedin.restli.client.util;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.common.CollectionRequest;
+import com.linkedin.restli.common.KeyValueRecord;
+import com.linkedin.restli.common.KeyValueRecordFactory;
 import java.util.List;
 import java.util.Map;
 
