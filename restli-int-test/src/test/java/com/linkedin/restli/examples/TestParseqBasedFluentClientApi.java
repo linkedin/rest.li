@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -86,52 +85,44 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testGetRequest() throws InterruptedException, ExecutionException
+  public void testGetRequest() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     CompletionStage<Greeting> result = greetings.get(1L);
-    result.whenComplete((r, t) -> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Greeting> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Assert.assertFalse(future.isCompletedExceptionally());
-    Greeting greeting = future.get();
+    Greeting greeting = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertTrue(greeting.hasId());
     Assert.assertEquals((Long) 1L, greeting.getId());
   }
 
   @Test
-  public void testGetRequestFailure() throws InterruptedException
+  public void testGetRequestFailure() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     CompletionStage<Greeting> result = greetings.get(-1L);
-    result.whenComplete((r, t) -> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS), "Request timed out.");
     CompletableFuture<Greeting> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Assert.assertTrue(future.isCompletedExceptionally());
+    try
+    {
+      future.get(5000, TimeUnit.MILLISECONDS);
+      Assert.fail("Expected failure");
+    } catch (ExecutionException e)
+    {
+      Assert.assertEquals(((RestLiResponseException) e.getCause()).getStatus(), 404);
+    }
   }
 
 
   @Test
-  public void testBatchGetRequest() throws InterruptedException, ExecutionException
+  public void testBatchGetRequest() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     Set<Long> ids = Sets.newHashSet(Arrays.asList(1L, 2L, 3L));
     CompletionStage<Map<Long, EntityResponse<Greeting>>> result = greetings.batchGet(ids);
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Map<Long, EntityResponse<Greeting>>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Map<Long, EntityResponse<Greeting>> resultMap = future.get();
+    Map<Long, EntityResponse<Greeting>> resultMap = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(resultMap.size(), ids.size());
     for (Long id : ids)
     {
@@ -143,19 +134,14 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testBatchGetRequestWithPartialErrors() throws InterruptedException, ExecutionException
+  public void testBatchGetRequestWithPartialErrors() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     Set<Long> ids = Sets.newHashSet(Arrays.asList(-1L, -2L, 1L, 2L, 3L));
     CompletionStage<Map<Long, EntityResponse<Greeting>>> result = greetings.batchGet(ids);
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Map<Long, EntityResponse<Greeting>>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Map<Long, EntityResponse<Greeting>> resultMap = future.get();
+    Map<Long, EntityResponse<Greeting>> resultMap = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(resultMap.size(), ids.size());
     for (Long id : ids)
     {
@@ -174,99 +160,69 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testCreate() throws InterruptedException, ExecutionException
+  public void testCreate() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    CountDownLatch latch = new CountDownLatch(1);
     CompletionStage<Long> result = greetings.create(getGreeting(), false);
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Long> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Assert.assertNotNull(future.get());
+    Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
   }
 
   @Test
-  public void testCreateNullId() throws InterruptedException, ExecutionException
+  public void testCreateNullId() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     CompletionStage<Long> result = greetings.create(getGreeting(), true);
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Long> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Assert.assertNull(future.get());
+    Assert.assertNull(future.get(5000, TimeUnit.MILLISECONDS));
   }
 
   @Test
-  public void testCreateReturnEntity() throws InterruptedException, ExecutionException
+  public void testCreateReturnEntity() throws Exception
   {
     CreateGreeting greetings = new CreateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     String msg = Double.toString(Math.random());
     CompletionStage<IdEntityResponse<Long, Greeting>> result = greetings.createAndGet(getGreeting(msg));
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<IdEntityResponse<Long, Greeting>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Assert.assertNotNull(future.get());
+    Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(msg, future.get().getEntity().getMessage());
   }
 
   @Test
-  public void testCreateReturnEntityDisabled() throws InterruptedException, ExecutionException
+  public void testCreateReturnEntityDisabled() throws Exception
   {
     CreateGreeting greetings = new CreateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     CompletionStage<Long> result = greetings.create(getGreeting());
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Long> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Assert.assertNotNull(future.get());
+    Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
   }
 
   @Test
-  public void testBatchCreate() throws InterruptedException, ExecutionException
+  public void testBatchCreate() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     CompletionStage<List<CreateIdStatus<Long>>> result = greetings.batchCreate(
         Arrays.asList(getGreeting(), getGreeting()));
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<List<CreateIdStatus<Long>>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    List<CreateIdStatus<Long>> ids = future.get();
+    List<CreateIdStatus<Long>> ids = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(ids.size(), 2);
   }
 
   @Test
-  public void testBatchCreateReturnEntity() throws InterruptedException, ExecutionException
+  public void testBatchCreateReturnEntity() throws Exception
   {
     CreateGreeting greetings = new CreateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     String msg1 = Double.toString(Math.random());
     String msg2 = Double.toString(Math.random());
     CompletionStage<List<CreateIdEntityStatus<Long, Greeting>>>
         result = greetings.batchCreateAndGet(Arrays.asList(getGreeting(msg1), getGreeting(msg2)));
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<List<CreateIdEntityStatus<Long, Greeting>>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    List<CreateIdEntityStatus<Long, Greeting>> entities = future.get();
+    List<CreateIdEntityStatus<Long, Greeting>> entities = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(entities.size(), 2);
     Assert.assertNotNull(entities.get(0).getEntity());
     Assert.assertEquals(msg1, entities.get(0).getEntity().getMessage());
@@ -275,27 +231,21 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testBatchCreateReturnEntityDisabled() throws InterruptedException, ExecutionException
+  public void testBatchCreateReturnEntityDisabled() throws Exception
   {
     CreateGreeting greetings = new CreateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     CompletionStage<List<CreateIdStatus<Long>>>
         result = greetings.batchCreate(Arrays.asList(getGreeting(), getGreeting()));
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<List<CreateIdStatus<Long>>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    List<CreateIdStatus<Long>> ids = future.get();
+    List<CreateIdStatus<Long>> ids = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(ids.size(), 2);
   }
 
   @Test
-  public void testCreateAndThenBatchDelete() throws InterruptedException, ExecutionException
+  public void testCreateAndThenBatchDelete() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    CountDownLatch latch = new CountDownLatch(1);
     // Create entities first so we don't delete those used by other tests.
     CompletionStage<List<CreateIdStatus<Long>>>
         createResult = greetings.batchCreate(Arrays.asList(getGreeting(), getGreeting()));
@@ -303,12 +253,8 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     CompletionStage<Map<Long, UpdateStatus>>
         result = createResult.thenCompose(ids -> greetings.batchDelete(
             Sets.newHashSet(ids.stream().map(CreateIdStatus::getKey).collect(Collectors.toList()))));
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Map<Long, UpdateStatus>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Map<Long, UpdateStatus> ids = future.get();
+    Map<Long, UpdateStatus> ids = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(ids.size(), 2);
     for (UpdateStatus status : ids.values())
     {
@@ -317,10 +263,9 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testCreateAndThenBatchDeleteWithFailures() throws InterruptedException, ExecutionException
+  public void testCreateAndThenBatchDeleteWithFailures() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    CountDownLatch latch = new CountDownLatch(1);
     // Create entities first so we don't delete those used by other tests.
     CompletionStage<List<CreateIdStatus<Long>>>
         createResult = greetings.batchCreate(Arrays.asList(getGreeting(), getGreeting()));
@@ -333,12 +278,8 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
       deleteIds.add(-1L);
       return greetings.batchDelete(deleteIds);
     });
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Map<Long, UpdateStatus>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Map<Long, UpdateStatus> ids = future.get();
+    Map<Long, UpdateStatus> ids = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(ids.size(), 3);
     Assert.assertEquals(ids.remove(-1L).getStatus().intValue(), 404);
     for (UpdateStatus status : ids.values())
@@ -348,35 +289,27 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testCreateAndThenDelete() throws InterruptedException
+  public void testCreateAndThenDelete() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    CountDownLatch latch = new CountDownLatch(1);
     // Create entities first so we don't delete those used by other tests.
     CompletionStage<Long> createResult = greetings.create(getGreeting(), false);
 
     CompletionStage<Void> result = createResult.thenCompose(greetings::delete);
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Void> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
+    future.get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertFalse(future.isCompletedExceptionally());
   }
 
   @Test
-  public void testDeleteFailure() throws InterruptedException
+  public void testDeleteFailure() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    CountDownLatch latch = new CountDownLatch(1);
     CompletionStage<Void> result = greetings.delete(-1L);
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Void> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isCompletedExceptionally());
     try
     {
-      future.get();
+      future.get(5000, TimeUnit.MILLISECONDS);
       Assert.fail("Expected failure");
     } catch (ExecutionException e)
     {
@@ -385,11 +318,10 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testGetAndThenPartialUpdate() throws InterruptedException, ExecutionException
+  public void testGetAndThenPartialUpdate() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     CompletionStage<Greeting> result = greetings.get(1L);
     CompletionStage<Void> updateResult = result.thenCompose(greeting ->
     {
@@ -401,51 +333,37 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
         throw new RuntimeException(e);
       }
     });
-    updateResult.whenComplete((r, t) -> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Void> future = updateResult.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
+    future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertFalse(future.isCompletedExceptionally());
   }
 
   @Test
-  public void testPartialUpdateAndGet() throws InterruptedException, ExecutionException
+  public void testPartialUpdateAndGet() throws Exception
   {
     PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
     Greeting update = getGreeting(message);
     CompletionStage<Greeting> result = greetings.partialUpdateAndGet(1L, PatchGenerator.diff(original, update));
-    result.whenComplete((r, t) -> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Greeting> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Assert.assertEquals(future.get().getMessage(), message);
+    Assert.assertEquals(future.get(5000, TimeUnit.MILLISECONDS).getMessage(), message);
   }
 
   @Test
-  public void testPartialUpdateError() throws InterruptedException, ExecutionException
+  public void testPartialUpdateError() throws Exception
   {
     PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
     Greeting update = getGreeting(message);
     CompletionStage<Greeting> result = greetings.partialUpdateAndGet(-1L, PatchGenerator.diff(original, update));
-    result.whenComplete((r, t) -> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Greeting> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Assert.assertTrue(future.isCompletedExceptionally());
     try
     {
-      future.get();
+      future.get(5000, TimeUnit.MILLISECONDS);
       Assert.fail("Expected failure");
     } catch (ExecutionException e)
     {
@@ -454,11 +372,10 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testBatchPartialUpdate() throws InterruptedException, ExecutionException
+  public void testBatchPartialUpdate() throws Exception
   {
     PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
@@ -466,21 +383,17 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     inputs.put(1L, PatchGenerator.diff(original, update));
     inputs.put(2L, PatchGenerator.diff(original, update));
     CompletionStage<Map<Long, UpdateStatus>> result = greetings.batchPartialUpdate(inputs);
-    result.whenComplete((r, t) -> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Map<Long, UpdateStatus>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
+    Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(future.get().get(1L).getStatus().intValue(), 200);
     Assert.assertEquals(future.get().get(2L).getStatus().intValue(), 200);
   }
 
   @Test
-  public void testBatchPartialUpdateWithErrors() throws InterruptedException, ExecutionException
+  public void testBatchPartialUpdateWithErrors() throws Exception
   {
     PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
@@ -488,21 +401,17 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     inputs.put(1L, PatchGenerator.diff(original, update));
     inputs.put(-2L, PatchGenerator.diff(original, update));
     CompletionStage<Map<Long, UpdateStatus>> result = greetings.batchPartialUpdate(inputs);
-    result.whenComplete((r, t) -> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Map<Long, UpdateStatus>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
+    Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(future.get().get(1L).getStatus().intValue(), 200);
     Assert.assertEquals(future.get().get(-2L).getStatus().intValue(), 404);
   }
 
   @Test
-  public void testBatchPartialUpdateAndGet() throws InterruptedException, ExecutionException
+  public void testBatchPartialUpdateAndGet() throws Exception
   {
     PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
@@ -510,11 +419,8 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     inputs.put(1L, PatchGenerator.diff(original, update));
     inputs.put(2L, PatchGenerator.diff(original, update));
     CompletionStage<Map<Long, UpdateEntityStatus<Greeting>>> result = greetings.batchPartialUpdateAndGet(inputs);
-    result.whenComplete((r, t) -> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Map<Long, UpdateEntityStatus<Greeting>>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
+    Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(future.get().get(1L).getEntity().getId().longValue(), 1L);
     Assert.assertEquals(future.get().get(1L).getEntity().getMessage(), message);
     Assert.assertEquals(future.get().get(2L).getEntity().getId().longValue(), 2L);
@@ -522,11 +428,10 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testBatchPartialUpdateAndGetWithErrors() throws InterruptedException, ExecutionException
+  public void testBatchPartialUpdateAndGetWithErrors() throws Exception
   {
     PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
@@ -534,11 +439,8 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     inputs.put(1L, PatchGenerator.diff(original, update));
     inputs.put(-2L, PatchGenerator.diff(original, update));
     CompletionStage<Map<Long, UpdateEntityStatus<Greeting>>> result = greetings.batchPartialUpdateAndGet(inputs);
-    result.whenComplete((r, t) -> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Map<Long, UpdateEntityStatus<Greeting>>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
+    Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(future.get().get(1L).getStatus().intValue(), 200);
     Assert.assertEquals(future.get().get(1L).getEntity().getId().longValue(), 1L);
     Assert.assertEquals(future.get().get(1L).getEntity().getMessage(), message);
@@ -547,74 +449,54 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testBatchUpdate() throws InterruptedException, ExecutionException
+  public void testBatchUpdate() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Map<Long, Greeting> inputs = new HashMap<>();
-    CountDownLatch latch = new CountDownLatch(1);
     inputs.put(5L, getGreeting());
     inputs.put(6L, getGreeting());
     CompletionStage<Map<Long, UpdateStatus>> result = greetings.batchUpdate(inputs);
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Map<Long, UpdateStatus>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Map<Long, UpdateStatus> ids = future.get();
+    Map<Long, UpdateStatus> ids = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(ids.size(), 2);
     Assert.assertEquals(ids.get(5L).getStatus().intValue(), 204);
     Assert.assertEquals(ids.get(6L).getStatus().intValue(), 204);
   }
 
   @Test
-  public void testBatchUpdateWithErrors() throws InterruptedException, ExecutionException
+  public void testBatchUpdateWithErrors() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Map<Long, Greeting> inputs = new HashMap<>();
-    CountDownLatch latch = new CountDownLatch(1);
     inputs.put(5L, getGreeting());
     inputs.put(-6L, getGreeting());
     CompletionStage<Map<Long, UpdateStatus>> result = greetings.batchUpdate(inputs);
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Map<Long, UpdateStatus>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Map<Long, UpdateStatus> ids = future.get();
+    Map<Long, UpdateStatus> ids = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(ids.size(), 2);
     Assert.assertEquals(ids.get(5L).getStatus().intValue(), 204);
     Assert.assertEquals(ids.get(-6L).getStatus().intValue(), 404);
   }
 
   @Test
-  public void testUpdate() throws InterruptedException, ExecutionException
+  public void testUpdate() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    CountDownLatch latch = new CountDownLatch(1);
     CompletionStage<Void> result = greetings.update(7L, getGreeting());
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Void> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
+    future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertFalse(future.isCompletedExceptionally());
   }
 
   @Test
-  public void testUpdateFailure() throws InterruptedException, ExecutionException
+  public void testUpdateFailure() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    CountDownLatch latch = new CountDownLatch(1);
     CompletionStage<Void> result = greetings.update(-7L, getGreeting());
-    result.whenComplete((r, t)-> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<Void> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Assert.assertTrue(future.isCompletedExceptionally());
     try
     {
-      future.get();
+      future.get(5000, TimeUnit.MILLISECONDS);
       Assert.fail("Expected failure");
     } catch (ExecutionException e)
     {
@@ -623,23 +505,17 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testGetAll() throws InterruptedException, ExecutionException
+  public void testGetAll() throws Exception
   {
     Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    CountDownLatch latch = new CountDownLatch(1);
     // Create some greetings with "GetAll" in message so they will be returned by getAll test method..
     CompletionStage<List<CreateIdStatus<Long>>> createResult = greetings.batchCreate(
         Arrays.asList(getGreeting("GetAll"), getGreeting("GetAll")));
 
     CompletionStage<List<Greeting>> result = createResult.thenCompose(ids -> greetings.getAll());
-    result.whenComplete((r, t) -> latch.countDown());
-    Assert.assertTrue(latch.await(5000, TimeUnit.MILLISECONDS),
-        "Request timed out");
     CompletableFuture<List<Greeting>> future = result.toCompletableFuture();
-    Assert.assertTrue(future.isDone());
-    Assert.assertFalse(future.isCompletedExceptionally());
-    List<Greeting> greetingList = future.get();
+    List<Greeting> greetingList = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertTrue(greetingList.size() >= 2);
     for (Greeting greeting :greetingList)
     {
