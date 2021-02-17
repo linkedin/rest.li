@@ -22,13 +22,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.filter.compression.ServerStreamCompressionFilter;
-import com.linkedin.r2.filter.compression.streaming.Bzip2Compressor;
-import com.linkedin.r2.filter.compression.streaming.DeflateCompressor;
-import com.linkedin.r2.filter.compression.streaming.GzipCompressor;
-import com.linkedin.r2.filter.compression.streaming.NoopCompressor;
-import com.linkedin.r2.filter.compression.streaming.SnappyCompressor;
 import com.linkedin.r2.filter.compression.streaming.StreamEncodingType;
-import com.linkedin.r2.filter.compression.streaming.StreamingCompressor;
 import com.linkedin.r2.filter.message.stream.StreamFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestStatus;
@@ -64,6 +58,7 @@ import test.r2.integ.clientserver.providers.client.ClientProvider;
 import test.r2.integ.clientserver.providers.server.ServerProvider;
 import test.r2.integ.helper.BytesReader;
 import test.r2.integ.helper.TimedBytesWriter;
+
 
 /**
  * @author Ang Xu
@@ -117,28 +112,28 @@ public class TestStreamResponseCompression extends AbstractServiceTest
   public void testDeflateCompression()
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "deflate", new DeflateCompressor(_executor));
+    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "deflate");
   }
 
   @Test
   public void testGzipCompression()
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "gzip", new GzipCompressor(_executor));
+    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "gzip");
   }
 
   @Test
   public void testBzip2Compression()
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "bzip2", new Bzip2Compressor(_executor));
+    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "bzip2");
   }
 
   @Test
   public void testSnappyCompression()
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "x-snappy-framed", new SnappyCompressor(_executor));
+    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "x-snappy-framed");
   }
 
   @Test
@@ -146,44 +141,42 @@ public class TestStreamResponseCompression extends AbstractServiceTest
       throws InterruptedException, ExecutionException, TimeoutException
   {
     testResponseCompression(SMALL_URI, SMALL_BYTES_NUM,
-                            "x-snappy-framed;q=1, bzip2;q=0.75, gzip;q=0.5, defalte;q=0",
-                            new SnappyCompressor(_executor));
+                            "x-snappy-framed;q=1, bzip2;q=0.75, gzip;q=0.5, defalte;q=0");
   }
 
   @Test
   public void testSnappyCompression3()
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "x-snappy-framed, *;q=0",
-                            new SnappyCompressor(_executor));
+    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "x-snappy-framed, *;q=0");
   }
 
   @Test
   public void testNoCompression()
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "identity", new NoopCompressor());
+    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "identity");
   }
 
   @Test
   public void testNoCompression2()
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "", new NoopCompressor());
+    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "");
   }
 
   @Test
   public void testNoCompression3()
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "foobar", new NoopCompressor());
+    testResponseCompression(SMALL_URI, SMALL_BYTES_NUM, "foobar");
   }
 
   @Test
   public void testCompressionThreshold()
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    testResponseCompression(TINY_URI, TINY_BYTES_NUM, "x-snappy-framed", new NoopCompressor());
+    testResponseCompression(TINY_URI, TINY_BYTES_NUM, "x-snappy-framed");
   }
 
   @Test
@@ -193,7 +186,7 @@ public class TestStreamResponseCompression extends AbstractServiceTest
     testEncodingNotAcceptable("foobar, identity;q=0");
   }
 
-  private void testResponseCompression(URI uri, long bytes, String acceptEncoding, final StreamingCompressor compressor)
+  private void testResponseCompression(URI uri, long bytes, String acceptEncoding)
       throws InterruptedException, TimeoutException, ExecutionException
   {
     StreamRequestBuilder builder = new StreamRequestBuilder((_clientProvider.createHttpURI(_port, uri)));
@@ -208,7 +201,7 @@ public class TestStreamResponseCompression extends AbstractServiceTest
 
     final FutureCallback<None> readerCallback = new FutureCallback<None>();
     final BytesReader reader = new BytesReader(BYTE, readerCallback);
-    final EntityStream decompressedStream = compressor.inflate(response.getEntityStream());
+    final EntityStream decompressedStream = response.getEntityStream();
     decompressedStream.setReader(reader);
 
     readerCallback.get(60, TimeUnit.SECONDS);

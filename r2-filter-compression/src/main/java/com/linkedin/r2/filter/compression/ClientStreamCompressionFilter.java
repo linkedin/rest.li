@@ -144,16 +144,16 @@ public class ClientStreamCompressionFilter implements StreamFilter
   public String buildAcceptEncodingHeader()
   {
     //Essentially, we want to assign nonzero quality values to all those specified;
-    float delta = 1.0f/(_acceptedEncodings.length+1);
+    float delta = 1.0f/(_acceptedEncodings.length + 1);
     float currentQuality = 1.0f;
 
     //Special case so we don't end with an unnecessary delimiter
     StringBuilder acceptEncodingValue = new StringBuilder();
-    for(int i=0; i < _acceptedEncodings.length; i++)
+    for (int i = 0; i < _acceptedEncodings.length; i++)
     {
       StreamEncodingType t = _acceptedEncodings[i];
 
-      if(i > 0)
+      if (i > 0)
       {
         acceptEncodingValue.append(CompressionConstants.ENCODING_DELIMITER);
       }
@@ -299,7 +299,7 @@ public class ClientStreamCompressionFilter implements StreamFilter
 
   private Map<String, String> stripHeaders(Map<String, String> headerMap, String...headers)
   {
-    Map<String, String> newMap = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    Map<String, String> newMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     newMap.putAll(headerMap);
     for (String header : headers)
     {
@@ -309,7 +309,8 @@ public class ClientStreamCompressionFilter implements StreamFilter
   }
 
   /**
-   * Builds HTTP headers related to response compression and creates a RestRequest with those headers added.
+   * Builds HTTP headers related to response compression and creates a RestRequest with those headers added. If the
+   * request already has a {@link HttpConstants#ACCEPT_ENCODING} set, then it returns the input request as is.
    *
    * @param responseCompressionOverride compression force on/off override from the request context.
    * @param req current request.
@@ -317,6 +318,12 @@ public class ClientStreamCompressionFilter implements StreamFilter
    */
   public StreamRequest addResponseCompressionHeaders(CompressionOption responseCompressionOverride, StreamRequest req)
   {
+    // If the client manually set an accept encoding header, don't override and short circuit.
+    if (req.getHeader(HttpConstants.ACCEPT_ENCODING) != null)
+    {
+      return req;
+    }
+
     StreamRequestBuilder builder = req.builder();
     if (responseCompressionOverride == null)
     {

@@ -1080,6 +1080,14 @@ public class HttpClientFactory implements TransportClientFactory
             _responseCompressionConfigs.get(httpServiceName),
             httpResponseCompressionOperations));
       }
+      else
+      {
+        filters = filters.addLastRest(new ClientCompressionFilter(EncodingType.IDENTITY,
+            _defaultRequestCompressionConfig,
+            null,
+            null,
+            Collections.emptyList()));
+      }
 
       if (streamRequestContentEncoding != StreamEncodingType.IDENTITY || !httpResponseCompressionOperations.isEmpty())
       {
@@ -1089,6 +1097,15 @@ public class HttpClientFactory implements TransportClientFactory
             buildStreamAcceptEncodingSchemas(responseEncodings),
             _responseCompressionConfigs.get(httpServiceName),
             httpResponseCompressionOperations,
+            _compressionExecutor));
+      }
+      else
+      {
+        filters = filters.addLast(new ClientStreamCompressionFilter(StreamEncodingType.IDENTITY,
+            _defaultRequestCompressionConfig,
+            null,
+            null,
+            Collections.emptyList(),
             _compressionExecutor));
       }
     }
