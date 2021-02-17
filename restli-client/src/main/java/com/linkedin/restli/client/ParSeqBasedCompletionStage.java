@@ -23,11 +23,13 @@ import com.linkedin.parseq.function.Success;
 import com.linkedin.parseq.promise.Promises;
 import com.linkedin.parseq.promise.SettablePromise;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -329,6 +331,27 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
     return ensureFutureByEngine(task, _engine);
   }
 
+  /**
+   * Use to wrap the exception from the last stage in a {@link CompletionException} so they can be
+   * propagated according to the rules defined in {@link CompletionStage} documentation
+   */
+  private <U> Task<U> wrapException(Task<U> task)
+  {
+    return task.transform(prevTaskResult -> {
+      if (prevTaskResult.isFailed()) {
+        Throwable t = prevTaskResult.getError();
+        if (t instanceof CompletionException) {
+          return Failure.of(t);
+        } else
+        {
+          CompletionException ex = new CompletionException(prevTaskResult.getError());
+          return Failure.of(ex);
+        }
+      }
+      return Success.of(prevTaskResult.get());
+    });
+  }
+
   private <U> ParSeqBasedCompletionStage<U> nextStageByComposingTask(Task<U> composedTask)
   {
     return new ParSeqBasedCompletionStage<U>(_engine, _asyncExecutor).from(ensureFuture(composedTask));
@@ -337,13 +360,14 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   @Override
   public <U> ParSeqBasedCompletionStage<U> thenApply(Function<? super T, ? extends U> fn)
   {
-    return nextStageByComposingTask(_task.map("thenApply", fn::apply));
+    return nextStageByComposingTask(wrapException(_task).map("thenApply", fn::apply));
   }
 
   @Override
   public <U> ParSeqBasedCompletionStage<U> thenApplyAsync(Function<? super T, ? extends U> fn, Executor executor)
   {
-    return nextStageByComposingTask(_task.flatMap("thenApplyAsync", (t) -> Task.blocking(() -> fn.apply(t), executor)));
+    return nextStageByComposingTask(wrapException(_task).flatMap("thenApplyAsync",
+        (t) -> Task.blocking(() -> fn.apply(t), executor)));
   }
 
   @Override
@@ -355,13 +379,13 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   @Override
   public ParSeqBasedCompletionStage<Void> thenAccept(Consumer<? super T> action)
   {
-    return nextStageByComposingTask(_task.andThen("thenAccept", Task.action(() -> action.accept(_task.get()))));
+    return nextStageByComposingTask(wrapException(_task).andThen("thenAccept", Task.action(() -> action.accept(_task.get()))));
   }
 
   @Override
   public ParSeqBasedCompletionStage<Void> thenAcceptAsync(Consumer<? super T> action, Executor executor)
   {
-    return nextStageByComposingTask(_task.andThen("thenAcceptAsync", Task.blocking(() -> {
+    return nextStageByComposingTask(wrapException(_task).andThen("thenAcceptAsync", Task.blocking(() -> {
       action.accept(_task.get());
       return null;
     }, executor)));
@@ -376,13 +400,13 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   @Override
   public ParSeqBasedCompletionStage<Void> thenRun(Runnable action)
   {
-    return nextStageByComposingTask(_task.andThen("thenRun", Task.action(action::run)));
+    return nextStageByComposingTask(wrapException(_task).andThen("thenRun", Task.action(action::run)));
   }
 
   @Override
   public ParSeqBasedCompletionStage<Void> thenRunAsync(Runnable action, Executor executor)
   {
-    return nextStageByComposingTask(_task.andThen("thenRunAsync", Task.blocking(() -> {
+    return nextStageByComposingTask(wrapException(_task).andThen("thenRunAsync", Task.blocking(() -> {
       action.run();
       return null;
     }, executor)));
@@ -397,14 +421,16 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   @Override
   public <U> ParSeqBasedCompletionStage<U> thenCompose(Function<? super T, ? extends CompletionStage<U>> fn)
   {
-    return nextStageByComposingTask(_task.flatMap("thenCompose", t -> Task.fromCompletionStage(() -> fn.apply(t))));
+    return nextStageByComposingTask(wrapException(_task).flatMap("thenCompose", t ->
+        // Note: Need to wrap here since it is dependent of the returned composedTask
+        wrapException(Task.fromCompletionStage(() -> fn.apply(t)))));
   }
 
   @Override
   public <U> ParSeqBasedCompletionStage<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn,
       Executor executor)
   {
-    return nextStageByComposingTask(_task.flatMap("thenCompose", t -> Task.async(() -> {
+    return nextStageByComposingTask(wrapException(_task).flatMap("thenCompose", t -> wrapException(Task.async(() -> {
       final SettablePromise<U> promise = Promises.settable();
       executor.execute(() -> {
         CompletionStage<? extends U> future = fn.apply(t);
@@ -417,7 +443,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
         });
       });
       return promise;
-    })));
+    }))));
   }
 
   @Override
@@ -431,7 +457,9 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
       BiFunction<? super T, ? super U, ? extends V> fn)
   {
     Task<U> that = Task.fromCompletionStage(() -> other);
-    return nextStageByComposingTask(Task.par(_task, that).map("thenCombine", fn::apply));
+    return nextStageByComposingTask(
+        Task.par(wrapException(_task), wrapException(that))
+            .map("thenCombine", fn::apply));
   }
 
   @Override
@@ -440,7 +468,8 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   {
     Task<U> that = Task.fromCompletionStage(() -> other);
     return nextStageByComposingTask(
-        Task.par(_task, that).flatMap("thenCombineAsync", (t, u) -> Task.blocking(() -> fn.apply(t, u), executor)));
+        Task.par(wrapException(_task), wrapException(that))
+        .flatMap("thenCombineAsync", (t, u) -> Task.blocking(() -> fn.apply(t, u), executor)));
   }
 
   @Override
@@ -456,15 +485,22 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   {
     Task<U> that = Task.fromCompletionStage(() -> other);
     return nextStageByComposingTask(
-        Task.par(_task, that).flatMap("thenAcceptBoth", (t, u) -> Task.action(() -> action.accept(t, u))));
+        Task.par(wrapException(_task), wrapException(that))
+            .flatMap("thenAcceptBoth", (t, u) -> Task.action(() -> action.accept(t, u))));
   }
 
+  /**
+   * If both stage completes exceptionally, the returned stage will complete exceptionally with {@link CompletionException}
+   * wrapping the first encountered exception.
+   */
   @Override
   public <U> ParSeqBasedCompletionStage<Void> thenAcceptBothAsync(CompletionStage<? extends U> other,
       BiConsumer<? super T, ? super U> action, Executor executor)
   {
     Task<U> that = Task.fromCompletionStage(() -> other);
-    return nextStageByComposingTask(Task.par(_task, that).flatMap("thenAcceptBothAsync", (t, u) -> Task.blocking(() -> {
+    return nextStageByComposingTask(
+        Task.par(wrapException(_task), wrapException(that))
+            .flatMap("thenAcceptBothAsync", (t, u) -> Task.blocking(() -> {
       action.accept(t, u);
       return null;
     }, executor)));
@@ -477,11 +513,16 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
     return thenAcceptBothAsync(other, action, _asyncExecutor);
   }
 
+  /**
+   * If both stage completes exceptionally, the returned stage will complete exceptionally with {@link CompletionException}
+   * wrapping the first encountered exception.
+   */
   @Override
   public ParSeqBasedCompletionStage<Void> runAfterBoth(CompletionStage<?> other, Runnable action)
   {
     Task<?> that = Task.fromCompletionStage(() -> other);
-    return nextStageByComposingTask(Task.par(_task, that).andThen("runAfterBoth", Task.action(action::run)));
+    return nextStageByComposingTask(
+        Task.par(wrapException(_task), wrapException(that)).andThen("runAfterBoth", Task.action(action::run)));
   }
 
   @Override
@@ -489,7 +530,8 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
       Executor executor)
   {
     Task<?> that = Task.fromCompletionStage(() -> other);
-    return nextStageByComposingTask(Task.par(_task, that).flatMap("thenAcceptBothAsync", (t, u) -> Task.blocking(() -> {
+    return nextStageByComposingTask(Task.par(wrapException(_task), wrapException(that))
+        .flatMap("thenAcceptBothAsync", (t, u) -> Task.blocking(() -> {
       action.run();
       return null;
     }, executor)));
@@ -501,6 +543,16 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
     return runAfterBothAsync(other, action, _asyncExecutor);
   }
 
+  /**
+   *  According to the {@link CompletionStage} documentation:
+   *  <quote>
+   *  If a stage is dependent on either of two others, and only one of them completes exceptionally,
+   *  no guarantees are made about whether the dependent stage completes normally or exceptionally
+   *  </quote>
+   *
+   *  Therefore we only need to guarantee that if both stage completes exceptionally, the returned stage also completes
+   *  exceptionally.
+   */
   private <U> ParSeqBasedCompletionStage<U> produceEitherStage(String taskName, CompletionStage<? extends T> other,
       Function<? super T, U> fn)
   {
@@ -509,10 +561,16 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
     //       This can be optimized once ensureFuture() switch to use ParSeq's scheduleToRun() implementation,
     //       so that both completionStage' tasks will be added to the same plan.
     final AtomicBoolean[] sync = {new AtomicBoolean(false)};
-    return nextStageByComposingTask(Task.async(taskName, () -> {
+    final AtomicInteger[] counter = {new AtomicInteger(2)};
+    return nextStageByComposingTask(
+        wrapException(Task.async(taskName, () -> {
       final SettablePromise<U> result = Promises.settable();
 
-      Stream.of(_task, that).map(task -> task.andThen((t) -> {
+      Stream.of(_task, that).map(task -> task.onFailure(throwable -> {
+        if (counter[0].decrementAndGet() == 0) {
+          result.fail(throwable); // If both failed, try to fail the promise
+        }
+      }).andThen((t) -> {
         if (sync[0].compareAndSet(false, true)) {
           try {
             result.done(fn.apply(t));
@@ -523,7 +581,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
       })).forEach(this::ensureFuture);
 
       return result;
-    }));
+    })));
   }
 
   private <U> ParSeqBasedCompletionStage<U> produceEitherStageAsync(String taskName, CompletionStage<? extends T> other,
@@ -531,9 +589,14 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   {
     Task<T> that = Task.fromCompletionStage(() -> other);
     final AtomicBoolean[] sync = {new AtomicBoolean(false)};
-    return nextStageByComposingTask(Task.async(taskName, () -> {
+    final AtomicInteger[] counter = {new AtomicInteger(2)};
+    return nextStageByComposingTask(wrapException(Task.async(taskName, () -> {
       final SettablePromise<U> result = Promises.settable();
-      Stream.of(_task, that).map(task -> task.flatMap((t) -> Task.blocking(() -> {
+      Stream.of(_task, that).map(task -> task.onFailure(throwable -> {
+        if (counter[0].decrementAndGet() == 0) {
+          result.fail(throwable); // If both failed, try to fail the promise
+        }
+      }).flatMap((t) -> Task.blocking(() -> {
         if (sync[0].compareAndSet(false, true)) {
           try {
             result.done(fn.apply(t));
@@ -545,7 +608,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
       }, executor))).forEach(this::ensureFuture);
 
       return result;
-    }));
+    })));
   }
 
   @Override
