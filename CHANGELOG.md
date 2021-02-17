@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.15.0] - 2021-02-17
+- Always enable client compression filter so that responses can be decompressed. If the request already has an accept encoding header set do not overwrite it.
+
 ## [29.14.5] - 2021-02-11
 - Shortcircuit already serialized projection params
 
@@ -4846,7 +4849,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.14.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.0...master
+[29.15.0]: https://github.com/linkedin/rest.li/compare/v29.14.5...v29.15.0
 [29.14.5]: https://github.com/linkedin/rest.li/compare/v29.14.4...v29.14.5
 [29.14.4]: https://github.com/linkedin/rest.li/compare/v29.14.3...v29.14.4
 [29.14.3]: https://github.com/linkedin/rest.li/compare/v29.14.2...v29.14.3
