@@ -196,44 +196,16 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
     return thenApplyAsync(fn, _asyncExecutor);
   }
 
-  /**
-   * Create a new ParSeq {@link Task}
-   *
-   * The returned task will contains task1's result if task1 failed. Otherwise it will use task2's result instead
-   * Note the returned type is same as Task's value type.
-   *
-   */
-  private <R, T> Task<R> andThenIfNotFailed(final String desc, final Task<T> task1, final Task<R> task2)
-  {
-    return Task.async("andThenIfNotFailed", context -> {
-      final Task<R> wrapper = Task.async(desc, ctx -> {
-        SettablePromise<R> promise = Promises.settable();
-        if (!task1.isFailed()) {
-          Promises.propagateResult(task2, promise);
-          ctx.run(task2);
-        } else {
-          promise.fail(task1.getError());
-        }
-        return promise;
-      });
-
-      context.after(task1).run(wrapper);
-      context.run(task1);
-      return wrapper;
-    });
-  }
-
   @Override
   public ParSeqBasedCompletionStage<Void> thenAccept(Consumer<? super T> action)
   {
-    return nextStageByComposingTask(
-        andThenIfNotFailed("thenAccept", _task, Task.action(() -> action.accept(_task.get()))));
+    return nextStageByComposingTask(_task.flatMap("thenAccept", (t) -> Task.action(() -> action.accept(t))));
   }
 
   @Override
   public ParSeqBasedCompletionStage<Void> thenAcceptAsync(Consumer<? super T> action, Executor executor)
   {
-    return nextStageByComposingTask(andThenIfNotFailed("thenAcceptAsync", _task, Task.blocking(() -> {
+    return nextStageByComposingTask(_task.flatMap("thenAcceptAsync", t -> Task.blocking(() -> {
       action.accept(_task.get());
       return null;
     }, executor)));
@@ -248,13 +220,13 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   @Override
   public ParSeqBasedCompletionStage<Void> thenRun(Runnable action)
   {
-    return nextStageByComposingTask(andThenIfNotFailed("thenRun", _task, Task.action(action::run)));
+    return nextStageByComposingTask(_task.flatMap("thenRun", (t) -> Task.action(action::run)));
   }
 
   @Override
   public ParSeqBasedCompletionStage<Void> thenRunAsync(Runnable action, Executor executor)
   {
-    return nextStageByComposingTask(andThenIfNotFailed("thenRunAsync", _task, Task.blocking(() -> {
+    return nextStageByComposingTask(_task.flatMap("thenRunAsync", t -> Task.blocking(() -> {
       action.run();
       return null;
     }, executor)));
@@ -363,8 +335,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   public ParSeqBasedCompletionStage<Void> runAfterBoth(CompletionStage<?> other, Runnable action)
   {
     Task<?> that = Task.fromCompletionStage(() -> other);
-    return nextStageByComposingTask(
-        andThenIfNotFailed("runAfterBoth", Task.par(_task, that), Task.action(action::run)));
+    return nextStageByComposingTask(Task.par(_task, that).flatMap("runAfterBoth", t -> Task.action(action::run)));
   }
 
   @Override
