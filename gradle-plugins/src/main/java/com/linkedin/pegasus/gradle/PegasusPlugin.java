@@ -547,12 +547,12 @@ public class PegasusPlugin implements Plugin<Project>
   private static final String PEGASUS_COMPATIBILITY_MODE = "pegasusPlugin.pegasusSchemaCompatibilityCheckMode";
 
   private static final Pattern TEST_DIR_REGEX = Pattern.compile("^(integ)?[Tt]est");
-  private static final String SNAPSHOT_NO_PUBLISH = "rest.model.noPublish";
-  private static final String IDL_NO_PUBLISH = "rest.idl.noPublish";
-  private static final String SKIP_IDL_CHECK = "rest.idl.skipCheck";
+  public static final String SNAPSHOT_NO_PUBLISH = "rest.model.noPublish";
+  public static final String IDL_NO_PUBLISH = "rest.idl.noPublish";
+  public static final String SKIP_IDL_CHECK = "rest.idl.skipCheck";
   // gradle property to skip running GenerateRestModel task.
   // Note it affects GenerateRestModel task only, and does not skip tasks depends on GenerateRestModel.
-  private static final String SKIP_GENERATE_REST_MODEL= "rest.model.skipGenerateRestModel";
+  public static final String SKIP_GENERATE_REST_MODEL= "rest.model.skipGenerateRestModel";
   private static final String SUPPRESS_REST_CLIENT_RESTLI_2 = "rest.client.restli2.suppress";
   private static final String SUPPRESS_REST_CLIENT_RESTLI_1 = "rest.client.restli1.suppress";
 
@@ -1318,7 +1318,7 @@ public class PegasusPlugin implements Plugin<Project>
             task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
             task.setSnapshotCompatLevel(PropertyUtil.findCompatLevel(project, FileCompatibilityType.SNAPSHOT));
 
-            task.onlyIf(t -> isPropertyTrue(project, SKIP_IDL_CHECK));
+            task.onlyIf(t -> !isPropertyTrue(project, SKIP_IDL_CHECK));
           });
 
       CheckIdlTask checkIdlTask = project.getTasks()
