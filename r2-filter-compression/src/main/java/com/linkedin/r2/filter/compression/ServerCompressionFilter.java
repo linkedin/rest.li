@@ -16,6 +16,7 @@
 
 package com.linkedin.r2.filter.compression;
 
+import com.linkedin.data.ByteString;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -126,10 +127,10 @@ public class ServerCompressionFilter implements RestFilter
         //Process the correct compression types only
         if (encoding.hasCompressor())
         {
-          byte[] decompressedContent = encoding.getCompressor().inflate(req.getEntity().asInputStream());
+          ByteString decompressedContent = encoding.getCompressor().inflate(req.getEntity());
           Map<String, String> headers = new HashMap<String, String>(req.getHeaders());
           headers.remove(HttpConstants.CONTENT_ENCODING);
-          headers.put(HttpConstants.CONTENT_LENGTH, Integer.toString(decompressedContent.length));
+          headers.put(HttpConstants.CONTENT_LENGTH, Integer.toString(decompressedContent.length()));
           req = req.builder().setEntity(decompressedContent).setHeaders(headers).build();
         }
       }
@@ -186,9 +187,9 @@ public class ServerCompressionFilter implements RestFilter
               res.getEntity().length() > (Integer) requestContext.getLocalAttr(HttpConstants.HEADER_RESPONSE_COMPRESSION_THRESHOLD))
           {
             Compressor compressor = selectedEncoding.getCompressor();
-            byte[] compressed = compressor.deflate(res.getEntity().asInputStream());
+            ByteString compressed = compressor.deflate(res.getEntity());
 
-            if (compressed.length < res.getEntity().length())
+            if (compressed.length() < res.getEntity().length())
             {
               RestResponseBuilder resCompress = res.builder();
               resCompress.removeHeader(HttpConstants.CONTENT_LENGTH);

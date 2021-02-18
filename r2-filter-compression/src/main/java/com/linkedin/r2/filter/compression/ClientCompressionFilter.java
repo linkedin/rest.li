@@ -17,6 +17,7 @@
 package com.linkedin.r2.filter.compression;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.CompressionConfig;
@@ -200,9 +201,9 @@ public class ClientCompressionFilter implements RestFilter
         ))
         {
           Compressor compressor = _requestContentEncoding.getCompressor();
-          byte[] compressed = compressor.deflate(req.getEntity().asInputStream());
+          ByteString compressed = compressor.deflate(req.getEntity());
 
-          if (compressed.length < req.getEntity().length())
+          if (compressed.length() < req.getEntity().length())
           {
             req = req.builder().setEntity(compressed).setHeader(HttpConstants.CONTENT_ENCODING,
                 compressor.getContentEncodingName()).build();
@@ -259,11 +260,11 @@ public class ClientCompressionFilter implements RestFilter
           {
             throw new CompressionException(CompressionConstants.SERVER_ENCODING_ERROR + compressionHeader);
           }
-          byte[] inflated = encoding.getCompressor().inflate(res.getEntity().asInputStream());
+          ByteString inflated = encoding.getCompressor().inflate(res.getEntity());
           Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
           headers.putAll(res.getHeaders());
           headers.remove(HttpConstants.CONTENT_ENCODING);
-          headers.put(HttpConstants.CONTENT_LENGTH, Integer.toString(inflated.length));
+          headers.put(HttpConstants.CONTENT_LENGTH, Integer.toString(inflated.length()));
           res = res.builder().setEntity(inflated).setHeaders(headers).build();
         }
       }

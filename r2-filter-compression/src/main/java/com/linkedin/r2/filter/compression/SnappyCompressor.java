@@ -18,15 +18,14 @@ package com.linkedin.r2.filter.compression;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
-import org.apache.commons.io.IOUtils;
-import org.iq80.snappy.Snappy;
 
 /**
  * Wrapper for snappy compression algorithm.
  * @author erli
  */
-public class SnappyCompressor implements Compressor
+public class SnappyCompressor extends AbstractCompressor
 {
   private static final String HTTP_NAME = "snappy";
 
@@ -36,32 +35,17 @@ public class SnappyCompressor implements Compressor
     return HTTP_NAME;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
-  public byte[] inflate(InputStream data) throws CompressionException
+  protected InputStream createInflaterInputStream(InputStream compressedDataStream) throws IOException
   {
-    try
-    {
-      byte[] temp = IOUtils.toByteArray(data);
-      return Snappy.uncompress(temp, 0, temp.length);
-    }
-    catch (IOException e)
-    {
-      throw new CompressionException(CompressionConstants.DECODING_ERROR + getContentEncodingName(), e);
-    }
-
+    return new org.iq80.snappy.SnappyInputStream(compressedDataStream, true);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
-  public byte[] deflate(InputStream data) throws CompressionException
+  protected OutputStream createDeflaterOutputStream(OutputStream decompressedDataStream) throws IOException
   {
-    try
-    {
-      byte[] temp = IOUtils.toByteArray(data);
-      return Snappy.compress(temp);
-    }
-    catch (IOException e)
-    {
-      throw new CompressionException(CompressionConstants.DECODING_ERROR + getContentEncodingName(), e);
-    }
+    return new org.iq80.snappy.SnappyOutputStream(decompressedDataStream);
   }
 }

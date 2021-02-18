@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.15.1] - 2021-02-18
+- Cleanup compression code to reduce duplication and minimize memcopies 
+
 ## [29.15.0] - 2021-02-17
 - Always enable client compression filter so that responses can be decompressed. If the request already has an accept encoding header set do not overwrite it.
 
@@ -4849,7 +4852,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.1...master
+[29.15.1]: https://github.com/linkedin/rest.li/compare/v29.15.0...v29.15.1
 [29.15.0]: https://github.com/linkedin/rest.li/compare/v29.14.5...v29.15.0
 [29.14.5]: https://github.com/linkedin/rest.li/compare/v29.14.4...v29.14.5
 [29.14.4]: https://github.com/linkedin/rest.li/compare/v29.14.3...v29.14.4
