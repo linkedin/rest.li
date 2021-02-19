@@ -2909,6 +2909,7 @@ public class TestRecordAndUnionTemplate
     assertFalse(unionWithAliases.isFruit());
     assertFalse(unionWithAliases.isNull());
 
+    assertEquals(unionWithAliases.memberKeyName(), "label");
     assertTrue(unionWithAliases.memberIs("label"));
     assertEquals(unionWithAliases.memberType(), Foo.UnionWithAliases.MEMBER_Label);
 
@@ -2928,6 +2929,7 @@ public class TestRecordAndUnionTemplate
     assertFalse(unionWithAliases.isFruit());
     assertFalse(unionWithAliases.isNull());
 
+    assertEquals(unionWithAliases.memberKeyName(), "count");
     assertTrue(unionWithAliases.memberIs("count"));
     assertEquals(unionWithAliases.memberType(), Foo.UnionWithAliases.MEMBER_Count);
 

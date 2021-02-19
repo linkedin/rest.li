@@ -137,6 +137,17 @@ public class UnionTemplate implements DataTemplate<Object>
   }
 
   /**
+   * Name of the key that identifies the contained member in the Union.
+   *
+   * @return the name of the key that identifies the contained member.
+   * @throws NullUnionUnsupportedOperationException if the union is a null union.
+   */
+  public String memberKeyName() {
+    checkNotNull();
+    return _map.keySet().iterator().next();
+  }
+
+  /**
    * Returns whether the contained member in the Union is identified by the specified key.
    *
    * If the underlying {@link DataMap} has a single entry and the entry's key equals the

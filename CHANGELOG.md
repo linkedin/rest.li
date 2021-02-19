@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add UnionTemplate.memberKeyName() to directly return the key name for a union member
 
 ## [29.15.1] - 2021-02-18
 - Cleanup compression code to reduce duplication and minimize memcopies 
