@@ -16,18 +16,17 @@
 
 package com.linkedin.r2.filter.compression;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
+import java.io.OutputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
-import org.apache.commons.io.IOUtils;
+
 
 /**
  * Wrapper class for bzip2 compression
  * */
-public class Bzip2Compressor implements Compressor {
+public class Bzip2Compressor extends AbstractCompressor {
   private static final String HTTP_NAME = "bzip2";
 
   @Override
@@ -37,57 +36,14 @@ public class Bzip2Compressor implements Compressor {
   }
 
   @Override
-  public byte[] inflate(InputStream data) throws CompressionException
+  protected InputStream createInflaterInputStream(InputStream compressedDataStream) throws IOException
   {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    BZip2CompressorInputStream bzip2 = null;
-
-    try
-    {
-      bzip2 = new BZip2CompressorInputStream(data);
-      IOUtils.copy(bzip2, out);
-    }
-    catch (IOException e)
-    {
-      throw new CompressionException(CompressionConstants.DECODING_ERROR + getContentEncodingName(), e);
-    }
-    finally
-    {
-      if (bzip2 != null)
-      {
-        IOUtils.closeQuietly(bzip2);
-      }
-    }
-
-    return out.toByteArray();
+    return new BZip2CompressorInputStream(compressedDataStream);
   }
 
   @Override
-  public byte[] deflate(InputStream data) throws CompressionException
+  protected OutputStream createDeflaterOutputStream(OutputStream decompressedDataStream) throws IOException
   {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    BZip2CompressorOutputStream compressor = null;
-
-    try
-    {
-      out = new ByteArrayOutputStream();
-      compressor = new BZip2CompressorOutputStream(out);
-
-      IOUtils.copy(data, compressor);
-      compressor.finish();
-    }
-    catch (IOException e)
-    {
-      throw new CompressionException(CompressionConstants.DECODING_ERROR + getContentEncodingName(), e);
-    }
-    finally
-    {
-      if (compressor != null)
-      {
-        IOUtils.closeQuietly(compressor);
-      }
-    }
-
-    return out.toByteArray();
+    return new BZip2CompressorOutputStream(decompressedDataStream);
   }
 }
