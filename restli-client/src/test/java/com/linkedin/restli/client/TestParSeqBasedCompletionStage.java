@@ -39,6 +39,7 @@ import org.mockito.ArgumentMatcher;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.junit.Assert.*;
@@ -48,21 +49,20 @@ import static org.mockito.Mockito.*;
 /**
  * Unit test for {@link ParSeqBasedCompletionStage}
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class TestParSeqBasedCompletionStage
 {
   ParSeqUnitTestHelper _parSeqUnitTestHelper;
   Engine _engine;
-  ParSeqBasedCompletionStageFactory _parSeqBasedCompletionStageFactory;
+  ParSeqBasedCompletionStageFactory<String> _parSeqBasedCompletionStageFactory;
   ExecutorService _executor = ForkJoinPool.commonPool();
 
   private static final String TESTVALUE1 = "testValue1";
   private static final String TESTVALUE2 = "testValue2";
   private static final String THREAD_NAME_VALUE = "thread_name_value";
   private final Executor _mockExecutor = new RenamingThreadExecutor(THREAD_NAME_VALUE);
-
   private static final RuntimeException EXCEPTION = new RuntimeException("Test");
-
-  private static ExecutorService service = Executors.newCachedThreadPool();
+  private static final ExecutorService service = Executors.newCachedThreadPool();
 
   private CompletionException verifyCompletionException()
   {
@@ -94,7 +94,12 @@ public class TestParSeqBasedCompletionStage
     _parSeqUnitTestHelper = new ParSeqUnitTestHelper();
     _parSeqUnitTestHelper.setUp();
     _engine = _parSeqUnitTestHelper.getEngine();
-    _parSeqBasedCompletionStageFactory = new ParSeqBasedCompletionStageFactory(_engine);
+    _parSeqBasedCompletionStageFactory = new ParSeqBasedCompletionStageFactory<String>(_engine);
+  }
+
+  @BeforeMethod
+  public void prepareMethod()
+  {
   }
 
   /* ------------- Facilities for testing -------------- */
@@ -166,17 +171,17 @@ public class TestParSeqBasedCompletionStage
 //    return stage;
   }
 
-  private <T> ParSeqBasedCompletionStage<T> createStage(T value)
+  private ParSeqBasedCompletionStage<String> createStage(String value)
   {
     return _parSeqBasedCompletionStageFactory.buildStageFromValue(value);
   }
 
-  private <T> ParSeqBasedCompletionStage<T> createStage(Task<T> task)
+  private ParSeqBasedCompletionStage<String> createStage(Task<String> task)
   {
     return _parSeqBasedCompletionStageFactory.buildStageFromTask(task);
   }
 
-  private <T> ParSeqBasedCompletionStage<T> createStageFromThrowable(Throwable t)
+  private ParSeqBasedCompletionStage<String> createStageFromThrowable(Throwable t)
   {
     return _parSeqBasedCompletionStageFactory.buildStageFromThrowable(t);
   }
@@ -305,7 +310,7 @@ public class TestParSeqBasedCompletionStage
   {
     final String[] stringArr = new String[1];
     String testResult = "testCreateStageFromCompletableFuture";
-    ParSeqBasedCompletionStage<String> stageFromCompletionStage =
+    ParSeqBasedCompletionStage<Void> stageFromCompletionStage =
         _parSeqBasedCompletionStageFactory.buildStageFromRunnableAsync(() -> {
           stringArr[0] = testResult;
         });
@@ -318,7 +323,7 @@ public class TestParSeqBasedCompletionStage
   {
     final String[] stringArr = new String[1];
     String testResult = "testCreateStageFromCompletableFuture";
-    ParSeqBasedCompletionStage<String> stageFromCompletionStage =
+    ParSeqBasedCompletionStage<Void> stageFromCompletionStage =
         _parSeqBasedCompletionStageFactory.buildStageFromRunnableAsync(() -> {
           try {
             Thread.sleep(500);
@@ -593,12 +598,15 @@ public class TestParSeqBasedCompletionStage
   @Test
   public void testThenCombineAsync() throws Exception
   {
+    CountDownLatch waitLatch = new CountDownLatch(1);
     CompletionStage<String> completionStage1 = createTestStage(TESTVALUE1);
     CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2);
     finish(completionStage1.thenCombineAsync(completionStage2, (a, b) ->  {
         assertEquals(THREAD_NAME_VALUE, Thread.currentThread().getName());
+      waitLatch.countDown();
         return 0;
     }, _mockExecutor));
+    assertTrue(waitLatch.await(1000, TimeUnit.MILLISECONDS));
   }
 
   @Test public void testThenCombine_combinerException() throws Exception {
@@ -641,10 +649,107 @@ public class TestParSeqBasedCompletionStage
 
   }
 
-  /* ------------- testing runAfterEither, acceptEither, applyToEither -------------- */
+  /* ------------- testing acceptEither, applyToEither, runAfterEither -------------- */
 
   @Test
-  public void testApplyEither_Success_Success() throws Exception
+  public void testAcceptEither_Success_Success() throws Exception
+  {
+    Consumer<Object> consumer = mock(Consumer.class);
+    CompletionStage<String> completionStage = createTestStage(TESTVALUE1);
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2);
+    finish(completionStage.acceptEither(completionStage2, consumer));
+    verify(consumer, times(1)).accept(any(String.class));
+  }
+
+  @Test
+  public void testAcceptEither_Success_UnFinish() throws Exception
+  {
+    Consumer<Object> consumer = mock(Consumer.class);
+    CountDownLatch waitLatch = new CountDownLatch(1);
+    CompletionStage<String> completionStage = createTestStage(TESTVALUE1);
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2, 5000).thenApply((v) -> {
+      waitLatch.countDown();
+      return v;
+    });
+    finish(completionStage.acceptEither(completionStage2, consumer));
+    assertFalse(waitLatch.await(100, TimeUnit.MILLISECONDS));
+    verify(consumer, times(1)).accept(any(String.class));
+  }
+
+  @Test
+  public void testAcceptEither_Success_FAIL() throws Exception
+  {
+    Consumer<Object> consumer = mock(Consumer.class);
+    CompletionStage<String> completionStage = createTestStage(TESTVALUE1, 100);
+    CompletionStage<String> completionStage2 = createTestFailedStage(EXCEPTION, 10); // Failure come first
+
+    CompletionStage eitherStage = completionStage.acceptEither(completionStage2, consumer);
+    finish(eitherStage);
+    verify(consumer, never()).accept(any(String.class));
+  }
+
+  @Test
+  public void testAcceptEither_Fail_UnFinish() throws Exception
+  {
+    Consumer<Object> consumer = mock(Consumer.class);
+    CountDownLatch waitLatch = new CountDownLatch(1);
+    CompletionStage<String> completionStage = createTestFailedStage(EXCEPTION);
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE1, 200).thenApply((v) -> {
+      waitLatch.countDown();
+      return TESTVALUE2;
+    });
+    assertFalse(waitLatch.await(100, TimeUnit.MILLISECONDS));
+    CompletionStage eitherStage = completionStage.acceptEither(completionStage2, consumer);
+    finish(eitherStage);
+    verify(consumer, never()).accept(any(String.class));
+  }
+
+  @Test
+  public void testAcceptEither_Fail_FAIL() throws Exception
+  {
+    Consumer<Object> consumer = mock(Consumer.class);
+    BiFunction<Object, Throwable, ?> handler = mock(BiFunction.class);
+    CompletionStage<String> completionStage = createTestFailedStage(EXCEPTION);
+    CompletionStage<String> completionStage2 = createTestFailedStage(EXCEPTION);
+    finish(completionStage.acceptEither(completionStage2, consumer).handle(handler));
+    verify(consumer, never()).accept(any());
+    verify(handler).apply(isNull(String.class), verifyCompletionException());
+  }
+
+  @Test
+  public void testAcceptEither_UnFinish_UnFinish() throws Exception
+  {
+    Consumer<Object> consumer = mock(Consumer.class);
+    CountDownLatch waitLatch = new CountDownLatch(1);
+    CompletionStage<String> completionStage1 = createTestStage(TESTVALUE1, 100);
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2, 100);
+    CompletionStage stage3 = completionStage1.acceptEither(completionStage2, consumer).thenApply((v) -> {
+      waitLatch.countDown();
+      return v;
+    });
+    assertFalse(waitLatch.await(10, TimeUnit.MILLISECONDS));
+    finish(stage3);
+    assertTrue(waitLatch.await(1000, TimeUnit.MILLISECONDS));
+  }
+
+  @Test
+  public void testAcceptEitherAsync() throws Exception
+  {
+    Consumer<String> consumer = mock(Consumer.class);
+    CountDownLatch waitLatch = new CountDownLatch(1);
+
+    CompletionStage<String> completionStage = createTestStage(TESTVALUE1);
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2);
+    finish(completionStage.acceptEitherAsync(completionStage2, r -> {
+      assertEquals(THREAD_NAME_VALUE, Thread.currentThread().getName());
+      waitLatch.countDown();
+    }, _mockExecutor));
+
+    assertTrue(waitLatch.await(1000, TimeUnit.MILLISECONDS));
+  }
+
+  @Test
+  public void testApplyToEither_Success_Success() throws Exception
   {
     Function<Object, ?> function = mock(Function.class);
     CompletionStage<String> completionStage = createTestStage(TESTVALUE1);
@@ -654,7 +759,7 @@ public class TestParSeqBasedCompletionStage
   }
 
   @Test
-  public void testApplyEither_Success_UnFinish() throws Exception
+  public void testApplyToEither_Success_UnFinish() throws Exception
   {
     Function<Object, ?> function = mock(Function.class);
     CountDownLatch waitLatch = new CountDownLatch(1);
@@ -669,7 +774,7 @@ public class TestParSeqBasedCompletionStage
   }
 
   @Test
-  public void testApplyEither_Success_FAIL() throws Exception
+  public void testApplyToEither_Success_FAIL() throws Exception
   {
     Function<Object, ?> function = mock(Function.class);
     CompletionStage<String> completionStage = createTestStage(TESTVALUE1, 100);
@@ -681,7 +786,7 @@ public class TestParSeqBasedCompletionStage
   }
 
   @Test
-  public void testApplyEither_Fail_UnFinish() throws Exception
+  public void testApplyToEither_Fail_UnFinish() throws Exception
   {
     Function<Object, ?> function = mock(Function.class);
     CountDownLatch waitLatch = new CountDownLatch(1);
@@ -697,7 +802,7 @@ public class TestParSeqBasedCompletionStage
   }
 
   @Test
-  public void testApplyEither_Fail_FAIL() throws Exception
+  public void testApplyToEither_Fail_FAIL() throws Exception
   {
     BiFunction<Object, Throwable, ?> handler = mock(BiFunction.class);
     Function<Object, ?> function = mock(Function.class);
@@ -709,7 +814,7 @@ public class TestParSeqBasedCompletionStage
   }
 
   @Test
-  public void testApplyEither_UnFinish_UnFinish() throws Exception
+  public void testApplyToEither_UnFinish_UnFinish() throws Exception
   {
     Function<Object, ?> function = mock(Function.class);
     CountDownLatch waitLatch = new CountDownLatch(1);
@@ -725,7 +830,7 @@ public class TestParSeqBasedCompletionStage
   }
 
   @Test
-  public void testApplyEitherAsync() throws Exception
+  public void testApplyToEitherAsync() throws Exception
   {
     Consumer<String> consumer = mock(Consumer.class);
     CountDownLatch waitLatch = new CountDownLatch(1);
@@ -740,6 +845,105 @@ public class TestParSeqBasedCompletionStage
 
     assertTrue(waitLatch.await(1000, TimeUnit.MILLISECONDS));
   }
+
+  @Test
+  public void testRunAfterEither_Success_Success() throws Exception
+  {
+    Runnable runnable = mock(Runnable.class);
+    CompletionStage<String> completionStage = createTestStage(TESTVALUE1);
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2);
+    finish(completionStage.runAfterEither(completionStage2, runnable));
+    verify(runnable, times(1)).run();
+  }
+
+  @Test
+  public void testRunAfterEither_Success_UnFinish() throws Exception
+  {
+    Runnable runnable = mock(Runnable.class);
+    CountDownLatch waitLatch = new CountDownLatch(1);
+    CompletionStage<String> completionStage = createTestStage(TESTVALUE1);
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2, 5000).thenApply((v) -> {
+      waitLatch.countDown();
+      return v;
+    });
+    finish(completionStage.runAfterEither(completionStage2, runnable));
+    assertFalse(waitLatch.await(100, TimeUnit.MILLISECONDS));
+    verify(runnable, times(1)).run();
+  }
+
+  @Test
+  public void testRunAfterEither_Success_FAIL() throws Exception
+  {
+    Runnable runnable = mock(Runnable.class);
+    CompletionStage<String> completionStage = createTestStage(TESTVALUE1, 100);
+    CompletionStage<String> completionStage2 = createTestFailedStage(EXCEPTION, 10); // Failure come first
+
+    CompletionStage eitherStage = completionStage.runAfterEither(completionStage2, runnable);
+    finish(eitherStage);
+    verify(runnable, never()).run();
+  }
+
+  @Test
+  public void testRunAfterEither_Fail_UnFinish() throws Exception
+  {
+    Runnable runnable = mock(Runnable.class);
+    CountDownLatch waitLatch = new CountDownLatch(1);
+    CompletionStage<String> completionStage = createTestFailedStage(EXCEPTION);
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE1, 200).thenApply((v) -> {
+      waitLatch.countDown();
+      return TESTVALUE2;
+    });
+    assertFalse(waitLatch.await(100, TimeUnit.MILLISECONDS));
+    CompletionStage eitherStage = completionStage.runAfterEither(completionStage2, runnable);
+    finish(eitherStage);
+    verify(runnable, never()).run();
+  }
+
+  @Test
+  public void testRunAfterEither_Fail_FAIL() throws Exception
+  {
+    BiFunction<Object, Throwable, ?> handler = mock(BiFunction.class);
+    Runnable runnable = mock(Runnable.class);
+    CompletionStage<String> completionStage = createTestFailedStage(EXCEPTION);
+    CompletionStage<String> completionStage2 = createTestFailedStage(EXCEPTION);
+    finish(completionStage.runAfterEither(completionStage2, runnable).handle(handler));
+    verify(runnable, never()).run();
+    verify(handler).apply(isNull(String.class), verifyCompletionException());
+  }
+
+  @Test
+  public void testRunAfterEither_UnFinish_UnFinish() throws Exception
+  {
+    Runnable runnable = mock(Runnable.class);
+    CountDownLatch waitLatch = new CountDownLatch(1);
+    CompletionStage<String> completionStage1 = createTestStage(TESTVALUE1, 100);
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2, 100);
+    CompletionStage stage3 = completionStage1.runAfterEither(completionStage2, runnable).thenApply((v) -> {
+      waitLatch.countDown();
+      return v;
+    });
+    assertFalse(waitLatch.await(10, TimeUnit.MILLISECONDS));
+    finish(stage3);
+    assertTrue(waitLatch.await(1000, TimeUnit.MILLISECONDS));
+  }
+
+  @Test
+  public void testRunAfterEitherAsync() throws Exception
+  {
+    Consumer<String> consumer = mock(Consumer.class);
+    CountDownLatch waitLatch = new CountDownLatch(1);
+
+    CompletionStage<String> completionStage = createTestStage(TESTVALUE1);
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2);
+    finish(completionStage.runAfterEitherAsync(completionStage2, () -> {
+      assertEquals(THREAD_NAME_VALUE, Thread.currentThread().getName());
+      waitLatch.countDown();
+    }, _mockExecutor));
+
+    assertTrue(waitLatch.await(1000, TimeUnit.MILLISECONDS));
+  }
+
+
   /* ------------- testing thenAcceptBoth, runAfterBoth -------------- */
 
   @Test public void testThenAcceptBoth() throws Exception {
@@ -785,12 +989,15 @@ public class TestParSeqBasedCompletionStage
   }
 
   @Test public void testThenAcceptBothAsync() throws Exception {
+    CountDownLatch waitLatch = new CountDownLatch(1);
     CompletionStage<String> completionStage1 = createTestStage(TESTVALUE1);
     CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2);
 
     finish(completionStage1.thenAcceptBothAsync(completionStage2, (a, b) -> {
       assertEquals(THREAD_NAME_VALUE, Thread.currentThread().getName());
+      waitLatch.countDown();
     }, _mockExecutor));
+    assertTrue(waitLatch.await(1000, TimeUnit.MILLISECONDS));
   }
 
   @Test public void testRunAfterBoth() throws Exception {
@@ -835,13 +1042,16 @@ public class TestParSeqBasedCompletionStage
   }
 
   @Test public void testRunAfterBothAsync() throws Exception {
+    CountDownLatch waitLatch = new CountDownLatch(1);
     CompletionStage<String> completionStage1 = createTestStage(TESTVALUE1);
     CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2);
 
     finish(completionStage1.runAfterBothAsync(completionStage2, () -> {
       assertEquals(THREAD_NAME_VALUE, Thread.currentThread().getName());
+      waitLatch.countDown();
     }, _mockExecutor));
 
+    assertTrue(waitLatch.await(1000, TimeUnit.MILLISECONDS));
   }
 
   /* ------------- testing exceptionally, handle, whenComplete -------------- */
@@ -1070,6 +1280,7 @@ public class TestParSeqBasedCompletionStage
       waitLatch.countDown();
     }, _mockExecutor);
     finish(stage);
+    assertTrue(waitLatch.await(1000, TimeUnit.MILLISECONDS));
   }
 
   /* ------------- testing multi-stages or Comprehensive tests -------------- */
@@ -1077,32 +1288,32 @@ public class TestParSeqBasedCompletionStage
   @Test
   public void testSeveralStageCombinations() throws Exception
   {
-    Function<String, ParSeqBasedCompletionStage<String>> upperCaseFunction =
+    Function<String, CompletionStage<String>> upperCaseFunction =
         s -> _parSeqBasedCompletionStageFactory.buildStageFromValue(s.toUpperCase());
 
-    ParSeqBasedCompletionStage<String> stage1 = _parSeqBasedCompletionStageFactory.buildStageFromValue("the quick ");
+    CompletionStage<String> stage1 = _parSeqBasedCompletionStageFactory.buildStageFromValue("the quick ");
 
-    ParSeqBasedCompletionStage<String> stage2 = _parSeqBasedCompletionStageFactory.buildStageFromValue("brown fox ");
+    CompletionStage<String> stage2 = _parSeqBasedCompletionStageFactory.buildStageFromValue("brown fox ");
 
-    ParSeqBasedCompletionStage<String> stage3 = stage1.thenCombine(stage2, (s1, s2) -> s1 + s2);
+    CompletionStage<String> stage3 = stage1.thenCombine(stage2, (s1, s2) -> s1 + s2);
 
-    ParSeqBasedCompletionStage<String> stage4 = stage3.thenCompose(upperCaseFunction);
+    CompletionStage<String> stage4 = stage3.thenCompose(upperCaseFunction);
 
-    ParSeqBasedCompletionStage<String> stage5 =
+    CompletionStage<String> stage5 =
         _parSeqBasedCompletionStageFactory.buildStageFromSupplierAsync(simulatedTask(2, "jumped over"));
 
-    ParSeqBasedCompletionStage<String> stage6 = stage4.thenCombineAsync(stage5, (s1, s2) -> s1 + s2, service);
+    CompletionStage<String> stage6 = stage4.thenCombineAsync(stage5, (s1, s2) -> s1 + s2, service);
 
-    ParSeqBasedCompletionStage<String> stage6_sub_1_slow =
+    CompletionStage<String> stage6_sub_1_slow =
         _parSeqBasedCompletionStageFactory.buildStageFromSupplierAsync(simulatedTask(4, "fell into"));
 
-    ParSeqBasedCompletionStage<String> stage7 =
+    CompletionStage<String> stage7 =
         stage6.applyToEitherAsync(stage6_sub_1_slow, String::toUpperCase, service);
 
-    ParSeqBasedCompletionStage<String> stage8 =
+    CompletionStage<String> stage8 =
         _parSeqBasedCompletionStageFactory.buildStageFromSupplierAsync(simulatedTask(3, " the lazy dog"), service);
 
-    ParSeqBasedCompletionStage<String> finalStage = stage7.thenCombineAsync(stage8, (s1, s2) -> s1 + s2, service);
+    CompletionStage<String> finalStage = stage7.thenCombineAsync(stage8, (s1, s2) -> s1 + s2, service);
 
     assertEquals(finalStage.toCompletableFuture().get(), "THE QUICK BROWN FOX JUMPED OVER the lazy dog");
   }
@@ -1118,16 +1329,6 @@ public class TestParSeqBasedCompletionStage
       return taskResult;
     };
   }
-
-  private void pauseSeconds(int seconds)
-  {
-    try {
-      Thread.sleep(seconds * 100);
-    } catch (InterruptedException e) {
-//      e.printStackTrace();
-    }
-  }
-
 
   @AfterClass
   void tearDown() throws Exception

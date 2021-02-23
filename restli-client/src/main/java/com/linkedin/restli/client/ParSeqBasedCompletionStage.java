@@ -614,7 +614,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
 
   /* ------------- For testing -------------- */
 
-  protected Task<T> getTask()
+  Task<T> getTask()
   {
     return _task;
   }
