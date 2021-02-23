@@ -680,8 +680,8 @@ public class TestParSeqBasedCompletionStage
   public void testAcceptEither_Success_FAIL() throws Exception
   {
     Consumer<Object> consumer = mock(Consumer.class);
-    CompletionStage<String> completionStage = createTestStage(TESTVALUE1, 100);
-    CompletionStage<String> completionStage2 = createTestFailedStage(EXCEPTION, 10); // Failure come first
+    CompletionStage<String> completionStage = createTestStage(TESTVALUE1, 1000);
+    CompletionStage<String> completionStage2 = createTestFailedStage(EXCEPTION, 1); // Failure come first
 
     CompletionStage eitherStage = completionStage.acceptEither(completionStage2, consumer);
     finish(eitherStage);
@@ -694,7 +694,7 @@ public class TestParSeqBasedCompletionStage
     Consumer<Object> consumer = mock(Consumer.class);
     CountDownLatch waitLatch = new CountDownLatch(1);
     CompletionStage<String> completionStage = createTestFailedStage(EXCEPTION);
-    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE1, 200).thenApply((v) -> {
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE1, 2000).thenApply((v) -> {
       waitLatch.countDown();
       return TESTVALUE2;
     });
@@ -777,8 +777,8 @@ public class TestParSeqBasedCompletionStage
   public void testApplyToEither_Success_FAIL() throws Exception
   {
     Function<Object, ?> function = mock(Function.class);
-    CompletionStage<String> completionStage = createTestStage(TESTVALUE1, 100);
-    CompletionStage<String> completionStage2 = createTestFailedStage(EXCEPTION, 10); // Failure come first
+    CompletionStage<String> completionStage = createTestStage(TESTVALUE1, 1000);
+    CompletionStage<String> completionStage2 = createTestFailedStage(EXCEPTION, 1); // Failure come first
 
     CompletionStage eitherStage = completionStage.applyToEither(completionStage2, function);
     finish(eitherStage);
@@ -875,8 +875,8 @@ public class TestParSeqBasedCompletionStage
   public void testRunAfterEither_Success_FAIL() throws Exception
   {
     Runnable runnable = mock(Runnable.class);
-    CompletionStage<String> completionStage = createTestStage(TESTVALUE1, 100);
-    CompletionStage<String> completionStage2 = createTestFailedStage(EXCEPTION, 10); // Failure come first
+    CompletionStage<String> completionStage = createTestStage(TESTVALUE1, 1000);
+    CompletionStage<String> completionStage2 = createTestFailedStage(EXCEPTION, 1); // Failure come first
 
     CompletionStage eitherStage = completionStage.runAfterEither(completionStage2, runnable);
     finish(eitherStage);
@@ -889,7 +889,7 @@ public class TestParSeqBasedCompletionStage
     Runnable runnable = mock(Runnable.class);
     CountDownLatch waitLatch = new CountDownLatch(1);
     CompletionStage<String> completionStage = createTestFailedStage(EXCEPTION);
-    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE1, 200).thenApply((v) -> {
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE1, 2000).thenApply((v) -> {
       waitLatch.countDown();
       return TESTVALUE2;
     });
