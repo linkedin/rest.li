@@ -685,6 +685,12 @@ public class TestParSeqBasedCompletionStage
 
     CompletionStage eitherStage = completionStage.acceptEither(completionStage2, consumer);
     finish(eitherStage);
+    finish(completionStage);
+    finish(completionStage2);
+    try {
+      eitherStage.toCompletableFuture().get();
+      fail("should fail");
+    } catch (Exception ignore) { }
     verify(consumer, never()).accept(any(String.class));
   }
 
@@ -782,6 +788,12 @@ public class TestParSeqBasedCompletionStage
 
     CompletionStage eitherStage = completionStage.applyToEither(completionStage2, function);
     finish(eitherStage);
+    finish(completionStage);
+    finish(completionStage2);
+    try {
+      eitherStage.toCompletableFuture().get();
+      fail("should fail");
+    } catch (Exception ignore) { }
     verify(function, never()).apply(any(String.class));
   }
 
@@ -880,6 +892,12 @@ public class TestParSeqBasedCompletionStage
 
     CompletionStage eitherStage = completionStage.runAfterEither(completionStage2, runnable);
     finish(eitherStage);
+    finish(completionStage);
+    finish(completionStage2);
+    try {
+      eitherStage.toCompletableFuture().get();
+      fail("should fail");
+    } catch (Exception ignore) { }
     verify(runnable, never()).run();
   }
 
