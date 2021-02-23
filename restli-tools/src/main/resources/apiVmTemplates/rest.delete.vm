@@ -14,44 +14,33 @@
    limitations under the License.
 *#
   #doc($method.schema.doc)
-  public CompletionStage<${spec.keyClassName}> create(
-      ${spec.entityClassName} entity#if( $method.hasParams()),#end
+  public CompletionStage<Void> delete(
+      $spec.keyClassName $spec.idName#if( $method.hasParams()),#end
       #**##methodParams($method)##
       ) {
-    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
-    #fillQueryParams($method)
-    #if($method.returnsEntity())
-      #**##returnEntityParam("false")
-    #end
-    @SuppressWarnings("unchecked")
-    IdResponseDecoder<${spec.keyClassName}> idResponseDecoder = new IdResponseDecoder<>(
-        (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
-        _resourceSpec.getKeyParts(),
-        _resourceSpec.getComplexKeyType());
-    CreateIdRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new CreateIdRequest<>(
-        entity,
+    #**##paramsRequestMap($method)##
+    DeleteRequest<${spec.entityClassName}> request = new DeleteRequest<>(
         Collections.emptyMap(),
         Collections.emptyList(),
-        idResponseDecoder,
         _resourceSpec,
         queryParams,
         queryParamClasses,
         ORIGINAL_RESOURCE_PATH,
+        ## TODO Path keys (sub-resources)
         Collections.emptyMap(),
         RestliRequestOptions.DEFAULT_OPTIONS,
-        null);
-    CompletableFuture<${spec.keyClassName}> result = new CompletableFuture<>();
+        $spec.idName);
+    CompletableFuture<Void> result = new CompletableFuture<>();
     Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
         responseTry -> {
           if (responseTry.isFailed()) {
             result.completeExceptionally(responseTry.getError());
           } else {
-            Response<IdResponse<${spec.keyClassName}>> response = responseTry.get();
-            if (response.hasError()) {
-              result.completeExceptionally(response.getError());
+            Response<?> resp = responseTry.get();
+            if (resp.hasError()) {
+              result.completeExceptionally(resp.getError());
             } else {
-              result.complete(response.getEntity().getId());
+              result.complete((Void) null);
             }
           }
           return Success.of((Void) null);

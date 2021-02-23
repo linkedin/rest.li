@@ -41,7 +41,7 @@ public class DeleteRequest<T extends RecordTemplate>
 {
   private final Object _id;
 
-  DeleteRequest(Map<String, String> headers,
+  public DeleteRequest(Map<String, String> headers,
                 List<HttpCookie> cookies,
                 ResourceSpec resourceSpec,
                 Map<String, Object> queryParams,

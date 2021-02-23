@@ -40,7 +40,7 @@ public class PartialUpdateRequest<T> extends Request<EmptyRecord>
 {
   private final Object _id;
 
-  PartialUpdateRequest(PatchRequest<T> input,
+  public PartialUpdateRequest(PatchRequest<T> input,
                        Map<String, String> headers,
                        List<HttpCookie> cookies,
                        ResourceSpec resourceSpec,
