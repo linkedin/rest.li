@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 import static org.mockito.Mockito.*;
 
 
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"rawtypes", "unchecked", "serial"})
 public class TestExecutionGroup
 {
   private Engine _engine = null;
