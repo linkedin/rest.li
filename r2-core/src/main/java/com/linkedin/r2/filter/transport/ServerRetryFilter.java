@@ -115,16 +115,18 @@ public class ServerRetryFilter implements RestFilter, StreamFilter
     {
       if (cause instanceof RetriableRequestException)
       {
-        String message = cause.getMessage();
-        if (_serverRetryTracker.isBelowRetryRatio())
+        if (!((RetriableRequestException) cause).getDoNotRetryOverride())
         {
-          LOG.debug("RetriableRequestException caught! Do retry. Error message: {}", message);
-          wireAttrs.put(R2Constants.RETRY_MESSAGE_ATTRIBUTE_KEY, message);
-        }
-        else
-        {
-          LOG.debug("Max request retry ratio exceeded! Will not retry. Error message: {}", message);
-          wireAttrs.remove(R2Constants.RETRY_MESSAGE_ATTRIBUTE_KEY);
+          String message = cause.getMessage();
+          if (_serverRetryTracker.isBelowRetryRatio())
+          {
+            LOG.debug("RetriableRequestException caught! Do retry. Error message: {}", message);
+            wireAttrs.put(R2Constants.RETRY_MESSAGE_ATTRIBUTE_KEY, message);
+          }
+          else
+          {
+            LOG.debug("Max request retry ratio exceeded! Will not retry. Error message: {}", message);
+          }
         }
         break;
       }
