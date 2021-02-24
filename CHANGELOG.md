@@ -13,7 +13,10 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.15.3] - 2021-02-24
 - Add support for update, partial_update, delete and get_all methods in fluent API bindings.
+- Prevent RetriableRequestException from cascading to the indirect caller.
 
 ## [29.15.2] - 2021-02-19
 - Add UnionTemplate.memberKeyName() to directly return the key name for a union member
@@ -4856,7 +4859,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.3...master
+[29.15.3]: https://github.com/linkedin/rest.li/compare/v29.15.2...v29.15.3
 [29.15.2]: https://github.com/linkedin/rest.li/compare/v29.15.1...v29.15.2
 [29.15.1]: https://github.com/linkedin/rest.li/compare/v29.15.0...v29.15.1
 [29.15.0]: https://github.com/linkedin/rest.li/compare/v29.14.5...v29.15.0
