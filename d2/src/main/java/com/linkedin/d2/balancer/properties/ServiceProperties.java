@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.properties;
 
+import com.linkedin.d2.balancer.subsetting.SubsettingStrategy;
 import com.linkedin.util.ArgumentUtil;
 
 import java.net.URI;
@@ -39,6 +40,7 @@ public class ServiceProperties
   private final List<String> _prioritizedSchemes;
   private final Set<URI> _banned;
   private final Map<String, Object> _serviceMetadataProperties;
+  private final int _minClusterSubsetSize;
 
   public ServiceProperties(String serviceName,
                            String clusterName,
@@ -125,6 +127,25 @@ public class ServiceProperties
                            List<Map<String,Object>> backupRequests,
                            Map<String, Object> relativeStrategyProperties)
   {
+    this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties, transportClientProperties, degraderProperties,
+        prioritizedSchemes, banned, serviceMetadataProperties, backupRequests, relativeStrategyProperties,
+        SubsettingStrategy.DEFAULT_CLUSTER_SUBSET_SIZE);
+  }
+
+  public ServiceProperties(String serviceName,
+      String clusterName,
+      String path,
+      List<String> prioritizedStrategyList,
+      Map<String,Object> loadBalancerStrategyProperties,
+      Map<String,Object> transportClientProperties,
+      Map<String,String> degraderProperties,
+      List<String> prioritizedSchemes,
+      Set<URI> banned,
+      Map<String,Object> serviceMetadataProperties,
+      List<Map<String,Object>> backupRequests,
+      Map<String, Object> relativeStrategyProperties,
+      int minClusterSubsetSize)
+  {
     ArgumentUtil.notNull(serviceName, PropertyKeys.SERVICE_NAME);
     ArgumentUtil.notNull(clusterName, PropertyKeys.CLUSTER_NAME);
     ArgumentUtil.notNull(path, PropertyKeys.PATH);
@@ -153,6 +174,7 @@ public class ServiceProperties
         Collections.<String,Object>emptyMap();
     _relativeStrategyProperties = relativeStrategyProperties != null
         ? relativeStrategyProperties : Collections.emptyMap();
+    _minClusterSubsetSize = minClusterSubsetSize;
   }
 
   public String getClusterName()
@@ -232,6 +254,11 @@ public class ServiceProperties
     return _serviceMetadataProperties;
   }
 
+  public int getMinClusterSubsetSize()
+  {
+    return _minClusterSubsetSize;
+  }
+
   @Override
   public String toString()
   {
@@ -254,8 +281,8 @@ public class ServiceProperties
         + _serviceMetadataProperties
         + ", backupRequests="
         + _backupRequests
-        + ", relativeStrategyProperties="
-        + _relativeStrategyProperties
+        + ", minimumClusterSubsetSize="
+        + _minClusterSubsetSize
         + "]";
   }
 

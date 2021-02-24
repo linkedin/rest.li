@@ -48,6 +48,7 @@ import java.nio.channels.ClosedChannelException;
 import java.util.Collections;
 import java.util.Map;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -73,6 +74,7 @@ public class TrackerClientImpl implements TrackerClient
   private final URI _uri;
   private final Predicate<Integer> _isErrorStatus;
   private final boolean _doNotSlowStart;
+  private final Map<Integer, Double> _subsetWeightMap;
   final CallTracker _callTracker;
 
   private volatile CallTracker.CallStats _latestCallStats;
@@ -93,6 +95,7 @@ public class TrackerClientImpl implements TrackerClient
     _partitionData = Collections.unmodifiableMap(partitionDataMap);
     _latestCallStats = _callTracker.getCallStats();
     _doNotSlowStart = doNotSlowStart;
+    _subsetWeightMap = new ConcurrentHashMap<>();
 
     _callTracker.addStatsRolloverEventListener(event -> _latestCallStats = event.getCallStats());
 
@@ -121,6 +124,17 @@ public class TrackerClientImpl implements TrackerClient
   public Map<Integer, PartitionData> getPartitionDataMap()
   {
     return _partitionData;
+  }
+
+  @Override
+  public void setSubsetWeight(int partitionId, double partitionWeight)
+  {
+    _subsetWeightMap.put(partitionId, partitionWeight);
+  }
+
+  @Override
+  public double getSubsetWeight(int partitionId) {
+    return _subsetWeightMap.getOrDefault(partitionId, 1D);
   }
 
   @Override

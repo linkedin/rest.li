@@ -32,6 +32,8 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
+import com.linkedin.d2.balancer.subsetting.SubsettingStrategy;
+import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactory;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
@@ -60,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -137,6 +140,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final SSLParameters _sslParameters;
   private final boolean       _isSSLEnabled;
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
+
+  private final SubsettingStrategyFactory _subsettingStrategyFactory;
 
   /*
    * Concurrency considerations:
@@ -250,6 +255,33 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                  PartitionAccessorRegistry partitionAccessorRegistry,
                                  SslSessionValidatorFactory sessionValidatorFactory)
   {
+    this(executorService,
+        uriBus,
+        clusterBus,
+        serviceBus,
+        clientFactories,
+        loadBalancerStrategyFactories,
+        sslContext,
+        sslParameters,
+        isSSLEnabled,
+        partitionAccessorRegistry,
+        sessionValidatorFactory,
+        SubsettingStrategyFactory.NO_OP_SUBSETTING_STRATEGY_FACTORY);
+  }
+
+  public SimpleLoadBalancerState(ScheduledExecutorService executorService,
+      PropertyEventBus<UriProperties> uriBus,
+      PropertyEventBus<ClusterProperties> clusterBus,
+      PropertyEventBus<ServiceProperties> serviceBus,
+      Map<String, TransportClientFactory> clientFactories,
+      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      boolean isSSLEnabled,
+      PartitionAccessorRegistry partitionAccessorRegistry,
+      SslSessionValidatorFactory sessionValidatorFactory,
+      SubsettingStrategyFactory subsettingStrategyFactory)
+  {
     _executor = executorService;
     _uriProperties = new ConcurrentHashMap<>();
     _clusterInfo = new ConcurrentHashMap<>();
@@ -275,6 +307,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _isSSLEnabled = isSSLEnabled;
     _sslSessionValidatorFactory = sessionValidatorFactory;
     _clusterListeners = Collections.synchronizedList(new ArrayList<>());
+    _subsettingStrategyFactory = subsettingStrategyFactory;
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -625,6 +658,43 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   public void setDelayedExecution(long delayedExecution)
   {
     _delayedExecution = delayedExecution;
+  }
+
+  @Override
+  public Map<URI, TrackerClient> getClientsSubset(String serviceName,
+                                                  ServiceProperties serviceProperties,
+                                                  int partitionId,
+                                                  Map<URI, TrackerClient> potentialClients)
+  {
+    SubsettingStrategy<URI> subsettingStrategy = _subsettingStrategyFactory.get(serviceName, serviceProperties, partitionId);
+    if (subsettingStrategy != null)
+    {
+      Map<URI, Double> pointsMap = potentialClients.entrySet().stream()
+          .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPartitionWeight(partitionId)));
+      Map<URI, Double> subsetMap = subsettingStrategy.getWeightedSubset(pointsMap);
+
+      if (subsetMap == null)
+      {
+        return potentialClients;
+      }
+      else
+      {
+        Map<URI, TrackerClient> subsetClients = new HashMap<>();
+        for (Map.Entry<URI, Double> entry: subsetMap.entrySet())
+        {
+          URI uri = entry.getKey();
+          TrackerClient client = potentialClients.get(uri);
+          client.setSubsetWeight(partitionId, subsetMap.get(uri));
+          subsetClients.put(uri, client);
+        }
+
+        return subsetClients;
+      }
+    }
+    else
+    {
+      return potentialClients;
+    }
   }
 
   @Override

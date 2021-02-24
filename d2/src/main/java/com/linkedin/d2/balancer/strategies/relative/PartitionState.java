@@ -167,7 +167,10 @@ public class PartitionState
         .collect(Collectors.toMap(TrackerClient::getUri, TrackerClient::getCallTracker)));
     _pointsMap = _trackerClientStateMap.entrySet().stream()
         .collect(Collectors.toMap(entry -> entry.getKey().getUri(),
-            entry -> (int) Math.round(entry.getValue().getHealthScore() * entry.getKey().getPartitionWeight(_partitionId) * _pointsPerWeight)));
+            entry -> (int) Math.round(entry.getValue().getHealthScore()
+                * entry.getKey().getPartitionWeight(_partitionId)
+                * entry.getKey().getSubsetWeight(_partitionId)
+                * _pointsPerWeight)));
     _ring = _ringFactory.createRing(_pointsMap, callTrackerMap);
   }
 

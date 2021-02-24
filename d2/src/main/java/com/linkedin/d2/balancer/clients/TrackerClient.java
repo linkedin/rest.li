@@ -62,6 +62,19 @@ public interface TrackerClient extends LoadBalancerClient
   }
 
   /**
+   * @param partitionId Partition ID key.
+   * @param subsetWeight Weight of the tracker client in the subset
+   */
+  default void setSubsetWeight(int partitionId, double subsetWeight)
+  {
+  }
+
+  default double getSubsetWeight(int partitionId)
+  {
+    return 1D;
+  }
+
+  /**
    * @return CallTracker.
    */
   CallTracker getCallTracker();

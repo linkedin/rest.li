@@ -513,7 +513,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   {
     DegraderControl degraderControl = client.getDegraderControl(partitionId);
     return client.getUri() + ":" + pointsMap.get(client.getUri()) + "/" +
-        String.valueOf(client.getPartitionWeight(partitionId) * config.getPointsPerWeight())
+        String.valueOf(client.getPartitionWeight(partitionId) * client.getSubsetWeight(partitionId) * config.getPointsPerWeight())
         + "(" + degraderControl.getCallTimeStats().getAverage() + "ms)";
   }
 
@@ -527,7 +527,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     for (DegraderTrackerClientUpdater clientUpdater : degraderTrackerClientUpdaters)
     {
       DegraderTrackerClient client = clientUpdater.getTrackerClient();
-      int perfectHealth = (int) (client.getPartitionWeight(partitionId) * config.getPointsPerWeight());
+      int perfectHealth = (int) (client.getPartitionWeight(partitionId) * client.getSubsetWeight(partitionId) * config.getPointsPerWeight());
       URI uri = client.getUri();
       if (!pointsMap.containsKey(uri))
       {
@@ -735,7 +735,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // calculate the weight as the probability of successful transmission to this
       // node divided by the probability of successful transmission to the entire
       // cluster
-      double clientWeight = client.getPartitionWeight(partitionId);
+      double clientWeight = client.getPartitionWeight(partitionId) * client.getSubsetWeight(partitionId);
       double successfulTransmissionWeight = clientWeight * (1.0 - dropRate);
 
       // calculate the weight as the probability of a successful transmission to this node

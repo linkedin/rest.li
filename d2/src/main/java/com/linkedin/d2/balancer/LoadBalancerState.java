@@ -29,6 +29,7 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -89,6 +90,14 @@ public interface LoadBalancerState
 
   List<SchemeStrategyPair> getStrategiesForService(String serviceName,
                                                     List<String> prioritizedSchemes);
+
+  default Map<URI, TrackerClient> getClientsSubset(String serviceName,
+                                                   ServiceProperties serviceProperties,
+                                                   int partitionId,
+                                                   Map<URI, TrackerClient> potentialClients)
+  {
+    return potentialClients;
+  }
 
   /**
    * This registers the LoadBalancerClusterListener with the LoadBalancerState, so that
