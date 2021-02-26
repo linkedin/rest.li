@@ -252,16 +252,17 @@ public class ResponseUtils
     return new RestException(restResponse, cause==null ? null : cause.toString(), cause, writableStackTrace);
   }
 
-  public static StreamException buildStreamException(RestLiResponseException restLiResponseException, StreamDataCodec codec)
+  public static StreamException buildStreamException(RestLiResponseException restLiResponseException, ContentType contentType)
   {
     RestLiResponse restLiResponse = restLiResponseException.getRestLiResponse();
     StreamResponseBuilder responseBuilder = new StreamResponseBuilder()
         .setHeaders(restLiResponse.getHeaders())
+        .setHeader(RestConstants.HEADER_CONTENT_TYPE, contentType.getHeaderKey())
         .setCookies(CookieUtil.encodeSetCookies(restLiResponse.getCookies()))
         .setStatus(restLiResponse.getStatus() == null ? HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode()
             : restLiResponse.getStatus().getCode());
 
-    EntityStream<ByteString> entityStream = codec.encodeMap(restLiResponse.getDataMap());
+    EntityStream<ByteString> entityStream = contentType.getStreamCodec().encodeMap(restLiResponse.getDataMap());
     StreamResponse response = responseBuilder.build(EntityStreamAdapters.fromGenericEntityStream(entityStream));
     return new StreamException(response, restLiResponseException.getCause());
   }
