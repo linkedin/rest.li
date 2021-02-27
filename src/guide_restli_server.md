@@ -295,7 +295,7 @@ implement asynchronous Rest.li resources. The templates are:
 -   `SimpleResourceTaskTemplate`
 
 The Rest.li server will automatically start any `Task` that is returned
-by a `Task` based method by running it through a ParSeq engine.`Callback`-based methods do not receive special treatment.
+by a `Task` based method by running it through a ParSeq engine. `Callback`-based methods do not receive special treatment. The ParSeq engine will be launched while the Rest.Li server is launched ([example](https://github.com/linkedin/rest.li/blob/master/restli-netty-standalone/src/main/java/com/linkedin/restli/server/NettyStandaloneLauncher.java#L84)) so the user does not run these task using another engine explicitly, instead, Rest.Li framework will the run the method logic using the ParSeq engine (For details check [RestLiMethodInvoker.java](https://github.com/linkedin/rest.li/blob/master/restli-server/src/main/java/com/linkedin/restli/internal/server/RestLiMethodInvoker.java)). Also refer to [this page](./Asynchronous-Servers-and-Clients-in-Rest_li.md) regarding the best practice of writing Asynchronous client and service logic.
 
 ## Sub-Resources
 
