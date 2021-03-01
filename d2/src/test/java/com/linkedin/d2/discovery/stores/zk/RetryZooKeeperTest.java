@@ -17,6 +17,7 @@
 package com.linkedin.d2.discovery.stores.zk;
 
 
+import com.linkedin.test.util.retry.ThreeRetries;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -529,7 +530,7 @@ public class RetryZooKeeperTest {
     EasyMock.verify(rzkPartialMock);
   }
 
-  @Test
+  @Test(retryAnalyzer = ThreeRetries.class)
   public void testRetryBackoff() throws NoSuchMethodException, InterruptedException
   {
     final RetryZooKeeper rzkPartialMock = EasyMock.createMockBuilder(RetryZooKeeper.class)
