@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Fix content type header not set in case of StreamException from rest.li server
 
 ## [29.15.3] - 2021-02-24
 - Add support for update, partial_update, delete and get_all methods in fluent API bindings.
