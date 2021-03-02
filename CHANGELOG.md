@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.15.4] - 2021-03-02
 - Fix content type header not set in case of StreamException from rest.li server
 
 ## [29.15.3] - 2021-02-24
@@ -4860,7 +4862,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.4...master
+[29.15.4]: https://github.com/linkedin/rest.li/compare/v29.15.3...v29.15.4
 [29.15.3]: https://github.com/linkedin/rest.li/compare/v29.15.2...v29.15.3
 [29.15.2]: https://github.com/linkedin/rest.li/compare/v29.15.1...v29.15.2
 [29.15.1]: https://github.com/linkedin/rest.li/compare/v29.15.0...v29.15.1
