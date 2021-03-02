@@ -27,6 +27,7 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.timing.FrameworkTimingKeys;
 import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.transport.common.RestRequestHandler;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceModel;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.activation.MimeTypeParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -252,12 +254,25 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
   {
     private final RoutingResult _routingResult;
     private final boolean _writableStackTrace;
+    private ContentType _respContentType;
 
     RestLiToRestResponseCallbackAdapter(Callback<RestResponse> callback, RoutingResult routingResult, Boolean writableStackTrace)
     {
       super(callback);
       _routingResult = routingResult;
       _writableStackTrace = writableStackTrace;
+      String respMimeType = routingResult.getContext().getResponseMimeType();
+      try
+      {
+        _respContentType = ContentType.getResponseContentType(respMimeType, routingResult.getContext().getRequestURI(), routingResult.getContext().getRequestHeaders())
+                .orElseThrow(() -> new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE, "Requested mime type for encoding is not supported. Mimetype: " + respMimeType));
+      }
+      catch (MimeTypeParseException e)
+      {
+        log.error("Failed to parse mime type which should never happen at this stage. ", e);
+        _respContentType = ContentType.JSON;
+      }
+
     }
 
     @Override
@@ -279,7 +294,7 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
       TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_ERROR_SERIALIZATION.key());
 
       final Throwable throwable = error instanceof RestLiResponseException
-          ? ResponseUtils.buildRestException((RestLiResponseException) error, _writableStackTrace)
+          ? ResponseUtils.buildRestException((RestLiResponseException) error, _writableStackTrace, _respContentType)
           : error;
 
       TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_ERROR_SERIALIZATION.key());

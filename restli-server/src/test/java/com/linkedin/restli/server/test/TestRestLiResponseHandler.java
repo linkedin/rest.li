@@ -22,6 +22,7 @@ import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.data.codec.JacksonDataCodec;
+import com.linkedin.data.codec.ProtobufDataCodec;
 import com.linkedin.data.codec.PsonDataCodec;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -115,20 +116,24 @@ public class TestRestLiResponseHandler
 
   private static final String APPLICATION_JSON = "application/json";
   private static final String APPLICATION_PSON = "application/x-pson";
+  private static final String APPLICATION_PROTOBUF = "application/x-protobuf2";
 
   private static final Map<String, String> JSON_ACCEPT_HEADERS  = Collections.singletonMap("Accept", APPLICATION_JSON);
   private static final Map<String, String> PSON_ACCEPT_HEADERS  = Collections.singletonMap("Accept", APPLICATION_PSON);
+  private static final Map<String, String> PROTOBUF_ACCEPT_HEADERS  = Collections.singletonMap("Accept", APPLICATION_PROTOBUF);
   private static final Map<String, String> EMPTY_ACCEPT_HEADERS = Collections.emptyMap();
   private static final Map<String, String> ANY_ACCEPT_HEADERS   = Collections.singletonMap("Accept", "*/*");
 
   private static final PsonDataCodec PSON_DATA_CODEC = new PsonDataCodec();
   private static final JacksonDataCodec JACKSON_DATA_CODEC = new JacksonDataCodec();
+  private static final ProtobufDataCodec PROTOBUF_DATA_CODEC = new ProtobufDataCodec();
 
   private static final String EXPECTED_STATUS_JSON = doubleQuote("{'text':'test status'}");
   private static final String EXPECTED_STATUS_ACTION_RESPONSE_JSON = doubleQuote("{'value':") + EXPECTED_STATUS_JSON + '}';
   private static final String EXPECTED_STATUS_ACTION_RESPONSE_STRING = "{value={text=test status}}";
   private static final String EXPECTED_STATUS_PSON = "#!PSON1\n!\u0081text\u0000\n\f\u0000\u0000\u0000test status\u0000\u0080";
   private static final String EXPECTED_STATUS_ACTION_RESPONSE_PSON = "#!PSON1\n!\u0081value\u0000!\u0083text\u0000\n\f\u0000\u0000\u0000test status\u0000\u0080\u0080";
+  private static final String EXPECTED_STATUS_PROTOBUF = "\u0000\u0001\u0014\u0004text\u0014\u000Btest status";
 
   private RestLiResponse invokeResponseHandler(String path,
                                              Object body,
@@ -144,6 +149,7 @@ public class TestRestLiResponseHandler
   private enum AcceptTypeData
   {
     JSON  (JSON_ACCEPT_HEADERS,   APPLICATION_JSON,   JACKSON_DATA_CODEC),
+    PROTOBUF  (PROTOBUF_ACCEPT_HEADERS,   APPLICATION_PROTOBUF,   PROTOBUF_DATA_CODEC),
     PSON  (PSON_ACCEPT_HEADERS,   APPLICATION_PSON,   PSON_DATA_CODEC),
     EMPTY (EMPTY_ACCEPT_HEADERS,  APPLICATION_JSON,   JACKSON_DATA_CODEC),
     ANY   (ANY_ACCEPT_HEADERS,    APPLICATION_JSON,   JACKSON_DATA_CODEC);
@@ -241,7 +247,9 @@ public class TestRestLiResponseHandler
         { AcceptTypeData.JSON, EXPECTED_STATUS_JSON, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE, RestConstants.HEADER_ID },
         { AcceptTypeData.JSON, EXPECTED_STATUS_JSON, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), RestConstants.HEADER_RESTLI_ERROR_RESPONSE, RestConstants.HEADER_RESTLI_ID },
         { AcceptTypeData.PSON, EXPECTED_STATUS_PSON, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE, RestConstants.HEADER_ID },
-        { AcceptTypeData.PSON, EXPECTED_STATUS_PSON, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), RestConstants.HEADER_RESTLI_ERROR_RESPONSE, RestConstants.HEADER_RESTLI_ID }
+        { AcceptTypeData.PSON, EXPECTED_STATUS_PSON, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), RestConstants.HEADER_RESTLI_ERROR_RESPONSE, RestConstants.HEADER_RESTLI_ID },
+        { AcceptTypeData.PROTOBUF, EXPECTED_STATUS_PROTOBUF, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE, RestConstants.HEADER_ID },
+        { AcceptTypeData.PROTOBUF, EXPECTED_STATUS_PROTOBUF, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), RestConstants.HEADER_RESTLI_ERROR_RESPONSE, RestConstants.HEADER_RESTLI_ID }
       };
   }
 
@@ -257,7 +265,7 @@ public class TestRestLiResponseHandler
     response = invokeResponseHandler("/test", buildStatusRecord(), ResourceMethod.GET, acceptTypeData.acceptHeaders, protocolVersion);
 
     checkResponse(response, 200, 1, true, errorResponseHeaderName);
-    if (acceptTypeData != AcceptTypeData.PSON)
+    if (acceptTypeData != AcceptTypeData.PSON && acceptTypeData != AcceptTypeData.PROTOBUF)
     {
       assertEquals(DataMapUtils.mapToByteString(response.getDataMap(), response.getHeaders()).asAvroString(), expectedStatus);
     }
@@ -309,7 +317,9 @@ public class TestRestLiResponseHandler
         { AcceptTypeData.JSON, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE },
         { AcceptTypeData.JSON, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), RestConstants.HEADER_RESTLI_ERROR_RESPONSE },
         { AcceptTypeData.PSON, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE },
-        { AcceptTypeData.PSON, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), RestConstants.HEADER_RESTLI_ERROR_RESPONSE }
+        { AcceptTypeData.PSON, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), RestConstants.HEADER_RESTLI_ERROR_RESPONSE },
+        { AcceptTypeData.PROTOBUF, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE },
+        { AcceptTypeData.PROTOBUF, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), RestConstants.HEADER_RESTLI_ERROR_RESPONSE }
       };
   }
 

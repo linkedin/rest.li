@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.15.5] - 2021-03-03
+- Fix content type header not set in case of RestliResponseException from non streaming server
+
 ## [29.15.4] - 2021-03-02
 - Fix content type header not set in case of StreamException from rest.li server
 
@@ -4862,7 +4865,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.5...master
+[29.15.5]: https://github.com/linkedin/rest.li/compare/v29.15.4...v29.15.5
 [29.15.4]: https://github.com/linkedin/rest.li/compare/v29.15.3...v29.15.4
 [29.15.3]: https://github.com/linkedin/rest.li/compare/v29.15.2...v29.15.3
 [29.15.2]: https://github.com/linkedin/rest.li/compare/v29.15.1...v29.15.2

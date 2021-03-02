@@ -39,6 +39,8 @@ import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.CookieUtil;
+import com.linkedin.restli.internal.common.DataMapConverter;
+import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceModel;
@@ -47,7 +49,7 @@ import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.RestLiServiceException;
-
+import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import javax.activation.MimeTypeParseException;
@@ -235,16 +237,35 @@ public class ResponseUtils
 
   public static RestException buildRestException(RestLiResponseException restLiResponseException, boolean writableStackTrace)
   {
+    return buildRestException(restLiResponseException, writableStackTrace, null);
+  }
+
+  public static RestException buildRestException(RestLiResponseException restLiResponseException, boolean writableStackTrace, ContentType contentType)
+  {
     RestLiResponse restLiResponse = restLiResponseException.getRestLiResponse();
     RestResponseBuilder responseBuilder = new RestResponseBuilder()
         .setHeaders(restLiResponse.getHeaders())
         .setCookies(CookieUtil.encodeSetCookies(restLiResponse.getCookies()))
         .setStatus(restLiResponse.getStatus() == null ? HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode()
             : restLiResponse.getStatus().getCode());
-
     if (restLiResponse.hasData() && restLiResponse.getStatus() != HttpStatus.S_204_NO_CONTENT)
     {
-      responseBuilder.setEntity(DataMapUtils.mapToByteString(restLiResponse.getDataMap(), responseBuilder.getHeaders()));
+      if (contentType != null)
+      {
+        responseBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, contentType.getHeaderKey());
+        try
+        {
+          responseBuilder.setEntity(contentType.getCodec().mapToByteString(restLiResponse.getDataMap()));
+        }
+        catch (IOException e)
+        {
+          throw new RestLiInternalException(e);
+        }
+      }
+      else
+      {
+        responseBuilder.setEntity(DataMapUtils.mapToByteString(restLiResponse.getDataMap(), responseBuilder.getHeaders()));
+      }
     }
 
     RestResponse restResponse = responseBuilder.build();
