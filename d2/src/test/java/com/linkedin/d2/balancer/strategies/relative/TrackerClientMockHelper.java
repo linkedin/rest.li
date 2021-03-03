@@ -52,6 +52,7 @@ public class TrackerClientMockHelper
       Mockito.when(trackerClient.getCallTracker()).thenReturn(new CallTrackerImpl(RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS));
       Mockito.when(trackerClient.getUri()).thenReturn(uri);
       Mockito.when(trackerClient.getPartitionWeight(anyInt())).thenReturn(1.0);
+      Mockito.when(trackerClient.getSubsetWeight(anyInt())).thenReturn(1.0);
       trackerClients.add(trackerClient);
     }
     return trackerClients;
@@ -109,6 +110,7 @@ public class TrackerClientMockHelper
       Mockito.when(callTracker.getCallStats()).thenReturn(callStats);
       Mockito.when(trackerClient.getUri()).thenReturn(uri);
       Mockito.when(trackerClient.getPartitionWeight(anyInt())).thenReturn(1.0);
+      Mockito.when(trackerClient.getSubsetWeight(anyInt())).thenReturn(1.0);
       Mockito.when(trackerClient.doNotSlowStart()).thenReturn(doNotSlowStart);
       trackerClients.add(trackerClient);
     }

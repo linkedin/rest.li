@@ -18,7 +18,6 @@ package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.test.util.retry.SingleRetry;
 import com.linkedin.test.util.retry.ThreeRetries;
 import java.net.URI;
 import java.util.Arrays;
