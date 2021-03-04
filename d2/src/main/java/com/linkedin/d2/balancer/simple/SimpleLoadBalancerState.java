@@ -142,6 +142,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
 
   private final SubsettingStrategyFactory _subsettingStrategyFactory;
+  private final Map<String, Map<Integer, Map<URI, TrackerClient>>>                      _weightedSubsetsCache;
 
   /*
    * Concurrency considerations:
@@ -308,6 +309,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _sslSessionValidatorFactory = sessionValidatorFactory;
     _clusterListeners = Collections.synchronizedList(new ArrayList<>());
     _subsettingStrategyFactory = subsettingStrategyFactory;
+    _weightedSubsetsCache = new ConcurrentHashMap<>();
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -669,26 +671,38 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     SubsettingStrategy<URI> subsettingStrategy = _subsettingStrategyFactory.get(serviceName, serviceProperties, partitionId);
     if (subsettingStrategy != null)
     {
-      Map<URI, Double> pointsMap = potentialClients.entrySet().stream()
-          .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPartitionWeight(partitionId)));
-      Map<URI, Double> subsetMap = subsettingStrategy.getWeightedSubset(pointsMap);
-
-      if (subsetMap == null)
+      if (subsettingStrategy.isSubsetChanged(_version.get()) ||
+          !_weightedSubsetsCache.containsKey(serviceName) ||
+          !_weightedSubsetsCache.get(serviceName).containsKey(partitionId))
       {
-        return potentialClients;
+        Map<URI, Double> weightMap = potentialClients.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPartitionWeight(partitionId)));
+        Map<URI, Double> subsetMap = subsettingStrategy.getWeightedSubset(weightMap, _version.get());
+
+        if (subsetMap == null)
+        {
+          return potentialClients;
+        }
+        else
+        {
+          Map<URI, TrackerClient> subsetClients = new HashMap<>();
+          for (Map.Entry<URI, Double> entry: subsetMap.entrySet())
+          {
+            URI uri = entry.getKey();
+            TrackerClient client = potentialClients.get(uri);
+            client.setSubsetWeight(partitionId, subsetMap.get(uri));
+            subsetClients.put(uri, client);
+          }
+
+          _weightedSubsetsCache.putIfAbsent(serviceName, new ConcurrentHashMap<>());
+          _weightedSubsetsCache.get(serviceName).put(partitionId, subsetClients);
+
+          return subsetClients;
+        }
       }
       else
       {
-        Map<URI, TrackerClient> subsetClients = new HashMap<>();
-        for (Map.Entry<URI, Double> entry: subsetMap.entrySet())
-        {
-          URI uri = entry.getKey();
-          TrackerClient client = potentialClients.get(uri);
-          client.setSubsetWeight(partitionId, subsetMap.get(uri));
-          subsetClients.put(uri, client);
-        }
-
-        return subsetClients;
+        return _weightedSubsetsCache.get(serviceName).get(partitionId);
       }
     }
     else

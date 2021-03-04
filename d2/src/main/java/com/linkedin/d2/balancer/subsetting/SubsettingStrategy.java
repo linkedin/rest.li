@@ -25,7 +25,19 @@ import java.util.Map;
  */
 public interface SubsettingStrategy<T>
 {
-  public static final int DEFAULT_CLUSTER_SUBSET_SIZE = -1;
+  int DEFAULT_CLUSTER_SUBSET_SIZE = -1;
 
-  Map<T, Double> getWeightedSubset(Map<T, Double> pointsMap);
+  /**
+   * Checks whether the subset is changed given the version number
+   */
+  boolean isSubsetChanged(long version);
+
+  /**
+   * Picks a subset from a collection of items
+   *
+   * @param weightMap Maps each item to its weight on a scale of 0.0 to 1.0.
+   * @param version The version of the weightMap. Subsequent calls with the same version number will return the cached subset.
+   * @return A subset that maps each item to its weight on a scale of 0.0 to 1.0.
+   */
+  Map<T, Double> getWeightedSubset(Map<T, Double> weightMap, long version);
 }

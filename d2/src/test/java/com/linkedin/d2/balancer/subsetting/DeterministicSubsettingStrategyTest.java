@@ -27,9 +27,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertSame;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 
 public class DeterministicSubsettingStrategyTest
@@ -70,14 +68,33 @@ public class DeterministicSubsettingStrategyTest
 
     double[] weights = new double[100];
     Arrays.fill(weights, 1D);
+
+    assertTrue(_deterministicSubsettingStrategy.isSubsetChanged(0));
     Map<String, Double> pointsMap = constructPointsMap(weights);
+    Map<String, Double> weightedSubset1 = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 0);
 
-    Map<String, Double> weightedSubset1 = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap);
-
+    assertFalse(_deterministicSubsettingStrategy.isSubsetChanged(0));
     pointsMap = constructPointsMap(weights);
-    Map<String, Double> weightedSubset2 = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap);
+    Map<String, Double> weightedSubset2 = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 0);
 
     assertSame(weightedSubset1, weightedSubset2);
+
+    assertTrue(_deterministicSubsettingStrategy.isSubsetChanged(1));
+    pointsMap = constructPointsMap(weights);
+    Map<String, Double> weightedSubset3 = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 1);
+
+    assertEquals(weightedSubset1, weightedSubset3);
+    assertNotSame(weightedSubset1, weightedSubset3);
+
+    assertFalse(_deterministicSubsettingStrategy.isSubsetChanged(1));
+    pointsMap = constructPointsMap(weights);
+    Map<String, Double> weightedSubset4 = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 1);
+
+    assertSame(weightedSubset3, weightedSubset4);
+
+    Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata())
+        .thenReturn(new DeterministicSubsettingMetadata(0, 19));
+    assertTrue(_deterministicSubsettingStrategy.isSubsetChanged(1));
   }
 
   @Test(dataProvider = "uniformWeightData")
@@ -95,7 +112,7 @@ public class DeterministicSubsettingStrategyTest
           .thenReturn(new DeterministicSubsettingMetadata(i, clientNum));
       _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider,
           "test", minSubsetSize);
-      Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap);
+      Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 0);
       assertTrue(weightedSubset.size() >= Math.min(minSubsetSize, hostNum));
 
       for (Map.Entry<String, Double> entry: weightedSubset.entrySet())
@@ -123,7 +140,7 @@ public class DeterministicSubsettingStrategyTest
           .thenReturn(new DeterministicSubsettingMetadata(i, clientNum));
       _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider,
           "test", minSubsetSize);
-      Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap);
+      Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 0);
 
       for (Map.Entry<String, Double> entry: weightedSubset.entrySet())
       {

@@ -18,15 +18,15 @@ package com.linkedin.d2.balancer.subsetting;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.d2.balancer.LoadBalancerState;
-import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import java.net.URI;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import org.apache.http.annotation.GuardedBy;
 
 
 /**
@@ -40,6 +40,12 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
   private final LoadBalancerState _loadBalancerState;
   private final long _timeout;
   private final TimeUnit _unit;
+
+  private final Object _lock = new Object();
+
+  @GuardedBy("_lock")
+  private long _clusterGenerationId = -1;
+  private DeterministicSubsettingMetadata _subsettingMetadata;
 
   public ZKDeterministicSubsettingMetadataProvider(String clusterName,
                                       URI nodeUri,
@@ -61,24 +67,40 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
 
     _loadBalancerState.listenToCluster(_clusterName, (type, name) ->
     {
-      UriProperties uriProperties = _loadBalancerState.getUriProperties(_clusterName).getProperty();
-      if (uriProperties != null)
+      LoadBalancerStateItem<UriProperties> uriItem = _loadBalancerState.getUriProperties(_clusterName);
+
+      synchronized (_lock)
       {
-        // Sort the URIs so each client sees the same ordering
-        List<URI> sortedUris = uriProperties.getPartitionDesc().keySet().stream()
-            .filter(uri -> uri.getScheme().equals(_nodeUri.getScheme()))
-            .sorted()
-            .collect(Collectors.toList());
-
-        int instanceId = sortedUris.indexOf(_nodeUri);
-
-        if (instanceId >= 0)
+        if (uriItem.getVersion() != _clusterGenerationId)
         {
-          metadataFutureCallback.onSuccess(new DeterministicSubsettingMetadata(instanceId, sortedUris.size()));
-          return;
+          _clusterGenerationId = uriItem.getVersion();
+          UriProperties uriProperties = uriItem.getProperty();
+          if (uriProperties != null)
+          {
+            // Sort the URIs so each client sees the same ordering
+            List<URI> sortedUris = uriProperties.getPartitionDesc().keySet().stream()
+                .filter(uri -> uri.getScheme().equals(_nodeUri.getScheme()))
+                .sorted()
+                .collect(Collectors.toList());
+
+            int instanceId = sortedUris.indexOf(_nodeUri);
+
+            if (instanceId >= 0)
+            {
+              _subsettingMetadata = new DeterministicSubsettingMetadata(instanceId, sortedUris.size());
+            }
+            else
+            {
+              _subsettingMetadata = null;
+            }
+          }
+          else
+          {
+            _subsettingMetadata = null;
+          }
         }
       }
-      metadataFutureCallback.onSuccess(null);
+      metadataFutureCallback.onSuccess(_subsettingMetadata);
     });
 
     try
