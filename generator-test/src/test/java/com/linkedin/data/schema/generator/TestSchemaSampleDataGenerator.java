@@ -53,6 +53,7 @@ import com.linkedin.data.template.LongMap;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.pegasus.generator.test.Certification;
+import com.linkedin.pegasus.generator.test.EnumEmpty;
 import com.linkedin.pegasus.generator.test.EnumFruits;
 import com.linkedin.pegasus.generator.test.FixedMD5;
 import com.linkedin.pegasus.generator.test.InvalidSelfReference;
@@ -129,6 +130,15 @@ public class TestSchemaSampleDataGenerator
     final String value = (String) SchemaSampleDataGenerator.buildData(schema, _spec);
     Assert.assertSame(schema.getSymbolDocs().size(), EnumFruits.class.getEnumConstants().length - 1/*The $UNKNOWN value*/);
     EnumFruits.valueOf(value);
+  }
+
+  @Test
+  public void testEmptyEnumSchema()
+  {
+    final EnumDataSchema schema = (EnumDataSchema) DataTemplateUtil.getSchema(EnumEmpty.class);
+    final String value = (String) SchemaSampleDataGenerator.buildData(schema, _spec);
+    Assert.assertSame(schema.getSymbols().size(), EnumEmpty.class.getEnumConstants().length - 1/*The $UNKNOWN value*/);
+    Assert.assertEquals("EmptyEnum", value);
   }
 
   @Test
