@@ -2614,6 +2614,7 @@ public class TestRecordAndUnionTemplate
     Foo.Union union2 = foo.getUnion();
     assertFalse(union2.isNull());
     assertTrue(union2.isInt());
+    assertEquals(union2.memberKeyName(), "int");
     assertEquals(union2.getInt(), value);
     assertSame(union2.memberType(), Foo.Union.MEMBER_int);
     assertNull(union2.getBar());
@@ -2627,6 +2628,7 @@ public class TestRecordAndUnionTemplate
     union2.setBar(bar);
     assertFalse(union2.isNull());
     assertTrue(union2.isBar());
+    assertEquals(union2.memberKeyName(), "Bar");
     assertEquals(union2.getBar().getInt(), value);
     assertSame(union2.memberType(), Foo.Union.MEMBER_Bar);
     assertNull(union2.getInt());
@@ -2645,6 +2647,7 @@ public class TestRecordAndUnionTemplate
       assertFalse(unionClone.isNull());
       assertFalse(unionClone.isInt());
       assertTrue(unionClone.isBar());
+      assertEquals(union2.memberKeyName(), "Bar");
       assertEquals(unionClone.getBar().getInt(), value);
       assertSame(unionClone.getBar(), union2.getBar());
       assertEquals(unionClone.getBar(), union2.getBar());
@@ -2674,8 +2677,10 @@ public class TestRecordAndUnionTemplate
       unionCopy = union2.copy();
       unionCopy.setEnumType(EnumType.APPLE);
       assertTrue(union2.isBar());
+      assertEquals(union2.memberKeyName(), "Bar");
       assertEquals(union2.getBar().getInt(), origValue);
       assertTrue(unionCopy.isEnumType());
+      assertEquals(unionCopy.memberKeyName(), "EnumType");
       assertSame(unionCopy.getEnumType(), EnumType.APPLE);
     }
     catch (CloneNotSupportedException e)
@@ -2848,6 +2853,19 @@ public class TestRecordAndUnionTemplate
     assertTrue(exc != null);
     assertTrue(exc instanceof NullUnionUnsupportedOperationException);
 
+    // memberKeyName cannot be used with null union
+    try
+    {
+      exc = null;
+      union.memberKeyName();
+    }
+    catch (Exception e)
+    {
+      exc = e;
+    }
+    assertTrue(exc != null);
+    assertTrue(exc instanceof NullUnionUnsupportedOperationException);
+
     // test legacy
     union = new Foo.Union(new DataMap());
     Integer i = 43;
@@ -2909,6 +2927,7 @@ public class TestRecordAndUnionTemplate
     assertFalse(unionWithAliases.isFruit());
     assertFalse(unionWithAliases.isNull());
 
+    assertEquals(unionWithAliases.memberKeyName(), "label");
     assertTrue(unionWithAliases.memberIs("label"));
     assertEquals(unionWithAliases.memberType(), Foo.UnionWithAliases.MEMBER_Label);
 
@@ -2928,6 +2947,7 @@ public class TestRecordAndUnionTemplate
     assertFalse(unionWithAliases.isFruit());
     assertFalse(unionWithAliases.isNull());
 
+    assertEquals(unionWithAliases.memberKeyName(), "count");
     assertTrue(unionWithAliases.memberIs("count"));
     assertEquals(unionWithAliases.memberType(), Foo.UnionWithAliases.MEMBER_Count);
 

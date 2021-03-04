@@ -14,6 +14,34 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.15.5] - 2021-03-03
+- Fix content type header not set in case of RestliResponseException from non streaming server
+
+## [29.15.4] - 2021-03-02
+- Fix content type header not set in case of StreamException from rest.li server
+
+## [29.15.3] - 2021-02-24
+- Add support for update, partial_update, delete and get_all methods in fluent API bindings.
+- Prevent RetriableRequestException from cascading to the indirect caller.
+
+## [29.15.2] - 2021-02-19
+- Add UnionTemplate.memberKeyName() to directly return the key name for a union member
+
+## [29.15.1] - 2021-02-18
+- Cleanup compression code to reduce duplication and minimize memcopies 
+
+## [29.15.0] - 2021-02-17
+- Always enable client compression filter so that responses can be decompressed. If the request already has an accept encoding header set do not overwrite it.
+
+## [29.14.5] - 2021-02-11
+- Shortcircuit already serialized projection params
+
+## [29.14.4] - 2021-02-10
+- Deal with status code 204, when we see 204 in error path, we will not return data (from data layer only)
+
+## [29.14.3] - 2021-02-10
+- Add PathSpecSet, an immutable set of PathSpecs that is convenient to use when building logic based on Rest.li projection
+
 ## [29.14.2] - 2021-02-03
 - Exclude conflicting velocity engine dependency.
 
@@ -4837,7 +4865,16 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.14.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.5...master
+[29.15.5]: https://github.com/linkedin/rest.li/compare/v29.15.4...v29.15.5
+[29.15.4]: https://github.com/linkedin/rest.li/compare/v29.15.3...v29.15.4
+[29.15.3]: https://github.com/linkedin/rest.li/compare/v29.15.2...v29.15.3
+[29.15.2]: https://github.com/linkedin/rest.li/compare/v29.15.1...v29.15.2
+[29.15.1]: https://github.com/linkedin/rest.li/compare/v29.15.0...v29.15.1
+[29.15.0]: https://github.com/linkedin/rest.li/compare/v29.14.5...v29.15.0
+[29.14.5]: https://github.com/linkedin/rest.li/compare/v29.14.4...v29.14.5
+[29.14.4]: https://github.com/linkedin/rest.li/compare/v29.14.3...v29.14.4
+[29.14.3]: https://github.com/linkedin/rest.li/compare/v29.14.2...v29.14.3
 [29.14.2]: https://github.com/linkedin/rest.li/compare/v29.14.1...v29.14.2
 [29.14.1]: https://github.com/linkedin/rest.li/compare/v29.14.0...v29.14.1
 [29.14.0]: https://github.com/linkedin/rest.li/compare/v29.13.12...v29.14.0

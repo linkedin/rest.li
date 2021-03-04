@@ -18,10 +18,10 @@
       ${spec.entityClassName} entity#if( $method.hasParams()),#end
       #**##methodParams($method)##
       ) {
-    Map<String, Object> queryParams = new HashMap<>();
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>();#else Collections.emptyMap();#end
+    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
+    Map<String, Class<?>> queryParamClasses = new HashMap<>($method.getQueryParamMapSize());
     #fillQueryParams($method)
-    queryParams.put(RestConstants.RETURN_ENTITY_PARAM, true);
+    #**##returnEntityParam("true")
     @SuppressWarnings("unchecked")
     IdEntityResponseDecoder<${spec.keyClassName}, ${spec.entityClassName}> idEntityResponseDecoder = new IdEntityResponseDecoder<>(
         (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),

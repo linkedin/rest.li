@@ -105,11 +105,7 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
 
   protected final void appendAssocKeys(UriBuilder uriBuilder)
   {
-    if (_assocKey == null)
-    {
-      throw new IllegalArgumentException("_assocKey is null");
-    }
-    if (_assocKey.getNumParts() != 0)
+    if (_assocKey != null && _assocKey.getNumParts() != 0)
     {
       uriBuilder.path(URIParamUtils.encodeKeyForUri(_assocKey, UriComponent.Type.PATH_SEGMENT, _version));
     }

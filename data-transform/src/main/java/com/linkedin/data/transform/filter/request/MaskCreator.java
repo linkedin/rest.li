@@ -21,7 +21,7 @@
 package com.linkedin.data.transform.filter.request;
 
 import com.linkedin.data.schema.PathSpec;
-
+import com.linkedin.data.schema.PathSpecSet;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -53,6 +53,26 @@ public class MaskCreator
   public static MaskTree createPositiveMask(Collection<PathSpec> paths)
   {
     return createMaskTree(paths, MaskOperation.POSITIVE_MASK_OP);
+  }
+
+  /**
+   * Create a positive mask for the given set.
+   *
+   * @param pathSpecSet the set that should be in the mask
+   * @return a {@link MaskTree}
+   */
+  public static MaskTree createPositiveMask(PathSpecSet pathSpecSet)
+  {
+    if (pathSpecSet.isAllInclusive())
+    {
+      MaskTree maskTree = new MaskTree();
+      maskTree.addOperation(new PathSpec(PathSpec.WILDCARD), MaskOperation.POSITIVE_MASK_OP);
+      return maskTree;
+    }
+    else
+    {
+      return createMaskTree(pathSpecSet.getPathSpecs(), MaskOperation.POSITIVE_MASK_OP);
+    }
   }
 
   /**

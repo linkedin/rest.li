@@ -95,6 +95,21 @@ public class RestLiIntegrationTest
     initClient(URI_PREFIX);
   }
 
+  public void init(boolean async, RestLiConfig restLiConfig, Map<String, String> transportProperties) throws IOException
+  {
+    initSchedulerAndEngine();
+    int asyncTimeout = async ? 5000 : -1;
+    _server =
+        RestLiIntTestServer.createServer(_engine,
+            RestLiIntTestServer.DEFAULT_PORT,
+            RestLiIntTestServer.supportedCompression,
+            async,
+            asyncTimeout,
+            restLiConfig);
+    _server.start();
+    initClient(transportProperties);
+  }
+
   public void init(List<? extends Filter> filters) throws IOException
   {
     final FilterChain fc = FilterChains.empty()
@@ -134,12 +149,22 @@ public class RestLiIntegrationTest
     _engine = new EngineBuilder().setTaskExecutor(_scheduler).setTimerScheduler(_scheduler).build();
   }
 
+  private void initClient(Map<String, String> transportProperties)
+  {
+    initClient(URI_PREFIX, transportProperties);
+  }
+
   private void initClient(String uriPrefix)
+  {
+    final String httpRequestTimeout = System.getProperty("test.httpRequestTimeout", "10000");
+    Map<String, String> transportProperties = Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT, httpRequestTimeout);
+    initClient(uriPrefix, transportProperties);
+  }
+
+  private void initClient(String uriPrefix, Map<String, String> transportProperties)
   {
     _clientFactory = new HttpClientFactory.Builder().setUsePipelineV2(false).build();
     _transportClients = new ArrayList<Client>();
-    final String httpRequestTimeout = System.getProperty("test.httpRequestTimeout", "10000");
-    Map<String, String> transportProperties = Collections.singletonMap(HttpClientFactory.HTTP_REQUEST_TIMEOUT, httpRequestTimeout);
     Client client = newTransportClient(transportProperties);
     RestLiClientConfig restLiClientConfig = new RestLiClientConfig();
     restLiClientConfig.setUseStreaming(Boolean.parseBoolean(System.getProperty("test.useStreamCodecClient", "false")));

@@ -18,22 +18,17 @@
       List<${spec.entityClassName}> entities#if( $method.hasParams()),#end
       #**##methodParams($method)##
       ) {
-    Map<String, Object> queryParams = new HashMap<>();
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>();#else Collections.emptyMap();#end
+    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
+    Map<String, Class<?>> queryParamClasses = new HashMap<>($method.getQueryParamMapSize());
     #fillQueryParams($method)
-    queryParams.put(RestConstants.RETURN_ENTITY_PARAM, true);
+    #**##returnEntityParam("true")
     @SuppressWarnings("unchecked")
     BatchCreateIdEntityDecoder<${spec.keyClassName}, ${spec.entityClassName}> idEntityResponseDecoder = new BatchCreateIdEntityDecoder<>(
         (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
         (TypeSpec<${spec.entityClassName}>) _resourceSpec.getValueType(),
         _resourceSpec.getKeyParts(),
         _resourceSpec.getComplexKeyType());
-    DataMap map = new DataMap();
-    CollectionRequest<${spec.entityClassName}> input = new CollectionRequest<>(map, ${spec.entityClassName}.class);
-    for (${spec.entityClassName} entity : entities)
-    {
-      input.getElements().add(entity);
-    }
+    CollectionRequest<${spec.entityClassName}> input = FluentClientUtils.buildBatchEntityInputs(entities, ${spec.entityClassName}.class);
 
     BatchCreateIdEntityRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchCreateIdEntityRequest<>(
         Collections.emptyMap(),

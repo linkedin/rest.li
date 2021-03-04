@@ -124,9 +124,34 @@ public class PathSpec
     return Collections.unmodifiableList(_path);
   }
 
+  /**
+   * Specifies whether this PathSpec has no segment
+   * @return <code>true</code> if this pathSpec has no segment, <code>false</code> otherwise
+   */
+  public boolean isEmptyPath()
+  {
+    return _path.isEmpty();
+  }
+
   public Map<String, Object> getPathAttributes()
   {
     return Collections.unmodifiableMap(_attributes);
+  }
+
+  /**
+   * Returns a new PathSpec using the same path as this PathSpec but truncated of its last element.
+   * The parent of an empty PathSpec is itself.
+   */
+  public PathSpec getParent()
+  {
+    if (_path.size() <= 1)
+    {
+      return emptyPath();
+    }
+    else
+    {
+      return new PathSpec(_path.subList(0, _path.size() - 1));
+    }
   }
 
   @Override
