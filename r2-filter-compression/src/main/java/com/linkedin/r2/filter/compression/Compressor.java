@@ -16,8 +16,8 @@
 
 package com.linkedin.r2.filter.compression;
 
+import com.linkedin.data.ByteString;
 import java.io.InputStream;
-import java.util.zip.DataFormatException;
 
 
 /*
@@ -29,19 +29,46 @@ public interface Compressor
    * @return Corresponding value for the content-encoding for the implemented
    * compression method.
    * */
-  public String getContentEncodingName();
+  String getContentEncodingName();
 
   /** Decompression function.
+   *
    * @param data Byte array of data to be decompressed
    * @return Newly allocated byte array of decompressed of data, or null if error
-   * @throws DataFormatException if the data cannot be properly decompressed
+   * @throws CompressionException if the data cannot be properly decompressed
    * */
-  public byte[] inflate(InputStream data) throws CompressionException;
+  byte[] inflate(InputStream data) throws CompressionException;
 
-  /** Compress function.
+  /**
+   * Decompression function.
+   *
+   * @param data {@link ByteString} of compressed data.
+   * @return {@link ByteString} with decompressed data.
+   * @throws CompressionException if the data cannot be properly decompressed
+   * */
+  default ByteString inflate(ByteString data) throws CompressionException
+  {
+    return ByteString.unsafeWrap(inflate(data.asInputStream()));
+  }
+
+  /**
+   * Compression function.
+   *
    * @param data Byte array of data to be compressed
    * @return Newly allocated byte array of compressed data, or null if error
-   * @throws DataFormatException  if the data cannot be properly compressed
+   * @throws CompressionException  if the data cannot be properly compressed
    * */
-  public byte[] deflate(InputStream data) throws CompressionException;
+  byte[] deflate(InputStream data) throws CompressionException;
+
+  /**
+   * Compression function.
+   *
+   * @param data {@link ByteString} of decompressed data.
+   * @return {@link ByteString} with compressed data.
+   * @throws CompressionException if the data cannot be properly compressed
+   * */
+  default ByteString deflate(ByteString data) throws CompressionException
+  {
+    return ByteString.unsafeWrap(deflate(data.asInputStream()));
+  }
 }

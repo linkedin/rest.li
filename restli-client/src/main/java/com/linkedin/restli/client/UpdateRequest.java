@@ -40,7 +40,7 @@ public class UpdateRequest<T extends RecordTemplate> extends Request<EmptyRecord
 {
   private final Object _id;
 
-  UpdateRequest(T input,
+  public UpdateRequest(T input,
                 Map<String, String> headers,
                 List<HttpCookie> cookies,
                 ResourceSpec resourceSpec,

@@ -133,4 +133,21 @@ public class TestQueryParamsUtil
     Assert.assertNull(dataMap.getDataMap(RestConstants.PAGING_FIELDS_PARAM));
     Assert.assertNull(dataMap.getDataMap(RestConstants.METADATA_FIELDS_PARAM));
   }
+
+  @Test
+  public void testPreSerializedProjectionParams()
+  {
+    Map<String, Object> queryParams = new HashMap<>();
+    queryParams.put(RestConstants.FIELDS_PARAM, "fields");
+    queryParams.put(RestConstants.PAGING_FIELDS_PARAM, "paging");
+    queryParams.put(RestConstants.METADATA_FIELDS_PARAM, "metadata");
+
+    DataMap dataMap =
+        QueryParamsUtil.convertToDataMap(queryParams, Collections.emptyMap(),
+            AllProtocolVersions.LATEST_PROTOCOL_VERSION, (paramName, pathSpecs) -> null);
+
+    Assert.assertEquals("fields", dataMap.getString(RestConstants.FIELDS_PARAM));
+    Assert.assertEquals("paging", dataMap.getString(RestConstants.PAGING_FIELDS_PARAM));
+    Assert.assertEquals("metadata", dataMap.getString(RestConstants.METADATA_FIELDS_PARAM));
+  }
 }

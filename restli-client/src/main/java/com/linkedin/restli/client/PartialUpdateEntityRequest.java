@@ -40,7 +40,7 @@ public class PartialUpdateEntityRequest<T extends RecordTemplate> extends Reques
 {
   private final Object _id;
 
-  PartialUpdateEntityRequest(PatchRequest<T> input,
+  public PartialUpdateEntityRequest(PatchRequest<T> input,
                         Map<String, String> headers,
                         List<HttpCookie> cookies,
                         EntityResponseDecoder<T> decoder,

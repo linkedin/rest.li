@@ -47,7 +47,7 @@ public class BatchUpdateRequest<K, V extends RecordTemplate>
   private final Map<K, V> _updateInputMap;
 
   @SuppressWarnings("unchecked")
-  BatchUpdateRequest(Map<String, String> headers,
+  public BatchUpdateRequest(Map<String, String> headers,
                      List<HttpCookie> cookies,
                      CollectionRequest<KeyValueRecord<K, V>> entities,
                      Map<String, Object> queryParams,

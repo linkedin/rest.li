@@ -16,76 +16,30 @@
 
 package com.linkedin.r2.filter.compression;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import org.apache.commons.io.IOUtils;
 
 /**
  * Wrapper class for gzip compression
  * */
-public class GzipCompressor implements Compressor
+public class GzipCompressor extends AbstractCompressor
 {
   private static final String HTTP_NAME = "gzip";
 
-  //Consider changing input param as streams rather than fixed bytes?
   @Override
-  public byte[] inflate(InputStream data) throws CompressionException
+  protected InputStream createInflaterInputStream(InputStream compressedDataStream) throws IOException
   {
-    ByteArrayOutputStream out;
-    GZIPInputStream gzip = null;
-
-    try
-    {
-      out = new ByteArrayOutputStream();
-      gzip = new GZIPInputStream(data);
-
-      IOUtils.copy(gzip, out);
-    }
-    catch (IOException e)
-    {
-      throw new CompressionException(CompressionConstants.DECODING_ERROR + getContentEncodingName(), e);
-    }
-    finally
-    {
-      if (gzip != null)
-      {
-        IOUtils.closeQuietly(gzip);
-      }
-    }
-
-    return out.toByteArray();
+    return new GZIPInputStream(compressedDataStream);
   }
 
   @Override
-  public byte[] deflate(InputStream data) throws CompressionException
+  protected OutputStream createDeflaterOutputStream(OutputStream decompressedDataStream) throws IOException
   {
-    ByteArrayOutputStream out;
-    GZIPOutputStream gzip = null;
-
-    try
-    {
-      out = new ByteArrayOutputStream();
-      gzip = new GZIPOutputStream(out);
-
-     IOUtils.copy(data, gzip);
-    }
-    catch (IOException e)
-    {
-      throw new CompressionException(CompressionConstants.DECODING_ERROR + getContentEncodingName(), e);
-    }
-    finally
-    {
-      if (gzip != null)
-      {
-        IOUtils.closeQuietly(gzip);
-      }
-    }
-
-    return out.toByteArray();
+    return new GZIPOutputStream(decompressedDataStream);
   }
 
   @Override

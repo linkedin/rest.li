@@ -309,6 +309,7 @@ public class RetryClient extends D2ClientDelegator
                 else
                 {
                   LOG.warn("Client retry ratio exceeded. This request will fail.");
+                  disableRetryException(e);
                   doRetry = false;
                 }
                 if (!doRetry)
@@ -321,6 +322,7 @@ public class RetryClient extends D2ClientDelegator
             else
             {
               LOG.warn("Retry limit exceeded. This request will fail.");
+              disableRetryException(e);
             }
           }
         }
@@ -345,6 +347,20 @@ public class RetryClient extends D2ClientDelegator
       }
 
       return false;
+    }
+
+    private void disableRetryException(Throwable e)
+    {
+      Throwable[] throwables = ExceptionUtils.getThrowables(e);
+
+      for (Throwable throwable: throwables)
+      {
+        if (throwable instanceof RetriableRequestException)
+        {
+          ((RetriableRequestException) throwable).setDoNotRetryOverride(true);
+          return;
+        }
+      }
     }
 
     /**

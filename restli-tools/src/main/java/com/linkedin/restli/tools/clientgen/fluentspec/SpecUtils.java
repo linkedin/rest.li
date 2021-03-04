@@ -24,7 +24,6 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
 

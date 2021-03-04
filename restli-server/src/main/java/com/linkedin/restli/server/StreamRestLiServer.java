@@ -369,7 +369,7 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
         TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_ERROR_SERIALIZATION.key());
 
         RestLiResponseException responseException = (RestLiResponseException) e;
-        final Throwable throwable = ResponseUtils.buildStreamException(responseException, _contentType.getStreamCodec());
+        final Throwable throwable = ResponseUtils.buildStreamException(responseException, _contentType);
 
         TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_ERROR_SERIALIZATION.key());
         return throwable;

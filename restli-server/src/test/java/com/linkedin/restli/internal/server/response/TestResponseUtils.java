@@ -21,7 +21,12 @@ import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.r2.message.stream.StreamException;
+import com.linkedin.restli.common.ContentType;
+import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.util.DataMapUtils;
+import com.linkedin.restli.server.TestRecord;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.Collections;
@@ -83,6 +88,24 @@ public class TestResponseUtils
     {
       Assert.fail("Test failed with exception: \n" + e.toString());
     }
+  }
+
+  @Test
+  public void testContentTypeHeaderForStreamException()
+  {
+    RestLiResponseException restLiResponseException = new RestLiResponseException(
+        new RuntimeException("this is a test"),
+        new RestLiResponse.Builder()
+            .status(HttpStatus.S_500_INTERNAL_SERVER_ERROR)
+            .entity(new TestRecord())
+            .headers(Collections.emptyMap())
+            .cookies(Collections.emptyList())
+            .build());
+
+    StreamException streamException = ResponseUtils.buildStreamException(restLiResponseException, ContentType.PROTOBUF2);
+
+    Assert.assertEquals(streamException.getResponse().getHeader(RestConstants.HEADER_CONTENT_TYPE),
+        ContentType.PROTOBUF2.getHeaderKey());
   }
 
   @AfterTest
