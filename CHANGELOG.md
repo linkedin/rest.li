@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.15.7] - 2021-03-05
+- Include accept header params when setting the response content type.
+
 ## [29.15.6] - 2021-03-04
 - Fix bug that if a schema is an enum without any symbols, doc gen should handle it instead of throwing exception.
 
@@ -4868,7 +4871,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.7...master
+[29.15.7]: https://github.com/linkedin/rest.li/compare/v29.15.6...v29.15.7
 [29.15.6]: https://github.com/linkedin/rest.li/compare/v29.15.5...v29.15.6
 [29.15.5]: https://github.com/linkedin/rest.li/compare/v29.15.4...v29.15.5
 [29.15.4]: https://github.com/linkedin/rest.li/compare/v29.15.3...v29.15.4
