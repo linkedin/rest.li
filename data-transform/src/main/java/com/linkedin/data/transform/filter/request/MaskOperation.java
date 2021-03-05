@@ -14,25 +14,23 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.data.transform.filter.request;
+
+import com.linkedin.data.schema.FieldMask;
+
 
 /**
  * @author Josh Walker
  * @version $Revision: $
  */
-
 public enum MaskOperation
 {
-  POSITIVE_MASK_OP(1),
-  NEGATIVE_MASK_OP(0);
+  POSITIVE_MASK_OP(FieldMask.POSITIVE_MASK),
+  NEGATIVE_MASK_OP(FieldMask.NEGATIVE_MASK);
 
   MaskOperation(int value)
   {
-    _representation = Integer.valueOf(value);
+    _representation = value;
   }
 
   /**

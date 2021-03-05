@@ -14,6 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 - Add fluent client api for simple resource and association resource.
+- Adds support for generating projection mask as the mask data map.
 
 ## [29.16.0] - 2021-03-10
 - Add a ParSeq based CompletionStage implementation
