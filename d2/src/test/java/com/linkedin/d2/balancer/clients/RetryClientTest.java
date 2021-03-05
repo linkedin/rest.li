@@ -43,6 +43,7 @@ import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.test.util.ClockedExecutor;
 import com.linkedin.test.util.retry.SingleRetry;
 import com.linkedin.util.clock.SettableClock;
+import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -109,7 +110,8 @@ public class RetryClientTest
         HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, balancer, 3);
+    RetryClient client = new RetryClient(dynamicClient, balancer, 3, RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM, SystemClock.instance(), true, true);
     URI uri = URI.create("d2://retryService?arg1arg2");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.newEntityStream(new ByteStringWriter(CONTENT)));
     TrackerClientTest.TestCallback<StreamResponse> restCallback = new TrackerClientTest.TestCallback<StreamResponse>();
@@ -117,6 +119,24 @@ public class RetryClientTest
 
     assertNull(restCallback.e);
     assertNotNull(restCallback.t);
+  }
+
+  @Test
+  public void testIgnoreStreamRetry() throws Exception
+  {
+    SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"),
+        HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
+
+    DynamicClient dynamicClient = new DynamicClient(balancer, null);
+    RetryClient client = new RetryClient(dynamicClient, balancer, 3);
+    URI uri = URI.create("d2://retryService?arg1arg2");
+    StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.newEntityStream(new ByteStringWriter(CONTENT)));
+    TrackerClientTest.TestCallback<StreamResponse> restCallback = new TrackerClientTest.TestCallback<StreamResponse>();
+    client.streamRequest(streamRequest, restCallback);
+
+    assertNull(restCallback.t);
+    assertNotNull(restCallback.e);
+    assertTrue(restCallback.e.getMessage().contains("Data not available"));
   }
 
   @Test
@@ -222,7 +242,8 @@ public class RetryClientTest
         HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, balancer, 3);
+    RetryClient client = new RetryClient(dynamicClient, balancer, 3, RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM, SystemClock.instance(), true, true);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
     FutureCallback<StreamResponse> streamCallback = new FutureCallback<>();
