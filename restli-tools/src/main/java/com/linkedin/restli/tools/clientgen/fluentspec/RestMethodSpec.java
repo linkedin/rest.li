@@ -23,8 +23,10 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.server.annotations.ReturnEntity;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -59,7 +61,8 @@ public class RestMethodSpec
 
   public boolean hasParams()
   {
-    return _schema.getParameters() != null && !_schema.getParameters().isEmpty();
+    return (_schema.getParameters() != null && !_schema.getParameters().isEmpty())
+        || getSupportedProjectionParams().size() > 0;
   }
 
   public List<ParameterSpec> getRequiredParams()
@@ -109,10 +112,12 @@ public class RestMethodSpec
    */
   public int getQueryParamMapSize()
   {
-    int params = hasParams() ? _schema.getParameters().size() : 0;
-    if (returnsEntity()){
+    int params = (_schema.getParameters() != null && !_schema.getParameters().isEmpty()) ? _schema.getParameters().size() : 0;
+    if (returnsEntity())
+    {
       params++;
     }
+    params += getSupportedProjectionParams().size();
     switch (ResourceMethod.fromString(_schema.getMethod()))
     {
       case BATCH_PARTIAL_UPDATE:
@@ -124,4 +129,33 @@ public class RestMethodSpec
     }
     return DataMapBuilder.getOptimumHashMapCapacityFromSize(params);
   }
+
+  public Set<String> getSupportedProjectionParams()
+  {
+    switch (ResourceMethod.fromString(_schema.getMethod()))
+    {
+      case GET:
+      case BATCH_GET:
+        return Collections.singleton(RestConstants.FIELDS_PARAM);
+      case CREATE:
+      case BATCH_CREATE:
+      case PARTIAL_UPDATE:
+      case BATCH_PARTIAL_UPDATE:
+        if (returnsEntity())
+        {
+          return Collections.singleton(RestConstants.FIELDS_PARAM);
+        }
+        else
+        {
+          return Collections.emptySet();
+        }
+      case FINDER:
+      case BATCH_FINDER:
+      case GET_ALL:
+        return RestConstants.PROJECTION_PARAMETERS;
+      default:
+        return Collections.emptySet();
+    }
+  }
 }
+

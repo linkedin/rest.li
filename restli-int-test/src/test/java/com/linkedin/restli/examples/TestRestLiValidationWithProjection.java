@@ -16,23 +16,9 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.examples.greetings.api.Message;
-import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
-import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.Request;
@@ -43,11 +29,24 @@ import com.linkedin.restli.common.BatchCreateIdEntityResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdEntityResponse;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.examples.greetings.api.Message;
+import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.ValidationDemo;
 import com.linkedin.restli.examples.greetings.api.myEnum;
+import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
 import com.linkedin.restli.examples.greetings.client.AutoValidationWithProjectionBuilders;
 import com.linkedin.restli.server.validation.RestLiValidationFilter;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 
 /**
@@ -57,6 +56,19 @@ import com.linkedin.restli.test.util.RootBuilderWrapper;
  */
 public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
 {
+  public static final String EXPECTED_VALIDATION_DEMO_FAILURE_MESSAGE =
+      "ERROR :: /validationDemoNext/UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: field is required but not found and has no default value\n"
+          + "ERROR :: /validationDemoNext/stringA :: length of \"invalid, length is larger than the max\" is out of range 1...10\n"
+          + "ERROR :: /validationDemoNext/ArrayWithInlineRecord/0/bar2 :: field is required but not found and has no default value\n"
+          + "ERROR :: /validationDemoNext/MapWithTyperefs/foo/message :: field is required but not found and has no default value\n"
+          + "ERROR :: /validationDemoNext/MapWithTyperefs/foo/tone :: field is required but not found and has no default value\n"
+          + "ERROR :: /validationDemoNext/stringB :: field is required but not found and has no default value\n"
+          + "ERROR :: /includedA :: length of \"invalid, length is larger than the max\" is out of range 1...10\n"
+          + "ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: field is required but not found and has no default value\n"
+          + "ERROR :: /ArrayWithInlineRecord/0/bar2 :: field is required but not found and has no default value\n"
+          + "ERROR :: /MapWithTyperefs/foo/message :: field is required but not found and has no default value\n"
+          + "ERROR :: /MapWithTyperefs/foo/tone :: field is required but not found and has no default value\n"
+          + "ERROR :: /stringA :: field is required but not found and has no default value\n";
   private RestClient _restClientAuto;
 
   @BeforeClass
@@ -82,19 +94,7 @@ public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
     try {
       _restClientAuto.sendRequest(request).getResponse();
     } catch (RestLiResponseException e) {
-      Assert.assertEquals(e.getServiceErrorMessage(),
-                          "ERROR :: /validationDemoNext/UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: field is required but not found and has no default value\n" +
-                              "ERROR :: /validationDemoNext/stringA :: length of \"invalid, length is larger than the max\" is out of range 1...10\n" +
-                              "ERROR :: /validationDemoNext/ArrayWithInlineRecord/0/bar2 :: field is required but not found and has no default value\n" +
-                              "ERROR :: /validationDemoNext/MapWithTyperefs/foo/message :: field is required but not found and has no default value\n" +
-                              "ERROR :: /validationDemoNext/MapWithTyperefs/foo/tone :: field is required but not found and has no default value\n" +
-                              "ERROR :: /validationDemoNext/stringB :: field is required but not found and has no default value\n" +
-                              "ERROR :: /includedA :: length of \"invalid, length is larger than the max\" is out of range 1...10\n" +
-                              "ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: field is required but not found and has no default value\n" +
-                              "ERROR :: /ArrayWithInlineRecord/0/bar2 :: field is required but not found and has no default value\n" +
-                              "ERROR :: /MapWithTyperefs/foo/message :: field is required but not found and has no default value\n" +
-                              "ERROR :: /MapWithTyperefs/foo/tone :: field is required but not found and has no default value\n" +
-                              "ERROR :: /stringA :: field is required but not found and has no default value\n");
+      Assert.assertEquals(e.getServiceErrorMessage(), EXPECTED_VALIDATION_DEMO_FAILURE_MESSAGE);
     }
   }
 

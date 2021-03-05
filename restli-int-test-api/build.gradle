@@ -16,6 +16,10 @@ tasks.withType(com.linkedin.pegasus.gradle.tasks.GenerateRestClientTask) {
   generateFluentApi = true
 }
 
+tasks.withType(com.linkedin.pegasus.gradle.tasks.GenerateDataTemplateTask) {
+  generateFieldMask = true
+}
+
 test {
   systemProperties['test.projectDir'] = project.projectDir.path
 }

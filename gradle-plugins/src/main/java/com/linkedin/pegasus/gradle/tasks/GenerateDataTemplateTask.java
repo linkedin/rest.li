@@ -47,6 +47,7 @@ public class GenerateDataTemplateTask extends DefaultTask
   private FileCollection _codegenClasspath;
   private boolean _enableArgFile;
   private Boolean _generateLowercasePath;
+  private Boolean _generateFieldMask;
 
   // Output Task Property
   private File _destinationDir;
@@ -126,6 +127,17 @@ public class GenerateDataTemplateTask extends DefaultTask
     _enableArgFile = enable;
   }
 
+  @Input
+  public boolean generateFieldMask()
+  {
+    return _generateFieldMask;
+  }
+
+  public void setGenerateFieldMask(boolean generateFieldMask)
+  {
+    _generateFieldMask = generateFieldMask;
+  }
+
   @Optional
   @Input
   public Boolean generateLowercasePath()
@@ -187,6 +199,10 @@ public class GenerateDataTemplateTask extends DefaultTask
       if (_generateLowercasePath != null)
       {
         javaExecSpec.jvmArgs("-Dgenerator.generate.lowercase.path=" + _generateLowercasePath); //.run(generateLowercasePath)
+      }
+      if (_generateFieldMask != null && _generateFieldMask)
+      {
+        javaExecSpec.jvmArgs("-Dgenerator.generate.field.mask=true");
       }
       javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
       javaExecSpec.args(_destinationDir.getPath());
