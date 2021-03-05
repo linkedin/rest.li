@@ -93,7 +93,15 @@ public class RetryClientTest
         HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, balancer, 3);
+    RetryClient client = new RetryClient(
+        dynamicClient,
+        balancer,
+        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
+        SystemClock.instance(),
+        true,
+        false);
     URI uri = URI.create("d2://retryService?arg1arg2");
     RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
     TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
@@ -110,8 +118,15 @@ public class RetryClientTest
         HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, balancer, 3, RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
-        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM, SystemClock.instance(), true, true);
+    RetryClient client = new RetryClient(
+        dynamicClient,
+        balancer,
+        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
+        SystemClock.instance(),
+        true,
+        true);
     URI uri = URI.create("d2://retryService?arg1arg2");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.newEntityStream(new ByteStringWriter(CONTENT)));
     TrackerClientTest.TestCallback<StreamResponse> restCallback = new TrackerClientTest.TestCallback<StreamResponse>();
@@ -128,7 +143,15 @@ public class RetryClientTest
         HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, balancer, 3);
+    RetryClient client = new RetryClient(
+        dynamicClient,
+        balancer,
+        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
+        SystemClock.instance(),
+        true,
+        false);
     URI uri = URI.create("d2://retryService?arg1arg2");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.newEntityStream(new ByteStringWriter(CONTENT)));
     TrackerClientTest.TestCallback<StreamResponse> restCallback = new TrackerClientTest.TestCallback<StreamResponse>();
@@ -146,7 +169,15 @@ public class RetryClientTest
         HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, balancer, 3);
+    RetryClient client = new RetryClient(
+        dynamicClient,
+        balancer,
+        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
+        SystemClock.instance(),
+        true,
+        false);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
     TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
@@ -167,7 +198,15 @@ public class RetryClientTest
         HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, balancer, 3);
+    RetryClient client = new RetryClient(
+        dynamicClient,
+        balancer,
+        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
+        SystemClock.instance(),
+        true,
+        true);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
     TrackerClientTest.TestCallback<StreamResponse> streamCallback = new TrackerClientTest.TestCallback<StreamResponse>();
@@ -188,7 +227,15 @@ public class RetryClientTest
         HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, balancer, 1);
+    RetryClient client = new RetryClient(
+        dynamicClient,
+        balancer,
+        1,
+        RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
+        SystemClock.instance(),
+        true,
+        false);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
     TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
@@ -206,7 +253,15 @@ public class RetryClientTest
         HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, balancer, 1);
+    RetryClient client = new RetryClient(
+        dynamicClient,
+        balancer,
+        1,
+        RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
+        SystemClock.instance(),
+        true,
+        true);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
     TrackerClientTest.TestCallback<StreamResponse> streamCallback = new TrackerClientTest.TestCallback<StreamResponse>();
@@ -224,7 +279,15 @@ public class RetryClientTest
         HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, balancer, 3);
+    RetryClient client = new RetryClient(
+        dynamicClient,
+        balancer,
+        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
+        SystemClock.instance(),
+        true,
+        false);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
     TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<RestResponse>();
@@ -242,8 +305,15 @@ public class RetryClientTest
         HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
-    RetryClient client = new RetryClient(dynamicClient, balancer, 3, RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
-        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM, SystemClock.instance(), true, true);
+    RetryClient client = new RetryClient(
+        dynamicClient,
+        balancer,
+        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
+        RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
+        SystemClock.instance(),
+        true,
+        true);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
     FutureCallback<StreamResponse> streamCallback = new FutureCallback<>();
@@ -272,7 +342,9 @@ public class RetryClientTest
         D2ClientConfig.DEAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
-        clock);
+        clock,
+        true,
+        false);
     URI uri1 = URI.create("d2://retryService1?arg1=empty&arg2=empty");
     RestRequest restRequest1 = new RestRequestBuilder(uri1).build();
 
@@ -326,7 +398,9 @@ public class RetryClientTest
         D2ClientConfig.DEAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
-        clock);
+        clock,
+        true,
+        false);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
 

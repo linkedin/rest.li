@@ -78,7 +78,7 @@ public class RetryClient extends D2ClientDelegator
 {
   public static final long DEFAULT_UPDATE_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
   public static final int DEFAULT_AGGREGATED_INTERVAL_NUM = 5;
-  public static final boolean DEFAULT_REST_RETRY_ENABLED = true;
+  public static final boolean DEFAULT_REST_RETRY_ENABLED = false;
   public static final boolean DEFAULT_STREAM_RETRY_ENABLED = false;
   private static final Logger LOG = LoggerFactory.getLogger(RetryClient.class);
 
@@ -92,11 +92,14 @@ public class RetryClient extends D2ClientDelegator
 
   ConcurrentMap<String, ClientRetryTracker> _retryTrackerMap;
 
+  @Deprecated
   public RetryClient(D2Client d2Client, LoadBalancer balancer, int limit)
   {
-    this(d2Client, balancer, limit, DEFAULT_UPDATE_INTERVAL_MS, DEFAULT_AGGREGATED_INTERVAL_NUM, SystemClock.instance());
+    this(d2Client, balancer, limit, DEFAULT_UPDATE_INTERVAL_MS, DEFAULT_AGGREGATED_INTERVAL_NUM, SystemClock.instance(),
+        DEFAULT_REST_RETRY_ENABLED, DEFAULT_STREAM_RETRY_ENABLED);
   }
 
+  @Deprecated
   public RetryClient(D2Client d2Client, LoadBalancer balancer, int limit, long updateIntervalMs, int aggregatedIntervalNum, Clock clock)
   {
     this(d2Client, balancer, limit, updateIntervalMs, aggregatedIntervalNum, clock, DEFAULT_REST_RETRY_ENABLED, DEFAULT_STREAM_RETRY_ENABLED);
