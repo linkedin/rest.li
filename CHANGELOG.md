@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.15.8] - 2021-03-05
+- Exclude 3XX http status from adding error logs during build error response from restli server.
+
 ## [29.15.7] - 2021-03-05
 - Include accept header params when setting the response content type.
 
@@ -4871,7 +4874,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.15.8...master
+[29.15.8]: https://github.com/linkedin/rest.li/compare/v29.15.7...v29.15.8
 [29.15.7]: https://github.com/linkedin/rest.li/compare/v29.15.6...v29.15.7
 [29.15.6]: https://github.com/linkedin/rest.li/compare/v29.15.5...v29.15.6
 [29.15.5]: https://github.com/linkedin/rest.li/compare/v29.15.4...v29.15.5
