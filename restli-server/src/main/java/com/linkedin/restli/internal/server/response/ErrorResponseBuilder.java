@@ -76,7 +76,10 @@ public final class ErrorResponseBuilder
 
   public ErrorResponse buildErrorResponse(RestLiServiceException result)
   {
-    if (result.getStatus() != null && result.getStatus().getCode() < 400)
+    // In some cases, people use 3XX to signal client a redirection. This falls into the category of blurred boundary
+    // whether this should be an error or not, in order to not disrupt change the behavior of existing code
+    // Thus excluding logging errors for 3XX
+    if (result.getStatus() != null && result.getStatus().getCode() < HttpStatus.S_300_MULTIPLE_CHOICES.getCode())
     {
       // Invalid to send an error response with success status codes. This should be converted to 500 errors.
       // Logging an error message now to detect and fix current use cases before we start converting to 500.
