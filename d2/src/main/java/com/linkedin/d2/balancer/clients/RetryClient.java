@@ -78,6 +78,8 @@ public class RetryClient extends D2ClientDelegator
 {
   public static final long DEFAULT_UPDATE_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
   public static final int DEFAULT_AGGREGATED_INTERVAL_NUM = 5;
+  public static final boolean DEFAULT_REST_RETRY_ENABLED = false;
+  public static final boolean DEFAULT_STREAM_RETRY_ENABLED = false;
   private static final Logger LOG = LoggerFactory.getLogger(RetryClient.class);
 
   private final Clock _clock;
@@ -85,15 +87,27 @@ public class RetryClient extends D2ClientDelegator
   private final int _limit;
   private final long _updateIntervalMs;
   private final int _aggregatedIntervalNum;
+  private final boolean _restRetryEnabled;
+  private final boolean _streamRetryEnabled;
 
   ConcurrentMap<String, ClientRetryTracker> _retryTrackerMap;
 
+  @Deprecated
   public RetryClient(D2Client d2Client, LoadBalancer balancer, int limit)
   {
-    this(d2Client, balancer, limit, DEFAULT_UPDATE_INTERVAL_MS, DEFAULT_AGGREGATED_INTERVAL_NUM, SystemClock.instance());
+    this(d2Client, balancer, limit, DEFAULT_UPDATE_INTERVAL_MS, DEFAULT_AGGREGATED_INTERVAL_NUM, SystemClock.instance(),
+        DEFAULT_REST_RETRY_ENABLED, DEFAULT_STREAM_RETRY_ENABLED);
   }
 
+  @Deprecated
   public RetryClient(D2Client d2Client, LoadBalancer balancer, int limit, long updateIntervalMs, int aggregatedIntervalNum, Clock clock)
+  {
+    this(d2Client, balancer, limit, updateIntervalMs, aggregatedIntervalNum, clock, DEFAULT_REST_RETRY_ENABLED, DEFAULT_STREAM_RETRY_ENABLED);
+  }
+
+  public RetryClient(D2Client d2Client, LoadBalancer balancer, int limit,
+      long updateIntervalMs, int aggregatedIntervalNum, Clock clock,
+      boolean restRetryEnabled, boolean streamRetryEnabled)
   {
     super(d2Client);
     _balancer = balancer;
@@ -102,6 +116,8 @@ public class RetryClient extends D2ClientDelegator
     _aggregatedIntervalNum = aggregatedIntervalNum;
     _clock = clock;
     _retryTrackerMap = new ConcurrentHashMap<>();
+    _restRetryEnabled = restRetryEnabled;
+    _streamRetryEnabled = streamRetryEnabled;
 
     LOG.debug("Retry client created with limit={}", _limit);
   }
@@ -131,12 +147,19 @@ public class RetryClient extends D2ClientDelegator
       final RequestContext requestContext,
       final Callback<RestResponse> callback)
   {
-    RestRequest newRequest = request.builder()
-        .setHeader(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, "0")
-        .build();
-    ClientRetryTracker retryTracker = updateRetryTracker(newRequest.getURI(), false);
-    final Callback<RestResponse> transportCallback = new RestRetryRequestCallback(newRequest, requestContext, callback, retryTracker);
-    _d2Client.restRequest(newRequest, requestContext, transportCallback);
+    if (_restRetryEnabled)
+    {
+      RestRequest newRequest = request.builder()
+          .setHeader(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, "0")
+          .build();
+      ClientRetryTracker retryTracker = updateRetryTracker(newRequest.getURI(), false);
+      final Callback<RestResponse> transportCallback = new RestRetryRequestCallback(newRequest, requestContext, callback, retryTracker);
+      _d2Client.restRequest(newRequest, requestContext, transportCallback);
+    }
+    else
+    {
+      _d2Client.restRequest(request, requestContext, callback);
+    }
   }
 
   @Override
@@ -148,12 +171,19 @@ public class RetryClient extends D2ClientDelegator
   @Override
   public void streamRequest(StreamRequest request, RequestContext requestContext, Callback<StreamResponse> callback)
   {
-    StreamRequest newRequest = request.builder()
-        .setHeader(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, "0")
-        .build(request.getEntityStream());
-    ClientRetryTracker retryTracker = updateRetryTracker(newRequest.getURI(), false);
-    final Callback<StreamResponse> transportCallback = new StreamRetryRequestCallback(newRequest, requestContext, callback, retryTracker);
-    _d2Client.streamRequest(newRequest, requestContext, transportCallback);
+    if (_streamRetryEnabled)
+    {
+      StreamRequest newRequest = request.builder()
+          .setHeader(HttpConstants.HEADER_NUMBER_OF_RETRY_ATTEMPTS, "0")
+          .build(request.getEntityStream());
+      ClientRetryTracker retryTracker = updateRetryTracker(newRequest.getURI(), false);
+      final Callback<StreamResponse> transportCallback = new StreamRetryRequestCallback(newRequest, requestContext, callback, retryTracker);
+      _d2Client.streamRequest(newRequest, requestContext, transportCallback);
+    }
+    else
+    {
+      _d2Client.streamRequest(request, requestContext, callback);
+    }
   }
 
   private ClientRetryTracker updateRetryTracker(URI uri, boolean isRetry)
