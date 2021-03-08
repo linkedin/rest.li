@@ -47,6 +47,7 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
+import com.linkedin.test.util.retry.ThreeRetries;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -336,7 +337,7 @@ public class SharedZkConnectionProviderTest {
   /**
    * Test announcing many hosts using one connection concurrently
    */
-  @Test(groups = "needZk")
+  @Test(groups = "needZk", retryAnalyzer = ThreeRetries.class)
   public void testManyHostsAnnouncementSharingConnections() throws Exception {
     List<URI> hostNames = prepareHostNames(100, "testManyHostsAnnouncementSharingConnections");
     List<ZooKeeperConnectionManager> connectionManagers = prepareConnectionManagers(hostNames);
@@ -354,7 +355,7 @@ public class SharedZkConnectionProviderTest {
    * Testing sharing connections between announcers and d2client
    * @throws Exception
    */
-  @Test(groups = "needZk")
+  @Test(groups = "needZk", retryAnalyzer = ThreeRetries.class)
   public void testAnnouncerAndClientSharing() throws Exception {
     //connection shared to announcers
     List<URI> hostNames = prepareHostNames(20, "testAnnouncerAndClientSharing");

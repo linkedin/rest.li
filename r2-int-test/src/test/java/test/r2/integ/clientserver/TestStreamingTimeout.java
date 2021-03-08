@@ -36,6 +36,7 @@ import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.test.util.retry.ThreeRetries;
 import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
 import java.util.HashMap;
@@ -120,7 +121,7 @@ public class TestStreamingTimeout extends AbstractServiceTest
     Assert.assertTrue(reader.allBytesCorrect());
   }
 
-  @Test
+  @Test(retryAnalyzer = ThreeRetries.class)
   public void testStreamTimeoutWithStreamingTimeoutInServerStream() throws Exception
   {
     final EntityStream entityStream = EntityStreams.newEntityStream(new BytesWriter(SMALL_BYTES_NUM, BYTE));
