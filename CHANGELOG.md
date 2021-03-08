@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Delete the mainCopyPdscSchemas Gradle task. mainCopySchemas is the replacement.
+- Delete the mainDestroyStaleSchemas Gradle task. mainCopySchemas is the replacement.
 
 ## [29.15.9] - 2021-03-06
 - Add separate configuration control for retrying RestRequest and StreamRequest.
