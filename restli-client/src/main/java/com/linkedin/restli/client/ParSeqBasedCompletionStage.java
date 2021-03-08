@@ -83,51 +83,16 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   {
   }
 
-  ParSeqBasedCompletionStage(Engine engine, Executor executor)
+  ParSeqBasedCompletionStage(Engine engine, Executor executor, Task<T> task)
   {
     _engine = engine;
     _asyncExecutor = executor != null ? executor : ForkJoinPool.commonPool();
+    _task = task;
   }
 
-  ParSeqBasedCompletionStage(Engine engine)
+  ParSeqBasedCompletionStage(Engine engine, Task<T> task)
   {
-    this(engine, null);
-  }
-
-  private ParSeqBasedCompletionStage<T> withTask(Task<T> t)
-  {
-    _task = t;
-    return this;
-  }
-
-  ParSeqBasedCompletionStage<T> from(CompletionStage<T> completionStage)
-  {
-    return nextStageByComposingTask(Task.fromCompletionStage("Create from CompletionStage:", () -> completionStage));
-  }
-
-  /**
-   * Create the stage from a ParSeq task that is executed asynchronously
-   * @param task the ParSeq task that is executed asynchronously.
-   * @return the new stage created from ParSeq task
-   */
-  ParSeqBasedCompletionStage<T> from(Task<T> task)
-  {
-    return withTask(task);
-  }
-
-  ParSeqBasedCompletionStage<T> from(Future<T> future, Executor executor)
-  {
-    return from(ensureFuture(Task.async("Create from Future", () -> {
-      final SettablePromise<T> promise = Promises.settable();
-      executor.execute(() -> {
-        try {
-          promise.done(future.get());
-        } catch (Throwable t) {
-          promise.fail(t);
-        }
-      });
-      return promise;
-    })));
+    this(engine, null, task);
   }
 
   /**
@@ -157,7 +122,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
    * To wrap the exception from the last stage into a {@link CompletionException} so they can be
    * propagated according to the rules defined in {@link CompletionStage} documentation
    */
-  private <U> Task<U> wrapException(Task<U> task)
+  static <U> Task<U> wrapException(Task<U> task)
   {
     return task.transform(prevTaskResult -> {
       if (prevTaskResult.isFailed()) {
@@ -175,7 +140,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
 
   private <U> ParSeqBasedCompletionStage<U> nextStageByComposingTask(Task<U> composedTask)
   {
-    return new ParSeqBasedCompletionStage<U>(_engine, _asyncExecutor).from(ensureFuture(wrapException(composedTask)));
+    return new ParSeqBasedCompletionStage<U>(_engine, _asyncExecutor, ensureFuture(wrapException(composedTask)));
   }
 
   @Override
@@ -601,15 +566,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   @Override
   public CompletableFuture<T> toCompletableFuture()
   {
-    final CompletableFuture<T> future = new CompletableFuture<T>();
-    _task.toCompletionStage().whenComplete((value, exception) -> {
-      if (exception != null) {
-        future.completeExceptionally(exception);
-      } else {
-        future.complete(value);
-      }
-    });
-    return future;
+    return _task.toCompletionStage().toCompletableFuture();
   }
 
   /* ------------- For testing -------------- */

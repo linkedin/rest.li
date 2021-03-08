@@ -18,6 +18,8 @@ package com.linkedin.restli.client;
 
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.Task;
+import com.linkedin.parseq.promise.Promises;
+import com.linkedin.parseq.promise.SettablePromise;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -64,7 +66,7 @@ class ParSeqBasedCompletionStageFactory<T>
   public ParSeqBasedCompletionStage<T> buildStageFromTask(Task<T> task)
   {
     checkEngine();
-    return new ParSeqBasedCompletionStage<T>(_engine, _asyncExecutor).from(task);
+    return new ParSeqBasedCompletionStage<T>(_engine, _asyncExecutor,task);
   }
 
   /**
@@ -104,7 +106,18 @@ class ParSeqBasedCompletionStageFactory<T>
   public ParSeqBasedCompletionStage<T> buildStageFromFuture(Future<T> future, Executor executor)
   {
     checkEngine();
-    return new ParSeqBasedCompletionStage<T>(_engine, _asyncExecutor).from(future, executor);
+    return new ParSeqBasedCompletionStage<T>(_engine, _asyncExecutor,
+    ParSeqBasedCompletionStage.ensureFutureByEngine(Task.async("Create from Future", () -> {
+      final SettablePromise<T> promise = Promises.settable();
+      executor.execute(() -> {
+        try {
+          promise.done(future.get());
+        } catch (Throwable t) {
+          promise.fail(t);
+        }
+      });
+      return promise;
+    }), _engine));
   }
 
   /**
@@ -116,7 +129,12 @@ class ParSeqBasedCompletionStageFactory<T>
   public ParSeqBasedCompletionStage<T> buildStageFromCompletionStage(CompletionStage<T> stage)
   {
     checkEngine();
-    return new ParSeqBasedCompletionStage<T>(_engine, _asyncExecutor).from(stage);
+    return new ParSeqBasedCompletionStage<T>(_engine, _asyncExecutor,
+        ParSeqBasedCompletionStage.ensureFutureByEngine(
+            ParSeqBasedCompletionStage.wrapException(
+            Task.fromCompletionStage("Create from CompletionStage:", () ->stage)
+            ), _engine)
+    );
   }
 
   /**
@@ -131,7 +149,7 @@ class ParSeqBasedCompletionStageFactory<T>
   public ParSeqBasedCompletionStage<Void> buildStageFromRunnableAsync(Runnable runnable)
   {
     checkEngine();
-    return new ParSeqBasedCompletionStage<Void>(_engine, _asyncExecutor).from(
+    return new ParSeqBasedCompletionStage<Void>(_engine, _asyncExecutor,
         ParSeqBasedCompletionStage.ensureFutureByEngine(Task.callable(() -> {
           runnable.run();
           return null;
@@ -151,7 +169,7 @@ class ParSeqBasedCompletionStageFactory<T>
   public ParSeqBasedCompletionStage<Void> buildStageFromRunnableAsync(Runnable runnable, Executor executor)
   {
     checkEngine();
-    return new ParSeqBasedCompletionStage<Void>(_engine, _asyncExecutor).from(
+    return new ParSeqBasedCompletionStage<Void>(_engine, _asyncExecutor,
         ParSeqBasedCompletionStage.ensureFutureByEngine(Task.blocking(() -> {
           runnable.run();
           return null;
@@ -170,14 +188,14 @@ class ParSeqBasedCompletionStageFactory<T>
   public ParSeqBasedCompletionStage<T> buildStageFromSupplierAsync(Supplier<T> supplier)
   {
     checkEngine();
-    return new ParSeqBasedCompletionStage<T>(_engine, _asyncExecutor).from(
+    return new ParSeqBasedCompletionStage<T>(_engine, _asyncExecutor,
         ParSeqBasedCompletionStage.ensureFutureByEngine(Task.callable(supplier::get), _engine));
   }
 
   public ParSeqBasedCompletionStage<T> buildStageFromSupplierAsync(Supplier<T> supplier, Executor executor)
   {
     checkEngine();
-    return new ParSeqBasedCompletionStage<T>(_engine, _asyncExecutor).from(
+    return new ParSeqBasedCompletionStage<T>(_engine, _asyncExecutor,
         ParSeqBasedCompletionStage.ensureFutureByEngine(Task.blocking(supplier::get, executor), _engine));
   }
 }
