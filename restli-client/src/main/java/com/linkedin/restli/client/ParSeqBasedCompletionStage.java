@@ -127,11 +127,13 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
     return task.transform(prevTaskResult -> {
       if (prevTaskResult.isFailed()) {
         Throwable t = prevTaskResult.getError();
-        if (t instanceof CompletionException) {
+        if (t instanceof CompletionException)
+        {
           return Failure.of(t);
-        } else {
-          CompletionException ex = new CompletionException(prevTaskResult.getError());
-          return Failure.of(ex);
+        }
+        else
+        {
+          return Failure.of(new CompletionException(prevTaskResult.getError()));
         }
       }
       return Success.of(prevTaskResult.get());
