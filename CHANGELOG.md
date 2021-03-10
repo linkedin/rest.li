@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add a ParSeq based CompletionStage implementation
 
 ## [29.15.9] - 2021-03-06
 - Add separate configuration control for retrying RestRequest and StreamRequest.
