@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.subsetting;
 
+import com.linkedin.d2.balancer.LoadBalancerState;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +37,9 @@ public class DeterministicSubsettingStrategyTest
 
   @Mock
   private DeterministicSubsettingMetadataProvider _deterministicSubsettingMetadataProvider;
+
+  @Mock
+  private LoadBalancerState _state;
 
   private DeterministicSubsettingStrategy<String> _deterministicSubsettingStrategy;
 
@@ -61,10 +65,10 @@ public class DeterministicSubsettingStrategyTest
   @Test
   public void testCaching()
   {
-    Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata())
+    Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata(_state))
         .thenReturn(new DeterministicSubsettingMetadata(0, 20));
     _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider,
-        "test", 10);
+        "test", 10, _state);
 
     double[] weights = new double[100];
     Arrays.fill(weights, 1D);
@@ -92,7 +96,7 @@ public class DeterministicSubsettingStrategyTest
 
     assertSame(weightedSubset3, weightedSubset4);
 
-    Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata())
+    Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata(_state))
         .thenReturn(new DeterministicSubsettingMetadata(0, 19));
     assertTrue(_deterministicSubsettingStrategy.isSubsetChanged(1));
   }
@@ -108,10 +112,10 @@ public class DeterministicSubsettingStrategyTest
 
     for (int i = 0; i < clientNum; i++)
     {
-      Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata())
+      Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata(_state))
           .thenReturn(new DeterministicSubsettingMetadata(i, clientNum));
       _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider,
-          "test", minSubsetSize);
+          "test", minSubsetSize, _state);
       Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 0);
       assertTrue(weightedSubset.size() >= Math.min(minSubsetSize, hostNum));
 
@@ -136,10 +140,10 @@ public class DeterministicSubsettingStrategyTest
 
     for (int i = 0; i < clientNum; i++)
     {
-      Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata())
+      Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata(_state))
           .thenReturn(new DeterministicSubsettingMetadata(i, clientNum));
       _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider,
-          "test", minSubsetSize);
+          "test", minSubsetSize, _state);
       Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 0);
 
       for (Map.Entry<String, Double> entry: weightedSubset.entrySet())

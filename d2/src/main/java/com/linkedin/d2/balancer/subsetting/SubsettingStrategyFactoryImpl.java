@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.subsetting;
 
+import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import java.net.URI;
 import java.util.Map;
@@ -26,11 +27,14 @@ public class SubsettingStrategyFactoryImpl implements SubsettingStrategyFactory
 {
   private final Map<String, Map<Integer, SubsettingStrategy<URI>>> _subsettingStrategyMap;
   private final DeterministicSubsettingMetadataProvider _deterministicSubsettingMetadataProvider;
+  private final LoadBalancerState _state;
 
-  public SubsettingStrategyFactoryImpl(DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
+  public SubsettingStrategyFactoryImpl(DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+      LoadBalancerState state)
   {
     _subsettingStrategyMap = new ConcurrentHashMap<>();
     _deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
+    _state = state;
   }
 
   @Override
@@ -49,15 +53,19 @@ public class SubsettingStrategyFactoryImpl implements SubsettingStrategyFactory
         }
         else
         {
-          strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize));
+          strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(
+              _deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize, _state));
         }
       }
       else
       {
         Map<Integer, SubsettingStrategy<URI>> strategyMap = new ConcurrentHashMap<>();
-        strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize));
+        strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(
+            _deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize, _state));
         _subsettingStrategyMap.put(serviceName, strategyMap);
       }
+
+      return _subsettingStrategyMap.get(serviceName).get(partitionId);
     }
 
     return null;

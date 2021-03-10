@@ -32,8 +32,10 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
+import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategy;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactory;
+import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactoryImpl;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
@@ -267,7 +269,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         isSSLEnabled,
         partitionAccessorRegistry,
         sessionValidatorFactory,
-        SubsettingStrategyFactory.NO_OP_SUBSETTING_STRATEGY_FACTORY);
+        null);
   }
 
   public SimpleLoadBalancerState(ScheduledExecutorService executorService,
@@ -281,7 +283,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       boolean isSSLEnabled,
       PartitionAccessorRegistry partitionAccessorRegistry,
       SslSessionValidatorFactory sessionValidatorFactory,
-      SubsettingStrategyFactory subsettingStrategyFactory)
+      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
   {
     _executor = executorService;
     _uriProperties = new ConcurrentHashMap<>();
@@ -308,7 +310,14 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _isSSLEnabled = isSSLEnabled;
     _sslSessionValidatorFactory = sessionValidatorFactory;
     _clusterListeners = Collections.synchronizedList(new ArrayList<>());
-    _subsettingStrategyFactory = subsettingStrategyFactory;
+    if (deterministicSubsettingMetadataProvider != null)
+    {
+      _subsettingStrategyFactory = new SubsettingStrategyFactoryImpl(deterministicSubsettingMetadataProvider, this);
+    }
+    else
+    {
+      _subsettingStrategyFactory = SubsettingStrategyFactory.NO_OP_SUBSETTING_STRATEGY_FACTORY;
+    }
     _weightedSubsetsCache = new ConcurrentHashMap<>();
   }
 

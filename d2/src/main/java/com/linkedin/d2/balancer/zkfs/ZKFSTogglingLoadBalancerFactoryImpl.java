@@ -34,6 +34,7 @@ import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactory;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactoryImpl;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
@@ -89,7 +90,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final boolean _useNewEphemeralStoreWatcher;
   private final PartitionAccessorRegistry _partitionAccessorRegistry;
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
-  private final SubsettingStrategyFactory _subsettingStrategyFactory;
+  private final DeterministicSubsettingMetadataProvider _deterministicSubsettingMetadataProvider;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -196,7 +197,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
         sslSessionValidatorFactory,
         d2ClientJmxManager,
         zookeeperReadWindowMs,
-        SubsettingStrategyFactory.NO_OP_SUBSETTING_STRATEGY_FACTORY);
+        null);
   }
 
   public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
@@ -217,7 +218,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       SslSessionValidatorFactory sslSessionValidatorFactory,
       D2ClientJmxManager d2ClientJmxManager,
       int zookeeperReadWindowMs,
-      SubsettingStrategyFactory subsettingStrategyFactory)
+      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
   {
     _factory = factory;
     _lbTimeout = timeout;
@@ -237,7 +238,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _sslSessionValidatorFactory = sslSessionValidatorFactory;
     _d2ClientJmxManager = d2ClientJmxManager;
     _zookeeperReadWindowMs = zookeeperReadWindowMs;
-    _subsettingStrategyFactory = subsettingStrategyFactory;
+    _deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
   }
 
   @Override
@@ -295,7 +296,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
             executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories,
             _sslContext, _sslParameters, _isSSLEnabled, _partitionAccessorRegistry,
-            _sslSessionValidatorFactory, _subsettingStrategyFactory);
+            _sslSessionValidatorFactory, _deterministicSubsettingMetadataProvider);
     _d2ClientJmxManager.setSimpleLoadBalancerState(state);
 
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit, executorService);

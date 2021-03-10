@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.subsetting;
 
+import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.util.hashing.MD5Hash;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -49,6 +50,7 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
   private final DeterministicSubsettingMetadataProvider _metadataProvider;
   private final long _randomSeed;
   private final int _minSubsetSize;
+  private final LoadBalancerState _state;
 
   private final Object _lock = new Object();
 
@@ -66,26 +68,28 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
    */
   public DeterministicSubsettingStrategy(DeterministicSubsettingMetadataProvider metadataProvider,
                                          String clusterName,
-                                         int minSubsetSize)
+                                         int minSubsetSize,
+                                         LoadBalancerState state)
   {
     _metadataProvider = metadataProvider;
     MD5Hash hashFunction = new MD5Hash();
     String[] keyTokens = {clusterName};
     _randomSeed = hashFunction.hashLong(keyTokens);
     _minSubsetSize = minSubsetSize;
+    _state = state;
   }
 
   @Override
   public boolean isSubsetChanged(long version)
   {
-    DeterministicSubsettingMetadata metadata = _metadataProvider.getSubsettingMetadata();
+    DeterministicSubsettingMetadata metadata = _metadataProvider.getSubsettingMetadata(_state);
     return metadata == null || !metadata.equals(_currentMetadata) || version != _currentVersion;
   }
 
   @Override
   public Map<T, Double> getWeightedSubset(Map<T, Double> weightMap, long version)
   {
-    DeterministicSubsettingMetadata metadata = _metadataProvider.getSubsettingMetadata();
+    DeterministicSubsettingMetadata metadata = _metadataProvider.getSubsettingMetadata(_state);
     if (metadata != null)
     {
       synchronized (_lock)

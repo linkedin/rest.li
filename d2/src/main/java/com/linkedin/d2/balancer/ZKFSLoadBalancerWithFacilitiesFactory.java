@@ -93,7 +93,7 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.sslSessionValidatorFactory,
                                                    d2ClientJmxManager,
                                                    config.zookeeperReadWindowMs,
-                                                   config.subsettingStrategyFactory
+                                                   config.deterministicSubsettingMetadataProvider
     );
   }
 }

@@ -33,6 +33,7 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategy
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactory;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
@@ -175,7 +176,7 @@ public class D2ClientBuilder
                   _config.d2JmxManagerPrefix,
                   _config.zookeeperReadWindowMs,
                   _config.enableRelativeLoadBalancer,
-                  _config.subsettingStrategyFactory);
+                  _config.deterministicSubsettingMetadataProvider);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -532,9 +533,9 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setSubsettingStrategyFactory(SubsettingStrategyFactory subsettingStrategyFactory)
+  public D2ClientBuilder setDeterministicSubsettingMetadataProvider(DeterministicSubsettingMetadataProvider provider)
   {
-    _config.subsettingStrategyFactory = subsettingStrategyFactory;
+    _config.deterministicSubsettingMetadataProvider = provider;
     return this;
   }
 

@@ -16,10 +16,16 @@
 
 package com.linkedin.d2.balancer.subsetting;
 
+import com.linkedin.d2.balancer.LoadBalancerState;
+
+
 /**
  * Provides deterministic subsetting strategy with the peer cluster metadata needed
  */
 public interface DeterministicSubsettingMetadataProvider
 {
-  DeterministicSubsettingMetadata getSubsettingMetadata();
+  /**
+   * Retrieve subsetting metadata of peer cluster given the load balancer state
+   */
+  DeterministicSubsettingMetadata getSubsettingMetadata(LoadBalancerState state);
 }

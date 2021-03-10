@@ -109,7 +109,7 @@ public class ZKDeterministicSubsettingMetadataProviderTest
             true, null,
             SSL_SESSION_VALIDATOR_FACTORY);
 
-    _metadataProvider = new ZKDeterministicSubsettingMetadataProvider(CLUSTER_NAME, NODE_URI, _state, 1000, TimeUnit.MILLISECONDS);
+    _metadataProvider = new ZKDeterministicSubsettingMetadataProvider(CLUSTER_NAME, NODE_URI, 1000, TimeUnit.MILLISECONDS);
   }
 
   @Test
@@ -133,7 +133,7 @@ public class ZKDeterministicSubsettingMetadataProviderTest
         "cluster-1",
         "/test", Collections.singletonList("random")));
 
-    DeterministicSubsettingMetadata metadata = _metadataProvider.getSubsettingMetadata();
+    DeterministicSubsettingMetadata metadata = _metadataProvider.getSubsettingMetadata(_state);
 
     assertEquals(metadata.getInstanceId(), 2);
     assertEquals(metadata.getTotalInstanceCount(), 10);
@@ -141,14 +141,14 @@ public class ZKDeterministicSubsettingMetadataProviderTest
     uriData.remove(URI.create("http://cluster-1/test0"));
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
 
-    metadata = _metadataProvider.getSubsettingMetadata();
+    metadata = _metadataProvider.getSubsettingMetadata(_state);
     assertEquals(metadata.getInstanceId(), 1);
     assertEquals(metadata.getTotalInstanceCount(), 9);
 
     uriData.remove(URI.create("http://cluster-1/test2"));
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
 
-    metadata = _metadataProvider.getSubsettingMetadata();
+    metadata = _metadataProvider.getSubsettingMetadata(_state);
     assertNull(metadata);
   }
 }

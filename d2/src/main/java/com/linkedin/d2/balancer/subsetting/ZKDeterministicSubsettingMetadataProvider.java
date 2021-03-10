@@ -27,6 +27,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.apache.http.annotation.GuardedBy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -35,9 +37,10 @@ import org.apache.http.annotation.GuardedBy;
  */
 public class ZKDeterministicSubsettingMetadataProvider implements DeterministicSubsettingMetadataProvider
 {
+  private final Logger _log = LoggerFactory.getLogger(ZKDeterministicSubsettingMetadataProvider.class);
+
   private final String _clusterName;
   private final URI _nodeUri;
-  private final LoadBalancerState _loadBalancerState;
   private final long _timeout;
   private final TimeUnit _unit;
 
@@ -49,25 +52,23 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
 
   public ZKDeterministicSubsettingMetadataProvider(String clusterName,
                                       URI nodeUri,
-                                      LoadBalancerState loadBalancerState,
                                       long timeout,
                                       TimeUnit unit)
   {
     _clusterName = clusterName;
     _nodeUri = nodeUri;
-    _loadBalancerState = loadBalancerState;
     _timeout = timeout;
     _unit = unit;
   }
 
   @Override
-  public DeterministicSubsettingMetadata getSubsettingMetadata()
+  public DeterministicSubsettingMetadata getSubsettingMetadata(LoadBalancerState state)
   {
     FutureCallback<DeterministicSubsettingMetadata> metadataFutureCallback = new FutureCallback<>();
 
-    _loadBalancerState.listenToCluster(_clusterName, (type, name) ->
+    state.listenToCluster(_clusterName, (type, name) ->
     {
-      LoadBalancerStateItem<UriProperties> uriItem = _loadBalancerState.getUriProperties(_clusterName);
+      LoadBalancerStateItem<UriProperties> uriItem = state.getUriProperties(_clusterName);
 
       synchronized (_lock)
       {
