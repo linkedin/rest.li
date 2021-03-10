@@ -69,19 +69,9 @@ import java.util.stream.Stream;
 public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
 {
 
-  protected Engine _engine = null;
-  protected Task<T> _task = null; // The underlying ParSeq task to acquire the value this completionStage needs
-  protected Executor _asyncExecutor = null;
-
-  /**
-   * Not allowing to use the class without an engine and executor
-   * TODO:
-   * (1) Without engine, will use {@link CompletableFuture} default implementation
-   * (2) or use default engine
-   */
-  private ParSeqBasedCompletionStage()
-  {
-  }
+  private final Engine _engine;
+  private final Task<T> _task; // The underlying ParSeq task to acquire the value this completionStage needs
+  private final Executor _asyncExecutor;
 
   ParSeqBasedCompletionStage(Engine engine, Executor executor, Task<T> task)
   {

@@ -699,7 +699,7 @@ public class TestParSeqBasedCompletionStage
   {
     Consumer<Object> consumer = mock(Consumer.class);
     CountDownLatch waitLatch = new CountDownLatch(1);
-    CompletionStage<String> completionStage = createTestFailedStage(EXCEPTION);
+    CompletionStage<String> completionStage = createTestFailedStage(EXCEPTION, 0);
     CompletionStage<String> completionStage2 = createTestStage(TESTVALUE1, 2000).thenApply((v) -> {
       waitLatch.countDown();
       return TESTVALUE2;
@@ -802,7 +802,7 @@ public class TestParSeqBasedCompletionStage
   {
     Function<Object, ?> function = mock(Function.class);
     CountDownLatch waitLatch = new CountDownLatch(1);
-    CompletionStage<String> completionStage = createTestFailedStage(EXCEPTION);
+    CompletionStage<String> completionStage = createTestFailedStage(EXCEPTION, 0);
     CompletionStage<String> completionStage2 = createTestStage(TESTVALUE1, 200).thenApply((v) -> {
       waitLatch.countDown();
       return TESTVALUE2;
@@ -906,7 +906,7 @@ public class TestParSeqBasedCompletionStage
   {
     Runnable runnable = mock(Runnable.class);
     CountDownLatch waitLatch = new CountDownLatch(1);
-    CompletionStage<String> completionStage = createTestFailedStage(EXCEPTION);
+    CompletionStage<String> completionStage = createTestFailedStage(EXCEPTION, 0);
     CompletionStage<String> completionStage2 = createTestStage(TESTVALUE1, 500).thenApply((v) -> {
       waitLatch.countDown();
       return TESTVALUE2;
