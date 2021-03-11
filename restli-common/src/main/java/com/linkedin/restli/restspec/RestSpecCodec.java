@@ -106,7 +106,7 @@ public class RestSpecCodec
    * @param schemaResolver the schemaResolver to use to resolve the typeText
    * @return a DataSchema
    */
-  public static DataSchema textToSchema(String typeText, DataSchemaResolver schemaResolver)
+  public static DataSchema textToSchema(String typeText, DataSchemaResolver schemaResolver, SchemaFormatType type)
   {
     typeText = typeText.trim();
     if (!typeText.startsWith("{") && !typeText.startsWith("\""))
@@ -115,8 +115,15 @@ public class RestSpecCodec
       typeText = "\"" + typeText + "\"";
     }
 
-    return DataTemplateUtil.parseSchema(typeText, schemaResolver, SchemaFormatType.PDSC);
+    return DataTemplateUtil.parseSchema(typeText, schemaResolver, type);
   }
+
+  public static DataSchema textToSchema(String typeText, DataSchemaResolver schemaResolver)
+  {
+    // Should check and use SchemaFormatType.PDL everywhere for this repo
+    return textToSchema(typeText, schemaResolver, SchemaFormatType.PDSC);
+  }
+
 
   private void fixupLegacyRestspec(DataMap data) throws IOException
   {

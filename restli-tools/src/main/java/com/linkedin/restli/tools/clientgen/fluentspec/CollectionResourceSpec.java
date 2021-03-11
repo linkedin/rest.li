@@ -67,7 +67,6 @@ import java.util.TreeSet;
 public class CollectionResourceSpec extends BaseResourceSpec
 {
   private ClassTemplateSpec _keyClass;
-  private ClassTemplateSpec _entityClass;
   public CollectionResourceSpec(ResourceSchema resourceSchema, TemplateSpecGenerator templateSpecGenerator,
       String sourceIdlName, DataSchemaResolver schemaResolver)
   {
@@ -106,114 +105,9 @@ public class CollectionResourceSpec extends BaseResourceSpec
     return SpecUtils.getClassName(getKeyClass());
   }
 
-  public ClassTemplateSpec getEntityClass()
-  {
-    if (_entityClass == null)
-    {
-      _entityClass = classToTemplateSpec(getResource().getSchema());
-    }
-    return _entityClass;
-  }
-
-  public String getEntityClassName()
-  {
-    return getEntityClass().getClassName();
-  }
-
   public String getIdName()
   {
     return getResource().getCollection().getIdentifier().getName();
   }
 
-  public Set<String> getImportsForRestMethods()
-  {
-    Set<String> imports = new TreeSet<>();
-    for(RestMethodSpec methodSpec : getRestMethods())
-    {
-      ResourceMethod method = ResourceMethod.fromString(methodSpec.getMethod());
-      switch (method)
-      {
-        case GET:
-          imports.add(GetRequest.class.getName());
-          break;
-        case BATCH_GET:
-          imports.add(BatchGetEntityRequest.class.getName());
-          imports.add(BatchKVResponse.class.getName());
-          imports.add(EntityResponse.class.getName());
-          imports.add(BatchEntityResponseDecoder.class.getName());
-          break;
-        case CREATE:
-          imports.add(CreateIdRequest.class.getName());
-          imports.add(IdResponse.class.getName());
-          imports.add(IdResponseDecoder.class.getName());
-          if (methodSpec.returnsEntity())
-          {
-            imports.add(CreateIdEntityRequest.class.getName());
-            imports.add(IdEntityResponse.class.getName());
-            imports.add(IdEntityResponseDecoder.class.getName());
-          }
-          break;
-        case BATCH_CREATE:
-          imports.add(CollectionRequest.class.getName());
-          imports.add(BatchCreateIdRequest.class.getName());
-          imports.add(CreateIdStatus.class.getName());
-          imports.add(BatchCreateIdResponse.class.getName());
-          imports.add(BatchCreateIdDecoder.class.getName());
-          if (methodSpec.returnsEntity())
-          {
-            imports.add(BatchCreateIdEntityRequest.class.getName());
-            imports.add(CreateIdEntityStatus.class.getName());
-            imports.add(BatchCreateIdEntityResponse.class.getName());
-            imports.add(BatchCreateIdEntityDecoder.class.getName());
-          }
-          break;
-        case PARTIAL_UPDATE:
-          imports.add(PatchRequest.class.getName());
-          imports.add(PartialUpdateRequest.class.getName());
-          if (methodSpec.returnsEntity())
-          {
-            imports.add(PartialUpdateEntityRequest.class.getName());
-            imports.add(EntityResponseDecoder.class.getName());
-          }
-          break;
-        case BATCH_PARTIAL_UPDATE:
-          imports.add(PatchRequest.class.getName());
-          imports.add(BatchPartialUpdateRequest.class.getName());
-          imports.add(CollectionRequest.class.getName());
-          imports.add(UpdateStatus.class.getName());
-          imports.add(BatchKVResponse.class.getName());
-          imports.add(KeyValueRecordFactory.class.getName());
-          imports.add(KeyValueRecord.class.getName());
-          if (methodSpec.returnsEntity())
-          {
-            imports.add(BatchPartialUpdateEntityRequest.class.getName());
-            imports.add(UpdateEntityStatus.class.getName());
-          }
-          break;
-        case UPDATE:
-          imports.add(UpdateRequest.class.getName());
-          break;
-        case BATCH_UPDATE:
-          imports.add(BatchUpdateRequest.class.getName());
-          imports.add(BatchKVResponse.class.getName());
-          imports.add(KeyValueRecordFactory.class.getName());
-          imports.add(KeyValueRecord.class.getName());
-          break;
-        case DELETE:
-          imports.add(DeleteRequest.class.getName());
-          break;
-        case BATCH_DELETE:
-          imports.add(BatchDeleteRequest.class.getName());
-          imports.add(UpdateStatus.class.getName());
-          break;
-        case GET_ALL:
-          imports.add(GetAllRequest.class.getName());
-          imports.add(CollectionResponse.class.getName());
-          break;
-        default:
-          break;
-      }
-    }
-    return imports;
-  }
 }

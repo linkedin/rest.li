@@ -24,8 +24,10 @@ import com.linkedin.pegasus.generator.TemplateSpecGenerator;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
+import com.linkedin.restli.tools.clientgen.fluentspec.AssociationResourceSpec;
 import com.linkedin.restli.tools.clientgen.fluentspec.BaseResourceSpec;
 import com.linkedin.restli.tools.clientgen.fluentspec.CollectionResourceSpec;
+import com.linkedin.restli.tools.clientgen.fluentspec.SimpleResourceSpec;
 import com.linkedin.restli.tools.clientgen.fluentspec.SpecUtils;
 import java.io.File;
 import java.io.FileWriter;
@@ -56,6 +58,7 @@ public class FluentApiGenerator
   private static final Logger LOGGER = LoggerFactory.getLogger(FluentApiGenerator.class);
   private static final Options OPTIONS = new Options();
   private static final String API_TEMPLATE_DIR = "apiVmTemplates";
+  private static final String FLUENT_CLIENT_FILE_SUFFIX = "FluentClient";
 
   public static void main(String[] args) throws Exception
   {
@@ -143,21 +146,42 @@ public class FluentApiGenerator
             pair.second.getPath(),
             schemaResolver);
       }
+      else if (resourceSchema.hasSimple())
+      {
+        spec = new SimpleResourceSpec(resourceSchema,
+            new TemplateSpecGenerator(schemaResolver),
+            pair.second.getPath(),
+            schemaResolver);
+      }
+      else if (resourceSchema.hasAssociation())
+      {
+        spec = new AssociationResourceSpec(resourceSchema,
+            new TemplateSpecGenerator(schemaResolver),
+            pair.second.getPath(),
+            schemaResolver);
+      }
       else
       {
         continue;
       }
       File packageDir = new File(targetDirectory, spec.getNamespace().toLowerCase().replace('.', File.separatorChar));
       packageDir.mkdirs();
-      File file = new File(packageDir, CodeUtil.capitalize(spec.getResource().getName()) + ".java");
+      File file = new File(packageDir, CodeUtil.capitalize(spec.getResource().getName()) + FLUENT_CLIENT_FILE_SUFFIX + ".java");
       try (FileWriter writer = new FileWriter(file))
       {
         VelocityContext context = new VelocityContext();
         context.put("spec", spec);
         context.put("util", SpecUtils.class);
-        if (spec.getResource().hasCollection())
+        context.put("class_name_suffix", FLUENT_CLIENT_FILE_SUFFIX);
+        if (
+            spec.getResource().hasCollection()
+                ||
+                spec.getResource().hasSimple()
+                ||
+                spec.getResource().hasAssociation()
+        )
         {
-          velocityEngine.mergeTemplate(API_TEMPLATE_DIR + "/collection.vm", VelocityEngine.ENCODING_DEFAULT, context, writer);
+          velocityEngine.mergeTemplate(API_TEMPLATE_DIR + "/resource.vm", VelocityEngine.ENCODING_DEFAULT, context, writer);
         }
       }
       catch (Exception e)
