@@ -15,15 +15,21 @@
 *#
   #doc($method.schema.doc)
   public CompletionStage<${spec.entityClassName}> get(
+    #if (!${spec.getResource().hasSimple()})
       $spec.keyClassName $spec.idName#if( $method.hasParams()),#end
       #**##methodParams($method)##
+    #end
       ) {
     #**##paramsRequestMap($method)##
     GetRequest<${spec.entityClassName}> request = new GetRequest<>(
         Collections.emptyMap(),
         Collections.emptyList(),
         ${spec.entityClassName}.class,
-        $spec.idName,
+        #if(${spec.idName})
+    #**#$spec.idName##
+        #else
+    #**#null##
+        #end,
         queryParams,
         queryParamClasses,
         _resourceSpec,

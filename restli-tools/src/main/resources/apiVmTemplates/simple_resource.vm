@@ -51,7 +51,7 @@ import java.util.concurrent.CompletableFuture;
 import javax.annotation.Generated;
 
 @Generated("Generated from $spec.sourceIdlName")
-public class $spec.className {
+public class ${spec.className}${class_name_suffix}{
   private final static String ORIGINAL_RESOURCE_PATH = "$util.getResourcePath($spec.resource.path)";
   private static ResourceSpec _resourceSpec;
 
@@ -85,18 +85,15 @@ public class $spec.className {
         #end
         requestMetadataMap,
         responseMetadataMap,
-        ${spec.keyClassName}.class,
-        null,
-        null,
-        ${spec.entityClassName}.class,
-        Collections.emptyMap());
+        ${spec.entityClassName}.class
+        );
   }
 
   private final ParSeqRestliClient _client;
   private final Engine _engine;
 
   #doc( $spec.resource.doc "  ")
-  public ${spec.className}(ParSeqRestliClient client, Engine engine) {
+  public ${spec.className}${class_name_suffix}(ParSeqRestliClient client, Engine engine) {
     _client = client;
     _engine = engine;
   }

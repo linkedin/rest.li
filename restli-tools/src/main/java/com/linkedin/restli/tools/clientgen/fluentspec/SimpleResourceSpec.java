@@ -20,6 +20,9 @@ import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.pegasus.generator.TemplateSpecGenerator;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.restspec.ResourceSchema;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 public class SimpleResourceSpec extends BaseResourceSpec
@@ -33,5 +36,26 @@ public class SimpleResourceSpec extends BaseResourceSpec
   {
     super(resourceSchema, templateSpecGenerator, sourceIdlName, schemaResolver);
   }
+
+  @Override
+  public List<RestMethodSpec> getRestMethods()
+  {
+    List<RestMethodSpec> methods = new ArrayList<>(getResource().getSimple().getMethods().size());
+    getResource().getSimple().getMethods().forEach(restMethodSchema -> methods.add(new RestMethodSpec(restMethodSchema, this)));
+    return methods;
+  }
+
+  @Override
+  public List<ActionMethodSpec> getActions()
+  {
+    if (getResource().getSimple().getActions() == null)
+    {
+      return Collections.emptyList();
+    }
+    List<ActionMethodSpec> actions = new ArrayList<>(getResource().getSimple().getActions().size());
+    getResource().getSimple().getActions().forEach(actionSchema -> actions.add(new ActionMethodSpec(actionSchema, this)));
+    return actions;
+  }
+
 
 }
