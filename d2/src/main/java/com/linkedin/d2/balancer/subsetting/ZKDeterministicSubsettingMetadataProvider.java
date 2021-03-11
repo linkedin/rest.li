@@ -37,8 +37,6 @@ import org.slf4j.LoggerFactory;
  */
 public class ZKDeterministicSubsettingMetadataProvider implements DeterministicSubsettingMetadataProvider
 {
-  private final Logger _log = LoggerFactory.getLogger(ZKDeterministicSubsettingMetadataProvider.class);
-
   private final String _clusterName;
   private final URI _nodeUri;
   private final long _timeout;

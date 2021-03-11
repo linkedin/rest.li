@@ -92,7 +92,7 @@ public interface LoadBalancerState
                                                     List<String> prioritizedSchemes);
 
   default Map<URI, TrackerClient> getClientsSubset(String serviceName,
-                                                   ServiceProperties serviceProperties,
+                                                   int minClusterSubsetSize,
                                                    int partitionId,
                                                    Map<URI, TrackerClient> potentialClients)
   {

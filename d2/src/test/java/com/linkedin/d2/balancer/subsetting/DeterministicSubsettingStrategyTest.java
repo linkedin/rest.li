@@ -137,6 +137,8 @@ public class DeterministicSubsettingStrategyTest
   {
     Map<String, Double> pointsMap = constructPointsMap(weights);
     Map<String, Double> distributionMap = new HashMap<>();
+    double minSubsetWeight = minSubsetSize / (double) weights.length;
+    double totalHostWeights = Arrays.stream(weights).sum();
 
     for (int i = 0; i < clientNum; i++)
     {
@@ -145,16 +147,19 @@ public class DeterministicSubsettingStrategyTest
       _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider,
           "test", minSubsetSize, _state);
       Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 0);
-
+      double totalWeights = 0;
       for (Map.Entry<String, Double> entry: weightedSubset.entrySet())
       {
-        distributionMap.put(entry.getKey(),
-            distributionMap.getOrDefault(entry.getKey(), 0D) + entry.getValue() * pointsMap.get(entry.getKey()));
+        String hostName = entry.getKey();
+        double weight = entry.getValue();
+        distributionMap.put(hostName,
+            distributionMap.getOrDefault(hostName, 0D) + weight * pointsMap.get(hostName));
+        totalWeights += weights[Integer.parseInt(hostName.substring("test".length()))] / totalHostWeights * weight;
       }
+      assertTrue(totalWeights + DELTA_DIFF >= Math.min(minSubsetWeight, 1D));
     }
 
     double totalWeights = distributionMap.values().stream().mapToDouble(Double::doubleValue).sum();
-    double totalHostWeights = Arrays.stream(weights).sum();
     for (Map.Entry<String, Double> entry: distributionMap.entrySet())
     {
       String hostName = entry.getKey();

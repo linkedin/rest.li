@@ -22,11 +22,11 @@ import java.net.URI;
 
 public interface SubsettingStrategyFactory
 {
-  SubsettingStrategyFactory NO_OP_SUBSETTING_STRATEGY_FACTORY = (serviceName, serviceProperties, partitionId) -> null;
+  SubsettingStrategyFactory NO_OP_SUBSETTING_STRATEGY_FACTORY = (serviceName, minClusterSubsetSize, partitionId) -> null;
 
   /**
    * get retrieves the {@link SubsettingStrategy} corresponding to the serviceName and partition Id
    * @return {@link SubsettingStrategy}
    */
-   SubsettingStrategy<URI> get(String serviceName, ServiceProperties serviceProperties, int partitionId);
+   SubsettingStrategy<URI> get(String serviceName, int minClusterSubsetSize, int partitionId);
 }

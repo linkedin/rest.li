@@ -673,11 +673,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
   @Override
   public Map<URI, TrackerClient> getClientsSubset(String serviceName,
-                                                  ServiceProperties serviceProperties,
+                                                  int minClusterSubsetSize,
                                                   int partitionId,
                                                   Map<URI, TrackerClient> potentialClients)
   {
-    SubsettingStrategy<URI> subsettingStrategy = _subsettingStrategyFactory.get(serviceName, serviceProperties, partitionId);
+    SubsettingStrategy<URI> subsettingStrategy = _subsettingStrategyFactory.get(serviceName, minClusterSubsetSize, partitionId);
     if (subsettingStrategy != null)
     {
       if (subsettingStrategy.isSubsetChanged(_version.get()) ||

@@ -56,15 +56,10 @@ public class ZKDeterministicSubsettingMetadataProviderTest
   private static final String CLUSTER_NAME = "cluster-1";
   private static final URI NODE_URI = URI.create("http://cluster-1/test2");
 
-  private ScheduledExecutorService _executorService;
-  private MockStore<UriProperties> _uriRegistry;
+  private MockStore<UriProperties>                                                 _uriRegistry;
   private MockStore<ClusterProperties>                                             _clusterRegistry;
   private MockStore<ServiceProperties>                                             _serviceRegistry;
-  private Map<String, TransportClientFactory>                                      _clientFactories;
-  private Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> _loadBalancerStrategyFactories;
   private SimpleLoadBalancerState _state;
-  private SSLContext _sslContext;
-  private SSLParameters _sslParameters;
 
   private ZKDeterministicSubsettingMetadataProvider _metadataProvider;
 
@@ -79,33 +74,32 @@ public class ZKDeterministicSubsettingMetadataProviderTest
   @BeforeMethod
   public void setUp()
   {
-    _executorService = new SynchronousExecutorService();
+    ScheduledExecutorService executorService = new SynchronousExecutorService();
     _uriRegistry = new MockStore<>();
     _clusterRegistry = new MockStore<>();
     _serviceRegistry = new MockStore<>();
-    _clientFactories = new HashMap<>();
-    _loadBalancerStrategyFactories = new HashMap<>();
-    _loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
+    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
+    Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
+        new HashMap<>();
+    loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
 
+    SSLContext sslContext;
     try {
-      _sslContext = SSLContext.getDefault();
+      sslContext = SSLContext.getDefault();
     }
     catch (NoSuchAlgorithmException e)
     {
       throw new RuntimeException(e);
     }
 
-    _sslParameters = new SSLParameters();
-    _clientFactories.put("https", new SimpleLoadBalancerTest.DoNothingClientFactory());
+    SSLParameters sslParameters = new SSLParameters();
+    clientFactories.put("https", new SimpleLoadBalancerTest.DoNothingClientFactory());
     _state =
-        new SimpleLoadBalancerState(_executorService,
-            new PropertyEventBusImpl<>(_executorService, _uriRegistry),
-            new PropertyEventBusImpl<>(_executorService, _clusterRegistry),
-            new PropertyEventBusImpl<>(_executorService, _serviceRegistry),
-            _clientFactories,
-            _loadBalancerStrategyFactories,
-            _sslContext,
-            _sslParameters,
+        new SimpleLoadBalancerState(executorService,
+            new PropertyEventBusImpl<>(executorService, _uriRegistry),
+            new PropertyEventBusImpl<>(executorService, _clusterRegistry),
+            new PropertyEventBusImpl<>(executorService, _serviceRegistry), clientFactories,
+            loadBalancerStrategyFactories, sslContext, sslParameters,
             true, null,
             SSL_SESSION_VALIDATOR_FACTORY);
 
@@ -115,10 +109,10 @@ public class ZKDeterministicSubsettingMetadataProviderTest
   @Test
   public void testGetSubsettingMetadata()
   {
-    List<String> schemes = new ArrayList<String>();
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     for (int i = 0; i < 10; i++)
     {
       uriData.put(URI.create("http://cluster-1/test" + i), partitionData);

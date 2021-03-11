@@ -38,10 +38,8 @@ public class SubsettingStrategyFactoryImpl implements SubsettingStrategyFactory
   }
 
   @Override
-  public SubsettingStrategy<URI> get(String serviceName, ServiceProperties serviceProperties, int partitionId)
+  public SubsettingStrategy<URI> get(String serviceName, int minClusterSubsetSize, int partitionId)
   {
-    int minClusterSubsetSize = serviceProperties.getMinClusterSubsetSize();
-
     if (minClusterSubsetSize > 0)
     {
       if (_subsettingStrategyMap.containsKey(serviceName))
