@@ -75,6 +75,14 @@ public class RetryTrackerClient extends DegraderTrackerClientImpl
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+    handleRequest(request, wireAttrs, callback,
+        r -> {},
+        () -> new StreamResponseBuilder().build(EntityStreams.emptyStream()));
+  }
+
+  @Override
   public URI getUri()
   {
     return _uri;

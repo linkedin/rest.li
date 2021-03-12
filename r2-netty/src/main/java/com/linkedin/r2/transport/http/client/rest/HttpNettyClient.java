@@ -100,6 +100,12 @@ public class HttpNettyClient extends AbstractNettyClient<RestRequest, RestRespon
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+    throw new UnsupportedOperationException("Stream is not supported.");
+  }
+
+  @Override
   protected TransportCallback<RestResponse> getExecutionCallback(TransportCallback<RestResponse> callback)
   {
     return new ExecutionCallback<>(_callbackExecutors, callback);

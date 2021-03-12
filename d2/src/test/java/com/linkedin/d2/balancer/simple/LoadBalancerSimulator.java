@@ -468,6 +468,12 @@ public class LoadBalancerSimulator
       }
 
       @Override
+      public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+          Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+        throw new IllegalArgumentException("RestRequestStreamResponse is not supported yet");
+      }
+
+      @Override
       public void restRequest(RestRequest request,
           RequestContext requestContext,
           Map<String, String> wireAttrs,

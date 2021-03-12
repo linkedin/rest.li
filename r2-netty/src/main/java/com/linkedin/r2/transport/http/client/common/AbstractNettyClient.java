@@ -161,6 +161,14 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
 
   @Override
   @SuppressWarnings("unchecked")
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+    MessageType.setMessageType(MessageType.Type.REST, wireAttrs);
+    writeRequest((Req) request, requestContext, wireAttrs, (TransportCallback<Res>) HttpBridge.streamToHttpCallback(callback, request));
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
   public void streamRequest(StreamRequest request, RequestContext requestContext, Map<String, String> wireAttrs,
       TransportCallback<StreamResponse> callback) {
     MessageType.setMessageType(MessageType.Type.REST, wireAttrs);

@@ -133,6 +133,12 @@ public class TrackerClientImpl implements TrackerClient
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+    _transportClient.restRequestStreamResponse(request, requestContext, wireAttrs, new TrackerClientStreamCallback(callback, _callTracker.startCall()));
+  }
+
+  @Override
   public void streamRequest(StreamRequest request,
                             RequestContext requestContext,
                             Map<String, String> wireAttrs,

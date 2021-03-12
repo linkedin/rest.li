@@ -80,6 +80,14 @@ public class FilterChainClient implements TransportClient
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+    ResponseFilter.registerCallback(createWrappedClientTimingCallback(requestContext, callback), requestContext);
+    markOnRequestTimings(requestContext);
+    _filters.onRestRequest(request, requestContext, wireAttrs);
+  }
+
+  @Override
   public void streamRequest(StreamRequest request,
                           RequestContext requestContext,
                           Map<String, String> wireAttrs,

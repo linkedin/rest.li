@@ -85,7 +85,7 @@ public interface Client
    * Asynchronously issues the given request. The given callback is invoked when the response is
    * received.
    *
-   * Any implementation that wants to support streaming MUST override this method.
+   * Any implementation that wants to support bidirectional streaming MUST override this method.
    *
    * @param request the request to issue
    * @param callback the callback to invoke with the response
@@ -99,7 +99,7 @@ public interface Client
    * Asynchronously issues the given request. The given callback is invoked when the response is
    * received.
    *
-   * Any implementation that wants to support streaming MUST override this method.
+   * Any implementation that wants to support bidirectional streaming MUST override this method.
    *
    * @param request the request to issue
    * @param requestContext context for the request
@@ -108,6 +108,35 @@ public interface Client
   default void streamRequest(StreamRequest request, RequestContext requestContext, Callback<StreamResponse> callback)
   {
     throw new UnsupportedOperationException("Please use an implementation that supports streaming.");
+  }
+
+  /**
+   * Asynchronously issues the given request. The given callback is invoked when the response is
+   * received.
+   *
+   * Any implementation that wants to support response-only streaming MUST override this method.
+   *
+   * @param request the request to issue
+   * @param callback the callback to invoke with the response
+   */
+  default void restRequestStreamResponse(RestRequest request, Callback<StreamResponse> callback)
+  {
+    throw new UnsupportedOperationException("Please use an implementation that supports response-only streaming.");
+  }
+
+  /**
+   * Asynchronously issues the given request. The given callback is invoked when the response is
+   * received.
+   *
+   * Any implementation that wants to support response-only streaming MUST override this method.
+   *
+   * @param request the request to issue
+   * @param requestContext context for the request
+   * @param callback the callback to invoke with the response
+   */
+  default void restRequestStreamResponse(RestRequest request, RequestContext requestContext, Callback<StreamResponse> callback)
+  {
+    throw new UnsupportedOperationException("Please use an implementation that supports response-only streaming.");
   }
 
   /**

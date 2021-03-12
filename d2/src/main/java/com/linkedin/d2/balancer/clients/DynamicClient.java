@@ -107,7 +107,16 @@ public class DynamicClient extends AbstractClient implements D2Client
     _balancer.getClient(request, requestContext,
       getClientCallback(request, requestContext, true, callback, client -> client.streamRequest(request, requestContext, loggerCallback))
     );
+  }
 
+  @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Callback<StreamResponse> callback) {
+    Callback<StreamResponse> loggerCallback = decorateLoggingCallback(callback, request, "stream");
+
+    _balancer.getClient(request, requestContext,
+        getClientCallback(request, requestContext, true, callback, client -> client.restRequestStreamResponse(request, requestContext, loggerCallback))
+    );
   }
 
   private Callback<TransportClient> getClientCallback(Request request, RequestContext requestContext, final boolean restOverStream, Callback<? extends Response> callback, SuccessCallback<Client> clientSuccessCallback)

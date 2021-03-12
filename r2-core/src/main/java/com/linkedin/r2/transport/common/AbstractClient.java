@@ -82,6 +82,11 @@ public abstract class AbstractClient implements Client
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request, Callback<StreamResponse> callback) {
+    restRequestStreamResponse(request, new RequestContext(), callback);
+  }
+
+  @Override
   public void restRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
   {
     StreamRequest streamRequest = Messages.toStreamRequest(request);

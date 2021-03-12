@@ -88,6 +88,12 @@ public class TransportClientAdapter extends AbstractClient
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext, Callback<StreamResponse> callback) {
+    final Map<String, String> wireAttrs = new HashMap<String, String>();
+    _client.restRequestStreamResponse(request, requestContext, wireAttrs, new TransportCallbackAdapter<StreamResponse>(callback));
+  }
+
+  @Override
   public void shutdown(Callback<None> callback)
   {
     _client.shutdown(callback);

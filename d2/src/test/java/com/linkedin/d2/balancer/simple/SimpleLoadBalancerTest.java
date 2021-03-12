@@ -1648,6 +1648,14 @@ public class SimpleLoadBalancerTest
       }
 
       @Override
+      public void restRequestStreamResponse(RestRequest request,
+          RequestContext requestContext,
+          Map<String, String> wireAttrs,
+          TransportCallback<StreamResponse> callback)
+      {
+      }
+
+      @Override
       public void shutdown(Callback<None> callback)
       {
         _count.decrementAndGet();

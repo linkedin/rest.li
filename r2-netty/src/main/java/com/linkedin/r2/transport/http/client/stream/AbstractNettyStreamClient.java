@@ -98,6 +98,12 @@ public abstract class AbstractNettyStreamClient extends AbstractNettyClient<Stre
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+    throw new UnsupportedOperationException("Response-only Stream is not supported.");
+  }
+
+  @Override
   protected TransportCallback<StreamResponse> getExecutionCallback(TransportCallback<StreamResponse> callback)
   {
     return new StreamExecutionCallback(_callbackExecutors, callback);

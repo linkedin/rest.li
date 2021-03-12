@@ -61,6 +61,12 @@ public class LazyClient implements TransportClient
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+    getWrappedClient().restRequestStreamResponse(request, requestContext, wireAttrs, callback);
+  }
+
+  @Override
   public void streamRequest(StreamRequest request,
                           RequestContext requestContext,
                           Map<String, String> wireAttrs,

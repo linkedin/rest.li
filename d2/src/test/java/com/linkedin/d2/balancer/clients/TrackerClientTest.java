@@ -293,7 +293,110 @@ public class TrackerClientTest
     Assert.assertEquals(stats.getErrorCountTotal(), 3);
     Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.2, 0.001);
   }
+  @Test
+  public void testCallTrackingRestRequestStreamResponse() throws Exception
+  {
+    URI uri = URI.create("http://test.qa.com:1234/foo");
+    SettableClock clock = new SettableClock();
+    AtomicInteger action = new AtomicInteger(0);
+    TransportClient tc = new TransportClient() {
+      @Override
+      public void restRequest(RestRequest request, RequestContext requestContext, Map<String, String> wireAttrs, TransportCallback<RestResponse> callback) {
+      }
 
+      @Override
+      public void restRequestStreamResponse(RestRequest request,
+          RequestContext requestContext,
+          Map<String, String> wireAttrs,
+          TransportCallback<StreamResponse> callback) {
+        clock.addDuration(5);
+        switch (action.get())
+        {
+          // success
+          case 0: callback.onResponse(TransportResponseImpl.success(new StreamResponseBuilder().build(EntityStreams.emptyStream())));
+            break;
+          // fail with stream exception
+          case 1: callback.onResponse(TransportResponseImpl.error(
+              new StreamException(new StreamResponseBuilder().setStatus(500).build(EntityStreams.emptyStream()))));
+            break;
+          // fail with timeout exception
+          case 2: callback.onResponse(TransportResponseImpl.error(new RemoteInvocationException(new TimeoutException())));
+            break;
+          // fail with other exception
+          default: callback.onResponse(TransportResponseImpl.error(new RuntimeException()));
+            break;
+        }
+      }
+
+      @Override
+      public void shutdown(Callback<None> callback) {}
+    };
+
+    DegraderTrackerClientImpl client = (DegraderTrackerClientImpl) createTrackerClient(tc, clock, uri);
+    CallTracker callTracker = client.getCallTracker();
+    CallTracker.CallStats stats;
+    DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+    DelayConsumeCallback delayConsumeCallback = new DelayConsumeCallback();
+    client.restRequestStreamResponse(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), delayConsumeCallback);
+    clock.addDuration(5);
+    // we only recorded the time when stream response arrives, but callcompletion.endcall hasn't been called yet.
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 0);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 0);
+
+    // delay
+    clock.addDuration(100);
+    delayConsumeCallback.consume();
+    clock.addDuration(5000);
+    // now that we consumed the entity stream, callcompletion.endcall has been called.
+    stats = callTracker.getCallStats();
+    Assert.assertEquals(stats.getCallCount(), 1);
+    Assert.assertEquals(stats.getErrorCount(), 0);
+    Assert.assertEquals(stats.getCallCountTotal(), 1);
+    Assert.assertEquals(stats.getErrorCountTotal(), 0);
+    Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.0, 0.001);
+
+    action.set(1);
+    client.restRequestStreamResponse(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), delayConsumeCallback);
+    clock.addDuration(5);
+    // we endcall with error immediately for stream exception, even before the entity is consumed
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 2);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 1);
+    delayConsumeCallback.consume();
+    clock.addDuration(5000);
+    // no change in tracking after entity is consumed
+    stats = callTracker.getCallStats();
+    Assert.assertEquals(stats.getCallCount(), 1);
+    Assert.assertEquals(stats.getErrorCount(), 1);
+    Assert.assertEquals(stats.getCallCountTotal(), 2);
+    Assert.assertEquals(stats.getErrorCountTotal(), 1);
+    Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.2, 0.001);
+
+    action.set(2);
+    client.restRequestStreamResponse(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    clock.addDuration(5);
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 3);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 2);
+    clock.addDuration(5000);
+    stats = callTracker.getCallStats();
+    Assert.assertEquals(stats.getCallCount(), 1);
+    Assert.assertEquals(stats.getErrorCount(), 1);
+    Assert.assertEquals(stats.getCallCountTotal(), 3);
+    Assert.assertEquals(stats.getErrorCountTotal(), 2);
+    Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.4, 0.001);
+
+    action.set(3);
+    client.restRequestStreamResponse(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    clock.addDuration(5);
+    Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 4);
+    Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 3);
+    clock.addDuration(5000);
+    stats = callTracker.getCallStats();
+    Assert.assertEquals(stats.getCallCount(), 1);
+    Assert.assertEquals(stats.getErrorCount(), 1);
+    Assert.assertEquals(stats.getCallCountTotal(), 4);
+    Assert.assertEquals(stats.getErrorCountTotal(), 3);
+    Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.2, 0.001);
+  }
   @Test
   public void testDoNotSlowStartWhenTrue()
   {
@@ -406,22 +509,40 @@ public class TrackerClientTest
       callback.onResponse(TransportResponseImpl.success(response));
     }
 
+    public void restRequestStreamResponse(RestRequest request,
+        RequestContext requestContext,
+        Map<String, String> wireAttrs,
+        TransportCallback<StreamResponse> callback)
+    {
+      restRequest = request;
+      restRequestContext = requestContext;
+      restWireAttrs = wireAttrs;
+      streamCallback = callback;
+      StreamResponseBuilder builder = new StreamResponseBuilder();
+      StreamResponse response = _emptyResponse ? builder.build(EntityStreams.emptyStream())
+          : builder.build(EntityStreams.newEntityStream(new ByteStringWriter(ByteString.copy("This is not empty".getBytes()))));
+      if (_dontCallCallback)
+      {
+        scheduleTimeout(requestContext, callback);
+        return;
+      }
+      callback.onResponse(TransportResponseImpl.success(response, wireAttrs));
+    }
+
     @Override
     public void streamRequest(StreamRequest request,
-                            RequestContext requestContext,
-                            Map<String, String> wireAttrs,
-                            TransportCallback<StreamResponse> callback)
-    {
+        RequestContext requestContext,
+        Map<String, String> wireAttrs,
+        TransportCallback<StreamResponse> callback) {
       streamRequest = request;
       restRequestContext = requestContext;
       restWireAttrs = wireAttrs;
       streamCallback = callback;
 
       StreamResponseBuilder builder = new StreamResponseBuilder();
-      StreamResponse response = _emptyResponse ? builder.build(EntityStreams.emptyStream())
-          : builder.build(EntityStreams.newEntityStream(new ByteStringWriter(ByteString.copy("This is not empty".getBytes()))));
-      if (_dontCallCallback)
-      {
+      StreamResponse response = _emptyResponse ? builder.build(EntityStreams.emptyStream()) : builder.build(
+          EntityStreams.newEntityStream(new ByteStringWriter(ByteString.copy("This is not empty".getBytes()))));
+      if (_dontCallCallback) {
         scheduleTimeout(requestContext, callback);
         return;
       }

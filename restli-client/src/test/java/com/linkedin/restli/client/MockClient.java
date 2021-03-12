@@ -24,6 +24,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Messages;
+import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.message.stream.StreamRequest;
@@ -66,6 +67,20 @@ public class MockClient extends AbstractClient
             .setHeaders(headers())
             .setEntity(body())
             .build();
+
+    adapter.onResponse(TransportResponseImpl.success(Messages.toStreamResponse(response)));
+  }
+
+  @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Callback<StreamResponse> callback) {
+    TransportCallback<StreamResponse> adapter = HttpBridge.streamToHttpCallback(new TransportCallbackAdapter<StreamResponse>(callback), request);
+
+    RestResponse response = new RestResponseBuilder()
+        .setStatus(status())
+        .setHeaders(headers())
+        .setEntity(body())
+        .build();
 
     adapter.onResponse(TransportResponseImpl.success(Messages.toStreamResponse(response)));
   }

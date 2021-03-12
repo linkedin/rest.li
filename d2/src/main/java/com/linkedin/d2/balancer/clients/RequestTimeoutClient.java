@@ -120,6 +120,20 @@ public class RequestTimeoutClient extends D2ClientDelegator
     _d2Client.streamRequest(request, requestContext, transportCallback);
   }
 
+  @Override
+  public void restRequestStreamResponse(RestRequest request, Callback<StreamResponse> callback) {
+    restRequestStreamResponse(request, new RequestContext(), callback);
+  }
+
+  @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Callback<StreamResponse> callback) {
+    final Callback<StreamResponse> transportCallback =
+        decorateCallbackWithRequestTimeout(callback, request, requestContext);
+
+    _d2Client.restRequestStreamResponse(request, requestContext, transportCallback);
+  }
+
   /**
    * Enforces the user timeout to the layer below if necessary.
    *

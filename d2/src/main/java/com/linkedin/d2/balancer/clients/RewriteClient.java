@@ -60,6 +60,14 @@ public class RewriteClient implements TransportClient
     _transportClient.restRequest(rewriteRequest(request), requestContext, wireAttrs, callback);
   }
 
+  @Override
+  public void restRequestStreamResponse(RestRequest request,
+      RequestContext requestContext,
+      Map<String, String> wireAttrs,
+      TransportCallback<StreamResponse> callback) {
+    _transportClient.restRequestStreamResponse(rewriteRequest(request), requestContext, wireAttrs, callback);
+  }
+
   /**
    * Asynchronously issues the given request. The given callback is invoked when the response is
    * received.

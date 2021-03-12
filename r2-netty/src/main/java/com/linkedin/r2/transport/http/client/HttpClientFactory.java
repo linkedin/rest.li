@@ -49,7 +49,9 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder
 import com.linkedin.r2.transport.http.client.common.ConnectionSharingChannelPoolManagerFactory;
 import com.linkedin.r2.transport.http.client.common.EventAwareChannelPoolManagerFactory;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
+import com.linkedin.r2.transport.http.client.stream.http.HttpNettyResponseOnlyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
+import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyResponseOnlyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.ConfigValueExtractor;
@@ -1412,14 +1414,21 @@ public class HttpClientFactory implements TransportClientFactory
     }
 
     TransportClient streamClient;
+    TransportClient responseOnlyStreamClient;
     switch (httpProtocolVersion) {
       case HTTP_1_1:
         streamClient = new HttpNettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
             _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildStream(key),
             _channelPoolManagerFactory.buildStream(sslKey));
+        responseOnlyStreamClient = new HttpNettyResponseOnlyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
+            _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildStream(key),
+            _channelPoolManagerFactory.buildStream(sslKey));
         break;
       case HTTP_2:
         streamClient = new Http2NettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
+            _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildHttp2Stream(key),
+            _channelPoolManagerFactory.buildHttp2Stream(sslKey));
+        responseOnlyStreamClient = new Http2NettyResponseOnlyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
             _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildHttp2Stream(key),
             _channelPoolManagerFactory.buildHttp2Stream(sslKey));
         break;
@@ -1431,7 +1440,7 @@ public class HttpClientFactory implements TransportClientFactory
         new HttpNettyClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout, _callbackExecutorGroup,
             _jmxManager, _channelPoolManagerFactory.buildRest(key), _channelPoolManagerFactory.buildRest(sslKey));
 
-    return new MixedClient(legacyClient, streamClient);
+    return new MixedClient(legacyClient, streamClient, responseOnlyStreamClient);
   }
 
   /**
@@ -1628,6 +1637,14 @@ public class HttpClientFactory implements TransportClientFactory
     }
 
     @Override
+    public void restRequestStreamResponse(RestRequest request,
+        RequestContext requestContext,
+        Map<String, String> wireAttrs,
+        TransportCallback<StreamResponse> callback) {
+      _client.restRequestStreamResponse(request, requestContext, wireAttrs, callback);
+    }
+
+    @Override
     public void streamRequest(StreamRequest request, RequestContext requestContext,
                             Map<String, String> wireAttrs,
                             TransportCallback<StreamResponse> callback)
@@ -1687,11 +1704,13 @@ public class HttpClientFactory implements TransportClientFactory
   {
     private final TransportClient _legacyClient;
     private final TransportClient _streamClient;
+    private final TransportClient _responseOnlyStreamClient;
 
-    MixedClient(TransportClient legacyClient, TransportClient streamClient)
+    MixedClient(TransportClient legacyClient, TransportClient streamClient, TransportClient responseOnlyStreamClient)
     {
       _legacyClient = legacyClient;
       _streamClient = streamClient;
+      _responseOnlyStreamClient = responseOnlyStreamClient;
     }
 
     @Override
@@ -1701,6 +1720,12 @@ public class HttpClientFactory implements TransportClientFactory
                             TransportCallback<RestResponse> callback)
     {
       _legacyClient.restRequest(request, requestContext, wireAttrs, callback);
+    }
+
+    @Override
+    public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+        Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+      _responseOnlyStreamClient.restRequestStreamResponse(request, requestContext, wireAttrs, callback);
     }
 
     @Override
@@ -1715,9 +1740,10 @@ public class HttpClientFactory implements TransportClientFactory
     @Override
     public void shutdown(final Callback<None> callback)
     {
-      Callback<None> multiCallback = new MultiCallback(callback, 2);
+      Callback<None> multiCallback = new MultiCallback(callback, 3);
       _legacyClient.shutdown(multiCallback);
       _streamClient.shutdown(multiCallback);
+      _responseOnlyStreamClient.shutdown(multiCallback);
     }
   }
 }

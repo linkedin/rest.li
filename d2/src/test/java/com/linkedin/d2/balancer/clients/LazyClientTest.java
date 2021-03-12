@@ -135,6 +135,12 @@ public class LazyClientTest
         }
 
         @Override
+        public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+            Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+          ++requestCount;
+        }
+
+        @Override
         public void shutdown(Callback<None> callback)
         {
           ++shutdownCount;

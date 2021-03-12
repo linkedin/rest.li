@@ -94,6 +94,17 @@ public abstract class D2ClientDelegator implements D2Client
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request, Callback<StreamResponse> callback) {
+    _d2Client.restRequestStreamResponse(request, callback);
+  }
+
+  @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Callback<StreamResponse> callback) {
+    _d2Client.restRequestStreamResponse(request, requestContext, callback);
+  }
+
+  @Override
   public void getMetadata(URI uri, Callback<Map<String, Object>> callback)
   {
     _d2Client.getMetadata(uri, callback);

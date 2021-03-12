@@ -3784,6 +3784,12 @@ public class DegraderLoadBalancerTest
     }
 
     @Override
+    public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+        Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+      captureValues(request, requestContext, wireAttrs, callback);
+    }
+
+    @Override
     public void restRequest(RestRequest request,
                      RequestContext requestContext,
                      Map<String, String> wireAttrs,

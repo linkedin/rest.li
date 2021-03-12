@@ -390,6 +390,24 @@ public class BackupRequestsClient extends D2ClientDelegator
         decorateCallbackSync(request, requestContext, _d2Client::streamRequest, callback));
   }
 
+  @Override
+  public void restRequestStreamResponse(RestRequest request, Callback<StreamResponse> callback) {
+    restRequestStreamResponse(request, new RequestContext(), callback);
+  }
+
+  @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Callback<StreamResponse> callback) {
+    if (_isD2Async)
+    {
+      requestAsync(request, requestContext, _d2Client::restRequestStreamResponse, callback);
+      return;
+    }
+
+    _d2Client.restRequestStreamResponse(request, requestContext,
+        decorateCallbackSync(request, requestContext, _d2Client::restRequestStreamResponse, callback));
+  }
+
   private <R extends Request, T> Callback<T> decorateCallbackSync(R request, RequestContext requestContext,
       DecoratorClient<R, T> client, Callback<T> callback)
   {

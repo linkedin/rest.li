@@ -178,6 +178,14 @@ public class HttpNettyClient implements TransportClient
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request,
+      RequestContext requestContext,
+      Map<String, String> wireAttrs,
+      TransportCallback<StreamResponse> callback) {
+    sendRequest(request, requestContext, wireAttrs, callback);
+  }
+
+  @Override
   public void streamRequest(StreamRequest request,
       RequestContext requestContext,
       Map<String, String> wireAttrs,

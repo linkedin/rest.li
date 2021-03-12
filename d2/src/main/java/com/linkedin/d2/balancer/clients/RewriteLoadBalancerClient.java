@@ -75,6 +75,13 @@ public class RewriteLoadBalancerClient implements LoadBalancerClient
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+    assert _serviceName.equals(LoadBalancerUtil.getServiceNameFromUri(request.getURI()));
+    _client.restRequestStreamResponse(request, requestContext, wireAttrs, callback);
+  }
+
+  @Override
   public void shutdown(Callback<None> callback)
   {
     _client.shutdown(callback);

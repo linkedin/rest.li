@@ -103,6 +103,24 @@ public class TestClient implements TransportClient
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Map<String, String> wireAttrs, TransportCallback<StreamResponse> callback) {
+    restRequest = request;
+    restRequestContext = requestContext;
+    restWireAttrs = wireAttrs;
+    streamCallback = callback;
+    StreamResponseBuilder builder = new StreamResponseBuilder();
+    StreamResponse response = _emptyResponse ? builder.build(EntityStreams.emptyStream())
+        : builder.build(EntityStreams.newEntityStream(new ByteStringWriter(ByteString.copy("This is not empty".getBytes()))));
+    if (_deferCallback)
+    {
+      scheduleTimeout(requestContext, callback);
+      return;
+    }
+    callback.onResponse(TransportResponseImpl.success(response, wireAttrs));
+  }
+
+  @Override
   public void streamRequest(StreamRequest request,
       RequestContext requestContext,
       Map<String, String> wireAttrs,

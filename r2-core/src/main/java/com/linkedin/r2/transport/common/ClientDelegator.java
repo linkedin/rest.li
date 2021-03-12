@@ -77,6 +77,17 @@ public class ClientDelegator implements Client
   }
 
   @Override
+  public void restRequestStreamResponse(RestRequest request, Callback<StreamResponse> callback) {
+    _client.restRequestStreamResponse(request, callback);
+  }
+
+  @Override
+  public void restRequestStreamResponse(RestRequest request, RequestContext requestContext,
+      Callback<StreamResponse> callback) {
+    _client.restRequestStreamResponse(request, requestContext, callback);
+  }
+
+  @Override
   public void shutdown(Callback<None> callback)
   {
     _client.shutdown(callback);
