@@ -24,13 +24,16 @@ import com.linkedin.pegasus.generator.TemplateSpecGenerator;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
+import com.linkedin.restli.tools.clientgen.fluentspec.AssociationResourceSpec;
 import com.linkedin.restli.tools.clientgen.fluentspec.BaseResourceSpec;
 import com.linkedin.restli.tools.clientgen.fluentspec.CollectionResourceSpec;
+import com.linkedin.restli.tools.clientgen.fluentspec.SimpleResourceSpec;
 import com.linkedin.restli.tools.clientgen.fluentspec.SpecUtils;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -38,6 +41,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
@@ -56,6 +61,7 @@ public class FluentApiGenerator
   private static final Logger LOGGER = LoggerFactory.getLogger(FluentApiGenerator.class);
   private static final Options OPTIONS = new Options();
   private static final String API_TEMPLATE_DIR = "apiVmTemplates";
+  private static final String FLUENT_CLIENT_FILE_SUFFIX = "FluentClient";
 
   public static void main(String[] args) throws Exception
   {
@@ -143,28 +149,61 @@ public class FluentApiGenerator
             pair.second.getPath(),
             schemaResolver);
       }
+      else if (resourceSchema.hasSimple())
+      {
+        spec = new SimpleResourceSpec(resourceSchema,
+            new TemplateSpecGenerator(schemaResolver),
+            pair.second.getPath(),
+            schemaResolver);
+      }
+      else if (resourceSchema.hasAssociation())
+      {
+        spec = new AssociationResourceSpec(resourceSchema,
+            new TemplateSpecGenerator(schemaResolver),
+            pair.second.getPath(),
+            schemaResolver);
+      }
       else
       {
         continue;
       }
+
       File packageDir = new File(targetDirectory, spec.getNamespace().toLowerCase().replace('.', File.separatorChar));
       packageDir.mkdirs();
-      File file = new File(packageDir, CodeUtil.capitalize(spec.getResource().getName()) + ".java");
-      try (FileWriter writer = new FileWriter(file))
+      // Generate FluentClient impl
+      File implFile = new File(packageDir, CodeUtil.capitalize(spec.getResource().getName()) + FLUENT_CLIENT_FILE_SUFFIX + ".java");
+      // Generate Resource interface
+      // TODO: move to universal client generator where fits better
+      File interfaceFile= new File(packageDir, CodeUtil.capitalize(spec.getResource().getName()) + ".java");
+      for (Pair<File, String> templatePair : Arrays.asList(
+          ImmutablePair.of(interfaceFile, "resource_interface.vm"),
+          ImmutablePair.of(implFile, "resource.vm")
+      ))
       {
-        VelocityContext context = new VelocityContext();
-        context.put("spec", spec);
-        context.put("util", SpecUtils.class);
-        if (spec.getResource().hasCollection())
+        try (FileWriter writer = new FileWriter(templatePair.getLeft()))
         {
-          velocityEngine.mergeTemplate(API_TEMPLATE_DIR + "/collection.vm", VelocityEngine.ENCODING_DEFAULT, context, writer);
+          VelocityContext context = new VelocityContext();
+          context.put("spec", spec);
+          context.put("util", SpecUtils.class);
+          context.put("class_name_suffix", FLUENT_CLIENT_FILE_SUFFIX);
+          if (spec.getResource().hasCollection()
+              || spec.getResource().hasSimple()
+              || spec.getResource().hasAssociation())
+          {
+            velocityEngine.mergeTemplate(API_TEMPLATE_DIR + "/" + templatePair.getRight(),
+                VelocityEngine.ENCODING_DEFAULT,
+                context,
+                writer);
+          }
+        }
+        catch (Exception e)
+        {
+          LOGGER.error("Error generating fluent client apis", e);
+          message.append(e.getMessage()).append("\n");
         }
       }
-      catch (Exception e)
-      {
-        LOGGER.error("Error generating fluent client apis", e);
-        message.append(e.getMessage()).append("\n");
-      }
+
+
     }
 
     if (message.length() > 0)
