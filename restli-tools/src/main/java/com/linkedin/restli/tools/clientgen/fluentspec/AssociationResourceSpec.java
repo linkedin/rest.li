@@ -31,6 +31,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.apache.commons.lang3.ClassUtils.getShortClassName;
+
 
 public class AssociationResourceSpec extends BaseResourceSpec
 {

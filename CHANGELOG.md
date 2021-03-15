@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add fluent client api for simple resource and association resource.
 
 ## [29.16.0] - 2021-03-10
 - Add a ParSeq based CompletionStage implementation

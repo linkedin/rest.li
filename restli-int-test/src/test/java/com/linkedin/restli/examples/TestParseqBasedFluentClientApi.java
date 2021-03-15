@@ -550,15 +550,6 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testSimpleResourceGet() throws Exception
-  {
-    GreetingFluentClient greeting = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    Greeting greetingEntity = greeting.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
-    Assert.assertTrue(greetingEntity.hasId());
-    Assert.assertEquals((Long) 12345L, greetingEntity.getId());
-  }
-
-  @Test
   public void testSimpleResourceUpdate() throws Exception
   {
     final String message = "Update test";
@@ -569,7 +560,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
-  public void testSimpleResourceDelete() throws Exception
+  public void testSimpleResourceDeleteMethodAndGetMethod() throws Exception
   {
     GreetingFluentClient greeting = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     greeting.delete().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
@@ -582,6 +573,12 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     {
 
     }
+    final String message = "Test Get";
+    greeting.update(getGreeting(message)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Greeting greetingEntity = greeting.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertTrue(greetingEntity.hasId());
+    Assert.assertEquals(greetingEntity.getMessage(), message);
+
   }
 
   @Test

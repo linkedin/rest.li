@@ -252,16 +252,6 @@ public class BaseResourceSpec
     return _entityClass;
   }
 
-
-  /**
-   * For example, "com.linkedin.common.MyClass" to "MyClass"
-   */
-  protected String getShortClassName(String longClassName)
-  {
-    String[] splits = longClassName.split("\\.");
-    return splits[splits.length - 1];
-  }
-
   public String getEntityClassName()
   {
     return _resourceNameConflictWithEntityClass ? getEntityClass().getBindingName() : getEntityClass().getClassName();
