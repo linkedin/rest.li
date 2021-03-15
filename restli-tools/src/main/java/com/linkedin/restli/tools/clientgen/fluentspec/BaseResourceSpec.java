@@ -83,6 +83,8 @@ public class BaseResourceSpec
   final DataSchemaLocation _currentSchemaLocation;
   final DataSchemaResolver _schemaResolver;
   ClassTemplateSpec _entityClass = null;
+  // In case resource name and entity class are conflicting, will need to use full entity class name
+  final boolean _resourceNameConflictWithEntityClass;
 
 
   public BaseResourceSpec(ResourceSchema resourceSchema, TemplateSpecGenerator templateSpecGenerator,
@@ -93,6 +95,7 @@ public class BaseResourceSpec
     _sourceIdlName = sourceIdlName;
     _schemaResolver = schemaResolver;
     _currentSchemaLocation = new FileDataSchemaLocation(new File(_sourceIdlName));
+    _resourceNameConflictWithEntityClass = getEntityClass().getClassName().equals(getClassName());
   }
 
   public ResourceSchema getResource()
@@ -249,9 +252,19 @@ public class BaseResourceSpec
     return _entityClass;
   }
 
+
+  /**
+   * For example, "com.linkedin.common.MyClass" to "MyClass"
+   */
+  protected String getShortClassName(String longClassName)
+  {
+    String[] splits = longClassName.split("\\.");
+    return splits[splits.length - 1];
+  }
+
   public String getEntityClassName()
   {
-    return getEntityClass().getClassName();
+    return _resourceNameConflictWithEntityClass ? getEntityClass().getBindingName() : getEntityClass().getClassName();
   }
 
   public List<RestMethodSpec> getRestMethods()
@@ -353,4 +366,10 @@ public class BaseResourceSpec
       return schemaToTemplateSpec(schema).getBindingName();
     }
   }
+
+  public boolean isResourceNameConflictWithEntityClass()
+  {
+    return _resourceNameConflictWithEntityClass;
+  }
+
 }

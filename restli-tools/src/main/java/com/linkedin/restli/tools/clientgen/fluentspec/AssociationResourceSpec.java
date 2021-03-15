@@ -98,15 +98,6 @@ public class AssociationResourceSpec extends BaseResourceSpec
     return getShortClassName(CompoundKey.class.getName());
   }
 
-  /**
-   * For example, "com.linkedin.common.MyClass" to "MyClass"
-   */
-  private String getShortClassName(String longClassName)
-  {
-    String[] splits = longClassName.split("\\.");
-    return splits[splits.length - 1];
-  }
-
   @Override
   public Set<String> getResourceSpecificImports(Set<String> imports)
   {

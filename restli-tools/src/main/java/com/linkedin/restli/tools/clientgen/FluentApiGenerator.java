@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -40,6 +41,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
@@ -164,31 +167,42 @@ public class FluentApiGenerator
       {
         continue;
       }
+
       File packageDir = new File(targetDirectory, spec.getNamespace().toLowerCase().replace('.', File.separatorChar));
       packageDir.mkdirs();
-      File file = new File(packageDir, CodeUtil.capitalize(spec.getResource().getName()) + FLUENT_CLIENT_FILE_SUFFIX + ".java");
-      try (FileWriter writer = new FileWriter(file))
+      // Generate FluentClient impl
+      File implFile = new File(packageDir, CodeUtil.capitalize(spec.getResource().getName()) + FLUENT_CLIENT_FILE_SUFFIX + ".java");
+      // Generate Resource interface
+      // TODO: move to universal client generator where fits better
+      File interfaceFile= new File(packageDir, CodeUtil.capitalize(spec.getResource().getName()) + ".java");
+      for (Pair<File, String> templatePair : Arrays.asList(
+          ImmutablePair.of(implFile, "resource.vm"),
+          ImmutablePair.of(interfaceFile, "resource_interface.vm")))
       {
-        VelocityContext context = new VelocityContext();
-        context.put("spec", spec);
-        context.put("util", SpecUtils.class);
-        context.put("class_name_suffix", FLUENT_CLIENT_FILE_SUFFIX);
-        if (
-            spec.getResource().hasCollection()
-                ||
-                spec.getResource().hasSimple()
-                ||
-                spec.getResource().hasAssociation()
-        )
+        try (FileWriter writer = new FileWriter(templatePair.getLeft()))
         {
-          velocityEngine.mergeTemplate(API_TEMPLATE_DIR + "/resource.vm", VelocityEngine.ENCODING_DEFAULT, context, writer);
+          VelocityContext context = new VelocityContext();
+          context.put("spec", spec);
+          context.put("util", SpecUtils.class);
+          context.put("class_name_suffix", FLUENT_CLIENT_FILE_SUFFIX);
+          if (spec.getResource().hasCollection()
+              || spec.getResource().hasSimple()
+              || spec.getResource().hasAssociation())
+          {
+            velocityEngine.mergeTemplate(API_TEMPLATE_DIR + "/" + templatePair.getRight(),
+                VelocityEngine.ENCODING_DEFAULT,
+                context,
+                writer);
+          }
+        }
+        catch (Exception e)
+        {
+          LOGGER.error("Error generating fluent client apis", e);
+          message.append(e.getMessage()).append("\n");
         }
       }
-      catch (Exception e)
-      {
-        LOGGER.error("Error generating fluent client apis", e);
-        message.append(e.getMessage()).append("\n");
-      }
+
+
     }
 
     if (message.length() > 0)

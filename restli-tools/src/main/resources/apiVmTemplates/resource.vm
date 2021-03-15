@@ -37,6 +37,9 @@ import com.linkedin.restli.common.TypeSpec;
   import ${import};
 #end
 import ${spec.entityClass.fullName};
+#if(${spec.getResource().hasAssociation()})
+import com.linkedin.restli.common.CompoundKey;
+#end
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -91,9 +94,9 @@ public class ${spec.className}${class_name_suffix}{
         );
     #elseif(${spec.getResource().hasAssociation()})
     HashMap<String, CompoundKey.TypeInfo> keyParts = new HashMap<String, CompoundKey.TypeInfo>();
-    #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+      #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
     keyParts.put("${assoc_key.name}", new CompoundKey.TypeInfo(${assoc_key.bindingType}.class, ${assoc_key.declaredType}.class));
-    #end
+      #end
     _resourceSpec = new ResourceSpecImpl(
         #if($spec.restMethods.size() > 0)
           EnumSet.of(
@@ -126,5 +129,26 @@ public class ${spec.className}${class_name_suffix}{
   // CRUD methods
   #foreach($method in $spec.restMethods)
     #parse("apiVmTemplates/rest.${method.method}.vm")
+  #end
+
+  #if(${spec.getResource().hasAssociation()})
+  // TODO: CompoundKey may eventually need to be exposed to the resource interface
+    public static class Key
+        extends CompoundKey
+    {
+        public Key() {
+        }
+
+        #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+        public ${spec.className}${class_name_suffix}.Key set$util.nameCapsCase($assoc_key.name)(${assoc_key.bindingType} ${assoc_key.name}) {
+            append("${assoc_key.name}", ${assoc_key.name}, _resourceSpec.getKeyParts().get("${assoc_key.name}"));
+            return this;
+        }
+
+        public ${assoc_key.bindingType} get${util.nameCapsCase($assoc_key.name)} () {
+            return ((${assoc_key.bindingType}) getPart("${assoc_key.name}"));
+        }
+        #end
+    }
   #end
 }
