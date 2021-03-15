@@ -36,7 +36,9 @@ import com.linkedin.restli.common.TypeSpec;
 #foreach($import in $spec.importsForRestMethods)
   import ${import};
 #end
+#if(!${spec.isResourceNameConflictWithEntityClass()})
 import ${spec.entityClass.fullName};
+#end
 #if(${spec.getResource().hasAssociation()})
 import com.linkedin.restli.common.CompoundKey;
 #end
@@ -77,7 +79,7 @@ public class ${spec.className}${class_name_suffix}{
       #end
     #end
 
-    #if (${spec.getResource().hasSimple()} || ${spec.getResource().hasCollection()})
+    #if (${spec.getResource().hasSimple()})
     _resourceSpec = new ResourceSpecImpl(
         #if($spec.restMethods.size() > 0)
           EnumSet.of(
@@ -92,6 +94,24 @@ public class ${spec.className}${class_name_suffix}{
         responseMetadataMap,
         ${spec.entityClassName}.class
         );
+    #elseif(${spec.getResource().hasCollection()})
+    _resourceSpec = new ResourceSpecImpl(
+        #if($spec.restMethods.size() > 0)
+          EnumSet.of(
+              #foreach($method in $spec.restMethods)
+              ResourceMethod.${method.method.toUpperCase()}#if($foreach.hasNext),#end
+              #end
+          ),
+        #else
+          EnumSet.noneOf(ResourceMethod.class),
+        #end
+        requestMetadataMap,
+        responseMetadataMap,
+        ${spec.keyClassName}.class,
+        null,
+        null,
+        ${spec.entityClassName}.class,
+        Collections.emptyMap());
     #elseif(${spec.getResource().hasAssociation()})
     HashMap<String, CompoundKey.TypeInfo> keyParts = new HashMap<String, CompoundKey.TypeInfo>();
       #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})

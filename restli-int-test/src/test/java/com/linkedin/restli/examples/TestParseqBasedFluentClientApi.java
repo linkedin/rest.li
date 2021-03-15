@@ -22,6 +22,7 @@ import com.linkedin.restli.client.ParSeqRestliClientBuilder;
 import com.linkedin.restli.client.ParSeqRestliClientConfigBuilder;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.util.PatchGenerator;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EntityResponse;
@@ -30,8 +31,11 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.examples.greetings.client.AssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.CreateGreetingFluentClient;
+import com.linkedin.restli.examples.greetings.client.GreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.GreetingsFluentClient;
 import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingFluentClient;
 import java.util.Arrays;
@@ -542,6 +546,104 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     for (Greeting greeting :greetingList)
     {
       Assert.assertTrue(greeting.getMessage().contains("GetAll"));
+    }
+  }
+
+  @Test
+  public void testSimpleResourceGet() throws Exception
+  {
+    GreetingFluentClient greeting = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greeting greetingEntity = greeting.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertTrue(greetingEntity.hasId());
+    Assert.assertEquals((Long) 12345L, greetingEntity.getId());
+  }
+
+  @Test
+  public void testSimpleResourceUpdate() throws Exception
+  {
+    final String message = "Update test";
+    GreetingFluentClient greeting = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    greeting.update(getGreeting(message)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Greeting greetingEntity = greeting.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(greetingEntity.getMessage(), message);
+  }
+
+  @Test
+  public void testSimpleResourceDelete() throws Exception
+  {
+    GreetingFluentClient greeting = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    greeting.delete().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    try
+    {
+      Greeting greetingEntity = greeting.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+      Assert.fail("should fail since entity delete");
+    }
+    catch (Exception e)
+    {
+
+    }
+  }
+
+  @Test
+  public void testAssociateResourceGet() throws Exception
+  {
+    CompoundKey key = AssociationResourceHelpers.URL_COMPOUND_KEY;
+    AssociationsFluentClient associations =
+        new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Message response = associations.get(key).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertTrue(response.hasId());
+  }
+
+  @Test
+  public void testAssociateResourceBatchGet() throws Exception
+  {
+    AssociationsFluentClient associations =
+        new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+
+    Map<CompoundKey, EntityResponse<Message>> entityResponse =
+        associations.batchGet(AssociationResourceHelpers.DB.keySet())
+            .toCompletableFuture()
+            .get(5000, TimeUnit.MILLISECONDS);
+    for (CompoundKey id : AssociationResourceHelpers.DB.keySet())
+    {
+      Assert.assertTrue(entityResponse.containsKey(id));
+      EntityResponse<Message> single = entityResponse.get(id);
+      Assert.assertEquals(single.getEntity(), AssociationResourceHelpers.DB.get(id));
+    }
+  }
+
+  @Test
+  public void testAssociateResourceBatchUpdate() throws Exception
+  {
+    AssociationsFluentClient associations =
+        new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+
+    Map<CompoundKey, UpdateStatus> ids =
+        associations.batchUpdate(AssociationResourceHelpers.DB).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+
+    Assert.assertEquals(ids.size(), 2);
+    for (CompoundKey id : ids.keySet())
+    {
+      Assert.assertEquals(ids.get(id).getStatus().intValue(), 204);
+    }
+  }
+
+  @Test
+  public void testAssociateResourceBatchPartialUpdate() throws Exception
+  {
+    AssociationsFluentClient associations =
+        new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+
+    Map<CompoundKey, PatchRequest<Message>> patches = new HashMap<CompoundKey, PatchRequest<Message>>();
+    patches.put(AssociationResourceHelpers.URL_COMPOUND_KEY, new PatchRequest<Message>());
+    patches.put(AssociationResourceHelpers.SIMPLE_COMPOUND_KEY, new PatchRequest<Message>());
+
+    Map<CompoundKey, UpdateStatus> ids =
+        associations.batchPartialUpdate(patches).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+
+    for (CompoundKey id : ids.keySet())
+    {
+      Assert.assertEquals(ids.get(id).getStatus().intValue(), 204);
     }
   }
 

@@ -176,8 +176,9 @@ public class FluentApiGenerator
       // TODO: move to universal client generator where fits better
       File interfaceFile= new File(packageDir, CodeUtil.capitalize(spec.getResource().getName()) + ".java");
       for (Pair<File, String> templatePair : Arrays.asList(
-          ImmutablePair.of(implFile, "resource.vm"),
-          ImmutablePair.of(interfaceFile, "resource_interface.vm")))
+          ImmutablePair.of(interfaceFile, "resource_interface.vm"),
+          ImmutablePair.of(implFile, "resource.vm")
+      ))
       {
         try (FileWriter writer = new FileWriter(templatePair.getLeft()))
         {
