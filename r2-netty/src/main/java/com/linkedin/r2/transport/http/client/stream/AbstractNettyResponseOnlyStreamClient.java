@@ -31,7 +31,6 @@ import java.util.concurrent.ScheduledExecutorService;
  * Abstract stream based abstract class implementation of {@link TransportClient} on top of Netty
  * libraries. Inheriting this class is a good starting point for protocol specific implementation
  * of TransportClient.
- *
  */
 
 public abstract class AbstractNettyResponseOnlyStreamClient extends AbstractNettyClient<RestRequest, StreamResponse>
