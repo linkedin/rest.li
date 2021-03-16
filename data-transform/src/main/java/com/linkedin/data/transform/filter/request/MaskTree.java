@@ -17,7 +17,7 @@
 package com.linkedin.data.transform.filter.request;
 
 import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.FieldMask;
+import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
@@ -44,7 +44,7 @@ import java.util.Optional;
  * The semantics of applying a MaskTree to a DataMap are documented in {@link com.linkedin.data.transform.DataComplexProcessor}
  */
 
-public class MaskTree extends FieldMask
+public class MaskTree extends MaskMap
 {
   /**
    * Initialize a new {@link MaskTree}.

@@ -33,3 +33,12 @@ compileTestJava.options.compilerArgs += '-Xlint:-deprecation'
 test {
   systemProperties['test.projectDir'] = projectDir.toString()
 }
+
+// generate pdsc files under "unionPegasus" directory with explicit ordering
+project.sourceSets.all { SourceSet sourceSet ->
+  final Task dataTemplateGenerateTask = rootProject.ext.build.dataTemplateGenerateTasks[sourceSet]
+  if (dataTemplateGenerateTask != null)
+  {
+    dataTemplateGenerateTask.systemProperties(['generator.generate.field.mask': "true"])
+  }
+}

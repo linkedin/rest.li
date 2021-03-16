@@ -23,39 +23,39 @@ import com.linkedin.data.DataMap;
  * Represents a projection mask using a DataMap. The DataMap structure is same as the data being projected, with values
  * storing the masks. Positive masks are stored as 1 and negative masks as 0.
  */
-public class FieldMask
+public class MaskMap
 {
   public static final int POSITIVE_MASK = 1;
   public static final int NEGATIVE_MASK = 0;
 
   /**
-   * Initialize a new {@link FieldMask}.
+   * Initialize a new {@link MaskMap}.
    */
-  public FieldMask()
+  public MaskMap()
   {
     _representation = new DataMap();
   }
 
   /**
-   * Initialize a new {@link FieldMask} using the given initial capacity for the map.
+   * Initialize a new {@link MaskMap} using the given initial capacity for the map.
    */
-  public FieldMask(int capacity)
+  public MaskMap(int capacity)
   {
     _representation = new DataMap(capacity);
   }
 
   /**
-   * Initialize a new {@link FieldMask}.
+   * Initialize a new {@link MaskMap}.
    *
    * @param rep a DataMap representation of the MaskTree
    */
-  public FieldMask(DataMap rep)
+  public MaskMap(DataMap rep)
   {
     _representation = rep;
   }
 
   /**
-   * Returning the underlying representation of this {@link FieldMask}.
+   * Returning the underlying representation of this {@link MaskMap}.
    * @return the {@link DataMap} representing this MaskTree
    */
   public DataMap getDataMap()

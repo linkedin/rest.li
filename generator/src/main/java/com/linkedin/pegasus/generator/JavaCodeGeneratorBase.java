@@ -20,7 +20,7 @@ import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedUtil;
-import com.linkedin.data.schema.FieldMask;
+import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.Custom;
@@ -116,7 +116,7 @@ public class JavaCodeGeneratorBase
     _mapClass = getCodeModel().ref(Map.class);
     _objectClass = getCodeModel().ref(Object.class);
     _pathSpecClass = getCodeModel().ref(PathSpec.class);
-    _maskMapClass = getCodeModel().ref(FieldMask.class);
+    _maskMapClass = getCodeModel().ref(MaskMap.class);
     _setModeClass = getCodeModel().ref(SetMode.class);
     _stringBuilderClass = getCodeModel().ref(StringBuilder.class);
     _stringClass = getCodeModel().ref(String.class);

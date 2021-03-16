@@ -25,9 +25,9 @@ import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.EnumDataSchema;
-import com.linkedin.data.schema.FieldMask;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.MapDataSchema;
+import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
@@ -850,14 +850,28 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     for (RecordTemplateSpec.Field field : fieldSpecs)
     {
       // Generate method body for all fields, two variants are generated for complex fields.
+      // For simple field "foo" generate:
+      // public ProjectionMask withFoo() {
+      //    maskMap.put("foo", POSITIVE_MASK);
+      // }
+      // In addition to above API, complex fields will generate additional API to set nested mask. For a complex field "bar":
+      // public ProjectionMask withBar(Function<Bar.ProjectionMask, Bar.ProjectionMask> nestedMaskBuilder) {
+      //    maskMap.put("foo", nestedMaskBuilder.apply(Bar.createMask()).getDataMap());
+      // }
       generateWithFieldBodyDefault(field, maskNestedClass, method ->
       {
         method.body().invoke(JExpr.invoke("getDataMap"), "put").arg(field.getSchemaField().getName())
-            .arg(getCodeModel().ref(FieldMask.class).staticRef("POSITIVE_MASK"));
+            .arg(getCodeModel().ref(MaskMap.class).staticRef("POSITIVE_MASK"));
       });
       generateWithFieldBodyNested(field, maskNestedClass, method -> {});
 
       // For array types, add another method to get Field mask with a range specified
+      // For a array type field "foo" with "Bar" items, a new API to set start and count will be provided (for both variants above).
+      // public ProjectionMask withFoo(Function<BarArray.ProjectionMask, BarArray.ProjectionMask> nestedMaskBuilder, Integer start, Integer count) {
+      //   maskMap.put("foo", nestedMaskBuilder.apply(BarArray.createMask()).getDataMap());
+      //   maskMap.get("foo").put("$start", start);
+      //   maskMap.get("foo").put("$count, count);
+      // }
       if (isArrayType(field.getSchemaField().getType()))
       {
         generateWithFieldBodyNested(field, maskNestedClass, withFieldRangeMethod -> generateArrayFieldAttributeMethod(field, withFieldRangeMethod));
@@ -871,7 +885,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
   }
 
-  private void generateArrayFieldAttributeMethod(RecordTemplateSpec.Field field, JMethod withFieldRangeMethod) {
+  private void generateArrayFieldAttributeMethod(RecordTemplateSpec.Field field, JMethod withFieldRangeMethod)
+  {
     JVar start = withFieldRangeMethod.param(getCodeModel().ref(Integer.class), "start");
     JVar count = withFieldRangeMethod.param(getCodeModel().ref(Integer.class), "count");
     JInvocation getDataMap = JExpr.invoke("getDataMap").invoke("getDataMap")
@@ -1344,6 +1359,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   {
     final JDefinedClass maskNestedClass = generateProjectionMaskNestedClass(unionClass, unionSpec.getMembers().size());
 
+    // Generates a method in the ProjectionMask class for each member. APIs generated are similar to fields in a record.
+    // for a member foo:
+    // public ProjectionMask withFoo() {
+    //   getDataMap().put("foo", POSITIVE_MASK);
+    // }
     for (UnionTemplateSpec.Member member : unionSpec.getMembers())
     {
       String memberKey = member.getUnionMemberKey();
@@ -1364,7 +1384,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       else
       {
         withMemberMethod.body().invoke(getDataMap, "put").arg(memberKey)
-            .arg(getCodeModel().ref(FieldMask.class).staticRef("POSITIVE_MASK"));
+            .arg(getCodeModel().ref(MaskMap.class).staticRef("POSITIVE_MASK"));
       }
       withMemberMethod.body()._return(JExpr._this());
     }
@@ -1482,10 +1502,15 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   private void generateMaskBuilderForCollection(JDefinedClass templateClass, DataSchema schema, JClass childClass, String wildcardMethodName)
       throws JClassAlreadyExistsException
   {
+    // If an array item is a complex type, this generates a mask builder that allows building a nested mask.
+    // If the array type is FooArray, then
+    // public ProjectionMask withItems(Function<Bar.ProjectionMask, Bar.ProjectionMask> itemMaskBuilder) {
+    //   getDataMap().put("$*", itemMaskBuilder.apply(Bar.createMask()).getDataMap());
+    // }
     if (hasNestedFields(schema))
     {
-      // Arrays can have upto 3 entries, including start and count.
-      final JDefinedClass maskNestedClass = generateProjectionMaskNestedClass(templateClass, 3);
+      // Arrays can custom attributes like start and count. The expected size of the map is attribute size + 1 (for items).
+      final JDefinedClass maskNestedClass = generateProjectionMaskNestedClass(templateClass, FilterConstants.NUMBER_OF_ARRAY_ATTRIBUTES + 1);
 
      final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(wildcardMethodName));
 

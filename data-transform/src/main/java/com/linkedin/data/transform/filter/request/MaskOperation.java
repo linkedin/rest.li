@@ -16,7 +16,7 @@
 
 package com.linkedin.data.transform.filter.request;
 
-import com.linkedin.data.schema.FieldMask;
+import com.linkedin.data.schema.MaskMap;
 
 
 /**
@@ -25,8 +25,8 @@ import com.linkedin.data.schema.FieldMask;
  */
 public enum MaskOperation
 {
-  POSITIVE_MASK_OP(FieldMask.POSITIVE_MASK),
-  NEGATIVE_MASK_OP(FieldMask.NEGATIVE_MASK);
+  POSITIVE_MASK_OP(MaskMap.POSITIVE_MASK),
+  NEGATIVE_MASK_OP(MaskMap.NEGATIVE_MASK);
 
   MaskOperation(int value)
   {

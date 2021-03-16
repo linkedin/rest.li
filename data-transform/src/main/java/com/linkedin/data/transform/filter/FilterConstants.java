@@ -23,6 +23,7 @@ public class FilterConstants
   public static final String  WILDCARD = "$*";
   public static final String  START = "$start";
   public static final String  COUNT = "$count";
+  public static final int NUMBER_OF_ARRAY_ATTRIBUTES = 2; // start and count.
   public static final Integer POSITIVE = Integer.valueOf(1);
   public static final Integer NEGATIVE = Integer.valueOf(0);
 

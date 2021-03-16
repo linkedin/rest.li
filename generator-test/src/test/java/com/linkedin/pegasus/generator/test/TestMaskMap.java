@@ -1,23 +1,22 @@
 package com.linkedin.pegasus.generator.test;
 
-import com.linkedin.data.schema.FieldMask;
+import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.PathSpecSet;
 import com.linkedin.data.transform.filter.request.MaskCreator;
 import com.linkedin.data.transform.filter.request.MaskTree;
-import java.util.function.Function;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 
 /**
- * Tests the FieldMask builder APIs generated as part of data tempalte classes.
+ * Tests the MaskMap builder APIs generated as part of data template classes.
  */
-public class TestFieldMask
+public class TestMaskMap
 {
   @Test
   public void testEmptyMask()
   {
-    FieldMask mask = RecordTest.createMask();
+    MaskMap mask = RecordTest.createMask();
     MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.empty());
     Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
   }
@@ -25,7 +24,7 @@ public class TestFieldMask
   @Test
   public void testPrimitiveFields()
   {
-    FieldMask mask = RecordTest.createMask()
+    MaskMap mask = RecordTest.createMask()
         .withBooleanField()
         .withDoubleField()
         .withEnumField()
@@ -43,7 +42,7 @@ public class TestFieldMask
   @Test
   public void testComplexFields()
   {
-    FieldMask mask = RecordTest.createMask()
+    MaskMap mask = RecordTest.createMask()
         .withRecordField()
         .withRecordInlineField();
 
@@ -57,7 +56,7 @@ public class TestFieldMask
   @Test
   public void testNestedFields()
   {
-    FieldMask mask = RecordTest.createMask()
+    MaskMap mask = RecordTest.createMask()
         .withRecordField(nestedMask -> nestedMask.withLocation().withOptionalLocation());
 
     MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
@@ -70,7 +69,7 @@ public class TestFieldMask
   @Test
   public void testArrayFieldDefaultProjection()
   {
-    FieldMask mask = RecordTest.createMask()
+    MaskMap mask = RecordTest.createMask()
         .withArrayField();
 
     MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
@@ -82,7 +81,7 @@ public class TestFieldMask
   @Test
   public void testArrayFieldRangeAttributes()
   {
-    FieldMask mask = RecordTest.createMask()
+    MaskMap mask = RecordTest.createMask()
         .withArrayField(10, 15);
 
     MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
@@ -94,7 +93,7 @@ public class TestFieldMask
   @Test
   public void testArrayFieldNestedProjection()
   {
-    FieldMask mask = ArrayTest.createMask()
+    MaskMap mask = ArrayTest.createMask()
         .withRecordArray(arrayMask -> arrayMask.withItems(RecordBar.ProjectionMask::withLocation));
 
     MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
@@ -106,7 +105,7 @@ public class TestFieldMask
   @Test
   public void testArrayFieldNestedProjectionWithAttributes()
   {
-    FieldMask mask = ArrayTest.createMask()
+    MaskMap mask = ArrayTest.createMask()
         .withRecordArray(arrayMask -> arrayMask.withItems(RecordBar.ProjectionMask::withLocation),
             5, 10);
 
@@ -120,7 +119,7 @@ public class TestFieldMask
   @Test
   public void testMapFieldNestedProjection()
   {
-    FieldMask mask = MapTest.createMask()
+    MaskMap mask = MapTest.createMask()
         .withRecordInlineMap(mapMask -> mapMask.withValues(RecordInMap.ProjectionMask::withF));
 
     MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
@@ -132,7 +131,7 @@ public class TestFieldMask
   @Test
   public void testMapFieldDefaultProjection()
   {
-    FieldMask mask = MapTest.createMask()
+    MaskMap mask = MapTest.createMask()
         .withRecordInlineMap();
 
     MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
@@ -144,7 +143,7 @@ public class TestFieldMask
   @Test
   public void testUnionFieldDefaultProjection()
   {
-    FieldMask mask = UnionTest.createMask()
+    MaskMap mask = UnionTest.createMask()
         .withUnionWithAliases();
 
     MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
@@ -156,7 +155,7 @@ public class TestFieldMask
   @Test
   public void testUnionFieldNestedProjection()
   {
-    FieldMask mask = UnionTest.createMask()
+    MaskMap mask = UnionTest.createMask()
         .withUnionWithAliases(unionMask -> unionMask.withMemAnotherInt()
             .withMemInt()
             .withMemBoolean()
@@ -176,7 +175,7 @@ public class TestFieldMask
   @Test
   public void testNonAliasedUnionFieldNestedProjection()
   {
-    FieldMask mask = UnionTest.createMask()
+    MaskMap mask = UnionTest.createMask()
         .withUnionWithoutNull(unionMask -> unionMask.withArray()
             .withBoolean()
             .withRecordBar(recordMask -> recordMask.withLocation())

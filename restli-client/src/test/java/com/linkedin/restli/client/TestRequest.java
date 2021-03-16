@@ -18,7 +18,7 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.data.DataMap;
-import com.linkedin.data.schema.FieldMask;
+import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.restli.client.test.TestRecord;
@@ -259,7 +259,7 @@ public class TestRequest
   public void testMaskTreeFieldsParam()
   {
     DataMap fields = new DataMap();
-    fields.put("id", FieldMask.POSITIVE_MASK);
+    fields.put("id", MaskMap.POSITIVE_MASK);
     GetRequest<TestRecord> getRequest =
         generateDummyRequestBuilder().setParam(RestConstants.FIELDS_PARAM, fields).build();
     assertEquals(getRequest.getFields(), Collections.singleton(new PathSpec("id")));
