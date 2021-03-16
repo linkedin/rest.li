@@ -57,6 +57,8 @@ import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.client.IdEntityResponseDecoder;
 import com.linkedin.restli.internal.client.IdResponseDecoder;
 import com.linkedin.restli.restspec.ResourceSchema;
+import com.linkedin.restli.restspec.ResourceSchemaArray;
+import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -86,7 +88,13 @@ public class CollectionResourceSpec extends BaseResourceSpec
 
   public List<RestMethodSpec> getRestMethods()
   {
-    List<RestMethodSpec> methods = new ArrayList<>(getResource().getCollection().getMethods().size());
+    RestMethodSchemaArray methodSchemaArray = getResource().getCollection().getMethods();
+    if (methodSchemaArray == null)
+    {
+      return Collections.emptyList();
+    }
+
+    List<RestMethodSpec> methods = new ArrayList<>(methodSchemaArray.size());
     getResource().getCollection().getMethods().forEach(restMethodSchema -> methods.add(new RestMethodSpec(restMethodSchema, this)));
     return methods;
   }
@@ -110,4 +118,9 @@ public class CollectionResourceSpec extends BaseResourceSpec
     return getResource().getCollection().getIdentifier().getName();
   }
 
+  @Override
+  public ResourceSchemaArray getSubResources()
+  {
+    return getResource().getCollection().getEntity().getSubresources();
+  }
 }

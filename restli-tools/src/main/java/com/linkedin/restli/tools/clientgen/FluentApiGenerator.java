@@ -119,7 +119,16 @@ public class FluentApiGenerator
     }
   }
 
-  /** */
+  /**
+   *
+   * @param resourceSchema
+   * @param schemaResolver
+   * @param velocityEngine
+   * @param targetDirectory
+   * @param sourceIdlName
+   * @param message
+   * @throws IOException
+   */
   static void generateFluentClientByResource(ResourceSchema resourceSchema,
                                              DataSchemaResolver schemaResolver,
                                              VelocityEngine velocityEngine,

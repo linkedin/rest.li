@@ -66,6 +66,7 @@ import com.linkedin.restli.internal.client.IdEntityResponseDecoder;
 import com.linkedin.restli.internal.client.IdResponseDecoder;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ResourceSchema;
+import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.util.CustomTypeUtil;
 import java.io.File;
@@ -103,9 +104,12 @@ public class BaseResourceSpec
     return _resource;
   }
 
+  /**
+   * Only Collection, Simple and AssociationResource could have subResources
+   */
   public ResourceSchemaArray getSubResources()
   {
-    return _resource.getEntity().getSubResources();
+    return null;
   }
 
   public TemplateSpecGenerator getTemplateSpecGenerator()
