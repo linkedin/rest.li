@@ -117,28 +117,20 @@ public class FluentApiGenerator
       help();
       System.exit(1);
     }
-
   }
 
-  static void run(String resolverPath, String rootPath, String targetDirectoryPath, String[] sources)
-      throws IOException
+  /** */
+  static void generateFluentClientByResource(ResourceSchema resourceSchema,
+                                             DataSchemaResolver schemaResolver,
+                                             VelocityEngine velocityEngine,
+                                             File targetDirectory,
+                                             String sourceIdlName,
+                                             StringBuilder message) throws IOException
   {
-    final RestSpecParser parser = new RestSpecParser();
-    final DataSchemaResolver schemaResolver = MultiFormatDataSchemaResolver.withBuiltinFormats(resolverPath);
-    VelocityEngine velocityEngine = initVelocityEngine();
-    final File targetDirectory = new File(targetDirectoryPath);
-
-
-    final RestSpecParser.ParseResult parseResult = parser.parseSources(sources);
-
-    final StringBuilder message = new StringBuilder();
-    for (CodeUtil.Pair<ResourceSchema, File> pair : parseResult.getSchemaAndFiles())
-    {
-      ResourceSchema resourceSchema = pair.first;
       // Skip unstructured data resources for client generation
       if (resourceSchema != null && ResourceEntityType.UNSTRUCTURED_DATA == resourceSchema.getEntityType())
       {
-        continue;
+        return;
       }
 
       BaseResourceSpec spec = null;
@@ -146,26 +138,26 @@ public class FluentApiGenerator
       {
         spec = new CollectionResourceSpec(resourceSchema,
             new TemplateSpecGenerator(schemaResolver),
-            pair.second.getPath(),
+            sourceIdlName,
             schemaResolver);
       }
       else if (resourceSchema.hasSimple())
       {
         spec = new SimpleResourceSpec(resourceSchema,
             new TemplateSpecGenerator(schemaResolver),
-            pair.second.getPath(),
+            sourceIdlName,
             schemaResolver);
       }
       else if (resourceSchema.hasAssociation())
       {
         spec = new AssociationResourceSpec(resourceSchema,
             new TemplateSpecGenerator(schemaResolver),
-            pair.second.getPath(),
+            sourceIdlName,
             schemaResolver);
       }
       else
       {
-        continue;
+        return;
       }
 
       File packageDir = new File(targetDirectory, spec.getNamespace().toLowerCase().replace('.', File.separatorChar));
@@ -202,8 +194,41 @@ public class FluentApiGenerator
           message.append(e.getMessage()).append("\n");
         }
       }
+      if (spec.getSubResources() != null)
+      {
+        for (ResourceSchema sub : spec.getSubResources())
+        {
+          generateFluentClientByResource(sub,
+          schemaResolver,
+          velocityEngine,
+          targetDirectory,
+          sourceIdlName,
+          message
+          );
+        }
+      }
+  }
 
+  static void run(String resolverPath, String rootPath, String targetDirectoryPath, String[] sources)
+      throws IOException
+  {
+    final DataSchemaResolver schemaResolver = MultiFormatDataSchemaResolver.withBuiltinFormats(resolverPath);
+    VelocityEngine velocityEngine = initVelocityEngine();
+    final File targetDirectory = new File(targetDirectoryPath);
+    final StringBuilder message = new StringBuilder();
 
+    final RestSpecParser parser = new RestSpecParser();
+    final RestSpecParser.ParseResult parseResult = parser.parseSources(sources);
+    for (CodeUtil.Pair<ResourceSchema, File> pair : parseResult.getSchemaAndFiles())
+    {
+      generateFluentClientByResource(
+        pair.first,
+        schemaResolver,
+        velocityEngine,
+        targetDirectory,
+        pair.second.getPath(),
+        message
+      );
     }
 
     if (message.length() > 0)

@@ -103,6 +103,11 @@ public class BaseResourceSpec
     return _resource;
   }
 
+  public ResourceSchemaArray getSubResources()
+  {
+    return _resource.getEntity().getSubResources();
+  }
+
   public TemplateSpecGenerator getTemplateSpecGenerator()
   {
     return _templateSpecGenerator;
