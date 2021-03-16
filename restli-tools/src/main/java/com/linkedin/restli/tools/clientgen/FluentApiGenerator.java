@@ -120,13 +120,15 @@ public class FluentApiGenerator
   }
 
   /**
+   * Generate a fluentClient based on a resource schema
    *
-   * @param resourceSchema
-   * @param schemaResolver
-   * @param velocityEngine
-   * @param targetDirectory
-   * @param sourceIdlName
-   * @param message
+   * @param resourceSchema the resource schema used to generate fluent client
+   * @param schemaResolver a schema resolver used to resolve schema
+   * @param velocityEngine template generating engine
+   * @param targetDirectory the directory where the fluent client will be generated
+   * @param sourceIdlName the source Idl file path that this resource schema is associated with
+   *                      Note the subResource will be in the same IDL with its parent
+   * @param message string builder to build error message
    * @throws IOException
    */
   static void generateFluentClientByResource(ResourceSchema resourceSchema,
