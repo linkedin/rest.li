@@ -98,7 +98,12 @@ record D2Service includes D2ChangeTimeStamps {
   backupRequests: optional array[BackupRequestsConfiguration]
 
   /**
-   * The minimum cluster subset size for this service. With a value greater than 0, each client will only send requests to a subset of the hosts in the cluster. A value of -1 disables the feature.
+   * When enabled, client will only send requests to a subset of the hosts in the cluster. Used together with minClusterSubsetSize.
+   */
+  enableClusterSubsetting: optional boolean
+
+  /**
+   * The minimum cluster subset size for this service. Will only take effect when enableClusterSubsetting is set to true.
    */
   minClusterSubsetSize: optional int
 }

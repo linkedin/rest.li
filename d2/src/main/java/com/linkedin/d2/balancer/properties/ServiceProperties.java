@@ -40,6 +40,7 @@ public class ServiceProperties
   private final List<String> _prioritizedSchemes;
   private final Set<URI> _banned;
   private final Map<String, Object> _serviceMetadataProperties;
+  private final boolean _enableClusterSubsetting;
   private final int _minClusterSubsetSize;
 
   public ServiceProperties(String serviceName,
@@ -129,7 +130,7 @@ public class ServiceProperties
   {
     this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties, transportClientProperties, degraderProperties,
         prioritizedSchemes, banned, serviceMetadataProperties, backupRequests, relativeStrategyProperties,
-        SubsettingStrategy.DEFAULT_CLUSTER_SUBSET_SIZE);
+        SubsettingStrategy.DEFAULT_ENABLE_CLUSTER_SUBSETTING, SubsettingStrategy.DEFAULT_CLUSTER_SUBSET_SIZE);
   }
 
   public ServiceProperties(String serviceName,
@@ -144,6 +145,7 @@ public class ServiceProperties
       Map<String,Object> serviceMetadataProperties,
       List<Map<String,Object>> backupRequests,
       Map<String, Object> relativeStrategyProperties,
+      boolean enableClusterSubsetting,
       int minClusterSubsetSize)
   {
     ArgumentUtil.notNull(serviceName, PropertyKeys.SERVICE_NAME);
@@ -174,6 +176,7 @@ public class ServiceProperties
         Collections.<String,Object>emptyMap();
     _relativeStrategyProperties = relativeStrategyProperties != null
         ? relativeStrategyProperties : Collections.emptyMap();
+    _enableClusterSubsetting = enableClusterSubsetting;
     _minClusterSubsetSize = minClusterSubsetSize;
   }
 
@@ -252,6 +255,11 @@ public class ServiceProperties
   public Map<String,Object> getServiceMetadataProperties()
   {
     return _serviceMetadataProperties;
+  }
+
+  public boolean isEnableClusterSubsetting()
+  {
+    return _enableClusterSubsetting;
   }
 
   public int getMinClusterSubsetSize()

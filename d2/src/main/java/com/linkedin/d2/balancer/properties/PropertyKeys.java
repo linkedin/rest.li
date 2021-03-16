@@ -72,6 +72,7 @@ public class PropertyKeys
   public static final String ALLOWED_CLIENT_OVERRIDE_KEYS = "allowedClientOverrideKeys";
   public static final String SERVICE_METADATA_PROPERTIES = "serviceMetadataProperties";
   public static final String RELATIVE_STRATEGY_PROPERTIES = "relativeStrategyProperties";
+  public static final String ENABLE_CLUSTER_SUBSETTING = "enableClusterSubsetting";
   public static final String MIN_CLUSTER_SUBSET_SIZE = "minClusterSubsetSize";
 
   //load balancer specific properties

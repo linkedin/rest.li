@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ZKDeterministicSubsettingMetadataProvider implements DeterministicSubsettingMetadataProvider
 {
+  private static final Logger _log = LoggerFactory.getLogger(ZKDeterministicSubsettingMetadataProvider.class);
   private final String _clusterName;
   private final URI _nodeUri;
   private final long _timeout;
@@ -46,6 +47,7 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
 
   @GuardedBy("_lock")
   private long _clusterGenerationId = -1;
+  @GuardedBy("_lock")
   private DeterministicSubsettingMetadata _subsettingMetadata;
 
   public ZKDeterministicSubsettingMetadataProvider(String clusterName,
@@ -106,6 +108,7 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
     {
       return metadataFutureCallback.get(_timeout, _unit);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
+      _log.warn("Failed to fetch deterministic subsetting metadata from ZooKeeper", e);
       return null;
     }
   }

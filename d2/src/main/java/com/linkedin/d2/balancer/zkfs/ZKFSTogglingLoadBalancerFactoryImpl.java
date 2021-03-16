@@ -35,8 +35,6 @@ import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
-import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactory;
-import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactoryImpl;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
 import com.linkedin.d2.balancer.util.TogglingLoadBalancer;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;

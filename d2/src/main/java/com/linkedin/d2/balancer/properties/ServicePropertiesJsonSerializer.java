@@ -203,6 +203,7 @@ public class ServicePropertiesJsonSerializer implements
     Map<String, Object> transportClientProperties = mapGetOrDefault(map, PropertyKeys.TRANSPORT_CLIENT_PROPERTIES, Collections.emptyMap());
     Map<String, String> degraderProperties = mapGetOrDefault(map, PropertyKeys.DEGRADER_PROPERTIES, Collections.emptyMap());
     Map<String, Object> relativeStrategyProperties = mapGetOrDefault(map, PropertyKeys.RELATIVE_STRATEGY_PROPERTIES, Collections.emptyMap());
+    boolean enableClusterSubsetting = mapGetOrDefault(map, PropertyKeys.ENABLE_CLUSTER_SUBSETTING, SubsettingStrategy.DEFAULT_ENABLE_CLUSTER_SUBSETTING);
     int minClusterSubsetSize = mapGetOrDefault(map, PropertyKeys.MIN_CLUSTER_SUBSET_SIZE, SubsettingStrategy.DEFAULT_CLUSTER_SUBSET_SIZE);
 
     List<URI> bannedList = mapGetOrDefault(map, PropertyKeys.BANNED_URIS, Collections.emptyList());
@@ -241,6 +242,7 @@ public class ServicePropertiesJsonSerializer implements
                                  metadataProperties,
                                  backupRequests,
                                  relativeStrategyProperties,
+                                 enableClusterSubsetting,
                                  minClusterSubsetSize);
   }
 }

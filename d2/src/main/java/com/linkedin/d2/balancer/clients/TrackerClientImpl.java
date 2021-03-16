@@ -49,6 +49,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -74,7 +75,7 @@ public class TrackerClientImpl implements TrackerClient
   private final URI _uri;
   private final Predicate<Integer> _isErrorStatus;
   private final boolean _doNotSlowStart;
-  private final Map<Integer, Double> _subsetWeightMap;
+  private final ConcurrentMap<Integer, Double> _subsetWeightMap;
   final CallTracker _callTracker;
 
   private volatile CallTracker.CallStats _latestCallStats;

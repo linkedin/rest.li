@@ -25,6 +25,7 @@ import java.util.Map;
  */
 public interface SubsettingStrategy<T>
 {
+  boolean DEFAULT_ENABLE_CLUSTER_SUBSETTING = false;
   int DEFAULT_CLUSTER_SUBSET_SIZE = -1;
 
   /**

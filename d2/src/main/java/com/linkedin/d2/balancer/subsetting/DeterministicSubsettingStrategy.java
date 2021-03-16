@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
-import org.apache.http.annotation.GuardedBy;
+import javax.annotation.concurrent.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,9 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
 
   @GuardedBy("_lock")
   private DeterministicSubsettingMetadata _currentMetadata;
+  @GuardedBy("_lock")
   private long _currentVersion = -1;
+  @GuardedBy("_lock")
   private Map<T, Double> _currentWeightedSubset;
 
   /**

@@ -678,45 +678,43 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                                   Map<URI, TrackerClient> potentialClients)
   {
     SubsettingStrategy<URI> subsettingStrategy = _subsettingStrategyFactory.get(serviceName, minClusterSubsetSize, partitionId);
-    if (subsettingStrategy != null)
+
+    if (subsettingStrategy == null)
     {
-      if (subsettingStrategy.isSubsetChanged(_version.get()) ||
-          !_weightedSubsetsCache.containsKey(serviceName) ||
-          !_weightedSubsetsCache.get(serviceName).containsKey(partitionId))
-      {
-        Map<URI, Double> weightMap = potentialClients.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPartitionWeight(partitionId)));
-        Map<URI, Double> subsetMap = subsettingStrategy.getWeightedSubset(weightMap, _version.get());
+      return potentialClients;
+    }
 
-        if (subsetMap == null)
-        {
-          return potentialClients;
-        }
-        else
-        {
-          Map<URI, TrackerClient> subsetClients = new HashMap<>();
-          for (Map.Entry<URI, Double> entry: subsetMap.entrySet())
-          {
-            URI uri = entry.getKey();
-            TrackerClient client = potentialClients.get(uri);
-            client.setSubsetWeight(partitionId, subsetMap.get(uri));
-            subsetClients.put(uri, client);
-          }
+    // If cluster version is not changed, return the cached subset if possible
+    if (!subsettingStrategy.isSubsetChanged(_version.get()) &&
+        _weightedSubsetsCache.containsKey(serviceName) &&
+        _weightedSubsetsCache.get(serviceName).containsKey(partitionId))
+    {
+      return _weightedSubsetsCache.get(serviceName).get(partitionId);
+    }
 
-          _weightedSubsetsCache.putIfAbsent(serviceName, new ConcurrentHashMap<>());
-          _weightedSubsetsCache.get(serviceName).put(partitionId, subsetClients);
+    Map<URI, Double> weightMap = potentialClients.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPartitionWeight(partitionId)));
+    Map<URI, Double> subsetMap = subsettingStrategy.getWeightedSubset(weightMap, _version.get());
 
-          return subsetClients;
-        }
-      }
-      else
-      {
-        return _weightedSubsetsCache.get(serviceName).get(partitionId);
-      }
+    if (subsetMap == null)
+    {
+      return potentialClients;
     }
     else
     {
-      return potentialClients;
+      Map<URI, TrackerClient> subsetClients = new HashMap<>();
+      for (Map.Entry<URI, Double> entry: subsetMap.entrySet())
+      {
+        URI uri = entry.getKey();
+        TrackerClient client = potentialClients.get(uri);
+        client.setSubsetWeight(partitionId, subsetMap.get(uri));
+        subsetClients.put(uri, client);
+      }
+
+      _weightedSubsetsCache.computeIfAbsent(serviceName, k -> new ConcurrentHashMap<>());
+      _weightedSubsetsCache.get(serviceName).put(partitionId, subsetClients);
+
+      return subsetClients;
     }
   }
 

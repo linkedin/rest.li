@@ -17,15 +17,15 @@
 package com.linkedin.d2.balancer.subsetting;
 
 import com.linkedin.d2.balancer.LoadBalancerState;
-import com.linkedin.d2.balancer.properties.ServiceProperties;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 
 public class SubsettingStrategyFactoryImpl implements SubsettingStrategyFactory
 {
-  private final Map<String, Map<Integer, SubsettingStrategy<URI>>> _subsettingStrategyMap;
+  private final ConcurrentMap<String, ConcurrentMap<Integer, SubsettingStrategy<URI>>> _subsettingStrategyMap;
   private final DeterministicSubsettingMetadataProvider _deterministicSubsettingMetadataProvider;
   private final LoadBalancerState _state;
 
@@ -40,32 +40,33 @@ public class SubsettingStrategyFactoryImpl implements SubsettingStrategyFactory
   @Override
   public SubsettingStrategy<URI> get(String serviceName, int minClusterSubsetSize, int partitionId)
   {
-    if (minClusterSubsetSize > 0)
+    if (minClusterSubsetSize <= 0)
     {
-      if (_subsettingStrategyMap.containsKey(serviceName))
-      {
-        Map<Integer, SubsettingStrategy<URI>> strategyMap = _subsettingStrategyMap.get(serviceName);
-        if (strategyMap.containsKey(partitionId))
-        {
-          return strategyMap.get(partitionId);
-        }
-        else
-        {
-          strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(
-              _deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize, _state));
-        }
-      }
-      else
-      {
-        Map<Integer, SubsettingStrategy<URI>> strategyMap = new ConcurrentHashMap<>();
-        strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(
-            _deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize, _state));
-        _subsettingStrategyMap.put(serviceName, strategyMap);
-      }
-
-      return _subsettingStrategyMap.get(serviceName).get(partitionId);
+      return null;
     }
 
-    return null;
+    if (_subsettingStrategyMap.containsKey(serviceName))
+    {
+      Map<Integer, SubsettingStrategy<URI>> strategyMap = _subsettingStrategyMap.get(serviceName);
+      if (strategyMap.containsKey(partitionId))
+      {
+        return strategyMap.get(partitionId);
+      }
+
+      strategyMap.computeIfAbsent(partitionId, id -> new DeterministicSubsettingStrategy<>(
+          _deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize, _state));
+    }
+    else
+    {
+      _subsettingStrategyMap.computeIfAbsent(serviceName, name ->
+      {
+        ConcurrentMap<Integer, SubsettingStrategy<URI>> strategyMap = new ConcurrentHashMap<>();
+        strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(
+            _deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize, _state));
+        return strategyMap;
+      });
+    }
+
+    return _subsettingStrategyMap.get(serviceName).get(partitionId);
   }
 }

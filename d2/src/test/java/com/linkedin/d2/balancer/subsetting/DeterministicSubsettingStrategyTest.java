@@ -189,9 +189,9 @@ public class DeterministicSubsettingStrategyTest
         };
   }
 
-  private static double[] generateRandomWeights(int size)
+  private static double[] generateRandomWeights(int size, double bound)
   {
-    return new Random().doubles(size, 0D, 1D).toArray();
+    return new Random().doubles(size, 0D, bound).toArray();
   }
 
   @DataProvider
@@ -203,11 +203,11 @@ public class DeterministicSubsettingStrategyTest
             {1, new double[]{1.0, 1.0, 1.0, 1.0, 1.0}, 10},
             {1, new double[]{1.0, 0.0, 0.0, 0.0, 0.0}, 10},
             {5, new double[]{1.0, 1.0, 0.0, 0.0, 0.0}, 10},
-            {10, generateRandomWeights(100), 10},
-            {7, generateRandomWeights(40), 13},
-            {47, generateRandomWeights(40), 13},
-            {13, generateRandomWeights(200), 11},
-            {83, generateRandomWeights(359), 23}
+            {10, generateRandomWeights(100, 1D), 10},
+            {7, generateRandomWeights(40, 1D), 13},
+            {47, generateRandomWeights(40, 10D), 13},
+            {13, generateRandomWeights(200, 20D), 11},
+            {83, generateRandomWeights(359, 20D), 23}
         };
   }
 }
