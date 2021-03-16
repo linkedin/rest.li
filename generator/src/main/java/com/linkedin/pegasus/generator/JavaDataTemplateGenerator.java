@@ -1510,7 +1510,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     if (hasNestedFields(schema))
     {
       // Arrays can custom attributes like start and count. The expected size of the map is attribute size + 1 (for items).
-      final JDefinedClass maskNestedClass = generateProjectionMaskNestedClass(templateClass, FilterConstants.NUMBER_OF_ARRAY_ATTRIBUTES + 1);
+      final JDefinedClass maskNestedClass = generateProjectionMaskNestedClass(templateClass, FilterConstants.ARRAY_ATTRIBUTES.size() + 1);
 
      final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(wildcardMethodName));
 
