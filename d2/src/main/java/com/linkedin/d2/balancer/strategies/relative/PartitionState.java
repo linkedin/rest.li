@@ -183,7 +183,7 @@ public class PartitionState
 
   List<PartitionStateUpdateListener<PartitionState>> getListeners()
   {
-    return Collections.unmodifiableList(_listeners);
+    return _listeners;
   }
 
   void removeTrackerClient(TrackerClient trackerClient)
