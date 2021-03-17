@@ -62,15 +62,18 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.Sync;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
+import org.gradle.language.jvm.tasks.ProcessResources;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
@@ -1824,6 +1827,32 @@ public class PegasusPlugin implements Plugin<Project>
 
     // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
     project.getDependencies().add(compileConfigName, project.files(dataTemplateJarTask.getArchivePath()));
+
+    project.getPlugins().withId("ivy-publish", ivyPublish -> {
+      // TODO if !atLeastGradle53 throw
+
+      JavaPluginExtension java = project.getExtensions().getByType(JavaPluginExtension.class);
+      if ("mainGeneratedDataTemplate".equals(targetSourceSet.getName())) {
+        // create new capability; automatically creates api and implementation configurations
+        java.registerFeature("dataTemplate", featureSpec -> {
+          featureSpec.usingSourceSet(targetSourceSet);
+        });
+
+        // include pegasus files in the output of this SourceSet
+        TaskProvider<ProcessResources> processResources = project.getTasks().named(targetSourceSet.getProcessResourcesTaskName(), ProcessResources.class);
+        processResources.configure(it -> {
+          it.from(prepareSchemasForPublishTask, copy -> copy.into("pegasus"));
+          it.from(prepareLegacySchemasForPublishTask, copy -> copy.into(TRANSLATED_SCHEMAS_DIR));
+          //TODO maybe add extensions
+        });
+
+        // expose transitive dependencies to consumers via api configuration
+        Configuration mainGeneratedDataTemplateApi = project.getConfigurations().getByName(targetSourceSet.getApiConfigurationName());
+        mainGeneratedDataTemplateApi.extendsFrom(
+                getDataModelConfig(project, sourceSet),
+                project.getConfigurations().getByName("dataTemplateCompile"));
+      }
+    });
 
     if (debug)
     {
