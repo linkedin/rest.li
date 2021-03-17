@@ -13,8 +13,11 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.16.1] - 2021-03-17
 - Add fluent client api for simple resource and association resource.
 - Add support for generating projection mask as the mask data map.
+- Fix UnmodifiableList wrap in d2 relative load balancer
 
 ## [29.16.0] - 2021-03-10
 - Add a ParSeq based CompletionStage implementation
@@ -4883,7 +4886,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.16.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.16.1...master
+[29.16.1]: https://github.com/linkedin/rest.li/compare/v29.16.0...v29.16.1
 [29.16.0]: https://github.com/linkedin/rest.li/compare/v29.15.9...v29.16.0
 [29.15.9]: https://github.com/linkedin/rest.li/compare/v29.15.8...v29.15.9
 [29.15.8]: https://github.com/linkedin/rest.li/compare/v29.15.7...v29.15.8
