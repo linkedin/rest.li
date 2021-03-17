@@ -1,5 +1,6 @@
 dependencies {
   compile project(':data')
+  compile project(':data-transform')
   compile project(':r2-core')
   compile project(':pegasus-common')
   compile externalDependency.commonsIo

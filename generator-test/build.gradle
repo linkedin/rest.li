@@ -29,6 +29,7 @@ project.sourceSets.all { SourceSet sourceSet ->
 
     final String currentResolverPath = dataTemplateGenerateTask.systemProperties['generator.resolver.path']
     dataTemplateGenerateTask.systemProperties(['generator.resolver.path': "${currentResolverPath}${File.pathSeparator}${inputDataSchemaDirPath}"])
+    dataTemplateGenerateTask.systemProperties(['generator.generate.field.mask': "true"])
   }
 }
 
