@@ -1,5 +1,6 @@
 namespace com.linkedin.restli.examples.defaults.api
 
+
 record HighLevelRecordWithDefault {
   noDefaultFieldA: int,
   intDefaultFieldB: int = -1,
