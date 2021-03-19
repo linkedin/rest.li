@@ -36,7 +36,7 @@ import com.linkedin.restli.common.TypeSpec;
 #foreach($import in $spec.importsForRestMethods)
   import ${import};
 #end
-#if(!${spec.isResourceNameConflictWithEntityClass()})
+#if(!${spec.isEntityClassNameConflicted()})
 import ${spec.entityClass.fullName};
 #end
 #if(${spec.getResource().hasAssociation()})
@@ -56,9 +56,12 @@ import java.util.concurrent.CompletableFuture;
 import javax.annotation.Generated;
 
 @Generated("Generated from $spec.sourceIdlName")
-public class ${spec.className}${class_name_suffix}{
+public class ${spec.className}${class_name_suffix} implements ${spec.toImplementInterfaceName} {
   private final static String ORIGINAL_RESOURCE_PATH = "$util.getResourcePath($spec.resource.path)";
   private static ResourceSpec _resourceSpec;
+  #if(${spec.getPathKeys().size()} > 0)
+  private Map<String, Object> _pathKeyMap = new HashMap<>();
+  #end
 
   static {
     HashMap<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
@@ -146,6 +149,38 @@ public class ${spec.className}${class_name_suffix}{
     _client = client;
     _engine = engine;
   }
+
+  ## Merge another pathKeyMap
+  #if(${spec.getPathKeys().size()}> 0)
+  public ${spec.className}${class_name_suffix} pathKeyMap(Map<String, Object> pathKeyMap)
+  {
+    _pathKeyMap.putAll(pathKeyMap);
+    return this;
+  }
+  #end
+
+  ## PathKey binding method
+  #foreach($pathKey in ${spec.getPathKeys()})
+  public ${spec.className}${class_name_suffix} $pathKey(${spec.getPathKeyTypes().get($pathKey)} $pathKey)
+  {
+    _pathKeyMap.put("$pathKey", $pathKey);
+    return this;
+  }
+  #end
+
+  #foreach($subSpec in $spec.childSubResourceSpecs)
+  @Override
+  ${subSpec.className} ${util.nameCamelCase($subSpec.className)}of(#if(${subSpec.diffPathKey})${subSpec.parent.keyClassName} ${subSpec.diffPathKey}#end)
+  {
+    return new ${subSpec.className}${class_name_suffix}(_client, _engine)#if(${spec.getPathKeys().size()} > 0).pathKeyMap(_pathKeyMap)#end
+               #if(${subSpec.diffPathKey})
+               .${subSpec.diffPathKey}(${subSpec.diffPathKey});
+               #else
+               ;
+               #end
+  }
+  #end
+
   // CRUD methods
   #foreach($method in $spec.restMethods)
     #parse("apiVmTemplates/rest.${method.method}.vm")

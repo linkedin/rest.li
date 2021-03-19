@@ -549,6 +549,8 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     }
   }
 
+  // ----- Test with Simple Resources ------
+
   @Test
   public void testSimpleResourceUpdate() throws Exception
   {
@@ -580,6 +582,8 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     Assert.assertEquals(greetingEntity.getMessage(), message);
 
   }
+
+  // ----- Test with Assocations Resources ------
 
   @Test
   public void testAssociateResourceGet() throws Exception
@@ -643,6 +647,14 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
       Assert.assertEquals(ids.get(id).getStatus().intValue(), 204);
     }
   }
+
+  // ----- Test with Sub Resources ------
+
+  @Test public void testSubResource(){}
+
+  // ## Tests with second level subresource ##
+
+  // ----- Test utils ------
 
   private Greeting getGreeting()
   {

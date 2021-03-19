@@ -33,7 +33,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -49,6 +52,9 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.JarResourceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.linkedin.restli.tools.clientgen.RequestBuilderSpecGenerator.*;
+import static com.linkedin.restli.tools.clientgen.fluentspec.SpecUtils.*;
 
 
 /**
@@ -131,17 +137,18 @@ public class FluentApiGenerator
    * @param message string builder to build error message
    * @throws IOException
    */
-  static void generateFluentClientByResource(ResourceSchema resourceSchema,
+  static BaseResourceSpec generateFluentClientByResource(ResourceSchema resourceSchema,
                                              DataSchemaResolver schemaResolver,
                                              VelocityEngine velocityEngine,
                                              File targetDirectory,
                                              String sourceIdlName,
-                                             StringBuilder message) throws IOException
+                                             List<BaseResourceSpec> parentList,
+                                             StringBuilder message)
   {
       // Skip unstructured data resources for client generation
       if (resourceSchema != null && ResourceEntityType.UNSTRUCTURED_DATA == resourceSchema.getEntityType())
       {
-        return;
+        return null;
       }
 
       BaseResourceSpec spec = null;
@@ -168,21 +175,62 @@ public class FluentApiGenerator
       }
       else
       {
-        return;
+        return null;
       }
-
       File packageDir = new File(targetDirectory, spec.getNamespace().toLowerCase().replace('.', File.separatorChar));
       packageDir.mkdirs();
       // Generate FluentClient impl
       File implFile = new File(packageDir, CodeUtil.capitalize(spec.getResource().getName()) + FLUENT_CLIENT_FILE_SUFFIX + ".java");
       // Generate Resource interface
-      // TODO: move to universal client generator where fits better
       File interfaceFile= new File(packageDir, CodeUtil.capitalize(spec.getResource().getName()) + ".java");
+
+      String resourcePath = getResourcePath(resourceSchema.getPath());
+      List<String> pathKeys = getPathKeys(resourcePath);
+      spec.setPathKeys(pathKeys);
+      spec.setAncestorResourceSpecs(new ArrayList<>(parentList));
+      List<BaseResourceSpec> childrenList = new LinkedList<>();
+      if (spec.getSubResources() != null)
+      {
+        for (ResourceSchema sub : spec.getSubResources())
+        {
+          parentList.add(spec);
+          BaseResourceSpec childSpec = generateFluentClientByResource(sub,
+              schemaResolver,
+              velocityEngine,
+              targetDirectory,
+              sourceIdlName,
+              parentList,
+              message);
+          if (childSpec != null)
+          {
+            childrenList.add(childSpec);
+          }
+          parentList.remove(parentList.size() - 1);
+        }
+      }
+
+      spec.setChildSubResourceSpecs(childrenList);
+
       for (Pair<File, String> templatePair : Arrays.asList(
           ImmutablePair.of(interfaceFile, "resource_interface.vm"),
           ImmutablePair.of(implFile, "resource.vm")
       ))
       {
+
+        if (
+            // If this is subresource, its interface should be nested in its root parent's interface
+            templatePair.getLeft() == interfaceFile
+            && parentList.size() != 0
+            // Unless this subresource is in different namespace with its immediate parent
+            // In this case, two interfaces will be generated in different namespaces,
+            //    In this way, FluentClient impl always stays together with the interface
+            && parentList.get(parentList.size() - 1).getNamespace().equals(spec.getNamespace())
+            )
+
+        {
+          continue;
+        }
+
         try (FileWriter writer = new FileWriter(templatePair.getLeft()))
         {
           VelocityContext context = new VelocityContext();
@@ -204,20 +252,8 @@ public class FluentApiGenerator
           LOGGER.error("Error generating fluent client apis", e);
           message.append(e.getMessage()).append("\n");
         }
-      }
-      if (spec.getSubResources() != null)
-      {
-        for (ResourceSchema sub : spec.getSubResources())
-        {
-          generateFluentClientByResource(sub,
-          schemaResolver,
-          velocityEngine,
-          targetDirectory,
-          sourceIdlName,
-          message
-          );
-        }
-      }
+    }
+    return spec;
   }
 
   static void run(String resolverPath, String rootPath, String targetDirectoryPath, String[] sources)
@@ -238,6 +274,7 @@ public class FluentApiGenerator
         velocityEngine,
         targetDirectory,
         pair.second.getPath(),
+        new ArrayList<>(2),
         message
       );
     }

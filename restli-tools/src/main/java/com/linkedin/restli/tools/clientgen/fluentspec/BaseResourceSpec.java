@@ -71,9 +71,13 @@ import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.util.CustomTypeUtil;
 import java.io.File;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 
 public class BaseResourceSpec
@@ -86,6 +90,12 @@ public class BaseResourceSpec
   ClassTemplateSpec _entityClass = null;
   // In case resource name and entity class are conflicting, will need to use full entity class name
   final boolean _resourceNameConflictWithEntityClass;
+  // subresources of this resource
+  List<BaseResourceSpec> _childSubResourceSpecs;
+  // All of the direct ancestors of this resource
+  List<BaseResourceSpec> _ancestorResourceSpecs;
+  List<String> _pathKeys;
+  Map<String, String> pathKeyTypes;
 
 
   public BaseResourceSpec(ResourceSchema resourceSchema, TemplateSpecGenerator templateSpecGenerator,
@@ -130,6 +140,14 @@ public class BaseResourceSpec
   public String getNamespace()
   {
     return _resource.hasNamespace() ? _resource.getNamespace() : "";
+  }
+
+  /**
+   * To concatenate namespace and class name
+   */
+  public String getBindingName()
+  {
+    return getNamespace().equals("")? getNamespace() + "." + getClassName(): getClassName();
   }
 
   protected ClassTemplateSpec classToTemplateSpec(String classname)
@@ -263,7 +281,7 @@ public class BaseResourceSpec
 
   public String getEntityClassName()
   {
-    return _resourceNameConflictWithEntityClass ? getEntityClass().getBindingName() : getEntityClass().getClassName();
+    return isEntityClassNameConflicted()? getEntityClass().getBindingName() : getEntityClass().getClassName();
   }
 
   public List<RestMethodSpec> getRestMethods()
@@ -366,9 +384,148 @@ public class BaseResourceSpec
     }
   }
 
-  public boolean isResourceNameConflictWithEntityClass()
+  public boolean isEntityClassNameConflicted()
   {
-    return _resourceNameConflictWithEntityClass;
+    // If parent resource has same name as Entity class name,
+    // then also use full entity class name.
+    return _resourceNameConflictWithEntityClass || getAncestorResourceSpecs().stream()
+        .map(BaseResourceSpec::getClassName)
+        .anyMatch(v -> v.equals(getEntityClass().getClassName()));
   }
 
+  /**
+   * Use to store all subResource specs
+   */
+  public List<BaseResourceSpec> getChildSubResourceSpecs()
+  {
+    return _childSubResourceSpecs;
+  }
+
+  public void setChildSubResourceSpecs(List<BaseResourceSpec> childSubResourceSpecs)
+  {
+    this._childSubResourceSpecs = childSubResourceSpecs;
+  }
+
+  /**
+   * For subResources, to keep a link to all the parent specs
+   */
+  public List<BaseResourceSpec> getAncestorResourceSpecs()
+  {
+    return _ancestorResourceSpecs;
+  }
+
+  public void setAncestorResourceSpecs(List<BaseResourceSpec> ancestorResourceSpecs)
+  {
+    this._ancestorResourceSpecs = ancestorResourceSpecs;
+  }
+
+  private boolean hasParent()
+  {
+    return getAncestorResourceSpecs().size() != 0;
+  }
+
+  public BaseResourceSpec getParent()
+  {
+    List<BaseResourceSpec> parents = getAncestorResourceSpecs();
+    if (parents.size() == 0)
+    {
+      return null;
+    }
+    return parents.get(parents.size() - 1);
+  }
+
+  /**
+   * During interface file rendering,
+   * this method is used to check whether this resource's namespace conflicts with its immediate parent's.
+   *
+   * Check {@link com.linkedin.restli.tools.clientgen.FluentApiGenerator} for rules when subResource does not
+   * use same namespace with its ancestors.
+   */
+  public String getParentNamespace()
+  {
+    return hasParent()? getParent().getNamespace(): "";
+  }
+
+  /**
+   * For fluentClients, the subresource's interface
+   * should be nested in its root parent resource interface file.
+   *
+   * Unless this subResource and its ancestors do not always have same namespace.
+   * In this case, the namespace in the IDL will be used to generate this Subresource interface file.
+   *
+   * In this way the fluentClient and the interface it is implementing will be in same namespace
+   *
+   * @return A proper name for the interface that FluentClient should be implementing
+   */
+  public String getToImplementInterfaceName()
+  {
+    List<BaseResourceSpec>  toCheck = new LinkedList<>(getAncestorResourceSpecs());
+    toCheck.add(this);
+    List<BaseResourceSpec> lineage = new LinkedList<>();
+
+    for (BaseResourceSpec spec : toCheck)
+    {
+      if (lineage.size() > 0 &&
+          !lineage.get(lineage.size() - 1).getNamespace().equals(spec.getNamespace()))
+      {
+        lineage.clear();
+      }
+      lineage.add(spec);
+    }
+    return lineage.stream().map(BaseResourceSpec::getClassName).collect(Collectors.joining("."));
+  }
+
+  /**
+   * To figure out the pathKey segment
+   * from the parent to this subResource
+   *
+   * No diff implies that the parent is a simple resource
+   */
+  public String getDiffPathKey()
+  {
+    if (!hasParent())
+    {
+      return null;
+    }
+    BaseResourceSpec parent = getParent();
+
+    List<String> pathKeys = getPathKeys();
+    if (pathKeys.size() == parent.getPathKeys().size())
+    {
+      return null;
+    }
+    // PathKeys are sorted, return last one
+    return pathKeys.get(pathKeys.size() - 1);
+  }
+
+  public List<String> getPathKeys()
+  {
+    return _pathKeys;
+  }
+
+  public void setPathKeys(List<String> pathKeys)
+  {
+    _pathKeys = pathKeys;
+  }
+
+  /**
+   * Deduce pathKey types map from the ancestors
+   */
+  public Map<String, String> getPathKeyTypes()
+  {
+    if (pathKeyTypes == null)
+    {
+      if (!hasParent())
+      {
+        pathKeyTypes = new HashMap<>();
+      }
+      else
+      {
+        pathKeyTypes = _ancestorResourceSpecs.stream().filter(spec -> spec instanceof CollectionResourceSpec)
+            .map(spec -> ((CollectionResourceSpec) spec))
+            .collect(Collectors.toMap(CollectionResourceSpec::getIdName, CollectionResourceSpec::getKeyClassName));
+      }
+    }
+    return pathKeyTypes;
+  }
 }

@@ -73,6 +73,11 @@ public class SpecUtils {
     return RestLiToolsUtils.nameCapsCase(name);
   }
 
+  public static String nameCamelCase(String name)
+  {
+    return RestLiToolsUtils.nameCamelCase(name);
+  }
+
   public static String restMethodToClassPrefix(String name)
   {
     ResourceMethod method = ResourceMethod.fromString(name);

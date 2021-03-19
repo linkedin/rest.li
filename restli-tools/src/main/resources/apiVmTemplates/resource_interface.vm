@@ -16,8 +16,14 @@ Copyright (c) 2021 LinkedIn Corp.
 #if ($spec.resource.namespace)
     package $spec.resource.namespace;
 #end
-#if(!${spec.isResourceNameConflictWithEntityClass()})
+#if(!${spec.isEntityClassNameConflicted()})
 import ${spec.entityClass.fullName};
+#end
+#foreach($import in $spec.importsForRestMethods)
+    import ${import};
+#end
+#if(${spec.getResource().hasAssociation()})
+    import com.linkedin.restli.common.CompoundKey;
 #end
 
 import java.util.ArrayList;
@@ -31,8 +37,12 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Generated;
-
 @Generated("Generated from $spec.sourceIdlName")
-public interface ${spec.className}{
+public interface ${spec.className} {
     ## TODO: Interface used by Universal Client
+
+#foreach($subSpec in $spec.childSubResourceSpecs)
+#**##subResource($subSpec)##
+#end
+    
 }
