@@ -152,7 +152,7 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
 
   ## Merge another pathKeyMap
   #if(${spec.getPathKeys().size()}> 0)
-  public ${spec.className}${class_name_suffix} pathKeyMap(Map<String, Object> pathKeyMap)
+  public ${spec.className}${class_name_suffix} pathKeys(Map<String, Object> pathKeyMap)
   {
     _pathKeyMap.putAll(pathKeyMap);
     return this;
@@ -161,7 +161,7 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
 
   ## PathKey binding method
   #foreach($pathKey in ${spec.getPathKeys()})
-  public ${spec.className}${class_name_suffix} $pathKey(${spec.getPathKeyTypes().get($pathKey)} $pathKey)
+  public ${spec.className}${class_name_suffix} ${pathKey}Key(${spec.getPathKeyTypes().get($pathKey)} $pathKey)
   {
     _pathKeyMap.put("$pathKey", $pathKey);
     return this;
@@ -172,7 +172,7 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
   @Override
   ${subSpec.className} ${util.nameCamelCase($subSpec.className)}of(#if(${subSpec.diffPathKey})${subSpec.parent.keyClassName} ${subSpec.diffPathKey}#end)
   {
-    return new ${subSpec.className}${class_name_suffix}(_client, _engine)#if(${spec.getPathKeys().size()} > 0).pathKeyMap(_pathKeyMap)#end
+    return new ${subSpec.className}${class_name_suffix}(_client, _engine)#if(${spec.getPathKeys().size()} > 0).pathKeys(_pathKeyMap)#end
                #if(${subSpec.diffPathKey})
                .${subSpec.diffPathKey}(${subSpec.diffPathKey});
                #else
