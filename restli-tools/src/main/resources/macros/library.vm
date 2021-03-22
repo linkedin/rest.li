@@ -38,9 +38,10 @@
         }
       #end
       #foreach($param in $method.supportedProjectionParams)
-        private MaskMap $param;
-        public $className set$util.nameCapsCase($param)(MaskMap $param) {
-          this.$param = $param;
+        private MaskMap $param.paramName;
+        public $className with${param.paramNameCaps}(
+            Function<${param.paramClassName}.ProjectionMask, ${param.paramClassName}.ProjectionMask> ${param.paramName}Handler) {
+          this.$param.paramName = ${param.paramName}Handler.apply(${param.paramClassName}.createMask());
           return this;
         }
       #end
@@ -54,7 +55,7 @@
     $param.paramClassName $param.paramName#if( $foreach.hasNext || $hasOptionalParams),#end
   #end
   #if($hasOptionalParams)
-    ${util.restMethodToClassPrefix($method.method)}OptionalParameters optionalParams
+    Function<${util.restMethodToClassPrefix($method.method)}OptionalParameters, ${util.restMethodToClassPrefix($method.method)}OptionalParameters> optionalParamsProvider
   #end
 #end
 
@@ -63,7 +64,7 @@
     $param.paramName#if( $foreach.hasNext || $method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0),#end
   #end
   #if(($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0))
-    new ${util.restMethodToClassPrefix($method.method)}OptionalParameters()
+    Function.identity()
   #end
 #end
 
@@ -76,6 +77,10 @@
 
 #macro(fillQueryParams $method)
 #**#
+    #if ($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+      ${util.restMethodToClassPrefix($method.method)}OptionalParameters optionalParams = optionalParamsProvider.apply(
+          new ${util.restMethodToClassPrefix($method.method)}OptionalParameters());
+    #end
     #foreach($param in $method.requiredParams)
       queryParams.put("$param.paramName", $param.paramName);
       queryParamClasses.put("$param.paramName", ${param.paramClassName}.class);
@@ -87,8 +92,8 @@
       }
     #end
     #foreach($param in $method.supportedProjectionParams)
-      if (optionalParams.$param != null) {
-        queryParams.put("$param", optionalParams.${param}.getDataMap());
+      if (optionalParams.$param.paramName != null) {
+        queryParams.put("$param.paramName", optionalParams.${param.paramName}.getDataMap());
       }
     #end
 #end

@@ -18,13 +18,15 @@ package com.linkedin.restli.tools.clientgen.fluentspec;
 
 import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.schema.DataSchemaConstants;
+import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
+import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.server.annotations.ReturnEntity;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -130,20 +132,20 @@ public class RestMethodSpec
     return DataMapBuilder.getOptimumHashMapCapacityFromSize(params);
   }
 
-  public Set<String> getSupportedProjectionParams()
+  public Set<ProjectionParameterSpec> getSupportedProjectionParams()
   {
     switch (ResourceMethod.fromString(_schema.getMethod()))
     {
       case GET:
       case BATCH_GET:
-        return Collections.singleton(RestConstants.FIELDS_PARAM);
+        return Collections.singleton(new ProjectionParameterSpec(RestConstants.FIELDS_PARAM, _root.getEntityClass()));
       case CREATE:
       case BATCH_CREATE:
       case PARTIAL_UPDATE:
       case BATCH_PARTIAL_UPDATE:
         if (returnsEntity())
         {
-          return Collections.singleton(RestConstants.FIELDS_PARAM);
+          return Collections.singleton(new ProjectionParameterSpec(RestConstants.FIELDS_PARAM, _root.getEntityClass()));
         }
         else
         {
@@ -152,7 +154,17 @@ public class RestMethodSpec
       case FINDER:
       case BATCH_FINDER:
       case GET_ALL:
-        return RestConstants.PROJECTION_PARAMETERS;
+        Set<ProjectionParameterSpec> collectionParts = new HashSet<>();
+        collectionParts.add(new ProjectionParameterSpec(RestConstants.FIELDS_PARAM, _root.getEntityClass()));
+        if (_schema.getMetadata() != null)
+        {
+          collectionParts.add(new ProjectionParameterSpec(RestConstants.METADATA_FIELDS_PARAM, _root.classToTemplateSpec(_schema.getMetadata().getType())));
+        }
+        if (_schema.hasPagingSupported() && _schema.isPagingSupported())
+        {
+          // TODO: add suppport for paging projection.
+        }
+        return collectionParts;
       default:
         return Collections.emptySet();
     }

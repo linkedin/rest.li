@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Update fluent client APIs to include projection mask as input parameter.
 
 ## [29.17.0] - 2021-03-23
 - Implement D2 cluster subsetting.
@@ -24,7 +25,6 @@ and what APIs have changed, if applicable.
 - Add fluent client api for simple resource and association resource.
 - Add support for generating projection mask as the mask data map.
 - Fix UnmodifiableList wrap in d2 relative load balancer
-- Update fluent client APIs to include projection mask as input parameter.
 
 ## [29.16.0] - 2021-03-10
 - Add a ParSeq based CompletionStage implementation
