@@ -71,6 +71,7 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.Sync;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
@@ -1830,6 +1831,13 @@ public class PegasusPlugin implements Plugin<Project>
 
     // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
     project.getDependencies().add(compileConfigName, project.files(dataTemplateJarTask.getArchivePath()));
+
+    // make pegasus artifacts reproducible
+    // see https://docs.gradle.org/6.8.3/userguide/working_with_files.html#sec:reproducible_archives
+    project.getTasks().withType(AbstractArchiveTask.class).configureEach(task -> {
+      task.setPreserveFileTimestamps(false);
+      task.setReproducibleFileOrder(true);
+    });
 
     project.getPlugins().withType(IvyPublishPlugin.class, ivyPublish -> {
       if (!isAtLeastGradle61()) {
