@@ -64,6 +64,7 @@ import org.gradle.api.plugins.JavaPlatformPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.publish.ivy.plugins.IvyPublishPlugin;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.SourceSet;
@@ -1830,30 +1831,35 @@ public class PegasusPlugin implements Plugin<Project>
     // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
     project.getDependencies().add(compileConfigName, project.files(dataTemplateJarTask.getArchivePath()));
 
-    project.getPlugins().withId("ivy-publish", ivyPublish -> {
-      // TODO if !atLeastGradle53 throw
+    project.getPlugins().withType(IvyPublishPlugin.class, ivyPublish -> {
+      if (!isAtLeastGradle61()) {
+        throw new GradleException("Using the ivy-publish plugin with the pegasus plugin requires Gradle 6.1 or higher " +
+                "at build time.  Please upgrade.");
+      }
 
       JavaPluginExtension java = project.getExtensions().getByType(JavaPluginExtension.class);
-      if ("mainGeneratedDataTemplate".equals(targetSourceSet.getName())) {
-        // create new capability; automatically creates api and implementation configurations
-        java.registerFeature("dataTemplate", featureSpec -> {
-          featureSpec.usingSourceSet(targetSourceSet);
-        });
+      // create new capabilities per source set; automatically creates api and implementation configurations
+      String featureName = mapSourceSetToFeatureName(targetSourceSet);
+      java.registerFeature(featureName, featureSpec -> {
+        featureSpec.usingSourceSet(targetSourceSet);
+      });
 
-        // include pegasus files in the output of this SourceSet
-        TaskProvider<ProcessResources> processResources = project.getTasks().named(targetSourceSet.getProcessResourcesTaskName(), ProcessResources.class);
-        processResources.configure(it -> {
-          it.from(prepareSchemasForPublishTask, copy -> copy.into("pegasus"));
-          it.from(prepareLegacySchemasForPublishTask, copy -> copy.into(TRANSLATED_SCHEMAS_DIR));
-          //TODO maybe add extensions
-        });
+      // include pegasus files in the output of this SourceSet
+      TaskProvider<ProcessResources> processResources = project.getTasks().named(targetSourceSet.getProcessResourcesTaskName(), ProcessResources.class);
+      processResources.configure(it -> {
+        it.from(prepareSchemasForPublishTask, copy -> copy.into("pegasus"));
+        it.from(prepareLegacySchemasForPublishTask, copy -> copy.into(TRANSLATED_SCHEMAS_DIR));
+        Sync copyExtensionSchemasTask = project.getTasks().withType(Sync.class).findByName(targetSourceSet.getName() + "CopyExtensionSchemas");
+        if (copyExtensionSchemasTask != null) {
+          it.from(copyExtensionSchemasTask, copy -> copy.into("extensions"));
+        }
+      });
 
-        // expose transitive dependencies to consumers via api configuration
-        Configuration mainGeneratedDataTemplateApi = project.getConfigurations().getByName(targetSourceSet.getApiConfigurationName());
-        mainGeneratedDataTemplateApi.extendsFrom(
-                getDataModelConfig(project, sourceSet),
-                project.getConfigurations().getByName("dataTemplateCompile"));
-      }
+      // expose transitive dependencies to consumers via api configuration
+      Configuration mainGeneratedDataTemplateApi = project.getConfigurations().getByName(targetSourceSet.getApiConfigurationName());
+      mainGeneratedDataTemplateApi.extendsFrom(
+              getDataModelConfig(project, targetSourceSet),
+              project.getConfigurations().getByName("dataTemplateCompile"));
     });
 
     if (debug)
@@ -1869,6 +1875,34 @@ public class PegasusPlugin implements Plugin<Project>
 
     project.getTasks().getByName(sourceSet.getCompileJavaTaskName()).dependsOn(dataTemplateJarTask);
     return generateDataTemplatesTask;
+  }
+
+  private String mapSourceSetToFeatureName(SourceSet sourceSet) {
+    String featureName = "";
+    switch (sourceSet.getName()) {
+      case "mainGeneratedDataTemplate":
+        featureName = "dataTemplate";
+        break;
+      case "testGeneratedDataTemplate":
+        featureName = "testDataTemplate";
+        break;
+      case "mainGeneratedRest":
+        featureName = "restClient";
+        break;
+      case "testGeneratedRest":
+        featureName = "testRestClient";
+        break;
+      case "mainGeneratedAvroSchema":
+        featureName = "avroSchema";
+        break;
+      case "testGeneratedAvroSchema":
+        featureName = "testAvroSchema";
+        break;
+      default:
+        String msg = String.format("Unable to map %s to an appropriate feature name", sourceSet);
+        throw new GradleException(msg);
+    }
+    return featureName;
   }
 
   // Generate rest client from idl files generated from java source files in the specified source set.
@@ -2260,8 +2294,12 @@ public class PegasusPlugin implements Plugin<Project>
           task.onlyIf(t -> !SharedFileUtils.getSuffixedFiles(project, inputDir, PDL_FILE_SUFFIX).isEmpty());
         });
   }
+
   protected static boolean isAtLeastGradle54() {
     return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.4")) >= 0;
   }
 
+  protected static boolean isAtLeastGradle61() {
+    return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.1")) >= 0;
+  }
 }

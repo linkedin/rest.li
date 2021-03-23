@@ -22,7 +22,7 @@ class PegasusPluginIntegrationTest extends Specification {
         .withProjectDir(tempDir.root)
         .withPluginClasspath()
         .withArguments('mainDataTemplateJar')
-        .forwardOutput()
+        //.forwardOutput()
         .build()
 
     then:
