@@ -65,6 +65,7 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.publish.ivy.plugins.IvyPublishPlugin;
+import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.SourceSet;
@@ -1850,6 +1851,39 @@ public class PegasusPlugin implements Plugin<Project>
       String featureName = mapSourceSetToFeatureName(targetSourceSet);
       java.registerFeature(featureName, featureSpec -> {
         featureSpec.usingSourceSet(targetSourceSet);
+      });
+
+      // include pegasus files in the output of this SourceSet
+      TaskProvider<ProcessResources> processResources = project.getTasks().named(targetSourceSet.getProcessResourcesTaskName(), ProcessResources.class);
+      processResources.configure(it -> {
+        it.from(prepareSchemasForPublishTask, copy -> copy.into("pegasus"));
+        it.from(prepareLegacySchemasForPublishTask, copy -> copy.into(TRANSLATED_SCHEMAS_DIR));
+        Sync copyExtensionSchemasTask = project.getTasks().withType(Sync.class).findByName(targetSourceSet.getName() + "CopyExtensionSchemas");
+        if (copyExtensionSchemasTask != null) {
+          it.from(copyExtensionSchemasTask, copy -> copy.into("extensions"));
+        }
+      });
+
+      // expose transitive dependencies to consumers via api configuration
+      Configuration mainGeneratedDataTemplateApi = project.getConfigurations().getByName(targetSourceSet.getApiConfigurationName());
+      mainGeneratedDataTemplateApi.extendsFrom(
+              getDataModelConfig(project, targetSourceSet),
+              project.getConfigurations().getByName("dataTemplateCompile"));
+    });
+
+    project.getPlugins().withType(MavenPublishPlugin.class, ivyPublish -> {
+      if (!isAtLeastGradle61()) {
+        throw new GradleException("Using the maven-publish plugin with the pegasus plugin requires Gradle 6.1 or higher " +
+                "at build time.  Please upgrade.");
+      }
+
+      JavaPluginExtension java = project.getExtensions().getByType(JavaPluginExtension.class);
+      // create new capabilities per source set; automatically creates api and implementation configurations
+      String featureName = mapSourceSetToFeatureName(targetSourceSet);
+      java.registerFeature(featureName, featureSpec -> {
+        featureSpec.usingSourceSet(targetSourceSet);
+        featureSpec.withJavadocJar();
+        featureSpec.withSourcesJar();
       });
 
       // include pegasus files in the output of this SourceSet

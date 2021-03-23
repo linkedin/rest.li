@@ -1,0 +1,418 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.linkedin.pegasus-child-demo",
+    "module": "child",
+    "version": "1.0.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "6.6"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.linkedin.pegasus-parent-demo",
+          "module": "parent",
+          "version": {
+            "requires": "1.0.0"
+          },
+          "requestedCapabilities": [
+            {
+              "group": "com.linkedin.pegasus-parent-demo",
+              "name": "parent-data-template",
+              "version": "1.0.0"
+            }
+          ]
+        },
+        {
+          "group": "com.google.code.findbugs",
+          "module": "jsr305",
+          "version": {
+            "requires": "3.0.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "child-1.0.0.jar",
+          "url": "child-1.0.0.jar",
+          "size": 261,
+          "sha512": "747d2f00a7f5f379582e33e452f30f3a25732a510971d9ed5161355bf7ef0fc507fef30883960dbfc780d36b6e8215fba01086b4ee053358805686e2f2c1aa85",
+          "sha256": "69e1a62e5752ca3f43fb1607f161379bbe88b64af89c1a543c126160adf7cc53",
+          "sha1": "5b8f86fea035328fc9e8c660773037a3401ce25f",
+          "md5": "e7e9f45eb9d74540092920528bb0abf0"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.linkedin.pegasus-parent-demo",
+          "module": "parent",
+          "version": {
+            "requires": "1.0.0"
+          },
+          "requestedCapabilities": [
+            {
+              "group": "com.linkedin.pegasus-parent-demo",
+              "name": "parent-data-template",
+              "version": "1.0.0"
+            }
+          ]
+        },
+        {
+          "group": "com.google.code.findbugs",
+          "module": "jsr305",
+          "version": {
+            "requires": "3.0.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "child-1.0.0.jar",
+          "url": "child-1.0.0.jar",
+          "size": 261,
+          "sha512": "747d2f00a7f5f379582e33e452f30f3a25732a510971d9ed5161355bf7ef0fc507fef30883960dbfc780d36b6e8215fba01086b4ee053358805686e2f2c1aa85",
+          "sha256": "69e1a62e5752ca3f43fb1607f161379bbe88b64af89c1a543c126160adf7cc53",
+          "sha1": "5b8f86fea035328fc9e8c660773037a3401ce25f",
+          "md5": "e7e9f45eb9d74540092920528bb0abf0"
+        }
+      ]
+    },
+    {
+      "name": "mainGeneratedDataTemplateJavadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "child-1.0.0-data-template-javadoc.jar",
+          "url": "child-1.0.0-data-template-javadoc.jar",
+          "size": 24626,
+          "sha512": "f200e2552cd8b12f8972201ec35a00d6d82589db33d9cc1b375a06ce2bcd98f998e1cabaf0d143e96ef5915db6514be72305dfd54114c982530e2f5daa18eadb",
+          "sha256": "689bce1ff8ee2866341b1ef42ed41427a7b0a029acec021434b1f6739d1e6f60",
+          "sha1": "2d455cb57a94608d4ecb1d02f45b8b64af188657",
+          "md5": "4edf48ee6294d0153fd5b97b4011c434"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "com.linkedin.pegasus-child-demo",
+          "name": "child-data-template",
+          "version": "1.0.0"
+        }
+      ]
+    },
+    {
+      "name": "mainGeneratedDataTemplateSourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "child-1.0.0-data-template-sources.jar",
+          "url": "child-1.0.0-data-template-sources.jar",
+          "size": 6315,
+          "sha512": "d519c3102519d6cba849ec0641cf36c5dcefae1d825ebf9602618f6432ce617455bf5f97d557c06a34cea8d1f691052c162b3cc7800223e3739ac0c0d6c47520",
+          "sha256": "532d5a6e920f80ff500dc43ee62803d00da169a558c1f5654bdadb24692a670d",
+          "sha1": "137105f141875fa63c0265fc4b90853602590ac9",
+          "md5": "ecee9fe068fe21efefe86de7d5e07bf3"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "com.linkedin.pegasus-child-demo",
+          "name": "child-data-template",
+          "version": "1.0.0"
+        }
+      ]
+    },
+    {
+      "name": "mainGeneratedDataTemplateApiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.linkedin.pegasus-parent-demo",
+          "module": "parent",
+          "version": {
+            "requires": "1.0.0"
+          },
+          "requestedCapabilities": [
+            {
+              "group": "com.linkedin.pegasus-parent-demo",
+              "name": "parent-data-template",
+              "version": "1.0.0"
+            }
+          ]
+        },
+        {
+          "group": "com.google.code.findbugs",
+          "module": "jsr305",
+          "version": {
+            "requires": "3.0.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "child-1.0.0-data-template.jar",
+          "url": "child-1.0.0-data-template.jar",
+          "size": 9750,
+          "sha512": "2e0f0b7b0ef2479416c8451676eac5a02697b6523f53b30f3e109cc46e831afedb6c186541490a9283a421a5c0213496d68bae7fb113da9c0c779f40eb849011",
+          "sha256": "fa0a997dc6db048f9e8d9a7d96b6df9a2d9ac00dfdc4e4a497666bd4962f360a",
+          "sha1": "7402e1931977f3d309a93bb30db0f149de7f8f12",
+          "md5": "2ef44a5e7cca13e87d7a58a6d134aee4"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "com.linkedin.pegasus-child-demo",
+          "name": "child-data-template",
+          "version": "1.0.0"
+        }
+      ]
+    },
+    {
+      "name": "mainGeneratedDataTemplateRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.linkedin.pegasus-parent-demo",
+          "module": "parent",
+          "version": {
+            "requires": "1.0.0"
+          },
+          "requestedCapabilities": [
+            {
+              "group": "com.linkedin.pegasus-parent-demo",
+              "name": "parent-data-template",
+              "version": "1.0.0"
+            }
+          ]
+        },
+        {
+          "group": "com.google.code.findbugs",
+          "module": "jsr305",
+          "version": {
+            "requires": "3.0.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "child-1.0.0-data-template.jar",
+          "url": "child-1.0.0-data-template.jar",
+          "size": 9750,
+          "sha512": "2e0f0b7b0ef2479416c8451676eac5a02697b6523f53b30f3e109cc46e831afedb6c186541490a9283a421a5c0213496d68bae7fb113da9c0c779f40eb849011",
+          "sha256": "fa0a997dc6db048f9e8d9a7d96b6df9a2d9ac00dfdc4e4a497666bd4962f360a",
+          "sha1": "7402e1931977f3d309a93bb30db0f149de7f8f12",
+          "md5": "2ef44a5e7cca13e87d7a58a6d134aee4"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "com.linkedin.pegasus-child-demo",
+          "name": "child-data-template",
+          "version": "1.0.0"
+        }
+      ]
+    },
+    {
+      "name": "testGeneratedDataTemplateJavadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "child-1.0.0-test-data-template-javadoc.jar",
+          "url": "child-1.0.0-test-data-template-javadoc.jar",
+          "size": 24626,
+          "sha512": "f200e2552cd8b12f8972201ec35a00d6d82589db33d9cc1b375a06ce2bcd98f998e1cabaf0d143e96ef5915db6514be72305dfd54114c982530e2f5daa18eadb",
+          "sha256": "689bce1ff8ee2866341b1ef42ed41427a7b0a029acec021434b1f6739d1e6f60",
+          "sha1": "2d455cb57a94608d4ecb1d02f45b8b64af188657",
+          "md5": "4edf48ee6294d0153fd5b97b4011c434"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "com.linkedin.pegasus-child-demo",
+          "name": "child-test-data-template",
+          "version": "1.0.0"
+        }
+      ]
+    },
+    {
+      "name": "testGeneratedDataTemplateSourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "child-1.0.0-test-data-template-sources.jar",
+          "url": "child-1.0.0-test-data-template-sources.jar",
+          "size": 261,
+          "sha512": "747d2f00a7f5f379582e33e452f30f3a25732a510971d9ed5161355bf7ef0fc507fef30883960dbfc780d36b6e8215fba01086b4ee053358805686e2f2c1aa85",
+          "sha256": "69e1a62e5752ca3f43fb1607f161379bbe88b64af89c1a543c126160adf7cc53",
+          "sha1": "5b8f86fea035328fc9e8c660773037a3401ce25f",
+          "md5": "e7e9f45eb9d74540092920528bb0abf0"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "com.linkedin.pegasus-child-demo",
+          "name": "child-test-data-template",
+          "version": "1.0.0"
+        }
+      ]
+    },
+    {
+      "name": "testGeneratedDataTemplateApiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.linkedin.pegasus-parent-demo",
+          "module": "parent",
+          "version": {
+            "requires": "1.0.0"
+          },
+          "requestedCapabilities": [
+            {
+              "group": "com.linkedin.pegasus-parent-demo",
+              "name": "parent-data-template",
+              "version": "1.0.0"
+            }
+          ]
+        },
+        {
+          "group": "com.google.code.findbugs",
+          "module": "jsr305",
+          "version": {
+            "requires": "3.0.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "child-1.0.0-test-data-template.jar",
+          "url": "child-1.0.0-test-data-template.jar",
+          "size": 261,
+          "sha512": "747d2f00a7f5f379582e33e452f30f3a25732a510971d9ed5161355bf7ef0fc507fef30883960dbfc780d36b6e8215fba01086b4ee053358805686e2f2c1aa85",
+          "sha256": "69e1a62e5752ca3f43fb1607f161379bbe88b64af89c1a543c126160adf7cc53",
+          "sha1": "5b8f86fea035328fc9e8c660773037a3401ce25f",
+          "md5": "e7e9f45eb9d74540092920528bb0abf0"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "com.linkedin.pegasus-child-demo",
+          "name": "child-test-data-template",
+          "version": "1.0.0"
+        }
+      ]
+    },
+    {
+      "name": "testGeneratedDataTemplateRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.linkedin.pegasus-parent-demo",
+          "module": "parent",
+          "version": {
+            "requires": "1.0.0"
+          },
+          "requestedCapabilities": [
+            {
+              "group": "com.linkedin.pegasus-parent-demo",
+              "name": "parent-data-template",
+              "version": "1.0.0"
+            }
+          ]
+        },
+        {
+          "group": "com.google.code.findbugs",
+          "module": "jsr305",
+          "version": {
+            "requires": "3.0.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "child-1.0.0-test-data-template.jar",
+          "url": "child-1.0.0-test-data-template.jar",
+          "size": 261,
+          "sha512": "747d2f00a7f5f379582e33e452f30f3a25732a510971d9ed5161355bf7ef0fc507fef30883960dbfc780d36b6e8215fba01086b4ee053358805686e2f2c1aa85",
+          "sha256": "69e1a62e5752ca3f43fb1607f161379bbe88b64af89c1a543c126160adf7cc53",
+          "sha1": "5b8f86fea035328fc9e8c660773037a3401ce25f",
+          "md5": "e7e9f45eb9d74540092920528bb0abf0"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "com.linkedin.pegasus-child-demo",
+          "name": "child-test-data-template",
+          "version": "1.0.0"
+        }
+      ]
+    }
+  ]
+}
