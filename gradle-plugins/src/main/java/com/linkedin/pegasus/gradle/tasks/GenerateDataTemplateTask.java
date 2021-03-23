@@ -126,9 +126,22 @@ public class GenerateDataTemplateTask extends DefaultTask
     _enableArgFile = enable;
   }
 
+  /**
+   * This method is kept for backwards compatibility.
+   * <p>
+   * This non-property method was exposed.  Property methods should begin with is or get.
+   *
+   * @deprecated use {@link #isGenerateLowercasePath()} instead
+   */
+  @Deprecated
+  public Boolean generateLowercasePath()
+  {
+    return isGenerateLowercasePath();
+  }
+
   @Optional
   @Input
-  public Boolean generateLowercasePath()
+  public Boolean isGenerateLowercasePath()
   {
     return _generateLowercasePath;
   }
