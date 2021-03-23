@@ -2,8 +2,10 @@ package com.linkedin.restli.examples.greetings.server.defaults;
 
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.defaults.api.HighLevelRecordWithDefault;
+import com.linkedin.restli.examples.defaults.api.LowLevelRecordWithDefault;
 import com.linkedin.restli.examples.defaults.api.RecordCriteria;
 import com.linkedin.restli.examples.greetings.api.Empty;
+import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BatchFinderResult;
 import com.linkedin.restli.server.CollectionResult;
@@ -15,6 +17,7 @@ import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
+import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,23 +48,33 @@ public class FieldFillInDefaultResources extends CollectionResourceTemplate<Long
     return result;
   }
 
-  @Override
-  public List<HighLevelRecordWithDefault> getAll(@PagingContextParam PagingContext pagingContext)
+  @RestMethod.GetAll
+  public CollectionResult<HighLevelRecordWithDefault, LowLevelRecordWithDefault> getAllHighLevelRecordWithDefault(
+      @PagingContextParam PagingContext pagingContext)
   {
-    List<HighLevelRecordWithDefault> result = new LinkedList<>();
-    for (int i = 0; i < 3; i++)
+    final int total = 3;
+    List<HighLevelRecordWithDefault> elements = new LinkedList<>();
+    for (int i = 0; i < total; i++)
     {
-      result.add(new HighLevelRecordWithDefault().setNoDefaultFieldA(i));
+      elements.add(new HighLevelRecordWithDefault().setNoDefaultFieldA(i));
     }
-    return result;
+    LowLevelRecordWithDefault metadata = new LowLevelRecordWithDefault();
+    return new CollectionResult<>(elements, total, metadata);
   }
 
   @Finder("findRecords")
-  public List<HighLevelRecordWithDefault> findRecords(@QueryParam("noDefaultFieldA") Integer fieldA)
+  public CollectionResult<HighLevelRecordWithDefault, LowLevelRecordWithDefault> findRecords(
+      @QueryParam("noDefaultFieldA") Integer fieldA)
   {
-    List<HighLevelRecordWithDefault> finderResult = new ArrayList<>();
-    finderResult.add(new HighLevelRecordWithDefault().setNoDefaultFieldA(fieldA));
-    return finderResult;
+    final int total = 3;
+    List<HighLevelRecordWithDefault> elements = new ArrayList<>();
+    for (int i = 0; i < total; i ++)
+    {
+      HighLevelRecordWithDefault record = new HighLevelRecordWithDefault().setNoDefaultFieldA(fieldA);
+      elements.add(record);
+    }
+    LowLevelRecordWithDefault metadata = new LowLevelRecordWithDefault();
+    return new CollectionResult<>(elements, total, metadata);
   }
 
   @BatchFinder(value = "searchRecords", batchParam = "criteria")

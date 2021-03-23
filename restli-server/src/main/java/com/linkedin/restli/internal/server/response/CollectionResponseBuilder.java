@@ -141,8 +141,14 @@ public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? e
     //If the client decides they want total in their paging response, then the resource method will see total in their
     //paging path spec and then decide to set total to a non null value. We will then also include it when we project
     //paging.
-    final CollectionMetadata projectedPaging = new CollectionMetadata(RestUtils.projectFields(paging.data(),
+    DataMap pagingData = paging.data();
+    if (resourceContext.isFillInDefaultsRequested())
+    {
+      pagingData = (DataMap) ResponseUtils.fillInDataDefault(CollectionMetadata.dataSchema(), pagingData);
+    }
+    final CollectionMetadata projectedPaging = new CollectionMetadata(RestUtils.projectFields(pagingData,
             ProjectionMode.AUTOMATIC, resourceContext.getPagingProjectionMask()));
+
 
     //For root object entities
     List<AnyRecord> processedElements = new ArrayList<>(elements.size());
@@ -166,8 +172,13 @@ public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? e
     final AnyRecord projectedCustomMetadata;
     if (customMetadata != null)
     {
+      DataMap customMetadataWithDefault = customMetadata.data();
+      if (resourceContext.isFillInDefaultsRequested())
+      {
+        customMetadataWithDefault = (DataMap) ResponseUtils.fillInDataDefault(customMetadata.schema(), customMetadataWithDefault);
+      }
       projectedCustomMetadata = new AnyRecord(RestUtils
-          .projectFields(customMetadata.data(), resourceContext.getMetadataProjectionMode(),
+          .projectFields(customMetadataWithDefault, resourceContext.getMetadataProjectionMode(),
               resourceContext.getMetadataProjectionMask(), resourceContext.getAlwaysProjectedFields()));
     }
     else
