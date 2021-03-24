@@ -5,14 +5,18 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.linkedin.pegasus.gradle.IOUtil;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.specs.Specs;
+import org.gradle.api.file.FileType;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.incremental.IncrementalTaskInputs;
+import org.gradle.work.InputChanges;
 
 
 public class ChangedFileReportTask extends DefaultTask
@@ -21,15 +25,10 @@ public class ChangedFileReportTask extends DefaultTask
 
   private FileCollection _idlFiles = getProject().files();
   private FileCollection _snapshotFiles = getProject().files();
-
-  public ChangedFileReportTask()
-  {
-    //with Gradle 6.0, Declaring an incremental task without outputs is not allowed.
-    getOutputs().upToDateWhen(Specs.satisfyNone());
-  }
+  private RegularFileProperty _outputFile = getProject().getObjects().fileProperty();
 
   @TaskAction
-  public void checkFilesForChanges(IncrementalTaskInputs inputs)
+  public void checkFilesForChanges(InputChanges inputs)
   {
     getLogger().lifecycle("Checking idl and snapshot files for changes...");
     getLogger().info("idlFiles: " + _idlFiles.getAsPath());
@@ -41,46 +40,59 @@ public class ChangedFileReportTask extends DefaultTask
 
     if (inputs.isIncremental())
     {
-      inputs.outOfDate(inputFileDetails -> {
-        if (inputFileDetails.isAdded())
+      inputs.getFileChanges(getSnapshotFiles()).forEach(change -> {
+        if (change.getFileType() != FileType.DIRECTORY)
         {
-          filesAdded.add(inputFileDetails.getFile().getAbsolutePath());
-        }
-
-        if (inputFileDetails.isRemoved())
-        {
-          filesRemoved.add(inputFileDetails.getFile().getAbsolutePath());
-        }
-
-        if (inputFileDetails.isModified())
-        {
-          filesChanged.add(inputFileDetails.getFile().getAbsolutePath());
+          String path = change.getFile().getAbsolutePath();
+          switch (change.getChangeType())
+          {
+            case ADDED:
+              filesAdded.add(path);
+              break;
+            case REMOVED:
+              filesRemoved.add(path);
+              break;
+            case MODIFIED:
+              filesChanged.add(path);
+              break;
+          }
         }
       });
 
-      inputs.removed(inputFileDetails -> filesRemoved.add(inputFileDetails.getFile().getAbsolutePath()));
+      StringBuilder sb = new StringBuilder();
 
       if (!filesRemoved.isEmpty())
       {
         String files = joinByComma(filesRemoved);
         _needCheckinFiles.add(files);
-        getLogger().lifecycle(
-            "The following files have been removed, be sure to remove them from source control: {}", files);
+        String removedFilesMsg = String.format("The following files have been removed, " +
+                "be sure to remove them from source control: %s\n", files);
+        sb.append(removedFilesMsg);
       }
 
       if (!filesAdded.isEmpty())
       {
         String files = joinByComma(filesAdded);
         _needCheckinFiles.add(files);
-        getLogger().lifecycle("The following files have been added, be sure to add them to source control: {}", files);
+        String addedFilesMsg = String.format("The following files have been added, " +
+                "be sure to add them to source control: %s\n", files);
+        sb.append(addedFilesMsg);
       }
 
       if (!filesChanged.isEmpty())
       {
         String files = joinByComma(filesChanged);
         _needCheckinFiles.add(files);
-        getLogger().lifecycle(
-            "The following files have been changed, be sure to commit the changes to source control: {}", files);
+        String modifiedFilesMsg = String.format("The following files have been changed, " +
+                "be sure to commit the changes to source control: %s\n", files);
+        sb.append(modifiedFilesMsg);
+      }
+
+      String output = sb.toString();
+      if (!output.isEmpty())
+      {
+        getLogger().lifecycle(output);
+        IOUtil.writeText(getOutputFile().get().getAsFile(), output);
       }
     }
   }
@@ -118,5 +130,10 @@ public class ChangedFileReportTask extends DefaultTask
   public Collection<String> getNeedCheckinFiles()
   {
     return _needCheckinFiles;
+  }
+
+  @OutputFile
+  public RegularFileProperty getOutputFile() {
+    return _outputFile;
   }
 }

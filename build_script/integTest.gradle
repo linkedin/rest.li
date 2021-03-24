@@ -22,6 +22,7 @@ sourceSets {
 }
 
 dependencies {
+  integTestImplementation gradleTestKit()
   integTestImplementation externalDependency.spock
 }
 

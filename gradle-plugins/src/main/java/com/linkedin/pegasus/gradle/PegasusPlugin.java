@@ -63,19 +63,26 @@ import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlatformPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.publish.ivy.plugins.IvyPublishPlugin;
+import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.Sync;
+import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
+import org.gradle.language.jvm.tasks.ProcessResources;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
+import org.gradle.util.GradleVersion;
 
 
 /**
@@ -633,6 +640,11 @@ public class PegasusPlugin implements Plugin<Project>
   @Override
   public void apply(Project project)
   {
+    if (!isAtLeastGradle54())
+    {
+      throw new GradleException("The pegasus plugin requires Gradle 5.4 or higher; please upgrade.");
+    }
+
     project.getPlugins().apply(JavaPlugin.class);
     project.getPlugins().apply(IdeaPlugin.class);
     project.getPlugins().apply(EclipsePlugin.class);
@@ -1407,6 +1419,7 @@ public class PegasusPlugin implements Plugin<Project>
       changedFileReportTask.setIdlFiles(SharedFileUtils.getSuffixedFiles(project, apiIdlDir, IDL_FILE_SUFFIX));
       changedFileReportTask.setSnapshotFiles(SharedFileUtils.getSuffixedFiles(project, apiSnapshotDir,
           SNAPSHOT_FILE_SUFFIX));
+      changedFileReportTask.getOutputFile().set(project.getLayout().getBuildDirectory().file("changedFilesReport.txt"));
       changedFileReportTask.mustRunAfter(publishRestliSnapshotTask, publishRestliIdlTask);
       changedFileReportTask.doLast(new CacheableAction<>(t ->
       {
@@ -1820,6 +1833,77 @@ public class PegasusPlugin implements Plugin<Project>
     // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
     project.getDependencies().add(compileConfigName, project.files(dataTemplateJarTask.getArchivePath()));
 
+    // make pegasus artifacts reproducible
+    // see https://docs.gradle.org/6.8.3/userguide/working_with_files.html#sec:reproducible_archives
+    project.getTasks().withType(AbstractArchiveTask.class).configureEach(task -> {
+      task.setPreserveFileTimestamps(false);
+      task.setReproducibleFileOrder(true);
+    });
+
+    project.getPlugins().withType(IvyPublishPlugin.class, ivyPublish -> {
+      if (!isAtLeastGradle61()) {
+        throw new GradleException("Using the ivy-publish plugin with the pegasus plugin requires Gradle 6.1 or higher " +
+                "at build time.  Please upgrade.");
+      }
+
+      JavaPluginExtension java = project.getExtensions().getByType(JavaPluginExtension.class);
+      // create new capabilities per source set; automatically creates api and implementation configurations
+      String featureName = mapSourceSetToFeatureName(targetSourceSet);
+      java.registerFeature(featureName, featureSpec -> {
+        featureSpec.usingSourceSet(targetSourceSet);
+      });
+
+      // include pegasus files in the output of this SourceSet
+      TaskProvider<ProcessResources> processResources = project.getTasks().named(targetSourceSet.getProcessResourcesTaskName(), ProcessResources.class);
+      processResources.configure(it -> {
+        it.from(prepareSchemasForPublishTask, copy -> copy.into("pegasus"));
+        it.from(prepareLegacySchemasForPublishTask, copy -> copy.into(TRANSLATED_SCHEMAS_DIR));
+        Sync copyExtensionSchemasTask = project.getTasks().withType(Sync.class).findByName(targetSourceSet.getName() + "CopyExtensionSchemas");
+        if (copyExtensionSchemasTask != null) {
+          it.from(copyExtensionSchemasTask, copy -> copy.into("extensions"));
+        }
+      });
+
+      // expose transitive dependencies to consumers via api configuration
+      Configuration mainGeneratedDataTemplateApi = project.getConfigurations().getByName(targetSourceSet.getApiConfigurationName());
+      mainGeneratedDataTemplateApi.extendsFrom(
+              getDataModelConfig(project, targetSourceSet),
+              project.getConfigurations().getByName("dataTemplateCompile"));
+    });
+
+    project.getPlugins().withType(MavenPublishPlugin.class, ivyPublish -> {
+      if (!isAtLeastGradle61()) {
+        throw new GradleException("Using the maven-publish plugin with the pegasus plugin requires Gradle 6.1 or higher " +
+                "at build time.  Please upgrade.");
+      }
+
+      JavaPluginExtension java = project.getExtensions().getByType(JavaPluginExtension.class);
+      // create new capabilities per source set; automatically creates api and implementation configurations
+      String featureName = mapSourceSetToFeatureName(targetSourceSet);
+      java.registerFeature(featureName, featureSpec -> {
+        featureSpec.usingSourceSet(targetSourceSet);
+        featureSpec.withJavadocJar();
+        featureSpec.withSourcesJar();
+      });
+
+      // include pegasus files in the output of this SourceSet
+      TaskProvider<ProcessResources> processResources = project.getTasks().named(targetSourceSet.getProcessResourcesTaskName(), ProcessResources.class);
+      processResources.configure(it -> {
+        it.from(prepareSchemasForPublishTask, copy -> copy.into("pegasus"));
+        it.from(prepareLegacySchemasForPublishTask, copy -> copy.into(TRANSLATED_SCHEMAS_DIR));
+        Sync copyExtensionSchemasTask = project.getTasks().withType(Sync.class).findByName(targetSourceSet.getName() + "CopyExtensionSchemas");
+        if (copyExtensionSchemasTask != null) {
+          it.from(copyExtensionSchemasTask, copy -> copy.into("extensions"));
+        }
+      });
+
+      // expose transitive dependencies to consumers via api configuration
+      Configuration mainGeneratedDataTemplateApi = project.getConfigurations().getByName(targetSourceSet.getApiConfigurationName());
+      mainGeneratedDataTemplateApi.extendsFrom(
+              getDataModelConfig(project, targetSourceSet),
+              project.getConfigurations().getByName("dataTemplateCompile"));
+    });
+
     if (debug)
     {
       System.out.println("configureDataTemplateGeneration sourceSet " + sourceSet.getName());
@@ -1833,6 +1917,34 @@ public class PegasusPlugin implements Plugin<Project>
 
     project.getTasks().getByName(sourceSet.getCompileJavaTaskName()).dependsOn(dataTemplateJarTask);
     return generateDataTemplatesTask;
+  }
+
+  private String mapSourceSetToFeatureName(SourceSet sourceSet) {
+    String featureName = "";
+    switch (sourceSet.getName()) {
+      case "mainGeneratedDataTemplate":
+        featureName = "dataTemplate";
+        break;
+      case "testGeneratedDataTemplate":
+        featureName = "testDataTemplate";
+        break;
+      case "mainGeneratedRest":
+        featureName = "restClient";
+        break;
+      case "testGeneratedRest":
+        featureName = "testRestClient";
+        break;
+      case "mainGeneratedAvroSchema":
+        featureName = "avroSchema";
+        break;
+      case "testGeneratedAvroSchema":
+        featureName = "testAvroSchema";
+        break;
+      default:
+        String msg = String.format("Unable to map %s to an appropriate feature name", sourceSet);
+        throw new GradleException(msg);
+    }
+    return featureName;
   }
 
   // Generate rest client from idl files generated from java source files in the specified source set.
@@ -2223,5 +2335,13 @@ public class PegasusPlugin implements Plugin<Project>
           task.into(outputDir);
           task.onlyIf(t -> !SharedFileUtils.getSuffixedFiles(project, inputDir, PDL_FILE_SUFFIX).isEmpty());
         });
+  }
+
+  protected static boolean isAtLeastGradle54() {
+    return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.4")) >= 0;
+  }
+
+  protected static boolean isAtLeastGradle61() {
+    return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.1")) >= 0;
   }
 }
