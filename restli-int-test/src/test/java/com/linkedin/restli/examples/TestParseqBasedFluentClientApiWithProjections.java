@@ -99,7 +99,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
     ManualProjectionsFluentClient projections = new ManualProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Greeting> result = projections.get(1L, false,
-        optionalParams -> optionalParams.withFields(mask -> mask.withMessage()));
+        optionalParams -> optionalParams.withMask(mask -> mask.withMessage()));
     CompletableFuture<Greeting> future = result.toCompletableFuture();
     Greeting greeting = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertFalse(greeting.hasId());
@@ -114,7 +114,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
 
     Set<Long> ids = Sets.newHashSet(Arrays.asList(1L, 2L, 3L));
     CompletionStage<Map<Long, EntityResponse<Greeting>>> result = greetings.batchGet(ids,
-        optionalParams -> optionalParams.withFields(mask -> mask.withTone()));
+        optionalParams -> optionalParams.withMask(mask -> mask.withTone()));
     CompletableFuture<Map<Long, EntityResponse<Greeting>>> future = result.toCompletableFuture();
     Map<Long, EntityResponse<Greeting>> resultMap = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(resultMap.size(), ids.size());
@@ -136,7 +136,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
 
     String msg = Double.toString(Math.random());
     CompletionStage<IdEntityResponse<Long, Greeting>> result = greetings.createAndGet(getGreeting(msg),
-        optionalParams -> optionalParams.withFields(mask -> mask.withMessage()));
+        optionalParams -> optionalParams.withMask(mask -> mask.withMessage()));
     CompletableFuture<IdEntityResponse<Long, Greeting>> future = result.toCompletableFuture();
     Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
     Assert.assertFalse(future.get().getEntity().hasId());
@@ -153,7 +153,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
     String msg2 = Double.toString(Math.random());
     CompletionStage<List<CreateIdEntityStatus<Long, Greeting>>>
         result = greetings.batchCreateAndGet(Arrays.asList(getGreeting(msg1), getGreeting(msg2)),
-        optionalParams -> optionalParams.withFields(mask -> mask.withId()));
+        optionalParams -> optionalParams.withMask(mask -> mask.withId()));
     CompletableFuture<List<CreateIdEntityStatus<Long, Greeting>>> future = result.toCompletableFuture();
     List<CreateIdEntityStatus<Long, Greeting>> entities = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(entities.size(), 2);
@@ -174,7 +174,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
     String message = "Edited message: fluent api test partialUpdateAndGet";
     Greeting update = getGreeting(message);
     CompletionStage<Greeting> result = greetings.partialUpdateAndGet(21L, PatchGenerator.diff(original, update),
-        optionalParams -> optionalParams.withFields(mask -> mask.withId()));
+        optionalParams -> optionalParams.withMask(mask -> mask.withId()));
     CompletableFuture<Greeting> future = result.toCompletableFuture();
     Greeting greeting = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertFalse(greeting.hasMessage());
@@ -193,7 +193,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
     inputs.put(21L, PatchGenerator.diff(original, update));
     inputs.put(22L, PatchGenerator.diff(original, update));
     CompletionStage<Map<Long, UpdateEntityStatus<Greeting>>> result = greetings.batchPartialUpdateAndGet(inputs,
-        optionalParams -> optionalParams.withFields(mask -> mask.withId().withMessage().withTone()));
+        optionalParams -> optionalParams.withMask(mask -> mask.withId().withMessage().withTone()));
     CompletableFuture<Map<Long, UpdateEntityStatus<Greeting>>> future = result.toCompletableFuture();
     Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(future.get().get(21L).getEntity().getId().longValue(), 21L);
@@ -212,7 +212,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
         Arrays.asList(getGreeting("GetAll").setId(200L), getGreeting("GetAll").setId(201L)));
 
     CompletionStage<List<Greeting>> result = createResult.thenCompose(ids -> greetings.getAll(
-        optionalParams -> optionalParams.withFields(mask -> mask.withMessage())));
+        optionalParams -> optionalParams.withMask(mask -> mask.withMessage())));
     CompletableFuture<List<Greeting>> future = result.toCompletableFuture();
     List<Greeting> greetingList = future.get(5000, TimeUnit.MILLISECONDS);
     Assert.assertTrue(greetingList.size() >= 2);
@@ -244,7 +244,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
     ManualProjectionsFluentClient projections = new ManualProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Greeting> result = projections.get(1L, true,
-        optionalParams -> optionalParams.withFields(mask -> mask.withMessage()));
+        optionalParams -> optionalParams.withMask(mask -> mask.withMessage()));
     CompletableFuture<Greeting> future = result.toCompletableFuture();
     Greeting greeting = future.get(5000, TimeUnit.MILLISECONDS);
     // these fields would have been excluded by the framework if automatic projection was enabled
@@ -276,7 +276,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
     AutoValidationWithProjectionFluentClient validationDemos = new AutoValidationWithProjectionFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<ValidationDemo> result = validationDemos.get(1,
-        optionalParams -> optionalParams.withFields(mask -> mask.withStringB()
+        optionalParams -> optionalParams.withMask(mask -> mask.withStringB()
             .withIncludedB()
             .withUnionFieldWithInlineRecord(m1 -> m1.withMyRecord(myRecord.ProjectionMask::withFoo2))
             .withArrayWithInlineRecord(itemMask -> itemMask.withItems(myItem.ProjectionMask::withBar1))

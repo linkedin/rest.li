@@ -24,16 +24,23 @@ public class ProjectionParameterSpec
 {
   private final ClassTemplateSpec _classTemplateSpec;
   private final String _parameterName;
+  private final String _methodName;
 
-  public ProjectionParameterSpec(String name, ClassTemplateSpec classTemplateSpec)
+  public ProjectionParameterSpec(String name, String methodName, ClassTemplateSpec classTemplateSpec)
   {
     _parameterName = name;
+    _methodName = methodName == null ? _parameterName : methodName;
     _classTemplateSpec = classTemplateSpec;
   }
 
   public String getParamName()
   {
     return _parameterName;
+  }
+
+  public String getMethodName()
+  {
+    return _methodName;
   }
 
   public String getParamNameCaps()

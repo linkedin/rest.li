@@ -39,7 +39,7 @@
       #end
       #foreach($param in $method.supportedProjectionParams)
         private MaskMap $param.paramName;
-        public $className with${param.paramNameCaps}(
+        public $className with${param.methodName}(
             Function<${param.paramClassName}.ProjectionMask, ${param.paramClassName}.ProjectionMask> ${param.paramName}Handler) {
           this.$param.paramName = ${param.paramName}Handler.apply(${param.paramClassName}.createMask());
           return this;
