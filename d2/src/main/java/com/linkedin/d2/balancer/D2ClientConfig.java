@@ -21,6 +21,7 @@ import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -103,7 +104,7 @@ public class D2ClientConfig
   JmxManager jmxManager = new NoOpJmxManager();
   String d2JmxManagerPrefix = "UnknownPrefix";
   boolean enableRelativeLoadBalancer = false;
-
+  DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
   public static final int DEAULT_RETRY_LIMIT = 3;
 
   public D2ClientConfig()
@@ -159,7 +160,8 @@ public class D2ClientConfig
                  JmxManager jmxManager,
                  String d2JmxManagerPrefix,
                  int zookeeperReadWindowMs,
-                 boolean enableRelativeLoadBalancer)
+                 boolean enableRelativeLoadBalancer,
+                 DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -211,5 +213,6 @@ public class D2ClientConfig
     this.d2JmxManagerPrefix = d2JmxManagerPrefix;
     this.zookeeperReadWindowMs = zookeeperReadWindowMs;
     this.enableRelativeLoadBalancer = enableRelativeLoadBalancer;
+    this.deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
   }
 }

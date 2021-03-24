@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.17.0] - 2021-03-23
+- Implement D2 cluster subsetting.
+
 ## [29.16.2] - 2021-03-22
 - Fix an issue where in collection response, we did not fill in the default values in the metadata and paging metadata.
 
@@ -4889,7 +4892,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.16.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.17.0...master
+[29.17.0]: https://github.com/linkedin/rest.li/compare/v29.16.2...v29.17.0
 [29.16.2]: https://github.com/linkedin/rest.li/compare/v29.16.1...v29.16.2
 [29.16.1]: https://github.com/linkedin/rest.li/compare/v29.16.0...v29.16.1
 [29.16.0]: https://github.com/linkedin/rest.li/compare/v29.15.9...v29.16.0
