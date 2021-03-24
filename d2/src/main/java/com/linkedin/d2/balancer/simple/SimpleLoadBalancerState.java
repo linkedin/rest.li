@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -144,7 +145,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
 
   private final SubsettingStrategyFactory _subsettingStrategyFactory;
-  private final Map<String, Map<Integer, Map<URI, TrackerClient>>>                      _weightedSubsetsCache;
+  private final ConcurrentMap<String, ConcurrentMap<Integer, Map<URI, TrackerClient>>> _weightedSubsetsCache;
 
   /*
    * Concurrency considerations:
