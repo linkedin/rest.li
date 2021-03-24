@@ -56,8 +56,7 @@ import static com.linkedin.restli.examples.AssociationResourceHelpers.SIMPLE_COM
 
 
 /**
- * Demonstrates an assocation resource keyed by string.
- * @author jbetz
+ * Association resource under parent association resource
  *
  */
 @RestLiAssociation(name="associationsassociations",

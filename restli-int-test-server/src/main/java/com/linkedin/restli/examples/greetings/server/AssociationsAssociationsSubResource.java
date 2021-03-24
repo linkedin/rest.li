@@ -37,10 +37,8 @@ import java.util.List;
 
 
 /**
- * @author Moira Tagle
- * @version $Revision: $
+ * Collection resource under an association resource which is also under an association resource
  */
-
 @RestLiCollection(
     parent = AssociationsAssociationsResource.class,
     name = "AssociationsAssociationsSub",

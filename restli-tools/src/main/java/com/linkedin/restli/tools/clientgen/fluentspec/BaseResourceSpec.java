@@ -477,15 +477,18 @@ public class BaseResourceSpec
   }
 
   /**
-   * For fluentClients, the subresource's interface
-   * should be nested in its root parent resource interface file.
+   * For fluentClients, the sub-resources' interfaces
+   * should be nested in their root parent resource interface file.
    *
-   * Unless this subResource and its ancestors do not always have same namespace.
-   * In this case, the namespace in the IDL will be used to generate this Subresource interface file.
+   * Unless one subResource and its ancestors do not always have same namespace.
+   * In this case, the namespace in the IDL will be used to generate
+   * this conflicting subresource interface file.
    *
-   * In this way the fluentClient and the interface it is implementing will be in same namespace
+   * In this way, the fluentClient and the interface it is implementing will be in same namespace
    *
-   * @return A proper name for the interface that FluentClient should be implementing
+   * @return A proper name for the interface that FluentClient should be implementing, e.g.
+   *         the "SuperSuper.Super.Base.Sub" in
+   *         <code>SubFluentClient implements SuperSuper.Super.Base.Sub</code>
    */
   public String getToImplementInterfaceName()
   {
@@ -506,6 +509,7 @@ public class BaseResourceSpec
   }
 
   /**
+   * For sub-resources:
    * DiffKey is the pathKey segment
    * from this subResource's direct parent to this subResource
    *
@@ -557,7 +561,6 @@ public class BaseResourceSpec
         {
           if (spec instanceof CollectionResourceSpec )
           {
-            // TODO: double confirm if this dealt with ComplexKey
             _pathKeyTypes.put(((CollectionResourceSpec) spec).getIdName(),
                 ((CollectionResourceSpec) spec).getKeyClassName());
           }
