@@ -13,6 +13,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.model.ReplacedBy;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
@@ -105,6 +106,7 @@ public class CheckSnapshotTask extends DefaultTask
   }
 
   @InputDirectory
+  @PathSensitive(PathSensitivity.RELATIVE)
   public File getPreviousSnapshotDirectory()
   {
     return _previousSnapshotDirectory;
@@ -157,6 +159,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isModelCompatible()} instead
    */
   @Deprecated
+  @ReplacedBy("modelCompatible")
   public boolean getIsModelCompatible()
   {
     return isModelCompatible();
@@ -171,6 +174,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isModelCompatible()} instead
    */
   @Deprecated
+  @ReplacedBy("modelCompatible")
   public boolean isIsModelCompatible()
   {
     return isModelCompatible();
@@ -191,6 +195,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isRestSpecCompatible()} instead
    */
   @Deprecated
+  @ReplacedBy("restSpecCompatible")
   public boolean getIsRestSpecCompatible()
   {
     return isRestSpecCompatible();
@@ -205,6 +210,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isRestSpecCompatible()} instead
    */
   @Deprecated
+  @ReplacedBy("restSpecCompatible")
   public boolean isIsRestSpecCompatible()
   {
     return isRestSpecCompatible();
@@ -225,6 +231,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isEquivalent()} instead
    */
   @Deprecated
+  @ReplacedBy("equivalent")
   public boolean getIsEquivalent()
   {
     return isEquivalent();
@@ -239,6 +246,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isEquivalent()} instead
    */
   @Deprecated
+  @ReplacedBy("equivalent")
   public boolean isIsEquivalent()
   {
     return isEquivalent();
@@ -259,6 +267,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isRestSpecEquivalent()} instead
    */
   @Deprecated
+  @ReplacedBy("restSpecEquivalent")
   public boolean getIsRestSpecEquivalent()
   {
     return isRestSpecEquivalent();
@@ -273,6 +282,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isRestSpecEquivalent()} instead
    */
   @Deprecated
+  @ReplacedBy("restSpecEquivalent")
   public boolean isIsRestSpecEquivalent()
   {
     return isRestSpecEquivalent();

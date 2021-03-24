@@ -163,7 +163,6 @@ public class GenerateRestModelTask extends DefaultTask
   }
 
   @OutputDirectory
-  @PathSensitive(PathSensitivity.NAME_ONLY)
   public File getIdlDestinationDir()
   {
     return _idlDestinationDir;

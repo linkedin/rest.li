@@ -15,6 +15,7 @@ import java.util.Map;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.model.ReplacedBy;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
@@ -290,9 +291,22 @@ public class GenerateRestClientTask extends DefaultTask
     _enableArgFile = enable;
   }
 
+  /**
+   * This method is kept for backwards compatibility.
+   * <p>
+   * This non-property method was exposed.  Property methods should begin with is or get.
+   *
+   * @deprecated use {@link #isGenerateLowercasePath()} instead
+   */
+  @Deprecated
+  public Boolean generateLowercasePath()
+  {
+    return isGenerateLowercasePath();
+  }
+
   @Optional
   @Input
-  public Boolean generateLowercasePath()
+  public Boolean isGenerateLowercasePath()
   {
     return _generateLowercasePath;
   }
@@ -322,6 +336,7 @@ public class GenerateRestClientTask extends DefaultTask
    * @deprecated use {@link #isRestli2FormatSuppressed()} instead
    */
   @Deprecated
+  @ReplacedBy("restli2FormatSuppressed")
   public boolean getIsRestli2FormatSuppressed()
   {
     return isRestli2FormatSuppressed();
@@ -336,6 +351,7 @@ public class GenerateRestClientTask extends DefaultTask
    * @deprecated use {@link #isRestli2FormatSuppressed()} instead
    */
   @Deprecated
+  @ReplacedBy("restli2FormatSuppressed")
   public boolean isIsRestli2FormatSuppressed()
   {
     return isRestli2FormatSuppressed();
@@ -397,6 +413,7 @@ public class GenerateRestClientTask extends DefaultTask
    * @deprecated use {@link #isRestli1BuildersDeprecated()} instead
    */
   @Deprecated
+  @ReplacedBy("restli1BuildersDeprecated")
   public boolean get_isRestli1BuildersDeprecated()
   {
     return isRestli1BuildersDeprecated();
@@ -411,6 +428,7 @@ public class GenerateRestClientTask extends DefaultTask
    * @deprecated use {@link #isRestli1BuildersDeprecated()} instead
    */
   @Deprecated
+  @ReplacedBy("restli1BuildersDeprecated")
   public boolean is_isRestli1BuildersDeprecated()
   {
     return isRestli1BuildersDeprecated();
