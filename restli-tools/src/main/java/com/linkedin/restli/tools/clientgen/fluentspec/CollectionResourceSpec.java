@@ -19,43 +19,7 @@ package com.linkedin.restli.tools.clientgen.fluentspec;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.pegasus.generator.TemplateSpecGenerator;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
-import com.linkedin.restli.client.BatchCreateIdEntityRequest;
-import com.linkedin.restli.client.BatchCreateIdRequest;
-import com.linkedin.restli.client.BatchDeleteRequest;
-import com.linkedin.restli.client.BatchGetEntityRequest;
-import com.linkedin.restli.client.BatchPartialUpdateEntityRequest;
-import com.linkedin.restli.client.BatchPartialUpdateRequest;
-import com.linkedin.restli.client.BatchUpdateRequest;
-import com.linkedin.restli.client.CreateIdEntityRequest;
-import com.linkedin.restli.client.CreateIdRequest;
-import com.linkedin.restli.client.DeleteRequest;
-import com.linkedin.restli.client.GetAllRequest;
-import com.linkedin.restli.client.GetRequest;
-import com.linkedin.restli.client.PartialUpdateEntityRequest;
-import com.linkedin.restli.client.PartialUpdateRequest;
-import com.linkedin.restli.client.UpdateRequest;
-import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.common.BatchCreateIdEntityResponse;
-import com.linkedin.restli.common.BatchCreateIdResponse;
-import com.linkedin.restli.common.CollectionRequest;
-import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CreateIdEntityStatus;
-import com.linkedin.restli.common.CreateIdStatus;
-import com.linkedin.restli.common.EntityResponse;
-import com.linkedin.restli.common.IdEntityResponse;
-import com.linkedin.restli.common.IdResponse;
-import com.linkedin.restli.common.KeyValueRecord;
-import com.linkedin.restli.common.KeyValueRecordFactory;
-import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.common.UpdateEntityStatus;
-import com.linkedin.restli.common.UpdateStatus;
-import com.linkedin.restli.internal.client.BatchCreateIdDecoder;
-import com.linkedin.restli.internal.client.BatchCreateIdEntityDecoder;
-import com.linkedin.restli.internal.client.BatchEntityResponseDecoder;
-import com.linkedin.restli.internal.client.EntityResponseDecoder;
-import com.linkedin.restli.internal.client.IdEntityResponseDecoder;
-import com.linkedin.restli.internal.client.IdResponseDecoder;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
@@ -63,16 +27,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
+import org.apache.commons.lang.ClassUtils;
 
 
 public class CollectionResourceSpec extends BaseResourceSpec
 {
   private ClassTemplateSpec _keyClass;
+  private final ComplexKeySpec _complexKeySpec;
+
   public CollectionResourceSpec(ResourceSchema resourceSchema, TemplateSpecGenerator templateSpecGenerator,
-      String sourceIdlName, DataSchemaResolver schemaResolver)
+      String sourceIdlName, DataSchemaResolver schemaResolver, String keyParamTypeSchema)
   {
     super(resourceSchema, templateSpecGenerator, sourceIdlName, schemaResolver);
+    _complexKeySpec = keyParamTypeSchema == null? null: new ComplexKeySpec(
+        getResource().getCollection().getIdentifier().getType(),
+        keyParamTypeSchema,
+        this
+    );
   }
 
   public List<ActionMethodSpec> getActions()
@@ -99,6 +70,7 @@ public class CollectionResourceSpec extends BaseResourceSpec
     return methods;
   }
 
+  // For simple key
   public ClassTemplateSpec getKeyClass()
   {
     if (_keyClass == null)
@@ -108,8 +80,30 @@ public class CollectionResourceSpec extends BaseResourceSpec
     return _keyClass;
   }
 
+  public boolean hasComplexKey()
+  {
+    return _complexKeySpec != null;
+  }
+
   public String getKeyClassName()
   {
+    return getKeyClassName(true);
+  }
+
+  public String getKeyClassName(boolean parameterized)
+  {
+    if (hasComplexKey())
+    {
+      if (parameterized)
+      {
+        return _complexKeySpec.getParameterizedSignature(_importNameConflict);
+      }
+      else
+      {
+      return ComplexResourceKey.class.getSimpleName();
+      }
+    }
+    // for simple key
     return SpecUtils.getClassName(getKeyClass());
   }
 
@@ -118,6 +112,26 @@ public class CollectionResourceSpec extends BaseResourceSpec
     return getResource().getCollection().getIdentifier().getName();
   }
 
+  @Override
+  public Set<String> getResourceSpecificImports(Set<String> imports)
+  {
+    imports = super.getResourceSpecificImports(imports);
+    // TODO: Handle keyTypeRefClass imports for ComplexKey
+    if (hasComplexKey())
+    {
+      imports.add(ComplexResourceKey.class.getName());
+      if(!_importNameConflict.contains(ClassUtils.getShortClassName(_complexKeySpec.getKeyKeyClassName())))
+      {
+        imports.add(_complexKeySpec.getKeyKeyClassName());
+      }
+      if(!_importNameConflict.contains(ClassUtils.getShortClassName(_complexKeySpec.getParamKeyClassName())))
+      {
+        imports.add(_complexKeySpec.getParamKeyClassName());
+      }
+    }
+
+    return imports;
+  }
   @Override
   public ResourceSchemaArray getSubResources()
   {

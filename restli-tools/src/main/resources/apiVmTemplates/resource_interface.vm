@@ -39,10 +39,11 @@ import java.util.concurrent.CompletableFuture;
 import javax.annotation.Generated;
 @Generated("Generated from $spec.sourceIdlName")
 public interface ${spec.className} {
-    ## TODO: Interface used by Universal Client
+    ## TODO: this Interface can be used directly as fluentAPI's interface
+    ## or it can be used by Universal Client
 
 #foreach($subSpec in $spec.childSubResourceSpecs)
-#**##subResource($subSpec)##
+#**##subResourceInterface($subSpec)##
 #end
     
 }

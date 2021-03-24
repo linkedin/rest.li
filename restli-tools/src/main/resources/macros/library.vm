@@ -83,16 +83,16 @@
     queryParamClasses.put(RestConstants.RETURN_ENTITY_PARAM, Boolean.class);
 #end
 
-#macro(subResource $spec)
+#macro(subResourceInterface $spec)
 #**#
     #if(${spec.namespace.equals($spec.parentNamespace)})
-    ${spec.className} ${spec.className}of(#if(${spec.diffPathKey}) ${spec.parent.keyClassName} ${spec.diffPathKey}#end); // TODO: handle complex Key
+    ${spec.className} ${util.nameCamelCase($spec.className)}Of(#if(${spec.diffPathKey}) ${spec.parent.keyClassName} ${spec.diffPathKey}#end); // TODO: handle complex Key
     public interface ${spec.className} {
 #foreach($subSpec in $spec.childSubResourceSpecs)
-      #**##subResource($subSpec)
+      #**##subResourceInterface($subSpec)
 #end
     }
     #else
-    ${spec.bindingName} ${util.nameCamelCase($spec.className)}of(#if(${spec.diffPathKey}) ${spec.parent.keyClassName} ${spec.diffPathKey}#end); // TODO: handle complex Key
+    ${spec.bindingName} ${util.nameCamelCase($spec.className)}Of(#if(${spec.diffPathKey})${spec.parent.keyClassName} ${spec.diffPathKey}#end); // TODO: handle complex Key
     #end
 #end

@@ -157,7 +157,7 @@ public class FluentApiGenerator
         spec = new CollectionResourceSpec(resourceSchema,
             new TemplateSpecGenerator(schemaResolver),
             sourceIdlName,
-            schemaResolver);
+            schemaResolver, resourceSchema.getCollection().getIdentifier().getParams());
       }
       else if (resourceSchema.hasSimple())
       {
@@ -268,15 +268,16 @@ public class FluentApiGenerator
     final RestSpecParser.ParseResult parseResult = parser.parseSources(sources);
     for (CodeUtil.Pair<ResourceSchema, File> pair : parseResult.getSchemaAndFiles())
     {
-//      generateFluentClientByResource(
-//        pair.first,
-//        schemaResolver,
-//        velocityEngine,
-//        targetDirectory,
-//        pair.second.getPath(),
-//        new ArrayList<>(2),
-//        message
-//      );
+
+      generateFluentClientByResource(
+        pair.first,
+        schemaResolver,
+        velocityEngine,
+        targetDirectory,
+        pair.second.getPath(),
+        new ArrayList<>(2),
+        message
+      );
     }
 
     if (message.length() > 0)

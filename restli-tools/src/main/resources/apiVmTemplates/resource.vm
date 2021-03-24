@@ -39,9 +39,6 @@ import com.linkedin.restli.common.TypeSpec;
 #if(!${spec.isEntityClassNameConflicted()})
 import ${spec.entityClass.fullName};
 #end
-#if(${spec.getResource().hasAssociation()})
-import com.linkedin.restli.common.CompoundKey;
-#end
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -110,7 +107,7 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
         #end
         requestMetadataMap,
         responseMetadataMap,
-        ${spec.keyClassName}.class,
+        ${spec.getKeyClassName(false)}.class,
         null,
         null,
         ${spec.entityClassName}.class,
@@ -161,20 +158,21 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
 
   ## PathKey binding method
   #foreach($pathKey in ${spec.getPathKeys()})
-  public ${spec.className}${class_name_suffix} ${pathKey}Key(${spec.getPathKeyTypes().get($pathKey)} $pathKey)
+  public ${spec.className}${class_name_suffix} with${util.nameCapsCase(${pathKey})}(${spec.getPathKeyTypes().get($pathKey)} $pathKey)
   {
     _pathKeyMap.put("$pathKey", $pathKey);
     return this;
   }
   #end
 
+  ## generate impl class for subResources
   #foreach($subSpec in $spec.childSubResourceSpecs)
   @Override
-  ${subSpec.className} ${util.nameCamelCase($subSpec.className)}of(#if(${subSpec.diffPathKey})${subSpec.parent.keyClassName} ${subSpec.diffPathKey}#end)
+  public #if(${subSpec.namespace.equals($subSpec.parentNamespace)})${subSpec.className}#else${subSpec.bindingName}#end ${util.nameCamelCase($subSpec.className)}Of(#if(${subSpec.diffPathKey})${subSpec.parent.keyClassName} ${subSpec.diffPathKey}#end)
   {
-    return new ${subSpec.className}${class_name_suffix}(_client, _engine)#if(${spec.getPathKeys().size()} > 0).pathKeys(_pathKeyMap)#end
+    return new #if(${subSpec.namespace.equals($subSpec.parentNamespace)})${subSpec.className}#else${subSpec.bindingName}#end${class_name_suffix}(_client, _engine)#if(${spec.getPathKeys().size()} > 0).pathKeys(_pathKeyMap)#end
                #if(${subSpec.diffPathKey})
-               .${subSpec.diffPathKey}(${subSpec.diffPathKey});
+               .with${util.nameCapsCase(${subSpec.diffPathKey})}(${subSpec.diffPathKey});
                #else
                ;
                #end
@@ -186,6 +184,8 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
     #parse("apiVmTemplates/rest.${method.method}.vm")
   #end
 
+
+  ## Add association key generation stub
   #if(${spec.getResource().hasAssociation()})
   // TODO: CompoundKey may eventually need to be exposed to the resource interface
     public static class Key

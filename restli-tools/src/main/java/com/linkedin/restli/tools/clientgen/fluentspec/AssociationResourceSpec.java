@@ -111,6 +111,7 @@ public class AssociationResourceSpec extends BaseResourceSpec
   @Override
   public Set<String> getResourceSpecificImports(Set<String> imports)
   {
+    imports = super.getResourceSpecificImports(imports);
     imports.add(CompoundKey.class.getName());
     imports.addAll(assockeyTypeImports);
     return imports;

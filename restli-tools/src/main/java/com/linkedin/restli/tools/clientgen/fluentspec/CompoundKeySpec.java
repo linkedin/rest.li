@@ -74,9 +74,9 @@ public class CompoundKeySpec
      *             is used. Also check AssociationKeySchema.pdl
      * @param bindingType the java bind type, for example, Integer.java will be used for the "int" used in the schema,
      *                    or it could be the custom type if the typeref to this custom type is also specified.
-     * @param declaredType the type used when this key is declared, this can be different from bidingType, for example,
+     * @param declaredType the type used when this key is declared, this can be different from bindingType, for example,
      *                     when typeref is used, declaredType will be that typeref; This could also be different from
-     *                     schema type, for example when schema type is "int", declaredType would be "Integer.java"
+     *                     schema type, for example when schema type is "int", declaredType would be "Integer"
      */
     public AssocKeySpec(String name, String type, String bindingType, String declaredType)
     {

@@ -22,7 +22,6 @@ import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
-import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.pegasus.generator.TemplateSpecGenerator;
@@ -47,6 +46,8 @@ import com.linkedin.restli.common.BatchCreateIdEntityResponse;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EntityResponse;
@@ -70,14 +71,17 @@ import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.util.CustomTypeUtil;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 
 
 public class BaseResourceSpec
@@ -88,15 +92,16 @@ public class BaseResourceSpec
   final DataSchemaLocation _currentSchemaLocation;
   final DataSchemaResolver _schemaResolver;
   ClassTemplateSpec _entityClass = null;
-  // In case resource name and entity class are conflicting, will need to use full entity class name
-  final boolean _resourceNameConflictWithEntityClass;
-  // subresources of this resource
+  // In case of naming conflict, resource name will be using shortened name,
+  // others (entity name, complex key, etc) will be using full qualified name
+  Set<String> _importNameConflict;
+  // sub-resources of this resource
   List<BaseResourceSpec> _childSubResourceSpecs;
   // All of the direct ancestors of this resource
   List<BaseResourceSpec> _ancestorResourceSpecs;
   List<String> _pathKeys;
-  Map<String, String> pathKeyTypes;
-
+  Map<String, String> _pathKeyTypes;
+  Map<String, List<Pair<String,String>>> _pathToAssocKeys;
 
   public BaseResourceSpec(ResourceSchema resourceSchema, TemplateSpecGenerator templateSpecGenerator,
       String sourceIdlName, DataSchemaResolver schemaResolver)
@@ -106,7 +111,8 @@ public class BaseResourceSpec
     _sourceIdlName = sourceIdlName;
     _schemaResolver = schemaResolver;
     _currentSchemaLocation = new FileDataSchemaLocation(new File(_sourceIdlName));
-    _resourceNameConflictWithEntityClass = getEntityClass().getClassName().equals(getClassName());
+    // In case resource name and entity class are conflicting, will need to use full entity class name
+    _importNameConflict = new HashSet<>(Arrays.asList(getClassName()));
   }
 
   public ResourceSchema getResource()
@@ -147,7 +153,7 @@ public class BaseResourceSpec
    */
   public String getBindingName()
   {
-    return getNamespace().equals("")? getNamespace() + "." + getClassName(): getClassName();
+    return getNamespace().equals("")?  getClassName(): getNamespace() + "." + getClassName();
   }
 
   protected ClassTemplateSpec classToTemplateSpec(String classname)
@@ -172,6 +178,24 @@ public class BaseResourceSpec
   // For Collection/Simple/Association/ActionSet specific resource imports
   protected Set<String> getResourceSpecificImports(Set<String> imports)
   {
+    for (BaseResourceSpec spec : _ancestorResourceSpecs)
+    {
+      // Import Compound key if any of the descendents or ancestors are Association Resource;
+      if (spec instanceof AssociationResourceSpec)
+      {
+        imports.add(CompoundKey.class.getName());
+      }
+      // Import Complex key if any of the descendents or ancestors are Collection resource and has Complex Key;
+      else if ((spec instanceof CollectionResourceSpec) && ((CollectionResourceSpec) spec).hasComplexKey())
+      {
+        imports.add(ComplexResourceKey.class.getName());
+      }
+    }
+
+    for (BaseResourceSpec spec : _childSubResourceSpecs)
+    {
+        spec.getResourceSpecificImports(imports);
+    }
     return imports;
   }
 
@@ -266,6 +290,9 @@ public class BaseResourceSpec
           break;
       }
     }
+
+    // TODO: ComplexKey
+    // Sub resources are handled recursively
     return getResourceSpecificImports(imports);
   }
 
@@ -296,7 +323,7 @@ public class BaseResourceSpec
 
   protected String getJavaBindTypeName(String typeSchema)
   {
-    DataSchema dataschema = RestSpecCodec.textToSchema(typeSchema, _schemaResolver, SchemaFormatType.PDL);
+    DataSchema dataschema = RestSpecCodec.textToSchema(typeSchema, _schemaResolver);
     return getJavaBindTypeName(dataschema);
   }
 
@@ -326,7 +353,7 @@ public class BaseResourceSpec
 
   protected String getClassRefNameForSchema(String schema)
   {
-    DataSchema dataschema = RestSpecCodec.textToSchema(schema, _schemaResolver, SchemaFormatType.PDL);
+    DataSchema dataschema = RestSpecCodec.textToSchema(schema, _schemaResolver);
     return getClassRefNameForSchema(dataschema);
   }
 
@@ -386,11 +413,7 @@ public class BaseResourceSpec
 
   public boolean isEntityClassNameConflicted()
   {
-    // If parent resource has same name as Entity class name,
-    // then also use full entity class name.
-    return _resourceNameConflictWithEntityClass || getAncestorResourceSpecs().stream()
-        .map(BaseResourceSpec::getClassName)
-        .anyMatch(v -> v.equals(getEntityClass().getClassName()));
+    return _importNameConflict.contains(getEntityClass().getClassName());
   }
 
   /**
@@ -417,6 +440,13 @@ public class BaseResourceSpec
   public void setAncestorResourceSpecs(List<BaseResourceSpec> ancestorResourceSpecs)
   {
     this._ancestorResourceSpecs = ancestorResourceSpecs;
+    // If ancestor resource has same name as Entity class name,
+    // then also use full entity class name, because the interface file
+    // need to have all ancestors and descendants' resource name, along with
+    // entity name.
+    _ancestorResourceSpecs.stream()
+        .map(BaseResourceSpec::getClassName)
+        .forEach(v -> _importNameConflict.add(v));
   }
 
   private boolean hasParent()
@@ -476,10 +506,11 @@ public class BaseResourceSpec
   }
 
   /**
-   * To figure out the pathKey segment
-   * from the parent to this subResource
+   * DiffKey is the pathKey segment
+   * from this subResource's direct parent to this subResource
    *
-   * No diff implies that the parent is a simple resource
+   * This method will be called when constructing APIs for the subResource.
+   * No diffKey implies that the parent is a simple resource
    */
   public String getDiffPathKey()
   {
@@ -509,23 +540,49 @@ public class BaseResourceSpec
   }
 
   /**
-   * Deduce pathKey types map from the ancestors
+   * Deduce pathKey to key types mapping from the ancestors
    */
   public Map<String, String> getPathKeyTypes()
   {
-    if (pathKeyTypes == null)
+    if (_pathKeyTypes == null)
     {
+      _pathKeyTypes = new HashMap<>();
       if (!hasParent())
       {
-        pathKeyTypes = new HashMap<>();
+        return _pathKeyTypes;
       }
       else
       {
-        pathKeyTypes = _ancestorResourceSpecs.stream().filter(spec -> spec instanceof CollectionResourceSpec)
-            .map(spec -> ((CollectionResourceSpec) spec))
-            .collect(Collectors.toMap(CollectionResourceSpec::getIdName, CollectionResourceSpec::getKeyClassName));
+        for (BaseResourceSpec spec : _ancestorResourceSpecs)
+        {
+          if (spec instanceof CollectionResourceSpec )
+          {
+            // TODO: double confirm if this dealt with ComplexKey
+            _pathKeyTypes.put(((CollectionResourceSpec) spec).getIdName(),
+                ((CollectionResourceSpec) spec).getKeyClassName());
+          }
+          else if (spec instanceof AssociationResourceSpec)
+          {
+            _pathKeyTypes.put(((AssociationResourceSpec) spec).getIdName(),
+                CompoundKey.class.getSimpleName());
+
+          }
+        }
       }
     }
-    return pathKeyTypes;
+    return _pathKeyTypes;
+  }
+
+  /**
+   * Deduce pathKey to assocKey binding types mapping
+   */
+  public Map<String, List<Pair<String, String>>> getPathToAssocKeys()
+  {
+    if(_pathToAssocKeys == null)
+    {
+      _pathToAssocKeys = new HashMap<>();
+    }
+    //TODO: similar to getPathKeyTypes
+    return _pathToAssocKeys;
   }
 }
