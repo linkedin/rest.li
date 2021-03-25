@@ -20,10 +20,22 @@
       _resourceSpec.getKeyParts(),
       (TypeSpec<${spec.entityClassName}>) _resourceSpec.getValueType());
 
+  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+    #doc($method.schema.doc)
+    public CompletionStage<Map<${spec.keyClassName}, UpdateStatus>> batchUpdate(
+        Map<$spec.keyClassName, ${spec.entityClassName}> entities#if($method.requiredParams.size() > 0),#end
+        #**##methodParams($method, false)##
+      ) {
+      return batchUpdate(entities,
+          #**##optionalMethodCallArgs($method)##
+      );
+    }
+  #end
+
   #doc($method.schema.doc)
   public CompletionStage<Map<${spec.keyClassName}, UpdateStatus>> batchUpdate(
       Map<$spec.keyClassName, ${spec.entityClassName}> entities#if( $method.hasParams()),#end
-      #**##methodParams($method)##
+      #**##methodParams($method, true)##
       ) {
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
     Map<String, Class<?>> queryParamClasses = new HashMap<>($method.getQueryParamMapSize());

@@ -13,12 +13,26 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
+  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+    #doc($method.schema.doc)
+    public CompletionStage<${spec.entityClassName}> get(
+      #if (!${spec.getResource().hasSimple()})
+        $spec.keyClassName $spec.idName#if($method.requiredParams.size() > 0),#end
+      #end
+        #**##methodParams($method, false)##
+      ) {
+      return get(#if(${spec.idName})${spec.idName},#end
+          #**##optionalMethodCallArgs($method)##
+      );
+    }
+  #end
+
   #doc($method.schema.doc)
   public CompletionStage<${spec.entityClassName}> get(
     #if (!${spec.getResource().hasSimple()})
       $spec.keyClassName $spec.idName#if( $method.hasParams()),#end
-      #**##methodParams($method)##
     #end
+      #**##methodParams($method, true)##
       ) {
     #**##paramsRequestMap($method)##
     GetRequest<${spec.entityClassName}> request = new GetRequest<>(

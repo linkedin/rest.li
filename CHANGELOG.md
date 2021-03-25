@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Update fluent client APIs to include projection mask as input parameter.
 
 ## [29.17.0] - 2021-03-23
 - Implement D2 cluster subsetting.
