@@ -853,24 +853,27 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       // For simple field "foo" generate:
       // public ProjectionMask withFoo() {
       //    maskMap.put("foo", POSITIVE_MASK);
+      //    _fooMask = null;
       // }
       // In addition to above API, complex fields will generate additional API to set nested mask. For a complex field "bar":
       // public ProjectionMask withBar(Function<Bar.ProjectionMask, Bar.ProjectionMask> nestedMaskBuilder) {
-      //    maskMap.put("foo", nestedMaskBuilder.apply(Bar.createMask()).getDataMap());
+      //    _barMask = nestedMaskBuilder.apply(_barMask == null ? Bar.createMask() : _barMask);
+      //    getDataMap().put("foo", _barMask.getDataMap());
       // }
+      generateWithFieldBodyNested(field, maskNestedClass, method -> {});
       generateWithFieldBodyDefault(field, maskNestedClass, method ->
       {
         method.body().invoke(JExpr.invoke("getDataMap"), "put").arg(field.getSchemaField().getName())
             .arg(getCodeModel().ref(MaskMap.class).staticRef("POSITIVE_MASK"));
       });
-      generateWithFieldBodyNested(field, maskNestedClass, method -> {});
 
       // For array types, add another method to get Field mask with a range specified
       // For a array type field "foo" with "Bar" items, a new API to set start and count will be provided (for both variants above).
       // public ProjectionMask withFoo(Function<BarArray.ProjectionMask, BarArray.ProjectionMask> nestedMaskBuilder, Integer start, Integer count) {
-      //   maskMap.put("foo", nestedMaskBuilder.apply(BarArray.createMask()).getDataMap());
-      //   maskMap.get("foo").put("$start", start);
-      //   maskMap.get("foo").put("$count, count);
+      //    _fooMask = nestedMaskBuilder.apply(_fooMask == null ? BarArray.createMask() : _fooMask);
+      //   getDataMap().put("foo", nested.getDataMap());
+      //   getDataMap().getDataMap("foo").put("$start", start);
+      //   getDataMap().getDataMap("foo").put("$count, count);
       // }
       if (isArrayType(field.getSchemaField().getType()))
       {
@@ -908,20 +911,31 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     // For fields with nested types, add a method that allows setting nested mask.
     if (hasNestedFields(field.getSchemaField().getType()))
     {
-      final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(field.getSchemaField().getName())));
+      final JClass fieldType = generate(field.getType());
+      JClass nestedMaskType = getCodeModel().ref(fieldType.fullName() + ".ProjectionMask");
+      String fieldName = escapeReserved(field.getSchemaField().getName());
+      String maskFieldName = "_" + fieldName + "Mask";
+      JFieldVar maskField = maskNestedClass.fields().get(maskFieldName);
+      if (maskField == null)
+      {
+        maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, maskFieldName);
+      }
+      final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(
+          fieldName)));
       if (!field.getSchemaField().getDoc().isEmpty())
       {
         withFieldMethod.javadoc().append(field.getSchemaField().getDoc());
       }
       setDeprecatedAnnotationAndJavadoc(withFieldMethod, field.getSchemaField());
-      final JClass fieldType = generate(field.getType());
-      JClass nestedMaskType = getCodeModel().ref(fieldType.fullName() + ".ProjectionMask");
-
+      JInvocation getDataMap = JExpr.invoke("getDataMap");
       JVar nestedMask = withFieldMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType), "nestedMask");
-      withFieldMethod.body().invoke(JExpr.invoke("getDataMap"), "put")
-          .arg(field.getSchemaField().getName())
-          .arg(nestedMask.invoke("apply").arg(fieldType.staticInvoke("createMask"))
-              .invoke("getDataMap"));
+      withFieldMethod.body().assign(maskField,
+          nestedMask.invoke("apply").arg(
+              JOp.cond(maskField.eq(JExpr._null()), fieldType.staticInvoke("createMask"), maskField)));
+      withFieldMethod.body().invoke(getDataMap, "put")
+          .arg(fieldName)
+          .arg(maskField.invoke("getDataMap"));
+
       methodBodyCustomizer.accept(withFieldMethod);
       withFieldMethod.body()._return(JExpr._this());
     }
@@ -929,12 +943,19 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
   private void generateWithFieldBodyDefault(RecordTemplateSpec.Field field, JDefinedClass maskNestedClass, Consumer<JMethod> methodCustomizer)
   {
-    final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(field.getSchemaField().getName())));
+    String fieldName = escapeReserved(field.getSchemaField().getName());
+    final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(fieldName));
     if (!field.getSchemaField().getDoc().isEmpty())
     {
       withFieldMethod.javadoc().append(field.getSchemaField().getDoc());
     }
     setDeprecatedAnnotationAndJavadoc(withFieldMethod, field.getSchemaField());
+    String maskFieldName = "_" + fieldName + "Mask";
+    JFieldVar maskField = maskNestedClass.fields().get(maskFieldName);
+    if (maskField != null)
+    {
+      withFieldMethod.body().assign(maskField, JExpr._null());
+    }
     methodCustomizer.accept(withFieldMethod);
     withFieldMethod.body()._return(JExpr._this());
   }
@@ -1374,12 +1395,15 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       {
         final JClass fieldType = generate(member.getClassTemplateSpec());
         JClass nestedMaskType = getCodeModel().ref(fieldType.fullName() + ".ProjectionMask");
-
+        String maskFieldName = "_" + CodeUtil.capitalize(escapeReserved(methodName)) + "Mask";
+        JFieldVar maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, maskFieldName);
         JVar nestedMask = withMemberMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType), "nestedMask");
+        withMemberMethod.body().assign(maskField,
+            nestedMask.invoke("apply").arg(
+                JOp.cond(maskField.eq(JExpr._null()), fieldType.staticInvoke("createMask"), maskField)));
         withMemberMethod.body().invoke(getDataMap, "put")
             .arg(memberKey)
-            .arg(nestedMask.invoke("apply").arg(fieldType.staticInvoke("createMask"))
-                .invoke("getDataMap"));
+            .arg(maskField.invoke("getDataMap"));
       }
       else
       {
@@ -1505,7 +1529,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     // If an array item is a complex type, this generates a mask builder that allows building a nested mask.
     // If the array type is FooArray, then
     // public ProjectionMask withItems(Function<Bar.ProjectionMask, Bar.ProjectionMask> itemMaskBuilder) {
-    //   getDataMap().put("$*", itemMaskBuilder.apply(Bar.createMask()).getDataMap());
+    //   _itemsMask = itemMaskBuilder.apply(_itemsMask == null ? Bar.createMask() : _itemsMask);
+    //   getDataMap().put("$*", _itemsMask.getDataMap());
     // }
     if (hasNestedFields(schema))
     {
@@ -1516,13 +1541,15 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
       JInvocation getDataMap = JExpr.invoke("getDataMap");
       JClass nestedMaskType = getCodeModel().ref(childClass.fullName() + ".ProjectionMask");
+      JFieldVar maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, "_itemsMask");
 
-      JVar nestedMask =
-          withFieldMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType), "nestedMask");
-      withFieldMethod.body()
-          .invoke(getDataMap, "put")
+      JVar nestedMask = withFieldMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType), "nestedMask");
+      withFieldMethod.body().assign(maskField,
+          nestedMask.invoke("apply").arg(
+              JOp.cond(maskField.eq(JExpr._null()), childClass.staticInvoke("createMask"), maskField)));
+      withFieldMethod.body().invoke(getDataMap, "put")
           .arg(JExpr.lit(FilterConstants.WILDCARD))
-          .arg(nestedMask.invoke("apply").arg(childClass.staticInvoke("createMask")).invoke("getDataMap"));
+          .arg(maskField.invoke("getDataMap"));
       withFieldMethod.body()._return(JExpr._this());
     }
   }
