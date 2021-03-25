@@ -719,11 +719,15 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     Set<URI> possibleUris = uris.getUriBySchemeAndPartition(scheme, partitionId);
 
     Map<URI, TrackerClient> clientsToBalance = getPotentialClients(serviceName, serviceProperties, clusterProperties, possibleUris);
-    if (clientsToBalance.isEmpty())
+    Map<URI, TrackerClient> clientsSubset = serviceProperties.isEnableClusterSubsetting() ?
+        _state.getClientsSubset(serviceName, serviceProperties.getMinClusterSubsetSize(),
+            partitionId, clientsToBalance) : clientsToBalance;
+
+    if (clientsSubset.isEmpty())
     {
       info(_log, "Can not find a host for service: ", serviceName, ", scheme: ", scheme, ", partition: ", partitionId);
     }
-    return clientsToBalance;
+    return clientsSubset;
   }
 
   private Map<URI, TrackerClient> getPotentialClients(String serviceName,

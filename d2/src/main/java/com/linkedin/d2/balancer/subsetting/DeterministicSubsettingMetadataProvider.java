@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2021 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,33 +14,18 @@
    limitations under the License.
 */
 
-package com.linkedin.data.transform.filter.request;
+package com.linkedin.d2.balancer.subsetting;
 
-import com.linkedin.data.schema.MaskMap;
+import com.linkedin.d2.balancer.LoadBalancerState;
 
 
 /**
- * @author Josh Walker
- * @version $Revision: $
+ * Provides deterministic subsetting strategy with the peer cluster metadata needed
  */
-public enum MaskOperation
+public interface DeterministicSubsettingMetadataProvider
 {
-  POSITIVE_MASK_OP(MaskMap.POSITIVE_MASK),
-  NEGATIVE_MASK_OP(MaskMap.NEGATIVE_MASK);
-
-  MaskOperation(int value)
-  {
-    _representation = value;
-  }
-
   /**
-   * return the representation of this MaskOperation
-   * @return an Integer, either 0 or 1
+   * Retrieve subsetting metadata of peer cluster given the load balancer state
    */
-  public Integer getRepresentation()
-  {
-    return _representation;
-  }
-
-  private final Integer _representation;
+  DeterministicSubsettingMetadata getSubsettingMetadata(LoadBalancerState state);
 }

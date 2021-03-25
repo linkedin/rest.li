@@ -113,7 +113,7 @@ public class D2MonitorEventEmitter
 
   private boolean isClientHealthy(TrackerClient trackerClient, final Map<URI, Integer> pointsMap)
   {
-    int perfectHealth = (int) (trackerClient.getPartitionWeight(_partitionId) * _pointsPerWeight);
+    int perfectHealth = (int) (trackerClient.getPartitionWeight(_partitionId) * trackerClient.getSubsetWeight(_partitionId) * _pointsPerWeight);
     return pointsMap.get(trackerClient.getUri()) >= perfectHealth;
   }
 

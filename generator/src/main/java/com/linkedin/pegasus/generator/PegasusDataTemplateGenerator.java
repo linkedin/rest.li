@@ -49,6 +49,7 @@ public class PegasusDataTemplateGenerator
    */
   public static final String GENERATOR_GENERATE_IMPORTED = "generator.generate.imported";
   public static final String GENERATOR_GENERATE_LOWERCASE_PATH = "generator.generate.lowercase.path";
+  public static final String GENERATOR_GENERATE_FIELD_MASK = "generator.generate.field.mask";
 
   private static final Logger _log = LoggerFactory.getLogger(PegasusDataTemplateGenerator.class);
 
@@ -100,6 +101,8 @@ public class PegasusDataTemplateGenerator
     final boolean generateImported = generateImportedProperty == null ? true : Boolean.parseBoolean(generateImportedProperty);
     final String generateLowercasePathProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_LOWERCASE_PATH);
     final boolean generateLowercasePath = generateLowercasePathProperty == null ?  true : Boolean.parseBoolean(generateLowercasePathProperty);
+    final String generateFieldMaskProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_FIELD_MASK);
+    final boolean generateFieldMask = Boolean.parseBoolean(generateFieldMaskProperty);
     String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
     if (resolverPath != null && ArgumentFileProcessor.isArgFile(resolverPath))
     {
@@ -115,15 +118,21 @@ public class PegasusDataTemplateGenerator
                                      generateImported,
                                      args[0],
                                      schemaFiles,
-                                     generateLowercasePath);
+                                     generateLowercasePath,
+                                     generateFieldMask);
   }
 
-  public static GeneratorResult run(String resolverPath, String defaultPackage, String rootPath, final boolean generateImported, String targetDirectoryPath, String[] sources, boolean generateLowercasePath)
+  public static GeneratorResult run(String resolverPath, String defaultPackage, String rootPath, final boolean generateImported,
+      String targetDirectoryPath, String[] sources, boolean generateLowercasePath, boolean generateFieldMask)
       throws IOException
   {
     final DataSchemaParser schemaParser = new DataSchemaParser(resolverPath);
     final TemplateSpecGenerator specGenerator = new TemplateSpecGenerator(schemaParser.getSchemaResolver());
-    final JavaDataTemplateGenerator dataTemplateGenerator = new JavaDataTemplateGenerator(defaultPackage, rootPath);
+    JavaDataTemplateGenerator.Config config = new JavaDataTemplateGenerator.Config();
+    config.setDefaultPackage(defaultPackage);
+    config.setRootPath(rootPath);
+    config.setFieldMaskMethods(generateFieldMask);
+    final JavaDataTemplateGenerator dataTemplateGenerator = new JavaDataTemplateGenerator(config);
 
     for (DataSchema predefinedSchema : JavaDataTemplateGenerator.PredefinedJavaClasses.keySet())
     {

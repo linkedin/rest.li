@@ -20,8 +20,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema.Type;
+import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.jersey.api.uri.UriBuilder;
+import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.URIParamUtils;
@@ -149,5 +151,32 @@ public class TestQueryParamsUtil
     Assert.assertEquals("fields", dataMap.getString(RestConstants.FIELDS_PARAM));
     Assert.assertEquals("paging", dataMap.getString(RestConstants.PAGING_FIELDS_PARAM));
     Assert.assertEquals("metadata", dataMap.getString(RestConstants.METADATA_FIELDS_PARAM));
+  }
+
+  @Test
+  public void testMaskTreeProjectionParams()
+  {
+    Map<String, Object> queryParams = new HashMap<>();
+    MaskMap fieldsMask = TestRecord.createMask().withId().withMessage();
+    queryParams.put(RestConstants.FIELDS_PARAM, fieldsMask.getDataMap());
+    DataMap pagingMask = new DataMap();
+    pagingMask.put("paging", MaskMap.POSITIVE_MASK);
+    queryParams.put(RestConstants.PAGING_FIELDS_PARAM, pagingMask);
+    DataMap metaDataMask = new DataMap();
+    metaDataMask.put("metadata", MaskMap.POSITIVE_MASK);
+    queryParams.put(RestConstants.METADATA_FIELDS_PARAM, metaDataMask);
+
+    DataMap dataMap =
+        QueryParamsUtil.convertToDataMap(queryParams, Collections.emptyMap(),
+            AllProtocolVersions.LATEST_PROTOCOL_VERSION, (paramName, pathSpecs) -> null);
+
+    Assert.assertSame(dataMap.get(RestConstants.FIELDS_PARAM), fieldsMask.getDataMap());
+    Assert.assertSame(dataMap.get(RestConstants.PAGING_FIELDS_PARAM), pagingMask);
+    Assert.assertSame(dataMap.get(RestConstants.METADATA_FIELDS_PARAM), metaDataMask);
+
+    UriBuilder uriBuilder = new UriBuilder();
+    URIParamUtils.addSortedParams(uriBuilder, dataMap);
+    String uri = uriBuilder.build().getQuery();
+    Assert.assertEquals(uri, "fields=message,id&metadataFields=metadata&pagingFields=paging");
   }
 }

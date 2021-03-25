@@ -15,7 +15,6 @@
 */
 package com.linkedin.restli.examples;
 
-import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.r2.RemoteInvocationException;
@@ -27,13 +26,19 @@ import com.linkedin.restli.client.GetAllRequest;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.BatchFinderCriteriaResult;
+import com.linkedin.restli.common.CollectionMetadata;
+import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.EntityResponse;
+import com.linkedin.restli.common.LinkArray;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.defaults.api.FillInDefaultsGetRequestBuilder;
 import com.linkedin.restli.examples.defaults.api.FillInDefaultsRequestBuilders;
 import com.linkedin.restli.examples.defaults.api.HighLevelRecordWithDefault;
+import com.linkedin.restli.examples.defaults.api.LowLevelRecordWithDefault;
 import com.linkedin.restli.examples.defaults.api.RecordCriteria;
+import com.linkedin.restli.server.CollectionResult;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -156,50 +161,98 @@ public class TestFillInDefaultValue  extends RestLiIntegrationTest
   }
 
   @DataProvider(name = "testGetAllData")
-  private Object[] testGetAllData() throws CloneNotSupportedException {
-    HighLevelRecordWithDefault a = new HighLevelRecordWithDefault(expectedTestData.clone()).setNoDefaultFieldA(0);
-    HighLevelRecordWithDefault b = new HighLevelRecordWithDefault(expectedTestData.clone()).setNoDefaultFieldA(1);
-    HighLevelRecordWithDefault c = new HighLevelRecordWithDefault(expectedTestData.clone()).setNoDefaultFieldA(2);
-    Map<Integer, HighLevelRecordWithDefault> expect = new HashMap<>();
-    expect.put(0, a);
-    expect.put(1, b);
-    expect.put(2, c);
-    return new Object[]{expect};
+  private Object[][] testGetAllData() throws CloneNotSupportedException
+  {
+    final int count = 3;
+    List<HighLevelRecordWithDefault> elements = new ArrayList<>();
+    for (int i = 0; i < count; i++)
+    {
+      elements.add(new HighLevelRecordWithDefault(expectedTestData.clone()).setNoDefaultFieldA(i));
+    }
+    CollectionMetadata collectionMetadata = new CollectionMetadata()
+        .setCount(10).setTotal(3).setStart(0).setLinks(new LinkArray());
+    LowLevelRecordWithDefault metadata = new LowLevelRecordWithDefault();
+    metadata.setNameWithDefault(metadata.getNameWithDefault());
+    return new Object[][]{{elements, collectionMetadata, metadata}};
   }
 
   @Test(dataProvider = "testGetAllData")
-  public void testFillInDefaultGetAll(Map<Integer, HighLevelRecordWithDefault> expected) throws RemoteInvocationException
+  public void testFillInDefaultGetAll(List<HighLevelRecordWithDefault> expectedElements,
+      CollectionMetadata expectedCollectionMetadata,
+      LowLevelRecordWithDefault expectedMetadata) throws RemoteInvocationException
   {
     FillInDefaultsRequestBuilders builders = new FillInDefaultsRequestBuilders();
-    GetAllRequest<HighLevelRecordWithDefault> request =
-        builders.getAll().setParam(RestConstants.FILL_IN_DEFAULTS_PARAM, true).build();
-    List<HighLevelRecordWithDefault> allResult = getClient().sendRequest(request).getResponse().getEntity().getElements();
-    Map<Integer, HighLevelRecordWithDefault> actual = new HashMap<>();
-    for (HighLevelRecordWithDefault oneRecord : allResult)
+    GetAllRequest<HighLevelRecordWithDefault> request = builders.getAll()
+        .setParam(RestConstants.FILL_IN_DEFAULTS_PARAM, true).build();
+    CollectionResponse<HighLevelRecordWithDefault> actual = getClient().sendRequest(request).getResponse().getEntity();
+
+    Assert.assertEquals(actual.getElements(), expectedElements);
+    Assert.assertEquals(actual.getPaging(), expectedCollectionMetadata);
+    Assert.assertEquals(actual.getMetadataRaw(), expectedMetadata.data());
+  }
+
+  @DataProvider(name = "testGetAllDataWithoutRequireDefault")
+  private Object[][] testGetAllDataWithoutRequireDefault() throws CloneNotSupportedException
+  {
+    final int count = 3;
+    List<HighLevelRecordWithDefault> elements = new ArrayList<>();
+    for (int i = 0; i < count; i++)
     {
-      actual.put(oneRecord.getNoDefaultFieldA(), oneRecord);
+      elements.add(new HighLevelRecordWithDefault().setNoDefaultFieldA(i));
     }
-    Assert.assertEquals(actual, expected);
+    CollectionMetadata collectionMetadata = new CollectionMetadata()
+        .setLinks(new LinkArray()).setCount(10).setStart(0).setTotal(3);
+    LowLevelRecordWithDefault metadata = new LowLevelRecordWithDefault();
+    return new Object[][]{{elements, collectionMetadata, metadata}};
+  }
+
+  @Test(dataProvider = "testGetAllDataWithoutRequireDefault")
+  public void testFillInDefaultGetAllWithoutRequireDefault(List<HighLevelRecordWithDefault> expectedElements,
+      CollectionMetadata expectedCollectionMetadata, LowLevelRecordWithDefault expectedMetadata) throws RemoteInvocationException
+  {
+    FillInDefaultsRequestBuilders builders = new FillInDefaultsRequestBuilders();
+    GetAllRequest<HighLevelRecordWithDefault> request = builders.getAll().build();
+    CollectionResponse<HighLevelRecordWithDefault> actual = getClient().sendRequest(request).getResponse().getEntity();
+
+    Assert.assertEquals(actual.getElements(), expectedElements);
+    Assert.assertEquals(actual.getPaging(), expectedCollectionMetadata);
+    Assert.assertEquals(actual.getMetadataRaw(), expectedMetadata.data());
   }
 
   @DataProvider(name = "testFinderData")
-  private Object[] testFinderData()
+  private Object[][] testFinderData() throws CloneNotSupportedException
   {
-    return new Integer[]{2, 3};
+    final int total = 3;
+    List<HighLevelRecordWithDefault> elements = new ArrayList<>();
+    for (int i = 0; i < total; i ++)
+    {
+      elements.add(new HighLevelRecordWithDefault(expectedTestData.clone()).setNoDefaultFieldA(2));
+    }
+    CollectionMetadata collectionMetadata = new CollectionMetadata()
+        .setLinks(new LinkArray()).setCount(10).setTotal(3).setStart(0);
+    LowLevelRecordWithDefault metadata = new LowLevelRecordWithDefault();
+    metadata.setNameWithDefault(metadata.getNameWithDefault());
+    return new Object[][]
+        {
+            {
+              2, elements, collectionMetadata, metadata
+            }
+        };
   }
 
   @Test(dataProvider = "testFinderData")
-  public void testFillInDefaultFinder(Integer fieldA) throws RemoteInvocationException
+  public void testFillInDefaultFinder(Integer fieldA, List<HighLevelRecordWithDefault> expectedElements,
+      CollectionMetadata expectedCollection, LowLevelRecordWithDefault expectedMetadata) throws RemoteInvocationException
   {
     FillInDefaultsRequestBuilders builders = new FillInDefaultsRequestBuilders();
     FindRequest<HighLevelRecordWithDefault> request = builders.findByFindRecords()
         .setParam(RestConstants.FILL_IN_DEFAULTS_PARAM, true)
         .setParam("noDefaultFieldA", fieldA).build();
-    List<HighLevelRecordWithDefault> result = getClient().sendRequest(request).getResponse().getEntity().getElements();
-    Set<HighLevelRecordWithDefault> actual = new HashSet<>(result);
-    Set<HighLevelRecordWithDefault> expect = new HashSet<>();
-    expect.add(new HighLevelRecordWithDefault(expectedTestData).setNoDefaultFieldA(fieldA));
-    Assert.assertEquals(actual, expect);
+
+    CollectionResponse<HighLevelRecordWithDefault> actual = getClient().sendRequest(request).getResponse().getEntity();
+    Assert.assertEquals(actual.getElements(), expectedElements);
+    Assert.assertEquals(actual.getPaging(), expectedCollection);
+    Assert.assertEquals(actual.getMetadataRaw(), expectedMetadata.data());
   }
 
   @DataProvider(name = "testBatchFinderData")
