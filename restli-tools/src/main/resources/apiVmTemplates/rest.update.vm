@@ -15,10 +15,12 @@
 *#
   #doc($method.schema.doc)
   public CompletionStage<Void> update(
+    #if (!${spec.getResource().hasSimple()})
       $spec.keyClassName $spec.idName,
-      ${spec.entityClassName} entity#if( $method.hasParams()),#end
-      #**##methodParams($method)##
-      ) {
+    #end
+    ${spec.entityClassName} entity#if( $method.hasParams()),#end
+    #**##methodParams($method)##
+  ) {
     #**##paramsRequestMap($method)##
     UpdateRequest<${spec.entityClassName}> request = new UpdateRequest<>(
         entity,
@@ -30,7 +32,11 @@
         ORIGINAL_RESOURCE_PATH,
         Collections.emptyMap(),
         RestliRequestOptions.DEFAULT_OPTIONS,
-        $spec.idName,
+        #if(${spec.idName})
+    #**#$spec.idName##
+        #else
+    #**#null##
+        #end,
         null);
     CompletableFuture<Void> result = new CompletableFuture<>();
     Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",

@@ -33,6 +33,7 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategy
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -69,6 +70,7 @@ import org.slf4j.LoggerFactory;
  * Build a {@link D2Client} with basic ZooKeeper setup to connect D2 protocol.
  * The client could be further wrapped by other client classes.
  */
+@SuppressWarnings("deprecation")
 public class D2ClientBuilder
 {
   private static final Logger LOG = LoggerFactory.getLogger(D2ClientBuilder.class);
@@ -145,6 +147,8 @@ public class D2ClientBuilder
                   _config.healthCheckOperations,
                   _config._executorService,
                   _config.retry,
+                  _config.restRetryEnabled,
+                  _config.streamRetryEnabled,
                   _config.retryLimit,
                   _config.retryUpdateIntervalMs,
                   _config.retryAggregatedIntervalNum,
@@ -170,7 +174,8 @@ public class D2ClientBuilder
                   _config.jmxManager,
                   _config.d2JmxManagerPrefix,
                   _config.zookeeperReadWindowMs,
-                  _config.enableRelativeLoadBalancer);
+                  _config.enableRelativeLoadBalancer,
+                  _config.deterministicSubsettingMetadataProvider);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -205,7 +210,14 @@ public class D2ClientBuilder
     if (_config.retry)
     {
       d2Client = new RetryClient(d2Client, loadBalancer, _config.retryLimit,
-          _config.retryUpdateIntervalMs, _config.retryAggregatedIntervalNum, SystemClock.instance());
+          _config.retryUpdateIntervalMs, _config.retryAggregatedIntervalNum, SystemClock.instance(),
+          true, true);
+    }
+    else if (_config.restRetryEnabled || _config.streamRetryEnabled)
+    {
+      d2Client = new RetryClient(d2Client, loadBalancer, _config.retryLimit,
+          _config.retryUpdateIntervalMs, _config.retryAggregatedIntervalNum, SystemClock.instance(),
+          _config.restRetryEnabled, _config.streamRetryEnabled);
     }
 
     // If we created default transport client factories, we need to shut them down when d2Client
@@ -337,6 +349,18 @@ public class D2ClientBuilder
   public D2ClientBuilder setRetry(boolean retry)
   {
     _config.retry = retry;
+    return this;
+  }
+
+  public D2ClientBuilder setRestRetryEnabled(boolean restRetryEnabled)
+  {
+    _config.restRetryEnabled = restRetryEnabled;
+    return this;
+  }
+
+  public D2ClientBuilder setStreamRetryEnabled(boolean streamRetryEnabled)
+  {
+    _config.streamRetryEnabled = streamRetryEnabled;
     return this;
   }
 
@@ -505,6 +529,12 @@ public class D2ClientBuilder
   public D2ClientBuilder setEnableRelativeLoadBalancer(boolean enableRelativeLoadBalancer)
   {
     _config.enableRelativeLoadBalancer = enableRelativeLoadBalancer;
+    return this;
+  }
+
+  public D2ClientBuilder setDeterministicSubsettingMetadataProvider(DeterministicSubsettingMetadataProvider provider)
+  {
+    _config.deterministicSubsettingMetadataProvider = provider;
     return this;
   }
 

@@ -21,6 +21,7 @@ import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -69,7 +70,15 @@ public class D2ClientConfig
    */
   ScheduledExecutorService _executorService = null;
   ScheduledExecutorService _backupRequestsExecutorService = null;
+
+  /**
+   * @deprecated Use restRetryEnabled and streamRetryEnabled instead
+   */
+  @Deprecated()
   boolean retry = false;
+
+  boolean restRetryEnabled = false;
+  boolean streamRetryEnabled = false;
   int retryLimit = DEAULT_RETRY_LIMIT;
   long retryUpdateIntervalMs = RetryClient.DEFAULT_UPDATE_INTERVAL_MS;
   int retryAggregatedIntervalNum = RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM;
@@ -95,7 +104,7 @@ public class D2ClientConfig
   JmxManager jmxManager = new NoOpJmxManager();
   String d2JmxManagerPrefix = "UnknownPrefix";
   boolean enableRelativeLoadBalancer = false;
-
+  DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
   public static final int DEAULT_RETRY_LIMIT = 3;
 
   public D2ClientConfig()
@@ -124,6 +133,8 @@ public class D2ClientConfig
                  HealthCheckOperations healthCheckOperations,
                  ScheduledExecutorService executorService,
                  boolean retry,
+                 boolean restRetryEnabled,
+                 boolean streamRetryEnabled,
                  int retryLimit,
                  long retryUpdateIntervalMs,
                  int retryAggregatedIntervalNum,
@@ -149,7 +160,8 @@ public class D2ClientConfig
                  JmxManager jmxManager,
                  String d2JmxManagerPrefix,
                  int zookeeperReadWindowMs,
-                 boolean enableRelativeLoadBalancer)
+                 boolean enableRelativeLoadBalancer,
+                 DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -173,6 +185,8 @@ public class D2ClientConfig
     this.healthCheckOperations = healthCheckOperations;
     this._executorService = executorService;
     this.retry = retry;
+    this.restRetryEnabled = restRetryEnabled;
+    this.streamRetryEnabled = streamRetryEnabled;
     this.retryLimit = retryLimit;
     this.retryUpdateIntervalMs = retryUpdateIntervalMs;
     this.retryAggregatedIntervalNum = retryAggregatedIntervalNum;
@@ -199,5 +213,6 @@ public class D2ClientConfig
     this.d2JmxManagerPrefix = d2JmxManagerPrefix;
     this.zookeeperReadWindowMs = zookeeperReadWindowMs;
     this.enableRelativeLoadBalancer = enableRelativeLoadBalancer;
+    this.deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
   }
 }

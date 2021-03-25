@@ -22,6 +22,7 @@ import com.linkedin.restli.client.ParSeqRestliClientBuilder;
 import com.linkedin.restli.client.ParSeqRestliClientConfigBuilder;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.util.PatchGenerator;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EntityResponse;
@@ -30,10 +31,13 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
+import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.CreateGreeting;
-import com.linkedin.restli.examples.greetings.client.Greetings;
-import com.linkedin.restli.examples.greetings.client.PartialUpdateGreeting;
+import com.linkedin.restli.examples.greetings.client.AssociationsFluentClient;
+import com.linkedin.restli.examples.greetings.client.CreateGreetingFluentClient;
+import com.linkedin.restli.examples.greetings.client.GreetingFluentClient;
+import com.linkedin.restli.examples.greetings.client.GreetingsFluentClient;
+import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingFluentClient;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -87,7 +91,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testGetRequest() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Greeting> result = greetings.get(1L);
     CompletableFuture<Greeting> future = result.toCompletableFuture();
@@ -99,7 +103,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testGetRequestFailure() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Greeting> result = greetings.get(-1L);
     CompletableFuture<Greeting> future = result.toCompletableFuture();
@@ -117,7 +121,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchGetRequest() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Set<Long> ids = Sets.newHashSet(Arrays.asList(1L, 2L, 3L));
     CompletionStage<Map<Long, EntityResponse<Greeting>>> result = greetings.batchGet(ids);
@@ -136,7 +140,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchGetRequestWithPartialErrors() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Set<Long> ids = Sets.newHashSet(Arrays.asList(-1L, -2L, 1L, 2L, 3L));
     CompletionStage<Map<Long, EntityResponse<Greeting>>> result = greetings.batchGet(ids);
@@ -162,7 +166,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreate() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletionStage<Long> result = greetings.create(getGreeting(), false);
     CompletableFuture<Long> future = result.toCompletableFuture();
     Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
@@ -171,7 +175,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreateNullId() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Long> result = greetings.create(getGreeting(), true);
     CompletableFuture<Long> future = result.toCompletableFuture();
@@ -181,7 +185,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreateReturnEntity() throws Exception
   {
-    CreateGreeting greetings = new CreateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CreateGreetingFluentClient greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     String msg = Double.toString(Math.random());
     CompletionStage<IdEntityResponse<Long, Greeting>> result = greetings.createAndGet(getGreeting(msg));
@@ -193,7 +197,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreateReturnEntityDisabled() throws Exception
   {
-    CreateGreeting greetings = new CreateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CreateGreetingFluentClient greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Long> result = greetings.create(getGreeting());
     CompletableFuture<Long> future = result.toCompletableFuture();
@@ -203,7 +207,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchCreate() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<List<CreateIdStatus<Long>>> result = greetings.batchCreate(
         Arrays.asList(getGreeting(), getGreeting()));
@@ -215,7 +219,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchCreateReturnEntity() throws Exception
   {
-    CreateGreeting greetings = new CreateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CreateGreetingFluentClient greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     String msg1 = Double.toString(Math.random());
     String msg2 = Double.toString(Math.random());
@@ -233,7 +237,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchCreateReturnEntityDisabled() throws Exception
   {
-    CreateGreeting greetings = new CreateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CreateGreetingFluentClient greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<List<CreateIdStatus<Long>>>
         result = greetings.batchCreate(Arrays.asList(getGreeting(), getGreeting()));
@@ -245,7 +249,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreateAndThenBatchDelete() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     // Create entities first so we don't delete those used by other tests.
     CompletionStage<List<CreateIdStatus<Long>>>
         createResult = greetings.batchCreate(Arrays.asList(getGreeting(), getGreeting()));
@@ -265,7 +269,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreateAndThenBatchDeleteWithFailures() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     // Create entities first so we don't delete those used by other tests.
     CompletionStage<List<CreateIdStatus<Long>>>
         createResult = greetings.batchCreate(Arrays.asList(getGreeting(), getGreeting()));
@@ -291,7 +295,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreateAndThenDelete() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     // Create entities first so we don't delete those used by other tests.
     CompletionStage<Long> createResult = greetings.create(getGreeting(), false);
 
@@ -304,7 +308,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testDeleteFailure() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletionStage<Void> result = greetings.delete(-1L);
     CompletableFuture<Void> future = result.toCompletableFuture();
     try
@@ -320,7 +324,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testPartialUpdateAfterCreateAndGet() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     // Create a new greeting to use for partial update test.
     CompletionStage<Long> createResult = greetings.create(getGreeting(), false);
     CompletionStage<Void> updateResult = createResult.thenCompose(greetings::get).thenCompose(greeting ->
@@ -343,7 +347,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testPartialUpdateAndGet() throws Exception
   {
-    PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
     Greeting update = getGreeting(message);
@@ -355,7 +359,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testPartialUpdateError() throws Exception
   {
-    PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
@@ -375,7 +379,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchPartialUpdate() throws Exception
   {
-    PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
@@ -393,7 +397,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchPartialUpdateWithErrors() throws Exception
   {
-    PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
@@ -411,7 +415,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchPartialUpdateAndGet() throws Exception
   {
-    PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
@@ -431,7 +435,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchPartialUpdateAndGetWithErrors() throws Exception
   {
-    PartialUpdateGreeting greetings = new PartialUpdateGreeting(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
@@ -452,7 +456,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchUpdate() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletionStage<List<CreateIdStatus<Long>>>
         createResult = greetings.batchCreate(Arrays.asList(getGreeting(), getGreeting()));
 
@@ -477,7 +481,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchUpdateWithErrors() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     final Map<Long, Greeting> inputs = new HashMap<>();
     inputs.put(-6L, getGreeting());
@@ -498,7 +502,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testUpdate() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletionStage<Long> createResult = greetings.create(getGreeting(), false);
     final String message = "Update test";
     CompletionStage<Void> updateResult = createResult.thenCompose(id -> greetings.update(id, getGreeting(message)));
@@ -513,7 +517,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testUpdateFailure() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletionStage<Void> result = greetings.update(-7L, getGreeting());
     CompletableFuture<Void> future = result.toCompletableFuture();
     try
@@ -529,7 +533,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testGetAll() throws Exception
   {
-    Greetings greetings = new Greetings(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     // Create some greetings with "GetAll" in message so they will be returned by getAll test method..
     CompletionStage<List<CreateIdStatus<Long>>> createResult = greetings.batchCreate(
@@ -542,6 +546,101 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     for (Greeting greeting :greetingList)
     {
       Assert.assertTrue(greeting.getMessage().contains("GetAll"));
+    }
+  }
+
+  @Test
+  public void testSimpleResourceUpdate() throws Exception
+  {
+    final String message = "Update test";
+    GreetingFluentClient greeting = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    greeting.update(getGreeting(message)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Greeting greetingEntity = greeting.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(greetingEntity.getMessage(), message);
+  }
+
+  @Test
+  public void testSimpleResourceDeleteMethodAndGetMethod() throws Exception
+  {
+    GreetingFluentClient greeting = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    greeting.delete().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    try
+    {
+      Greeting greetingEntity = greeting.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+      Assert.fail("should fail since entity delete");
+    }
+    catch (Exception e)
+    {
+
+    }
+    final String message = "Test Get";
+    greeting.update(getGreeting(message)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Greeting greetingEntity = greeting.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertTrue(greetingEntity.hasId());
+    Assert.assertEquals(greetingEntity.getMessage(), message);
+
+  }
+
+  @Test
+  public void testAssociateResourceGet() throws Exception
+  {
+    CompoundKey key = AssociationResourceHelpers.URL_COMPOUND_KEY;
+    AssociationsFluentClient associations =
+        new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Message response = associations.get(key).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertTrue(response.hasId());
+  }
+
+  @Test
+  public void testAssociateResourceBatchGet() throws Exception
+  {
+    AssociationsFluentClient associations =
+        new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+
+    Map<CompoundKey, EntityResponse<Message>> entityResponse =
+        associations.batchGet(AssociationResourceHelpers.DB.keySet())
+            .toCompletableFuture()
+            .get(5000, TimeUnit.MILLISECONDS);
+    for (CompoundKey id : AssociationResourceHelpers.DB.keySet())
+    {
+      Assert.assertTrue(entityResponse.containsKey(id));
+      EntityResponse<Message> single = entityResponse.get(id);
+      Assert.assertEquals(single.getEntity(), AssociationResourceHelpers.DB.get(id));
+    }
+  }
+
+  @Test
+  public void testAssociateResourceBatchUpdate() throws Exception
+  {
+    AssociationsFluentClient associations =
+        new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+
+    Map<CompoundKey, UpdateStatus> ids =
+        associations.batchUpdate(AssociationResourceHelpers.DB).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+
+    Assert.assertEquals(ids.size(), 2);
+    for (CompoundKey id : ids.keySet())
+    {
+      Assert.assertEquals(ids.get(id).getStatus().intValue(), 204);
+    }
+  }
+
+  @Test
+  public void testAssociateResourceBatchPartialUpdate() throws Exception
+  {
+    AssociationsFluentClient associations =
+        new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+
+    Map<CompoundKey, PatchRequest<Message>> patches = new HashMap<CompoundKey, PatchRequest<Message>>();
+    patches.put(AssociationResourceHelpers.URL_COMPOUND_KEY, new PatchRequest<Message>());
+    patches.put(AssociationResourceHelpers.SIMPLE_COMPOUND_KEY, new PatchRequest<Message>());
+
+    Map<CompoundKey, UpdateStatus> ids =
+        associations.batchPartialUpdate(patches).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+
+    for (CompoundKey id : ids.keySet())
+    {
+      Assert.assertEquals(ids.get(id).getStatus().intValue(), 204);
     }
   }
 

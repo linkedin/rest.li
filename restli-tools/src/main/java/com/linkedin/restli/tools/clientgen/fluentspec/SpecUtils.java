@@ -34,7 +34,6 @@ public class SpecUtils {
   private SpecUtils()
   {
   }
-
   public static String getClassName(ClassTemplateSpec classTemplateSpec) {
     if (classTemplateSpec instanceof PrimitiveTemplateSpec)
     {

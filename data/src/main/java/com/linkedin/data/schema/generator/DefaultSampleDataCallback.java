@@ -135,6 +135,11 @@ public class DefaultSampleDataCallback implements SampleDataCallback
   public String getEnum(String fieldName, EnumDataSchema enumDataSchema)
   {
     List<String> symbols = enumDataSchema.getSymbols();
+    // enum without any symbols is allowed, return "EmptyEnum" as a reference in doc.
+    if (symbols.size() < 1)
+    {
+      return "EmptyEnum";
+    }
     return symbols.get(nonNegative(symbols.size() - 1));
   }
 

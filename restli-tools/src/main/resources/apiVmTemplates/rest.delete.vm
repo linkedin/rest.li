@@ -15,7 +15,9 @@
 *#
   #doc($method.schema.doc)
   public CompletionStage<Void> delete(
+    #if (!${spec.getResource().hasSimple()})
       $spec.keyClassName $spec.idName#if( $method.hasParams()),#end
+    #end
       #**##methodParams($method)##
       ) {
     #**##paramsRequestMap($method)##
@@ -29,7 +31,12 @@
         ## TODO Path keys (sub-resources)
         Collections.emptyMap(),
         RestliRequestOptions.DEFAULT_OPTIONS,
-        $spec.idName);
+        #if(${spec.idName})
+    #**#$spec.idName##
+        #else
+    #**#null##
+        #end
+        );
     CompletableFuture<Void> result = new CompletableFuture<>();
     Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
         responseTry -> {

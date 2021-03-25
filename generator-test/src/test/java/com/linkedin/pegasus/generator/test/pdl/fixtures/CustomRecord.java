@@ -2,6 +2,7 @@ package com.linkedin.pegasus.generator.test.pdl.fixtures;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplate;
 import java.util.List;
@@ -70,6 +71,14 @@ public class CustomRecord implements DataTemplate<DataMap>
     {
       super();
     }
+  }
+
+  public static class ProjectionMask extends MaskMap
+  {
+  }
+
+  public static ProjectionMask createMask() {
+    return new ProjectionMask();
   }
 
   @Override

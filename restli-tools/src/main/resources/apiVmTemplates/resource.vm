@@ -36,7 +36,12 @@ import com.linkedin.restli.common.TypeSpec;
 #foreach($import in $spec.importsForRestMethods)
   import ${import};
 #end
+#if(!${spec.isResourceNameConflictWithEntityClass()})
 import ${spec.entityClass.fullName};
+#end
+#if(${spec.getResource().hasAssociation()})
+import com.linkedin.restli.common.CompoundKey;
+#end
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,7 +56,7 @@ import java.util.concurrent.CompletableFuture;
 import javax.annotation.Generated;
 
 @Generated("Generated from $spec.sourceIdlName")
-public class $spec.className {
+public class ${spec.className}${class_name_suffix}{
   private final static String ORIGINAL_RESOURCE_PATH = "$util.getResourcePath($spec.resource.path)";
   private static ResourceSpec _resourceSpec;
 
@@ -73,6 +78,23 @@ public class $spec.className {
         responseMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", Collections.emptyList()));
       #end
     #end
+
+    #if (${spec.getResource().hasSimple()})
+    _resourceSpec = new ResourceSpecImpl(
+        #if($spec.restMethods.size() > 0)
+          EnumSet.of(
+              #foreach($method in $spec.restMethods)
+              ResourceMethod.${method.method.toUpperCase()}#if($foreach.hasNext),#end
+              #end
+          ),
+        #else
+          EnumSet.noneOf(ResourceMethod.class),
+        #end
+        requestMetadataMap,
+        responseMetadataMap,
+        ${spec.entityClassName}.class
+        );
+    #elseif(${spec.getResource().hasCollection()})
     _resourceSpec = new ResourceSpecImpl(
         #if($spec.restMethods.size() > 0)
           EnumSet.of(
@@ -90,18 +112,63 @@ public class $spec.className {
         null,
         ${spec.entityClassName}.class,
         Collections.emptyMap());
+    #elseif(${spec.getResource().hasAssociation()})
+    HashMap<String, CompoundKey.TypeInfo> keyParts = new HashMap<String, CompoundKey.TypeInfo>();
+      #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+    keyParts.put("${assoc_key.name}", new CompoundKey.TypeInfo(${assoc_key.bindingType}.class, ${assoc_key.declaredType}.class));
+      #end
+    _resourceSpec = new ResourceSpecImpl(
+        #if($spec.restMethods.size() > 0)
+          EnumSet.of(
+              #foreach($method in $spec.restMethods)
+              ResourceMethod.${method.method.toUpperCase()}#if($foreach.hasNext),#end
+              #end
+          ),
+        #else
+          EnumSet.noneOf(ResourceMethod.class),
+        #end
+        requestMetadataMap,
+        responseMetadataMap,
+        CompoundKey.class,
+        null,
+        null,
+        ${spec.entityClassName}.class,
+        keyParts
+        );
+    #end
   }
 
   private final ParSeqRestliClient _client;
   private final Engine _engine;
 
   #doc( $spec.resource.doc "  ")
-  public ${spec.className}(ParSeqRestliClient client, Engine engine) {
+  public ${spec.className}${class_name_suffix}(ParSeqRestliClient client, Engine engine) {
     _client = client;
     _engine = engine;
   }
   // CRUD methods
   #foreach($method in $spec.restMethods)
     #parse("apiVmTemplates/rest.${method.method}.vm")
+  #end
+
+  #if(${spec.getResource().hasAssociation()})
+  // TODO: CompoundKey may eventually need to be exposed to the resource interface
+    public static class Key
+        extends CompoundKey
+    {
+        public Key() {
+        }
+
+        #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+        public ${spec.className}${class_name_suffix}.Key set$util.nameCapsCase($assoc_key.name)(${assoc_key.bindingType} ${assoc_key.name}) {
+            append("${assoc_key.name}", ${assoc_key.name}, _resourceSpec.getKeyParts().get("${assoc_key.name}"));
+            return this;
+        }
+
+        public ${assoc_key.bindingType} get${util.nameCapsCase($assoc_key.name)} () {
+            return ((${assoc_key.bindingType}) getPart("${assoc_key.name}"));
+        }
+        #end
+    }
   #end
 }

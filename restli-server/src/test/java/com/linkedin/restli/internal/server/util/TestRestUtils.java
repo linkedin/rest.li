@@ -51,6 +51,8 @@ import org.testng.annotations.Test;
 public class TestRestUtils
 {
   private static final String JSON_TYPE = "application/json";
+  private static final String JSON_TYPE_WITH_VALID_PARAMS = "application/json; foo=bar";
+  private static final String JSON_TYPE_WITH_Q_PARAM = "application/json; q=.9";
   private static final String PSON_TYPE = "application/x-pson";
   private static final String EMPTY_TYPE = "";
   private static final String HTML_HEADER = "text/html";
@@ -77,6 +79,8 @@ public class TestRestUtils
     {
         { JSON_HEADER, JSON_TYPE },
         { PSON_HEADER, PSON_TYPE },
+        { JSON_TYPE_WITH_VALID_PARAMS, JSON_TYPE_WITH_VALID_PARAMS },
+        { JSON_TYPE_WITH_Q_PARAM, JSON_TYPE },
         { HTML_HEADER, EMPTY_TYPE },
         { UNKNOWN_TYPE_HEADER, EMPTY_TYPE },
         { UNKNOWN_TYPE_HEADER_WITH_INVALID_PARAMS, EMPTY_TYPE },

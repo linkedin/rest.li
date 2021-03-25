@@ -52,6 +52,8 @@ import org.apache.commons.lang.math.NumberUtils;
 public final class MIMEParse
 {
 
+  private static final String QUALITY_PARAM = "q";
+
   /**
    * Parse results container
    */
@@ -67,11 +69,25 @@ public final class MIMEParse
     @Override
     public String toString()
     {
-      StringBuffer s = new StringBuffer("('" + type + "', '" + subType
-                                                + "', {");
-      for (String k : params.keySet())
-        s.append("'" + k + "':'" + params.get(k) + "',");
+      StringBuilder s = new StringBuilder("('").append(type).append("', '").append(subType).append("', {");
+      params.forEach((k, v) -> s.append("'").append(k).append("':'").append(v).append("',"));
       return s.append("})").toString();
+    }
+
+    /**
+     * Build the String for the content type header
+     */
+    String toContentType() {
+      StringBuilder s = new StringBuilder(type).append("/").append(subType);
+      params.forEach((k, v) ->
+      {
+        // Exclude accept type's "q" param from the content type
+        if (!k.equals(QUALITY_PARAM))
+        {
+          s.append("; ").append(k).append("=").append(v);
+        }
+      });
+      return s.toString();
     }
   }
 
@@ -94,7 +110,9 @@ public final class MIMEParse
       String p = parts[i];
       String[] subParts = StringUtils.split(p, '=');
       if (subParts.length == 2)
+      {
         results.params.put(subParts[0].trim(), subParts[1].trim());
+      }
     }
     String fullType = parts[0].trim();
 
@@ -126,10 +144,10 @@ public final class MIMEParse
   protected static ParseResults parseMediaRange(String range)
   {
     ParseResults results = parseMimeType(range);
-    String q = results.params.get("q");
+    String q = results.params.get(QUALITY_PARAM);
     float f = NumberUtils.toFloat(q, 1);
     if (StringUtils.isBlank(q) || f < 0 || f > 1)
-      results.params.put("q", "1");
+      results.params.put(QUALITY_PARAM, "1");
     return results;
   }
 
@@ -178,6 +196,7 @@ public final class MIMEParse
   {
     int bestFitness = -1;
     float bestFitQ = 0;
+    Map<String, String> bestFitParams = Collections.emptyMap();
     ParseResults target = parseMediaRange(mimeType);
 
     for (ParseResults range : parsedRanges)
@@ -191,7 +210,7 @@ public final class MIMEParse
         for (String k : target.params.keySet())
         {
           int paramMatches = 0;
-          if (!k.equals("q") && range.params.containsKey(k)
+          if (!k.equals(QUALITY_PARAM) && range.params.containsKey(k)
                   && target.params.get(k).equals(range.params.get(k)))
           {
             paramMatches++;
@@ -203,12 +222,17 @@ public final class MIMEParse
           {
             bestFitness = fitness;
             bestFitQ = NumberUtils
-                    .toFloat(range.params.get("q"), 0);
+                    .toFloat(range.params.get(QUALITY_PARAM), 0);
+            bestFitParams = range.params;
           }
         }
       }
     }
-    return new FitnessAndQuality(bestFitness, bestFitQ);
+    FitnessAndQuality fitnessAndQuality = new FitnessAndQuality(bestFitness, bestFitQ);
+    target.params = bestFitParams;
+    fitnessAndQuality.mimeType = target.toContentType();
+
+    return fitnessAndQuality;
   }
 
   /**
@@ -247,6 +271,8 @@ public final class MIMEParse
    *
    * MimeParse.bestMatch(Arrays.asList(new String[]{"application/xbel+xml",
    * "text/xml"}), "text/*;q=0.5,*; q=0.1") 'text/xml'
+   *
+   * @return content-type
    */
   public static String bestMatch(Collection<String> supported, String header)
   {
@@ -259,7 +285,6 @@ public final class MIMEParse
     {
       FitnessAndQuality fitnessAndQuality = fitnessAndQualityParsed(s,
                                                                     parseResults);
-      fitnessAndQuality.mimeType = s;
       weightedMatches.add(fitnessAndQuality);
     }
     Collections.sort(weightedMatches);

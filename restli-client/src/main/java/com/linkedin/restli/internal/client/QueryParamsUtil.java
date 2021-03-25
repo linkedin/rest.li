@@ -74,8 +74,8 @@ public class QueryParamsUtil
 
       if (RestConstants.PROJECTION_PARAMETERS.contains(key))
       {
-        // Short-circuit already serialized projection params.
-        if (value instanceof String)
+        // Short-circuit already serialized projection params or projection params already represented as simplified mask tree.
+        if (value instanceof String || value instanceof DataMap)
         {
           result.put(key, value);
           continue;
