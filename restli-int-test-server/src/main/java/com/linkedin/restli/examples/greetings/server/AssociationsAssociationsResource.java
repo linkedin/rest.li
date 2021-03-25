@@ -14,9 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
 package com.linkedin.restli.examples.greetings.server;
 
 
@@ -56,8 +53,7 @@ import static com.linkedin.restli.examples.AssociationResourceHelpers.SIMPLE_COM
 
 
 /**
- * Association resource under parent association resource
- *
+ * Association resource under a parent association resource
  */
 @RestLiAssociation(name="associationsassociations",
     parent = AssociationsResource.class,

@@ -13,11 +13,6 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.examples.greetings.server;
 
 

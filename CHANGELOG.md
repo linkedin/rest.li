@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add fluent client api for subresources
 
 ## [29.17.0] - 2021-03-23
 - Implement D2 cluster subsetting.
