@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2021 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -52,56 +52,13 @@ public class AssociationsAssociationsSubResource extends CollectionResourceTempl
     PathKeys pathKeys = getContext().getPathKeys();
     String srcKey = pathKeys.getAsString("src");
     String destKey = pathKeys.getAsString("dest");
+
+    String anotherSrcKey = pathKeys.getAsString("anotherSrc");
+    String anotherDestKey = pathKeys.getAsString("anotherDest");
     Message message = new Message();
-    message.setId(srcKey);
+    message.setId(srcKey + anotherSrcKey + key);
     message.setTone(Tone.FRIENDLY);
-    message.setMessage(destKey);
+    message.setMessage(destKey+anotherDestKey);
     return message;
-  }
-
-  @Finder("tone")
-  public List<Message> findByTone(@QueryParam("tone") Tone tone)
-  {
-    List<Message> messages = new ArrayList<Message>(2);
-
-    Message message1 = new Message();
-    message1.setId("one");
-    message1.setMessage("one");
-    message1.setTone(tone);
-
-    Message message2 = new Message();
-    message2.setId("two");
-    message2.setMessage("two");
-    message2.setTone(tone);
-
-    messages.add(message1);
-    messages.add(message2);
-
-    return messages;
-  }
-
-  @Action(name="action")
-  public int action()
-  {
-    return 1;
-  }
-
-  @Action(name="getSource")
-  public String srcAction(@PathKeysParam PathKeys pks)
-  {
-    if (pks != null)
-    {
-      return pks.getAsString("src");
-    }
-    else
-    {
-      return null;
-    }
-  }
-
-  @Action(name="concatenateStrings")
-  public String thingAction(@PathKeyParam("src") String src, @PathKeyParam("dest") String dest)
-  {
-    return src + dest;
   }
 }

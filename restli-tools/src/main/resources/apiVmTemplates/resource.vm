@@ -28,6 +28,7 @@ import com.linkedin.restli.client.ParSeqRestliClient;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.util.FluentClientUtils;
+import com.linkedin.restli.client.AbstractRequestBuilder;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
@@ -205,5 +206,17 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
         }
         #end
     }
+  #end
+
+  #if(${spec.getPathKeys().size()} > 0)
+  protected Map<String, Object> buildReadOnlyPathKeys()
+  {
+    return AbstractRequestBuilder.getReadOnlyPathKeys(_pathKeyMap);
+  }
+  #else
+  protected Map<String, Object> buildReadOnlyPathKeys()
+  {
+    return Collections.emptyMap();
+  }
   #end
 }

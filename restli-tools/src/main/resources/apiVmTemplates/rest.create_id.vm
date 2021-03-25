@@ -38,7 +38,7 @@
         queryParams,
         queryParamClasses,
         ORIGINAL_RESOURCE_PATH,
-        Collections.emptyMap(),
+        buildReadOnlyPathKeys(),
         RestliRequestOptions.DEFAULT_OPTIONS,
         null);
     CompletableFuture<${spec.keyClassName}> result = new CompletableFuture<>();

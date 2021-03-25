@@ -112,101 +112,36 @@
             "entity" : {
               "path" : "/greeting/subgreetings/{subgreetingsId}",
               "subresources" : [ {
-                "name" : "subgreetingsInsubgreetings",
+                "name" : "greetingsOfgreetingsOfgreeting",
                 "namespace" : "com.linkedin.restli.examples.greetings.client",
-                "path" : "/greeting/subgreetings/{subgreetingsId}/subgreetingsInsubgreetings",
+                "path" : "/greeting/subgreetings/{subgreetingsId}/greetingsOfgreetingsOfgreeting",
                 "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
-                "doc" : "This resource represents a collection resource under a simple resource.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CollectionUnderCollectionResource",
+                "doc" : "This resource represents a collection under a collection which is under another simple resource\n used as the parent for {@link CollectionOfCollectionOfCollectionOfSimpleResource}\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CollectionOfCollectionOfSimpleResource",
                 "collection" : {
                   "identifier" : {
-                    "name" : "subgreetingsInsubgreetingsId",
+                    "name" : "greetingsOfgreetingsOfgreetingId",
                     "type" : "long"
                   },
-                  "supports" : [ "batch_create", "batch_get", "create", "delete", "get", "partial_update", "update" ],
-                  "methods" : [ {
-                    "method" : "create"
-                  }, {
-                    "method" : "get"
-                  }, {
-                    "method" : "update"
-                  }, {
-                    "method" : "partial_update"
-                  }, {
-                    "method" : "delete"
-                  }, {
-                    "method" : "batch_create"
-                  }, {
-                    "method" : "batch_get"
-                  } ],
-                  "finders" : [ {
-                    "name" : "search",
-                    "parameters" : [ {
-                      "name" : "tone",
-                      "type" : "com.linkedin.restli.examples.greetings.api.Tone",
-                      "optional" : true
-                    }, {
-                      "name" : "complexQueryParam",
-                      "type" : "com.linkedin.restli.examples.greetings.api.Greeting",
-                      "optional" : true
-                    } ],
-                    "pagingSupported" : true
-                  } ],
-                  "actions" : [ {
-                    "name" : "exceptionTest"
-                  }, {
-                    "name" : "purge",
-                    "returns" : "int"
-                  } ],
+                  "supports" : [ ],
                   "entity" : {
-                    "path" : "/greeting/subgreetings/{subgreetingsId}/subgreetingsInsubgreetings/{subgreetingsInsubgreetingsId}",
+                    "path" : "/greeting/subgreetings/{subgreetingsId}/greetingsOfgreetingsOfgreeting/{greetingsOfgreetingsOfgreetingId}",
                     "subresources" : [ {
-                      "name" : "subsubgreetingsInsubGreeting",
+                      "name" : "greetingsOfgreetingsOfgreetingsOfgreeting",
                       "namespace" : "com.linkedin.restli.examples.greetings.client",
-                      "path" : "/greeting/subgreetings/{subgreetingsId}/subgreetingsInsubgreetings/{subgreetingsInsubgreetingsId}/subsubgreetingsInsubGreeting",
+                      "path" : "/greeting/subgreetings/{subgreetingsId}/greetingsOfgreetingsOfgreeting/{greetingsOfgreetingsOfgreetingId}/greetingsOfgreetingsOfgreetingsOfgreeting",
                       "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
-                      "doc" : "This resource represents a collection resource under a simple resource.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ColectionUnderCollectionUnderCollectionResource",
+                      "doc" : "This resource represents a collection resource under a collection resource,\n which is under another collection resource, and that is under another simple resource\n\n Used to test sub-resource with depth more than 1\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CollectionOfCollectionOfCollectionOfSimpleResource",
                       "collection" : {
                         "identifier" : {
-                          "name" : "subsubgreetingsInsubGreetingId",
+                          "name" : "greetingsOfgreetingsOfgreetingsOfgreetingId",
                           "type" : "long"
                         },
-                        "supports" : [ "batch_create", "batch_get", "create", "delete", "get", "partial_update", "update" ],
+                        "supports" : [ "get" ],
                         "methods" : [ {
-                          "method" : "create"
-                        }, {
                           "method" : "get"
-                        }, {
-                          "method" : "update"
-                        }, {
-                          "method" : "partial_update"
-                        }, {
-                          "method" : "delete"
-                        }, {
-                          "method" : "batch_create"
-                        }, {
-                          "method" : "batch_get"
-                        } ],
-                        "finders" : [ {
-                          "name" : "search",
-                          "parameters" : [ {
-                            "name" : "tone",
-                            "type" : "com.linkedin.restli.examples.greetings.api.Tone",
-                            "optional" : true
-                          }, {
-                            "name" : "complexQueryParam",
-                            "type" : "com.linkedin.restli.examples.greetings.api.Greeting",
-                            "optional" : true
-                          } ],
-                          "pagingSupported" : true
-                        } ],
-                        "actions" : [ {
-                          "name" : "exceptionTest"
-                        }, {
-                          "name" : "purge",
-                          "returns" : "int"
                         } ],
                         "entity" : {
-                          "path" : "/greeting/subgreetings/{subgreetingsId}/subgreetingsInsubgreetings/{subgreetingsInsubgreetingsId}/subsubgreetingsInsubGreeting/{subsubgreetingsInsubGreetingId}"
+                          "path" : "/greeting/subgreetings/{subgreetingsId}/greetingsOfgreetingsOfgreeting/{greetingsOfgreetingsOfgreetingId}/greetingsOfgreetingsOfgreetingsOfgreeting/{greetingsOfgreetingsOfgreetingsOfgreetingId}"
                         }
                       }
                     } ]

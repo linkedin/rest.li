@@ -28,8 +28,7 @@
         queryParams,
         queryParamClasses,
         ORIGINAL_RESOURCE_PATH,
-        ## TODO Path keys (sub-resources)
-        Collections.emptyMap(),
+        buildReadOnlyPathKeys(),
         RestliRequestOptions.DEFAULT_OPTIONS,
         #if(${spec.idName})
     #**#$spec.idName##

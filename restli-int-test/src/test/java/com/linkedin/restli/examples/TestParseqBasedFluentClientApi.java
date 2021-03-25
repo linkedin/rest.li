@@ -22,10 +22,12 @@ import com.linkedin.restli.client.ParSeqRestliClientBuilder;
 import com.linkedin.restli.client.ParSeqRestliClientConfigBuilder;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.util.PatchGenerator;
+import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.CreateIdEntityStatus;
 import com.linkedin.restli.common.CreateIdStatus;
 import com.linkedin.restli.common.EntityResponse;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdEntityResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateEntityStatus;
@@ -33,13 +35,22 @@ import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.examples.greetings.api.TwoPartKey;
+import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsFluentClient;
+import com.linkedin.restli.examples.greetings.client.AssociationsSubFluentClient;
+import com.linkedin.restli.examples.greetings.client.AssociationsassociationsFluentClient;
+import com.linkedin.restli.examples.greetings.client.ComplexKeysSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.CreateGreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.GreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.GreetingsFluentClient;
+import com.linkedin.restli.examples.greetings.client.GreetingsOfgreetingsOfgreetingsOfgreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingFluentClient;
+import com.linkedin.restli.examples.greetings.client.SubgreetingsFluentClient;
+import com.linkedin.restli.examples.greetings.client.SubsubgreetingFluentClient;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -649,12 +660,198 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   // ----- Test with Sub Resources ------
+  // These tests is to verify subresources methods in FluentClient subresources
+  // works as expected as non-subresources.
 
-  @Test public void testSubResource(){}
+  /**
+   * Test {@link com.linkedin.restli.examples.greetings.server.CollectionUnderSimpleResource}
+   * A complete set of request tests were tested in {@link TestSimpleResourceHierarchy}
+   */
+  @Test public void testSubResource_noPathKey() throws Exception
+  {
+     SubgreetingsFluentClient
+         subgreetingsFluentClient = new SubgreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+     CompletableFuture<Greeting> future = subgreetingsFluentClient.get(1L).toCompletableFuture();
+     Greeting greeting = future.get(5000, TimeUnit.MILLISECONDS);
+     Assert.assertTrue(greeting.hasId());
+     Assert.assertEquals((Long) 1L, greeting.getId());
 
-  // ## Tests with second level subresource ##
+    List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
+    Map<Long, EntityResponse<Greeting>> response =
+        subgreetingsFluentClient.batchGet(new HashSet<>(ids)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(response.size(), ids.size());
 
-  // ----- Test utils ------
+    // Update
+    String updatedMessage = "updated";
+    greeting.setMessage(updatedMessage);
+    CompletionStage<Void> updateStage = subgreetingsFluentClient.update(1L, greeting).thenRun(() -> {
+      try{
+        Assert.assertEquals(
+        subgreetingsFluentClient.get(1L).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS),
+            greeting
+        );
+      }
+      catch (Exception e)
+      {
+        Assert.fail("Unexpected error");
+      }
+    });
+    updateStage.toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertFalse(updateStage.toCompletableFuture().isCompletedExceptionally());
+
+    // Partial update
+    Greeting update = greeting.copy();
+    String partialUpdateMessage = "Partial update message";
+    update.setMessage(partialUpdateMessage);
+    CompletionStage<Void> partialUpdateResult = subgreetingsFluentClient.partialUpdate(1L, PatchGenerator.diff(greeting, update));
+    partialUpdateResult.toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(subgreetingsFluentClient.get(1L).toCompletableFuture().get(500, TimeUnit.MILLISECONDS).getMessage(), partialUpdateMessage);
+    Assert.assertFalse(partialUpdateResult.toCompletableFuture().isCompletedExceptionally());
+
+
+    // create
+    String msg = Double.toString(Math.random());
+    CompletionStage<Long> result = subgreetingsFluentClient.create(getGreeting(msg));
+    CompletableFuture<Long> createFuture = result.toCompletableFuture();
+    Long createdId = createFuture.get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertTrue(subgreetingsFluentClient.get(createdId).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS).getMessage().equals(msg));
+
+    // batch create
+    String msg1 = Double.toString(Math.random());
+    String msg2 = Double.toString(Math.random());
+    CompletionStage<List<CreateIdStatus<Long>>>
+        batchCreateStage = subgreetingsFluentClient.batchCreate(Arrays.asList(getGreeting(msg1), getGreeting(msg2)));
+    CompletableFuture<List<CreateIdStatus<Long>>> batchCreateFuture = batchCreateStage.toCompletableFuture();
+    List<CreateIdStatus<Long>> createdList = batchCreateFuture.get(5000, TimeUnit.MILLISECONDS);
+    CompletionStage<Map<Long, EntityResponse<Greeting>>> batchGetStage =
+        subgreetingsFluentClient.batchGet(createdList.stream().map(CreateIdStatus::getKey).collect(Collectors.toSet()));
+
+    Map<Long, EntityResponse<Greeting>> entities = batchGetStage.toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(entities.size(), 2);
+  }
+
+  /**
+   * Test {@link com.linkedin.restli.examples.greetings.server.SimpleResourceUnderCollectionResource}
+   * A complete set of request tests were tested in {@link TestSimpleResourceHierarchy}
+   */
+  @Test public void testSubResource_oneLayerPathKey() throws Exception
+  {
+    // Get
+    SubsubgreetingFluentClient subsubClient = new SubsubgreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greeting greeting = subsubClient.withSubgreetingsId(1L).get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(greeting.getId().longValue(), 10L);
+
+    // Update
+    Greeting updateGreeting = new Greeting();
+    updateGreeting.setMessage("Message1");
+    updateGreeting.setTone(Tone.INSULTING);
+    updateGreeting.setId(1L);
+    subsubClient.update(updateGreeting).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(subsubClient.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS).getTone(), Tone.INSULTING);
+
+    // Partial Update
+    Greeting partialUpdateGreeting = new Greeting();
+    partialUpdateGreeting.setMessage("Message1");
+    partialUpdateGreeting.setTone(Tone.SINCERE);
+    partialUpdateGreeting.setId(1L);
+    PatchRequest<Greeting> patch = PatchGenerator.diffEmpty(partialUpdateGreeting);
+    subsubClient.partialUpdate(patch).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(subsubClient.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS).getTone(), Tone.SINCERE);
+
+    // Delete
+    subsubClient.delete().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    try
+    {
+      subsubClient.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+      Assert.fail("Should fail");
+    }
+    catch (Exception e)
+    {
+      Assert.assertTrue(e.getCause() instanceof RestLiResponseException);
+      Assert.assertEquals(((RestLiResponseException)e.getCause()).getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
+    }
+
+  }
+
+  /**
+   * Test {@link com.linkedin.restli.examples.greetings.server.CollectionOfCollectionOfCollectionOfSimpleResource}
+   */
+  @Test public void testSubResource_twoLayersPathKeys() throws Exception
+  {
+    GreetingsOfgreetingsOfgreetingsOfgreetingFluentClient gggs =
+        new GreetingsOfgreetingsOfgreetingsOfgreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    gggs.withSubgreetingsId(100L);
+    gggs.withGreetingsOfgreetingsOfgreetingId(1000L);
+    Greeting response = gggs.get(10L).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertTrue(response.getId() == 1110);
+  }
+
+  /**
+   * Test {@link com.linkedin.restli.examples.greetings.server.AssociationsSubResource}
+   *
+   * A complete set of request tests were tested in {@link TestAssociationsResource}
+   */
+  @Test public void testSubResource_associationKey() throws Exception
+  {
+    //AssociationsSub
+    String src = "src";
+    String dest = "dest";
+    String subKey = "subKey";
+    CompoundKey key1 = new AssociationsFluentClient.Key().setSrc(src).setDest(dest);
+    AssociationsSubFluentClient subFluentClient = new AssociationsSubFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Message response = subFluentClient.withAssociationsId(key1).get(subKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(response.getId(), "src");
+    Assert.assertEquals(response.getMessage(), "dest");
+  }
+
+  /**
+   * Test {@link com.linkedin.restli.examples.greetings.server.AssociationsAssociationsSubResource}
+  */
+  @Test public void testSubResource_twoLayerAssociationPathKey() throws Exception
+  {
+    //AssociationsAssociations
+    String src = "src";
+    String anotherSrc = "anotherSrc";
+    String dest = "dest";
+    String anotherDest = "anotherDest";
+    String subKey = "subKey";
+    CompoundKey key1 = new AssociationsFluentClient.Key().setSrc(src).setDest(dest);
+    CompoundKey key2 =
+        new AssociationsassociationsFluentClient.Key()
+            .setAnotherSrc(anotherSrc)
+            .setAnotherDest(anotherDest);
+    AssociationsAssociationsSubFluentClient subFluentClient = new AssociationsAssociationsSubFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Message response = subFluentClient.withAssociationsId(key1)
+        .withAssociationsassociationsId(key2)
+        .get(subKey)
+        .toCompletableFuture()
+        .get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(response.getId(), src+anotherSrc+subKey);
+    Assert.assertEquals(response.getMessage(), dest+anotherDest);
+  }
+
+  /**
+   * Test {@link com.linkedin.restli.server.resources.ComplexKeyResource}
+   *
+   * A complete set of request tests were tested in {@link TestComplexKeysResource}
+   */
+  @Test public void testSubResource_complexKey() throws Exception
+  {
+    TwoPartKey key = new TwoPartKey();
+    key.setMajor("a");
+    key.setMinor("b");
+    TwoPartKey param = new TwoPartKey();
+    param.setMajor("c");
+    param.setMinor("d");
+    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, param);
+    ComplexKeysSubFluentClient subFluentClient = new ComplexKeysSubFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    subFluentClient.withKeys(complexKey);
+    TwoPartKey response = subFluentClient.get("stringKey").toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(response.getMajor(), "aANDc");
+    Assert.assertEquals(response.getMinor(), "bANDd");
+  }
+
+  // ----- utils used for testing ------
 
   private Greeting getGreeting()
   {

@@ -35,7 +35,7 @@
         queryParams,
         queryParamClasses,
         ORIGINAL_RESOURCE_PATH,
-        Collections.emptyMap(),
+        buildReadOnlyPathKeys(),
         RestliRequestOptions.DEFAULT_OPTIONS,
         #if(${spec.idName})
     #**#$spec.idName##
