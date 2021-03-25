@@ -121,6 +121,41 @@ public class TestExecutionGroup
     }, client);
   }
 
+  @Test public void testExecuteOnlyOnce() throws Exception
+  {
+    ExecutionGroup eg = new ExecutionGroup(_engine);
+    MockBatchableResource client = new MockBatchableResource();
+    eg.addTaskByFluentClient(client, task1);
+    eg.execute();
+    try
+    {
+      eg.execute();
+      Assert.fail("Should fail here");
+    }
+    catch (IllegalStateException e)
+    {
+      Assert.assertEquals(ExecutionGroup.MULTIPLE_EXECUTION_ERROR, e.getMessage());
+    }
+  }
+
+  @Test public void testAddingAfterExecutedNotAllowed() throws Exception
+  {
+    ExecutionGroup eg = new ExecutionGroup(_engine);
+    MockBatchableResource client = new MockBatchableResource();
+    eg.addTaskByFluentClient(client, task1);
+    eg.execute();
+    try
+    {
+      eg.addTaskByFluentClient(client, task1);
+      Assert.fail("Should fail here");
+    }
+    catch (IllegalStateException e)
+    {
+      Assert.assertEquals(ExecutionGroup.ADD_AFTER_EXECUTION_ERROR, e.getMessage());
+    }
+
+  }
+
   @AfterClass
   void tearDown() throws Exception
   {

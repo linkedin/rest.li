@@ -24,8 +24,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 
 /**
@@ -36,7 +34,7 @@ import java.util.stream.Collectors;
  * be batched per Client.
  *
  * There are two way to use this
- * (1) Using it with the fluent api and ask the executionGroup to execute explicitly.
+ * Method 1: Using it with the fluent api and ask the executionGroup to execute explicitly.
  * Example:
  * <blockquote>
  *   <pre>
@@ -46,7 +44,15 @@ import java.util.stream.Collectors;
  *   </pre>
  * </blockquote>
  *
- * (2) Use it inside a lambda function. Corresponding FluentAPIs used inside this lambda will be batched.
+ * Please be noted these when passing around the {@link ExecutionGroup} instance:
+ * - {@link ExecutionGroup} can only be executed once. Once executed,
+ *   no task should be added to the same {@link ExecutionGroup} anymore.
+ * - {@link ExecutionGroup} implementations for adding and executing the requests are not thread-safe.
+ * Based on these, it is recommended that the user call {@link ExecutionGroup#execute()} method in a decisive point of time,
+ * as if setting a synchronization barrier, and create a new instance if firing another batch call is needed.
+ * For example, one can use the last composed stage to execute the {@link ExecutionGroup}
+ *
+ * Method 2: Use it inside a lambda function. Corresponding FluentAPIs used inside this lambda will be batched.
  * Note in this style, you can still optionally pass the Client type as parameter to specifies requests from which
  * clients the requests need to be batched on. If clients not provided as arguments,
  * all FluentAPI requests will be batched.
@@ -71,9 +77,9 @@ import java.util.stream.Collectors;
  *       new ExecutionGroup().batchOn(() -> {
  *         {@code <YourClient2>}.get({@code <Parameter3>});
  *         {@code <YourClient2>}.get({@code <Parameter4>});
- *       }); // this execution group will not be affecting the outer execution group.
- *       // adding to eg3 explicitly so will not be batched together with other implicit calls in this lambda clause.
- *       {@code <YourClient>}.get({@code <Parameter3>}, eg3);
+ *       }); // this execution group will not be affecting the outer execution group, so Parameter 3 and 4 will be batched
+ *       // adding to another execution group explicitly so will not be batched together with other implicit calls in this lambda clause.
+ *       {@code <YourClient>}.get({@code <Parameter3>}, anotherEg);
  *     }); // get call from {@code <YourClient>} with parameter1 and parameter2 will be batched
  *   </pre>
  * </blockquote>
@@ -83,10 +89,13 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ExecutionGroup
 {
-  private final Map<FluentClient, List<Task>> _clientToTaskListMap = new HashMap<>();
+  private final Map<FluentClient, List<Task<?>>> _clientToTaskListMap = new HashMap<>();
   private final Engine _engine;
+  private boolean fired = false;
 
-  private Set<FluentClient> _fluentClientAll; // filled by UClient when executionGroup is created; Used for batchOn
+  private List<FluentClient> _fluentClientAll; // filled by UClient when executionGroup is created; Used for batchOn
+  static final String MULTIPLE_EXECUTION_ERROR = "Operation not supported, the executionGroup has already been executed.";
+  static final String ADD_AFTER_EXECUTION_ERROR = "Operation not supported, the execution group has already been executed.";
 
   /**
    * This constructor will be called by the UniversalClient and will not be called by API users directly
@@ -102,12 +111,16 @@ public class ExecutionGroup
    */
   public void execute()
   {
-    for (Map.Entry<FluentClient, List<Task>> entry : _clientToTaskListMap.entrySet()) {
-      List<Task> taskList = entry.getValue();
+    if (fired)
+    {
+      throw new IllegalStateException(MULTIPLE_EXECUTION_ERROR);
+    }
+    fired = true;
+    for (Map.Entry<FluentClient, List<Task<?>>> entry : _clientToTaskListMap.entrySet()) {
+      List<Task<?>> taskList = entry.getValue();
       // the Task.par(Iterable) version does not fast-fail comparing to Task.par(Task...)
       ParTask<Object> perFluentClientTasks =
-          Task.par(taskList.stream().map(obj -> ((Task<Object>) obj)).collect(Collectors.toList()));
-      taskList.clear();
+          Task.par(taskList);
       _clientToTaskListMap.remove(entry.getKey());
       // starts a plan for tasks from one client due to performance consideration
       // TODO: optimize, use scheduleAndRun
@@ -130,7 +143,7 @@ public class ExecutionGroup
   {
     List<FluentClient> batchedClients =
         fluentClients.length > 0 ? new ArrayList<FluentClient>(Arrays.asList(fluentClients))
-            : new ArrayList<FluentClient>(_fluentClientAll);
+            : _fluentClientAll;
 
     for (FluentClient fluentClient : batchedClients) {
       fluentClient.setExecutionGroup(this);
@@ -145,22 +158,40 @@ public class ExecutionGroup
     }
   }
 
-  public void addTaskByFluentClient(FluentClient client, Task... tasks)
+  /**
+   * To add ParSeq tasks to the this {@link ExecutionGroup}.
+   * The tasks belong to same {@link FluentClient} are supposed to be run as a batch together
+   *
+   * @param client the {@link FluentClient} that this tasks came from.
+   * @param tasks the tasks to be added to the {@link FluentClient}, will be grouped by the client
+   */
+  public void addTaskByFluentClient(FluentClient client, Task<?>... tasks)
   {
-    _clientToTaskListMap.computeIfAbsent(client, (v) -> new ArrayList<>()).addAll(Arrays.asList(tasks));
+    if (!fired)
+    {
+      _clientToTaskListMap.computeIfAbsent(client, (v) -> new ArrayList<>()).addAll(Arrays.asList(tasks));
+    }
+    else
+    {
+      throw new IllegalStateException(ADD_AFTER_EXECUTION_ERROR);
+    }
   }
 
+
   /**
-   * Add all FluentClients that can be batched on
+   * Add all FluentClients that can be batched on.
+   *
+   * The clients stored in this list will be used
+   * as the default clients to be batched on if the user does not specify
    *
    * @param fluentClientAll all the FluentClients that can be batched on
    */
-  void setFluentClientAll(Set<FluentClient> fluentClientAll)
+  void setFluentClientAll(List<FluentClient> fluentClientAll)
   {
     _fluentClientAll = fluentClientAll;
   }
 
-  Map<FluentClient, List<Task>> getClientToTaskListMap()
+  Map<FluentClient, List<Task<?>>> getClientToTaskListMap()
   {
     return _clientToTaskListMap;
   }

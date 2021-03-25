@@ -1,6 +1,7 @@
 package com.linkedin.restli.client;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 
@@ -15,7 +16,7 @@ interface FluentClient
     @Override
     public List<ExecutionGroup> initialValue()
     {
-      return new ArrayList<ExecutionGroup>();
+      return new LinkedList<>();
     }
   };
 
