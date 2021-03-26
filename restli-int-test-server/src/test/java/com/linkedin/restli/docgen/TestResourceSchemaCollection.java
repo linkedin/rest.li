@@ -92,11 +92,15 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexByteKeys", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.associations", ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.associations.associationsSub", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.associations.associationsassociations", ResourceType.ASSOCIATION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.associations.associationsassociations.AssociationsAssociationsSub", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.finders", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.batchfinders", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting", ResourceType.SIMPLE);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings", ResourceType.COLLECTION);
-    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings.subgreetingsInsubgreetings", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings.greetingsOfgreetingsOfgreeting", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings.greetingsOfgreetingsOfgreeting.greetingsOfgreetingsOfgreetingsOfgreeting",
+        ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.typerefPrimitiveLongAssociationKeyResource",
                       ResourceType.ASSOCIATION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.typerefCustomDoubleAssociationKeyResource",
@@ -203,7 +207,7 @@ public class TestResourceSchemaCollection
     final List<ResourceSchema> subgreetingsSubResources = _schemas.getSubResources(subgreetingsResource);
     Assert.assertEquals(subgreetingsSubResources.size(), 2);
     final ResourceSchema subsubgreetingResource = subgreetingsSubResources.get(0);
-    Assert.assertEquals(subsubgreetingResource.getName(), "subgreetingsInsubgreetings");
+    Assert.assertEquals(subsubgreetingResource.getName(), "greetingsOfgreetingsOfgreeting");
     Assert.assertEquals(subsubgreetingResource.getNamespace(), greetingResource.getNamespace());
   }
 

@@ -128,7 +128,7 @@
           "namespace" : "com.linkedin.restli.examples.greetings.client",
           "path" : "/associations/{associationsId}/associationsassociations",
           "schema" : "com.linkedin.restli.examples.greetings.api.Message",
-          "doc" : "Association resource under parent association resource\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AssociationsAssociationsResource",
+          "doc" : "Association resource under a parent association resource\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AssociationsAssociationsResource",
           "association" : {
             "identifier" : "associationsassociationsId",
             "assocKeys" : [ {
