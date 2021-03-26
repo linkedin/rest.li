@@ -91,7 +91,7 @@ public class ExecutionGroup
 {
   private final Map<FluentClient, List<Task<?>>> _clientToTaskListMap = new HashMap<>();
   private final Engine _engine;
-  private boolean fired = false;
+  private boolean _fired = false;
 
   private List<FluentClient> _fluentClientAll; // filled by UClient when executionGroup is created; Used for batchOn
   static final String MULTIPLE_EXECUTION_ERROR = "Operation not supported, the executionGroup has already been executed.";
@@ -111,11 +111,11 @@ public class ExecutionGroup
    */
   public void execute()
   {
-    if (fired)
+    if (_fired)
     {
       throw new IllegalStateException(MULTIPLE_EXECUTION_ERROR);
     }
-    fired = true;
+    _fired = true;
     for (Map.Entry<FluentClient, List<Task<?>>> entry : _clientToTaskListMap.entrySet()) {
       List<Task<?>> taskList = entry.getValue();
       // the Task.par(Iterable) version does not fast-fail comparing to Task.par(Task...)
@@ -167,7 +167,7 @@ public class ExecutionGroup
    */
   public void addTaskByFluentClient(FluentClient client, Task<?>... tasks)
   {
-    if (!fired)
+    if (!_fired)
     {
       _clientToTaskListMap.computeIfAbsent(client, (v) -> new ArrayList<>()).addAll(Arrays.asList(tasks));
     }

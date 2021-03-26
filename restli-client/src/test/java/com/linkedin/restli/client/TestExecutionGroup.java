@@ -8,7 +8,11 @@ import com.linkedin.parseq.batching.BatchingStrategy;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -68,7 +72,17 @@ public class TestExecutionGroup
     eg2.addTaskByFluentClient(client1, mockTask);
     eg.execute();
     eg2.execute();
-    Thread.sleep(200); // wait for engine to execute
+    CountDownLatch waitLatch = new CountDownLatch(1);
+    doAnswer(new Answer()
+    {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable
+      {
+        waitLatch.countDown();
+        return null;
+      }
+    }).when(mockTask).contextRun(any(), any(), any());
+    waitLatch.await(1000, TimeUnit.MILLISECONDS);
     verify(mockTask, times(2)).contextRun(any(), any(), any());
   }
 
