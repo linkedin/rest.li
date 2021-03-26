@@ -184,6 +184,8 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
     #parse("apiVmTemplates/rest.${method.method}.vm")
   #end
 
+  #parse("apiVmTemplates/action.vm")
+
 
   ## Add association key generation stub
   #if(${spec.getResource().hasAssociation()})

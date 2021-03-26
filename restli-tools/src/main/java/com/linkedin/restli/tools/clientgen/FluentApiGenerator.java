@@ -173,9 +173,16 @@ public class FluentApiGenerator
             sourceIdlName,
             schemaResolver);
       }
+      else if (resourceSchema.hasActionSet())
+      {
+        spec = new ActionSetSpec(resourceSchema,
+            new TemplateSpecGenerator(schemaResolver),
+            sourceIdlName,
+            schemaResolver);
+      }
       else
       {
-        return null;
+        throw new RuntimeException("Encountered unknown schema:", resourceSchema.getName());
       }
       File packageDir = new File(targetDirectory, spec.getNamespace().toLowerCase().replace('.', File.separatorChar));
       packageDir.mkdirs();

@@ -31,6 +31,7 @@ public class SimpleResourceSpec extends BaseResourceSpec
 {
 
   private ClassTemplateSpec _entityClass;
+  private List<ActionMethodSpec> _resourceActions;
 
   // Simple resource only supports get, update/partial_update, delete and actions
   public SimpleResourceSpec(ResourceSchema resourceSchema, TemplateSpecGenerator templateSpecGenerator,
@@ -53,16 +54,22 @@ public class SimpleResourceSpec extends BaseResourceSpec
     return methods;
   }
 
-  @Override
-  public List<ActionMethodSpec> getActions()
+  public List<ActionMethodSpec> getResourceActions()
   {
-    if (getResource().getSimple().getActions() == null)
+    if (_resourceActions == null)
     {
-      return Collections.emptyList();
+      if (getResource().getSimple().getActions() == null)
+      {
+        _resourceActions = Collections.emptyList();
+      }
+
+      _resourceActions = new ArrayList<>(getResource().getSimple().getActions().size());
+      // For simple resource action methods, the resource level "Any", "Collection", "Entity" is in fact same
+      // so treat it as non-entity here
+      getResource().getSimple()
+      .getActions().forEach(actionSchema -> _resourceActions.add(new ActionMethodSpec(actionSchema, this, false)));
     }
-    List<ActionMethodSpec> actions = new ArrayList<>(getResource().getSimple().getActions().size());
-    getResource().getSimple().getActions().forEach(actionSchema -> actions.add(new ActionMethodSpec(actionSchema, this)));
-    return actions;
+    return _resourceActions;
   }
 
   @Override
