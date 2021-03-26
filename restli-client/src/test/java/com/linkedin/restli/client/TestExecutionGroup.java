@@ -72,7 +72,7 @@ public class TestExecutionGroup
     eg2.addTaskByFluentClient(client1, mockTask);
     eg.execute();
     eg2.execute();
-    CountDownLatch waitLatch = new CountDownLatch(1);
+    CountDownLatch waitLatch = new CountDownLatch(2);
     doAnswer(new Answer()
     {
       @Override
