@@ -25,7 +25,7 @@
 #end
 
 #macro(optionalParamClass $method)
-  #if($method.optionalParams.size() > 0)
+  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
     #set($className = "${util.restMethodToClassPrefix($method.method)}OptionalParameters")
 
     public static class $className {
@@ -37,17 +37,34 @@
           return this;
         }
       #end
+      #foreach($param in $method.supportedProjectionParams)
+        private MaskMap $param.paramName;
+        public $className with${param.methodName}(
+            Function<${param.paramClassName}.ProjectionMask, ${param.paramClassName}.ProjectionMask> ${param.paramName}Handler) {
+          this.$param.paramName = ${param.paramName}Handler.apply(${param.paramClassName}.createMask());
+          return this;
+        }
+      #end
     }
   #end
 #end
 
-#macro(methodParams $method)
+#macro(methodParams $method $includeOptional)
+  #set($hasOptionalParams = $includeOptional && ($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0))
   #foreach($param in $method.requiredParams)
-    $param.paramClassName $param.paramName#if( $foreach.hasNext || $method.optionalParams.size() > 0),#end
+    $param.paramClassName $param.paramName#if( $foreach.hasNext || $hasOptionalParams),#end
   #end
-  #set($className = "${util.restMethodToClassPrefix($method.method)}OptionalParameters")
-  #if($method.optionalParams.size() > 0)
-    $className optionalParams
+  #if($hasOptionalParams)
+    Function<${util.restMethodToClassPrefix($method.method)}OptionalParameters, ${util.restMethodToClassPrefix($method.method)}OptionalParameters> optionalParamsProvider
+  #end
+#end
+
+#macro(optionalMethodCallArgs $method)
+  #foreach($param in $method.requiredParams)
+    $param.paramName#if( $foreach.hasNext || $method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0),#end
+  #end
+  #if(($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0))
+    Function.identity()
   #end
 #end
 
@@ -60,6 +77,10 @@
 
 #macro(fillQueryParams $method)
 #**#
+    #if ($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+      ${util.restMethodToClassPrefix($method.method)}OptionalParameters optionalParams = optionalParamsProvider.apply(
+          new ${util.restMethodToClassPrefix($method.method)}OptionalParameters());
+    #end
     #foreach($param in $method.requiredParams)
       queryParams.put("$param.paramName", $param.paramName);
       queryParamClasses.put("$param.paramName", ${param.paramClassName}.class);
@@ -68,6 +89,11 @@
       if (optionalParams.$param.paramName != null) {
         queryParams.put("$param.paramName", optionalParams.$param.paramName);
         queryParamClasses.put("$param.paramName", ${param.paramClassName}.class);
+      }
+    #end
+    #foreach($param in $method.supportedProjectionParams)
+      if (optionalParams.$param.paramName != null) {
+        queryParams.put("$param.paramName", optionalParams.${param.paramName}.getDataMap());
       }
     #end
 #end

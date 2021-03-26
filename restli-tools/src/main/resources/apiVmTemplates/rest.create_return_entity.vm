@@ -13,10 +13,22 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
+  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+    #doc($method.schema.doc)
+    public CompletionStage<IdEntityResponse<${spec.keyClassName}, ${spec.entityClassName}>> createAndGet(
+        ${spec.entityClassName} entity#if($method.requiredParams.size() > 0),#end
+        #**##methodParams($method, false)##
+      ) {
+      return createAndGet(entity,
+          #**##optionalMethodCallArgs($method)##
+      );
+    }
+  #end
+
   #doc($method.schema.doc)
   public CompletionStage<IdEntityResponse<${spec.keyClassName}, ${spec.entityClassName}>> createAndGet(
       ${spec.entityClassName} entity#if( $method.hasParams()),#end
-      #**##methodParams($method)##
+      #**##methodParams($method, true)##
       ) {
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
     Map<String, Class<?>> queryParamClasses = new HashMap<>($method.getQueryParamMapSize());
@@ -58,4 +70,3 @@
     _engine.run(responseTask);
     return result;
   }
-  #optionalParamClass($method)
