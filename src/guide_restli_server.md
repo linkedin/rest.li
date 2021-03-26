@@ -1767,14 +1767,17 @@ public void doAction();
 ```
 
 A more complex example, illustrating multiple parameters:
-
+(Note this action is defined on the entity level, and the entity Key is accessed from the conxt)
 ```java
 @Action(name="sendTestAnnouncement",resourceLevel= ResourceLevel.ENTITY)
 public void sendTestAnnouncement(@ActionParam("subject") String subject, 
                                  @ActionParam("message") String message, 
                                  @ActionParam("emailAddress") String emailAddress)
+{
+  Long entityKey = getContext().getPathKeys().get(_resourceName + "Id");
+  // ...
+}
 ```
-
 <a id="ActionParamVQueryParam"></a>
 
 #### ActionParam vs. QueryParam

@@ -597,6 +597,10 @@ public <BuilderType> <paramName>Param(<ParamType> value);
 
 The value **must** be non-null.
 
+If the request is sent to an endpoint defined at Resource entity level, an entity Key is required by setting the `id`
+```java
+public <BuilderType> id(<IdType> idvalue);
+```
 <a id="wiki-CallingSubResources"></a>
 
 ### Calling Sub-Resources
