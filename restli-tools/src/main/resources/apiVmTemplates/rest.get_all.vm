@@ -13,10 +13,18 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
+  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+    #doc($method.schema.doc)
+    public CompletionStage<List<${spec.entityClassName}>> getAll(#methodParams($method, false)##
+         ) {
+      return getAll(#optionalMethodCallArgs($method)##
+          );
+    }
+  #end
+
   #doc($method.schema.doc)
-  public CompletionStage<List<${spec.entityClassName}>> getAll(
-      #**##methodParams($method)##
-      ) {
+  public CompletionStage<List<${spec.entityClassName}>> getAll(#methodParams($method, true)##
+        ) {
     #**##paramsRequestMap($method)##
     GetAllRequest<${spec.entityClassName}> request = new GetAllRequest<>(
         Collections.emptyMap(),

@@ -13,14 +13,30 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
+  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+    #doc($method.schema.doc)
+    public CompletionStage<Void> update(
+        #if (!${spec.getResource().hasSimple()})
+          $spec.keyClassName $spec.idName,
+        #end
+        ${spec.entityClassName} entity#if($method.requiredParams.size() > 0),#end
+        #**##methodParams($method, false)##
+      ) {
+      return update(#if(${spec.idName})$spec.idName,#end
+          entity,
+          #**##optionalMethodCallArgs($method)##
+      );
+    }
+  #end
+
   #doc($method.schema.doc)
   public CompletionStage<Void> update(
     #if (!${spec.getResource().hasSimple()})
       $spec.keyClassName $spec.idName,
     #end
     ${spec.entityClassName} entity#if( $method.hasParams()),#end
-    #**##methodParams($method)##
-  ) {
+    #**##methodParams($method, true)##
+    ) {
     #**##paramsRequestMap($method)##
     UpdateRequest<${spec.entityClassName}> request = new UpdateRequest<>(
         entity,
