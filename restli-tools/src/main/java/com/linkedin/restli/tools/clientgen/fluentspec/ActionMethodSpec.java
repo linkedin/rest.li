@@ -26,13 +26,15 @@ import java.util.List;
 public class ActionMethodSpec
 {
   private final ActionSchema _actionSchema;
-  private final BaseResourceSpec _root;
   private ClassTemplateSpec _valueClass;
+  private final BaseResourceSpec _resourceSpec;
+  private final boolean _isEntityAction; // Entity action will need KeyClass and idName from its resource spec
 
-  public ActionMethodSpec(ActionSchema actionSchema, BaseResourceSpec root)
+  public ActionMethodSpec(ActionSchema actionSchema, BaseResourceSpec resourceSpec, boolean isEntityAction)
   {
     _actionSchema = actionSchema;
-    _root = root;
+    _resourceSpec = resourceSpec;
+    _isEntityAction = isEntityAction;
   }
 
   public String getName()
@@ -47,7 +49,7 @@ public class ActionMethodSpec
       return Collections.emptyList();
     }
     List<ParameterSpec> params = new ArrayList<>(_actionSchema.getParameters().size());
-    _actionSchema.getParameters().forEach(param -> params.add(new ParameterSpec(param, _root)));
+    _actionSchema.getParameters().forEach(param -> params.add(new ParameterSpec(param, _resourceSpec)));
     return params;
   }
 
@@ -55,7 +57,7 @@ public class ActionMethodSpec
   {
     if (_valueClass == null)
     {
-      _valueClass = _root.classToTemplateSpec(_actionSchema.getReturns());
+      _valueClass = _resourceSpec.classToTemplateSpec(_actionSchema.getReturns());
     }
     return _valueClass;
   }
@@ -63,5 +65,15 @@ public class ActionMethodSpec
   public String getValueClassName()
   {
     return SpecUtils.getClassName(getValueClass());
+  }
+
+  public boolean isEntityAction()
+  {
+    return _isEntityAction;
+  }
+
+  public BaseResourceSpec getResourceSpec()
+  {
+    return _resourceSpec;
   }
 }

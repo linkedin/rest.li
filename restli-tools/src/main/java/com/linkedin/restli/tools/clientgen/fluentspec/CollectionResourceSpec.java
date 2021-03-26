@@ -20,6 +20,7 @@ import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.pegasus.generator.TemplateSpecGenerator;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.common.ComplexResourceKey;
+import com.linkedin.restli.restspec.ActionSchemaArray;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestMethodSchemaArray;
@@ -27,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang.ClassUtils;
 
 
@@ -34,6 +37,9 @@ public class CollectionResourceSpec extends BaseResourceSpec
 {
   private ClassTemplateSpec _keyClass;
   private final ComplexKeySpec _complexKeySpec;
+  private List<ActionMethodSpec> _resourceActions;
+  private List<ActionMethodSpec> _entityActions;
+
 
   public CollectionResourceSpec(ResourceSchema resourceSchema, TemplateSpecGenerator templateSpecGenerator,
       String sourceIdlName, DataSchemaResolver schemaResolver, String keyParamTypeSchema)
@@ -46,16 +52,49 @@ public class CollectionResourceSpec extends BaseResourceSpec
     );
   }
 
+  @Override
   public List<ActionMethodSpec> getActions()
   {
-    if (getResource().getCollection().getActions() == null)
-    {
-      return Collections.emptyList();
-    }
-    List<ActionMethodSpec> actions = new ArrayList<>(getResource().getCollection().getActions().size());
-    getResource().getCollection().getActions().forEach(actionSchema -> actions.add(new ActionMethodSpec(actionSchema, this)));
-    return actions;
+    return Stream.concat(getResourceActions().stream(), getEntityActions().stream())
+        .collect(Collectors.toList());
   }
+
+  public List<ActionMethodSpec> getResourceActions()
+  {
+    if (_resourceActions == null)
+    {
+      if (getResource().getCollection().getActions() == null)
+      {
+        _resourceActions = Collections.emptyList();
+      }
+
+      _resourceActions = new ArrayList<>(getResource().getCollection().getActions().size());
+      getResource().getCollection().getActions()
+      .forEach(actionSchema -> _resourceActions.add(new ActionMethodSpec(actionSchema, this, false)));
+    }
+    return _resourceActions;
+  }
+
+  /**
+   * get action methods for entities in this collection resource
+   */
+  public List<ActionMethodSpec> getEntityActions()
+  {
+    if (_entityActions == null)
+    {
+      ActionSchemaArray actionSchemaArray = getResource().getCollection().getEntity().getActions();
+      if (actionSchemaArray == null)
+      {
+        _entityActions = Collections.emptyList();
+      }
+      _entityActions = new ArrayList<>(actionSchemaArray.size());
+      actionSchemaArray
+        .forEach(actionSchema -> _entityActions.add(new ActionMethodSpec(actionSchema, this, true)));
+    }
+
+    return _entityActions;
+  }
+
 
   public List<RestMethodSpec> getRestMethods()
   {
