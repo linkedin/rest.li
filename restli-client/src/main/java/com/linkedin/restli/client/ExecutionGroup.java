@@ -66,7 +66,7 @@ import java.util.Map;
  *     });
  *   </pre>
  * </blockquote>
- * Note: You can use nested executiongroup and each lambda clause have a separate scope.
+ * Note: One can use nested executiongroup and each lambda clause have a separate scope.
  * Example:
  * <blockquote>
  *   <pre>
@@ -101,7 +101,8 @@ public class ExecutionGroup
    * This constructor will be called by the UniversalClient and will not be called by API users directly
    * @param engine
    */
-  /* package private */ ExecutionGroup(Engine engine)
+  /* package private */
+  public ExecutionGroup(Engine engine)
   {
     _engine = engine;
   }
@@ -139,6 +140,8 @@ public class ExecutionGroup
    *                      will be batched.
    * @throws Exception
    */
+  // TODO: (1) This should be called by UniversalClient
+  // TODO: (2) this be called by FluentClient as a convenient method
   public void batchOn(Runnable runnable, FluentClient... fluentClients) throws Exception
   {
     List<FluentClient> batchedClients =

@@ -25,6 +25,20 @@
           #**##optionalMethodCallArgs($method)##
       );
     }
+
+    #doc($method.schema.doc)
+    public CompletionStage<Void> delete(
+      #if (!${spec.getResource().hasSimple()})
+        $spec.keyClassName $spec.idName,
+      #end
+        ExecutionGroup executionGroup#if($method.requiredParams.size() > 0),#end
+        #**##methodParams($method, false)##
+      ) {
+      return delete(#if(${spec.idName})$spec.idName,#end
+      executionGroup,
+          #**##optionalMethodCallArgs($method)##
+      );
+    }
   #end
 
   #doc($method.schema.doc)
@@ -50,22 +64,44 @@
     #**#null##
         #end
         );
-    CompletableFuture<Void> result = new CompletableFuture<>();
-    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
-        responseTry -> {
-          if (responseTry.isFailed()) {
-            result.completeExceptionally(responseTry.getError());
-          } else {
-            Response<?> resp = responseTry.get();
-            if (resp.hasError()) {
-              result.completeExceptionally(resp.getError());
-            } else {
-              result.complete((Void) null);
-            }
-          }
-          return Success.of((Void) null);
-        });
-    _engine.run(responseTask);
-    return result;
+    #**##makeRequestAndReturn(
+      "Void",
+      "?",
+      "(Void) null",
+      false
+    )##        
+  }
+
+  #doc($method.schema.doc)
+  public CompletionStage<Void> delete(
+    #if (!${spec.getResource().hasSimple()})
+      $spec.keyClassName $spec.idName,
+    #end
+    ExecutionGroup executionGroup#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      ) {
+    #**##paramsRequestMap($method)##
+    DeleteRequest<${spec.entityClassName}> request = new DeleteRequest<>(
+        Collections.emptyMap(),
+        Collections.emptyList(),
+        _resourceSpec,
+        queryParams,
+        queryParamClasses,
+        ORIGINAL_RESOURCE_PATH,
+        ## TODO Path keys (sub-resources)
+        Collections.emptyMap(),
+        RestliRequestOptions.DEFAULT_OPTIONS,
+        #if(${spec.idName})
+    #**#$spec.idName##
+        #else
+    #**#null##
+        #end
+        );
+    #**##makeRequestAndReturn(
+      "Void",
+      "?",
+      "(Void) null",
+      true
+    )##        
   }
   #optionalParamClass($method)

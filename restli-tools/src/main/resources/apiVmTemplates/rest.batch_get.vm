@@ -23,6 +23,18 @@
           #**##optionalMethodCallArgs($method)##
       );
     }
+
+    #doc($method.schema.doc)
+    public CompletionStage<Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>> batchGet(
+        Set<$spec.keyClassName> ids,
+        ExecutionGroup executionGroup#if($method.requiredParams.size() > 0),#end
+        #**##methodParams($method, false)##
+        ) {
+      return batchGet(ids,
+      executionGroup,
+          #**##optionalMethodCallArgs($method)##
+      );
+    }
   #end
 
   #doc($method.schema.doc)
@@ -49,22 +61,44 @@
         ORIGINAL_RESOURCE_PATH,
         buildReadOnlyPathKeys(),
         RestliRequestOptions.DEFAULT_OPTIONS);
-    CompletableFuture<Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>> result = new CompletableFuture<>();
-    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
-        responseTry -> {
-          if (responseTry.isFailed()) {
-            result.completeExceptionally(responseTry.getError());
-          } else {
-            Response<BatchKVResponse<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>> response = responseTry.get();
-            if (response.hasError()) {
-              result.completeExceptionally(response.getError());
-            } else{
-              result.complete(response.getEntity().getResults());
-            }
-          }
-          return Success.of((Void) null);
-        });
-    _engine.run(responseTask);
-    return result;
+    #**##makeRequestAndReturn(
+      "Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>", 
+      "BatchKVResponse<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>", 
+      "resp.getEntity().getResults()",
+      false
+    )##
+  }
+
+  #doc($method.schema.doc)
+  public CompletionStage<Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>> batchGet(
+      Set<$spec.keyClassName> ids,
+      ExecutionGroup executionGroup#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      ) {
+    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
+    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
+    #fillQueryParams($method)
+    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
+    @SuppressWarnings("unchecked")
+    BatchGetEntityRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchGetEntityRequest<>(
+        Collections.emptyMap(),
+        Collections.emptyList(),
+        new BatchEntityResponseDecoder<>(
+            (TypeSpec<${spec.entityClassName}>) _resourceSpec.getValueType(),
+            (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
+            _resourceSpec.getKeyParts(),
+            _resourceSpec.getComplexKeyType()),
+        queryParams,
+        queryParamClasses,
+        _resourceSpec,
+        ORIGINAL_RESOURCE_PATH,
+        Collections.emptyMap(),
+        RestliRequestOptions.DEFAULT_OPTIONS);
+    #**##makeRequestAndReturn(
+      "Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>", 
+      "BatchKVResponse<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>", 
+      "resp.getEntity().getResults()",
+      true
+    )##
   }
   #optionalParamClass($method)

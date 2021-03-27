@@ -198,7 +198,7 @@ class MockBatchableResource implements FluentClient
 
   public Map<Long, String> batchGet(Collection<Long> keys)
   {
-    return keys.stream().collect(Collectors.toMap(key -> key, key -> get(key)));
+    return keys.stream().collect(Collectors.toMap(key -> key, this::get));
   }
 
   public boolean validateExecutionGroupFromContext(ExecutionGroup eg)

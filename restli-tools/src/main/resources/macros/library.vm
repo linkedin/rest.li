@@ -75,6 +75,35 @@
   #end
 #end
 
+#macro(makeRequestAndReturn $returnClassName, $responseType, $resposneEntity, $withEG)
+#**#
+Task<$returnClassName> responseTask = _client.createTask(request).transform("Task to completion stage",
+    responseTry -> {
+      if (responseTry.isFailed()) {
+        return Failure.of(responseTry.getError());
+      } else {
+        Response<$responseType> resp = responseTry.get();
+        if (resp.hasError()) {
+          return Failure.of(resp.getError());
+        } else {
+          return Success.of($resposneEntity);
+        }
+      }
+    });
+    #if(!$withEG)
+    ExecutionGroup executionGroup = this.getExecutionGroupFromContext();
+    #end
+    if (executionGroup == null)
+    {
+      return _completionStageFactory.buildStageFromTaskToRun(responseTask);
+    }
+    else
+    {
+      executionGroup.addTaskByFluentClient(this, responseTask);
+      return _completionStageFactory.buildStageFromTask(responseTask);
+    }
+#end
+
 #macro(fillQueryParams $method)
 #**#
     #if ($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
