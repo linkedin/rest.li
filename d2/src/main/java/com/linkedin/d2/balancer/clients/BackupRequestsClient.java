@@ -32,6 +32,7 @@ import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy.ExcludedHostHints;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.data.ByteString;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
@@ -39,6 +40,9 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
+import com.linkedin.r2.message.stream.entitystream.EntityStreams;
+import com.linkedin.r2.message.stream.entitystream.FullEntityObserver;
 import com.linkedin.r2.util.NamedThreadFactory;
 import java.net.URI;
 import java.util.List;
@@ -380,6 +384,29 @@ public class BackupRequestsClient extends D2ClientDelegator
   @Override
   public void streamRequest(StreamRequest request, RequestContext requestContext, Callback<StreamResponse> callback)
   {
+    // Buffering stream request raises concerns on memory usage and performance.
+    // Currently only support backup requests with IS_FULL_REQUEST.
+    if (!isFullRequest(requestContext)) {
+      _d2Client.streamRequest(request, requestContext, callback);
+      return;
+    }
+    if (!isBuffered(requestContext)) {
+      final FullEntityObserver observer = new FullEntityObserver(new Callback<ByteString>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          LOG.warn("Failed to record request's entity for retrying backup request.");
+        }
+
+        @Override
+        public void onSuccess(ByteString result)
+        {
+          requestContext.putLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY, result);
+        }
+      });
+      request.getEntityStream().addObserver(observer);
+    }
     if (_isD2Async)
     {
       requestAsync(request, requestContext, _d2Client::streamRequest, callback);
@@ -524,6 +551,7 @@ public class BackupRequestsClient extends D2ClientDelegator
       executorService.schedule(this::maybeSendBackupRequest, delayNano, TimeUnit.NANOSECONDS);
     }
 
+    @SuppressWarnings("unchecked")
     private void maybeSendBackupRequest()
     {
       Set<URI> exclusionSet = ExcludedHostHints.getRequestContextExcludedHosts(_requestContext);
@@ -532,9 +560,23 @@ public class BackupRequestsClient extends D2ClientDelegator
       if (exclusionSet != null)
       {
         exclusionSet.forEach(uri -> ExcludedHostHints.addRequestContextExcludedHost(_backupRequestContext, uri));
+        if (_request instanceof StreamRequest && !isBuffered(_requestContext)) {
+          return;
+        }
         if (!_done.get() && _strategy.isBackupRequestAllowed())
         {
-          _client.doRequest(_request, _backupRequestContext, new Callback<T>()
+          boolean needCloneRC = false;
+          R request = _request;
+          if (_request instanceof StreamRequest) {
+            StreamRequest req = (StreamRequest)_request;
+            req = req.builder()
+                .build(EntityStreams.newEntityStream(new ByteStringWriter(
+                    (ByteString) _requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY)
+                )));
+            request = (R)req;
+            needCloneRC = true;
+          }
+          _client.doRequest(request, needCloneRC ? _requestContext.clone(): _requestContext, new Callback<T>()
           {
             @Override
             public void onSuccess(T result)
@@ -721,4 +763,15 @@ public class BackupRequestsClient extends D2ClientDelegator
 
   }
 
+  private static boolean isFullRequest(RequestContext requestContext)
+  {
+    Object isFullRequest = requestContext.getLocalAttr(R2Constants.IS_FULL_REQUEST);
+    return isFullRequest != null && (Boolean)isFullRequest;
+  }
+
+  private static boolean isBuffered(RequestContext requestContext)
+  {
+    Object bufferedBody = requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY);
+    return bufferedBody != null;
+  }
 }
