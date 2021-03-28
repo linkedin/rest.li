@@ -62,12 +62,14 @@ public class SimpleResourceSpec extends BaseResourceSpec
       {
         _resourceActions = Collections.emptyList();
       }
-
-      _resourceActions = new ArrayList<>(getResource().getSimple().getActions().size());
-      // For simple resource action methods, the resource level "Any", "Collection", "Entity" is in fact same
-      // so treat it as non-entity here
-      getResource().getSimple()
-      .getActions().forEach(actionSchema -> _resourceActions.add(new ActionMethodSpec(actionSchema, this, false)));
+      else
+      {
+        _resourceActions = new ArrayList<>(getResource().getSimple().getActions().size());
+        // For simple resource action methods, the resource level "Any", "Collection", "Entity" is in fact same
+        // so treat it as non-entity here
+        getResource().getSimple()
+        .getActions().forEach(actionSchema -> _resourceActions.add(new ActionMethodSpec(actionSchema, this, false)));
+      }
     }
     return _resourceActions;
   }

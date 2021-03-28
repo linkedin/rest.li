@@ -17,10 +17,14 @@
 package com.linkedin.restli.tools.clientgen.fluentspec;
 
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.restspec.ActionSchema;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+
+import static com.linkedin.restli.tools.clientgen.fluentspec.SpecUtils.*;
 
 
 public class ActionMethodSpec
@@ -53,6 +57,11 @@ public class ActionMethodSpec
     return params;
   }
 
+  public boolean hasActionParams()
+  {
+    return (_actionSchema.getParameters() != null && !_actionSchema.getParameters().isEmpty());
+  }
+
   public ClassTemplateSpec getValueClass()
   {
     if (_valueClass == null)
@@ -64,6 +73,11 @@ public class ActionMethodSpec
 
   public String getValueClassName()
   {
+    if (getValueClass() == null)
+    {
+      return Void.class.getSimpleName();
+    }
+
     return SpecUtils.getClassName(getValueClass());
   }
 
@@ -76,4 +90,28 @@ public class ActionMethodSpec
   {
     return _resourceSpec;
   }
+
+  public Set<ProjectionParameterSpec> getSupportedProjectionParams()
+  {
+    if (hasReturnValue()) {
+      return Collections.singleton(
+          new ProjectionParameterSpec(RestConstants.FIELDS_PARAM,
+              FIELDS_MASK_METHOD_NAME, getValueClass()));
+    }
+    else
+    {
+      return Collections.emptySet();
+    }
+  }
+
+  public boolean hasReturnValue()
+  {
+    return getValueClass() != null;
+  }
+
+//  public boolean isProjectionApplicable()
+//  {
+//    //TODO
+//    return hasReturnValue() &&
+//  }
 }

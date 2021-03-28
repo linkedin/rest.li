@@ -67,10 +67,12 @@ public class CollectionResourceSpec extends BaseResourceSpec
       {
         _resourceActions = Collections.emptyList();
       }
-
-      _resourceActions = new ArrayList<>(getResource().getCollection().getActions().size());
-      getResource().getCollection().getActions()
-      .forEach(actionSchema -> _resourceActions.add(new ActionMethodSpec(actionSchema, this, false)));
+      else
+      {
+        _resourceActions = new ArrayList<>(getResource().getCollection().getActions().size());
+        getResource().getCollection().getActions()
+            .forEach(actionSchema -> _resourceActions.add(new ActionMethodSpec(actionSchema, this, false)));
+      }
     }
     return _resourceActions;
   }
@@ -87,9 +89,13 @@ public class CollectionResourceSpec extends BaseResourceSpec
       {
         _entityActions = Collections.emptyList();
       }
-      _entityActions = new ArrayList<>(actionSchemaArray.size());
-      actionSchemaArray
-        .forEach(actionSchema -> _entityActions.add(new ActionMethodSpec(actionSchema, this, true)));
+      else
+      {
+        _entityActions = new ArrayList<>(actionSchemaArray.size());
+        actionSchemaArray
+            .forEach(actionSchema -> _entityActions.add(new ActionMethodSpec(actionSchema, this, true)));
+      }
+
     }
 
     return _entityActions;

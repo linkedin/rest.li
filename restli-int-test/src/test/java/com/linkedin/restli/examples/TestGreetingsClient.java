@@ -336,6 +336,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
             .id(1L)
             .setActionParam("NewTone", Tone.SINCERE)
             .setActionParam("DelOld", false)
+//            .fields(Greeting.fields().id())
             .build();
     ResponseFuture<Greeting> responseFuture = getClient().sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);

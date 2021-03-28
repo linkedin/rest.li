@@ -25,6 +25,7 @@ import com.linkedin.data.template.FieldDef;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.function.Success;
+//import com.linkedin.restli.client.ParSeqBasedCompletionStageFactory;
 import com.linkedin.restli.client.ParSeqRestliClient;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestliRequestOptions;
@@ -52,6 +53,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import javax.annotation.Generated;
 
+@SuppressWarnings({"rawtypes"})
 @Generated("Generated from $spec.sourceIdlName")
 public class ${spec.className}${class_name_suffix} implements ${spec.toImplementInterfaceName} {
   private final static String ORIGINAL_RESOURCE_PATH = "$util.getResourcePath($spec.resource.path)";
@@ -59,6 +61,7 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
   #if(${spec.getPathKeys().size()} > 0)
   private Map<String, Object> _pathKeyMap = new HashMap<>();
   #end
+  // private ParSeqBasedCompletionStageFactory _completionStageFactory;
 
   static {
     HashMap<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
@@ -145,6 +148,7 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
   public ${spec.className}${class_name_suffix}(ParSeqRestliClient client, Engine engine) {
     _client = client;
     _engine = engine;
+    // _completionStageFactory = new ParSeqBasedCompletionStageFactory(engine);
   }
 
   ## Merge another pathKeyMap
@@ -179,12 +183,14 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
   }
   #end
 
+  // action no: ${spec.actions.size()}
+  #parse("apiVmTemplates/action.vm")
   // CRUD methods
   #foreach($method in $spec.restMethods)
     #parse("apiVmTemplates/rest.${method.method}.vm")
   #end
 
-  #parse("apiVmTemplates/action.vm")
+
 
 
   ## Add association key generation stub
