@@ -133,12 +133,15 @@ public class SpecUtils {
 
   /**
    * Check whether the shortName being tested conflicts with what has been imported
+   * if not, will update the mapping used for look-up
+   *
    * @param shortNameMapping a mapping of short name to binding name in imports
    * @param shortName the shortName to be checked
    * @param bindingName the binding name that the shortName being checked corresponds to
-   * @return true if the shortName cannot be used due to conflicts, false otherwise
+   * @return true if the shortName cannot be used due to conflicts,
+   *         false otherwise, and will update the mapping
    */
-  public static boolean checkIfShortNameConflictWithImports(Map<String, String> shortNameMapping, String shortName, String bindingName)
+  public static boolean checkIfShortNameConflictAndUpdateMapping(Map<String, String> shortNameMapping, String shortName, String bindingName)
   {
     if (shortNameMapping.containsKey(shortName))
     {
@@ -146,6 +149,7 @@ public class SpecUtils {
     }
     else
     {
+      shortNameMapping.put(shortName, bindingName);
       return false;
     }
   }

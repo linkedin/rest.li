@@ -300,14 +300,13 @@ public class BaseResourceSpec
       // than complex key, etc.
       if (_entityClassName == null)
       {
-        if (SpecUtils.checkIfShortNameConflictWithImports(_importCheckConflict, getEntityClass().getClassName(),
+        if (SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict, getEntityClass().getClassName(),
             getEntityClass().getBindingName()))
         {
           _entityClassName = getEntityClass().getFullName();
         }
         else
         {
-          _importCheckConflict.put(getEntityClass().getClassName(), getEntityClass().getBindingName());
           imports.add(getEntityClass().getFullName());
           _entityClassName = getEntityClass().getClassName();
         }
