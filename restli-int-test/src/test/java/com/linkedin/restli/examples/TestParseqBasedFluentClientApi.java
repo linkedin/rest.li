@@ -763,7 +763,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     try
     {
       subsubClient.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
-      Assert.fail("Should fail");
+      Assert.fail("Sub resource call without path key should fail");
     }
     catch (Exception e)
     {

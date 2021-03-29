@@ -92,16 +92,19 @@ public class BaseResourceSpec
   final DataSchemaLocation _currentSchemaLocation;
   final DataSchemaResolver _schemaResolver;
   ClassTemplateSpec _entityClass = null;
-  // In case of naming conflict, resource name will be using shortened name,
+  private String _entityClassName = null;
+  // This set contains those "unusable" short names.
+  // In case of naming conflict, since resource name will be using shortened name,
   // others (entity name, complex key, etc) will be using full qualified name
-  Set<String> _importNameConflict;
+  protected Set<String> _imports;
+  protected Set<String> _importCheckConflict;
   // sub-resources of this resource
-  List<BaseResourceSpec> _childSubResourceSpecs;
+  protected List<BaseResourceSpec> _childSubResourceSpecs;
   // All of the direct ancestors of this resource
-  List<BaseResourceSpec> _ancestorResourceSpecs;
-  List<String> _pathKeys;
-  Map<String, String> _pathKeyTypes;
-  Map<String, List<Pair<String,String>>> _pathToAssocKeys;
+  protected List<BaseResourceSpec> _ancestorResourceSpecs;
+  protected List<String> _pathKeys;
+  protected Map<String, String> _pathKeyTypes;
+  protected Map<String, List<Pair<String,String>>> _pathToAssocKeys;
 
   public BaseResourceSpec(ResourceSchema resourceSchema, TemplateSpecGenerator templateSpecGenerator,
       String sourceIdlName, DataSchemaResolver schemaResolver)
@@ -111,8 +114,9 @@ public class BaseResourceSpec
     _sourceIdlName = sourceIdlName;
     _schemaResolver = schemaResolver;
     _currentSchemaLocation = new FileDataSchemaLocation(new File(_sourceIdlName));
-    // In case resource name and entity class are conflicting, will need to use full entity class name
-    _importNameConflict = new HashSet<>(Arrays.asList(getClassName()));
+    // In case any other class name conflicting with resource name
+    // it will need to use full class name
+    _importCheckConflict = new HashSet<>(Arrays.asList(getClassName()));
   }
 
   public ResourceSchema getResource()
@@ -201,99 +205,118 @@ public class BaseResourceSpec
 
   public Set<String> getImportsForRestMethods()
   {
-    Set<String> imports = new TreeSet<>();
-    for(RestMethodSpec methodSpec : getRestMethods())
+    if (_imports == null)
     {
-      ResourceMethod method = ResourceMethod.fromString(methodSpec.getMethod());
-      switch (method)
+      Set<String> imports = new TreeSet<>();
+      for (RestMethodSpec methodSpec : getRestMethods())
       {
-        case GET:
-          imports.add(GetRequest.class.getName());
-          break;
-        case BATCH_GET:
-          imports.add(BatchGetEntityRequest.class.getName());
-          imports.add(BatchKVResponse.class.getName());
-          imports.add(EntityResponse.class.getName());
-          imports.add(BatchEntityResponseDecoder.class.getName());
-          break;
-        case CREATE:
-          imports.add(CreateIdRequest.class.getName());
-          imports.add(IdResponse.class.getName());
-          imports.add(IdResponseDecoder.class.getName());
-          if (methodSpec.returnsEntity())
-          {
-            imports.add(CreateIdEntityRequest.class.getName());
-            imports.add(IdEntityResponse.class.getName());
-            imports.add(IdEntityResponseDecoder.class.getName());
-          }
-          break;
-        case BATCH_CREATE:
-          imports.add(CollectionRequest.class.getName());
-          imports.add(BatchCreateIdRequest.class.getName());
-          imports.add(CreateIdStatus.class.getName());
-          imports.add(BatchCreateIdResponse.class.getName());
-          imports.add(BatchCreateIdDecoder.class.getName());
-          if (methodSpec.returnsEntity())
-          {
-            imports.add(BatchCreateIdEntityRequest.class.getName());
-            imports.add(CreateIdEntityStatus.class.getName());
-            imports.add(BatchCreateIdEntityResponse.class.getName());
-            imports.add(BatchCreateIdEntityDecoder.class.getName());
-          }
-          break;
-        case PARTIAL_UPDATE:
-          imports.add(PatchRequest.class.getName());
-          imports.add(PartialUpdateRequest.class.getName());
-          if (methodSpec.returnsEntity())
-          {
-            imports.add(PartialUpdateEntityRequest.class.getName());
-            imports.add(EntityResponseDecoder.class.getName());
-          }
-          break;
-        case BATCH_PARTIAL_UPDATE:
-          imports.add(PatchRequest.class.getName());
-          imports.add(BatchPartialUpdateRequest.class.getName());
-          imports.add(CollectionRequest.class.getName());
-          imports.add(UpdateStatus.class.getName());
-          imports.add(BatchKVResponse.class.getName());
-          imports.add(KeyValueRecordFactory.class.getName());
-          imports.add(KeyValueRecord.class.getName());
-          if (methodSpec.returnsEntity())
-          {
-            imports.add(BatchPartialUpdateEntityRequest.class.getName());
-            imports.add(UpdateEntityStatus.class.getName());
-          }
-          break;
-        case UPDATE:
-          imports.add(UpdateRequest.class.getName());
-          break;
-        case BATCH_UPDATE:
-          imports.add(BatchUpdateRequest.class.getName());
-          imports.add(BatchKVResponse.class.getName());
-          imports.add(KeyValueRecordFactory.class.getName());
-          imports.add(KeyValueRecord.class.getName());
-          imports.add(CollectionRequest.class.getName());
-          imports.add(UpdateStatus.class.getName());
-          break;
-        case DELETE:
-          imports.add(DeleteRequest.class.getName());
-          break;
-        case BATCH_DELETE:
-          imports.add(BatchDeleteRequest.class.getName());
-          imports.add(UpdateStatus.class.getName());
-          break;
-        case GET_ALL:
-          imports.add(GetAllRequest.class.getName());
-          imports.add(CollectionResponse.class.getName());
-          break;
-        default:
-          break;
+        ResourceMethod method = ResourceMethod.fromString(methodSpec.getMethod());
+        switch (method)
+        {
+          case GET:
+            imports.add(GetRequest.class.getName());
+            break;
+          case BATCH_GET:
+            imports.add(BatchGetEntityRequest.class.getName());
+            imports.add(BatchKVResponse.class.getName());
+            imports.add(EntityResponse.class.getName());
+            imports.add(BatchEntityResponseDecoder.class.getName());
+            break;
+          case CREATE:
+            imports.add(CreateIdRequest.class.getName());
+            imports.add(IdResponse.class.getName());
+            imports.add(IdResponseDecoder.class.getName());
+            if (methodSpec.returnsEntity())
+            {
+              imports.add(CreateIdEntityRequest.class.getName());
+              imports.add(IdEntityResponse.class.getName());
+              imports.add(IdEntityResponseDecoder.class.getName());
+            }
+            break;
+          case BATCH_CREATE:
+            imports.add(CollectionRequest.class.getName());
+            imports.add(BatchCreateIdRequest.class.getName());
+            imports.add(CreateIdStatus.class.getName());
+            imports.add(BatchCreateIdResponse.class.getName());
+            imports.add(BatchCreateIdDecoder.class.getName());
+            if (methodSpec.returnsEntity())
+            {
+              imports.add(BatchCreateIdEntityRequest.class.getName());
+              imports.add(CreateIdEntityStatus.class.getName());
+              imports.add(BatchCreateIdEntityResponse.class.getName());
+              imports.add(BatchCreateIdEntityDecoder.class.getName());
+            }
+            break;
+          case PARTIAL_UPDATE:
+            imports.add(PatchRequest.class.getName());
+            imports.add(PartialUpdateRequest.class.getName());
+            if (methodSpec.returnsEntity())
+            {
+              imports.add(PartialUpdateEntityRequest.class.getName());
+              imports.add(EntityResponseDecoder.class.getName());
+            }
+            break;
+          case BATCH_PARTIAL_UPDATE:
+            imports.add(PatchRequest.class.getName());
+            imports.add(BatchPartialUpdateRequest.class.getName());
+            imports.add(CollectionRequest.class.getName());
+            imports.add(UpdateStatus.class.getName());
+            imports.add(BatchKVResponse.class.getName());
+            imports.add(KeyValueRecordFactory.class.getName());
+            imports.add(KeyValueRecord.class.getName());
+            if (methodSpec.returnsEntity())
+            {
+              imports.add(BatchPartialUpdateEntityRequest.class.getName());
+              imports.add(UpdateEntityStatus.class.getName());
+            }
+            break;
+          case UPDATE:
+            imports.add(UpdateRequest.class.getName());
+            break;
+          case BATCH_UPDATE:
+            imports.add(BatchUpdateRequest.class.getName());
+            imports.add(BatchKVResponse.class.getName());
+            imports.add(KeyValueRecordFactory.class.getName());
+            imports.add(KeyValueRecord.class.getName());
+            imports.add(CollectionRequest.class.getName());
+            imports.add(UpdateStatus.class.getName());
+            break;
+          case DELETE:
+            imports.add(DeleteRequest.class.getName());
+            break;
+          case BATCH_DELETE:
+            imports.add(BatchDeleteRequest.class.getName());
+            imports.add(UpdateStatus.class.getName());
+            break;
+          case GET_ALL:
+            imports.add(GetAllRequest.class.getName());
+            imports.add(CollectionResponse.class.getName());
+            break;
+          default:
+            break;
+        }
       }
-    }
 
-    // TODO: ComplexKey
-    // Sub resources are handled recursively
-    return getResourceSpecificImports(imports);
+      // Entity class has a higher priority to use short name
+      // than complex key, etc.
+      if (_entityClassName == null)
+      {
+        if (!_importCheckConflict.contains(getEntityClass().getClassName()))
+        {
+          _importCheckConflict.add(getEntityClass().getClassName());
+          imports.add(getEntityClass().getFullName());
+          _entityClassName = getEntityClass().getClassName();
+        }
+        else
+        {
+          _entityClassName = getEntityClass().getFullName();
+        }
+      }
+
+      // Sub resources are handled recursively
+      _imports = getResourceSpecificImports(imports);
+    }
+    return _imports;
   }
 
   // get the class representing the record entity of this resource
@@ -308,7 +331,12 @@ public class BaseResourceSpec
 
   public String getEntityClassName()
   {
-    return isEntityClassNameConflicted()? getEntityClass().getBindingName() : getEntityClass().getClassName();
+    if (_entityClassName == null)
+    {
+      // Need to initialize by checking all the import chain
+      getImportsForRestMethods();
+    }
+    return _entityClassName;
   }
 
   public List<RestMethodSpec> getRestMethods()
@@ -413,7 +441,7 @@ public class BaseResourceSpec
 
   public boolean isEntityClassNameConflicted()
   {
-    return _importNameConflict.contains(getEntityClass().getClassName());
+    return _importCheckConflict.contains(getEntityClass().getClassName());
   }
 
   /**
@@ -446,7 +474,7 @@ public class BaseResourceSpec
     // entity name.
     _ancestorResourceSpecs.stream()
         .map(BaseResourceSpec::getClassName)
-        .forEach(v -> _importNameConflict.add(v));
+        .forEach(v -> _importCheckConflict.add(v));
   }
 
   private boolean hasParent()

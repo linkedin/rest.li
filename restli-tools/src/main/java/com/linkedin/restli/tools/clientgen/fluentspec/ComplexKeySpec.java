@@ -47,7 +47,8 @@ public class ComplexKeySpec
     {
       String keyKeyClassNameShort = ClassUtils.getShortClassName(_keyKeyClassName);
       String paramKeyClassNameShort = ClassUtils.getShortClassName(_paramKeyClassName);
-      _parameterizedSignature = String.format("ComplexResourceKey<%s, %s>", importNameConflict.contains(keyKeyClassNameShort)? _keyKeyClassName: keyKeyClassNameShort,
+      _parameterizedSignature = String.format("ComplexResourceKey<%s, %s>",
+          importNameConflict.contains(keyKeyClassNameShort)? _keyKeyClassName: keyKeyClassNameShort,
           importNameConflict.contains(paramKeyClassNameShort)? _paramKeyClassName:paramKeyClassNameShort);
     }
     return _parameterizedSignature;

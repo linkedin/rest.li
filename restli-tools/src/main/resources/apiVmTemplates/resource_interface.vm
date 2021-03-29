@@ -16,9 +16,6 @@ Copyright (c) 2021 LinkedIn Corp.
 #if ($spec.resource.namespace)
     package $spec.resource.namespace;
 #end
-#if(!${spec.isEntityClassNameConflicted()})
-import ${spec.entityClass.fullName};
-#end
 #foreach($import in $spec.importsForRestMethods)
     import ${import};
 #end
@@ -45,5 +42,5 @@ public interface ${spec.className} {
 #foreach($subSpec in $spec.childSubResourceSpecs)
 #**##subResourceInterface($subSpec)##
 #end
-    
+
 }

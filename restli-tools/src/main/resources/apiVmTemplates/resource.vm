@@ -38,9 +38,6 @@ import com.linkedin.restli.common.TypeSpec;
 #foreach($import in $spec.importsForRestMethods)
   import ${import};
 #end
-#if(!${spec.isEntityClassNameConflicted()})
-import ${spec.entityClass.fullName};
-#end
 
 import java.util.ArrayList;
 import java.util.Collection;

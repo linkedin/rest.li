@@ -96,7 +96,7 @@ public class CollectionResourceSpec extends BaseResourceSpec
     {
       if (parameterized)
       {
-        return _complexKeySpec.getParameterizedSignature(_importNameConflict);
+        return _complexKeySpec.getParameterizedSignature(_importCheckConflict);
       }
       else
       {
@@ -120,11 +120,11 @@ public class CollectionResourceSpec extends BaseResourceSpec
     if (hasComplexKey())
     {
       imports.add(ComplexResourceKey.class.getName());
-      if(!_importNameConflict.contains(ClassUtils.getShortClassName(_complexKeySpec.getKeyKeyClassName())))
+      if(!_importCheckConflict.contains(ClassUtils.getShortClassName(_complexKeySpec.getKeyKeyClassName())))
       {
         imports.add(_complexKeySpec.getKeyKeyClassName());
       }
-      if(!_importNameConflict.contains(ClassUtils.getShortClassName(_complexKeySpec.getParamKeyClassName())))
+      if(!_importCheckConflict.contains(ClassUtils.getShortClassName(_complexKeySpec.getParamKeyClassName())))
       {
         imports.add(_complexKeySpec.getParamKeyClassName());
       }
