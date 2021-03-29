@@ -17,6 +17,7 @@
 package com.linkedin.restli.tools.clientgen.fluentspec;
 
 import com.linkedin.restli.common.ComplexResourceKey;
+import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang.ClassUtils;
 
@@ -41,15 +42,17 @@ public class ComplexKeySpec
     this._paramKeyClassName = _baseResourceSpec.getJavaBindTypeName(paramKeyType);
   }
 
-  public String getParameterizedSignature(Set<String> importNameConflict)
+  public String getParameterizedSignature(Map<String, String> importNameConflict)
   {
     if (_parameterizedSignature == null)
     {
       String keyKeyClassNameShort = ClassUtils.getShortClassName(_keyKeyClassName);
       String paramKeyClassNameShort = ClassUtils.getShortClassName(_paramKeyClassName);
       _parameterizedSignature = String.format("ComplexResourceKey<%s, %s>",
-          importNameConflict.contains(keyKeyClassNameShort)? _keyKeyClassName: keyKeyClassNameShort,
-          importNameConflict.contains(paramKeyClassNameShort)? _paramKeyClassName:paramKeyClassNameShort);
+          SpecUtils.checkIfShortNameConflictWithImports(importNameConflict, keyKeyClassNameShort, _keyKeyClassName)?
+           _keyKeyClassName: keyKeyClassNameShort,
+          SpecUtils.checkIfShortNameConflictWithImports(importNameConflict, keyKeyClassNameShort, _keyKeyClassName)?
+          _paramKeyClassName:paramKeyClassNameShort);
     }
     return _parameterizedSignature;
   }

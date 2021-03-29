@@ -71,10 +71,8 @@ import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.util.CustomTypeUtil;
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -93,11 +91,11 @@ public class BaseResourceSpec
   final DataSchemaResolver _schemaResolver;
   ClassTemplateSpec _entityClass = null;
   private String _entityClassName = null;
-  // This set contains those "unusable" short names.
+  protected Set<String> _imports;
+  // This map contains a mapping from those used short names to its full java binding name
   // In case of naming conflict, since resource name will be using shortened name,
   // others (entity name, complex key, etc) will be using full qualified name
-  protected Set<String> _imports;
-  protected Set<String> _importCheckConflict;
+  protected Map<String, String> _importCheckConflict;
   // sub-resources of this resource
   protected List<BaseResourceSpec> _childSubResourceSpecs;
   // All of the direct ancestors of this resource
@@ -116,7 +114,8 @@ public class BaseResourceSpec
     _currentSchemaLocation = new FileDataSchemaLocation(new File(_sourceIdlName));
     // In case any other class name conflicting with resource name
     // it will need to use full class name
-    _importCheckConflict = new HashSet<>(Arrays.asList(getClassName()));
+    _importCheckConflict = new HashMap<>();
+    _importCheckConflict.put(getClassName(), getBindingName());
   }
 
   public ResourceSchema getResource()
@@ -301,15 +300,16 @@ public class BaseResourceSpec
       // than complex key, etc.
       if (_entityClassName == null)
       {
-        if (!_importCheckConflict.contains(getEntityClass().getClassName()))
+        if (SpecUtils.checkIfShortNameConflictWithImports(_importCheckConflict, getEntityClass().getClassName(),
+            getEntityClass().getBindingName()))
         {
-          _importCheckConflict.add(getEntityClass().getClassName());
-          imports.add(getEntityClass().getFullName());
-          _entityClassName = getEntityClass().getClassName();
+          _entityClassName = getEntityClass().getFullName();
         }
         else
         {
-          _entityClassName = getEntityClass().getFullName();
+          _importCheckConflict.put(getEntityClass().getClassName(), getEntityClass().getBindingName());
+          imports.add(getEntityClass().getFullName());
+          _entityClassName = getEntityClass().getClassName();
         }
       }
 
@@ -439,11 +439,6 @@ public class BaseResourceSpec
     }
   }
 
-  public boolean isEntityClassNameConflicted()
-  {
-    return _importCheckConflict.contains(getEntityClass().getClassName());
-  }
-
   /**
    * Use to store all subResource specs
    */
@@ -473,8 +468,7 @@ public class BaseResourceSpec
     // need to have all ancestors and descendants' resource name, along with
     // entity name.
     _ancestorResourceSpecs.stream()
-        .map(BaseResourceSpec::getClassName)
-        .forEach(v -> _importCheckConflict.add(v));
+        .forEach(v -> _importCheckConflict.put(v.getClassName(), v.getBindingName()));
   }
 
   private boolean hasParent()

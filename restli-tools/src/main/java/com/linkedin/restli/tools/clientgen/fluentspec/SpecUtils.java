@@ -24,6 +24,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.text.StringEscapeUtils;
 
 
@@ -128,5 +129,24 @@ public class SpecUtils {
       docLines.add(StringEscapeUtils.escapeHtml4(line));
     }
     return docLines;
+  }
+
+  /**
+   * Check whether the shortName being tested conflicts with what has been imported
+   * @param shortNameMapping a mapping of short name to binding name in imports
+   * @param shortName the shortName to be checked
+   * @param bindingName the binding name that the shortName being checked corresponds to
+   * @return true if the shortName cannot be used due to conflicts, false otherwise
+   */
+  public static boolean checkIfShortNameConflictWithImports(Map<String, String> shortNameMapping, String shortName, String bindingName)
+  {
+    if (shortNameMapping.containsKey(shortName))
+    {
+      return !((shortNameMapping.get(shortName)!= null) && shortNameMapping.get(shortName).equals(bindingName));
+    }
+    else
+    {
+      return false;
+    }
   }
 }
