@@ -184,6 +184,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   private final boolean _fieldMaskMethods;
   private final boolean _copierMethods;
   private final String _rootPath;
+  private final ProjectionMaskApiChecker _projectionMaskApiChecker;
 
   private JavaDataTemplateGenerator(String defaultPackage,
                                     boolean recordFieldAccessorWithMode,
@@ -191,7 +192,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
                                     boolean pathSpecMethods,
                                     boolean copierMethods,
                                     String rootPath,
-                                    boolean fieldMaskMethods)
+                                    boolean fieldMaskMethods,
+                                    ProjectionMaskApiChecker projectionMaskApiChecker)
   {
     super(defaultPackage);
 
@@ -209,6 +211,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     _fieldMaskMethods = fieldMaskMethods;
     _copierMethods = copierMethods;
     _rootPath = rootPath;
+    _projectionMaskApiChecker = projectionMaskApiChecker;
   }
 
   public JavaDataTemplateGenerator(Config config)
@@ -219,7 +222,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
          config.getPathSpecMethods(),
          config.getCopierMethods(),
          config.getRootPath(),
-         config.isFieldMaskMethods());
+         config.isFieldMaskMethods(),
+         config.getProjectionMaskApiChecker());
   }
 
   /**
@@ -243,7 +247,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
          true,
          true,
          rootPath,
-         false);
+         false,
+         null);
   }
 
   public Map<JDefinedClass, ClassTemplateSpec> getGeneratedClasses()
@@ -570,7 +575,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
     if (_fieldMaskMethods)
     {
-      generateMaskBuilderForCollection(arrayClass, arrayDataTemplateSpec.getSchema(), itemJClass, "items");
+      generateMaskBuilderForCollection(arrayClass, arrayDataTemplateSpec.getSchema(), itemJClass, "items",
+          arrayDataTemplateSpec.getItemClass());
     }
 
     generateCustomClassInitialization(arrayClass, arrayDataTemplateSpec.getCustomInfo());
@@ -675,7 +681,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
     if (_fieldMaskMethods)
     {
-      generateMaskBuilderForCollection(mapClass, mapSpec.getSchema(), valueJClass, "values");
+      generateMaskBuilderForCollection(mapClass, mapSpec.getSchema(), valueJClass, "values",
+          mapSpec.getValueClass());
     }
     generateCustomClassInitialization(mapClass, mapSpec.getCustomInfo());
 
@@ -871,7 +878,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       // For a array type field "foo" with "Bar" items, a new API to set start and count will be provided (for both variants above).
       // public ProjectionMask withFoo(Function<BarArray.ProjectionMask, BarArray.ProjectionMask> nestedMaskBuilder, Integer start, Integer count) {
       //    _fooMask = nestedMaskBuilder.apply(_fooMask == null ? BarArray.createMask() : _fooMask);
-      //   getDataMap().put("foo", nested.getDataMap());
+      //   getDataMap().put("foo", _fooMask.getDataMap());
       //   getDataMap().getDataMap("foo").put("$start", start);
       //   getDataMap().getDataMap("foo").put("$count, count);
       // }
@@ -915,30 +922,66 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       JClass nestedMaskType = getCodeModel().ref(fieldType.fullName() + ".ProjectionMask");
       String fieldName = escapeReserved(field.getSchemaField().getName());
       String maskFieldName = "_" + fieldName + "Mask";
-      JFieldVar maskField = maskNestedClass.fields().get(maskFieldName);
-      if (maskField == null)
-      {
-        maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, maskFieldName);
-      }
-      final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(
-          fieldName)));
-      if (!field.getSchemaField().getDoc().isEmpty())
-      {
-        withFieldMethod.javadoc().append(field.getSchemaField().getDoc());
-      }
-      setDeprecatedAnnotationAndJavadoc(withFieldMethod, field.getSchemaField());
       JInvocation getDataMap = JExpr.invoke("getDataMap");
-      JVar nestedMask = withFieldMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType), "nestedMask");
-      withFieldMethod.body().assign(maskField,
-          nestedMask.invoke("apply").arg(
-              JOp.cond(maskField.eq(JExpr._null()), fieldType.staticInvoke("createMask"), maskField)));
-      withFieldMethod.body().invoke(getDataMap, "put")
-          .arg(fieldName)
-          .arg(maskField.invoke("getDataMap"));
+      // Generate a fully typesafe method if the nested type has the new ProjectionMask API.
+      if (hasProjectionMaskApi(fieldType, field.getType()))
+      {
+        JFieldVar maskField = maskNestedClass.fields().get(maskFieldName);
+        if (maskField == null)
+        {
+          maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, maskFieldName);
+        }
+        final JMethod withFieldTypesafeMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(
+            fieldName)));
+        if (!field.getSchemaField().getDoc().isEmpty())
+        {
+          withFieldTypesafeMethod.javadoc().append(field.getSchemaField().getDoc());
+        }
+        setDeprecatedAnnotationAndJavadoc(withFieldTypesafeMethod, field.getSchemaField());
+        JVar nestedMask = withFieldTypesafeMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType), "nestedMask");
+        withFieldTypesafeMethod.body().assign(maskField,
+            nestedMask.invoke("apply").arg(
+                JOp.cond(maskField.eq(JExpr._null()), fieldType.staticInvoke("createMask"), maskField)));
+        withFieldTypesafeMethod.body().invoke(getDataMap, "put")
+            .arg(fieldName)
+            .arg(maskField.invoke("getDataMap"));
 
-      methodBodyCustomizer.accept(withFieldMethod);
-      withFieldMethod.body()._return(JExpr._this());
+        methodBodyCustomizer.accept(withFieldTypesafeMethod);
+        withFieldTypesafeMethod.body()._return(JExpr._this());
+      }
+      // Generate a method that accepts generic mask map if the nested type is from an external source. This is needed
+      // for backwards compatibility.
+      // Note: If the nested type is generated from source PDLs, it will have ProjectionMask.
+      if (!isGeneratedFromSource(field.getType()))
+      {
+        final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(
+            fieldName)));
+        if (!field.getSchemaField().getDoc().isEmpty())
+        {
+          withFieldMethod.javadoc().append(field.getSchemaField().getDoc());
+        }
+        setDeprecatedAnnotationAndJavadoc(withFieldMethod, field.getSchemaField());
+        JVar maskMap = withFieldMethod.param(_maskMapClass, "nestedMask");
+        withFieldMethod.body().invoke(getDataMap, "put")
+            .arg(fieldName)
+            .arg(maskMap.invoke("getDataMap"));
+
+        methodBodyCustomizer.accept(withFieldMethod);
+        withFieldMethod.body()._return(JExpr._this());
+      }
     }
+  }
+
+  private boolean hasProjectionMaskApi(JClass parentClass, ClassTemplateSpec templateSpec)
+  {
+    return _projectionMaskApiChecker != null &&
+        _projectionMaskApiChecker.hasProjectionMaskApi(parentClass, templateSpec);
+  }
+
+  private boolean isGeneratedFromSource(ClassTemplateSpec templateSpec)
+  {
+    return _projectionMaskApiChecker != null &&
+        _projectionMaskApiChecker.isGeneratedFromSource(templateSpec);
   }
 
   private void generateWithFieldBodyDefault(RecordTemplateSpec.Field field, JDefinedClass maskNestedClass, Consumer<JMethod> methodCustomizer)
@@ -1381,36 +1424,58 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JDefinedClass maskNestedClass = generateProjectionMaskNestedClass(unionClass, unionSpec.getMembers().size());
 
     // Generates a method in the ProjectionMask class for each member. APIs generated are similar to fields in a record.
-    // for a member foo:
-    // public ProjectionMask withFoo() {
-    //   getDataMap().put("foo", POSITIVE_MASK);
-    // }
     for (UnionTemplateSpec.Member member : unionSpec.getMembers())
     {
       String memberKey = member.getUnionMemberKey();
       String methodName = CodeUtil.getUnionMemberName(member);
-      final JMethod withMemberMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(methodName)));
       JInvocation getDataMap = JExpr.invoke("getDataMap");
       if (hasNestedFields(member.getSchema()))
       {
-        final JClass fieldType = generate(member.getClassTemplateSpec());
-        JClass nestedMaskType = getCodeModel().ref(fieldType.fullName() + ".ProjectionMask");
-        String maskFieldName = "_" + CodeUtil.capitalize(escapeReserved(methodName)) + "Mask";
-        JFieldVar maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, maskFieldName);
-        JVar nestedMask = withMemberMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType), "nestedMask");
-        withMemberMethod.body().assign(maskField,
-            nestedMask.invoke("apply").arg(
-                JOp.cond(maskField.eq(JExpr._null()), fieldType.staticInvoke("createMask"), maskField)));
-        withMemberMethod.body().invoke(getDataMap, "put")
-            .arg(memberKey)
-            .arg(maskField.invoke("getDataMap"));
+        final JClass memberType = generate(member.getClassTemplateSpec());
+        // Generate a nested mask api for the member using generic MaskMap if the member is from an external source.
+        // public ProjectionMask withFoo(MaksMap nestedMask) {
+        //   getDataMap().put("foo", nestedMask.getDataMap());
+        // }
+        if (!isGeneratedFromSource(member.getClassTemplateSpec()))
+        {
+          final JMethod withMemberMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(methodName)));
+          JVar maskMap = withMemberMethod.param(_maskMapClass,"nestedMask");
+          withMemberMethod.body().invoke(getDataMap, "put").arg(memberKey).arg(maskMap.invoke("getDataMap"));
+          withMemberMethod.body()._return(JExpr._this());
+        }
+        // Generate a typesafe nested mask api for the member if it has ProjectionMask class.
+        // public ProjectionMask withFoo(Function<Foo.ProjectionMask, Foo.ProjectionMask> nestedMask) {
+        //   _fooMask = nestedMask.apply(_fooMask == null ? Foo.createMask() : _fooMask);
+        //   getDataMap().put("foo", _fooMask.getDataMap());
+        // }
+        if (hasProjectionMaskApi(memberType, member.getClassTemplateSpec()))
+        {
+          JClass nestedMaskType = getCodeModel().ref(memberType.fullName() + ".ProjectionMask");
+          final JMethod withMemberTypesafeMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(methodName)));
+
+          String maskFieldName = "_" + CodeUtil.capitalize(escapeReserved(methodName)) + "Mask";
+          JFieldVar maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, maskFieldName);
+          JVar nestedMask =
+              withMemberTypesafeMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType),
+                  "nestedMask");
+          withMemberTypesafeMethod.body()
+              .assign(maskField, nestedMask.invoke("apply")
+                  .arg(JOp.cond(maskField.eq(JExpr._null()), memberType.staticInvoke("createMask"), maskField)));
+          withMemberTypesafeMethod.body().invoke(getDataMap, "put").arg(memberKey).arg(maskField.invoke("getDataMap"));
+          withMemberTypesafeMethod.body()._return(JExpr._this());
+        }
       }
       else
       {
+        // Generate a mask API to project the member.
+        // public ProjectionMask withFoo() {
+        //   getDataMap().put("foo", MaskMap.POSITIVE_MASK);
+        // }
+        final JMethod withMemberMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(methodName)));
         withMemberMethod.body().invoke(getDataMap, "put").arg(memberKey)
             .arg(getCodeModel().ref(MaskMap.class).staticRef("POSITIVE_MASK"));
+        withMemberMethod.body()._return(JExpr._this());
       }
-      withMemberMethod.body()._return(JExpr._this());
     }
   }
 
@@ -1523,34 +1588,49 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     return schemaField;
   }
 
-  private void generateMaskBuilderForCollection(JDefinedClass templateClass, DataSchema schema, JClass childClass, String wildcardMethodName)
+  private void generateMaskBuilderForCollection(JDefinedClass templateClass, DataSchema schema,
+      JClass childClass, String wildcardMethodName, ClassTemplateSpec itemSpec)
       throws JClassAlreadyExistsException
   {
-    // If an array item is a complex type, this generates a mask builder that allows building a nested mask.
-    // If the array type is FooArray, then
-    // public ProjectionMask withItems(Function<Bar.ProjectionMask, Bar.ProjectionMask> itemMaskBuilder) {
-    //   _itemsMask = itemMaskBuilder.apply(_itemsMask == null ? Bar.createMask() : _itemsMask);
+    // If an array item/map value is a complex type, this generates a mask builder that allows building a nested mask.
+    // If the array type is BarArray, then
+    // public ProjectionMask withItems(Function<Bar.ProjectionMask, Bar.ProjectionMask> nestedMask) {
+    //   _itemsMask = nestedMask.apply(_itemsMask == null ? Bar.createMask() : _itemsMask);
     //   getDataMap().put("$*", _itemsMask.getDataMap());
     // }
     if (hasNestedFields(schema))
     {
       // Arrays can custom attributes like start and count. The expected size of the map is attribute size + 1 (for items).
       final JDefinedClass maskNestedClass = generateProjectionMaskNestedClass(templateClass, FilterConstants.ARRAY_ATTRIBUTES.size() + 1);
-
-     final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(wildcardMethodName));
-
       JInvocation getDataMap = JExpr.invoke("getDataMap");
-      JClass nestedMaskType = getCodeModel().ref(childClass.fullName() + ".ProjectionMask");
-      JFieldVar maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, "_itemsMask");
 
-      JVar nestedMask = withFieldMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType), "nestedMask");
-      withFieldMethod.body().assign(maskField,
-          nestedMask.invoke("apply").arg(
-              JOp.cond(maskField.eq(JExpr._null()), childClass.staticInvoke("createMask"), maskField)));
-      withFieldMethod.body().invoke(getDataMap, "put")
-          .arg(JExpr.lit(FilterConstants.WILDCARD))
-          .arg(maskField.invoke("getDataMap"));
-      withFieldMethod.body()._return(JExpr._this());
+      // Generate fully typesafe API for specifying item/value mask if the nested type has ProjectionMask class.
+      if (hasProjectionMaskApi(childClass, itemSpec))
+      {
+        final JMethod withFieldTypesafeMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(wildcardMethodName));
+
+        JClass nestedMaskType = getCodeModel().ref(childClass.fullName() + ".ProjectionMask");
+        JFieldVar maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, "_" + wildcardMethodName + "Mask");
+
+        JVar nestedMask = withFieldTypesafeMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType), "nestedMask");
+        withFieldTypesafeMethod.body().assign(maskField,
+            nestedMask.invoke("apply").arg(
+                JOp.cond(maskField.eq(JExpr._null()), childClass.staticInvoke("createMask"), maskField)));
+        withFieldTypesafeMethod.body().invoke(getDataMap, "put")
+            .arg(JExpr.lit(FilterConstants.WILDCARD))
+            .arg(maskField.invoke("getDataMap"));
+        withFieldTypesafeMethod.body()._return(JExpr._this());
+      }
+      // Generate mask api using generic MaskMap if the item/value type is from external source.
+      if (!isGeneratedFromSource(itemSpec))
+      {
+        final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(wildcardMethodName));
+        JVar maskMap = withFieldMethod.param(_maskMapClass, "nestedMask");
+        withFieldMethod.body().invoke(getDataMap, "put")
+            .arg(JExpr.lit(FilterConstants.WILDCARD))
+            .arg(maskMap.invoke("getDataMap"));
+        withFieldMethod.body()._return(JExpr._this());
+      }
     }
   }
 
@@ -1824,6 +1904,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     private boolean _fieldMaskMethods;
     private boolean _copierMethods;
     private String _rootPath;
+    private ProjectionMaskApiChecker _projectionMaskApiChecker;
 
     public Config()
     {
@@ -1904,6 +1985,16 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     public String getRootPath()
     {
       return _rootPath;
+    }
+
+    public ProjectionMaskApiChecker getProjectionMaskApiChecker()
+    {
+      return _projectionMaskApiChecker;
+    }
+
+    public void setProjectionMaskApiChecker(ProjectionMaskApiChecker projectionMaskApiChecker)
+    {
+      _projectionMaskApiChecker = projectionMaskApiChecker;
     }
   }
 }

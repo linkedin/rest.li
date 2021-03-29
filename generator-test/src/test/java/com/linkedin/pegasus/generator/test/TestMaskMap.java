@@ -4,6 +4,8 @@ import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.PathSpecSet;
 import com.linkedin.data.transform.filter.request.MaskCreator;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.pegasus.generator.test.idl.records.WithCustomRecord;
+import com.linkedin.pegasus.generator.test.pdl.fixtures.CustomRecord;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -314,6 +316,21 @@ public class TestMaskMap
         UnionTest.fields().unionWithAliases().MemBoolean(),
         UnionTest.fields().unionWithAliases().MemAnotherMap(),
         UnionTest.fields().unionWithAliases().MemMap()
+    ));
+    Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
+  }
+
+  @Test
+  public void testNestedTypeWithoutProjectionMask()
+  {
+    WithCustomRecord.ProjectionMask mask = WithCustomRecord.createMask()
+        .withCustom(MaskCreator.createPositiveMask(CustomRecord.fields().title()))
+        .withCustomArray(itemsMask -> itemsMask.withItems(
+            MaskCreator.createPositiveMask(CustomRecord.fields().body())));
+
+    MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
+        WithCustomRecord.fields().custom().title(),
+        WithCustomRecord.fields().customArray().items().body()
     ));
     Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
   }
