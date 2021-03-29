@@ -19,6 +19,9 @@ package com.linkedin.restli.client;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.ParSeqUnitTestHelper;
 import com.linkedin.parseq.Task;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -28,7 +31,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -36,6 +41,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -134,20 +140,30 @@ public class TestParSeqBasedCompletionStage
     return createTestStage(val, 100); // Default value: 100 ms
   }
 
+  private CompletionStage<String> createCompletableFuture(String val)
+  {
+    return createCompletableFuture(val, 100); // Default value: 100 ms
+  }
+
   private CompletionStage<String> createTestStage(String val, long milliSeconds)
   {
-    return createStage(delayedCompletingTask(val, milliSeconds));
+    return milliSeconds > 0? createStageFromTask(delayedCompletingTask(val, milliSeconds)): createStageFromValue(val);
 //     Uncomment below to Test with CompletableFuture impl
-//    CompletableFuture stage = new CompletableFuture<>();
-//    _executor.execute(() -> {
-//      try {
-//        Thread.sleep(milliSeconds);
-//      } catch (InterruptedException e) {
-//        e.printStackTrace();
-//      }
-//      stage.complete(val);
-//    });
-//    return stage;
+//     return milliSeconds > 0? createCompletableFuture(val, milliSeconds): CompletableFuture.completedFuture(val);
+  }
+
+  private <U> CompletableFuture<U> createCompletableFuture(String val, long milliSeconds)
+  {
+    CompletableFuture stage = new CompletableFuture<>();
+    _executor.execute(() -> {
+      try {
+        Thread.sleep(milliSeconds);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      stage.complete(val);
+    });
+    return stage;
   }
 
   private CompletionStage<String> createTestFailedStage(Throwable t)
@@ -157,26 +173,33 @@ public class TestParSeqBasedCompletionStage
 
   private CompletionStage<String> createTestFailedStage(Throwable t, long milliSeconds)
   {
-    return milliSeconds > 0 ? createStage(delayedFailingTask(t, milliSeconds)): createStageFromThrowable(t);
+    return milliSeconds > 0 ? createStageFromTask(delayedFailingTask(t, milliSeconds)): createStageFromThrowable(t);
     // Uncomment below to Test with CompletableFuture impl
-//    CompletableFuture stage = new CompletableFuture<>();
-//    _executor.execute(() -> {
-//      try {
-//        Thread.sleep(milliSeconds);
-//      } catch (InterruptedException e) {
-//        e.printStackTrace();
-//      }
-//      stage.completeExceptionally(t);
-//    });
-//    return stage;
+//    CompletableFuture<String> returnStage = new CompletableFuture<>();
+//    returnStage.completeExceptionally(t);
+//    return milliSeconds > 0 ? createCompletableFuture(milliSeconds, t): returnStage;
   }
 
-  private ParSeqBasedCompletionStage<String> createStage(String value)
+  private <U> CompletableFuture<U> createCompletableFuture(long milliSeconds, Throwable t)
+  {
+    CompletableFuture stage = new CompletableFuture<>();
+    _executor.execute(() -> {
+      try {
+        Thread.sleep(milliSeconds);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      stage.completeExceptionally(t);
+    });
+    return stage;
+  }
+
+  private ParSeqBasedCompletionStage<String> createStageFromValue(String value)
   {
     return _parSeqBasedCompletionStageFactory.buildStageFromValue(value);
   }
 
-  private ParSeqBasedCompletionStage<String> createStage(Task<String> task)
+  private ParSeqBasedCompletionStage<String> createStageFromTask(Task<String> task)
   {
     return _parSeqBasedCompletionStageFactory.buildStageFromTask(task);
   }
@@ -418,7 +441,7 @@ public class TestParSeqBasedCompletionStage
   public void testThenAccept() throws Exception
   {
     Consumer<String> consumer = mock(Consumer.class);
-    finish(createStage(TESTVALUE1).thenAccept(consumer));
+    finish(createTestStage(TESTVALUE1).thenAccept(consumer));
     verify(consumer, times(1)).accept(TESTVALUE1);
   }
 
@@ -1300,6 +1323,75 @@ public class TestParSeqBasedCompletionStage
     }, _mockExecutor);
     finish(stage);
     assertTrue(waitLatch.await(1000, TimeUnit.MILLISECONDS));
+  }
+
+  private void testWithcomposableApi(CompletionStage stage, List<CountDownLatch> latches) throws Exception {
+    Consumer<String> consumer = mock(Consumer.class);
+    CompletionStage<String> completionStage = createTestStage(TESTVALUE1);
+    if (latches == null)
+    {
+      // synchronization not needed, then wait blockingly
+      finish(completionStage.thenCompose(r -> stage).thenAccept(consumer));
+      verify(consumer, times(1)).accept(TESTVALUE2);
+    }
+    else
+    {
+      new Thread(() ->{
+        try {
+          latches.get(0).countDown();
+          finish(completionStage.thenCompose(r -> stage).thenAccept(consumer));
+          verify(consumer, times(1)).accept(TESTVALUE2);
+          latches.get(1).countDown();
+        } catch (Exception e) {
+          throw new RuntimeException("Not expected");
+        }
+      }).start();
+    }
+  }
+
+  private void testWithUnFinishedStage(CompletionStage stage) throws Exception
+  {
+    testWithcomposableApi(stage, null);
+  }
+
+  private void testWithUnStartedStage(CompletionStage stage, Task task) throws Exception
+  {
+    List<CountDownLatch> latches = new ArrayList<>(Arrays.asList(new CountDownLatch(1), new CountDownLatch(1)));
+    testWithcomposableApi(stage, latches);
+    latches.get(0).await(5000, TimeUnit.MILLISECONDS);
+    _engine.run(task);
+    latches.get(1).await(5000, TimeUnit.MILLISECONDS);
+    verify((ParSeqBasedCompletionStage) stage, times(1)).getTask();
+  }
+
+  // To test the correctness of ParSeqBasedCompletionStage##getOrGenerateTaskFromStage
+  @Test
+  public void testGetTaskOfParSeqBasedCompletionStage() throws Exception {
+    // Control: CompletableFuture with completed value
+    CompletionStage<String> completionStageCompletableFuture = CompletableFuture.completedFuture(TESTVALUE2);
+    testWithUnFinishedStage(completionStageCompletableFuture);
+
+    // treatment: Use a ParSeqBasedCompletionStage with A Task already resolved
+    CompletionStage<String> completionStageParSeq = createTestStage(TESTVALUE2, 0);
+    assert(completionStageParSeq instanceof ParSeqBasedCompletionStage);
+    CompletionStage<String> spyStage = Mockito.spy(completionStageParSeq);
+    testWithUnFinishedStage(spyStage);
+    verify((ParSeqBasedCompletionStage) spyStage, times(1)).getTask();
+
+
+    // treatment: Use a ParSeqBasedCompletionStage with a task has not started
+    Task<String> testTask = Task.value(TESTVALUE2);
+    CompletionStage<String> completionStageParSeq2 = createStageFromTask(testTask);
+    assert(completionStageParSeq2 instanceof ParSeqBasedCompletionStage);
+    CompletionStage<String> spyStage2 = Mockito.spy(completionStageParSeq2);
+    testWithUnStartedStage(spyStage2, testTask);
+
+    // treatment: Use a ParSeqBasedCompletionStage started but will finish later
+    CompletionStage<String> completionStageParSeq3 = createTestStage(TESTVALUE2, 100);
+    assert(completionStageParSeq3 instanceof ParSeqBasedCompletionStage);
+    CompletionStage<String> spyStage3 = Mockito.spy(completionStageParSeq3);
+    testWithUnFinishedStage(spyStage3);
+    verify((ParSeqBasedCompletionStage) spyStage3, times(1)).getTask();
   }
 
   /* ------------- testing multi-stages or Comprehensive tests -------------- */
