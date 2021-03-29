@@ -15,6 +15,7 @@ Copyright (c) 2021 LinkedIn Corp.
 *#
 
 #foreach($method in $spec.actions)
+  #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
   #doc($method.schema.doc)
   // ${method.name}
   // ${method.valueClassName}
@@ -25,68 +26,67 @@ Copyright (c) 2021 LinkedIn Corp.
   #end
   // End of paramters
 
-  ##  four versions: 
-  ##  with varargs
-  ##  with varargs, if(hasReturnEntity) optionslParams
+  ##  two versions: 
   ##  with actionParameters
-  ##  with actionParameters, optionalParameters
-  ## public CompletionStage<${method.valueClassName}> ${method.name}(
-  ##   ## Position 0: if entity action, need the id
-  ##   #if(${method.isEntityAction()})
-  ##   $spec.keyClassName $spec.idName #if(${method.hasParams()}),#end
-  ##   #end
-  ##   ## Position 1-N: params, see
-  ##   #if(${method.hasActionParams()})
-  ##   Function<${method.name}ActionParameters, ${method.name}ActionParameters> paramsProvider
-  ##   #end
-  ## )
-  ## {
-  ##   paramsProvider.apply(new ${method.name}OptionalParameters());
+  ##  with actionParameters
+  @SuppressWarnings("unchecked")
+  public CompletionStage<${method.valueClassName}> ${method.name}Action(
+    #if(${method.isEntityAction()})
+    $spec.keyClassName $spec.idName #if(${method.hasActionParams()}),#end
+    #end
+    #if(${method.hasActionParams()})
+    Function<$actionParamClassName, $actionParamClassName> paramsProvider
+    #end
+  )
+  {
+    RecordDataSchema requestDataSchema =  _resourceSpec.getRequestMetadata("${method.name}").getRecordDataSchema();
+    RecordDataSchema actionResponseDataSchema = _resourceSpec.getActionResponseMetadata("${method.name}").getRecordDataSchema();
+    FieldDef<${method.valueClassName}> responseFieldDef = (FieldDef<${method.valueClassName}>)_resourceSpec.getActionResponseMetadata("${method.name}").getFieldDef(ActionResponse.VALUE_NAME);
 
-  ##   RecordDataSchema requestDataSchema =  _resourceSpec.getRequestMetadata(_name).getRecordDataSchema();
-  ##   RecordDataSchema actionResponseDataSchema = _resourceSpec.getActionResponseMetadata(_name).getRecordDataSchema();
-  ##   FieldDef<V> responseFieldDef = (FieldDef<V>)_resourceSpec.getActionResponseMetadata(_name).getFieldDef(ActionResponse.VALUE_NAME);
+    ActionResponseDecoder<${method.valueClassName}> actionResponseDecoder =
+        new ActionResponseDecoder<${method.valueClassName}>(responseFieldDef, actionResponseDataSchema);
+    DynamicRecordTemplate inputParameters =
+        new DynamicRecordTemplate(requestDataSchema, 
+        #if(${method.hasActionParams()})
+          paramsProvider.apply(new $actionParamClassName()).buildReadOnlyActionParameters());
+        #else
+          Collections.emptyMap());
+        #end
+    inputParameters.data().setReadOnly();
+    ActionRequest<${method.valueClassName}> request = new ActionRequest<${method.valueClassName}>(inputParameters,
+                                Collections.emptyMap(),
+                                Collections.emptyList(),
+                                actionResponseDecoder,
+                                _resourceSpec,
+                                Collections.emptyMap(),
+                                Collections.emptyMap(),
+                                "${method.name}",
+                                ORIGINAL_RESOURCE_PATH,
+                                buildReadOnlyPathKeys(),
+                                RestliRequestOptions.DEFAULT_OPTIONS,
+                                FluentClientUtils.getReadOnlyOrCopyKeyObject(#if(${method.isEntityAction()})$spec.idName#else null#end),
+                                ## TODO: Not supporting streaming attachments now
+                                null
+                                );
 
-  ##   @SuppressWarnings("unchecked")
-  ##   ActionResponseDecoder<V> actionResponseDecoder =
-  ##       new ActionResponseDecoder<V>(responseFieldDef, actionResponseDataSchema);
-  ##   DynamicRecordTemplate inputParameters =
-  ##       new DynamicRecordTemplate(requestDataSchema, buildReadOnlyActionParameters());
-  ##   inputParameters.data().setReadOnly();
-  ##   return new ActionRequest<V>(inputParameters,
-  ##                               Collections.emptyMap(), ##buildReadOnlyHeaders(),
-  ##                               Collections.emptyList(), ##buildReadOnlyCookies(),
-  ##                               actionResponseDecoder,
-  ##                               _resourceSpec,
-  ##                               Collections.emptyMap(), ## buildReadOnlyQueryParameters(), 
-  ##                               TODO, ## TODO: handle projections getQueryParamClasses(),
-  ##                               ${method.actionName} ,## _name,
-  ##                               ORIGINAL_RESOURCE_PATH, ##getBaseUriTemplate(),
-  ##                               buildReadOnlyPathKeys(),
-  ##                               RestliRequestOptions.DEFAULT_OPTIONS,
-  ##                               getReadOnlyOrCopyKeyObject(?null: ),
-  ##                               ## TODO: Streaming attachments
-  ##                               null
-  ##                               );
+    CompletableFuture<${method.valueClassName}> result = new CompletableFuture<>();
+    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
+        responseTry -> {
+          if (responseTry.isFailed()) {
+            result.completeExceptionally(responseTry.getError());
+          } else {
+            Response<${method.valueClassName}> resp = responseTry.get();
+            if (resp.hasError()) {
+              result.completeExceptionally(resp.getError());
+            } else {
+              result.complete(resp.getEntity());
+            }
+          }
+          return Success.of((Void) null);
+        });
+    _engine.run(responseTask);
+    return result;
+  }
 
-  ##   CompletableFuture<${spec.entityClassName}> result = new CompletableFuture<>();
-  ##   Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
-  ##       responseTry -> {
-  ##         if (responseTry.isFailed()) {
-  ##           result.completeExceptionally(responseTry.getError());
-  ##         } else {
-  ##           Response<${spec.entityClassName}> resp = responseTry.get();
-  ##           if (resp.hasError()) {
-  ##             result.completeExceptionally(resp.getError());
-  ##           } else {
-  ##             result.complete(resp.getEntity());
-  ##           }
-  ##         }
-  ##         return Success.of((Void) null);
-  ##       });
-  ##   _engine.run(responseTask);
-  ##   return result;
-  ## }
-
-  ## #actionParamClass($method)
+  #actionParamClass($method)
 #end

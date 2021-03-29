@@ -79,4 +79,10 @@ public class SimpleResourceSpec extends BaseResourceSpec
   {
     return getResource().getSimple().getEntity().getSubresources();
   }
+
+  @Override
+  public List<ActionMethodSpec> getActions()
+  {
+    return getResourceActions();
+  }
 }

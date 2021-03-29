@@ -18,10 +18,13 @@ package com.linkedin.restli.tools.clientgen.fluentspec;
 
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.pegasus.generator.TemplateSpecGenerator;
+import com.linkedin.restli.client.ActionRequest;
+import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.restspec.ResourceSchema;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 
 public class ActionSetResourceSpec extends BaseResourceSpec
@@ -48,4 +51,11 @@ public class ActionSetResourceSpec extends BaseResourceSpec
     }
     return _resourceActions;
   }
+
+  @Override
+  public List<ActionMethodSpec> getActions()
+  {
+    return getResourceActions();
+  }
+
 }

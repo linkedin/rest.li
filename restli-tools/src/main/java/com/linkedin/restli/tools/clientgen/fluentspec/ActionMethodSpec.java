@@ -93,25 +93,14 @@ public class ActionMethodSpec
 
   public Set<ProjectionParameterSpec> getSupportedProjectionParams()
   {
-    if (hasReturnValue()) {
-      return Collections.singleton(
-          new ProjectionParameterSpec(RestConstants.FIELDS_PARAM,
-              FIELDS_MASK_METHOD_NAME, getValueClass()));
-    }
-    else
-    {
-      return Collections.emptySet();
-    }
+    // Projection is not supported in Action sets, see
+    // https://linkedin.github.io/rest.li/How-to-use-projections-in-Java
+    // for details
+    return Collections.emptySet();
   }
 
   public boolean hasReturnValue()
   {
     return getValueClass() != null;
   }
-
-//  public boolean isProjectionApplicable()
-//  {
-//    //TODO
-//    return hasReturnValue() &&
-//  }
 }
