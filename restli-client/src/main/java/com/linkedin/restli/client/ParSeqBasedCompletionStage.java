@@ -571,6 +571,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
    * Note that there is no assumption that generated Task has been started
    * The code which uses this method should consider that
    */
+  @SuppressWarnings({"unchecked"})
   protected <U> Task<U> getOrGenerateTaskFromStage(CompletionStage<? extends U> stage)
   {
     if (stage instanceof ParSeqBasedCompletionStage)
