@@ -1,0 +1,92 @@
+#*
+Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*#
+
+#foreach($method in $spec.actions)
+  #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
+  #doc($method.schema.doc)
+  // ${method.name}
+  // ${method.valueClassName}
+  // ${method.isEntityAction()}
+  // Below is parameters
+  #foreach($param in ${method.parameters})
+    // name: [$param.paramName], paramClassName: [$param.paramClassName]
+  #end
+  // End of paramters
+
+  ##  two versions: 
+  ##  with actionParameters
+  ##  with actionParameters
+  @SuppressWarnings("unchecked")
+  public CompletionStage<${method.valueClassName}> ${method.name}Action(
+    #if(${method.isEntityAction()})
+    $spec.keyClassName $spec.idName #if(${method.hasActionParams()}),#end
+    #end
+    #if(${method.hasActionParams()})
+    Function<$actionParamClassName, $actionParamClassName> paramsProvider
+    #end
+  )
+  {
+    RecordDataSchema requestDataSchema =  _resourceSpec.getRequestMetadata("${method.name}").getRecordDataSchema();
+    RecordDataSchema actionResponseDataSchema = _resourceSpec.getActionResponseMetadata("${method.name}").getRecordDataSchema();
+    FieldDef<${method.valueClassName}> responseFieldDef = (FieldDef<${method.valueClassName}>)_resourceSpec.getActionResponseMetadata("${method.name}").getFieldDef(ActionResponse.VALUE_NAME);
+
+    ActionResponseDecoder<${method.valueClassName}> actionResponseDecoder =
+        new ActionResponseDecoder<${method.valueClassName}>(responseFieldDef, actionResponseDataSchema);
+    DynamicRecordTemplate inputParameters =
+        new DynamicRecordTemplate(requestDataSchema, 
+        #if(${method.hasActionParams()})
+          paramsProvider.apply(new $actionParamClassName()).buildReadOnlyActionParameters());
+        #else
+          Collections.emptyMap());
+        #end
+    inputParameters.data().setReadOnly();
+    ActionRequest<${method.valueClassName}> request = new ActionRequest<${method.valueClassName}>(inputParameters,
+                                Collections.emptyMap(),
+                                Collections.emptyList(),
+                                actionResponseDecoder,
+                                _resourceSpec,
+                                Collections.emptyMap(),
+                                Collections.emptyMap(),
+                                "${method.name}",
+                                ORIGINAL_RESOURCE_PATH,
+                                buildReadOnlyPathKeys(),
+                                RestliRequestOptions.DEFAULT_OPTIONS,
+                                FluentClientUtils.getReadOnlyOrCopyKeyObject(#if(${method.isEntityAction()})$spec.idName#else null#end),
+                                ## TODO: Not supporting streaming attachments now
+                                null
+                                );
+
+    CompletableFuture<${method.valueClassName}> result = new CompletableFuture<>();
+    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
+        responseTry -> {
+          if (responseTry.isFailed()) {
+            result.completeExceptionally(responseTry.getError());
+          } else {
+            Response<${method.valueClassName}> resp = responseTry.get();
+            if (resp.hasError()) {
+              result.completeExceptionally(resp.getError());
+            } else {
+              result.complete(resp.getEntity());
+            }
+          }
+          return Success.of((Void) null);
+        });
+    _engine.run(responseTask);
+    return result;
+  }
+
+  #actionParamClass($method)
+#end

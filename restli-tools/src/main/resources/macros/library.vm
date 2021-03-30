@@ -49,6 +49,34 @@
   #end
 #end
 
+
+#macro(actionParamClass $method)
+  #if($method.hasActionParams())
+    #set($className = "${util.nameCapsCase($method.name)}ActionParameters")
+
+    public static class $className {
+      private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>($method.getParameters().size());
+      #foreach($param in $method.parameters)
+        private $param.paramClassName $param.paramName;
+      #end
+
+      #foreach($param in $method.parameters)
+        #doc($param.schema.doc)
+        public $className set${param.paramNameCaps}($param.paramClassName $param.paramName) {
+          this.$param.paramName = $param.paramName;
+          _actionParams.put(_resourceSpec.getRequestMetadata("${method.name}").getFieldDef("$param.paramName"), $param.paramName);
+          return this;
+        }
+      #end
+
+      public Map<FieldDef<?>, Object> buildReadOnlyActionParameters()
+      {
+        return FluentClientUtils.buildReadOnlyActionParameters(_actionParams);
+      }
+    }
+  #end
+#end
+
 #macro(methodParams $method $includeOptional)
   #set($hasOptionalParams = $includeOptional && ($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0))
   #foreach($param in $method.requiredParams)

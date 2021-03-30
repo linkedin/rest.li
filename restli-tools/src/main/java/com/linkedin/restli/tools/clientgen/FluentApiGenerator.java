@@ -24,6 +24,7 @@ import com.linkedin.pegasus.generator.TemplateSpecGenerator;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
+import com.linkedin.restli.tools.clientgen.fluentspec.ActionSetResourceSpec;
 import com.linkedin.restli.tools.clientgen.fluentspec.AssociationResourceSpec;
 import com.linkedin.restli.tools.clientgen.fluentspec.BaseResourceSpec;
 import com.linkedin.restli.tools.clientgen.fluentspec.CollectionResourceSpec;
@@ -173,9 +174,16 @@ public class FluentApiGenerator
             sourceIdlName,
             schemaResolver);
       }
+      else if (resourceSchema.hasActionsSet())
+      {
+        spec = new ActionSetResourceSpec(resourceSchema,
+            new TemplateSpecGenerator(schemaResolver),
+            sourceIdlName,
+            schemaResolver);
+      }
       else
       {
-        return null;
+        throw new RuntimeException("Encountered schema with unknown type:" + resourceSchema.getName());
       }
       File packageDir = new File(targetDirectory, spec.getNamespace().toLowerCase().replace('.', File.separatorChar));
       packageDir.mkdirs();

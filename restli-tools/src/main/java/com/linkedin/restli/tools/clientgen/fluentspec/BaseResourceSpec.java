@@ -24,8 +24,11 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
+import com.linkedin.data.template.DynamicRecordTemplate;
+import com.linkedin.data.template.FieldDef;
 import com.linkedin.pegasus.generator.TemplateSpecGenerator;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
+import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateIdEntityRequest;
 import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.BatchDeleteRequest;
@@ -42,6 +45,7 @@ import com.linkedin.restli.client.PartialUpdateEntityRequest;
 import com.linkedin.restli.client.PartialUpdateRequest;
 import com.linkedin.restli.client.UpdateRequest;
 import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.BatchCreateIdEntityResponse;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.CollectionRequest;
@@ -59,6 +63,7 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.internal.client.ActionResponseDecoder;
 import com.linkedin.restli.internal.client.BatchCreateIdDecoder;
 import com.linkedin.restli.internal.client.BatchCreateIdEntityDecoder;
 import com.linkedin.restli.internal.client.BatchEntityResponseDecoder;
@@ -202,16 +207,20 @@ public class BaseResourceSpec
     return imports;
   }
 
-  public Set<String> getImportsForRestMethods()
+  public Set<String> getImportsForMethods()
   {
-    if (_imports == null)
-    {
+    if (_imports == null) {
       Set<String> imports = new TreeSet<>();
-      for (RestMethodSpec methodSpec : getRestMethods())
-      {
+      if (getActions().size() > 0) {
+        imports.add(ActionRequest.class.getName());
+        imports.add(ActionResponse.class.getName());
+        imports.add(ActionResponseDecoder.class.getName());
+        imports.add(DynamicRecordTemplate.class.getName());
+        imports.add(FieldDef.class.getName());
+      }
+      for (RestMethodSpec methodSpec : getRestMethods()) {
         ResourceMethod method = ResourceMethod.fromString(methodSpec.getMethod());
-        switch (method)
-        {
+        switch (method) {
           case GET:
             imports.add(GetRequest.class.getName());
             break;
@@ -225,8 +234,7 @@ public class BaseResourceSpec
             imports.add(CreateIdRequest.class.getName());
             imports.add(IdResponse.class.getName());
             imports.add(IdResponseDecoder.class.getName());
-            if (methodSpec.returnsEntity())
-            {
+            if (methodSpec.returnsEntity()) {
               imports.add(CreateIdEntityRequest.class.getName());
               imports.add(IdEntityResponse.class.getName());
               imports.add(IdEntityResponseDecoder.class.getName());
@@ -238,8 +246,7 @@ public class BaseResourceSpec
             imports.add(CreateIdStatus.class.getName());
             imports.add(BatchCreateIdResponse.class.getName());
             imports.add(BatchCreateIdDecoder.class.getName());
-            if (methodSpec.returnsEntity())
-            {
+            if (methodSpec.returnsEntity()) {
               imports.add(BatchCreateIdEntityRequest.class.getName());
               imports.add(CreateIdEntityStatus.class.getName());
               imports.add(BatchCreateIdEntityResponse.class.getName());
@@ -249,8 +256,7 @@ public class BaseResourceSpec
           case PARTIAL_UPDATE:
             imports.add(PatchRequest.class.getName());
             imports.add(PartialUpdateRequest.class.getName());
-            if (methodSpec.returnsEntity())
-            {
+            if (methodSpec.returnsEntity()) {
               imports.add(PartialUpdateEntityRequest.class.getName());
               imports.add(EntityResponseDecoder.class.getName());
             }
@@ -263,8 +269,7 @@ public class BaseResourceSpec
             imports.add(BatchKVResponse.class.getName());
             imports.add(KeyValueRecordFactory.class.getName());
             imports.add(KeyValueRecord.class.getName());
-            if (methodSpec.returnsEntity())
-            {
+            if (methodSpec.returnsEntity()) {
               imports.add(BatchPartialUpdateEntityRequest.class.getName());
               imports.add(UpdateEntityStatus.class.getName());
             }
@@ -333,7 +338,7 @@ public class BaseResourceSpec
     if (_entityClassName == null)
     {
       // Need to initialize by checking all the import chain
-      getImportsForRestMethods();
+      getImportsForMethods();
     }
     return _entityClassName;
   }

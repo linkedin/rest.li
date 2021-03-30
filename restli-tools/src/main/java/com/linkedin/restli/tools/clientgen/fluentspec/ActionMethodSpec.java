@@ -17,22 +17,28 @@
 package com.linkedin.restli.tools.clientgen.fluentspec;
 
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.restspec.ActionSchema;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+
+import static com.linkedin.restli.tools.clientgen.fluentspec.SpecUtils.*;
 
 
 public class ActionMethodSpec
 {
   private final ActionSchema _actionSchema;
-  private final BaseResourceSpec _root;
   private ClassTemplateSpec _valueClass;
+  private final BaseResourceSpec _resourceSpec;
+  private final boolean _isEntityAction; // Entity action will need KeyClass and idName from its resource spec
 
-  public ActionMethodSpec(ActionSchema actionSchema, BaseResourceSpec root)
+  public ActionMethodSpec(ActionSchema actionSchema, BaseResourceSpec resourceSpec, boolean isEntityAction)
   {
     _actionSchema = actionSchema;
-    _root = root;
+    _resourceSpec = resourceSpec;
+    _isEntityAction = isEntityAction;
   }
 
   public String getName()
@@ -47,21 +53,54 @@ public class ActionMethodSpec
       return Collections.emptyList();
     }
     List<ParameterSpec> params = new ArrayList<>(_actionSchema.getParameters().size());
-    _actionSchema.getParameters().forEach(param -> params.add(new ParameterSpec(param, _root)));
+    _actionSchema.getParameters().forEach(param -> params.add(new ParameterSpec(param, _resourceSpec)));
     return params;
+  }
+
+  public boolean hasActionParams()
+  {
+    return (_actionSchema.getParameters() != null && !_actionSchema.getParameters().isEmpty());
   }
 
   public ClassTemplateSpec getValueClass()
   {
     if (_valueClass == null)
     {
-      _valueClass = _root.classToTemplateSpec(_actionSchema.getReturns());
+      _valueClass = _resourceSpec.classToTemplateSpec(_actionSchema.getReturns());
     }
     return _valueClass;
   }
 
   public String getValueClassName()
   {
+    if (getValueClass() == null)
+    {
+      return Void.class.getSimpleName();
+    }
+
     return SpecUtils.getClassName(getValueClass());
+  }
+
+  public boolean isEntityAction()
+  {
+    return _isEntityAction;
+  }
+
+  public BaseResourceSpec getResourceSpec()
+  {
+    return _resourceSpec;
+  }
+
+  public Set<ProjectionParameterSpec> getSupportedProjectionParams()
+  {
+    // Projection is not supported in Action sets, see
+    // https://linkedin.github.io/rest.li/How-to-use-projections-in-Java
+    // for details
+    return Collections.emptySet();
+  }
+
+  public boolean hasReturnValue()
+  {
+    return getValueClass() != null;
   }
 }

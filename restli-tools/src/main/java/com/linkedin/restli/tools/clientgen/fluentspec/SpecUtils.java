@@ -32,6 +32,9 @@ import org.apache.commons.text.StringEscapeUtils;
  * Common utility functions for building fluent apis.
  */
 public class SpecUtils {
+  static final String FIELDS_MASK_METHOD_NAME = "Mask";
+  static final String METADATA_MASK_METHOD_NAME = "MetadataMask";
+
   private SpecUtils()
   {
   }
