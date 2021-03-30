@@ -166,6 +166,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   // Deprecated annotation utils
   //
   private static final String DEPRECATED_KEY = "deprecated";
+  static final String PROJECTION_MASK_CLASSNAME = "ProjectionMask";
 
   private final Map<ClassTemplateSpec, JDefinedClass> _definedClasses = new HashMap<ClassTemplateSpec, JDefinedClass>();
   private final Map<JDefinedClass, ClassTemplateSpec> _generatedClasses = new HashMap<JDefinedClass, ClassTemplateSpec>();
@@ -919,7 +920,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     if (hasNestedFields(field.getSchemaField().getType()))
     {
       final JClass fieldType = generate(field.getType());
-      JClass nestedMaskType = getCodeModel().ref(fieldType.fullName() + ".ProjectionMask");
+      JClass nestedMaskType = getCodeModel().ref(fieldType.fullName() + "." + PROJECTION_MASK_CLASSNAME);
       String fieldName = escapeReserved(field.getSchemaField().getName());
       String maskFieldName = "_" + fieldName + "Mask";
       JInvocation getDataMap = JExpr.invoke("getDataMap");
@@ -1450,7 +1451,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
         // }
         if (hasProjectionMaskApi(memberType, member.getClassTemplateSpec()))
         {
-          JClass nestedMaskType = getCodeModel().ref(memberType.fullName() + ".ProjectionMask");
+          JClass nestedMaskType = getCodeModel().ref(memberType.fullName() + "." + PROJECTION_MASK_CLASSNAME);
           final JMethod withMemberTypesafeMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(methodName)));
 
           String maskFieldName = "_" + CodeUtil.capitalize(escapeReserved(methodName)) + "Mask";
@@ -1609,7 +1610,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       {
         final JMethod withFieldTypesafeMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(wildcardMethodName));
 
-        JClass nestedMaskType = getCodeModel().ref(childClass.fullName() + ".ProjectionMask");
+        JClass nestedMaskType = getCodeModel().ref(childClass.fullName() + "." + PROJECTION_MASK_CLASSNAME);
         JFieldVar maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, "_" + wildcardMethodName + "Mask");
 
         JVar nestedMask = withFieldTypesafeMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType), "nestedMask");
@@ -1667,7 +1668,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   private JDefinedClass generateProjectionMaskNestedClass(JDefinedClass templateClass, int fieldCount)
       throws JClassAlreadyExistsException
   {
-    final JDefinedClass projectionMaskNestedClass = templateClass._class(JMod.PUBLIC | JMod.STATIC, "ProjectionMask");
+    final JDefinedClass projectionMaskNestedClass = templateClass._class(JMod.PUBLIC | JMod.STATIC, PROJECTION_MASK_CLASSNAME);
     projectionMaskNestedClass._extends(_maskMapClass);
     JMethod constructor = projectionMaskNestedClass.constructor(JMod.NONE);
     if (DataMapBuilder.getOptimumHashMapCapacityFromSize(fieldCount) < DEFAULT_DATAMAP_INITIAL_CAPACITY)

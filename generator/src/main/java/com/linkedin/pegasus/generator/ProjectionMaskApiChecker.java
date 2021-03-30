@@ -43,7 +43,8 @@ public class ProjectionMaskApiChecker
       try
       {
         final Class<?> clazz = _classLoader.loadClass(jClass.fullName());
-        return Arrays.stream(clazz.getClasses()).anyMatch(c -> c.getSimpleName().equals("ProjectionMask"));
+        return Arrays.stream(clazz.getClasses()).anyMatch(
+            c -> c.getSimpleName().equals(JavaDataTemplateGenerator.PROJECTION_MASK_CLASSNAME));
       }
       catch (ClassNotFoundException e)
       {
