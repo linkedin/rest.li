@@ -31,9 +31,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -1325,7 +1323,8 @@ public class TestParSeqBasedCompletionStage
     assertTrue(waitLatch.await(1000, TimeUnit.MILLISECONDS));
   }
 
-  private void testWithcomposableApi(CompletionStage stage, List<CountDownLatch> latches) throws Exception {
+  private void testWithComposableApi(CompletionStage stage, List<CountDownLatch> latches) throws Exception
+  {
     Consumer<String> consumer = mock(Consumer.class);
     CompletionStage<String> completionStage = createTestStage(TESTVALUE1);
     if (latches == null)
@@ -1336,13 +1335,16 @@ public class TestParSeqBasedCompletionStage
     }
     else
     {
-      new Thread(() ->{
-        try {
+      new Thread(() -> {
+        try
+        {
           latches.get(0).countDown();
           finish(completionStage.thenCompose(r -> stage).thenAccept(consumer));
           verify(consumer, times(1)).accept(TESTVALUE2);
           latches.get(1).countDown();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
           throw new RuntimeException("Not expected");
         }
       }).start();
@@ -1351,13 +1353,13 @@ public class TestParSeqBasedCompletionStage
 
   private void testWithUnFinishedStage(CompletionStage stage) throws Exception
   {
-    testWithcomposableApi(stage, null);
+    testWithComposableApi(stage, null);
   }
 
   private void testWithUnStartedStage(CompletionStage stage, Task task) throws Exception
   {
     List<CountDownLatch> latches = new ArrayList<>(Arrays.asList(new CountDownLatch(1), new CountDownLatch(1)));
-    testWithcomposableApi(stage, latches);
+    testWithComposableApi(stage, latches);
     latches.get(0).await(5000, TimeUnit.MILLISECONDS);
     _engine.run(task);
     latches.get(1).await(5000, TimeUnit.MILLISECONDS);
