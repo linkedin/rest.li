@@ -19,6 +19,7 @@ package com.linkedin.restli.tools.clientgen.fluentspec;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ParameterSchema;
+import org.apache.commons.lang.ClassUtils;
 
 
 public class ParameterSpec
@@ -26,6 +27,9 @@ public class ParameterSpec
   private final ParameterSchema _parameterSchema;
   private final BaseResourceSpec _root;
   private ClassTemplateSpec _classTemplateSpec;
+  // a boolean flag to turn on whether show className as short name
+  // Note: need to explicitly turn this flag on during imports checking
+  private Boolean _usingShortClassName;
 
   public ParameterSpec(ParameterSchema parameterSchema, BaseResourceSpec root)
   {
@@ -61,4 +65,30 @@ public class ParameterSpec
   {
     return SpecUtils.getClassName(getParamClass());
   }
+
+  public String getParamClassDisplayName()
+  {
+    if (_usingShortClassName == null)
+    {
+      // It seems the Marco sometimes resolves earlier than the the template
+      // Unfortunately need to check the conflicts again here to figure out the correct display name,
+      // even though BaseResourceSpec already did so during import resolution
+      _usingShortClassName = !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_root.getImportCheckConflict(),
+                              ClassUtils.getShortClassName(getParamClassName()),
+                                                           getParamClassName());
+    }
+    return _usingShortClassName ? ClassUtils.getShortClassName(getParamClassName()):
+        getParamClassName();
+  }
+
+  public boolean isUsingShortClassName()
+  {
+    return _usingShortClassName;
+  }
+
+  public void setUsingShortClassName(boolean useShortName)
+  {
+    this._usingShortClassName = useShortName;
+  }
+
 }

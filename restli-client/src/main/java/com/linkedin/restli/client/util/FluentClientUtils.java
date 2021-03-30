@@ -1,12 +1,17 @@
 package com.linkedin.restli.client.util;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.restli.client.AbstractRequestBuilder;
+import com.linkedin.restli.client.ActionRequestBuilder;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.KeyValueRecord;
 import com.linkedin.restli.common.KeyValueRecordFactory;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.omg.SendingContext.RunTime;
 
 
 /**
@@ -60,5 +65,23 @@ public class FluentClientUtils {
       input.getElements().add(entity);
     }
     return input;
+  }
+
+  public static Map<FieldDef<?>, Object> buildReadOnlyActionParameters(Map<FieldDef<?>, Object> actionParams)
+  {
+    return ActionRequestBuilder.buildReadOnlyActionParameters(actionParams);
+  }
+
+  static public <Key> Key getReadOnlyOrCopyKeyObject(Key key)
+  {
+    try
+    {
+      return AbstractRequestBuilder.getReadOnlyOrCopyKeyObject(key);
+    }
+    catch (CloneNotSupportedException e)
+    {
+      throw new RuntimeException("Error getting Key Object", e);
+    }
+
   }
 }

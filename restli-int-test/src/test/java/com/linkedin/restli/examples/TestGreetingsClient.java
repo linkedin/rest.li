@@ -338,6 +338,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
             .setActionParam("DelOld", false)
             .build();
     ResponseFuture<Greeting> responseFuture = getClient().sendRequest(request);
+//    Response resp = responseFuture.getResponse();
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
     final Greeting newGreeting = responseFuture.getResponse().getEntity();
     Assert.assertNotNull(newGreeting);

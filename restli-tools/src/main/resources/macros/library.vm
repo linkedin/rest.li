@@ -13,6 +13,11 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
+## #macro(importClasses $spec)
+## #foreach($import in $spec.importsForMethods)
+## import ${import};
+## #end
+## #end
 
 #macro(doc $doc)
   #if($doc)
@@ -30,9 +35,9 @@
 
     public static class $className {
       #foreach($param in $method.optionalParams)
-        private $param.paramClassName $param.paramName;
+        private $param.paramClassDisplayName $param.paramName;
         #doc($param.schema.doc)
-        public $className set${param.paramNameCaps}($param.paramClassName $param.paramName) {
+        public $className set${param.paramNameCaps}($param.paramClassDisplayName $param.paramName) {
           this.$param.paramName = $param.paramName;
           return this;
         }
@@ -40,8 +45,8 @@
       #foreach($param in $method.supportedProjectionParams)
         private MaskMap $param.paramName;
         public $className with${param.methodName}(
-            Function<${param.paramClassName}.ProjectionMask, ${param.paramClassName}.ProjectionMask> ${param.paramName}Handler) {
-          this.$param.paramName = ${param.paramName}Handler.apply(${param.paramClassName}.createMask());
+            Function<${param.paramClassDisplayName}.ProjectionMask, ${param.paramClassDisplayName}.ProjectionMask> ${param.paramName}Handler) {
+          this.$param.paramName = ${param.paramName}Handler.apply(${param.paramClassDisplayName}.createMask());
           return this;
         }
       #end
@@ -49,10 +54,38 @@
   #end
 #end
 
+
+#macro(actionParamClass $method)
+  #if($method.hasActionParams())
+    #set($className = "${util.nameCapsCase($method.name)}ActionParameters")
+
+    public static class $className {
+      private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>($method.getParameters().size());
+      #foreach($param in $method.parameters)
+        private $param.paramClassDisplayName $param.paramName;
+      #end
+
+      #foreach($param in $method.parameters)
+        #doc($param.schema.doc)
+        public $className set${param.paramNameCaps}($param.paramClassDisplayName $param.paramName) {
+          this.$param.paramName = $param.paramName;
+          _actionParams.put(_resourceSpec.getRequestMetadata("${method.name}").getFieldDef("$param.paramName"), $param.paramName);
+          return this;
+        }
+      #end
+
+      public Map<FieldDef<?>, Object> buildParametersMap()
+      {
+        return FluentClientUtils.buildReadOnlyActionParameters(_actionParams);
+      }
+    }
+  #end
+#end
+
 #macro(methodParams $method $includeOptional)
   #set($hasOptionalParams = $includeOptional && ($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0))
   #foreach($param in $method.requiredParams)
-    $param.paramClassName $param.paramName#if( $foreach.hasNext || $hasOptionalParams),#end
+    $param.paramClassDisplayName $param.paramName#if( $foreach.hasNext || $hasOptionalParams),#end
   #end
   #if($hasOptionalParams)
     Function<${util.restMethodToClassPrefix($method.method)}OptionalParameters, ${util.restMethodToClassPrefix($method.method)}OptionalParameters> optionalParamsProvider

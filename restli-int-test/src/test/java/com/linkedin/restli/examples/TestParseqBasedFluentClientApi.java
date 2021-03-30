@@ -851,6 +851,49 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     Assert.assertEquals(response.getMinor(), "bANDd");
   }
 
+  // ----- Tests with actions ------
+  @Test public void testCollectionEntityActionWithReturn() throws Exception
+  {
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greeting newGreeting;
+    newGreeting =  greetings.actionUpdateTone(1L, Tone.SINCERE, false).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertNotNull(newGreeting);
+    Assert.assertEquals(newGreeting.getId().longValue(), 1L);
+    Assert.assertEquals(newGreeting.getTone(), Tone.SINCERE);
+
+    newGreeting =  greetings.actionUpdateTone(1L, param -> param.setNewTone(Tone.INSULTING)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertNotNull(newGreeting);
+    Assert.assertEquals(newGreeting.getId().longValue(), 1L);
+    Assert.assertEquals(newGreeting.getTone(), Tone.INSULTING);
+  }
+
+  @Test public void testCollectionEntityActionWithNoReturn() throws Exception
+  {
+    // TestGroupsResource
+
+  }
+
+  @Test public void testCollectionActionWithReturn() throws Exception
+  {
+
+  }
+
+  @Test public void testCollectionActionWithNoReturn() throws Exception
+  {
+
+  }
+
+  @Test public void testActionSetActionWithReturn() throws Exception
+  {
+
+  }
+
+  @Test public void testActionSetActionWithNoReturn() throws Exception
+  {
+
+  }
+
+
   // ----- utils used for testing ------
 
   private Greeting getGreeting()
