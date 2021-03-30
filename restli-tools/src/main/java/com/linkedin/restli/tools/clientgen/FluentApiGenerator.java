@@ -117,9 +117,9 @@ public class FluentApiGenerator
 
       FluentApiGenerator.run(resolverPath, cl.getOptionValue('r'), targetDirectory, sources);
     }
-    catch (ParseException e)
+    catch (ParseException | IOException e)
     {
-      LOGGER.error("Invalid arguments: " + e.getMessage());
+      LOGGER.error("Encountered error while generating Fluent clients: " + e.getMessage());
       help();
       System.exit(1);
     }
@@ -191,9 +191,9 @@ public class FluentApiGenerator
       List<BaseResourceSpec> childrenList = new LinkedList<>();
       if (spec.getSubResources() != null)
       {
+        parentList.add(spec);
         for (ResourceSchema sub : spec.getSubResources())
         {
-          parentList.add(spec);
           BaseResourceSpec childSpec = generateFluentClientByResource(sub,
               schemaResolver,
               velocityEngine,
@@ -205,8 +205,8 @@ public class FluentApiGenerator
           {
             childrenList.add(childSpec);
           }
-          parentList.remove(parentList.size() - 1);
         }
+        parentList.remove(parentList.size() - 1);
       }
 
       spec.setChildSubResourceSpecs(childrenList);

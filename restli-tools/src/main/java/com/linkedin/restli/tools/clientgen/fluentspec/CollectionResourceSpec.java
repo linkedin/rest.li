@@ -120,12 +120,12 @@ public class CollectionResourceSpec extends BaseResourceSpec
     if (hasComplexKey())
     {
       imports.add(ComplexResourceKey.class.getName());
-      if(!SpecUtils.checkIfShortNameConflictWithImports(_importCheckConflict,
+      if(!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
           ClassUtils.getShortClassName(_complexKeySpec.getKeyKeyClassName()), _complexKeySpec.getKeyKeyClassName()))
       {
         imports.add(_complexKeySpec.getKeyKeyClassName());
       }
-      if(!SpecUtils.checkIfShortNameConflictWithImports(_importCheckConflict,
+      if(!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
           ClassUtils.getShortClassName(_complexKeySpec.getParamKeyClassName()), _complexKeySpec.getParamKeyClassName()))
       {
         imports.add(_complexKeySpec.getParamKeyClassName());
