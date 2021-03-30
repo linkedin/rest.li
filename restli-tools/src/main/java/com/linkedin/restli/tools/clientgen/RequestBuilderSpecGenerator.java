@@ -403,7 +403,7 @@ public class RequestBuilderSpecGenerator
     }
   }
 
-  private static List<String> getPathKeys(String basePath)
+  static List<String> getPathKeys(String basePath)
   {
     UriTemplate template = new UriTemplate(basePath);
     return fixOldStylePathKeys(template.getTemplateVariables(), basePath, new HashMap<String, List<String>>());

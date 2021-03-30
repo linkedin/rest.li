@@ -23,7 +23,9 @@ import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.restspec.AssocKeySchema;
 import com.linkedin.restli.restspec.ResourceSchema;
+import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestMethodSchema;
+import com.linkedin.restli.restspec.RestMethodSchemaArray;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,6 +65,12 @@ public class AssociationResourceSpec extends BaseResourceSpec
   @Override
   public List<RestMethodSpec> getRestMethods()
   {
+    RestMethodSchemaArray methodSchemaArray = getResource().getAssociation().getMethods();
+    if (methodSchemaArray == null)
+    {
+      return Collections.emptyList();
+    }
+
     List<RestMethodSpec> methods = new ArrayList<>(getResource().getAssociation().getMethods().size());
     for (RestMethodSchema methodSchema : getResource().getAssociation().getMethods())
     {
@@ -103,6 +111,7 @@ public class AssociationResourceSpec extends BaseResourceSpec
   @Override
   public Set<String> getResourceSpecificImports(Set<String> imports)
   {
+    imports = super.getResourceSpecificImports(imports);
     imports.add(CompoundKey.class.getName());
     imports.addAll(assockeyTypeImports);
     return imports;
@@ -129,4 +138,9 @@ public class AssociationResourceSpec extends BaseResourceSpec
     return getShortClassName(fullType);
   }
 
+  @Override
+  public ResourceSchemaArray getSubResources()
+  {
+    return getResource().getAssociation().getEntity().getSubresources();
+  }
 }

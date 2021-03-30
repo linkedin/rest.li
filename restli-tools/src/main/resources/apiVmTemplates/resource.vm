@@ -29,6 +29,7 @@ import com.linkedin.restli.client.ParSeqRestliClient;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.util.FluentClientUtils;
+import com.linkedin.restli.client.AbstractRequestBuilder;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
@@ -36,12 +37,6 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
 #foreach($import in $spec.importsForRestMethods)
   import ${import};
-#end
-#if(!${spec.isResourceNameConflictWithEntityClass()})
-import ${spec.entityClass.fullName};
-#end
-#if(${spec.getResource().hasAssociation()})
-import com.linkedin.restli.common.CompoundKey;
 #end
 
 import java.util.ArrayList;
@@ -58,9 +53,12 @@ import java.util.function.Function;
 import javax.annotation.Generated;
 
 @Generated("Generated from $spec.sourceIdlName")
-public class ${spec.className}${class_name_suffix}{
+public class ${spec.className}${class_name_suffix} implements ${spec.toImplementInterfaceName} {
   private final static String ORIGINAL_RESOURCE_PATH = "$util.getResourcePath($spec.resource.path)";
   private static ResourceSpec _resourceSpec;
+  #if(${spec.getPathKeys().size()} > 0)
+  private Map<String, Object> _pathKeyMap = new HashMap<>();
+  #end
 
   static {
     HashMap<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
@@ -109,7 +107,7 @@ public class ${spec.className}${class_name_suffix}{
         #end
         requestMetadataMap,
         responseMetadataMap,
-        ${spec.keyClassName}.class,
+        ${spec.getKeyClassName(false)}.class,
         null,
         null,
         ${spec.entityClassName}.class,
@@ -148,11 +146,46 @@ public class ${spec.className}${class_name_suffix}{
     _client = client;
     _engine = engine;
   }
+
+  ## Merge another pathKeyMap
+  #if(${spec.getPathKeys().size()}> 0)
+  public ${spec.className}${class_name_suffix} pathKeys(Map<String, Object> pathKeyMap)
+  {
+    _pathKeyMap.putAll(pathKeyMap);
+    return this;
+  }
+  #end
+
+  ## PathKey binding method
+  #foreach($pathKey in ${spec.getPathKeys()})
+  public ${spec.className}${class_name_suffix} with${util.nameCapsCase(${pathKey})}(${spec.getPathKeyTypes().get($pathKey)} $pathKey)
+  {
+    _pathKeyMap.put("$pathKey", $pathKey);
+    return this;
+  }
+  #end
+
+  ## generate impl class for subResources
+  #foreach($subSpec in $spec.childSubResourceSpecs)
+  @Override
+  public #if(${subSpec.namespace.equals($subSpec.parentNamespace)})${subSpec.className}#else${subSpec.bindingName}#end ${util.nameCamelCase($subSpec.className)}Of(#if(${subSpec.diffPathKey})${subSpec.parent.keyClassName} ${subSpec.diffPathKey}#end)
+  {
+    return new #if(${subSpec.namespace.equals($subSpec.parentNamespace)})${subSpec.className}#else${subSpec.bindingName}#end${class_name_suffix}(_client, _engine)#if(${spec.getPathKeys().size()} > 0).pathKeys(_pathKeyMap)#end
+               #if(${subSpec.diffPathKey})
+               .with${util.nameCapsCase(${subSpec.diffPathKey})}(${subSpec.diffPathKey});
+               #else
+               ;
+               #end
+  }
+  #end
+
   // CRUD methods
   #foreach($method in $spec.restMethods)
     #parse("apiVmTemplates/rest.${method.method}.vm")
   #end
 
+
+  ## Add association key generation stub
   #if(${spec.getResource().hasAssociation()})
   // TODO: CompoundKey may eventually need to be exposed to the resource interface
     public static class Key
@@ -172,5 +205,17 @@ public class ${spec.className}${class_name_suffix}{
         }
         #end
     }
+  #end
+
+  #if(${spec.getPathKeys().size()} > 0)
+  protected Map<String, Object> buildReadOnlyPathKeys()
+  {
+    return AbstractRequestBuilder.getReadOnlyPathKeys(_pathKeyMap);
+  }
+  #else
+  protected Map<String, Object> buildReadOnlyPathKeys()
+  {
+    return Collections.emptyMap();
+  }
   #end
 }
