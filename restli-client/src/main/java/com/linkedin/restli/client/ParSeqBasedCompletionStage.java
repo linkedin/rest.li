@@ -200,7 +200,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   {
     return nextStageByComposingTask(_task.flatMap("thenCompose", t ->
         // Note: Need to wrap here since it is dependent of the returned composedTask
-        wrapException(Task.fromCompletionStage(() -> fn.apply(t)))));
+        wrapException(getOrGenerateTaskFromStage(fn.apply(t)))));
   }
 
   @Override
@@ -233,7 +233,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   public <U, V> ParSeqBasedCompletionStage<V> thenCombine(CompletionStage<? extends U> other,
       BiFunction<? super T, ? super U, ? extends V> fn)
   {
-    Task<U> that = Task.fromCompletionStage(() -> other);
+    Task<U> that = getOrGenerateTaskFromStage(other);
     return nextStageByComposingTask(Task.par(_task, that).map("thenCombine", fn::apply));
   }
 
@@ -241,7 +241,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   public <U, V> ParSeqBasedCompletionStage<V> thenCombineAsync(CompletionStage<? extends U> other,
       BiFunction<? super T, ? super U, ? extends V> fn, Executor executor)
   {
-    Task<U> that = Task.fromCompletionStage(() -> other);
+    Task<U> that = getOrGenerateTaskFromStage(other);
     return nextStageByComposingTask(
         Task.par(_task, that).flatMap("thenCombineAsync", (t, u) -> Task.blocking(() -> fn.apply(t, u), executor)));
   }
@@ -257,7 +257,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   public <U> ParSeqBasedCompletionStage<Void> thenAcceptBoth(CompletionStage<? extends U> other,
       BiConsumer<? super T, ? super U> action)
   {
-    Task<U> that = Task.fromCompletionStage(() -> other);
+    Task<U> that = getOrGenerateTaskFromStage(other);
     return nextStageByComposingTask(
         Task.par(_task, that).flatMap("thenAcceptBoth", (t, u) -> Task.action(() -> action.accept(t, u))));
   }
@@ -270,7 +270,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   public <U> ParSeqBasedCompletionStage<Void> thenAcceptBothAsync(CompletionStage<? extends U> other,
       BiConsumer<? super T, ? super U> action, Executor executor)
   {
-    Task<U> that = Task.fromCompletionStage(() -> other);
+    Task<U> that = getOrGenerateTaskFromStage(other);
     return nextStageByComposingTask(Task.par(_task, that).flatMap("thenAcceptBothAsync", (t, u) -> Task.blocking(() -> {
       action.accept(t, u);
       return null;
@@ -291,7 +291,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   @Override
   public ParSeqBasedCompletionStage<Void> runAfterBoth(CompletionStage<?> other, Runnable action)
   {
-    Task<?> that = Task.fromCompletionStage(() -> other);
+    Task<?> that = getOrGenerateTaskFromStage(other);
     return nextStageByComposingTask(Task.par(_task, that).flatMap("runAfterBoth", t -> Task.action(action::run)));
   }
 
@@ -299,7 +299,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   public ParSeqBasedCompletionStage<Void> runAfterBothAsync(CompletionStage<?> other, Runnable action,
       Executor executor)
   {
-    Task<?> that = Task.fromCompletionStage(() -> other);
+    Task<?> that = getOrGenerateTaskFromStage(other);
     return nextStageByComposingTask(Task.par(_task, that).flatMap("thenAcceptBothAsync", (t, u) -> Task.blocking(() -> {
       action.run();
       return null;
@@ -325,7 +325,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   private <U> ParSeqBasedCompletionStage<U> produceEitherStage(String taskName, CompletionStage<? extends T> other,
       Function<? super T, U> fn)
   {
-    Task<T> that = Task.fromCompletionStage(() -> other);
+    Task<T> that = getOrGenerateTaskFromStage(other);
     // TODO: Synchronization is now needed since we cannot enforce a happen-before relation.
     //       This can be optimized once ensureFuture() switch to use ParSeq's scheduleToRun() implementation,
     //       so that both completionStage' tasks will be added to the same plan. In the same plan, tasks are executed
@@ -357,7 +357,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
   private <U> ParSeqBasedCompletionStage<U> produceEitherStageAsync(String taskName, CompletionStage<? extends T> other,
       Function<? super T, U> fn, Executor executor)
   {
-    Task<T> that = Task.fromCompletionStage(() -> other);
+    Task<T> that = getOrGenerateTaskFromStage(other);
     final AtomicBoolean[] sync = {new AtomicBoolean(false)};
     return nextStageByComposingTask(Task.async(taskName, () -> {
       final SettablePromise<U> result = Promises.settable();
@@ -561,10 +561,27 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
     return _task.toCompletionStage().toCompletableFuture();
   }
 
-  /* ------------- For testing -------------- */
-
-  Task<T> getTask()
+  protected Task<T> getTask()
   {
     return _task;
   }
+
+  /**
+   * Special treatment to ParSeqBasedCompletionStage
+   * Note that there is no assumption that generated Task has been started
+   * The code which uses this method should consider that
+   */
+  @SuppressWarnings({"unchecked"})
+  protected <U> Task<U> getOrGenerateTaskFromStage(CompletionStage<? extends U> stage)
+  {
+    if (stage instanceof ParSeqBasedCompletionStage)
+    {
+      return ((ParSeqBasedCompletionStage) stage).getTask();
+    }
+    else
+    {
+      return Task.fromCompletionStage(() -> stage);
+    }
+  }
+
 }
