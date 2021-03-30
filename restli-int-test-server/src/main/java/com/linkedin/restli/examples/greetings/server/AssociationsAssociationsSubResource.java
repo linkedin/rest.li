@@ -36,7 +36,7 @@ import java.util.List;
  */
 @RestLiCollection(
     parent = AssociationsAssociationsResource.class,
-    name = "AssociationsAssociationsSub",
+    name = "associationsAssociationsSub",
     namespace = "com.linkedin.restli.examples.greetings.client",
     keyName = "subKey"
 )

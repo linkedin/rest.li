@@ -39,7 +39,7 @@ import com.linkedin.restli.examples.greetings.api.TwoPartKey;
 import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubFluentClient;
-import com.linkedin.restli.examples.greetings.client.AssociationsassociationsFluentClient;
+import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.CreateGreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.GreetingFluentClient;
@@ -817,12 +817,12 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     String subKey = "subKey";
     CompoundKey key1 = new AssociationsFluentClient.Key().setSrc(src).setDest(dest);
     CompoundKey key2 =
-        new AssociationsassociationsFluentClient.Key()
+        new AssociationsAssociationsFluentClient.Key()
             .setAnotherSrc(anotherSrc)
             .setAnotherDest(anotherDest);
     AssociationsAssociationsSubFluentClient subFluentClient = new AssociationsAssociationsSubFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Message response = subFluentClient.withAssociationsId(key1)
-        .withAssociationsassociationsId(key2)
+        .withAssociationsAssociationsId(key2)
         .get(subKey)
         .toCompletableFuture()
         .get(5000, TimeUnit.MILLISECONDS);
