@@ -79,6 +79,10 @@ public class TestProjectionMaskApiChecker {
     Assert.assertFalse(projectionMaskApiChecker.hasProjectionMaskApi(_nestedType, _templateSpec));
     Mockito.verify(_nestedType, Mockito.times(1)).fullName();
     Mockito.verify(_nestedTypeSource, Mockito.never()).getAbsolutePath();
+
+    // Check caching
+    Assert.assertFalse(projectionMaskApiChecker.hasProjectionMaskApi(_nestedType, _templateSpec));
+    Mockito.verifyNoMoreInteractions(_nestedType);
   }
 
   @Test
@@ -92,6 +96,10 @@ public class TestProjectionMaskApiChecker {
     Assert.assertTrue(projectionMaskApiChecker.hasProjectionMaskApi(_nestedType, _templateSpec));
     Mockito.verify(_nestedType, Mockito.times(1)).fullName();
     Mockito.verify(_nestedTypeSource, Mockito.never()).getAbsolutePath();
+
+    // Check caching
+    Assert.assertTrue(projectionMaskApiChecker.hasProjectionMaskApi(_nestedType, _templateSpec));
+    Mockito.verifyNoMoreInteractions(_nestedType);
   }
 
   @Test
@@ -108,6 +116,10 @@ public class TestProjectionMaskApiChecker {
     Mockito.verify(_mockClassLoader, Mockito.times(1)).loadClass(Mockito.anyString());
     Mockito.verify(_nestedType, Mockito.times(1)).fullName();
     Mockito.verify(_nestedTypeSource, Mockito.times(1)).getAbsolutePath();
+
+    // Check caching
+    Assert.assertTrue(projectionMaskApiChecker.hasProjectionMaskApi(_nestedType, _templateSpec));
+    Mockito.verifyNoMoreInteractions(_mockClassLoader);
   }
 
   @Test
@@ -124,6 +136,10 @@ public class TestProjectionMaskApiChecker {
     Mockito.verify(_mockClassLoader, Mockito.times(1)).loadClass(Mockito.anyString());
     Mockito.verify(_nestedType, Mockito.times(1)).fullName();
     Mockito.verify(_nestedTypeSource, Mockito.times(1)).getAbsolutePath();
+
+    // Check caching
+    Assert.assertFalse(projectionMaskApiChecker.hasProjectionMaskApi(_nestedType, _templateSpec));
+    Mockito.verifyNoMoreInteractions(_mockClassLoader);
   }
 
   private static class FakeRecord extends RecordTemplate

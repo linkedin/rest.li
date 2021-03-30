@@ -5,6 +5,8 @@ import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.sun.codemodel.JClass;
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,6 +19,7 @@ public class ProjectionMaskApiChecker
   private final TemplateSpecGenerator _specGenerator;
   private final Set<String> _sourceFiles;
   private final ClassLoader _classLoader;
+  private final Map<JClass, Boolean> _hasProjectionMaskCache = new HashMap<>();
 
   ProjectionMaskApiChecker(TemplateSpecGenerator specGenerator,
       Set<File> sourceFiles, ClassLoader classLoader)
@@ -35,16 +38,19 @@ public class ProjectionMaskApiChecker
    */
   boolean hasProjectionMaskApi(JClass definedClass, ClassTemplateSpec templateSpec)
   {
-    try
+    return _hasProjectionMaskCache.computeIfAbsent(definedClass, (jClass) ->
     {
-      final Class<?> clazz = _classLoader.loadClass(definedClass.fullName());
-      return Arrays.stream(clazz.getClasses()).anyMatch(c -> c.getSimpleName().equals("ProjectionMask"));
-    }
-    catch (ClassNotFoundException e)
-    {
-      // Ignore, and check if the class will be generated from a source PDL
-    }
-    return isGeneratedFromSource(templateSpec);
+      try
+      {
+        final Class<?> clazz = _classLoader.loadClass(jClass.fullName());
+        return Arrays.stream(clazz.getClasses()).anyMatch(c -> c.getSimpleName().equals("ProjectionMask"));
+      }
+      catch (ClassNotFoundException e)
+      {
+        // Ignore, and check if the class will be generated from a source PDL
+      }
+      return isGeneratedFromSource(templateSpec);
+    });
   }
 
   /**
