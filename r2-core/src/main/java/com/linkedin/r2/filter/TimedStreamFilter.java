@@ -34,12 +34,13 @@ import static com.linkedin.r2.filter.TimedRestFilter.ON_RESPONSE_SUFFIX;
  *
  * @author Xialin Zhu
  */
-/* package private */ class TimedStreamFilter implements StreamFilter
+public class TimedStreamFilter implements StreamFilter
 {
   private final StreamFilter _streamFilter;
   private final TimingKey _onRequestTimingKey;
   private final TimingKey _onResponseTimingKey;
   private final TimingKey _onErrorTimingKey;
+  private boolean _shared;
 
   /**
    * Registers {@link TimingKey}s for {@link com.linkedin.r2.message.timing.TimingNameConstants#TIMED_STREAM_FILTER}.
@@ -60,6 +61,7 @@ import static com.linkedin.r2.filter.TimedRestFilter.ON_RESPONSE_SUFFIX;
         filterClassName, TimingImportance.LOW);
     _onErrorTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_ERROR_SUFFIX + timingKeyPostfix,
         filterClassName, TimingImportance.LOW);
+    _shared = false;
   }
 
   @Override
@@ -90,5 +92,17 @@ import static com.linkedin.r2.filter.TimedRestFilter.ON_RESPONSE_SUFFIX;
   {
     TimingContextUtil.markTiming(requestContext, _onErrorTimingKey);
     _streamFilter.onStreamError(ex, requestContext, wireAttrs, new TimedNextFilter<>(_onErrorTimingKey, nextFilter));
+  }
+
+  public void setShared() {
+    _shared = true;
+  }
+
+  public void onShutdown() {
+    if (!_shared) {
+      TimingKey.unregisterKey(_onErrorTimingKey);
+      TimingKey.unregisterKey(_onRequestTimingKey);
+      TimingKey.unregisterKey(_onResponseTimingKey);
+    }
   }
 }

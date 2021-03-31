@@ -16,6 +16,7 @@ and what APIs have changed, if applicable.
 - Strictly enforce Gradle version compatibility in the `pegasus` Gradle plugin.
   - Minimum required Gradle version is now `1.0` (effectively backward-compatible).
   - Minimum suggested Gradle version is now `5.2.1`
+- Fix TimingKey Memory Leak
 
 ## [29.18.2] - 2021-04-28
 - Fix bug in generated fluent client APIs when typerefs are used as association key params

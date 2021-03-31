@@ -157,6 +157,7 @@ public class DynamicClient extends AbstractClient implements D2Client
 
       callback.onSuccess(None.none());
     });
+    TimingKey.unregisterKey(TIMING_KEY);
   }
 
   @Override

@@ -78,6 +78,16 @@ import java.util.Map;
     return new FilterChainImpl(_restFilters, doAddLast(_streamFilters, decorateStreamFilter(filter)));
   }
 
+  @Override
+  public List<RestFilter> getRestFilters() {
+    return new ArrayList<RestFilter>(_restFilters);
+  }
+
+  @Override
+  public List<StreamFilter> getStreamFilters() {
+    return new ArrayList<StreamFilter>(_streamFilters);
+  }
+
   private RestFilter decorateRestFilter(RestFilter filter)
   {
     return new TimedRestFilter(filter);

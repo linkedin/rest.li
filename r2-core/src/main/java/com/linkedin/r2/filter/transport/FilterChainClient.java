@@ -17,10 +17,13 @@
 /* $Id$ */
 package com.linkedin.r2.filter.transport;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.FilterChain;
+import com.linkedin.r2.filter.TimedRestFilter;
+import com.linkedin.r2.filter.TimedStreamFilter;
+import com.linkedin.r2.filter.message.rest.RestFilter;
+import com.linkedin.r2.filter.message.stream.StreamFilter;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -29,11 +32,14 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.timing.FrameworkTimingKeys;
 import com.linkedin.r2.message.timing.TimingContextUtil;
+import com.linkedin.r2.message.timing.TimingKey;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+
 
 /**
  * {@link TransportClient} adapter which composes a {@link TransportClient}
@@ -94,6 +100,12 @@ public class FilterChainClient implements TransportClient
   public void shutdown(Callback<None> callback)
   {
     _client.shutdown(callback);
+
+    _filters.getStreamFilters().stream().filter(TimedStreamFilter.class::isInstance)
+      .map(TimedStreamFilter.class::cast).forEach(TimedStreamFilter::onShutdown);
+
+    _filters.getRestFilters().stream().filter(TimedRestFilter.class::isInstance)
+      .map(TimedRestFilter.class::cast).forEach(TimedRestFilter::onShutdown);
   }
 
   /**
