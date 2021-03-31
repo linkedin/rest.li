@@ -565,7 +565,6 @@ public class BackupRequestsClient extends D2ClientDelegator
         }
         if (!_done.get() && _strategy.isBackupRequestAllowed())
         {
-          boolean needCloneRC = false;
           R request = _request;
           if (_request instanceof StreamRequest) {
             StreamRequest req = (StreamRequest)_request;
@@ -574,9 +573,12 @@ public class BackupRequestsClient extends D2ClientDelegator
                     (ByteString) _requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY)
                 )));
             request = (R)req;
-            needCloneRC = true;
+            if (!isBuffered(_backupRequestContext)) {
+              _backupRequestContext.putLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY,
+                  _requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY));
+            }
           }
-          _client.doRequest(request, needCloneRC ? _requestContext.clone(): _requestContext, new Callback<T>()
+          _client.doRequest(request, _backupRequestContext, new Callback<T>()
           {
             @Override
             public void onSuccess(T result)
