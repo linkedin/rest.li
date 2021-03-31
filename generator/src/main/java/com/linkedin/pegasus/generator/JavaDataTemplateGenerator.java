@@ -950,10 +950,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
         methodBodyCustomizer.accept(withFieldTypesafeMethod);
         withFieldTypesafeMethod.body()._return(JExpr._this());
       }
-      // Generate a method that accepts generic mask map if the nested type is from an external source. This is needed
-      // for backwards compatibility.
-      // Note: If the nested type is generated from source PDLs, it will have ProjectionMask.
-      if (!isGeneratedFromSource(field.getType()))
+      // Generate a method that accepts generic mask map if needed
+      if (shouldGenerateGenericMaskApi(field.getType()))
       {
         final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(
             fieldName)));
@@ -973,16 +971,26 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     }
   }
 
+  /**
+   * Returns true of the provided class/spec has ProjectionMask api or if it would generate templates with
+   * ProjectionMask.
+   */
   private boolean hasProjectionMaskApi(JClass parentClass, ClassTemplateSpec templateSpec)
   {
     return _projectionMaskApiChecker != null &&
         _projectionMaskApiChecker.hasProjectionMaskApi(parentClass, templateSpec);
   }
 
-  private boolean isGeneratedFromSource(ClassTemplateSpec templateSpec)
+  /**
+   * Check if a projection mask API using  generic mask map should be generated for a nested type.
+   * Returns true if the nested type is from an external source. This is needed for backwards compatibility.
+   * Note: If the nested type is generated from source PDLs, it will have ProjectionMask, so generic API is not needed.
+   * @param templateSpec Spec for the nested type.
+   */
+  private boolean shouldGenerateGenericMaskApi(ClassTemplateSpec templateSpec)
   {
-    return _projectionMaskApiChecker != null &&
-        _projectionMaskApiChecker.isGeneratedFromSource(templateSpec);
+    return _projectionMaskApiChecker == null ||
+        !_projectionMaskApiChecker.isGeneratedFromSource(templateSpec);
   }
 
   private void generateWithFieldBodyDefault(RecordTemplateSpec.Field field, JDefinedClass maskNestedClass, Consumer<JMethod> methodCustomizer)
@@ -1437,7 +1445,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
         // public ProjectionMask withFoo(MaksMap nestedMask) {
         //   getDataMap().put("foo", nestedMask.getDataMap());
         // }
-        if (!isGeneratedFromSource(member.getClassTemplateSpec()))
+        if (shouldGenerateGenericMaskApi(member.getClassTemplateSpec()))
         {
           final JMethod withMemberMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(methodName)));
           JVar maskMap = withMemberMethod.param(_maskMapClass,"nestedMask");
@@ -1623,7 +1631,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
         withFieldTypesafeMethod.body()._return(JExpr._this());
       }
       // Generate mask api using generic MaskMap if the item/value type is from external source.
-      if (!isGeneratedFromSource(itemSpec))
+      if (shouldGenerateGenericMaskApi(itemSpec))
       {
         final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(wildcardMethodName));
         JVar maskMap = withFieldMethod.param(_maskMapClass, "nestedMask");
