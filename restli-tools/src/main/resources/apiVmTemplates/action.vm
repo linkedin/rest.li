@@ -17,14 +17,6 @@ Copyright (c) 2021 LinkedIn Corp.
   #foreach($method in $spec.actions)
     #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
     #doc($method.schema.doc)
-    // ${method.name}
-    // ${method.valueClassDisplayName}
-    // ${method.isEntityAction()}
-    // Below is parameters
-    #foreach($param in ${method.parameters})
-      // name: [$param.paramName], paramClassName: [$param.paramClassName]
-    #end
-    // End of paramters
 
     ## methods are named as "action<ActionName>" so it is consistent with current RequestBuilder naming
     #if(${method.hasActionParams()})

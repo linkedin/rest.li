@@ -13,12 +13,6 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
-## #macro(importClasses $spec)
-## #foreach($import in $spec.importsForMethods)
-## import ${import};
-## #end
-## #end
-
 #macro(doc $doc)
   #if($doc)
   /**
