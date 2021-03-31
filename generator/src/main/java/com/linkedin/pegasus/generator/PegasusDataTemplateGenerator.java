@@ -132,7 +132,6 @@ public class PegasusDataTemplateGenerator
     config.setDefaultPackage(defaultPackage);
     config.setRootPath(rootPath);
     config.setFieldMaskMethods(generateFieldMask);
-    final JavaDataTemplateGenerator dataTemplateGenerator = new JavaDataTemplateGenerator(config);
 
     for (DataSchema predefinedSchema : JavaDataTemplateGenerator.PredefinedJavaClasses.keySet())
     {
@@ -145,6 +144,10 @@ public class PegasusDataTemplateGenerator
     {
       specGenerator.generate(entry.getKey(), entry.getValue());
     }
+    config.setProjectionMaskApiChecker(new ProjectionMaskApiChecker(
+        specGenerator, parseResult.getSourceFiles(),
+        JavaCodeUtil.classLoaderFromResolverPath(schemaParser.getResolverPath())));
+    final JavaDataTemplateGenerator dataTemplateGenerator = new JavaDataTemplateGenerator(config);
     for (ClassTemplateSpec spec : specGenerator.getGeneratedSpecs())
     {
       dataTemplateGenerator.generate(spec);
