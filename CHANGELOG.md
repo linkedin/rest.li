@@ -20,6 +20,7 @@ and what APIs have changed, if applicable.
 - Update projection mask builder APIs to support updating the mask objects.
 - Added support for checking if a nested type supports new ProjectionMask API before generating new typesafe APIs for them.
 - Fix a typo in D2ClientConfig
+- Fix the default value resolution logic in Avro schema translator to match the PDL behavior.
 
 ## [29.17.0] - 2021-03-23
 - Implement D2 cluster subsetting.
