@@ -37,11 +37,7 @@
     }
   #end
 
-  #doc($method.schema.doc)
-  public CompletionStage<Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>> batchGet(
-      Set<$spec.keyClassName> ids#if( $method.hasParams()),#end
-      #**##methodParams($method, true)##
-      ) {
+  #define($BatchGetCommon)
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
     Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
     #fillQueryParams($method)
@@ -61,6 +57,14 @@
         ORIGINAL_RESOURCE_PATH,
         buildReadOnlyPathKeys(),
         RestliRequestOptions.DEFAULT_OPTIONS);
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>> batchGet(
+      Set<$spec.keyClassName> ids#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      ) {
+$BatchGetCommon
     #**##makeRequestAndReturn(
       "Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>", 
       "BatchKVResponse<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>", 
@@ -75,25 +79,7 @@
       ExecutionGroup executionGroup#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
-    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
-    #fillQueryParams($method)
-    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
-    @SuppressWarnings("unchecked")
-    BatchGetEntityRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchGetEntityRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        new BatchEntityResponseDecoder<>(
-            (TypeSpec<${spec.entityClassName}>) _resourceSpec.getValueType(),
-            (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
-            _resourceSpec.getKeyParts(),
-            _resourceSpec.getComplexKeyType()),
-        queryParams,
-        queryParamClasses,
-        _resourceSpec,
-        ORIGINAL_RESOURCE_PATH,
-        Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS);
+$BatchGetCommon
     #**##makeRequestAndReturn(
       "Map<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>", 
       "BatchKVResponse<${spec.keyClassName}, EntityResponse<${spec.entityClassName}>>", 

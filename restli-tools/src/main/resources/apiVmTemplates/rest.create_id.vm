@@ -37,11 +37,7 @@
     }
   #end
 
-  #doc($method.schema.doc)
-  public CompletionStage<${spec.keyClassName}> create(
-      ${spec.entityClassName} entity#if( $method.hasParams()),#end
-      #**##methodParams($method, true)##
-      ) {
+  #define($CreateIdCommon)
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
     Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
     #fillQueryParams($method)
@@ -65,6 +61,14 @@
         buildReadOnlyPathKeys(),
         RestliRequestOptions.DEFAULT_OPTIONS,
         null);
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<${spec.keyClassName}> create(
+      ${spec.entityClassName} entity#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      ) {
+$CreateIdCommon
     #**##makeRequestAndReturn(
       ${spec.keyClassName},
       "IdResponse<${spec.keyClassName}>",
@@ -79,29 +83,7 @@
       ExecutionGroup executionGroup#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
-    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
-    #fillQueryParams($method)
-    #if($method.returnsEntity())
-      #**##returnEntityParam("false")
-    #end
-    @SuppressWarnings("unchecked")
-    IdResponseDecoder<${spec.keyClassName}> idResponseDecoder = new IdResponseDecoder<>(
-        (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
-        _resourceSpec.getKeyParts(),
-        _resourceSpec.getComplexKeyType());
-    CreateIdRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new CreateIdRequest<>(
-        entity,
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        idResponseDecoder,
-        _resourceSpec,
-        queryParams,
-        queryParamClasses,
-        ORIGINAL_RESOURCE_PATH,
-        Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS,
-        null);
+$CreateIdCommon
     #**##makeRequestAndReturn(
       ${spec.keyClassName},
       "IdResponse<${spec.keyClassName}>",

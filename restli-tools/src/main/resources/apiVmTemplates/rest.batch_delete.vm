@@ -37,11 +37,7 @@
     }
   #end
 
-  #doc($method.schema.doc)
-  public CompletionStage<Map<${spec.keyClassName}, UpdateStatus>> batchDelete(
-      Set<$spec.keyClassName> ids#if( $method.hasParams()),#end
-      #**##methodParams($method, true)##
-      ) {
+  #define($BatchDeleteCommon)
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
     Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
     #fillQueryParams($method)
@@ -55,6 +51,14 @@
         ORIGINAL_RESOURCE_PATH,
         buildReadOnlyPathKeys(),
         RestliRequestOptions.DEFAULT_OPTIONS);
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<Map<${spec.keyClassName}, UpdateStatus>> batchDelete(
+      Set<$spec.keyClassName> ids#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      ) {
+$BatchDeleteCommon
     #**##makeRequestAndReturn(
       "Map<${spec.keyClassName}, UpdateStatus>",
       "BatchKVResponse<${spec.keyClassName}, UpdateStatus>",
@@ -69,20 +73,7 @@
       ExecutionGroup executionGroup#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
-    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
-    #fillQueryParams($method)
-    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
-    BatchDeleteRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchDeleteRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        queryParams,
-        queryParamClasses,
-        _resourceSpec,
-        ORIGINAL_RESOURCE_PATH,
-        ## TODO Path keys (sub-resources)
-        Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS);
+$BatchDeleteCommon
     #**##makeRequestAndReturn(
       "Map<${spec.keyClassName}, UpdateStatus>",
       "BatchKVResponse<${spec.keyClassName}, UpdateStatus>",

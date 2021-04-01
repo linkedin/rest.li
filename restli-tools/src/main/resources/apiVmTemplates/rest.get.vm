@@ -41,13 +41,7 @@
     }
   #end
 
-  #doc($method.schema.doc)
-  public CompletionStage<${spec.entityClassName}> get(
-    #if (!${spec.getResource().hasSimple()})
-      $spec.keyClassName $spec.idName#if( $method.hasParams()),#end
-    #end
-      #**##methodParams($method, true)##
-      ) {
+  #define($GetRequestCommon)
     #**##paramsRequestMap($method)##
     GetRequest<${spec.entityClassName}> request = new GetRequest<>(
         Collections.emptyMap(),
@@ -64,6 +58,16 @@
         ORIGINAL_RESOURCE_PATH,
         buildReadOnlyPathKeys(),
         RestliRequestOptions.DEFAULT_OPTIONS);
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<${spec.entityClassName}> get(
+    #if (!${spec.getResource().hasSimple()})
+      $spec.keyClassName $spec.idName#if( $method.hasParams()),#end
+    #end
+      #**##methodParams($method, true)##
+      ) {
+$GetRequestCommon
     #**##makeRequestAndReturn(
       ${spec.entityClassName}, 
       ${spec.entityClassName}, 
@@ -80,23 +84,7 @@
       ExecutionGroup executionGroup#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
-    #**##paramsRequestMap($method)##
-    GetRequest<${spec.entityClassName}> request = new GetRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        ${spec.entityClassName}.class,
-        #if(${spec.idName})
-    #**#$spec.idName##
-        #else
-    #**#null##
-        #end,
-        queryParams,
-        queryParamClasses,
-        _resourceSpec,
-        ORIGINAL_RESOURCE_PATH,
-        ## TODO Path keys (sub-resources)
-        Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS);
+$GetRequestCommon
     #**##makeRequestAndReturn(
       ${spec.entityClassName}, 
       ${spec.entityClassName}, 

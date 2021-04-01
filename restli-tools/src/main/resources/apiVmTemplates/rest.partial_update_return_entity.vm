@@ -45,14 +45,7 @@
     }
   #end
 
-  #doc($method.schema.doc)
-  public CompletionStage<${spec.entityClassName}> partialUpdateAndGet(
-    #if (!${spec.getResource().hasSimple()})
-      $spec.keyClassName $spec.idName,
-    #end
-      PatchRequest<${spec.entityClassName}> entity#if( $method.hasParams()),#end
-      #**##methodParams($method, true)##
-      ) {
+  #define($PartialUpdateReturnEntityCommon)
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
     Map<String, Class<?>> queryParamClasses = new HashMap<>($method.getQueryParamMapSize());
     #fillQueryParams($method)
@@ -76,6 +69,17 @@
         #else
     #**#null##
         #end,null);
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<${spec.entityClassName}> partialUpdateAndGet(
+    #if (!${spec.getResource().hasSimple()})
+      $spec.keyClassName $spec.idName,
+    #end
+      PatchRequest<${spec.entityClassName}> entity#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      ) {
+$PartialUpdateReturnEntityCommon
     #**##makeRequestAndReturn(
       "${spec.entityClassName}",
       "${spec.entityClassName}",
@@ -93,29 +97,7 @@
       ExecutionGroup executionGroup#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
-    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = new HashMap<>($method.getQueryParamMapSize());
-    #fillQueryParams($method)
-    #**##returnEntityParam("true")
-    @SuppressWarnings("unchecked")
-    EntityResponseDecoder<${spec.entityClassName}> entityResponseDecoder = new EntityResponseDecoder<>(
-        (Class<${spec.entityClassName}>) _resourceSpec.getValueClass());
-    PartialUpdateEntityRequest<${spec.entityClassName}> request = new PartialUpdateEntityRequest<>(
-        entity,
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        entityResponseDecoder,
-        _resourceSpec,
-        queryParams,
-        queryParamClasses,
-        ORIGINAL_RESOURCE_PATH,
-        Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS,
-        #if(${spec.idName})
-    #**#$spec.idName##
-        #else
-    #**#null##
-        #end,null);
+$PartialUpdateReturnEntityCommon
     #**##makeRequestAndReturn(
       "${spec.entityClassName}",
       "${spec.entityClassName}",

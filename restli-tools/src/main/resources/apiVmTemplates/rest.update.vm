@@ -45,14 +45,8 @@
     }
   #end
 
-  #doc($method.schema.doc)
-  public CompletionStage<Void> update(
-    #if (!${spec.getResource().hasSimple()})
-      $spec.keyClassName $spec.idName,
-    #end
-    ${spec.entityClassName} entity#if( $method.hasParams()),#end
-    #**##methodParams($method, true)##
-    ) {
+
+  #define($UpdateCommon)
     #**##paramsRequestMap($method)##
     UpdateRequest<${spec.entityClassName}> request = new UpdateRequest<>(
         entity,
@@ -70,6 +64,17 @@
     #**#null##
         #end,
         null);
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<Void> update(
+    #if (!${spec.getResource().hasSimple()})
+      $spec.keyClassName $spec.idName,
+    #end
+    ${spec.entityClassName} entity#if( $method.hasParams()),#end
+    #**##methodParams($method, true)##
+    ) {
+$UpdateCommon
     #**##makeRequestAndReturn(
       "Void",
       "?",
@@ -87,23 +92,7 @@
     ExecutionGroup executionGroup#if( $method.hasParams()),#end
     #**##methodParams($method, true)##
     ) {
-    #**##paramsRequestMap($method)##
-    UpdateRequest<${spec.entityClassName}> request = new UpdateRequest<>(
-        entity,
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        _resourceSpec,
-        queryParams,
-        queryParamClasses,
-        ORIGINAL_RESOURCE_PATH,
-        Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS,
-        #if(${spec.idName})
-    #**#$spec.idName##
-        #else
-    #**#null##
-        #end,
-        null);
+$UpdateCommon
     #**##makeRequestAndReturn(
       "Void",
       "?",

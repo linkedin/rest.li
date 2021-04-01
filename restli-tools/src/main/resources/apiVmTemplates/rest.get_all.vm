@@ -33,9 +33,7 @@
     }
   #end
 
-  #doc($method.schema.doc)
-  public CompletionStage<List<${spec.entityClassName}>> getAll(#methodParams($method, true)##
-        ) {
+  #define($GetAllCommon)
     #**##paramsRequestMap($method)##
     GetAllRequest<${spec.entityClassName}> request = new GetAllRequest<>(
         Collections.emptyMap(),
@@ -49,6 +47,12 @@
         RestliRequestOptions.DEFAULT_OPTIONS,
         ## TODO AssocKey
         null);
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<List<${spec.entityClassName}>> getAll(#methodParams($method, true)##
+        ) {
+$GetAllCommon
     #**##makeRequestAndReturn(
       "List<${spec.entityClassName}>",
       "CollectionResponse<${spec.entityClassName}>",
@@ -62,20 +66,7 @@
     ExecutionGroup executionGroup#if( $method.hasParams()),#end
     #methodParams($method, true)##
         ) {
-    #**##paramsRequestMap($method)##
-    GetAllRequest<${spec.entityClassName}> request = new GetAllRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        ${spec.entityClassName}.class,
-        _resourceSpec,
-        queryParams,
-        queryParamClasses,
-        ORIGINAL_RESOURCE_PATH,
-        ## TODO Path keys (sub-resources)
-        Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS,
-        ## TODO AssocKey
-        null);
+$GetAllCommon
     #**##makeRequestAndReturn(
       "List<${spec.entityClassName}>",
       "CollectionResponse<${spec.entityClassName}>",

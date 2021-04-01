@@ -37,11 +37,8 @@
     }
   #end
 
-  #doc($method.schema.doc)
-  public CompletionStage<List<CreateIdStatus<${spec.keyClassName}>>> batchCreate(
-      List<${spec.entityClassName}> entities#if( $method.hasParams()),#end
-      #**##methodParams($method, true)##
-      ) {
+
+  #define($BatchCreateIdRequestCommon)
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
     Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
     #fillQueryParams($method)
@@ -68,6 +65,14 @@
         RestliRequestOptions.DEFAULT_OPTIONS,
         ## Streaming attachments
         null);
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<List<CreateIdStatus<${spec.keyClassName}>>> batchCreate(
+      List<${spec.entityClassName}> entities#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      ) {
+$BatchCreateIdRequestCommon
     #**##makeRequestAndReturn(
       "List<CreateIdStatus<${spec.keyClassName}>>",
       "BatchCreateIdResponse<${spec.keyClassName}>",
@@ -82,32 +87,7 @@
       ExecutionGroup executionGroup#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
-    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
-    #fillQueryParams($method)
-    #if($method.returnsEntity())
-      #**##returnEntityParam("false")
-    #end
-    @SuppressWarnings("unchecked")
-    BatchCreateIdDecoder<${spec.keyClassName}> idResponseDecoder = new BatchCreateIdDecoder<>(
-        (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
-        _resourceSpec.getKeyParts(),
-        _resourceSpec.getComplexKeyType());
-    CollectionRequest<${spec.entityClassName}> input = FluentClientUtils.buildBatchEntityInputs(entities, ${spec.entityClassName}.class);
-
-    BatchCreateIdRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchCreateIdRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        idResponseDecoder,
-        input,
-        _resourceSpec,
-        queryParams,
-        queryParamClasses,
-        ORIGINAL_RESOURCE_PATH,
-        Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS,
-        ## Streaming attachments
-        null);
+$BatchCreateIdRequestCommon
     #**##makeRequestAndReturn(
       "List<CreateIdStatus<${spec.keyClassName}>>",
       "BatchCreateIdResponse<${spec.keyClassName}>",

@@ -45,14 +45,7 @@
     }
   #end
 
-  #doc($method.schema.doc)
-  public CompletionStage<Void> partialUpdate(
-    #if (!${spec.getResource().hasSimple()})
-      $spec.keyClassName $spec.idName,
-    #end
-      PatchRequest<${spec.entityClassName}> entity#if( $method.hasParams()),#end
-      #**##methodParams($method, true)##
-      ) {
+  #define($PartialUpdateNoReturnCommon)
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
     Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
     #fillQueryParams($method)
@@ -74,6 +67,17 @@
         #else
     #**#null##
         #end, null);
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<Void> partialUpdate(
+    #if (!${spec.getResource().hasSimple()})
+      $spec.keyClassName $spec.idName,
+    #end
+      PatchRequest<${spec.entityClassName}> entity#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      ) {
+$PartialUpdateNoReturnCommon
     #**##makeRequestAndReturn(
       "Void",
       "?",
@@ -91,27 +95,7 @@
       ExecutionGroup executionGroup#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
-    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
-    #fillQueryParams($method)
-    #if($method.returnsEntity())
-        #**##returnEntityParam("false")
-    #end
-    PartialUpdateRequest<${spec.entityClassName}> request = new PartialUpdateRequest<>(
-        entity,
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        _resourceSpec,
-        queryParams,
-        queryParamClasses,
-        ORIGINAL_RESOURCE_PATH,
-        Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS,
-        #if(${spec.idName})
-    #**#$spec.idName##
-        #else
-    #**#null##
-        #end, null);
+$PartialUpdateNoReturnCommon
     #**##makeRequestAndReturn(
       "Void",
       "?",

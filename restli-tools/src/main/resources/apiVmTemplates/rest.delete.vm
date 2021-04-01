@@ -41,13 +41,7 @@
     }
   #end
 
-  #doc($method.schema.doc)
-  public CompletionStage<Void> delete(
-    #if (!${spec.getResource().hasSimple()})
-      $spec.keyClassName $spec.idName#if( $method.hasParams()),#end
-    #end
-      #**##methodParams($method, true)##
-      ) {
+  #define($DeleteCommon)
     #**##paramsRequestMap($method)##
     DeleteRequest<${spec.entityClassName}> request = new DeleteRequest<>(
         Collections.emptyMap(),
@@ -64,6 +58,16 @@
     #**#null##
         #end
         );
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<Void> delete(
+    #if (!${spec.getResource().hasSimple()})
+      $spec.keyClassName $spec.idName#if( $method.hasParams()),#end
+    #end
+      #**##methodParams($method, true)##
+      ) {
+$DeleteCommon
     #**##makeRequestAndReturn(
       "Void",
       "?",
@@ -80,23 +84,7 @@
     ExecutionGroup executionGroup#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
-    #**##paramsRequestMap($method)##
-    DeleteRequest<${spec.entityClassName}> request = new DeleteRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        _resourceSpec,
-        queryParams,
-        queryParamClasses,
-        ORIGINAL_RESOURCE_PATH,
-        ## TODO Path keys (sub-resources)
-        Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS,
-        #if(${spec.idName})
-    #**#$spec.idName##
-        #else
-    #**#null##
-        #end
-        );
+$DeleteCommon
     #**##makeRequestAndReturn(
       "Void",
       "?",

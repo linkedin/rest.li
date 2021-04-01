@@ -44,11 +44,7 @@
     }
   #end
 
-  #doc($method.schema.doc)
-  public CompletionStage<Map<${spec.keyClassName}, UpdateStatus>> batchUpdate(
-      Map<$spec.keyClassName, ${spec.entityClassName}> entities#if( $method.hasParams()),#end
-      #**##methodParams($method, true)##
-      ) {
+  #define($BatchUpdateCommon)
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
     Map<String, Class<?>> queryParamClasses = new HashMap<>($method.getQueryParamMapSize());
     #fillQueryParams($method)
@@ -67,6 +63,14 @@
         RestliRequestOptions.DEFAULT_OPTIONS,
         entities,
         null);
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<Map<${spec.keyClassName}, UpdateStatus>> batchUpdate(
+      Map<$spec.keyClassName, ${spec.entityClassName}> entities#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      ) {
+$BatchUpdateCommon
     #**##makeRequestAndReturn(
       "Map<${spec.keyClassName}, UpdateStatus>",
       "BatchKVResponse<${spec.keyClassName}, UpdateStatus>",
@@ -81,24 +85,7 @@
       ExecutionGroup executionGroup#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
-    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = new HashMap<>($method.getQueryParamMapSize());
-    #fillQueryParams($method)
-    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, entities.keySet());
-    CollectionRequest<KeyValueRecord<$spec.keyClassName, ${spec.entityClassName}>> inputs = FluentClientUtils.buildBatchKVInputs(
-        entities, UPDATE_VALUE_FACTORY);
-    BatchUpdateRequest<$spec.keyClassName, ${spec.entityClassName}> request = new BatchUpdateRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        inputs,
-        queryParams,
-        queryParamClasses,
-        _resourceSpec,
-        ORIGINAL_RESOURCE_PATH,
-        Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS,
-        entities,
-        null);
+$BatchUpdateCommon
     #**##makeRequestAndReturn(
       "Map<${spec.keyClassName}, UpdateStatus>",
       "BatchKVResponse<${spec.keyClassName}, UpdateStatus>",

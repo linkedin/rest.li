@@ -44,11 +44,8 @@
     }
   #end
 
-  #doc($method.schema.doc)
-  public CompletionStage<Map<$spec.keyClassName, UpdateStatus>> batchPartialUpdate(
-      Map<$spec.keyClassName, PatchRequest<${spec.entityClassName}>> patches#if( $method.hasParams()),#end
-      #**##methodParams($method, true)##
-      ) {
+
+  #define($BatchPartialUpdateCommon) 
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
     Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
     #fillQueryParams($method)
@@ -71,6 +68,14 @@
         RestliRequestOptions.DEFAULT_OPTIONS,
         patches,
         null);
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<Map<$spec.keyClassName, UpdateStatus>> batchPartialUpdate(
+      Map<$spec.keyClassName, PatchRequest<${spec.entityClassName}>> patches#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      ) {
+$BatchPartialUpdateCommon
     #**##makeRequestAndReturn(
       "Map<$spec.keyClassName, UpdateStatus>",
       "BatchKVResponse<$spec.keyClassName, UpdateStatus>",
@@ -85,28 +90,7 @@
       ExecutionGroup executionGroup#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
-    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
-    #fillQueryParams($method)
-    #if($method.returnsEntity())
-      #**##returnEntityParam("false")
-    #end
-    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, patches.keySet());
-    CollectionRequest<KeyValueRecord<$spec.keyClassName, PatchRequest<${spec.entityClassName}>>> inputs = FluentClientUtils.buildBatchKVInputs(
-        patches, PATCH_VALUE_FACTORY);
-
-    BatchPartialUpdateRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchPartialUpdateRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        inputs,
-        queryParams,
-        queryParamClasses,
-        _resourceSpec,
-        ORIGINAL_RESOURCE_PATH,
-        Collections.emptyMap(),
-        RestliRequestOptions.DEFAULT_OPTIONS,
-        patches,
-        null);
+$BatchPartialUpdateCommon
     #**##makeRequestAndReturn(
       "Map<$spec.keyClassName, UpdateStatus>",
       "BatchKVResponse<$spec.keyClassName, UpdateStatus>",
