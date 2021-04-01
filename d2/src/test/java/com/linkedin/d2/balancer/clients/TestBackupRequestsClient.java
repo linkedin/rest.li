@@ -34,9 +34,9 @@ import com.linkedin.d2.backuprequests.ResponseTimeDistribution;
 import com.linkedin.d2.backuprequests.TestTrackingBackupRequestsStrategy;
 import com.linkedin.d2.backuprequests.TrackingBackupRequestsStrategy;
 import com.linkedin.d2.balancer.KeyMapper;
+import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.StaticLoadBalancerState;
-import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
@@ -51,11 +51,17 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamRequestBuilder;
+import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.stream.StreamResponseBuilder;
+import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
+import com.linkedin.r2.message.stream.entitystream.DrainReader;
+import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.util.clock.SystemClock;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -69,6 +75,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -84,11 +91,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNotSame;
-import static org.testng.Assert.assertSame;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 
 public class TestBackupRequestsClient
@@ -98,6 +101,7 @@ public class TestBackupRequestsClient
   private static final String CLUSTER_NAME = "testCluster";
   private static final String PATH = "";
   private static final String STRATEGY_NAME = "degrader";
+  private static final String BUFFERED_HEADER = "buffered";
   private static final ByteString CONTENT = ByteString.copy(new byte[8092]);
 
   private ScheduledExecutorService _executor;
@@ -124,6 +128,105 @@ public class TestBackupRequestsClient
     RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
     Future<RestResponse> response = client.restRequest(restRequest);
     assertEquals(response.get().getStatus(), 200);
+  }
+
+  @Test(invocationCount = 3, dataProvider = "isD2Async")
+  public void testStreamRequestWithNoIsFullRequest(boolean isD2Async) throws Exception {
+    int responseDelayNano = 100000000; //1s till response comes back
+    int backupDelayNano = 50000000; // make backup request after 0.5 second
+    Deque<URI> hostsReceivingRequest = new ConcurrentLinkedDeque<>();
+    BackupRequestsClient client =
+        createAlwaysBackupClientWithHosts(Arrays.asList("http://test1.com:123", "http://test2.com:123"),
+            hostsReceivingRequest, responseDelayNano, backupDelayNano, isD2Async);
+
+    URI uri = URI.create("d2://testService");
+
+    // if there is no IS_FULL_REQUEST set, backup requests will not happen
+    StreamRequest streamRequest =
+        new StreamRequestBuilder(uri).build(EntityStreams.newEntityStream(new ByteStringWriter(CONTENT)));
+    RequestContext context = new RequestContext();
+    context.putLocalAttr(R2Constants.OPERATION, "get");
+    RequestContext context1 = context.clone();
+
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<AssertionError> failure = new AtomicReference<>();
+
+    client.streamRequest(streamRequest, context1, new Callback<StreamResponse>() {
+      @Override
+      public void onError(Throwable e) {
+        failure.set(new AssertionError("Callback onError"));
+        latch.countDown();
+      }
+
+      @Override
+      public void onSuccess(StreamResponse result) {
+        try {
+          assertEquals(result.getStatus(), 200);
+          assertEquals(result.getHeader("buffered"), "false");
+          assertEquals(hostsReceivingRequest.size(), 1);
+          assertEquals(new HashSet<>(hostsReceivingRequest).size(), 1);
+          hostsReceivingRequest.clear();
+        } catch (AssertionError e) {
+          failure.set(e);
+        }
+        latch.countDown();
+      }
+    });
+
+    latch.await(2, TimeUnit.SECONDS);
+    if (failure.get() != null) {
+      throw failure.get();
+    }
+  }
+
+  @Test(invocationCount = 3, dataProvider = "isD2Async")
+  public void testStreamRequestWithIsFullRequest(boolean isD2Async) throws Exception {
+    int responseDelayNano = 500000000; //5s till response comes back
+    int backupDelayNano = 100000000; // make backup request after 1 second
+    Deque<URI> hostsReceivingRequest = new ConcurrentLinkedDeque<>();
+    BackupRequestsClient client =
+        createAlwaysBackupClientWithHosts(Arrays.asList("http://test1.com:123", "http://test2.com:123"),
+            hostsReceivingRequest, responseDelayNano, backupDelayNano, isD2Async);
+
+    URI uri = URI.create("d2://testService");
+
+    // if there is IS_FULL_REQUEST set, backup requests will happen
+    StreamRequest streamRequest =
+        new StreamRequestBuilder(uri).build(EntityStreams.newEntityStream(new ByteStringWriter(CONTENT)));
+    RequestContext context = new RequestContext();
+    context.putLocalAttr(R2Constants.OPERATION, "get");
+    context.putLocalAttr(R2Constants.IS_FULL_REQUEST, true);
+    RequestContext context1 = context.clone();
+
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<AssertionError> failure = new AtomicReference<>();
+
+    client.streamRequest(streamRequest, context1, new Callback<StreamResponse>() {
+      @Override
+      public void onError(Throwable e) {
+        failure.set(new AssertionError("Callback onError"));
+        latch.countDown();
+      }
+
+      @Override
+      public void onSuccess(StreamResponse result) {
+        try {
+          assertEquals(result.getStatus(), 200);
+          assertEquals(result.getHeader("buffered"), "true");
+          assertEquals(hostsReceivingRequest.size(), 2);
+          assertEquals(new HashSet<>(hostsReceivingRequest).size(), 2);
+          hostsReceivingRequest.clear();
+        } catch (AssertionError e) {
+          failure.set(e);
+        }
+        latch.countDown();
+      }
+    });
+
+    latch.await(6, TimeUnit.SECONDS);
+    if (failure.get() != null) {
+      throw failure.get();
+    }
   }
 
   /**
@@ -628,6 +731,31 @@ public class TestBackupRequestsClient
             _executor.schedule(
                 () -> callback.onResponse(TransportResponseImpl.success(new RestResponseBuilder().build())), responseDelayNano,
                 TimeUnit.NANOSECONDS);
+          }
+
+          @Override
+          public void streamRequest(StreamRequest request,
+              RequestContext requestContext,
+              Map<String, String> wireAttrs,
+              TransportCallback<StreamResponse> callback) {
+            // whenever a trackerClient is used to make request, record down it's hostname
+            hostsReceivingRequestList.add(uri);
+            if (null != requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY)) {
+              callback.onResponse(TransportResponseImpl.success(new StreamResponseBuilder().setHeader(
+                  BUFFERED_HEADER, String.valueOf(requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY) != null)
+              ).build(EntityStreams.emptyStream())));
+              return;
+            }
+            request.getEntityStream().setReader(new DrainReader(){
+              public void onDone() {
+                // delay response to allow backup request to happen
+                _executor.schedule(
+                    () -> callback.onResponse(TransportResponseImpl.success(new StreamResponseBuilder().setHeader(
+                        BUFFERED_HEADER, String.valueOf(requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY) != null)
+                    ).build(EntityStreams.emptyStream()))), responseDelayNano,
+                    TimeUnit.NANOSECONDS);
+              }
+            });
           }
         };
       }
