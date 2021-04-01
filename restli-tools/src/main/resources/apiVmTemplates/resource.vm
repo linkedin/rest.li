@@ -107,7 +107,11 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
         #end
         requestMetadataMap,
         responseMetadataMap,
+        #if(${spec.hasKeyTypeRef()})
+        ${spec.getKeyTypeRefClassName()}.class,
+        #else
         ${spec.getKeyClassName(false)}.class,
+        #end
         null,
         null,
         ${spec.entityClassName}.class,

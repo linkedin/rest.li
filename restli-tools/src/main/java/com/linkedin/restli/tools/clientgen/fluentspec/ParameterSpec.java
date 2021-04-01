@@ -19,18 +19,24 @@ package com.linkedin.restli.tools.clientgen.fluentspec;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ParameterSchema;
+import org.apache.commons.lang.ClassUtils;
 
 
 public class ParameterSpec
 {
   private final ParameterSchema _parameterSchema;
   private final BaseResourceSpec _root;
-  private ClassTemplateSpec _classTemplateSpec;
+  private final ClassTemplateSpec _classTemplateSpec;
+  private final String _declaredTypeRefClassName;
+
 
   public ParameterSpec(ParameterSchema parameterSchema, BaseResourceSpec root)
   {
     _parameterSchema = parameterSchema;
     _root = root;
+    String parameterClassType = _parameterSchema.getType();
+    _classTemplateSpec = _root.classToTemplateSpec(parameterClassType);
+    _declaredTypeRefClassName = _root.getClassRefNameForSchema(parameterClassType);
   }
 
   public String getParamName()
@@ -50,11 +56,19 @@ public class ParameterSpec
 
   public ClassTemplateSpec getParamClass()
   {
-    if (_classTemplateSpec == null)
-    {
-      _classTemplateSpec = _root.classToTemplateSpec(_parameterSchema.getType());
-    }
     return _classTemplateSpec;
+  }
+
+  public boolean hasParamTypeRef()
+  {
+    return !ClassUtils.getShortClassName(getParamClassName()).equals(ClassUtils.getShortClassName(
+        _declaredTypeRefClassName));
+  }
+
+  // TODO: add displayable name
+  public String getParamTypeRefClassName()
+  {
+    return _declaredTypeRefClassName;
   }
 
   public String getParamClassName()

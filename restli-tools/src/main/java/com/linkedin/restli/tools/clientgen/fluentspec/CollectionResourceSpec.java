@@ -33,6 +33,7 @@ import org.apache.commons.lang.ClassUtils;
 public class CollectionResourceSpec extends BaseResourceSpec
 {
   private ClassTemplateSpec _keyClass;
+  private String _keyTypeRefClassName;
   private final ComplexKeySpec _complexKeySpec;
 
   public CollectionResourceSpec(ResourceSchema resourceSchema, TemplateSpecGenerator templateSpecGenerator,
@@ -44,6 +45,15 @@ public class CollectionResourceSpec extends BaseResourceSpec
         keyParamTypeSchema,
         this
     );
+
+    String declaredKeyClassName = getClassRefNameForSchema(getResource().getCollection().getIdentifier().getType());
+    String keyClassName = getKeyClassName();
+
+    if (!hasComplexKey() &&
+        !ClassUtils.getShortClassName(keyClassName).equals(ClassUtils.getShortClassName(declaredKeyClassName)))
+    {
+      _keyTypeRefClassName = declaredKeyClassName;
+    }
   }
 
   public List<ActionMethodSpec> getActions()
@@ -71,6 +81,7 @@ public class CollectionResourceSpec extends BaseResourceSpec
   }
 
   // For simple key
+  // Note: this will dereference TypeRef
   public ClassTemplateSpec getKeyClass()
   {
     if (_keyClass == null)
@@ -83,6 +94,11 @@ public class CollectionResourceSpec extends BaseResourceSpec
   public boolean hasComplexKey()
   {
     return _complexKeySpec != null;
+  }
+
+  public boolean hasKeyTypeRef()
+  {
+    return  _keyTypeRefClassName != null;
   }
 
   public String getKeyClassName()
@@ -107,6 +123,11 @@ public class CollectionResourceSpec extends BaseResourceSpec
     return SpecUtils.getClassName(getKeyClass());
   }
 
+  public String getKeyTypeRefClassName()
+  {
+    return _keyTypeRefClassName;
+  }
+
   public String getIdName()
   {
     return getResource().getCollection().getIdentifier().getName();
@@ -116,7 +137,16 @@ public class CollectionResourceSpec extends BaseResourceSpec
   public Set<String> getResourceSpecificImports(Set<String> imports)
   {
     imports = super.getResourceSpecificImports(imports);
-    // TODO: Handle keyTypeRefClass imports for ComplexKey
+    if (hasKeyTypeRef())
+    {
+      if(!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+          ClassUtils.getShortClassName(_keyTypeRefClassName), _keyTypeRefClassName))
+      {
+        imports.add(_keyTypeRefClassName);
+      }
+
+    }
+
     if (hasComplexKey())
     {
       imports.add(ComplexResourceKey.class.getName());

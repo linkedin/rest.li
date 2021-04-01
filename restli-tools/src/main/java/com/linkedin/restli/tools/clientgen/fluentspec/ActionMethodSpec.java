@@ -21,6 +21,7 @@ import com.linkedin.restli.restspec.ActionSchema;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.apache.commons.lang.ClassUtils;
 
 
 public class ActionMethodSpec
@@ -28,11 +29,16 @@ public class ActionMethodSpec
   private final ActionSchema _actionSchema;
   private final BaseResourceSpec _root;
   private ClassTemplateSpec _valueClass;
+  private String _declaredValuedClassName;
 
   public ActionMethodSpec(ActionSchema actionSchema, BaseResourceSpec root)
   {
     _actionSchema = actionSchema;
     _root = root;
+    String valueClassName = _actionSchema.getReturns();
+    _valueClass = _root.classToTemplateSpec(valueClassName);
+    _declaredValuedClassName = valueClassName == null? null: root.getClassRefNameForSchema(valueClassName);
+
   }
 
   public String getName()
@@ -53,15 +59,37 @@ public class ActionMethodSpec
 
   public ClassTemplateSpec getValueClass()
   {
-    if (_valueClass == null)
-    {
-      _valueClass = _root.classToTemplateSpec(_actionSchema.getReturns());
-    }
     return _valueClass;
   }
 
   public String getValueClassName()
   {
     return SpecUtils.getClassName(getValueClass());
+  }
+
+  public boolean hasReturns()
+  {
+    return getValueClass() != null;
+  }
+
+  /**
+   * Action methods with return TypeRef are defined as
+   * <blockquote><pre>
+   * {@code @Action}(name = "{@code <actionMethodName>}", returnTyperef={@code TypeRefToReturnType}.class)
+   * public {@code <ReturnType>} {@code <actionMethodName>} (...) {}
+   * </pre></blockquote>
+   *
+   * @return whether this action method's return type has a returnTypeRef
+   */
+  public boolean hasReturnTypeRef()
+  {
+    return hasReturns() && (_declaredValuedClassName != null) &&
+        !ClassUtils.getShortClassName(getValueClassName()).equals(ClassUtils.getShortClassName(_declaredValuedClassName));
+  }
+
+  // TODO: add to imports so can have a shortened display name
+  public String getValueTypeRefClassName()
+  {
+    return _declaredValuedClassName;
   }
 }
