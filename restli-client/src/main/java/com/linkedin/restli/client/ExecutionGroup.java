@@ -87,6 +87,8 @@ import java.util.Map;
  *
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
+// TODO: change back to package private
+/* package private */
 public class ExecutionGroup
 {
   private final Map<FluentClient, List<Task<?>>> _clientToTaskListMap = new HashMap<>();
@@ -101,7 +103,7 @@ public class ExecutionGroup
    * This constructor will be called by the UniversalClient and will not be called by API users directly
    * @param engine
    */
-  /* package private */
+  // TODO: change back to package private
   public ExecutionGroup(Engine engine)
   {
     _engine = engine;
@@ -161,7 +163,7 @@ public class ExecutionGroup
     }
   }
 
-  /**
+ /**
    * To add ParSeq tasks to the this {@link ExecutionGroup}.
    * The tasks belong to same {@link FluentClient} are supposed to be run as a batch together
    *
