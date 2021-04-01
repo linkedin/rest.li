@@ -434,7 +434,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     return getReadOnlyPathKeys(_pathKeys);
   }
 
-  static protected Map<String, Object> getReadOnlyPathKeys(Map<String, Object> pathKeys)
+  static public Map<String, Object> getReadOnlyPathKeys(Map<String, Object> pathKeys)
   {
     try
     {

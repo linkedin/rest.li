@@ -13,7 +13,10 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add fluent client api for subresources
 - Update fluent client APIs to include projection mask as input parameter.
+- Update projection mask builder APIs to support updating the mask objects.
+- Added support for checking if a nested type supports new ProjectionMask API before generating new typesafe APIs for them.
 
 ## [29.17.0] - 2021-03-23
 - Implement D2 cluster subsetting.

@@ -4,6 +4,8 @@ import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.PathSpecSet;
 import com.linkedin.data.transform.filter.request.MaskCreator;
 import com.linkedin.data.transform.filter.request.MaskTree;
+import com.linkedin.pegasus.generator.test.idl.records.WithCustomRecord;
+import com.linkedin.pegasus.generator.test.pdl.fixtures.CustomRecord;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -188,6 +190,147 @@ public class TestMaskMap
         UnionTest.fields().unionWithoutNull().RecordBar().location(),
         UnionTest.fields().unionWithoutNull().String(),
         UnionTest.fields().unionWithoutNull().Bytes()
+    ));
+    Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
+  }
+
+  // Tests the case where a partial mask is  created and updated later.
+  @Test
+  public void testReuseMaskSimpleFields()
+  {
+    RecordTest.ProjectionMask mask = RecordTest.createMask()
+        .withBooleanField();
+
+    MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
+        RecordTest.fields().booleanField()));
+    Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
+
+    // Now update the mask to add new fields.
+    mask.withDoubleField();
+
+    MaskTree tree2 = MaskCreator.createPositiveMask(PathSpecSet.of(
+        RecordTest.fields().booleanField(),
+        RecordTest.fields().doubleField()));
+    Assert.assertEquals(mask.getDataMap(), tree2.getDataMap());
+  }
+
+  @Test
+  public void testReuseMaskNestedRecord()
+  {
+    RecordTest.ProjectionMask mask = RecordTest.createMask()
+        .withBooleanField()
+        .withRecordField(nestedMask -> nestedMask.withLocation());
+
+    MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
+        RecordTest.fields().booleanField(),
+        RecordTest.fields().recordField().location()));
+    Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
+
+    // Now update the mask to add new fields.
+    mask.withDoubleField()
+        .withRecordField(nestedMask -> nestedMask.withOptionalLocation());
+
+    MaskTree tree2 = MaskCreator.createPositiveMask(PathSpecSet.of(
+        RecordTest.fields().booleanField(),
+        RecordTest.fields().doubleField(),
+        RecordTest.fields().recordField().location(),
+        RecordTest.fields().recordField().optionalLocation()));
+    Assert.assertEquals(mask.getDataMap(), tree2.getDataMap());
+  }
+
+  @Test
+  public void testReuseMaskNestedRecordClearing()
+  {
+    RecordTest.ProjectionMask mask = RecordTest.createMask()
+        .withRecordField(nestedMask -> nestedMask.withLocation());
+
+    MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
+        RecordTest.fields().recordField().location()));
+    Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
+
+    // Clear the nested mask by projecting the entire field.
+    mask.withRecordField();
+    tree = MaskCreator.createPositiveMask(PathSpecSet.of(
+        RecordTest.fields().recordField()));
+    Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
+
+    // Now update the mask to add new fields.
+    mask.withRecordField(nestedMask -> nestedMask.withOptionalLocation());
+
+    tree = MaskCreator.createPositiveMask(PathSpecSet.of(
+        RecordTest.fields().recordField().optionalLocation()));
+    Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
+  }
+
+  @Test
+  public void testReuseMaskNestedArray()
+  {
+    ArrayTest.ProjectionMask mask = ArrayTest.createMask()
+        .withRecordArray(arrayMask -> arrayMask.withItems(RecordBar.ProjectionMask::withLocation));
+
+    // Now update the mask to add new fields.
+    mask.withRecordArray(arrayMask -> arrayMask.withItems(nestedMask -> nestedMask.withOptionalLocation()));
+
+    MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
+        ArrayTest.fields().recordArray().items().location(),
+        ArrayTest.fields().recordArray().items().optionalLocation()
+    ));
+    Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
+
+    // Reset the nested mask by projecting all
+    mask.withRecordArray(0, 10);
+    tree = MaskCreator.createPositiveMask(PathSpecSet.of(
+        ArrayTest.fields().recordArray(0, 10)
+    ));
+    Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
+
+    // Apply the nested mask again
+    mask.withRecordArray(arrayMask -> arrayMask.withItems(nestedMask -> nestedMask.withOptionalLocation()));
+    tree = MaskCreator.createPositiveMask(PathSpecSet.of(
+        ArrayTest.fields().recordArray().items().optionalLocation()
+    ));
+    Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
+  }
+
+  @Test
+  public void testReuseUnionFieldNestedProjection()
+  {
+    UnionTest.ProjectionMask mask = UnionTest.createMask()
+        .withUnionWithAliases(unionMask -> unionMask.withMemAnotherInt()
+            .withMemAnotherMap()
+            .withMemMap());
+
+    MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
+        UnionTest.fields().unionWithAliases().MemAnotherInt(),
+        UnionTest.fields().unionWithAliases().MemAnotherMap(),
+        UnionTest.fields().unionWithAliases().MemMap()
+    ));
+    Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
+
+    mask.withUnionWithAliases(unionMask -> unionMask.withMemInt()
+            .withMemBoolean());
+
+    tree = MaskCreator.createPositiveMask(PathSpecSet.of(
+        UnionTest.fields().unionWithAliases().MemAnotherInt(),
+        UnionTest.fields().unionWithAliases().MemInt(),
+        UnionTest.fields().unionWithAliases().MemBoolean(),
+        UnionTest.fields().unionWithAliases().MemAnotherMap(),
+        UnionTest.fields().unionWithAliases().MemMap()
+    ));
+    Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
+  }
+
+  @Test
+  public void testNestedTypeWithoutProjectionMask()
+  {
+    WithCustomRecord.ProjectionMask mask = WithCustomRecord.createMask()
+        .withCustom(MaskCreator.createPositiveMask(CustomRecord.fields().title()))
+        .withCustomArray(itemsMask -> itemsMask.withItems(
+            MaskCreator.createPositiveMask(CustomRecord.fields().body())));
+
+    MaskTree tree = MaskCreator.createPositiveMask(PathSpecSet.of(
+        WithCustomRecord.fields().custom().title(),
+        WithCustomRecord.fields().customArray().items().body()
     ));
     Assert.assertEquals(mask.getDataMap(), tree.getDataMap());
   }
