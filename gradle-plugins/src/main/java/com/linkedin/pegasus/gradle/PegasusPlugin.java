@@ -35,6 +35,7 @@ import com.linkedin.pegasus.gradle.tasks.ValidateSchemaAnnotationTask;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -52,6 +53,8 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -1832,7 +1835,8 @@ public class PegasusPlugin implements Plugin<Project>
     project.getDependencies().add(compileConfigName, project.files(dataTemplateJarTask.getArchivePath()));
 
     project.getPlugins().withType(IvyPublishPlugin.class, ivyPublish -> {
-      if (!isAtLeastGradle61()) {
+      if (!isAtLeastGradle61())
+      {
         throw new GradleException("Using the ivy-publish plugin with the pegasus plugin requires Gradle 6.1 or higher " +
                 "at build time.  Please upgrade.");
       }
@@ -1840,9 +1844,19 @@ public class PegasusPlugin implements Plugin<Project>
       JavaPluginExtension java = project.getExtensions().getByType(JavaPluginExtension.class);
       // create new capabilities per source set; automatically creates api and implementation configurations
       String featureName = mapSourceSetToFeatureName(targetSourceSet);
-      java.registerFeature(featureName, featureSpec -> {
-        featureSpec.usingSourceSet(targetSourceSet);
-      });
+      try
+      {
+        Method registerFeature = JavaPluginExtension.class.getDeclaredMethod("registerFeature", String.class, Action.class);
+        Action<?>/*<org.gradle.api.plugins.FeatureSpec>*/ featureSpecAction = createFeatureVariantFromSourceSet(targetSourceSet);
+        registerFeature.invoke(java, featureName, featureSpecAction);
+      }
+      catch (ReflectiveOperationException e)
+      {
+        throw new GradleException("Unable to register new feature variant", e);
+      }
+//      java.registerFeature(featureName, featureSpec -> {
+//        featureSpec.usingSourceSet(targetSourceSet);
+//      });
 
       // include pegasus files in the output of this SourceSet
       TaskProvider<ProcessResources> processResources = project.getTasks().named(targetSourceSet.getProcessResourcesTaskName(), ProcessResources.class);
@@ -2322,6 +2336,22 @@ public class PegasusPlugin implements Plugin<Project>
               GradleVersion.current(),
               MIN_SUGGESTED_VERSION));
     }
+  }
+
+  private Action<?>/*<org.gradle.api.plugins.FeatureSpec>*/ createFeatureVariantFromSourceSet(SourceSet sourceSet)
+  {
+    return featureSpec -> {
+      try
+      {
+        Class<?> clazz = Class.forName("org.gradle.api.plugins.FeatureSpec");
+        Method usingSourceSet = clazz.getDeclaredMethod("usingSourceSet", SourceSet.class);
+        usingSourceSet.invoke(featureSpec, sourceSet);
+      }
+      catch (ReflectiveOperationException e)
+      {
+        throw new GradleException("Unable to invoke FeatureSpec#usingSourceSet(SourceSet)", e);
+      }
+    };
   }
 
   protected static boolean isAtLeastGradle61()
