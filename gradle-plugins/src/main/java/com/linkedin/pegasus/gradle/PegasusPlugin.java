@@ -2311,19 +2311,21 @@ public class PegasusPlugin implements Plugin<Project>
         });
   }
 
-  private void checkGradleVersion(Project project)
-  {
-    if (MIN_REQUIRED_VERSION.compareTo(GradleVersion.current()) > 0)
-    {
+  private void checkGradleVersion(Project project) {
+    if (MIN_REQUIRED_VERSION.compareTo(GradleVersion.current()) > 0) {
       throw new GradleException(String.format("This plugin does not support %s. Please use %s or later.",
-          GradleVersion.current(),
-          MIN_REQUIRED_VERSION));
+              GradleVersion.current(),
+              MIN_REQUIRED_VERSION));
     }
-    if (MIN_SUGGESTED_VERSION.compareTo(GradleVersion.current()) > 0)
-    {
+    if (MIN_SUGGESTED_VERSION.compareTo(GradleVersion.current()) > 0) {
       project.getLogger().warn(String.format("Pegasus supports %s, but it may not be supported in the next major release. Please use %s or later.",
-          GradleVersion.current(),
-          MIN_SUGGESTED_VERSION));
+              GradleVersion.current(),
+              MIN_SUGGESTED_VERSION));
     }
+  }
+
+  protected static boolean isAtLeastGradle61()
+  {
+    return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.1")) >= 0;
   }
 }
