@@ -141,7 +141,7 @@ public class CollectionResourceSpec extends BaseResourceSpec
     if(_useShortKeyClassName == null)
     {
       // Need to check here  && while importing due to
-      // undeterministic order  in template resolving
+      // undeterministic order in template resolving
       if(!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
           ClassUtils.getShortClassName(getKeyClassName()), getKeyClassName()))
       {
@@ -163,11 +163,11 @@ public class CollectionResourceSpec extends BaseResourceSpec
     if (_useShortKeyTypeRefClassName == null)
     {
       // Need to check here  && while importing due to
-      // undeterministic order  in template resolving
+      // undeterministic order in template resolving
       if(!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
           ClassUtils.getShortClassName(getKeyClassName()), getKeyClassName()))
       {
-        _useShortKeyClassName = true;
+        _useShortKeyTypeRefClassName = true;
       }
     }
     return _useShortKeyTypeRefClassName? ClassUtils.getShortClassName(_keyTypeRefClassName)
