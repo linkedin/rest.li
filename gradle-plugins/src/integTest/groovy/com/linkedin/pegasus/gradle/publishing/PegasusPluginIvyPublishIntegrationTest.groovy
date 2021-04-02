@@ -91,6 +91,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
     when:
     def grandparentRunner = GradleRunner.create()
         .withProjectDir(grandparentProject.root)
+        .withGradleVersion('6.1')
         .withPluginClasspath()
         .withArguments('publish', '-is') //uploadDataTemplate
         //.forwardOutput()
@@ -145,7 +146,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
     |
     |  dataModel ('com.linkedin.pegasus-grandparent-demo:grandparent:1.0.0') {
     |    capabilities {
-    |      requireCapability('com.linkedin.pegasus-grandparent-demo:grandparent-data-template:1.0.0') // TODO Gradle 6.0 requires an explicit version, 6.? does not
+    |      requireCapability('com.linkedin.pegasus-grandparent-demo:grandparent-data-template')
     |    }
     |  }
     |}
@@ -178,6 +179,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
 
     def parentRunner = GradleRunner.create()
         .withProjectDir(parentProject.root)
+        .withGradleVersion('6.1')
         .withPluginClasspath()
         .withArguments('publish', '-is')
         //.forwardOutput()
@@ -232,7 +234,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
     |
     |  dataModel ('com.linkedin.pegasus-parent-demo:parent:1.0.0') {
     |    capabilities {
-    |      requireCapability('com.linkedin.pegasus-parent-demo:parent-data-template:1.0.0') // TODO Gradle 6.0 requires an explicit version, 6.? does not
+    |      requireCapability('com.linkedin.pegasus-parent-demo:parent-data-template')
     |    }
     |  }    
     |}
@@ -269,8 +271,9 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
 
     def childRunner = GradleRunner.create()
         .withProjectDir(childProject.root)
+        .withGradleVersion('6.1')
         .withPluginClasspath()
-        .withArguments('publish', '-is') //uploadDataTemplate
+        .withArguments('publish', '-is')
         //.forwardOutput()
         //.withDebug(true)
 
@@ -361,10 +364,11 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
     when:
     def grandparentRunner = GradleRunner.create()
         .withProjectDir(grandparentProject.root)
+        .withGradleVersion('6.1')
         .withPluginClasspath()
-        .withArguments('publish', '-is') //uploadDataTemplate
-    //.forwardOutput()
-    //.withDebug(true)
+        .withArguments('publish', '-is')
+        //.forwardOutput()
+        //.withDebug(true)
 
     def grandparentResult = grandparentRunner.build()
 
@@ -446,6 +450,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
 
     def parentRunner = GradleRunner.create()
         .withProjectDir(parentProject.root)
+        .withGradleVersion('6.1')
         .withPluginClasspath()
         .withArguments('publish', '-is')
         //.forwardOutput()
@@ -542,10 +547,11 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
 
     def childRunner = GradleRunner.create()
         .withProjectDir(childProject.root)
+        .withGradleVersion('6.1')
         .withPluginClasspath()
         .withArguments('publish', '-is')
-    //.forwardOutput()
-    //.withDebug(true)
+        //.forwardOutput()
+        //.withDebug(true)
 
     def childResult = childRunner.build()
 
@@ -635,8 +641,9 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
     when:
     def grandparentRunner = GradleRunner.create()
         .withProjectDir(grandparentProject.root)
+        .withGradleVersion('6.1')
         .withPluginClasspath()
-        .withArguments('publish', '-is') //uploadDataTemplate
+        .withArguments('publish', '-is')
         //.forwardOutput()
         //.withDebug(true)
 
@@ -726,6 +733,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
 
     def parentRunner = GradleRunner.create()
         .withProjectDir(parentProject.root)
+        .withGradleVersion('6.1')
         .withPluginClasspath()
         .withArguments('publish', '-is')
         //.forwardOutput()
@@ -821,6 +829,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
 
     def childRunner = GradleRunner.create()
         .withProjectDir(childProject.root)
+        .withGradleVersion('6.1')
         .withPluginClasspath()
         .withArguments('publish', '-is')
         //.forwardOutput()
