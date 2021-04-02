@@ -79,7 +79,7 @@ public class D2ClientConfig
 
   boolean restRetryEnabled = false;
   boolean streamRetryEnabled = false;
-  int retryLimit = DEAULT_RETRY_LIMIT;
+  int retryLimit = DEFAULT_RETRY_LIMIT;
   long retryUpdateIntervalMs = RetryClient.DEFAULT_UPDATE_INTERVAL_MS;
   int retryAggregatedIntervalNum = RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM;
   boolean warmUp = true;
@@ -105,7 +105,7 @@ public class D2ClientConfig
   String d2JmxManagerPrefix = "UnknownPrefix";
   boolean enableRelativeLoadBalancer = false;
   DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
-  public static final int DEAULT_RETRY_LIMIT = 3;
+  public static final int DEFAULT_RETRY_LIMIT = 3;
 
   public D2ClientConfig()
   {
