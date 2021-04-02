@@ -688,7 +688,7 @@ public class TestParSeqBasedCompletionStage
     Consumer<Object> consumer = mock(Consumer.class);
     CountDownLatch waitLatch = new CountDownLatch(1);
     CompletionStage<String> completionStage = createTestStage(TESTVALUE1);
-    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2, 5000).thenApply((v) -> {
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2, 1000).thenApply((v) -> {
       waitLatch.countDown();
       return v;
     });
@@ -791,7 +791,7 @@ public class TestParSeqBasedCompletionStage
     Function<Object, ?> function = mock(Function.class);
     CountDownLatch waitLatch = new CountDownLatch(1);
     CompletionStage<String> completionStage = createTestStage(TESTVALUE1);
-    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2, 5000).thenApply((v) -> {
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2, 1000).thenApply((v) -> {
       waitLatch.countDown();
       return v;
     });
@@ -895,7 +895,7 @@ public class TestParSeqBasedCompletionStage
     Runnable runnable = mock(Runnable.class);
     CountDownLatch waitLatch = new CountDownLatch(1);
     CompletionStage<String> completionStage = createTestStage(TESTVALUE1);
-    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2, 5000).thenApply((v) -> {
+    CompletionStage<String> completionStage2 = createTestStage(TESTVALUE2, 1000).thenApply((v) -> {
       waitLatch.countDown();
       return v;
     });
