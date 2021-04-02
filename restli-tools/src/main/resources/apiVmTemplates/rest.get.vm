@@ -17,7 +17,7 @@
     #doc($method.schema.doc)
     public CompletionStage<${spec.entityClassName}> get(
       #if (!${spec.getResource().hasSimple()})
-        $spec.keyClassName $spec.idName#if($method.requiredParams.size() > 0),#end
+        $spec.keyClassDisplayName $spec.idName#if($method.requiredParams.size() > 0),#end
       #end
         #**##methodParams($method, false)##
       ) {
@@ -30,7 +30,7 @@
   #doc($method.schema.doc)
   public CompletionStage<${spec.entityClassName}> get(
     #if (!${spec.getResource().hasSimple()})
-      $spec.keyClassName $spec.idName#if( $method.hasParams()),#end
+      $spec.keyClassDisplayName $spec.idName#if( $method.hasParams()),#end
     #end
       #**##methodParams($method, true)##
       ) {

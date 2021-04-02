@@ -23,8 +23,12 @@ import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
 
@@ -32,26 +36,58 @@ import org.apache.commons.text.StringEscapeUtils;
  * Common utility functions for building fluent apis.
  */
 public class SpecUtils {
+  static final String JAVA_LANG_PREFIX = "java.lang";
+  static final Set<String> PRIMITIVE_CLASS_NAMES = new HashSet<String>(Arrays.asList(
+      Integer.class.getSimpleName(),
+      Double.class.getSimpleName(),
+      Boolean.class.getSimpleName(),
+      String.class.getSimpleName(),
+      Long.class.getSimpleName(),
+      Float.class.getSimpleName()
+  ));
   private SpecUtils()
   {
   }
+
+  /**
+   * For checking if two class names are from same class
+   *
+   * This method can be used tell, for example, if declared class name is a TypeRef to the value class
+   *
+   * @param valueClassName the class which has been used a value
+   * @param declaredClassNameToCheck the declared class which might be different than the value class
+   * @return true if two names are pointing to same class, false otherwise
+   */
+  public static boolean checkIsSameClass(String valueClassName, String declaredClassNameToCheck)
+  {
+    if (PRIMITIVE_CLASS_NAMES.contains(valueClassName) || PRIMITIVE_CLASS_NAMES.contains(declaredClassNameToCheck))
+    {
+      return ClassUtils.getShortClassName(valueClassName).equals(ClassUtils.getShortClassName(declaredClassNameToCheck));
+    }
+    else
+    {
+      return valueClassName.equals(declaredClassNameToCheck);
+    }
+
+  }
+
   public static String getClassName(ClassTemplateSpec classTemplateSpec) {
     if (classTemplateSpec instanceof PrimitiveTemplateSpec)
     {
       switch (classTemplateSpec.getSchema().getType())
       {
         case INT:
-          return Integer.class.getSimpleName();
+          return Integer.class.getName();
         case DOUBLE:
-          return Double.class.getSimpleName();
+          return Double.class.getName();
         case BOOLEAN:
-          return Boolean.class.getSimpleName();
+          return Boolean.class.getName();
         case STRING:
-          return String.class.getSimpleName();
+          return String.class.getName();
         case LONG:
-          return Long.class.getSimpleName();
+          return Long.class.getName();
         case FLOAT:
-          return Float.class.getSimpleName();
+          return Float.class.getName();
         case BYTES:
           return ByteString.class.getName();
 

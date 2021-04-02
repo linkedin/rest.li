@@ -15,7 +15,7 @@
 *#
   #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
     #doc($method.schema.doc)
-    public CompletionStage<List<CreateIdStatus<${spec.keyClassName}>>> batchCreate(
+    public CompletionStage<List<CreateIdStatus<${spec.keyClassDisplayName}>>> batchCreate(
         List<${spec.entityClassName}> entities#if($method.requiredParams.size() > 0),#end
         #**##methodParams($method, false)##
           ){
@@ -26,7 +26,7 @@
   #end
 
   #doc($method.schema.doc)
-  public CompletionStage<List<CreateIdStatus<${spec.keyClassName}>>> batchCreate(
+  public CompletionStage<List<CreateIdStatus<${spec.keyClassDisplayName}>>> batchCreate(
       List<${spec.entityClassName}> entities#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
@@ -37,13 +37,13 @@
       #**##returnEntityParam("false")
     #end
     @SuppressWarnings("unchecked")
-    BatchCreateIdDecoder<${spec.keyClassName}> idResponseDecoder = new BatchCreateIdDecoder<>(
-        (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
+    BatchCreateIdDecoder<${spec.keyClassDisplayName}> idResponseDecoder = new BatchCreateIdDecoder<>(
+        (TypeSpec<${spec.keyClassDisplayName}>) _resourceSpec.getKeyType(),
         _resourceSpec.getKeyParts(),
         _resourceSpec.getComplexKeyType());
     CollectionRequest<${spec.entityClassName}> input = FluentClientUtils.buildBatchEntityInputs(entities, ${spec.entityClassName}.class);
 
-    BatchCreateIdRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchCreateIdRequest<>(
+    BatchCreateIdRequest<${spec.keyClassDisplayName}, ${spec.entityClassName}> request = new BatchCreateIdRequest<>(
         Collections.emptyMap(),
         Collections.emptyList(),
         idResponseDecoder,
@@ -56,13 +56,13 @@
         RestliRequestOptions.DEFAULT_OPTIONS,
         ## Streaming attachments
         null);
-    CompletableFuture<List<CreateIdStatus<${spec.keyClassName}>>> result = new CompletableFuture<>();
+    CompletableFuture<List<CreateIdStatus<${spec.keyClassDisplayName}>>> result = new CompletableFuture<>();
     Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
         responseTry -> {
           if (responseTry.isFailed()) {
             result.completeExceptionally(responseTry.getError());
           } else {
-            Response<BatchCreateIdResponse<${spec.keyClassName}>> response = responseTry.get();
+            Response<BatchCreateIdResponse<${spec.keyClassDisplayName}>> response = responseTry.get();
             if (response.hasError()) {
               result.completeExceptionally(response.getError());
             } else {

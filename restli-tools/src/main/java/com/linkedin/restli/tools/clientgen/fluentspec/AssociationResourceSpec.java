@@ -108,6 +108,11 @@ public class AssociationResourceSpec extends BaseResourceSpec
     return getShortClassName(CompoundKey.class.getName());
   }
 
+  public String getKeyClassDisplayName()
+  {
+    return getShortClassName(CompoundKey.class.getName());
+  }
+
   @Override
   public Set<String> getResourceSpecificImports(Set<String> imports)
   {

@@ -108,9 +108,9 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
         requestMetadataMap,
         responseMetadataMap,
         #if(${spec.hasKeyTypeRef()})
-        ${spec.getKeyTypeRefClassName()}.class,
+        ${spec.getKeyTypeRefClassDisplayName()}.class,
         #else
-        ${spec.getKeyClassName(false)}.class,
+        ${spec.getKeyClassDisplayName(false)}.class,
         #end
         null,
         null,
@@ -172,7 +172,7 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
   ## generate impl class for subResources
   #foreach($subSpec in $spec.childSubResourceSpecs)
   @Override
-  public #if(${subSpec.namespace.equals($subSpec.parentNamespace)})${subSpec.className}#else${subSpec.bindingName}#end ${util.nameCamelCase($subSpec.className)}Of(#if(${subSpec.diffPathKey})${subSpec.parent.keyClassName} ${subSpec.diffPathKey}#end)
+  public #if(${subSpec.namespace.equals($subSpec.parentNamespace)})${subSpec.className}#else${subSpec.bindingName}#end ${util.nameCamelCase($subSpec.className)}Of(#if(${subSpec.diffPathKey})${subSpec.parent.keyClassDisplayName} ${subSpec.diffPathKey}#end)
   {
     return new #if(${subSpec.namespace.equals($subSpec.parentNamespace)})${subSpec.className}#else${subSpec.bindingName}#end${class_name_suffix}(_client, _engine)#if(${spec.getPathKeys().size()} > 0).pathKeys(_pathKeyMap)#end
                #if(${subSpec.diffPathKey})

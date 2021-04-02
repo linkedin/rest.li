@@ -61,8 +61,7 @@ public class ParameterSpec
 
   public boolean hasParamTypeRef()
   {
-    return !ClassUtils.getShortClassName(getParamClassName()).equals(ClassUtils.getShortClassName(
-        _declaredTypeRefClassName));
+    return !SpecUtils.checkIsSameClass(getParamClassName(), _declaredTypeRefClassName);
   }
 
   // TODO: add displayable name

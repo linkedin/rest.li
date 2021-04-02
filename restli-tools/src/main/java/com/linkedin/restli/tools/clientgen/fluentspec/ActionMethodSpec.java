@@ -84,7 +84,7 @@ public class ActionMethodSpec
   public boolean hasReturnTypeRef()
   {
     return hasReturns() && (_declaredValuedClassName != null) &&
-        !ClassUtils.getShortClassName(getValueClassName()).equals(ClassUtils.getShortClassName(_declaredValuedClassName));
+        !SpecUtils.checkIsSameClass(getValueClassName(), _declaredValuedClassName);
   }
 
   // TODO: add to imports so can have a shortened display name
