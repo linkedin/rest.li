@@ -1846,6 +1846,13 @@ public class PegasusPlugin implements Plugin<Project>
       String featureName = mapSourceSetToFeatureName(targetSourceSet);
       try
       {
+        /*
+         reflection is required to preserve compatibility with Gradle 5.2.1 and below
+         TODO once Gradle 5.3+ is required, remove reflection and replace with:
+           java.registerFeature(featureName, featureSpec -> {
+             featureSpec.usingSourceSet(targetSourceSet);
+            });
+        */
         Method registerFeature = JavaPluginExtension.class.getDeclaredMethod("registerFeature", String.class, Action.class);
         Action<?>/*<org.gradle.api.plugins.FeatureSpec>*/ featureSpecAction = createFeatureVariantFromSourceSet(targetSourceSet);
         registerFeature.invoke(java, featureName, featureSpecAction);
@@ -1854,9 +1861,6 @@ public class PegasusPlugin implements Plugin<Project>
       {
         throw new GradleException("Unable to register new feature variant", e);
       }
-//      java.registerFeature(featureName, featureSpec -> {
-//        featureSpec.usingSourceSet(targetSourceSet);
-//      });
 
       // include pegasus files in the output of this SourceSet
       TaskProvider<ProcessResources> processResources = project.getTasks().named(targetSourceSet.getProcessResourcesTaskName(), ProcessResources.class);
@@ -2338,8 +2342,13 @@ public class PegasusPlugin implements Plugin<Project>
     }
   }
 
-  private Action<?>/*<org.gradle.api.plugins.FeatureSpec>*/ createFeatureVariantFromSourceSet(SourceSet sourceSet)
-  {
+  /**
+   * Reflection is necessary to obscure types introduced in Gradle 5.3
+   *
+   * @param sourceSet the target sourceset upon which to create a new feature variant
+   * @return an Action which modifies a org.gradle.api.plugins.FeatureSpec instance
+   */
+  private Action<?>/*<org.gradle.api.plugins.FeatureSpec>*/ createFeatureVariantFromSourceSet(SourceSet sourceSet) {
     return featureSpec -> {
       try
       {
