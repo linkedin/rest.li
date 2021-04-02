@@ -1,9 +1,11 @@
   <configurations>
     <conf name="compile" visibility="public"/>
+    <conf name="dataTemplate" visibility="public" extends="mainGeneratedDataTemplateApiElements,mainGeneratedDataTemplateRuntimeElements"/>
     <conf name="default" visibility="public" extends="runtime"/>
     <conf name="mainGeneratedDataTemplateApiElements" visibility="public"/>
     <conf name="mainGeneratedDataTemplateRuntimeElements" visibility="public"/>
     <conf name="runtime" visibility="public"/>
+    <conf name="testDataTemplate" visibility="public" extends="testGeneratedDataTemplateApiElements,testGeneratedDataTemplateRuntimeElements"/>
     <conf name="testGeneratedDataTemplateApiElements" visibility="public"/>
     <conf name="testGeneratedDataTemplateRuntimeElements" visibility="public"/>
   </configurations>

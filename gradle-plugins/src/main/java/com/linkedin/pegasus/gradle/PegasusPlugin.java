@@ -1853,11 +1853,27 @@ public class PegasusPlugin implements Plugin<Project>
         }
       });
 
-      // expose transitive dependencies to consumers via api configuration
+      // expose transitive dependencies to consumers via variant configurations
+      Configuration featureConfiguration = project.getConfigurations().getByName(featureName);
       Configuration mainGeneratedDataTemplateApi = project.getConfigurations().getByName(targetSourceSet.getApiConfigurationName());
+      featureConfiguration.extendsFrom(mainGeneratedDataTemplateApi);
       mainGeneratedDataTemplateApi.extendsFrom(
               getDataModelConfig(project, targetSourceSet),
               project.getConfigurations().getByName("dataTemplateCompile"));
+
+      // Configure the existing IvyPublication
+      // For backwards-compatibility, make the legacy dataTemplate/testDataTemplate configurations extend
+      // their replacements, auto-created when we registered the new feature variant
+      project.afterEvaluate(p -> {
+        PublishingExtension publishing = p.getExtensions().getByType(PublishingExtension.class);
+        // When configuring a Gradle Publication, use this value to find the name of the publication to configure.  Defaults to "ivy".
+        String publicationName = p.getExtensions().getExtraProperties().getProperties().getOrDefault("PegasusPublicationName", "ivy").toString();
+        IvyPublication ivyPublication = publishing.getPublications().withType(IvyPublication.class).getByName(publicationName);
+        ivyPublication.configurations(configurations -> configurations.create(featureName, legacyConfiguration -> {
+          legacyConfiguration.extend(p.getConfigurations().getByName(targetSourceSet.getApiElementsConfigurationName()).getName());
+          legacyConfiguration.extend(p.getConfigurations().getByName(targetSourceSet.getRuntimeElementsConfigurationName()).getName());
+        }));
+      });
     });
 
     if (debug)
