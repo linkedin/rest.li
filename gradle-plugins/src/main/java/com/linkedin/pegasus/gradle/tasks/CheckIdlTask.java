@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.model.ReplacedBy;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
@@ -167,106 +166,16 @@ public class CheckIdlTask extends DefaultTask
     _summaryTarget = summaryTarget;
   }
 
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isModelCompatible()} instead
-   */
-  @Deprecated
-  @ReplacedBy("modelCompatible")
-  public boolean getIsModelCompatible()
-  {
-    return isModelCompatible();
-  }
-
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isModelCompatible()} instead
-   */
-  @Deprecated
-  @ReplacedBy("modelCompatible")
-  public boolean isIsModelCompatible()
-  {
-    return isModelCompatible();
-  }
-
   @Internal
   public boolean isModelCompatible()
   {
     return _modelCompatible;
   }
 
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isRestSpecCompatible()} instead
-   */
-  @Deprecated
-  @ReplacedBy("restSpecCompatible")
-  public boolean getIsRestSpecCompatible()
-  {
-    return isRestSpecCompatible();
-  }
-
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isRestSpecCompatible()} instead
-   */
-  @Deprecated
-  @ReplacedBy("restSpecCompatible")
-  public boolean isIsRestSpecCompatible()
-  {
-    return isRestSpecCompatible();
-  }
-
   @Internal
   public boolean isRestSpecCompatible()
   {
     return _restSpecCompatible;
-  }
-
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isEquivalent()} instead
-   */
-  @Deprecated
-  @ReplacedBy("equivalent")
-  public boolean getIsEquivalent()
-  {
-    return _equivalent;
-  }
-
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isEquivalent()} instead
-   */
-  @Deprecated
-  @ReplacedBy("equivalent")
-  public boolean isIsEquivalent()
-  {
-    return _equivalent;
   }
 
   @Internal

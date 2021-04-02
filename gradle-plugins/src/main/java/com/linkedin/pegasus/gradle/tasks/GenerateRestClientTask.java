@@ -15,7 +15,6 @@ import java.util.Map;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.model.ReplacedBy;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
@@ -327,36 +326,6 @@ public class GenerateRestClientTask extends DefaultTask
     _destinationDir = destinationDir;
   }
 
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isRestli2FormatSuppressed()} instead
-   */
-  @Deprecated
-  @ReplacedBy("restli2FormatSuppressed")
-  public boolean getIsRestli2FormatSuppressed()
-  {
-    return isRestli2FormatSuppressed();
-  }
-
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isRestli2FormatSuppressed()} instead
-   */
-  @Deprecated
-  @ReplacedBy("restli2FormatSuppressed")
-  public boolean isIsRestli2FormatSuppressed()
-  {
-    return isRestli2FormatSuppressed();
-  }
-
   @Internal
   public boolean isRestli2FormatSuppressed()
   {
@@ -402,36 +371,6 @@ public class GenerateRestClientTask extends DefaultTask
   public void setGenerateFluentApi(boolean generateFluentApi)
   {
     _generateFluentApi = generateFluentApi;
-  }
-
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isRestli1BuildersDeprecated()} instead
-   */
-  @Deprecated
-  @ReplacedBy("restli1BuildersDeprecated")
-  public boolean get_isRestli1BuildersDeprecated()
-  {
-    return isRestli1BuildersDeprecated();
-  }
-
-  /**
-   * This method is kept for backwards compatibility.
-   * <p>
-   * A Groovy property with this name was exposed, which leads to this lengthy
-   * getter name. In Java, boolean fields are named without the "is" prefix.
-   *
-   * @deprecated use {@link #isRestli1BuildersDeprecated()} instead
-   */
-  @Deprecated
-  @ReplacedBy("restli1BuildersDeprecated")
-  public boolean is_isRestli1BuildersDeprecated()
-  {
-    return isRestli1BuildersDeprecated();
   }
 
   @Internal

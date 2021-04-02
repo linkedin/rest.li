@@ -76,7 +76,6 @@ import org.gradle.plugins.ide.eclipse.EclipsePlugin;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
-import org.gradle.util.GradleVersion;
 
 
 /**
@@ -634,11 +633,6 @@ public class PegasusPlugin implements Plugin<Project>
   @Override
   public void apply(Project project)
   {
-    if (!isAtLeastGradle54())
-    {
-      throw new GradleException("The pegasus plugin requires Gradle 5.4 or higher; please upgrade.");
-    }
-
     project.getPlugins().apply(JavaPlugin.class);
     project.getPlugins().apply(IdeaPlugin.class);
     project.getPlugins().apply(EclipsePlugin.class);
@@ -2231,8 +2225,4 @@ public class PegasusPlugin implements Plugin<Project>
           task.onlyIf(t -> !SharedFileUtils.getSuffixedFiles(project, inputDir, PDL_FILE_SUFFIX).isEmpty());
         });
   }
-  protected static boolean isAtLeastGradle54() {
-    return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.4")) >= 0;
-  }
-
 }

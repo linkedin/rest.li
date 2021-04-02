@@ -9,14 +9,13 @@ import java.util.stream.Collectors;
 import com.linkedin.pegasus.gradle.IOUtil;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.FileType;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.work.InputChanges;
+import org.gradle.api.tasks.incremental.IncrementalTaskInputs;
 
 
 public class ChangedFileReportTask extends DefaultTask
@@ -28,7 +27,7 @@ public class ChangedFileReportTask extends DefaultTask
   private RegularFileProperty _outputFile = getProject().getObjects().fileProperty();
 
   @TaskAction
-  public void checkFilesForChanges(InputChanges inputs)
+  public void checkFilesForChanges(IncrementalTaskInputs inputs)
   {
     getLogger().lifecycle("Checking idl and snapshot files for changes...");
     getLogger().info("idlFiles: " + _idlFiles.getAsPath());
@@ -40,24 +39,24 @@ public class ChangedFileReportTask extends DefaultTask
 
     if (inputs.isIncremental())
     {
-      inputs.getFileChanges(getSnapshotFiles()).forEach(change -> {
-        if (change.getFileType() != FileType.DIRECTORY)
+      inputs.outOfDate(inputFileDetails -> {
+        if (inputFileDetails.isAdded())
         {
-          String path = change.getFile().getAbsolutePath();
-          switch (change.getChangeType())
-          {
-            case ADDED:
-              filesAdded.add(path);
-              break;
-            case REMOVED:
-              filesRemoved.add(path);
-              break;
-            case MODIFIED:
-              filesChanged.add(path);
-              break;
-          }
+          filesAdded.add(inputFileDetails.getFile().getAbsolutePath());
+        }
+
+        if (inputFileDetails.isRemoved())
+        {
+          filesRemoved.add(inputFileDetails.getFile().getAbsolutePath());
+        }
+
+        if (inputFileDetails.isModified())
+        {
+          filesChanged.add(inputFileDetails.getFile().getAbsolutePath());
         }
       });
+
+      inputs.removed(inputFileDetails -> filesRemoved.add(inputFileDetails.getFile().getAbsolutePath()));
 
       StringBuilder sb = new StringBuilder();
 
