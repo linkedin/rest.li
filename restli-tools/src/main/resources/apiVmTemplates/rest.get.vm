@@ -13,6 +13,29 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
+#if (${spec.getResource().hasAssociation()})
+  #define($ScatteredKey) ## list each part in AssocKeyOnly
+  #set($compoundKeySpec = ${spec.getCompoundKeySpec()})
+  #set($assocKeyLen = ${compoundKeySpec.getAssocKeySpecs().size()})
+  #set($lastCompoundKeyPart = ${compoundKeySpec.getAssocKeySpecs().get($assocKeyLen - 1)})
+  #if($assocKeyLen > 1)
+    #foreach($idx in [2..$assocKeyLen])
+      //idx
+      #set($compoundKeyPart = ${compoundKeySpec.getAssocKeySpecs().get($idx - 2)})
+      ${compoundKeyPart.bindingType} ${compoundKeyPart.name},
+    #end
+  #end
+  ${lastCompoundKeyPart.bindingType} ${lastCompoundKeyPart.name}#if($method.requiredParams.size() > 0),#end
+  #end
+
+  #define($GenerateCompoundKey)
+  CompoundKey ${spec.idName} = ${spec.className}.Key
+              #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()}
+                .set$util.nameCapsCase($assoc_key.name)($assoc_key.name)
+              #end
+  #end
+#end
+
   #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
     #doc($method.schema.doc)
     public CompletionStage<${spec.entityClassName}> get(
@@ -25,6 +48,7 @@
           #**##optionalMethodCallArgs($method)##
       );
     }
+
 
     #doc($method.schema.doc)
     public CompletionStage<${spec.entityClassName}> get(
@@ -39,6 +63,34 @@
           #**##optionalMethodCallArgs($method)##
       );
     }
+
+    ### For associations ###
+    #if (${spec.getResource().hasAssociation()})
+    #doc($method.schema.doc)
+    public CompletionStage<${spec.entityClassName}> get(
+$ScatteredKey
+        #**##methodParams($method, false)##
+      ) {
+$GenerateCompoundKey
+      return get(${spec.idName},
+          #**##optionalMethodCallArgs($method)##
+      );
+    }
+
+
+    #doc($method.schema.doc)
+    public CompletionStage<${spec.entityClassName}> get(
+$ScatteredKey
+        ExecutionGroup executionGroup#if($method.requiredParams.size() > 0),#end
+        #**##methodParams($method, false)##
+      ) {
+$GenerateCompoundKey
+      return get(${spec.idName},
+          executionGroup,
+          #**##optionalMethodCallArgs($method)##
+      );
+    }
+    #end ## end for associations key binding methods
   #end
 
   #define($GetRequestCommon)
@@ -92,4 +144,37 @@ $GetRequestCommon
       true
     )##
   }
+
+  ### For associations ###
+  #if (${spec.getResource().hasAssociation()})
+  #doc($method.schema.doc)
+  public CompletionStage<${spec.entityClassName}> get(
+$ScatteredKey
+      #**##methodParams($method, true)##
+      ) {
+$GetRequestCommon
+    #**##makeRequestAndReturn(
+      ${spec.entityClassName}, 
+      ${spec.entityClassName}, 
+      "resp.getEntity()",
+      false
+    )##
+  }
+
+  #doc($method.schema.doc)
+  public CompletionStage<${spec.entityClassName}> get(
+$ScatteredKey
+      ExecutionGroup executionGroup#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      ) {
+$GetRequestCommon
+    #**##makeRequestAndReturn(
+      ${spec.entityClassName}, 
+      ${spec.entityClassName}, 
+      "resp.getEntity()",
+      true
+    )##
+  }
+  #end ## end for associations key binding methods
+
   #optionalParamClass($method)
