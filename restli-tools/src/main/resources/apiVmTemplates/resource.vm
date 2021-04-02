@@ -186,6 +186,31 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
   }
   #end
 
+  ## For Get, Delete, Update, PartialUpdates for association key, will generate additional methods
+  ##     to use each part key as parameters.
+  #if (${spec.getResource().hasAssociation()})
+    #define($ScatteredKey) ## list each part in AssocKeyOnly
+    #set($compoundKeySpec = ${spec.getCompoundKeySpec()})
+    #set($assocKeyLen = ${compoundKeySpec.getAssocKeySpecs().size()})
+    #set($lastCompoundKeyPart = ${compoundKeySpec.getAssocKeySpecs().get($assocKeyLen - 1)})
+    #if($assocKeyLen > 1)
+      #foreach($idx in [2..$assocKeyLen])
+        //idx
+        #set($compoundKeyPart = ${compoundKeySpec.getAssocKeySpecs().get($idx - 2)})
+        ${compoundKeyPart.bindingType} ${compoundKeyPart.name},
+      #end
+    #end
+    ${lastCompoundKeyPart.bindingType} ${lastCompoundKeyPart.name}#if($method.requiredParams.size() > 0),#end
+    #end
+
+    #define($AggregateCompoundKey)
+    CompoundKey ${spec.idName} = ${spec.className}.Key
+                #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()}
+                  .set$util.nameCapsCase($assoc_key.name)($assoc_key.name)
+                #end
+    #end
+  #end
+
   // CRUD methods
   #foreach($method in $spec.restMethods)
     #parse("apiVmTemplates/rest.${method.method}.vm")
