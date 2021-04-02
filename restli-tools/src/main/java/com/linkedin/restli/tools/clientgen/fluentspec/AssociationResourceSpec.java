@@ -168,7 +168,8 @@ public class AssociationResourceSpec extends BaseResourceSpec
    * To return the shortened type name after attempting to shorten it.
    * If shortened, the full binding type will be added to the imports set
    *
-   * Note: If the type is not primitive this method will also add that to the imports set.
+   * Note: If the type is primitive, this method will also add that to the imports set now, but
+   *       will be eventually filtered out in later stage
    * @param fullType the full type name being checked
    * @param assockeyTypeImports the imports set that the full type of assocKey part would be added to
    * @return shorted type name if shorten is allowed, otherwise full name

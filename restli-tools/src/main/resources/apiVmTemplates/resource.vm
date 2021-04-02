@@ -81,7 +81,7 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
 
     HashMap<String, DynamicRecordMetadata> responseMetadataMap=new HashMap<String, DynamicRecordMetadata>();
     #foreach($action in $spec.actions)
-      #if($action.hasReturnValue())
+      #if($action.hasReturns())
         responseMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", Collections.singletonList(new FieldDef<${action.valueClassDisplayName}>("value", ${action.valueClassDisplayName}.class, DataTemplateUtil.getSchema(${action.valueClassDisplayName}.class)))));
       #else
         responseMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", Collections.emptyList()));
@@ -145,13 +145,13 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
         keyParts
         );
     #elseif(${spec.getResource().hasActionsSet()})
-    _resourceSpec = new ResourceSpecImpl(EnumSet.noneOf(ResourceMethod.class), 
-      requestMetadataMap, 
+    _resourceSpec = new ResourceSpecImpl(EnumSet.noneOf(ResourceMethod.class),
+      requestMetadataMap,
       responseMetadataMap,
-      Void.class, 
-      null, 
-      null, 
-      null, 
+      Void.class,
+      null,
+      null,
+      null,
       Collections.emptyMap());
     #end
   }

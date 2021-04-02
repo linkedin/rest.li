@@ -104,7 +104,7 @@ public class ActionMethodSpec
     return Collections.emptySet();
   }
 
-  public boolean hasReturnValue()
+  public boolean hasReturns()
   {
     return getValueClass() != null;
   }
