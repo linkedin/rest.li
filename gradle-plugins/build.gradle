@@ -43,7 +43,6 @@ tasks.pluginUnderTestMetadata {
 }
 
 integTest {
-  classpath += files(pluginUnderTestMetadata.outputDirectory)
   dependsOn configurations.dataTemplateForTesting, configurations.pegasusPluginForTesting
   systemProperty 'integTest.dataTemplateCompileDependencies', "'${configurations.dataTemplateForTesting.join("', '")}'"
   systemProperty 'integTest.pegasusPluginDependencies', "'${configurations.pegasusPluginForTesting.join("', '")}'"
