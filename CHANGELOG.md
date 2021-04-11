@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.17.2] - 2021-04-11
+- Fix the default value resolution logic in Avro schema translator to match the PDL behavior.
+
 ## [29.17.1] - 2021-04-02
 - Add fluent client api for subresources
 - Update fluent client APIs to include projection mask as input parameter.
@@ -4899,7 +4902,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.17.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.17.2...master
+[29.17.2]: https://github.com/linkedin/rest.li/compare/v29.17.1...v29.17.2
 [29.17.1]: https://github.com/linkedin/rest.li/compare/v29.17.0...v29.17.1
 [29.17.0]: https://github.com/linkedin/rest.li/compare/v29.16.2...v29.17.0
 [29.16.2]: https://github.com/linkedin/rest.li/compare/v29.16.1...v29.16.2
