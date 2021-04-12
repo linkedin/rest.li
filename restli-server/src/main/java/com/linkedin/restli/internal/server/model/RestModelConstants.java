@@ -148,6 +148,9 @@ public interface RestModelConstants
       AbstractMapTemplate[].class
   };
 
+  /*
+   * This doesn't include ActionResult because the enclosed type parameter of ActionResult is what's validated.
+   */
   Class<?>[] VALID_ACTION_RETURN_TYPES = new Class<?>[] {
       Void.TYPE,
       boolean.class,
@@ -167,7 +170,6 @@ public interface RestModelConstants
       FixedTemplate.class,
       AbstractArrayTemplate.class,
       AbstractMapTemplate.class,
-      ActionResult.class,
 
       boolean[].class,
       Boolean[].class,
