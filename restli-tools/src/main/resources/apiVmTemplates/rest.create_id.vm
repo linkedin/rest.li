@@ -15,7 +15,7 @@
 *#
   #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
     #doc($method.schema.doc)
-    public CompletionStage<${spec.keyClassName}> create(
+    public CompletionStage<${spec.keyClassDisplayName}> create(
         ${spec.entityClassName} entity#if($method.requiredParams.size() > 0),#end
         #**##methodParams($method, false)##
       ) {
@@ -26,7 +26,7 @@
   #end
 
   #doc($method.schema.doc)
-  public CompletionStage<${spec.keyClassName}> create(
+  public CompletionStage<${spec.keyClassDisplayName}> create(
       ${spec.entityClassName} entity#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
@@ -37,11 +37,11 @@
       #**##returnEntityParam("false")
     #end
     @SuppressWarnings("unchecked")
-    IdResponseDecoder<${spec.keyClassName}> idResponseDecoder = new IdResponseDecoder<>(
-        (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
+    IdResponseDecoder<${spec.keyClassDisplayName}> idResponseDecoder = new IdResponseDecoder<>(
+        (TypeSpec<${spec.keyClassDisplayName}>) _resourceSpec.getKeyType(),
         _resourceSpec.getKeyParts(),
         _resourceSpec.getComplexKeyType());
-    CreateIdRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new CreateIdRequest<>(
+    CreateIdRequest<${spec.keyClassDisplayName}, ${spec.entityClassName}> request = new CreateIdRequest<>(
         entity,
         Collections.emptyMap(),
         Collections.emptyList(),
@@ -53,13 +53,13 @@
         buildReadOnlyPathKeys(),
         RestliRequestOptions.DEFAULT_OPTIONS,
         null);
-    CompletableFuture<${spec.keyClassName}> result = new CompletableFuture<>();
+    CompletableFuture<${spec.keyClassDisplayName}> result = new CompletableFuture<>();
     Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
         responseTry -> {
           if (responseTry.isFailed()) {
             result.completeExceptionally(responseTry.getError());
           } else {
-            Response<IdResponse<${spec.keyClassName}>> response = responseTry.get();
+            Response<IdResponse<${spec.keyClassDisplayName}>> response = responseTry.get();
             if (response.hasError()) {
               result.completeExceptionally(response.getError());
             } else {

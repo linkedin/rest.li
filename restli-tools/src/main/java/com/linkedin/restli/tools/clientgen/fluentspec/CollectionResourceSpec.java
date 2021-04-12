@@ -33,6 +33,9 @@ import org.apache.commons.lang.ClassUtils;
 public class CollectionResourceSpec extends BaseResourceSpec
 {
   private ClassTemplateSpec _keyClass;
+  private Boolean _useShortKeyClassName;
+  private String _keyTypeRefClassName;
+  private Boolean _useShortKeyTypeRefClassName;
   private final ComplexKeySpec _complexKeySpec;
 
   public CollectionResourceSpec(ResourceSchema resourceSchema, TemplateSpecGenerator templateSpecGenerator,
@@ -44,6 +47,15 @@ public class CollectionResourceSpec extends BaseResourceSpec
         keyParamTypeSchema,
         this
     );
+
+    String declaredKeyClassName = getClassRefNameForSchema(getResource().getCollection().getIdentifier().getType());
+    String keyClassName = getKeyClassName();
+
+    if (!hasComplexKey() &&
+        !SpecUtils.checkIsSameClass(keyClassName, declaredKeyClassName))
+    {
+      _keyTypeRefClassName = declaredKeyClassName;
+    }
   }
 
   public List<ActionMethodSpec> getActions()
@@ -71,6 +83,7 @@ public class CollectionResourceSpec extends BaseResourceSpec
   }
 
   // For simple key
+  // Note: this will dereference TypeRef
   public ClassTemplateSpec getKeyClass()
   {
     if (_keyClass == null)
@@ -83,6 +96,11 @@ public class CollectionResourceSpec extends BaseResourceSpec
   public boolean hasComplexKey()
   {
     return _complexKeySpec != null;
+  }
+
+  public boolean hasKeyTypeRef()
+  {
+    return  _keyTypeRefClassName != null;
   }
 
   public String getKeyClassName()
@@ -107,6 +125,55 @@ public class CollectionResourceSpec extends BaseResourceSpec
     return SpecUtils.getClassName(getKeyClass());
   }
 
+  public String getKeyClassDisplayName()
+  {
+    return getKeyClassDisplayName(true);
+  }
+
+  public String getKeyClassDisplayName(boolean parameterized)
+  {
+    if (hasComplexKey())
+    {
+      // Note: ClassUtils cannot shorten parameterized class
+      return getKeyClassName(parameterized);
+    }
+
+    if(_useShortKeyClassName == null)
+    {
+      // Need to check here  && while importing due to
+      // undeterministic order in template resolving
+      if(!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+          ClassUtils.getShortClassName(getKeyClassName()), getKeyClassName()))
+      {
+        _useShortKeyClassName = true;
+      }
+    }
+    return _useShortKeyClassName ? ClassUtils.getShortClassName(getKeyClassName(parameterized))
+        : getKeyClassName(parameterized);
+  }
+
+
+  public String getKeyTypeRefClassName()
+  {
+    return _keyTypeRefClassName;
+  }
+
+  public String getKeyTypeRefClassDisplayName()
+  {
+    if (_useShortKeyTypeRefClassName == null)
+    {
+      // Need to check here  && while importing due to
+      // undeterministic order in template resolving
+      if(!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+          ClassUtils.getShortClassName(getKeyClassName()), getKeyClassName()))
+      {
+        _useShortKeyTypeRefClassName = true;
+      }
+    }
+    return _useShortKeyTypeRefClassName? ClassUtils.getShortClassName(_keyTypeRefClassName)
+        : _keyTypeRefClassName;
+  }
+
   public String getIdName()
   {
     return getResource().getCollection().getIdentifier().getName();
@@ -116,7 +183,17 @@ public class CollectionResourceSpec extends BaseResourceSpec
   public Set<String> getResourceSpecificImports(Set<String> imports)
   {
     imports = super.getResourceSpecificImports(imports);
-    // TODO: Handle keyTypeRefClass imports for ComplexKey
+    if (hasKeyTypeRef())
+    {
+      if(!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+          ClassUtils.getShortClassName(_keyTypeRefClassName), _keyTypeRefClassName))
+      {
+        imports.add(_keyTypeRefClassName);
+        _useShortKeyTypeRefClassName = true;
+      }
+
+    }
+
     if (hasComplexKey())
     {
       imports.add(ComplexResourceKey.class.getName());
@@ -130,6 +207,16 @@ public class CollectionResourceSpec extends BaseResourceSpec
       {
         imports.add(_complexKeySpec.getParamKeyClassName());
       }
+    }
+    else
+    {
+      if(!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+          ClassUtils.getShortClassName(getKeyClassName()), getKeyClassName()))
+      {
+        _useShortKeyClassName = true;
+        imports.add(getKeyClassName());
+      }
+
     }
 
     return imports;
