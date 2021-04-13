@@ -65,8 +65,18 @@ fi
 while sleep 9m; do echo "[Ping] Keeping Travis job alive ($((SECONDS / 60)) minutes)"; done &
 WAITER_PID=$!
 
-# Build and publish to Bintray
-echo "All checks passed, attempting to publish Rest.li $VERSION to Bintray..."
+# TODO: This just publishes to the test-repo for now, delete the Bintray publish step once no longer testing
+# Publish to JFrog Artifactory
+echo "All checks passed, attempting to publish Rest.li $VERSION to JFrog Artifactory..."
+./gradlew artifactoryPublish
+if [ $? = 0 ]; then
+  echo "Successfully published Rest.li $VERSION to JFrog Artifactory."
+else
+  echo "Publish to JFrog Artifactory failed (continuing since this is only for testing for now)"
+fi
+
+# Publish to Bintray
+echo "Attempting to publish Rest.li $VERSION to Bintray..."
 ./gradlew bintrayUpload
 EXIT_CODE=$?
 
