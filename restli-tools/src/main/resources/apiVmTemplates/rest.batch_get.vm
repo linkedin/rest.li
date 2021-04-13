@@ -14,10 +14,10 @@
    limitations under the License.
 *#
 #if($is_interface)
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+  #if($method.hasOptionalParams() || $method.hasProjectionParams())
     #doc($method.schema.doc)
     public CompletionStage<Map<${spec.keyClassDisplayName}, EntityResponse<${spec.entityClassName}>>> batchGet(
-        Set<$spec.keyClassDisplayName> ids#if($method.requiredParams.size() > 0),#end
+        Set<$spec.keyClassDisplayName> ids#if($method.hasRequiredParams()),#end
         #**##methodParams($method, false)##
         );
   #end
@@ -29,10 +29,10 @@
       );
 #optionalParamClass($method)
 #else ## is_interface
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+  #if($method.hasOptionalParams() || $method.hasProjectionParams())
     #doc($method.schema.doc)
     public CompletionStage<Map<${spec.keyClassDisplayName}, EntityResponse<${spec.entityClassName}>>> batchGet(
-        Set<$spec.keyClassDisplayName> ids#if($method.requiredParams.size() > 0),#end
+        Set<$spec.keyClassDisplayName> ids#if($method.hasRequiredParams()),#end
         #**##methodParams($method, false)##
         ) {
       return batchGet(ids,

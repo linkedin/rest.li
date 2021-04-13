@@ -44,7 +44,7 @@ public class BatchFindRequest<V extends RecordTemplate>
 {
   private final CompoundKey _assocKey;
 
-  BatchFindRequest(Map<String, String> headers,
+  public BatchFindRequest(Map<String, String> headers,
                   List<HttpCookie> cookies,
                   Class<V> templateClass,
                   ResourceSpec resourceSpec,

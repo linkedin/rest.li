@@ -46,7 +46,9 @@ public class AssociationResourceSpec extends BaseResourceSpec
   private Set<String> assockeyTypeImports = new LinkedHashSet<>(4); // import assocKeyTYpe if not primitive
   private List<ActionMethodSpec> _resourceActions;
   private List<ActionMethodSpec> _entityActions;
-
+  private List<RestMethodSpec> _restMethods;
+  private List<FinderMethodSpec> _finders;
+  private List<BatchFinderMethodSpec> _batchFinders;
 
   public AssociationResourceSpec(ResourceSchema resourceSchema, TemplateSpecGenerator templateSpecGenerator,
       String sourceIdlName, DataSchemaResolver schemaResolver)
@@ -72,25 +74,28 @@ public class AssociationResourceSpec extends BaseResourceSpec
   @Override
   public List<RestMethodSpec> getRestMethods()
   {
-    RestMethodSchemaArray methodSchemaArray = getResource().getAssociation().getMethods();
-    if (methodSchemaArray == null)
+    if (_restMethods == null)
     {
-      return Collections.emptyList();
-    }
-
-    List<RestMethodSpec> methods = new ArrayList<>(getResource().getAssociation().getMethods().size());
-    for (RestMethodSchema methodSchema : getResource().getAssociation().getMethods())
-    {
-      String methodType = methodSchema.getMethod().toUpperCase();
-      if (methodType.equals(ResourceMethod.CREATE.name()) || methodType.equals(ResourceMethod.BATCH_CREATE.name()))
+      RestMethodSchemaArray methodSchemaArray = getResource().getAssociation().getMethods();
+      if (methodSchemaArray == null)
       {
-        // Association resource never supports create and batch_create
-        // create and batch_create in association resource will be skipped for now
-        continue;
+        _restMethods = Collections.emptyList();
+        return _restMethods;
       }
-      methods.add(new RestMethodSpec(methodSchema, this));
+      _restMethods = new ArrayList<>(methodSchemaArray.size());
+      for (RestMethodSchema methodSchema : methodSchemaArray)
+      {
+        String methodType = methodSchema.getMethod().toUpperCase();
+        if (methodType.equals(ResourceMethod.CREATE.name()) || methodType.equals(ResourceMethod.BATCH_CREATE.name()))
+        {
+          // Association resource never supports create and batch_create
+          // create and batch_create in association resource will be skipped for now
+          continue;
+        }
+        _restMethods.add(new RestMethodSpec(methodSchema, this));
+      }
     }
-    return methods;
+    return _restMethods;
   }
 
   @Override
@@ -138,6 +143,40 @@ public class AssociationResourceSpec extends BaseResourceSpec
     }
 
     return _entityActions;
+  }
+
+  public List<FinderMethodSpec> getFinders()
+  {
+    if (_finders == null)
+    {
+      if (getResource().getAssociation().getFinders() == null)
+      {
+        _finders =  Collections.emptyList();
+        return _finders;
+      }
+      _finders = new ArrayList<>(getResource().getAssociation().getFinders().size());
+      getResource().getAssociation()
+          .getFinders()
+          .forEach(finderSchema -> _finders.add(new FinderMethodSpec(finderSchema, this)));
+    }
+    return _finders;
+  }
+
+  public List<BatchFinderMethodSpec> getBatchFinders()
+  {
+    if (_batchFinders == null)
+    {
+      if (getResource().getAssociation().getBatchFinders() == null)
+      {
+        _batchFinders = Collections.emptyList();
+        return _batchFinders;
+      }
+      _batchFinders = new ArrayList<>(getResource().getAssociation().getBatchFinders().size());
+      getResource().getAssociation()
+          .getBatchFinders()
+          .forEach(finderSchema -> _batchFinders.add(new BatchFinderMethodSpec(finderSchema, this)));
+    }
+    return _batchFinders;
   }
 
   public String getIdName()

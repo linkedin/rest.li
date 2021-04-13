@@ -32,6 +32,7 @@ import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateIdEntityRequest;
 import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.BatchDeleteRequest;
+import com.linkedin.restli.client.BatchFindRequest;
 import com.linkedin.restli.client.BatchGetEntityRequest;
 import com.linkedin.restli.client.BatchPartialUpdateEntityRequest;
 import com.linkedin.restli.client.BatchPartialUpdateRequest;
@@ -39,6 +40,7 @@ import com.linkedin.restli.client.BatchUpdateRequest;
 import com.linkedin.restli.client.CreateIdEntityRequest;
 import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.DeleteRequest;
+import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.GetAllRequest;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.client.PartialUpdateEntityRequest;
@@ -46,8 +48,10 @@ import com.linkedin.restli.client.PartialUpdateRequest;
 import com.linkedin.restli.client.UpdateRequest;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.common.ActionResponse;
+import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.BatchCreateIdEntityResponse;
 import com.linkedin.restli.common.BatchCreateIdResponse;
+import com.linkedin.restli.common.BatchFinderCriteriaResult;
 import com.linkedin.restli.common.CollectionRequest;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ComplexResourceKey;
@@ -247,7 +251,6 @@ public class BaseResourceSpec
             }
         );
       }
-
       for (RestMethodSpec methodSpec : getRestMethods())
       {
         ResourceMethod method = ResourceMethod.fromString(methodSpec.getMethod());
@@ -336,7 +339,17 @@ public class BaseResourceSpec
             break;
         }
       }
-
+      if (!getFinders().isEmpty())
+      {
+        imports.add(FindRequest.class.getName());
+        imports.add(CollectionResponse.class.getName());
+      }
+      if (!getBatchFinders().isEmpty())
+      {
+        imports.add(BatchFindRequest.class.getName());
+        imports.add(BatchCollectionResponse.class.getName());
+        imports.add(BatchFinderCriteriaResult.class.getName());
+      }
       // Entity class has a higher priority to use short name
       // than complex key, etc.
       if (_entityClassName == null)
@@ -360,45 +373,51 @@ public class BaseResourceSpec
 
       // Add param classes to imports
       Stream.of(
-                    getRestMethods()
-                      .stream()
-                      .map(RestMethodSpec::getRequiredParams)
-                      .flatMap(List::stream),
-                    getRestMethods()
-                      .stream()
-                      .map(RestMethodSpec::getOptionalParams)
-                      .flatMap(List::stream),
-                    getRestMethods()
-                      .stream()
-                      .map(RestMethodSpec::getSupportedProjectionParams)
-                      .flatMap(Set::stream),
-                    getActions()
-                      .stream()
-                      .map(ActionMethodSpec::getParameters)
-                      .flatMap(List::stream)
-                )
+          getRestMethods()
+              .stream()
+              .map(RestMethodSpec::getAllParameters).
+              flatMap(List::stream),
+          getActions()
+              .stream()
+              .map(ActionMethodSpec::getAllParameters)
+              .flatMap(List::stream),
+          getFinders()
+              .stream()
+              .map(MethodSpec::getAllParameters)
+              .flatMap(List::stream),
+          getBatchFinders()
+              .stream()
+              .map(MethodSpec::getAllParameters)
+              .flatMap(List::stream))
           .reduce(Stream::concat)
           .orElseGet(Stream::empty)
           .forEach(paramSpec ->
-                      {
-                        if (!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
-                              ClassUtils.getShortClassName(paramSpec.getParamClassName()),
-                                                           paramSpec.getParamClassName()))
-                        {
-                          imports.add(paramSpec.getParamClassName());
-                          paramSpec.setUsingShortClassName(true);
-                        }
+              {
+                if (!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+                      ClassUtils.getShortClassName(paramSpec.getParamClassName()),
+                                                   paramSpec.getParamClassName()))
+                {
+                  imports.add(paramSpec.getParamClassName());
+                  paramSpec.setUsingShortClassName(true);
+                }
 
-                        if (
-                            paramSpec.hasParamTypeRef() &&
-                            !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
-                            ClassUtils.getShortClassName(paramSpec.getParamTypeRefClassName()),
-                            paramSpec.getParamTypeRefClassName()))
-                        {
-                          imports.add(paramSpec.getParamTypeRefClassName());
-                          paramSpec.setUsingShortTypeRefClassName(true);
-                        }
-                      }
+                if (paramSpec.hasParamTypeRef() &&
+                    !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+                    ClassUtils.getShortClassName(paramSpec.getParamTypeRefClassName()),
+                    paramSpec.getParamTypeRefClassName()))
+                {
+                  imports.add(paramSpec.getParamTypeRefClassName());
+                  paramSpec.setUsingShortTypeRefClassName(true);
+                }
+                if (paramSpec.isArray() &&
+                    !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+                            ClassUtils.getShortClassName(paramSpec.getItemClassName()),
+                            paramSpec.getItemClassName()))
+                {
+                  imports.add(paramSpec.getItemClassName());
+                  paramSpec.setUsingShortItemClassName(true);
+                }
+              }
           );
 
       // Sub resources are handled recursively
@@ -438,6 +457,16 @@ public class BaseResourceSpec
   }
 
   public List<ActionMethodSpec> getActions()
+  {
+    return Collections.emptyList();
+  }
+
+  public List<FinderMethodSpec> getFinders()
+  {
+    return Collections.emptyList();
+  }
+
+  public List<BatchFinderMethodSpec> getBatchFinders()
   {
     return Collections.emptyList();
   }
@@ -708,5 +737,4 @@ public class BaseResourceSpec
   {
     return _importCheckConflict;
   }
-
 }

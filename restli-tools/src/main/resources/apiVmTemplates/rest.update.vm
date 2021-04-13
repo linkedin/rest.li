@@ -14,13 +14,13 @@
    limitations under the License.
 *#
 #if($is_interface)
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+  #if($method.hasOptionalParams() || $method.hasProjectionParams())
     #doc($method.schema.doc)
     public CompletionStage<Void> update(
         #if (!${spec.getResource().hasSimple()})
           $spec.keyClassDisplayName $spec.idName,
         #end
-        ${spec.entityClassName} entity#if($method.requiredParams.size() > 0),#end
+        ${spec.entityClassName} entity#if($method.hasRequiredParams()),#end
         #**##methodParams($method, false)##
       );
   #end
@@ -35,13 +35,13 @@
     );
 #optionalParamClass($method)
 #else ## is_interface
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+  #if($method.hasOptionalParams() || $method.hasProjectionParams())
     #doc($method.schema.doc)
     public CompletionStage<Void> update(
         #if (!${spec.getResource().hasSimple()})
           $spec.keyClassDisplayName $spec.idName,
         #end
-        ${spec.entityClassName} entity#if($method.requiredParams.size() > 0),#end
+        ${spec.entityClassName} entity#if($method.hasRequiredParams()),#end
         #**##methodParams($method, false)##
       ) {
       return update(#if(${spec.idName})$spec.idName,#end

@@ -53,7 +53,7 @@ import java.util.Set;
 
 import static com.linkedin.restli.examples.AssociationResourceHelpers.DB;
 import static com.linkedin.restli.examples.AssociationResourceHelpers.SIMPLE_COMPOUND_KEY;
-
+import static com.linkedin.restli.examples.AssociationResourceHelpers.URL_COMPOUND_KEY;
 
 /**
  * Demonstrates an assocation resource keyed by string.
@@ -125,6 +125,14 @@ public class AssociationsResource extends AssociationResourceTemplate<Message>
   @Finder("assocKeyFinder")
   public List<Message> assocKeyFinder(@AssocKeyParam("src") String src)
   {
+    if (src.equals(SIMPLE_COMPOUND_KEY.getPartAsString("src")))
+    {
+      return Collections.singletonList(DB.get(SIMPLE_COMPOUND_KEY));
+    }
+    else if (src.equals(URL_COMPOUND_KEY.getPartAsString("src")))
+    {
+      return Collections.singletonList(DB.get(URL_COMPOUND_KEY));
+    }
     return Collections.emptyList();
   }
 

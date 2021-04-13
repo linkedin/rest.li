@@ -14,13 +14,13 @@
    limitations under the License.
 *#
 #if($is_interface)
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+  #if($method.hasOptionalParams() || $method.hasProjectionParams())
     #doc($method.schema.doc)
     public CompletionStage<${spec.entityClassName}> partialUpdateAndGet(
       #if (!${spec.getResource().hasSimple()})
           $spec.keyClassDisplayName $spec.idName,
       #end
-        PatchRequest<${spec.entityClassName}> entity#if($method.requiredParams.size() > 0),#end
+        PatchRequest<${spec.entityClassName}> entity#if($method.hasRequiredParams()),#end
         #**##methodParams($method, false)##
       );
   #end
@@ -34,13 +34,13 @@
       #**##methodParams($method, true)##
       );
 #else ## is_interface
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+  #if($method.hasOptionalParams() || $method.hasProjectionParams())
     #doc($method.schema.doc)
     public CompletionStage<${spec.entityClassName}> partialUpdateAndGet(
       #if (!${spec.getResource().hasSimple()})
           $spec.keyClassDisplayName $spec.idName,
       #end
-        PatchRequest<${spec.entityClassName}> entity#if($method.requiredParams.size() > 0),#end
+        PatchRequest<${spec.entityClassName}> entity#if($method.hasRequiredParams()),#end
         #**##methodParams($method, false)##
       ) {
       return partialUpdateAndGet(#if(${spec.idName})$spec.idName,#end

@@ -38,7 +38,8 @@ public class ActionSetResourceSpec extends BaseResourceSpec
   public List<ActionMethodSpec> getResourceActions()
   {
     if (_resourceActions == null) {
-      if (getResource().getActionsSet().getActions() == null) {
+      if (getResource().getActionsSet().getActions() == null)
+      {
         _resourceActions = Collections.emptyList();
       }
 

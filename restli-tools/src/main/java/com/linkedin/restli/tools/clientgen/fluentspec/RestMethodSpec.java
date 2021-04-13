@@ -17,36 +17,21 @@
 package com.linkedin.restli.tools.clientgen.fluentspec;
 
 import com.linkedin.data.DataMapBuilder;
-import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.common.RestConstants;
-import com.linkedin.restli.restspec.ParameterSchema;
+import com.linkedin.restli.restspec.MetadataSchema;
+import com.linkedin.restli.restspec.ParameterSchemaArray;
 import com.linkedin.restli.restspec.RestMethodSchema;
 import com.linkedin.restli.server.annotations.ReturnEntity;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 
-public class RestMethodSpec
+public class RestMethodSpec extends MethodSpec
 {
   private final RestMethodSchema _schema;
-  private final BaseResourceSpec _root;
-  private List<ParameterSpec> _requiredParams;
-  private List<ParameterSpec> _optionalParams;
-  private static final ParameterSchema START_SCHEMA = new ParameterSchema().setOptional(true)
-      .setName(RestConstants.START_PARAM)
-      .setType(DataSchemaConstants.INTEGER_TYPE);
-  private static final ParameterSchema COUNT_SCHEMA = new ParameterSchema().setOptional(true)
-      .setName(RestConstants.COUNT_PARAM)
-      .setType(DataSchemaConstants.INTEGER_TYPE);
 
   public RestMethodSpec(RestMethodSchema schema, BaseResourceSpec root)
   {
-    _schema = schema;
-    _root = root;
+    super(root);
+    this._schema = schema;
   }
 
   public RestMethodSchema getSchema()
@@ -54,52 +39,22 @@ public class RestMethodSpec
     return this._schema;
   }
 
+  @Override
   public String getMethod()
   {
     return _schema.getMethod();
   }
 
-  public boolean hasParams()
+  @Override
+  public ParameterSchemaArray getParameters()
   {
-    return (_schema.getParameters() != null && !_schema.getParameters().isEmpty())
-        || getSupportedProjectionParams().size() > 0;
+    return _schema.getParameters() == null ? new ParameterSchemaArray() : _schema.getParameters();
   }
 
-  public List<ParameterSpec> getRequiredParams()
+  @Override
+  public boolean isPagingSupported()
   {
-    if (_requiredParams != null)
-    {
-      return _requiredParams;
-    }
-    if (_schema.getParameters() == null)
-    {
-      return Collections.emptyList();
-    }
-    _requiredParams = _schema.getParameters().stream().filter(p -> !p.hasOptional() || !p.isOptional())
-        .map(p -> new ParameterSpec(p, _root))
-        .collect(Collectors.toList());
-    return _requiredParams;
-  }
-
-  public List<ParameterSpec> getOptionalParams()
-  {
-    if (_optionalParams != null)
-    {
-      return _optionalParams;
-    }
-    if (_schema.getParameters() == null)
-    {
-      return Collections.emptyList();
-    }
-    _optionalParams = _schema.getParameters().stream().filter(p -> p.hasOptional() && p.isOptional())
-        .map(p -> new ParameterSpec(p, _root))
-        .collect(Collectors.toList());
-    if (_schema.getMethod().equals("get_all") && _schema.hasPagingSupported() && _schema.isPagingSupported())
-    {
-      _optionalParams.add(new ParameterSpec(START_SCHEMA, _root));
-      _optionalParams.add(new ParameterSpec(COUNT_SCHEMA, _root));
-    }
-    return _optionalParams;
+    return getMethod().equals("get_all") && _schema.hasPagingSupported() && _schema.isPagingSupported();
   }
 
   public boolean returnsEntity()
@@ -107,12 +62,16 @@ public class RestMethodSpec
     return _schema.getAnnotations() != null && _schema.getAnnotations().containsKey(ReturnEntity.NAME);
   }
 
-  /**
-   * Returns the optimum size to initialize the maps for query param and query param classes.
-   */
+  @Override
+  protected MetadataSchema getMetadata()
+  {
+    return _schema.getMetadata();
+  }
+
+  @Override
   public int getQueryParamMapSize()
   {
-    int params = (_schema.getParameters() != null && !_schema.getParameters().isEmpty()) ? _schema.getParameters().size() : 0;
+    int params = getParameters().size();
     if (returnsEntity())
     {
       params++;
@@ -128,44 +87,6 @@ public class RestMethodSpec
         params++;
     }
     return DataMapBuilder.getOptimumHashMapCapacityFromSize(params);
-  }
-
-  public Set<ProjectionParameterSpec> getSupportedProjectionParams()
-  {
-    switch (ResourceMethod.fromString(_schema.getMethod()))
-    {
-      case GET:
-      case BATCH_GET:
-        return Collections.singleton(new ProjectionParameterSpec(RestConstants.FIELDS_PARAM, SpecUtils.FIELDS_MASK_METHOD_NAME, _root.getEntityClass(), _root));
-      case CREATE:
-      case BATCH_CREATE:
-      case PARTIAL_UPDATE:
-      case BATCH_PARTIAL_UPDATE:
-        if (returnsEntity())
-        {
-          return Collections.singleton(new ProjectionParameterSpec(RestConstants.FIELDS_PARAM, SpecUtils.FIELDS_MASK_METHOD_NAME, _root.getEntityClass(), _root));
-        }
-        else
-        {
-          return Collections.emptySet();
-        }
-      case FINDER:
-      case BATCH_FINDER:
-      case GET_ALL:
-        Set<ProjectionParameterSpec> collectionParts = new HashSet<>();
-        collectionParts.add(new ProjectionParameterSpec(RestConstants.FIELDS_PARAM, SpecUtils.FIELDS_MASK_METHOD_NAME, _root.getEntityClass(), _root));
-        if (_schema.getMetadata() != null)
-        {
-          collectionParts.add(new ProjectionParameterSpec(RestConstants.METADATA_FIELDS_PARAM, SpecUtils.METADATA_MASK_METHOD_NAME, _root.classToTemplateSpec(_schema.getMetadata().getType()), _root));
-        }
-        if (_schema.hasPagingSupported() && _schema.isPagingSupported())
-        {
-          // TODO: add suppport for paging projection.
-        }
-        return collectionParts;
-      default:
-        return Collections.emptySet();
-    }
   }
 }
 

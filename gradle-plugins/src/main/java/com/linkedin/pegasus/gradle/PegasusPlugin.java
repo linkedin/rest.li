@@ -1908,7 +1908,7 @@ public class PegasusPlugin implements Plugin<Project>
         {
           task.dependsOn(project.getConfigurations().getByName("dataTemplate"));
           task.setInputDir(idlDir);
-          task.setResolverPath(dataModels);
+          task.setResolverPath(dataModels.plus(project.getConfigurations().getByName("restClientCompile")));
           task.setRuntimeClasspath(project.getConfigurations().getByName("dataModel")
               .plus(project.getConfigurations().getByName("dataTemplate").getArtifacts().getFiles()));
           task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
