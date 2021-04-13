@@ -96,7 +96,7 @@ public class RetryClientTest
     RetryClient client = new RetryClient(
         dynamicClient,
         balancer,
-        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
         SystemClock.instance(),
@@ -121,7 +121,7 @@ public class RetryClientTest
     RetryClient client = new RetryClient(
         dynamicClient,
         balancer,
-        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
         SystemClock.instance(),
@@ -146,7 +146,7 @@ public class RetryClientTest
     RetryClient client = new RetryClient(
         dynamicClient,
         balancer,
-        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
         SystemClock.instance(),
@@ -172,7 +172,7 @@ public class RetryClientTest
     RetryClient client = new RetryClient(
         dynamicClient,
         balancer,
-        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
         SystemClock.instance(),
@@ -201,7 +201,7 @@ public class RetryClientTest
     RetryClient client = new RetryClient(
         dynamicClient,
         balancer,
-        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
         SystemClock.instance(),
@@ -282,7 +282,7 @@ public class RetryClientTest
     RetryClient client = new RetryClient(
         dynamicClient,
         balancer,
-        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
         SystemClock.instance(),
@@ -308,7 +308,7 @@ public class RetryClientTest
     RetryClient client = new RetryClient(
         dynamicClient,
         balancer,
-        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
         SystemClock.instance(),
@@ -339,7 +339,7 @@ public class RetryClientTest
     RetryClient client = new RetryClient(
         dynamicClient,
         balancer,
-        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
         clock,
@@ -395,7 +395,7 @@ public class RetryClientTest
     RetryClient client = new RetryClient(
         dynamicClient,
         balancer,
-        D2ClientConfig.DEAULT_RETRY_LIMIT,
+        D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
         clock,

@@ -14,16 +14,16 @@
    limitations under the License.
 *#
   @SuppressWarnings("unchecked")
-  private static final KeyValueRecordFactory<${spec.keyClassName}, ${spec.entityClassName}> UPDATE_VALUE_FACTORY = new KeyValueRecordFactory<${spec.keyClassName}, ${spec.entityClassName}>(
-      (TypeSpec<${spec.keyClassName}>) _resourceSpec.getKeyType(),
+  private static final KeyValueRecordFactory<${spec.keyClassDisplayName}, ${spec.entityClassName}> UPDATE_VALUE_FACTORY = new KeyValueRecordFactory<${spec.keyClassDisplayName}, ${spec.entityClassName}>(
+      (TypeSpec<${spec.keyClassDisplayName}>) _resourceSpec.getKeyType(),
       _resourceSpec.getComplexKeyType(),
       _resourceSpec.getKeyParts(),
       (TypeSpec<${spec.entityClassName}>) _resourceSpec.getValueType());
 
   #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
     #doc($method.schema.doc)
-    public CompletionStage<Map<${spec.keyClassName}, UpdateStatus>> batchUpdate(
-        Map<$spec.keyClassName, ${spec.entityClassName}> entities#if($method.requiredParams.size() > 0),#end
+    public CompletionStage<Map<${spec.keyClassDisplayName}, UpdateStatus>> batchUpdate(
+        Map<$spec.keyClassDisplayName, ${spec.entityClassName}> entities#if($method.requiredParams.size() > 0),#end
         #**##methodParams($method, false)##
       ) {
       return batchUpdate(entities,
@@ -33,17 +33,17 @@
   #end
 
   #doc($method.schema.doc)
-  public CompletionStage<Map<${spec.keyClassName}, UpdateStatus>> batchUpdate(
-      Map<$spec.keyClassName, ${spec.entityClassName}> entities#if( $method.hasParams()),#end
+  public CompletionStage<Map<${spec.keyClassDisplayName}, UpdateStatus>> batchUpdate(
+      Map<$spec.keyClassDisplayName, ${spec.entityClassName}> entities#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
     Map<String, Class<?>> queryParamClasses = new HashMap<>($method.getQueryParamMapSize());
     #fillQueryParams($method)
     queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, entities.keySet());
-    CollectionRequest<KeyValueRecord<$spec.keyClassName, ${spec.entityClassName}>> inputs = FluentClientUtils.buildBatchKVInputs(
+    CollectionRequest<KeyValueRecord<$spec.keyClassDisplayName, ${spec.entityClassName}>> inputs = FluentClientUtils.buildBatchKVInputs(
         entities, UPDATE_VALUE_FACTORY);
-    BatchUpdateRequest<$spec.keyClassName, ${spec.entityClassName}> request = new BatchUpdateRequest<>(
+    BatchUpdateRequest<$spec.keyClassDisplayName, ${spec.entityClassName}> request = new BatchUpdateRequest<>(
         Collections.emptyMap(),
         Collections.emptyList(),
         inputs,
@@ -55,13 +55,13 @@
         RestliRequestOptions.DEFAULT_OPTIONS,
         entities,
         null);
-    CompletableFuture<Map<${spec.keyClassName}, UpdateStatus>> result = new CompletableFuture<>();
+    CompletableFuture<Map<${spec.keyClassDisplayName}, UpdateStatus>> result = new CompletableFuture<>();
     Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
         responseTry -> {
           if (responseTry.isFailed()) {
             result.completeExceptionally(responseTry.getError());
           } else {
-            Response<BatchKVResponse<${spec.keyClassName}, UpdateStatus>> response = responseTry.get();
+            Response<BatchKVResponse<${spec.keyClassDisplayName}, UpdateStatus>> response = responseTry.get();
             if (response.hasError()) {
               result.completeExceptionally(response.getError());
             } else {

@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
 
@@ -50,23 +51,46 @@ public class SpecUtils {
   private SpecUtils()
   {
   }
+
+  /**
+   * For checking if two class names are from same class
+   *
+   * This method can be used tell, for example, if declared class name is a TypeRef to the value class
+   *
+   * @param valueClassName the class which has been used a value
+   * @param declaredClassNameToCheck the declared class which might be different than the value class
+   * @return true if two names are pointing to same class, false otherwise
+   */
+  public static boolean checkIsSameClass(String valueClassName, String declaredClassNameToCheck)
+  {
+    if (PRIMITIVE_CLASS_NAMES.contains(valueClassName) || PRIMITIVE_CLASS_NAMES.contains(declaredClassNameToCheck))
+    {
+      return ClassUtils.getShortClassName(valueClassName).equals(ClassUtils.getShortClassName(declaredClassNameToCheck));
+    }
+    else
+    {
+      return valueClassName.equals(declaredClassNameToCheck);
+    }
+
+  }
+
   public static String getClassName(ClassTemplateSpec classTemplateSpec) {
     if (classTemplateSpec instanceof PrimitiveTemplateSpec)
     {
       switch (classTemplateSpec.getSchema().getType())
       {
         case INT:
-          return Integer.class.getSimpleName();
+          return Integer.class.getName();
         case DOUBLE:
-          return Double.class.getSimpleName();
+          return Double.class.getName();
         case BOOLEAN:
-          return Boolean.class.getSimpleName();
+          return Boolean.class.getName();
         case STRING:
-          return String.class.getSimpleName();
+          return String.class.getName();
         case LONG:
-          return Long.class.getSimpleName();
+          return Long.class.getName();
         case FLOAT:
-          return Float.class.getSimpleName();
+          return Float.class.getName();
         case BYTES:
           return ByteString.class.getName();
 

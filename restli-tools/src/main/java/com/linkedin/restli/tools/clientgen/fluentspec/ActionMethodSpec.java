@@ -32,12 +32,17 @@ public class ActionMethodSpec
   private final BaseResourceSpec _resourceSpec;
   private final boolean _isEntityAction; // Entity action will need KeyClass and idName from its resource spec
   private boolean _usingShortClassName = false;
+  private String _declaredValuedClassName;
 
   public ActionMethodSpec(ActionSchema actionSchema, BaseResourceSpec resourceSpec, boolean isEntityAction)
   {
     _actionSchema = actionSchema;
     _resourceSpec = resourceSpec;
     _isEntityAction = isEntityAction;
+    String valueClassName = _actionSchema.getReturns();
+    _valueClass = _resourceSpec.classToTemplateSpec(valueClassName);
+    _declaredValuedClassName = valueClassName == null? null: _resourceSpec.getClassRefNameForSchema(valueClassName);
+
   }
 
   public String getName()
@@ -119,4 +124,24 @@ public class ActionMethodSpec
     this._usingShortClassName = usingShortClassName;
   }
 
+  /**
+   * Action methods with return TypeRef are defined as
+   * <blockquote><pre>
+   * {@code @Action}(name = "{@code <actionMethodName>}", returnTyperef={@code TypeRefToReturnType}.class)
+   * public {@code <ReturnType>} {@code <actionMethodName>} (...) {}
+   * </pre></blockquote>
+   *
+   * @return whether this action method's return type has a returnTypeRef
+   */
+  public boolean hasReturnTypeRef()
+  {
+    return hasReturns() && (_declaredValuedClassName != null) &&
+        !SpecUtils.checkIsSameClass(getValueClassName(), _declaredValuedClassName);
+  }
+
+  // TODO: add to imports so can have a shortened display name
+  public String getValueTypeRefClassName()
+  {
+    return _declaredValuedClassName;
+  }
 }

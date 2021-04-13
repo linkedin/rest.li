@@ -35,17 +35,19 @@ import com.linkedin.restli.common.IdEntityResponse;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
 import com.linkedin.restli.examples.greetings.client.ActionsFluentClient;
+import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubFluentClient;
-import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.CreateGreetingFluentClient;
+import com.linkedin.restli.examples.greetings.client.CustomTypes2FluentClient;
 import com.linkedin.restli.examples.greetings.client.GreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.GreetingsFluentClient;
 import com.linkedin.restli.examples.greetings.client.GreetingsOfgreetingsOfgreetingsOfgreetingFluentClient;
@@ -937,6 +939,18 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
 
+
+  // ----- Test TypeRef cases ------
+
+  @Test public void testTypeRef_keyTypeRef() throws Exception
+  {
+    CustomTypes2FluentClient customTypes2FluentClient = new CustomTypes2FluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Assert.assertEquals(customTypes2FluentClient.get(new CustomLong(1L))
+        .toCompletableFuture()
+        .get(5000, TimeUnit.MILLISECONDS)
+        .getId()
+        .longValue(), 1L);
+  }
 
   // ----- utils used for testing ------
 

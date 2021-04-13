@@ -15,8 +15,8 @@
 *#
   #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
     #doc($method.schema.doc)
-    public CompletionStage<Map<${spec.keyClassName}, UpdateStatus>> batchDelete(
-        Set<$spec.keyClassName> ids#if($method.requiredParams.size() > 0),#end
+    public CompletionStage<Map<${spec.keyClassDisplayName}, UpdateStatus>> batchDelete(
+        Set<$spec.keyClassDisplayName> ids#if($method.requiredParams.size() > 0),#end
         #**##methodParams($method, false)##
         ) {
       return batchDelete(ids,
@@ -26,15 +26,15 @@
   #end
 
   #doc($method.schema.doc)
-  public CompletionStage<Map<${spec.keyClassName}, UpdateStatus>> batchDelete(
-      Set<$spec.keyClassName> ids#if( $method.hasParams()),#end
+  public CompletionStage<Map<${spec.keyClassDisplayName}, UpdateStatus>> batchDelete(
+      Set<$spec.keyClassDisplayName> ids#if( $method.hasParams()),#end
       #**##methodParams($method, true)##
       ) {
     Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
     Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
     #fillQueryParams($method)
     queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
-    BatchDeleteRequest<${spec.keyClassName}, ${spec.entityClassName}> request = new BatchDeleteRequest<>(
+    BatchDeleteRequest<${spec.keyClassDisplayName}, ${spec.entityClassName}> request = new BatchDeleteRequest<>(
         Collections.emptyMap(),
         Collections.emptyList(),
         queryParams,
@@ -43,13 +43,13 @@
         ORIGINAL_RESOURCE_PATH,
         buildReadOnlyPathKeys(),
         RestliRequestOptions.DEFAULT_OPTIONS);
-    CompletableFuture<Map<${spec.keyClassName}, UpdateStatus>> result = new CompletableFuture<>();
+    CompletableFuture<Map<${spec.keyClassDisplayName}, UpdateStatus>> result = new CompletableFuture<>();
     Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
         responseTry -> {
           if (responseTry.isFailed()) {
             result.completeExceptionally(responseTry.getError());
           } else {
-            Response<BatchKVResponse<${spec.keyClassName}, UpdateStatus>> response = responseTry.get();
+            Response<BatchKVResponse<${spec.keyClassDisplayName}, UpdateStatus>> response = responseTry.get();
             if (response.hasError()) {
               result.completeExceptionally(response.getError());
             } else {

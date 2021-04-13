@@ -30,11 +30,19 @@ public class ParameterSpec
   // a boolean flag to turn on whether show className as short name
   // Note: need to explicitly turn this flag on during imports checking
   private Boolean _usingShortClassName;
+  private String _declaredTypeRefClassName;
+
 
   public ParameterSpec(ParameterSchema parameterSchema, BaseResourceSpec root)
   {
     _parameterSchema = parameterSchema;
     _root = root;
+    if(_parameterSchema != null) // Excluding projection parameter
+    {
+      String parameterClassType = _parameterSchema.getType();
+      _classTemplateSpec = _root.classToTemplateSpec(parameterClassType);
+      _declaredTypeRefClassName = _root.getClassRefNameForSchema(parameterClassType);
+    }
   }
 
   public String getParamName()
@@ -54,11 +62,18 @@ public class ParameterSpec
 
   public ClassTemplateSpec getParamClass()
   {
-    if (_classTemplateSpec == null)
-    {
-      _classTemplateSpec = _root.classToTemplateSpec(_parameterSchema.getType());
-    }
     return _classTemplateSpec;
+  }
+
+  public boolean hasParamTypeRef()
+  {
+    return !SpecUtils.checkIsSameClass(getParamClassName(), _declaredTypeRefClassName);
+  }
+
+  // TODO: add displayable name
+  public String getParamTypeRefClassName()
+  {
+    return _declaredTypeRefClassName;
   }
 
   public String getParamClassName()

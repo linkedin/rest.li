@@ -17,7 +17,7 @@
     #doc($method.schema.doc)
     public CompletionStage<Void> partialUpdate(
       #if (!${spec.getResource().hasSimple()})
-        $spec.keyClassName $spec.idName,
+        $spec.keyClassDisplayName $spec.idName,
       #end
         PatchRequest<${spec.entityClassName}> entity#if($method.requiredParams.size() > 0),#end
         #**##methodParams($method, false)##
@@ -32,7 +32,7 @@
   #doc($method.schema.doc)
   public CompletionStage<Void> partialUpdate(
     #if (!${spec.getResource().hasSimple()})
-      $spec.keyClassName $spec.idName,
+      $spec.keyClassDisplayName $spec.idName,
     #end
       PatchRequest<${spec.entityClassName}> entity#if( $method.hasParams()),#end
       #**##methodParams($method, true)##

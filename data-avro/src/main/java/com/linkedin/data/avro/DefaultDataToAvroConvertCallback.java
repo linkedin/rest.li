@@ -215,6 +215,17 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
           (_options.getOptionalDefaultMode() == OptionalDefaultMode.TRANSLATE_TO_NULL && isTranslatedUnionMember) ||
           (fieldValue == Data.NULL));
     }
+    else if (fieldValue == null)
+    {
+      // If the default specified at parent level doesn't specify a value for the field, use the default specified at
+      // field level.
+      fieldValue = field.getDefault();
+      if (fieldValue == null)
+      {
+        throw new IllegalArgumentException(
+            message(path, "Cannot translate required field without default."));
+      }
+    }
     Object resultFieldValue = translate(path, fieldValue, fieldDataSchema);
     _newDefaultSchema = fieldDataSchema;
     return resultFieldValue;
