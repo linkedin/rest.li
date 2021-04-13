@@ -1,0 +1,93 @@
+/*
+   Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+/**
+ * The purpose of this script is to configure the publications (and create the associated tasks) for a sub-project.
+ */
+apply plugin: 'maven-publish'
+apply plugin: 'java-library'
+
+def pomConfig = {
+  resolveStrategy = Closure.DELEGATE_FIRST // needed for the description to be included for some reason
+  name project.name // sub-project name
+  packaging 'jar'
+  description 'Rest.li is a framework for building robust, scalable service architectures using dynamic discovery and simple asychronous type-checked REST + JSON APIs.'
+  url 'https://rest.li'
+  licenses {
+    license {
+      name 'The Apache Software License, Version 2.0'
+      url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+      distribution 'repo'
+    }
+  }
+  developers {
+    // TODO: add developers
+  }
+  scm {
+    url 'git@github.com:linkedin/rest.li.git'
+    connection 'scm:git:git@github.com:linkedin/rest.li.git'
+    developerConnection 'scm:git:git@github.com:linkedin/rest.li.git'
+  }
+}
+
+// Closure that injects extra metadata during POM generation
+def manipulatePomXml = {
+  def root = asNode()
+  def children = root.children()
+
+  // Prefer appending POM info before dependencies for readability (helps with debugging)
+  if (children.last().name().toString().endsWith('dependencies')) {
+    children.get(children.size() - 2) + pomConfig
+  } else {
+    children.last() + pomConfig
+  }
+}
+
+// Define all publications for this sub-project.
+// For some publication "XXX", this creates a task "generatePomFileForXXXPublication", which generates the Maven (.pom) publication.
+publishing {
+  publications {
+    // Define the "release" publication
+    release(MavenPublication) {
+      from components.java
+
+      afterEvaluate {
+        // Add all extra archives (sources, javadoc, any custom archives e.g. all)
+        project.configurations.archives.allArtifacts.forEach {
+          if (it.classifier) {
+            artifact it
+          }
+        }
+      }
+
+      groupId project.group
+      artifactId project.name // sub-project name
+      version project.version
+      pom.withXml manipulatePomXml
+    }
+  }
+}
+
+// Utility task to assert that all to-be-published artifacts exist (allows us to safely decouple build and publish tasks)
+task assertArtifactsExist() {
+  doLast {
+    final Set<File> missingArtifacts = configurations.archives.allArtifacts.file.findAll { !it.exists() }
+    if (missingArtifacts) {
+      throw new GradleException(
+          "Cannot perform publish. The project likely hasn't been built. Missing artifacts ${missingArtifacts}")
+    }
+  }
+}

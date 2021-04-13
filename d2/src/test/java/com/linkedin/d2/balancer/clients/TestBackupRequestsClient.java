@@ -61,6 +61,7 @@ import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+import com.linkedin.test.util.retry.SingleRetry;
 import com.linkedin.util.clock.SystemClock;
 import java.io.IOException;
 import java.net.URI;
@@ -232,7 +233,7 @@ public class TestBackupRequestsClient
   /**
    * Backup Request should still work when a hint is given together with the flag indicating that the hint is only a preference, not requirement.
    */
-  @Test(invocationCount = 3, dataProvider = "isD2Async")
+  @Test(invocationCount = 3, dataProvider = "isD2Async", retryAnalyzer = SingleRetry.class) // Appears to be flaky in CI
   public void testRequestWithHint(boolean isD2Async) throws Exception
   {
     int responseDelayNano = 100000000; //1s till response comes back
