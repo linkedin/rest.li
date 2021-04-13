@@ -28,7 +28,9 @@ import org.apache.commons.lang.ClassUtils;
 public class ComplexKeySpec
 {
   private final String _keyKeyClassName;
+  private Boolean _useShortKeyKeyClassName;
   private final String _paramKeyClassName;
+  private Boolean _useShortParamKeyClassName;
   private final BaseResourceSpec _baseResourceSpec;
   private String _parameterizedSignature = null;
 
@@ -41,17 +43,14 @@ public class ComplexKeySpec
     this._paramKeyClassName = _baseResourceSpec.getJavaBindTypeName(paramKeyType);
   }
 
-  public String getParameterizedSignature(Map<String, String> importNameConflict)
+  public String getParameterizedSignature()
   {
     if (_parameterizedSignature == null)
     {
-      String keyKeyClassNameShort = ClassUtils.getShortClassName(_keyKeyClassName);
-      String paramKeyClassNameShort = ClassUtils.getShortClassName(_paramKeyClassName);
       _parameterizedSignature = String.format("ComplexResourceKey<%s, %s>",
-          SpecUtils.checkIfShortNameConflictAndUpdateMapping(importNameConflict, keyKeyClassNameShort, _keyKeyClassName)?
-           _keyKeyClassName: keyKeyClassNameShort,
-          SpecUtils.checkIfShortNameConflictAndUpdateMapping(importNameConflict, keyKeyClassNameShort, _keyKeyClassName)?
-          _paramKeyClassName:paramKeyClassNameShort);
+          getKeyKeyClassDisplayName(),
+          getParamKeyClassDisplayName()
+      );
     }
     return _parameterizedSignature;
   }
@@ -61,8 +60,40 @@ public class ComplexKeySpec
     return _keyKeyClassName;
   }
 
+  public String getKeyKeyClassDisplayName()
+  {
+    if (_useShortKeyKeyClassName == null)
+    {
+      _useShortKeyKeyClassName =
+          !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_baseResourceSpec.getImportCheckConflict(),
+              ClassUtils.getShortClassName(_keyKeyClassName), _keyKeyClassName);
+    }
+    return _useShortKeyKeyClassName ? ClassUtils.getShortClassName(_keyKeyClassName): _keyKeyClassName;
+  }
+
   public String getParamKeyClassName()
   {
     return _paramKeyClassName;
+  }
+
+  public String getParamKeyClassDisplayName()
+  {
+    if (_useShortParamKeyClassName == null)
+    {
+      _useShortParamKeyClassName =
+          !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_baseResourceSpec.getImportCheckConflict(),
+              ClassUtils.getShortClassName(_paramKeyClassName), _paramKeyClassName);
+    }
+    return _useShortParamKeyClassName? ClassUtils.getShortClassName(_paramKeyClassName): _paramKeyClassName;
+  }
+
+  public void setUseShortKeyKeyClassName(boolean useShortKeyKeyClassName)
+  {
+    this._useShortKeyKeyClassName = useShortKeyKeyClassName;
+  }
+
+  public void setUseShortParamKeyClassName(boolean useShortParamKeyClassName)
+  {
+    this._useShortParamKeyClassName = useShortParamKeyClassName;
   }
 }

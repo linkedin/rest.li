@@ -114,7 +114,7 @@ public class CollectionResourceSpec extends BaseResourceSpec
     {
       if (parameterized)
       {
-        return _complexKeySpec.getParameterizedSignature(_importCheckConflict);
+        return _complexKeySpec.getParameterizedSignature();
       }
       else
       {
@@ -142,11 +142,8 @@ public class CollectionResourceSpec extends BaseResourceSpec
     {
       // Need to check here  && while importing due to
       // undeterministic order in template resolving
-      if(!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
-          ClassUtils.getShortClassName(getKeyClassName()), getKeyClassName()))
-      {
-        _useShortKeyClassName = true;
-      }
+      _useShortKeyClassName = !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+          ClassUtils.getShortClassName(getKeyClassName()), getKeyClassName());
     }
     return _useShortKeyClassName ? ClassUtils.getShortClassName(getKeyClassName(parameterized))
         : getKeyClassName(parameterized);
@@ -164,11 +161,8 @@ public class CollectionResourceSpec extends BaseResourceSpec
     {
       // Need to check here  && while importing due to
       // undeterministic order in template resolving
-      if(!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
-          ClassUtils.getShortClassName(getKeyClassName()), getKeyClassName()))
-      {
-        _useShortKeyTypeRefClassName = true;
-      }
+      _useShortKeyTypeRefClassName = !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+          ClassUtils.getShortClassName(getKeyClassName()), getKeyClassName());
     }
     return _useShortKeyTypeRefClassName? ClassUtils.getShortClassName(_keyTypeRefClassName)
         : _keyTypeRefClassName;
@@ -201,11 +195,13 @@ public class CollectionResourceSpec extends BaseResourceSpec
           ClassUtils.getShortClassName(_complexKeySpec.getKeyKeyClassName()), _complexKeySpec.getKeyKeyClassName()))
       {
         imports.add(_complexKeySpec.getKeyKeyClassName());
+        _complexKeySpec.setUseShortKeyKeyClassName(true);
       }
       if(!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
           ClassUtils.getShortClassName(_complexKeySpec.getParamKeyClassName()), _complexKeySpec.getParamKeyClassName()))
       {
         imports.add(_complexKeySpec.getParamKeyClassName());
+        _complexKeySpec.setUseShortParamKeyClassName(true);
       }
     }
     else
@@ -226,4 +222,10 @@ public class CollectionResourceSpec extends BaseResourceSpec
   {
     return getResource().getCollection().getEntity().getSubresources();
   }
+
+
+  public ComplexKeySpec getComplexKeySpec() {
+    return _complexKeySpec;
+  }
+
 }

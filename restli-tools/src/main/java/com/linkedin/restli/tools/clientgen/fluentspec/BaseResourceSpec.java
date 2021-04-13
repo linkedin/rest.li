@@ -609,4 +609,10 @@ public class BaseResourceSpec
     //TODO: similar to getPathKeyTypes
     return _pathToAssocKeys;
   }
+
+  public Map<String, String> getImportCheckConflict()
+  {
+    return _importCheckConflict;
+  }
+
 }

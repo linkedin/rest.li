@@ -41,6 +41,7 @@ import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsFlu
 import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubFluentClient;
+import com.linkedin.restli.examples.greetings.client.ComplexKeysFluentClient;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.CreateGreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.CustomTypes2FluentClient;
@@ -50,6 +51,7 @@ import com.linkedin.restli.examples.greetings.client.GreetingsOfgreetingsOfgreet
 import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.SubgreetingsFluentClient;
 import com.linkedin.restli.examples.greetings.client.SubsubgreetingFluentClient;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -837,7 +839,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
    *
    * A complete set of request tests were tested in {@link TestComplexKeysResource}
    */
-  @Test public void testSubResource_complexKey() throws Exception
+  @Test public void testSubResource_complexKeyParentResource() throws Exception
   {
     TwoPartKey key = new TwoPartKey();
     key.setMajor("a");
@@ -864,6 +866,176 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
         .getId()
         .longValue(), 1L);
   }
+
+  // ----- Testing ComplexKeysResource ------
+  private static ComplexResourceKey<TwoPartKey, TwoPartKey> getComplexKey(String major, String minor)
+  {
+    return new ComplexResourceKey<TwoPartKey, TwoPartKey>(
+        new TwoPartKey().setMajor(major).setMinor(minor),
+        new TwoPartKey());
+  }
+
+  private static List<ComplexResourceKey<TwoPartKey, TwoPartKey>> getBatchComplexKeys()
+  {
+    List<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids =
+      new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>();
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(StringTestKeys.URL, StringTestKeys.URL2);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key3 = getComplexKey(StringTestKeys.ERROR, StringTestKeys.ERROR);
+    ids.add(key1);
+    ids.add(key2);
+    ids.add(key3);
+
+    return ids;
+  }
+
+  // ComplexKeysResource: Test "Get", "create", "batchGet"
+  @Test public void testComplexKey_get() throws Exception
+  {
+    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ComplexResourceKey<TwoPartKey, TwoPartKey> testKeys = getComplexKey(
+            StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
+
+    Message result = complexKeyClient.get(testKeys).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+
+
+    Assert.assertTrue(result.hasId());
+    Assert.assertEquals(result.getMessage(), StringTestKeys.SIMPLEKEY + " " + StringTestKeys.SIMPLEKEY2);
+  }
+
+  @Test public void testComplexKey_batchGet() throws Exception
+  {
+    List<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = getBatchComplexKeys();
+    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> resultMap =
+        complexKeyClient.batchGet(new HashSet<>(ids)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+
+    Assert.assertEquals(resultMap.size(), 3);
+    Assert.assertNotNull(resultMap.get(ids.get(0)).getEntity());
+    Assert.assertNotNull(resultMap.get(ids.get(1)).getEntity());
+    Assert.assertNotNull(resultMap.get(ids.get(2)).getError());
+  }
+
+  @Test public void testComplexKey_createThenGet() throws Exception
+  {
+      final String messageText = "newMessage";
+      Message message = new Message();
+      message.setMessage(messageText);
+
+      ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ComplexResourceKey<TwoPartKey, TwoPartKey> result =
+        complexKeyClient.create(message).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+
+      Assert.assertEquals(result, getComplexKey(messageText, messageText));
+      Assert.assertEquals(complexKeyClient.get(result).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS).getMessage(), messageText);
+  }
+
+  @Test public void testComplexKey_batchUpdate() throws Exception
+  {
+    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    final String messageText = StringTestKeys.SIMPLEKEY + " " + StringTestKeys.SIMPLEKEY2;
+    final Message message = new Message();
+    message.setId(StringTestKeys.SIMPLEKEY + " " + StringTestKeys.SIMPLEKEY2);
+    message.setMessage(messageText);
+    message.setTone(Tone.INSULTING);
+    final String messageText2 = StringTestKeys.URL + " " + StringTestKeys.URL2;
+    final Message message2 = new Message();
+    message2.setId(StringTestKeys.URL + " " + StringTestKeys.URL2);
+    message2.setMessage(messageText2);
+    message2.setTone(Tone.INSULTING);
+
+    final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> inputs = new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>();
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(StringTestKeys.URL, StringTestKeys.URL2);
+    inputs.put(key1, message);
+    inputs.put(key2, message2);
+    complexKeyClient.batchUpdate(inputs).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> result =
+        complexKeyClient.batchGet(new HashSet<>(Arrays.asList(key1, key2)))
+            .toCompletableFuture()
+            .get(5000, TimeUnit.MILLISECONDS);
+
+    Assert.assertNotNull(result.get(key1));
+    Assert.assertNotNull(result.get(key2));
+    Assert.assertEquals(result.get(key1).getEntity().getTone(), Tone.INSULTING);
+    Assert.assertEquals(result.get(key2).getEntity().getTone(), Tone.INSULTING);
+  }
+
+  @Test public void testComplexKey_partialUpdate() throws Exception
+  {
+    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+
+    Message message = new Message();
+    message.setTone(Tone.FRIENDLY);
+
+    PatchRequest<Message> patch = PatchGenerator.diffEmpty(message);
+
+    final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, PatchRequest<Message>> inputs =
+        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, PatchRequest<Message>>();
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(StringTestKeys.URL, StringTestKeys.URL2);
+    inputs.put(key1, patch);
+    inputs.put(key2, patch);
+
+    Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus> result =
+        complexKeyClient.batchPartialUpdate(inputs).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+
+    // Update return valid result
+    Assert.assertEquals(result.get(key1).getStatus().intValue(), 204);
+    Assert.assertEquals(result.get(key2).getStatus().intValue(), 204);
+
+    Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> getResult =
+        complexKeyClient.batchGet(new HashSet<>(Arrays.asList(key1, key2)))
+            .toCompletableFuture()
+            .get(5000, TimeUnit.MILLISECONDS);
+
+    //
+    Assert.assertEquals(getResult.get(key1).getEntity().getTone(), Tone.FRIENDLY);
+    Assert.assertEquals(getResult.get(key2).getEntity().getTone(), Tone.FRIENDLY);
+  }
+
+  @Test public void testComplexKey_batchDelete() throws Exception
+  {
+    String messageText = "m1";
+    Message message = new Message();
+    message.setMessage(messageText);
+
+    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ComplexResourceKey<TwoPartKey, TwoPartKey> createResponse =
+        complexKeyClient.create(message).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+
+    String messageText2 = "m2";
+    message.setMessage(messageText2);
+
+    createResponse = complexKeyClient.create(message).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(messageText, messageText);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(messageText2, messageText2);
+
+    ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>();
+    ids.add(key1);
+    ids.add(key2);
+    Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus> deleteResponse =
+        complexKeyClient.batchDelete(new HashSet<>(ids)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+
+    Assert.assertEquals(deleteResponse.size(), ids.size());
+    Assert.assertEquals(deleteResponse.get(key1).getStatus().intValue(), 204);
+    Assert.assertEquals(deleteResponse.get(key2).getStatus().intValue(), 204);
+    Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> getResponse =
+        complexKeyClient.batchGet(new HashSet<>(ids)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(getResponse.get(key1).getError().getStatus().intValue(), 404);
+    Assert.assertEquals(getResponse.get(key2).getError().getStatus().intValue(), 404);
+
+  }
+
+  // TODO: Add this test after action method is supported
+//  @Test public void testComplexKey_entityAction() throws Exception
+//  {
+//    ComplexResourceKey<TwoPartKey, TwoPartKey> key = getComplexKey("major", "minor");
+//    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+////    complexKeyClient.
+//    Assert.assertEquals(entity.longValue(), 1L);
+//  }
 
   // ----- utils used for testing ------
 
