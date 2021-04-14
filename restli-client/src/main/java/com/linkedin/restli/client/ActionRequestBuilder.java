@@ -267,7 +267,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     }
   }
 
-  static Object getReadOnlyActionParameter(Object original) throws CloneNotSupportedException
+  private static Object getReadOnlyActionParameter(Object original) throws CloneNotSupportedException
   {
     if (original == null){
       return null;

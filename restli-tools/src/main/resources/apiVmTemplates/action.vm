@@ -96,7 +96,7 @@ Copyright (c) 2021 LinkedIn Corp.
                                   ORIGINAL_RESOURCE_PATH,
                                   buildReadOnlyPathKeys(),
                                   RestliRequestOptions.DEFAULT_OPTIONS,
-                                  FluentClientUtils.getReadOnlyOrCopyKeyObject(#if(${method.isEntityAction()})$spec.idName#else null#end),
+                                  #if(${method.isEntityAction()})$spec.idName#else null#end,
                                   ## TODO: Not supporting streaming attachments now
                                   null
                                   );
