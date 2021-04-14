@@ -20,6 +20,7 @@ buildscript {
   }
   dependencies {
     classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.21.0'
   }
 }
 
@@ -253,7 +254,9 @@ subprojects {
 
     // Only build and publish artifacts for consumer-facing modules
     if (!(it.name in privateModules)) {
-      // Configure the Bintray release task
+      // Configure all publications and the tasks to publish them
+      apply from: "${buildScriptDirPath}/publications.gradle"
+      apply from: "${buildScriptDirPath}/jfrog.gradle"
       apply from: "${buildScriptDirPath}/bintrayRelease.gradle"
     }
   }
