@@ -20,6 +20,7 @@ import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.restspec.ActionSchema;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang.ClassUtils;
@@ -32,7 +33,11 @@ public class ActionMethodSpec
   private final BaseResourceSpec _resourceSpec;
   private final boolean _isEntityAction; // Entity action will need KeyClass and idName from its resource spec
   private boolean _usingShortClassName = false;
+  private Boolean _usingShortTypeRefClassName = null;
   private String _declaredValuedClassName;
+  private List<ParameterSpec> _methodParameters;
+  private List<ParameterSpec> _optionalParameters;
+  private List<ParameterSpec> _requiredParameters;
 
   public ActionMethodSpec(ActionSchema actionSchema, BaseResourceSpec resourceSpec, boolean isEntityAction)
   {
@@ -52,18 +57,73 @@ public class ActionMethodSpec
 
   public List<ParameterSpec> getParameters()
   {
-    if (_actionSchema.getParameters() == null)
+    if (_methodParameters == null)
     {
-      return Collections.emptyList();
+      if (_actionSchema.getParameters() == null)
+      {
+        _methodParameters = Collections.emptyList();
+      }
+      else
+      {
+        _methodParameters = new ArrayList<>(_actionSchema.getParameters().size());
+        _methodParameters.addAll(getRequiredParameters());
+        _methodParameters.addAll(getOptionalParameters());
+      }
     }
-    List<ParameterSpec> params = new ArrayList<>(_actionSchema.getParameters().size());
-    _actionSchema.getParameters().forEach(param -> params.add(new ParameterSpec(param, _resourceSpec)));
-    return params;
+    return _methodParameters;
   }
 
   public boolean hasActionParams()
   {
     return (_actionSchema.getParameters() != null && !_actionSchema.getParameters().isEmpty());
+  }
+
+  public List<ParameterSpec> getRequiredParameters()
+  {
+    if (_requiredParameters == null)
+    {
+      _requiredParameters =  new LinkedList<>();
+      if (_actionSchema.getParameters() != null)
+      {
+        _actionSchema.getParameters().forEach(param ->
+          {
+            if(!param.hasOptional() && !param.hasDefault())
+            {
+              _requiredParameters.add(new ParameterSpec(param, _resourceSpec));
+            };
+          });
+      }
+    }
+    return _requiredParameters;
+  }
+
+  public List<ParameterSpec> getOptionalParameters()
+  {
+    if (_optionalParameters == null)
+    {
+      _optionalParameters=  new LinkedList<>();
+      if (_actionSchema.getParameters() != null)
+      {
+        _actionSchema.getParameters().forEach(param ->
+          {
+            if(param.hasOptional() || param.hasDefault())
+            {
+              _optionalParameters.add(new ParameterSpec(param, _resourceSpec));
+            };
+          });
+      }
+    }
+    return _optionalParameters;
+  }
+
+  public boolean hasRequiredParams()
+  {
+    return getRequiredParameters().size() > 0;
+  }
+
+  public boolean hasOptionalParams()
+  {
+    return getOptionalParameters().size() > 0;
   }
 
   public ClassTemplateSpec getValueClass()
@@ -139,9 +199,25 @@ public class ActionMethodSpec
         !SpecUtils.checkIsSameClass(getValueClassName(), _declaredValuedClassName);
   }
 
-  // TODO: add to imports so can have a shortened display name
   public String getValueTypeRefClassName()
   {
     return _declaredValuedClassName;
   }
+
+  public String getValuedTypeRefClassDisplayName()
+  {
+    if (_usingShortTypeRefClassName == null)
+    {
+      _usingShortTypeRefClassName = !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_resourceSpec.getImportCheckConflict(),
+          ClassUtils.getShortClassName(getValueTypeRefClassName()),
+          getValueTypeRefClassName());
+    }
+    return _usingShortTypeRefClassName ? ClassUtils.getShortClassName(getValueTypeRefClassName()):
+        getValueTypeRefClassName();
+  }
+
+  public void setUsingShortTypeRefClassName(Boolean usingShortTypeRefClassName) {
+    _usingShortTypeRefClassName = usingShortTypeRefClassName;
+  }
+
 }

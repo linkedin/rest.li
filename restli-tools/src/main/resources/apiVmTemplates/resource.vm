@@ -74,7 +74,7 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
     #foreach($action in $spec.actions)
       ArrayList<FieldDef<?>> ${action.name}Params = new ArrayList<FieldDef<?>>();
       #foreach($actionParam in $action.parameters)
-        ${action.name}Params.add(new FieldDef<${actionParam.paramClassDisplayName}>("${actionParam.paramName}", ${actionParam.paramClassDisplayName}.class, DataTemplateUtil.getSchema(${actionParam.paramClassDisplayName}.class)));
+        ${action.name}Params.add(new FieldDef<${actionParam.paramClassDisplayName}>("${actionParam.paramName}", ${actionParam.paramClassDisplayName}.class, DataTemplateUtil.getSchema(#if(${actionParam.hasParamTypeRef()})${actionParam.getParamTypeRefClassDisplayName()}#else${actionParam.paramClassDisplayName}#end.class)));
       #end
       requestMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", ${action.name}Params));
     #end
@@ -82,7 +82,7 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
     HashMap<String, DynamicRecordMetadata> responseMetadataMap=new HashMap<String, DynamicRecordMetadata>();
     #foreach($action in $spec.actions)
       #if($action.hasReturns())
-        responseMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", Collections.singletonList(new FieldDef<${action.valueClassDisplayName}>("value", ${action.valueClassDisplayName}.class, DataTemplateUtil.getSchema(${action.valueClassDisplayName}.class)))));
+        responseMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", Collections.singletonList(new FieldDef<${action.valueClassDisplayName}>("value", ${action.valueClassDisplayName}.class, DataTemplateUtil.getSchema(#if(${action.hasReturnTypeRef()})${action.getValuedTypeRefClassDisplayName()}#else${action.valueClassDisplayName}#end.class)))));
       #else
         responseMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", Collections.emptyList()));
       #end

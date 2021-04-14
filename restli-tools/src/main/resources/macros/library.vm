@@ -49,7 +49,37 @@
 #end
 
 
-#macro(actionParamClass $method)
+#macro(actionOptParamClass $method)
+  #if($method.hasActionParams())
+    #set($className = "${util.nameCapsCase($method.name)}ActionOptionalParameters")
+
+    public static class $className {
+      private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>($method.getParameters().size());
+      #foreach($param in $method.getOptionalParameters())
+        private $param.paramClassDisplayName $param.paramName;
+      #end
+
+      #foreach($param in $method.getOptionalParameters())
+        #doc($param.schema.doc)
+        public $className set${param.paramNameCaps}($param.paramClassDisplayName $param.paramName) {
+          this.$param.paramName = $param.paramName;
+          _actionParams.put(_resourceSpec.getRequestMetadata("${method.name}").getFieldDef("$param.paramName"), $param.paramName);
+          return this;
+        }
+        public $param.paramClassDisplayName get${param.paramNameCaps}() {
+          return $param.paramName;
+        }
+      #end
+
+      public Map<FieldDef<?>, Object> buildParametersMap()
+      {
+        return _actionParams;
+      }
+    }
+  #end
+#end
+
+#macro(actionAllParamClass $method)
   #if($method.hasActionParams())
     #set($className = "${util.nameCapsCase($method.name)}ActionParameters")
 
@@ -66,11 +96,14 @@
           _actionParams.put(_resourceSpec.getRequestMetadata("${method.name}").getFieldDef("$param.paramName"), $param.paramName);
           return this;
         }
+        public $param.paramClassDisplayName get${param.paramNameCaps}() {
+          return $param.paramName;
+        }
       #end
 
       public Map<FieldDef<?>, Object> buildParametersMap()
       {
-        return FluentClientUtils.buildReadOnlyActionParameters(_actionParams);
+        return _actionParams;
       }
     }
   #end

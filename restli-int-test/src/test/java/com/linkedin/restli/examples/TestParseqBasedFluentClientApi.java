@@ -864,12 +864,14 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   {
     GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Greeting newGreeting;
-    newGreeting =  greetings.actionUpdateTone(1L, Tone.SINCERE, false).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    newGreeting =  greetings.updateTone(1L,
+          param -> param.setNewTone(Tone.SINCERE).setDelOld(false))
+        .toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
     Assert.assertNotNull(newGreeting);
     Assert.assertEquals(newGreeting.getId().longValue(), 1L);
     Assert.assertEquals(newGreeting.getTone(), Tone.SINCERE);
 
-    newGreeting =  greetings.actionUpdateTone(1L, param -> param.setNewTone(Tone.INSULTING)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    newGreeting =  greetings.updateTone(1L, param -> param.setNewTone(Tone.INSULTING)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
     Assert.assertNotNull(newGreeting);
     Assert.assertEquals(newGreeting.getId().longValue(), 1L);
     Assert.assertEquals(newGreeting.getTone(), Tone.INSULTING);
@@ -885,7 +887,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     ownershipRequest.setNewOwnerMemberID(testId);
     GroupsFluentClient groupsFluentClient = new GroupsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletableFuture<Void> response =
-        groupsFluentClient.actionTransferOwnership(1, param -> param.setRequest(ownershipRequest))
+        groupsFluentClient.transferOwnership(1, param -> param.setRequest(ownershipRequest))
             .toCompletableFuture();
     response.get(5000, TimeUnit.MILLISECONDS);
     assert(!response.isCompletedExceptionally());
@@ -894,13 +896,13 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test public void testCollectionActionWithReturn() throws Exception
   {
     GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    Assert.assertTrue(greetings.actionPurge().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS) == 100);
+    Assert.assertTrue(greetings.purge().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS) == 100);
   }
 
   @Test public void testCollectionActionWithNoReturn() throws Exception
   {
     GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    CompletableFuture<Void> stage = greetings.actionAnotherAction(param -> param.setBitfield(new BooleanArray())
+    CompletableFuture<Void> stage = greetings.anotherAction(param -> param.setBitfield(new BooleanArray())
         .setRequest(new TransferOwnershipRequest())
         .setSomeString("")
         .setStringMap(new StringMap())).toCompletableFuture();
@@ -912,7 +914,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   public void testCollectionActionWithException() throws Throwable
   {
     GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    CompletableFuture<Void> stage = greetings.actionExceptionTest().toCompletableFuture();
+    CompletableFuture<Void> stage = greetings.exceptionTest().toCompletableFuture();
     try
     {
       stage.get(5000, TimeUnit.MILLISECONDS);
@@ -928,15 +930,23 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test public void testActionSetActionWithReturn() throws Exception
   {
     ActionsFluentClient actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    Assert.assertTrue(actionsFluentClient.actionUltimateAnswer().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS) == 42);
+    Assert.assertTrue(actionsFluentClient.ultimateAnswer().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS) == 42);
   }
 
   @Test public void testActionSetActionWithNoReturn() throws Exception
   {
     ActionsFluentClient actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    Assert.assertNull(actionsFluentClient.actionReturnVoid().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS));
+    Assert.assertNull(actionsFluentClient.returnVoid().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS));
 
   }
+
+  @Test public void testActionSetActionWithTypeRef() throws Exception
+  {
+    // This end point use typeref for both ActionParam and Action methods' return value
+    ActionsFluentClient actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Assert.assertEquals(actionsFluentClient.customTypeRef(new CustomLong(500L)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS), new CustomLong(500L));
+  }
+
 
 
 

@@ -67,11 +67,6 @@ public class FluentClientUtils {
     return input;
   }
 
-  public static Map<FieldDef<?>, Object> buildReadOnlyActionParameters(Map<FieldDef<?>, Object> actionParams)
-  {
-    return ActionRequestBuilder.buildReadOnlyActionParameters(actionParams);
-  }
-
   static public <Key> Key getReadOnlyOrCopyKeyObject(Key key)
   {
     try

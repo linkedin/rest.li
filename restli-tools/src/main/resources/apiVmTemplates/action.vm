@@ -16,33 +16,45 @@ Copyright (c) 2021 LinkedIn Corp.
 
   #foreach($method in $spec.actions)
     #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
+    #set($actionOptionalParamClassName = "${util.nameCapsCase($method.name)}ActionOptionalParameters")
     #doc($method.schema.doc)
 
-    ## methods are named as "action<ActionName>" so it is consistent with current RequestBuilder naming
-    #if(${method.hasActionParams()})
+    #if(${method.hasRequiredParams()}) ## action with no required Params will only have one API
     @SuppressWarnings("unchecked")
-    public CompletionStage<${method.valueClassDisplayName}> action${util.nameCapsCase(${method.name})}(
+    public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
       #if(${method.isEntityAction()})
       $spec.keyClassName $spec.idName,
       #end
-        #set($paramLen = ${method.getParameters().size()})
-        #set($lastParam = ${method.getParameters().get($paramLen - 1)})
-        #if($paramLen > 1)
-          #foreach($idx in [2..$paramLen])
-            #set($param = ${method.getParameters().get($idx - 2)})
-          $param.paramClassDisplayName $param.paramName,
+        #set($paramLen = ${method.getRequiredParameters().size()})
+        #if($paramLen > 0)
+          #set($lastParam = ${method.getRequiredParameters().get($paramLen - 1)})
+          #if($paramLen > 1)
+            #foreach($idx in [2..$paramLen])
+              #set($param = ${method.getRequiredParameters().get($idx - 2)})
+            $param.paramClassDisplayName $param.paramName,
+            #end
           #end
-        #end
           $lastParam.paramClassDisplayName $lastParam.paramName
+        #end
+          #if(${method.getOptionalParameters().size()} > 0)
+          #if($paramLen > 0),#end 
+          Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider
+          #end
     )
     {
-      return action${util.nameCapsCase(${method.name})}(
+      #if(${method.hasOptionalParams()})
+      $actionOptionalParamClassName optionalParams = optionalParamsProvider.apply(new $actionOptionalParamClassName());
+      #end
+      return ${util.nameCamelCase(${method.name})}(
         #if(${method.isEntityAction()})
         $spec.idName,
         #end
         paramProvider -> paramProvider
-        #foreach($param in ${method.getParameters()})
+        #foreach($param in ${method.getRequiredParameters()})
         .set${param.paramNameCaps}($param.paramName)
+        #end
+        #foreach($param in ${method.getOptionalParameters()})
+        .set${param.paramNameCaps}(optionalParams.get${param.paramNameCaps}())
         #end
       )
       ;
@@ -50,7 +62,7 @@ Copyright (c) 2021 LinkedIn Corp.
     #end
 
     @SuppressWarnings("unchecked")
-    public CompletionStage<${method.valueClassDisplayName}> action${util.nameCapsCase(${method.name})}(
+    public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
       #if(${method.isEntityAction()})
       $spec.keyClassName $spec.idName #if(${method.hasActionParams()}),#end
       #end
@@ -108,5 +120,10 @@ Copyright (c) 2021 LinkedIn Corp.
       return result;
     }
 
-      #actionParamClass($method)
+    #if(${method.hasActionParams()})
+      #actionAllParamClass($method)
+    #end
+    #if(${method.hasRequiredParams()} && ${method.hasOptionalParams()})
+      #actionOptParamClass($method)
+    #end
   #end

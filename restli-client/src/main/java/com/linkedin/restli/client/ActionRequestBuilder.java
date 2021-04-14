@@ -246,7 +246,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     return buildReadOnlyActionParameters(_actionParams);
   }
 
-  public static Map<FieldDef<?>, Object> buildReadOnlyActionParameters(Map<FieldDef<?>, Object> actionParams)
+  private static Map<FieldDef<?>, Object> buildReadOnlyActionParameters(Map<FieldDef<?>, Object> actionParams)
   {
     try
     {

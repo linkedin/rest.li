@@ -211,7 +211,8 @@ public class BaseResourceSpec
 
   public List<String> getImportsForMethods()
   {
-    if (_imports == null) {
+    if (_imports == null) 
+    {
       Set<String> imports = new TreeSet<>();
       if (getActions().size() > 0) {
         imports.add(ActionRequest.class.getName());
@@ -230,13 +231,25 @@ public class BaseResourceSpec
                 imports.add(actionMethodSpec.getValueClassName());
                 actionMethodSpec.setUsingShortClassName(true);
               }
+
+              if (
+                  actionMethodSpec.hasReturnTypeRef() &&
+                  !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+                  ClassUtils.getShortClassName(actionMethodSpec.getValueTypeRefClassName()),
+                  actionMethodSpec.getValueTypeRefClassName()))
+              {
+                imports.add(actionMethodSpec.getValueTypeRefClassName());
+                actionMethodSpec.setUsingShortTypeRefClassName(true);
+              }
             }
         );
       }
 
-      for (RestMethodSpec methodSpec : getRestMethods()) {
+      for (RestMethodSpec methodSpec : getRestMethods()) 
+      {
         ResourceMethod method = ResourceMethod.fromString(methodSpec.getMethod());
-        switch (method) {
+        switch (method) 
+        {
           case GET:
             imports.add(GetRequest.class.getName());
             break;
@@ -368,8 +381,18 @@ public class BaseResourceSpec
                           imports.add(paramSpec.getParamClassName());
                           paramSpec.setUsingShortClassName(true);
                         }
+
+                        if (
+                            paramSpec.hasParamTypeRef() &&
+                            !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+                            ClassUtils.getShortClassName(paramSpec.getParamTypeRefClassName()),
+                            paramSpec.getParamTypeRefClassName()))
+                        {
+                          imports.add(paramSpec.getParamTypeRefClassName());
+                          paramSpec.setUsingShortTypeRefClassName(true);
+                        }
                       }
-                  );
+          );
 
       // Sub resources are handled recursively
       _imports = getResourceSpecificImports(imports);
