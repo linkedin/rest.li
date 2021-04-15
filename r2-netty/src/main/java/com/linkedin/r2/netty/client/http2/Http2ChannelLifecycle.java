@@ -17,16 +17,16 @@
 package com.linkedin.r2.netty.client.http2;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.group.ChannelGroup;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2StreamChannel;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2StreamChannelBootstrap;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.ObjectCreationTimeoutException;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.TimeoutCallback;
 import com.linkedin.util.clock.Clock;
-import io.netty.channel.Channel;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.handler.codec.http2.Http2StreamChannel;
-import io.netty.handler.codec.http2.Http2StreamChannelBootstrap;
 import java.net.SocketAddress;
 import java.util.ArrayDeque;
 import java.util.ArrayList;

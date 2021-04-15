@@ -19,6 +19,7 @@ package com.linkedin.restli.examples;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.pegasus.io.netty.channel.nio.NioEventLoopGroup;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.CompressionOption;
@@ -65,8 +66,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import io.netty.channel.nio.NioEventLoopGroup;
 
 /**
  * Integration tests for request compression.

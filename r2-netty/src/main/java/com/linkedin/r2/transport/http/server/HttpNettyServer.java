@@ -20,13 +20,13 @@
 
 package com.linkedin.r2.transport.http.server;
 
+import com.linkedin.pegasus.io.netty.bootstrap.ServerBootstrap;
+import com.linkedin.pegasus.io.netty.channel.nio.NioEventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.socket.nio.NioServerSocketChannel;
+import com.linkedin.pegasus.io.netty.util.concurrent.DefaultEventExecutorGroup;
+import com.linkedin.pegasus.io.netty.util.concurrent.EventExecutorGroup;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.util.NamedThreadFactory;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
-import io.netty.util.concurrent.EventExecutorGroup;
 import java.net.InetSocketAddress;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;

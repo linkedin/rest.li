@@ -61,8 +61,19 @@ def manipulatePomXml = {
 publishing {
   publications {
     // Define the "release" publication
-    release(MavenPublication) {
-      from components.java
+    release(MavenPublication) { publication ->
+      if (project.name == 'li-netty') {
+        apply plugin: 'com.github.johnrengelman.shadow'
+        project.shadow.component(publication)
+
+        // I'm not 100% sure why this is needed, but without it a duplicate
+        // packaging tag is added set equal to "pom".
+        pom {
+          packaging = 'jar'
+        }
+      } else {
+        from components.java
+      }
 
       afterEvaluate {
         // Add all extra archives (sources, javadoc, any custom archives e.g. all)

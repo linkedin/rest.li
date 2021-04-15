@@ -16,6 +16,10 @@
 
 package com.linkedin.r2.netty.client.http;
 
+import com.linkedin.pegasus.io.netty.channel.ChannelInitializer;
+import com.linkedin.pegasus.io.netty.channel.socket.nio.NioSocketChannel;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpClientCodec;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpScheme;
 import com.linkedin.r2.netty.handler.common.CancelTimeoutHandler;
 import com.linkedin.r2.netty.handler.common.CertificateHandler;
 import com.linkedin.r2.netty.handler.common.ChannelLifecycleHandler;
@@ -25,10 +29,6 @@ import com.linkedin.r2.netty.handler.common.SessionResumptionSslHandler;
 import com.linkedin.r2.netty.handler.common.SslHandshakeTimingHandler;
 import com.linkedin.r2.netty.handler.http.HttpMessageDecoders;
 import com.linkedin.r2.netty.handler.http.HttpMessageEncoders;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpScheme;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 

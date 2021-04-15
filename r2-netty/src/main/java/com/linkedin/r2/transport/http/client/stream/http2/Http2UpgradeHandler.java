@@ -20,16 +20,16 @@
 
 package com.linkedin.r2.transport.http.client.stream.http2;
 
+import com.linkedin.pegasus.io.netty.channel.ChannelDuplexHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelFuture;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelPromise;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpClientUpgradeHandler;
 import com.linkedin.r2.netty.handler.http2.Http2ProtocolUpgradeHandler;
 import com.linkedin.r2.transport.common.bridge.common.RequestWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.http.HttpClientUpgradeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

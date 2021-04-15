@@ -20,26 +20,26 @@
 
 package com.linkedin.r2.transport.http.client.stream.http2;
 
-import io.netty.handler.codec.http2.AbstractHttp2ConnectionHandlerBuilder;
-import io.netty.handler.codec.http2.DefaultHttp2ConnectionDecoder;
-import io.netty.handler.codec.http2.DefaultHttp2ConnectionEncoder;
-import io.netty.handler.codec.http2.DefaultHttp2FrameReader;
-import io.netty.handler.codec.http2.DefaultHttp2FrameWriter;
-import io.netty.handler.codec.http2.DefaultHttp2HeadersDecoder;
-import io.netty.handler.codec.http2.DefaultHttp2LocalFlowController;
-import io.netty.handler.codec.http2.Http2Connection;
-import io.netty.handler.codec.http2.Http2ConnectionDecoder;
-import io.netty.handler.codec.http2.Http2ConnectionEncoder;
-import io.netty.handler.codec.http2.Http2FrameReader;
-import io.netty.handler.codec.http2.Http2FrameWriter;
-import io.netty.handler.codec.http2.Http2HeadersDecoder;
-import io.netty.handler.codec.http2.Http2InboundFrameLogger;
-import io.netty.handler.codec.http2.Http2OutboundFrameLogger;
-import io.netty.handler.codec.http2.Http2Settings;
-import io.netty.handler.codec.http2.StreamBufferingEncoder;
-import io.netty.util.internal.ObjectUtil;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.AbstractHttp2ConnectionHandlerBuilder;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.DefaultHttp2ConnectionDecoder;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.DefaultHttp2ConnectionEncoder;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.DefaultHttp2FrameReader;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.DefaultHttp2FrameWriter;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.DefaultHttp2HeadersDecoder;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.DefaultHttp2LocalFlowController;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2Connection;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2ConnectionDecoder;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2ConnectionEncoder;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2FrameReader;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2FrameWriter;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2HeadersDecoder;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2InboundFrameLogger;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2OutboundFrameLogger;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2Settings;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.StreamBufferingEncoder;
+import com.linkedin.pegasus.io.netty.util.internal.ObjectUtil;
 
-import static io.netty.handler.codec.http2.DefaultHttp2LocalFlowController.DEFAULT_WINDOW_UPDATE_RATIO;
+import static com.linkedin.pegasus.io.netty.handler.codec.http2.DefaultHttp2LocalFlowController.DEFAULT_WINDOW_UPDATE_RATIO;
 
 
 class Http2StreamCodecBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http2StreamCodec, Http2StreamCodecBuilder>

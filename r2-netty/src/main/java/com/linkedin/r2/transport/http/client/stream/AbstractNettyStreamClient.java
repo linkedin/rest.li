@@ -17,6 +17,8 @@
 package com.linkedin.r2.transport.http.client.stream;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.pegasus.io.netty.channel.EventLoopGroup;
+import com.linkedin.pegasus.io.netty.util.concurrent.DefaultEventExecutorGroup;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Messages;
 import com.linkedin.r2.message.Request;
@@ -34,9 +36,6 @@ import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
 import com.linkedin.r2.transport.http.client.common.AbstractNettyClient;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
-
-import io.netty.channel.EventLoopGroup;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
 
 import java.net.SocketAddress;
 import java.util.Map;

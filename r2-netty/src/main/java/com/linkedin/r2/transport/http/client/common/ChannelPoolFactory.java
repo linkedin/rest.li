@@ -21,8 +21,8 @@
 package com.linkedin.r2.transport.http.client.common;
 
 
+import com.linkedin.pegasus.io.netty.channel.Channel;
 import com.linkedin.r2.transport.http.client.AsyncPool;
-import io.netty.channel.Channel;
 import java.net.SocketAddress;
 
 /**

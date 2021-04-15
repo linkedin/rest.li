@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Shade and relocate the Netty dependency to avoid classpath conflicts in large applications.
 
 ## [29.18.4] - 2021-05-06
 - Replace runtime configuration with runtimeClasspath configuration in plugin for compatibility with Gradle 7.

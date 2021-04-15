@@ -16,13 +16,13 @@
 
 package com.linkedin.r2.netty.handler.common;
 
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelOutboundHandlerAdapter;
+import com.linkedin.pegasus.io.netty.channel.ChannelPromise;
+import com.linkedin.pegasus.io.netty.handler.ssl.SslHandler;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionNotTrustedException;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOutboundHandlerAdapter;
-import io.netty.channel.ChannelPromise;
-import io.netty.handler.ssl.SslHandler;
 
 /**
  * In the case the user requires the Server verification, we extract the

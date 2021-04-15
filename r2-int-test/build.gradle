@@ -1,11 +1,14 @@
 dependencies {
-    compile project (':r2-core')
-    compile project (':r2-sample')
-    compile project (':test-util')
+    testCompile project (':pegasus-common')
+    testCompile project (':r2-core')
     testCompile project(path: ':r2-core', configuration: 'testArtifacts')
+    testCompile project (':r2-disruptor')
+    testCompile project (':r2-filter-compression')
+    testCompile project (':r2-sample')
+    testCompile project (':test-util')
     testCompile externalDependency.testng
     testCompile externalDependency.junit
-    compile externalDependency.commonsLang
+    testCompile externalDependency.commonsLang
 }
 
 tasks.withType(Test) {

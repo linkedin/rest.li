@@ -17,6 +17,9 @@
 package com.linkedin.r2.transport.http.client.rest;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.EventLoopGroup;
+import com.linkedin.pegasus.io.netty.util.concurrent.DefaultEventExecutorGroup;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -39,9 +42,6 @@ import com.linkedin.r2.transport.http.client.common.ErrorChannelFutureListener;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.Cancellable;
-import io.netty.channel.Channel;
-import io.netty.channel.EventLoopGroup;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;

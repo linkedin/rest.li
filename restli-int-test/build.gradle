@@ -5,6 +5,7 @@ ext.apiProject = null
 dependencies {
   compile project(':data')
   compile project(':pegasus-common')
+  compile project(path: ':li-netty', configuration: 'shadow')
   compile project(':r2-core')
   compile project(':data-transform')
   compile project(':restli-client')

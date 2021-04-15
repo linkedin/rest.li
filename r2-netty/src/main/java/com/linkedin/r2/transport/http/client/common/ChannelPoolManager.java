@@ -18,12 +18,12 @@ package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.group.ChannelGroup;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolStats;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.PoolStatsProvider;
-import io.netty.channel.Channel;
-import io.netty.channel.group.ChannelGroup;
 
 import java.net.SocketAddress;
 import java.util.Collection;

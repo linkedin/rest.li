@@ -16,15 +16,15 @@
 
 package com.linkedin.r2.netty.client.http2;
 
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.ChannelInitializer;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpScheme;
 import com.linkedin.r2.netty.handler.common.CancelTimeoutHandler;
 import com.linkedin.r2.netty.handler.common.ChannelLifecycleHandler;
 import com.linkedin.r2.netty.handler.common.ClientEntityStreamHandler;
 import com.linkedin.r2.netty.handler.common.SchemeHandler;
 import com.linkedin.r2.netty.handler.http2.Http2MessageDecoders;
 import com.linkedin.r2.netty.handler.http2.Http2MessageEncoders;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.handler.codec.http.HttpScheme;
 
 /**
  * Netty handler to setup the Http2 Stream Channel pipeline

@@ -16,6 +16,7 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.pegasus.io.netty.channel.EventLoopGroup;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
@@ -23,7 +24,6 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder
 import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
-import io.netty.channel.EventLoopGroup;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;

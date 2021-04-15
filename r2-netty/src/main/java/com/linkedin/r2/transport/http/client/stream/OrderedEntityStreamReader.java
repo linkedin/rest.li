@@ -17,9 +17,9 @@
 package com.linkedin.r2.transport.http.client.stream;
 
 import com.linkedin.data.ByteString;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
 import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
-import io.netty.channel.ChannelHandlerContext;
 
 
 /**

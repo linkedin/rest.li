@@ -17,20 +17,20 @@
 package com.linkedin.r2.netty.handler.http2;
 
 import com.linkedin.data.ByteString;
+import com.linkedin.pegasus.io.netty.buffer.ByteBuf;
+import com.linkedin.pegasus.io.netty.buffer.Unpooled;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.handler.codec.MessageToMessageEncoder;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.DefaultHttp2DataFrame;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.DefaultHttp2HeadersFrame;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2DataFrame;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2HeadersFrame;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.netty.common.NettyRequestAdapter;
 import com.linkedin.r2.netty.entitystream.StreamReader;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.MessageToMessageEncoder;
-import io.netty.handler.codec.http2.DefaultHttp2DataFrame;
-import io.netty.handler.codec.http2.DefaultHttp2HeadersFrame;
-import io.netty.handler.codec.http2.Http2DataFrame;
-import io.netty.handler.codec.http2.Http2HeadersFrame;
 import java.util.List;
 
 /**

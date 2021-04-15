@@ -17,6 +17,12 @@
 package com.linkedin.r2.netty.entitystream;
 
 import com.linkedin.data.ByteString;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelInboundHandlerAdapter;
+import com.linkedin.pegasus.io.netty.channel.ChannelPipeline;
+import com.linkedin.pegasus.io.netty.handler.codec.TooLongFrameException;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2StreamChannel;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.stream.entitystream.WriteHandle;
@@ -24,12 +30,6 @@ import com.linkedin.r2.message.stream.entitystream.Writer;
 import com.linkedin.r2.netty.common.ChannelPipelineEvent;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.netty.common.StreamingTimeout;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelPipeline;
-import io.netty.handler.codec.TooLongFrameException;
-import io.netty.handler.codec.http2.Http2StreamChannel;
 import java.util.LinkedList;
 import java.util.List;
 import org.slf4j.Logger;

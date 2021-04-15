@@ -22,24 +22,24 @@ package com.linkedin.r2.transport.http.server;
 
 
 import com.linkedin.data.ByteString;
+import com.linkedin.pegasus.io.netty.buffer.ByteBuf;
+import com.linkedin.pegasus.io.netty.buffer.ByteBufInputStream;
+import com.linkedin.pegasus.io.netty.buffer.Unpooled;
+import com.linkedin.pegasus.io.netty.channel.ChannelDuplexHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelPromise;
+import com.linkedin.pegasus.io.netty.handler.codec.MessageToMessageDecoder;
+import com.linkedin.pegasus.io.netty.handler.codec.MessageToMessageEncoder;
+import com.linkedin.pegasus.io.netty.handler.codec.http.DefaultFullHttpResponse;
+import com.linkedin.pegasus.io.netty.handler.codec.http.FullHttpRequest;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpHeaderNames;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpResponse;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpResponseStatus;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpVersion;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.MessageToMessageDecoder;
-import io.netty.handler.codec.MessageToMessageEncoder;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;

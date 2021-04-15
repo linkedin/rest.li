@@ -17,6 +17,8 @@
 package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.pegasus.io.netty.channel.EventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.nio.NioEventLoopGroup;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Messages;
@@ -29,8 +31,6 @@ import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.common.AbstractNettyClient;
 import com.linkedin.test.util.DataGeneration;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
