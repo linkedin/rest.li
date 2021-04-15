@@ -24,8 +24,11 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
+import com.linkedin.data.template.DynamicRecordTemplate;
+import com.linkedin.data.template.FieldDef;
 import com.linkedin.pegasus.generator.TemplateSpecGenerator;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
+import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateIdEntityRequest;
 import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.BatchDeleteRequest;
@@ -42,6 +45,7 @@ import com.linkedin.restli.client.PartialUpdateEntityRequest;
 import com.linkedin.restli.client.PartialUpdateRequest;
 import com.linkedin.restli.client.UpdateRequest;
 import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.ActionResponse;
 import com.linkedin.restli.common.BatchCreateIdEntityResponse;
 import com.linkedin.restli.common.BatchCreateIdResponse;
 import com.linkedin.restli.common.CollectionRequest;
@@ -59,6 +63,7 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.internal.client.ActionResponseDecoder;
 import com.linkedin.restli.internal.client.BatchCreateIdDecoder;
 import com.linkedin.restli.internal.client.BatchCreateIdEntityDecoder;
 import com.linkedin.restli.internal.client.BatchEntityResponseDecoder;
@@ -79,6 +84,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 
@@ -202,11 +209,43 @@ public class BaseResourceSpec
     return imports;
   }
 
-  public Set<String> getImportsForRestMethods()
+  public List<String> getImportsForMethods()
   {
     if (_imports == null)
     {
       Set<String> imports = new TreeSet<>();
+      if (getActions().size() > 0)
+      {
+        imports.add(ActionRequest.class.getName());
+        imports.add(ActionResponse.class.getName());
+        imports.add(ActionResponseDecoder.class.getName());
+        imports.add(DynamicRecordTemplate.class.getName());
+        imports.add(FieldDef.class.getName());
+
+        // Add action value class to imports
+        getActions().stream().forEach(actionMethodSpec ->
+            {
+              if (!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+                  ClassUtils.getShortClassName(actionMethodSpec.getValueClassName()),
+                  actionMethodSpec.getValueClassName()))
+              {
+                imports.add(actionMethodSpec.getValueClassName());
+                actionMethodSpec.setUsingShortClassName(true);
+              }
+
+              if (
+                  actionMethodSpec.hasReturnTypeRef() &&
+                  !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+                  ClassUtils.getShortClassName(actionMethodSpec.getValueTypeRefClassName()),
+                  actionMethodSpec.getValueTypeRefClassName()))
+              {
+                imports.add(actionMethodSpec.getValueTypeRefClassName());
+                actionMethodSpec.setUsingShortTypeRefClassName(true);
+              }
+            }
+        );
+      }
+
       for (RestMethodSpec methodSpec : getRestMethods())
       {
         ResourceMethod method = ResourceMethod.fromString(methodSpec.getMethod());
@@ -300,7 +339,12 @@ public class BaseResourceSpec
       // than complex key, etc.
       if (_entityClassName == null)
       {
-        if (SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict, getEntityClass().getClassName(),
+        if (getEntityClass() == null)
+        {
+          _entityClassName = Void.class.getSimpleName();
+        }
+        else if (SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+            getEntityClass().getClassName(),
             getEntityClass().getBindingName()))
         {
           _entityClassName = getEntityClass().getFullName();
@@ -312,10 +356,58 @@ public class BaseResourceSpec
         }
       }
 
+      // Add param classes to imports
+      Stream.of(
+                    getRestMethods()
+                      .stream()
+                      .map(RestMethodSpec::getRequiredParams)
+                      .flatMap(List::stream),
+                    getRestMethods()
+                      .stream()
+                      .map(RestMethodSpec::getOptionalParams)
+                      .flatMap(List::stream),
+                    getRestMethods()
+                      .stream()
+                      .map(RestMethodSpec::getSupportedProjectionParams)
+                      .flatMap(Set::stream),
+                    getActions()
+                      .stream()
+                      .map(ActionMethodSpec::getParameters)
+                      .flatMap(List::stream)
+                )
+          .reduce(Stream::concat)
+          .orElseGet(Stream::empty)
+          .forEach(paramSpec ->
+                      {
+                        if (!SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+                              ClassUtils.getShortClassName(paramSpec.getParamClassName()),
+                                                           paramSpec.getParamClassName()))
+                        {
+                          imports.add(paramSpec.getParamClassName());
+                          paramSpec.setUsingShortClassName(true);
+                        }
+
+                        if (
+                            paramSpec.hasParamTypeRef() &&
+                            !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_importCheckConflict,
+                            ClassUtils.getShortClassName(paramSpec.getParamTypeRefClassName()),
+                            paramSpec.getParamTypeRefClassName()))
+                        {
+                          imports.add(paramSpec.getParamTypeRefClassName());
+                          paramSpec.setUsingShortTypeRefClassName(true);
+                        }
+                      }
+          );
+
       // Sub resources are handled recursively
       _imports = getResourceSpecificImports(imports);
     }
-    return _imports;
+
+    return _imports.stream()
+        .filter(importClass ->
+            !(importClass.startsWith(SpecUtils.JAVA_LANG_PREFIX)
+            || SpecUtils.PRIMITIVE_CLASS_NAMES.contains(importClass)))
+        .collect(Collectors.toList());
   }
 
   // get the class representing the record entity of this resource
@@ -333,7 +425,7 @@ public class BaseResourceSpec
     if (_entityClassName == null)
     {
       // Need to initialize by checking all the import chain
-      getImportsForRestMethods();
+      getImportsForMethods();
     }
     return _entityClassName;
   }

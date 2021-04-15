@@ -14,7 +14,8 @@ import java.util.Map;
  *
  * @author Karthik Balasubramanian
  */
-public class FluentClientUtils {
+public class FluentClientUtils
+{
   private FluentClientUtils()
   {}
 

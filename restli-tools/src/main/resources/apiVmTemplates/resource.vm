@@ -19,6 +19,7 @@ package $spec.resource.namespace;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.MaskMap;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.data.template.FieldDef;
@@ -35,9 +36,10 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.TypeSpec;
-#foreach($import in $spec.importsForRestMethods)
+#foreach($import in $spec.importsForMethods)
   import ${import};
 #end
+## #importClasses($spec)
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,11 +55,18 @@ import java.util.function.Function;
 import javax.annotation.Generated;
 
 @Generated("Generated from $spec.sourceIdlName")
+@SuppressWarnings({"rawtypes"})
 public class ${spec.className}${class_name_suffix} implements ${spec.toImplementInterfaceName} {
   private final static String ORIGINAL_RESOURCE_PATH = "$util.getResourcePath($spec.resource.path)";
   private static ResourceSpec _resourceSpec;
   #if(${spec.getPathKeys().size()} > 0)
   private Map<String, Object> _pathKeyMap = new HashMap<>();
+  #end
+  #if(${spec.getActions().size()} > 0)
+  private final Map<String, Class<?>> _actionQueryParamsClasses = Collections.singletonMap("action", String.class);
+  #foreach($method in $spec.actions)
+  private final Map<String, Object> _${method.name}ActionQueryParams = Collections.singletonMap("action", "${method.name}");
+  #end
   #end
 
   static {
@@ -65,15 +74,15 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
     #foreach($action in $spec.actions)
       ArrayList<FieldDef<?>> ${action.name}Params = new ArrayList<FieldDef<?>>();
       #foreach($actionParam in $action.parameters)
-        ${action.name}Params.add(new FieldDef<${actionParam.paramClassName}>("${actionParam.paramName}", ${actionParam.paramClassName}.class, DataTemplateUtil.getSchema(${actionParam.paramClassName}.class)));
+        ${action.name}Params.add(new FieldDef<${actionParam.paramClassDisplayName}>("${actionParam.paramName}", ${actionParam.paramClassDisplayName}.class, DataTemplateUtil.getSchema(#if(${actionParam.hasParamTypeRef()})${actionParam.getParamTypeRefClassDisplayName()}#else${actionParam.paramClassDisplayName}#end.class)));
       #end
       requestMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", ${action.name}Params));
     #end
 
     HashMap<String, DynamicRecordMetadata> responseMetadataMap=new HashMap<String, DynamicRecordMetadata>();
     #foreach($action in $spec.actions)
-      #if($action.schema.hasReturns())
-        responseMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", Collections.singletonList(new FieldDef<${action.valueClassName}>("value", ${action.valueClassName}.class, DataTemplateUtil.getSchema(${action.valueClassName}.class)))));
+      #if($action.hasReturns())
+        responseMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", Collections.singletonList(new FieldDef<${action.valueClassDisplayName}>("value", ${action.valueClassDisplayName}.class, DataTemplateUtil.getSchema(#if(${action.hasReturnTypeRef()})${action.getValuedTypeRefClassDisplayName()}#else${action.valueClassDisplayName}#end.class)))));
       #else
         responseMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", Collections.emptyList()));
       #end
@@ -144,6 +153,15 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
         ${spec.entityClassName}.class,
         keyParts
         );
+    #elseif(${spec.getResource().hasActionsSet()})
+    _resourceSpec = new ResourceSpecImpl(EnumSet.noneOf(ResourceMethod.class),
+      requestMetadataMap,
+      responseMetadataMap,
+      Void.class,
+      null,
+      null,
+      null,
+      Collections.emptyMap());
     #end
   }
 
@@ -188,10 +206,14 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
   }
   #end
 
+  // Action methods
+    #parse("apiVmTemplates/action.vm")
   // CRUD methods
   #foreach($method in $spec.restMethods)
     #parse("apiVmTemplates/rest.${method.method}.vm")
   #end
+
+
 
 
   ## Add association key generation stub

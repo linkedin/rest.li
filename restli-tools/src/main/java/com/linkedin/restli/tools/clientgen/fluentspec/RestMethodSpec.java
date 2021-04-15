@@ -42,8 +42,6 @@ public class RestMethodSpec
   private static final ParameterSchema COUNT_SCHEMA = new ParameterSchema().setOptional(true)
       .setName(RestConstants.COUNT_PARAM)
       .setType(DataSchemaConstants.INTEGER_TYPE);
-  private static final String FIELDS_MASK_METHOD_NAME = "Mask";
-  private static final String METADATA_MASK_METHOD_NAME = "MetadataMask";
 
   public RestMethodSpec(RestMethodSchema schema, BaseResourceSpec root)
   {
@@ -138,14 +136,14 @@ public class RestMethodSpec
     {
       case GET:
       case BATCH_GET:
-        return Collections.singleton(new ProjectionParameterSpec(RestConstants.FIELDS_PARAM, FIELDS_MASK_METHOD_NAME, _root.getEntityClass()));
+        return Collections.singleton(new ProjectionParameterSpec(RestConstants.FIELDS_PARAM, SpecUtils.FIELDS_MASK_METHOD_NAME, _root.getEntityClass(), _root));
       case CREATE:
       case BATCH_CREATE:
       case PARTIAL_UPDATE:
       case BATCH_PARTIAL_UPDATE:
         if (returnsEntity())
         {
-          return Collections.singleton(new ProjectionParameterSpec(RestConstants.FIELDS_PARAM, FIELDS_MASK_METHOD_NAME, _root.getEntityClass()));
+          return Collections.singleton(new ProjectionParameterSpec(RestConstants.FIELDS_PARAM, SpecUtils.FIELDS_MASK_METHOD_NAME, _root.getEntityClass(), _root));
         }
         else
         {
@@ -155,10 +153,10 @@ public class RestMethodSpec
       case BATCH_FINDER:
       case GET_ALL:
         Set<ProjectionParameterSpec> collectionParts = new HashSet<>();
-        collectionParts.add(new ProjectionParameterSpec(RestConstants.FIELDS_PARAM, FIELDS_MASK_METHOD_NAME, _root.getEntityClass()));
+        collectionParts.add(new ProjectionParameterSpec(RestConstants.FIELDS_PARAM, SpecUtils.FIELDS_MASK_METHOD_NAME, _root.getEntityClass(), _root));
         if (_schema.getMetadata() != null)
         {
-          collectionParts.add(new ProjectionParameterSpec(RestConstants.METADATA_FIELDS_PARAM, METADATA_MASK_METHOD_NAME, _root.classToTemplateSpec(_schema.getMetadata().getType())));
+          collectionParts.add(new ProjectionParameterSpec(RestConstants.METADATA_FIELDS_PARAM, SpecUtils.METADATA_MASK_METHOD_NAME, _root.classToTemplateSpec(_schema.getMetadata().getType()), _root));
         }
         if (_schema.hasPagingSupported() && _schema.isPagingSupported())
         {

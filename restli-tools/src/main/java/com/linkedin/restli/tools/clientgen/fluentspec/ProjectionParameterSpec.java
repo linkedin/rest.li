@@ -20,14 +20,15 @@ import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 
 
-public class ProjectionParameterSpec
+public class ProjectionParameterSpec extends ParameterSpec
 {
   private final ClassTemplateSpec _classTemplateSpec;
   private final String _parameterName;
   private final String _methodName;
 
-  public ProjectionParameterSpec(String name, String methodName, ClassTemplateSpec classTemplateSpec)
+  public ProjectionParameterSpec(String name, String methodName, ClassTemplateSpec classTemplateSpec, BaseResourceSpec root)
   {
+    super(null, root);
     _parameterName = name;
     _methodName = methodName == null ? _parameterName : methodName;
     _classTemplateSpec = classTemplateSpec;
