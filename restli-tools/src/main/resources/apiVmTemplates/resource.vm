@@ -121,8 +121,13 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
         #else
         ${spec.getKeyClassDisplayName(false)}.class,
         #end
+        #if(${spec.hasComplexKey()})
+        ${spec.getComplexKeySpec().getKeyKeyClassDisplayName()}.class,
+        ${spec.getComplexKeySpec().getParamKeyClassDisplayName()}.class,
+        #else
         null,
         null,
+        #end
         ${spec.entityClassName}.class,
         Collections.emptyMap());
     #elseif(${spec.getResource().hasAssociation()})
