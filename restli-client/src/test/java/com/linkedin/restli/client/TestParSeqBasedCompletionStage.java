@@ -59,7 +59,7 @@ public class TestParSeqBasedCompletionStage
   ParSeqUnitTestHelper _parSeqUnitTestHelper;
   Engine _engine;
   ParSeqBasedCompletionStageFactory<String> _parSeqBasedCompletionStageFactory;
-  ExecutorService _executor = ForkJoinPool.commonPool();
+  ExecutorService _executor = Executors.newCachedThreadPool();
 
   private static final String TESTVALUE1 = "testValue1";
   private static final String TESTVALUE2 = "testValue2";
