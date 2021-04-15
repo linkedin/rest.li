@@ -211,10 +211,11 @@ public class BaseResourceSpec
 
   public List<String> getImportsForMethods()
   {
-    if (_imports == null) 
+    if (_imports == null)
     {
       Set<String> imports = new TreeSet<>();
-      if (getActions().size() > 0) {
+      if (getActions().size() > 0)
+      {
         imports.add(ActionRequest.class.getName());
         imports.add(ActionResponse.class.getName());
         imports.add(ActionResponseDecoder.class.getName());
@@ -245,10 +246,10 @@ public class BaseResourceSpec
         );
       }
 
-      for (RestMethodSpec methodSpec : getRestMethods()) 
+      for (RestMethodSpec methodSpec : getRestMethods())
       {
         ResourceMethod method = ResourceMethod.fromString(methodSpec.getMethod());
-        switch (method) 
+        switch (method)
         {
           case GET:
             imports.add(GetRequest.class.getName());
@@ -263,7 +264,8 @@ public class BaseResourceSpec
             imports.add(CreateIdRequest.class.getName());
             imports.add(IdResponse.class.getName());
             imports.add(IdResponseDecoder.class.getName());
-            if (methodSpec.returnsEntity()) {
+            if (methodSpec.returnsEntity())
+            {
               imports.add(CreateIdEntityRequest.class.getName());
               imports.add(IdEntityResponse.class.getName());
               imports.add(IdEntityResponseDecoder.class.getName());
@@ -275,7 +277,8 @@ public class BaseResourceSpec
             imports.add(CreateIdStatus.class.getName());
             imports.add(BatchCreateIdResponse.class.getName());
             imports.add(BatchCreateIdDecoder.class.getName());
-            if (methodSpec.returnsEntity()) {
+            if (methodSpec.returnsEntity())
+            {
               imports.add(BatchCreateIdEntityRequest.class.getName());
               imports.add(CreateIdEntityStatus.class.getName());
               imports.add(BatchCreateIdEntityResponse.class.getName());
@@ -285,7 +288,8 @@ public class BaseResourceSpec
           case PARTIAL_UPDATE:
             imports.add(PatchRequest.class.getName());
             imports.add(PartialUpdateRequest.class.getName());
-            if (methodSpec.returnsEntity()) {
+            if (methodSpec.returnsEntity())
+            {
               imports.add(PartialUpdateEntityRequest.class.getName());
               imports.add(EntityResponseDecoder.class.getName());
             }
@@ -298,7 +302,8 @@ public class BaseResourceSpec
             imports.add(BatchKVResponse.class.getName());
             imports.add(KeyValueRecordFactory.class.getName());
             imports.add(KeyValueRecord.class.getName());
-            if (methodSpec.returnsEntity()) {
+            if (methodSpec.returnsEntity())
+            {
               imports.add(BatchPartialUpdateEntityRequest.class.getName());
               imports.add(UpdateEntityStatus.class.getName());
             }

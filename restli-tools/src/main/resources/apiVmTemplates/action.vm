@@ -29,15 +29,16 @@ Copyright (c) 2021 LinkedIn Corp.
         #if($paramLen > 0)
           #set($lastParam = ${method.getRequiredParameters().get($paramLen - 1)})
           #if($paramLen > 1)
-            #foreach($idx in [2..$paramLen])
-              #set($param = ${method.getRequiredParameters().get($idx - 2)})
+            #set($endIdx= ${paramLen} - 2)
+            #foreach($idx in [0..$endIdx])
+              #set($param = ${method.getRequiredParameters().get($idx)})
             $param.paramClassDisplayName $param.paramName,
             #end
           #end
           $lastParam.paramClassDisplayName $lastParam.paramName
         #end
           #if(${method.getOptionalParameters().size()} > 0)
-          #if($paramLen > 0),#end 
+          #if($paramLen > 0),#end
           Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider
           #end
     )
@@ -78,7 +79,7 @@ Copyright (c) 2021 LinkedIn Corp.
       ActionResponseDecoder<${method.valueClassDisplayName}> actionResponseDecoder =
           new ActionResponseDecoder<${method.valueClassDisplayName}>(responseFieldDef, actionResponseDataSchema);
       DynamicRecordTemplate inputParameters =
-          new DynamicRecordTemplate(requestDataSchema, 
+          new DynamicRecordTemplate(requestDataSchema,
           #if(${method.hasActionParams()})
             paramsProvider.apply(new $actionParamClassName()).buildParametersMap());
           #else
