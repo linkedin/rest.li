@@ -1086,7 +1086,6 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
             .toCompletableFuture()
             .get(5000, TimeUnit.MILLISECONDS);
 
-    //
     Assert.assertEquals(getResult.get(key1).getEntity().getTone(), Tone.FRIENDLY);
     Assert.assertEquals(getResult.get(key2).getEntity().getTone(), Tone.FRIENDLY);
   }
@@ -1125,14 +1124,13 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
 
   }
 
-  // TODO: Add this test after action method is supported
-//  @Test public void testComplexKey_entityAction() throws Exception
-//  {
-//    ComplexResourceKey<TwoPartKey, TwoPartKey> key = getComplexKey("major", "minor");
-//    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-////    complexKeyClient.
-//    Assert.assertEquals(entity.longValue(), 1L);
-//  }
+  @Test public void testComplexKey_entityAction() throws Exception
+  {
+    ComplexResourceKey<TwoPartKey, TwoPartKey> key = getComplexKey("major", "minor");
+    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Integer entity = complexKeyClient.entityAction(key).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(entity.longValue(), 1L);
+  }
 
   // ----- utils used for testing ------
 
