@@ -16,7 +16,7 @@ Copyright (c) 2021 LinkedIn Corp.
 #if ($spec.resource.namespace)
     package $spec.resource.namespace;
 #end
-#foreach($import in $spec.importsForRestMethods)
+#foreach($import in $spec.importsForMethods)
     import ${import};
 #end
 #if(${spec.getResource().hasAssociation()})

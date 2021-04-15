@@ -16,10 +16,13 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.data.template.BooleanArray;
+import com.linkedin.data.template.StringMap;
 import com.linkedin.parseq.ParSeqUnitTestHelper;
 import com.linkedin.restli.client.ParSeqRestliClient;
 import com.linkedin.restli.client.ParSeqRestliClientBuilder;
 import com.linkedin.restli.client.ParSeqRestliClientConfigBuilder;
+import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.ComplexResourceKey;
@@ -37,6 +40,7 @@ import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
+import com.linkedin.restli.examples.greetings.client.ActionsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsFluentClient;
@@ -50,6 +54,8 @@ import com.linkedin.restli.examples.greetings.client.GreetingsOfgreetingsOfgreet
 import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.SubgreetingsFluentClient;
 import com.linkedin.restli.examples.greetings.client.SubsubgreetingFluentClient;
+import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
+import com.linkedin.restli.examples.groups.client.GroupsFluentClient;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -852,6 +858,97 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     Assert.assertEquals(response.getMajor(), "aANDc");
     Assert.assertEquals(response.getMinor(), "bANDd");
   }
+
+  // ----- Tests with actions ------
+  @Test public void testCollectionEntityActionWithReturn() throws Exception
+  {
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greeting newGreeting;
+    newGreeting =  greetings.updateTone(1L,
+          param -> param.setNewTone(Tone.SINCERE).setDelOld(false))
+        .toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertNotNull(newGreeting);
+    Assert.assertEquals(newGreeting.getId().longValue(), 1L);
+    Assert.assertEquals(newGreeting.getTone(), Tone.SINCERE);
+
+    newGreeting =  greetings.updateTone(1L, param -> param.setNewTone(Tone.INSULTING)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertNotNull(newGreeting);
+    Assert.assertEquals(newGreeting.getId().longValue(), 1L);
+    Assert.assertEquals(newGreeting.getTone(), Tone.INSULTING);
+  }
+
+  @Test public void testCollectionEntityActionWithNoReturn() throws Exception
+  {
+    // TestGroupsResource
+    String testEmail = "test@test.com";
+    TransferOwnershipRequest ownershipRequest = new TransferOwnershipRequest();
+    ownershipRequest.setNewOwnerContactEmail(testEmail);
+    int testId = 9999;
+    ownershipRequest.setNewOwnerMemberID(testId);
+    GroupsFluentClient groupsFluentClient = new GroupsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CompletableFuture<Void> response =
+        groupsFluentClient.transferOwnership(1, param -> param.setRequest(ownershipRequest))
+            .toCompletableFuture();
+    response.get(5000, TimeUnit.MILLISECONDS);
+    assert(!response.isCompletedExceptionally());
+  }
+
+  @Test public void testCollectionActionWithReturn() throws Exception
+  {
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Assert.assertTrue(greetings.purge().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS) == 100);
+  }
+
+  @Test public void testCollectionActionWithNoReturn() throws Exception
+  {
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CompletableFuture<Void> stage = greetings.anotherAction(param -> param.setBitfield(new BooleanArray())
+        .setRequest(new TransferOwnershipRequest())
+        .setSomeString("")
+        .setStringMap(new StringMap())).toCompletableFuture();
+    Assert.assertNull(stage.get(5000, TimeUnit.MILLISECONDS));
+    assert(!stage.isCompletedExceptionally());
+  }
+
+  @Test(expectedExceptions = {RestLiResponseException.class})
+  public void testCollectionActionWithException() throws Throwable
+  {
+    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CompletableFuture<Void> stage = greetings.exceptionTest().toCompletableFuture();
+    try
+    {
+      stage.get(5000, TimeUnit.MILLISECONDS);
+      Assert.fail("expected exception");
+    }
+    catch (Exception e)
+    {
+      assert(stage.isCompletedExceptionally());
+      throw e.getCause();
+    }
+  }
+
+  @Test public void testActionSetActionWithReturn() throws Exception
+  {
+    ActionsFluentClient actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Assert.assertTrue(actionsFluentClient.ultimateAnswer().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS) == 42);
+  }
+
+  @Test public void testActionSetActionWithNoReturn() throws Exception
+  {
+    ActionsFluentClient actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Assert.assertNull(actionsFluentClient.returnVoid().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS));
+
+  }
+
+  @Test public void testActionSetActionWithTypeRef() throws Exception
+  {
+    // This end point use typeref for both ActionParam and Action methods' return value
+    ActionsFluentClient actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Assert.assertEquals(actionsFluentClient.customTypeRef(new CustomLong(500L)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS), new CustomLong(500L));
+  }
+
+
+
 
   // ----- Test TypeRef cases ------
 

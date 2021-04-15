@@ -26,17 +26,24 @@ public class ParameterSpec
 {
   private final ParameterSchema _parameterSchema;
   private final BaseResourceSpec _root;
-  private final ClassTemplateSpec _classTemplateSpec;
-  private final String _declaredTypeRefClassName;
+  private ClassTemplateSpec _classTemplateSpec;
+  // a boolean flag to turn on whether show className as short name
+  // Note: need to explicitly turn this flag on during imports checking
+  private Boolean _usingShortClassName;
+  private String _declaredTypeRefClassName;
+  private Boolean _usingShortTypeRefClassName;
 
 
   public ParameterSpec(ParameterSchema parameterSchema, BaseResourceSpec root)
   {
     _parameterSchema = parameterSchema;
     _root = root;
-    String parameterClassType = _parameterSchema.getType();
-    _classTemplateSpec = _root.classToTemplateSpec(parameterClassType);
-    _declaredTypeRefClassName = _root.getClassRefNameForSchema(parameterClassType);
+    if(_parameterSchema != null) // Excluding projection parameter
+    {
+      String parameterClassType = _parameterSchema.getType();
+      _classTemplateSpec = _root.classToTemplateSpec(parameterClassType);
+      _declaredTypeRefClassName = _root.getClassRefNameForSchema(parameterClassType);
+    }
   }
 
   public String getParamName()
@@ -61,17 +68,61 @@ public class ParameterSpec
 
   public boolean hasParamTypeRef()
   {
-    return !SpecUtils.checkIsSameClass(getParamClassName(), _declaredTypeRefClassName);
+    return _declaredTypeRefClassName!= null &&
+        !SpecUtils.checkIsSameClass(getParamClassName(), _declaredTypeRefClassName);
   }
 
-  // TODO: add displayable name
   public String getParamTypeRefClassName()
   {
     return _declaredTypeRefClassName;
   }
 
+  public String getParamTypeRefClassDisplayName()
+  {
+    if (_usingShortTypeRefClassName == null)
+    {
+      _usingShortTypeRefClassName = !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_root.getImportCheckConflict(),
+          ClassUtils.getShortClassName(getParamTypeRefClassName()),
+          getParamTypeRefClassName());
+    }
+    return _usingShortTypeRefClassName ? ClassUtils.getShortClassName(getParamTypeRefClassName()):
+        getParamTypeRefClassName();
+  }
+
+
   public String getParamClassName()
   {
     return SpecUtils.getClassName(getParamClass());
   }
+
+  public String getParamClassDisplayName()
+  {
+    if (_usingShortClassName == null)
+    {
+      // It seems the Marco sometimes resolves earlier than the the template
+      // Unfortunately need to check the conflicts again here to figure out the correct display name,
+      // even though BaseResourceSpec already did so during import resolution
+      _usingShortClassName = !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_root.getImportCheckConflict(),
+                              ClassUtils.getShortClassName(getParamClassName()),
+                                                           getParamClassName());
+    }
+    return _usingShortClassName ? ClassUtils.getShortClassName(getParamClassName()):
+        getParamClassName();
+  }
+
+  public boolean isUsingShortClassName()
+  {
+    return _usingShortClassName;
+  }
+
+  public void setUsingShortClassName(boolean useShortName)
+  {
+    this._usingShortClassName = useShortName;
+  }
+
+  public void setUsingShortTypeRefClassName(Boolean usingShortTypeRefClassName)
+  {
+    _usingShortTypeRefClassName = usingShortTypeRefClassName;
+  }
+
 }

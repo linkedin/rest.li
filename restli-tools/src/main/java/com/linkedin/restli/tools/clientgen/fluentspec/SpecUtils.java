@@ -36,6 +36,8 @@ import org.apache.commons.text.StringEscapeUtils;
  * Common utility functions for building fluent apis.
  */
 public class SpecUtils {
+  static final String FIELDS_MASK_METHOD_NAME = "Mask";
+  static final String METADATA_MASK_METHOD_NAME = "MetadataMask";
   static final String JAVA_LANG_PREFIX = "java.lang";
   static final Set<String> PRIMITIVE_CLASS_NAMES = new HashSet<String>(Arrays.asList(
       Integer.class.getSimpleName(),
@@ -44,7 +46,8 @@ public class SpecUtils {
       String.class.getSimpleName(),
       Long.class.getSimpleName(),
       Float.class.getSimpleName()
-  ));
+      ));
+
   private SpecUtils()
   {
   }
@@ -179,6 +182,12 @@ public class SpecUtils {
    */
   public static boolean checkIfShortNameConflictAndUpdateMapping(Map<String, String> shortNameMapping, String shortName, String bindingName)
   {
+    // Always shortcut java native primitive class check
+    if (bindingName.startsWith(SpecUtils.JAVA_LANG_PREFIX))
+    {
+      return false;
+    }
+
     if (shortNameMapping.containsKey(shortName))
     {
       return !((shortNameMapping.get(shortName)!= null) && shortNameMapping.get(shortName).equals(bindingName));

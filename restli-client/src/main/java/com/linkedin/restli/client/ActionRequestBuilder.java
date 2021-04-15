@@ -243,11 +243,16 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
 
   private Map<FieldDef<?>, Object> buildReadOnlyActionParameters()
   {
+    return buildReadOnlyActionParameters(_actionParams);
+  }
+
+  private static Map<FieldDef<?>, Object> buildReadOnlyActionParameters(Map<FieldDef<?>, Object> actionParams)
+  {
     try
     {
-      Map<FieldDef<?>, Object> readOnlyParameters = new HashMap<FieldDef<?>, Object>(_actionParams.size());
+      Map<FieldDef<?>, Object> readOnlyParameters = new HashMap<FieldDef<?>, Object>(actionParams.size());
 
-      for (Map.Entry<FieldDef<?>, Object> originalParameterEntry : _actionParams.entrySet())
+      for (Map.Entry<FieldDef<?>, Object> originalParameterEntry : actionParams.entrySet())
       {
         readOnlyParameters.put(
             originalParameterEntry.getKey(),
@@ -262,7 +267,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     }
   }
 
-  private Object getReadOnlyActionParameter(Object original) throws CloneNotSupportedException
+  private static Object getReadOnlyActionParameter(Object original) throws CloneNotSupportedException
   {
     if (original == null){
       return null;
