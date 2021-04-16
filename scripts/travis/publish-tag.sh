@@ -65,40 +65,24 @@ fi
 while sleep 9m; do echo "[Ping] Keeping Travis job alive ($((SECONDS / 60)) minutes)"; done &
 WAITER_PID=$!
 
-# TODO: This just publishes to the test-repo for now, delete the Bintray publish step once no longer testing
 # Publish to JFrog Artifactory
 echo "All checks passed, attempting to publish Rest.li $VERSION to JFrog Artifactory..."
 ./gradlew artifactoryPublish
-if [ $? = 0 ]; then
-  echo "Successfully published Rest.li $VERSION to JFrog Artifactory."
-else
-  echo "Publish to JFrog Artifactory failed (continuing since this is only for testing for now)"
-fi
-
-# Publish to Bintray
-echo "Attempting to publish Rest.li $VERSION to Bintray..."
-./gradlew bintrayUpload
 EXIT_CODE=$?
 
 # Kill the waiter job
 kill $WAITER_PID
 
 if [ $EXIT_CODE = 0 ]; then
-  echo "Successfully published Rest.li $VERSION to Bintray."
+  echo "Successfully published Rest.li $VERSION to JFrog Artifactory."
 else
-  # Publish failed, so roll back the upload to ensure this version is completely wiped from the repo
-  echo "Publish failed, wiping $VERSION from Bintray..."
-  DELETE_VERSION_URL="https://api.bintray.com/packages/linkedin/maven/pegasus/versions/${VERSION}"
-  curl -X DELETE --user ${BINTRAY_USER}:${BINTRAY_KEY} --fail $DELETE_VERSION_URL
+  # We used to roll back Bintray uploads on failure to publish, but it's not clear if this is needed for JFrog.
+  # TODO: If "partial uploads" can occur for JFrog, then here we would roll back the upload via the JFrog REST API.
+  # We did this before using: curl -X DELETE --user ${BINTRAY_USER}:${BINTRAY_KEY} --fail $DELETE_VERSION_URL
 
-  if [ $? = 0 ]; then
-    echo "Successfully rolled $VERSION back."
-    echo 'Please retry the upload by restarting this Travis job.'
-  else
-    echo "Failed to roll back $VERSION, please manually delete this version from Bintray."
-    echo "See: https://bintray.com/linkedin/maven/pegasus/$VERSION"
-    echo 'Once this version is deleted, please retry the upload by restarting this Travis job.'
-  fi
+  echo 'Failed to publish to JFrog Artifactory.'
+  echo "You can check https://linkedin.jfrog.io/ui/repos/tree/General/pegasus to ensure that $VERSION is not present."
+  echo 'Please retry the upload by restarting this Travis job.'
 
   exit 1
 fi

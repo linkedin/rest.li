@@ -19,7 +19,7 @@
  * - artifactoryPublish: publishes all artifacts for the "release" publication to JFrog; depends on...
  *   - generatePomFileForReleasePublication: defined in publications.gradle
  *   - assertArtifactsExist: defined in publications.gradle
- *   - assertBintrayCredentialsExist: asserts that JFrog credentials are present as environment variables
+ *   - assertJFrogCredentialsExist: asserts that JFrog credentials are present as environment variables
  */
 apply plugin: 'com.jfrog.artifactory' // https://www.jfrog.com/confluence/display/rtf/gradle+artifactory+plugin
 
@@ -36,7 +36,7 @@ artifactory {
 
   publish {
     repository {
-      repoKey = 'test-repo' // The Artifactory repository key to publish to // TODO: change this to "pegasus" once this has been tested in CI
+      repoKey = 'pegasus' // The Artifactory repository key to publish to
       username = jfrogUser // The publisher user name
       password = jfrogKey // The publisher password
     }
