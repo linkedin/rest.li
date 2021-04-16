@@ -13,6 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Migrate the Rest.li release process from Bintray to JFrog Artifactory.
+    - As of this version, Bintray will no longer host Rest.li releases.
+    - Releases can be found on [LinkedIn's JFrog Artifactory instance](https://linkedin.jfrog.io/).
 
 ## [29.17.3] - 2021-04-15
 - Releasing to test new CI behavior.
