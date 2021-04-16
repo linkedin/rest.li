@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.17.4] - 2021-04-16
 - Migrate the Rest.li release process from Bintray to JFrog Artifactory.
     - As of this version, Bintray will no longer host Rest.li releases.
     - Releases can be found on [LinkedIn's JFrog Artifactory instance](https://linkedin.jfrog.io/).
@@ -4908,7 +4910,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.17.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.17.4...master
+[29.17.4]: https://github.com/linkedin/rest.li/compare/v29.17.3...v29.17.4
 [29.17.3]: https://github.com/linkedin/rest.li/compare/v29.17.2...v29.17.3
 [29.17.2]: https://github.com/linkedin/rest.li/compare/v29.17.1...v29.17.2
 [29.17.1]: https://github.com/linkedin/rest.li/compare/v29.17.0...v29.17.1
