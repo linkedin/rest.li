@@ -19,41 +19,26 @@ package com.linkedin.restli.examples.greetings;
 
 
 import com.linkedin.data.template.RecordTemplate;
-import com.linkedin.r2.message.rest.RestException;
-import com.linkedin.restli.client.CreateRequest;
+import com.linkedin.restli.client.CreateIdRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.uribuilders.RestliUriBuilderUtil;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.custom.types.DateCoercer;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.CustomTypes2Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes2RequestBuilders;
-import com.linkedin.restli.examples.greetings.client.CustomTypes3Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes3RequestBuilders;
-import com.linkedin.restli.examples.greetings.client.CustomTypes4Builders;
 import com.linkedin.restli.examples.greetings.client.CustomTypes4RequestBuilders;
-import com.linkedin.restli.examples.greetings.client.CustomTypesBuilders;
 import com.linkedin.restli.examples.greetings.client.CustomTypesRequestBuilders;
-import com.linkedin.restli.examples.typeref.api.UnionRef;
 import com.linkedin.restli.examples.typeref.api.UnionRefInline;
-import com.linkedin.restli.internal.client.BatchEntityResponseDecoder;
-import com.linkedin.restli.internal.client.BatchResponseDecoder;
-import com.linkedin.restli.internal.client.CollectionResponseDecoder;
-import com.linkedin.restli.internal.client.CreateResponseDecoder;
-import com.linkedin.restli.internal.client.EntityResponseDecoder;
-import com.linkedin.restli.internal.client.RestResponseDecoder;
+import com.linkedin.restli.internal.client.*;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.TestConstants;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -72,53 +57,50 @@ public class TestCustomTypesRequestBuilders
 {
   // test correct request is built for customLong
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request1BuilderDataProviderCustomLongFinder")
-  public void testFinderCustomLong(RootBuilderWrapper<Long, Greeting> builders, ProtocolVersion version, String expectedUri)
-    throws IOException, RestException
+  public void testFinderCustomLong(ProtocolVersion version, String expectedUri)
   {
-    Request<CollectionResponse<Greeting>> request = builders.findBy("CustomLong").setQueryParam("l", new CustomLong(20L)).build();
+    Request<CollectionResponse<Greeting>> request = new CustomTypesRequestBuilders()
+        .findByCustomLong()
+        .lParam(new CustomLong(20L))
+        .build();
 
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
   }
 
   // test correct request is built for customLongArray
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request1BuilderDataProviderCustomLongArrayFinder")
-  public void testFinderCustomLongArray(RootBuilderWrapper<Long, Greeting> builders, ProtocolVersion version, String expectedUri)
-    throws IOException, RestException
+  public void testFinderCustomLongArray(ProtocolVersion version, String expectedUri)
   {
     List<CustomLong> ls = new ArrayList<CustomLong>(2);
     ls.add(new CustomLong(2L));
     ls.add(new CustomLong(4L));
-    Request<CollectionResponse<Greeting>> request = builders.findBy("CustomLongArray").setQueryParam("ls", ls).build();
+
+    Request<CollectionResponse<Greeting>> request = new CustomTypesRequestBuilders()
+        .findByCustomLongArray()
+        .lsParam(ls)
+        .build();
 
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request2BuilderDataProviderEntity")
-  public void testCollectionGetKey(RootBuilderWrapper<CustomLong, Greeting> builders, ProtocolVersion version, String expectedUri) throws IOException, RestException
+  public void testCollectionGetKey(ProtocolVersion version, String expectedUri)
   {
-    Request<Greeting> request = builders.get().id(new CustomLong(5L)).build();
+    Request<Greeting> request = new CustomTypes2RequestBuilders().get().id(new CustomLong(5L)).build();
 
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedUri, null, version);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request2CreateBuilderDataProvider")
-  public void testTypeRefParam(ProtocolVersion version, String expectedUri) throws IOException, RestException
+  public void testTypeRefParam(ProtocolVersion version, String expectedUri)
   {
-    CreateRequest<Greeting> request = new CustomTypes2Builders().create().unionRefParamParam(UnionRefInline.create(10)).build();
+    CreateIdRequest<CustomLong, Greeting> request = new CustomTypes2RequestBuilders().create().unionRefParamParam(UnionRefInline.create(10)).build();
 
-    checkRequestBuilder(request, ResourceMethod.CREATE, CreateResponseDecoder.class, expectedUri, null, version);
+    checkRequestBuilder(request, ResourceMethod.CREATE, IdResponseDecoder.class, expectedUri, null, version);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request2BatchDataProvider")
-  public void testCollectionBatchGetKey(ProtocolVersion version, String expectedUri) throws IOException, RestException
-  {
-    Request<BatchResponse<Greeting>> request = new CustomTypes2Builders().batchGet().ids(new CustomLong(1L), new CustomLong(2L), new CustomLong(3L)).build();
-
-    checkRequestBuilder(request, ResourceMethod.BATCH_GET, BatchResponseDecoder.class, expectedUri, null, version);
-  }
-
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request2BatchDataProvider")
-  public void testCollectionBatchGetEntityKey(ProtocolVersion version, String expectedUri) throws IOException, RestException
+  public void testCollectionBatchGetKey(ProtocolVersion version, String expectedUri)
   {
     Request<BatchKVResponse<CustomLong, EntityResponse<Greeting>>> request =
       new CustomTypes2RequestBuilders().batchGet().ids(new CustomLong(1L), new CustomLong(2L), new CustomLong(3L)).build();
@@ -127,39 +109,42 @@ public class TestCustomTypesRequestBuilders
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request4BuilderDataProviderEntity")
-  public void testCollectionChildGetKey(RootBuilderWrapper<CustomLong, Greeting> builders, ProtocolVersion version, String expectedUri)
-    throws IOException, RestException
+  public void testCollectionChildGetKey(ProtocolVersion version, String expectedUri)
   {
-    Request<Greeting> request = builders.get().setPathKey("customTypes2Id", new CustomLong(1L)).id(new CustomLong(7L)).build();
+    Request<Greeting> request = new CustomTypes4RequestBuilders().get()
+        .customTypes2IdKey(new CustomLong(1L))
+        .id(new CustomLong(7L))
+        .build();
 
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedUri, null, version);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request3BuilderDataProviderEntity")
-  public void testAssociationKeys(RootBuilderWrapper<CompoundKey, Greeting> builders, ProtocolVersion version, String expectedUri)
-    throws IOException, RestException
+  public void testAssociationKeys(ProtocolVersion version, String expectedUri)
   {
     // normally coercer registration is handled in RestliAnnotationReader,
     // but that isn't run here because this is just a unit test.  So, we need to
     // force registration of the DateCoercer because it isn't contained in Date itself.
     new DateCoercer();
 
-    CustomTypes3Builders.Key key = new CustomTypes3Builders.Key().setLongId(new CustomLong(5L)).setDateId(new Date(13L));
-    Request<Greeting> request = builders.get().id(key).build();
+    CustomTypes3RequestBuilders.Key key = new CustomTypes3RequestBuilders.Key().setLongId(new CustomLong(5L)).setDateId(new Date(13L));
+    Request<Greeting> request = new CustomTypes3RequestBuilders().get().id(key).build();
 
     checkRequestBuilder(request, ResourceMethod.GET, EntityResponseDecoder.class, expectedUri, null, version);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request3BuilderDataProviderEntityFinder")
-  public void testAssocKey(RootBuilderWrapper<CompoundKey, Greeting> builders, ProtocolVersion version, String expectedUri)
-    throws IOException, RestException
+  public void testAssocKey(ProtocolVersion version, String expectedUri)
   {
     // normally coercer registration is handled in RestliAnnotationReader,
     // but that isn't run here because this is just a unit test.  So, we need to
     // force registration of the DateCoercer because it isn't contained in Date itself.
     new DateCoercer();
 
-    Request<CollectionResponse<Greeting>> request = builders.findBy("DateOnly").setPathKey("dateId", new Date(13L)).build();
+    Request<CollectionResponse<Greeting>> request = new CustomTypes3RequestBuilders()
+        .findByDateOnly()
+        .dateIdKey(new Date(13L))
+        .build();
 
     checkRequestBuilder(request, ResourceMethod.FINDER, CollectionResponseDecoder.class, expectedUri, null, version);
 
@@ -184,10 +169,8 @@ public class TestCustomTypesRequestBuilders
     String uriV1 = "customTypes?l=20&q=customLong";
     String uriV2 = "customTypes?l=20&q=customLong";
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 },
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesRequestBuilders()) , AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1},
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesRequestBuilders()) , AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2}
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 
@@ -197,10 +180,8 @@ public class TestCustomTypesRequestBuilders
     String uriV1 = "customTypes?ls=2&ls=4&q=customLongArray";
     String uriV2 = "customTypes?ls=List(2,4)&q=customLongArray";
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 },
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesRequestBuilders()) , AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1},
-      { new RootBuilderWrapper<Long, Greeting>(new CustomTypesRequestBuilders()) , AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2}
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 
@@ -210,10 +191,8 @@ public class TestCustomTypesRequestBuilders
     String uriV1 = "customTypes2/5";
     String uriV2 = "customTypes2/5";
     return new Object[][] {
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2Builders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2Builders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 },
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes2RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 
@@ -245,10 +224,8 @@ public class TestCustomTypesRequestBuilders
     String uriV1 = "customTypes2/1/customTypes4/7";
     String uriV2 = "customTypes2/1/customTypes4/7";
     return new Object[][] {
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes4Builders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes4Builders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 },
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes4RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<CustomLong, Greeting>(new CustomTypes4RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 
@@ -258,10 +235,8 @@ public class TestCustomTypesRequestBuilders
     String uriV1 = "customTypes3/dateId=13&longId=5";
     String uriV2 = "customTypes3/(dateId:13,longId:5)";
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3Builders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3Builders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 },
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 
@@ -271,10 +246,8 @@ public class TestCustomTypesRequestBuilders
     String uriV1 = "customTypes3/dateId=13?q=dateOnly";
     String uriV2 = "customTypes3/(dateId:13)?q=dateOnly";
     return new Object[][] {
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3Builders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3Builders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 },
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
-      { new RootBuilderWrapper<CompoundKey, Greeting>(new CustomTypes3RequestBuilders()), AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
+      { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), uriV1 },
+      { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), uriV2 }
     };
   }
 }

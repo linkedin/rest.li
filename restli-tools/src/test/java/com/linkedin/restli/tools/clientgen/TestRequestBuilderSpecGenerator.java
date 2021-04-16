@@ -23,7 +23,6 @@ import com.linkedin.pegasus.generator.CodeUtil;
 import com.linkedin.pegasus.generator.DataSchemaParser;
 import com.linkedin.pegasus.generator.TemplateSpecGenerator;
 import com.linkedin.restli.common.ResourceMethod;
-import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.tools.clientgen.builderspec.ActionBuilderSpec;
 import com.linkedin.restli.tools.clientgen.builderspec.ActionParamBindingMethodSpec;
@@ -39,7 +38,6 @@ import com.linkedin.restli.tools.clientgen.builderspec.RootBuilderSpec;
 import com.linkedin.restli.tools.clientgen.builderspec.SimpleRootBuilderSpec;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,7 +66,7 @@ public class TestRequestBuilderSpecGenerator
   private String moduleDir;
 
   @BeforeClass
-  public void setUp() throws IOException
+  public void setUp()
   {
     moduleDir = System.getProperty("user.dir");
   }
@@ -94,8 +92,7 @@ public class TestRequestBuilderSpecGenerator
     builderBaseMap.put(ResourceMethod.BATCH_DELETE, "BatchDeleteRequestBuilder");
     builderBaseMap.put(ResourceMethod.BATCH_CREATE, "BatchCreateIdRequestBuilder");
     final RequestBuilderSpecGenerator builderSpecGenerator =
-        new RequestBuilderSpecGenerator(schemaParser.getSchemaResolver(), specGenerator, RestliVersion.RESTLI_2_0_0,
-                                        builderBaseMap);
+        new RequestBuilderSpecGenerator(schemaParser.getSchemaResolver(), specGenerator, builderBaseMap);
 
     // parse idl to ResourceSchemas
     final RestSpecParser.ParseResult parseResult = parser.parseSources(sources);
@@ -109,7 +106,7 @@ public class TestRequestBuilderSpecGenerator
   }
 
   @Test
-  public void testSimpleResource() throws Exception
+  public void testSimpleResource()
   {
     String idl = moduleDir + FS + IDLS_DIR + FS + "testSimple.restspec.json";
     Set<BuilderSpec> builderSpecs = generateBuilderSpec(new String[] {idl});
@@ -165,7 +162,7 @@ public class TestRequestBuilderSpecGenerator
   }
 
   @Test
-  public void testCollectionResource() throws Exception
+  public void testCollectionResource()
   {
     String idl = moduleDir + FS + IDLS_DIR + FS + "testCollection.restspec.json";
     Set<BuilderSpec> builderSpecs = generateBuilderSpec(new String[] {idl});
@@ -331,7 +328,7 @@ public class TestRequestBuilderSpecGenerator
   }
 
   @Test
-  public void testActionResource() throws Exception
+  public void testActionResource()
   {
     String idl = moduleDir + FS + IDLS_DIR + FS + "testAction.restspec.json";
     Set<BuilderSpec> builderSpecs = generateBuilderSpec(new String[] {idl});

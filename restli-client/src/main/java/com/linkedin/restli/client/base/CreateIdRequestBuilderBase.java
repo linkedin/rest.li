@@ -34,10 +34,10 @@ public class CreateIdRequestBuilderBase<K,
         RB extends CreateIdRequestBuilderBase<K, V, RB>>
         extends CreateIdRequestBuilder<K, V>
 {
-  protected CreateIdRequestBuilderBase(String baseURITemplate,
-                                       Class<V> valueClass,
-                                       ResourceSpec resourceSpec,
-                                       RestliRequestOptions requestOptions)
+  public CreateIdRequestBuilderBase(String baseURITemplate,
+                                    Class<V> valueClass,
+                                    ResourceSpec resourceSpec,
+                                    RestliRequestOptions requestOptions)
   {
     super(baseURITemplate, valueClass, resourceSpec, requestOptions);
   }

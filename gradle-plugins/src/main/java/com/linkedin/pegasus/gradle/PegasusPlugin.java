@@ -553,8 +553,6 @@ public class PegasusPlugin implements Plugin<Project>
   // gradle property to skip running GenerateRestModel task.
   // Note it affects GenerateRestModel task only, and does not skip tasks depends on GenerateRestModel.
   private static final String SKIP_GENERATE_REST_MODEL= "rest.model.skipGenerateRestModel";
-  private static final String SUPPRESS_REST_CLIENT_RESTLI_2 = "rest.client.restli2.suppress";
-  private static final String SUPPRESS_REST_CLIENT_RESTLI_1 = "rest.client.restli1.suppress";
 
   private static final String GENERATOR_CLASSLOADER_NAME = "pegasusGeneratorClassLoader";
 
@@ -1913,8 +1911,6 @@ public class PegasusPlugin implements Plugin<Project>
               .plus(project.getConfigurations().getByName("dataTemplate").getArtifacts().getFiles()));
           task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
           task.setDestinationDir(generatedRestClientDir);
-          task.setRestli2FormatSuppressed(project.hasProperty(SUPPRESS_REST_CLIENT_RESTLI_2));
-          task.setRestli1FormatSuppressed(project.hasProperty(SUPPRESS_REST_CLIENT_RESTLI_1));
           if (isPropertyTrue(project, ENABLE_ARG_FILE))
           {
             task.setEnableArgFile(true);

@@ -28,12 +28,10 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.Exceptions3Builders;
 import com.linkedin.restli.examples.greetings.client.Exceptions3RequestBuilders;
 import com.linkedin.restli.examples.greetings.server.ExceptionsResource3;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -97,7 +95,7 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
-  public void testGet404(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testGet404(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, Exceptions3RequestBuilders builders) throws RemoteInvocationException
   {
     Response<Greeting> response = null;
     RestLiResponseException exception = null;
@@ -150,7 +148,7 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "exceptionHandlingModesDataProvider")
-  public void testUpdate(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, RootBuilderWrapper<Long, Greeting> builders) throws Exception
+  public void testUpdate(boolean explicit, ErrorHandlingBehavior errorHandlingBehavior, Exceptions3RequestBuilders builders) throws Exception
   {
     Response<EmptyRecord> response = null;
     RestLiResponseException exception = null;
@@ -209,18 +207,12 @@ public class TestExceptionsResource3 extends RestLiIntegrationTest
   {
     return new Object[][]
         {
-            { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders()) },
-            { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-            { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders()) },
-            { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-            { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders()) },
-            { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-            { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders()) },
-            { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-            { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders()) },
-            { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3Builders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-            { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders()) },
-            { false, null, new RootBuilderWrapper<Long, Greeting>(new Exceptions3RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+            { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new Exceptions3RequestBuilders() },
+            { true, ErrorHandlingBehavior.FAIL_ON_ERROR, new Exceptions3RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) },
+            { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new Exceptions3RequestBuilders() },
+            { true, ErrorHandlingBehavior.TREAT_SERVER_ERROR_AS_SUCCESS, new Exceptions3RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) },
+            { false, null, new Exceptions3RequestBuilders() },
+            { false, null, new Exceptions3RequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
         };
   }
 }

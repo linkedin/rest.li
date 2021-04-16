@@ -20,7 +20,7 @@ import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -73,15 +73,15 @@ public class TestEmptyBodyRequests extends RestLiIntegrationTest
   public Object[][] exceptionHandlingModesDataProvider()
   {
     return new Object[][] {
-        { new GreetingsBuilders().update().id(1L).build(), true },
+        { new GreetingsRequestBuilders().update().id(1L).build(), true },
         // Restli client creates a wrapper with empty "elements" for batch update.
-        { new GreetingsBuilders().batchUpdate().build(), false },
-        { new GreetingsBuilders().partialUpdate().id(1L).build(), true},
+        { new GreetingsRequestBuilders().batchUpdate().build(), false },
+        { new GreetingsRequestBuilders().partialUpdate().id(1L).build(), true},
         // Restli client creates a wrapper with empty "elements" for batch partial update.
-        { new GreetingsBuilders().batchPartialUpdate().build(), false},
+        { new GreetingsRequestBuilders().batchPartialUpdate().build(), false},
         // Restli client creates a wrapper with empty "elements" for batch create.
-        { new GreetingsBuilders().batchCreate().build(), false},
-        { new GreetingsBuilders().create().build(), true},
+        { new GreetingsRequestBuilders().batchCreate().build(), false},
+        { new GreetingsRequestBuilders().create().build(), true},
 
     };
   }

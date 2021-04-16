@@ -24,15 +24,10 @@ import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.SearchMetadata;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.ToneFacet;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsCallbackBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsCallbackRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsPromiseBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsPromiseCtxBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsPromiseCtxRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsPromiseRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsTaskBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsTaskRequestBuilders;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.config.RestLiMethodConfigBuilder;
@@ -139,24 +134,14 @@ public class TestAlwaysProjectedFieldsOnServer extends RestLiIntegrationTest
   {
     return new Object[][]
         {
-          { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-          { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
           { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
           { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-          { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders()) },
-          { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
           { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders()) },
           { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-          { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders()) },
-          { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
           { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders()) },
           { new RootBuilderWrapper<Long, Greeting>(new GreetingsCallbackRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-          { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders()) },
-          { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
           { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders()) },
           { new RootBuilderWrapper<Long, Greeting>(new GreetingsPromiseCtxRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-          { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders()) },
-          { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
           { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders()) },
           { new RootBuilderWrapper<Long, Greeting>(new GreetingsTaskRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
        };

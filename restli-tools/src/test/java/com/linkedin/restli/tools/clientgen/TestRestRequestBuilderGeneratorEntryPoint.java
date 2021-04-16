@@ -18,12 +18,10 @@ package com.linkedin.restli.tools.clientgen;
 
 import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.pegasus.generator.PegasusDataTemplateGenerator;
-import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.tools.ExporterTestUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
@@ -46,7 +44,6 @@ public class TestRestRequestBuilderGeneratorEntryPoint
   private String originalGeneratorResolverPath;
   private String originalGenerateImported;
   private String originalGenerateDataTemplates;
-  private String originalVersionString;
 
   @BeforeClass
   public void setUp() throws IOException
@@ -59,7 +56,6 @@ public class TestRestRequestBuilderGeneratorEntryPoint
     originalGeneratorResolverPath = backupOriginalValueAndOverride(AbstractGenerator.GENERATOR_RESOLVER_PATH, "");
     originalGenerateImported = backupOriginalValueAndOverride(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED, "true");
     originalGenerateDataTemplates = backupOriginalValueAndOverride(RestRequestBuilderGenerator.GENERATOR_REST_GENERATE_DATATEMPLATES, "false");
-    originalVersionString = System.clearProperty(RestRequestBuilderGenerator.GENERATOR_REST_GENERATE_VERSION);
   }
 
   @AfterClass
@@ -71,7 +67,6 @@ public class TestRestRequestBuilderGeneratorEntryPoint
     restoreOriginalValue(AbstractGenerator.GENERATOR_RESOLVER_PATH, originalGeneratorResolverPath);
     restoreOriginalValue(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED, originalGenerateImported);
     restoreOriginalValue(RestRequestBuilderGenerator.GENERATOR_REST_GENERATE_DATATEMPLATES, originalGenerateDataTemplates);
-    restoreOriginalValue(RestRequestBuilderGenerator.GENERATOR_REST_GENERATE_VERSION, originalVersionString);
   }
 
   private String backupOriginalValueAndOverride(String key, String newValue)
@@ -90,13 +85,13 @@ public class TestRestRequestBuilderGeneratorEntryPoint
   }
 
   /**
-   * This is a hastily-copied clone of {@link TestRestRequestBuilderGenerator#testOldStylePathIDL(RestliVersion, String, String, String)}
+   * This is a hastily-copied clone of {@link TestRestRequestBuilderGenerator#testOldStylePathIDL}
    *
    * This test works-around the decision to communicate state using sysprops instead of CLI arguments, and adds
    * coverage for {@link RestRequestBuilderGenerator#main(String[])}, which previously had none.
    */
-  @Test(dataProvider = "oldNewStyleDataProvider")
-  public void testMainEntryPointCanHandleArgFile(String version, String AssocKeysPathBuildersName, String SubBuildersName, String SubGetBuilderName) throws Exception
+  @Test
+  public void testMainEntryPointCanHandleArgFile() throws Exception
   {
     String pegasusDir = moduleDir + FS + RESOURCES_DIR + FS + "pegasus";
 
@@ -114,20 +109,19 @@ public class TestRestRequestBuilderGeneratorEntryPoint
     final String[] oldStyleMainArgs = {outPath, String.format("@%s", oldStyleArgFile.getAbsolutePath())};
     final String[] newStyleMainArgs = {outPath2, String.format("@%s", newStyleArgFile.getAbsolutePath())};
 
-    System.setProperty(RestRequestBuilderGenerator.GENERATOR_REST_GENERATE_VERSION, version);
     System.setProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH, String.format("@%s", resolverPathArgFile.getAbsolutePath()));
 
     RestRequestBuilderGenerator.main(oldStyleMainArgs);
     RestRequestBuilderGenerator.main(newStyleMainArgs);
 
-    final File oldStyleSuperBuilderFile = new File(outPath + FS + AssocKeysPathBuildersName);
-    final File oldStyleSubBuilderFile = new File(outPath + FS + SubBuildersName);
-    final File oldStyleSubGetBuilderFile = new File(outPath + FS + SubGetBuilderName);
+    final File oldStyleSuperBuilderFile = new File(outPath + FS + "AssocKeysPathRequestBuilders.java");
+    final File oldStyleSubBuilderFile = new File(outPath + FS + "SubRequestBuilders.java");
+    final File oldStyleSubGetBuilderFile = new File(outPath + FS + "SubGetRequestBuilder.java");
     Assert.assertTrue(oldStyleSuperBuilderFile.exists());
     Assert.assertTrue(oldStyleSubBuilderFile.exists());
     Assert.assertTrue(oldStyleSubGetBuilderFile.exists());
 
-    final File newStyleSubGetBuilderFile = new File(outPath2 + FS + SubGetBuilderName);
+    final File newStyleSubGetBuilderFile = new File(outPath2 + FS + "SubGetRequestBuilder.java");
     Assert.assertTrue(newStyleSubGetBuilderFile.exists());
 
     BufferedReader oldStyleReader = new BufferedReader(new FileReader(oldStyleSubGetBuilderFile));
@@ -151,14 +145,4 @@ public class TestRestRequestBuilderGeneratorEntryPoint
     oldStyleReader.close();
     newStyleReader.close();
   }
-
-  @DataProvider
-  private static Object[][] oldNewStyleDataProvider()
-  {
-    return new Object[][] {
-            { "1.0.0", "AssocKeysPathBuilders.java", "SubBuilders.java", "SubGetBuilder.java" },
-            { "2.0.0", "AssocKeysPathRequestBuilders.java", "SubRequestBuilders.java", "SubGetRequestBuilder.java", }
-    };
-  }
-
 }

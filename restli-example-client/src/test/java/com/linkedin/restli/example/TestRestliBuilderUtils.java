@@ -5,7 +5,7 @@
 package com.linkedin.restli.example;
 
 import com.linkedin.restli.client.util.RestliBuilderUtils;
-import com.linkedin.restli.example.photos.PhotosCreateBuilder;
+import com.linkedin.restli.example.photos.PhotosCreateRequestBuilder;
 import com.linkedin.restli.example.photos.PhotosRequestBuilders;
 
 import org.testng.Assert;
@@ -23,7 +23,7 @@ public class TestRestliBuilderUtils
   {
     try
     {
-      String uri = RestliBuilderUtils.getPrimaryResourceName(PhotosCreateBuilder.class);
+      String uri = RestliBuilderUtils.getPrimaryResourceName(PhotosCreateRequestBuilder.class);
       Assert.fail("Shouldn't be able to get the primary resource name from a non-master builder");
     }
     catch (RuntimeException e)

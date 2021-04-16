@@ -19,7 +19,6 @@ package com.linkedin.restli.examples;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
-import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
@@ -34,10 +33,9 @@ import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.ValidationDemo;
 import com.linkedin.restli.examples.greetings.api.myEnum;
-import com.linkedin.restli.examples.greetings.client.ActionsBuilders;
-import com.linkedin.restli.examples.greetings.client.AutoValidationWithProjectionBuilders;
+import com.linkedin.restli.examples.greetings.client.ActionsRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.AutoValidationWithProjectionRequestBuilders;
 import com.linkedin.restli.server.validation.RestLiValidationFilter;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -88,8 +86,9 @@ public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
   @Test
   public void testNoProjection() throws RemoteInvocationException
   {
-    RootBuilderWrapper<Integer, ValidationDemo> wrapper = new RootBuilderWrapper<Integer, ValidationDemo>(new AutoValidationWithProjectionBuilders());
-    Request<CollectionResponse<ValidationDemo>> request = wrapper.findBy("searchWithProjection").build();
+    Request<CollectionResponse<ValidationDemo>> request = new AutoValidationWithProjectionRequestBuilders()
+        .findBySearchWithProjection()
+        .build();
 
     try {
       _restClientAuto.sendRequest(request).getResponse();
@@ -99,7 +98,7 @@ public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
   }
 
   @DataProvider
-  private Object[][] provideProjectionWithValidFieldsBuilders() throws DataProcessingException
+  private Object[][] provideProjectionWithValidFieldsBuilders()
   {
     List<PathSpec> spec = Arrays.asList(
         ValidationDemo.fields().stringB(),
@@ -111,20 +110,21 @@ public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
         ValidationDemo.fields().MapWithTyperefs().values().id(),
         ValidationDemo.fields().validationDemoNext().intB());
 
-    RootBuilderWrapper<Integer, ValidationDemo> wrapper =
-        new RootBuilderWrapper<Integer, ValidationDemo>(new AutoValidationWithProjectionBuilders());
+    AutoValidationWithProjectionRequestBuilders builders = new AutoValidationWithProjectionRequestBuilders();
 
-    Request<CollectionResponse<ValidationDemo>> findRequest =
-        wrapper.findBy("searchWithProjection").fields(spec.toArray(new PathSpec[spec.size()])).build();
+    Request<CollectionResponse<ValidationDemo>> findRequest = builders
+        .findBySearchWithProjection()
+        .fields(spec.toArray(new PathSpec[spec.size()]))
+        .build();
 
     Request<ValidationDemo> getRequest =
-        wrapper.get().id(1).fields(spec.toArray(new PathSpec[spec.size()])).build();
+        builders.get().id(1).fields(spec.toArray(new PathSpec[spec.size()])).build();
 
     Request<ValidationDemo> getRequestWithArrayRange =
-        wrapper.get().id(1).fields(ValidationDemo.fields().ArrayWithInlineRecord(10, 20)).build();
+        builders.get().id(1).fields(ValidationDemo.fields().ArrayWithInlineRecord(10, 20)).build();
 
     Request<CollectionResponse<ValidationDemo>> getAllRequest =
-        wrapper.getAll().fields(spec.toArray(new PathSpec[spec.size()])).build();
+        builders.getAll().fields(spec.toArray(new PathSpec[spec.size()])).build();
 
     // Valid input for CreateAndGet
     ValidationDemo.UnionFieldWithInlineRecord unionField = new ValidationDemo.UnionFieldWithInlineRecord();
@@ -132,10 +132,10 @@ public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
     ValidationDemo validDemo = new ValidationDemo().setStringB("b").setUnionFieldWithInlineRecord(unionField);
 
     Request<IdEntityResponse<Integer, ValidationDemo>> createAndGetRequest =
-        wrapper.createAndGet().input(validDemo).fields(spec.toArray(new PathSpec[spec.size()])).build();
+        builders.createAndGet().input(validDemo).fields(spec.toArray(new PathSpec[spec.size()])).build();
 
     Request<BatchCreateIdEntityResponse<Integer, ValidationDemo>> batchCreateAndGetRequest =
-        wrapper.batchCreateAndGet().inputs(Arrays.asList(validDemo)).fields(spec.toArray(new PathSpec[spec.size()])).build();
+        builders.batchCreateAndGet().inputs(Arrays.asList(validDemo)).fields(spec.toArray(new PathSpec[spec.size()])).build();
 
     return new Object[][] {
         { findRequest, HttpStatus.S_200_OK },
@@ -157,9 +157,8 @@ public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
   @Test
   public void testProjectionWithInvalidFields() throws RemoteInvocationException
   {
-    RootBuilderWrapper<Integer, ValidationDemo> wrapper = new RootBuilderWrapper<Integer, ValidationDemo>(new AutoValidationWithProjectionBuilders());
     Request<CollectionResponse<ValidationDemo>> request =
-        wrapper.findBy("searchWithProjection")
+        new AutoValidationWithProjectionRequestBuilders().findBySearchWithProjection()
             .fields(ValidationDemo.fields().stringA(), //invalid
                     ValidationDemo.fields().stringB(),
                     ValidationDemo.fields().includedA(), //invalid
@@ -187,17 +186,16 @@ public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
   @DataProvider
   private Object[][] provideProjectionWithNonexistentFieldsData()
   {
-    RootBuilderWrapper<Integer, ValidationDemo> wrapper =
-        new RootBuilderWrapper<>(new AutoValidationWithProjectionBuilders());
+    AutoValidationWithProjectionRequestBuilders builders = new AutoValidationWithProjectionRequestBuilders();
 
     Request<ValidationDemo> getRequest =
-        wrapper.get().id(1).fields(new PathSpec("nonexistentFieldFooBar")).build();
+        builders.get().id(1).fields(new PathSpec("nonexistentFieldFooBar")).build();
 
     Request<CollectionResponse<ValidationDemo>> getAllRequest =
-        wrapper.getAll().fields(new PathSpec("nonexistentFieldFooBar")).build();
+        builders.getAll().fields(new PathSpec("nonexistentFieldFooBar")).build();
 
     Request<CollectionResponse<ValidationDemo>> findRequest =
-        wrapper.findBy("searchWithProjection").fields(new PathSpec("nonexistentFieldFooBar")).build();
+        builders.findBySearchWithProjection().fields(new PathSpec("nonexistentFieldFooBar")).build();
 
     return new Object[][]
     {
@@ -244,9 +242,9 @@ public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
         .setMessage("Cheesecake")
         .setTone(Tone.SINCERE);
 
-    Request<Message> req = new ActionsBuilders()
+    Request<Message> req = new ActionsRequestBuilders()
         .actionEchoMessage()
-        .paramMessage(message)
+        .messageParam(message)
         .setParam(RestConstants.FIELDS_PARAM, new HashSet<>(Arrays.asList(fields.message(), fields.tone())))
         .build();
 

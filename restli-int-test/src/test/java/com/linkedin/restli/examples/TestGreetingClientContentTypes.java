@@ -24,8 +24,6 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.client.response.CreateResponse;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.EmptyRecord;
@@ -34,10 +32,8 @@ import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -71,7 +67,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
-  public void testGet(RestClient restClient, RootBuilderWrapper<Long, Greeting> builders) throws
+  public void testGet(RestClient restClient, GreetingsRequestBuilders builders) throws
     RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(1L).build();
@@ -85,30 +81,6 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     throws RemoteInvocationException
   {
     List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchResponse<Greeting>> request = new GreetingsBuilders(requestOptions).batchGet().ids(ids).build();
-
-    Response<BatchResponse<Greeting>> response = restClient.sendRequest(request).getResponse();
-    BatchResponse<Greeting> batchResponse = response.getEntity();
-    Assert.assertEquals(batchResponse.getResults().size(), ids.size());
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataBatchDataProvider")
-  public void testBatchGetKV(RestClient restClient, RestliRequestOptions requestOptions)
-    throws RemoteInvocationException
-  {
-    List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
-    Request<BatchKVResponse<Long, Greeting>> request = new GreetingsBuilders(requestOptions).batchGet().ids(ids).buildKV();
-
-    Response<BatchKVResponse<Long, Greeting>> response = restClient.sendRequest(request).getResponse();
-    BatchKVResponse<Long, Greeting> batchResponse = response.getEntity();
-    Assert.assertEquals(batchResponse.getResults().size(), ids.size());
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataBatchDataProvider")
-  public void testBatchGetEntity(RestClient restClient, RestliRequestOptions requestOptions)
-    throws RemoteInvocationException
-  {
-    List<Long> ids = Arrays.asList(1L, 2L, 3L, 4L);
     Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = new GreetingsRequestBuilders(requestOptions).batchGet().ids(ids).build();
 
     Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = restClient.sendRequest(request).getResponse();
@@ -117,10 +89,10 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
-  public void testFinder(RestClient restClient, RootBuilderWrapper<Long, Greeting> builders)
+  public void testFinder(RestClient restClient, GreetingsRequestBuilders builders)
     throws RemoteInvocationException
   {
-    Request<CollectionResponse<Greeting>> request = builders.findBy("Search").setQueryParam("tone", Tone.SINCERE).paginate(1, 2).build();
+    Request<CollectionResponse<Greeting>> request = builders.findBySearch().toneParam(Tone.SINCERE).paginate(1, 2).build();
 
     Response<CollectionResponse<Greeting>> response = restClient.sendRequest(request).getResponse();
 
@@ -135,16 +107,17 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
-  public void testAction(RestClient restClient, RootBuilderWrapper<Long, Greeting> builders)
+  public void testAction(RestClient restClient, GreetingsRequestBuilders builders)
     throws RemoteInvocationException
   {
-    Request<Greeting> request = builders.<Greeting>action("SomeAction").id(1L)
-      .setActionParam("A", 1)
-      .setActionParam("B", "")
-      .setActionParam("C", new TransferOwnershipRequest())
-      .setActionParam("D", new TransferOwnershipRequest())
-      .setActionParam("E", 3)
-      .build();
+    Request<Greeting> request = builders.actionSomeAction()
+        .id(1L)
+        .aParam(1)
+        .bParam("")
+        .cParam(new TransferOwnershipRequest())
+        .dParam(new TransferOwnershipRequest())
+        .eParam(3)
+        .build();
 
     Response<Greeting> response = restClient.sendRequest(request).getResponse();
 
@@ -159,43 +132,12 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     greeting.setMessage("Hello there!");
     greeting.setTone(Tone.FRIENDLY);
 
-    final GreetingsBuilders builders = new GreetingsBuilders(requestOptions);
-
-    Request<EmptyRecord> createRequest = builders.create().input(greeting).build();
-    Response<EmptyRecord> response = restClient.sendRequest(createRequest).getResponse();
-    Assert.assertNull(response.getHeader(RestConstants.HEADER_CONTENT_TYPE));
-    @SuppressWarnings("unchecked")
-    CreateResponse<Long> createResponse = (CreateResponse<Long>)response.getEntity();
-    long id = createResponse.getId();
-    @SuppressWarnings("deprecation")
-    String stringId = response.getId();
-    Assert.assertEquals(id, Long.parseLong(stringId));
-
-    Request<Greeting> getRequest = builders.get().id(id).build();
-    Response<Greeting> getResponse = restClient.sendRequest(getRequest).getResponse();
-    Greeting responseGreeting = getResponse.getEntity();
-
-    Assert.assertEquals(responseGreeting.getMessage(), greeting.getMessage());
-    Assert.assertEquals(responseGreeting.getTone(), greeting.getTone());
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "buildersClientDataDataProvider")
-  public void testCreateId(RestClient restClient, RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
-    Greeting greeting = new Greeting();
-    greeting.setMessage("Hello there!");
-    greeting.setTone(Tone.FRIENDLY);
-
     final GreetingsRequestBuilders builders = new GreetingsRequestBuilders(requestOptions);
 
     CreateIdRequest<Long, Greeting> createRequest = builders.create().input(greeting).build();
     Response<IdResponse<Long>> response = restClient.sendRequest(createRequest).getResponse();
     Assert.assertNull(response.getHeader(RestConstants.HEADER_CONTENT_TYPE));
-    @SuppressWarnings("unchecked")
     long id = response.getEntity().getId();
-    @SuppressWarnings("deprecation")
-    String stringId = response.getId();
-    Assert.assertEquals(id, Long.parseLong(stringId));
 
     Request<Greeting> getRequest = builders.get().id(id).build();
     Response<Greeting> getResponse = restClient.sendRequest(getRequest).getResponse();
@@ -206,7 +148,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataDataProvider")
-  public void testUpdate(RestClient restClient, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException, CloneNotSupportedException
+  public void testUpdate(RestClient restClient, GreetingsRequestBuilders builders) throws RemoteInvocationException, CloneNotSupportedException
   {
     // GET
     Request<Greeting> request = builders.get().id(1L).build();
@@ -232,16 +174,17 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testPostsWithCharset(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testPostsWithCharset(GreetingsRequestBuilders builders) throws RemoteInvocationException
   {
-    Request<Greeting> request = builders.<Greeting>action("SomeAction").id(1L)
-      .setActionParam("A", 1)
-      .setActionParam("B", "")
-      .setActionParam("C", new TransferOwnershipRequest())
-      .setActionParam("D", new TransferOwnershipRequest())
-      .setActionParam("E", 3)
-      .setHeader("Content-Type", "application/json; charset=UTF-8")
-      .build();
+    Request<Greeting> request = builders.actionSomeAction()
+        .id(1L)
+        .aParam(1)
+        .bParam("")
+        .cParam(new TransferOwnershipRequest())
+        .dParam(new TransferOwnershipRequest())
+        .eParam(3)
+        .setHeader("Content-Type", "application/json; charset=UTF-8")
+        .build();
 
     Response<Greeting> response = getClient().sendRequest(request).getResponse();
 
@@ -252,12 +195,12 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     createGreeting.setMessage("Hello there!");
     createGreeting.setTone(Tone.FRIENDLY);
 
-    Request<EmptyRecord> createRequest = builders
+    Request<?> createRequest = builders
       .create()
       .input(createGreeting)
       .setHeader("Content-Type", "application/json; charset=UTF-8")
       .build();
-    Response<EmptyRecord> emptyRecordResponse = getClient().sendRequest(createRequest).getResponse();
+    Response<?> emptyRecordResponse = getClient().sendRequest(createRequest).getResponse();
     Assert.assertNull(emptyRecordResponse.getHeader(RestConstants.HEADER_CONTENT_TYPE));
   }
 
@@ -267,18 +210,12 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
   {
     return new Object[][]
       {
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) }, // default client
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }, // default client
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }, // default client
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }, // default client
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
-        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX), new GreetingsRequestBuilders() }, // default client
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX), new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }, // default client
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), new GreetingsRequestBuilders() },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.JSON, ACCEPT_TYPES), new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), new GreetingsRequestBuilders() },
+        { new RestClient(getDefaultTransportClient(), URI_PREFIX, ContentType.PSON, ACCEPT_TYPES), new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
       };
   }
 
@@ -316,10 +253,8 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      { new GreetingsRequestBuilders() },
+      { new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 }

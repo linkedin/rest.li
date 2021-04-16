@@ -17,27 +17,15 @@
 package com.linkedin.restli.examples;
 
 import com.linkedin.r2.RemoteInvocationException;
-import com.linkedin.restli.client.BatchGetEntityRequest;
-import com.linkedin.restli.client.Request;
-import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.RestLiResponseException;
+import com.linkedin.restli.client.*;
 import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
-import com.linkedin.restli.common.BatchCollectionResponse;
-import com.linkedin.restli.common.BatchFinderCriteriaResult;
-import com.linkedin.restli.common.CollectionResponse;
-import com.linkedin.restli.common.CreateStatus;
-import com.linkedin.restli.common.EntityResponse;
-import com.linkedin.restli.common.HttpStatus;
-import com.linkedin.restli.common.PatchRequest;
-import com.linkedin.restli.common.UpdateStatus;
+import com.linkedin.restli.common.*;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingCriteria;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.BatchGreetingBuilders;
 import com.linkedin.restli.examples.greetings.client.BatchGreetingRequestBuilders;
 
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +33,6 @@ import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -99,22 +86,26 @@ public class TestMaxBatchSize extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchCreateWithMaxBatchSizeUnderLimitation(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test
+  public void testBatchCreateWithMaxBatchSizeUnderLimitation() throws RemoteInvocationException
   {
-    Request<CollectionResponse<CreateStatus>> request = builders.batchCreate()
-        .inputs(Arrays.asList(GREETING_ONE, GREETING_TWO)).build();
+    BatchCreateIdRequest<Long, Greeting> request = new BatchGreetingRequestBuilders()
+        .batchCreate()
+        .inputs(Arrays.asList(GREETING_ONE, GREETING_TWO))
+        .build();
 
-    Response<CollectionResponse<CreateStatus>> createResponse =
+    Response<BatchCreateIdResponse<Long>> createResponse =
         getClient().sendRequest(request).getResponse();
     Assert.assertEquals(createResponse.getStatus(), 200);
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchCreateWithMaxBatchSizeBeyondLimitation(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test
+  public void testBatchCreateWithMaxBatchSizeBeyondLimitation() throws RemoteInvocationException
   {
-    Request<CollectionResponse<CreateStatus>> request = builders.batchCreate()
-        .inputs(Arrays.asList(GREETING_ONE, GREETING_TWO, GREETING_THREE)).build();
+    BatchCreateIdRequest<Long, Greeting> request = new BatchGreetingRequestBuilders()
+        .batchCreate()
+        .inputs(Arrays.asList(GREETING_ONE, GREETING_TWO, GREETING_THREE))
+        .build();
 
     try
     {
@@ -158,72 +149,84 @@ public class TestMaxBatchSize extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchUpdateWithMaxBatchSizeUnderLimitation(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test
+  public void testBatchUpdateWithMaxBatchSizeUnderLimitation() throws RemoteInvocationException
   {
-    Request<BatchKVResponse<Long, UpdateStatus>>
-        request = builders.batchUpdate().input(1l, GREETING_ONE).input(2l, GREETING_TWO).build();
+    Request<BatchKVResponse<Long, UpdateStatus>> request = new BatchGreetingRequestBuilders()
+        .batchUpdate()
+        .input(1L, GREETING_ONE)
+        .input(2L, GREETING_TWO)
+        .build();
 
     Response<BatchKVResponse<Long, UpdateStatus>> response = getClient().sendRequest(request).getResponse();
     Assert.assertEquals(response.getStatus(), 200);
     Assert.assertEquals(response.getEntity().getResults().keySet().size(), 2);
-    Assert.assertEquals(response.getEntity().getResults().get(1l).getStatus().intValue(), 204);
-    Assert.assertEquals(response.getEntity().getResults().get(2l).getStatus().intValue(), 204);
+    Assert.assertEquals(response.getEntity().getResults().get(1L).getStatus().intValue(), 204);
+    Assert.assertEquals(response.getEntity().getResults().get(2L).getStatus().intValue(), 204);
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchUpdateWithMaxBatchSizeBeyondLimitationButValidationOff(RootBuilderWrapper<Long, Greeting> builders)
+  @Test
+  public void testBatchUpdateWithMaxBatchSizeBeyondLimitationButValidationOff()
       throws RemoteInvocationException
   {
-    Request<BatchKVResponse<Long, UpdateStatus>>
-        request = builders.batchUpdate()
-        .input(1l, GREETING_ONE)
-        .input(2l, GREETING_TWO)
-        .input(3l, GREETING_THREE).build();
+    Request<BatchKVResponse<Long, UpdateStatus>> request = new BatchGreetingRequestBuilders()
+        .batchUpdate()
+        .input(1L, GREETING_ONE)
+        .input(2L, GREETING_TWO)
+        .input(3L, GREETING_THREE)
+        .build();
 
     Response<BatchKVResponse<Long, UpdateStatus>> response = getClient().sendRequest(request).getResponse();
 
     Assert.assertEquals(response.getStatus(), 200);
     Assert.assertEquals(response.getEntity().getResults().keySet().size(), 3);
-    Assert.assertEquals(response.getEntity().getResults().get(1l).getStatus().intValue(), 204);
-    Assert.assertEquals(response.getEntity().getResults().get(2l).getStatus().intValue(), 204);
-    Assert.assertEquals(response.getEntity().getResults().get(3l).getStatus().intValue(), 204);
+    Assert.assertEquals(response.getEntity().getResults().get(1L).getStatus().intValue(), 204);
+    Assert.assertEquals(response.getEntity().getResults().get(2L).getStatus().intValue(), 204);
+    Assert.assertEquals(response.getEntity().getResults().get(3L).getStatus().intValue(), 204);
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchPartialUpdateWithMaxBatchSizeUnderLimitation(RootBuilderWrapper<Long, Greeting> builders)
+  @Test
+  public void testBatchPartialUpdateWithMaxBatchSizeUnderLimitation()
       throws RemoteInvocationException
   {
-    Greeting patchedGreetingOne = new Greeting().setTone(Tone.INSULTING).setId(1l).setMessage("Hello");
-    Greeting patchedGreetingTwo = new Greeting().setTone(Tone.FRIENDLY).setId(2l).setMessage("Hi");
+    Greeting patchedGreetingOne = new Greeting().setTone(Tone.INSULTING).setId(1L).setMessage("Hello");
+    Greeting patchedGreetingTwo = new Greeting().setTone(Tone.FRIENDLY).setId(2L).setMessage("Hi");
 
     Map<Long, PatchRequest<Greeting>> patchInputs = new HashMap<>();
-    patchInputs.put(1l, PatchGenerator.diff(GREETING_ONE, patchedGreetingOne));
-    patchInputs.put(2l, PatchGenerator.diff(GREETING_TWO, patchedGreetingTwo));
+    patchInputs.put(1L, PatchGenerator.diff(GREETING_ONE, patchedGreetingOne));
+    patchInputs.put(2L, PatchGenerator.diff(GREETING_TWO, patchedGreetingTwo));
 
-    Request<BatchKVResponse<Long, UpdateStatus>> request = builders.batchPartialUpdate().patchInputs(patchInputs).build();
+    Request<BatchKVResponse<Long, UpdateStatus>> request = new BatchGreetingRequestBuilders()
+        .batchPartialUpdate()
+        .inputs(patchInputs)
+        .build();
+
     Response<BatchKVResponse<Long, UpdateStatus>> response = getClient().sendRequest(request).getResponse();
 
     Assert.assertEquals(response.getStatus(), 200);
     Assert.assertEquals(response.getEntity().getResults().keySet().size(), 2);
-    Assert.assertEquals(response.getEntity().getResults().get(1l).getStatus().intValue(), 204);
-    Assert.assertEquals(response.getEntity().getResults().get(2l).getStatus().intValue(), 204);
+    Assert.assertEquals(response.getEntity().getResults().get(1L).getStatus().intValue(), 204);
+    Assert.assertEquals(response.getEntity().getResults().get(2L).getStatus().intValue(), 204);
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchPartialUpdateWithMaxBatchSizeBeyondLimitation(RootBuilderWrapper<Long, Greeting> builders)
+  @Test
+  public void testBatchPartialUpdateWithMaxBatchSizeBeyondLimitation()
       throws RemoteInvocationException
   {
-    Greeting patchedGreetingOne = new Greeting().setTone(Tone.INSULTING).setId(1l).setMessage("Hello");
-    Greeting patchedGreetingTwo = new Greeting().setTone(Tone.FRIENDLY).setId(2l).setMessage("Hi");
-    Greeting patchedGreetingThree = new Greeting().setTone(Tone.SINCERE).setId(3l).setMessage("Hello world");
+    Greeting patchedGreetingOne = new Greeting().setTone(Tone.INSULTING).setId(1L).setMessage("Hello");
+    Greeting patchedGreetingTwo = new Greeting().setTone(Tone.FRIENDLY).setId(2L).setMessage("Hi");
+    Greeting patchedGreetingThree = new Greeting().setTone(Tone.SINCERE).setId(3L).setMessage("Hello world");
 
     Map<Long, PatchRequest<Greeting>> patchInputs = new HashMap<>();
-    patchInputs.put(1l, PatchGenerator.diff(GREETING_ONE, patchedGreetingOne));
-    patchInputs.put(2l, PatchGenerator.diff(GREETING_TWO, patchedGreetingTwo));
-    patchInputs.put(3l, PatchGenerator.diff(GREETING_THREE, patchedGreetingThree));
+    patchInputs.put(1L, PatchGenerator.diff(GREETING_ONE, patchedGreetingOne));
+    patchInputs.put(2L, PatchGenerator.diff(GREETING_TWO, patchedGreetingTwo));
+    patchInputs.put(3L, PatchGenerator.diff(GREETING_THREE, patchedGreetingThree));
 
-    Request<BatchKVResponse<Long, UpdateStatus>> request = builders.batchPartialUpdate().patchInputs(patchInputs).build();
+    Request<BatchKVResponse<Long, UpdateStatus>> request = new BatchGreetingRequestBuilders()
+        .batchPartialUpdate()
+        .inputs(patchInputs)
+        .build();
+
     try
     {
       getClient().sendRequest(request).getResponse();
@@ -237,21 +240,29 @@ public class TestMaxBatchSize extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchDeleteWithMaxBatchSizeUnderLimitation(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test
+  public void testBatchDeleteWithMaxBatchSizeUnderLimitation() throws RemoteInvocationException
   {
-    Request<BatchKVResponse<Long, UpdateStatus>> request = builders.batchDelete().ids(1l, 2l).build();
+    Request<BatchKVResponse<Long, UpdateStatus>> request = new BatchGreetingRequestBuilders()
+        .batchDelete()
+        .ids(1L, 2L)
+        .build();
+
     Response<BatchKVResponse<Long, UpdateStatus>> response = getClient().sendRequest(request).getResponse();
 
     Assert.assertEquals(response.getStatus(), 200);
-    Assert.assertEquals(response.getEntity().getResults().get(1l).getStatus().intValue(), 204);
-    Assert.assertEquals(response.getEntity().getResults().get(2l).getStatus().intValue(), 204);
+    Assert.assertEquals(response.getEntity().getResults().get(1L).getStatus().intValue(), 204);
+    Assert.assertEquals(response.getEntity().getResults().get(2L).getStatus().intValue(), 204);
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchDeleteWithMaxBatchSizeBeyondLimitation(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test
+  public void testBatchDeleteWithMaxBatchSizeBeyondLimitation() throws RemoteInvocationException
   {
-    Request<BatchKVResponse<Long, UpdateStatus>> request = builders.batchDelete().ids(1l, 2l, 3l).build();
+    Request<BatchKVResponse<Long, UpdateStatus>> request = new BatchGreetingRequestBuilders()
+        .batchDelete()
+        .ids(1L, 2L, 3L)
+        .build();
+
     try
     {
       getClient().sendRequest(request).getResponse();
@@ -265,11 +276,14 @@ public class TestMaxBatchSize extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchFinderWithOneCriteriaWithMaxBatchSizeUnderLimitation(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test
+  public void testBatchFinderWithOneCriteriaWithMaxBatchSizeUnderLimitation() throws RemoteInvocationException
   {
-    Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
-            .addQueryParam("criteria", CRITERIA_ONE).build();
+    Request<BatchCollectionResponse<Greeting>> request = new BatchGreetingRequestBuilders()
+        .batchFindBySearchGreetings()
+        .addCriteriaParam(CRITERIA_ONE)
+        .build();
+
     BatchCollectionResponse<Greeting> response = getClient().sendRequest(request).getResponse().getEntity();
 
     List<BatchFinderCriteriaResult<Greeting>> batchResult = response.getResults();
@@ -281,12 +295,14 @@ public class TestMaxBatchSize extends RestLiIntegrationTest
     Assert.assertTrue(greetings.get(0).getTone().equals(Tone.INSULTING));
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchFinderWithMaxBatchSizeUnderLimitation(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test
+  public void testBatchFinderWithMaxBatchSizeUnderLimitation() throws RemoteInvocationException
   {
-    Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
-        .setQueryParam("criteria",
-        Arrays.asList(CRITERIA_ONE, CRITERIA_TWO)).build();
+    Request<BatchCollectionResponse<Greeting>> request = new BatchGreetingRequestBuilders()
+        .batchFindBySearchGreetings()
+        .criteriaParam(Arrays.asList(CRITERIA_ONE, CRITERIA_TWO))
+        .build();
+
     BatchCollectionResponse<Greeting> response = getClient().sendRequest(request).getResponse().getEntity();
 
     List<BatchFinderCriteriaResult<Greeting>> batchResult = response.getResults();
@@ -302,12 +318,13 @@ public class TestMaxBatchSize extends RestLiIntegrationTest
     Assert.assertTrue(greetings2.get(0).getTone().equals(Tone.FRIENDLY));
   }
 
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testBatchFinderWithMaxBatchSizeBeyondLimitation(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  @Test
+  public void testBatchFinderWithMaxBatchSizeBeyondLimitation() throws RemoteInvocationException
   {
-    Request<BatchCollectionResponse<Greeting>> request = builders.batchFindBy("searchGreetings")
-        .setQueryParam("criteria",
-            Arrays.asList(CRITERIA_ONE, CRITERIA_TWO, CRITERIA_THREE)).build();
+    Request<BatchCollectionResponse<Greeting>> request = new BatchGreetingRequestBuilders()
+        .batchFindBySearchGreetings()
+        .criteriaParam(Arrays.asList(CRITERIA_ONE, CRITERIA_TWO, CRITERIA_THREE))
+        .build();
 
     try
     {
@@ -320,14 +337,5 @@ public class TestMaxBatchSize extends RestLiIntegrationTest
       Assert.assertEquals(e.getServiceErrorMessage(), "The request batch size: "
           + "3 is larger than the allowed max batch size: 2 for method: searchGreetings");
     }
-  }
-
-  @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  private static Object[][] requestBuilderDataProvider()
-  {
-    return new Object[][] {
-        { new RootBuilderWrapper<Long, Greeting>(new BatchGreetingBuilders()) },
-        { new RootBuilderWrapper<Long, Greeting>(new BatchGreetingRequestBuilders()) }
-    };
   }
 }

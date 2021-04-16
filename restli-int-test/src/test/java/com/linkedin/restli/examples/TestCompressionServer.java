@@ -48,11 +48,9 @@ import com.linkedin.restli.client.response.BatchKVResponse;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.client.util.RestLiClientConfig;
 import com.linkedin.restli.common.BatchCreateIdResponse;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateIdStatus;
-import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -63,14 +61,12 @@ import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.SearchMetadata;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.examples.greetings.server.CompressionResource;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.testutils.URIDetails;
 import com.linkedin.restli.server.filter.Filter;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -194,21 +190,17 @@ public class TestCompressionServer extends RestLiIntegrationTest
         "get, batch_get, get_all",
         "get, batch_get, get_all, batch_create, batch_update, batch_partial_update"};
     int entries = compressionOperations.length;
-    Object[][] result = new Object[entries * 4][];
+    Object[][] result = new Object[entries * 2][];
 
-    int index = entries * 4 - 1;
+    int index = entries * 2 - 1;
     for (String operation: compressionOperations)
     {
       Map<String, String> clientProperties = new HashMap<String, String>();
       clientProperties.put(HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS, operation);
       RestClient client = new RestClient(newTransportClient(clientProperties), URI_PREFIX, getClientConfig());
-      result[index--] = new Object[]{ client, operation, new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()),
+      result[index--] = new Object[]{ client, operation, new GreetingsRequestBuilders(),
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()};
-      result[index--] = new Object[]{ client, operation, new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)),
-          AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()};
-      result[index--] = new Object[]{ client, operation, new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()),
-          AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()};
-      result[index--] = new Object[]{ client, operation, new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)),
+      result[index--] = new Object[]{ client, operation, new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS),
           AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()};
     }
 
@@ -235,10 +227,8 @@ public class TestCompressionServer extends RestLiIntegrationTest
   {
     return new Object[][]
         {
-            { new RestClient(getDefaultTransportClient(), URI_PREFIX, getClientConfig()), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-            { new RestClient(getDefaultTransportClient(), URI_PREFIX, getClientConfig()), new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-            { new RestClient(getDefaultTransportClient(), URI_PREFIX, getClientConfig()), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) },
-            { new RestClient(getDefaultTransportClient(), URI_PREFIX, getClientConfig()), new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+            { new RestClient(getDefaultTransportClient(), URI_PREFIX, getClientConfig()), new GreetingsRequestBuilders() },
+            { new RestClient(getDefaultTransportClient(), URI_PREFIX, getClientConfig()), new GreetingsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
         };
   }
 
@@ -429,9 +419,9 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
   //Existing tests to ensure compatibility
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsNoCompressedResponsesDataProvider")
-  public void testIntAction(RestClient client, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testIntAction(RestClient client, GreetingsRequestBuilders builders) throws RemoteInvocationException
   {
-    Request<Integer> request = builders.<Integer>action("Purge").build();
+    Request<Integer> request = builders.actionPurge().build();
     ResponseFuture<Integer> responseFuture = client.sendRequest(request);
 
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
@@ -440,15 +430,15 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsNoCompressedResponsesDataProvider")
-  public void testRecordAction(RestClient client, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testRecordAction(RestClient client, GreetingsRequestBuilders builders) throws RemoteInvocationException
   {
-    Request<Greeting> request = builders.<Greeting>action("SomeAction")
+    Request<Greeting> request = builders.actionSomeAction()
         .id(1L)
-        .setActionParam("A", 1)
-        .setActionParam("B", "")
-        .setActionParam("C", new TransferOwnershipRequest())
-        .setActionParam("D", new TransferOwnershipRequest())
-        .setActionParam("E", 3)
+        .aParam(1)
+        .bParam("")
+        .cParam(new TransferOwnershipRequest())
+        .dParam(new TransferOwnershipRequest())
+        .eParam(3)
         .build();
     ResponseFuture<Greeting> responseFuture = client.sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
@@ -457,12 +447,12 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsNoCompressedResponsesDataProvider")
-  public void testUpdateToneAction(RestClient client, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testUpdateToneAction(RestClient client, GreetingsRequestBuilders builders) throws RemoteInvocationException
   {
-    Request<Greeting> request = builders.<Greeting>action("UpdateTone")
+    Request<Greeting> request = builders.actionUpdateTone()
         .id(1L)
-        .setActionParam("NewTone", Tone.SINCERE)
-        .setActionParam("DelOld", false)
+        .newToneParam(Tone.SINCERE)
+        .delOldParam(false)
         .build();
     ResponseFuture<Greeting> responseFuture = client.sendRequest(request);
     Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
@@ -475,8 +465,8 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsNoCompressedResponsesDataProvider")
   //test update on retrieved entity
-  public void testUpdate(RestClient client, RootBuilderWrapper<Long, Greeting> builders)
-      throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
+  public void testUpdate(RestClient client, GreetingsRequestBuilders builders)
+      throws RemoteInvocationException, CloneNotSupportedException
   {
     // GET
     Request<Greeting> request = builders.get().id(1L).build();
@@ -505,7 +495,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsNoCompressedResponsesDataProvider")
   //test update on retrieved entity
-  public void testGet(RestClient client, RootBuilderWrapper<Long, Greeting> builders)
+  public void testGet(RestClient client, GreetingsRequestBuilders builders)
       throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
   {
     // GET
@@ -519,8 +509,8 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsNoCompressedResponsesDataProvider")
-  public void testPartialUpdate(RestClient client, RootBuilderWrapper<Long, Greeting> builders)
-      throws RemoteInvocationException, CloneNotSupportedException, URISyntaxException
+  public void testPartialUpdate(RestClient client, GreetingsRequestBuilders builders)
+      throws RemoteInvocationException, CloneNotSupportedException
   {
     // GET
     Request<Greeting> request = builders.get().id(1L).build();
@@ -551,7 +541,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsNoCompressedResponsesDataProvider")
   //test cookbook example from quickstart wiki
-  public void testCookbook(RestClient restClient, RootBuilderWrapper<Long, Greeting> builders) throws Exception
+  public void testCookbook(RestClient restClient, GreetingsRequestBuilders builders) throws Exception
   {
     // GET
     Request<Greeting> request = builders.get().id(1L).build();
@@ -579,46 +569,12 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCookbookDataProvider")
-  public void testOldCookbookInBatch(RestClient client, RestliRequestOptions requestOptions) throws Exception
-  {
-    final GreetingsBuilders builders = new GreetingsBuilders(requestOptions);
-
-    // GET
-    Greeting greetingResult = getOldCookbookBatchGetResult(client, requestOptions);
-
-    // POST
-    Greeting greeting = new Greeting(greetingResult.data().copy());
-    greeting.setMessage("This is a new message!");
-
-    Request<BatchKVResponse<Long, UpdateStatus>> writeRequest = builders.batchUpdate().input(1L, greeting).build();
-    client.sendRequest(writeRequest).getResponse();
-
-    // GET again, to verify that our POST worked.
-    getOldCookbookBatchGetResult(client, requestOptions);
-
-    // batch Create
-    Greeting repeatedGreeting = new Greeting();
-    repeatedGreeting.setMessage("Hello Hello");
-    repeatedGreeting.setTone(Tone.SINCERE);
-    List<Greeting> entities = Arrays.asList(repeatedGreeting, repeatedGreeting);
-    Request<CollectionResponse<CreateStatus>> batchCreateRequest = builders.batchCreate().inputs(entities).build();
-    List<CreateStatus> statuses = client.sendRequest(batchCreateRequest).getResponse().getEntity().getElements();
-    for (CreateStatus status : statuses)
-    {
-      Assert.assertEquals(status.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
-      @SuppressWarnings("deprecation")
-      String id = status.getId();
-      Assert.assertNotNull(id);
-    }
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCookbookDataProvider")
-  public void testNewCookbookInBatch(RestClient client, RestliRequestOptions requestOptions) throws Exception
+  public void testCookbookInBatch(RestClient client, RestliRequestOptions requestOptions) throws Exception
   {
     final GreetingsRequestBuilders builders = new GreetingsRequestBuilders(requestOptions);
 
     // GET
-    Greeting greetingResult = getNewCookbookBatchGetResult(client, requestOptions);
+    Greeting greetingResult = getCookbookBatchGetResult(client, requestOptions);
 
     // POST
     Greeting greeting = new Greeting(greetingResult.data().copy());
@@ -628,7 +584,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     client.sendRequest(writeRequest).getResponse();
 
     // GET again, to verify that our POST worked.
-    getNewCookbookBatchGetResult(client, requestOptions);
+    getCookbookBatchGetResult(client, requestOptions);
 
     // batch Create
     Greeting repeatedGreeting = new Greeting();
@@ -648,10 +604,10 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCompressedResponsesBuilderDataProvider")
-  public void testSearch(RestClient client, String operationsForCompression, RootBuilderWrapper<Long, Greeting> builders,
+  public void testSearch(RestClient client, String operationsForCompression, GreetingsRequestBuilders builders,
                          ProtocolVersion protocolVersion) throws RemoteInvocationException
   {
-    Request<CollectionResponse<Greeting>> findRequest = builders.findBy("Search").setQueryParam("tone", Tone.FRIENDLY).build();
+    Request<CollectionResponse<Greeting>> findRequest = builders.findBySearch().toneParam(Tone.FRIENDLY).build();
     Response<CollectionResponse<Greeting>> response = client.sendRequest(findRequest).getResponse();
 
     checkHeaderForCompression(response, operationsForCompression, "finder:search");
@@ -665,10 +621,10 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCompressedResponsesBuilderDataProvider")
-  public void testSearchWithoutDecompression(RestClient client, String operationsForCompression, RootBuilderWrapper<Long, Greeting> builders,
+  public void testSearchWithoutDecompression(RestClient client, String operationsForCompression, GreetingsRequestBuilders builders,
                                              ProtocolVersion protocolVersion) throws RemoteInvocationException
   {
-    Request<CollectionResponse<Greeting>> findRequest = builders.findBy("Search").setQueryParam("tone", Tone.FRIENDLY).build();
+    Request<CollectionResponse<Greeting>> findRequest = builders.findBySearch().toneParam(Tone.FRIENDLY).build();
     RequestContext requestContext = new RequestContext();
     RequestContextUtil.turnOffResponseDecompression(requestContext);
 
@@ -697,10 +653,10 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCompressedResponsesBuilderDataProvider")
-  public void testSearchWithPostFilter(RestClient client, String operationsForCompression, RootBuilderWrapper<Long, Greeting> builders,
+  public void testSearchWithPostFilter(RestClient client, String operationsForCompression, GreetingsRequestBuilders builders,
                                        ProtocolVersion protocolVersion) throws RemoteInvocationException
   {
-    Request<CollectionResponse<Greeting>> findRequest = builders.findBy("SearchWithPostFilter").paginate(0, 5).build();
+    Request<CollectionResponse<Greeting>> findRequest = builders.findBySearchWithPostFilter().paginate(0, 5).build();
     Response<CollectionResponse<Greeting>> response = client.sendRequest(findRequest).getResponse();
     checkHeaderForCompression(response, operationsForCompression, "finder:" + findRequest.getMethodName());
     CollectionResponse<Greeting> entity = response.getEntity();
@@ -725,11 +681,11 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCompressedResponsesBuilderDataProvider")
-  public void testSearchWithTones(RestClient client, String operationsForCompression, RootBuilderWrapper<Long, Greeting> builders,
+  public void testSearchWithTones(RestClient client, String operationsForCompression, GreetingsRequestBuilders builders,
                                   ProtocolVersion protocolVersion) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> req =
-        builders.findBy("SearchWithTones").setQueryParam("tones", Arrays.asList(Tone.SINCERE, Tone.INSULTING)).build();
+        builders.findBySearchWithTones().tonesParam(Arrays.asList(Tone.SINCERE, Tone.INSULTING)).build();
     ResponseFuture<CollectionResponse<Greeting>> future = client.sendRequest(req);
     Response<CollectionResponse<Greeting>> response = future.getResponse();
     checkHeaderForCompression(response, operationsForCompression, "finder:" + req.getMethodName());
@@ -743,10 +699,10 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCompressedResponsesBuilderDataProvider")
-  public void testSearchFacets(RestClient client, String operationsForCompression, RootBuilderWrapper<Long, Greeting> builders,
+  public void testSearchFacets(RestClient client, String operationsForCompression, GreetingsRequestBuilders builders,
                                ProtocolVersion protocolVersion) throws RemoteInvocationException
   {
-    Request<CollectionResponse<Greeting>> req = builders.findBy("SearchWithFacets").setQueryParam("tone", Tone.SINCERE).build();
+    Request<CollectionResponse<Greeting>> req = builders.findBySearchWithFacets().toneParam(Tone.SINCERE).build();
     ResponseFuture<CollectionResponse<Greeting>> future = client.sendRequest(req);
     Response<CollectionResponse<Greeting>> response = future.getResponse();
     checkHeaderForCompression(response, operationsForCompression, "finder:" + req.getMethodName());
@@ -762,37 +718,6 @@ public class TestCompressionServer extends RestLiIntegrationTest
                            List<Long> ids,
                            int expectedSuccessSize) throws RemoteInvocationException
   {
-    final Request<?> request = new GreetingsBuilders(requestOptions).batchGet().ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).build();
-    @SuppressWarnings("unchecked")
-    final BatchResponse<Greeting> response = (BatchResponse<Greeting>) getBatchGetResponse(client, operationsForCompression, request);
-    Assert.assertEquals(response.getResults().size(), expectedSuccessSize);
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCompressedResponsesBatchDataProvider")
-  public void testBatchGetKV(RestClient client,
-                             String operationsForCompression,
-                             RestliRequestOptions requestOptions,
-                             List<Long> ids,
-                             int expectedSuccessSize) throws RemoteInvocationException
-  {
-    final Request<?> request = new GreetingsBuilders(requestOptions).batchGet().ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).buildKV();
-    @SuppressWarnings("unchecked")
-    final BatchKVResponse<Long, Greeting> response = (BatchKVResponse<Long, Greeting>) getBatchGetResponse(client, operationsForCompression, request);
-    Assert.assertEquals(response.getResults().size(), expectedSuccessSize);
-
-    for (Map.Entry<Long, Greeting> entry : response.getResults().entrySet())
-    {
-      Assert.assertEquals(entry.getKey(), entry.getValue().getId());
-    }
-  }
-
-  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsCompressedResponsesBatchDataProvider")
-  public void testBatchGetEntity(RestClient client,
-                                 String operationsForCompression,
-                                 RestliRequestOptions requestOptions,
-                                 List<Long> ids,
-                                 int expectedSuccessSize) throws RemoteInvocationException
-  {
     final Request<?> request = new GreetingsRequestBuilders(requestOptions).batchGet().ids(ids).fields(Greeting.fields().id(), Greeting.fields().message()).build();
     @SuppressWarnings("unchecked")
     final BatchKVResponse<Long, EntityResponse<Greeting>> response = (BatchKVResponse<Long, EntityResponse<Greeting>>) getBatchGetResponse(client, operationsForCompression, request);
@@ -807,16 +732,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     }
   }
 
-  private Greeting getOldCookbookBatchGetResult(RestClient client, RestliRequestOptions requestOptions) throws RemoteInvocationException
-  {
-    Request<BatchResponse<Greeting>> request = new GreetingsBuilders(requestOptions).batchGet().ids(1L).build();
-    ResponseFuture<BatchResponse<Greeting>> future = client.sendRequest(request);
-    Response<BatchResponse<Greeting>> greetingResponse = future.getResponse();
-    checkContentEncodingHeaderIsAbsent(greetingResponse);
-    return greetingResponse.getEntity().getResults().get("1");
-  }
-
-  private Greeting getNewCookbookBatchGetResult(RestClient client, RestliRequestOptions requestOptions) throws RemoteInvocationException
+  private Greeting getCookbookBatchGetResult(RestClient client, RestliRequestOptions requestOptions) throws RemoteInvocationException
   {
     Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = new GreetingsRequestBuilders(requestOptions).batchGet().ids(1L).build();
     ResponseFuture<BatchKVResponse<Long, EntityResponse<Greeting>>> future = client.sendRequest(request);
@@ -901,17 +817,17 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsNoCompressedResponsesDataProvider")
-  public void testMalformedPagination(RestClient client, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testMalformedPagination(RestClient client, GreetingsRequestBuilders builders) throws RemoteInvocationException
   {
     expectPaginationError("-1", client, builders);
     expectPaginationError("abc", client, builders);
   }
 
-  private void expectPaginationError(String count, RestClient client, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  private void expectPaginationError(String count, RestClient client, GreetingsRequestBuilders builders) throws RemoteInvocationException
   {
     try
     {
-      Request<CollectionResponse<Greeting>> request = builders.findBy("Search").name("search").setParam("count", count).build();
+      Request<CollectionResponse<Greeting>> request = builders.findBySearch().name("search").setParam("count", count).build();
       client.sendRequest(request).getResponse();
       Assert.fail("expected exception");
     }
@@ -922,11 +838,11 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsNoCompressedResponsesDataProvider")
-  public void testException(RestClient client, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testException(RestClient client, GreetingsRequestBuilders builders) throws RemoteInvocationException
   {
     try
     {
-      Request<Void> request = builders.<Void>action("ExceptionTest").build();
+      Request<Void> request = builders.actionExceptionTest().build();
       client.sendRequest(request).getResponse().getEntity();
       Assert.fail("expected exception");
     }
@@ -938,7 +854,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientsNoCompressedResponsesDataProvider")
-  public void test404(RestClient client, RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void test404(RestClient client, GreetingsRequestBuilders builders) throws RemoteInvocationException
   {
     Request<Greeting> request = builders.get().id(999L).build();
     ResponseFuture<Greeting> future = client.sendRequest(request);

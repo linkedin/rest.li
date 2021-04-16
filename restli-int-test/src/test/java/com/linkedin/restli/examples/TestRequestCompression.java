@@ -48,9 +48,8 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.server.RestLiServiceException;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
-
 import com.linkedin.test.util.retry.ThreeRetries;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -249,7 +248,7 @@ public class TestRequestCompression extends RestLiIntegrationTest
     properties.put(HttpClientFactory.HTTP_SERVICE_NAME, SERVICE_NAME);
     TransportClientAdapter clientAdapter1 = new TransportClientAdapter(httpClientFactory.getClient(properties));
     RestClient client = new RestClient(clientAdapter1, FILTERS_URI_PREFIX);
-    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(restliRequestOptions));
+    GreetingsRequestBuilders builders = new GreetingsRequestBuilders(restliRequestOptions);
 
     // GET
     Request<Greeting> request = builders.get().id(1L).build();

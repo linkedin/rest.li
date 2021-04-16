@@ -31,17 +31,12 @@ import com.linkedin.r2.transport.http.client.AbstractJmxManager;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.r2.util.NamedThreadFactory;
-import com.linkedin.restli.client.BatchGetRequestBuilder;
-import com.linkedin.restli.client.ProtocolVersionOption;
-import com.linkedin.restli.client.Request;
-import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.RestClient;
-import com.linkedin.restli.client.RestliRequestOptions;
-import com.linkedin.restli.client.RestliRequestOptionsBuilder;
-import com.linkedin.restli.common.BatchResponse;
+import com.linkedin.restli.client.*;
+import com.linkedin.restli.client.response.BatchKVResponse;
+import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
+import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.filter.Filter;
 import com.linkedin.restli.server.filter.FilterRequestContext;
@@ -227,14 +222,14 @@ public class TestResponseCompression extends RestLiIntegrationTest
     {
       ids[i] = (long) i;
     }
-    BatchGetRequestBuilder<Long, Greeting> builder = new GreetingsBuilders(restliRequestOptions).batchGet().ids(Arrays.asList(ids))
+    BatchGetEntityRequestBuilder<Long, Greeting> builder = new GreetingsRequestBuilders(restliRequestOptions).batchGet().ids(Arrays.asList(ids))
         .setHeader(EXPECTED_ACCEPT_ENCODING, expectedAcceptEncoding);
     if (expectedCompressionThreshold != null)
     {
       builder.setHeader(EXPECTED_COMPRESSION_THRESHOLD, expectedCompressionThreshold);
     }
-    Request<BatchResponse<Greeting>> request = builder.build();
-    Response<BatchResponse<Greeting>> response = client.sendRequest(request).getResponse();
+    Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = builder.build();
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = client.sendRequest(request).getResponse();
 
     if (responseShouldBeCompressed)
     {
@@ -272,10 +267,10 @@ public class TestResponseCompression extends RestLiIntegrationTest
     {
       ids[i] = (long) i;
     }
-    Request<BatchResponse<Greeting>> request = new GreetingsBuilders().batchGet().ids(Arrays.asList(ids))
+    Request<BatchKVResponse<Long, EntityResponse<Greeting>>> request = new GreetingsRequestBuilders().batchGet().ids(Arrays.asList(ids))
         .setHeader(EXPECTED_ACCEPT_ENCODING, expectedAcceptEncoding).build();
     RestClient restClient = new RestClient(client, FILTERS_URI_PREFIX);
-    Response<BatchResponse<Greeting>> response = restClient.sendRequest(request).getResponse();
+    Response<BatchKVResponse<Long, EntityResponse<Greeting>>> response = restClient.sendRequest(request).getResponse();
     Assert.assertEquals(response.getHeader(TestCompressionServer.CONTENT_ENCODING_SAVED), expectedContentEncoding);
   }
 }

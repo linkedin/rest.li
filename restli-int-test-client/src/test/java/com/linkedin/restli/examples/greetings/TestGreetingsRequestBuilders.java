@@ -20,12 +20,9 @@ package com.linkedin.restli.examples.greetings;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -34,19 +31,10 @@ import org.testng.annotations.Test;
  */
 public class TestGreetingsRequestBuilders
 {
-  @Test(dataProvider = "requestBuilderDataProvider")
-  public void testBatchable(RootBuilderWrapper<Long, Greeting> builders)
+  @Test
+  public void testBatchable()
   {
-    Request<Greeting> request = builders.get().id(1L).build();
+    Request<Greeting> request = new GreetingsRequestBuilders().get().id(1L).build();
     Assert.assertTrue(request.getResourceProperties().getSupportedMethods().contains(ResourceMethod.BATCH_GET));
-  }
-
-  @DataProvider
-  private static Object[][] requestBuilderDataProvider()
-  {
-    return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders()) }
-    };
   }
 }

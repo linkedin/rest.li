@@ -27,22 +27,16 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.GreetingsBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsCallbackBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsCallbackRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsPromiseBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsPromiseCtxBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsPromiseCtxRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsPromiseRequestBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.GreetingsTaskBuilders;
 import com.linkedin.restli.examples.greetings.client.GreetingsTaskRequestBuilders;
 import com.linkedin.restli.internal.server.response.RecordResponseEnvelope;
 import com.linkedin.restli.server.RestLiResponseData;
@@ -207,28 +201,14 @@ public class TestFilters extends RestLiIntegrationTest
 
   private Long createTestData(RootBuilderWrapper<Long, Greeting> builders, Greeting greeting) throws RemoteInvocationException
   {
-    RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, EmptyRecord> createBuilderWrapper = builders.create();
-    Long createdId;
-    if (createBuilderWrapper.isRestLi2Builder())
-    {
-      Object objBuilder = createBuilderWrapper.getBuilder();
-      @SuppressWarnings("unchecked")
-      CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder =
-          (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
-      CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(greeting).build();
-      Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
-      createdId = response.getEntity().getId();
-    }
-    else
-    {
-      Request<EmptyRecord> request = createBuilderWrapper.input(greeting).build();
-      Response<EmptyRecord> response = getClient().sendRequest(request).getResponse();
-      @SuppressWarnings("unchecked")
-      CreateResponse<Long> createResponse = (CreateResponse<Long>) response.getEntity();
-      createdId = createResponse.getId();
-    }
-    return createdId;
-
+    RootBuilderWrapper.MethodBuilderWrapper<Long, Greeting, IdResponse<Long>> createBuilderWrapper = builders.create();
+    Object objBuilder = createBuilderWrapper.getBuilder();
+    @SuppressWarnings("unchecked")
+    CreateIdRequestBuilder<Long, Greeting> createIdRequestBuilder =
+        (CreateIdRequestBuilder<Long, Greeting>) objBuilder;
+    CreateIdRequest<Long, Greeting> request = createIdRequestBuilder.input(greeting).build();
+    Response<IdResponse<Long>> response = getClient().sendRequest(request).getResponse();
+    return response.getEntity().getId();
   }
 
   private void verifyFilters(Tone tone, boolean respFilter)
@@ -289,25 +269,15 @@ public class TestFilters extends RestLiIntegrationTest
   private Object[][] requestBuilderDataProvider()
   {
     Object[] builders = new Object[]{
-        new GreetingsBuilders(),
         new GreetingsRequestBuilders(),
-        new GreetingsPromiseBuilders(),
         new GreetingsPromiseRequestBuilders(),
-        new GreetingsCallbackBuilders(),
         new GreetingsCallbackRequestBuilders(),
-        new GreetingsPromiseCtxBuilders(),
         new GreetingsPromiseCtxRequestBuilders(),
-        new GreetingsTaskBuilders(),
         new GreetingsTaskRequestBuilders(),
-        new GreetingsBuilders(FORCE_USE_NEXT_OPTIONS),
         new GreetingsRequestBuilders(FORCE_USE_NEXT_OPTIONS),
-        new GreetingsPromiseBuilders(FORCE_USE_NEXT_OPTIONS),
         new GreetingsPromiseRequestBuilders(FORCE_USE_NEXT_OPTIONS),
-        new GreetingsCallbackBuilders(FORCE_USE_NEXT_OPTIONS),
         new GreetingsCallbackRequestBuilders(FORCE_USE_NEXT_OPTIONS),
-        new GreetingsPromiseCtxBuilders(FORCE_USE_NEXT_OPTIONS),
         new GreetingsPromiseCtxRequestBuilders(FORCE_USE_NEXT_OPTIONS),
-        new GreetingsTaskBuilders(FORCE_USE_NEXT_OPTIONS),
         new GreetingsTaskRequestBuilders(FORCE_USE_NEXT_OPTIONS)
     };
     Set<Object> builderWrapperSet = new HashSet<Object>();

@@ -72,8 +72,6 @@ import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.validation.RestLiDataValidator;
-import com.linkedin.restli.internal.common.RestliVersion;
-import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.model.ResourceModelEncoder;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ActionSchema;
@@ -117,7 +115,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
-import com.sun.codemodel.JConditional;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
@@ -128,8 +125,6 @@ import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JVar;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -139,28 +134,15 @@ import org.slf4j.LoggerFactory;
  */
 public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 {
-  private static final Logger _log = LoggerFactory.getLogger(JavaRequestBuilderGenerator.class);
   private static final String NAME = "name";
   private static final String NAMESPACE = "namespace";
-  private static final RestSpecCodec _codec = new RestSpecCodec();
   // Generate the validateInput() method for these resource methods
   private static final List<ResourceMethod> _validateEntityMethods = Arrays.asList(
       ResourceMethod.CREATE, ResourceMethod.UPDATE, ResourceMethod.BATCH_CREATE, ResourceMethod.BATCH_UPDATE);
   private static final List<ResourceMethod> _validatePatchMethods = Arrays.asList(
       ResourceMethod.PARTIAL_UPDATE, ResourceMethod.BATCH_PARTIAL_UPDATE);
 
-  private static final Map<RestliVersion, String> ROOT_BUILDERS_SUFFIX;
-  private static final Map<RestliVersion, String> METHOD_BUILDER_SUFFIX;
-  static
-  {
-    ROOT_BUILDERS_SUFFIX = new HashMap<RestliVersion, String>();
-    ROOT_BUILDERS_SUFFIX.put(RestliVersion.RESTLI_1_0_0, "Builders");
-    ROOT_BUILDERS_SUFFIX.put(RestliVersion.RESTLI_2_0_0, "RequestBuilders");
-
-    METHOD_BUILDER_SUFFIX = new HashMap<RestliVersion, String>();
-    METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_1_0_0, "Builder");
-    METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_2_0_0, "RequestBuilder");
-  }
+  private static final String METHOD_BUILDER_SUFFIX = "RequestBuilder";
 
   // "Return entity" request builder base classes for each supported method
   private static final Map<ResourceMethod, Class<?>> RETURN_ENTITY_BUILDER_CLASSES;
@@ -174,20 +156,15 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
   }
 
   private final JClass _voidClass = getCodeModel().ref(Void.class);
-  private final JClass _fieldDefClass = getCodeModel().ref(FieldDef.class);
   private final JClass _resourceSpecClass = getCodeModel().ref(ResourceSpec.class);
   private final JClass _resourceSpecImplClass = getCodeModel().ref(ResourceSpecImpl.class);
   private final JClass _enumSetClass = getCodeModel().ref(EnumSet.class);
   private final JClass _resourceMethodClass = getCodeModel().ref(ResourceMethod.class);
-  private final JClass _classClass = getCodeModel().ref(Class.class);
-  private final JClass _objectClass = getCodeModel().ref(Object.class);
   private final HashSet<JClass> _generatedArrayClasses = new HashSet<JClass>();
   private final DataSchemaResolver _schemaResolver;
   private final TemplateSpecGenerator _specGenerator;
   private final JavaDataTemplateGenerator _javaDataTemplateGenerator;
   private final boolean _generateDataTemplates;
-  private final RestliVersion _version;
-  private final RestliVersion _deprecatedByVersion;
   private File _currentSourceFile;
 
   /**
@@ -195,16 +172,11 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
    * @param defaultPackage package to be used when a {@link NamedDataSchema} does not specify a namespace
    * @param generateDataTemplates true if the related data template source files will be generated as well, false otherwise.
    *                              if null is assigned to this value, by default it returns true.
-   * @param version {@link RestliVersion} of the generated builder format
-   * @param deprecatedByVersion this version of builder format will be generated, but will be annotated as deprecated.
-   *                            also will reference to the non-deprecated version.
    * @param rootPath root path to relativize
    */
   public JavaRequestBuilderGenerator(String resolverPath,
                                      String defaultPackage,
                                      boolean generateDataTemplates,
-                                     RestliVersion version,
-                                     RestliVersion deprecatedByVersion,
                                      String rootPath)
   {
     super(defaultPackage);
@@ -212,8 +184,6 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     _specGenerator = new TemplateSpecGenerator(_schemaResolver);
     _javaDataTemplateGenerator = new JavaDataTemplateGenerator(defaultPackage, rootPath);
     _generateDataTemplates = generateDataTemplates;
-    _version = version;
-    _deprecatedByVersion = deprecatedByVersion;
   }
 
   /**
@@ -221,17 +191,12 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
    * @param defaultPackage package to be used when a {@link NamedDataSchema} does not specify a namespace
    * @param generateDataTemplates true if the related data template source files will be generated as well, false otherwise.
    *                              if null is assigned to this value, by default it returns true.
-   * @param version {@link RestliVersion} of the generated builder format
-   * @param deprecatedByVersion this version of builder format will be generated, but will be annotated as deprecated.
-   *                            also will reference to the non-deprecated version.
    */
   public JavaRequestBuilderGenerator(String resolverPath,
                                      String defaultPackage,
-                                     boolean generateDataTemplates,
-                                     RestliVersion version,
-                                     RestliVersion deprecatedByVersion)
+                                     boolean generateDataTemplates)
   {
-    this(resolverPath, defaultPackage, generateDataTemplates, version, deprecatedByVersion, null);
+    this(resolverPath, defaultPackage, generateDataTemplates, null);
   }
 
   public boolean isGeneratedArrayClass(JClass clazz)
@@ -276,11 +241,10 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     }
   }
 
-  private static String getBuilderClassNameByVersion(RestliVersion version, String namespace, String builderName, boolean isRootBuilders)
+  private static String getBuilderClassName(String namespace, String builderName, boolean isRootBuilders)
   {
     final String className = (namespace == null || namespace.trim().isEmpty() ? "" : namespace + ".") + CodeUtil.capitalize(builderName);
-    final Map<RestliVersion, String> suffixMap = (isRootBuilders ? ROOT_BUILDERS_SUFFIX : METHOD_BUILDER_SUFFIX);
-    return className + suffixMap.get(version);
+    return className + (isRootBuilders ? "RequestBuilders" : "RequestBuilder");
   }
 
   private static List<String> fixOldStylePathKeys(List<String> pathKeys, String resourcePath, Map<String, List<String>> pathToAssocKeys)
@@ -486,29 +450,6 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     }
   }
 
-  private boolean checkVersionAndDeprecateBuilderClass(JDefinedClass clazz, boolean isRootBuilders)
-  {
-    if (_deprecatedByVersion == null)
-    {
-      return false;
-    }
-    else
-    {
-      clazz.annotate(Deprecated.class);
-
-      final Map<RestliVersion, String> suffixMap = (isRootBuilders ? ROOT_BUILDERS_SUFFIX : METHOD_BUILDER_SUFFIX);
-      final String deprecatedBuilderName = clazz.name();
-      final String replacementBuilderName = deprecatedBuilderName.substring(0, deprecatedBuilderName.length() - suffixMap.get(_version).length());
-      clazz.javadoc().addDeprecated().append("This format of request builder is obsolete. Please use {@link " +
-                                                 getBuilderClassNameByVersion(_deprecatedByVersion,
-                                                                              clazz.getPackage().name(),
-                                                                              replacementBuilderName,
-                                                                              isRootBuilders) +
-                                                 "} instead.");
-      return true;
-    }
-  }
-
   private void annotate(JDefinedClass requestBuilderClass, String sourceFilePath, String rootPath)
   {
     JavaCodeUtil.annotate(requestBuilderClass, "Request Builder", sourceFilePath, rootPath);
@@ -526,37 +467,14 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     final String packageName = resource.getNamespace();
     final JPackage clientPackage = (packageName == null || packageName.isEmpty()) ? getPackage() : getPackage(packageName);
 
-    final String className;
-    if (_version == RestliVersion.RESTLI_2_0_0)
-    {
-      className = getBuilderClassNameByVersion(RestliVersion.RESTLI_2_0_0, null, resource.getName(), true);
-    }
-    else
-    {
-      className = getBuilderClassNameByVersion(RestliVersion.RESTLI_1_0_0, null, resource.getName(), true);
-    }
+    final String className = getBuilderClassName(null, resource.getName(), true);
     final JDefinedClass facadeClass = clientPackage._class(className);
     annotate(facadeClass, sourceFile.getAbsolutePath(), rootPath);
 
-    final JFieldVar baseUriField;
-    final JFieldVar requestOptionsField;
     final JExpression baseUriGetter = JExpr.invoke("getBaseUriTemplate");
     final JExpression requestOptionsGetter = JExpr.invoke("getRequestOptions");
 
-    if (_version == RestliVersion.RESTLI_2_0_0)
-    {
-      baseUriField = null;
-      requestOptionsField = null;
-      facadeClass._extends(BuilderBase.class);
-    }
-    else
-    {
-      // for old builder, instead of extending from RequestBuilderBase, add fields and getters in the class
-      baseUriField = facadeClass.field(JMod.PRIVATE | JMod.FINAL, String.class, "_baseUriTemplate");
-      requestOptionsField = facadeClass.field(JMod.PRIVATE, RestliRequestOptions.class, "_requestOptions");
-      facadeClass.method(JMod.PRIVATE, String.class, "getBaseUriTemplate").body()._return(baseUriField);
-      facadeClass.method(JMod.PUBLIC, RestliRequestOptions.class, "getRequestOptions").body()._return(requestOptionsField);
-    }
+    facadeClass._extends(BuilderBase.class);
 
     // make the original resource path available via a private final static variable.
     final JFieldVar originalResourceField = facadeClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, String.class, "ORIGINAL_RESOURCE_PATH");
@@ -566,21 +484,6 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     // create reference to RestliRequestOptions.DEFAULT_OPTIONS
     final JClass restliRequestOptionsClass = getCodeModel().ref(RestliRequestOptions.class);
     final JFieldRef defaultOptionsField = restliRequestOptionsClass.staticRef("DEFAULT_OPTIONS");
-
-    if (_version == RestliVersion.RESTLI_1_0_0)
-    {
-      // same getPathComponents() logic as in RequestBuilderBase
-      final JMethod pathComponentsGetter = facadeClass.method(JMod.PUBLIC, String[].class, "getPathComponents");
-      pathComponentsGetter.body()._return(getCodeModel().ref(URIParamUtils.class).staticInvoke("extractPathComponentsFromUriTemplate").arg(baseUriField));
-
-      // method that expresses the following logic
-      //   (requestOptions == null) ? return RestliRequestOptions.DEFAULT_OPTIONS : requestOptions;
-      final JMethod requestOptionsAssigner = facadeClass.method(JMod.PRIVATE | JMod.STATIC, RestliRequestOptions.class, "assignRequestOptions");
-      final JVar requestOptionsAssignerParam = requestOptionsAssigner.param(RestliRequestOptions.class, "requestOptions");
-      final JConditional requestNullCheck = requestOptionsAssigner.body()._if(requestOptionsAssignerParam.eq(JExpr._null()));
-      requestNullCheck._then().block()._return(defaultOptionsField);
-      requestNullCheck._else().block()._return(requestOptionsAssignerParam);
-    }
 
     /*
     There will be 4 constructors:
@@ -599,17 +502,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
     // request options override constructor
     final JVar requestOptionsOverrideOptionsParam = requestOptionsOverrideConstructor.param(RestliRequestOptions.class, "requestOptions");
-
-    if (_version == RestliVersion.RESTLI_2_0_0)
-    {
-      requestOptionsOverrideConstructor.body().invoke(SUPER).arg(originalResourceField).arg(requestOptionsOverrideOptionsParam);
-    }
-    else
-    {
-      requestOptionsOverrideConstructor.body().assign(baseUriField, originalResourceField);
-      final JInvocation requestOptionsOverrideAssignRequestOptions = new JBlock().invoke("assignRequestOptions").arg(requestOptionsOverrideOptionsParam);
-      requestOptionsOverrideConstructor.body().assign(requestOptionsField, requestOptionsOverrideAssignRequestOptions);
-    }
+    requestOptionsOverrideConstructor.body().invoke(SUPER).arg(originalResourceField).arg(requestOptionsOverrideOptionsParam);
 
     // primary resource name override constructor, delegates to the main constructor
     final JVar resourceNameOverrideResourceNameParam = resourceNameOverrideConstructor.param(_stringClass, "primaryResourceName");
@@ -629,16 +522,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       baseUriExpr = mainConsResourceNameParam;
     }
 
-    if (_version == RestliVersion.RESTLI_2_0_0)
-    {
-      mainConstructor.body().invoke(SUPER).arg(baseUriExpr).arg(mainConsOptionsParam);
-    }
-    else
-    {
-      final JInvocation mainAssignRequestOptions = new JBlock().invoke("assignRequestOptions").arg(mainConsOptionsParam);
-      mainConstructor.body().assign(baseUriField, baseUriExpr);
-      mainConstructor.body().assign(requestOptionsField, mainAssignRequestOptions);
-    }
+    mainConstructor.body().invoke(SUPER).arg(baseUriExpr).arg(mainConsOptionsParam);
 
     final String resourceName = CodeUtil.capitalize(resource.getName());
     final JMethod primaryResourceGetter = facadeClass.method(JMod.PUBLIC | JMod.STATIC, String.class, "getPrimaryResource");
@@ -870,11 +754,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                     rootPath);
 
     generateClassJavadoc(facadeClass, resource);
-
-    if (!checkVersionAndDeprecateBuilderClass(facadeClass, true))
-    {
-      checkRestSpecAndDeprecateRootBuildersClass(facadeClass, resource);
-    }
+    checkRestSpecAndDeprecateRootBuildersClass(facadeClass, resource);
 
     return facadeClass;
   }
@@ -1056,14 +936,15 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       {
         final String finderName = finder.getName();
 
-        final String builderName = CodeUtil.capitalize(resourceName) + "FindBy" + CodeUtil.capitalize(finderName) + METHOD_BUILDER_SUFFIX.get(_version);        JDefinedClass finderBuilderClass = generateDerivedBuilder(baseBuilderClass,
-                                                                                                                                                                                                                          valueClass,
-                                                                                                                                                                                                                          finderName,
-                                                                                                                                                                                                                          builderName,
-                                                                                                                                                                                                                          facadeClass.getPackage(),
-                                                                                                                                                                                                                          ResourceMethod.FINDER,
-                                                                                                                                                                                                                          null,
-                                                                                                                                                                                                                          rootPath);
+        final String builderName = CodeUtil.capitalize(resourceName) + "FindBy" + CodeUtil.capitalize(finderName) + METHOD_BUILDER_SUFFIX;
+        JDefinedClass finderBuilderClass = generateDerivedBuilder(baseBuilderClass,
+                                                                  valueClass,
+                                                                  finderName,
+                                                                  builderName,
+                                                                  facadeClass.getPackage(),
+                                                                  ResourceMethod.FINDER,
+                                                                  null,
+                                                                  rootPath);
 
         final JMethod finderMethod = facadeClass.method(JMod.PUBLIC, finderBuilderClass, "findBy" + CodeUtil.capitalize(finderName));
 
@@ -1128,7 +1009,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       {
         final String batchFinderName = batchFinder.getName();
 
-        final String builderName = CodeUtil.capitalize(resourceName) + "BatchFindBy" + CodeUtil.capitalize(batchFinderName) + METHOD_BUILDER_SUFFIX.get(_version);
+        final String builderName = CodeUtil.capitalize(resourceName) + "BatchFindBy" + CodeUtil.capitalize(batchFinderName) + METHOD_BUILDER_SUFFIX;
         JDefinedClass batchFinderBuilderClass = generateDerivedBuilder(baseBuilderClass,
                                                                       valueClass,
                                                                       batchFinderName,
@@ -1232,7 +1113,6 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
     final JDefinedClass derivedBuilderClass = clientPackage._class(JMod.PUBLIC, derivedBuilderName);
     annotate(derivedBuilderClass, null, rootPath);
-    checkVersionAndDeprecateBuilderClass(derivedBuilderClass, false);
     derivedBuilderClass._extends(baseBuilderClass.narrow(derivedBuilderClass));
     final JMethod derivedBuilderConstructor = derivedBuilderClass.constructor(JMod.PUBLIC);
     final JVar uriParam = derivedBuilderConstructor.param(_stringClass, "baseUriTemplate");
@@ -1403,10 +1283,9 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     final JClass vanillaActionBuilderClass = getCodeModel().ref(ActionRequestBuilderBase.class).narrow(keyClass, returnType);
     final String actionName = action.getName();
 
-    final String actionBuilderClassName = CodeUtil.capitalize(resourceName) + "Do" + CodeUtil.capitalize(actionName) + METHOD_BUILDER_SUFFIX.get(_version);
+    final String actionBuilderClassName = CodeUtil.capitalize(resourceName) + "Do" + CodeUtil.capitalize(actionName) + METHOD_BUILDER_SUFFIX;
     final JDefinedClass actionBuilderClass = facadeClass.getPackage()._class(JMod.PUBLIC, actionBuilderClassName);
     annotate(actionBuilderClass, null, rootPath);
-    checkVersionAndDeprecateBuilderClass(actionBuilderClass, false);
     actionBuilderClass._extends(vanillaActionBuilderClass.narrow(actionBuilderClass));
     final JMethod actionBuilderConstructor = actionBuilderClass.constructor(JMod.PUBLIC);
     final JVar uriParam = actionBuilderConstructor.param(_stringClass, "baseUriTemplate");
@@ -1427,12 +1306,9 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
         final boolean isOptional = RestLiToolsUtils.isParameterOptional(param);
         final JavaBinding binding = getJavaBindingType(param.getType(), facadeClass);
 
-        final JMethod typesafeMethod = _version == RestliVersion.RESTLI_2_0_0 ? actionBuilderClass.method(JMod.PUBLIC,
-                                                                                                          actionBuilderClass,
-                                                                                                          RestLiToolsUtils.nameCamelCase(paramName + "Param")) : actionBuilderClass.method(JMod.PUBLIC,
-                                                                                                                                                                                           actionBuilderClass,
-                                                                                                                                                                                           "param" + CodeUtil.capitalize(
-                                                                                                                                                                                               paramName));
+        final JMethod typesafeMethod = actionBuilderClass.method(JMod.PUBLIC,
+                                                                 actionBuilderClass,
+                                                                 RestLiToolsUtils.nameCamelCase(paramName + "Param"));
         final JVar typesafeMethodParam = typesafeMethod.param(binding.valueClass, "value");
 
         final JClass dataTemplateUtil = getCodeModel().ref(DataTemplateUtil.class);
@@ -1478,44 +1354,17 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     }
 
     final Map<ResourceMethod, Class<?>> crudBuilderClasses = new TreeMap<>();
-    if (_version == RestliVersion.RESTLI_2_0_0)
-    {
-      crudBuilderClasses.put(ResourceMethod.CREATE, CreateIdRequestBuilderBase.class);
-    }
-    else
-    {
-      // we use fully qualified class name to avoid importing the deprecated class
-      // so far in Java there is no way to suppress deprecation warning for import
-      crudBuilderClasses.put(ResourceMethod.CREATE, com.linkedin.restli.client.base.CreateRequestBuilderBase.class);
-    }
+    crudBuilderClasses.put(ResourceMethod.CREATE, CreateIdRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.GET, GetRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.UPDATE, UpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.PARTIAL_UPDATE, PartialUpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.DELETE, DeleteRequestBuilderBase.class);
-    if (_version == RestliVersion.RESTLI_2_0_0)
-    {
-      crudBuilderClasses.put(ResourceMethod.BATCH_CREATE, BatchCreateIdRequestBuilderBase.class);
-    }
-    else
-    {
-      // we use fully qualified class name to avoid importing the deprecated class
-      // so far in Java there is no way to suppress deprecation warning for import
-      crudBuilderClasses.put(ResourceMethod.BATCH_CREATE, com.linkedin.restli.client.base.BatchCreateRequestBuilderBase.class);
-    }
+    crudBuilderClasses.put(ResourceMethod.BATCH_CREATE, BatchCreateIdRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.BATCH_UPDATE, BatchUpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.BATCH_PARTIAL_UPDATE, BatchPartialUpdateRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.BATCH_DELETE, BatchDeleteRequestBuilderBase.class);
     crudBuilderClasses.put(ResourceMethod.GET_ALL, GetAllRequestBuilderBase.class);
-    if (_version == RestliVersion.RESTLI_2_0_0)
-    {
-      crudBuilderClasses.put(ResourceMethod.BATCH_GET, BatchGetEntityRequestBuilderBase.class);
-    }
-    else
-    {
-      // we use fully qualified class name to avoid importing the deprecated class
-      // so far in Java there is no way to suppress deprecation warning for import
-      crudBuilderClasses.put(ResourceMethod.BATCH_GET, com.linkedin.restli.client.base.BatchGetRequestBuilderBase.class);
-    }
+    crudBuilderClasses.put(ResourceMethod.BATCH_GET, BatchGetEntityRequestBuilderBase.class);
 
     for (Map.Entry<ResourceMethod, Class<?>> entry : crudBuilderClasses.entrySet())
     {
@@ -1602,7 +1451,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
                                                           valueClass,
                                                           null,
                                                           resourceName + RestLiToolsUtils.nameCapsCase(methodName) +
-                                                              METHOD_BUILDER_SUFFIX.get(_version),
+                                                              METHOD_BUILDER_SUFFIX,
                                                           facadeClass.getPackage(),
                                                           method,
                                                           annotations,

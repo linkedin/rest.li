@@ -17,15 +17,12 @@
 package com.linkedin.restli.test;
 
 
-import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.ToneFacet;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.Arrays;
 
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 
@@ -37,22 +34,13 @@ import org.testng.annotations.Test;
  */
 public class ArrayTest
 {
-  @Test(dataProvider = "requestBuilderDataProvider")
-  public void testIterable(RootBuilderWrapper<Integer, Greeting> builders)
+  @Test
+  public void testIterable()
   {
-    builders.findBy("Test")
-      .setQueryParam("primitive", Arrays.asList(1, 2, 3))
-      .setQueryParam("enum", Arrays.asList(Tone.FRIENDLY, Tone.SINCERE))
-      .setQueryParam("record" ,Arrays.asList(new Message(), new Message()))
-      .setQueryParam("existing", Arrays.asList(new ToneFacet(), new ToneFacet()));
-  }
-
-  @DataProvider
-  private static Object[][] requestBuilderDataProvider()
-  {
-    return new Object[][] {
-      { new RootBuilderWrapper<Integer, Greeting>(new ArrayTestBuilders()) },
-      { new RootBuilderWrapper<Integer, Greeting>(new ArrayTestRequestBuilders()) }
-    };
+    new ArrayTestRequestBuilders().findByTest()
+      .primitiveParam(Arrays.asList(1, 2, 3))
+      .enumParam(Arrays.asList(Tone.FRIENDLY, Tone.SINCERE))
+      .recordParam(Arrays.asList(new Message(), new Message()))
+      .existingParam(Arrays.asList(new ToneFacet(), new ToneFacet()));
   }
 }

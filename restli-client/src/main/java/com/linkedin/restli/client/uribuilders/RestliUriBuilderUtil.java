@@ -20,18 +20,14 @@ package com.linkedin.restli.client.uribuilders;
 import com.linkedin.restli.client.ActionRequest;
 import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.client.BatchCreateIdEntityRequest;
-import com.linkedin.restli.client.BatchCreateRequest;
 import com.linkedin.restli.client.BatchDeleteRequest;
 import com.linkedin.restli.client.BatchFindRequest;
 import com.linkedin.restli.client.BatchGetEntityRequest;
-import com.linkedin.restli.client.BatchGetKVRequest;
-import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.BatchPartialUpdateEntityRequest;
 import com.linkedin.restli.client.BatchPartialUpdateRequest;
 import com.linkedin.restli.client.BatchUpdateRequest;
 import com.linkedin.restli.client.CreateIdEntityRequest;
 import com.linkedin.restli.client.CreateIdRequest;
-import com.linkedin.restli.client.CreateRequest;
 import com.linkedin.restli.client.DeleteRequest;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.client.GetAllRequest;
@@ -70,15 +66,7 @@ public class RestliUriBuilderUtil
       case GET:
         return new GetRequestUriBuilder((GetRequest)request, uriPrefix, version);
       case BATCH_GET:
-        if (request instanceof BatchGetRequest)
-        {
-          return new BatchGetRequestUriBuilder((BatchGetRequest)request, uriPrefix, version);
-        }
-        else if (request instanceof BatchGetKVRequest)
-        {
-          return new BatchGetKVRequestUriBuilder((BatchGetKVRequest)request, uriPrefix, version);
-        }
-        else if (request instanceof BatchGetEntityRequest)
+        if (request instanceof BatchGetEntityRequest)
         {
           return new BatchGetEntityRequestUriBuilder((BatchGetEntityRequest)request, uriPrefix, version);
         }
@@ -91,11 +79,7 @@ public class RestliUriBuilderUtil
       case BATCH_FINDER:
         return new BatchFindRequestUriBuilder((BatchFindRequest)request, uriPrefix, version);
       case CREATE:
-        if (request instanceof CreateRequest)
-        {
-          return new CreateRequestUriBuilder((CreateRequest)request, uriPrefix, version);
-        }
-        else if (request instanceof CreateIdRequest)
+        if (request instanceof CreateIdRequest)
         {
           return new CreateIdRequestUriBuilder((CreateIdRequest)request, uriPrefix, version);
         }
@@ -108,11 +92,7 @@ public class RestliUriBuilderUtil
           throw new IllegalArgumentException("Create request of unknown type: " + request.getClass());
         }
       case BATCH_CREATE:
-        if (request instanceof BatchCreateRequest)
-        {
-          return new BatchCreateRequestUriBuilder((BatchCreateRequest)request, uriPrefix, version);
-        }
-        else if (request instanceof BatchCreateIdRequest)
+        if (request instanceof BatchCreateIdRequest)
         {
           return new BatchCreateIdRequestUriBuilder((BatchCreateIdRequest)request, uriPrefix, version);
         }

@@ -24,19 +24,13 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
-import com.linkedin.restli.client.CreateRequest;
-import com.linkedin.restli.client.CreateRequestBuilder;
-import com.linkedin.restli.client.GetRequest;
-import com.linkedin.restli.client.GetRequestBuilder;
-import com.linkedin.restli.client.Request;
-import com.linkedin.restli.client.Response;
-import com.linkedin.restli.client.RestliRequestOptions;
+import com.linkedin.restli.client.*;
+import com.linkedin.restli.client.base.CreateIdRequestBuilderBase;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpecImpl;
-import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.multiplexer.IndividualBody;
 import com.linkedin.restli.common.multiplexer.IndividualRequest;
 import com.linkedin.restli.common.multiplexer.IndividualRequestMap;
@@ -92,9 +86,12 @@ public class MultiplexerTestBase
         .build();
   }
 
-  protected static CreateRequest<TestRecord> fakeCreateRequest(TestRecord entity)
+  protected static CreateIdRequest<Integer, TestRecord> fakeCreateRequest(TestRecord entity)
   {
-    return new CreateRequestBuilder<Integer, TestRecord>(BASE_URI, TestRecord.class, RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
+    CreateIdRequestBuilder<Integer, TestRecord> requestBuilder = new CreateIdRequestBuilderBase<>(
+        BASE_URI, TestRecord.class, RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+
+    return requestBuilder
         .input(entity)
         .setHeaders(HEADERS)
         .build();
@@ -103,7 +100,7 @@ public class MultiplexerTestBase
   protected static Response<TestRecord> fakeResponse(int id)
   {
     TestRecord record = fakeEntity(id);
-    return new ResponseImpl<TestRecord>(HttpStatus.S_200_OK.getCode(), HEADERS, Collections.<HttpCookie>emptyList(), record, null);
+    return new ResponseImpl<>(HttpStatus.S_200_OK.getCode(), HEADERS, Collections.emptyList(), record, null);
   }
 
   protected static TestRecord fakeEntity(int id)
@@ -133,14 +130,14 @@ public class MultiplexerTestBase
     return request;
   }
 
-  protected static IndividualResponse fakeIndividualResponse(RecordTemplate record) throws IOException
+  protected static IndividualResponse fakeIndividualResponse(RecordTemplate record)
   {
     return new IndividualResponse()
         .setStatus(HttpStatus.S_200_OK.getCode())
         .setBody(new IndividualBody(record.data()));
   }
 
-  protected static IndividualResponse fakeIndividualErrorResponse() throws IOException
+  protected static IndividualResponse fakeIndividualErrorResponse()
   {
     return new IndividualResponse()
         .setStatus(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode());
@@ -206,7 +203,7 @@ public class MultiplexerTestBase
         .build();
   }
 
-  protected static RestResponse fakeRestErrorResponse() throws IOException
+  protected static RestResponse fakeRestErrorResponse()
   {
     return new RestResponseBuilder()
         .setStatus(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode())

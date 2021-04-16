@@ -74,7 +74,7 @@ public class IdEntityResponseDecoder<K, V extends RecordTemplate> extends RestRe
     modifiableHeaders.remove(RestConstants.HEADER_ID);
     modifiableHeaders.remove(RestConstants.HEADER_RESTLI_ID);
 
-    return new ResponseImpl<IdEntityResponse<K, V>>(rawResponse.getStatus(), modifiableHeaders, rawResponse.getCookies(), rawResponse.getEntity(), rawResponse.getError());
+    return new ResponseImpl<>(rawResponse.getStatus(), modifiableHeaders, rawResponse.getCookies(), rawResponse.getEntity(), rawResponse.getError());
   }
 
   @Override

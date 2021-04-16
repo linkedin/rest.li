@@ -78,9 +78,7 @@ public class TestDefaultScatterGatherStrategy
                   Collections.emptyMap());
 
   // sample batch requests
-  private static BatchGetRequest<TestRecord> _batchGetRequest;
   private static BatchGetEntityRequest<Long, TestRecord> _batchGetEntityRequest;
-  private static BatchGetKVRequest<Long, TestRecord> _batchGetKVRequest;
   private static BatchDeleteRequest<Long, TestRecord> _batchDeleteRequest;
   private static BatchUpdateRequest<Long, TestRecord> _batchUpdateRequest;
   private static BatchPartialUpdateRequest<Long, TestRecord> _batchPartialUpdateRequest;
@@ -101,9 +99,7 @@ public class TestDefaultScatterGatherStrategy
   {
     _uriMapper = mock(URIMapper.class);
     _sgStrategy = new DefaultScatterGatherStrategy(_uriMapper);
-    _batchGetRequest = createBatchGetRequest(1L, 2L, 3L, 4L);
     _batchGetEntityRequest = createBatchGetEntityRequest(1L, 2L, 3L, 4L);
-    _batchGetKVRequest = createBatchGetKVRequest(1L, 2L, 3L, 4L);
     _batchDeleteRequest = createBatchDeleteRequest(1L, 2L, 3L, 4L);
     _batchUpdateRequest = createBatchUpdateRequest(1L, 2L, 3L, 4L);
     _batchPartialUpdateRequest = createBatchPartialUpdateRequest(1L, 2L, 3L, 4L);
@@ -206,15 +202,11 @@ public class TestDefaultScatterGatherStrategy
   private static Object[][] batchRequestToUris()
   {
     return new Object[][] {
-            { _batchGetRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), _batchToUris},
             { _batchGetEntityRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), _batchToUris},
-            { _batchGetKVRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), _batchToUris},
             { _batchDeleteRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), _batchToUris},
             { _batchUpdateRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), _batchToUris},
             { _batchPartialUpdateRequest, AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), _batchToUris},
-            { _batchGetRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), _batchToUris},
             { _batchGetEntityRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), _batchToUris},
-            { _batchGetKVRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), _batchToUris},
             { _batchDeleteRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), _batchToUris},
             { _batchUpdateRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), _batchToUris},
             { _batchPartialUpdateRequest, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), _batchToUris}
@@ -244,12 +236,8 @@ public class TestDefaultScatterGatherStrategy
   private static Object[][] scatterBatchRequestProvider()
   {
     return new Object[][] {
-            { _batchGetRequest, createBatchGetRequest(1L, 2L), _host1URI,
-                    createBatchGetRequest(3L), _host2URI},
             { _batchGetEntityRequest, createBatchGetEntityRequest(1L, 2L), _host1URI,
                     createBatchGetEntityRequest(3L), _host2URI},
-            { _batchGetKVRequest, createBatchGetKVRequest(1L, 2L), _host1URI,
-                    createBatchGetKVRequest(3L), _host2URI},
             { _batchDeleteRequest, createBatchDeleteRequest(1L, 2L), _host1URI,
                     createBatchDeleteRequest(3L), _host2URI},
             { _batchUpdateRequest, createBatchUpdateRequest(1L, 2L), _host1URI,
@@ -292,57 +280,6 @@ public class TestDefaultScatterGatherStrategy
     }
   }
 
-  @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocol")
-  private static Object[][] protocolVersions()
-  {
-    return new Object[][]{
-            {AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion()},
-            {AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()}
-    };
-  }
-
-
-  @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "protocol")
-  public void testGatherBatchResponse(ProtocolVersion version)
-  {
-    Map<RequestInfo, Response<BatchResponse<TestRecord>>> successResponses = new HashMap<>();
-    successResponses.put(
-            new RequestInfo(createBatchGetRequest(1L, 2L), getTargetHostRequestContext(_host1URI)),
-            createBatchResponse(Collections.singleton(1L), Collections.singleton(2L)));
-    Map<RequestInfo, Throwable> failResponses = new HashMap<>();
-    failResponses.put(
-            new RequestInfo(createBatchGetRequest(3L), getTargetHostRequestContext(_host2URI)),
-            new RestLiScatterGatherException("Partition host is unavailable!"));
-    Callback<Response<BatchResponse<TestRecord>>> testCallback = new Callback<Response<BatchResponse<TestRecord>>>()
-    {
-      @Override
-      public void onError(Throwable e)
-      {
-
-      }
-
-      @Override
-      public void onSuccess(Response<BatchResponse<TestRecord>> result)
-      {
-        Assert.assertNotNull(result.getEntity());
-        Assert.assertEquals(result.getStatus(), HttpStatus.S_200_OK.getCode());
-        Assert.assertTrue(result.getEntity().getResults().size() == 1);
-        Assert.assertTrue(result.getEntity().getResults().containsKey("1"));
-        Assert.assertTrue(result.getEntity().getErrors().size() == 3);
-        ErrorResponse keyError = result.getEntity().getErrors().get("2");
-        Assert.assertEquals(keyError.getStatus().intValue(), HttpStatus.S_404_NOT_FOUND.getCode());
-        ErrorResponse failError = result.getEntity().getErrors().get("3");
-        Assert.assertEquals(failError.getExceptionClass(), RestLiScatterGatherException.class.getName());
-        Assert.assertEquals(failError.getMessage(), "Partition host is unavailable!");
-        ErrorResponse unmappedError = result.getEntity().getErrors().get("4");
-        Assert.assertEquals(unmappedError.getExceptionClass(), RestLiScatterGatherException.class.getName());
-        Assert.assertEquals(unmappedError.getMessage(), "Unable to find a host for keys :[4]");
-      }
-    };
-    _sgStrategy.onAllResponsesReceived(_batchGetRequest, version, successResponses, failResponses, _unmappedKeys, testCallback);
-  }
-
-
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "gatherBatchResponseProvider")
   private static Object[][] gatherBatchResponseProvider()
   {
@@ -353,8 +290,6 @@ public class TestDefaultScatterGatherStrategy
     return new Object[][] {
             { _batchGetEntityRequest, v1, createBatchGetEntityRequest(1L, 2L), _host1URI,
                     createBatchEntityResponse(v1, resultKeys, errorKeys), createBatchGetEntityRequest(3L), _host2URI, 1, 4},
-            { _batchGetKVRequest, v1, createBatchGetKVRequest(1L, 2L), _host1URI,
-                    createBatchGetKVResponse(v1, resultKeys, errorKeys), createBatchGetKVRequest(3L), _host2URI, 1, 1},
             { _batchDeleteRequest, v1, createBatchDeleteRequest(1L, 2L), _host1URI,
                     createBatchKVResponse(v1, resultKeys, errorKeys), createBatchDeleteRequest(3L), _host2URI, 4, 4},
             { _batchUpdateRequest, v1, createBatchUpdateRequest(1L, 2L), _host1URI,
@@ -365,8 +300,6 @@ public class TestDefaultScatterGatherStrategy
                     createBatchUpdateEntityResponse(v1, resultKeys, errorKeys), createBatchPartialUpdateEntityRequest(3L), _host2URI, 4, 4},
             { _batchGetEntityRequest, v2, createBatchGetEntityRequest(1L, 2L), _host1URI,
                     createBatchEntityResponse(v1, resultKeys, errorKeys), createBatchGetEntityRequest(3L), _host2URI, 1, 4},
-            { _batchGetKVRequest, v2, createBatchGetKVRequest(1L, 2L), _host1URI,
-                    createBatchGetKVResponse(v1, resultKeys, errorKeys), createBatchGetKVRequest(3L), _host2URI, 1, 1},
             { _batchDeleteRequest, v2, createBatchDeleteRequest(1L, 2L), _host1URI,
                     createBatchKVResponse(v2, resultKeys, errorKeys), createBatchDeleteRequest(3L), _host2URI, 4, 4},
             { _batchUpdateRequest, v2, createBatchUpdateRequest(1L, 2L), _host1URI,
@@ -435,25 +368,11 @@ public class TestDefaultScatterGatherStrategy
     _sgStrategy.onAllResponsesReceived(request, version, successResponses, failResponses, _unmappedKeys, testCallback);
   }
 
-  private static BatchGetRequest<TestRecord> createBatchGetRequest(Long... ids)
-  {
-    BatchGetRequestBuilder<Long, TestRecord> builder =
-            new BatchGetRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
-    return builder.ids(ids).setParam("foo", "bar").addHeader("a", "b").build();
-  }
-
   private static BatchGetEntityRequest<Long, TestRecord> createBatchGetEntityRequest(Long... ids)
   {
     BatchGetEntityRequestBuilder<Long, TestRecord> builder =
             new BatchGetEntityRequestBuilder<>(TEST_URI, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     return builder.ids(ids).setParam("foo", "bar").addHeader("a", "b").build();
-  }
-
-  private static BatchGetKVRequest<Long, TestRecord> createBatchGetKVRequest(Long... ids)
-  {
-    BatchGetRequestBuilder<Long, TestRecord> builder =
-            new BatchGetRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
-    return builder.ids(ids).setParam("foo", "bar").addHeader("a", "b").buildKV();
   }
 
   private static BatchDeleteRequest<Long, TestRecord> createBatchDeleteRequest(Long... ids)
@@ -495,55 +414,6 @@ public class TestDefaultScatterGatherStrategy
       builder.input(id, new PatchRequest<>());
     }
     return builder.setParam("foo", "bar").addHeader("a", "b").returnEntity(true).build();
-  }
-
-  private static Response<BatchResponse<TestRecord>> createBatchResponse(Set<Long> resultKeys, Set<Long> errorKeys)
-  {
-    DataMap resultMap = new DataMap();
-    for (Long id: resultKeys)
-    {
-      resultMap.put(id.toString(), new TestRecord().setId(id).data());
-    }
-    DataMap errorMap = new DataMap();
-    for (Long id: errorKeys)
-    {
-      errorMap.put(id.toString(),
-              new ErrorResponse().setStatus(HttpStatus.S_404_NOT_FOUND.getCode()).data());
-    }
-    DataMap responseMap = new DataMap();
-    responseMap.put(BatchResponse.RESULTS, resultMap);
-    responseMap.put(BatchResponse.ERRORS, errorMap);
-    BatchResponse<TestRecord> response = new BatchResponse<>(responseMap, TestRecord.class);
-    return new ResponseImpl<>(HttpStatus.S_200_OK.getCode(),
-            Collections.emptyMap(), Collections.emptyList(), response, null);
-  }
-
-  private static Response<BatchKVResponse<Long, TestRecord>> createBatchGetKVResponse(ProtocolVersion version,
-                                                                                      Set<Long> resultKeys,
-                                                                                      Set<Long> errorKeys)
-  {
-    DataMap resultMap = new DataMap();
-    for (Long id: resultKeys)
-    {
-      resultMap.put(id.toString(), new TestRecord().setId(id).data());
-    }
-    DataMap errorMap = new DataMap();
-    for (Long id: errorKeys)
-    {
-      errorMap.put(id.toString(),
-              new ErrorResponse().setStatus(HttpStatus.S_404_NOT_FOUND.getCode()).data());
-    }
-    DataMap responseMap = new DataMap();
-    responseMap.put(BatchResponse.RESULTS, resultMap);
-    responseMap.put(BatchResponse.ERRORS, errorMap);
-    BatchKVResponse<Long, TestRecord> response = new BatchKVResponse<>(responseMap,
-            new TypeSpec<>(Long.class),
-            new TypeSpec<>(TestRecord.class),
-            Collections.emptyMap(),
-            null,
-            version);
-    return new ResponseImpl<>(HttpStatus.S_200_OK.getCode(),
-            Collections.emptyMap(), Collections.emptyList(), response, null);
   }
 
   private static Response<BatchKVResponse<Long, EntityResponse<TestRecord>>>
@@ -641,4 +511,3 @@ public class TestDefaultScatterGatherStrategy
     return context;
   }
 }
-

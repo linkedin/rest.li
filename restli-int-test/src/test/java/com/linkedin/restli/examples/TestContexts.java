@@ -22,9 +22,7 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
-import com.linkedin.restli.examples.greetings.client.WithContextBuilders;
 import com.linkedin.restli.examples.greetings.client.WithContextRequestBuilders;
-import com.linkedin.restli.test.util.RootBuilderWrapper;
 
 import java.util.List;
 
@@ -61,7 +59,7 @@ public class TestContexts extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testGet(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testGet(WithContextRequestBuilders builders) throws RemoteInvocationException
   {
     Request<Greeting> requestWithProjection =
       builders.get().id(5L).fields(Greeting.fields().message(), Greeting.fields().tone()).build();
@@ -76,10 +74,10 @@ public class TestContexts extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
-  public void testFinder(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
+  public void testFinder(WithContextRequestBuilders builders) throws RemoteInvocationException
   {
     Request<CollectionResponse<Greeting>> requestWithProjection =
-      builders.findBy("Finder")
+      builders.findByFinder()
         .fields(Greeting.fields().message(), Greeting.fields().tone())
         .setHeader("Expected-Header", HEADER_MESSAGE)
         .build();
@@ -94,7 +92,7 @@ public class TestContexts extends RestLiIntegrationTest
     Greeting headerGreeting = projectionGreetings.get(1);
     Assert.assertEquals(headerGreeting.getMessage(), HEADER_MESSAGE);
 
-    Request<CollectionResponse<Greeting>> requestNoProjection = builders.findBy("Finder").build();
+    Request<CollectionResponse<Greeting>> requestNoProjection = builders.findByFinder().build();
     List<Greeting> noProjectionGreetings = getClient().sendRequest(requestNoProjection).getResponse().getEntity().getElements();
 
     // test projection and keys
@@ -111,10 +109,8 @@ public class TestContexts extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Long, Greeting>(new WithContextBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new WithContextBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-      { new RootBuilderWrapper<Long, Greeting>(new WithContextRequestBuilders()) },
-      { new RootBuilderWrapper<Long, Greeting>(new WithContextRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      { new WithContextRequestBuilders() },
+      { new WithContextRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS) }
     };
   }
 }

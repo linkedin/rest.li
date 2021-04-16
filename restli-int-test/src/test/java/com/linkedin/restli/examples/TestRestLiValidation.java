@@ -26,19 +26,15 @@ import com.linkedin.data.schema.validator.ValidatorContext;
 import com.linkedin.data.transform.DataProcessingException;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.restli.client.BatchGetEntityRequest;
-import com.linkedin.restli.client.BatchGetRequest;
 import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.response.BatchKVResponse;
-import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.BatchCreateIdResponse;
-import com.linkedin.restli.common.BatchResponse;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.CreateIdStatus;
-import com.linkedin.restli.common.CreateStatus;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.EntityResponse;
 import com.linkedin.restli.common.HttpStatus;
@@ -57,9 +53,7 @@ import com.linkedin.restli.examples.greetings.api.ValidationDemoCriteria;
 import com.linkedin.restli.examples.greetings.api.myEnum;
 import com.linkedin.restli.examples.greetings.api.myItem;
 import com.linkedin.restli.examples.greetings.api.myRecord;
-import com.linkedin.restli.examples.greetings.client.AutoValidationDemosBuilders;
 import com.linkedin.restli.examples.greetings.client.AutoValidationDemosRequestBuilders;
-import com.linkedin.restli.examples.greetings.client.ValidationDemosBuilders;
 import com.linkedin.restli.examples.greetings.client.ValidationDemosRequestBuilders;
 import com.linkedin.restli.server.validation.RestLiValidationFilter;
 import com.linkedin.restli.test.util.PatchBuilder;
@@ -108,30 +102,9 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     super.shutdown();
   }
 
-  @DataProvider
-  private static Object[][] manualBuilders()
-  {
-    return new Object[][]
-        {
-            {new ValidationDemosBuilders()},
-            {new ValidationDemosRequestBuilders()}
-        };
-  }
-
-  @DataProvider
-  private static Object[][] autoBuilders()
-  {
-    return new Object[][]
-        {
-            {new AutoValidationDemosBuilders()},
-            {new AutoValidationDemosRequestBuilders()}
-        };
-  }
-
   private Object[][] manualClientsAndBuilders()
   {
     return new Object[][] {
-        {_restClientManual, new ValidationDemosBuilders()},
         {_restClientManual, new ValidationDemosRequestBuilders()}
     };
   }
@@ -139,7 +112,6 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   private Object[][] autoClientsAndBuilders()
   {
     return new Object[][] {
-        {_restClientAuto, new AutoValidationDemosBuilders()},
         {_restClientAuto, new AutoValidationDemosRequestBuilders()}
     };
   }
@@ -147,9 +119,7 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   private Object[][] clientsAndBuilders()
   {
     return new Object[][] {
-        {_restClientManual, new ValidationDemosBuilders()},
         {_restClientManual, new ValidationDemosRequestBuilders()},
-        {_restClientAuto, new AutoValidationDemosBuilders()},
         {_restClientAuto, new AutoValidationDemosRequestBuilders()}
     };
   }
@@ -267,21 +237,12 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   public void testBatchCreateManualFailure(List<ValidationDemo> validationDemos, List<String> errorMessages)
       throws RemoteInvocationException
   {
-    Response<CollectionResponse<CreateStatus>> response = _restClientManual.sendRequest(
-        new RootBuilderWrapper<Integer, ValidationDemo>(new ValidationDemosBuilders()).batchCreate().inputs(validationDemos).build())
+    Response<BatchCreateIdResponse<Integer>> response = _restClientManual.sendRequest(new ValidationDemosRequestBuilders()
+        .batchCreate().inputs(validationDemos).build())
         .getResponse();
-    List<CreateStatus> results = response.getEntity().getElements();
+
+    List<CreateIdStatus<Integer>> results2 = response.getEntity().getElements();
     int i = 0;
-    for (CreateStatus result : results)
-    {
-      Assert.assertEquals((int) result.getStatus(), HttpStatus.S_422_UNPROCESSABLE_ENTITY.getCode());
-      Assert.assertTrue(result.getError().getMessage().contains(errorMessages.get(i++)));
-    }
-    response = _restClientManual.sendRequest(new RootBuilderWrapper<Integer, ValidationDemo>(
-        new ValidationDemosRequestBuilders()).batchCreate().inputs(validationDemos).build()).getResponse();
-    @SuppressWarnings("unchecked")
-    List<CreateIdStatus<Integer>> results2 = ((BatchCreateIdResponse<Integer>) (Object) response.getEntity()).getElements();
-    i = 0;
     for (CreateIdStatus<Integer> result : results2)
     {
       Assert.assertEquals((int) result.getStatus(), HttpStatus.S_422_UNPROCESSABLE_ENTITY.getCode());
@@ -397,17 +358,10 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   @SuppressWarnings("unchecked")
   public void testCreateSuccess(RestClient restClient, Object builder, ValidationDemo validationDemo) throws RemoteInvocationException
   {
-    Request<EmptyRecord> createRequest = new RootBuilderWrapper<Integer, ValidationDemo>(builder).create().input(validationDemo).build();
-    Response<EmptyRecord> response = restClient.sendRequest(createRequest).getResponse();
+    Request<IdResponse<Integer>> createRequest = new RootBuilderWrapper<Integer, ValidationDemo>(builder).create().input(validationDemo).build();
+    Response<IdResponse<Integer>> response = restClient.sendRequest(createRequest).getResponse();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
-    if (response.getEntity() instanceof CreateResponse)
-    {
-      Assert.assertEquals(((CreateResponse<Integer>)response.getEntity()).getId(), new Integer(1234));
-    }
-    else
-    {
-      Assert.assertEquals(((IdResponse<Integer>)(Object)response.getEntity()).getId(), new Integer(1234));
-    }
+    Assert.assertEquals(response.getEntity().getId(), Integer.valueOf(1234));
   }
 
   @DataProvider
@@ -752,9 +706,10 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     Assert.assertEquals(response.getStatus(), HttpStatus.S_204_NO_CONTENT.getCode());
   }
 
-  @Test(dataProvider = "manualBuilders")
-  public void testGet(Object builder) throws RemoteInvocationException
+  @Test
+  public void testGet() throws RemoteInvocationException
   {
+    Object builder = new ValidationDemosRequestBuilders();
     Request<ValidationDemo> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).get().id(1).build();
     Response<ValidationDemo> response = _restClientManual.sendRequest(request).getResponse();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
@@ -763,35 +718,34 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   @Test
   public void testBatchGet() throws RemoteInvocationException
   {
-    BatchGetRequest<ValidationDemo> request = new ValidationDemosBuilders().batchGet().ids(1, 2, 3).build();
-    Response<BatchResponse<ValidationDemo>> response = _restClientManual.sendRequest(request).getResponse();
+    BatchGetEntityRequest<Integer, ValidationDemo> request = new ValidationDemosRequestBuilders().batchGet().ids(1, 2, 3).build();
+    Response<BatchKVResponse<Integer, EntityResponse<ValidationDemo>>> response = _restClientManual.sendRequest(request).getResponse();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
-
-    BatchGetEntityRequest<Integer, ValidationDemo> request2 = new ValidationDemosRequestBuilders().batchGet().ids(1, 2, 3).build();
-    Response<BatchKVResponse<Integer, EntityResponse<ValidationDemo>>> response2 = _restClientManual.sendRequest(request2).getResponse();
-    Assert.assertEquals(response2.getStatus(), HttpStatus.S_200_OK.getCode());
   }
 
-  @Test(dataProvider = "manualBuilders")
-  public void testGetAll(Object builder) throws RemoteInvocationException
+  @Test
+  public void testGetAll() throws RemoteInvocationException
   {
+    Object builder = new ValidationDemosRequestBuilders();
     Request<CollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).getAll().build();
     Response<CollectionResponse<ValidationDemo>> response = _restClientManual.sendRequest(request).getResponse();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
   }
 
-  @Test(dataProvider = "manualBuilders")
-  public void testFinder(Object builder) throws RemoteInvocationException
+  @Test
+  public void testFinder() throws RemoteInvocationException
   {
+    Object builder = new ValidationDemosRequestBuilders();
     Request<CollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
         .findBy("search").setQueryParam("intA", 1234).build();
     Response<CollectionResponse<ValidationDemo>> response = _restClientManual.sendRequest(request).getResponse();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
   }
 
-  @Test(dataProvider = "manualBuilders")
-  public void testBatchFinder(Object builder) throws RemoteInvocationException
+  @Test
+  public void testBatchFinder() throws RemoteInvocationException
   {
+    Object builder = new ValidationDemosRequestBuilders();
     ValidationDemoCriteria c1 = new ValidationDemoCriteria().setIntA(1111).setStringB("hello");
     ValidationDemoCriteria c2 = new ValidationDemoCriteria().setIntA(1111).setStringB("world");
 
@@ -802,9 +756,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
   }
 
-  @Test(dataProvider = "autoBuilders")
-  public void testGetAuto(Object builder) throws RemoteInvocationException
+  @Test
+  public void testGetAuto() throws RemoteInvocationException
   {
+    Object builder = new AutoValidationDemosRequestBuilders();
+
     try
     {
       Request<ValidationDemo> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).get().id(1).build();
@@ -826,21 +782,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
         ":: field is required but not found and has no default value\n";
     try
     {
-      BatchGetRequest<ValidationDemo> request = new AutoValidationDemosBuilders().batchGet().ids(ids).build();
+      BatchGetEntityRequest<Integer, ValidationDemo> request = new AutoValidationDemosRequestBuilders().batchGet().ids(ids).build();
       _restClientAuto.sendRequest(request).getResponse();
-      Assert.fail("Expected RestLiResponseException");
-    }
-    catch (RestLiResponseException e)
-    {
-      for (Integer id : ids)
-      {
-        Assert.assertTrue(e.getServiceErrorMessage().contains("Key: " + id.toString() + errorMessage));
-      }
-    }
-    try
-    {
-      BatchGetEntityRequest<Integer, ValidationDemo> request2 = new AutoValidationDemosRequestBuilders().batchGet().ids(ids).build();
-      _restClientAuto.sendRequest(request2).getResponse();
       Assert.fail("Expected RestLiResponseException");
     }
     catch (RestLiResponseException e)
@@ -852,9 +795,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "autoBuilders")
-  public void testGetAllAuto(Object builder) throws RemoteInvocationException
+  @Test
+  public void testGetAllAuto() throws RemoteInvocationException
   {
+    Object builder = new AutoValidationDemosRequestBuilders();
+
     try
     {
       Request<CollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).getAll().build();
@@ -870,9 +815,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "autoBuilders")
-  public void testFinderAuto(Object builder) throws RemoteInvocationException
+  @Test
+  public void testFinderAuto() throws RemoteInvocationException
   {
+    Object builder = new AutoValidationDemosRequestBuilders();
+
     try
     {
       Request<CollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)
@@ -888,9 +835,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "autoBuilders")
-  public void testBatchFinderAutoWithMissingField(Object builder) throws RemoteInvocationException
+  @Test
+  public void testBatchFinderAutoWithMissingField() throws RemoteInvocationException
   {
+    Object builder = new AutoValidationDemosRequestBuilders();
+
     try
     {
       ValidationDemoCriteria c1 = new ValidationDemoCriteria().setIntA(1111).setStringB("hello");
@@ -909,9 +858,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "autoBuilders")
-  public void testBatchFinderAutoWithOverLengthField(Object builder) throws RemoteInvocationException
+  @Test
+  public void testBatchFinderAutoWithOverLengthField() throws RemoteInvocationException
   {
+    Object builder = new AutoValidationDemosRequestBuilders();
+
     try
     {
       ValidationDemoCriteria c1 = new ValidationDemoCriteria().setIntA(2222).setStringB("hello");
@@ -930,9 +881,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     }
   }
 
-  @Test(dataProvider = "autoBuilders")
-  public void testBatchFinderAutoWithMultipleErrorFields(Object builder) throws RemoteInvocationException
+  @Test
+  public void testBatchFinderAutoWithMultipleErrorFields() throws RemoteInvocationException
   {
+    Object builder = new AutoValidationDemosRequestBuilders();
+
     try
     {
       ValidationDemoCriteria c1 = new ValidationDemoCriteria().setIntA(3333).setStringB("hello");
@@ -955,9 +908,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   }
 
 
-  @Test(dataProvider = "autoBuilders")
-  public void testBatchFinderAutoWithErrorCriteriaResult(Object builder) throws RemoteInvocationException
+  @Test
+  public void testBatchFinderAutoWithErrorCriteriaResult() throws RemoteInvocationException
   {
+    Object builder = new AutoValidationDemosRequestBuilders();
+
     ValidationDemoCriteria c1 = new ValidationDemoCriteria().setIntA(5555).setStringB("hello");
     ValidationDemoCriteria c2 = new ValidationDemoCriteria().setIntA(4444).setStringB("world");
 
@@ -970,9 +925,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
 
 
   // Tests for output validation filter handling exceptions from the resource
-  @Test(dataProvider = "autoBuilders")
-  public void testGetAutoWithException(Object builder) throws RemoteInvocationException
+  @Test
+  public void testGetAutoWithException() throws RemoteInvocationException
   {
+    Object builder = new AutoValidationDemosRequestBuilders();
+
     try
     {
       Request<ValidationDemo> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder).get().id(0).build();
@@ -993,21 +950,18 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     union.setMyRecord(new myRecord().setFoo1(100).setFoo2(200));
     ValidationDemo expectedResult = new ValidationDemo().setStringA("a").setStringB("b").setUnionFieldWithInlineRecord(union);
 
-    BatchGetRequest<ValidationDemo> request = new AutoValidationDemosBuilders().batchGet().ids(0, 1).build();
-    Response<BatchResponse<ValidationDemo>> response = _restClientAuto.sendRequest(request).getResponse();
+    BatchGetEntityRequest<Integer, ValidationDemo> request = new AutoValidationDemosRequestBuilders().batchGet().ids(0, 1).build();
+    Response<BatchKVResponse<Integer, EntityResponse<ValidationDemo>>> response =_restClientAuto.sendRequest(request).getResponse();
     Assert.assertEquals(response.getStatus(), HttpStatus.S_200_OK.getCode());
-    Assert.assertEquals((int) response.getEntity().getErrors().get("0").getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode());
-    Assert.assertEquals(response.getEntity().getResults().get("1"), expectedResult);
-    BatchGetEntityRequest<Integer, ValidationDemo> request2 = new AutoValidationDemosRequestBuilders().batchGet().ids(0, 1).build();
-    Response<BatchKVResponse<Integer, EntityResponse<ValidationDemo>>> response2 =_restClientAuto.sendRequest(request2).getResponse();
-    Assert.assertEquals(response2.getStatus(), HttpStatus.S_200_OK.getCode());
-    Assert.assertEquals((int) response2.getEntity().getErrors().get(0).getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode());
-    Assert.assertEquals(response2.getEntity().getResults().get(1).getEntity(), expectedResult);
+    Assert.assertEquals((int) response.getEntity().getErrors().get(0).getStatus(), HttpStatus.S_400_BAD_REQUEST.getCode());
+    Assert.assertEquals(response.getEntity().getResults().get(1).getEntity(), expectedResult);
   }
 
-  @Test(dataProvider = "autoBuilders")
-  public void testFinderWithException(Object builder) throws RemoteInvocationException
+  @Test
+  public void testFinderWithException() throws RemoteInvocationException
   {
+    Object builder = new AutoValidationDemosRequestBuilders();
+
     try
     {
       Request<CollectionResponse<ValidationDemo>> request = new RootBuilderWrapper<Integer, ValidationDemo>(builder)

@@ -19,7 +19,6 @@ package com.linkedin.restli.client.testutils.test;
 
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestLiResponseException;
-import com.linkedin.restli.client.response.CreateResponse;
 import com.linkedin.restli.client.testutils.MockResponseBuilder;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.RestConstants;
@@ -75,30 +74,13 @@ public class TestMockResponseBuilder
   }
 
   @Test
-  public void testCreateResponse()
-  {
-    final MockResponseBuilder<Long, CreateResponse<Long>> mockResponseBuilder = new MockResponseBuilder<Long, CreateResponse<Long>>();
-    mockResponseBuilder.setEntity(new CreateResponse<Long>(1L));
-    final Response<CreateResponse<Long>> response = mockResponseBuilder.build();
-
-    final CreateResponse<Long> createResponse = response.getEntity();
-    Assert.assertEquals(createResponse.getId().longValue(), 1L);
-    @SuppressWarnings("deprecation")
-    String id = response.getId();
-    Assert.assertEquals(id, "1");
-  }
-
-  @Test
   public void testIdResponse()
   {
-    final MockResponseBuilder<Long, IdResponse<Long>> mockResponseBuilder = new MockResponseBuilder<Long, IdResponse<Long>>();
-    mockResponseBuilder.setEntity(new IdResponse<Long>(1L));
+    final MockResponseBuilder<Long, IdResponse<Long>> mockResponseBuilder = new MockResponseBuilder<>();
+    mockResponseBuilder.setEntity(new IdResponse<>(1L));
     final Response<IdResponse<Long>> response = mockResponseBuilder.build();
 
     final IdResponse<Long> idResponse = response.getEntity();
     Assert.assertEquals(idResponse.getId().longValue(), 1L);
-    @SuppressWarnings("deprecation")
-    String id = response.getId();
-    Assert.assertEquals(id, "1");
   }
 }

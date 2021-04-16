@@ -42,7 +42,7 @@ import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.common.IdEntityResponse;
 import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.instrumentation.api.InstrumentationControl;
-import com.linkedin.restli.examples.instrumentation.client.LatencyInstrumentationBuilders;
+import com.linkedin.restli.examples.instrumentation.client.LatencyInstrumentationRequestBuilders;
 import com.linkedin.restli.examples.instrumentation.server.LatencyInstrumentationResource;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.test.util.retry.SingleRetry;
@@ -198,7 +198,7 @@ public class TestLatencyInstrumentation extends RestLiIntegrationTest
         .setForceException(forceException)
         .setUseScatterGather(useScatterGather);
 
-    CreateIdEntityRequest<Long, InstrumentationControl> createRequest = new LatencyInstrumentationBuilders()
+    CreateIdEntityRequest<Long, InstrumentationControl> createRequest = new LatencyInstrumentationRequestBuilders()
         .createAndGet()
         .input(instrumentationControl)
         .build();
