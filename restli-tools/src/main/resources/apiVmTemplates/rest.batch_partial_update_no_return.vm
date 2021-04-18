@@ -13,6 +13,22 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
+#if($is_interface)
+  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+    #doc($method.schema.doc)
+    public CompletionStage<Map<$spec.keyClassDisplayName, UpdateStatus>> batchPartialUpdate(
+        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.requiredParams.size() > 0),#end
+        #**##methodParams($method, false)##
+        );
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<Map<$spec.keyClassDisplayName, UpdateStatus>> batchPartialUpdate(
+      Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      );
+#optionalParamClass($method)
+#else ## is_interface
   @SuppressWarnings("unchecked")
   private static final KeyValueRecordFactory<${spec.keyClassDisplayName}, PatchRequest<${spec.entityClassName}>> PATCH_VALUE_FACTORY = new KeyValueRecordFactory<${spec.keyClassDisplayName}, PatchRequest<${spec.entityClassName}>>(
         (TypeSpec<${spec.keyClassDisplayName}>) _resourceSpec.getKeyType(),
@@ -77,4 +93,4 @@
     _engine.run(responseTask);
     return result;
   }
-  #optionalParamClass($method)
+#end ## is_interface

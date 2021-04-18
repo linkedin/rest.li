@@ -19,10 +19,8 @@ Copyright (c) 2021 LinkedIn Corp.
 #foreach($import in $spec.importsForMethods)
     import ${import};
 #end
-#if(${spec.getResource().hasAssociation()})
-    import com.linkedin.restli.common.CompoundKey;
-#end
-
+import com.linkedin.data.schema.MaskMap;
+import com.linkedin.restli.common.ResourceSpec;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,14 +31,35 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import javax.annotation.Generated;
+
+
 @Generated("Generated from $spec.sourceIdlName")
 public interface ${spec.className} {
-    ## TODO: this Interface can be used directly as fluentAPI's interface
+    ## this Interface can be used directly as fluentAPI's interface
     ## or it can be used by Universal Client
 
+
+## Method interfaces:
+#set($is_interface=true)
+## Action methods
+    #parse("apiVmTemplates/action.vm")
+## CRUD methods
+#foreach($method in $spec.restMethods)
+    #parse("apiVmTemplates/rest.${method.method}.vm")
+#end
+#if(${spec.getResource().hasAssociation()})
+    #assocCompoundKeyGenInterface($spec)
+#end
+
+## recursively build subresource interfaces
+## TODO: should correct the indentation
 #foreach($subSpec in $spec.childSubResourceSpecs)
 #**##subResourceInterface($subSpec)##
 #end
+
+## 1. RestMethod file compile and re-organize
+## 2. propagate assocations key
 
 }

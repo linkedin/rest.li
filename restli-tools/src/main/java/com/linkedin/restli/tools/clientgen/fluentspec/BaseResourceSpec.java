@@ -190,7 +190,7 @@ public class BaseResourceSpec
   {
     for (BaseResourceSpec spec : _ancestorResourceSpecs)
     {
-      // Import Compound key if any of the descendents or ancestors are Association Resource;
+      // Import Compound key if any of the ancestors are Association Resource;
       if (spec instanceof AssociationResourceSpec)
       {
         imports.add(CompoundKey.class.getName());
@@ -204,7 +204,9 @@ public class BaseResourceSpec
 
     for (BaseResourceSpec spec : _childSubResourceSpecs)
     {
+        // Interface class will need imports from sub resources
         spec.getResourceSpecificImports(imports);
+        imports.addAll(spec.getImportsForMethods());
     }
     return imports;
   }
