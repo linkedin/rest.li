@@ -47,7 +47,7 @@
   ${assoc_key.bindingType} ${assoc_key.name},
   #end
 #end
-${lastKey.bindingType} 
+${lastKey.bindingType}
 ${lastKey.name}
 #end
 
@@ -249,7 +249,7 @@ ${lastKey.name}
 #macro(subResourceInterface $spec)
 #**#
     #if(${spec.namespace.equals($spec.parentNamespace)})
-    ${spec.className} ${util.nameCamelCase($spec.className)}Of(#if(${spec.diffPathKey})${spec.parent.keyClassName} ${spec.diffPathKey}#end); // TODO: handle complex Key
+    ${spec.className} ${util.nameCamelCase($spec.className)}Of(#if(${spec.diffPathKey})${spec.parent.keyClassName} ${spec.diffPathKey}#end);
     public interface ${spec.className} {
       #foreach($subSpec in $spec.childSubResourceSpecs)
             #**##subResourceInterface($subSpec)
@@ -263,6 +263,6 @@ ${lastKey.name}
       #end
     }
     #else
-    ${spec.bindingName} ${util.nameCamelCase($spec.className)}Of(#if(${spec.diffPathKey})${spec.parent.keyClassName} ${spec.diffPathKey}#end); // TODO: handle complex Key
+    ${spec.bindingName} ${util.nameCamelCase($spec.className)}Of(#if(${spec.diffPathKey})${spec.parent.keyClassName} ${spec.diffPathKey}#end);
     #end
 #end
