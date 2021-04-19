@@ -613,12 +613,12 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
 
   private CompoundKey getAssociateResourceUrlKey(Associations client)
   {
-    return client.generateAssociationsKey(StringTestKeys.URL2, StringTestKeys.URL);
+    return client.generateAssociationsCompoundKey(StringTestKeys.URL2, StringTestKeys.URL);
   }
 
   private CompoundKey getAssociateResourceSimpleKey(Associations client)
   {
-    return client.generateAssociationsKey(StringTestKeys.SIMPLEKEY2, StringTestKeys.SIMPLEKEY);
+    return client.generateAssociationsCompoundKey(StringTestKeys.SIMPLEKEY2, StringTestKeys.SIMPLEKEY);
   }
 
   private Map<CompoundKey, Message> getAssociateResourceMockDB(Associations client)

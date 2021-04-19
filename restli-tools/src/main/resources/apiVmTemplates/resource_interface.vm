@@ -43,12 +43,8 @@ public interface ${spec.className} {
 
 ## Method interfaces:
 #set($is_interface=true)
-## Action methods
-    #parse("apiVmTemplates/action.vm")
-## CRUD methods
-#foreach($method in $spec.restMethods)
-    #parse("apiVmTemplates/rest.${method.method}.vm")
-#end
+#parseMethodsFromTemplates
+
 #if(${spec.getResource().hasAssociation()})
     #assocCompoundKeyGenInterface($spec)
 #end

@@ -31,35 +31,35 @@
    */
   #end
 #end
+
+#macro(associateKeyIdxCommon)
+#set($keySize = ${spec.getCompoundKeySpec().getAssocKeySpecs().size()})
+#set($lastKeyIdx = $keySize - 1)
+#set($lastKey = ${spec.getCompoundKeySpec().getAssocKeySpecs().get($lastKeyIdx)})
+#set($endIdx = $lastKeyIdx- 1)
+#end
+
+#macro(associateKeyParams)
+#associateKeyIdxCommon
+#if($keySize > 1)
+  #foreach($keyIdx in [0..$endIdx])
+  #set($assoc_key = ${spec.getCompoundKeySpec().getAssocKeySpecs().get($keyIdx)})
+  ${assoc_key.bindingType} ${assoc_key.name},
+  #end
+#end
+${lastKey.bindingType} 
+${lastKey.name}
+#end
+
 #macro(assocCompoundKeyGenInterface $spec)
-  CompoundKey generate${util.nameCapsCase($spec.className)}Key(
-    #set($keySize = ${spec.getCompoundKeySpec().getAssocKeySpecs().size()})
-    #set($lastKeyIdx = $keySize - 1)
-    #set($lastKey= ${spec.getCompoundKeySpec().getAssocKeySpecs().get($lastKeyIdx)})
-    #if($keySize > 1)
-      #set($endIdx= $lastKeyIdx- 1)
-      #foreach($keyIdx in [0..$endIdx])
-      #set($assoc_key = ${spec.getCompoundKeySpec().getAssocKeySpecs().get($keyIdx)})
-      ${assoc_key.bindingType} ${assoc_key.name},
-      #end
-    #end
-    ${lastKey.bindingType} ${lastKey.name}
+  CompoundKey generate${util.nameCapsCase($spec.className)}CompoundKey(
+    #associateKeyParams
   );
 #end
 
 #macro(assocCompoundKeyGenImpl $spec)
-  public CompoundKey generate${util.nameCapsCase($spec.className)}Key(
-    #set($keySize = ${spec.getCompoundKeySpec().getAssocKeySpecs().size()})
-    #set($lastKeyIdx = $keySize - 1)
-    #set($lastKey= ${spec.getCompoundKeySpec().getAssocKeySpecs().get($lastKeyIdx)})
-    #set($endIdx= $lastKeyIdx- 1)
-    #if($keySize > 1)
-      #foreach($keyIdx in [0..$endIdx])
-      #set($assoc_key = ${spec.getCompoundKeySpec().getAssocKeySpecs().get($keyIdx)})
-      ${assoc_key.bindingType} ${assoc_key.name},
-      #end
-    #end
-    ${lastKey.bindingType} ${lastKey.name}
+  public CompoundKey generate${util.nameCapsCase($spec.className)}CompoundKey(
+    #associateKeyParams
   ) {
     return new Key().
       #if($keySize > 1)
