@@ -55,7 +55,4 @@ public interface ${spec.className} {
 #**##subResourceInterface($subSpec)##
 #end
 
-## 1. RestMethod file compile and re-organize
-## 2. propagate assocations key
-
 }

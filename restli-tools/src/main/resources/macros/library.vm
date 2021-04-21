@@ -32,23 +32,10 @@
   #end
 #end
 
-#macro(associateKeyIdxCommon)
-#set($keySize = ${spec.getCompoundKeySpec().getAssocKeySpecs().size()})
-#set($lastKeyIdx = $keySize - 1)
-#set($lastKey = ${spec.getCompoundKeySpec().getAssocKeySpecs().get($lastKeyIdx)})
-#set($endIdx = $lastKeyIdx- 1)
-#end
-
 #macro(associateKeyParams)
-#associateKeyIdxCommon
-#if($keySize > 1)
-  #foreach($keyIdx in [0..$endIdx])
-  #set($assoc_key = ${spec.getCompoundKeySpec().getAssocKeySpecs().get($keyIdx)})
-  ${assoc_key.bindingType} ${assoc_key.name},
-  #end
+#foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+  ${assoc_key.bindingType} ${assoc_key.name}#if($foreach.hasNext),#end
 #end
-${lastKey.bindingType}
-${lastKey.name}
 #end
 
 #macro(assocCompoundKeyGenInterface $spec)
@@ -62,13 +49,9 @@ ${lastKey.name}
     #associateKeyParams
   ) {
     return new Key().
-      #if($keySize > 1)
-        #foreach($keyIdx in [0..$endIdx])
-        #set($assoc_key = ${spec.getCompoundKeySpec().getAssocKeySpecs().get($keyIdx)})
-        set$util.nameCapsCase($assoc_key.name)(${assoc_key.name}).
-        #end
+      #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+        set$util.nameCapsCase($assoc_key.name)(${assoc_key.name})#if($foreach.hasNext).#else;#end
       #end
-      set$util.nameCapsCase($lastKey.name)(${lastKey.name});
   }
 #end
 
