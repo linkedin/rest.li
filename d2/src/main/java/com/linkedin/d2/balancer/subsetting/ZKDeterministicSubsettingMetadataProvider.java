@@ -39,7 +39,7 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
 {
   private static final Logger _log = LoggerFactory.getLogger(ZKDeterministicSubsettingMetadataProvider.class);
   private final String _clusterName;
-  private final URI _nodeUri;
+  private final String _hostName;
   private final long _timeout;
   private final TimeUnit _unit;
 
@@ -51,12 +51,12 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
   private DeterministicSubsettingMetadata _subsettingMetadata;
 
   public ZKDeterministicSubsettingMetadataProvider(String clusterName,
-                                      URI nodeUri,
+                                      String hostName,
                                       long timeout,
                                       TimeUnit unit)
   {
     _clusterName = clusterName;
-    _nodeUri = nodeUri;
+    _hostName = hostName;
     _timeout = timeout;
     _unit = unit;
   }
@@ -79,16 +79,16 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
           if (uriProperties != null)
           {
             // Sort the URIs so each client sees the same ordering
-            List<URI> sortedUris = uriProperties.getPartitionDesc().keySet().stream()
-                .filter(uri -> uri.getScheme().equals(_nodeUri.getScheme()))
+            List<String> sortedHosts = uriProperties.getPartitionDesc().keySet().stream()
+                .map(URI::getHost)
                 .sorted()
                 .collect(Collectors.toList());
 
-            int instanceId = sortedUris.indexOf(_nodeUri);
+            int instanceId = sortedHosts.indexOf(_hostName);
 
             if (instanceId >= 0)
             {
-              _subsettingMetadata = new DeterministicSubsettingMetadata(instanceId, sortedUris.size());
+              _subsettingMetadata = new DeterministicSubsettingMetadata(instanceId, sortedHosts.size());
             }
             else
             {

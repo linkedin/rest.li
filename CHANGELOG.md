@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.18.0] - 2021-04-20
+- Use host FQDN instead of nodeUri to get D2 subsetting metadata
+
 ## [29.17.4] - 2021-04-16
 - Migrate the Rest.li release process from Bintray to JFrog Artifactory.
     - As of this version, Bintray will no longer host Rest.li releases.
@@ -4910,7 +4913,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.17.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.0...master
+[29.18.0]: https://github.com/linkedin/rest.li/compare/v29.17.4...v29.18.0
 [29.17.4]: https://github.com/linkedin/rest.li/compare/v29.17.3...v29.17.4
 [29.17.3]: https://github.com/linkedin/rest.li/compare/v29.17.2...v29.17.3
 [29.17.2]: https://github.com/linkedin/rest.li/compare/v29.17.1...v29.17.2
