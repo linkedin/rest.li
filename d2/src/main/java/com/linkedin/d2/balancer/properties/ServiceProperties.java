@@ -289,6 +289,8 @@ public class ServiceProperties
         + _serviceMetadataProperties
         + ", backupRequests="
         + _backupRequests
+        + ", enableClusterSubsetting="
+        + _enableClusterSubsetting
         + ", minimumClusterSubsetSize="
         + _minClusterSubsetSize
         + "]";
