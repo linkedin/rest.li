@@ -17,10 +17,10 @@
 package com.linkedin.restli.tools.clientgen.fluentspec;
 
 import com.linkedin.data.ByteString;
+import com.linkedin.pegasus.generator.CodeUtil;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.pegasus.generator.spec.PrimitiveTemplateSpec;
 import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
-import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,8 +36,6 @@ import org.apache.commons.text.StringEscapeUtils;
  * Common utility functions for building fluent apis.
  */
 public class SpecUtils {
-  static final String FIELDS_MASK_METHOD_NAME = "Mask";
-  static final String METADATA_MASK_METHOD_NAME = "MetadataMask";
   static final String JAVA_LANG_PREFIX = "java.lang";
   static final Set<String> PRIMITIVE_CLASS_NAMES = new HashSet<String>(Arrays.asList(
       Integer.class.getSimpleName(),
@@ -120,33 +118,24 @@ public class SpecUtils {
 
   public static String restMethodToClassPrefix(String name)
   {
-    ResourceMethod method = ResourceMethod.fromString(name);
-    switch (method)
+    switch (name)
     {
-      case GET:
-        return "Get";
-      case BATCH_GET:
+      case "batch_get":
         return "BatchGet";
-      case CREATE:
-        return "Create";
-      case BATCH_CREATE:
+      case "batch_create":
         return "BatchCreate";
-      case PARTIAL_UPDATE:
+      case "partial_update":
         return "PartialUpdate";
-      case UPDATE:
-        return "Update";
-      case BATCH_UPDATE:
+      case "batch_update":
         return "BatchUpdate";
-      case DELETE:
-        return "Delete";
-      case BATCH_PARTIAL_UPDATE:
+      case "batch_partial_update":
         return "BatchPartialUpdate";
-      case BATCH_DELETE:
+      case "batch_delete":
         return "BatchDelete";
-      case GET_ALL:
+      case "get_all":
         return "GetAll";
       default:
-        return name;
+        return CodeUtil.capitalize(name);
     }
   }
 

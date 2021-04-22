@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add fluent client API for FINDER and BATCH_FINDER methods.
 
 ## [29.18.0] - 2021-04-20
 - Use host FQDN instead of nodeUri to get D2 subsetting metadata

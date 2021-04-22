@@ -14,10 +14,10 @@
    limitations under the License.
 *#
 #if($is_interface)
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+  #if($method.hasOptionalParams() || $method.hasProjectionParams())
     #doc($method.schema.doc)
     public CompletionStage<Map<$spec.keyClassDisplayName, UpdateStatus>> batchPartialUpdate(
-        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.requiredParams.size() > 0),#end
+        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.hasRequiredParams()),#end
         #**##methodParams($method, false)##
         );
   #end
@@ -36,10 +36,10 @@
         _resourceSpec.getKeyParts(),
         (TypeSpec<PatchRequest<${spec.entityClassName}>>) (Object) new TypeSpec<>(PatchRequest.class));
 
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+  #if($method.hasOptionalParams() || $method.hasProjectionParams())
     #doc($method.schema.doc)
     public CompletionStage<Map<$spec.keyClassDisplayName, UpdateStatus>> batchPartialUpdate(
-        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.requiredParams.size() > 0),#end
+        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.hasRequiredParams()),#end
         #**##methodParams($method, false)##
         ) {
       return batchPartialUpdate(patches,

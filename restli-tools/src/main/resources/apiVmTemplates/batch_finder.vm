@@ -1,0 +1,83 @@
+#*
+   Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*#
+#if($is_interface)
+  #if($finder.hasOptionalParams() || $finder.hasProjectionParams())
+    #doc($method.schema.doc)
+    public CompletionStage<BatchCollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, false)##
+        #**##methodParams($finder, false)##
+    );
+  #end
+
+  #doc($finder.schema.doc)
+  public CompletionStage<BatchCollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, true)##
+      #**##methodParams($finder, true)##
+  );
+  #optionalParamClass($finder)
+#else
+  #if($finder.hasOptionalParams() || $finder.hasProjectionParams())
+    #doc($method.schema.doc)
+    public CompletionStage<BatchCollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, false)##
+        #**##methodParams($finder, false)##
+         ) {
+      return ${finder.methodName}(#assocKeyCallArgs($finder)##
+          #**##optionalMethodCallArgs($finder)##
+      );
+    }
+  #end
+
+  #doc($finder.schema.doc)
+  public CompletionStage<BatchCollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, true)##
+      #**##methodParams($finder, true)##
+      ) {
+    #**##paramsRequestMap($finder)##
+    #if($finder.assocKeys.size() > 0)
+      CompoundKey assocKey = new CompoundKey();
+      #foreach($assocKey in $finder.assocKeys)
+        assocKey.append("$assocKey.name", $assocKey.name);
+      #end
+    #end
+    queryParams.put(RestConstants.BATCH_FINDER_QUERY_TYPE_PARAM, "$finder.name");
+    BatchFindRequest<${spec.entityClassName}> request = new BatchFindRequest<>(
+        Collections.emptyMap(),
+        Collections.emptyList(),
+        ${spec.entityClassName}.class,
+        _resourceSpec,
+        queryParams,
+        queryParamClasses,
+        "$finder.name",
+        ORIGINAL_RESOURCE_PATH,
+        buildReadOnlyPathKeys(),
+        RestliRequestOptions.DEFAULT_OPTIONS,
+        #**##if($finder.assocKeys.size() > 0)assocKey #else null #end);
+    CompletableFuture<BatchCollectionResponse<${spec.entityClassName}>> result = new CompletableFuture<>();
+    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
+        responseTry -> {
+          if (responseTry.isFailed()) {
+            result.completeExceptionally(responseTry.getError());
+          } else {
+            Response<BatchCollectionResponse<${spec.entityClassName}>> resp = responseTry.get();
+            if (resp.hasError()) {
+              result.completeExceptionally(resp.getError());
+            } else {
+              result.complete(resp.getEntity());
+            }
+          }
+          return Success.of((Void) null);
+        });
+    _engine.run(responseTask);
+    return result;
+  }
+#end ## is_interface

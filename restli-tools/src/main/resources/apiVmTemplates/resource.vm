@@ -17,12 +17,10 @@
 package $spec.resource.namespace;
 #end
 
-import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
-import com.linkedin.data.template.FieldDef;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.function.Success;
@@ -42,7 +40,6 @@ import com.linkedin.restli.common.TypeSpec;
 ## #importClasses($spec)
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -73,8 +70,8 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
     HashMap<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
     #foreach($action in $spec.actions)
       ArrayList<FieldDef<?>> ${action.name}Params = new ArrayList<FieldDef<?>>();
-      #foreach($actionParam in $action.parameters)
-        ${action.name}Params.add(new FieldDef<${actionParam.paramClassDisplayName}>("${actionParam.paramName}", ${actionParam.paramClassDisplayName}.class, DataTemplateUtil.getSchema(#if(${actionParam.hasParamTypeRef()})${actionParam.getParamTypeRefClassDisplayName()}#else${actionParam.paramClassDisplayName}#end.class)));
+      #foreach($actionParam in $action.allParameters)
+        ${action.name}Params.add(new FieldDef<${actionParam.fieldClassDisplayName}>("${actionParam.paramName}", ${actionParam.fieldClassDisplayName}.class, DataTemplateUtil.getSchema(#if(${actionParam.hasParamTypeRef()})${actionParam.getParamTypeRefClassDisplayName()}#else${actionParam.fieldClassDisplayName}#end.class)));
       #end
       requestMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", ${action.name}Params));
     #end
@@ -208,6 +205,7 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
 
   #parseMethodsFromTemplates
 
+  ## Add association key generation stub
   #if(${spec.getResource().hasAssociation()})
     #assocCompoundKeyClass($spec)
     #assocCompoundKeyGenImpl($spec)

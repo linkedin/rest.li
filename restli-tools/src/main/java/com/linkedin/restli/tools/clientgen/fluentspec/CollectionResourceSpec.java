@@ -42,6 +42,9 @@ public class CollectionResourceSpec extends BaseResourceSpec
   private final ComplexKeySpec _complexKeySpec;
   private List<ActionMethodSpec> _resourceActions;
   private List<ActionMethodSpec> _entityActions;
+  private List<RestMethodSpec> _restMethods;
+  private List<FinderMethodSpec> _finders;
+  private List<BatchFinderMethodSpec> _batchFinders;
 
 
   public CollectionResourceSpec(ResourceSchema resourceSchema, TemplateSpecGenerator templateSpecGenerator,
@@ -113,18 +116,56 @@ public class CollectionResourceSpec extends BaseResourceSpec
     return _entityActions;
   }
 
-
   public List<RestMethodSpec> getRestMethods()
   {
-    RestMethodSchemaArray methodSchemaArray = getResource().getCollection().getMethods();
-    if (methodSchemaArray == null)
+    if (_restMethods == null)
     {
-      return Collections.emptyList();
+      RestMethodSchemaArray methodSchemaArray = getResource().getCollection().getMethods();
+      if (methodSchemaArray == null)
+      {
+        _restMethods = Collections.emptyList();
+        return _restMethods;
+      }
+      _restMethods = new ArrayList<>(methodSchemaArray.size());
+      getResource().getCollection()
+          .getMethods()
+          .forEach(restMethodSchema -> _restMethods.add(new RestMethodSpec(restMethodSchema, this)));
     }
+    return _restMethods;
+  }
 
-    List<RestMethodSpec> methods = new ArrayList<>(methodSchemaArray.size());
-    getResource().getCollection().getMethods().forEach(restMethodSchema -> methods.add(new RestMethodSpec(restMethodSchema, this)));
-    return methods;
+  public List<FinderMethodSpec> getFinders()
+  {
+    if (_finders == null)
+    {
+      if (getResource().getCollection().getFinders() == null)
+      {
+        _finders =  Collections.emptyList();
+        return _finders;
+      }
+      _finders = new ArrayList<>(getResource().getCollection().getFinders().size());
+      getResource().getCollection()
+          .getFinders()
+          .forEach(finderSchema -> _finders.add(new FinderMethodSpec(finderSchema, this)));
+    }
+    return _finders;
+  }
+
+  public List<BatchFinderMethodSpec> getBatchFinders()
+  {
+    if (_batchFinders == null)
+    {
+      if (getResource().getCollection().getBatchFinders() == null)
+      {
+        _batchFinders = Collections.emptyList();
+        return _batchFinders;
+      }
+      _batchFinders = new ArrayList<>(getResource().getCollection().getBatchFinders().size());
+      getResource().getCollection()
+          .getBatchFinders()
+          .forEach(finderSchema -> _batchFinders.add(new BatchFinderMethodSpec(finderSchema, this)));
+    }
+    return _batchFinders;
   }
 
   // For simple key

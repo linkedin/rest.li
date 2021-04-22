@@ -16,9 +16,12 @@
 
 package com.linkedin.restli.tools.clientgen.fluentspec;
 
+import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.data.schema.DataSchema;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ParameterSchema;
+import com.linkedin.restli.restspec.RestSpecCodec;
 import org.apache.commons.lang.ClassUtils;
 
 
@@ -27,9 +30,11 @@ public class ParameterSpec
   private final ParameterSchema _parameterSchema;
   private final BaseResourceSpec _root;
   private ClassTemplateSpec _classTemplateSpec;
+  private ClassTemplateSpec _itemTemplateSpec;
   // a boolean flag to turn on whether show className as short name
   // Note: need to explicitly turn this flag on during imports checking
   private Boolean _usingShortClassName;
+  private Boolean _usingShortItemClassName;
   private String _declaredTypeRefClassName;
   private Boolean _usingShortTypeRefClassName;
 
@@ -43,6 +48,12 @@ public class ParameterSpec
       String parameterClassType = _parameterSchema.getType();
       _classTemplateSpec = _root.classToTemplateSpec(parameterClassType);
       _declaredTypeRefClassName = _root.getClassRefNameForSchema(parameterClassType);
+
+      final DataSchema typeSchema = RestSpecCodec.textToSchema(_parameterSchema.getType(), _root._schemaResolver);
+      if (typeSchema instanceof ArrayDataSchema)
+      {
+        _itemTemplateSpec = _root.schemaToTemplateSpec(((ArrayDataSchema) typeSchema).getItems());
+      }
     }
   }
 
@@ -89,13 +100,36 @@ public class ParameterSpec
         getParamTypeRefClassName();
   }
 
+  public boolean isArray()
+  {
+    return _itemTemplateSpec != null;
+  }
 
   public String getParamClassName()
   {
     return SpecUtils.getClassName(getParamClass());
   }
 
+  public String getItemClassName()
+  {
+    return SpecUtils.getClassName(_itemTemplateSpec);
+  }
+
   public String getParamClassDisplayName()
+  {
+    String className;
+    if (isArray()) // Array parameter.
+    {
+      className = String.format("Iterable<%s>", getItemClassDisplayName());
+    }
+    else
+    {
+      className = getFieldClassDisplayName();
+    }
+    return className;
+  }
+
+  public String getFieldClassDisplayName()
   {
     if (_usingShortClassName == null)
     {
@@ -106,8 +140,20 @@ public class ParameterSpec
                               ClassUtils.getShortClassName(getParamClassName()),
                                                            getParamClassName());
     }
-    return _usingShortClassName ? ClassUtils.getShortClassName(getParamClassName()):
-        getParamClassName();
+    return _usingShortClassName ? ClassUtils.getShortClassName(getParamClassName())
+        : getParamClassName();
+  }
+
+  public String getItemClassDisplayName()
+  {
+    if (_usingShortItemClassName == null)
+    {
+      _usingShortItemClassName = !SpecUtils.checkIfShortNameConflictAndUpdateMapping(_root.getImportCheckConflict(),
+          ClassUtils.getShortClassName(getItemClassName()),
+          getItemClassName());
+    }
+    return _usingShortItemClassName ? ClassUtils.getShortClassName(getItemClassName())
+        : getItemClassName();
   }
 
   public boolean isUsingShortClassName()
@@ -125,4 +171,8 @@ public class ParameterSpec
     _usingShortTypeRefClassName = usingShortTypeRefClassName;
   }
 
+  public void setUsingShortItemClassName(Boolean usingShortItemClassName)
+  {
+    _usingShortItemClassName = usingShortItemClassName;
+  }
 }

@@ -17,37 +17,33 @@
 package com.linkedin.restli.tools.clientgen.fluentspec;
 
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
+import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.restspec.ActionSchema;
-import java.util.ArrayList;
+import com.linkedin.restli.restspec.MetadataSchema;
+import com.linkedin.restli.restspec.ParameterSchemaArray;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang.ClassUtils;
 
 
-public class ActionMethodSpec
+public class ActionMethodSpec extends MethodSpec
 {
   private final ActionSchema _actionSchema;
   private ClassTemplateSpec _valueClass;
-  private final BaseResourceSpec _resourceSpec;
   private final boolean _isEntityAction; // Entity action will need KeyClass and idName from its resource spec
   private boolean _usingShortClassName = false;
   private Boolean _usingShortTypeRefClassName = null;
   private String _declaredValuedClassName;
-  private List<ParameterSpec> _methodParameters;
-  private List<ParameterSpec> _optionalParameters;
-  private List<ParameterSpec> _requiredParameters;
 
   public ActionMethodSpec(ActionSchema actionSchema, BaseResourceSpec resourceSpec, boolean isEntityAction)
   {
+    super(resourceSpec);
     _actionSchema = actionSchema;
-    _resourceSpec = resourceSpec;
     _isEntityAction = isEntityAction;
     String valueClassName = _actionSchema.getReturns();
-    _valueClass = _resourceSpec.classToTemplateSpec(valueClassName);
-    _declaredValuedClassName = valueClassName == null? null: _resourceSpec.getClassRefNameForSchema(valueClassName);
-
+    _valueClass = resourceSpec.classToTemplateSpec(valueClassName);
+    _declaredValuedClassName = valueClassName == null? null: resourceSpec.getClassRefNameForSchema(valueClassName);
   }
 
   public String getName()
@@ -55,75 +51,20 @@ public class ActionMethodSpec
     return _actionSchema.getName();
   }
 
-  public List<ParameterSpec> getParameters()
+  @Override
+  public String getMethod()
   {
-    if (_methodParameters == null)
-    {
-      if (_actionSchema.getParameters() == null)
-      {
-        _methodParameters = Collections.emptyList();
-      }
-      else
-      {
-        _methodParameters = new ArrayList<>(_actionSchema.getParameters().size());
-        _methodParameters.addAll(getRequiredParameters());
-        _methodParameters.addAll(getOptionalParameters());
-      }
-    }
-    return _methodParameters;
+    return ResourceMethod.ACTION.name();
+  }
+
+  public ParameterSchemaArray getParameters()
+  {
+    return _actionSchema.getParameters() == null ? new ParameterSchemaArray() : _actionSchema.getParameters();
   }
 
   public boolean hasActionParams()
   {
     return (_actionSchema.getParameters() != null && !_actionSchema.getParameters().isEmpty());
-  }
-
-  public List<ParameterSpec> getRequiredParameters()
-  {
-    if (_requiredParameters == null)
-    {
-      _requiredParameters =  new LinkedList<>();
-      if (_actionSchema.getParameters() != null)
-      {
-        _actionSchema.getParameters().forEach(param ->
-          {
-            if(!param.hasOptional() && !param.hasDefault())
-            {
-              _requiredParameters.add(new ParameterSpec(param, _resourceSpec));
-            };
-          });
-      }
-    }
-    return _requiredParameters;
-  }
-
-  public List<ParameterSpec> getOptionalParameters()
-  {
-    if (_optionalParameters == null)
-    {
-      _optionalParameters=  new LinkedList<>();
-      if (_actionSchema.getParameters() != null)
-      {
-        _actionSchema.getParameters().forEach(param ->
-          {
-            if(param.hasOptional() || param.hasDefault())
-            {
-              _optionalParameters.add(new ParameterSpec(param, _resourceSpec));
-            };
-          });
-      }
-    }
-    return _optionalParameters;
-  }
-
-  public boolean hasRequiredParams()
-  {
-    return getRequiredParameters().size() > 0;
-  }
-
-  public boolean hasOptionalParams()
-  {
-    return getOptionalParameters().size() > 0;
   }
 
   public ClassTemplateSpec getValueClass()
@@ -156,11 +97,7 @@ public class ActionMethodSpec
     return _isEntityAction;
   }
 
-  public BaseResourceSpec getResourceSpec()
-  {
-    return _resourceSpec;
-  }
-
+  @Override
   public Set<ProjectionParameterSpec> getSupportedProjectionParams()
   {
     // Projection is not supported in Action sets, see
@@ -219,5 +156,4 @@ public class ActionMethodSpec
   public void setUsingShortTypeRefClassName(Boolean usingShortTypeRefClassName) {
     _usingShortTypeRefClassName = usingShortTypeRefClassName;
   }
-
 }

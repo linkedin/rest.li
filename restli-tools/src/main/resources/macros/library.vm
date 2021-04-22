@@ -20,6 +20,14 @@
   #foreach($method in $spec.restMethods)
       #parse("apiVmTemplates/rest.${method.method}.vm")
   #end
+  ## Finders
+  #foreach($finder in $spec.finders)
+    #parse("apiVmTemplates/finder.vm")
+  #end
+  ## Batch Finders
+  #foreach($finder in $spec.batchFinders)
+    #parse("apiVmTemplates/batch_finder.vm")
+  #end
 #end
 
 #macro(doc $doc)
@@ -76,11 +84,11 @@
 #end
 
 #macro(optionalParamClass $method)
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
-    #set($className = "${util.restMethodToClassPrefix($method.method)}OptionalParameters")
+  #if($method.hasOptionalParams() || $method.hasProjectionParams())
+    #set($className = "${util.restMethodToClassPrefix($method.methodName)}OptionalParameters")
 
     public static class $className {
-      #foreach($param in $method.optionalParams)
+      #foreach($param in $method.optionalParameters)
         $param.paramClassDisplayName $param.paramName;
         #doc($param.schema.doc)
         public $className set${param.paramNameCaps}($param.paramClassDisplayName $param.paramName) {
@@ -141,11 +149,11 @@
 
     public static class $className {
       private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>($method.getParameters().size());
-      #foreach($param in $method.parameters)
+      #foreach($param in $method.allParameters)
         private $param.paramClassDisplayName $param.paramName;
       #end
 
-      #foreach($param in $method.parameters)
+      #foreach($param in $method.allParameters)
         #doc($param.schema.doc)
         public $className set${param.paramNameCaps}($param.paramClassDisplayName $param.paramName) {
           this.$param.paramName = $param.paramName;
@@ -158,7 +166,7 @@
 
       public Map<FieldDef<?>, Object> buildParametersMap(ResourceSpec resourceSpec)
       {
-        #foreach($param in $method.parameters)
+        #foreach($param in $method.allParameters)
         if ($param.paramName != null) {
           _actionParams.put(resourceSpec.getRequestMetadata("${method.name}").getFieldDef("$param.paramName"), $param.paramName);
         }
@@ -169,21 +177,34 @@
   #end
 #end
 
+#macro(assocKeyParams $method $includeOptional)
+    #set($hasMoreParams = $method.hasRequiredParams() || ($includeOptional && ($method.hasOptionalParams() || $method.hasProjectionParams())))
+    #foreach($assocKey in $method.assocKeys)
+      $assocKey.declaredType $assocKey.name#if( $foreach.hasNext || $hasMoreParams),#end
+    #end
+#end
+
 #macro(methodParams $method $includeOptional)
-  #set($hasOptionalParams = $includeOptional && ($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0))
-  #foreach($param in $method.requiredParams)
+  #set($hasOptionalParams = $includeOptional && ($method.hasOptionalParams() || $method.hasProjectionParams()))
+  #foreach($param in $method.requiredParameters)
     $param.paramClassDisplayName $param.paramName#if( $foreach.hasNext || $hasOptionalParams),#end
   #end
   #if($hasOptionalParams)
-    Function<${util.restMethodToClassPrefix($method.method)}OptionalParameters, ${util.restMethodToClassPrefix($method.method)}OptionalParameters> optionalParamsProvider
+    Function<${util.restMethodToClassPrefix($method.methodName)}OptionalParameters, ${util.restMethodToClassPrefix($method.methodName)}OptionalParameters> optionalParamsProvider
+  #end
+#end
+
+#macro(assocKeyCallArgs $method)
+  #foreach($assocKey in $method.assocKeys)
+    $assocKey.name#if( $foreach.hasNext || $method.parameters.size() > 0 || $method.hasProjectionParams()),#end
   #end
 #end
 
 #macro(optionalMethodCallArgs $method)
-  #foreach($param in $method.requiredParams)
-    $param.paramName#if( $foreach.hasNext || $method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0),#end
+  #foreach($param in $method.requiredParameters)
+    $param.paramName#if( $foreach.hasNext || $method.hasOptionalParams() || $method.hasProjectionParams()),#end
   #end
-  #if(($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0))
+  #if(($method.hasOptionalParams() || $method.hasProjectionParams()))
     Function.identity()
   #end
 #end
@@ -197,15 +218,15 @@
 
 #macro(fillQueryParams $method)
 #**#
-    #if ($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
-      ${util.restMethodToClassPrefix($method.method)}OptionalParameters optionalParams = optionalParamsProvider.apply(
-          new ${util.restMethodToClassPrefix($method.method)}OptionalParameters());
+    #if ($method.hasOptionalParams() || $method.hasProjectionParams())
+      ${util.restMethodToClassPrefix($method.methodName)}OptionalParameters optionalParams = optionalParamsProvider.apply(
+          new ${util.restMethodToClassPrefix($method.methodName)}OptionalParameters());
     #end
-    #foreach($param in $method.requiredParams)
+    #foreach($param in $method.requiredParameters)
       queryParams.put("$param.paramName", $param.paramName);
       queryParamClasses.put("$param.paramName", ${param.paramClassName}.class);
     #end
-    #foreach($param in $method.optionalParams)
+    #foreach($param in $method.optionalParameters)
       if (optionalParams.$param.paramName != null) {
         queryParams.put("$param.paramName", optionalParams.$param.paramName);
         queryParamClasses.put("$param.paramName", ${param.paramClassName}.class);

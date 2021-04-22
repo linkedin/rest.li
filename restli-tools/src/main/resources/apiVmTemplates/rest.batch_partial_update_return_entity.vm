@@ -14,10 +14,10 @@
    limitations under the License.
 *#
 #if($is_interface)
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+  #if($method.hasOptionalParams() || $method.hasProjectionParams())
     #doc($method.schema.doc)
     public CompletionStage<Map<$spec.keyClassDisplayName, UpdateEntityStatus<${spec.entityClassName}>>> batchPartialUpdateAndGet(
-        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.requiredParams.size() > 0),#end
+        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.hasRequiredParams()),#end
         #**##methodParams($method, false)##
         );
   #end
@@ -28,10 +28,10 @@
       #**##methodParams($method, true)##
       );
 #else ## is_interface
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+  #if($method.hasOptionalParams() || $method.hasProjectionParams())
     #doc($method.schema.doc)
     public CompletionStage<Map<$spec.keyClassDisplayName, UpdateEntityStatus<${spec.entityClassName}>>> batchPartialUpdateAndGet(
-        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.requiredParams.size() > 0),#end
+        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.hasRequiredParams()),#end
         #**##methodParams($method, false)##
         ) {
       return batchPartialUpdateAndGet(patches,
