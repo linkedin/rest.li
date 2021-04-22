@@ -13,6 +13,21 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
+#if($is_interface)
+  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+    #doc($method.schema.doc)
+    public CompletionStage<List<CreateIdEntityStatus<${spec.keyClassDisplayName}, ${spec.entityClassName}>>> batchCreateAndGet(
+        List<${spec.entityClassName}> entities#if($method.requiredParams.size() > 0),#end
+        #**##methodParams($method, false)##
+        );
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<List<CreateIdEntityStatus<${spec.keyClassDisplayName}, ${spec.entityClassName}>>> batchCreateAndGet(
+      List<${spec.entityClassName}> entities#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      );
+#else ## is_interface
   #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
     #doc($method.schema.doc)
     public CompletionStage<List<CreateIdEntityStatus<${spec.keyClassDisplayName}, ${spec.entityClassName}>>> batchCreateAndGet(
@@ -73,3 +88,4 @@
     _engine.run(responseTask);
     return result;
   }
+#end ## is_interface

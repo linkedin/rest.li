@@ -22,7 +22,6 @@ import com.linkedin.parseq.ParSeqUnitTestHelper;
 import com.linkedin.restli.client.ParSeqRestliClient;
 import com.linkedin.restli.client.ParSeqRestliClientBuilder;
 import com.linkedin.restli.client.ParSeqRestliClientConfigBuilder;
-import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.RestLiResponseException;
 import com.linkedin.restli.client.util.PatchGenerator;
 import com.linkedin.restli.common.ComplexResourceKey;
@@ -40,24 +39,30 @@ import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
+import com.linkedin.restli.examples.greetings.client.Actions;
 import com.linkedin.restli.examples.greetings.client.ActionsFluentClient;
+import com.linkedin.restli.examples.greetings.client.Associations;
 import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubFluentClient;
+import com.linkedin.restli.examples.greetings.client.ComplexKeys;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysFluentClient;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubFluentClient;
+import com.linkedin.restli.examples.greetings.client.CreateGreeting;
 import com.linkedin.restli.examples.greetings.client.CreateGreetingFluentClient;
+import com.linkedin.restli.examples.greetings.client.CustomTypes2;
 import com.linkedin.restli.examples.greetings.client.CustomTypes2FluentClient;
 import com.linkedin.restli.examples.greetings.client.GreetingFluentClient;
+import com.linkedin.restli.examples.greetings.client.Greetings;
 import com.linkedin.restli.examples.greetings.client.GreetingsFluentClient;
-import com.linkedin.restli.examples.greetings.client.GreetingsOfgreetingsOfgreetingsOfgreetingFluentClient;
+import com.linkedin.restli.examples.greetings.client.PartialUpdateGreeting;
 import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.SubgreetingsFluentClient;
-import com.linkedin.restli.examples.greetings.client.SubsubgreetingFluentClient;
-import java.util.ArrayList;
 import com.linkedin.restli.examples.groups.api.TransferOwnershipRequest;
+import com.linkedin.restli.examples.groups.client.Groups;
 import com.linkedin.restli.examples.groups.client.GroupsFluentClient;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -112,7 +117,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testGetRequest() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Greeting> result = greetings.get(1L);
     CompletableFuture<Greeting> future = result.toCompletableFuture();
@@ -124,7 +129,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testGetRequestFailure() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Greeting> result = greetings.get(-1L);
     CompletableFuture<Greeting> future = result.toCompletableFuture();
@@ -142,7 +147,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchGetRequest() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Set<Long> ids = Sets.newHashSet(Arrays.asList(1L, 2L, 3L));
     CompletionStage<Map<Long, EntityResponse<Greeting>>> result = greetings.batchGet(ids);
@@ -161,7 +166,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchGetRequestWithPartialErrors() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Set<Long> ids = Sets.newHashSet(Arrays.asList(-1L, -2L, 1L, 2L, 3L));
     CompletionStage<Map<Long, EntityResponse<Greeting>>> result = greetings.batchGet(ids);
@@ -187,7 +192,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreate() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletionStage<Long> result = greetings.create(getGreeting(), false);
     CompletableFuture<Long> future = result.toCompletableFuture();
     Assert.assertNotNull(future.get(5000, TimeUnit.MILLISECONDS));
@@ -196,7 +201,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreateNullId() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Long> result = greetings.create(getGreeting(), true);
     CompletableFuture<Long> future = result.toCompletableFuture();
@@ -206,7 +211,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreateReturnEntity() throws Exception
   {
-    CreateGreetingFluentClient greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CreateGreeting greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     String msg = Double.toString(Math.random());
     CompletionStage<IdEntityResponse<Long, Greeting>> result = greetings.createAndGet(getGreeting(msg));
@@ -218,7 +223,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreateReturnEntityDisabled() throws Exception
   {
-    CreateGreetingFluentClient greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CreateGreeting greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Long> result = greetings.create(getGreeting());
     CompletableFuture<Long> future = result.toCompletableFuture();
@@ -228,7 +233,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchCreate() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<List<CreateIdStatus<Long>>> result = greetings.batchCreate(
         Arrays.asList(getGreeting(), getGreeting()));
@@ -240,7 +245,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchCreateReturnEntity() throws Exception
   {
-    CreateGreetingFluentClient greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CreateGreeting greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     String msg1 = Double.toString(Math.random());
     String msg2 = Double.toString(Math.random());
@@ -258,7 +263,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchCreateReturnEntityDisabled() throws Exception
   {
-    CreateGreetingFluentClient greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CreateGreeting greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<List<CreateIdStatus<Long>>>
         result = greetings.batchCreate(Arrays.asList(getGreeting(), getGreeting()));
@@ -270,7 +275,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreateAndThenBatchDelete() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     // Create entities first so we don't delete those used by other tests.
     CompletionStage<List<CreateIdStatus<Long>>>
         createResult = greetings.batchCreate(Arrays.asList(getGreeting(), getGreeting()));
@@ -290,7 +295,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreateAndThenBatchDeleteWithFailures() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     // Create entities first so we don't delete those used by other tests.
     CompletionStage<List<CreateIdStatus<Long>>>
         createResult = greetings.batchCreate(Arrays.asList(getGreeting(), getGreeting()));
@@ -316,7 +321,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testCreateAndThenDelete() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     // Create entities first so we don't delete those used by other tests.
     CompletionStage<Long> createResult = greetings.create(getGreeting(), false);
 
@@ -329,7 +334,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testDeleteFailure() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletionStage<Void> result = greetings.delete(-1L);
     CompletableFuture<Void> future = result.toCompletableFuture();
     try
@@ -345,7 +350,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testPartialUpdateAfterCreateAndGet() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     // Create a new greeting to use for partial update test.
     CompletionStage<Long> createResult = greetings.create(getGreeting(), false);
     CompletionStage<Void> updateResult = createResult.thenCompose(greetings::get).thenCompose(greeting ->
@@ -368,7 +373,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testPartialUpdateAndGet() throws Exception
   {
-    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreeting greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
     Greeting update = getGreeting(message);
@@ -380,7 +385,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testPartialUpdateError() throws Exception
   {
-    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreeting greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
@@ -400,7 +405,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchPartialUpdate() throws Exception
   {
-    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreeting greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
@@ -418,7 +423,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchPartialUpdateWithErrors() throws Exception
   {
-    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreeting greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
@@ -436,7 +441,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchPartialUpdateAndGet() throws Exception
   {
-    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreeting greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
@@ -456,7 +461,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchPartialUpdateAndGetWithErrors() throws Exception
   {
-    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreeting greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
@@ -477,7 +482,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchUpdate() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletionStage<List<CreateIdStatus<Long>>>
         createResult = greetings.batchCreate(Arrays.asList(getGreeting(), getGreeting()));
 
@@ -502,7 +507,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchUpdateWithErrors() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     final Map<Long, Greeting> inputs = new HashMap<>();
     inputs.put(-6L, getGreeting());
@@ -523,7 +528,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testUpdate() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletionStage<Long> createResult = greetings.create(getGreeting(), false);
     final String message = "Update test";
     CompletionStage<Void> updateResult = createResult.thenCompose(id -> greetings.update(id, getGreeting(message)));
@@ -538,7 +543,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testUpdateFailure() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletionStage<Void> result = greetings.update(-7L, getGreeting());
     CompletableFuture<Void> future = result.toCompletableFuture();
     try
@@ -554,7 +559,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testGetAll() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     // Create some greetings with "GetAll" in message so they will be returned by getAll test method..
     CompletionStage<List<CreateIdStatus<Long>>> createResult = greetings.batchCreate(
@@ -576,7 +581,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   public void testSimpleResourceUpdate() throws Exception
   {
     final String message = "Update test";
-    GreetingFluentClient greeting = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    com.linkedin.restli.examples.greetings.client.Greeting greeting = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     greeting.update(getGreeting(message)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
     Greeting greetingEntity = greeting.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(greetingEntity.getMessage(), message);
@@ -585,7 +590,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testSimpleResourceDeleteMethodAndGetMethod() throws Exception
   {
-    GreetingFluentClient greeting = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    com.linkedin.restli.examples.greetings.client.Greeting greeting = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     greeting.delete().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
     try
     {
@@ -606,42 +611,68 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
 
   // ----- Test with Assocations Resources ------
 
+  private CompoundKey getAssociateResourceUrlKey(Associations client)
+  {
+    return client.generateAssociationsCompoundKey(StringTestKeys.URL2, StringTestKeys.URL);
+  }
+
+  private CompoundKey getAssociateResourceSimpleKey(Associations client)
+  {
+    return client.generateAssociationsCompoundKey(StringTestKeys.SIMPLEKEY2, StringTestKeys.SIMPLEKEY);
+  }
+
+  private Map<CompoundKey, Message> getAssociateResourceMockDB(Associations client)
+  {
+    HashMap<CompoundKey, Message> mapDB = new HashMap<CompoundKey, Message>();
+    CompoundKey urlKey = getAssociateResourceUrlKey(client);
+    CompoundKey simpleKey = getAssociateResourceSimpleKey(client);
+    mapDB.put(urlKey, new Message().setId(urlKey.getPartAsString("src") + " " + urlKey.getPartAsString("dest"))
+        .setMessage("I need some %20")
+        .setTone(Tone.SINCERE));
+    mapDB.put(getAssociateResourceSimpleKey(client),
+        new Message().setId(simpleKey.getPartAsString("src") + " " + simpleKey.getPartAsString("dest"))
+        .setMessage("src1-dest1")
+        .setTone(Tone.SINCERE));
+    return mapDB;
+  }
+
   @Test
   public void testAssociateResourceGet() throws Exception
   {
-    CompoundKey key = AssociationResourceHelpers.URL_COMPOUND_KEY;
-    AssociationsFluentClient associations =
+    Associations associations =
         new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    Message response = associations.get(key).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Message response = associations.get(getAssociateResourceUrlKey(associations))
+        .toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
     Assert.assertTrue(response.hasId());
   }
 
   @Test
   public void testAssociateResourceBatchGet() throws Exception
   {
-    AssociationsFluentClient associations =
+    Associations associations =
         new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Map<CompoundKey, EntityResponse<Message>> entityResponse =
-        associations.batchGet(AssociationResourceHelpers.DB.keySet())
+        associations.batchGet(getAssociateResourceMockDB(associations).keySet())
             .toCompletableFuture()
             .get(5000, TimeUnit.MILLISECONDS);
-    for (CompoundKey id : AssociationResourceHelpers.DB.keySet())
+    for (CompoundKey id : getAssociateResourceMockDB(associations).keySet())
     {
       Assert.assertTrue(entityResponse.containsKey(id));
       EntityResponse<Message> single = entityResponse.get(id);
-      Assert.assertEquals(single.getEntity(), AssociationResourceHelpers.DB.get(id));
+      Assert.assertEquals(single.getEntity(), getAssociateResourceMockDB(associations).get(id));
     }
   }
 
   @Test
   public void testAssociateResourceBatchUpdate() throws Exception
   {
-    AssociationsFluentClient associations =
+    Associations associations =
         new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Map<CompoundKey, UpdateStatus> ids =
-        associations.batchUpdate(AssociationResourceHelpers.DB).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+        associations.batchUpdate(getAssociateResourceMockDB(associations))
+            .toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
 
     Assert.assertEquals(ids.size(), 2);
     for (CompoundKey id : ids.keySet())
@@ -653,12 +684,12 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testAssociateResourceBatchPartialUpdate() throws Exception
   {
-    AssociationsFluentClient associations =
+    Associations associations =
         new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Map<CompoundKey, PatchRequest<Message>> patches = new HashMap<CompoundKey, PatchRequest<Message>>();
-    patches.put(AssociationResourceHelpers.URL_COMPOUND_KEY, new PatchRequest<Message>());
-    patches.put(AssociationResourceHelpers.SIMPLE_COMPOUND_KEY, new PatchRequest<Message>());
+    patches.put(getAssociateResourceUrlKey(associations), new PatchRequest<Message>());
+    patches.put(getAssociateResourceSimpleKey(associations), new PatchRequest<Message>());
 
     Map<CompoundKey, UpdateStatus> ids =
         associations.batchPartialUpdate(patches).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
@@ -672,6 +703,18 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   // ----- Test with Sub Resources ------
   // These tests is to verify subresources methods in FluentClient subresources
   // works as expected as non-subresources.
+
+  @Test public void testSubResource_getSubClientFromParent() throws Exception
+  {
+    com.linkedin.restli.examples.greetings.client.Greeting
+        greetingClient = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greeting greeting = greetingClient.subgreetingsOf()
+        .subsubgreetingOf(1L)
+        .get()
+        .toCompletableFuture()
+        .get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(greeting.getId().longValue(), 10L); // value should be (pathKey * 10)
+  }
 
   /**
    * Test {@link com.linkedin.restli.examples.greetings.server.CollectionUnderSimpleResource}
@@ -747,9 +790,11 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test public void testSubResource_oneLayerPathKey() throws Exception
   {
     // Get
-    SubsubgreetingFluentClient subsubClient = new SubsubgreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    Greeting greeting = subsubClient.withSubgreetingsId(1L).get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
-    Assert.assertEquals(greeting.getId().longValue(), 10L);
+    com.linkedin.restli.examples.greetings.client.Greeting.Subgreetings.Subsubgreeting
+        subsubClient = new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine()).subgreetingsOf()
+        .subsubgreetingOf(1L);
+    Greeting greeting = subsubClient.get().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(greeting.getId().longValue(), 10L); // value should be (pathKey * 10)
 
     // Update
     Greeting updateGreeting = new Greeting();
@@ -788,10 +833,12 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
    */
   @Test public void testSubResource_twoLayersPathKeys() throws Exception
   {
-    GreetingsOfgreetingsOfgreetingsOfgreetingFluentClient gggs =
-        new GreetingsOfgreetingsOfgreetingsOfgreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    gggs.withSubgreetingsId(100L);
-    gggs.withGreetingsOfgreetingsOfgreetingId(1000L);
+    com.linkedin.restli.examples.greetings.client.Greeting.Subgreetings.GreetingsOfgreetingsOfgreeting.GreetingsOfgreetingsOfgreetingsOfgreeting
+        gggs =
+        new GreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine())
+            .subgreetingsOf()
+            .greetingsOfgreetingsOfgreetingOf(100L).greetingsOfgreetingsOfgreetingsOfgreetingOf(1000L);
+
     Greeting response = gggs.get(10L).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
     Assert.assertTrue(response.getId() == 1110);
   }
@@ -808,8 +855,16 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     String dest = "dest";
     String subKey = "subKey";
     CompoundKey key1 = new AssociationsFluentClient.Key().setSrc(src).setDest(dest);
-    AssociationsSubFluentClient subFluentClient = new AssociationsSubFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    AssociationsSubFluentClient
+        subFluentClient = new AssociationsSubFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Message response = subFluentClient.withAssociationsId(key1).get(subKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(response.getId(), "src");
+    Assert.assertEquals(response.getMessage(), "dest");
+
+    // Repeat using sub client generated from parent
+    Associations.AssociationsSub
+        subFluentClient2 = new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine()).associationsSubOf(key1);
+    response = subFluentClient2.get(subKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(response.getId(), "src");
     Assert.assertEquals(response.getMessage(), "dest");
   }
@@ -830,9 +885,22 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
         new AssociationsAssociationsFluentClient.Key()
             .setAnotherSrc(anotherSrc)
             .setAnotherDest(anotherDest);
-    AssociationsAssociationsSubFluentClient subFluentClient = new AssociationsAssociationsSubFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    AssociationsAssociationsSubFluentClient
+        subFluentClient = new AssociationsAssociationsSubFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Message response = subFluentClient.withAssociationsId(key1)
         .withAssociationsAssociationsId(key2)
+        .get(subKey)
+        .toCompletableFuture()
+        .get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(response.getId(), src+anotherSrc+subKey);
+    Assert.assertEquals(response.getMessage(), dest+anotherDest);
+
+    // Repeat using sub client generated from parent
+    Associations.AssociationsAssociations.AssociationsAssociationsSub
+        subFluentClient2 = new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine())
+        .associationsAssociationsOf(key1).associationsAssociationsSubOf(key2);
+
+    response = subFluentClient2
         .get(subKey)
         .toCompletableFuture()
         .get(5000, TimeUnit.MILLISECONDS);
@@ -854,17 +922,27 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     param.setMajor("c");
     param.setMinor("d");
     ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, param);
-    ComplexKeysSubFluentClient subFluentClient = new ComplexKeysSubFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ComplexKeysSubFluentClient
+        subFluentClient = new ComplexKeysSubFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     subFluentClient.withKeys(complexKey);
     TwoPartKey response = subFluentClient.get("stringKey").toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(response.getMajor(), "aANDc");
     Assert.assertEquals(response.getMinor(), "bANDd");
+
+    // Repeat using sub client generated from parent
+
+    ComplexKeys.ComplexKeysSub
+        subFluentClient2 = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine()).complexKeysSubOf(complexKey);
+    response = subFluentClient2.get("stringKey").toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(response.getMajor(), "aANDc");
+    Assert.assertEquals(response.getMinor(), "bANDd");
+
   }
 
   // ----- Tests with actions ------
   @Test public void testCollectionEntityActionWithReturn() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Greeting newGreeting;
     newGreeting =  greetings.updateTone(1L,
           param -> param.setNewTone(Tone.SINCERE).setDelOld(false))
@@ -887,7 +965,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     ownershipRequest.setNewOwnerContactEmail(testEmail);
     int testId = 9999;
     ownershipRequest.setNewOwnerMemberID(testId);
-    GroupsFluentClient groupsFluentClient = new GroupsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Groups groupsFluentClient = new GroupsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletableFuture<Void> response =
         groupsFluentClient.transferOwnership(1, param -> param.setRequest(ownershipRequest))
             .toCompletableFuture();
@@ -897,13 +975,13 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
 
   @Test public void testCollectionActionWithReturn() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Assert.assertTrue(greetings.purge().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS) == 100);
   }
 
   @Test public void testCollectionActionWithNoReturn() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletableFuture<Void> stage = greetings.anotherAction(param -> param.setBitfield(new BooleanArray())
         .setRequest(new TransferOwnershipRequest())
         .setSomeString("")
@@ -915,7 +993,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test(expectedExceptions = {RestLiResponseException.class})
   public void testCollectionActionWithException() throws Throwable
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletableFuture<Void> stage = greetings.exceptionTest().toCompletableFuture();
     try
     {
@@ -931,13 +1009,13 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
 
   @Test public void testActionSetActionWithReturn() throws Exception
   {
-    ActionsFluentClient actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Actions actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Assert.assertTrue(actionsFluentClient.ultimateAnswer().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS) == 42);
   }
 
   @Test public void testActionSetActionWithNoReturn() throws Exception
   {
-    ActionsFluentClient actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Actions actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Assert.assertNull(actionsFluentClient.returnVoid().toCompletableFuture().get(5000, TimeUnit.MILLISECONDS));
 
   }
@@ -945,7 +1023,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test public void testActionSetActionWithTypeRef() throws Exception
   {
     // This end point use typeref for both ActionParam and Action methods' return value
-    ActionsFluentClient actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Actions actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Assert.assertEquals(actionsFluentClient.customTypeRef(new CustomLong(500L)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS), new CustomLong(500L));
   }
 
@@ -956,7 +1034,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
 
   @Test public void testTypeRef_keyTypeRef() throws Exception
   {
-    CustomTypes2FluentClient customTypes2FluentClient = new CustomTypes2FluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CustomTypes2 customTypes2FluentClient = new CustomTypes2FluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Assert.assertEquals(customTypes2FluentClient.get(new CustomLong(1L))
         .toCompletableFuture()
         .get(5000, TimeUnit.MILLISECONDS)
@@ -989,7 +1067,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   // ComplexKeysResource: Test "Get", "create", "batchGet"
   @Test public void testComplexKey_get() throws Exception
   {
-    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ComplexKeys complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     ComplexResourceKey<TwoPartKey, TwoPartKey> testKeys = getComplexKey(
             StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
 
@@ -1003,7 +1081,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test public void testComplexKey_batchGet() throws Exception
   {
     List<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = getBatchComplexKeys();
-    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ComplexKeys complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>> resultMap =
         complexKeyClient.batchGet(new HashSet<>(ids)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
 
@@ -1019,7 +1097,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
       Message message = new Message();
       message.setMessage(messageText);
 
-      ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+      ComplexKeys complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     ComplexResourceKey<TwoPartKey, TwoPartKey> result =
         complexKeyClient.create(message).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
 
@@ -1029,7 +1107,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
 
   @Test public void testComplexKey_batchUpdate() throws Exception
   {
-    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ComplexKeys complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     final String messageText = StringTestKeys.SIMPLEKEY + " " + StringTestKeys.SIMPLEKEY2;
     final Message message = new Message();
     message.setId(StringTestKeys.SIMPLEKEY + " " + StringTestKeys.SIMPLEKEY2);
@@ -1060,7 +1138,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
 
   @Test public void testComplexKey_partialUpdate() throws Exception
   {
-    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ComplexKeys complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Message message = new Message();
     message.setTone(Tone.FRIENDLY);
@@ -1096,7 +1174,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     Message message = new Message();
     message.setMessage(messageText);
 
-    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ComplexKeys complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     ComplexResourceKey<TwoPartKey, TwoPartKey> createResponse =
         complexKeyClient.create(message).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
 
@@ -1127,7 +1205,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test public void testComplexKey_entityAction() throws Exception
   {
     ComplexResourceKey<TwoPartKey, TwoPartKey> key = getComplexKey("major", "minor");
-    ComplexKeysFluentClient complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ComplexKeys complexKeyClient = new ComplexKeysFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Integer entity = complexKeyClient.entityAction(key).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
     Assert.assertEquals(entity.longValue(), 1L);
   }

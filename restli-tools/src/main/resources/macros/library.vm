@@ -13,6 +13,15 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
+#macro(parseMethodsFromTemplates)
+  ## Action methods
+  #parse("apiVmTemplates/action.vm")
+  ## CRUD methods
+  #foreach($method in $spec.restMethods)
+      #parse("apiVmTemplates/rest.${method.method}.vm")
+  #end
+#end
+
 #macro(doc $doc)
   #if($doc)
   /**
@@ -23,13 +32,56 @@
   #end
 #end
 
+#macro(associateKeyParams)
+#foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+  ${assoc_key.bindingType} ${assoc_key.name}#if($foreach.hasNext),#end
+#end
+#end
+
+#macro(assocCompoundKeyGenInterface $spec)
+  CompoundKey generate${util.nameCapsCase($spec.className)}CompoundKey(
+    #associateKeyParams
+  );
+#end
+
+#macro(assocCompoundKeyGenImpl $spec)
+  public CompoundKey generate${util.nameCapsCase($spec.className)}CompoundKey(
+    #associateKeyParams
+  ) {
+    return new Key().
+      #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+        set$util.nameCapsCase($assoc_key.name)(${assoc_key.name})#if($foreach.hasNext).#else;#end
+      #end
+  }
+#end
+
+#macro(assocCompoundKeyClass $spec)
+  public static class Key
+      extends CompoundKey
+  {
+      public Key() {
+      }
+
+      #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+      public ${spec.className}${class_name_suffix}.Key set$util.nameCapsCase($assoc_key.name)(${assoc_key.bindingType} ${assoc_key.name}) {
+          append("${assoc_key.name}", ${assoc_key.name}, _resourceSpec.getKeyParts().get("${assoc_key.name}"));
+          return this;
+      }
+
+      public ${assoc_key.bindingType} get${util.nameCapsCase($assoc_key.name)} () {
+          return ((${assoc_key.bindingType}) getPart("${assoc_key.name}"));
+      }
+      #end
+  }
+#end
+
 #macro(optionalParamClass $method)
   #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
     #set($className = "${util.restMethodToClassPrefix($method.method)}OptionalParameters")
 
     public static class $className {
       #foreach($param in $method.optionalParams)
-        private $param.paramClassDisplayName $param.paramName;
+        $param.paramClassDisplayName $param.paramName;
         #doc($param.schema.doc)
         public $className set${param.paramNameCaps}($param.paramClassDisplayName $param.paramName) {
           this.$param.paramName = $param.paramName;
@@ -37,7 +89,7 @@
         }
       #end
       #foreach($param in $method.supportedProjectionParams)
-        private MaskMap $param.paramName;
+        MaskMap $param.paramName;
         public $className with${param.methodName}(
             Function<${param.paramClassDisplayName}.ProjectionMask, ${param.paramClassDisplayName}.ProjectionMask> ${param.paramName}Handler) {
           this.$param.paramName = ${param.paramName}Handler.apply(${param.paramClassDisplayName}.createMask());
@@ -63,7 +115,6 @@
         #doc($param.schema.doc)
         public $className set${param.paramNameCaps}($param.paramClassDisplayName $param.paramName) {
           this.$param.paramName = $param.paramName;
-          _actionParams.put(_resourceSpec.getRequestMetadata("${method.name}").getFieldDef("$param.paramName"), $param.paramName);
           return this;
         }
         public $param.paramClassDisplayName get${param.paramNameCaps}() {
@@ -71,8 +122,13 @@
         }
       #end
 
-      public Map<FieldDef<?>, Object> buildParametersMap()
+      public Map<FieldDef<?>, Object> buildParametersMap(ResourceSpec resourceSpec)
       {
+        #foreach($param in $method.getOptionalParameters())
+        if ($param.paramName != null) {
+          _actionParams.put(resourceSpec.getRequestMetadata("${method.name}").getFieldDef("$param.paramName"), $param.paramName);
+        }
+        #end
         return _actionParams;
       }
     }
@@ -93,7 +149,6 @@
         #doc($param.schema.doc)
         public $className set${param.paramNameCaps}($param.paramClassDisplayName $param.paramName) {
           this.$param.paramName = $param.paramName;
-          _actionParams.put(_resourceSpec.getRequestMetadata("${method.name}").getFieldDef("$param.paramName"), $param.paramName);
           return this;
         }
         public $param.paramClassDisplayName get${param.paramNameCaps}() {
@@ -101,8 +156,13 @@
         }
       #end
 
-      public Map<FieldDef<?>, Object> buildParametersMap()
+      public Map<FieldDef<?>, Object> buildParametersMap(ResourceSpec resourceSpec)
       {
+        #foreach($param in $method.parameters)
+        if ($param.paramName != null) {
+          _actionParams.put(resourceSpec.getRequestMetadata("${method.name}").getFieldDef("$param.paramName"), $param.paramName);
+        }
+        #end
         return _actionParams;
       }
     }
@@ -172,13 +232,20 @@
 #macro(subResourceInterface $spec)
 #**#
     #if(${spec.namespace.equals($spec.parentNamespace)})
-    ${spec.className} ${util.nameCamelCase($spec.className)}Of(#if(${spec.diffPathKey}) ${spec.parent.keyClassName} ${spec.diffPathKey}#end); // TODO: handle complex Key
+    ${spec.className} ${util.nameCamelCase($spec.className)}Of(#if(${spec.diffPathKey})${spec.parent.keyClassName} ${spec.diffPathKey}#end);
     public interface ${spec.className} {
-#foreach($subSpec in $spec.childSubResourceSpecs)
-      #**##subResourceInterface($subSpec)
-#end
+      #foreach($subSpec in $spec.childSubResourceSpecs)
+            #**##subResourceInterface($subSpec)
+      #end
+
+
+      #parseMethodsFromTemplates
+
+      #if(${spec.getResource().hasAssociation()})
+        #assocCompoundKeyGenInterface($spec)
+      #end
     }
     #else
-    ${spec.bindingName} ${util.nameCamelCase($spec.className)}Of(#if(${spec.diffPathKey})${spec.parent.keyClassName} ${spec.diffPathKey}#end); // TODO: handle complex Key
+    ${spec.bindingName} ${util.nameCamelCase($spec.className)}Of(#if(${spec.diffPathKey})${spec.parent.keyClassName} ${spec.diffPathKey}#end);
     #end
 #end

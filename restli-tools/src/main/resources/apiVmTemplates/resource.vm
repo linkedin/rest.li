@@ -206,36 +206,11 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
   }
   #end
 
-  // Action methods
-    #parse("apiVmTemplates/action.vm")
-  // CRUD methods
-  #foreach($method in $spec.restMethods)
-    #parse("apiVmTemplates/rest.${method.method}.vm")
-  #end
+  #parseMethodsFromTemplates
 
-
-
-
-  ## Add association key generation stub
   #if(${spec.getResource().hasAssociation()})
-  // TODO: CompoundKey may eventually need to be exposed to the resource interface
-    public static class Key
-        extends CompoundKey
-    {
-        public Key() {
-        }
-
-        #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
-        public ${spec.className}${class_name_suffix}.Key set$util.nameCapsCase($assoc_key.name)(${assoc_key.bindingType} ${assoc_key.name}) {
-            append("${assoc_key.name}", ${assoc_key.name}, _resourceSpec.getKeyParts().get("${assoc_key.name}"));
-            return this;
-        }
-
-        public ${assoc_key.bindingType} get${util.nameCapsCase($assoc_key.name)} () {
-            return ((${assoc_key.bindingType}) getPart("${assoc_key.name}"));
-        }
-        #end
-    }
+    #assocCompoundKeyClass($spec)
+    #assocCompoundKeyGenImpl($spec)
   #end
 
   #if(${spec.getPathKeys().size()} > 0)

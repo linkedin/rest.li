@@ -13,6 +13,22 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
+#if($is_interface)
+  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
+    #doc($method.schema.doc)
+    public CompletionStage<${spec.keyClassDisplayName}> create(
+        ${spec.entityClassName} entity#if($method.requiredParams.size() > 0),#end
+        #**##methodParams($method, false)##
+      );
+  #end
+
+  #doc($method.schema.doc)
+  public CompletionStage<${spec.keyClassDisplayName}> create(
+      ${spec.entityClassName} entity#if( $method.hasParams()),#end
+      #**##methodParams($method, true)##
+      );
+#optionalParamClass($method)
+#else ## is_interface
   #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
     #doc($method.schema.doc)
     public CompletionStage<${spec.keyClassDisplayName}> create(
@@ -71,4 +87,4 @@
     _engine.run(responseTask);
     return result;
   }
-  #optionalParamClass($method)
+#end ## is_interface
