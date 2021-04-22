@@ -34,17 +34,23 @@ import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingCriteria;
-import com.linkedin.restli.examples.greetings.api.GreetingCriteriaArray;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.ValidationDemo;
 import com.linkedin.restli.examples.greetings.api.myItem;
 import com.linkedin.restli.examples.greetings.api.myRecord;
+import com.linkedin.restli.examples.greetings.client.AutoValidationWithProjection;
 import com.linkedin.restli.examples.greetings.client.AutoValidationWithProjectionFluentClient;
+import com.linkedin.restli.examples.greetings.client.Batchfinders;
 import com.linkedin.restli.examples.greetings.client.BatchfindersFluentClient;
+import com.linkedin.restli.examples.greetings.client.CreateGreeting;
 import com.linkedin.restli.examples.greetings.client.CreateGreetingFluentClient;
+import com.linkedin.restli.examples.greetings.client.Greetings;
 import com.linkedin.restli.examples.greetings.client.GreetingsFluentClient;
+import com.linkedin.restli.examples.greetings.client.ManualProjections;
 import com.linkedin.restli.examples.greetings.client.ManualProjectionsFluentClient;
+import com.linkedin.restli.examples.greetings.client.PagingMetadataProjections;
 import com.linkedin.restli.examples.greetings.client.PagingMetadataProjectionsFluentClient;
+import com.linkedin.restli.examples.greetings.client.PartialUpdateGreeting;
 import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingFluentClient;
 import com.linkedin.restli.server.validation.RestLiValidationFilter;
 
@@ -104,7 +110,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testGetWithProjection() throws Exception
   {
-    ManualProjectionsFluentClient projections = new ManualProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ManualProjections projections = new ManualProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Greeting> result = projections.get(1L,
         optionalParams -> optionalParams.withMask(mask -> mask.withMessage()));
@@ -118,7 +124,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testBatchGetWithProjection() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Set<Long> ids = Sets.newHashSet(Arrays.asList(1L, 2L, 3L));
     CompletionStage<Map<Long, EntityResponse<Greeting>>> result = greetings.batchGet(ids,
@@ -140,7 +146,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testCreateAndGetWithProjection() throws Exception
   {
-    CreateGreetingFluentClient greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CreateGreeting greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     String msg = Double.toString(Math.random());
     CompletionStage<IdEntityResponse<Long, Greeting>> result = greetings.createAndGet(getGreeting(msg),
@@ -155,7 +161,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testBatchCreateAndGetWithProjection() throws Exception
   {
-    CreateGreetingFluentClient greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    CreateGreeting greetings = new CreateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     String msg1 = Double.toString(Math.random());
     String msg2 = Double.toString(Math.random());
@@ -176,7 +182,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testPartialUpdateAndGetWithProjection() throws Exception
   {
-    PartialUpdateGreetingFluentClient
+    PartialUpdateGreeting
         greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Greeting original = getGreeting();
     String message = "Edited message: fluent api test partialUpdateAndGet";
@@ -192,7 +198,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testBatchPartialUpdateAndGetWithProjection() throws Exception
   {
-    PartialUpdateGreetingFluentClient greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PartialUpdateGreeting greetings = new PartialUpdateGreetingFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     Map<Long, PatchRequest<Greeting>> inputs = new HashMap<>();
     Greeting original = getGreeting();
@@ -213,7 +219,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testGetAllWithFieldProjection() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     // Create some greetings with "GetAll" in message so they will be returned by getAll test method..
     CompletionStage<List<CreateIdStatus<Long>>> createResult = greetings.batchCreate(
@@ -234,7 +240,8 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testGetAllWithPagingProjection() throws Exception
   {
-    PagingMetadataProjectionsFluentClient greetings = new PagingMetadataProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PagingMetadataProjections
+        greetings = new PagingMetadataProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<CollectionResponse<Greeting>> result = greetings.getAll(
         params -> params.withPagingMask(pageMask -> pageMask.withTotal().withStart())
@@ -262,7 +269,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testGetAllWithMetadataProjection() throws Exception
   {
-    PagingMetadataProjectionsFluentClient greetings = new PagingMetadataProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PagingMetadataProjections greetings = new PagingMetadataProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<CollectionResponse<Greeting>> result = greetings.getAll(
         params -> params.withMetadataMask(metadataMask -> metadataMask.withMessage())
@@ -287,7 +294,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testFinderWithProjection() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<CollectionResponse<Greeting>> result = greetings.findBySearch(
         params -> params.setTone(Tone.FRIENDLY)
@@ -307,7 +314,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testFinderWithPagingProjection() throws Exception
   {
-    PagingMetadataProjectionsFluentClient greetings = new PagingMetadataProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PagingMetadataProjections greetings = new PagingMetadataProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<CollectionResponse<Greeting>> result = greetings.findByMetadataAutomaticPagingFullyAutomatic(
         params -> params.withPagingMask(pageMask -> pageMask.withTotal())
@@ -336,7 +343,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testFinderWithMetadataProjection() throws Exception
   {
-    PagingMetadataProjectionsFluentClient greetings = new PagingMetadataProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    PagingMetadataProjections greetings = new PagingMetadataProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<CollectionResponse<Greeting>> result = greetings.findByMetadataAutomaticPagingFullyAutomatic(
         params -> params.withMetadataMask(metadataMask -> metadataMask.withId())
@@ -363,7 +370,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testBatchFinderWithProjection() throws Exception
   {
-    BatchfindersFluentClient batchFinders = new BatchfindersFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Batchfinders batchFinders = new BatchfindersFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     GreetingCriteria c1 = new GreetingCriteria().setId(1L).setTone(Tone.SINCERE);
     GreetingCriteria c2 = new GreetingCriteria().setId(2L).setTone(Tone.FRIENDLY);
     CompletionStage<BatchCollectionResponse<Greeting>> result = batchFinders.findBySearchGreetings(
@@ -388,7 +395,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testBatchFinderWithPagingProjection() throws Exception
   {
-    BatchfindersFluentClient batchFinders = new BatchfindersFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Batchfinders batchFinders = new BatchfindersFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     GreetingCriteria c1 = new GreetingCriteria().setId(1L).setTone(Tone.SINCERE);
     GreetingCriteria c2 = new GreetingCriteria().setId(2L).setTone(Tone.FRIENDLY);
     CompletionStage<BatchCollectionResponse<Greeting>> result = batchFinders.findBySearchGreetings(
@@ -429,7 +436,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testGetFull() throws Exception
   {
-    ManualProjectionsFluentClient projections = new ManualProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ManualProjections projections = new ManualProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Greeting> result = projections.get(1L);
     CompletableFuture<Greeting> future = result.toCompletableFuture();
@@ -443,7 +450,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testGetWithProjectionDisabled() throws Exception
   {
-    ManualProjectionsFluentClient projections = new ManualProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    ManualProjections projections = new ManualProjectionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<Greeting> result = projections.get(1L,
         optionalParams -> optionalParams.withMask(mask -> mask.withMessage())
@@ -458,7 +465,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testValidationWithNoProjection() throws Exception
   {
-    AutoValidationWithProjectionFluentClient
+    AutoValidationWithProjection
         validationDemos = new AutoValidationWithProjectionFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     CompletionStage<ValidationDemo> result = validationDemos.get(1);
     try {
@@ -476,7 +483,7 @@ public class TestParseqBasedFluentClientApiWithProjections extends RestLiIntegra
   @Test
   public void testValidationWithOnlyValidFieldsProjected() throws Exception
   {
-    AutoValidationWithProjectionFluentClient validationDemos = new AutoValidationWithProjectionFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    AutoValidationWithProjection validationDemos = new AutoValidationWithProjectionFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<ValidationDemo> result = validationDemos.get(1,
         optionalParams -> optionalParams.withMask(mask -> mask.withStringB()

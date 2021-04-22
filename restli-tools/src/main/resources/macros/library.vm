@@ -166,7 +166,7 @@
 
       public Map<FieldDef<?>, Object> buildParametersMap(ResourceSpec resourceSpec)
       {
-        #foreach($param in $method.parameters)
+        #foreach($param in $method.allParameters)
         if ($param.paramName != null) {
           _actionParams.put(resourceSpec.getRequestMetadata("${method.name}").getFieldDef("$param.paramName"), $param.paramName);
         }

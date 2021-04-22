@@ -23,24 +23,14 @@ Copyright (c) 2021 LinkedIn Corp.
     @SuppressWarnings("unchecked")
     public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
       #if(${method.isEntityAction()})
-      $spec.keyClassName $spec.idName,
+        $spec.keyClassName $spec.idName,
       #end
-        #set($paramLen = ${method.getRequiredParameters().size()})
-        #if($paramLen > 0)
-          #set($lastParam = ${method.getRequiredParameters().get($paramLen - 1)})
-          #if($paramLen > 1)
-            #set($endIdx= ${paramLen} - 2)
-            #foreach($idx in [0..$endIdx])
-              #set($param = ${method.getRequiredParameters().get($idx)})
-            $param.paramClassDisplayName $param.paramName,
-            #end
-          #end
-          $lastParam.paramClassDisplayName $lastParam.paramName
-        #end
-          #if(${method.getOptionalParameters().size()} > 0)
-          #if($paramLen > 0),#end
-          Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider
-          #end
+      #foreach($param in $method.getRequiredParameters())
+        $param.paramClassDisplayName $param.paramName #if($foreach.hasNext || $method.hasOptionalParams()),#end
+      #end
+      #if($method.hasOptionalParams())
+        Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider
+      #end
     );
     #end
 
@@ -73,22 +63,12 @@ Copyright (c) 2021 LinkedIn Corp.
       #if(${method.isEntityAction()})
       $spec.keyClassName $spec.idName,
       #end
-        #set($paramLen = ${method.getRequiredParameters().size()})
-        #if($paramLen > 0)
-          #set($lastParam = ${method.getRequiredParameters().get($paramLen - 1)})
-          #if($paramLen > 1)
-            #set($endIdx= ${paramLen} - 2)
-            #foreach($idx in [0..$endIdx])
-              #set($param = ${method.getRequiredParameters().get($idx)})
-            $param.paramClassDisplayName $param.paramName,
-            #end
-          #end
-          $lastParam.paramClassDisplayName $lastParam.paramName
-        #end
-          #if(${method.getOptionalParameters().size()} > 0)
-          #if($paramLen > 0),#end
-          Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider
-          #end
+      #foreach($param in $method.getRequiredParameters())
+        $param.paramClassDisplayName $param.paramName #if($foreach.hasNext || $method.hasOptionalParams()),#end
+      #end
+      #if($method.hasOptionalParams())
+        Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider
+      #end
     )
     {
       #if(${method.hasOptionalParams()})

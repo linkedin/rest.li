@@ -53,6 +53,7 @@ import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsFlu
 import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubFluentClient;
+import com.linkedin.restli.examples.greetings.client.Batchfinders;
 import com.linkedin.restli.examples.greetings.client.ComplexKeys;
 import com.linkedin.restli.examples.greetings.client.BatchGreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.BatchfindersFluentClient;
@@ -587,7 +588,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testFinder() throws Exception
   {
-    GreetingsFluentClient greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Greetings greetings = new GreetingsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
     CompletionStage<CollectionResponse<Greeting>> result = greetings.findBySearch(params -> params.setTone(Tone.FRIENDLY));
     CompletableFuture<CollectionResponse<Greeting>> future = result.toCompletableFuture();
@@ -602,7 +603,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   @Test
   public void testBatchFinder() throws Exception
   {
-    BatchfindersFluentClient batchfinders = new BatchfindersFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    Batchfinders batchfinders = new BatchfindersFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     GreetingCriteria c1 = new GreetingCriteria().setId(1L).setTone(Tone.SINCERE);
     GreetingCriteria c2 = new GreetingCriteria().setId(2L).setTone(Tone.FRIENDLY);
     CompletionStage<BatchCollectionResponse<Greeting>> result = batchfinders.findBySearchGreetings(
@@ -656,12 +657,12 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
 
   private CompoundKey getAssociateResourceUrlKey(Associations client)
   {
-    return client.generateAssociationsCompoundKey(StringTestKeys.URL2, StringTestKeys.URL);
+    return client.generateAssociationsCompoundKey(StringTestKeys.URL, StringTestKeys.URL2);
   }
 
   private CompoundKey getAssociateResourceSimpleKey(Associations client)
   {
-    return client.generateAssociationsCompoundKey(StringTestKeys.SIMPLEKEY2, StringTestKeys.SIMPLEKEY);
+    return client.generateAssociationsCompoundKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
   }
 
   private Map<CompoundKey, Message> getAssociateResourceMockDB(Associations client)
@@ -1109,9 +1110,6 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     Actions actionsFluentClient = new ActionsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     Assert.assertEquals(actionsFluentClient.customTypeRef(new CustomLong(500L)).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS), new CustomLong(500L));
   }
-
-
-
 
   // ----- Test TypeRef cases ------
 

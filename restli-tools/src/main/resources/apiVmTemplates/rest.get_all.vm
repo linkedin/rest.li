@@ -16,12 +16,12 @@
 #if($is_interface)
   #if($method.hasOptionalParams() || $method.hasProjectionParams())
     #doc($method.schema.doc)
-    public CompletionStage<List<${spec.entityClassName}>> getAll(#methodParams($method, false)##
+    public CompletionStage<CollectionResponse<${spec.entityClassName}>> getAll(#methodParams($method, false)##
          );
   #end
 
   #doc($method.schema.doc)
-  public CompletionStage<List<${spec.entityClassName}>> getAll(#methodParams($method, true)##
+  public CompletionStage<CollectionResponse<${spec.entityClassName}>> getAll(#methodParams($method, true)##
         );
 
 #optionalParamClass($method)

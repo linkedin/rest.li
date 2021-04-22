@@ -120,27 +120,19 @@ public class SpecUtils {
   {
     switch (name)
     {
-      case "GET":
-        return "Get";
-      case "BATCH_GET":
+      case "batch_get":
         return "BatchGet";
-      case "CREATE":
-        return "Create";
-      case "BATCH_CREATE":
+      case "batch_create":
         return "BatchCreate";
-      case "PARTIAL_UPDATE":
+      case "partial_update":
         return "PartialUpdate";
-      case "UPDATE":
-        return "Update";
-      case "BATCH_UPDATE":
+      case "batch_update":
         return "BatchUpdate";
-      case "DELETE":
-        return "Delete";
-      case "BATCH_PARTIAL_UPDATE":
+      case "batch_partial_update":
         return "BatchPartialUpdate";
-      case "BATCH_DELETE":
+      case "batch_delete":
         return "BatchDelete";
-      case "GET_ALL":
+      case "get_all":
         return "GetAll";
       default:
         return CodeUtil.capitalize(name);
