@@ -33,7 +33,11 @@ import java.util.Map;
  * The request grouped by execution group will be further grouped by Client so requests will
  * be batched per Client.
  *
- * There are two way to use this
+ * {@link ExecutionGroup} is not supposed to be instantiated directly. Check {@link FluentClient} to see the
+ * method that instantiate them. {@link FluentClient} also provides convenient method to use
+ * {@link ##batchOn(Runnable, FluentClient...)}
+ *
+ * Once given an {@link ExecutionGroup} instance, are two way to use it:
  * Method 1: Using it with the fluent api and ask the executionGroup to execute explicitly.
  * Example:
  * <blockquote>
@@ -66,7 +70,7 @@ import java.util.Map;
  *     });
  *   </pre>
  * </blockquote>
- * Note: You can use nested executiongroup and each lambda clause have a separate scope.
+ * Note: One can use nested executiongroup and each lambda clause have a separate scope.
  * Example:
  * <blockquote>
  *   <pre>

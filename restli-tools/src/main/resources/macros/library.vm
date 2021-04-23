@@ -194,6 +194,67 @@
   #end
 #end
 
+#macro(methodParamsWithEGroup $method $includeOptional $withEG)
+  #set($hasOptionalParams = $includeOptional && ($method.hasOptionalParams() || $method.hasProjectionParams()))
+  #foreach($param in $method.requiredParameters)
+    $param.paramClassDisplayName $param.paramName#if( $foreach.hasNext || ($hasOptionalParams || $withEG)),#end
+  #end
+  #if($hasOptionalParams)
+    Function<${util.restMethodToClassPrefix($method.methodName)}OptionalParameters, ${util.restMethodToClassPrefix($method.methodName)}OptionalParameters> optionalParamsProvider #if($withEG),#end
+  #end 
+  #if($withEG)ExecutionGroup executionGroup #end
+
+#end
+
+#macro(actionMethodParams $method $includeOptional)
+  #set($hasOptionalParams = $includeOptional && $method.hasOptionalParams())
+  #if(${method.isEntityAction()})
+    $spec.keyClassName $spec.idName,
+  #end
+  #foreach($param in $method.getRequiredParameters())
+    $param.paramClassDisplayName $param.paramName #if($foreach.hasNext || $hasOptionalParams),#end
+  #end
+
+  #if($hasOptionalParams)
+    Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider
+  #end
+#end
+
+#macro(actionMethodParamsWithEGroup $method $includeOptional $withEG)
+  #set($hasOptionalParams = $includeOptional && $method.hasOptionalParams())
+  #if(${method.isEntityAction()})
+    $spec.keyClassName $spec.idName,
+  #end
+  #foreach($param in $method.getRequiredParameters())
+    $param.paramClassDisplayName $param.paramName #if($foreach.hasNext || ($hasOptionalParams || $withEG)),#end
+  #end
+
+  #if($hasOptionalParams)
+    Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider #if($withEG), #end
+  #end 
+  #if($withEG)ExecutionGroup executionGroup #end
+#end
+
+#macro(actionMethodProviderParams $method)
+    #if(${method.isEntityAction()})
+    $spec.keyClassName $spec.idName #if(${method.hasActionParams()}),#end
+    #end
+    #if(${method.hasActionParams()})
+    Function<$actionParamClassName, $actionParamClassName> paramsProvider
+    #end
+#end
+
+#macro(actionMethodProviderParamsWithEGroup $method $withEG)
+    #set($hasParams = ($method.isEntityAction() || $method.hasActionParams()))
+    #if(${method.isEntityAction()})
+    $spec.keyClassName $spec.idName #if(${method.hasActionParams()} || $withEG),#end
+    #end
+    #if(${method.hasActionParams()})
+    Function<$actionParamClassName, $actionParamClassName> paramsProvider #if($withEG), #end
+    #end
+    #if($withEG)ExecutionGroup executionGroup #end
+#end
+
 #macro(assocKeyCallArgs $method)
   #foreach($assocKey in $method.assocKeys)
     $assocKey.name#if( $foreach.hasNext || $method.parameters.size() > 0 || $method.hasProjectionParams()),#end
@@ -207,6 +268,16 @@
   #if(($method.hasOptionalParams() || $method.hasProjectionParams()))
     Function.identity()
   #end
+#end
+
+#macro(optionalMethodCallArgsWithEGroup $method $withEG)
+  #foreach($param in $method.requiredParameters)
+    $param.paramName#if( $foreach.hasNext || ($method.hasOptionalParams() || $method.hasProjectionParams() || $withEG)),#end
+  #end
+  #if(($method.hasOptionalParams() || $method.hasProjectionParams()))
+    Function.identity() #if($withEG), #end
+  #end 
+  #if($withEG) executionGroup #end
 #end
 
 #macro(pagingParams $method)
@@ -248,6 +319,35 @@
 #macro(returnEntityParam $value)
 #**#queryParams.put(RestConstants.RETURN_ENTITY_PARAM, $value);
     queryParamClasses.put(RestConstants.RETURN_ENTITY_PARAM, Boolean.class);
+#end
+
+#macro(makeRequestAndReturn $returnClassName, $responseType, $resposneEntity, $withEG)
+#**#
+Task<$returnClassName> responseTask = _client.createTask(request).transform("Task to completion stage",
+    responseTry -> {
+      if (responseTry.isFailed()) {
+        return Failure.of(responseTry.getError());
+      } else {
+        Response<$responseType> resp = responseTry.get();
+        if (resp.hasError()) {
+          return Failure.of(resp.getError());
+        } else {
+          return Success.of($resposneEntity);
+        }
+      }
+    });
+    #if(!$withEG)
+    ExecutionGroup executionGroup = this.getExecutionGroupFromContext();
+    #end
+    if (executionGroup == null)
+    {
+      return _completionStageFactory.buildStageFromTaskToRun(responseTask);
+    }
+    else
+    {
+      executionGroup.addTaskByFluentClient(this, responseTask);
+      return _completionStageFactory.buildStageFromTask(responseTask);
+    }
 #end
 
 #macro(subResourceInterface $spec)

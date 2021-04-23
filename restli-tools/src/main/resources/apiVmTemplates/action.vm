@@ -15,138 +15,127 @@ Copyright (c) 2021 LinkedIn Corp.
 *#
 #if($is_interface)
   #foreach($method in $spec.actions)
-    #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
-    #set($actionOptionalParamClassName = "${util.nameCapsCase($method.name)}ActionOptionalParameters")
-    #doc($method.schema.doc)
+    #foreach($withEG in [true, false])
+      #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
+      #set($actionOptionalParamClassName = "${util.nameCapsCase($method.name)}ActionOptionalParameters")
+      #doc($method.schema.doc)
 
-    #if(${method.hasRequiredParams()}) ## action with no required Params will only have one API
-    @SuppressWarnings("unchecked")
-    public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
-      #if(${method.isEntityAction()})
-        $spec.keyClassName $spec.idName,
-      #end
-      #foreach($param in $method.getRequiredParameters())
-        $param.paramClassDisplayName $param.paramName #if($foreach.hasNext || $method.hasOptionalParams()),#end
-      #end
-      #if($method.hasOptionalParams())
-        Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider
-      #end
-    );
-    #end
+      #if(${method.hasRequiredParams()}) ## action with no required Params will only have one API
+        #if($method.hasOptionalParams()) ## when have optional params, the optionalParamsProvider is optional
+          @SuppressWarnings("unchecked")
+          public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
+            #actionMethodParamsWithEGroup($method, false, $withEG)##
+          );
+        #end ## end hasOptionalParams
+        @SuppressWarnings("unchecked")
+        public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
+            #actionMethodParamsWithEGroup($method, true, $withEG)##
+        );
+      #end ## end hasRequiredParams
 
-    @SuppressWarnings("unchecked")
-    public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
-      #if(${method.isEntityAction()})
-      $spec.keyClassName $spec.idName #if(${method.hasActionParams()}),#end
-      #end
-      #if(${method.hasActionParams()})
-      Function<$actionParamClassName, $actionParamClassName> paramsProvider
-      #end
-    );
-
+      @SuppressWarnings("unchecked")
+      public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
+        #actionMethodProviderParamsWithEGroup($method, $withEG)##
+      );
+    #end ## end withEG
     #if(${method.hasActionParams()})
       #actionAllParamClass($method)
     #end
     #if(${method.hasRequiredParams()} && ${method.hasOptionalParams()})
       #actionOptParamClass($method)
     #end
-  #end ## foreach
+  #end ## foreach method
 #else ## is_interface
-  #foreach($method in $spec.actions)
-    #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
-    #set($actionOptionalParamClassName = "${util.nameCapsCase($method.name)}ActionOptionalParameters")
-    #doc($method.schema.doc)
+  #foreach($withEG in [true, false])
+    #foreach($method in $spec.actions)
+      #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
+      #set($actionOptionalParamClassName = "${util.nameCapsCase($method.name)}ActionOptionalParameters")
+      #doc($method.schema.doc)
 
-    #if(${method.hasRequiredParams()}) ## action with no required Params will only have one API
-    @SuppressWarnings("unchecked")
-    public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
-      #if(${method.isEntityAction()})
-      $spec.keyClassName $spec.idName,
-      #end
-      #foreach($param in $method.getRequiredParameters())
-        $param.paramClassDisplayName $param.paramName #if($foreach.hasNext || $method.hasOptionalParams()),#end
-      #end
-      #if($method.hasOptionalParams())
-        Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider
-      #end
-    )
-    {
-      #if(${method.hasOptionalParams()})
-      $actionOptionalParamClassName optionalParams = optionalParamsProvider.apply(new $actionOptionalParamClassName());
-      #end
-      return ${util.nameCamelCase(${method.name})}(
-        #if(${method.isEntityAction()})
-        $spec.idName,
-        #end
-        paramProvider -> paramProvider
-        #foreach($param in ${method.getRequiredParameters()})
-        .set${param.paramNameCaps}($param.paramName)
-        #end
-        #foreach($param in ${method.getOptionalParameters()})
-        .set${param.paramNameCaps}(optionalParams.get${param.paramNameCaps}())
-        #end
-      )
-      ;
-    }
-    #end
-
-    @SuppressWarnings("unchecked")
-    public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
-      #if(${method.isEntityAction()})
-      $spec.keyClassName $spec.idName #if(${method.hasActionParams()}),#end
-      #end
-      #if(${method.hasActionParams()})
-      Function<$actionParamClassName, $actionParamClassName> paramsProvider
-      #end
-    )
-    {
-      RecordDataSchema requestDataSchema =  _resourceSpec.getRequestMetadata("${method.name}").getRecordDataSchema();
-      RecordDataSchema actionResponseDataSchema = _resourceSpec.getActionResponseMetadata("${method.name}").getRecordDataSchema();
-      FieldDef<${method.valueClassDisplayName}> responseFieldDef = (FieldDef<${method.valueClassDisplayName}>)_resourceSpec.getActionResponseMetadata("${method.name}").getFieldDef(ActionResponse.VALUE_NAME);
-
-      ActionResponseDecoder<${method.valueClassDisplayName}> actionResponseDecoder =
-          new ActionResponseDecoder<${method.valueClassDisplayName}>(responseFieldDef, actionResponseDataSchema);
-      DynamicRecordTemplate inputParameters =
-          new DynamicRecordTemplate(requestDataSchema,
-          #if(${method.hasActionParams()})
-            paramsProvider.apply(new $actionParamClassName()).buildParametersMap(_resourceSpec));
-          #else
-            Collections.emptyMap());
+      #if(${method.hasRequiredParams()}) ## action with no required Params will only have one API
+        #if($method.hasOptionalParams()) ## when have optional params, the optionalParamsProvider is optional
+          @SuppressWarnings("unchecked")
+          public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
+            #actionMethodParamsWithEGroup($method, false, $withEG)##
+          )
+          {
+            return ${util.nameCamelCase(${method.name})}(
+              #if(${method.isEntityAction()})
+              $spec.idName,
+              #end
+              #foreach($param in $method.getRequiredParameters())
+                $param.paramName #if($foreach.hasNext),#end
+              #end,
+              Function.identity() #if($withEG), executionGroup #end
+            )
+            ;
+          }
+        #end ## end hasOptionalParams
+        @SuppressWarnings("unchecked")
+        public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
+          #actionMethodParamsWithEGroup($method, true, $withEG)##
+        )
+        {
+          #if(${method.hasOptionalParams()})
+          $actionOptionalParamClassName optionalParams = optionalParamsProvider.apply(new $actionOptionalParamClassName());
           #end
-      inputParameters.data().setReadOnly();
-      ActionRequest<${method.valueClassDisplayName}> request = new ActionRequest<${method.valueClassDisplayName}>(inputParameters,
-                                  Collections.emptyMap(),
-                                  Collections.emptyList(),
-                                  actionResponseDecoder,
-                                  _resourceSpec,
-                                  _${method.name}ActionQueryParams,
-                                  _actionQueryParamsClasses,
-                                  "${method.name}",
-                                  ORIGINAL_RESOURCE_PATH,
-                                  buildReadOnlyPathKeys(),
-                                  RestliRequestOptions.DEFAULT_OPTIONS,
-                                  #if(${method.isEntityAction()})$spec.idName#else null#end,
-                                  ## TODO: Not supporting streaming attachments now
-                                  null
-                                  );
+          return ${util.nameCamelCase(${method.name})}(
+            #if(${method.isEntityAction()})
+            $spec.idName,
+            #end
+            paramProvider -> paramProvider
+            #foreach($param in ${method.getRequiredParameters()})
+            .set${param.paramNameCaps}($param.paramName)
+            #end
+            #foreach($param in ${method.getOptionalParameters()})
+            .set${param.paramNameCaps}(optionalParams.get${param.paramNameCaps}())
+            #end #if($withEG), executionGroup #end
+          )
+          ;
+        }
+      #end ## end hasRequiredParams
 
-      CompletableFuture<${method.valueClassDisplayName}> result = new CompletableFuture<>();
-      Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
-          responseTry -> {
-            if (responseTry.isFailed()) {
-              result.completeExceptionally(responseTry.getError());
-            } else {
-              Response<${method.valueClassDisplayName}> resp = responseTry.get();
-              if (resp.hasError()) {
-                result.completeExceptionally(resp.getError());
-              } else {
-                result.complete(resp.getEntity());
-              }
-            }
-            return Success.of((Void) null);
-          });
-      _engine.run(responseTask);
-      return result;
-    }
-  #end ## foreach
+      @SuppressWarnings("unchecked")
+      public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
+        #actionMethodProviderParamsWithEGroup($method, $withEG)##
+      )
+      {
+        RecordDataSchema requestDataSchema =  _resourceSpec.getRequestMetadata("${method.name}").getRecordDataSchema();
+        RecordDataSchema actionResponseDataSchema = _resourceSpec.getActionResponseMetadata("${method.name}").getRecordDataSchema();
+        FieldDef<${method.valueClassDisplayName}> responseFieldDef = (FieldDef<${method.valueClassDisplayName}>)_resourceSpec.getActionResponseMetadata("${method.name}").getFieldDef(ActionResponse.VALUE_NAME);
+
+        ActionResponseDecoder<${method.valueClassDisplayName}> actionResponseDecoder =
+            new ActionResponseDecoder<${method.valueClassDisplayName}>(responseFieldDef, actionResponseDataSchema);
+        DynamicRecordTemplate inputParameters =
+            new DynamicRecordTemplate(requestDataSchema,
+            #if(${method.hasActionParams()})
+              paramsProvider.apply(new $actionParamClassName()).buildParametersMap(_resourceSpec));
+            #else
+              Collections.emptyMap());
+            #end
+        inputParameters.data().setReadOnly();
+        ActionRequest<${method.valueClassDisplayName}> request = new ActionRequest<${method.valueClassDisplayName}>(inputParameters,
+                                    Collections.emptyMap(),
+                                    Collections.emptyList(),
+                                    actionResponseDecoder,
+                                    _resourceSpec,
+                                    _${method.name}ActionQueryParams,
+                                    _actionQueryParamsClasses,
+                                    "${method.name}",
+                                    ORIGINAL_RESOURCE_PATH,
+                                    buildReadOnlyPathKeys(),
+                                    RestliRequestOptions.DEFAULT_OPTIONS,
+                                    #if(${method.isEntityAction()})$spec.idName#else null#end,
+                                    ## TODO: Not supporting streaming attachments now
+                                    null
+                                    );
+      #**##makeRequestAndReturn(
+      ${method.valueClassDisplayName},
+      ${method.valueClassDisplayName},
+      "resp.getEntity()",
+            $withEG
+          )##
+      }
+    #end ## foreach
+  #end ## end withEG
 #end ## is_interface
