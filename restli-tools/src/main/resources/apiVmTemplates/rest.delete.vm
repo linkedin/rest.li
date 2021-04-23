@@ -14,78 +14,71 @@
    limitations under the License.
 *#
 #if($is_interface)
-  #if($method.hasOptionalParams() || $method.hasProjectionParams())
+  #foreach($withEG in [true, false])
+    #if($method.hasOptionalParams() || $method.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<Void> delete(
+        #if (!${spec.getResource().hasSimple()})
+          $spec.keyClassDisplayName $spec.idName#if($method.hasRequiredParams() || $withEG),#end
+        #end
+          #**##methodParamsWithEGroup($method, false, $withEG)##
+        );
+    #end
+
     #doc($method.schema.doc)
     public CompletionStage<Void> delete(
       #if (!${spec.getResource().hasSimple()})
-        $spec.keyClassDisplayName $spec.idName#if($method.hasRequiredParams()),#end
+        $spec.keyClassDisplayName $spec.idName#if( $method.hasParams() || $withEG),#end
       #end
-        #**##methodParams($method, false)##
-      );
-  #end
-
-  #doc($method.schema.doc)
-  public CompletionStage<Void> delete(
-    #if (!${spec.getResource().hasSimple()})
-      $spec.keyClassDisplayName $spec.idName#if( $method.hasParams()),#end
-    #end
-      #**##methodParams($method, true)##
-      );
+        #**##methodParamsWithEGroup($method, true, $withEG)##
+        );
+  #end ## end withEG
 #optionalParamClass($method)
 #else ## is_interface
-  #if($method.hasOptionalParams() || $method.hasProjectionParams())
+  #foreach($withEG in [true, false])
+    #if($method.hasOptionalParams() || $method.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<Void> delete(
+        #if (!${spec.getResource().hasSimple()})
+          $spec.keyClassDisplayName $spec.idName#if($method.hasRequiredParams() || $withEG),#end
+        #end
+          #**##methodParamsWithEGroup($method, false, $withEG)##
+        ) {
+        return delete(#if(${spec.idName})$spec.idName,#end
+            #**##optionalMethodCallArgsWithEGroup($method, $withEG)##
+        );
+      }
+    #end
+
     #doc($method.schema.doc)
     public CompletionStage<Void> delete(
       #if (!${spec.getResource().hasSimple()})
-        $spec.keyClassDisplayName $spec.idName#if($method.hasRequiredParams()),#end
+        $spec.keyClassDisplayName $spec.idName#if( $method.hasParams() || $withEG),#end
       #end
-        #**##methodParams($method, false)##
-      ) {
-      return delete(#if(${spec.idName})$spec.idName,#end
-          #**##optionalMethodCallArgs($method)##
-      );
+        #**##methodParamsWithEGroup($method, true, $withEG)##
+        ) {
+      #**##paramsRequestMap($method)##
+      DeleteRequest<${spec.entityClassName}> request = new DeleteRequest<>(
+          Collections.emptyMap(),
+          Collections.emptyList(),
+          _resourceSpec,
+          queryParams,
+          queryParamClasses,
+          ORIGINAL_RESOURCE_PATH,
+          buildReadOnlyPathKeys(),
+          RestliRequestOptions.DEFAULT_OPTIONS,
+          #if(${spec.idName})
+      #**#$spec.idName##
+          #else
+      #**#null##
+          #end
+          );
+      #**##makeRequestAndReturn(
+        "Void",
+        "?",
+        "(Void) null",
+        $withEG
+      )##      
     }
-  #end
-
-  #doc($method.schema.doc)
-  public CompletionStage<Void> delete(
-    #if (!${spec.getResource().hasSimple()})
-      $spec.keyClassDisplayName $spec.idName#if( $method.hasParams()),#end
-    #end
-      #**##methodParams($method, true)##
-      ) {
-    #**##paramsRequestMap($method)##
-    DeleteRequest<${spec.entityClassName}> request = new DeleteRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        _resourceSpec,
-        queryParams,
-        queryParamClasses,
-        ORIGINAL_RESOURCE_PATH,
-        buildReadOnlyPathKeys(),
-        RestliRequestOptions.DEFAULT_OPTIONS,
-        #if(${spec.idName})
-    #**#$spec.idName##
-        #else
-    #**#null##
-        #end
-        );
-    CompletableFuture<Void> result = new CompletableFuture<>();
-    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
-        responseTry -> {
-          if (responseTry.isFailed()) {
-            result.completeExceptionally(responseTry.getError());
-          } else {
-            Response<?> resp = responseTry.get();
-            if (resp.hasError()) {
-              result.completeExceptionally(resp.getError());
-            } else {
-              result.complete((Void) null);
-            }
-          }
-          return Success.of((Void) null);
-        });
-    _engine.run(responseTask);
-    return result;
-  }
+  #end ## end withEG
 #end ## is_interface
