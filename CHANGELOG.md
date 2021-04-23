@@ -13,7 +13,10 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.18.1] - 2021-04-22
 - Add fluent client API for FINDER and BATCH_FINDER methods.
+- Fix a bug when converting enableClusterSubsetting config to Boolean in ServicePropertiesJsonSerializer
 
 ## [29.18.0] - 2021-04-20
 - Use host FQDN instead of nodeUri to get D2 subsetting metadata
@@ -4914,7 +4917,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.1...master
+[29.18.1]: https://github.com/linkedin/rest.li/compare/v29.18.0...v29.18.1
 [29.18.0]: https://github.com/linkedin/rest.li/compare/v29.17.4...v29.18.0
 [29.17.4]: https://github.com/linkedin/rest.li/compare/v29.17.3...v29.17.4
 [29.17.3]: https://github.com/linkedin/rest.li/compare/v29.17.2...v29.17.3
