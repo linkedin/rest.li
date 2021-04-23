@@ -165,6 +165,7 @@ public class TestParSeqBasedFluentClientApiWithExecutionGroup extends RestLiInte
     Assert.assertTrue(hasTask("greetings batch_get(reqs: 1, ids: 2)",t.getTrace()));
 
 
+    // Testing read the completion Stage within the runnable: Not allowed; should fail
     results.clear();
     try
     {
@@ -173,14 +174,14 @@ public class TestParSeqBasedFluentClientApiWithExecutionGroup extends RestLiInte
             try {
               results.add(greetings.get(1L));
               results.add(greetings.get(1L));
-              results.get(0).toCompletableFuture().get(1000, TimeUnit.MILLISECONDS);
+              results.get(0).toCompletableFuture().get(500, TimeUnit.MILLISECONDS);
             } catch (Exception e)
             {
               throw new RuntimeException(e);
             }
           }
       );
-      Assert.fail("Should fail due: the CompletionStage cannot be read ");
+      Assert.fail("Should fail: the CompletionStage cannot be read ");
     }
     catch (Exception e)
     {

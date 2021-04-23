@@ -184,16 +184,6 @@
     #end
 #end
 
-#macro(methodParams $method $includeOptional)
-  #set($hasOptionalParams = $includeOptional && ($method.hasOptionalParams() || $method.hasProjectionParams()))
-  #foreach($param in $method.requiredParameters)
-    $param.paramClassDisplayName $param.paramName#if( $foreach.hasNext || $hasOptionalParams),#end
-  #end
-  #if($hasOptionalParams)
-    Function<${util.restMethodToClassPrefix($method.methodName)}OptionalParameters, ${util.restMethodToClassPrefix($method.methodName)}OptionalParameters> optionalParamsProvider
-  #end
-#end
-
 #macro(methodParamsWithEGroup $method $includeOptional $withEG)
   #set($hasOptionalParams = $includeOptional && ($method.hasOptionalParams() || $method.hasProjectionParams()))
   #foreach($param in $method.requiredParameters)
@@ -204,20 +194,6 @@
   #end 
   #if($withEG)ExecutionGroup executionGroup #end
 
-#end
-
-#macro(actionMethodParams $method $includeOptional)
-  #set($hasOptionalParams = $includeOptional && $method.hasOptionalParams())
-  #if(${method.isEntityAction()})
-    $spec.keyClassName $spec.idName,
-  #end
-  #foreach($param in $method.getRequiredParameters())
-    $param.paramClassDisplayName $param.paramName #if($foreach.hasNext || $hasOptionalParams),#end
-  #end
-
-  #if($hasOptionalParams)
-    Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider
-  #end
 #end
 
 #macro(actionMethodParamsWithEGroup $method $includeOptional $withEG)
@@ -235,15 +211,6 @@
   #if($withEG)ExecutionGroup executionGroup #end
 #end
 
-#macro(actionMethodProviderParams $method)
-    #if(${method.isEntityAction()})
-    $spec.keyClassName $spec.idName #if(${method.hasActionParams()}),#end
-    #end
-    #if(${method.hasActionParams()})
-    Function<$actionParamClassName, $actionParamClassName> paramsProvider
-    #end
-#end
-
 #macro(actionMethodProviderParamsWithEGroup $method $withEG)
     #set($hasParams = ($method.isEntityAction() || $method.hasActionParams()))
     #if(${method.isEntityAction()})
@@ -258,15 +225,6 @@
 #macro(assocKeyCallArgs $method)
   #foreach($assocKey in $method.assocKeys)
     $assocKey.name#if( $foreach.hasNext || $method.parameters.size() > 0 || $method.hasProjectionParams()),#end
-  #end
-#end
-
-#macro(optionalMethodCallArgs $method)
-  #foreach($param in $method.requiredParameters)
-    $param.paramName#if( $foreach.hasNext || $method.hasOptionalParams() || $method.hasProjectionParams()),#end
-  #end
-  #if(($method.hasOptionalParams() || $method.hasProjectionParams()))
-    Function.identity()
   #end
 #end
 
