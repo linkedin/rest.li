@@ -32,7 +32,7 @@ import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.util.FluentClientUtils;
 import com.linkedin.restli.client.AbstractRequestBuilder;
-import com.linkedin.restli.client.FluentClient;
+import com.linkedin.restli.client.ParSeqBasedFluentClient;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
@@ -57,7 +57,7 @@ import javax.annotation.Generated;
 
 @Generated("Generated from $spec.sourceIdlName")
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class ${spec.className}${class_name_suffix} implements ${spec.toImplementInterfaceName}, FluentClient {
+public class ${spec.className}${class_name_suffix} implements ${spec.toImplementInterfaceName}, ParSeqBasedFluentClient {
   private final static String ORIGINAL_RESOURCE_PATH = "$util.getResourcePath($spec.resource.path)";
   private static ResourceSpec _resourceSpec;
   #if(${spec.getPathKeys().size()} > 0)

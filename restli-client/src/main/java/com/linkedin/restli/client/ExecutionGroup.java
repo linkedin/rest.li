@@ -33,9 +33,9 @@ import java.util.Map;
  * The request grouped by execution group will be further grouped by Client so requests will
  * be batched per Client.
  *
- * {@link ExecutionGroup} is not supposed to be instantiated directly. Check {@link FluentClient} to see the
- * method that instantiate them. {@link FluentClient} also provides convenient method to use
- * {@link ##batchOn(Runnable, FluentClient...)}
+ * {@link ExecutionGroup} is not supposed to be instantiated directly. Check {@link ParSeqBasedFluentClient} to see the
+ * method that instantiate them. {@link ParSeqBasedFluentClient} also provides convenient method to use
+ * {@link ##batchOn(Runnable, ParSeqBasedFluentClient...)}
  *
  * Once given an {@link ExecutionGroup} instance, are two way to use it:
  * Method 1: Using it with the fluent api and ask the executionGroup to execute explicitly.
@@ -93,11 +93,11 @@ import java.util.Map;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ExecutionGroup
 {
-  private final Map<FluentClient, List<Task<?>>> _clientToTaskListMap = new HashMap<>();
+  private final Map<ParSeqBasedFluentClient, List<Task<?>>> _clientToTaskListMap = new HashMap<>();
   private final Engine _engine;
   private boolean _fired = false;
 
-  private List<FluentClient> _fluentClientAll; // filled by UClient when executionGroup is created; Used for batchOn
+  private List<ParSeqBasedFluentClient> _fluentClientAll; // filled by UClient when executionGroup is created; Used for batchOn
   static final String MULTIPLE_EXECUTION_ERROR = "Operation not supported, the executionGroup has already been executed.";
   static final String ADD_AFTER_EXECUTION_ERROR = "Operation not supported, the execution group has already been executed.";
 
@@ -120,7 +120,7 @@ public class ExecutionGroup
       throw new IllegalStateException(MULTIPLE_EXECUTION_ERROR);
     }
     _fired = true;
-    for (Map.Entry<FluentClient, List<Task<?>>> entry : _clientToTaskListMap.entrySet()) {
+    for (Map.Entry<ParSeqBasedFluentClient, List<Task<?>>> entry : _clientToTaskListMap.entrySet()) {
       List<Task<?>> taskList = entry.getValue();
       // the Task.par(Iterable) version does not fast-fail comparing to Task.par(Task...)
       ParTask<Object> perFluentClientTasks =
@@ -143,20 +143,20 @@ public class ExecutionGroup
    *                      will be batched.
    * @throws Exception
    */
-  public void batchOn(Runnable runnable, FluentClient... fluentClients) throws Exception
+  public void batchOn(Runnable runnable, ParSeqBasedFluentClient... fluentClients) throws Exception
   {
-    List<FluentClient> batchedClients =
-        fluentClients.length > 0 ? new ArrayList<FluentClient>(Arrays.asList(fluentClients))
+    List<ParSeqBasedFluentClient> batchedClients =
+        fluentClients.length > 0 ? new ArrayList<ParSeqBasedFluentClient>(Arrays.asList(fluentClients))
             : _fluentClientAll;
 
-    for (FluentClient fluentClient : batchedClients) {
+    for (ParSeqBasedFluentClient fluentClient : batchedClients) {
       fluentClient.setExecutionGroup(this);
     }
     try {
       runnable.run();
       this.execute();
     } finally {
-      for (FluentClient fluentClient : batchedClients) {
+      for (ParSeqBasedFluentClient fluentClient : batchedClients) {
         fluentClient.removeExecutionGroup();
       }
     }
@@ -164,12 +164,12 @@ public class ExecutionGroup
 
   /**
    * To add ParSeq tasks to the this {@link ExecutionGroup}.
-   * The tasks belong to same {@link FluentClient} are supposed to be run as a batch together
+   * The tasks belong to same {@link ParSeqBasedFluentClient} are supposed to be run as a batch together
    *
-   * @param client the {@link FluentClient} that this tasks came from.
-   * @param tasks the tasks to be added to the {@link FluentClient}, will be grouped by the client
+   * @param client the {@link ParSeqBasedFluentClient} that this tasks came from.
+   * @param tasks the tasks to be added to the {@link ParSeqBasedFluentClient}, will be grouped by the client
    */
-  public void addTaskByFluentClient(FluentClient client, Task<?>... tasks)
+  public void addTaskByFluentClient(ParSeqBasedFluentClient client, Task<?>... tasks)
   {
     if (!_fired)
     {
@@ -190,12 +190,12 @@ public class ExecutionGroup
    *
    * @param fluentClientAll all the FluentClients that can be batched on
    */
-  void setFluentClientAll(List<FluentClient> fluentClientAll)
+  void setFluentClientAll(List<ParSeqBasedFluentClient> fluentClientAll)
   {
     _fluentClientAll = fluentClientAll;
   }
 
-  Map<FluentClient, List<Task<?>>> getClientToTaskListMap()
+  Map<ParSeqBasedFluentClient, List<Task<?>>> getClientToTaskListMap()
   {
     return _clientToTaskListMap;
   }

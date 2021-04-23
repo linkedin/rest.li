@@ -19,8 +19,12 @@ import java.util.List;
 
 /**
  * A common interface for client that implements FluentAPIs
+ *
+ * Note currently the FluentClient is ParSeq based and the execution
+ * of request is coupled with ParSeq {@link Engine} and {@link com.linkedin.parseq.Task}
+ *
  */
-public interface FluentClient
+public interface ParSeqBasedFluentClient
 {
 
   ThreadLocal<List<ExecutionGroup>> _executionGroup = new ThreadLocal<List<ExecutionGroup>>()
@@ -85,7 +89,7 @@ public interface FluentClient
 
   /**
    * This method will generate an {@link ExecutionGroup} instance and run its
-   * {@link ExecutionGroup#batchOn(Runnable, FluentClient...)} method, with this fluentClient being the only {@link FluentClient}
+   * {@link ExecutionGroup#batchOn(Runnable, ParSeqBasedFluentClient...)} method, with this fluentClient being the only {@link ParSeqBasedFluentClient}
    * in the argument.
    *
    * @param runnable the runnable that executes user's logic

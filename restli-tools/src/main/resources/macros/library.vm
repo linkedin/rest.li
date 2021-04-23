@@ -177,8 +177,8 @@
   #end
 #end
 
-#macro(assocKeyParams $method $includeOptional)
-    #set($hasMoreParams = $method.hasRequiredParams() || ($includeOptional && ($method.hasOptionalParams() || $method.hasProjectionParams())))
+#macro(assocKeyParams $method $includeOptional $withEG)
+    #set($hasMoreParams = $method.hasRequiredParams() || ($includeOptional && ($method.hasOptionalParams() || $method.hasProjectionParams())) || $withEG)
     #foreach($assocKey in $method.assocKeys)
       $assocKey.declaredType $assocKey.name#if( $foreach.hasNext || $hasMoreParams),#end
     #end

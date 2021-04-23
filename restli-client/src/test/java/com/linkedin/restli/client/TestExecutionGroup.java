@@ -189,7 +189,7 @@ public class TestExecutionGroup
   }
 }
 
-class MockBatchableResource implements FluentClient
+class MockBatchableResource implements ParSeqBasedFluentClient
 {
   public String get(Long key)
   {
