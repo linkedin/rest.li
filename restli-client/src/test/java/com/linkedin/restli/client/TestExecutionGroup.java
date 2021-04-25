@@ -46,7 +46,8 @@ public class TestExecutionGroup
     eg = new ExecutionGroup(_engine);
     client1 = mock(MockBatchableResource.class);
     when(client1.get(any())).thenReturn("1");
-    task1 = Task.callable(() -> {
+    task1 = Task.callable(() ->
+    {
       client1.get(1L);
       return null;
     });
@@ -113,7 +114,8 @@ public class TestExecutionGroup
   public void testCallableExecution() throws Exception
   {
     MockBatchableResource client = new MockBatchableResource();
-    eg.batchOn(() -> {
+    eg.batchOn(() ->
+    {
       Assert.assertTrue(client.validateExecutionGroupFromContext(eg));
     }, client);
   }
@@ -122,20 +124,25 @@ public class TestExecutionGroup
   public void testCallableExecution_Nested() throws Exception
   {
     MockBatchableResource client = new MockBatchableResource();
-    eg.batchOn(() -> {
+    eg.batchOn(() ->
+    {
       Assert.assertTrue(client.validateExecutionGroupFromContext(eg)); //outer - eg
       ExecutionGroup eg2 = new ExecutionGroup(_engine);
-      try {
-        eg2.batchOn(() -> {
+      try
+      {
+        eg2.batchOn(() ->
+        {
           Assert.assertTrue(client.validateExecutionGroupFromContext(eg2)); // inner - eg2
         }, client);
-      } catch (Exception ignored) {
+      } catch (Exception ignored)
+      {
       }
       Assert.assertTrue(client.validateExecutionGroupFromContext(eg)); // outer -eg
     }, client);
   }
 
-  @Test public void testExecuteOnlyOnce() throws Exception
+  @Test
+  public void testExecuteOnlyOnce() throws Exception
   {
     ExecutionGroup eg = new ExecutionGroup(_engine);
     MockBatchableResource client = new MockBatchableResource();
@@ -145,14 +152,14 @@ public class TestExecutionGroup
     {
       eg.execute();
       Assert.fail("Should fail here");
-    }
-    catch (IllegalStateException e)
+    } catch (IllegalStateException e)
     {
       Assert.assertEquals(ExecutionGroup.MULTIPLE_EXECUTION_ERROR, e.getMessage());
     }
   }
 
-  @Test public void testAddingAfterExecutedNotAllowed() throws Exception
+  @Test
+  public void testAddingAfterExecutedNotAllowed() throws Exception
   {
     ExecutionGroup eg = new ExecutionGroup(_engine);
     MockBatchableResource client = new MockBatchableResource();
@@ -162,20 +169,20 @@ public class TestExecutionGroup
     {
       eg.addTaskByFluentClient(client, task1);
       Assert.fail("Should fail here");
-    }
-    catch (IllegalStateException e)
+    } catch (IllegalStateException e)
     {
       Assert.assertEquals(ExecutionGroup.ADD_AFTER_EXECUTION_ERROR, e.getMessage());
     }
-
   }
 
   @AfterClass
   void tearDown() throws Exception
   {
-    if (_parSeqUnitTestHelper != null) {
+    if (_parSeqUnitTestHelper != null)
+    {
       _parSeqUnitTestHelper.tearDown();
-    } else {
+    } else
+    {
       throw new RuntimeException(
           "Tried to shut down Engine but it either has not even been created or has " + "already been shut down");
     }
@@ -183,7 +190,8 @@ public class TestExecutionGroup
 
   void awaitAllTasks(Task... tasks) throws Exception
   {
-    for (Task t : tasks) {
+    for (Task t : tasks)
+    {
       t.await();
     }
   }
@@ -211,6 +219,7 @@ class MockBatchableResource implements ParSeqBasedFluentClient
   {
     return null;
   }
+
   @Override
   public void runBatchOnClient(Runnable runnable) throws Exception
   {

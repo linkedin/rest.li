@@ -69,7 +69,7 @@ public interface ParSeqBasedFluentClient
   default void removeExecutionGroup()
   {
     List<ExecutionGroup> groupList = _executionGroup.get();
-    if(groupList.size() > 0)
+    if (groupList.size() > 0)
     {
       groupList.remove(groupList.size() - 1);
     }
@@ -96,5 +96,4 @@ public interface ParSeqBasedFluentClient
    * @throws Exception the exceptions encountered when running the runnable
    */
   void runBatchOnClient(Runnable runnable) throws Exception;
-
 }

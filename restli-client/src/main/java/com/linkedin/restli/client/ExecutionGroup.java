@@ -120,11 +120,11 @@ public class ExecutionGroup
       throw new IllegalStateException(MULTIPLE_EXECUTION_ERROR);
     }
     _fired = true;
-    for (Map.Entry<ParSeqBasedFluentClient, List<Task<?>>> entry : _clientToTaskListMap.entrySet()) {
+    for (Map.Entry<ParSeqBasedFluentClient, List<Task<?>>> entry : _clientToTaskListMap.entrySet())
+    {
       List<Task<?>> taskList = entry.getValue();
       // the Task.par(Iterable) version does not fast-fail comparing to Task.par(Task...)
-      ParTask<Object> perFluentClientTasks =
-          Task.par(taskList);
+      ParTask<Object> perFluentClientTasks = Task.par(taskList);
       _clientToTaskListMap.remove(entry.getKey());
       // starts a plan for tasks from one client due to performance consideration
       // TODO: optimize, use scheduleAndRun
@@ -149,14 +149,18 @@ public class ExecutionGroup
         fluentClients.length > 0 ? new ArrayList<ParSeqBasedFluentClient>(Arrays.asList(fluentClients))
             : _fluentClientAll;
 
-    for (ParSeqBasedFluentClient fluentClient : batchedClients) {
+    for (ParSeqBasedFluentClient fluentClient : batchedClients)
+    {
       fluentClient.setExecutionGroup(this);
     }
-    try {
+    try
+    {
       runnable.run();
       this.execute();
-    } finally {
-      for (ParSeqBasedFluentClient fluentClient : batchedClients) {
+    } finally
+    {
+      for (ParSeqBasedFluentClient fluentClient : batchedClients)
+      {
         fluentClient.removeExecutionGroup();
       }
     }
