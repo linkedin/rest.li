@@ -88,10 +88,10 @@ project.ext.externalDependency = [
   'mail': 'javax.mail:mail:1.4.4',
   'netty': 'io.netty:netty-all:4.1.41.Final',
   'objenesis': 'org.objenesis:objenesis:1.2',
-  'parseq': 'com.linkedin.parseq:parseq:5.1.1',
-  'parseq_tracevis': 'com.linkedin.parseq:parseq-tracevis:5.1.1',
-  'parseq_restClient': 'com.linkedin.parseq:parseq-restli-client:5.1.1',
-  'parseq_testApi': 'com.linkedin.parseq:parseq-test-api:5.1.1',
+  'parseq': 'com.linkedin.parseq:parseq:5.1.2',
+  'parseq_tracevis': 'com.linkedin.parseq:parseq-tracevis:5.1.2',
+  'parseq_restClient': 'com.linkedin.parseq:parseq-restli-client:5.1.2',
+  'parseq_testApi': 'com.linkedin.parseq:parseq-test-api:5.1.2',
   'servletApi': 'javax.servlet:javax.servlet-api:3.1.0',
   'slf4jApi': 'org.slf4j:slf4j-api:1.7.30',
   'slf4jLog4j2': 'org.apache.logging.log4j:log4j-slf4j-impl:2.0.2',
@@ -230,6 +230,13 @@ subprojects {
     repositories {
       mavenLocal()
       mavenCentral()
+      maven {
+        url "https://linkedin.jfrog.io/artifactory/open-source"
+      }
+      maven {
+        url "https://linkedin.jfrog.io/artifactory/maven-bintray-temp"
+      }
+      // TODO: Remove once Bintray is down for good
       maven {
         url "https://dl.bintray.com/linkedin/maven"
       }
