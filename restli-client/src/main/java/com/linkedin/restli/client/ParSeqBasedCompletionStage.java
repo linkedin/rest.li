@@ -561,7 +561,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
     return _task.toCompletionStage().toCompletableFuture();
   }
 
-  protected Task<T> getTask()
+  public Task<T> getTask()
   {
     return _task;
   }

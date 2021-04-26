@@ -14,70 +14,63 @@
    limitations under the License.
 *#
 #if($is_interface)
-  #if($finder.hasOptionalParams() || $finder.hasProjectionParams())
-    #doc($method.schema.doc)
-    public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, false)##
-        #**##methodParams($finder, false)##
-    );
-  #end
+  #foreach($withEG in [true, false])
+    #if($finder.hasOptionalParams() || $finder.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, false, $withEG)##
+          #**##methodParamsWithEGroup($finder, false, $withEG)##
+      );
+    #end
 
-  #doc($finder.schema.doc)
-  public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, true)##
-      #**##methodParams($finder, true)##
-  );
+    #doc($finder.schema.doc)
+    public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, true, $withEG)##
+        #**##methodParamsWithEGroup($finder, true, $withEG)##
+    );
+  #end ## end withEG
   #optionalParamClass($finder)
 #else
-  #if($finder.hasOptionalParams() || $finder.hasProjectionParams())
-    #doc($method.schema.doc)
-    public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, false)##
-        #**##methodParams($finder, false)##
-         ) {
-      return ${finder.methodName}(#assocKeyCallArgs($finder)##
-          #**##optionalMethodCallArgs($finder)##
-      );
-    }
-  #end
-
-  #doc($finder.schema.doc)
-  public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, true)##
-      #**##methodParams($finder, true)##
-      ) {
-    #**##paramsRequestMap($finder)##
-    #if($finder.assocKeys.size() > 0)
-      CompoundKey assocKey = new CompoundKey();
-      #foreach($assocKey in $finder.assocKeys)
-        assocKey.append("$assocKey.name", $assocKey.name);
-      #end
+  #foreach($withEG in [true, false])
+    #if($finder.hasOptionalParams() || $finder.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, false, $withEG)##
+          #**##methodParamsWithEGroup($finder, false, $withEG)##
+          ) {
+        return ${finder.methodName}(#assocKeyCallArgs($finder)##
+            #**##optionalMethodCallArgsWithEGroup($finder, $withEG)##
+        );
+      }
     #end
-    queryParams.put(RestConstants.QUERY_TYPE_PARAM, "$finder.name");
-    FindRequest<${spec.entityClassName}> request = new FindRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        ${spec.entityClassName}.class,
-        _resourceSpec,
-        queryParams,
-        queryParamClasses,
-        "$finder.name",
-        ORIGINAL_RESOURCE_PATH,
-        buildReadOnlyPathKeys(),
-        RestliRequestOptions.DEFAULT_OPTIONS,
-        #**##if($finder.assocKeys.size() > 0)assocKey #else null #end);
-    CompletableFuture<CollectionResponse<${spec.entityClassName}>> result = new CompletableFuture<>();
-    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
-        responseTry -> {
-          if (responseTry.isFailed()) {
-            result.completeExceptionally(responseTry.getError());
-          } else {
-            Response<CollectionResponse<${spec.entityClassName}>> resp = responseTry.get();
-            if (resp.hasError()) {
-              result.completeExceptionally(resp.getError());
-            } else {
-              result.complete(resp.getEntity());
-            }
+
+    #doc($finder.schema.doc)
+    public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, true, $withEG)##
+        #**##methodParamsWithEGroup($finder, true, $withEG)##
+        ) {
+      #**##paramsRequestMap($finder)##
+      #if($finder.assocKeys.size() > 0)
+        CompoundKey assocKey = new CompoundKey();
+        #foreach($assocKey in $finder.assocKeys)
+          assocKey.append("$assocKey.name", $assocKey.name);
+        #end
+      #end
+      queryParams.put(RestConstants.QUERY_TYPE_PARAM, "$finder.name");
+      FindRequest<${spec.entityClassName}> request = new FindRequest<>(
+          Collections.emptyMap(),
+          Collections.emptyList(),
+          ${spec.entityClassName}.class,
+          _resourceSpec,
+          queryParams,
+          queryParamClasses,
+          "$finder.name",
+          ORIGINAL_RESOURCE_PATH,
+          buildReadOnlyPathKeys(),
+          RestliRequestOptions.DEFAULT_OPTIONS,
+          #**##if($finder.assocKeys.size() > 0)assocKey #else null #end);
+      #**##makeRequestAndReturn(
+      "CollectionResponse<${spec.entityClassName}>",
+      "CollectionResponse<${spec.entityClassName}>",
+      "resp.getEntity()",
+                  $withEG
+                )##
           }
-          return Success.of((Void) null);
-        });
-    _engine.run(responseTask);
-    return result;
-  }
+  #end ## end withEG
 #end ## is_interface

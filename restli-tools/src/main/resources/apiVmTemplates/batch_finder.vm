@@ -14,33 +14,36 @@
    limitations under the License.
 *#
 #if($is_interface)
+  #foreach($withEG in [true, false])
   #if($finder.hasOptionalParams() || $finder.hasProjectionParams())
     #doc($method.schema.doc)
-    public CompletionStage<BatchCollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, false)##
-        #**##methodParams($finder, false)##
+    public CompletionStage<BatchCollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, false, $withEG)##
+        #**##methodParamsWithEGroup($finder, false, $withEG)##
     );
   #end
 
   #doc($finder.schema.doc)
-  public CompletionStage<BatchCollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, true)##
-      #**##methodParams($finder, true)##
+  public CompletionStage<BatchCollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, true, $withEG)##
+      #**##methodParamsWithEGroup($finder, true, $withEG)##
   );
+  #end ## end withEG
   #optionalParamClass($finder)
 #else
+  #foreach($withEG in [true, false])
   #if($finder.hasOptionalParams() || $finder.hasProjectionParams())
     #doc($method.schema.doc)
-    public CompletionStage<BatchCollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, false)##
-        #**##methodParams($finder, false)##
+    public CompletionStage<BatchCollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, false, $withEG)##
+        #**##methodParamsWithEGroup($finder, false, $withEG)##
          ) {
       return ${finder.methodName}(#assocKeyCallArgs($finder)##
-          #**##optionalMethodCallArgs($finder)##
+          #**##optionalMethodCallArgsWithEGroup($finder, $withEG)##
       );
     }
   #end
 
   #doc($finder.schema.doc)
-  public CompletionStage<BatchCollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, true)##
-      #**##methodParams($finder, true)##
+  public CompletionStage<BatchCollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, true, $withEG)##
+      #**##methodParamsWithEGroup($finder, true, $withEG)##
       ) {
     #**##paramsRequestMap($finder)##
     #if($finder.assocKeys.size() > 0)
@@ -62,22 +65,12 @@
         buildReadOnlyPathKeys(),
         RestliRequestOptions.DEFAULT_OPTIONS,
         #**##if($finder.assocKeys.size() > 0)assocKey #else null #end);
-    CompletableFuture<BatchCollectionResponse<${spec.entityClassName}>> result = new CompletableFuture<>();
-    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
-        responseTry -> {
-          if (responseTry.isFailed()) {
-            result.completeExceptionally(responseTry.getError());
-          } else {
-            Response<BatchCollectionResponse<${spec.entityClassName}>> resp = responseTry.get();
-            if (resp.hasError()) {
-              result.completeExceptionally(resp.getError());
-            } else {
-              result.complete(resp.getEntity());
-            }
-          }
-          return Success.of((Void) null);
-        });
-    _engine.run(responseTask);
-    return result;
+      #**##makeRequestAndReturn(
+      "BatchCollectionResponse<${spec.entityClassName}>",
+      "BatchCollectionResponse<${spec.entityClassName}>",
+      "resp.getEntity()",
+                  $withEG
+                )##
   }
+  #end ## end withEG
 #end ## is_interface

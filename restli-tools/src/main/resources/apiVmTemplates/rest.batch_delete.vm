@@ -14,67 +14,60 @@
    limitations under the License.
 *#
 #if($is_interface)
-  #if($method.hasOptionalParams() || $method.hasProjectionParams())
+  #foreach($withEG in [true, false])
+    #if($method.hasOptionalParams() || $method.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<Map<${spec.keyClassDisplayName}, UpdateStatus>> batchDelete(
+          Set<$spec.keyClassDisplayName> ids#if($method.hasRequiredParams() || $withEG),#end
+          #**##methodParamsWithEGroup($method, false, $withEG)##
+          );
+    #end
+
     #doc($method.schema.doc)
     public CompletionStage<Map<${spec.keyClassDisplayName}, UpdateStatus>> batchDelete(
-        Set<$spec.keyClassDisplayName> ids#if($method.hasRequiredParams()),#end
-        #**##methodParams($method, false)##
+        Set<$spec.keyClassDisplayName> ids#if( $method.hasParams() || $withEG),#end
+        #**##methodParamsWithEGroup($method, true, $withEG)##
         );
-  #end
-
-  #doc($method.schema.doc)
-  public CompletionStage<Map<${spec.keyClassDisplayName}, UpdateStatus>> batchDelete(
-      Set<$spec.keyClassDisplayName> ids#if( $method.hasParams()),#end
-      #**##methodParams($method, true)##
-      );
+  #end ## end withEG
 #optionalParamClass($method)
 #else ## is_interface
-  #if($method.hasOptionalParams() || $method.hasProjectionParams())
+  #foreach($withEG in [true, false])
+    #if($method.hasOptionalParams() || $method.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<Map<${spec.keyClassDisplayName}, UpdateStatus>> batchDelete(
+          Set<$spec.keyClassDisplayName> ids#if($method.hasRequiredParams() || $withEG),#end
+          #**##methodParamsWithEGroup($method, false, $withEG)##
+          ) {
+        return batchDelete(ids,
+            #**##optionalMethodCallArgsWithEGroup($method, $withEG)##
+        );
+      }
+    #end
+
     #doc($method.schema.doc)
     public CompletionStage<Map<${spec.keyClassDisplayName}, UpdateStatus>> batchDelete(
-        Set<$spec.keyClassDisplayName> ids#if($method.hasRequiredParams()),#end
-        #**##methodParams($method, false)##
+        Set<$spec.keyClassDisplayName> ids#if( $method.hasParams() || $withEG),#end
+        #**##methodParamsWithEGroup($method, true, $withEG)##
         ) {
-      return batchDelete(ids,
-          #**##optionalMethodCallArgs($method)##
-      );
+      Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
+      Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
+      #fillQueryParams($method)
+      queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
+      BatchDeleteRequest<${spec.keyClassDisplayName}, ${spec.entityClassName}> request = new BatchDeleteRequest<>(
+          Collections.emptyMap(),
+          Collections.emptyList(),
+          queryParams,
+          queryParamClasses,
+          _resourceSpec,
+          ORIGINAL_RESOURCE_PATH,
+          buildReadOnlyPathKeys(),
+          RestliRequestOptions.DEFAULT_OPTIONS);
+      #**##makeRequestAndReturn(
+        "Map<${spec.keyClassName}, UpdateStatus>",
+        "BatchKVResponse<${spec.keyClassName}, UpdateStatus>",
+        "resp.getEntity().getResults()",
+        $withEG
+      )##
     }
-  #end
-
-  #doc($method.schema.doc)
-  public CompletionStage<Map<${spec.keyClassDisplayName}, UpdateStatus>> batchDelete(
-      Set<$spec.keyClassDisplayName> ids#if( $method.hasParams()),#end
-      #**##methodParams($method, true)##
-      ) {
-    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
-    #fillQueryParams($method)
-    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, ids);
-    BatchDeleteRequest<${spec.keyClassDisplayName}, ${spec.entityClassName}> request = new BatchDeleteRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        queryParams,
-        queryParamClasses,
-        _resourceSpec,
-        ORIGINAL_RESOURCE_PATH,
-        buildReadOnlyPathKeys(),
-        RestliRequestOptions.DEFAULT_OPTIONS);
-    CompletableFuture<Map<${spec.keyClassDisplayName}, UpdateStatus>> result = new CompletableFuture<>();
-    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
-        responseTry -> {
-          if (responseTry.isFailed()) {
-            result.completeExceptionally(responseTry.getError());
-          } else {
-            Response<BatchKVResponse<${spec.keyClassDisplayName}, UpdateStatus>> response = responseTry.get();
-            if (response.hasError()) {
-              result.completeExceptionally(response.getError());
-            } else {
-              result.complete(response.getEntity().getResults());
-            }
-          }
-          return Success.of((Void) null);
-        });
-    _engine.run(responseTask);
-    return result;
-  }
+  #end ## end withEG
 #end ## is_interface
