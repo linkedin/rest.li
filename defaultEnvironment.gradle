@@ -2,6 +2,13 @@ subprojects {
   repositories {
     mavenCentral()
     maven {
+      url "https://linkedin.jfrog.io/artifactory/open-source"
+    }
+    maven {
+      url "https://linkedin.jfrog.io/artifactory/maven-bintray-temp"
+    }
+    // TODO: Remove once Bintray is down for good
+    maven {
       url  "https://dl.bintray.com/linkedin/maven"
     }
   }
