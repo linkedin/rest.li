@@ -184,7 +184,7 @@ public class TestExecutionGroup
     } else
     {
       throw new RuntimeException(
-          "Tried to shut down Engine but it either has not even been created or has " + "already been shut down");
+          "Tried to shut down Engine but it either has not even been created or has already been shut down");
     }
   }
 
