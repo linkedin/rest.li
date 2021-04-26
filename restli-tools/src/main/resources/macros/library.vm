@@ -40,7 +40,8 @@
   #end
 #end
 
-#macro(associateKeyParams)
+
+#macro(associateKeyParams $spec)
 #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
   ${assoc_key.bindingType} ${assoc_key.name}#if($foreach.hasNext),#end
 #end
@@ -48,13 +49,13 @@
 
 #macro(assocCompoundKeyGenInterface $spec)
   CompoundKey generate${util.nameCapsCase($spec.className)}CompoundKey(
-    #associateKeyParams
+    #associateKeyParams($spec)
   );
 #end
 
 #macro(assocCompoundKeyGenImpl $spec)
   public CompoundKey generate${util.nameCapsCase($spec.className)}CompoundKey(
-    #associateKeyParams
+    #associateKeyParams($spec)
   ) {
     return new Key().
       #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
@@ -81,6 +82,14 @@
       }
       #end
   }
+#end
+
+#macro(generateAssocKeyAsId $spec $method $checkAssoc)
+  #if($checkAssoc && ${spec.idName})
+  CompoundKey ${spec.idName} = generate${util.nameCapsCase($spec.className)}CompoundKey (
+        #assocKeyCallArgs($method, false)
+      );
+  #end
 #end
 
 #macro(optionalParamClass $method)
@@ -177,7 +186,7 @@
   #end
 #end
 
-#macro(assocKeyParams $method $includeOptional $withEG)
+#macro(assocKeyParamsWithOptAndEg $method $includeOptional $withEG)
     #set($hasMoreParams = $method.hasRequiredParams() || ($includeOptional && ($method.hasOptionalParams() || $method.hasProjectionParams())) || $withEG)
     #foreach($assocKey in $method.assocKeys)
       $assocKey.bindingType $assocKey.name#if( $foreach.hasNext || $hasMoreParams),#end
@@ -195,10 +204,19 @@
   #if($withEG)ExecutionGroup executionGroup #end
 #end
 
-#macro(actionMethodParamsWithEGroup $method $includeOptional $withEG)
+#macro(setIsEntityActionIdNeeded $method)
+  #set($isEntityActionIdNeeded = ${method.isEntityAction()} && !${method.getResourceSpec().getResource().hasSimple()})
+#end
+
+#macro(actionMethodParamsWithEGroup $method $includeOptional $withEG $checkAssoc)
   #set($hasOptionalParams = $includeOptional && $method.hasOptionalParams())
-  #if(${method.isEntityAction()})
-    $spec.keyClassName $spec.idName,
+  #setIsEntityActionIdNeeded($method)
+  #if($isEntityActionIdNeeded)
+    #if($checkAssoc && ${method.getResourceSpec().getResource().hasAssociation()})
+      #associateKeyParams(${method.getResourceSpec()})
+    #else
+      $spec.keyClassName $spec.idName
+    #end #if(${method.hasActionParams()} || $withEG),#end
   #end
   #foreach($param in $method.getRequiredParameters())
     $param.paramClassDisplayName $param.paramName #if($foreach.hasNext || ($hasOptionalParams || $withEG)),#end
@@ -210,10 +228,15 @@
   #if($withEG)ExecutionGroup executionGroup #end
 #end
 
-#macro(actionMethodProviderParamsWithEGroup $method $withEG)
+#macro(actionMethodProviderParamsWithEGroup $method $withEG $checkAssoc)
     #set($hasParams = ($method.isEntityAction() || $method.hasActionParams()))
-    #if(${method.isEntityAction()})
-    $spec.keyClassName $spec.idName #if(${method.hasActionParams()} || $withEG),#end
+    #setIsEntityActionIdNeeded($method)
+    #if($isEntityActionIdNeeded)
+      #if($checkAssoc && ${method.getResourceSpec().getResource().hasAssociation()})
+        #associateKeyParams(${method.getResourceSpec()})
+      #else
+        $spec.keyClassName $spec.idName
+      #end #if(${method.hasActionParams()} || $withEG),#end
     #end
     #if(${method.hasActionParams()})
     Function<$actionParamClassName, $actionParamClassName> paramsProvider #if($withEG), #end
@@ -221,9 +244,9 @@
     #if($withEG)ExecutionGroup executionGroup #end
 #end
 
-#macro(assocKeyCallArgs $method)
+#macro(assocKeyCallArgs $method $checkParams)
   #foreach($assocKey in $method.assocKeys)
-    $assocKey.name#if( $foreach.hasNext || $method.parameters.size() > 0 || $method.hasProjectionParams()),#end
+    $assocKey.name#if( $foreach.hasNext || ($checkParams && ($method.parameters.size() > 0 || $method.hasProjectionParams()))),#end
   #end
 #end
 
