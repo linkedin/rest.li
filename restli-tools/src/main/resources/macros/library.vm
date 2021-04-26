@@ -191,9 +191,8 @@
   #end
   #if($hasOptionalParams)
     Function<${util.restMethodToClassPrefix($method.methodName)}OptionalParameters, ${util.restMethodToClassPrefix($method.methodName)}OptionalParameters> optionalParamsProvider #if($withEG),#end
-  #end 
+  #end
   #if($withEG)ExecutionGroup executionGroup #end
-
 #end
 
 #macro(actionMethodParamsWithEGroup $method $includeOptional $withEG)
@@ -207,7 +206,7 @@
 
   #if($hasOptionalParams)
     Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider #if($withEG), #end
-  #end 
+  #end
   #if($withEG)ExecutionGroup executionGroup #end
 #end
 
@@ -234,7 +233,7 @@
   #end
   #if(($method.hasOptionalParams() || $method.hasProjectionParams()))
     Function.identity() #if($withEG), #end
-  #end 
+  #end
   #if($withEG) executionGroup #end
 #end
 
