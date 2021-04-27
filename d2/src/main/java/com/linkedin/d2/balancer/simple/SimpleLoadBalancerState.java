@@ -679,6 +679,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                                   Map<URI, TrackerClient> potentialClients)
   {
     SubsettingStrategy<URI> subsettingStrategy = _subsettingStrategyFactory.get(serviceName, minClusterSubsetSize, partitionId);
+    final int LOG_SUBSET_MAX_SIZE = 20;
 
     if (subsettingStrategy == null)
     {
@@ -714,6 +715,15 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
       _weightedSubsetsCache.computeIfAbsent(serviceName, k -> new ConcurrentHashMap<>());
       _weightedSubsetsCache.get(serviceName).put(partitionId, subsetClients);
+
+      debug(_log, "cluster subset updated for service ", serviceName, ": [",
+          subsetClients.values().stream()
+            .limit(LOG_SUBSET_MAX_SIZE)
+            .map(client -> client.getUri() + ":" + client.getSubsetWeight(partitionId))
+            .collect(Collectors.joining(",")),
+          (subsetClients.size() > LOG_SUBSET_MAX_SIZE ? "...(total " + subsetClients.size() + ")" : ""),
+          "]"
+      );
 
       return subsetClients;
     }

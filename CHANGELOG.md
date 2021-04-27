@@ -14,6 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 - Fix bug in generated fluent client APIs when typerefs are used as association key params
+- Add debug log for cluster subsetting updates
 
 ## [29.18.1] - 2021-04-22
 - Add fluent client API for FINDER and BATCH_FINDER methods.
