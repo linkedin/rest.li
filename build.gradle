@@ -234,9 +234,6 @@ subprojects {
       maven {
         url "https://linkedin.jfrog.io/artifactory/open-source"
       }
-      maven {
-        url "https://linkedin.jfrog.io/artifactory/maven-bintray-temp"
-      }
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
