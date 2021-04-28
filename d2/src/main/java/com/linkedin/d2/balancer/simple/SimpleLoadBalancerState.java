@@ -80,6 +80,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactoryProvider
 {
+  private static final int                                                               LOG_SUBSET_MAX_SIZE = 20;
   private static final Logger                                                            _log = LoggerFactory.getLogger(SimpleLoadBalancerState.class);
 
   private final UriLoadBalancerSubscriber _uriSubscriber;
@@ -679,7 +680,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                                   Map<URI, TrackerClient> potentialClients)
   {
     SubsettingStrategy<URI> subsettingStrategy = _subsettingStrategyFactory.get(serviceName, minClusterSubsetSize, partitionId);
-    final int LOG_SUBSET_MAX_SIZE = 20;
 
     if (subsettingStrategy == null)
     {
@@ -721,8 +721,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
             .limit(LOG_SUBSET_MAX_SIZE)
             .map(client -> client.getUri() + ":" + client.getSubsetWeight(partitionId))
             .collect(Collectors.joining(",")),
-          (subsetClients.size() > LOG_SUBSET_MAX_SIZE ? "...(total " + subsetClients.size() + ")" : ""),
-          "]"
+          " (total ", subsetClients.size(), ")]"
       );
 
       return subsetClients;
