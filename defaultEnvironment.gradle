@@ -4,9 +4,6 @@ subprojects {
     maven {
       url "https://linkedin.jfrog.io/artifactory/open-source"
     }
-    maven {
-      url "https://linkedin.jfrog.io/artifactory/maven-bintray-temp"
-    }
   }
 
   project.buildDir = new File(project.rootProject.buildDir, project.name)
