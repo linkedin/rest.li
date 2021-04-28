@@ -180,7 +180,7 @@
 #macro(assocKeyParams $method $includeOptional $withEG)
     #set($hasMoreParams = $method.hasRequiredParams() || ($includeOptional && ($method.hasOptionalParams() || $method.hasProjectionParams())) || $withEG)
     #foreach($assocKey in $method.assocKeys)
-      $assocKey.declaredType $assocKey.name#if( $foreach.hasNext || $hasMoreParams),#end
+      $assocKey.bindingType $assocKey.name#if( $foreach.hasNext || $hasMoreParams),#end
     #end
 #end
 

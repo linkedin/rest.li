@@ -17,6 +17,7 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
+import com.linkedin.restli.examples.greetings.api.Tone;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -83,7 +84,9 @@ public class CustomTypesResource3 extends AssociationResourceTemplate<Greeting>
   @Finder("dateOnly")
   public List<Greeting> dateOnly(@AssocKeyParam(value="dateId", typeref=DateRef.class) Date dateId)
   {
-    return Collections.emptyList();
+    return Collections.singletonList(new Greeting().setId(dateId.getTime())
+        .setMessage("date Only finder")
+        .setTone(Tone.FRIENDLY));
   }
 
 }

@@ -40,7 +40,6 @@ import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingCriteria;
-import com.linkedin.restli.examples.greetings.api.GreetingCriteriaArray;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.MessageCriteria;
 import com.linkedin.restli.examples.greetings.api.MessageCriteriaArray;
@@ -54,15 +53,16 @@ import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsSub
 import com.linkedin.restli.examples.greetings.client.AssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.Batchfinders;
-import com.linkedin.restli.examples.greetings.client.ComplexKeys;
-import com.linkedin.restli.examples.greetings.client.BatchGreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.BatchfindersFluentClient;
+import com.linkedin.restli.examples.greetings.client.ComplexKeys;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysFluentClient;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.CreateGreeting;
 import com.linkedin.restli.examples.greetings.client.CreateGreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.CustomTypes2;
 import com.linkedin.restli.examples.greetings.client.CustomTypes2FluentClient;
+import com.linkedin.restli.examples.greetings.client.CustomTypes3;
+import com.linkedin.restli.examples.greetings.client.CustomTypes3FluentClient;
 import com.linkedin.restli.examples.greetings.client.GreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.Greetings;
 import com.linkedin.restli.examples.greetings.client.GreetingsFluentClient;
@@ -74,6 +74,7 @@ import com.linkedin.restli.examples.groups.client.Groups;
 import com.linkedin.restli.examples.groups.client.GroupsFluentClient;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -757,6 +758,17 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     {
       Assert.assertEquals(message.getId(), AssociationResourceHelpers.URL_MESSAGE.getId());
     }
+  }
+
+  @Test
+  public void testAssociationFinderUsingCustomAssocKey() throws Exception
+  {
+    CustomTypes3 customTypesResource3 =
+        new CustomTypes3FluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+
+    CollectionResponse<Greeting> greetings =
+        customTypesResource3.findByDateOnly(new Date()).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertTrue(greetings.getElements().size() > 0);
   }
 
   @Test

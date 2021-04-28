@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Fix bug in generated fluent client APIs when typerefs are used as association key params
 
 ## [29.18.1] - 2021-04-22
 - Add fluent client API for FINDER and BATCH_FINDER methods.
