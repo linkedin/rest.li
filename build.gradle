@@ -28,6 +28,7 @@ project.ext {
   isDefaultEnvironment = !project.hasProperty('overrideBuildEnvironment')
   privateModules = ['d2-benchmark', 'd2-int-test', 'generator-test', 'log-test-config', 'r2-int-test',
                      'r2-perf-test', 'restli-internal-testutils'] as Set
+  skipTestsForSubprojects = (project.findProperty('pegasus.skipTestsForSubprojects') ?: '').split(',') as Set
 }
 
 File getEnvironmentScript()
@@ -233,13 +234,6 @@ subprojects {
       maven {
         url "https://linkedin.jfrog.io/artifactory/open-source"
       }
-      maven {
-        url "https://linkedin.jfrog.io/artifactory/maven-bintray-temp"
-      }
-      // TODO: Remove once Bintray is down for good
-      maven {
-        url "https://dl.bintray.com/linkedin/maven"
-      }
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
@@ -309,6 +303,8 @@ subprojects {
           it.options.excludeGroups 'ci-flaky'
         }
         it.systemProperties['test.httpRequestTimeout'] = '20000'
+        // Make the build fail fast in CI (may have unintended consequences locally)
+        it.failFast = true
       }
     }
   }
@@ -396,6 +392,14 @@ subprojects {
       commandLine = ['mkdir','-p', dir]
       workingDir = file(rootDir.toString())
     }
+  }
+
+  // Disable tests for specific subprojects if requested
+  if (project.name in rootProject.ext.skipTestsForSubprojects) {
+    project.tasks.withType(Test) {
+      enabled = false
+    }
+    logger.lifecycle "Tests for subproject ${project.name} will be skipped."
   }
 }
 
