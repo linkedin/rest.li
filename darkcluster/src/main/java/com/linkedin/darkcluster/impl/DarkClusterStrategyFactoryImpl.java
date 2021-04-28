@@ -17,11 +17,18 @@
 package com.linkedin.darkcluster.impl;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.darkcluster.util.ExpiringCircularBuffer;
+import com.linkedin.darkcluster.util.GuaranteedRateLimiter;
+import com.linkedin.util.clock.SystemClock;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
 
 import com.linkedin.common.util.Notifier;
@@ -51,6 +58,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
 {
   private static final Logger LOG = LoggerFactory.getLogger(DarkClusterStrategyFactoryImpl.class);
   public static final DarkClusterStrategy NO_OP_DARK_CLUSTER_STRATEGY = new NoOpDarkClusterStrategy();
+  private static final String RATE_LIMITER_NAME = "DarkClusterRateLimiter";
 
   // ClusterInfoProvider isn't available until the D2 client is started, so it can't be
   // populated during construction time.
@@ -63,13 +71,19 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   private final Random _random;
   private final LoadBalancerClusterListener _clusterListener;
   private final DarkClusterVerifierManager _verifierManager;
+  private final ScheduledExecutorService _rateLimiterScheduler;
+  private final ExecutorService _rateLimiterExecutor;
+  private final ExpiringCircularBuffer<Callback<None>> _rateLimiterStoredCallbacks;
 
   public DarkClusterStrategyFactoryImpl(@Nonnull Facilities facilities,
                                         @Nonnull String sourceClusterName,
                                         @Nonnull DarkClusterDispatcher darkClusterDispatcher,
                                         @Nonnull Notifier notifier,
                                         @Nonnull Random random,
-                                        @Nonnull DarkClusterVerifierManager verifierManager)
+                                        @Nonnull DarkClusterVerifierManager verifierManager,
+                                        @Nonnull ScheduledExecutorService rateLimiterScheduler,
+                                        @Nonnull ExecutorService rateLimiterExecutor,
+                                        @Nonnull ExpiringCircularBuffer<Callback<None>> rateLimiterStoredCallbacks)
   {
     _facilities = facilities;
     _sourceClusterName = sourceClusterName;
@@ -78,6 +92,9 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     _random = random;
     _darkClusterDispatcher = darkClusterDispatcher;
     _verifierManager = verifierManager;
+    _rateLimiterScheduler = rateLimiterScheduler;
+    _rateLimiterExecutor = rateLimiterExecutor;
+    _rateLimiterStoredCallbacks = rateLimiterStoredCallbacks;
     _clusterListener = new DarkClusterListener();
   }
 
@@ -122,34 +139,63 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
       DarkClusterStrategyNameArray strategyList = darkClusterConfig.getDarkClusterStrategyPrioritizedList();
       for (com.linkedin.d2.DarkClusterStrategyName darkClusterStrategyName : strategyList)
       {
-        switch(darkClusterStrategyName)
-        {
-          case RELATIVE_TRAFFIC:
-            if (RelativeTrafficMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig))
-            {
-              BaseDarkClusterDispatcher baseDarkClusterDispatcher =
-                new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
-              return new RelativeTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
-                                                                      baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(),
-                                                                      _random);
-            }
-            break;
-          case IDENTICAL_TRAFFIC:
-            if (IdenticalTrafficMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig))
-            {
-              BaseDarkClusterDispatcher baseDarkClusterDispatcher =
-                  new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
-              return new IdenticalTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
-                  baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(),
-                  _random);
-            }
-            break;
-          case CONSTANT_QPS:
-            // the constant qps strategy is not yet implemented, continue to the next strategy if it exists
-            break;
-          default:
-            break;
-        }
+        // TODO: Pull this from config instead
+        int darkClusterPerHostInboundTargetRate = 3000;
+
+        // TODO: Pull this from config instead
+        int dispatcherMaxRequestsToBuffer = 50;
+
+        // TODO: Pull this from config instead
+        int dispatcherOldestRequestAge = 10;
+
+        _rateLimiterStoredCallbacks.setCapacity(dispatcherMaxRequestsToBuffer);
+        _rateLimiterStoredCallbacks.setTtl(dispatcherOldestRequestAge, ChronoUnit.SECONDS);
+
+        BaseDarkClusterDispatcher baseDarkClusterDispatcher =
+            new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
+
+        GuaranteedRateLimiter rateLimiter = new GuaranteedRateLimiter(_rateLimiterScheduler, _rateLimiterExecutor,
+            SystemClock.instance(), _rateLimiterStoredCallbacks);
+
+        return new ConstantQpsDarkClusterStrategy(_sourceClusterName, darkClusterName,
+            darkClusterPerHostInboundTargetRate, baseDarkClusterDispatcher, _notifier,
+            _facilities.getClusterInfoProvider(), rateLimiter);
+
+        // TODO: fix case statement to evaluate all strategies instead of hard-coding CONSTANT_QPS
+        // switch(darkClusterStrategyName) {
+        //   case RELATIVE_TRAFFIC:
+        //     if (RelativeTrafficMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig)) {
+        //       BaseDarkClusterDispatcher baseDarkClusterDispatcher =
+        //           new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
+        //       return new RelativeTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName,
+        //           darkClusterConfig.getMultiplier(), baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(),
+        //           _random);
+        //     }
+        //     break;
+        //   case IDENTICAL_TRAFFIC:
+        //     if (IdenticalTrafficMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig)) {
+        //       BaseDarkClusterDispatcher baseDarkClusterDispatcher =
+        //           new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
+        //       return new IdenticalTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName,
+        //           darkClusterConfig.getMultiplier(), baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(),
+        //           _random);
+        //     }
+        //     break;
+        //   case CONSTANT_QPS:
+        //     if (ConstantQpsMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig)) {
+        //       BaseDarkClusterDispatcher baseDarkClusterDispatcher =
+        //           new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
+        //       return new ConstantQpsMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName,
+        //           300, 500, baseDarkClusterDispatcher, _notifier,
+        //           _facilities.getClusterInfoProvider(),
+        //           new ConcurrentCallsInLastTimeTracker(1000, 100, _scheduledExecutorService),
+        //           new ConcurrentCallsInLastTimeTracker(1000, 100, _scheduledExecutorService),
+        //           _random);
+        //     }
+        //     break;
+        //   default:
+        //     break;
+        // }
       }
     }
     return new NoOpDarkClusterStrategy();

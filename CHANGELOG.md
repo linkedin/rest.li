@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.1] - 2021-04-27
+- Add support for CONSTANT_QPS dark canary cluster strategy
+
 ## [29.18.1] - 2021-04-22
 - Add fluent client API for FINDER and BATCH_FINDER methods.
 - Fix a bug when converting enableClusterSubsetting config to Boolean in ServicePropertiesJsonSerializer
@@ -4917,7 +4920,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.1...master
+[29.19.1]: https://github.com/linkedin/rest.li/compare/v29.18.1...v29.19.1
 [29.18.1]: https://github.com/linkedin/rest.li/compare/v29.18.0...v29.18.1
 [29.18.0]: https://github.com/linkedin/rest.li/compare/v29.17.4...v29.18.0
 [29.17.4]: https://github.com/linkedin/rest.li/compare/v29.17.3...v29.17.4
