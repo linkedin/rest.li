@@ -429,7 +429,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Request<CollectionResponse<Greeting>> request = builders.findBy("DateOnly").setPathKey("dateId", new Date(13L)).build();
     List<Greeting> response = getClient().sendRequest(request).getResponse().getEntity().getElements();
 
-    Assert.assertEquals(response.size(), 0);
+    Assert.assertEquals(response.size(), 1);
   }
 
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
