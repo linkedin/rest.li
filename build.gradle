@@ -303,6 +303,8 @@ subprojects {
           it.options.excludeGroups 'ci-flaky'
         }
         it.systemProperties['test.httpRequestTimeout'] = '20000'
+        // Make the build fail fast in CI (may have unintended consequences locally)
+        it.failFast = true
       }
     }
   }
