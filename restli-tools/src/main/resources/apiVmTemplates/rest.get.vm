@@ -33,7 +33,6 @@
             $spec.keyClassDisplayName $spec.idName#if( $method.hasParams() || $withEG),#end
           #end ## end define
         #end ## endIf
-
         #if($method.hasOptionalParams() || $method.hasProjectionParams())
           #doc($method.schema.doc)
           public CompletionStage<${spec.entityClassName}> get(
@@ -75,8 +74,6 @@
             $spec.keyClassDisplayName $spec.idName#if( $method.hasParams() || $withEG),#end
           #end ## end define
         #end ## endIf
-
-
         #if($method.hasOptionalParams() || $method.hasProjectionParams())
           #doc($method.schema.doc)
           public CompletionStage<${spec.entityClassName}> get(

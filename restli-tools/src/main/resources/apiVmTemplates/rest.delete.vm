@@ -15,70 +15,112 @@
 *#
 #if($is_interface)
   #foreach($withEG in [true, false])
-    #if($method.hasOptionalParams() || $method.hasProjectionParams())
+    #foreach($checkAssoc in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+      #set($showTemplate =(!$checkAssoc ||  ${spec.getResource().hasAssociation()}))
+      #if ($showTemplate) 
+        #if ($checkAssoc)
+          #define($keyStubNoOptional)
+            #assocKeyParamsWithOptAndEg($method, false, $withEG)
+          #end ## end define
+          #define($keyStubWithOptional)
+            #assocKeyParamsWithOptAndEg($method, true, $withEG)
+          #end ## end define
+        #else
+          #define($keyStubNoOptional)
+            $spec.keyClassDisplayName $spec.idName#if($method.hasRequiredParams()|| $withEG),#end
+          #end ## end define
+          #define($keyStubWithOptional)
+            $spec.keyClassDisplayName $spec.idName#if( $method.hasParams() || $withEG),#end
+          #end ## end define
+        #end ## endIf
+      #if($method.hasOptionalParams() || $method.hasProjectionParams())
+        #doc($method.schema.doc)
+        public CompletionStage<Void> delete(
+          #if (!${spec.getResource().hasSimple()})
+            $keyStubNoOptional
+          #end
+            #**##methodParamsWithEGroup($method, false, $withEG)##
+          );
+      #end
+
       #doc($method.schema.doc)
       public CompletionStage<Void> delete(
         #if (!${spec.getResource().hasSimple()})
-          $spec.keyClassDisplayName $spec.idName#if($method.hasRequiredParams() || $withEG),#end
+          $keyStubWithOptional
         #end
-          #**##methodParamsWithEGroup($method, false, $withEG)##
-        );
-    #end
-
-    #doc($method.schema.doc)
-    public CompletionStage<Void> delete(
-      #if (!${spec.getResource().hasSimple()})
-        $spec.keyClassDisplayName $spec.idName#if( $method.hasParams() || $withEG),#end
-      #end
-        #**##methodParamsWithEGroup($method, true, $withEG)##
-        );
+          #**##methodParamsWithEGroup($method, true, $withEG)##
+          );
+      #end ## end if showTemplate
+    #end ## foreach checkAssoc
   #end ## end withEG
 #optionalParamClass($method)
 #else ## is_interface
   #foreach($withEG in [true, false])
-    #if($method.hasOptionalParams() || $method.hasProjectionParams())
+    #foreach($checkAssoc in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+      #set($showTemplate =(!$checkAssoc ||  ${spec.getResource().hasAssociation()}))
+      #if ($showTemplate)
+        #if ($checkAssoc)
+          #define($keyStubNoOptional)
+            #assocKeyParamsWithOptAndEg($method, false, $withEG)
+          #end ## end define
+          #define($keyStubWithOptional)
+            #assocKeyParamsWithOptAndEg($method, true, $withEG)
+          #end ## end define
+        #else
+          #define($keyStubNoOptional)
+            $spec.keyClassDisplayName $spec.idName#if($method.hasRequiredParams()|| $withEG),#end
+          #end ## end define
+          #define($keyStubWithOptional)
+            $spec.keyClassDisplayName $spec.idName#if( $method.hasParams() || $withEG),#end
+          #end ## end define
+        #end ## endIf
+      #if($method.hasOptionalParams() || $method.hasProjectionParams())
+        #doc($method.schema.doc)
+        public CompletionStage<Void> delete(
+          #if (!${spec.getResource().hasSimple()})
+            $keyStubNoOptional
+          #end
+            #**##methodParamsWithEGroup($method, false, $withEG)##
+          ) {
+          #generateAssocKeyAsId($spec, $method, $checkAssoc)
+          return delete(#if(${spec.idName})$spec.idName,#end
+              #**##optionalMethodCallArgsWithEGroup($method, $withEG)##
+          );
+        }
+      #end
+
       #doc($method.schema.doc)
       public CompletionStage<Void> delete(
         #if (!${spec.getResource().hasSimple()})
-          $spec.keyClassDisplayName $spec.idName#if($method.hasRequiredParams() || $withEG),#end
+          $keyStubWithOptional
         #end
-          #**##methodParamsWithEGroup($method, false, $withEG)##
-        ) {
-        return delete(#if(${spec.idName})$spec.idName,#end
-            #**##optionalMethodCallArgsWithEGroup($method, $withEG)##
-        );
+          #**##methodParamsWithEGroup($method, true, $withEG)##
+          ) {
+        #generateAssocKeyAsId($spec, $method, $checkAssoc)
+        #**##paramsRequestMap($method)##
+        DeleteRequest<${spec.entityClassName}> request = new DeleteRequest<>(
+            Collections.emptyMap(),
+            Collections.emptyList(),
+            _resourceSpec,
+            queryParams,
+            queryParamClasses,
+            ORIGINAL_RESOURCE_PATH,
+            buildReadOnlyPathKeys(),
+            RestliRequestOptions.DEFAULT_OPTIONS,
+            #if(${spec.idName})
+        #**#$spec.idName##
+            #else
+        #**#null##
+            #end
+            );
+        #**##makeRequestAndReturn(
+          "Void",
+          "?",
+          "(Void) null",
+          $withEG
+        )##      
       }
-    #end
-
-    #doc($method.schema.doc)
-    public CompletionStage<Void> delete(
-      #if (!${spec.getResource().hasSimple()})
-        $spec.keyClassDisplayName $spec.idName#if( $method.hasParams() || $withEG),#end
-      #end
-        #**##methodParamsWithEGroup($method, true, $withEG)##
-        ) {
-      #**##paramsRequestMap($method)##
-      DeleteRequest<${spec.entityClassName}> request = new DeleteRequest<>(
-          Collections.emptyMap(),
-          Collections.emptyList(),
-          _resourceSpec,
-          queryParams,
-          queryParamClasses,
-          ORIGINAL_RESOURCE_PATH,
-          buildReadOnlyPathKeys(),
-          RestliRequestOptions.DEFAULT_OPTIONS,
-          #if(${spec.idName})
-      #**#$spec.idName##
-          #else
-      #**#null##
-          #end
-          );
-      #**##makeRequestAndReturn(
-        "Void",
-        "?",
-        "(Void) null",
-        $withEG
-      )##      
-    }
+      #end ## end if show template
+    #end ## foreach checkAssoc
   #end ## end withEG
 #end ## is_interface

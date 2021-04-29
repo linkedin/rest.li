@@ -33,8 +33,10 @@ import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
+import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.AssocKeyParam;
 import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.annotations.Finder;
@@ -165,4 +167,11 @@ public class AssociationsResource extends AssociationResourceTemplate<Message>
 
     return batchFinderResult;
   }
+
+  @Action(name = "testAction", resourceLevel = ResourceLevel.ENTITY)
+  public String testAction()
+  {
+    return "Hello!";
+  }
+
 }

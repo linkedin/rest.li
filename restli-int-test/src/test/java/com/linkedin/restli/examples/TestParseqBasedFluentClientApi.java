@@ -47,6 +47,8 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
 import com.linkedin.restli.examples.greetings.client.Actions;
 import com.linkedin.restli.examples.greetings.client.ActionsFluentClient;
+import com.linkedin.restli.examples.greetings.client.AssociationAltKey;
+import com.linkedin.restli.examples.greetings.client.AssociationAltKeyFluentClient;
 import com.linkedin.restli.examples.greetings.client.Associations;
 import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsSubFluentClient;
@@ -794,6 +796,48 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     BatchFinderCriteriaResult<Message> insulting = messages.getResults().get(1);
     Assert.assertTrue(insulting.isError());
     Assert.assertEquals( (int) insulting.getError().getStatus(), 404);
+  }
+
+  @Test public void testAssociateResourceSpreadKeyAPI() throws Exception
+  {
+    // Use AssocationAltKeyResource and AltKeyDataProvider
+
+    // Get
+    AssociationAltKey client = new AssociationAltKeyFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    String msgKey = "a";
+    Long longKey = 1L;
+    Greeting res = client.get(longKey, msgKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(res.getTone(), Tone.INSULTING);
+    Assert.assertEquals(res.getMessage(), msgKey);
+
+    // Update
+    String newMsg = "aa";
+    res.setMessage(newMsg);
+    client.update(longKey, msgKey, res).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    res = client.get(longKey, msgKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(res.getMessage(), newMsg);
+    // PartialUpdate
+    Tone updatedTone = Tone.SINCERE;
+    res.setTone(updatedTone);
+    Greeting original = client.get(longKey, msgKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    PatchRequest<Greeting> patch = PatchGenerator.diff(original, res);
+    client.partialUpdate(longKey, msgKey, patch).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS); // Only tone differ
+    res = client.get(longKey, msgKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(res.getMessage(), newMsg);
+    Assert.assertEquals(res.getTone(), updatedTone);
+
+    // Delete
+    try
+    {
+      // that resource implementation does not allow deletion
+      client.delete(longKey, msgKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    }
+      catch (ExecutionException e)
+    {
+      Assert.assertEquals(((RestLiResponseException) e.getCause()).getStatus(), 404);
+    }
+    Assert.assertEquals(client.testAction(longKey, msgKey)
+        .toCompletableFuture().get(5000, TimeUnit.MILLISECONDS), "Hello!");
   }
 
   // ----- Test with Sub Resources ------

@@ -28,6 +28,7 @@ import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
+import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.AlternativeKey;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
@@ -108,6 +109,7 @@ public class AssociationAltKeyResource extends AssociationResourceTemplate<Greet
       return new UpdateResponse(HttpStatus.S_400_BAD_REQUEST);
     }
 
+    update(key, g);
     return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
   }
 
