@@ -46,6 +46,10 @@ public class AltKeyDataProvider
     key2.append("message", "b");
     key2.append("greetingId", 2L);
 
+    CompoundKey key3 = new CompoundKey();
+    key3.append("message", "c");
+    key3.append("greetingId", 3L);
+
     Greeting greeting1 = new Greeting();
     greeting1.setTone(Tone.INSULTING);
     greeting1.setId(1l);
@@ -56,10 +60,20 @@ public class AltKeyDataProvider
     greeting2.setId(2l);
     greeting2.setMessage("b");
 
+    Greeting greeting3 = new Greeting();
+    greeting3.setTone(Tone.FRIENDLY);
+    greeting3.setId(3l);
+    greeting3.setMessage("c");
+
     _db1.put(1L, greeting1);
     _db1.put(2L, greeting2);
     _db2.put(key1, greeting1);
     _db2.put(key2, greeting2);
+    _db2.put(key3, greeting3);
+  }
+  private void create(CompoundKey id, Greeting entity)
+  {
+    _db2.put(id, entity);
   }
 
   public Greeting get(Long id)

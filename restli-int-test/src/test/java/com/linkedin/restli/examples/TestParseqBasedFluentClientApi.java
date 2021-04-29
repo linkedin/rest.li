@@ -804,10 +804,10 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
 
     // Get
     AssociationAltKey client = new AssociationAltKeyFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
-    String msgKey = "a";
-    Long longKey = 1L;
+    String msgKey = "c";
+    Long longKey = 3L;
     Greeting res = client.get(longKey, msgKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
-    Assert.assertEquals(res.getTone(), Tone.INSULTING);
+    Assert.assertEquals(res.getTone(), Tone.FRIENDLY);
     Assert.assertEquals(res.getMessage(), msgKey);
 
     // Update
@@ -836,6 +836,8 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     {
       Assert.assertEquals(((RestLiResponseException) e.getCause()).getStatus(), 404);
     }
+
+    // Action
     Assert.assertEquals(client.testAction(longKey, msgKey)
         .toCompletableFuture().get(5000, TimeUnit.MILLISECONDS), "Hello!");
   }
