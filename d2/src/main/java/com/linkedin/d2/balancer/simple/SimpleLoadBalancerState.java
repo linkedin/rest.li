@@ -80,6 +80,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactoryProvider
 {
+  private static final int                                                               LOG_SUBSET_MAX_SIZE = 20;
   private static final Logger                                                            _log = LoggerFactory.getLogger(SimpleLoadBalancerState.class);
 
   private final UriLoadBalancerSubscriber _uriSubscriber;
@@ -714,6 +715,14 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
 
       _weightedSubsetsCache.computeIfAbsent(serviceName, k -> new ConcurrentHashMap<>());
       _weightedSubsetsCache.get(serviceName).put(partitionId, subsetClients);
+
+      debug(_log, "cluster subset updated for service ", serviceName, ": [",
+          subsetClients.values().stream()
+            .limit(LOG_SUBSET_MAX_SIZE)
+            .map(client -> client.getUri() + ":" + client.getSubsetWeight(partitionId))
+            .collect(Collectors.joining(",")),
+          " (total ", subsetClients.size(), ")]"
+      );
 
       return subsetClients;
     }
