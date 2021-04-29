@@ -15,10 +15,10 @@
 *#
 #if($is_interface)
   #foreach($withEG in [true, false])
-    #foreach($checkAssoc in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
-      #set($showTemplate =(!$checkAssoc ||  ${spec.getResource().hasAssociation()}))
+    #foreach($flattenAssocKey in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+      #set($showTemplate =(!$flattenAssocKey ||  ${spec.getResource().hasAssociation()}))
       #if ($showTemplate) 
-        #if ($checkAssoc)
+        #if ($flattenAssocKey)
           #define($keyStubNoOptional)
             #associateKeyParams($spec),
           #end ## end define
@@ -58,10 +58,10 @@
 #optionalParamClass($method)
 #else ## is_interface
   #foreach($withEG in [true, false])
-    #foreach($checkAssoc in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
-      #set($showTemplate =(!$checkAssoc ||  ${spec.getResource().hasAssociation()}))
+    #foreach($flattenAssocKey in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+      #set($showTemplate =(!$flattenAssocKey ||  ${spec.getResource().hasAssociation()}))
       #if ($showTemplate)
-        #if ($checkAssoc)
+        #if ($flattenAssocKey)
           #define($keyStubNoOptional)
             #associateKeyParams($spec),
           #end ## end define
@@ -85,7 +85,7 @@
             PatchRequest<${spec.entityClassName}> entity#if($method.hasRequiredParams() || $withEG),#end
             #**##methodParamsWithEGroup($method, false, $withEG)##
           ) {
-          #generateAssocKeyAsId($spec, $method, $checkAssoc)
+          #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
           return partialUpdate(#if(${spec.idName})$spec.idName,#end
               entity,
               #**##optionalMethodCallArgsWithEGroup($method, $withEG)##
@@ -101,7 +101,7 @@
           PatchRequest<${spec.entityClassName}> entity#if( $method.hasParams() || $withEG),#end
           #**##methodParamsWithEGroup($method, true, $withEG)##
           ) {
-        #generateAssocKeyAsId($spec, $method, $checkAssoc)
+        #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
         Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
         Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
         #fillQueryParams($method)

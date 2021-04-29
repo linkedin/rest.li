@@ -15,10 +15,10 @@
 *#
 #if($is_interface)
   #foreach($withEG in [true, false])
-    #foreach($checkAssoc in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
-      #set($showTemplate =(!$checkAssoc ||  ${spec.getResource().hasAssociation()}))
+    #foreach($flattenAssocKey in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+      #set($showTemplate =(!$flattenAssocKey ||  ${spec.getResource().hasAssociation()}))
       #if ($showTemplate) 
-        #if ($checkAssoc)
+        #if ($flattenAssocKey)
           #define($keyStubNoOptional)
             #assocKeyParamsWithOptAndEg($method, false, $withEG)
           #end ## end define
@@ -56,10 +56,10 @@
 #optionalParamClass($method)
 #else ## is_interface
   #foreach($withEG in [true, false])
-    #foreach($checkAssoc in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
-      #set($showTemplate =(!$checkAssoc ||  ${spec.getResource().hasAssociation()}))
+    #foreach($flattenAssocKey in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+      #set($showTemplate =(!$flattenAssocKey ||  ${spec.getResource().hasAssociation()}))
       #if ($showTemplate)
-        #if ($checkAssoc)
+        #if ($flattenAssocKey)
           #define($keyStubNoOptional)
             #assocKeyParamsWithOptAndEg($method, false, $withEG)
           #end ## end define
@@ -82,7 +82,7 @@
             #end
               #**##methodParamsWithEGroup($method, false, $withEG)##
             ) {
-            #generateAssocKeyAsId($spec, $method, $checkAssoc)
+            #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
             return get(#if(${spec.idName})${spec.idName},#end
                 #**##optionalMethodCallArgsWithEGroup($method, $withEG)##
             );
@@ -96,7 +96,7 @@
           #end
             #**##methodParamsWithEGroup($method, true, $withEG)##
             ) {
-          #generateAssocKeyAsId($spec, $method, $checkAssoc)
+          #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
           #**##paramsRequestMap($method)##
           GetRequest<${spec.entityClassName}> request = new GetRequest<>(
               Collections.emptyMap(),

@@ -84,8 +84,8 @@
   }
 #end
 
-#macro(generateAssocKeyAsId $spec $method $checkAssoc)
-  #if($checkAssoc && ${spec.idName})
+#macro(generateAssocKeyAsId $spec $method $flattenAssocKey)
+  #if($flattenAssocKey && ${spec.idName})
   CompoundKey ${spec.idName} = generate${util.nameCapsCase($spec.className)}CompoundKey (
         #assocKeyCallArgs($method, false)
       );
@@ -208,11 +208,11 @@
   #set($isEntityActionIdNeeded = ${method.isEntityAction()} && !${method.getResourceSpec().getResource().hasSimple()})
 #end
 
-#macro(actionMethodParamsWithEGroup $method $includeOptional $withEG $checkAssoc)
+#macro(actionMethodParamsWithEGroup $method $includeOptional $withEG $flattenAssocKey)
   #set($hasOptionalParams = $includeOptional && $method.hasOptionalParams())
   #setIsEntityActionIdNeeded($method)
   #if($isEntityActionIdNeeded)
-    #if($checkAssoc && ${method.getResourceSpec().getResource().hasAssociation()})
+    #if($flattenAssocKey && ${method.getResourceSpec().getResource().hasAssociation()})
       #associateKeyParams(${method.getResourceSpec()})
     #else
       $spec.keyClassName $spec.idName
@@ -228,11 +228,11 @@
   #if($withEG)ExecutionGroup executionGroup #end
 #end
 
-#macro(actionMethodProviderParamsWithEGroup $method $withEG $checkAssoc)
+#macro(actionMethodProviderParamsWithEGroup $method $withEG $flattenAssocKey)
     #set($hasParams = ($method.isEntityAction() || $method.hasActionParams()))
     #setIsEntityActionIdNeeded($method)
     #if($isEntityActionIdNeeded)
-      #if($checkAssoc && ${method.getResourceSpec().getResource().hasAssociation()})
+      #if($flattenAssocKey && ${method.getResourceSpec().getResource().hasAssociation()})
         #associateKeyParams(${method.getResourceSpec()})
       #else
         $spec.keyClassName $spec.idName

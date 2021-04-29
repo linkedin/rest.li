@@ -16,14 +16,14 @@ Copyright (c) 2021 LinkedIn Corp.
 #if($is_interface)
   #foreach($method in $spec.actions)
     #foreach($withEG in [true, false])
-      #foreach($checkAssoc in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
-        #set($showTemplate =(!$checkAssoc ||  ${spec.getResource().hasAssociation()}))
+      #foreach($flattenAssocKey in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+        #set($showTemplate =(!$flattenAssocKey ||  ${spec.getResource().hasAssociation()}))
         #if ($showTemplate) 
           #define($keyStubNoOptional)
-            #actionMethodParamsWithEGroup($method, false, $withEG, $checkAssoc)
+            #actionMethodParamsWithEGroup($method, false, $withEG, $flattenAssocKey)
           #end ## end define
           #define($keyStubWithOptional)
-            #actionMethodParamsWithEGroup($method, true, $withEG, $checkAssoc)
+            #actionMethodParamsWithEGroup($method, true, $withEG, $flattenAssocKey)
           #end ## end define
 
         #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
@@ -44,7 +44,7 @@ Copyright (c) 2021 LinkedIn Corp.
 
         @SuppressWarnings("unchecked")
         public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
-          #actionMethodProviderParamsWithEGroup($method, $withEG, $checkAssoc)##
+          #actionMethodProviderParamsWithEGroup($method, $withEG, $flattenAssocKey)##
         );
 
         #end ## end if showTemplate
@@ -61,14 +61,14 @@ Copyright (c) 2021 LinkedIn Corp.
   #foreach($withEG in [true, false])
     #foreach($method in $spec.actions)
       #setIsEntityActionIdNeeded($method)
-      #foreach($checkAssoc in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
-        #set($showTemplate =(!$checkAssoc ||  ${spec.getResource().hasAssociation()}))
+      #foreach($flattenAssocKey in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+        #set($showTemplate =(!$flattenAssocKey ||  ${spec.getResource().hasAssociation()}))
         #if ($showTemplate)
           #define($keyStubNoOptional)
-            #actionMethodParamsWithEGroup($method, false, $withEG, $checkAssoc)
+            #actionMethodParamsWithEGroup($method, false, $withEG, $flattenAssocKey)
           #end ## end define
           #define($keyStubWithOptional)
-            #actionMethodParamsWithEGroup($method, true, $withEG, $checkAssoc)
+            #actionMethodParamsWithEGroup($method, true, $withEG, $flattenAssocKey)
           #end ## end define
         #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
         #set($actionOptionalParamClassName = "${util.nameCapsCase($method.name)}ActionOptionalParameters")
@@ -81,7 +81,7 @@ Copyright (c) 2021 LinkedIn Corp.
               $keyStubNoOptional
             )
             {
-              #generateAssocKeyAsId($spec, $method, $checkAssoc)
+              #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
               return ${util.nameCamelCase(${method.name})}(
                 #if($isEntityActionIdNeeded)
                 $spec.idName,
@@ -99,7 +99,7 @@ Copyright (c) 2021 LinkedIn Corp.
             $keyStubWithOptional
           )
           {
-            #generateAssocKeyAsId($spec, $method, $checkAssoc)
+            #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
             #if(${method.hasOptionalParams()})
             $actionOptionalParamClassName optionalParams = optionalParamsProvider.apply(new $actionOptionalParamClassName());
             #end
@@ -121,9 +121,10 @@ Copyright (c) 2021 LinkedIn Corp.
 
         @SuppressWarnings("unchecked")
         public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
-          #actionMethodProviderParamsWithEGroup($method, $withEG, $checkAssoc)##
+          #actionMethodProviderParamsWithEGroup($method, $withEG, $flattenAssocKey)##
         )
         {
+          #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
           RecordDataSchema requestDataSchema =  _resourceSpec.getRequestMetadata("${method.name}").getRecordDataSchema();
           RecordDataSchema actionResponseDataSchema = _resourceSpec.getActionResponseMetadata("${method.name}").getRecordDataSchema();
           FieldDef<${method.valueClassDisplayName}> responseFieldDef = (FieldDef<${method.valueClassDisplayName}>)_resourceSpec.getActionResponseMetadata("${method.name}").getFieldDef(ActionResponse.VALUE_NAME);
@@ -138,7 +139,6 @@ Copyright (c) 2021 LinkedIn Corp.
                 Collections.emptyMap());
               #end
           inputParameters.data().setReadOnly();
-          #generateAssocKeyAsId($spec, $method, $checkAssoc)
           ActionRequest<${method.valueClassDisplayName}> request = new ActionRequest<${method.valueClassDisplayName}>(inputParameters,
                                       Collections.emptyMap(),
                                       Collections.emptyList(),
@@ -154,13 +154,13 @@ Copyright (c) 2021 LinkedIn Corp.
                                       ## TODO: Not supporting streaming attachments now
                                       null
                                       );
-        #**##makeRequestAndReturn(
-        ${method.valueClassDisplayName},
-        ${method.valueClassDisplayName},
-        "resp.getEntity()",
-              $withEG
-            )##
-        }
+          #**##makeRequestAndReturn(
+          ${method.valueClassDisplayName},
+          ${method.valueClassDisplayName},
+          "resp.getEntity()",
+                $withEG
+              )##
+          }
         #end ## end if show template
       #end ## foreach checkAssoc
     #end ## foreach method
