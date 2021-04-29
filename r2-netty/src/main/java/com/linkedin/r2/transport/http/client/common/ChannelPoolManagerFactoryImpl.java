@@ -63,7 +63,6 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
    * @param scheduler      An executor; it is the caller's responsibility to shut it down
    * @param usePipelineV2 build channel pool manager for the new Netty pipeline.
    * @param enableSSLSessionResumption Enable reuse of Ssl Session.
-   * @param usePipelineV2 Use unified new code.
    */
   public ChannelPoolManagerFactoryImpl(EventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
       boolean enableSSLSessionResumption, boolean usePipelineV2, int channelPoolWaiterTimeout,
