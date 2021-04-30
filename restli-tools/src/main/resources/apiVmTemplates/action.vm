@@ -48,7 +48,7 @@ Copyright (c) 2021 LinkedIn Corp.
         );
 
         #end ## end if showTemplate
-      #end ## foreach checkAssoc
+      #end ## foreach flattenAssocKey
     #end ## end withEG
     #if(${method.hasActionParams()})
       #actionAllParamClass($method)
@@ -162,7 +162,7 @@ Copyright (c) 2021 LinkedIn Corp.
               )##
           }
         #end ## end if show template
-      #end ## foreach checkAssoc
+      #end ## foreach flattenAssocKey
     #end ## foreach method
   #end ## end withEG
 #end ## is_interface

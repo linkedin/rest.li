@@ -51,7 +51,7 @@
             #**##methodParamsWithEGroup($method, true, $withEG)##
             );
       #end ## end if showTemplate
-    #end ## foreach checkAssoc
+    #end ## foreach flattenAssocKey
   #end ## end withEG
 #optionalParamClass($method)
 #else ## is_interface
@@ -121,6 +121,6 @@
               )##
             }
       #end ## end if show template
-    #end ## foreach checkAssoc
+    #end ## foreach flattenAssocKey
   #end ## end withEG
 #end ## is_interface
