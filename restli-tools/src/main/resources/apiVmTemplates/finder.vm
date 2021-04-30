@@ -17,13 +17,13 @@
   #foreach($withEG in [true, false])
     #if($finder.hasOptionalParams() || $finder.hasProjectionParams())
       #doc($method.schema.doc)
-      public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, false, $withEG)##
+      public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParamsWithOptAndEg($finder, false, $withEG)##
           #**##methodParamsWithEGroup($finder, false, $withEG)##
       );
     #end
 
     #doc($finder.schema.doc)
-    public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, true, $withEG)##
+    public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParamsWithOptAndEg($finder, true, $withEG)##
         #**##methodParamsWithEGroup($finder, true, $withEG)##
     );
   #end ## end withEG
@@ -32,17 +32,17 @@
   #foreach($withEG in [true, false])
     #if($finder.hasOptionalParams() || $finder.hasProjectionParams())
       #doc($method.schema.doc)
-      public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, false, $withEG)##
+      public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParamsWithOptAndEg($finder, false, $withEG)##
           #**##methodParamsWithEGroup($finder, false, $withEG)##
           ) {
-        return ${finder.methodName}(#assocKeyCallArgs($finder)##
+        return ${finder.methodName}(#assocKeyCallArgs($finder, true)##
             #**##optionalMethodCallArgsWithEGroup($finder, $withEG)##
         );
       }
     #end
 
     #doc($finder.schema.doc)
-    public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParams($finder, true, $withEG)##
+    public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParamsWithOptAndEg($finder, true, $withEG)##
         #**##methodParamsWithEGroup($finder, true, $withEG)##
         ) {
       #**##paramsRequestMap($finder)##

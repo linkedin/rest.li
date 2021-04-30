@@ -208,5 +208,15 @@ public abstract class MethodSpec
   {
     return getSupportedProjectionParams().size() > 0;
   }
+
+  public List<CompoundKeySpec.AssocKeySpec> getAssocKeys()
+  {
+    if (_resourceSpec instanceof AssociationResourceSpec)
+    {
+      return new ArrayList<>(((AssociationResourceSpec) _resourceSpec).getCompoundKeySpec().getAssocKeySpecs());
+    }
+
+    return Collections.emptyList();
+  }
 }
 
