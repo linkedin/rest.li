@@ -76,6 +76,7 @@ import org.gradle.plugins.ide.eclipse.EclipsePlugin;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
+import org.gradle.util.GradleVersion;
 
 
 /**
@@ -520,6 +521,9 @@ public class PegasusPlugin implements Plugin<Project>
 {
   public static boolean debug = false;
 
+  private static final GradleVersion MIN_REQUIRED_VERSION = GradleVersion.version("1.0"); // Next: 5.2.1
+  private static final GradleVersion MIN_SUGGESTED_VERSION = GradleVersion.version("5.2.1"); // Next: 5.3
+
   //
   // Constants for generating sourceSet names and corresponding directory names
   // for generated code
@@ -633,6 +637,8 @@ public class PegasusPlugin implements Plugin<Project>
   @Override
   public void apply(Project project)
   {
+    checkGradleVersion(project);
+
     project.getPlugins().apply(JavaPlugin.class);
     project.getPlugins().apply(IdeaPlugin.class);
     project.getPlugins().apply(EclipsePlugin.class);
@@ -2223,5 +2229,21 @@ public class PegasusPlugin implements Plugin<Project>
           task.into(outputDir);
           task.onlyIf(t -> !SharedFileUtils.getSuffixedFiles(project, inputDir, PDL_FILE_SUFFIX).isEmpty());
         });
+  }
+
+  private void checkGradleVersion(Project project)
+  {
+    if (MIN_REQUIRED_VERSION.compareTo(GradleVersion.current()) > 0)
+    {
+      throw new GradleException(String.format("This plugin does not support %s. Please use %s or later.",
+          GradleVersion.current(),
+          MIN_REQUIRED_VERSION));
+    }
+    if (MIN_SUGGESTED_VERSION.compareTo(GradleVersion.current()) > 0)
+    {
+      project.getLogger().warn(String.format("Pegasus supports %s, but it may not be supported in the next major release. Please use %s or later.",
+          GradleVersion.current(),
+          MIN_SUGGESTED_VERSION));
+    }
   }
 }

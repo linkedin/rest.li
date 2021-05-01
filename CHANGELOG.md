@@ -13,22 +13,25 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Strictly enforce Gradle version compatibility in the `pegasus` Gradle plugin.
+  - Minimum required Gradle version is now `1.0` (effectively backward-compatible).
+  - Minimum suggested Gradle version is now `5.2.1`
 
 ## [29.18.2] - 2021-04-28
 - Fix bug in generated fluent client APIs when typerefs are used as association key params
 - Add debug log for cluster subsetting updates
 
 ## [29.18.1] - 2021-04-22
-- Add fluent client API for FINDER and BATCH_FINDER methods.
-- Fix a bug when converting enableClusterSubsetting config to Boolean in ServicePropertiesJsonSerializer
+- Add fluent client API for `FINDER` and `BATCH_FINDER` methods.
+- Fix a bug when converting `enableClusterSubsetting` config to Boolean in `ServicePropertiesJsonSerializer`.
 
 ## [29.18.0] - 2021-04-20
 - Use host FQDN instead of nodeUri to get D2 subsetting metadata
 
 ## [29.17.4] - 2021-04-16
 - Migrate the Rest.li release process from Bintray to JFrog Artifactory.
-    - As of this version, Bintray will no longer host Rest.li releases.
-    - Releases can be found on [LinkedIn's JFrog Artifactory instance](https://linkedin.jfrog.io/).
+  - As of this version, Bintray will no longer host Rest.li releases.
+  - Releases can be found on [LinkedIn's JFrog Artifactory instance](https://linkedin.jfrog.io/).
 
 ## [29.17.3] - 2021-04-15
 - Releasing to test new CI behavior.
@@ -52,7 +55,7 @@ and what APIs have changed, if applicable.
 ## [29.16.1] - 2021-03-17
 - Add fluent client api for simple resource and association resource.
 - Add support for generating projection mask as the mask data map.
-- Fix UnmodifiableList wrap in d2 relative load balancer
+- Fix UnmodifiableList wrap in d2 relative load balancer.
 
 ## [29.16.0] - 2021-03-10
 - Add a ParSeq based CompletionStage implementation
@@ -71,17 +74,17 @@ and what APIs have changed, if applicable.
 - Fix bug that if a schema is an enum without any symbols, doc gen should handle it instead of throwing exception.
 
 ## [29.15.5] - 2021-03-03
-- Fix content type header not set in case of RestliResponseException from non streaming server
+- Fix content type header not set in case of `RestliResponseException` from non-streaming server.
 
 ## [29.15.4] - 2021-03-02
-- Fix content type header not set in case of StreamException from rest.li server
+- Fix content type header not set in case of `StreamException` from Rest.li server.
 
 ## [29.15.3] - 2021-02-24
 - Add support for update, partial_update, delete and get_all methods in fluent API bindings.
-- Prevent RetriableRequestException from cascading to the indirect caller.
+- Prevent `RetriableRequestException` from cascading to the indirect caller.
 
 ## [29.15.2] - 2021-02-19
-- Add UnionTemplate.memberKeyName() to directly return the key name for a union member
+- Add `UnionTemplate.memberKeyName()` to directly return the key name for a union member.
 
 ## [29.15.1] - 2021-02-18
 - Cleanup compression code to reduce duplication and minimize memcopies 
