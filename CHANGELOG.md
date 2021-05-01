@@ -13,6 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Update Gradle version compatibility in the `pegasus` Gradle plugin.
+  - Minimum required Gradle version is now `5.2.1`
+  - Minimum suggested Gradle version is now `5.3`
 - Strictly enforce Gradle version compatibility in the `pegasus` Gradle plugin.
   - Minimum required Gradle version is now `1.0` (effectively backward-compatible).
   - Minimum suggested Gradle version is now `5.2.1`
