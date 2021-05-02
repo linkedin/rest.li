@@ -30,13 +30,13 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 
@@ -118,9 +118,9 @@ public class DataSchemaParser
    * Parses all schemas from the specified sources. Sources can be schema files, jars containing schemas or directories
    * with schema files.
    *
-   * @param sources sources to scan and parse for pegasus schemas.
+   * @param rawSources sources to scan and parse for pegasus schemas.
    */
-  public DataSchemaParser.ParseResult parseSources(String[] sources) throws IOException
+  public DataSchemaParser.ParseResult parseSources(String[] rawSources) throws IOException
   {
     Set<String> fileExtensions = _parserByFileExtension.keySet();
     Map<String, List<String>> byExtension = new HashMap<>(fileExtensions.size());
@@ -129,8 +129,11 @@ public class DataSchemaParser
       byExtension.put(fileExtension, new ArrayList<>());
     }
 
+    String[] sortedSources = Arrays.copyOf(rawSources, rawSources.length);
+    Arrays.sort(sortedSources);
+
     // Extract all schema files from the given source paths and group by extension (JARs are handled specially)
-    for (String source : sources)
+    for (String source : sortedSources)
     {
       final File sourceFile = new File(source);
       if (sourceFile.exists())
@@ -205,8 +208,8 @@ public class DataSchemaParser
   public static class ParseResult
   {
     private static final String EXTENSION_FILENAME_SUFFIX = "Extensions.pdl";
-    // Sort the results to ensure that the output is deterministic for a given set of source inputs
-    private final Map<DataSchema, DataSchemaLocation> _schemaAndLocations = new TreeMap<>(Comparator.comparing(DataSchema::toString));
+    // Store the results in a LinkedHashMap to ensure ordering is deterministic for a given set of source inputs
+    private final Map<DataSchema, DataSchemaLocation> _schemaAndLocations = new LinkedHashMap<>();
     private final Set<File> _sourceFiles = new HashSet<>();
     protected final StringBuilder _messageBuilder = new StringBuilder();
 
