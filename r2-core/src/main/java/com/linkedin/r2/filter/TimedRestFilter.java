@@ -23,6 +23,8 @@ import com.linkedin.r2.message.timing.TimingKey;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.timing.TimingImportance;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 
@@ -31,7 +33,7 @@ import java.util.Map;
  *
  * @author Xialin Zhu
  */
-/* package private */ class TimedRestFilter implements RestFilter
+public class TimedRestFilter implements RestFilter
 {
   protected static final String ON_REQUEST_SUFFIX = "onRequest";
   protected static final String ON_RESPONSE_SUFFIX = "onResponse";
@@ -41,6 +43,7 @@ import java.util.Map;
   private final TimingKey _onRequestTimingKey;
   private final TimingKey _onResponseTimingKey;
   private final TimingKey _onErrorTimingKey;
+  private boolean _shared;
 
   /**
    * Registers {@link TimingKey}s for {@link com.linkedin.r2.message.timing.TimingNameConstants#TIMED_REST_FILTER}.
@@ -61,6 +64,7 @@ import java.util.Map;
         _restFilter.getClass().getSimpleName(), TimingImportance.LOW);
     _onErrorTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_ERROR_SUFFIX + timingKeyPostfix,
         _restFilter.getClass().getSimpleName(), TimingImportance.LOW);
+    _shared = false;
   }
 
   @Override
@@ -90,5 +94,17 @@ import java.util.Map;
   {
     TimingContextUtil.markTiming(requestContext, _onErrorTimingKey);
     _restFilter.onRestError(ex, requestContext, wireAttrs, new TimedNextFilter<>(_onErrorTimingKey, nextFilter));
+  }
+
+  public void setShared() {
+    _shared = true;
+  }
+
+  public void onShutdown() {
+    if (!_shared) {
+      TimingKey.unregisterKey(_onErrorTimingKey);
+      TimingKey.unregisterKey(_onRequestTimingKey);
+      TimingKey.unregisterKey(_onResponseTimingKey);
+    }
   }
 }

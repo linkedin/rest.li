@@ -17,9 +17,12 @@
 package com.linkedin.r2.message.timing;
 
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.linkedin.r2.message.RequestContext;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 /**
@@ -32,6 +35,7 @@ import com.linkedin.r2.message.RequestContext;
 public class TimingKey
 {
   private static final Map<String, TimingKey> _pool = new ConcurrentHashMap<>();
+  private static final ExecutorService _unregisterExecutor = Executors.newFixedThreadPool(1);
 
   private final String _name;
   private final String _type;
@@ -130,4 +134,26 @@ public class TimingKey
   {
     return registerNewKey(new TimingKey(uniqueName, type, timingImportance));
   }
+
+  /**
+   * Unregister a TimingKey to reclaim the memory
+   *
+   */
+  public static void unregisterKey(TimingKey key)
+  {
+    _unregisterExecutor.submit(new Callable<Void>() {
+      public Void call() throws Exception {
+        _pool.remove(key.getName());
+        return null;
+      }
+    });
+  }
+
+  /**
+   * Return how many registered keys, for testing purpose.
+   */
+  public static int getCount() {
+    return _pool.size();
+  }
+
 }
