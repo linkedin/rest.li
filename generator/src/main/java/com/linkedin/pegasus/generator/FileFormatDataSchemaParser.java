@@ -134,7 +134,7 @@ public class FileFormatDataSchemaParser
 
       for (Map.Entry<String, DataSchemaLocation> entry : _schemaResolver.nameToDataSchemaLocations().entrySet())
       {
-        final DataSchema schema = _schemaResolver.bindings().get(entry.getKey());
+        final DataSchema schema = _schemaResolver.existingDataSchema(entry.getKey());
         result.getSchemaAndLocations().put(schema, entry.getValue());
       }
     }

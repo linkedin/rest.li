@@ -13,10 +13,13 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.18.3] - 2021-05-03
 - Strictly enforce Gradle version compatibility in the `pegasus` Gradle plugin.
   - Minimum required Gradle version is now `1.0` (effectively backward-compatible).
   - Minimum suggested Gradle version is now `5.2.1`
 - Fix TimingKey Memory Leak
+- Fix bottlenecks in DataSchemaParser
 
 ## [29.18.2] - 2021-04-28
 - Fix bug in generated fluent client APIs when typerefs are used as association key params
@@ -4925,7 +4928,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.3...master
+[29.18.3]: https://github.com/linkedin/rest.li/compare/v29.18.2...v29.18.3
 [29.18.2]: https://github.com/linkedin/rest.li/compare/v29.18.1...v29.18.2
 [29.18.1]: https://github.com/linkedin/rest.li/compare/v29.18.0...v29.18.1
 [29.18.0]: https://github.com/linkedin/rest.li/compare/v29.17.4...v29.18.0
