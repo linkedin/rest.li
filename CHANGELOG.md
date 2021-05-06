@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.18.4] - 2021-05-06
+- Replace runtime configuration with runtimeClasspath configuration in plugin for compatibility with Gradle 7.
+
 ## [29.18.3] - 2021-05-03
 - Strictly enforce Gradle version compatibility in the `pegasus` Gradle plugin.
   - Minimum required Gradle version is now `1.0` (effectively backward-compatible).
@@ -4928,7 +4931,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.4...master
+[29.18.4]: https://github.com/linkedin/rest.li/compare/v29.18.3...v29.18.4
 [29.18.3]: https://github.com/linkedin/rest.li/compare/v29.18.2...v29.18.3
 [29.18.2]: https://github.com/linkedin/rest.li/compare/v29.18.1...v29.18.2
 [29.18.1]: https://github.com/linkedin/rest.li/compare/v29.18.0...v29.18.1

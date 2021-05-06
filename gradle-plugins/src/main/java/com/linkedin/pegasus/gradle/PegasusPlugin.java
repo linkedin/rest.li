@@ -60,7 +60,6 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaBasePlugin;
-import org.gradle.api.plugins.JavaPlatformPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.Copy;
@@ -906,7 +905,7 @@ public class PegasusPlugin implements Plugin<Project>
                   task.setResolverPath(getDataModelConfig(project, sourceSet)); // same resolver path as generateDataTemplatesTask
                   task.setClassPath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION)
                                            .plus(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION))
-                                           .plus(project.getConfigurations().getByName(JavaPlatformPlugin.RUNTIME_CONFIGURATION_NAME)));
+                                           .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)));
                   task.setHandlerJarPath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION));
                   if (isPropertyTrue(project, ENABLE_ARG_FILE))
                   {
@@ -1457,7 +1456,7 @@ public class PegasusPlugin implements Plugin<Project>
           task.setPreviousSnapshotDirectory(pegasusSchemaSnapshotDir);
           task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION)
               .plus(project.getConfigurations().getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION))
-              .plus(project.getConfigurations().getByName(JavaPlatformPlugin.RUNTIME_CONFIGURATION_NAME)));
+              .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)));
           task.setCompatibilityLevel(isExtensionSchema ? COMPATIBILITY_LEVEL_BACKWARDS
               :PropertyUtil.findCompatLevel(project, FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT));
           task.setCompatibilityMode(isExtensionSchema ? COMPATIBILITY_OPTIONS_MODE_EXTENSION :
