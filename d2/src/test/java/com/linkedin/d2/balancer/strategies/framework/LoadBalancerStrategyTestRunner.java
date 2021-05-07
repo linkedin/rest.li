@@ -77,6 +77,7 @@ public class LoadBalancerStrategyTestRunner
   private Map<URI, Integer> _callCountMap;
   private Map<URI, Long> _latencySumMap;
   private Map<URI, List<Integer>> _pointHistoryMap = new HashMap<>();
+  private Map<URI, List<Integer>> _loadHistoryMap = new HashMap<>();
 
   public LoadBalancerStrategyTestRunner(LoadBalancerStrategy strategy, String serviceName,
       List<URI> uris, Map<Integer, Map<URI, TrackerClient>> partitionTrackerClientsMap,
@@ -143,6 +144,14 @@ public class LoadBalancerStrategyTestRunner
   public Map<URI, List<Integer>> getPointHistory()
   {
     return _pointHistoryMap;
+  }
+
+  /**
+   * Get the load history for past intervals
+   */
+  public Map<URI, List<Integer>> getLoadHistory()
+  {
+    return _loadHistoryMap;
   }
 
   /**
@@ -254,6 +263,8 @@ public class LoadBalancerStrategyTestRunner
     {
       _pointHistoryMap.putIfAbsent(uri,  new ArrayList<>());
       _pointHistoryMap.get(uri).add(currentPointsMap.getOrDefault(uri, 0));
+      _loadHistoryMap.putIfAbsent(uri,  new ArrayList<>());
+      _loadHistoryMap.get(uri).add(_lastRequestCountMap.getOrDefault(uri, 0));
     }
   }
 }

@@ -148,7 +148,7 @@ public class SimpleLoadBalancerStateTest
     if (enableRelativeLoadBalancer)
     {
       _loadBalancerStrategyFactories.put(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME,
-          new RelativeLoadBalancerStrategyFactory(new ClockedExecutor(), null, Collections.emptyList(), new NoopEventEmitter(), SystemClock.instance()));
+          new RelativeLoadBalancerStrategyFactory(new ClockedExecutor(), null, Collections.emptyList(), new NoopEventEmitter(), SystemClock.instance(), false));
     }
     _loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
     _loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3());

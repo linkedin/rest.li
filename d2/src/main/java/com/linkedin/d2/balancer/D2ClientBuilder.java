@@ -175,7 +175,8 @@ public class D2ClientBuilder
                   _config.d2JmxManagerPrefix,
                   _config.zookeeperReadWindowMs,
                   _config.enableRelativeLoadBalancer,
-                  _config.deterministicSubsettingMetadataProvider);
+                  _config.deterministicSubsettingMetadataProvider,
+                  _config.enableServerReportedLoad);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -572,7 +573,7 @@ public class D2ClientBuilder
     {
       final RelativeLoadBalancerStrategyFactory relativeLoadBalancerStrategyFactory = new RelativeLoadBalancerStrategyFactory(
           _config._executorService, _config.healthCheckOperations, Collections.emptyList(), _config.eventEmitter,
-          SystemClock.instance());
+          SystemClock.instance(), _config.enableServerReportedLoad);
       loadBalancerStrategyFactories.putIfAbsent(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME,
           relativeLoadBalancerStrategyFactory);
     }

@@ -31,6 +31,7 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import com.linkedin.d2.loadBalancerStrategyType;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -79,9 +80,11 @@ public class LoadBalancerStrategyTestRunnerBuilder
   private List<URI> _uris;
   private List<MockTransportClient> _transportClients;
   private int _numIntervals;
+  private boolean _enableServerReportedLoad;
   private LatencyManager _latencyManager;
   private ErrorCountManager _errorCountManager;
   private RequestCountManager _requestCountManager;
+  private ServerLoadScoreManager _serverLoadScoreManager;
   private final loadBalancerStrategyType _type;
   private final ClockedExecutor _clockedExecutor = new ClockedExecutor();
 
@@ -137,6 +140,12 @@ public class LoadBalancerStrategyTestRunnerBuilder
   public LoadBalancerStrategyTestRunnerBuilder setNumIntervals(int numIntervals)
   {
     _numIntervals = numIntervals;
+    return this;
+  }
+
+  public LoadBalancerStrategyTestRunnerBuilder enableServerReportedLoad(boolean enableServerReportedLoad)
+  {
+    _enableServerReportedLoad = enableServerReportedLoad;
     return this;
   }
 
@@ -241,6 +250,27 @@ public class LoadBalancerStrategyTestRunnerBuilder
     return this;
   }
 
+  /**
+   * Set the server reported overload score to be a relationship of the call count that each host gets
+   * @param serverLoadScoreCalculationList A correlation formula list for each host, the size of the map should equal the number of uris.
+   */
+  public LoadBalancerStrategyTestRunnerBuilder setDynamicServerLoadScore(List<ServerLoadScoreCorrelation> serverLoadScoreCalculationList)
+  {
+    if (serverLoadScoreCalculationList.size() != _uris.size())
+    {
+      throw new IllegalArgumentException("The dynamic load score list size has to match with the host size");
+    }
+
+    Map<URI, ServerLoadScoreCorrelation> serverLoadScoreCalculationMap = new HashMap<>();
+    for (int i = 0; i < serverLoadScoreCalculationList.size(); i++)
+    {
+      serverLoadScoreCalculationMap.put(_uris.get(i), serverLoadScoreCalculationList.get(i));
+    }
+
+    _serverLoadScoreManager = new DynamicServerLoadScoreManager(serverLoadScoreCalculationMap);
+    return this;
+  }
+
   public LoadBalancerStrategyTestRunnerBuilder setDegraderStrategies(Map<String, Object> strategyProperties,
       Map<String, String> degraderProperties)
   {
@@ -296,8 +326,9 @@ public class LoadBalancerStrategyTestRunnerBuilder
     _strategy = new DegraderLoadBalancerStrategyFactoryV3().newLoadBalancer(_serviceProperties);
 
     _transportClients = _uris.stream()
-        .map(uri -> new MockTransportClient(_clockedExecutor, _latencyManager, _errorCountManager, uri, INTERVAL_IN_MILLIS,
-            _currentErrorCountMap, _lastRequestCountMap, _callCountMap, _latencySumMap))
+        .map(uri -> new MockTransportClient(_clockedExecutor, _latencyManager, _errorCountManager,
+            _serverLoadScoreManager, uri, INTERVAL_IN_MILLIS, _currentErrorCountMap, _lastRequestCountMap,
+            _callCountMap, _latencySumMap))
         .collect(Collectors.toList());
     Map<URI, TrackerClient> trackerClientMap = _transportClients.stream()
         .map(transportClient -> {
@@ -319,12 +350,13 @@ public class LoadBalancerStrategyTestRunnerBuilder
     {
       setRelativeLoadBalancerStrategies(new D2RelativeStrategyProperties());
     }
-    _strategy = new RelativeLoadBalancerStrategyFactory(_clockedExecutor, null, new ArrayList<>(), null, _clockedExecutor)
+    _strategy = new RelativeLoadBalancerStrategyFactory(_clockedExecutor, null, new ArrayList<>(), null, _clockedExecutor, _enableServerReportedLoad)
         .newLoadBalancer(_serviceProperties);
 
     _transportClients = _uris.stream()
-        .map(uri -> new MockTransportClient(_clockedExecutor, _latencyManager, _errorCountManager, uri, INTERVAL_IN_MILLIS,
-            _currentErrorCountMap, _lastRequestCountMap, _callCountMap, _latencySumMap))
+        .map(uri -> new MockTransportClient(_clockedExecutor, _latencyManager, _errorCountManager,
+            _serverLoadScoreManager, uri, INTERVAL_IN_MILLIS, _currentErrorCountMap, _lastRequestCountMap,
+            _callCountMap, _latencySumMap))
         .collect(Collectors.toList());
     Map<URI, TrackerClient> trackerClientMap = _transportClients.stream()
         .map(transportClient -> {
@@ -370,6 +402,7 @@ public class LoadBalancerStrategyTestRunnerBuilder
     private final ClockedExecutor _clockedExecutor;
     private final LatencyManager _latencyManager;
     private final ErrorCountManager _errorCountManager;
+    private final ServerLoadScoreManager _serverLoadScoreManager;
     private final URI _uri;
     private final long _intervalMillis;
 
@@ -379,13 +412,15 @@ public class LoadBalancerStrategyTestRunnerBuilder
     private Map<URI, Long> _latencySumMap;
 
     MockTransportClient(
-        ClockedExecutor executor, LatencyManager latencyManager, ErrorCountManager errorCountManager, URI uri,
-        long intervalMillis, Map<URI, Integer> currentErrorCountMap, Map<URI, Integer> lastRequestCountMap,
+        ClockedExecutor executor, LatencyManager latencyManager, ErrorCountManager errorCountManager,
+        ServerLoadScoreManager serverLoadScoreManager, URI uri, long intervalMillis,
+        Map<URI, Integer> currentErrorCountMap, Map<URI, Integer> lastRequestCountMap,
         Map<URI, Integer> callCountMap, Map<URI, Long> latencySumMap)
     {
       _clockedExecutor = executor;
       _latencyManager = latencyManager;
       _errorCountManager = errorCountManager;
+      _serverLoadScoreManager = serverLoadScoreManager;
       _uri = uri;
       _intervalMillis = intervalMillis;
 
@@ -404,6 +439,8 @@ public class LoadBalancerStrategyTestRunnerBuilder
       long latency = _latencyManager.getLatency(_uri, requestCount, currentIntervalIndex);
       boolean hasError = _errorCountManager.getErrorCount(_uri, requestCount, currentIntervalIndex) -
           _currentErrorCountMap.getOrDefault(_uri, 0) > 0;
+      int serverLoadScore = _serverLoadScoreManager.getServerLoadScore(_uri, requestCount, currentIntervalIndex);
+      Map<String, String> wireAttributes = new HashMap<>();
 
       _clockedExecutor.schedule(new Runnable()
       {
@@ -418,7 +455,8 @@ public class LoadBalancerStrategyTestRunnerBuilder
             callback.onResponse(TransportResponseImpl.error(restException));
             return;
           }
-          callback.onResponse(TransportResponseImpl.success(restResponseBuilder.build()));
+          wireAttributes.put(R2Constants.SERVER_LOAD, Integer.toString(serverLoadScore));
+          callback.onResponse(TransportResponseImpl.success(restResponseBuilder.build(), wireAttributes));
         }
       }, latency, TimeUnit.MILLISECONDS);
 

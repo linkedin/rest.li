@@ -67,7 +67,15 @@ public class StateUpdaterTest
   {
     RelativeLoadBalancerStrategyFactory.putDefaultValues(relativeStrategyProperties);
     _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, _executorService,
-        partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME);
+        partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME, false);
+  }
+
+  private void setup(D2RelativeStrategyProperties relativeStrategyProperties,
+      ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap, boolean enableServerReportedLoad)
+  {
+    RelativeLoadBalancerStrategyFactory.putDefaultValues(relativeStrategyProperties);
+    _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, _executorService,
+        partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME, enableServerReportedLoad);
   }
 
   @Test(dataProvider = "partitionId")
@@ -76,7 +84,8 @@ public class StateUpdaterTest
     setup(new D2RelativeStrategyProperties(), new ConcurrentHashMap<>());
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
-        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0));
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L),
+        Arrays.asList(0, 0), Arrays.asList(0, 0));
 
     assertTrue(_stateUpdater.getPointsMap(partitionId).isEmpty(), "There should be no state before initialization");
 
@@ -106,7 +115,8 @@ public class StateUpdaterTest
     setup(relativeStrategyProperties, new ConcurrentHashMap<>());
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
-        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0), doNotSlowStart);
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L),
+        Arrays.asList(0, 0), Arrays.asList(0, 0), doNotSlowStart);
 
     assertTrue(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty(), "There should be no state before initialization");
 
@@ -142,7 +152,8 @@ public class StateUpdaterTest
     setup(new D2RelativeStrategyProperties(), new ConcurrentHashMap<>());
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
-        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0));
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L),
+        Arrays.asList(0, 0), Arrays.asList(0, 0));
 
     assertTrue(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty(), "There should be no state before initialization");
 
@@ -183,14 +194,15 @@ public class StateUpdaterTest
         .build();
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
-        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0));
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L),
+        Arrays.asList(0, 0), Arrays.asList(0, 0));
 
     ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
     partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     D2RelativeStrategyProperties relativeStrategyProperties = RelativeLoadBalancerStrategyFactory.putDefaultValues(new D2RelativeStrategyProperties());
     _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, executorService,
-        partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME);
+        partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME, true);
 
     // update will be scheduled twice, once from interval update, once from cluster change
     CountDownLatch countDownLatch = new CountDownLatch(2);
@@ -212,7 +224,7 @@ public class StateUpdaterTest
   {
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3,
         Arrays.asList(20, 20, 20), Arrays.asList(10, 10, 10), Arrays.asList(200L, 300L, 1000L),
-        Arrays.asList(100L, 200L, 500L), Arrays.asList(0, 0, 0));
+        Arrays.asList(100L, 200L, 500L), Arrays.asList(0, 0, 0), Arrays.asList(0, 0, 0));
 
     PartitionState state = new PartitionStateTestDataBuilder()
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
@@ -246,10 +258,10 @@ public class StateUpdaterTest
      */
     List<TrackerClient> trackerClients1 = TrackerClientMockHelper.mockTrackerClients(3,
         Arrays.asList(20, 20, 20), Arrays.asList(10, 10, 10), Arrays.asList(200L, 300L, 1000L),
-        Arrays.asList(100L, 200L, 500L), Arrays.asList(0, 0, 0));
+        Arrays.asList(100L, 200L, 500L), Arrays.asList(0, 0, 0), Arrays.asList(0, 0, 0));
     List<TrackerClient> trackerClients2 = TrackerClientMockHelper.mockTrackerClients(1,
         Arrays.asList(20), Arrays.asList(10), Arrays.asList(1000L),
-        Arrays.asList(600L), Arrays.asList(0));
+        Arrays.asList(600L), Arrays.asList(0), Arrays.asList(0));
     trackerClients2.add(trackerClients1.get(2));
 
     PartitionState state1 = new PartitionStateTestDataBuilder()
@@ -285,7 +297,7 @@ public class StateUpdaterTest
   {
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3,
         Arrays.asList(20, 20, 20), Arrays.asList(10, 10, 10), Arrays.asList(200L, 220L, 1000L),
-        Arrays.asList(100L, 110L, 500L), Arrays.asList(0, 0, 0));
+        Arrays.asList(100L, 110L, 500L), Arrays.asList(0, 0, 0), Arrays.asList(0, 0, 0));
 
     PartitionState state = new PartitionStateTestDataBuilder()
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
@@ -354,6 +366,7 @@ public class StateUpdaterTest
     List<Integer> defaultCallCountList = Arrays.asList(20, 20, 20);
     List<Integer> defaultOutstandingCountList = Arrays.asList(10, 10, 10);
     List<Integer> defaultErrorCountList = Arrays.asList(0, 0, 0);
+    List<Integer> defaultServerOverloadScoreList = Arrays.asList(0, 0, 0);
     double defaultHighLatencyFactor = 1.2;
     double defaultHighErrorRate = 0.2;
     int numTrackerClients = 3;
@@ -361,23 +374,130 @@ public class StateUpdaterTest
         {
             // Test with different latency and outstanding latencies
             {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,defaultCallCountList, defaultOutstandingCountList,
-                Arrays.asList(200L, 220L, 200L), Arrays.asList(100L, 110L, 100L), defaultErrorCountList), defaultHighLatencyFactor, defaultHighErrorRate, false},
+                Arrays.asList(200L, 220L, 200L), Arrays.asList(100L, 110L, 100L), defaultServerOverloadScoreList, defaultErrorCountList), defaultHighLatencyFactor, defaultHighErrorRate, false},
             {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,defaultCallCountList, defaultOutstandingCountList,
-                Arrays.asList(1000L, 120L, 115L), Arrays.asList(20L, 10L, 15L), defaultErrorCountList), defaultHighLatencyFactor, defaultHighErrorRate, true},
+                Arrays.asList(1000L, 120L, 115L), Arrays.asList(20L, 10L, 15L), defaultServerOverloadScoreList, defaultErrorCountList), defaultHighLatencyFactor, defaultHighErrorRate, true},
             {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,defaultCallCountList, defaultOutstandingCountList,
-                Arrays.asList(100L, 120L, 115L), Arrays.asList(1000L, 10L, 15L), defaultErrorCountList), defaultHighLatencyFactor, defaultHighErrorRate, true},
+                Arrays.asList(100L, 120L, 115L), Arrays.asList(1000L, 10L, 15L), defaultServerOverloadScoreList, defaultErrorCountList), defaultHighLatencyFactor, defaultHighErrorRate, true},
             {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,defaultCallCountList, defaultOutstandingCountList,
-                Arrays.asList(1000L, 500L, 600L), Arrays.asList(900L, 700L, 800L), defaultErrorCountList), 1.5, defaultHighErrorRate, false},
+                Arrays.asList(1000L, 500L, 600L), Arrays.asList(900L, 700L, 800L), defaultServerOverloadScoreList, defaultErrorCountList), 1.5, defaultHighErrorRate, false},
 
             // Test with different error count and error rates
             {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,Arrays.asList(100, 200, 200), Arrays.asList(0, 0, 0),
-                defaultLatencyList, defaultOutstandingLatencyList, Arrays.asList(10, 10, 15)), defaultHighLatencyFactor, defaultHighErrorRate, false},
+                defaultLatencyList, defaultOutstandingLatencyList, defaultServerOverloadScoreList, Arrays.asList(10, 10, 15)), defaultHighLatencyFactor, defaultHighErrorRate, false},
             {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,Arrays.asList(100, 200, 200), Arrays.asList(0, 0, 0),
-                defaultLatencyList, defaultOutstandingLatencyList, Arrays.asList(10, 10, 15)), defaultHighLatencyFactor, 0.09, true},
+                defaultLatencyList, defaultOutstandingLatencyList,defaultServerOverloadScoreList,  Arrays.asList(10, 10, 15)), defaultHighLatencyFactor, 0.09, true},
             {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,Arrays.asList(100, 200, 200), Arrays.asList(0, 0, 0),
-                defaultLatencyList, defaultOutstandingLatencyList, Arrays.asList(21, 10, 15)), defaultHighLatencyFactor, defaultHighErrorRate, true},
+                defaultLatencyList, defaultOutstandingLatencyList,defaultServerOverloadScoreList,  Arrays.asList(21, 10, 15)), defaultHighLatencyFactor, defaultHighErrorRate, true},
             {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,Arrays.asList(100, 200, 200), Arrays.asList(0, 0, 0),
-                defaultLatencyList, defaultOutstandingLatencyList, Arrays.asList(21, 10, 15)), defaultHighLatencyFactor, 0.3, false}
+                defaultLatencyList, defaultOutstandingLatencyList,defaultServerOverloadScoreList,  Arrays.asList(21, 10, 15)), defaultHighLatencyFactor, 0.3, false}
+        };
+  }
+
+  @Test(dataProvider = "trackerClientsWithServerLoad")
+  public void testHealthScoreDropDueToServerLoad(List<TrackerClient> trackerClients, double highServerLoadFactor,
+      boolean enableServerReportedLoad, boolean expectToDropHealthScore)
+  {
+    PartitionState state = new PartitionStateTestDataBuilder()
+        .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
+        .setTrackerClientStateMap(trackerClients,
+            Arrays.asList(StateUpdater.MAX_HEALTH_SCORE, StateUpdater.MAX_HEALTH_SCORE, StateUpdater.MAX_HEALTH_SCORE),
+            Arrays.asList(TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
+            Arrays.asList(30, 30, 30))
+        .build();
+
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
+    setup(new D2RelativeStrategyProperties()
+            .setRelativeLoadHighThresholdFactor(highServerLoadFactor),
+        partitionLoadBalancerStateMap, enableServerReportedLoad);
+    _stateUpdater.updateState();
+
+    Map<URI, Integer> pointsMap = _stateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
+    if (!expectToDropHealthScore)
+    {
+      assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), HEALTHY_POINTS);
+    }
+    else
+    {
+      assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(),
+          (int) (HEALTHY_POINTS - RelativeLoadBalancerStrategyFactory.DEFAULT_DOWN_STEP * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
+      assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), HEALTHY_POINTS);
+    }
+  }
+
+  @DataProvider(name = "trackerClientsWithServerLoad")
+  Object[][] getTrackerClientsWithServerLoad()
+  {
+    List<Long> defaultLatencyList = Arrays.asList(100L, 100L, 100L);
+    List<Long> defaultOutstandingLatencyList = Arrays.asList(20L, 20L, 20L);
+    List<Integer> defaultCallCountList = Arrays.asList(20, 20, 20);
+    List<Integer> defaultOutstandingCountList = Arrays.asList(10, 10, 10);
+    List<Integer> defaultErrorCountList = Arrays.asList(0, 0, 0);
+    int numTrackerClients = 3;
+    return new Object[][]
+        {
+            {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,defaultCallCountList, defaultOutstandingCountList,
+                defaultLatencyList, defaultOutstandingLatencyList, Arrays.asList(300, 100, 100), defaultErrorCountList), 1.6, false, false},
+            {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,defaultCallCountList, defaultOutstandingCountList,
+                defaultLatencyList, defaultOutstandingLatencyList, Arrays.asList(300, 100, 100), defaultErrorCountList), 1.6, true, true},
+            {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,defaultCallCountList, defaultOutstandingCountList,
+                defaultLatencyList, defaultOutstandingLatencyList, Arrays.asList(300, 100, 100), defaultErrorCountList), 4.0, true, false}
+        };
+  }
+
+  @Test(dataProvider = "trackerClientsWithServerLoadRecover")
+  public void testHealthScoreRecoverDueToServerLoad(List<TrackerClient> trackerClients, double highServerLoadFactor, double lowServerLoadFactor,
+      boolean enableServerReportedLoad, boolean expectToRecoverHealthScore)
+  {
+    double badHostHealthScore = 0.5;
+    PartitionState state = new PartitionStateTestDataBuilder()
+        .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
+        .setTrackerClientStateMap(trackerClients,
+            Arrays.asList(badHostHealthScore, StateUpdater.MAX_HEALTH_SCORE, StateUpdater.MAX_HEALTH_SCORE),
+            Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
+            Arrays.asList(30, 30, 30))
+        .build();
+
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
+    setup(new D2RelativeStrategyProperties()
+        .setRelativeLoadHighThresholdFactor(highServerLoadFactor)
+            .setRelativeLoadLowThresholdFactor(lowServerLoadFactor),
+        partitionLoadBalancerStateMap, enableServerReportedLoad);
+    _stateUpdater.updateState();
+
+    Map<URI, Integer> pointsMap = _stateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
+    if (!expectToRecoverHealthScore)
+    {
+      assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), (int)(badHostHealthScore * HEALTHY_POINTS));
+    }
+    else
+    {
+      assertTrue(pointsMap.get(trackerClients.get(0).getUri()) > badHostHealthScore * HEALTHY_POINTS);
+    }
+  }
+
+  @DataProvider(name = "trackerClientsWithServerLoadRecover")
+  Object[][] getTrackerClientsWithServerLoadRecover()
+  {
+    List<Long> defaultLatencyList = Arrays.asList(100L, 100L, 100L);
+    List<Long> defaultOutstandingLatencyList = Arrays.asList(20L, 20L, 20L);
+    List<Integer> defaultCallCountList = Arrays.asList(20, 20, 20);
+    List<Integer> defaultOutstandingCountList = Arrays.asList(10, 10, 10);
+    List<Integer> defaultErrorCountList = Arrays.asList(0, 0, 0);
+    int numTrackerClients = 3;
+    return new Object[][]
+        {
+            {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,defaultCallCountList, defaultOutstandingCountList,
+                defaultLatencyList, defaultOutstandingLatencyList, Arrays.asList(150, 100, 100), defaultErrorCountList), 2.5, 2.0, false, true},
+            {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,defaultCallCountList, defaultOutstandingCountList,
+                defaultLatencyList, defaultOutstandingLatencyList, Arrays.asList(150, 100, 100), defaultErrorCountList), 2.5, 2.0, true, true},
+            {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,defaultCallCountList, defaultOutstandingCountList,
+                defaultLatencyList, defaultOutstandingLatencyList, Arrays.asList(150, 100, 100), defaultErrorCountList), 1.6, 1.1, true, false}
         };
   }
 
@@ -388,7 +508,7 @@ public class StateUpdaterTest
     // One client has high latency but small call count
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3,
         Arrays.asList(5, 20, 20), Arrays.asList(0, 0, 0), Arrays.asList(1000L, 300L, 300L),
-        Arrays.asList(100L, 200L, 200L), Arrays.asList(0, 0, 0));
+        Arrays.asList(100L, 200L, 200L), Arrays.asList(0, 0, 0), Arrays.asList(0, 0, 0));
 
     PartitionState state = new PartitionStateTestDataBuilder()
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
@@ -418,7 +538,7 @@ public class StateUpdaterTest
   {
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3,
         Arrays.asList(20, 20, 20), Arrays.asList(0, 0, 0), Arrays.asList(300L, 300L, 300L),
-        Arrays.asList(200L, 200L, 200L), Arrays.asList(0, 0, 0));
+        Arrays.asList(200L, 200L, 200L), Arrays.asList(0, 0, 0), Arrays.asList(0, 0, 0));
 
     PartitionState state = new PartitionStateTestDataBuilder()
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
@@ -479,7 +599,8 @@ public class StateUpdaterTest
     setup(new D2RelativeStrategyProperties(), new ConcurrentHashMap<>());
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
-        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 200L), Arrays.asList(100L, 100L), Arrays.asList(0, 0));
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 200L), Arrays.asList(100L, 100L),
+        Arrays.asList(0, 0), Arrays.asList(0, 0));
     PartitionState existingState = new PartitionStateTestDataBuilder()
         .setTrackerClientStateMap(trackerClients,
             Arrays.asList(1.0, 1.0),
@@ -491,7 +612,7 @@ public class StateUpdaterTest
 
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     D2RelativeStrategyProperties relativeStrategyProperties = RelativeLoadBalancerStrategyFactory.putDefaultValues(new D2RelativeStrategyProperties());
-    _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, executorService, stateMap, Collections.emptyList(), SERVICE_NAME);
+    _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, executorService, stateMap, Collections.emptyList(), SERVICE_NAME, true);
 
     // In 6 seconds, the update should be executed twice
     CountDownLatch countDownLatch = new CountDownLatch(2);

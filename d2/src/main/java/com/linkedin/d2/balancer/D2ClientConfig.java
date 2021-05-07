@@ -44,6 +44,8 @@ import javax.net.ssl.SSLParameters;
 
 public class D2ClientConfig
 {
+  public static final int DEFAULT_RETRY_LIMIT = 3;
+
   String zkHosts = null;
   long zkSessionTimeoutInMs = 3600000L;
   long zkStartupTimeoutInMs = 10000L;
@@ -105,7 +107,7 @@ public class D2ClientConfig
   String d2JmxManagerPrefix = "UnknownPrefix";
   boolean enableRelativeLoadBalancer = false;
   DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
-  public static final int DEFAULT_RETRY_LIMIT = 3;
+  boolean enableServerReportedLoad = false;
 
   public D2ClientConfig()
   {
@@ -161,7 +163,8 @@ public class D2ClientConfig
                  String d2JmxManagerPrefix,
                  int zookeeperReadWindowMs,
                  boolean enableRelativeLoadBalancer,
-                 DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
+                 DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+                 boolean enableServerReportedLoad)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -214,5 +217,6 @@ public class D2ClientConfig
     this.zookeeperReadWindowMs = zookeeperReadWindowMs;
     this.enableRelativeLoadBalancer = enableRelativeLoadBalancer;
     this.deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
+    this.enableServerReportedLoad = enableServerReportedLoad;
   }
 }

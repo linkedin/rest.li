@@ -71,20 +71,26 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   // Default ring properties
   public static final int DEFAULT_POINTS_PER_WEIGHT = 100;
 
+  public static final double DEFAULT_RELATIVE_LOAD_HIGH_THRESHOLD_FACTOR = 2.0;
+  public static final double DEFAULT_RELATIVE_LOAD_LOW_THRESHOLD_FACTOR = 1.2;
+
   private final ScheduledExecutorService _executorService;
   private final HealthCheckOperations _healthCheckOperations;
   private final List<PartitionStateUpdateListener.Factory<PartitionState>> _stateListenerFactories;
   private final EventEmitter _eventEmitter;
   private final Clock _clock;
+  private final boolean _enableServerReportedLoad;
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
-      List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock)
+      List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock,
+      boolean enableServerReportedLoad)
   {
     _executorService = executorService;
     _healthCheckOperations = healthCheckOperations;
     _stateListenerFactories = stateListenerFactories;
     _eventEmitter = (eventEmitter == null) ? new NoopEventEmitter() : eventEmitter;
     _clock = clock;
+    _enableServerReportedLoad = enableServerReportedLoad;
   }
 
 
@@ -112,7 +118,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     {
       listenerFactories.addAll(_stateListenerFactories);
     }
-    return new StateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories, serviceName);
+    return new StateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories, serviceName, _enableServerReportedLoad);
   }
 
   private ClientSelector getClientSelector(D2RelativeStrategyProperties relativeStrategyProperties)
@@ -163,6 +169,8 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     properties.setErrorStatusFilter(getOrDefault(properties.getErrorStatusFilter(), DEFAULT_ERROR_STATUS_FILTER));
     properties.setEmittingIntervalMs(getOrDefault(properties.getEmittingIntervalMs(), DEFAULT_EMITTING_INTERVAL_MS));
     properties.setEnableFastRecovery(getOrDefault(properties.isEnableFastRecovery(), DEFAULT_ENABLE_FAST_RECOVERY));
+    properties.setRelativeLoadHighThresholdFactor(getOrDefault(properties.getRelativeLoadHighThresholdFactor(), DEFAULT_RELATIVE_LOAD_HIGH_THRESHOLD_FACTOR));
+    properties.setRelativeLoadLowThresholdFactor(getOrDefault(properties.getRelativeLoadLowThresholdFactor(), DEFAULT_RELATIVE_LOAD_LOW_THRESHOLD_FACTOR));
 
     D2QuarantineProperties quarantineProperties = properties.hasQuarantineProperties()
         ? properties.getQuarantineProperties() : new D2QuarantineProperties();

@@ -22,6 +22,7 @@ import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.util.degrader.CallTracker;
+import com.linkedin.util.degrader.CallTrackerImpl;
 import com.linkedin.util.degrader.ErrorType;
 import java.net.URI;
 import java.util.HashMap;
@@ -61,6 +62,7 @@ public class StateUpdater
   private final Lock _lock;
   private final List<PartitionStateUpdateListener.Factory<PartitionState>> _listenerFactories;
   private final String _serviceName;
+  private final boolean _enableServerReportedLoad;
 
   private ConcurrentMap<Integer, PartitionState> _partitionLoadBalancerStateMap;
   private int _firstPartitionId = -1;
@@ -69,9 +71,11 @@ public class StateUpdater
                        QuarantineManager quarantineManager,
                        ScheduledExecutorService executorService,
                        List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
-                       String serviceName)
+                       String serviceName,
+                       boolean enableServerReportedLoad)
   {
-    this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories, serviceName);
+    this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories, serviceName,
+        enableServerReportedLoad);
   }
 
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
@@ -79,7 +83,8 @@ public class StateUpdater
       ScheduledExecutorService executorService,
       ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap,
       List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
-      String serviceName)
+      String serviceName,
+      boolean enableServerReportedLoad)
   {
     _relativeStrategyProperties = relativeStrategyProperties;
     _quarantineManager = quarantineManager;
@@ -88,6 +93,7 @@ public class StateUpdater
     _partitionLoadBalancerStateMap = partitionLoadBalancerStateMap;
     _lock = new ReentrantLock();
     _serviceName = serviceName;
+    _enableServerReportedLoad = enableServerReportedLoad;
 
     _executorService.scheduleWithFixedDelay(this::updateState, EXECUTOR_INITIAL_DELAY,
         _relativeStrategyProperties.getUpdateIntervalMs(), TimeUnit.MILLISECONDS);
@@ -192,14 +198,14 @@ public class StateUpdater
 
     // Step 1: Update the base health scores for each {@link TrackerClient} in the cluster
     Map<TrackerClient, CallTracker.CallStats> latestCallStatsMap = new HashMap<>();
-    long avgClusterLatency = getAvgClusterLatency(trackerClients, latestCallStatsMap);
+    ClusterStats clusterStats = getClusterStats(trackerClients, latestCallStatsMap);
     boolean clusterUpdated = clusterGenerationId != oldPartitionState.getClusterGenerationId();
-    updateBaseHealthScoreAndState(trackerClients, newPartitionState, avgClusterLatency, clusterUpdated, latestCallStatsMap);
+    updateBaseHealthScoreAndState(trackerClients, newPartitionState, clusterStats, clusterUpdated, latestCallStatsMap);
 
     // Step 2: Handle quarantine and recovery for all tracker clients in this cluster
     // this will adjust the base health score if there is any change in quarantine and recovery map
     _quarantineManager.updateQuarantineState(newPartitionState,
-        oldPartitionState, avgClusterLatency);
+        oldPartitionState, clusterStats.getAvgClusterLatency());
 
     // Step 3: Calculate the new ring for each partition
     newPartitionState.updateRing();
@@ -231,11 +237,11 @@ public class StateUpdater
    * Update the health score of all tracker clients for the service
    */
   private void updateBaseHealthScoreAndState(Set<TrackerClient> trackerClients,
-      PartitionState partitionState, long clusterAvgLatency,
+      PartitionState partitionState, ClusterStats clusterStats,
       boolean clusterUpdated, Map<TrackerClient, CallTracker.CallStats> lastCallStatsMap)
   {
     // Calculate the base health score before we override them when handling the quarantine and recovery
-    calculateBaseHealthScore(trackerClients, partitionState, clusterAvgLatency, lastCallStatsMap);
+    calculateBaseHealthScore(trackerClients, partitionState, clusterStats, lastCallStatsMap);
 
     // Remove the trackerClients from original map if there is any change in uri list
     Map<TrackerClient, TrackerClientState> trackerClientStateMap = partitionState.getTrackerClientStateMap();
@@ -252,7 +258,7 @@ public class StateUpdater
   }
 
   private void calculateBaseHealthScore(Set<TrackerClient> trackerClients, PartitionState partitionState,
-      long avgClusterLatency, Map<TrackerClient, CallTracker.CallStats> lastCallStatsMap)
+      ClusterStats clusterStats, Map<TrackerClient, CallTracker.CallStats> lastCallStatsMap)
   {
     Map<TrackerClient, TrackerClientState> trackerClientStateMap = partitionState.getTrackerClientStateMap();
 
@@ -269,13 +275,14 @@ public class StateUpdater
         int callCount = latestCallStats.getCallCount() + latestCallStats.getOutstandingCount();
         double errorRate = getErrorRate(latestCallStats.getErrorTypeCounts(), callCount);
         long avgLatency = getAvgHostLatency(latestCallStats);
+        int serverLoadScore = _enableServerReportedLoad ? latestCallStats.getServerLoadScore() : CallTrackerImpl.DEFAULT_SERVER_OVERLOAD_SCORE;
         double oldHealthScore = trackerClientState.getHealthScore();
         double newHealthScore = oldHealthScore;
 
         clusterCallCount += callCount;
         clusterErrorCount += errorRate * callCount;
 
-        if (isUnhealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
+        if (isUnhealthy(trackerClientState, clusterStats, callCount, avgLatency, errorRate, serverLoadScore))
         {
           // If it is above high latency, we reduce the health score by down step
           newHealthScore = Double.max(trackerClientState.getHealthScore() - _relativeStrategyProperties.getDownStep(), MIN_HEALTH_SCORE);
@@ -283,12 +290,13 @@ public class StateUpdater
 
           LOG.debug("Host is unhealthy. Host: " + trackerClient.toString()
                   + ", errorRate: " + errorRate
-                  + ", latency: " + avgClusterLatency
+                  + ", latency: " + clusterStats.getAvgClusterLatency()
+                  + ", serverLoad: " + serverLoadScore
                   + ", callCount: " + callCount
                   + ", healthScore dropped from " + trackerClientState.getHealthScore() + " to " + newHealthScore);
         }
         else if (trackerClientState.getHealthScore() < MAX_HEALTH_SCORE
-            && isHealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
+            && isHealthy(trackerClientState, clusterStats, callCount, avgLatency, errorRate, serverLoadScore))
         {
           if (oldHealthScore < _relativeStrategyProperties.getSlowStartThreshold())
           {
@@ -326,18 +334,20 @@ public class StateUpdater
         }
       }
     }
-    partitionState.setPartitionStats(avgClusterLatency, clusterCallCount, clusterErrorCount);
+    partitionState.setPartitionStats(clusterStats.getAvgClusterLatency(), clusterCallCount, clusterErrorCount);
   }
 
   /**
-   * Get the weighted average cluster latency
+   * Get the cluster level stats including weighted average cluster latency and average load
    */
-  private long getAvgClusterLatency(Set<TrackerClient> trackerClients, Map<TrackerClient, CallTracker.CallStats> latestCallStatsMap)
+  private ClusterStats getClusterStats(Set<TrackerClient> trackerClients, Map<TrackerClient, CallTracker.CallStats> latestCallStatsMap)
   {
     long latencySum = 0;
     long outstandingLatencySum = 0;
     int callCountSum = 0;
     int outstandingCallCountSum = 0;
+    int numValidHost = 0;
+    int loadTotal = 0;
 
     for (TrackerClient trackerClient : trackerClients)
     {
@@ -350,11 +360,21 @@ public class StateUpdater
       outstandingLatencySum += latestCallStats.getOutstandingStartTimeAvg() * outstandingCallCount;
       callCountSum += callCount;
       outstandingCallCountSum += outstandingCallCount;
+
+      int loadScore = latestCallStats.getServerLoadScore();
+      if (loadScore > CallTrackerImpl.DEFAULT_SERVER_OVERLOAD_SCORE)
+      {
+        numValidHost ++;
+        loadTotal += loadScore;
+      }
     }
 
-    return callCountSum + outstandingCallCountSum == 0
+    long avgClusterLatency = callCountSum + outstandingCallCountSum == 0
         ? 0
         : Math.round((latencySum + outstandingLatencySum) / (double) (callCountSum + outstandingCallCountSum));
+    double avgClusterLoad = numValidHost > 0 ? loadTotal / (double) numValidHost : CallTrackerImpl.DEFAULT_SERVER_OVERLOAD_SCORE;
+
+    return new ClusterStats(avgClusterLatency, avgClusterLoad);
   }
 
   public static long getAvgHostLatency(CallTracker.CallStats callStats)
@@ -372,23 +392,31 @@ public class StateUpdater
   /**
    * Identify if a client is unhealthy
    */
-  private boolean isUnhealthy(TrackerClientState trackerClientState, long avgClusterLatency,
-      int callCount, long latency, double errorRate)
+  private boolean isUnhealthy(TrackerClientState trackerClientState, ClusterStats clusterStats,
+      int callCount, long latency, double errorRate, int serverLoadScore)
   {
+    boolean isServerLoadHigh = serverLoadScore > CallTrackerImpl.DEFAULT_SERVER_OVERLOAD_SCORE
+        && serverLoadScore >= clusterStats.getAvgClusterLoad() * _relativeStrategyProperties.getRelativeLoadHighThresholdFactor();
+
     return callCount >= trackerClientState.getAdjustedMinCallCount()
-        && (latency >= avgClusterLatency * _relativeStrategyProperties.getRelativeLatencyHighThresholdFactor()
-        || errorRate >= _relativeStrategyProperties.getHighErrorRate());
+        && (latency >= clusterStats.getAvgClusterLatency() * _relativeStrategyProperties.getRelativeLatencyHighThresholdFactor()
+        || errorRate >= _relativeStrategyProperties.getHighErrorRate()
+        || isServerLoadHigh);
   }
 
   /**
    * Identify if a client is healthy
    */
-  private boolean isHealthy(TrackerClientState trackerClientState, long avgClusterLatency,
-      int callCount, long latency, double errorRate)
+  private boolean isHealthy(TrackerClientState trackerClientState, ClusterStats clusterStats,
+      int callCount, long latency, double errorRate, int serverLoadScore)
   {
+    boolean isServerLoadRecovered = serverLoadScore == CallTrackerImpl.DEFAULT_SERVER_OVERLOAD_SCORE
+        || serverLoadScore <= clusterStats.getAvgClusterLoad() * _relativeStrategyProperties.getRelativeLoadLowThresholdFactor();
+
     return callCount >= trackerClientState.getAdjustedMinCallCount()
-        && latency <= avgClusterLatency * _relativeStrategyProperties.getRelativeLatencyLowThresholdFactor()
-        && errorRate <= _relativeStrategyProperties.getLowErrorRate();
+        && latency <= clusterStats.getAvgClusterLatency() * _relativeStrategyProperties.getRelativeLatencyLowThresholdFactor()
+        && errorRate <= _relativeStrategyProperties.getLowErrorRate()
+        && isServerLoadRecovered;
   }
 
   private void notifyPartitionStateUpdateListener(PartitionState state)
@@ -507,5 +535,25 @@ public class StateUpdater
   private static String getClientStats(TrackerClient client, Map<TrackerClient, TrackerClientState> trackerClientStateMap)
   {
     return client.getUri() + ":" + trackerClientStateMap.get(client).getHealthScore();
+  }
+
+  private class ClusterStats
+  {
+    private final long _avgClusterLatency;
+    private final double _avgClusterLoad;
+
+    ClusterStats(long avgClusterLatency, double avgClusterLoad)
+    {
+      _avgClusterLatency = avgClusterLatency;
+      _avgClusterLoad = avgClusterLoad;
+    }
+
+    public long getAvgClusterLatency() {
+      return _avgClusterLatency;
+    }
+
+    public double getAvgClusterLoad() {
+      return _avgClusterLoad;
+    }
   }
 }

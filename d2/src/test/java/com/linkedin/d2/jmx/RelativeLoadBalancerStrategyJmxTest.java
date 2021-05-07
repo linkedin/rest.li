@@ -57,7 +57,7 @@ public class RelativeLoadBalancerStrategyJmxTest {
   public void testLatencyDeviation()
   {
     List<TrackerClient> trackerClientsEqual = TrackerClientMockHelper.mockTrackerClients(2,
-        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 200L), Arrays.asList(100L, 100L), Arrays.asList(0, 0));
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 200L), Arrays.asList(100L, 100L), Arrays.asList(0, 0), Arrays.asList(0, 0));
 
     RelativeLoadBalancerStrategyJmx jmx = mockRelativeLoadBalancerStrategyJmx(trackerClientsEqual);
     assertEquals(jmx.getLatencyStandardDeviation(), 0.0);
@@ -66,11 +66,11 @@ public class RelativeLoadBalancerStrategyJmxTest {
 
     List<TrackerClient> trackerClientsDiverse1 = TrackerClientMockHelper.mockTrackerClients(3,
         Arrays.asList(20, 20, 20), Arrays.asList(10, 10, 10),
-        Arrays.asList(100L, 150L, 200L), Arrays.asList(50L, 75L, 100L), Arrays.asList(0, 0, 0));
+        Arrays.asList(100L, 150L, 200L), Arrays.asList(50L, 75L, 100L), Arrays.asList(0, 0, 0), Arrays.asList(0, 0, 0));
 
     List<TrackerClient> trackerClientsDiverse2 = TrackerClientMockHelper.mockTrackerClients(4,
         Arrays.asList(20, 20, 20, 20), Arrays.asList(10, 10, 10, 10),
-        Arrays.asList(100L, 200L, 400L, 600L), Arrays.asList(50L, 100L, 200L, 300L), Arrays.asList(0, 0, 0, 0));
+        Arrays.asList(100L, 200L, 400L, 600L), Arrays.asList(50L, 100L, 200L, 300L),Arrays.asList(0, 0, 0, 0), Arrays.asList(0, 0, 0, 0));
 
     RelativeLoadBalancerStrategyJmx jmx1 = mockRelativeLoadBalancerStrategyJmx(trackerClientsDiverse1);
     RelativeLoadBalancerStrategyJmx jmx2 = mockRelativeLoadBalancerStrategyJmx(trackerClientsDiverse2);
@@ -83,7 +83,7 @@ public class RelativeLoadBalancerStrategyJmxTest {
     // hosts not receiving any traffic should not affect deviation calculation
     List<TrackerClient> trackerClientsDiverse3 = TrackerClientMockHelper.mockTrackerClients(4,
         Arrays.asList(20, 20, 20, 0), Arrays.asList(10, 10, 10, 0),
-        Arrays.asList(100L, 150L, 200L, 0L), Arrays.asList(50L, 75L, 100L, 0L), Arrays.asList(0, 0, 0, 0));
+        Arrays.asList(100L, 150L, 200L, 0L), Arrays.asList(50L, 75L, 100L, 0L), Arrays.asList(0, 0, 0, 0), Arrays.asList(0, 0, 0, 0));
 
     RelativeLoadBalancerStrategyJmx jmx3 = mockRelativeLoadBalancerStrategyJmx(trackerClientsDiverse3);
     assertEquals(jmx3.getLatencyStandardDeviation(), jmx1.getLatencyStandardDeviation());
@@ -95,7 +95,7 @@ public class RelativeLoadBalancerStrategyJmxTest {
   public void testLatencyRelativeFactor()
   {
     List<TrackerClient> trackerClientsEqual = TrackerClientMockHelper.mockTrackerClients(2,
-        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 200L), Arrays.asList(100L, 100L), Arrays.asList(0, 0));
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 200L), Arrays.asList(100L, 100L), Arrays.asList(0, 0), Arrays.asList(0, 0));
 
     RelativeLoadBalancerStrategyJmx jmx = mockRelativeLoadBalancerStrategyJmx(trackerClientsEqual);
     assertEquals(jmx.getMaxLatencyRelativeFactor(), 1.0);
@@ -103,7 +103,7 @@ public class RelativeLoadBalancerStrategyJmxTest {
 
     List<TrackerClient> trackerClientsDiverse = TrackerClientMockHelper.mockTrackerClients(4,
         Arrays.asList(20, 20, 20, 20), Arrays.asList(10, 10, 10, 10),
-        Arrays.asList(100L, 200L, 300L, 400L), Arrays.asList(50L, 100L, 150L, 200L), Arrays.asList(0, 0, 0, 0));
+        Arrays.asList(100L, 200L, 300L, 400L), Arrays.asList(50L, 100L, 150L, 200L), Arrays.asList(0, 0, 0, 0), Arrays.asList(0, 0, 0, 0));
 
     jmx = mockRelativeLoadBalancerStrategyJmx(trackerClientsDiverse);
     double maxLatencyRelativeFactor = jmx.getMaxLatencyRelativeFactor();
@@ -131,7 +131,7 @@ public class RelativeLoadBalancerStrategyJmxTest {
   public void testZeroLatency()
   {
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3,
-        Arrays.asList(0, 0, 0), Arrays.asList(0, 0, 0), Arrays.asList(0L, 0L, 0L), Arrays.asList(0L, 0L, 0L), Arrays.asList(0, 0, 0));
+        Arrays.asList(0, 0, 0), Arrays.asList(0, 0, 0), Arrays.asList(0L, 0L, 0L), Arrays.asList(0L, 0L, 0L), Arrays.asList(0, 0, 0), Arrays.asList(0, 0, 0));
 
     RelativeLoadBalancerStrategyJmx jmx = mockRelativeLoadBalancerStrategyJmx(trackerClients);
     assertEquals(jmx.getLatencyStandardDeviation(), 0.0);
