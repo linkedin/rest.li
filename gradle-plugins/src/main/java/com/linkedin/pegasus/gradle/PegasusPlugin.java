@@ -63,6 +63,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaBasePlugin;
+import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
@@ -647,7 +648,7 @@ public class PegasusPlugin implements Plugin<Project>
   {
     checkGradleVersion(project);
 
-    project.getPlugins().apply(JavaPlugin.class);
+    project.getPlugins().apply(JavaLibraryPlugin.class);
     project.getPlugins().apply(IdeaPlugin.class);
     project.getPlugins().apply(EclipsePlugin.class);
 
@@ -1255,7 +1256,7 @@ public class PegasusPlugin implements Plugin<Project>
 
       // generate the rest model
       FileCollection restModelCodegenClasspath = project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION)
-          .plus(project.getConfigurations().getByName("runtime"))
+          .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME))
           .plus(sourceSet.getRuntimeClasspath());
       String destinationDirPrefix = getGeneratedDirPath(project, sourceSet, REST_GEN_TYPE) + File.separatorChar;
       FileCollection restModelResolverPath = apiProject.files(getDataSchemaPath(project, sourceSet))
@@ -1824,15 +1825,21 @@ public class PegasusPlugin implements Plugin<Project>
 
     // include additional dependencies into the appropriate configuration used to compile the input source set
     // must include the generated data template classes and their dependencies the configuration
-    String compileConfigName = isTestSourceSet(sourceSet) ? "testCompile" : "compile";
+    String dependencyDeclarationConfigName = isTestSourceSet(sourceSet)
+        ? JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME
+        : JavaPlugin.API_CONFIGURATION_NAME;
 
-    Configuration compileConfig = project.getConfigurations().maybeCreate(compileConfigName);
-    compileConfig.extendsFrom(
+    Configuration dependencyDeclarationConfig = project.getConfigurations()
+        .maybeCreate(dependencyDeclarationConfigName);
+
+    dependencyDeclarationConfig.extendsFrom(
         getDataModelConfig(project, sourceSet),
         project.getConfigurations().getByName("dataTemplateCompile"));
 
     // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
-    project.getDependencies().add(compileConfigName, project.files(dataTemplateJarTask.getArchivePath()));
+
+    project.getDependencies().add(dependencyDeclarationConfigName,
+        project.files(dataTemplateJarTask.getArchivePath()));
 
     // The below Action is only applied when the 'ivy-publish' is applied by the consumer.
     // If the consumer does not use ivy-publish, this is a noop.
@@ -1908,12 +1915,12 @@ public class PegasusPlugin implements Plugin<Project>
     if (debug)
     {
       System.out.println("configureDataTemplateGeneration sourceSet " + sourceSet.getName());
-      System.out.println(compileConfigName + ".allDependencies : "
-          + project.getConfigurations().getByName(compileConfigName).getAllDependencies());
-      System.out.println(compileConfigName + ".extendsFrom: "
-          + project.getConfigurations().getByName(compileConfigName).getExtendsFrom());
-      System.out.println(compileConfigName + ".transitive: "
-          + project.getConfigurations().getByName(compileConfigName).isTransitive());
+      System.out.println(dependencyDeclarationConfigName + ".allDependencies : "
+          + project.getConfigurations().getByName(dependencyDeclarationConfigName).getAllDependencies());
+      System.out.println(dependencyDeclarationConfigName + ".extendsFrom: "
+          + project.getConfigurations().getByName(dependencyDeclarationConfigName).getExtendsFrom());
+      System.out.println(dependencyDeclarationConfigName + ".transitive: "
+          + project.getConfigurations().getByName(dependencyDeclarationConfigName).isTransitive());
     }
 
     project.getTasks().getByName(sourceSet.getCompileJavaTaskName()).dependsOn(dataTemplateJarTask);
