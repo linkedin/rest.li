@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Expose getResourceClass from ResourceDefinition interface.
 
 ## [29.18.5] - 2021-05-13
 - Add "http.streamingTimeout" to AllowedClientPropertyKeys

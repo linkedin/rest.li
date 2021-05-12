@@ -42,6 +42,13 @@ public interface ResourceDefinition
   String getNamespace();
 
   /**
+   * Gets the rest.li resource java class.
+   *
+   * @return java class for this rest.li resource.
+   */
+  Class<?> getResourceClass();
+
+  /**
    * Returns whether the resource is a root resource or not.
    *
    * @return true if the resource is a root resource; else false.
