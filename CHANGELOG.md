@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.18.6] - 2021-05-13
 - Expose getResourceClass from ResourceDefinition interface.
 
 ## [29.18.5] - 2021-05-13
@@ -4935,7 +4937,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.6...master
+[29.18.6]: https://github.com/linkedin/rest.li/compare/v29.18.5...v29.18.6
 [29.18.5]: https://github.com/linkedin/rest.li/compare/v29.18.4...v29.18.5
 [29.18.4]: https://github.com/linkedin/rest.li/compare/v29.18.3...v29.18.4
 [29.18.3]: https://github.com/linkedin/rest.li/compare/v29.18.2...v29.18.3
