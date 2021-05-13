@@ -43,19 +43,11 @@ public interface ResourceDefinition
 
   /**
    * Gets the rest.li resource java class.
-   * By default we assume java resource class name is the same as annotated namespace name,
-   * if that class cannot be found, return null.
    *
    * @return java class for this rest.li resource.
    */
   default Class<?> getResourceClass() {
-
-    String clazzName = getNamespace() + "." + getName();
-    try {
-      return Class.forName(clazzName);
-    } catch (ClassNotFoundException e) {
-      return null;
-    }
+    throw new UnsupportedOperationException();
   }
 
   /**
