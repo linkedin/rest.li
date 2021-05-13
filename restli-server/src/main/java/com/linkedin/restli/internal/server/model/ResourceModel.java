@@ -327,27 +327,31 @@ public class ResourceModel implements ResourceDefinition
   /**
    * @return true if this resource has sub-resources, false otherwise
    */
+  @Override
   public boolean hasSubResources()
   {
     return _pathSubResourceMap.size() > 0;
   }
 
+  @Override
   public Class<?> getResourceClass()
   {
     return _resourceClass;
   }
 
-
+  @Override
   public String getName()
   {
     return _name;
   }
 
+  @Override
   public String getNamespace()
   {
     return _namespace;
   }
 
+  @Override
   public boolean isRoot()
   {
     return _root;
