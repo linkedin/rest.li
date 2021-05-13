@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.18.5] - 2021-05-13
+- Add "http.streamingTimeout" to AllowedClientPropertyKeys
+
 ## [29.18.4] - 2021-05-06
 - Replace runtime configuration with runtimeClasspath configuration in plugin for compatibility with Gradle 7.
 
@@ -4931,7 +4934,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.5...master
+[29.18.5]: https://github.com/linkedin/rest.li/compare/v29.18.4...v29.18.5
 [29.18.4]: https://github.com/linkedin/rest.li/compare/v29.18.3...v29.18.4
 [29.18.3]: https://github.com/linkedin/rest.li/compare/v29.18.2...v29.18.3
 [29.18.2]: https://github.com/linkedin/rest.li/compare/v29.18.1...v29.18.2
