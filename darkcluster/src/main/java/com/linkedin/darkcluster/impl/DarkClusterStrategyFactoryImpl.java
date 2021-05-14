@@ -17,9 +17,8 @@
 package com.linkedin.darkcluster.impl;
 
 import com.linkedin.common.callback.Callback;
-import com.linkedin.common.util.None;
-import com.linkedin.darkcluster.util.ExpiringCircularBuffer;
-import com.linkedin.darkcluster.util.GuaranteedRateLimiter;
+import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
+import com.linkedin.r2.transport.http.client.EvictingCircularBuffer;
 import com.linkedin.util.clock.SystemClock;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
@@ -71,9 +70,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   private final Random _random;
   private final LoadBalancerClusterListener _clusterListener;
   private final DarkClusterVerifierManager _verifierManager;
-  private final ScheduledExecutorService _rateLimiterScheduler;
-  private final ExecutorService _rateLimiterExecutor;
-  private final ExpiringCircularBuffer<Callback<None>> _rateLimiterStoredCallbacks;
+  private final ConstantQpsRateLimiter _rateLimiter;
 
   public DarkClusterStrategyFactoryImpl(@Nonnull Facilities facilities,
                                         @Nonnull String sourceClusterName,
@@ -81,9 +78,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
                                         @Nonnull Notifier notifier,
                                         @Nonnull Random random,
                                         @Nonnull DarkClusterVerifierManager verifierManager,
-                                        @Nonnull ScheduledExecutorService rateLimiterScheduler,
-                                        @Nonnull ExecutorService rateLimiterExecutor,
-                                        @Nonnull ExpiringCircularBuffer<Callback<None>> rateLimiterStoredCallbacks)
+                                        @Nonnull ConstantQpsRateLimiter rateLimiter)
   {
     _facilities = facilities;
     _sourceClusterName = sourceClusterName;
@@ -92,9 +87,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     _random = random;
     _darkClusterDispatcher = darkClusterDispatcher;
     _verifierManager = verifierManager;
-    _rateLimiterScheduler = rateLimiterScheduler;
-    _rateLimiterExecutor = rateLimiterExecutor;
-    _rateLimiterStoredCallbacks = rateLimiterStoredCallbacks;
+    _rateLimiter = rateLimiter;
     _clusterListener = new DarkClusterListener();
   }
 
@@ -148,18 +141,15 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
         // TODO: Pull this from config instead
         int dispatcherOldestRequestAge = 10;
 
-        _rateLimiterStoredCallbacks.setCapacity(dispatcherMaxRequestsToBuffer);
-        _rateLimiterStoredCallbacks.setTtl(dispatcherOldestRequestAge, ChronoUnit.SECONDS);
+        _rateLimiter.setBufferCapacity(dispatcherMaxRequestsToBuffer);
+        _rateLimiter.setBufferTtl(dispatcherOldestRequestAge, ChronoUnit.SECONDS);
 
         BaseDarkClusterDispatcher baseDarkClusterDispatcher =
             new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
 
-        GuaranteedRateLimiter rateLimiter = new GuaranteedRateLimiter(_rateLimiterScheduler, _rateLimiterExecutor,
-            SystemClock.instance(), _rateLimiterStoredCallbacks);
-
         return new ConstantQpsDarkClusterStrategy(_sourceClusterName, darkClusterName,
             darkClusterPerHostInboundTargetRate, baseDarkClusterDispatcher, _notifier,
-            _facilities.getClusterInfoProvider(), rateLimiter);
+            _facilities.getClusterInfoProvider(), _rateLimiter);
 
         // TODO: fix case statement to evaluate all strategies instead of hard-coding CONSTANT_QPS
         // switch(darkClusterStrategyName) {

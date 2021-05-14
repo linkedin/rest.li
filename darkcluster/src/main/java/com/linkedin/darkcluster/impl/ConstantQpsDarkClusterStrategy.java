@@ -18,7 +18,8 @@ package com.linkedin.darkcluster.impl;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
-import com.linkedin.darkcluster.util.GuaranteedRateLimiter;
+import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
 import com.linkedin.common.util.Notifier;
@@ -41,18 +42,21 @@ import com.linkedin.r2.message.rest.RestRequest;
 public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
   private final String _originalClusterName;
   private final String _darkClusterName;
-  private final Integer _darkClusterPerHostInboundTargetRate;
+  private final Integer _darkClusterPerHostQps;
   private final BaseDarkClusterDispatcher _baseDarkClusterDispatcher;
   private final Notifier _notifier;
   private final ClusterInfoProvider _clusterInfoProvider;
-  private final GuaranteedRateLimiter _rateLimiter;
+  private final ConstantQpsRateLimiter _rateLimiter;
+
+  private static final long ONE_SECOND_PERIOD = TimeUnit.SECONDS.toMillis(1);
+  private static final int NUM_REQUESTS_TO_SEND_PER_RATE_LIMITER_CYCLE = 1;
 
   public ConstantQpsDarkClusterStrategy(@Nonnull String originalClusterName, @Nonnull String darkClusterName,
-      @Nonnull Integer darkClusterPerHostInboundTargetRate, @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
-      @Nonnull Notifier notifier, @Nonnull ClusterInfoProvider clusterInfoProvider, @Nonnull GuaranteedRateLimiter rateLimiter) {
+      @Nonnull Integer darkClusterPerHostQps, @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
+      @Nonnull Notifier notifier, @Nonnull ClusterInfoProvider clusterInfoProvider, @Nonnull ConstantQpsRateLimiter rateLimiter) {
     _originalClusterName = originalClusterName;
     _darkClusterName = darkClusterName;
-    _darkClusterPerHostInboundTargetRate = darkClusterPerHostInboundTargetRate;
+    _darkClusterPerHostQps = darkClusterPerHostQps;
     _baseDarkClusterDispatcher = baseDarkClusterDispatcher;
     _notifier = notifier;
     _clusterInfoProvider = clusterInfoProvider;
@@ -62,8 +66,9 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
   @Override
   public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext) {
     float sendRate = getPerHostSendRate();
-    _rateLimiter.setRate(sendRate, 1000, 1);
-    return addRequestToQueue(originalRequest, darkRequest, requestContext);
+    int burst = (int) Math.ceil(sendRate / ONE_SECOND_PERIOD);
+    _rateLimiter.setRate(sendRate, ONE_SECOND_PERIOD, burst);
+    return addRequest(originalRequest, darkRequest, requestContext);
   }
 
   /**
@@ -95,7 +100,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
       int numDarkClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_darkClusterName);
       int numSourceClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_originalClusterName);
       if (numSourceClusterInstances != 0) {
-        return (float) (_darkClusterPerHostInboundTargetRate * numDarkClusterInstances) / numSourceClusterInstances;
+        return (float) (_darkClusterPerHostQps * numDarkClusterInstances) / numSourceClusterInstances;
       }
 
       return 0F;
@@ -114,7 +119,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
    * @param requestContext
    * @return
    */
-  private boolean addRequestToQueue(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
+  private boolean addRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
     _rateLimiter.submit(new Callback<None>() {
       @Override
@@ -124,7 +129,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
 
       @Override
       public void onSuccess(None result) {
-        _baseDarkClusterDispatcher.sendRequest(originalRequest, darkRequest, requestContext, 1);
+        _baseDarkClusterDispatcher.sendRequest(originalRequest, darkRequest, requestContext, NUM_REQUESTS_TO_SEND_PER_RATE_LIMITER_CYCLE);
       }
     });
     return true;

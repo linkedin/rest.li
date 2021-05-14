@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.19.1] - 2021-04-27
+## [29.19.1] - 2021-05-14
 - Add support for CONSTANT_QPS dark canary cluster strategy
 
 ## [29.18.1] - 2021-04-22

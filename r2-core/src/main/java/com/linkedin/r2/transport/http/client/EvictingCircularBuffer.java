@@ -14,8 +14,13 @@
    limitations under the License.
 */
 
-package com.linkedin.darkcluster.util;
+package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.r2.transport.http.client.ratelimiter.CallbackStore;
+import com.linkedin.util.clock.Clock;
+import com.linkedin.util.clock.SystemClock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -23,117 +28,168 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Queue;
-import org.apache.commons.lang3.NotImplementedException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
 /**
  * TODO: javadocs
- * @param <E>
  */
 @SuppressWarnings("serial")
-public class ExpiringCircularBuffer<E> extends ArrayList<E> implements Queue<E> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ExpiringCircularBuffer.class);
+public class EvictingCircularBuffer implements CallbackStore
+{
+  private static final Logger LOGGER = LoggerFactory.getLogger(EvictingCircularBuffer.class);
   private Duration _ttl;
-  private ArrayList<Instant> _ttlBuffer;
-  private volatile int _readerPosition;
-  private volatile int _writerPosition;
+  private final ArrayList<Callback<None>> _callbacks = new ArrayList<>();
+  private final ArrayList<Instant> _ttlBuffer = new ArrayList<>();
+  private final ArrayList<ReentrantReadWriteLock> _elementLocks = new ArrayList<>();
+  private final AtomicInteger _readerPosition = new AtomicInteger();
+  private final AtomicInteger _writerPosition = new AtomicInteger();
+  private final Clock _clock;
 
-  public ExpiringCircularBuffer(int capacity, int ttl, ChronoUnit ttlUnit) {
-    super();
-    setCapacity(capacity);
-    setTtl(ttl, ttlUnit);
+  public EvictingCircularBuffer(int capacity, int ttl, ChronoUnit ttlUnit)
+  {
+    this(capacity, ttl, ttlUnit, SystemClock.instance());
   }
 
-  public synchronized boolean add(E toAdd) {
-    this.set(_writerPosition, toAdd);
-    _ttlBuffer.set(_writerPosition, Instant.now());
-    bumpWriterPosition();
-    return true;
+  EvictingCircularBuffer(int capacity, int ttl, ChronoUnit ttlUnit, Clock clock)
+  {
+    setCapacity(capacity);
+    setTtl(ttl, ttlUnit);
+    _clock = clock;
+  }
+
+  public void put(Callback<None> toAdd)
+  {
+    int writerPosition = getAndBumpWriterPosition();
+    ReentrantReadWriteLock thisLock = _elementLocks.get(writerPosition);
+    thisLock.writeLock().lock();
+    try
+    {
+      _callbacks.set(writerPosition, toAdd);
+      _ttlBuffer.set(writerPosition, Instant.ofEpochMilli(_clock.currentTimeMillis()));
+    } finally {
+      thisLock.writeLock().unlock();
+    }
   }
 
   /**
    * TODO: javadocs
    * @return
    */
-  public synchronized E element() {
-    LOGGER.info("Trying a get. Reader position is {}", _readerPosition);
-    E e = this.get(_readerPosition);
-    Instant ttl = _ttlBuffer.get(_readerPosition);
-    if (e == null) {
-      if (_readerPosition == 0) {
-        throw new NoSuchElementException("Buffer is empty");
-      } else {
-        LOGGER.info("Hit a hole in the buffer, bump readerPosition and retry.");
-        bumpReaderPosition();
-        return element();
-      }
-    } else if (Duration.between(ttl, Instant.now()).compareTo(_ttl) > 0) {
-      if (_readerPosition != 0 || (_readerPosition == 0 && this.size() == 1)) {
-        LOGGER.info("purging object from buffer after expiring ttl");
-        this.set(_readerPosition, null);
-        _ttlBuffer.set(_readerPosition, null);
-      }
-      bumpReaderPosition();
-      return element();
-    }
-    bumpReaderPosition();
-    return e;
-  }
+  public Callback<None> get()
+  {
+    int thisReaderPosition = getAndBumpReaderPosition();
+    ReentrantReadWriteLock thisLock = _elementLocks.get(thisReaderPosition);
 
-  public boolean offer(E e) {
-    return add(e);
-  }
-
-  public E remove() {
-    throw new NotImplementedException("ExpiringCircularBuffer does not support removal operations");
-  }
-
-  public E poll() {
-    throw new NotImplementedException("ExpiringCircularBuffer does not support removal operations");
-  }
-
-  public E peek() {
+    thisLock.readLock().lock();
+    Callback<None> callback;
+    Instant ttl;
     try {
-      return element();
-    } catch (NoSuchElementException ex) {
-      return null;
+      LOGGER.info("Trying a get. Reader position is {}", thisReaderPosition);
+      callback = _callbacks.get(thisReaderPosition);
+      ttl = _ttlBuffer.get(thisReaderPosition);
     }
+    finally
+    {
+      thisLock.readLock().unlock();
+    }
+
+    if (callback == null)
+    {
+      if (thisReaderPosition == 0)
+      {
+        throw new NoSuchElementException("Buffer is empty");
+      }
+      else
+      {
+        LOGGER.info("Hit a hole in the buffer, retry.");
+        return get();
+      }
+    }
+    else if (Duration.between(ttl, Instant.ofEpochMilli(_clock.currentTimeMillis())).compareTo(_ttl) > 0)
+    {
+      if (thisReaderPosition != 0 || this.size() == 1)
+      {
+        thisLock.writeLock().lock();
+        try {
+          if (callback == _callbacks.get(thisReaderPosition))
+          {
+            LOGGER.info("purging callback from buffer after expiring ttl");
+            _callbacks.set(thisReaderPosition, null);
+            _ttlBuffer.set(thisReaderPosition, null);
+          }
+        }
+        finally
+        {
+          thisLock.writeLock().unlock();
+        }
+      }
+      return get();
+    }
+    return callback;
   }
 
-  public int size() {
-    return (int) this.stream().filter(Objects::nonNull).count();
+  private int getAndBumpWriterPosition()
+  {
+    return (_writerPosition.getAndUpdate(x -> (x + 1) % _callbacks.size()));
   }
 
-  public boolean isEmpty() {
-    return this.size() == 0;
+  private int getAndBumpReaderPosition()
+  {
+    return (_readerPosition.getAndUpdate(x -> (x + 1) % _callbacks.size()));
   }
 
-  private synchronized void bumpReaderPosition() {
-    _readerPosition = (_readerPosition + 1) % super.size();
-    LOGGER.info("reader position is now {}", _readerPosition);
+  private int size()
+  {
+    return (int) _callbacks.stream().filter(Objects::nonNull).count();
   }
 
-  private synchronized void bumpWriterPosition() {
-    _writerPosition = (_writerPosition + 1) % super.size();
-    LOGGER.info("writer position is now {}", _writerPosition);
+  int getCapacity()
+  {
+    return _callbacks.size();
   }
 
-  public synchronized void setCapacity(int capacity) {
+  void setCapacity(int capacity)
+  {
     if (capacity < 1) {
-      throw new IllegalArgumentException("capacity can't be less than 1.");
+      throw new IllegalArgumentException("capacity can't be less than 1");
     }
-    super.clear();
-    super.addAll(Collections.nCopies(capacity, null));
-    _ttlBuffer = new ArrayList<>(Collections.nCopies(capacity, null));
+
+    ArrayList<ReentrantReadWriteLock> tempLocks = new ArrayList<>();
+    _elementLocks.forEach(x ->
+    {
+      x.writeLock().lock();
+      tempLocks.add(x);
+    });
+    try {
+      _callbacks.clear();
+      _ttlBuffer.clear();
+      _elementLocks.clear();
+      _ttlBuffer.addAll(Collections.nCopies(capacity, null));
+      _callbacks.addAll(Collections.nCopies(capacity, null));
+      for(int i = 0; i <= capacity; i++)
+      {
+        _elementLocks.add(new ReentrantReadWriteLock());
+      }
+    }
+    finally
+    {
+      tempLocks.forEach(x -> x.writeLock().unlock());
+    }
   }
 
-  public void setTtl(int ttl, ChronoUnit ttlUnit)
+  public Duration getTtl()
+  {
+    return _ttl;
+  }
+
+  void setTtl(int ttl, ChronoUnit ttlUnit)
   {
     if (ttl < 1) {
-      throw new IllegalArgumentException("ttl can't be less than 1.");
+      throw new IllegalArgumentException("ttl can't be less than 1");
     }
     if (ttlUnit == null) {
       throw new IllegalArgumentException("ttlUnit can't be null.");
