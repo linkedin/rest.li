@@ -7,7 +7,6 @@ import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.avro.Schema;
@@ -26,11 +25,11 @@ import org.apache.avro.Schema;
 class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator implements DataSchemaTraverse.Callback
 {
   private final DataToAvroSchemaTranslationOptions _options;
-  private final IdentityHashMap<RecordDataSchema.Field, FieldOverride> _defaultValueOverrides;
+  private final Map<RecordDataSchema.Field, FieldOverride> _defaultValueOverrides;
   private DataSchema _newDefaultSchema;
 
   DefaultDataToAvroConvertCallback(DataToAvroSchemaTranslationOptions options,
-      IdentityHashMap<RecordDataSchema.Field, FieldOverride> defaultValueOverrides)
+      Map<RecordDataSchema.Field, FieldOverride> defaultValueOverrides)
   {
     _options = options;
     _defaultValueOverrides = defaultValueOverrides;
