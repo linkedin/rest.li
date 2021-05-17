@@ -30,8 +30,6 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -40,7 +38,6 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("serial")
 public class EvictingCircularBuffer implements CallbackStore
 {
-  private static final Logger LOGGER = LoggerFactory.getLogger(EvictingCircularBuffer.class);
   private Duration _ttl;
   private final ArrayList<Callback<None>> _callbacks = new ArrayList<>();
   private final ArrayList<Instant> _ttlBuffer = new ArrayList<>();
@@ -48,6 +45,7 @@ public class EvictingCircularBuffer implements CallbackStore
   private final AtomicInteger _readerPosition = new AtomicInteger();
   private final AtomicInteger _writerPosition = new AtomicInteger();
   private final Clock _clock;
+
 
   public EvictingCircularBuffer(int capacity, int ttl, ChronoUnit ttlUnit)
   {
@@ -88,7 +86,6 @@ public class EvictingCircularBuffer implements CallbackStore
     Callback<None> callback;
     Instant ttl;
     try {
-      LOGGER.info("Trying a get. Reader position is {}", thisReaderPosition);
       callback = _callbacks.get(thisReaderPosition);
       ttl = _ttlBuffer.get(thisReaderPosition);
     }
@@ -105,7 +102,6 @@ public class EvictingCircularBuffer implements CallbackStore
       }
       else
       {
-        LOGGER.info("Hit a hole in the buffer, retry.");
         return get();
       }
     }
@@ -117,7 +113,6 @@ public class EvictingCircularBuffer implements CallbackStore
         try {
           if (callback == _callbacks.get(thisReaderPosition))
           {
-            LOGGER.info("purging callback from buffer after expiring ttl");
             _callbacks.set(thisReaderPosition, null);
             _ttlBuffer.set(thisReaderPosition, null);
           }
@@ -157,7 +152,8 @@ public class EvictingCircularBuffer implements CallbackStore
     if (capacity < 1) {
       throw new IllegalArgumentException("capacity can't be less than 1");
     }
-
+    // acquire write lock for all elements in the buffer to prevent reads while the buffer is re-created,
+    // taking care to store them in a temporary location for releasing afterward.
     ArrayList<ReentrantReadWriteLock> tempLocks = new ArrayList<>();
     _elementLocks.forEach(x ->
     {
@@ -168,6 +164,8 @@ public class EvictingCircularBuffer implements CallbackStore
       _callbacks.clear();
       _ttlBuffer.clear();
       _elementLocks.clear();
+      // populate ArrayList with nulls to prevent changes to underlying data structure size during writes,
+      // also needed to compute reader and writer position through calls to size()
       _ttlBuffer.addAll(Collections.nCopies(capacity, null));
       _callbacks.addAll(Collections.nCopies(capacity, null));
       for(int i = 0; i <= capacity; i++)
@@ -177,6 +175,8 @@ public class EvictingCircularBuffer implements CallbackStore
     }
     finally
     {
+      // these locks no longer exist in _elementLocks, but we need to release them in order to unblock
+      // pending reads.
       tempLocks.forEach(x -> x.writeLock().unlock());
     }
   }

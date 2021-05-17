@@ -33,11 +33,17 @@ import com.linkedin.r2.message.rest.RestRequest;
 
 /**
  * ConstantQpsDarkClusterStrategy figures out how many dark requests to send. The high level goal of this strategy is to
- * keep the incoming QPS per dark host constant.
+ * keep the incoming QPS per dark cluster host constant.
  *
  * It uses the {@link ClusterInfoProvider} to determine the number of instances in both the source and target cluster,
- * and uses that to calculate the number of requests to send in order to make the QPS per dark host constant and equal
+ * and uses that to calculate the number of requests to send in order to make the QPS per dark cluster host constant and equal
  * to a specified value, assuming all hosts in the source cluster send traffic.
+ *
+ * This strategy differs from the RELATIVE_TRAFFIC and IDENTICAL_TRAFFIC strategies in that requests are dispatched by a
+ * rate-limited event loop after being stored in a circular buffer. This provides a steady stream of outbound traffic that
+ * only duplicates requests when the inbound rate of traffic is less than the outbound rate. With the other strategies,
+ * requests are randomly selected based on a multiplier. With this strategy, all requests are submitted to the rate-limiter,
+ * which dispatches and evicts stored requests based on its configuration.
  */
 public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
   private final String _originalClusterName;
@@ -65,7 +71,8 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
 
   @Override
   public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext) {
-    float sendRate = getPerHostSendRate();
+    float sendRate = getSendRate();
+    // set burst in such a way that requests are dispatched evenly across the ONE_SECOND_PERIOD
     int burst = (int) Math.ceil(sendRate / ONE_SECOND_PERIOD);
     _rateLimiter.setRate(sendRate, ONE_SECOND_PERIOD, burst);
     return addRequest(originalRequest, darkRequest, requestContext);
@@ -73,8 +80,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
 
   /**
    * We won't create this strategy if this config isn't valid for this strategy. For instance, we don't want to create
-   * the ConstantQpsDarkClusterStrategy if there's no darkClusterPerHostInboundTargetRate or if the
-   * darkClusterPerHostInboundTargetRate is zero, because we'd be doing pointless work on every getOrCreate.
+   * the ConstantQpsDarkClusterStrategy if any of the configurables are zero, because we'd be doing pointless work on every getOrCreate.
    * Instead if will go to the next strategy (or NoOpDarkClusterStrategy).
    *
    * This is a static method defined here because we don't want to instantiate a strategy to check this. It cannot be a
@@ -83,24 +89,43 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
    * @return true if config is valid for this strategy
    */
   public static boolean isValidConfig(DarkClusterConfig darkClusterConfig) {
-    // TODO: Commented out for testing in ei. Still finalizing what config values we'll use. Uncomment when design is finalized.
-    return true;
-    // return darkClusterConfig.hasDispatcherOutboundTargetRate() &&
-    //    darkClusterConfig.getDispatcherOutboundTargetRate() > 0;
+    return darkClusterConfig.hasDispatcherOutboundTargetRate() &&
+        darkClusterConfig.getDispatcherOutboundTargetRate() > 0 &&
+        darkClusterConfig.hasDispatcherMaxRequestsToBuffer() &&
+        darkClusterConfig.getDispatcherMaxRequestsToBuffer() > 0 &&
+        darkClusterConfig.hasDispatcherOldestRequestAge() &&
+        darkClusterConfig.getDispatcherOldestRequestAge() > 0;
   }
 
   /**
-   * TODO: javadocs
-   * @return
+   * Provides the rate of requests to send per second from this host to the dark cluster. Result of this method call should
+   * be used to configure the ConstantQpsRateLimiter.
+   *
+   * It uses the {@link ClusterInfoProvider} to make the following calculation:
+   *
+   * RequestsPerSecond = ((# instances in dark cluster) * darkClusterPerHostQps) / (# instances in source cluster)
+   *
+   * For example, if there are 2 dark instances, and 10 instances in the source cluster, with a darkClusterPerHostQps of 50, we get:
+   * RequestsPerSecond = (2 * 50)/10 = 10.
+   *
+   * another example:
+   * 1 dark instance, 7 source instances, darkClusterPerHostQps = 75.
+   * #equestsPerSecond = (1 * 75)/7 = 10.71429.
+   *
+   * An uncommon but possible configuration:
+   * 10 dark instances, 1 source instance, darkClusterPerHostQps = 50.
+   * RequestsPerSecond = (10 * 50)/1 = 500.
+   *
+   * @return requests per second this host should dispatch
    */
-  private float getPerHostSendRate() {
+  private float getSendRate() {
     try {
       // Only support https for now. http support can be added later if truly needed, but would be non-ideal
       // because potentially both dark and source would have to be configured.
       int numDarkClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_darkClusterName);
       int numSourceClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_originalClusterName);
       if (numSourceClusterInstances != 0) {
-        return (float) (_darkClusterPerHostQps * numDarkClusterInstances) / numSourceClusterInstances;
+        return (float) (numDarkClusterInstances * _darkClusterPerHostQps) / numSourceClusterInstances;
       }
 
       return 0F;
@@ -113,11 +138,11 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
   }
 
   /**
-   * TODO: javadocs
-   * @param originalRequest
-   * @param darkRequest
-   * @param requestContext
-   * @return
+   * Wraps the provided request in a Callback and adds it to the rate-limiter for storage in its buffer. Once stored,
+   * the rate-limiter will begin including this request in the collection of requests it dispatches. Requests stored in
+   * the {@link ConstantQpsRateLimiter} will continue to be dispatched until overwritten by newer requests, or until their TTLs expire.
+
+   * @return always returns true since callbacks can always be added to {@link ConstantQpsRateLimiter};
    */
   private boolean addRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {

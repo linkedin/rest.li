@@ -16,7 +16,11 @@ enum DarkClusterStrategyName {
   RELATIVE_TRAFFIC
 
   /**
-   * This strategy will try to maintain a certain queries per second to the entire dark cluster. Configured with "dispatcherOutboundTargetRate".
+   * This strategy will maintain a certain number of queries per second to the entire dark cluster. It does so by adding every inbound
+   * request to a circular buffer which is consumed asynchronously by a rate-limited event loop. Configured with:
+   *   "dispatcherOutboundTargetRate": the target rate which each dark cluster host should receive.
+   *   "dispatcherMaxRequestsToBuffer": the number of requests to store in the circular buffer.
+   *   "dispatcherOldestRequestAge": time in seconds that a request is eligible for dispatch once it is added to the circular buffer.
    */
   CONSTANT_QPS
 

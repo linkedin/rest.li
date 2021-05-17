@@ -19,7 +19,7 @@ package com.linkedin.r2.transport.http.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.ratelimiter.CallbackStore;
-import com.linkedin.r2.transport.http.client.ratelimiter.ConsumptionTracker;
+import com.linkedin.r2.transport.http.client.ratelimiter.RateLimiterExecutionTracker;
 import com.linkedin.r2.transport.http.client.ratelimiter.QueueBasedCallbackStore;
 import com.linkedin.r2.transport.http.client.ratelimiter.Rate;
 import com.linkedin.util.ArgumentUtil;
@@ -58,7 +58,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
   private final EventLoop _eventLoop;
   private final CallbackStore _pendingCallbacks;
 
-  private final ConsumptionTracker _consumptionTracker;
+  private final RateLimiterExecutionTracker _consumptionTracker;
   private final AtomicReference<Throwable> _invocationError = new AtomicReference<>(null);
 
   private final static Long OVER_BUFFER_RATELIMITEDLOG_RATE_MS = 60000L;
@@ -99,7 +99,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
   }
 
   SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, CallbackStore pendingCallbacks,
-      BufferOverflowMode bufferOverflowMode, String rateLimiterName, ConsumptionTracker consumptionTracker)
+      BufferOverflowMode bufferOverflowMode, String rateLimiterName, RateLimiterExecutionTracker consumptionTracker)
   {
     ArgumentUtil.ensureNotNull(scheduler, "scheduler");
     ArgumentUtil.ensureNotNull(executor, "executor");
@@ -279,7 +279,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         }
         catch (NoSuchElementException ex)
         {
-          _consumptionTracker.pauseConsumption();
+          _consumptionTracker.pauseExecution();
         }
         catch (Throwable e)
         {
@@ -366,7 +366,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     }
   }
 
-  private static class LimitedConsumptionTracker implements ConsumptionTracker
+  private static class LimitedConsumptionTracker implements RateLimiterExecutionTracker
   {
     private final AtomicInteger _pendingCount = new AtomicInteger(0);
     private final int _maxBuffered;
@@ -394,7 +394,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       return _pendingCount.get() == 0;
     }
 
-    public void pauseConsumption()
+    public void pauseExecution()
     {
       _pendingCount.set(0);
     }
