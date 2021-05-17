@@ -19,13 +19,16 @@ package com.linkedin.data.avro;
 
 import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.PegasusSchemaParser;
+import com.linkedin.data.schema.SchemaToPdlEncoder;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 import com.linkedin.data.schema.validation.ValidationOptions;
@@ -152,10 +155,10 @@ public class SchemaTranslator
           if (translationMode == AvroToDataSchemaTranslationMode.VERIFY_EMBEDDED_SCHEMA)
           {
             // additional verification to make sure that embedded schema translates to Avro schema
-            DataToAvroSchemaTranslationOptions dataToAvdoSchemaOptions = new DataToAvroSchemaTranslationOptions();
+            DataToAvroSchemaTranslationOptions dataToAvroSchemaOptions = new DataToAvroSchemaTranslationOptions();
             Object optionalDefaultModeProperty = ((DataMap) dataProperty).get(SchemaTranslator.OPTIONAL_DEFAULT_MODE_PROPERTY);
-            dataToAvdoSchemaOptions.setOptionalDefaultMode(OptionalDefaultMode.valueOf(optionalDefaultModeProperty.toString()));
-            Schema avroSchemaFromEmbedded = dataToAvroSchema(resultDataSchema, dataToAvdoSchemaOptions);
+            dataToAvroSchemaOptions.setOptionalDefaultMode(OptionalDefaultMode.valueOf(optionalDefaultModeProperty.toString()));
+            Schema avroSchemaFromEmbedded = dataToAvroSchema(resultDataSchema, dataToAvroSchemaOptions);
             Schema avroSchemaFromJson = Schema.parse(avroSchemaInJson);
             if (!avroSchemaFromEmbedded.equals(avroSchemaFromJson))
             {
@@ -308,6 +311,11 @@ public class SchemaTranslator
    */
   public static String dataToAvroSchemaJson(DataSchema dataSchema, DataToAvroSchemaTranslationOptions options) throws IllegalArgumentException
   {
+    // Create a copy of the schema before the actual translation, since the translation process ends up modifying the
+    // schema for unions with aliases, and we don't want to disturb the original schema. Use PDL to preserve annotations.
+    final DataSchema translatedDataSchema = DataTemplateUtil.parseSchema(
+        SchemaToPdlEncoder.schemaToPdl(dataSchema, SchemaToPdlEncoder.EncodingStyle.COMPACT), SchemaFormatType.PDL);
+
     // Before the actual schema translation, we perform some pre-processing mainly to deal with default values and pegasus
     // unions with aliases.
     DataSchemaTraverse schemaTraverser = new DataSchemaTraverse();
@@ -315,24 +323,16 @@ public class SchemaTranslator
     // Build callbacks for the schema traverser. We convert any Pegasus 'union with aliases' into Pegasus records during
     // PRE_ORDER and convert all the default values in the schema during POST_ORDER. The aforementioned order should be
     // maintained, as we want the Pegasus unions translated before converting the default values.
-    Map<DataSchemaTraverse.Order, DataSchemaTraverse.Callback> callbacks = new HashMap<>();
+    Map<DataSchemaTraverse.Order, DataSchemaTraverse.Callback> callbacks =
+        new HashMap<>(DataMapBuilder.getOptimumHashMapCapacityFromSize(2));
 
-    IdentityHashMap<RecordDataSchema.Field, FieldOverride> schemaOverrides = new IdentityHashMap<>();
-    callbacks.put(DataSchemaTraverse.Order.PRE_ORDER, new PegasusUnionToAvroRecordConvertCallback(options, schemaOverrides));
+    callbacks.put(DataSchemaTraverse.Order.PRE_ORDER, new PegasusUnionToAvroRecordConvertCallback(options));
 
-    IdentityHashMap<RecordDataSchema.Field, FieldOverride> defaultValueOverrides = new IdentityHashMap<>();
+    Map<RecordDataSchema.Field, FieldOverride> defaultValueOverrides = new IdentityHashMap<>();
     callbacks.put(DataSchemaTraverse.Order.POST_ORDER, new DefaultDataToAvroConvertCallback(options, defaultValueOverrides));
 
-    schemaTraverser.traverse(dataSchema, callbacks);
-
-    // convert schema
-    FieldOverridesProvider fieldOverridesProvider = new FieldOverridesBuilder()
-        .schemaOverrides(schemaOverrides)
-        .defaultValueOverrides(defaultValueOverrides)
-        .build();
-    String schemaJson = SchemaToAvroJsonEncoder.schemaToAvro(dataSchema, fieldOverridesProvider, options);
-
-    return schemaJson;
+    schemaTraverser.traverse(translatedDataSchema, callbacks);
+    return SchemaToAvroJsonEncoder.schemaToAvro(translatedDataSchema, dataSchema, defaultValueOverrides, options);
   }
 
   /**
