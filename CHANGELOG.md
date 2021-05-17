@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.18.7] - 2021-05-17
+- Avoid modifying pegasus schemas when translating them to AVRO.
+
 ## [29.18.6] - 2021-05-13
 - Expose getResourceClass from ResourceDefinition interface.
 
@@ -4937,7 +4940,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.7...master
+[29.18.7]: https://github.com/linkedin/rest.li/compare/v29.18.6...v29.18.7
 [29.18.6]: https://github.com/linkedin/rest.li/compare/v29.18.5...v29.18.6
 [29.18.5]: https://github.com/linkedin/rest.li/compare/v29.18.4...v29.18.5
 [29.18.4]: https://github.com/linkedin/rest.li/compare/v29.18.3...v29.18.4

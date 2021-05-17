@@ -13,7 +13,7 @@ import java.util.Map;
  */
 class FieldOverridesBuilder {
   private Map<RecordDataSchema.Field, FieldOverride> _defaultValueOverrides;
-  private Map<RecordDataSchema.Field, FieldOverride> _schemaOverrides;
+  private Map<RecordDataSchema.Field, RecordDataSchema.Field> _schemaOverrides;
 
   FieldOverridesBuilder defaultValueOverrides(IdentityHashMap<RecordDataSchema.Field, FieldOverride> defaultValueOverrides)
   {
@@ -21,7 +21,7 @@ class FieldOverridesBuilder {
     return this;
   }
 
-  FieldOverridesBuilder schemaOverrides(IdentityHashMap<RecordDataSchema.Field, FieldOverride> schemaOverrides)
+  FieldOverridesBuilder schemaOverrides(IdentityHashMap<RecordDataSchema.Field, RecordDataSchema.Field> schemaOverrides)
   {
     _schemaOverrides = schemaOverrides;
     return this;
@@ -37,7 +37,7 @@ class FieldOverridesBuilder {
       }
 
       @Override
-      public FieldOverride getSchemaOverride(RecordDataSchema.Field field)
+      public RecordDataSchema.Field getSchemaOverride(RecordDataSchema.Field field)
       {
         return (_schemaOverrides == null) ? null : _schemaOverrides.get(field);
       }

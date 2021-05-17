@@ -139,7 +139,7 @@ public class DataSchemaTraverse
 
   private void traverseChild(String childKey, DataSchema childSchema)
   {
-    if (! _seen.containsKey(childSchema))
+    if (!_seen.containsKey(childSchema))
     {
       _seen.put(childSchema, Boolean.TRUE);
       _path.add(childKey);

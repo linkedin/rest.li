@@ -317,11 +317,11 @@ public class SchemaTranslator
     // maintained, as we want the Pegasus unions translated before converting the default values.
     Map<DataSchemaTraverse.Order, DataSchemaTraverse.Callback> callbacks = new HashMap<>();
 
-    IdentityHashMap<RecordDataSchema.Field, FieldOverride> schemaOverrides = new IdentityHashMap<>();
+    IdentityHashMap<RecordDataSchema.Field, RecordDataSchema.Field> schemaOverrides = new IdentityHashMap<>();
     callbacks.put(DataSchemaTraverse.Order.PRE_ORDER, new PegasusUnionToAvroRecordConvertCallback(options, schemaOverrides));
 
     IdentityHashMap<RecordDataSchema.Field, FieldOverride> defaultValueOverrides = new IdentityHashMap<>();
-    callbacks.put(DataSchemaTraverse.Order.POST_ORDER, new DefaultDataToAvroConvertCallback(options, defaultValueOverrides));
+    callbacks.put(DataSchemaTraverse.Order.POST_ORDER, new DefaultDataToAvroConvertCallback(options, defaultValueOverrides, schemaOverrides));
 
     schemaTraverser.traverse(dataSchema, callbacks);
 
@@ -330,9 +330,7 @@ public class SchemaTranslator
         .schemaOverrides(schemaOverrides)
         .defaultValueOverrides(defaultValueOverrides)
         .build();
-    String schemaJson = SchemaToAvroJsonEncoder.schemaToAvro(dataSchema, fieldOverridesProvider, options);
-
-    return schemaJson;
+    return SchemaToAvroJsonEncoder.schemaToAvro(dataSchema, fieldOverridesProvider, options);
   }
 
   /**

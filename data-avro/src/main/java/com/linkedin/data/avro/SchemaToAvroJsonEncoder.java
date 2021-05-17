@@ -219,15 +219,18 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   @Override
   protected void encodeFieldType(RecordDataSchema.Field field) throws IOException
   {
-    DataSchema fieldSchema = field.getType();
+    RecordDataSchema.Field override = _fieldOverridesProvider.getSchemaOverride(field) != null
+        ? _fieldOverridesProvider.getSchemaOverride(field)
+        : field;
+    DataSchema fieldSchema = override.getType();
     UnionDataSchema unionDataSchema =
       (fieldSchema.getDereferencedType() == DataSchema.Type.UNION ?
         (UnionDataSchema) fieldSchema.getDereferencedDataSchema() :
         null);
     _builder.writeFieldName(TYPE_KEY);
 
-    Object defaultValue = field.getDefault();
-    boolean optional = field.getOptional() ||
+    Object defaultValue = override.getDefault();
+    boolean optional = override.getOptional() ||
         //If chose to translate default to optional field AND ALSO has defaultValue
         ((defaultValue !=null)
             && _options.getDefaultFieldTranslationMode() == PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE);
@@ -370,14 +373,23 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   protected void encodeFieldDefault(RecordDataSchema.Field field) throws IOException
   {
     FieldOverride defaultValueOverride = _fieldOverridesProvider.getDefaultValueOverride(field);
-
-    // if field is optional, it must have a default value - either Data.NULL or translated value
-    assert(!field.getOptional() || (defaultValueOverride != null && defaultValueOverride.getValue() != null));
-
-    boolean isTranslatedUnionMember = (Boolean.TRUE == field.getProperties().get(SchemaTranslator.TRANSLATED_UNION_MEMBER_PROPERTY));
-
+    RecordDataSchema.Field fieldOverride = _fieldOverridesProvider.getSchemaOverride(field) != null
+        ? _fieldOverridesProvider.getSchemaOverride(field)
+        : field;
+    boolean isTranslatedUnionMember = (Boolean.TRUE == fieldOverride.getProperties().get(SchemaTranslator.TRANSLATED_UNION_MEMBER_PROPERTY));
     Object defaultValue = (defaultValueOverride != null) ? defaultValueOverride.getValue() : null;
 
+    // Translated union members will have the default specified in the field (no override).
+    // Translated union members can have null default.
+    if (isTranslatedUnionMember)
+    {
+      defaultValue = field.getDefault();
+    }
+    else
+    {
+      // if field is optional, it must have a default value - either Data.NULL or translated value
+      assert (!field.getOptional() || defaultValue != null);
+    }
     if (defaultValue != null || isTranslatedUnionMember) {
       _builder.writeFieldName(DEFAULT_KEY);
       _builder.writeData(defaultValue);
@@ -407,7 +419,11 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   @Override
   protected void encodeFieldProperties(RecordDataSchema.Field field) throws IOException
   {
-    final Map<String, ?> filteredMap = produceFieldProperties(field, _options);
+    RecordDataSchema.Field fieldOverride = _fieldOverridesProvider.getSchemaOverride(field) != null
+        ? _fieldOverridesProvider.getSchemaOverride(field)
+        : field;
+
+    final Map<String, ?> filteredMap = produceFieldProperties(fieldOverride, _options);
 
     _builder.writeProperties(filteredMap);
   }
@@ -471,19 +487,6 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
       }
     }
     return namespace;
-  }
-
-  @Override
-  protected void encodeField(RecordDataSchema.Field field) throws IOException
-  {
-    super.encodeField(field);
-
-    // Reset the field's type and default if there is an override
-    FieldOverride schemaOverride = _fieldOverridesProvider.getSchemaOverride(field);
-    if (schemaOverride != null) {
-      field.setType(schemaOverride.getSchema());
-      field.setDefault(schemaOverride.getValue());
-    }
   }
 
   /**

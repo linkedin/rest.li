@@ -28,12 +28,15 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
   private final DataToAvroSchemaTranslationOptions _options;
   private final IdentityHashMap<RecordDataSchema.Field, FieldOverride> _defaultValueOverrides;
   private DataSchema _newDefaultSchema;
+  private final IdentityHashMap<RecordDataSchema.Field, RecordDataSchema.Field> _schemaOverrides;
 
   DefaultDataToAvroConvertCallback(DataToAvroSchemaTranslationOptions options,
-      IdentityHashMap<RecordDataSchema.Field, FieldOverride> defaultValueOverrides)
+      IdentityHashMap<RecordDataSchema.Field, FieldOverride> defaultValueOverrides,
+      IdentityHashMap<RecordDataSchema.Field, RecordDataSchema.Field> schemaOverrides)
   {
     _options = options;
     _defaultValueOverrides = defaultValueOverrides;
+    _schemaOverrides = schemaOverrides;
   }
 
   @Override
@@ -49,13 +52,17 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
     {
       return;
     }
-    RecordDataSchema recordSchema = (RecordDataSchema) schema;
+    translateRecord(path, (RecordDataSchema) schema);
+  }
+
+  private void translateRecord(List<String> path, RecordDataSchema recordSchema) {
     for (RecordDataSchema.Field field : recordSchema.getFields())
     {
+      RecordDataSchema.Field override = _schemaOverrides.getOrDefault(field, field);
       FieldOverride defaultValueOverride = _defaultValueOverrides.get(field);
       if (defaultValueOverride == null)
       {
-        Object defaultData = field.getDefault();
+        Object defaultData = override.getDefault();
         if (defaultData != null)
         {
           if (_options.getDefaultFieldTranslationMode() ==
@@ -67,11 +74,11 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
           }
           else
           {
-          path.add(field.getName());
-          _newDefaultSchema = null;
-          Object newDefault = translateField(pathList(path), defaultData, field);
-          _defaultValueOverrides.put(field, new FieldOverride(_newDefaultSchema, newDefault));
-          path.remove(path.size() - 1);
+            path.add(field.getName());
+            _newDefaultSchema = null;
+            Object newDefault = translateField(pathList(path), defaultData, override);
+            _defaultValueOverrides.put(field, new FieldOverride(_newDefaultSchema, newDefault));
+            path.remove(path.size() - 1);
           }
         }
         else if (field.getOptional())
@@ -126,9 +133,10 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
   @Override
   protected Object translateField(List<Object> path, Object fieldValue, RecordDataSchema.Field field)
   {
-    DataSchema fieldDataSchema = field.getType();
-    boolean isOptional = field.getOptional();
-    boolean isTranslatedUnionMember = Boolean.TRUE == field.getProperties().get(SchemaTranslator.TRANSLATED_UNION_MEMBER_PROPERTY);
+    RecordDataSchema.Field fieldOverride = _schemaOverrides.getOrDefault(field, field);
+    DataSchema fieldDataSchema = fieldOverride.getType();
+    boolean isOptional = fieldOverride.getOptional();
+    boolean isTranslatedUnionMember = Boolean.TRUE == fieldOverride.getProperties().get(SchemaTranslator.TRANSLATED_UNION_MEMBER_PROPERTY);
     if (isOptional)
     {
       if (fieldDataSchema.getDereferencedType() != DataSchema.Type.UNION)
@@ -136,7 +144,7 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
         if (fieldValue == null)
         {
           if (_options.getOptionalDefaultMode() != OptionalDefaultMode.TRANSLATE_TO_NULL &&
-              field.getDefault() != null)
+              fieldOverride.getDefault() != null)
           {
             throw new IllegalArgumentException(
                 message(path,
@@ -178,7 +186,7 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
                         "cannot translate field because its default value's type is not the same as translated field's first union member's type"));
               }
             }
-            fieldDataSchema = field.getType();
+            fieldDataSchema = fieldOverride.getType();
           }
         }
       }
@@ -190,8 +198,8 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
           // field is not present
           if (_options.getOptionalDefaultMode() != OptionalDefaultMode.TRANSLATE_TO_NULL)
           {
-            Object fieldDefault = field.getDefault();
-            if (fieldDefault != null || fieldDefault != Data.NULL)
+            Object fieldDefault = fieldOverride.getDefault();
+            if (fieldDefault != null && fieldDefault != Data.NULL)
             {
               throw new IllegalArgumentException(
                   message(path,
@@ -219,7 +227,7 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
     {
       // If the default specified at parent level doesn't specify a value for the field, use the default specified at
       // field level.
-      fieldValue = field.getDefault();
+      fieldValue = fieldOverride.getDefault();
       if (fieldValue == null)
       {
         throw new IllegalArgumentException(

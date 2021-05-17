@@ -17,5 +17,5 @@ interface FieldOverridesProvider {
   /**
    * Returns a schema {@link FieldOverride} if there exists one for the requested field.
    */
-  FieldOverride getSchemaOverride(RecordDataSchema.Field field);
+  RecordDataSchema.Field getSchemaOverride(RecordDataSchema.Field field);
 }

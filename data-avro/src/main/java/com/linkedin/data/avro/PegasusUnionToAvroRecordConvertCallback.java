@@ -13,6 +13,7 @@ import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.data.schema.util.CopySchemaUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -25,18 +26,17 @@ import java.util.Map;
  * type 'union with aliases' into a record.
  *
  * For every invocation of this callback with a record schema, if there exists a field of type union with aliases
- * specified for its members, the field's type will be updated to a record representation of this union. The
- * default value, if exists, will also be updated accordingly. As this callback mutates the schema being traversed,
- * use this with caution.
+ * specified for its members, a field override will be created to change the union to a record representation of this
+ * union. The default value, if exists, will also be overridden accordingly.
  *
  * @author Arun Ponniah Sethuramalingam
  */
 class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Callback {
   private final DataToAvroSchemaTranslationOptions _options;
-  private final IdentityHashMap<RecordDataSchema.Field, FieldOverride> _schemaOverrides;
+  private final IdentityHashMap<RecordDataSchema.Field, RecordDataSchema.Field> _schemaOverrides;
 
   PegasusUnionToAvroRecordConvertCallback(DataToAvroSchemaTranslationOptions options,
-      IdentityHashMap<RecordDataSchema.Field, FieldOverride> schemaOverrides)
+      IdentityHashMap<RecordDataSchema.Field, RecordDataSchema.Field> schemaOverrides)
   {
     _options = options;
     _schemaOverrides = schemaOverrides;
@@ -187,15 +187,11 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
   private void overrideUnionFieldSchemaAndDefault(RecordDataSchema.Field field,
       DataSchema modifiedSchema, Object modifiedDefaultValue, Map<String, Object> propagatedProperties)
   {
-    // Stash the field's original type and default value, so that we can use this for reverting them back after
-    // the schema translation is complete. This is because we don't want the input schema to have any modifications
-    // when the control goes back to the caller.
-    FieldOverride fieldSchemaOverride = new FieldOverride(field.getType(), field.getDefault());
-    _schemaOverrides.put(field, fieldSchemaOverride);
-
-    field.setType(modifiedSchema);
-    field.setDefault(modifiedDefaultValue);
-    field.setProperties(propagatedProperties);
+    // Make a copy of the original field and update it to indicate the field's override.
+    RecordDataSchema.Field fieldOverride = CopySchemaUtil.copyField(field, modifiedSchema);
+    fieldOverride.setDefault(modifiedDefaultValue);
+    fieldOverride.setProperties(propagatedProperties);
+    _schemaOverrides.put(field, fieldOverride);
   }
 
   /**
