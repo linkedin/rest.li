@@ -33,7 +33,17 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 /**
- * TODO: javadocs
+ * A CallbackStore specifically designed to feed an asynchronous event loop with a constant supply of unique Callbacks.
+ *
+ * EvictingCircularBuffer accomplishes a few key goals:
+ * - Must always accept submission of new Callbacks, replacing oldest Callbacks when buffer is exhausted
+ * - Must provide a unique Callback between subsequent get() calls
+ * - Must be able to honor get requests in excess of put requests, returning previously returned Callbacks is acceptable.
+ * - During periods of insufficient write throughput, must prune stale Callbacks, ultimately throwing NoSuchElementException
+ *   to upstream callers when inbound write throughput has dropped to zero.
+ * - Must do the above with high performance, without adding meaningful latency to reader/writer threads.
+ *
+ * This class is thread-safe, achieving performance through granular locking of each element of the underlying circular buffer.
  */
 @SuppressWarnings("serial")
 public class EvictingCircularBuffer implements CallbackStore
@@ -59,6 +69,13 @@ public class EvictingCircularBuffer implements CallbackStore
     _clock = clock;
   }
 
+  /**
+   * Adds the supplied Callback to the internal circular buffer. If the buffer is full, the oldest Callback in the buffer
+   * will be overwritten. Calls to put always succeed, and there is no guarantee that Callbacks submitted through the put()
+   * method will be subsequently returned by the get() method.
+   *
+   * @param toAdd Callback that is to be possibly returned by later calls to get()
+   */
   public void put(Callback<None> toAdd)
   {
     int writerPosition = getAndBumpWriterPosition();
@@ -74,8 +91,15 @@ public class EvictingCircularBuffer implements CallbackStore
   }
 
   /**
-   * TODO: javadocs
-   * @return
+   * Returns a Callback previously stored in the circular buffer through the put() method. Callbacks are generally returned
+   * in the order they were received, but in cases of get() throughput in excess of put() throughput, previously returned
+   * Callbacks will be sent. Oldest age of returned Callbacks is configurable through the ttl param in the constructor.
+   *
+   * Calls to get() will always succeed as long as calls to put() continue at a cadence within the ttl duration. When write
+   * throughput has dropped to zero, get() will eventually throw NoSuchElementException once the circular buffer has become
+   * fully pruned through expired ttl.
+   * @return Callback
+   * @throws NoSuchElementException if internal circular buffer is empty
    */
   public Callback<None> get()
   {
@@ -127,29 +151,24 @@ public class EvictingCircularBuffer implements CallbackStore
     return callback;
   }
 
-  private int getAndBumpWriterPosition()
-  {
-    return (_writerPosition.getAndUpdate(x -> (x + 1) % _callbacks.size()));
-  }
-
-  private int getAndBumpReaderPosition()
-  {
-    return (_readerPosition.getAndUpdate(x -> (x + 1) % _callbacks.size()));
-  }
-
-  private int size()
-  {
-    return (int) _callbacks.stream().filter(Objects::nonNull).count();
-  }
-
+  /**
+   * @return the number of unique Callbacks this buffer can hold.
+   */
   int getCapacity()
   {
     return _callbacks.size();
   }
 
+  /**
+   * Resizes the circular buffer, deleting the contents in the process.
+   * This method should not be called frequently, ideally only as part of a startup lifecycle, as it does heavy locking
+   * to ensure all reads and writes are drained coinciding with the resizing of the buffer.
+   * @param capacity
+   */
   void setCapacity(int capacity)
   {
-    if (capacity < 1) {
+    if (capacity < 1)
+    {
       throw new IllegalArgumentException("capacity can't be less than 1");
     }
     // acquire write lock for all elements in the buffer to prevent reads while the buffer is re-created,
@@ -160,7 +179,8 @@ public class EvictingCircularBuffer implements CallbackStore
       x.writeLock().lock();
       tempLocks.add(x);
     });
-    try {
+    try
+    {
       _callbacks.clear();
       _ttlBuffer.clear();
       _elementLocks.clear();
@@ -181,19 +201,45 @@ public class EvictingCircularBuffer implements CallbackStore
     }
   }
 
-  public Duration getTtl()
+  /**
+   * @return the currently configured TTL.
+   */
+  Duration getTtl()
   {
     return _ttl;
   }
 
+  /**
+   * Sets the amount of time a Callback is eligible to be returned after it has been stored in the buffer.
+   * TTL is shared across all stored Callbacks for the sake of simplicity.
+   * @param ttl number value of amount of time
+   * @param ttlUnit unit of time for number value
+   */
   void setTtl(int ttl, ChronoUnit ttlUnit)
   {
-    if (ttl < 1) {
+    if (ttl < 1)
+    {
       throw new IllegalArgumentException("ttl can't be less than 1");
     }
-    if (ttlUnit == null) {
+    if (ttlUnit == null)
+    {
       throw new IllegalArgumentException("ttlUnit can't be null.");
     }
     _ttl = Duration.of(ttl, ttlUnit);
+  }
+
+  private int getAndBumpWriterPosition()
+  {
+    return (_writerPosition.getAndUpdate(x -> (x + 1) % _callbacks.size()));
+  }
+
+  private int getAndBumpReaderPosition()
+  {
+    return (_readerPosition.getAndUpdate(x -> (x + 1) % _callbacks.size()));
+  }
+
+  private int size()
+  {
+    return (int) _callbacks.stream().filter(Objects::nonNull).count();
   }
 }

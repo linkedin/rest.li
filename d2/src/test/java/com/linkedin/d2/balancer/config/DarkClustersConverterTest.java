@@ -91,8 +91,7 @@ public class DarkClustersConverterTest
 
     DarkClusterConfig resultConfig = DarkClustersConverter.toConfig(DarkClustersConverter.toProperties(configMap)).get(DARK_CLUSTER_KEY);
     Assert.assertEquals(resultConfig.getMultiplier(), DARK_CLUSTER_DEFAULT_MULTIPLIER);
-    Assert.assertEquals((int)resultConfig.getDarkClusterPerHostQps(), DARK_CLUSTER_DEFAULT_TARGET_RATE);
-    Assert.assertEquals((int)resultConfig.getDispatcherOutboundMaxRate(), DARK_CLUSTER_DEFAULT_MAX_RATE);
+    Assert.assertEquals((int)resultConfig.getDispatcherOutboundTargetRate(), DARK_CLUSTER_DEFAULT_TARGET_RATE);
     Assert.assertEquals(resultConfig.getDarkClusterStrategyPrioritizedList().size(), 1, "default strategy list should be size 1");
     Assert.assertFalse(resultConfig.hasTransportClientProperties(), "default shouldn't have transportProperties");
   }
@@ -177,5 +176,3 @@ public class DarkClustersConverterTest
     Assert.assertEquals(strategyList.get(1), DarkClusterStrategyName.$UNKNOWN, "second strategy should be unknown");
   }
 }
-
-
