@@ -31,7 +31,8 @@ import org.junit.Assert;
 import org.testng.annotations.Test;
 
 
-public class TestEvictingCircularBuffer {
+public class TestEvictingCircularBuffer
+{
   private static final int TEST_TIMEOUT = 3000;
   private static final int TEST_CAPACITY = 5;
   private static final int TEST_TTL = 5;
@@ -69,7 +70,8 @@ public class TestEvictingCircularBuffer {
     buffer.put(callback);
     Assert.assertSame(buffer.get(), callback);
     TEST_CLOCK.addDuration(5001);
-    try {
+    try
+    {
       buffer.get();
     }
     catch (NoSuchElementException ex)
@@ -157,7 +159,8 @@ public class TestEvictingCircularBuffer {
   {
     EvictingCircularBuffer buffer = getBuffer();
 
-    try {
+    try
+    {
       buffer.setTtl(0, TEST_TTL_UNIT);
     }
     catch (IllegalArgumentException ex)
@@ -165,7 +168,8 @@ public class TestEvictingCircularBuffer {
       // TTL can't be less than 1.
     }
 
-    try {
+    try
+    {
       buffer.setTtl(1, null);
     }
     catch (IllegalArgumentException ex)
@@ -173,7 +177,8 @@ public class TestEvictingCircularBuffer {
       // TTL unit can't be null
     }
 
-    try {
+    try
+    {
       buffer.setCapacity(0);
     }
     catch (IllegalArgumentException ex)

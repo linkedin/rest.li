@@ -19,7 +19,8 @@ package com.linkedin.r2.transport.http.client.ratelimiter;
 /**
  * Used by a RateLimiter to track execution of callbacks pending in its internal buffer.
  */
-public interface RateLimiterExecutionTracker {
+public interface RateLimiterExecutionTracker
+{
 
     /**
      * Unpauses execution on RateLimiter if applicable. Increments the number of pending callbacks by 1.

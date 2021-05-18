@@ -130,31 +130,35 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
       {
         switch(darkClusterStrategyName) {
           case RELATIVE_TRAFFIC:
-            if (RelativeTrafficMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig)) {
+            if (RelativeTrafficMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig))
+            {
               BaseDarkClusterDispatcher baseDarkClusterDispatcher =
                   new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
               return new RelativeTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName,
-                  darkClusterConfig.getMultiplier(), baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(),
-                  _random);
+                                                                      darkClusterConfig.getMultiplier(), baseDarkClusterDispatcher,
+                                                                      _notifier, _facilities.getClusterInfoProvider(), _random);
             }
             break;
           case IDENTICAL_TRAFFIC:
-            if (IdenticalTrafficMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig)) {
+            if (IdenticalTrafficMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig))
+            {
               BaseDarkClusterDispatcher baseDarkClusterDispatcher =
                   new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
               return new IdenticalTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName,
-                  darkClusterConfig.getMultiplier(), baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(),
-                  _random);
+                                                                       darkClusterConfig.getMultiplier(), baseDarkClusterDispatcher,
+                                                                       _notifier, _facilities.getClusterInfoProvider(), _random);
             }
             break;
           case CONSTANT_QPS:
-            if (ConstantQpsDarkClusterStrategy.isValidConfig(darkClusterConfig)) {
+            if (ConstantQpsDarkClusterStrategy.isValidConfig(darkClusterConfig))
+            {
               BaseDarkClusterDispatcher baseDarkClusterDispatcher =
                   new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
               _rateLimiter.setBufferCapacity(darkClusterConfig.getDispatcherMaxRequestsToBuffer());
               _rateLimiter.setBufferTtl(darkClusterConfig.getDispatcherOldestRequestAge(), ChronoUnit.SECONDS);
               return new ConstantQpsDarkClusterStrategy(_sourceClusterName, darkClusterName,
-                  darkClusterConfig.getDispatcherOutboundTargetRate(), baseDarkClusterDispatcher, _notifier,
+                                                        darkClusterConfig.getDispatcherOutboundTargetRate(),
+                                                        baseDarkClusterDispatcher, _notifier,
                   _facilities.getClusterInfoProvider(), _rateLimiter);
             }
             break;

@@ -27,7 +27,8 @@ import org.junit.Assert;
 import org.testng.annotations.Test;
 
 
-public class TestConstantQpsRateLimiter {
+public class TestConstantQpsRateLimiter
+{
   private static final int TEST_TIMEOUT = 3000;
   private static final float TEST_QPS = 5;
   private static final int ONE_SECOND = 1000;

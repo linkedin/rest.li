@@ -38,7 +38,7 @@ public class ConstantQpsRateLimiter extends SmoothRateLimiter {
   public ConstantQpsRateLimiter(
       ScheduledExecutorService scheduler, Executor executor, Clock clock, EvictingCircularBuffer storedCallbacks)
   {
-    super(scheduler, executor, clock, storedCallbacks, BufferOverflowMode.NONE, "ConstantQpsRateLimiter", new UnlimitedConsumptionTracker());
+    super(scheduler, executor, clock, storedCallbacks, BufferOverflowMode.NONE, "ConstantQpsRateLimiter", new UnlimitedExecutionTracker());
     _evictingCircularBuffer = storedCallbacks;
   }
 
@@ -63,7 +63,7 @@ public class ConstantQpsRateLimiter extends SmoothRateLimiter {
   }
 
 
-  private static class UnlimitedConsumptionTracker implements RateLimiterExecutionTracker
+  private static class UnlimitedExecutionTracker implements RateLimiterExecutionTracker
   {
     private final AtomicBoolean _paused = new AtomicBoolean(true);
 

@@ -24,7 +24,8 @@ import java.util.NoSuchElementException;
 /**
  * A lightweight queue-like interface specifically for Callbacks
  */
-public interface CallbackStore {
+public interface CallbackStore
+{
 
   /**
    * Buffers a Callback for later retrieval.
