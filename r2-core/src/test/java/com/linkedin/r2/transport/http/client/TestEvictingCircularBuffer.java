@@ -39,7 +39,7 @@ public class TestEvictingCircularBuffer
   private static final ChronoUnit TEST_TTL_UNIT = ChronoUnit.SECONDS;
   private static final SettableClock TEST_CLOCK = new SettableClock();
 
-  @Test
+  @Test(timeOut = TEST_TIMEOUT)
   public void testGettersAfterInstantiateSimple()
   {
     EvictingCircularBuffer buffer = new EvictingCircularBuffer(TEST_CAPACITY, TEST_TTL, TEST_TTL_UNIT);

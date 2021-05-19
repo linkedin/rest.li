@@ -52,7 +52,7 @@ public class TestConstantQpsRateLimiter
     Assert.assertTrue(tattler.getInteractCount() > 1);
   }
 
-  @Test
+  @Test(timeOut = TEST_TIMEOUT)
   public void eventLoopStopsWhenTtlExpiresAllRequests()
   {
     ClockedExecutor executor = new ClockedExecutor();
