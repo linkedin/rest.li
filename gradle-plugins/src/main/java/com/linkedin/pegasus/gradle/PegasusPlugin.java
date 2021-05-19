@@ -1834,6 +1834,15 @@ public class PegasusPlugin implements Plugin<Project>
     // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
     project.getDependencies().add(compileConfigName, project.files(dataTemplateJarTask.getArchivePath()));
 
+    // The below Action is only applied when the 'ivy-publish' is applied by the consumer.
+    // If the consumer does not use ivy-publish, this is a noop.
+    // this Action prepares the project applying the pegasus plugin to publish artifacts using these steps:
+    // 1. Registers "feature variants" for pegasus-specific artifacts;
+    //      see https://docs.gradle.org/6.1/userguide/feature_variants.html
+    // 2. Wires legacy configurations like `dataTemplateCompile` to auto-generated feature variant *Api and
+    //      *Implementation configurations for backwards compatibility.
+    // 3. Configures the Ivy Publication to include auto-generated feature variant *Api and *Implementation
+    //      configurations and their dependencies.
     project.getPlugins().withType(IvyPublishPlugin.class, ivyPublish -> {
       if (!isAtLeastGradle61())
       {
