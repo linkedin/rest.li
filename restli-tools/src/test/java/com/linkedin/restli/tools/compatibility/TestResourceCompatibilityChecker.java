@@ -514,6 +514,8 @@ public class TestResourceCompatibilityChecker
                                                  CompatibilityInfo.Type.ARRAY_MISSING_ELEMENT, "someString"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "simple", "actions", "oneAction", "parameters"),
                                                  CompatibilityInfo.Type.PARAMETER_NEW_REQUIRED, "someStringNew"));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "simple", "actions", "threeAction", "readOnly"),
+                                                 CompatibilityInfo.Type.VALUE_NOT_EQUAL, false, true));
     modelTestErrors.add(new CompatibilityInfo(Arrays.asList("com.linkedin.greetings.api.Greeting"),
                                               CompatibilityInfo.Type.TYPE_BREAKS_NEW_READER, "new record added required fields newField"));
     modelTestErrors.add(new CompatibilityInfo(Arrays.asList("com.linkedin.greetings.api.Greeting"),
