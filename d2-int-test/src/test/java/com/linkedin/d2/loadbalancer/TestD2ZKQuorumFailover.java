@@ -274,7 +274,7 @@ public class TestD2ZKQuorumFailover extends D2BaseTest
   {
     _echoServers = new ArrayList<LoadBalancerEchoServer>();
     Map<Integer, Double> partitionWeight = new HashMap<Integer, Double>();
-    partitionWeight.put(new Integer(1), new Double(1.0d));
+    partitionWeight.put(Integer.valueOf(1), Double.valueOf(1.0d));
     _echoServers.add(startEchoServer(getHost(_zkHosts[0]), getPort(_zkHosts[0]), ECHO_SERVER_HOST, ECHO_SERVER_PORT1_1, "cluster-1", "service-1_1", "service-1_2", "service-1_3" ));
     _echoServers.add(startEchoServer(getHost(_zkHosts[0]), getPort(_zkHosts[0]), ECHO_SERVER_HOST, ECHO_SERVER_PORT1_2, "cluster-1", "service-1_1", "service-1_2", "service-1_3" ));
     _echoServers.add(startEchoServer(getHost(_zkHosts[0]), getPort(_zkHosts[0]), ECHO_SERVER_HOST, ECHO_SERVER_PORT2_1, "cluster-2", "service-2_1", "service-2_2", "service-2_3" ));

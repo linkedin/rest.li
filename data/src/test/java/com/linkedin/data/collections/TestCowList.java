@@ -145,7 +145,7 @@ public class TestCowList
     assertEquals(list8.getRefCounted().getRefCount(), 0);
 
     CowList<Integer> list9 = list1.clone();
-    list9.remove(new Integer(referenceStart1 + 1));
+    list9.remove(Integer.valueOf(referenceStart1 + 1));
     assertEquals(list9.get(1).intValue(), referenceStart1 + 2);
     contains(list1, referenceStart1 + 1);
     contains(list3, referenceStart1 + 1);

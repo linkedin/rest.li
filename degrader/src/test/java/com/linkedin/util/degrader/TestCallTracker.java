@@ -775,11 +775,11 @@ public class TestCallTracker
     Assert.assertEquals(_callTracker.getCurrentErrorCountTotal(), startErrorCountTotal + 8,
                         "Total error count is incorrect");
 
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(1),
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_EXCEPTION), Integer.valueOf(1),
                         "Current remote invocation exception count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(2),
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CLOSED_CHANNEL_EXCEPTION), Integer.valueOf(2),
                         "Current closed channel exception count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CONNECT_EXCEPTION), new Integer(2),
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CONNECT_EXCEPTION), Integer.valueOf(2),
                         "Current connect exception count is incorrect");
 
     _clock.setCurrentTimeMillis(startTime + INTERVAL * 2);
@@ -787,18 +787,18 @@ public class TestCallTracker
     //getCallStats needs to wait for an interval before it produces the stats from previous interval
     Map<ErrorType, Integer> errorTypeCounts = _callTracker.getCallStats().getErrorTypeCounts();
     Map<ErrorType, Integer> errorTypeCountsTotal = _callTracker.getCallStats().getErrorTypeCountsTotal();
-    Assert.assertEquals(errorTypeCounts.get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(1),
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.REMOTE_INVOCATION_EXCEPTION), Integer.valueOf(1),
                         "Remote invocation exception count is incorrect");
-    Assert.assertEquals(errorTypeCounts.get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(2),
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.CLOSED_CHANNEL_EXCEPTION), Integer.valueOf(2),
                         "Closed channel exception count is incorrect");
-    Assert.assertEquals(errorTypeCounts.get(ErrorType.CONNECT_EXCEPTION), new Integer(2),
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.CONNECT_EXCEPTION), Integer.valueOf(2),
                         "Connect exception count is incorrect");
 
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(1),
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.REMOTE_INVOCATION_EXCEPTION), Integer.valueOf(1),
                         "Total remote invocation exception count is incorrect");
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(2),
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.CLOSED_CHANNEL_EXCEPTION), Integer.valueOf(2),
                         "Total closed channel exception count is incorrect");
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.CONNECT_EXCEPTION), new Integer(2),
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.CONNECT_EXCEPTION), Integer.valueOf(2),
                         "Total connect exception count is incorrect");
 
     Assert.assertEquals(_callTracker.getCallStats().getErrorCount(), 6, "Error count is incorrect");
@@ -814,22 +814,22 @@ public class TestCallTracker
     dones.remove(0).endCallWithError(ErrorType.REMOTE_INVOCATION_EXCEPTION);
 
     //this change should be reflected in getCurrentErrorTypeCountsTotal
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(4),
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_EXCEPTION), Integer.valueOf(4),
                         "Current remote invocation exception count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(2),
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CLOSED_CHANNEL_EXCEPTION), Integer.valueOf(2),
                         "Current closed channel exception count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CONNECT_EXCEPTION), new Integer(2),
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CONNECT_EXCEPTION), Integer.valueOf(2),
                         "Current connect exception count is incorrect");
 
     //another simulation of change in the middle of interval
     dones.remove(0).endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION);
     dones.remove(0).endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION);
 
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(4),
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.REMOTE_INVOCATION_EXCEPTION), Integer.valueOf(4),
                         "Current remote invocation exception count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(4),
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CLOSED_CHANNEL_EXCEPTION), Integer.valueOf(4),
                         "Current closed channel exception count is incorrect");
-    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CONNECT_EXCEPTION), new Integer(2),
+    Assert.assertEquals(_callTracker.getCurrentErrorTypeCountsTotal().get(ErrorType.CONNECT_EXCEPTION), Integer.valueOf(2),
                         "Current connect exception count is incorrect");
 
      _clock.setCurrentTimeMillis(startTime + INTERVAL * 3);
@@ -839,17 +839,17 @@ public class TestCallTracker
     errorTypeCounts = _callTracker.getCallStats().getErrorTypeCounts();
     errorTypeCountsTotal = _callTracker.getCallStats().getErrorTypeCountsTotal();
 
-    Assert.assertEquals(errorTypeCounts.get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(3),
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.REMOTE_INVOCATION_EXCEPTION), Integer.valueOf(3),
                         "Remote invocation exception count is incorrect");
-    Assert.assertEquals(errorTypeCounts.get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(2),
+    Assert.assertEquals(errorTypeCounts.get(ErrorType.CLOSED_CHANNEL_EXCEPTION), Integer.valueOf(2),
                         "Closed channel exception count is incorrect");
     Assert.assertNull(errorTypeCounts.get(ErrorType.CONNECT_EXCEPTION), "Connect exception count is incorrect");
 
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.REMOTE_INVOCATION_EXCEPTION), new Integer(4),
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.REMOTE_INVOCATION_EXCEPTION), Integer.valueOf(4),
                         "Total remote invocation exception count is incorrect");
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.CLOSED_CHANNEL_EXCEPTION), new Integer(4),
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.CLOSED_CHANNEL_EXCEPTION), Integer.valueOf(4),
                         "Total closed channel exception count is incorrect");
-    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.CONNECT_EXCEPTION), new Integer(2),
+    Assert.assertEquals(errorTypeCountsTotal.get(ErrorType.CONNECT_EXCEPTION), Integer.valueOf(2),
                         "Total connect exception count is incorrect");
 
     Assert.assertEquals(_callTracker.getCallStats().getErrorCount(), 5, "Error count is incorrect");

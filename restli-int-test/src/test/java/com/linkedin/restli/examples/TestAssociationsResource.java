@@ -209,7 +209,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     Request<Integer> request = builders.<Integer>action("Action").setPathKey("dest", "dest").setPathKey("src", "src").build();
     Integer integer = getClient().sendRequest(request).getResponse().getEntity();
 
-    Assert.assertEquals(integer, new Integer(1));
+    Assert.assertEquals(integer, Integer.valueOf(1));
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")

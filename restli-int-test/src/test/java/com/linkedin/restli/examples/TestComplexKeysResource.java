@@ -386,7 +386,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     {
       @SuppressWarnings("unchecked")
       CreateIdStatus<ComplexResourceKey<TwoPartKey, TwoPartKey>> createIdStatus = (CreateIdStatus<ComplexResourceKey<TwoPartKey, TwoPartKey>>) createStatus;
-      Assert.assertEquals(createIdStatus.getStatus(), new Integer(201));
+      Assert.assertEquals(createIdStatus.getStatus(), Integer.valueOf(201));
       Assert.assertTrue(expectedComplexKeys.contains(createIdStatus.getKey()));
 
       try
@@ -443,7 +443,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     expectedComplexKeys.add(expectedComplexKey2);
     for (CreateIdStatus<ComplexResourceKey<TwoPartKey, TwoPartKey>> status : response.getEntity().getElements())
     {
-      Assert.assertEquals(status.getStatus(), new Integer(201));
+      Assert.assertEquals(status.getStatus(), Integer.valueOf(201));
       Assert.assertTrue(expectedComplexKeys.contains(status.getKey()));
 
       try

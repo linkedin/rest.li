@@ -116,7 +116,7 @@ public class TestPartitionsWithZKQuorum extends D2BaseTest
     _client = _cli.createZKFSTogglingLBClient(_quorum.getHosts(), "/d2", null);
     // Echo servers startup
     Map<Integer, Double> partitionWeight = new HashMap<Integer, Double>();
-    partitionWeight.put(new Integer(1), new Double(1.0d));
+    partitionWeight.put(Integer.valueOf(1), Double.valueOf(1.0d));
     startCustomPartitionEchoServers(partitionWeight);
     assertAllEchoServersRegistered(_cli.getZKClient(), _zkUriString, _echoServers);
     assertQuorumProcessAllRequests(D2_CONFIG_CUSTOM_PARTITION_DATA);
@@ -142,7 +142,7 @@ public class TestPartitionsWithZKQuorum extends D2BaseTest
     _client = _cli.createZKFSTogglingLBClient(_quorum.getHosts(), "/d2", null);
     // Echo servers startup
     Map<Integer, Double> partitionWeight = new HashMap<Integer, Double>();
-    partitionWeight.put(new Integer(1), new Double(1.0d));
+    partitionWeight.put(Integer.valueOf(1), Double.valueOf(1.0d));
     startAllEchoServers(partitionWeight);
     assertAllEchoServersRegistered(_cli.getZKClient(), _zkUriString, _echoServers);
     assertQuorumProcessAllRequests(D2_CONFIG_DATA);
