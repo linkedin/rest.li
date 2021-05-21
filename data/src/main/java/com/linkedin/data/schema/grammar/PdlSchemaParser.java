@@ -71,8 +71,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -103,12 +105,36 @@ public class PdlSchemaParser extends AbstractSchemaParser
 
   // Mapping from simple name to full name
   private Map<String, Name> _currentImports;
+  private final boolean _isLocationNeeded;
+  private final Map<Object, ParseLocation> _parseLocations;
 
-  private StringBuilder _errorMessageBuilder = new StringBuilder();
+  private final StringBuilder _errorMessageBuilder = new StringBuilder();
 
   public PdlSchemaParser(DataSchemaResolver resolver)
   {
+    this(resolver, false);
+  }
+
+  /**
+   * Construct PDL parser with the option to return context locations of schema elements after parsings.
+   *
+   * @param resolver Schema resolver to use to resolve referenced schemas in the source text.
+   * @param returnContextLocations Enable recording the context locations of schema elements during parsing. The
+   *                              locations can be retrieved using {@link #getParseLocations()} after parsing.
+   */
+  public PdlSchemaParser(DataSchemaResolver resolver, boolean returnContextLocations)
+  {
     super(resolver);
+    this._isLocationNeeded = returnContextLocations;
+    if (returnContextLocations)
+    {
+      this._parseLocations = new IdentityHashMap<>();
+    }
+    else
+    {
+      this._parseLocations = Collections.emptyMap();
+    }
+
   }
 
   /**
@@ -196,6 +222,28 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
   }
 
+  /**
+   * Returns the context locations of the entities that were parsed from the document. Parse should be created with
+   * {@link #PdlSchemaParser(DataSchemaResolver, boolean)} and by specifying "true" for returnContextLocations. Otherwise
+   * the returned map will be empty.
+   *
+   * Locations for the following elements defined in the source file will be returned:
+   * <ul>
+   *   <li>All named schemas: Records, Enums, Fixed and Typerefs </li>
+   *   <li>Fields of records (fields from includes are not handled).</li>
+   *   <li>Union schemas and all union members</li>
+   *   <li>Enum symbols</li>
+   *   <li>Top level and inline namespaces</li>
+   * </ul>
+   *
+   * The returned location {@link ParseLocation} will provide the start line/column and end line/column. All four
+   * of these positions are inclusive. The column indexes start with 1, that is, the first character in a line will be
+   * at position 1.
+   */
+  public Map<Object, ParseLocation> getParseLocations() {
+    return _parseLocations;
+  }
+
   private StringBuilder startErrorMessage(ParseError error)
   {
     return errorMessageBuilder().append(error.location).append(": ");
@@ -209,7 +257,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
   /**
    * An ANTLR lexer or parser error.
    */
-  private class ParseError
+  private static class ParseError
   {
     public final ParseErrorLocation location;
     public final String message;
@@ -222,10 +270,57 @@ public class PdlSchemaParser extends AbstractSchemaParser
   }
 
   /**
+   * Represents the location of a schema element in the source text.
+   */
+  public static class ParseLocation
+  {
+    int _startLine;
+    int _startColumn;
+    int _endLine;
+    int _endColumn;
+
+    public ParseLocation(int startLine, int startColumn, int endLine, int endColumn)
+    {
+      _startLine = startLine;
+      _startColumn = startColumn;
+      _endLine = endLine;
+      _endColumn = endColumn;
+    }
+
+    /**
+     * Returns the  1-indexed, inclusive start line of the schema element.
+     */
+    public int getStartLine() {
+      return _startLine;
+    }
+
+    /**
+     * Returns the  1-indexed, inclusive start column of the element.
+     */
+    public int getStartColumn() {
+      return _startColumn;
+    }
+
+    /**
+     * Returns the 1-indexed, inclusive end line of the schema element.
+     */
+    public int getEndLine() {
+      return _endLine;
+    }
+
+    /**
+     * Returns the 1-indexed, inclusive end column of the element.
+     */
+    public int getEndColumn() {
+      return _endColumn;
+    }
+  }
+
+  /**
    * Pegasus DataLocation implementation for tracking ANTLR lexer and parser error source
    * coordinates.
    */
-  private class ParseErrorLocation implements DataLocation
+  private static class ParseErrorLocation implements DataLocation
   {
     public final int line;
     public final int column;
@@ -276,7 +371,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
    *
    * For recoverable parse errors, the error should instead be recorded using startErrorMessage.
    */
-  protected class ParseException extends IOException
+  protected static class ParseException extends IOException
   {
     private static final long serialVersionUID = 1;
 
@@ -296,7 +391,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
   /**
    * Error recorder to capture ANTLR lexer and parser errors.
    */
-  private class ErrorRecorder extends BaseErrorListener
+  private static class ErrorRecorder extends BaseErrorListener
   {
     public final List<ParseError> errors = new LinkedList<>();
 
@@ -328,6 +423,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     if (namespaceDeclaration != null)
     {
       setCurrentNamespace(namespaceDeclaration.typeName().value);
+      recordLocation(namespaceDeclaration.typeName().value, namespaceDeclaration);
     }
     else
     {
@@ -354,8 +450,8 @@ public class PdlSchemaParser extends AbstractSchemaParser
       if (!namedSchema.getNamespace().equals(getCurrentNamespace()))
       {
         throw new ParseException(typeDeclaration,
-            "Top level type declaration may not be qualified with a namespace different than the file namespace: " +
-            typeDeclaration.getText());
+            "Top level type declaration may not be qualified with a namespace different than the file namespace: "
+                + typeDeclaration.getText());
       }
       schema = namedSchema;
     }
@@ -365,8 +461,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
     else
     {
-      throw new ParseException(typeDeclaration,
-          "Unrecognized type declaration: " + typeDeclaration.getText());
+      throw new ParseException(typeDeclaration, "Unrecognized type declaration: " + typeDeclaration.getText());
     }
     addTopLevelSchema(schema);
     return schema;
@@ -388,8 +483,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
     else
     {
-      throw new ParseException(type,
-        "Unrecognized type declaration parse node: " + type.getText());
+      throw new ParseException(type, "Unrecognized type declaration parse node: " + type.getText());
     }
   }
 
@@ -400,6 +494,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     PdlParser.NamespaceDeclarationContext scopeNamespace = type.namespaceDeclaration();
     if (scopeNamespace != null) {
       setCurrentNamespace(scopeNamespace.typeName().value);
+      recordLocation(scopeNamespace.typeName().value, scopeNamespace);
     }
     PdlParser.PackageDeclarationContext scopePackage = type.packageDeclaration();
     if (scopePackage != null) {
@@ -430,10 +525,10 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
     else
     {
-      throw new ParseException(anon,
-        "Unrecognized type parse node: " + anon.getText());
+      throw new ParseException(anon, "Unrecognized type parse node: " + anon.getText());
     }
     setProperties(anon, complexDataSchema);
+    recordLocation(complexDataSchema, anon);
     return complexDataSchema;
   }
 
@@ -459,8 +554,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
     else
     {
-      throw new ParseException(namedType,
-        "Unrecognized named type parse node: " + namedType.getText());
+      throw new ParseException(namedType, "Unrecognized named type parse node: " + namedType.getText());
     }
 
     if (_currentImports.containsKey(schema.getName()))
@@ -489,7 +583,26 @@ public class PdlSchemaParser extends AbstractSchemaParser
     }
 
     schema.setPackage(getCurrentPackage());
+    recordLocation(schema, namedType);
     return schema;
+  }
+
+  /**
+   * Stores the location of the schema element obtained from the parser context. See {@link #getParseLocations()}
+   * for the full list of schema elements for which locations are recorded/returned.
+   */
+  private void recordLocation(Object schemaElement, ParserRuleContext context)
+  {
+    if (_isLocationNeeded)
+    {
+      // getCharPosition returns beginning of the last token. Add the token's length to get actual end position.
+      int endPosition = context.getStop().getCharPositionInLine() +
+          (context.getStop().getStopIndex() - context.getStop().getStartIndex());
+      // Parser columns are indexed at 0, so add 1 to get it 1 indexed.
+      _parseLocations.put(schemaElement,
+          new ParseLocation(context.getStart().getLine(), context.getStart().getCharPositionInLine() + 1,
+              context.getStop().getLine(), endPosition + 1));
+    }
   }
 
   private FixedDataSchema parseFixed(
@@ -527,6 +640,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     for (EnumSymbolDeclarationContext symbolDecl : symbolDecls)
     {
       symbols.add(symbolDecl.symbol.value);
+      recordLocation(symbolDecl.symbol.value, symbolDecl);
       if (symbolDecl.doc != null)
       {
         symbolDocs.put(symbolDecl.symbol.value, symbolDecl.doc.value);
@@ -657,6 +771,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
       if (dataSchema != null)
       {
         UnionDataSchema.Member unionMember = new UnionDataSchema.Member(dataSchema);
+        recordLocation(unionMember, memberDecl);
         unionMember.setDeclaredInline(isDeclaredInline(memberDecl.member));
         // Get union member alias, if any
         UnionMemberAliasContext alias = memberDecl.unionMemberAlias();
@@ -849,9 +964,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
           if (!(val instanceof DataMap))
           {
             throw new ParseException(
-              new ParseError(
-                new ParseErrorLocation(context),
-                "Conflicting property: " + path.toString()));
+                new ParseError(new ParseErrorLocation(context), "Conflicting property: " + path.toString()));
           }
           current = (DataMap) val;
         }
@@ -867,9 +980,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
         if (current.containsKey(pathPart))
         {
           throw new ParseException(
-            new ParseError(
-              new ParseErrorLocation(context),
-              "Property already defined: " + path.toString()));
+              new ParseError(new ParseErrorLocation(context), "Property already defined: " + path.toString()));
         }
         else
         {
@@ -960,6 +1071,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
           throw new IllegalStateException("type is missing for field: " + field.getText());
         }
         Field result = new Field(toDataSchema(field.type));
+        recordLocation(result, field);
         Map<String, Object> properties = new HashMap<>();
         result.setName(field.name, errorMessageBuilder());
         result.setOptional(field.isOptional);
@@ -1120,7 +1232,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     else
     {
       throw new ParseException(typeAssignment,
-        "Unrecognized type assignment parse node: " + typeAssignment.getText() + NEWLINE);
+          "Unrecognized type assignment parse node: " + typeAssignment.getText() + NEWLINE);
     }
   }
 

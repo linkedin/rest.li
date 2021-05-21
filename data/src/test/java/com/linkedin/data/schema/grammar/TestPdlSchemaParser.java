@@ -20,9 +20,12 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.EnumDataSchema;
+import com.linkedin.data.schema.FixedDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import java.io.IOException;
@@ -263,6 +266,192 @@ public class TestPdlSchemaParser
     validate.clear();
     validate.put("minValue", 0);
     Assert.assertEquals(unionField.getType().getProperties(), expectedProperty);
+  }
+
+  @Test
+  public void testRecordParserLocations()
+  {
+    PdlSchemaParser parser = new PdlSchemaParser(new DefaultDataSchemaResolver(), true);
+    parser.parse(getClass().getResourceAsStream("TestRecordForParserContextLocations.pdl"));
+    List<DataSchema> topLevelSchemas = parser.topLevelDataSchemas();
+
+    Assert.assertEquals(topLevelSchemas.size(), 1, "Expected 1 top-level schema to be parsed.");
+
+    RecordDataSchema mainRecordSchema = (RecordDataSchema) topLevelSchemas.get(0);
+    Map<Object, PdlSchemaParser.ParseLocation> locations = parser.getParseLocations();
+    checkParseLocationForRecord(locations, mainRecordSchema);
+
+    // Checks for namespace locations.
+    // Top-level namespace
+    PdlSchemaParser.ParseLocation topNamespaceLoc = locations.get(mainRecordSchema.getNamespace());
+    assertLocation(topNamespaceLoc, 1, 1, 1, 42,
+        "namespace: " + mainRecordSchema.getNamespace());
+    // Inline namespace
+    String inlineNamespace = ((RecordDataSchema) mainRecordSchema.getField("inlineNamespacedField").getType())
+        .getNamespace();
+    PdlSchemaParser.ParseLocation inlineNamespaceLoc = locations.get(inlineNamespace);
+    assertLocation(inlineNamespaceLoc, 48, 5, 48, 38,
+        "namespace: " + inlineNamespace);
+
+  }
+
+  @Test
+  public void testEnumParserLocations()
+  {
+    PdlSchemaParser parser = new PdlSchemaParser(new DefaultDataSchemaResolver(), true);
+    parser.parse(getClass().getResourceAsStream("TestEnumForParserContextLocations.pdl"));
+    List<DataSchema> topLevelSchemas = parser.topLevelDataSchemas();
+
+    Assert.assertEquals(topLevelSchemas.size(), 1, "Expected 1 top-level schema to be parsed.");
+
+    EnumDataSchema topSchema = (EnumDataSchema) topLevelSchemas.get(0);
+    Map<Object, PdlSchemaParser.ParseLocation> locations = parser.getParseLocations();
+    checkParseLocationForEnum(locations, topSchema);
+  }
+
+  @Test
+  public void testTyperefParserLocations()
+  {
+    PdlSchemaParser parser = new PdlSchemaParser(new DefaultDataSchemaResolver(), true);
+    parser.parse(getClass().getResourceAsStream("TestTyperefForParserContextLocations.pdl"));
+    List<DataSchema> topLevelSchemas = parser.topLevelDataSchemas();
+
+    Assert.assertEquals(topLevelSchemas.size(), 1, "Expected 1 top-level schema to be parsed.");
+
+    TyperefDataSchema topSchema = (TyperefDataSchema) topLevelSchemas.get(0);
+    Map<Object, PdlSchemaParser.ParseLocation> locations = parser.getParseLocations();
+    checkParseLocationForTyperef(locations, topSchema);
+  }
+
+  @Test
+  public void testFixedParserLocations()
+  {
+    PdlSchemaParser parser = new PdlSchemaParser(new DefaultDataSchemaResolver(), true);
+    parser.parse(getClass().getResourceAsStream("TestFixedForParserContextLocations.pdl"));
+    List<DataSchema> topLevelSchemas = parser.topLevelDataSchemas();
+
+    Assert.assertEquals(topLevelSchemas.size(), 1, "Expected 1 top-level schema to be parsed.");
+
+    FixedDataSchema topSchema = (FixedDataSchema) topLevelSchemas.get(0);
+    Map<Object, PdlSchemaParser.ParseLocation> locations = parser.getParseLocations();
+    checkParseLocationForFixed(locations, topSchema);
+  }
+
+  private void checkParseLocationForRecord(
+      Map<Object, PdlSchemaParser.ParseLocation> locations, RecordDataSchema recordSchema)
+  {
+    checkParseLocation(locations, recordSchema, (DataMap) recordSchema.getProperties().get("location"),
+        recordSchema.getName());
+
+    // Check all fields
+    for (RecordDataSchema.Field field : recordSchema.getFields())
+    {
+      checkParseLocation(locations, field, (DataMap) field.getProperties().get("location"),
+          recordSchema.getName() + ":" + field.getName());
+      if (field.isDeclaredInline())
+      {
+        checkParseLocationOfInlineSchema(locations, field.getType(), field.getName());
+      }
+    }
+  }
+
+  private void checkParseLocationForTyperef(
+      Map<Object, PdlSchemaParser.ParseLocation> locations, TyperefDataSchema typerefSchema)
+  {
+    checkParseLocation(locations, typerefSchema, (DataMap) typerefSchema.getProperties().get("location"),
+        typerefSchema.getName());
+
+    // Check de-referenced schema
+    checkParseLocationOfInlineSchema(locations, typerefSchema.getDereferencedDataSchema(), typerefSchema.getName());
+  }
+
+  private void checkParseLocationForFixed(
+      Map<Object, PdlSchemaParser.ParseLocation> locations, FixedDataSchema fixedSchema)
+  {
+    checkParseLocation(locations, fixedSchema, (DataMap) fixedSchema.getProperties().get("location"),
+        fixedSchema.getName());
+  }
+
+  private void checkParseLocationOfInlineSchema(Map<Object, PdlSchemaParser.ParseLocation> locations,
+      DataSchema schema, String context)
+  {
+    if (schema instanceof NamedDataSchema)
+    {
+      NamedDataSchema namedSchema = (NamedDataSchema) schema;
+      if (namedSchema instanceof RecordDataSchema)
+      {
+        checkParseLocationForRecord(locations, (RecordDataSchema) namedSchema);
+      }
+      else if (namedSchema instanceof EnumDataSchema)
+      {
+        checkParseLocationForEnum(locations, (EnumDataSchema) namedSchema);
+      }
+      else if (namedSchema instanceof TyperefDataSchema)
+      {
+        checkParseLocationForTyperef(locations, (TyperefDataSchema) namedSchema);
+      }
+      else if (namedSchema instanceof FixedDataSchema)
+      {
+        checkParseLocationForFixed(locations, (FixedDataSchema) namedSchema);
+      }
+    }
+    else if (schema instanceof UnionDataSchema)
+    {
+      checkParseLocationForUnion(locations, (UnionDataSchema) schema, context);
+    }
+
+  }
+  private void checkParseLocationForUnion(
+      Map<Object, PdlSchemaParser.ParseLocation> locations, UnionDataSchema unionSchema,
+      String fieldName)
+  {
+    checkParseLocation(locations, unionSchema, (DataMap) unionSchema.getProperties().get("location"),
+        fieldName);
+
+    // Check all fields
+    for (UnionDataSchema.Member member : unionSchema.getMembers())
+    {
+      DataMap expected = unionSchema.areMembersAliased() ? (DataMap) member.getProperties().get("location")
+          : ((DataMap) unionSchema.getProperties().get("location")).getDataMap(member.getUnionMemberKey());
+      checkParseLocation(locations, member, expected, fieldName + ":" + member.getUnionMemberKey());
+      if (member.isDeclaredInline())
+      {
+        checkParseLocationOfInlineSchema(locations, member.getType(), fieldName);
+      }
+    }
+  }
+
+  private void checkParseLocationForEnum(
+      Map<Object, PdlSchemaParser.ParseLocation> locations, EnumDataSchema enumSchema)
+  {
+    checkParseLocation(locations, enumSchema, (DataMap) enumSchema.getProperties().get("location"),
+        enumSchema.getName());
+
+    // Check all symbols
+    for (String symbol : enumSchema.getSymbols())
+    {
+      checkParseLocation(locations, symbol, (DataMap) enumSchema.getSymbolProperties(symbol).get("location"),
+          enumSchema.getName() + ":" + symbol);
+    }
+  }
+
+  private void checkParseLocation(Map<Object, PdlSchemaParser.ParseLocation> locations, Object schemaNode,
+      DataMap expected, String context)
+  {
+    PdlSchemaParser.ParseLocation location = locations.get(schemaNode);
+    assertLocation(location, expected.getInteger("startLine"), expected.getInteger("startCol"),
+        expected.getInteger("endLine"), expected.getInteger("endCol"), context);
+  }
+
+  private void assertLocation(PdlSchemaParser.ParseLocation location, int startLine, int startCol, int endLine,
+      int endCol, String context)
+  {
+    Assert.assertNotNull(location);
+    Assert.assertEquals(location.getStartLine(), startLine, context + " startLine");
+    Assert.assertEquals(location.getStartColumn(), startCol, context + " startCol");
+    Assert.assertEquals(location.getEndLine(), endLine, context + " endLine");
+    Assert.assertEquals(location.getEndColumn(), endCol, context + " endCol");
+
   }
 
   /**
