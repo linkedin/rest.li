@@ -336,7 +336,7 @@ public class TestFilters extends RestLiIntegrationTest
   // Filter for testing purposes. Keeps track of number of calls to each function and verifies data in each call
   private class TestFilter implements Filter
   {
-    protected final Integer spValue = new Integer(100);
+    protected final Integer spValue = Integer.valueOf(100);
     protected final String spKey = "Counter";
     protected int numRequests;
     protected int numResponses;

@@ -546,11 +546,11 @@ public class TestData
   public void testDataMapAccessors()
   {
     Object[] objects = {
-        new Boolean(true),
-        new Integer(1),
-        new Long(2),
-        new Float(1.5),
-        new Double(2.0),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(2),
+        Float.valueOf(1.5f),
+        Double.valueOf(2.0),
         new String("foo"),
         ByteString.copyAvroString("bar", false)
     };

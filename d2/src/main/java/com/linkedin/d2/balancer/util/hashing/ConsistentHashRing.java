@@ -228,7 +228,7 @@ public class ConsistentHashRing<T> implements Ring<T>
       double percentage;
 
       Map<T, Double> coverageMap = getCoverageMap();
-      Double sizeOfInt = new Double(Integer.MAX_VALUE) - new Double(Integer.MIN_VALUE);
+      Double sizeOfInt = Double.valueOf(Integer.MAX_VALUE) - Double.valueOf(Integer.MIN_VALUE);
       double maxPercentage = Double.MIN_VALUE;
       double minPercentage = Double.MAX_VALUE;
       for (Map.Entry<T, Double> entry : coverageMap.entrySet())
@@ -257,7 +257,7 @@ public class ConsistentHashRing<T> implements Ring<T>
     }
 
     Map<T, Double> coverageMap = new HashMap<T, Double>();
-    Double curr = new Double(Integer.MIN_VALUE);
+    Double curr = Double.valueOf(Integer.MIN_VALUE);
     T firstElement = null;
     //we know points are sortedSet and the iterator is iterating from low to high
     for (Point<T> point : _points)
@@ -267,7 +267,7 @@ public class ConsistentHashRing<T> implements Ring<T>
         firstElement = point.getT();
       }
       Double currentCoverage = point.getHash() - curr;
-      curr = new Double(point.getHash());
+      curr = Double.valueOf(point.getHash());
       Double area = coverageMap.get(point.getT());
       if (area == null)
       {
@@ -277,7 +277,7 @@ public class ConsistentHashRing<T> implements Ring<T>
       coverageMap.put(point.getT(), area);
     }
     //don't forget to take into account the last chunk of area
-    Double remainingArea = new Double(Integer.MAX_VALUE - curr);
+    Double remainingArea = Double.valueOf(Integer.MAX_VALUE - curr);
     Double area = coverageMap.get(firstElement);
     area += remainingArea;
     coverageMap.put(firstElement, area);

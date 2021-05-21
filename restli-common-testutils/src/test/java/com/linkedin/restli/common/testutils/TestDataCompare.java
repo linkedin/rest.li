@@ -154,7 +154,7 @@ public class TestDataCompare
     assertTrue(
             DataCompare.compare(
                     toDataMap("numberField", Long.MAX_VALUE),
-                    toDataMap("numberField", new Long(Long.MAX_VALUE-1).doubleValue())
+                    toDataMap("numberField", Long.valueOf(Long.MAX_VALUE-1).doubleValue())
             ).hasError());
   }
 

@@ -216,7 +216,7 @@ public class D2BaseTest implements D2TestConstants
           try
           {
             response = cli.sendRequest(client, clusterName, service, msg);
-            assertTrue(response.contains(LoadBalancerEchoServer.getResponsePostfixString()),"No '"+LoadBalancerEchoServer.getResponsePostfixString()+"' found in response from "+clusterName+"/"+service+". Response:"+response); 
+            assertTrue(response.contains(LoadBalancerEchoServer.getResponsePostfixString()),"No '"+LoadBalancerEchoServer.getResponsePostfixString()+"' found in response from "+clusterName+"/"+service+". Response:"+response);
             _log.error("Assert pass. Response contains "+LoadBalancerEchoServer.getResponsePostfixString());
           }
           catch (Exception e)
@@ -248,7 +248,7 @@ public class D2BaseTest implements D2TestConstants
         try
         {
           response = cli.sendRequest(client, "cluster-"+i,"service-"+i+"_1", msg);
-          assertTrue(response.contains(LoadBalancerEchoServer.getResponsePostfixString()),"No '"+LoadBalancerEchoServer.getResponsePostfixString()+"' found in response from cluster-"+i+"/service-"+i+"_1. Response:"+response); 
+          assertTrue(response.contains(LoadBalancerEchoServer.getResponsePostfixString()),"No '"+LoadBalancerEchoServer.getResponsePostfixString()+"' found in response from cluster-"+i+"/service-"+i+"_1. Response:"+response);
           counts.get("passed").getAndIncrement();
         }
         catch (Exception e)
@@ -315,7 +315,7 @@ public class D2BaseTest implements D2TestConstants
       if (count < weight.length)
       {
         Map<Integer, Double> partitionWeight = new HashMap<Integer, Double> ();
-        partitionWeight.put(new Integer(partitionId), weight[count]);
+        partitionWeight.put(Integer.valueOf(partitionId), weight[count]);
         hash.put(server, partitionWeight);
         count++;
       }

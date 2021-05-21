@@ -80,7 +80,7 @@ public class TestTyperefKeysResource extends RestLiIntegrationTest
     CreateIdRequest<Long, Greeting> req = new TyperefKeysRequestBuilders(requestOptions).create().input(greeting).build();
 
     Response<IdResponse<Long>> resp = getClient().sendRequest(req).getResponse();
-    Assert.assertEquals(resp.getEntity().getId(), new Long(1L));
+    Assert.assertEquals(resp.getEntity().getId(), Long.valueOf(1L));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
@@ -90,8 +90,8 @@ public class TestTyperefKeysResource extends RestLiIntegrationTest
     Response<BatchResponse<Greeting>> resp = getClient().sendRequest(req).getResponse();
 
     Map<String, Greeting> results = resp.getEntity().getResults();
-    Assert.assertEquals(results.get("1").getId(), new Long(1L));
-    Assert.assertEquals(results.get("2").getId(), new Long(2L));
+    Assert.assertEquals(results.get("1").getId(), Long.valueOf(1L));
+    Assert.assertEquals(results.get("2").getId(), Long.valueOf(2L));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
@@ -101,8 +101,8 @@ public class TestTyperefKeysResource extends RestLiIntegrationTest
     Response<BatchKVResponse<Long, Greeting>> resp = getClient().sendRequest(req).getResponse();
 
     Map<Long, Greeting> results = resp.getEntity().getResults();
-    Assert.assertEquals(results.get(1L).getId(), new Long(1L));
-    Assert.assertEquals(results.get(2L).getId(), new Long(2L));
+    Assert.assertEquals(results.get(1L).getId(), Long.valueOf(1L));
+    Assert.assertEquals(results.get(2L).getId(), Long.valueOf(2L));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
@@ -112,8 +112,8 @@ public class TestTyperefKeysResource extends RestLiIntegrationTest
     Response<BatchKVResponse<Long, EntityResponse<Greeting>>> resp = getClient().sendRequest(req).getResponse();
 
     Map<Long, EntityResponse<Greeting>> results = resp.getEntity().getResults();
-    Assert.assertEquals(results.get(1L).getEntity().getId(), new Long(1L));
-    Assert.assertEquals(results.get(2L).getEntity().getId(), new Long(2L));
+    Assert.assertEquals(results.get(1L).getEntity().getId(), Long.valueOf(1L));
+    Assert.assertEquals(results.get(2L).getEntity().getId(), Long.valueOf(2L));
   }
 
   @DataProvider(name = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")

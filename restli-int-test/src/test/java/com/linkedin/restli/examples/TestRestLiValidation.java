@@ -402,11 +402,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
     if (response.getEntity() instanceof CreateResponse)
     {
-      Assert.assertEquals(((CreateResponse<Integer>)response.getEntity()).getId(), new Integer(1234));
+      Assert.assertEquals(((CreateResponse<Integer>)response.getEntity()).getId(), Integer.valueOf(1234));
     }
     else
     {
-      Assert.assertEquals(((IdResponse<Integer>)(Object)response.getEntity()).getId(), new Integer(1234));
+      Assert.assertEquals(((IdResponse<Integer>)(Object)response.getEntity()).getId(), Integer.valueOf(1234));
     }
   }
 

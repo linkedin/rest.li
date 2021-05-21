@@ -80,7 +80,7 @@ public class TestErrorResponseBuilder
 
     EasyMock.verify(mockDescriptor);
     ErrorResponse errorResponse = (ErrorResponse) restResponse.getEntity();
-    Assert.assertEquals(errorResponse.getStatus(), new Integer(500));
+    Assert.assertEquals(errorResponse.getStatus(), Integer.valueOf(500));
     Assert.assertTrue(errorResponse.getMessage().contains(runtimeException.getMessage()));
   }
 

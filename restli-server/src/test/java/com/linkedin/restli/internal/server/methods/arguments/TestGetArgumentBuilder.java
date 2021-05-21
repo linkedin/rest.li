@@ -94,7 +94,7 @@ public class TestGetArgumentBuilder
             {
                 getIntegerParam(),
                 "myComplexKeyCollectionId",
-                new Integer(123),
+                Integer.valueOf(123),
                 new IntegerDataSchema()
             },
             {
@@ -243,7 +243,7 @@ public class TestGetArgumentBuilder
       throws IOException
   {
     String keyName = "myComplexKeyCollectionId";
-    Object keyValue = new Integer(123);
+    Object keyValue = Integer.valueOf(123);
     DataSchema keySchema = new IntegerDataSchema();
     Key key = new Key(keyName, keyValue.getClass(), keySchema);
 
@@ -267,7 +267,7 @@ public class TestGetArgumentBuilder
       throws IOException
   {
     String keyName = "myComplexKeyCollectionId";
-    Object keyValue = new Integer(123);
+    Object keyValue = Integer.valueOf(123);
     DataSchema keySchema = new IntegerDataSchema();
     Key key = new Key(keyName, keyValue.getClass(), keySchema);
     Map<String, String> headers = new HashMap<String, String>();

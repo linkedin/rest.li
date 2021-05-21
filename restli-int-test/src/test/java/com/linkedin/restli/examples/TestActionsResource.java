@@ -227,7 +227,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     //variant of testing primitive return types, except with null optional parameters
 
     Request<Integer> intRequest = builders.<Integer>action("ReturnIntOptionalParam").setActionParam("param",
-        new Integer(1)).build();
+        Integer.valueOf(1)).build();
     Integer integer = getClient().sendRequest(intRequest).getResponse().getEntity();
     Assert.assertEquals(1, integer.intValue());
 
@@ -236,7 +236,7 @@ public class TestActionsResource extends RestLiIntegrationTest
     Assert.assertEquals(0, integerNull.intValue());
 
     Request<Boolean> boolRequest = builders.<Boolean>action("ReturnBoolOptionalParam").setActionParam("param",
-        new Boolean(false)).build();
+        Boolean.FALSE).build();
     Boolean bool = getClient().sendRequest(boolRequest).getResponse().getEntity();
     Assert.assertTrue(!bool.booleanValue());
 

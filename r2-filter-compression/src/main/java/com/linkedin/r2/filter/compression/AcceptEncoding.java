@@ -195,6 +195,6 @@ public class AcceptEncoding implements Comparable<AcceptEncoding>
   @Override
   public int compareTo(AcceptEncoding target)
   {
-    return new Float(target.getQuality()).compareTo(getQuality());
+    return Float.valueOf(target.getQuality()).compareTo(getQuality());
   }
 }

@@ -699,7 +699,7 @@ public class PsonDataCodec implements DataCodec
           break;
         case PSON_BOOLEAN:
           byte b = _buffer.get();
-          o = new Boolean(b != ZERO_BYTE);
+          o = Boolean.valueOf(b != ZERO_BYTE);
           break;
         case PSON_BINARY:
           int length = _buffer.getInt();

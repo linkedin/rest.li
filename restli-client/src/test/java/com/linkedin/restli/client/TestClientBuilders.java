@@ -1392,7 +1392,7 @@ public class TestClientBuilders
     GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     GetRequest<TestRecord> request = builder.id(1L).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
-    Assert.assertEquals(request.getObjectId(), new Long(1L));
+    Assert.assertEquals(request.getObjectId(), Long.valueOf(1L));
     Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
             TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
