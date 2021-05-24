@@ -13,6 +13,12 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Initial support for the modern `ivy-publish` plugin when producing data-template artifacts
+  - Use of `ivy-publish` plugin requires Gradle 6.1+.
+  - When `pegasus` and `ivy-publish` plugins are applied in concert,
+    a new [Publication](https://docs.gradle.org/5.2.1/javadoc/org/gradle/api/publish/Publication.html) called `ivy` is created.
+  - This Publication name can be modified by setting the `PegasusPublicationName` project property.
+  - See [Ivy Publish Plugin](https://docs.gradle.org/5.2.1/userguide/publishing_ivy.html) for more information about the modern publishing mechanism.
 
 ## [29.18.8] - 2021-05-21
 - Fix a bug in ZKDeterministicSubsettingMetadataProvider to make host set distinct
