@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.18.8] - 2021-05-21
+- Fix a bug in ZKDeterministicSubsettingMetadataProvider to make host set distinct
+
 ## [29.18.7] - 2021-05-16
 - Copy the input pegasus data schema when translating to avro
 
@@ -4940,7 +4943,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.8...master
+[29.18.8]: https://github.com/linkedin/rest.li/compare/v29.18.7...v29.18.8
 [29.18.7]: https://github.com/linkedin/rest.li/compare/v29.18.6...v29.18.7
 [29.18.6]: https://github.com/linkedin/rest.li/compare/v29.18.5...v29.18.6
 [29.18.5]: https://github.com/linkedin/rest.li/compare/v29.18.4...v29.18.5

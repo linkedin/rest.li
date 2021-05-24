@@ -82,6 +82,7 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
             List<String> sortedHosts = uriProperties.getPartitionDesc().keySet().stream()
                 .map(URI::getHost)
                 .sorted()
+                .distinct()
                 .collect(Collectors.toList());
 
             int instanceId = sortedHosts.indexOf(_hostName);
@@ -99,6 +100,8 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
           {
             _subsettingMetadata = null;
           }
+
+          _log.debug("Got deterministic subsetting metadata for cluster {}: {}", _clusterName, _subsettingMetadata);
         }
       }
       metadataFutureCallback.onSuccess(_subsettingMetadata);
@@ -108,7 +111,7 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
     {
       return metadataFutureCallback.get(_timeout, _unit);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      _log.warn("Failed to fetch deterministic subsetting metadata from ZooKeeper", e);
+      _log.warn("Failed to fetch deterministic subsetting metadata from ZooKeeper for cluster " + _clusterName, e);
       return null;
     }
   }
