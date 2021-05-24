@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.18.9] - 2021-05-24
 - Initial support for the modern `ivy-publish` plugin when producing data-template artifacts
   - Use of `ivy-publish` plugin requires Gradle 6.1+.
   - When `pegasus` and `ivy-publish` plugins are applied in concert,
@@ -4949,7 +4951,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.8...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.9...master
+[29.18.9]: https://github.com/linkedin/rest.li/compare/v29.18.8...v29.18.9
 [29.18.8]: https://github.com/linkedin/rest.li/compare/v29.18.7...v29.18.8
 [29.18.7]: https://github.com/linkedin/rest.li/compare/v29.18.6...v29.18.7
 [29.18.6]: https://github.com/linkedin/rest.li/compare/v29.18.5...v29.18.6
