@@ -11,6 +11,12 @@ record ActionSchema includes CustomAnnotationSchema, ServiceErrorsSchema, Succes
   name: string
 
   /**
+   * Placeholder indicating if this action is read-only or not. This is not enforced by the framework
+   * and is just a marker.
+   */
+  readOnly: optional boolean = false
+
+  /**
    * Documentation for this action
    */
   doc: optional string

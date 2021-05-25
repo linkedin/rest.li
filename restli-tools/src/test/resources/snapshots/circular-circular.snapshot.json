@@ -38,6 +38,7 @@
     "actionsSet" : {
       "actions" : [ {
         "name" : "test",
+        "readOnly" : true,
         "parameters" : [ {
           "name" : "a",
           "type" : "com.linkedin.restli.tools.snapshot.circular.A"

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.18.10] - 2021-05-24
+- Introduce a readonly attribute on the action annotation
+
 ## [29.18.9] - 2021-05-24
 - Initial support for the modern `ivy-publish` plugin when producing data-template artifacts
   - Use of `ivy-publish` plugin requires Gradle 6.1+.
@@ -4951,7 +4954,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.9...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.10...master
+[29.18.10]: https://github.com/linkedin/rest.li/compare/v29.18.9...v29.18.10
 [29.18.9]: https://github.com/linkedin/rest.li/compare/v29.18.8...v29.18.9
 [29.18.8]: https://github.com/linkedin/rest.li/compare/v29.18.7...v29.18.8
 [29.18.7]: https://github.com/linkedin/rest.li/compare/v29.18.6...v29.18.7

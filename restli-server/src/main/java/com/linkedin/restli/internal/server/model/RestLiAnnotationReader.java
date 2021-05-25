@@ -2409,6 +2409,7 @@ public final class RestLiAnnotationReader
                                                                                                 getActionResourceLevel(actionAnno, model),
                                                                                                 returnFieldDef,
                                                                                                 actionReturnRecordDataSchema,
+                                                                                                actionAnno.readOnly(),
                                                                                                 recordDataSchema,
                                                                                                 getInterfaceType(method),
                                                                                                 annotationsMap);
