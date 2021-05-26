@@ -33,7 +33,7 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
-import com.linkedin.d2.balancer.subsetting.SubsettingStrategy;
+import com.linkedin.d2.balancer.subsetting.SubsettingState;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactory;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactoryImpl;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
@@ -59,7 +59,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -145,8 +144,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final boolean       _isSSLEnabled;
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
 
-  private final SubsettingStrategyFactory _subsettingStrategyFactory;
-  private final ConcurrentMap<String, ConcurrentMap<Integer, Map<URI, TrackerClient>>> _weightedSubsetsCache;
+  private final SubsettingState _subsettingState;
 
   /*
    * Concurrency considerations:
@@ -314,13 +312,14 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _clusterListeners = Collections.synchronizedList(new ArrayList<>());
     if (deterministicSubsettingMetadataProvider != null)
     {
-      _subsettingStrategyFactory = new SubsettingStrategyFactoryImpl(deterministicSubsettingMetadataProvider, this);
+      SubsettingStrategyFactory subsettingStrategyFactory =
+          new SubsettingStrategyFactoryImpl(deterministicSubsettingMetadataProvider, this);
+      _subsettingState = new SubsettingState(subsettingStrategyFactory);
     }
     else
     {
-      _subsettingStrategyFactory = SubsettingStrategyFactory.NO_OP_SUBSETTING_STRATEGY_FACTORY;
+      _subsettingState = null;
     }
-    _weightedSubsetsCache = new ConcurrentHashMap<>();
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -674,53 +673,40 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   @Override
+  public long getPeerClusterVersion(String serviceName,
+                                    ServiceProperties serviceProperties,
+                                    int partitionId)
+  {
+    if (_subsettingState == null || !serviceProperties.isEnableClusterSubsetting())
+    {
+      return -1;
+    }
+    else
+    {
+      return _subsettingState.getPeerClusterVersion(serviceName, serviceProperties.getMinClusterSubsetSize(), partitionId);
+    }
+  }
+
+  @Override
   public Map<URI, TrackerClient> getClientsSubset(String serviceName,
                                                   int minClusterSubsetSize,
                                                   int partitionId,
                                                   Map<URI, TrackerClient> potentialClients)
   {
-    SubsettingStrategy<URI> subsettingStrategy = _subsettingStrategyFactory.get(serviceName, minClusterSubsetSize, partitionId);
-
-    if (subsettingStrategy == null)
-    {
-      return potentialClients;
-    }
-
-    // If cluster version is not changed, return the cached subset if possible
-    if (!subsettingStrategy.isSubsetChanged(_version.get()) &&
-        _weightedSubsetsCache.containsKey(serviceName) &&
-        _weightedSubsetsCache.get(serviceName).containsKey(partitionId))
-    {
-      return _weightedSubsetsCache.get(serviceName).get(partitionId);
-    }
-
-    Map<URI, Double> weightMap = potentialClients.entrySet().stream()
-        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPartitionWeight(partitionId)));
-    Map<URI, Double> subsetMap = subsettingStrategy.getWeightedSubset(weightMap, _version.get());
-
-    if (subsetMap == null)
+    if (_subsettingState == null)
     {
       return potentialClients;
     }
     else
     {
-      Map<URI, TrackerClient> subsetClients = new HashMap<>();
-      for (Map.Entry<URI, Double> entry: subsetMap.entrySet())
-      {
-        URI uri = entry.getKey();
-        TrackerClient client = potentialClients.get(uri);
-        client.setSubsetWeight(partitionId, subsetMap.get(uri));
-        subsetClients.put(uri, client);
-      }
+      Map<URI, TrackerClient> subsetClients = _subsettingState
+          .getClientsSubset(serviceName, minClusterSubsetSize, partitionId, potentialClients, _version.get());
 
-      _weightedSubsetsCache.computeIfAbsent(serviceName, k -> new ConcurrentHashMap<>());
-      _weightedSubsetsCache.get(serviceName).put(partitionId, subsetClients);
-
-      debug(_log, "cluster subset updated for service ", serviceName, ": [",
+      debug(_log, "get cluster subset for service ", serviceName, ": [",
           subsetClients.values().stream()
-            .limit(LOG_SUBSET_MAX_SIZE)
-            .map(client -> client.getUri() + ":" + client.getSubsetWeight(partitionId))
-            .collect(Collectors.joining(",")),
+              .limit(LOG_SUBSET_MAX_SIZE)
+              .map(client -> client.getUri() + ":" + client.getSubsetWeight(partitionId))
+              .collect(Collectors.joining(",")),
           " (total ", subsetClients.size(), ")]"
       );
 

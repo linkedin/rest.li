@@ -842,8 +842,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
       clientsToLoadBalance = getPotentialClients(serviceName, serviceProperties, cluster, uris, scheme, partitionId);
 
+      long clusterGenerationId = Math.max(_state.getPeerClusterVersion(serviceName, serviceProperties, partitionId),
+          uriItem.getVersion());
+
       trackerClient =
-          strategy.getTrackerClient(request, requestContext, uriItem.getVersion(), partitionId, clientsToLoadBalance);
+          strategy.getTrackerClient(request, requestContext, clusterGenerationId, partitionId, clientsToLoadBalance);
 
       debug(_log,
             "load balancer strategy for ",

@@ -89,7 +89,7 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
 
             if (instanceId >= 0)
             {
-              _subsettingMetadata = new DeterministicSubsettingMetadata(instanceId, sortedHosts.size());
+              _subsettingMetadata = new DeterministicSubsettingMetadata(instanceId, sortedHosts.size(), uriItem.getVersion());
             }
             else
             {

@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentMap;
 public class SubsettingStrategyFactoryImpl implements SubsettingStrategyFactory
 {
   private final ConcurrentMap<String, ConcurrentMap<Integer, SubsettingStrategy<URI>>> _subsettingStrategyMap;
+  private final ConcurrentMap<String, Integer> _minClusterSubsetSizeMap;
   private final DeterministicSubsettingMetadataProvider _deterministicSubsettingMetadataProvider;
   private final LoadBalancerState _state;
 
@@ -33,6 +34,7 @@ public class SubsettingStrategyFactoryImpl implements SubsettingStrategyFactory
       LoadBalancerState state)
   {
     _subsettingStrategyMap = new ConcurrentHashMap<>();
+    _minClusterSubsetSizeMap = new ConcurrentHashMap<>();
     _deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
     _state = state;
   }
@@ -48,7 +50,7 @@ public class SubsettingStrategyFactoryImpl implements SubsettingStrategyFactory
     if (_subsettingStrategyMap.containsKey(serviceName))
     {
       Map<Integer, SubsettingStrategy<URI>> strategyMap = _subsettingStrategyMap.get(serviceName);
-      if (strategyMap.containsKey(partitionId))
+      if (minClusterSubsetSize == _minClusterSubsetSizeMap.get(serviceName) && strategyMap.containsKey(partitionId))
       {
         return strategyMap.get(partitionId);
       }
@@ -66,6 +68,7 @@ public class SubsettingStrategyFactoryImpl implements SubsettingStrategyFactory
         return strategyMap;
       });
     }
+    _minClusterSubsetSizeMap.put(serviceName, minClusterSubsetSize);
 
     return _subsettingStrategyMap.get(serviceName).get(partitionId);
   }

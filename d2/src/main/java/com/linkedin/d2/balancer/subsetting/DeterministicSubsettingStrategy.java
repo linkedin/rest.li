@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
-import javax.annotation.concurrent.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,15 +51,6 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
   private final int _minSubsetSize;
   private final LoadBalancerState _state;
 
-  private final Object _lock = new Object();
-
-  @GuardedBy("_lock")
-  private DeterministicSubsettingMetadata _currentMetadata;
-  @GuardedBy("_lock")
-  private long _currentVersion = -1;
-  @GuardedBy("_lock")
-  private Map<T, Double> _currentWeightedSubset;
-
   /**
    * Builds deterministic subsetting strategy
    *
@@ -82,42 +72,31 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
   }
 
   @Override
-  public boolean isSubsetChanged(long version)
+  public long getPeerClusterVersion()
   {
     DeterministicSubsettingMetadata metadata = _metadataProvider.getSubsettingMetadata(_state);
-    return metadata == null || !metadata.equals(_currentMetadata) || version != _currentVersion;
+
+    return metadata.getClusterGenerationId();
   }
 
   @Override
-  public Map<T, Double> getWeightedSubset(Map<T, Double> weightMap, long version)
+  public Map<T, Double> getWeightedSubset(Map<T, Double> weightMap)
   {
     DeterministicSubsettingMetadata metadata = _metadataProvider.getSubsettingMetadata(_state);
     if (metadata != null)
     {
-      synchronized (_lock)
-      {
-        if (metadata.equals(_currentMetadata) && version == _currentVersion)
-        {
-          return _currentWeightedSubset;
-        }
+      List<T> points = new ArrayList<>(weightMap.keySet());
+      Collections.sort(points);
+      Collections.shuffle(points, new Random(_randomSeed));
+      List<Double> weights = points.stream().map(weightMap::get).collect(Collectors.toList());
+      Ring ring = new Ring(weights);
 
-        _currentVersion = version;
-        _currentMetadata = metadata;
+      double offset = metadata.getInstanceId() / (double) metadata.getTotalInstanceCount();
+      double subsetSliceWidth = getSubsetSliceWidth(metadata.getTotalInstanceCount(), points.size());
+      List<Integer> indices = ring.getIndices(offset, subsetSliceWidth);
 
-        List<T> points = new ArrayList<>(weightMap.keySet());
-        Collections.sort(points);
-        Collections.shuffle(points, new Random(_randomSeed));
-        List<Double> weights = points.stream().map(weightMap::get).collect(Collectors.toList());
-        Ring ring = new Ring(weights);
-
-        double offset = metadata.getInstanceId() / (double) metadata.getTotalInstanceCount();
-        double subsetSliceWidth = getSubsetSliceWidth(metadata.getTotalInstanceCount(), points.size());
-        List<Integer> indices = ring.getIndices(offset, subsetSliceWidth);
-
-        _currentWeightedSubset = indices.stream().collect(
-            Collectors.toMap(points::get, i -> round(ring.getWeight(i, offset, subsetSliceWidth), WEIGHT_DECIMAL_PLACE)));
-      }
-      return _currentWeightedSubset;
+      return indices.stream().collect(
+          Collectors.toMap(points::get, i -> round(ring.getWeight(i, offset, subsetSliceWidth), WEIGHT_DECIMAL_PLACE)));
     }
     else
     {

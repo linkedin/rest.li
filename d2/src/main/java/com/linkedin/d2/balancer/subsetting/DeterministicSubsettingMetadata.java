@@ -26,11 +26,13 @@ public final class DeterministicSubsettingMetadata
 {
   private final int _instanceId;
   private final int _totalInstanceCount;
+  private final long _clusterGenerationId;
 
-  public DeterministicSubsettingMetadata(int instanceId, int totalInstanceCount)
+  public DeterministicSubsettingMetadata(int instanceId, int totalInstanceCount, long clusterGenerationId)
   {
     _instanceId = instanceId;
     _totalInstanceCount = totalInstanceCount;
+    _clusterGenerationId = clusterGenerationId;
   }
 
   /**
@@ -42,11 +44,18 @@ public final class DeterministicSubsettingMetadata
   }
 
   /**
-   * Get the total number of instances in the peer client cluster.
+   * Get the total number of instances in the peer client cluster
    */
   public int getTotalInstanceCount()
   {
     return _totalInstanceCount;
+  }
+
+  /**
+   * Get cluster generation Id
+   */
+  public long getClusterGenerationId() {
+    return _clusterGenerationId;
   }
 
   @Override
@@ -59,19 +68,21 @@ public final class DeterministicSubsettingMetadata
       return false;
     }
     DeterministicSubsettingMetadata that = (DeterministicSubsettingMetadata) o;
-    return _instanceId == that._instanceId && _totalInstanceCount == that._totalInstanceCount;
+    return _instanceId == that._instanceId
+        && _totalInstanceCount == that._totalInstanceCount
+        && _clusterGenerationId == that._clusterGenerationId;
   }
 
   @Override
   public int hashCode()
   {
-    return Objects.hash(_instanceId, _totalInstanceCount);
+    return Objects.hash(_instanceId, _totalInstanceCount, _clusterGenerationId);
   }
 
   @Override
   public String toString()
   {
     return "DeterministicSubsettingMetadata{" + "_instanceId=" + _instanceId + ", _totalInstanceCount="
-        + _totalInstanceCount + '}';
+        + _totalInstanceCount + ", _clusterGenerationId=" + _clusterGenerationId + '}';
   }
 }

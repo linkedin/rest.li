@@ -63,42 +63,14 @@ public class DeterministicSubsettingStrategyTest
   }
 
   @Test
-  public void testCaching()
+  public void testGetPeerClusterVersion()
   {
     Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata(_state))
-        .thenReturn(new DeterministicSubsettingMetadata(0, 20));
+        .thenReturn(new DeterministicSubsettingMetadata(0, 20, 0));
     _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider,
         "test", 10, _state);
 
-    double[] weights = new double[100];
-    Arrays.fill(weights, 1D);
-
-    assertTrue(_deterministicSubsettingStrategy.isSubsetChanged(0));
-    Map<String, Double> pointsMap = constructPointsMap(weights);
-    Map<String, Double> weightedSubset1 = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 0);
-
-    assertFalse(_deterministicSubsettingStrategy.isSubsetChanged(0));
-    pointsMap = constructPointsMap(weights);
-    Map<String, Double> weightedSubset2 = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 0);
-
-    assertSame(weightedSubset1, weightedSubset2);
-
-    assertTrue(_deterministicSubsettingStrategy.isSubsetChanged(1));
-    pointsMap = constructPointsMap(weights);
-    Map<String, Double> weightedSubset3 = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 1);
-
-    assertEquals(weightedSubset1, weightedSubset3);
-    assertNotSame(weightedSubset1, weightedSubset3);
-
-    assertFalse(_deterministicSubsettingStrategy.isSubsetChanged(1));
-    pointsMap = constructPointsMap(weights);
-    Map<String, Double> weightedSubset4 = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 1);
-
-    assertSame(weightedSubset3, weightedSubset4);
-
-    Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata(_state))
-        .thenReturn(new DeterministicSubsettingMetadata(0, 19));
-    assertTrue(_deterministicSubsettingStrategy.isSubsetChanged(1));
+    assertEquals(_deterministicSubsettingStrategy.getPeerClusterVersion(), 0);
   }
 
   @Test(dataProvider = "uniformWeightData")
@@ -113,10 +85,10 @@ public class DeterministicSubsettingStrategyTest
     for (int i = 0; i < clientNum; i++)
     {
       Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata(_state))
-          .thenReturn(new DeterministicSubsettingMetadata(i, clientNum));
+          .thenReturn(new DeterministicSubsettingMetadata(i, clientNum, 0));
       _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider,
           "test", minSubsetSize, _state);
-      Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 0);
+      Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap);
       assertTrue(weightedSubset.size() >= Math.min(minSubsetSize, hostNum));
 
       for (Map.Entry<String, Double> entry: weightedSubset.entrySet())
@@ -143,10 +115,10 @@ public class DeterministicSubsettingStrategyTest
     for (int i = 0; i < clientNum; i++)
     {
       Mockito.when(_deterministicSubsettingMetadataProvider.getSubsettingMetadata(_state))
-          .thenReturn(new DeterministicSubsettingMetadata(i, clientNum));
+          .thenReturn(new DeterministicSubsettingMetadata(i, clientNum, 0));
       _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider,
           "test", minSubsetSize, _state);
-      Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap, 0);
+      Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap);
       double totalWeights = 0;
       for (Map.Entry<String, Double> entry: weightedSubset.entrySet())
       {
