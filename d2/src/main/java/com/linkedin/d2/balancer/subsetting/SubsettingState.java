@@ -22,10 +22,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.http.annotation.GuardedBy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class SubsettingState
 {
+  private static final Logger LOG = LoggerFactory.getLogger(SubsettingState.class);
   private final Object _lock = new Object();
   private final SubsettingStrategyFactory _subsettingStrategyFactory;
 
@@ -81,14 +84,16 @@ public class SubsettingState
 
     synchronized (_lock)
     {
-      if (version == _version &&
-          peerClusterVersion == _peerClusterVersion &&
-          minClusterSubsetSize == _minClusterSubsetSize &&
-          _weightedSubsetsCache.containsKey(serviceName) &&
-          _weightedSubsetsCache.get(serviceName).containsKey(partitionId))
+      if (isCacheValid(version, peerClusterVersion, minClusterSubsetSize))
       {
-        return _weightedSubsetsCache.get(serviceName).get(partitionId);
+        Map<Integer, Map<URI, TrackerClient>> serviceCache = _weightedSubsetsCache.get(serviceName);
+        if (serviceCache != null && serviceCache.containsKey(partitionId))
+        {
+          return serviceCache.get(partitionId);
+        }
       }
+
+      LOG.debug("Calculate subset for version: " + _version + ", peerClusterVersion: " + _peerClusterVersion);
 
       Map<URI, Double> weightMap = potentialClients.entrySet().stream()
           .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPartitionWeight(partitionId)));
@@ -105,17 +110,24 @@ public class SubsettingState
         {
           URI uri = entry.getKey();
           TrackerClient client = potentialClients.get(uri);
-          client.setSubsetWeight(partitionId, subsetMap.get(uri));
+          client.setSubsetWeight(partitionId, entry.getValue());
           subsetClients.put(uri, client);
         }
 
-        _weightedSubsetsCache.computeIfAbsent(serviceName, k -> new HashMap<>());
-        _weightedSubsetsCache.get(serviceName).put(partitionId, subsetClients);
+        Map<Integer, Map<URI, TrackerClient>> serviceCache = _weightedSubsetsCache.computeIfAbsent(serviceName, k -> new HashMap<>());
+        serviceCache.put(partitionId, subsetClients);
         _version = version;
         _peerClusterVersion = peerClusterVersion;
         _minClusterSubsetSize = minClusterSubsetSize;
         return subsetClients;
       }
     }
+  }
+
+  private boolean isCacheValid(long version, long peerClusterVersion, int minClusterSubsetSize)
+  {
+    return version == _version &&
+        peerClusterVersion == _peerClusterVersion &&
+        minClusterSubsetSize == _minClusterSubsetSize;
   }
 }
