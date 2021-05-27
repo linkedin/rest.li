@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.18.13] - 2021-05-27
+- Remove one more "runtime" configuration reference.
+
 ## [29.18.12] - 2021-05-26
 - Use daemon threads to unregister TimingKeys.
 
@@ -4960,7 +4963,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.12...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.13...master
+[29.18.13]: https://github.com/linkedin/rest.li/compare/v29.18.12...v29.18.13
 [29.18.12]: https://github.com/linkedin/rest.li/compare/v29.18.11...v29.18.12
 [29.18.11]: https://github.com/linkedin/rest.li/compare/v29.18.10...v29.18.11
 [29.18.10]: https://github.com/linkedin/rest.li/compare/v29.18.9...v29.18.10
