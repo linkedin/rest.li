@@ -35,7 +35,8 @@ import java.util.concurrent.Executors;
 public class TimingKey
 {
   private static final Map<String, TimingKey> _pool = new ConcurrentHashMap<>();
-  private static final ExecutorService _unregisterExecutor = Executors.newFixedThreadPool(1);
+  private static final ExecutorService _unregisterExecutor = Executors
+      .newFixedThreadPool(1, TimingKey::createDaemonThread);
 
   private final String _name;
   private final String _type;
@@ -156,4 +157,9 @@ public class TimingKey
     return _pool.size();
   }
 
+  private static final Thread createDaemonThread(Runnable runnable) {
+    Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+    thread.setDaemon(true);
+    return thread;
+  }
 }
