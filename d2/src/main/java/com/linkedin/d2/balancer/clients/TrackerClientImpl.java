@@ -74,9 +74,10 @@ public class TrackerClientImpl implements TrackerClient
   private final Map<Integer, PartitionData> _partitionData;
   private final URI _uri;
   private final Predicate<Integer> _isErrorStatus;
-  private final boolean _doNotSlowStart;
   private final ConcurrentMap<Integer, Double> _subsetWeightMap;
   final CallTracker _callTracker;
+
+  private boolean _doNotSlowStart;
 
   private volatile CallTracker.CallStats _latestCallStats;
 
@@ -201,6 +202,12 @@ public class TrackerClientImpl implements TrackerClient
 
       _wrappedCallback.onResponse(response);
     }
+  }
+
+  @Override
+  public void setDoNotSlowStart(int partitionId, boolean doNotSlowStart)
+  {
+    _doNotSlowStart = doNotSlowStart;
   }
 
   @Override

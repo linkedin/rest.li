@@ -18,22 +18,39 @@ package com.linkedin.d2.balancer.subsetting;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.http.annotation.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+/**
+ * State of cluster subsetting
+ */
 public class SubsettingState
 {
   private static final Logger LOG = LoggerFactory.getLogger(SubsettingState.class);
   private final Object _lock = new Object();
   private final SubsettingStrategyFactory _subsettingStrategyFactory;
 
+  /**
+   * Map from serviceName => Partition Id => subset map
+   */
   @GuardedBy("_lock")
   private final Map<String, Map<Integer, Map<URI, TrackerClient>>> _weightedSubsetsCache;
+
+  /**
+   * Map from serviceName => Partition Id => all potential clients
+   */
+  @GuardedBy("_lock")
+  private final Map<String, Map<Integer, Set<URI>>> _potentialClientsMap;
+
+  @GuardedBy("_lock")
+  private final Map<String, Integer> _minClusterSubsetSizeMap;
 
   @GuardedBy("_lock")
   private long _version;
@@ -41,16 +58,14 @@ public class SubsettingState
   @GuardedBy("_lock")
   private long _peerClusterVersion;
 
-  @GuardedBy("_lock")
-  private long _minClusterSubsetSize;
-
   public SubsettingState(SubsettingStrategyFactory subsettingStrategyFactory)
   {
     _version = -1;
     _peerClusterVersion = -1;
-    _minClusterSubsetSize = -1;
     _subsettingStrategyFactory = subsettingStrategyFactory;
     _weightedSubsetsCache = new HashMap<>();
+    _potentialClientsMap = new HashMap<>();
+    _minClusterSubsetSizeMap = new HashMap<>();
   }
 
   public long getPeerClusterVersion(String serviceName,
@@ -84,7 +99,7 @@ public class SubsettingState
 
     synchronized (_lock)
     {
-      if (isCacheValid(version, peerClusterVersion, minClusterSubsetSize))
+      if (isCacheValid(version, peerClusterVersion, minClusterSubsetSize, serviceName))
       {
         Map<Integer, Map<URI, TrackerClient>> serviceCache = _weightedSubsetsCache.get(serviceName);
         if (serviceCache != null && serviceCache.containsKey(partitionId))
@@ -105,29 +120,45 @@ public class SubsettingState
       }
       else
       {
+        Set<URI> oldPotentialClients = Collections.emptySet();
+
+        Map<Integer, Set<URI>> oldServicePotentialClients = _potentialClientsMap.get(serviceName);
+        if (oldServicePotentialClients != null)
+        {
+          oldPotentialClients = oldServicePotentialClients.getOrDefault(partitionId, Collections.emptySet());
+        }
+
         Map<URI, TrackerClient> subsetClients = new HashMap<>();
         for (Map.Entry<URI, Double> entry: subsetMap.entrySet())
         {
           URI uri = entry.getKey();
           TrackerClient client = potentialClients.get(uri);
+          if (oldPotentialClients.contains(uri))
+          {
+            client.setDoNotSlowStart(partitionId, true);
+          }
           client.setSubsetWeight(partitionId, entry.getValue());
           subsetClients.put(uri, client);
         }
 
         Map<Integer, Map<URI, TrackerClient>> serviceCache = _weightedSubsetsCache.computeIfAbsent(serviceName, k -> new HashMap<>());
         serviceCache.put(partitionId, subsetClients);
+
+        Map<Integer, Set<URI>> servicePotentialClients = _potentialClientsMap.computeIfAbsent(serviceName, k -> new HashMap<>());
+        servicePotentialClients.put(partitionId, potentialClients.keySet());
+
         _version = version;
         _peerClusterVersion = peerClusterVersion;
-        _minClusterSubsetSize = minClusterSubsetSize;
+        _minClusterSubsetSizeMap.put(serviceName, minClusterSubsetSize);
         return subsetClients;
       }
     }
   }
 
-  private boolean isCacheValid(long version, long peerClusterVersion, int minClusterSubsetSize)
+  private boolean isCacheValid(long version, long peerClusterVersion, int minClusterSubsetSize, String serviceName)
   {
     return version == _version &&
         peerClusterVersion == _peerClusterVersion &&
-        minClusterSubsetSize == _minClusterSubsetSize;
+        minClusterSubsetSize == _minClusterSubsetSizeMap.getOrDefault(serviceName, -1);
   }
 }

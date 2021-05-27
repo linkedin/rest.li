@@ -931,7 +931,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         && !state.getTrackerClients().contains(client)                        // client is new
         && config.getRingRampFactor() > FAST_RECOVERY_THRESHOLD               // Fast recovery is enabled
         && degraderControl.getInitialDropRate() > SLOW_START_THRESHOLD        // Slow start is enabled
-        && !degraderControl.isHigh())                                         // current client is not degrading or QPS is too low
+        && !degraderControl.isHigh()                                          // current client is not degrading or QPS is too low
+        && !client.doNotSlowStart())                                          // doNotSlowStart is set to false
     {
       recoveryMap.put(client, clientUpdater.getMaxDropRate());
       // also set the maxDropRate to the computedDropRate if not 1;
