@@ -20,7 +20,8 @@ enum DarkClusterStrategyName {
    * request to a circular buffer which is consumed asynchronously by a rate-limited event loop. Configured with:
    *   "dispatcherOutboundTargetRate": the target rate which each dark cluster host should receive.
    *   "dispatcherMaxRequestsToBuffer": the number of requests to store in the circular buffer.
-   *   "dispatcherOldestRequestAge": time in seconds that a request is eligible for dispatch once it is added to the circular buffer.
+   *   "dispatcherBufferedRequestExpiryInSeconds": time in seconds that a request is eligible for dispatch
+   *                                               once it is added to the circular buffer.
    */
   CONSTANT_QPS
 

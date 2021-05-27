@@ -53,7 +53,6 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
 {
   private static final Logger LOG = LoggerFactory.getLogger(DarkClusterStrategyFactoryImpl.class);
   public static final DarkClusterStrategy NO_OP_DARK_CLUSTER_STRATEGY = new NoOpDarkClusterStrategy();
-  private static final String RATE_LIMITER_NAME = "DarkClusterRateLimiter";
 
   // ClusterInfoProvider isn't available until the D2 client is started, so it can't be
   // populated during construction time.
@@ -74,7 +73,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
                                         @Nonnull Notifier notifier,
                                         @Nonnull Random random,
                                         @Nonnull DarkClusterVerifierManager verifierManager,
-                                        @Nonnull ConstantQpsRateLimiter rateLimiter)
+                                        ConstantQpsRateLimiter rateLimiter)
   {
     _facilities = facilities;
     _sourceClusterName = sourceClusterName;
@@ -85,6 +84,16 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     _verifierManager = verifierManager;
     _rateLimiter = rateLimiter;
     _clusterListener = new DarkClusterListener();
+  }
+
+  public DarkClusterStrategyFactoryImpl(@Nonnull Facilities facilities,
+                                        @Nonnull String sourceClusterName,
+                                        @Nonnull DarkClusterDispatcher darkClusterDispatcher,
+                                        @Nonnull Notifier notifier,
+                                        @Nonnull Random random,
+                                        @Nonnull DarkClusterVerifierManager verifierManager)
+  {
+    this(facilities, sourceClusterName, darkClusterDispatcher, notifier, random, verifierManager, null);
   }
 
   @Override
@@ -150,16 +159,20 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
             }
             break;
           case CONSTANT_QPS:
+            if (_rateLimiter == null) {
+              LOG.error("Dark Cluster {} configured to use CONSTANT_QPS strategy, but no rate limiter provided during instantiation. "
+                  + "No Dark Cluster strategy will be used!", darkClusterName);
+              break;
+            }
             if (ConstantQpsDarkClusterStrategy.isValidConfig(darkClusterConfig))
             {
               BaseDarkClusterDispatcher baseDarkClusterDispatcher =
                   new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
               _rateLimiter.setBufferCapacity(darkClusterConfig.getDispatcherMaxRequestsToBuffer());
-              _rateLimiter.setBufferTtl(darkClusterConfig.getDispatcherOldestRequestAge(), ChronoUnit.SECONDS);
+              _rateLimiter.setBufferTtl(darkClusterConfig.getDispatcherBufferedRequestExpiryInSeconds(), ChronoUnit.SECONDS);
               return new ConstantQpsDarkClusterStrategy(_sourceClusterName, darkClusterName,
-                                                        darkClusterConfig.getDispatcherOutboundTargetRate(),
-                                                        baseDarkClusterDispatcher, _notifier,
-                  _facilities.getClusterInfoProvider(), _rateLimiter);
+                  darkClusterConfig.getDispatcherOutboundTargetRate(), baseDarkClusterDispatcher,
+                  _notifier, _facilities.getClusterInfoProvider(), _rateLimiter);
             }
             break;
           default:

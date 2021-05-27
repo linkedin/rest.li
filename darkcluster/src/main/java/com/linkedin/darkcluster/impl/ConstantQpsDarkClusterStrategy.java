@@ -45,7 +45,8 @@ import com.linkedin.r2.message.rest.RestRequest;
  * requests are randomly selected based on a multiplier. With this strategy, all requests are submitted to the rate-limiter,
  * which dispatches and evicts stored requests based on its configuration.
  */
-public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
+public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
+{
   private final String _originalClusterName;
   private final String _darkClusterName;
   private final Integer _darkClusterPerHostQps;
@@ -59,7 +60,8 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
 
   public ConstantQpsDarkClusterStrategy(@Nonnull String originalClusterName, @Nonnull String darkClusterName,
       @Nonnull Integer darkClusterPerHostQps, @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
-      @Nonnull Notifier notifier, @Nonnull ClusterInfoProvider clusterInfoProvider, @Nonnull ConstantQpsRateLimiter rateLimiter) {
+      @Nonnull Notifier notifier, @Nonnull ClusterInfoProvider clusterInfoProvider, @Nonnull ConstantQpsRateLimiter rateLimiter)
+  {
     _originalClusterName = originalClusterName;
     _darkClusterName = darkClusterName;
     _darkClusterPerHostQps = darkClusterPerHostQps;
@@ -70,7 +72,8 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
   }
 
   @Override
-  public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext) {
+  public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
+  {
     float sendRate = getSendRate();
     // set burst in such a way that requests are dispatched evenly across the ONE_SECOND_PERIOD
     int burst = (int) Math.ceil(sendRate / ONE_SECOND_PERIOD);
@@ -88,13 +91,14 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
    * @param darkClusterConfig
    * @return true if config is valid for this strategy
    */
-  public static boolean isValidConfig(DarkClusterConfig darkClusterConfig) {
+  public static boolean isValidConfig(DarkClusterConfig darkClusterConfig)
+  {
     return darkClusterConfig.hasDispatcherOutboundTargetRate() &&
         darkClusterConfig.getDispatcherOutboundTargetRate() > 0 &&
         darkClusterConfig.hasDispatcherMaxRequestsToBuffer() &&
         darkClusterConfig.getDispatcherMaxRequestsToBuffer() > 0 &&
-        darkClusterConfig.hasDispatcherOldestRequestAge() &&
-        darkClusterConfig.getDispatcherOldestRequestAge() > 0;
+        darkClusterConfig.hasDispatcherBufferedRequestExpiryInSeconds() &&
+        darkClusterConfig.getDispatcherBufferedRequestExpiryInSeconds() > 0;
   }
 
   /**
@@ -110,7 +114,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
    *
    * another example:
    * 1 dark instance, 7 source instances, darkClusterPerHostQps = 75.
-   * #equestsPerSecond = (1 * 75)/7 = 10.71429.
+   * RequestsPerSecond = (1 * 75)/7 = 10.71429.
    *
    * An uncommon but possible configuration:
    * 10 dark instances, 1 source instance, darkClusterPerHostQps = 50.
@@ -118,7 +122,8 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
    *
    * @return requests per second this host should dispatch
    */
-  private float getSendRate() {
+  private float getSendRate()
+  {
     try {
       // Only support https for now. http support can be added later if truly needed, but would be non-ideal
       // because potentially both dark and source would have to be configured.
@@ -146,14 +151,16 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy {
    */
   private boolean addRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
-    _rateLimiter.submit(new Callback<None>() {
+    _rateLimiter.submit(new Callback<None>()
+    {
       @Override
       public void onError(Throwable e) {
         //
       }
 
       @Override
-      public void onSuccess(None result) {
+      public void onSuccess(None result)
+      {
         _baseDarkClusterDispatcher.sendRequest(originalRequest, darkRequest, requestContext, NUM_REQUESTS_TO_SEND_PER_RATE_LIMITER_CYCLE);
       }
     });

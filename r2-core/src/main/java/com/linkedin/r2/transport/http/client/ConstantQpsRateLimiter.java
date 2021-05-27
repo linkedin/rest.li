@@ -32,14 +32,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Rest.li's original use case for this rate-limiter is to supply Dark Clusters with a steady stream of request volume for
  * testing purposes under a given load.
  */
-public class ConstantQpsRateLimiter extends SmoothRateLimiter {
+public class ConstantQpsRateLimiter extends SmoothRateLimiter
+{
   private final EvictingCircularBuffer _evictingCircularBuffer;
 
   public ConstantQpsRateLimiter(
-      ScheduledExecutorService scheduler, Executor executor, Clock clock, EvictingCircularBuffer storedCallbacks)
+      ScheduledExecutorService scheduler, Executor executor, Clock clock, EvictingCircularBuffer callbackBuffer)
   {
-    super(scheduler, executor, clock, storedCallbacks, BufferOverflowMode.NONE, "ConstantQpsRateLimiter", new UnlimitedExecutionTracker());
-    _evictingCircularBuffer = storedCallbacks;
+    super(scheduler, executor, clock, callbackBuffer, BufferOverflowMode.NONE, "ConstantQpsRateLimiter", new UnlimitedExecutionTracker());
+    _evictingCircularBuffer = callbackBuffer;
   }
 
   /**

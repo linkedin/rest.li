@@ -97,7 +97,7 @@ public class ClusterPropertiesSerializerTest
 
     DarkClusterConfig darkCluster1 = new DarkClusterConfig()
         .setMultiplier(1.5f)
-        .setDispatcherOldestRequestAge(10)
+        .setDispatcherBufferedRequestExpiryInSeconds(10)
         .setDispatcherMaxRequestsToBuffer(100)
         .setDispatcherOutboundTargetRate(50);
     DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
@@ -114,13 +114,13 @@ public class ClusterPropertiesSerializerTest
 
     DarkClusterConfig darkCluster1 = new DarkClusterConfig()
         .setMultiplier(1.5f)
-        .setDispatcherOldestRequestAge(10)
+        .setDispatcherBufferedRequestExpiryInSeconds(10)
         .setDispatcherMaxRequestsToBuffer(100)
         .setDispatcherOutboundTargetRate(50);
     DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
     darkClusterConfigMap.put(DARK_CLUSTER1_KEY, darkCluster1);
     DarkClusterConfig darkCluster2 = new DarkClusterConfig()
-        .setDispatcherOldestRequestAge(10)
+        .setDispatcherBufferedRequestExpiryInSeconds(10)
         .setDispatcherMaxRequestsToBuffer(100)
         .setDispatcherOutboundTargetRate(50)
         .setMultiplier(0);

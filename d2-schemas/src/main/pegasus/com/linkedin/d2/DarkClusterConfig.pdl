@@ -23,7 +23,7 @@ record DarkClusterConfig {
   /**
    * Amount of time in seconds that a request is eligible for asynchronous dispatch once it is added to the circular buffer by the CONSTANT_QPS strategy.
    */
-  dispatcherOldestRequestAge: int = 1
+  dispatcherBufferedRequestExpiryInSeconds: int = 1
 
   /**
    * Prioritized order of dark cluster multiplier strategies. This is a list to support adding new strategies and having the strategy users
