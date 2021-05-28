@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.18.14] - 2021-05-27
+- Use class.getClassLoader() instead of thread.getContextClassLoader() to get the class loader.
+
 ## [29.18.13] - 2021-05-27
 - Remove one more "runtime" configuration reference.
 
@@ -4963,7 +4966,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.13...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.14...master
+[29.18.14]: https://github.com/linkedin/rest.li/compare/v29.18.13...v29.18.14
 [29.18.13]: https://github.com/linkedin/rest.li/compare/v29.18.12...v29.18.13
 [29.18.12]: https://github.com/linkedin/rest.li/compare/v29.18.11...v29.18.12
 [29.18.11]: https://github.com/linkedin/rest.li/compare/v29.18.10...v29.18.11
