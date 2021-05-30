@@ -20,21 +20,15 @@
 
 package com.linkedin.util.degrader;
 
-/**
- * @author Swee Lim
- * @version $Rev$
- */
-
-import com.linkedin.common.stats.LongStats;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
-import com.linkedin.util.clock.Time;
+import com.linkedin.common.stats.LongStats;
 import com.linkedin.common.util.ConfigHelper;
 
 /**
@@ -122,21 +116,21 @@ public class DegraderImpl implements Degrader
 {
   private static final Logger LOG = LoggerFactory.getLogger(Degrader.class.getName());
 
-  public static final Clock    DEFAULT_CLOCK = SystemClock.instance();
+  public static final Clock    DEFAULT_CLOCK = Clock.systemUTC();
   public static final Boolean  DEFAULT_LOG_ENABLED = false;
   public static final LatencyToUse DEFAULT_LATENCY_TO_USE = LatencyToUse.AVERAGE;
   public static final Double   DEFAULT_OVERRIDE_DROP_RATE = -1.0;
   public static final Double   DEFAULT_MAX_DROP_RATE = 1.00;
-  public static final long     DEFAULT_MAX_DROP_DURATION = Time.milliseconds(60000);
+  public static final long     DEFAULT_MAX_DROP_DURATION = Duration.ofMillis(60000).toMillis();
   public static final Double   DEFAULT_UP_STEP = 0.20;
   public static final Double   DEFAULT_DOWN_STEP = 0.05;
   public static final Integer  DEFAULT_MIN_CALL_COUNT = 1;
-  public static final long     DEFAULT_HIGH_LATENCY = Time.milliseconds(400);
-  public static final long     DEFAULT_LOW_LATENCY  = Time.milliseconds(200);
+  public static final long     DEFAULT_HIGH_LATENCY = Duration.ofMillis(400).toMillis();
+  public static final long     DEFAULT_LOW_LATENCY  = Duration.ofMillis(200).toMillis();
   public static final Double   DEFAULT_HIGH_ERROR_RATE = 1.1;
   public static final Double   DEFAULT_LOW_ERROR_RATE  = 1.1;
-  public static final long     DEFAULT_HIGH_OUTSTANDING = Time.milliseconds(10000);
-  public static final long     DEFAULT_LOW_OUTSTANDING  = Time.milliseconds(  500);
+  public static final long     DEFAULT_HIGH_OUTSTANDING = Duration.ofMillis(10000).toMillis();
+  public static final long     DEFAULT_LOW_OUTSTANDING  = Duration.ofMillis(500).toMillis();
   public static final Integer  DEFAULT_MIN_OUTSTANDING_COUNT = 5;
   public static final Integer  DEFAULT_OVERRIDE_MIN_CALL_COUNT = -1;
   public static final double   DEFAULT_INITIAL_DROP_RATE = 0.0d;
@@ -195,7 +189,7 @@ public class DegraderImpl implements Degrader
     _lastIntervalCountTotal = 0;
     _lastIntervalDroppedCountTotal = 0;
     _lastIntervalDroppedRate = 0.0;
-    _lastResetTime = _clock.currentTimeMillis();
+    _lastResetTime = _clock.millis();
     _lastNotDroppedTime.set(_lastResetTime);
     _countTotal.set(0);
     _noOverrideDropCountTotal.set(0);
@@ -234,7 +228,7 @@ public class DegraderImpl implements Degrader
   @Override
   public boolean checkDrop(double code)
   {
-    long now = _clock.currentTimeMillis();
+    long now = _clock.millis();
     checkStale(now);
     _countTotal.incrementAndGet();
     double dropRate = _dropRate;
@@ -295,7 +289,7 @@ public class DegraderImpl implements Degrader
 
   public synchronized Stats getStats()
   {
-    checkStale(_clock.currentTimeMillis());
+    checkStale(_clock.millis());
     return new Stats(_dropRate, _computedDropRate,
                      _countTotal.get(),
                      _noOverrideDropCountTotal.get(),

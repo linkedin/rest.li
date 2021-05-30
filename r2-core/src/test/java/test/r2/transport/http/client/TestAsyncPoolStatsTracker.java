@@ -25,7 +25,7 @@ import com.linkedin.r2.transport.http.client.AsyncPoolStats;
 import com.linkedin.r2.transport.http.client.AsyncPoolStatsTracker;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.util.clock.SettableClock;
-import com.linkedin.util.clock.Time;
+import java.time.Duration;
 import java.util.stream.IntStream;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -40,7 +40,7 @@ public class TestAsyncPoolStatsTracker
 {
   private static final PoolStats.LifecycleStats LIFECYCLE_STATS = new AsyncPoolLifecycleStats(0, 0, 0, 0);
 
-  private static final long SAMPLING_DURATION_INCREMENT = Time.minutes(2L);
+  private static final long SAMPLING_DURATION_INCREMENT = Duration.ofMinutes(2).toMillis();
 
   private static final int MAX_SIZE = Integer.MAX_VALUE;
   private static final int MIN_SIZE = 0;

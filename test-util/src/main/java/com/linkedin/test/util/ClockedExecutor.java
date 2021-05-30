@@ -1,5 +1,8 @@
 package com.linkedin.test.util;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -14,9 +17,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import com.linkedin.util.clock.Clock;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  *
  * This class lacks in some implementations. It's in work in progress
  */
-public class ClockedExecutor implements Clock, ScheduledExecutorService
+public class ClockedExecutor extends Clock implements ScheduledExecutorService
 {
   private static final Logger LOG = LoggerFactory.getLogger(ClockedExecutor.class);
 
@@ -35,7 +35,7 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
 
   public Future<Void> runFor(long duration)
   {
-    return runUntil((duration <= 0 ? 0 : duration) + getCurrentTimeMillis());
+    return runUntil((duration <= 0 ? 0 : duration) + _currentTimeMillis);
   }
 
   public Future<Void> runUntil(long untilTime)
@@ -210,21 +210,25 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
   }
 
   @Override
-  public long currentTimeMillis()
-  {
-    return _currentTimeMillis;
-  }
-
-  @Override
   public String toString()
   {
     return "ClockedExecutor [_currentTimeMillis: " + _currentTimeMillis + "_taskList:" + _taskList.stream().map(e -> e.toString())
       .collect(Collectors.joining(","));
   }
 
-  public long getCurrentTimeMillis()
-  {
-    return _currentTimeMillis;
+  @Override
+  public ZoneId getZone() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Clock withZone(ZoneId zoneId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Instant instant() {
+    return Instant.ofEpochMilli(_currentTimeMillis);
   }
 
   private class ClockedTask implements Runnable, ScheduledFuture<Void>

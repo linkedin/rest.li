@@ -22,9 +22,9 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategy
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
-import com.linkedin.util.clock.Clock;
 import com.linkedin.util.RateLimitedLogger;
 import java.net.URISyntaxException;
+import java.time.Clock;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -168,7 +168,7 @@ public class LoadBalancerQuarantine
       return;
     }
 
-    final long startTime = _clock.currentTimeMillis();
+    final long startTime = _clock.millis();
     Callback<None> healthCheckCallback = new Callback<None>()
     {
       @Override
@@ -187,7 +187,7 @@ public class LoadBalancerQuarantine
           if (!_isShutdown)
           {
             // schedule next check
-            long nextCheckDelay = _timeBetweenHC - (_clock.currentTimeMillis() - startTime);
+            long nextCheckDelay = _timeBetweenHC - (_clock.millis() - startTime);
             if (nextCheckDelay > 0)
             {
               _executorService.schedule(() -> healthCheckNTimes(n - 1), nextCheckDelay, TimeUnit.MILLISECONDS);
@@ -215,7 +215,7 @@ public class LoadBalancerQuarantine
    */
   public boolean checkUpdateQuarantineState()
   {
-    _lastChecked = _clock.currentTimeMillis();
+    _lastChecked = _clock.millis();
     int repeatNum = DegraderLoadBalancerStrategyConfig.DEFAULT_QUARANTINE_CHECKNUM;
 
     switch(_quarantineState)

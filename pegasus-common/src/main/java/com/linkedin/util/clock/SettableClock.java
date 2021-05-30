@@ -18,36 +18,45 @@
  * $Id: SettableClock.java 76085 2009-05-20 19:42:12Z dmccutch $ */
 package com.linkedin.util.clock;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+
+
 /**
  * @author Yan Pujante
  * @version $Revision: 76085 $
  */
-public class SettableClock implements Clock
+public class SettableClock extends Clock
 {
   private long _currentTimeMillis;
 
-  /**
-   * Constructor
-   */
   public SettableClock()
   {
     this(System.currentTimeMillis());
   }
 
-  /**
-   * Constructor
-   */
   public SettableClock(long currentTimeMillis)
   {
     setCurrentTimeMillis(currentTimeMillis);
   }
 
-  /**
-   * @return the current time of this clock in milliseconds.
-   */
-  public long currentTimeMillis()
+  @Override
+  public ZoneId getZone()
   {
-    return _currentTimeMillis;
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Clock withZone(ZoneId zoneId)
+  {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Instant instant()
+  {
+    return Instant.ofEpochMilli(_currentTimeMillis);
   }
 
   public void setCurrentTimeMillis(long currentTimeMillis)

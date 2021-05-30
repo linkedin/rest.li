@@ -16,16 +16,14 @@
 package com.linkedin.d2.balancer.clients;
 
 import java.net.URI;
+import java.time.Clock;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import com.linkedin.d2.balancer.properties.PartitionData;
-import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.Degrader;
 import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
@@ -41,7 +39,7 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
 
   public DegraderTrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient)
   {
-    this(uri, partitionDataMap, wrappedClient, SystemClock.instance(), null,
+    this(uri, partitionDataMap, wrappedClient, Clock.systemUTC(), null,
          TrackerClientImpl.DEFAULT_CALL_TRACKER_INTERVAL, DEFAULT_ERROR_STATUS_PATTERN);
   }
 

@@ -21,8 +21,8 @@ import com.linkedin.d2.HttpMethod;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SettableClock;
+
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,7 +48,6 @@ public class QuarantineManagerTest
   private static final String SERVICE_PATH = "dummyServicePath";
   private static final HealthCheckOperations HEALTH_CHECK_OPERATIONS = new HealthCheckOperations();
   private static final long DEFAULT_AVG_CLUSTER_LATENCY = 100;
-  private static final Clock CLOCK = new SettableClock();
 
   private final ScheduledExecutorService _executorService = Mockito.mock(ScheduledExecutorService.class);
   private QuarantineManager _quarantineManager;
@@ -59,7 +58,7 @@ public class QuarantineManagerTest
     D2QuarantineProperties d2QuarantineProperties = new D2QuarantineProperties().setQuarantineMaxPercent(quarantineMaxPercent)
         .setHealthCheckMethod(HttpMethod.OPTIONS);
     _quarantineManager = new QuarantineManager(SERVICE_NAME, SERVICE_PATH, HEALTH_CHECK_OPERATIONS, d2QuarantineProperties,
-        slowStartThreshold, fastRecoveryEnabled, _executorService, CLOCK,
+        slowStartThreshold, fastRecoveryEnabled, _executorService, Clock.systemUTC(),
         RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS,
         RelativeLoadBalancerStrategyFactory.DEFAULT_RELATIVE_LATENCY_LOW_THRESHOLD_FACTOR);
   }

@@ -154,7 +154,7 @@ public class DegraderLoadBalancerStateTest
     CountDownLatch _resume = new CountDownLatch(0);
 
     @Override
-    public long currentTimeMillis()
+    public long millis()
     {
       _calls.incrementAndGet();
       _paused.countDown();
@@ -166,7 +166,7 @@ public class DegraderLoadBalancerStateTest
       {
         fail(e + "", e);
       }
-      return super.currentTimeMillis();
+      return super.millis();
     }
   }
 

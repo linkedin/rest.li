@@ -1799,7 +1799,7 @@ public class SimpleLoadBalancerDelayTest
   {
     Map<URI, Integer> counterMaps = simulator.getClientCounters();
     counterMaps.forEach((k,v) -> { _log.info("{} - Client {}: {}",
-        new Object[] { simulator.getClock().currentTimeMillis(), k, v}); });
+        new Object[] { simulator.getClock().millis(), k, v}); });
     Map<URI, Integer> ringMap = null;
     try
     {
@@ -1810,7 +1810,7 @@ public class SimpleLoadBalancerDelayTest
       _log.error("Service foo unavailable!" + e);
     }
     ringMap.forEach((k,v) -> { _log.info("{} - points {}: {}",
-        new Object[] {simulator.getClock().currentTimeMillis(), k, v}); });
+        new Object[] {simulator.getClock().millis(), k, v}); });
 
     if (!_d2MonitorMap.isEmpty())
     {

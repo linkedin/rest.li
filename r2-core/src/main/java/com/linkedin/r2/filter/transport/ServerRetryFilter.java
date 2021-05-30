@@ -31,8 +31,7 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.http.common.HttpConstants;
 import com.linkedin.r2.util.ServerRetryTracker;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
+import java.time.Clock;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -59,7 +58,7 @@ public class ServerRetryFilter implements RestFilter, StreamFilter
 
   public ServerRetryFilter()
   {
-    this(SystemClock.instance(), DEFAULT_RETRY_LIMIT, DEFAULT_MAX_REQUEST_RETRY_RATIO, DEFAULT_UPDATE_INTERVAL_MS, DEFAULT_AGGREGATED_INTERVAL_NUM);
+    this(Clock.systemUTC(), DEFAULT_RETRY_LIMIT, DEFAULT_MAX_REQUEST_RETRY_RATIO, DEFAULT_UPDATE_INTERVAL_MS, DEFAULT_AGGREGATED_INTERVAL_NUM);
   }
 
   public ServerRetryFilter(Clock clock, int retryLimit, double maxRequestRetryRatio, long updateIntervalMs, int aggregatedIntervalNum)

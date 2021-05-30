@@ -82,7 +82,7 @@ public class DegraderLoadBalancerState
       Partition newValue = new Partition(partitionId,
           new ReentrantLock(),
           new PartitionDegraderLoadBalancerState
-              (-1, _config.getClock().currentTimeMillis(), false,
+              (-1, _config.getClock().millis(), false,
                   new DelegatingRingFactory<>(_config),
                   new HashMap<URI, Integer>(),
                   PartitionDegraderLoadBalancerState.Strategy.

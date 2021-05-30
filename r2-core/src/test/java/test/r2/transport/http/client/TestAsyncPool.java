@@ -35,7 +35,7 @@ import com.linkedin.test.util.AssertionMethods;
 import com.linkedin.test.util.ClockedExecutor;
 import com.linkedin.test.util.retry.SingleRetry;
 import com.linkedin.util.clock.SettableClock;
-import com.linkedin.util.clock.Time;
+import java.time.Duration;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -62,7 +62,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TestAsyncPool
 {
-  private static final long SAMPLING_DURATION_INCREMENT = Time.minutes(2L);
+  private static final long SAMPLING_DURATION_INCREMENT = Duration.ofMinutes(2).toMillis();
 
   private ScheduledExecutorService _executor = Executors.newSingleThreadScheduledExecutor();
 

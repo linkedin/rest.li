@@ -31,7 +31,7 @@ import com.linkedin.r2.transport.http.client.NoopRateLimiter;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.RateLimiter;
 import com.linkedin.r2.util.Cancellable;
-import com.linkedin.util.clock.SystemClock;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -153,7 +153,7 @@ public class TestAsyncSharedPoolImpl
     LifecycleMock lifecycle = new LifecycleMock();
     lifecycle.setCreateConsumer(callback -> runnables.add(() -> callback.onSuccess(new Object())));
     AsyncSharedPoolImpl<Object> pool = new AsyncSharedPoolImpl<>(POOL_NAME, lifecycle, SCHEDULER, LIMITER,
-        NO_POOL_TIMEOUT, true, MAX_WAITERS, SystemClock.instance(), NoopLongTracker.instance());
+        NO_POOL_TIMEOUT, true, MAX_WAITERS, Clock.systemUTC(), NoopLongTracker.instance());
     pool.start();
 
     FutureCallback<Object> callback = new FutureCallback<>();

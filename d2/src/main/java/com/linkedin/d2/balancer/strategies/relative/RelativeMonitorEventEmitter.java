@@ -18,7 +18,8 @@ package com.linkedin.d2.balancer.strategies.relative;
 import com.linkedin.d2.balancer.event.D2MonitorEventEmitter;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
-import com.linkedin.util.clock.Clock;
+
+import java.time.Clock;
 
 
 /**

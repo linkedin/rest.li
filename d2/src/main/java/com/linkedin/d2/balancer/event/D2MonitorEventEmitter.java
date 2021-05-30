@@ -18,9 +18,9 @@ package com.linkedin.d2.balancer.event;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
-import com.linkedin.util.clock.Clock;
 
 import java.net.URI;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +63,7 @@ public class D2MonitorEventEmitter
                                int pointsPerWeight)
   {
     _partitionId = partitionId;
-    _lastEmittingTimeStamp = clock.currentTimeMillis();
+    _lastEmittingTimeStamp = clock.millis();
     _clusterName = clusterName;
     _serviceName = serviceName;
     _clock = clock;
@@ -90,7 +90,7 @@ public class D2MonitorEventEmitter
         .setClusterCurrentErrorCount(clusterStatsProvider._errorCount)
         .setClusterDropLevel(clusterStatsProvider._dropLevel);
 
-    long currentTime = _clock.currentTimeMillis();
+    long currentTime = _clock.millis();
     long intervalMs =  currentTime - _lastEmittingTimeStamp;
 
     if (allowedToEmit(intervalMs))

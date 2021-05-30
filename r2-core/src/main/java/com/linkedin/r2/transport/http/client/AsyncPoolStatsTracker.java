@@ -19,9 +19,8 @@ package com.linkedin.r2.transport.http.client;
 import com.linkedin.common.stats.LongStats;
 import com.linkedin.common.stats.LongTracker;
 import com.linkedin.common.stats.LongTracking;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
-import com.linkedin.util.clock.Time;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.function.Supplier;
 
 
@@ -41,7 +40,7 @@ public class AsyncPoolStatsTracker
    * alternative is to enforce a minimum sample size. We chose a time based solution since many
    * monitoring systems are also time based.
    */
-  private static final long MINIMUM_SAMPLING_PERIOD = Time.minutes(1L);
+  private static final long MINIMUM_SAMPLING_PERIOD = Duration.ofMinutes(1).toMillis();
 
   /**
    * These are total counts over the entire lifetime of the pool
@@ -92,7 +91,7 @@ public class AsyncPoolStatsTracker
         poolSizeSupplier,
         checkedOutSupplier,
         idleSizeSupplier,
-        SystemClock.instance(),
+        Clock.systemUTC(),
         new LongTracking());
   }
 
@@ -178,7 +177,7 @@ public class AsyncPoolStatsTracker
 
   public AsyncPoolStats getStats()
   {
-    long now = _clock.currentTimeMillis();
+    long now = _clock.millis();
     if (now - _lastSamplingTime > MINIMUM_SAMPLING_PERIOD)
     {
       _sampleMaxCheckedOut = _currentMaxCheckedOut;
@@ -221,4 +220,3 @@ public class AsyncPoolStatsTracker
     return stats;
   }
 }
-

@@ -22,6 +22,8 @@ package com.linkedin.util.degrader;
 import com.linkedin.common.stats.LongTracker;
 import com.linkedin.common.stats.LongTracking;
 import com.linkedin.common.stats.SimpleLongTracking;
+
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,8 +33,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.linkedin.common.stats.LongStats;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 
 
 /**
@@ -54,7 +54,7 @@ import com.linkedin.util.clock.SystemClock;
 
 public class CallTrackerImpl implements CallTracker
 {
-  private static final Clock DEFAULT_CLOCK = SystemClock.instance();
+  private static final Clock DEFAULT_CLOCK = Clock.systemUTC();
 
   private final Object _lock = new Object();
 
@@ -92,7 +92,7 @@ public class CallTrackerImpl implements CallTracker
     _clock = clock;
     _interval = interval;
     _lastStartTime = -1;
-    _lastResetTime = _clock.currentTimeMillis();
+    _lastResetTime = _clock.millis();
     _errorTypeCountsTotal = new HashMap<ErrorType, Integer>();
     /* create trackers for each resolution */
     _tracker = new Tracker(percentileTrackingEnabled);
@@ -105,7 +105,7 @@ public class CallTrackerImpl implements CallTracker
     Pending pending;
     synchronized (_lock)
     {
-      currentTime = _clock.currentTimeMillis();
+      currentTime = _clock.millis();
       _tracker.getStatsWithCurrentTime(currentTime);
       _callStartCountTotal++;
       _tracker._callStartCount++;
@@ -128,7 +128,7 @@ public class CallTrackerImpl implements CallTracker
   @Override
   public CallStats getCallStats()
   {
-    return getStatsWithCurrentTime(_clock.currentTimeMillis());
+    return getStatsWithCurrentTime(_clock.millis());
   }
 
   private CallStats getStatsWithCurrentTime(long currentTimeMillis)
@@ -227,7 +227,7 @@ public class CallTrackerImpl implements CallTracker
   public long getTimeSinceLastCallStart()
   {
     long lastStartTime = _lastStartTime;
-    return lastStartTime == -1 ? -1 : _clock.currentTimeMillis() - lastStartTime;
+    return lastStartTime == -1 ? -1 : _clock.millis() - lastStartTime;
   }
 
   @Override
@@ -237,7 +237,7 @@ public class CallTrackerImpl implements CallTracker
     synchronized (_lock)
     {
       _lastStartTime = -1;
-      _lastResetTime = _clock.currentTimeMillis();
+      _lastResetTime = _clock.millis();
       _callCountTotal = 0;
       _callStartCountTotal = 0;
       _errorCountTotal = 0;
@@ -316,7 +316,7 @@ public class CallTrackerImpl implements CallTracker
     @Override
     public void record()
     {
-      _endTime.compareAndSet(0, _clock.currentTimeMillis());
+      _endTime.compareAndSet(0, _clock.millis());
     }
 
     @Override
@@ -344,7 +344,7 @@ public class CallTrackerImpl implements CallTracker
         Pending pending;
         synchronized (_lock)
         {
-          _endTime.compareAndSet(0, _clock.currentTimeMillis());
+          _endTime.compareAndSet(0, _clock.millis());
           long duration = _endTime.get() - _start;
 
           if (_start >= _lastResetTime)
@@ -406,7 +406,7 @@ public class CallTrackerImpl implements CallTracker
     Pending pending;
     synchronized (_lock)
     {
-      addCallData(duration, hasError, _clock.currentTimeMillis(), null);
+      addCallData(duration, hasError, _clock.millis(), null);
       pending = checkForPending();
     }
 

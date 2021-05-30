@@ -17,14 +17,14 @@
 /* $Id$ */
 package com.linkedin.util.degrader;
 
-import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SettableClock;
-import com.linkedin.util.clock.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.util.Date;
 
 import static org.testng.Assert.assertEquals;
@@ -41,41 +41,41 @@ public class TestDegrader
   private static final Logger log = LoggerFactory.getLogger(TestDegrader.class);
 
   private static final String   _defaultName = "degrader";
-  private static final long _defaultInterval = Time.milliseconds(5000);
+  private static final long _defaultInterval = Duration.ofMillis(5000).toMillis();
   private static final DegraderImpl.LatencyToUse _defaultLatencyToUse = DegraderImpl.LatencyToUse.AVERAGE;
   private static final Double _defaultOverrideDropRate = -1.0;
   private static final Double _defaultMaxDropRate = 0.90;
-  private static final long _defaultMaxDropDuration = Time.milliseconds(60000);
+  private static final long _defaultMaxDropDuration = Duration.ofMillis(60000).toMillis();
   private static final Double _defaultUpStep = 0.20;
   private static final Double _defaultDownStep = 0.25;
   private static final Integer _defaultMinCallCount = 1;
-  private static final long _defaultHighLatency = Time.milliseconds(4000);
-  private static final long _defaultLowLatency = Time.milliseconds(500);
+  private static final long _defaultHighLatency = Duration.ofMillis(4000).toMillis();
+  private static final long _defaultLowLatency = Duration.ofMillis(500).toMillis();
   private static final Double _defaultHighErrorRate = 0.50;
   private static final Double _defaultLowErrorRate = 0.10;
-  private static final long _defaultHighOutstanding = Time.milliseconds(10000);
-  private static final long _defaultLowOutstanding = Time.milliseconds(500);
+  private static final long _defaultHighOutstanding = Duration.ofMillis(10000).toMillis();
+  private static final long _defaultLowOutstanding = Duration.ofMillis(500).toMillis();
   private static final Integer _defaultMinOutstandingCount = 2;
 
   private static final DegraderImpl.LatencyToUse _testLatencyToUse = DegraderImpl.LatencyToUse.PCT99;
   private static final Double _testOverrideDropRate = 0.66;
   private static final Double _testMaxDropRate = 0.55;
-  private static final long _testMaxDropDuration = Time.milliseconds(99999);
+  private static final long _testMaxDropDuration = Duration.ofMillis(99999).toMillis();
   private static final Double _testUpStep = 0.005;
   private static final Double _testDownStep = 0.006;
   private static final Integer _testMinCallCount = 13;
-  private static final long _testHighLatency = Time.milliseconds(5555);
-  private static final long _testLowLatency = Time.milliseconds(555);
+  private static final long _testHighLatency = Duration.ofMillis(5555).toMillis();
+  private static final long _testLowLatency = Duration.ofMillis(555).toMillis();
   private static final Double _testHighErrorRate = 0.95;
   private static final Double _testLowErrorRate = 0.05;
-  private static final long _testHighOutstanding = Time.milliseconds(15555);
-  private static final long _testLowOutstanding = Time.milliseconds(1555);
+  private static final long _testHighOutstanding = Duration.ofMillis(15555).toMillis();
+  private static final long _testLowOutstanding = Duration.ofMillis(1555).toMillis();
   private static final Integer _testMinOutstandingCount = 23;
   private static final double _testInitialDropRate = 0.99;
   private static final double _testSlowStartThreshold = 0.2;
   private static final double _testPreemptiveRequestTimeoutRate = 0.75;
 
-  private static final long _defaultMidLatency = Time.milliseconds((_defaultHighLatency + _defaultLowLatency) / 2);
+  private static final long _defaultMidLatency = Duration.ofMillis((_defaultHighLatency + _defaultLowLatency) / 2).toMillis();
 
   private SettableClock _clock;
   private CallTracker _callTracker;
@@ -86,7 +86,7 @@ public class TestDegrader
   private long _lastSetClockToNextInterval;
 
   @BeforeMethod
-  public void setUp() throws Exception
+  public void setUp()
   {
     _clock = new SettableClock();
     _callTracker = new CallTrackerImpl(_defaultInterval, _clock);
@@ -113,7 +113,7 @@ public class TestDegrader
 
     _degrader = new DegraderImpl(_config);
     _control = new DegraderControl(_degrader);
-    _startTime = _clock.currentTimeMillis();
+    _startTime = _clock.millis();
     _lastSetClockToNextInterval = _startTime;
 
     if (log.isDebugEnabled())
@@ -180,7 +180,7 @@ public class TestDegrader
   }
   private void makeCall(int count, long latency, boolean isError)
   {
-    long now = _clock.currentTimeMillis();
+    long now = _clock.millis();
     CallCompletion[] cc = startCall(count);
     _clock.setCurrentTimeMillis(now + latency);
     endCall(cc, isError);
@@ -188,7 +188,7 @@ public class TestDegrader
 
   private void advanceClock(long millis)
   {
-    _clock.setCurrentTimeMillis(_clock.currentTimeMillis() + millis);
+    _clock.setCurrentTimeMillis(_clock.millis() + millis);
   }
 
   private void setClockToInterval(int intervalNo)
@@ -198,7 +198,7 @@ public class TestDegrader
 
   private void setClockToNextInterval()
   {
-    long now = _clock.currentTimeMillis();
+    long now = _clock.millis();
     long interval = _defaultInterval;
     long newTime;
     if (now == _lastSetClockToNextInterval)
@@ -362,7 +362,7 @@ public class TestDegrader
   public void testDropRate()
   {
     DegraderImpl.Stats stats;
-    long lastNotDroppedTime = _clock.currentTimeMillis();
+    long lastNotDroppedTime = _clock.millis();
 
     assertFalse(checkDrop(0.0));
     assertFalse(checkPreemptiveTimeout());
@@ -378,7 +378,7 @@ public class TestDegrader
     assertEquals(expectedDropRate, stats.getCurrentComputedDropRate());
     assertEquals(expectedDropRate, stats.getCurrentDropRate());
 
-    assertEquals(_clock.currentTimeMillis(), stats.getIntervalEndTime());
+    assertEquals(_clock.millis(), stats.getIntervalEndTime());
     assertEquals(_defaultInterval, stats.getInterval());
     assertEquals(0.0, stats.getDroppedRate());
     assertEquals(1, stats.getCallCount());
@@ -390,7 +390,7 @@ public class TestDegrader
     assertTrue(checkDrop(expectedDropRate - 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(2, stats.getCurrentCountTotal());
     assertEquals(2, _control.getCurrentCountTotal());
     assertEquals(1, stats.getCurrentDroppedCountTotal());
@@ -399,7 +399,7 @@ public class TestDegrader
     assertFalse(checkDrop(expectedDropRate + 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(lastNotDroppedTime, stats.getLastNotDroppedTime());
     assertEquals(3, stats.getCurrentCountTotal());
     assertEquals(3, _control.getCurrentCountTotal());
@@ -414,7 +414,7 @@ public class TestDegrader
     assertEquals(expectedDropRate, stats.getCurrentComputedDropRate());
     assertEquals(expectedDropRate, stats.getCurrentDropRate());
 
-    assertEquals(_clock.currentTimeMillis(), stats.getIntervalEndTime());
+    assertEquals(_clock.millis(), stats.getIntervalEndTime());
     assertEquals(_defaultInterval, stats.getInterval());
     assertEquals(0.50, stats.getDroppedRate());
     assertEquals(2, stats.getCallCount());
@@ -426,14 +426,14 @@ public class TestDegrader
     assertTrue(checkDrop(expectedDropRate - 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(4, stats.getCurrentCountTotal());
     assertEquals(2, stats.getCurrentDroppedCountTotal());
 
     assertFalse(checkDrop(expectedDropRate + 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(lastNotDroppedTime, stats.getLastNotDroppedTime());
     assertEquals(5, stats.getCurrentCountTotal());
     assertEquals(2, stats.getCurrentDroppedCountTotal());
@@ -447,7 +447,7 @@ public class TestDegrader
     assertEquals(expectedDropRate, stats.getCurrentComputedDropRate());
     assertEquals(expectedDropRate, stats.getCurrentDropRate());
 
-    assertEquals(_clock.currentTimeMillis(), stats.getIntervalEndTime());
+    assertEquals(_clock.millis(), stats.getIntervalEndTime());
     assertEquals(_defaultInterval, stats.getInterval());
     assertEquals(0.50, stats.getDroppedRate());
     assertEquals(1, stats.getCallCount());
@@ -456,7 +456,7 @@ public class TestDegrader
     assertEquals(0, stats.getOutstandingLatency());
     assertEquals(0, stats.getOutstandingCount());
 
-    assertEquals(new Date(_clock.currentTimeMillis()), _control.getIntervalEndTime());
+    assertEquals(new Date(_clock.millis()), _control.getIntervalEndTime());
     assertEquals(_defaultInterval, _control.getInterval());
     assertEquals(0.50, _control.getDroppedRate());
     assertEquals(1, stats.getCallCount());
@@ -468,14 +468,14 @@ public class TestDegrader
     assertTrue(checkDrop(expectedDropRate - 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(6, stats.getCurrentCountTotal());
     assertEquals(3, stats.getCurrentDroppedCountTotal());
 
     assertFalse(checkDrop(expectedDropRate + 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(lastNotDroppedTime, stats.getLastNotDroppedTime());
     assertEquals(7, stats.getCurrentCountTotal());
     assertEquals(3, stats.getCurrentDroppedCountTotal());
@@ -491,14 +491,14 @@ public class TestDegrader
     assertTrue(checkDrop(expectedDropRate - 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(8, stats.getCurrentCountTotal());
     assertEquals(4, stats.getCurrentDroppedCountTotal());
 
     assertFalse(checkDrop(expectedDropRate + 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(lastNotDroppedTime, stats.getLastNotDroppedTime());
     assertEquals(9, stats.getCurrentCountTotal());
     assertEquals(4, stats.getCurrentDroppedCountTotal());
@@ -521,7 +521,7 @@ public class TestDegrader
     assertFalse(checkDrop(expectedDropRate + 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(lastNotDroppedTime, stats.getLastNotDroppedTime());
     assertEquals(11, stats.getCurrentCountTotal());
     assertEquals(5, stats.getCurrentDroppedCountTotal());
@@ -547,12 +547,12 @@ public class TestDegrader
     assertFalse(checkDrop(expectedDropRate + 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(lastNotDroppedTime, stats.getLastNotDroppedTime());
     assertEquals(13, stats.getCurrentCountTotal());
     assertEquals(6, stats.getCurrentDroppedCountTotal());
 
-    long now = _clock.currentTimeMillis();
+    long now = _clock.millis();
     setClockToNextInterval();
     assertTrue(checkDrop(expectedDropRate - 0.05));
     assertTrue(checkPreemptiveTimeout());
@@ -567,7 +567,7 @@ public class TestDegrader
     assertFalse(checkDrop(expectedDropRate - 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(lastNotDroppedTime, stats.getLastNotDroppedTime());
     assertEquals(15, stats.getCurrentCountTotal());
     assertEquals(7, stats.getCurrentDroppedCountTotal());
@@ -584,7 +584,7 @@ public class TestDegrader
     assertFalse(checkDrop(expectedDropRate - 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(lastNotDroppedTime, stats.getLastNotDroppedTime());
     assertEquals(17, stats.getCurrentCountTotal());
     assertEquals(8, stats.getCurrentDroppedCountTotal());
@@ -607,7 +607,7 @@ public class TestDegrader
     assertFalse(checkDrop(expectedDropRate + 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(lastNotDroppedTime, stats.getLastNotDroppedTime());
     assertEquals(19, stats.getCurrentCountTotal());
     assertEquals(9, stats.getCurrentDroppedCountTotal());
@@ -630,7 +630,7 @@ public class TestDegrader
     assertFalse(checkDrop(expectedDropRate + 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(lastNotDroppedTime, stats.getLastNotDroppedTime());
     assertEquals(21, stats.getCurrentCountTotal());
     assertEquals(10, stats.getCurrentDroppedCountTotal());
@@ -653,7 +653,7 @@ public class TestDegrader
     assertFalse(checkDrop(expectedDropRate + 0.05));
     assertTrue(checkPreemptiveTimeout());
     stats = _degrader.getStats();
-    lastNotDroppedTime = _clock.currentTimeMillis();
+    lastNotDroppedTime = _clock.millis();
     assertEquals(lastNotDroppedTime, stats.getLastNotDroppedTime());
     assertEquals(23, stats.getCurrentCountTotal());
     assertEquals(11, stats.getCurrentDroppedCountTotal());
@@ -674,21 +674,21 @@ public class TestDegrader
     assertFalse(checkPreemptiveTimeout());
 
     setClockToNextInterval();
-    long outstandingStartTime = _clock.currentTimeMillis();
+    long outstandingStartTime = _clock.millis();
     CallCompletion[] cc = startCall(_config.getMinOutstandingCount());
 
     setClockToNextInterval();
     stats = _degrader.getStats();
-    assertEquals(_clock.currentTimeMillis(), stats.getIntervalEndTime());
+    assertEquals(_clock.millis(), stats.getIntervalEndTime());
     assertEquals(_defaultInterval, stats.getInterval());
     assertEquals(0.0, stats.getDroppedRate());
     assertEquals(0, stats.getCallCount());
     assertEquals(0, stats.getLatency());
     assertEquals(0.0, stats.getErrorRate());
-    assertEquals(_clock.currentTimeMillis() - outstandingStartTime, stats.getOutstandingLatency());
+    assertEquals(_clock.millis() - outstandingStartTime, stats.getOutstandingLatency());
     assertEquals(_config.getMinOutstandingCount(), stats.getOutstandingCount());
 
-    assertEquals(new Date(_clock.currentTimeMillis()), _control.getIntervalEndTime());
+    assertEquals(new Date(_clock.millis()), _control.getIntervalEndTime());
     assertEquals(_defaultInterval, _control.getInterval());
     assertEquals(0.0, _control.getDroppedRate());
     assertEquals(0, _control.getCallCount());
@@ -707,7 +707,7 @@ public class TestDegrader
     assertEquals(expectedDropRate, stats.getCurrentComputedDropRate());
     assertEquals(expectedDropRate, stats.getCurrentDropRate());
 
-    assertEquals(_clock.currentTimeMillis(), stats.getIntervalEndTime());
+    assertEquals(_clock.millis(), stats.getIntervalEndTime());
     assertEquals(_defaultInterval, stats.getInterval());
     assertEquals(0.0, stats.getDroppedRate());
     assertEquals(1, stats.getCallCount());
@@ -716,7 +716,7 @@ public class TestDegrader
     assertEquals(_defaultInterval * 2, stats.getOutstandingLatency());
     assertEquals(_config.getMinOutstandingCount() - 1, stats.getOutstandingCount());
 
-    assertEquals(new Date(_clock.currentTimeMillis()), _control.getIntervalEndTime());
+    assertEquals(new Date(_clock.millis()), _control.getIntervalEndTime());
     assertEquals(_defaultInterval, _control.getInterval());
     assertEquals(0.0, _control.getDroppedRate());
     assertEquals(1, _control.getCallCount());

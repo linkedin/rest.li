@@ -61,10 +61,10 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionNotTrustedException;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.test.util.ClockedExecutor;
-import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -148,7 +148,7 @@ public class SimpleLoadBalancerStateTest
     if (enableRelativeLoadBalancer)
     {
       _loadBalancerStrategyFactories.put(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME,
-          new RelativeLoadBalancerStrategyFactory(new ClockedExecutor(), null, Collections.emptyList(), new NoopEventEmitter(), SystemClock.instance()));
+          new RelativeLoadBalancerStrategyFactory(new ClockedExecutor(), null, Collections.emptyList(), new NoopEventEmitter(), Clock.systemUTC()));
     }
     _loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
     _loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3());
@@ -879,7 +879,7 @@ public class SimpleLoadBalancerStateTest
     Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
     clients.add(new DegraderTrackerClientImpl(uri, partitionDataMap, new DegraderLoadBalancerTest.TestLoadBalancerClient(uri),
-                                              SystemClock.instance(), null));
+                                              Clock.systemUTC(), null));
 
     for (int i = 0; i < 20; i++)
     {

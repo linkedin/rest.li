@@ -24,8 +24,8 @@ import com.linkedin.common.stats.LongTracker;
 import com.linkedin.common.stats.LongTracking;
 import com.linkedin.r2.util.SingleTimeout;
 import com.linkedin.util.ArgumentUtil;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
+
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -160,7 +160,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       RateLimiter rateLimiter)
   {
     this(name, lifecycle, maxSize, idleTimeout, timeoutExecutor,
-        maxWaiters, strategy, minSize, rateLimiter, SystemClock.instance(), new LongTracking());
+        maxWaiters, strategy, minSize, rateLimiter, Clock.systemUTC(), new LongTracking());
   }
 
   @Deprecated
@@ -755,7 +755,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private Collection<T> getExpiredObjects()
   {
     List<T> expiredObjects = new ArrayList<T>();
-    long now = _clock.currentTimeMillis();
+    long now = _clock.millis();
 
     synchronized (_lock)
     {
@@ -830,7 +830,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     public TimedObject(T obj)
     {
       _obj = obj;
-      _time = _clock.currentTimeMillis();
+      _time = _clock.millis();
     }
 
     public T get()
@@ -893,13 +893,13 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     public TimeTrackingCallback(Callback<T> callback)
     {
       _callback = callback;
-      _startTime = _clock.currentTimeMillis();
+      _startTime = _clock.millis();
     }
 
     @Override
     public void onError(Throwable e)
     {
-      long waitTime = _clock.currentTimeMillis() - _startTime;
+      long waitTime = _clock.millis() - _startTime;
       synchronized (_lock)
       {
         _statsTracker.trackWaitTime(waitTime);
@@ -911,7 +911,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     @Override
     public void onSuccess(T result)
     {
-      long waitTime = _clock.currentTimeMillis() - _startTime;
+      long waitTime = _clock.millis() - _startTime;
       synchronized (_lock)
       {
         _statsTracker.trackWaitTime(waitTime);

@@ -44,9 +44,8 @@ import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.FullEntityObserver;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.common.HttpConstants;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
+import java.time.Clock;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
@@ -95,7 +94,7 @@ public class RetryClient extends D2ClientDelegator
   @Deprecated
   public RetryClient(D2Client d2Client, LoadBalancer balancer, int limit)
   {
-    this(d2Client, balancer, limit, DEFAULT_UPDATE_INTERVAL_MS, DEFAULT_AGGREGATED_INTERVAL_NUM, SystemClock.instance(),
+    this(d2Client, balancer, limit, DEFAULT_UPDATE_INTERVAL_MS, DEFAULT_AGGREGATED_INTERVAL_NUM, Clock.systemUTC(),
         DEFAULT_REST_RETRY_ENABLED, DEFAULT_STREAM_RETRY_ENABLED);
   }
 
@@ -438,7 +437,7 @@ public class RetryClient extends D2ClientDelegator
       _clock = clock;
       _serviceName = serviceName;
 
-      _lastRollOverTime = clock.currentTimeMillis();
+      _lastRollOverTime = clock.millis();
       _currentAggregatedRetryRatio = 0;
 
       _aggregatedRetryCounter = new RetryCounter();
@@ -515,7 +514,7 @@ public class RetryClient extends D2ClientDelegator
 
     private void updateRetryDecision()
     {
-      long currentTime = _clock.currentTimeMillis();
+      long currentTime = _clock.millis();
 
       synchronized (_updateLock)
       {

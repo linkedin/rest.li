@@ -16,6 +16,7 @@
 
 package com.linkedin.r2.transport.http.client.ratelimiter;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -35,10 +36,8 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.AsyncRateLimiter;
 import com.linkedin.test.util.ClockedExecutor;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SettableClock;
-import com.linkedin.util.clock.SystemClock;
 
+import com.linkedin.util.clock.SettableClock;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -66,7 +65,7 @@ public abstract class BaseTestSmoothRateLimiter
 
   protected ScheduledExecutorService _scheduledExecutorService;
   protected ExecutorService _executor;
-  protected final Clock _clock = SystemClock.instance();
+  protected final Clock _clock = Clock.systemUTC();
   protected Queue<Callback<None>> _queue;
 
   @BeforeClass
@@ -105,8 +104,7 @@ public abstract class BaseTestSmoothRateLimiter
   @Test(timeOut = TEST_TIMEOUT)
   public void testMultiSubmitWithinPermits() throws Exception
   {
-    SettableClock clock = new SettableClock();
-    AsyncRateLimiter rateLimiter = getRateLimiter(_scheduledExecutorService, _executor, clock);
+    AsyncRateLimiter rateLimiter = getRateLimiter(_scheduledExecutorService, _executor, Clock.systemUTC());
 
     rateLimiter.setRate(128d, ONE_SECOND_PERIOD, UNLIMITED_BURST);
 

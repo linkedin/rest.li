@@ -2,6 +2,8 @@ package com.linkedin.darkcluster.impl;
 
 import com.linkedin.darkcluster.api.DispatcherResponseValidationMetricsHolder;
 import com.linkedin.darkcluster.api.ResponseValidationMetricsHeader;
+
+import java.time.Clock;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -11,7 +13,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.linkedin.util.clock.Clock;
 
 
 /**
@@ -48,7 +49,7 @@ public class DispatcherResponseValidationMetricsHolderImpl implements Dispatcher
           .stream()
           .collect(Collectors.toMap(Function.identity(), name -> perClusterMetrics.get(name).sum()));
       LOG.debug("Aggregated metrics for dark cluster: {}, metrics: {}", darkClusterName, metricsMap);
-      return new ResponseValidationMetricsHeader.ResponseValidationMetrics(metricsMap, _clock.currentTimeMillis());
+      return new ResponseValidationMetricsHeader.ResponseValidationMetrics(metricsMap, _clock.millis());
     }
     LOG.debug("No metrics found for darkCluster: {}", darkClusterName);
     return null;
@@ -87,4 +88,3 @@ public class DispatcherResponseValidationMetricsHolderImpl implements Dispatcher
     });
   }
 }
-

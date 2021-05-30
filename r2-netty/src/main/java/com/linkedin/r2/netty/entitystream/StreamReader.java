@@ -22,7 +22,6 @@ import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.netty.common.StreamingTimeout;
-import com.linkedin.util.clock.SystemClock;
 import io.netty.channel.ChannelHandlerContext;
 
 /**

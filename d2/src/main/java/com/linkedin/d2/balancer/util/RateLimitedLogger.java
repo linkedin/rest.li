@@ -1,7 +1,8 @@
 package com.linkedin.d2.balancer.util;
 
-import com.linkedin.util.clock.Clock;
 import org.slf4j.Logger;
+
+import java.time.Clock;
 
 /**
  * @see com.linkedin.util.RateLimitedLogger

@@ -16,7 +16,7 @@
 
 package com.linkedin.r2.util;
 
-import com.linkedin.util.clock.Clock;
+import java.time.Clock;
 import java.util.LinkedList;
 import org.checkerframework.checker.lock.qual.GuardedBy;
 import org.slf4j.Logger;
@@ -58,7 +58,7 @@ public class ServerRetryTracker
     _updateIntervalMs = updateIntervalMs;
     _clock = clock;
 
-    _lastRollOverTime = clock.currentTimeMillis();
+    _lastRollOverTime = clock.millis();
     _isBelowRetryRatio = true;
 
     _aggregatedRetryAttemptsCounter = new int[_retryLimit + 1];
@@ -114,7 +114,7 @@ public class ServerRetryTracker
 
   void updateRetryDecision()
   {
-    long currentTime = _clock.currentTimeMillis();
+    long currentTime = _clock.millis();
 
     synchronized (_updateLock)
     {

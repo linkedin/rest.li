@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.clients;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
@@ -36,7 +35,6 @@ import com.linkedin.r2.message.stream.entitystream.Observer;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
-import com.linkedin.util.clock.Clock;
 import com.linkedin.util.degrader.CallCompletion;
 import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.CallTrackerImpl;
@@ -45,6 +43,7 @@ import com.linkedin.util.degrader.ErrorType;
 import java.net.ConnectException;
 import java.net.URI;
 import java.nio.channels.ClosedChannelException;
+import java.time.Clock;
 import java.util.Collections;
 import java.util.Map;
 
@@ -81,7 +80,7 @@ public class TrackerClientImpl implements TrackerClient
   private volatile CallTracker.CallStats _latestCallStats;
 
   public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
-      Clock clock, long interval, Predicate<Integer> isErrorStatus)
+                           Clock clock, long interval, Predicate<Integer> isErrorStatus)
   {
     this(uri, partitionDataMap, transportClient, clock, interval, isErrorStatus, true, false);
   }

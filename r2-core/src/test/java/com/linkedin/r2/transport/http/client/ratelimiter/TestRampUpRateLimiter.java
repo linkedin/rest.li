@@ -22,7 +22,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.AsyncRateLimiter;
 import com.linkedin.r2.transport.http.client.SmoothRateLimiter;
 import com.linkedin.test.util.ClockedExecutor;
-import com.linkedin.util.clock.Clock;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -109,9 +109,9 @@ public class TestRampUpRateLimiter extends TestSmoothRateLimiter
           public void onSuccess(None result)
           {
             // counting how many tasks per second we are receiving.
-            if (clockedExecutor.getCurrentTimeMillis() - time.get() >= ONE_SECOND_PERIOD)
+            if (clockedExecutor.millis() - time.get() >= ONE_SECOND_PERIOD)
             {
-              time.set(((int) (clockedExecutor.getCurrentTimeMillis() / 1000) * 1000));
+              time.set(((int) (clockedExecutor.millis() / 1000) * 1000));
               completionsPerSecond.add(count.get());
               count.set(1);
             }

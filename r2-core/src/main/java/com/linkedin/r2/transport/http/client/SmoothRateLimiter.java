@@ -21,7 +21,8 @@ import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.ratelimiter.Rate;
 import com.linkedin.util.ArgumentUtil;
 import com.linkedin.util.RateLimitedLogger;
-import com.linkedin.util.clock.Clock;
+
+import java.time.Clock;
 import java.util.Queue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
@@ -214,7 +215,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     EventLoop(Clock clock)
     {
       _clock = clock;
-      _permitTime = _clock.currentTimeMillis();
+      _permitTime = _clock.millis();
       Rate rate = _rate;
       _permitAvailableCount = rate.getEvents();
       _permitsInTimeFrame = rate.getEvents();
@@ -235,7 +236,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     public void loop()
     {
       // Checks if permits should be refreshed
-      long now = _clock.currentTimeMillis();
+      long now = _clock.millis();
       Rate rate = _rate;
       if (now - _permitTime >= rate.getPeriod())
       {
@@ -293,9 +294,9 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         try
         {
           // avoids executing too many duplicate tasks
-          long nextRunRelativeTime = Math.max(0, _permitTime + rate.getPeriod() - _clock.currentTimeMillis());
-          long nextRunAbsolute = _clock.currentTimeMillis() + nextRunRelativeTime;
-          if (_nextScheduled > nextRunAbsolute || _nextScheduled <= _clock.currentTimeMillis())
+          long nextRunRelativeTime = Math.max(0, _permitTime + rate.getPeriod() - _clock.millis());
+          long nextRunAbsolute = _clock.millis() + nextRunRelativeTime;
+          if (_nextScheduled > nextRunAbsolute || _nextScheduled <= _clock.millis())
           {
             _nextScheduled = nextRunAbsolute;
 

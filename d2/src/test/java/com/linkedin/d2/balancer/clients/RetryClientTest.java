@@ -43,9 +43,9 @@ import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.test.util.ClockedExecutor;
 import com.linkedin.test.util.retry.SingleRetry;
 import com.linkedin.util.clock.SettableClock;
-import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -99,7 +99,7 @@ public class RetryClientTest
         D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
-        SystemClock.instance(),
+        Clock.systemUTC(),
         true,
         false);
     URI uri = URI.create("d2://retryService?arg1arg2");
@@ -124,7 +124,7 @@ public class RetryClientTest
         D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
-        SystemClock.instance(),
+        Clock.systemUTC(),
         true,
         true);
     URI uri = URI.create("d2://retryService?arg1arg2");
@@ -149,7 +149,7 @@ public class RetryClientTest
         D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
-        SystemClock.instance(),
+        Clock.systemUTC(),
         true,
         false);
     URI uri = URI.create("d2://retryService?arg1arg2");
@@ -175,7 +175,7 @@ public class RetryClientTest
         D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
-        SystemClock.instance(),
+        Clock.systemUTC(),
         true,
         false);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
@@ -204,7 +204,7 @@ public class RetryClientTest
         D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
-        SystemClock.instance(),
+        Clock.systemUTC(),
         true,
         true);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
@@ -233,7 +233,7 @@ public class RetryClientTest
         1,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
-        SystemClock.instance(),
+        Clock.systemUTC(),
         true,
         false);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
@@ -259,7 +259,7 @@ public class RetryClientTest
         1,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
-        SystemClock.instance(),
+        Clock.systemUTC(),
         true,
         true);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
@@ -285,7 +285,7 @@ public class RetryClientTest
         D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
-        SystemClock.instance(),
+        Clock.systemUTC(),
         true,
         false);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
@@ -311,7 +311,7 @@ public class RetryClientTest
         D2ClientConfig.DEFAULT_RETRY_LIMIT,
         RetryClient.DEFAULT_UPDATE_INTERVAL_MS,
         RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM,
-        SystemClock.instance(),
+        Clock.systemUTC(),
         true,
         true);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
