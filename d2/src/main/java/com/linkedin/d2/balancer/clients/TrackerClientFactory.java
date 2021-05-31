@@ -22,6 +22,7 @@ import com.linkedin.d2.balancer.config.RelativeStrategyPropertiesConverter;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import java.net.URI;
+import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -36,8 +37,6 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.degrader.DegraderImpl;
 import com.linkedin.util.RateLimitedLogger;
 
@@ -63,7 +62,7 @@ public class TrackerClientFactory
                                            String loadBalancerStrategyName,
                                            TransportClient transportClient)
   {
-    return createTrackerClient(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, SystemClock.instance());
+    return createTrackerClient(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, Clock.systemUTC());
   }
 
   /**

@@ -1,6 +1,6 @@
 package com.linkedin.util;
 
-import com.linkedin.util.clock.Clock;
+import java.time.Clock;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
@@ -553,7 +553,7 @@ public class RateLimitedLogger implements Logger
 
   private boolean logAllowed()
   {
-    final long now = _clock.currentTimeMillis();
+    final long now = _clock.millis();
     final long lastLog = _lastLog.get();
     return (lastLog == INIT_TIME || now - lastLog >= _logRate) && _lastLog.compareAndSet(lastLog, now);
   }

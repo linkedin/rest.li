@@ -24,9 +24,9 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
-import com.linkedin.util.clock.Clock;
 import com.linkedin.util.RateLimitedLogger;
 import java.net.URISyntaxException;
+import java.time.Clock;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
@@ -100,7 +100,7 @@ public class QuarantineManager {
   {
     long quarantineLatency = Math.max((long) (clusterAvgLatency * _relativeLatencyLowThresholdFactor),
         MIN_QUANRANTINE_LATENCY_MS);
-    long currentTime = _clock.currentTimeMillis();
+    long currentTime = _clock.millis();
     // Step 0: Pre-check if quarantine method works for clients, if it works, we will mark _quarantineEnabled as true
     preCheckQuarantine(newPartitionState, quarantineLatency);
     // Step 1: check if quarantine state still applies. If not, remove it from the quarantine map
@@ -150,7 +150,7 @@ public class QuarantineManager {
             HealthCheck healthCheckClient = partitionState.getHealthCheckMap().get(client);
             if (healthCheckClient == null)
             {
-              healthCheckClient =  new HealthCheckClientBuilder()
+              healthCheckClient = new HealthCheckClientBuilder()
                   .setHealthCheckOperations(_healthCheckOperations)
                   .setHealthCheckPath(_quarantineProperties.getHealthCheckPath())
                   .setServicePath(_servicePath)

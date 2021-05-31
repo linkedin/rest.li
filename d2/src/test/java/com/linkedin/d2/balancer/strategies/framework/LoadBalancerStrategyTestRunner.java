@@ -207,7 +207,7 @@ public class LoadBalancerStrategyTestRunner
    */
   private void runInterval(List<Integer> partitionIds)
   {
-    int currentIntervalIndex = (int) (_clockedExecutor.currentTimeMillis() / LoadBalancerStrategyTestRunnerBuilder.INTERVAL_IN_MILLIS);
+    int currentIntervalIndex = (int) (_clockedExecutor.millis() / LoadBalancerStrategyTestRunnerBuilder.INTERVAL_IN_MILLIS);
     int requestCount = _requestsManager.getRequestCount(currentIntervalIndex);
     int partitionIndex = 0;
 

@@ -18,6 +18,7 @@
  * $Id: TestCallTracker.java 142668 2010-10-07 21:03:16Z dmessink $ */
 package com.linkedin.util.degrader;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import com.linkedin.util.clock.SettableClock;
-import com.linkedin.util.clock.Time;
 import org.testng.annotations.Test;
 
 /**
@@ -38,10 +38,10 @@ import org.testng.annotations.Test;
 
 public class TestCallTracker
 {
-  private static final long INTERVAL = Time.minutes(1);
+  private static final long INTERVAL = Duration.ofMinutes(1).toMillis();
 
-  private static final long FIVE_MS = Time.milliseconds(5);
-  private static final long TEN_MS = Time.milliseconds(10);
+  private static final long FIVE_MS = Duration.ofMillis(5).toMillis();
+  private static final long TEN_MS = Duration.ofMillis(10).toMillis();
 
   private CallTrackerImpl _callTracker;
   private long _interval = INTERVAL;
@@ -127,7 +127,7 @@ public class TestCallTracker
   @org.testng.annotations.Test public void testCallTracker()
   {
     long jitter = 500;
-    long now = _clock.currentTimeMillis();
+    long now = _clock.millis();
     long startTime = now;
     long startCallCountTotal = _callTracker.getCurrentCallCountTotal();
     long startErrorCountTotal = _callTracker.getCurrentErrorCountTotal();
@@ -155,7 +155,7 @@ public class TestCallTracker
                         "Current error count total is incorrect");
 
     _clock.setCurrentTimeMillis(INTERVAL + startTime + jitter);
-    now = _clock.currentTimeMillis();
+    now = _clock.millis();
 
     Assert.assertEquals(_callTracker.getCallStats().getIntervalStartTime(), startTime,
                         "Interval interval start time is incorrect");
@@ -223,7 +223,7 @@ public class TestCallTracker
 
     jitter = 1000;
     _clock.setCurrentTimeMillis(INTERVAL * 2 + startTime + jitter);
-    now = _clock.currentTimeMillis();
+    now = _clock.millis();
 
     Assert.assertEquals(_callTracker.getCallStats().getIntervalStartTime(), startTime + INTERVAL,
                         "Interval interval start time is incorrect");
@@ -274,7 +274,7 @@ public class TestCallTracker
     Assert.assertEquals(stats1.stale(now), true, "Interval stale is incorrect");
 
     _clock.setCurrentTimeMillis(INTERVAL * 10 + startTime + jitter);
-    now = _clock.currentTimeMillis();
+    now = _clock.millis();
     _callTracker.getCallStats();
 
     // check listener
@@ -326,7 +326,7 @@ public class TestCallTracker
   public void testRecord()
   {
     long jitter = 500;
-    long now = _clock.currentTimeMillis();
+    long now = _clock.millis();
     long startTime = now;
     Listener listener = new Listener();
     _callTracker.addStatsRolloverEventListener(listener);
@@ -366,7 +366,7 @@ public class TestCallTracker
   @org.testng.annotations.Test public void testOutstanding()
   {
     long jitter = 500;
-    long now = _clock.currentTimeMillis();
+    long now = _clock.millis();
     long startTime = now;
 
     Assert.assertEquals(_callTracker.getCallStats().getIntervalEndTime(), now,
@@ -521,18 +521,18 @@ public class TestCallTracker
   @org.testng.annotations.Test public void testListenerNotifications()
   {
     long jitter = 500;
-    long now = _clock.currentTimeMillis();
+    long now = _clock.millis();
     long startTime = now;
 
     Listener listener = new Listener();
     _callTracker.addStatsRolloverEventListener(listener);
 
-    _clock.addDuration(Time.milliseconds(88));
+    _clock.addDuration(Duration.ofMillis(88).toMillis());
 
     // Check event notification on reset
 
     _callTracker.reset();
-    startTime = _clock.currentTimeMillis();
+    startTime = _clock.millis();
 
     Assert.assertEquals(listener.getRecord(0).getCallStats().getIntervalStartTime(),
                         startTime - INTERVAL, "Interval 1st notification startTime is incorrect");
@@ -574,9 +574,9 @@ public class TestCallTracker
 
     // Check event notification on reset
 
-    _clock.addDuration(Time.milliseconds(88));
+    _clock.addDuration(Duration.ofMillis(88).toMillis());
     _callTracker.reset();
-    startTime = _clock.currentTimeMillis();
+    startTime = _clock.millis();
 
     Assert.assertEquals(listener.getRecord(3).getCallStats().getIntervalStartTime(),
                         startTime - INTERVAL, "Interval 4th notification startTime is incorrect");
@@ -635,9 +635,9 @@ public class TestCallTracker
     _callTracker = new CallTrackerImpl(interval, _clock);
 
     List<CallCompletion> dones = startCall(_callTracker, 50 * 1000);
-    _clock.addDuration(Time.minutes(60));
+    _clock.addDuration(Duration.ofMinutes(60).toMillis());
     endCall(dones, 25 * 1000);
-    _clock.addDuration(Time.milliseconds(2));
+    _clock.addDuration(Duration.ofMillis(2).toMillis());
     endCall(dones, 25 * 1000);
 
     _clock.setCurrentTimeMillis(_callTracker.getLastResetTime() + interval);
@@ -647,7 +647,7 @@ public class TestCallTracker
 
   @org.testng.annotations.Test public void testCallStorage()
   {
-    long startTime = _clock.currentTimeMillis();
+    long startTime = _clock.millis();
     long startCallCountTotal = _callTracker.getCurrentCallCountTotal();
     long startErrorCountTotal = _callTracker.getCurrentErrorCountTotal();
 
@@ -724,7 +724,7 @@ public class TestCallTracker
 
   @org.testng.annotations.Test public void testErrorTracking()
   {
-    long startTime = _clock.currentTimeMillis();
+    long startTime = _clock.millis();
     long startCallCountTotal = _callTracker.getCurrentCallCountTotal();
     long startErrorCountTotal = _callTracker.getCurrentErrorCountTotal();
 
@@ -863,10 +863,10 @@ public class TestCallTracker
 
   @org.testng.annotations.Test public void testReset()
   {
-    Assert.assertEquals(_callTracker.getLastResetTime(), _clock.currentTimeMillis(),
+    Assert.assertEquals(_callTracker.getLastResetTime(), _clock.millis(),
                         "Initial lastResetTime is incorrect");
 
-    long startTime = _clock.currentTimeMillis();
+    long startTime = _clock.millis();
     long startCallCountTotal = _callTracker.getCurrentCallCountTotal();
     long startErrorCountTotal = _callTracker.getCurrentErrorCountTotal();
     long jitter = 500;
@@ -885,7 +885,7 @@ public class TestCallTracker
     Assert.assertEquals(_callTracker.getCurrentConcurrency(), 0, "Concurrency is incorrect");
 
     _clock.setCurrentTimeMillis(INTERVAL + startTime + jitter);
-    long now = _clock.currentTimeMillis();
+    long now = _clock.millis();
 
     Assert.assertEquals(_callTracker.getCallStats().getIntervalStartTime(), startTime,
                         "Interval interval start time is incorrect");
@@ -903,7 +903,7 @@ public class TestCallTracker
 
     _clock.addDuration(FIVE_MS);
     _callTracker.reset();
-    long lastResetTime = now = _clock.currentTimeMillis();
+    long lastResetTime = now = _clock.millis();
     _clock.addDuration(FIVE_MS);
 
     Assert.assertEquals(_callTracker.getLastResetTime(), lastResetTime,
@@ -968,13 +968,13 @@ public class TestCallTracker
     Assert.assertEquals(_callTracker.getCallStats().getConcurrentMax(), 0,
                         "Interval max concurrency is incorrect");
 
-    long lastCallTime = _clock.currentTimeMillis();
+    long lastCallTime = _clock.millis();
     dones = startCall(_callTracker, 5);
     _clock.addDuration(FIVE_MS);
     endCall(dones, 5);
 
     _clock.addDuration(FIVE_MS);
-    now = _clock.currentTimeMillis();
+    now = _clock.millis();
 
     Assert.assertEquals(_callTracker.getLastResetTime(), lastResetTime,
                         "lastResetTime is incorrect after reset");
@@ -989,7 +989,7 @@ public class TestCallTracker
     Assert.assertEquals(_callTracker.getCurrentConcurrency(), 0, "Concurrency is incorrect");
 
     _clock.setCurrentTimeMillis(INTERVAL + lastResetTime + jitter);
-    now = _clock.currentTimeMillis();
+    now = _clock.millis();
     long expectedEndTime = now - (now - lastResetTime) % INTERVAL;
 
     Assert.assertEquals(_callTracker.getCallStats().getIntervalStartTime(),
@@ -1038,10 +1038,10 @@ public class TestCallTracker
 
   @org.testng.annotations.Test public void testResetOnTheFly()
   {
-    Assert.assertEquals(_callTracker.getLastResetTime(), _clock.currentTimeMillis(),
+    Assert.assertEquals(_callTracker.getLastResetTime(), _clock.millis(),
                         "Initial lastResetTime is incorrect");
 
-    long startTime = _clock.currentTimeMillis();
+    long startTime = _clock.millis();
     long startCallCountTotal = _callTracker.getCurrentCallCountTotal();
     long startErrorCountTotal = _callTracker.getCurrentErrorCountTotal();
     long jitter = 500;
@@ -1052,7 +1052,7 @@ public class TestCallTracker
     dones.remove(0).endCall();
     dones.remove(0).endCallWithError();
 
-    long lastResetTime = _clock.currentTimeMillis();
+    long lastResetTime = _clock.millis();
     _callTracker.reset();
 
     Assert.assertEquals(_callTracker.getLastResetTime(), lastResetTime,
@@ -1165,13 +1165,13 @@ public class TestCallTracker
     Assert.assertEquals(_callTracker.getCallStats().getCallTimeStats().get99Pct(), 0,
                         "Interval 99 percentile call time is incorrect");
 
-    long lastCallTime = _clock.currentTimeMillis();
+    long lastCallTime = _clock.millis();
     dones = startCall(_callTracker, 5);
     _clock.addDuration(FIVE_MS);
     endCall(dones, 4);
     dones.remove(0).endCallWithError();
     _clock.addDuration(FIVE_MS);
-    long now = _clock.currentTimeMillis();
+    long now = _clock.millis();
 
     Assert.assertEquals(_callTracker.getLastResetTime(), lastResetTime,
                         "lastResetTime is incorrect after reset");
@@ -1186,7 +1186,7 @@ public class TestCallTracker
     Assert.assertEquals(_callTracker.getCurrentConcurrency(), 0, "Concurrency is incorrect");
 
     _clock.setCurrentTimeMillis(INTERVAL + lastResetTime + jitter);
-    now = _clock.currentTimeMillis();
+    now = _clock.millis();
 
     Assert.assertEquals(_callTracker.getCallStats().getIntervalStartTime(), lastResetTime,
                         "Interval interval start time is incorrect");
@@ -1233,7 +1233,7 @@ public class TestCallTracker
 
   @org.testng.annotations.Test public void testEndMoreCallsThanStarted()
   {
-    long startTime = _clock.currentTimeMillis();
+    long startTime = _clock.millis();
     long startCallCountTotal = _callTracker.getCurrentCallCountTotal();
     long startErrorCountTotal = _callTracker.getCurrentErrorCountTotal();
 

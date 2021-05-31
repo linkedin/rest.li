@@ -18,7 +18,6 @@ package com.linkedin.d2.discovery.event;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
-import com.linkedin.util.clock.SystemClock;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +109,7 @@ public class PropertyEventBusRequestsThrottler<T>
     }
     for (String key : keys)
     {
-      logTime.put(key, SystemClock.instance().currentTimeMillis());
+      logTime.put(key, System.currentTimeMillis());
     }
 
     // register the external subscriber to let the user receive all the values from the eventBus
@@ -133,7 +132,7 @@ public class PropertyEventBusRequestsThrottler<T>
       if (_logStatusEnabled || LOG.isDebugEnabled())
       {
         LOG.info("{}/{} Key {} fetched in {}ms",
-          new Object[]{index, _keysToFetch.size(), prop, SystemClock.instance().currentTimeMillis() - startTime});
+          new Object[]{index, _keysToFetch.size(), prop, System.currentTimeMillis() - startTime});
       }
       if (_keysToFetch.size() == index) {
         _callback.onSuccess(None.none());

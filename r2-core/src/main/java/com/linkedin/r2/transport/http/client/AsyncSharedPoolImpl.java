@@ -29,9 +29,8 @@ import com.linkedin.r2.SizeLimitExceededException;
 import com.linkedin.r2.util.Cancellable;
 import com.linkedin.r2.util.LinkedDeque;
 import com.linkedin.util.ArgumentUtil;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -103,7 +102,7 @@ public class AsyncSharedPoolImpl<T> implements AsyncPool<T>
       RateLimiter rateLimiter, long timeoutMills, int maxWaiters)
   {
     this(name, lifecycle, scheduler, rateLimiter, timeoutMills, false, maxWaiters,
-        SystemClock.instance(), new LongTracking());
+        Clock.systemUTC(), new LongTracking());
   }
 
   public AsyncSharedPoolImpl(String name, AsyncPool.Lifecycle<T> lifecycle, ScheduledExecutorService scheduler,

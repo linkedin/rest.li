@@ -23,12 +23,12 @@ import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.r2.message.rest.RestMethod;
 import com.linkedin.util.degrader.DegraderImpl;
+
+import java.time.Clock;
 import java.util.Collections;
 import java.util.Map;
 
 import com.linkedin.common.util.MapUtil;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +100,7 @@ public class DegraderLoadBalancerStrategyConfig
   private final long _lowEventEmittingInterval;
   private final long _highEventEmittingInterval;
 
-  public static final Clock DEFAULT_CLOCK = SystemClock.instance();
+  public static final Clock DEFAULT_CLOCK = Clock.systemUTC();
   public static final double DEFAULT_INITIAL_RECOVERY_LEVEL = 0.01;
   public static final double DEFAULT_RAMP_FACTOR = 2.0;
   public static final long DEFAULT_UPDATE_INTERVAL_MS = 5000L;

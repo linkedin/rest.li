@@ -18,6 +18,7 @@ package com.linkedin.r2.transport.http.client.ratelimiter;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.MultiCallback;
+import java.time.Clock;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -27,7 +28,6 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.AsyncRateLimiter;
 import com.linkedin.r2.transport.http.client.SmoothRateLimiter;
-import com.linkedin.util.clock.Clock;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;

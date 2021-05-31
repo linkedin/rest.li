@@ -62,9 +62,9 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.test.util.retry.SingleRetry;
-import com.linkedin.util.clock.SystemClock;
 import java.io.IOException;
 import java.net.URI;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -719,7 +719,7 @@ public class TestBackupRequestsClient
       @Override
       public TrackerClient getClient(String serviceName, URI uri)
       {
-        return new DegraderTrackerClientImpl(uri, partitionDescriptions.get(uri), null, SystemClock.instance(), null) {
+        return new DegraderTrackerClientImpl(uri, partitionDescriptions.get(uri), null, Clock.systemUTC(), null) {
           @Override
           public void restRequest(RestRequest request,
               RequestContext requestContext,

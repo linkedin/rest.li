@@ -4,7 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import com.linkedin.darkcluster.api.ResponseValidationMetricsHeader;
 import com.linkedin.darkcluster.impl.DarkResponseValidationMetricsCollectorImpl;
 import com.linkedin.test.util.retry.SingleRetry;
-import com.linkedin.util.clock.SystemClock;
+
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -19,7 +20,6 @@ import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import com.linkedin.util.clock.Clock;
 
 
 public class TestDarkResponseValidationMetricsCollectorImpl {
@@ -30,7 +30,7 @@ public class TestDarkResponseValidationMetricsCollectorImpl {
   @BeforeMethod
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    Mockito.when(_clock.currentTimeMillis()).thenReturn(1L);
+    Mockito.when(_clock.millis()).thenReturn(1L);
   }
   @Test
   public void testAggregateAndGetFromDifferentSources() {
@@ -85,19 +85,19 @@ public class TestDarkResponseValidationMetricsCollectorImpl {
         new ResponseValidationMetricsHeader.ResponseValidationMetrics(ImmutableMap.of("SUCCESS_COUNT", 10L, "FAILURE_COUNT", 5L), 2L));
     ResponseValidationMetricsHeader header3 = new ResponseValidationMetricsHeader("host1",
         new ResponseValidationMetricsHeader.ResponseValidationMetrics(ImmutableMap.of("SUCCESS_COUNT", 12L, "FAILURE_COUNT", 6L), 3L));
-    Mockito.when(_clock.currentTimeMillis()).thenReturn(1L);
+    Mockito.when(_clock.millis()).thenReturn(1L);
     collector.collect(header1);
     Map<String, Long> metrics1 = collector.get();
     Assert.assertEquals(metrics1.size(), 2);
     Assert.assertEquals(metrics1.get("SUCCESS_COUNT").intValue(), 6);
     Assert.assertEquals(metrics1.get("FAILURE_COUNT").intValue(), 4);
-    Mockito.when(_clock.currentTimeMillis()).thenReturn(2L);
+    Mockito.when(_clock.millis()).thenReturn(2L);
     collector.collect(header2);
     Map<String, Long> metrics2 = collector.get();
     Assert.assertEquals(metrics2.size(), 2);
     Assert.assertEquals(metrics2.get("SUCCESS_COUNT").intValue(), 6);
     Assert.assertEquals(metrics2.get("FAILURE_COUNT").intValue(), 4);
-    Mockito.when(_clock.currentTimeMillis()).thenReturn(3L);
+    Mockito.when(_clock.millis()).thenReturn(3L);
     collector.collect(header3);
     Map<String, Long> metrics3 = collector.get();
     Assert.assertEquals(metrics3.size(), 2);
@@ -112,13 +112,13 @@ public class TestDarkResponseValidationMetricsCollectorImpl {
         new ResponseValidationMetricsHeader.ResponseValidationMetrics(ImmutableMap.of("SUCCESS_COUNT", 6L, "FAILURE_COUNT", 4L), 1L));
     ResponseValidationMetricsHeader header2 = new ResponseValidationMetricsHeader("host1",
         new ResponseValidationMetricsHeader.ResponseValidationMetrics(ImmutableMap.of("SUCCESS_COUNT", 5L, "FAILURE_COUNT", 2L), 2L));
-    Mockito.when(_clock.currentTimeMillis()).thenReturn(1L);
+    Mockito.when(_clock.millis()).thenReturn(1L);
     collector.collect(header1);
     Map<String, Long> metrics1 = collector.get();
     Assert.assertEquals(metrics1.size(), 2);
     Assert.assertEquals(metrics1.get("SUCCESS_COUNT").intValue(), 6);
     Assert.assertEquals(metrics1.get("FAILURE_COUNT").intValue(), 4);
-    Mockito.when(_clock.currentTimeMillis()).thenReturn(2L);
+    Mockito.when(_clock.millis()).thenReturn(2L);
     collector.collect(header2);
     Map<String, Long> metrics2 = collector.get();
     Assert.assertEquals(metrics1.size(), 2);
@@ -133,13 +133,13 @@ public class TestDarkResponseValidationMetricsCollectorImpl {
         new ResponseValidationMetricsHeader.ResponseValidationMetrics(ImmutableMap.of("SUCCESS_COUNT", 6L, "FAILURE_COUNT", 4L), 2L));
     ResponseValidationMetricsHeader header2 = new ResponseValidationMetricsHeader("host1",
         new ResponseValidationMetricsHeader.ResponseValidationMetrics(ImmutableMap.of("SUCCESS_COUNT", 5L, "FAILURE_COUNT", 2L), 1L));
-    Mockito.when(_clock.currentTimeMillis()).thenReturn(1L);
+    Mockito.when(_clock.millis()).thenReturn(1L);
     collector.collect(header1);
     Map<String, Long> metrics1 = collector.get();
     Assert.assertEquals(metrics1.size(), 2);
     Assert.assertEquals(metrics1.get("SUCCESS_COUNT").intValue(), 6);
     Assert.assertEquals(metrics1.get("FAILURE_COUNT").intValue(), 4);
-    Mockito.when(_clock.currentTimeMillis()).thenReturn(2L);
+    Mockito.when(_clock.millis()).thenReturn(2L);
     collector.collect(header2);
     Map<String, Long> metrics2 = collector.get();
     Assert.assertEquals(metrics1.size(), 2);
@@ -151,7 +151,7 @@ public class TestDarkResponseValidationMetricsCollectorImpl {
       + "at any time should always result in monotonically increasing metrics", retryAnalyzer = SingleRetry.class) // Known to be flaky in CI
   public void testMonotonicityWithAggregateAndGetWithMultipleThreads() {
     DarkResponseValidationMetricsCollectorImpl collector = new DarkResponseValidationMetricsCollectorImpl(
-        SystemClock.instance(),
+        Clock.systemUTC(),
         _collectionFrequencyInMillis);
     List<Map<String, Long>> retrievedAggregatedMetrics = new ArrayList<>();
     Random random = new Random();
@@ -197,4 +197,3 @@ public class TestDarkResponseValidationMetricsCollectorImpl {
     });
   }
 }
-

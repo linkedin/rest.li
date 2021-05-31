@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
@@ -48,7 +47,7 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.util.ArgumentUtil;
-import com.linkedin.util.clock.SystemClock;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -210,13 +209,13 @@ public class D2ClientBuilder
     if (_config.retry)
     {
       d2Client = new RetryClient(d2Client, loadBalancer, _config.retryLimit,
-          _config.retryUpdateIntervalMs, _config.retryAggregatedIntervalNum, SystemClock.instance(),
+          _config.retryUpdateIntervalMs, _config.retryAggregatedIntervalNum, Clock.systemUTC(),
           true, true);
     }
     else if (_config.restRetryEnabled || _config.streamRetryEnabled)
     {
       d2Client = new RetryClient(d2Client, loadBalancer, _config.retryLimit,
-          _config.retryUpdateIntervalMs, _config.retryAggregatedIntervalNum, SystemClock.instance(),
+          _config.retryUpdateIntervalMs, _config.retryAggregatedIntervalNum, Clock.systemUTC(),
           _config.restRetryEnabled, _config.streamRetryEnabled);
     }
 
@@ -572,7 +571,7 @@ public class D2ClientBuilder
     {
       final RelativeLoadBalancerStrategyFactory relativeLoadBalancerStrategyFactory = new RelativeLoadBalancerStrategyFactory(
           _config._executorService, _config.healthCheckOperations, Collections.emptyList(), _config.eventEmitter,
-          SystemClock.instance());
+          Clock.systemUTC());
       loadBalancerStrategyFactories.putIfAbsent(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME,
           relativeLoadBalancerStrategyFactory);
     }

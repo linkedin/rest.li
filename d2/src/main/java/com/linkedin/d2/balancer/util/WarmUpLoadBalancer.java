@@ -30,7 +30,6 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.http.client.TimeoutCallback;
-import com.linkedin.util.clock.SystemClock;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
@@ -198,7 +197,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
 
     void execute()
     {
-      final long startTime = SystemClock.instance().currentTimeMillis();
+      final long startTime = System.currentTimeMillis();
 
       final String serviceName = _serviceNamesQueue.poll();
       if (serviceName == null || _shuttingDown)
@@ -233,7 +232,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
         public void onSuccess(None result)
         {
           LOG.info("{}/{} Service {} warmed up in {}ms", new Object[]{_requestCompletedCount.get() + 1, _serviceNames.size(),
-            serviceName, SystemClock.instance().currentTimeMillis() - startTime});
+            serviceName, System.currentTimeMillis() - startTime});
           executeNextTask();
         }
       });

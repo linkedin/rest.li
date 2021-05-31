@@ -24,7 +24,8 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.util.clock.Clock;
+
+import java.time.Clock;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
@@ -85,10 +86,10 @@ public class TransportHealthCheck implements HealthCheck
   @Override
   public void checkHealth(Callback<None> callback)
   {
-    final long startTime = _clock.currentTimeMillis();
+    final long startTime = _clock.millis();
 
     TransportCallback<RestResponse> transportCallback = response -> {
-      long delay = _clock.currentTimeMillis() - startTime;
+      long delay = _clock.millis() - startTime;
       if (response.hasError())
       {
         // Currently treat all errors as failure

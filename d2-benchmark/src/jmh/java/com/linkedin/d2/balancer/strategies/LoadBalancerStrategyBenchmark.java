@@ -33,9 +33,8 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.util.NamedThreadFactory;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -76,7 +75,7 @@ public class LoadBalancerStrategyBenchmark
   private static final List<String> DEFAULT_STRATEGY_LIST = Arrays.asList("DEGRADER", "RELATIVE");
   private static final String URI_PREFIX = "http://test.qa";
   private static final String URI_SUFFIX = ".com:5555";
-  private static final Clock CLOCK = SystemClock.instance();
+  private static final Clock CLOCK = Clock.systemUTC();
   private static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("executor"));
 
   static
@@ -283,7 +282,7 @@ public class LoadBalancerStrategyBenchmark
     ServiceProperties serviceProperties = new ServiceProperties(DUMMY_SERVICE_NAME, DEFAULT_CLUSTER_NAME, DEFAULT_PATH, DEFAULT_STRATEGY_LIST,
         null, null, null, null, null,
         null, null, RelativeStrategyPropertiesConverter.toMap(relativeStrategyProperties));
-    return new RelativeLoadBalancerStrategyFactory(EXECUTOR_SERVICE, null, new ArrayList<>(), null, SystemClock.instance())
+    return new RelativeLoadBalancerStrategyFactory(EXECUTOR_SERVICE, null, new ArrayList<>(), null, CLOCK)
         .newLoadBalancer(serviceProperties);
   }
 

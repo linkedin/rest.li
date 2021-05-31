@@ -2,6 +2,8 @@ package com.linkedin.darkcluster.impl;
 
 import com.linkedin.darkcluster.api.DarkClusterResponseValidationMetricsCollector;
 import com.linkedin.darkcluster.api.ResponseValidationMetricsHeader;
+
+import java.time.Clock;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -13,7 +15,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.linkedin.util.clock.Clock;
 
 
 /**
@@ -111,7 +112,7 @@ public class DarkResponseValidationMetricsCollectorImpl implements DarkClusterRe
     }
     Lock sourceLock = _sourceLockMap.get(source);
     MetricsInternal existingMetrics = _internalMetricsMap.get(source);
-    long currentTimestamp = _clock.currentTimeMillis();
+    long currentTimestamp = _clock.millis();
     if (existingMetrics == null) {
       // multiple threads may satisfy this condition but only one thread will obtain the lock
       if (sourceLock.tryLock()) {
@@ -226,4 +227,3 @@ public class DarkResponseValidationMetricsCollectorImpl implements DarkClusterRe
     }
   }
 }
-

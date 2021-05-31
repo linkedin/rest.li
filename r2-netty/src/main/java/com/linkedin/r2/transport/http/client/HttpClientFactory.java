@@ -56,9 +56,9 @@ import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.r2.util.NamedThreadFactory;
-import com.linkedin.util.clock.SystemClock;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1123,7 +1123,7 @@ public class HttpClientFactory implements TransportClientFactory
 
     // Add the disruptor filter to the end of the filter chain to get the most accurate simulation of disrupt
     Integer requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
-    DisruptFilter disruptFilter = new DisruptFilter(_executor, _eventLoopGroup, requestTimeout, SystemClock.instance());
+    DisruptFilter disruptFilter = new DisruptFilter(_executor, _eventLoopGroup, requestTimeout, Clock.systemUTC());
     filters = filters.addLastRest(disruptFilter);
     filters = filters.addLast(disruptFilter);
 
@@ -1413,7 +1413,7 @@ public class HttpClientFactory implements TransportClientFactory
       }
 
       return new com.linkedin.r2.netty.client.HttpNettyClient(_eventLoopGroup, _executor, _callbackExecutorGroup,
-          channelPoolManager, sslChannelPoolManager, httpProtocolVersion, SystemClock.instance(),
+          channelPoolManager, sslChannelPoolManager, httpProtocolVersion, Clock.systemUTC(),
               requestTimeout, streamingTimeout, shutdownTimeout);
     }
 

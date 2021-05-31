@@ -27,8 +27,6 @@ import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolLifecycleStats;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -41,6 +39,8 @@ import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.Future;
 import java.net.ConnectException;
 import java.net.SocketAddress;
+import java.time.Clock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +72,7 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
    */
   private static final AsyncPoolLifecycleStats DEFAULT_LIFECYCLE_STATS = new AsyncPoolLifecycleStats(0D, 0L, 0L, 0L);
 
-  private final Clock _clock = SystemClock.instance();
+  private final Clock _clock = Clock.systemUTC();
   public final static String CHANNELPOOL_SSL_CALLBACK_HANDLER = "channelPoolSslCallbackHandler";
 
   private final SocketAddress _remoteAddress;
@@ -99,7 +99,7 @@ public class ChannelPoolLifecycle implements AsyncPool.Lifecycle<Channel>
       }
 
       Channel c = channelFuture.channel();
-      c.attr(CHANNEL_CREATION_TIME_KEY).set(_clock.currentTimeMillis());
+      c.attr(CHANNEL_CREATION_TIME_KEY).set(_clock.millis());
 
       if (_tcpNoDelay)
       {

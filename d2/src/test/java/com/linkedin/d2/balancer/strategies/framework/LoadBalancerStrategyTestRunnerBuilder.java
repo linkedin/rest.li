@@ -399,7 +399,7 @@ public class LoadBalancerStrategyTestRunnerBuilder
     public void restRequest(RestRequest request, RequestContext requestContext, Map<String, String> wireAttrs,
         TransportCallback<RestResponse> callback)
     {
-      int currentIntervalIndex = (int) (_clockedExecutor.currentTimeMillis() / _intervalMillis);
+      int currentIntervalIndex = (int) (_clockedExecutor.millis() / _intervalMillis);
       int requestCount = _lastRequestCountMap.getOrDefault(_uri, 0);
       long latency = _latencyManager.getLatency(_uri, requestCount, currentIntervalIndex);
       boolean hasError = _errorCountManager.getErrorCount(_uri, requestCount, currentIntervalIndex) -

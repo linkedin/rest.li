@@ -36,7 +36,6 @@ import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;

@@ -627,7 +627,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     Map<DegraderTrackerClient, LoadBalancerQuarantine> quarantineMap = oldState.getQuarantineMap();
     Map<DegraderTrackerClient, LoadBalancerQuarantine> quarantineHistory = oldState.getQuarantineHistory();
     Set<DegraderTrackerClient> activeClients = new HashSet<>();
-    long clk = config.getClock().currentTimeMillis();
+    long clk = config.getClock().millis();
     long clusterErrorCount = 0;
     long clusterDropCount = 0;
 
@@ -696,7 +696,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       debug(_log, "New state is the same as the old state so we're not changing anything. Old state = ", oldState
           ,", config= ", config);
       return new PartitionDegraderLoadBalancerState(oldState, clusterGenerationId,
-          config.getClock().currentTimeMillis());
+          config.getClock().millis());
     }
 
     // update our overrides.
@@ -849,7 +849,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       List<DegraderTrackerClient> unHealthyClients = getUnhealthyTrackerClients(degraderTrackerClientUpdaters, points, quarantineMap, config, partitionId);
       newState =
           new PartitionDegraderLoadBalancerState(clusterGenerationId,
-                                                 config.getClock().currentTimeMillis(),
+                                                 config.getClock().millis(),
                                                  true,
                                                  oldState.getRingFactory(),
                                                  points,
@@ -885,7 +885,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // have chance to get in in next interval (already evicted from quarantine or not a new client anymore).
       List<DegraderTrackerClient> unHealthyClients = getUnhealthyTrackerClients(degraderTrackerClientUpdaters, oldPointsMap, quarantineMap, config, partitionId);
       newState =
-              new PartitionDegraderLoadBalancerState(clusterGenerationId, config.getClock().currentTimeMillis(), true,
+              new PartitionDegraderLoadBalancerState(clusterGenerationId, config.getClock().millis(), true,
                                             oldState.getRingFactory(),
                                             oldPointsMap,
                                             PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
@@ -1034,7 +1034,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     return  updateEnabled
         && (
             !config.isUpdateOnlyAtInterval() && partitionState.getClusterGenerationId() != clusterGenerationId ||
-            config.getClock().currentTimeMillis() - partitionState.getLastUpdated() >= config.getUpdateIntervalMs());
+            config.getClock().millis() - partitionState.getLastUpdated() >= config.getUpdateIntervalMs());
   }
 
   /**
@@ -1421,4 +1421,3 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         + ", _state=" + _state + "]";
   }
 }
-

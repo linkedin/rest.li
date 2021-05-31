@@ -16,6 +16,7 @@
 
 package com.linkedin.r2.disruptor;
 
+import java.time.Clock;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -34,8 +35,6 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.util.ArgumentUtil;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +94,7 @@ public class DisruptFilter implements StreamFilter, RestFilter
 
   @Deprecated
   public DisruptFilter(ScheduledExecutorService scheduler, ExecutorService executor, int requestTimeout) {
-    this(scheduler, executor, requestTimeout, SystemClock.instance());
+    this(scheduler, executor, requestTimeout, Clock.systemUTC());
   }
 
   @Override
@@ -184,7 +183,7 @@ public class DisruptFilter implements StreamFilter, RestFilter
         case MINIMUM_DELAY:
           DisruptContexts.MinimumDelayDisruptContext minimumDelayDisruptContext =
               (DisruptContexts.MinimumDelayDisruptContext) context;
-          minimumDelayDisruptContext.requestStartTime(_clock.currentTimeMillis());
+          minimumDelayDisruptContext.requestStartTime(_clock.millis());
           nextFilter.onRequest(req, requestContext, wireAttrs);
           break;
         default:
@@ -217,7 +216,7 @@ public class DisruptFilter implements StreamFilter, RestFilter
             (DisruptContexts.MinimumDelayDisruptContext) context;
 
         final long startTime = minimumDelayContext.requestStartTime();
-        final long totalDelay = _clock.currentTimeMillis() - startTime;
+        final long totalDelay = _clock.millis() - startTime;
         long remainingDelay = minimumDelayContext.delay() - totalDelay;
 
         if (startTime == 0)

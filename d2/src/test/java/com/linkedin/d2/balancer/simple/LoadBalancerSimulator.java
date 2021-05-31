@@ -32,8 +32,10 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.util.NamedThreadFactory;
-import com.linkedin.util.clock.Clock;
 import java.net.URI;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -205,7 +207,7 @@ public class LoadBalancerSimulator
       Assert.fail("unable to shutdown state");
     }
 
-    _log.info("LoadBalancer Shutdown @ {}", _clockedExecutor.currentTimeMillis());
+    _log.info("LoadBalancer Shutdown @ {}", _clockedExecutor.millis());
   }
 
   public void updateUriProperties(UriProperties uriProperties)
@@ -409,7 +411,7 @@ public class LoadBalancerSimulator
 
         TransportCallback<RestResponse> restCallback = (response) -> {
           // assertFalse(response.hasError());
-          _log.debug("Got response for {} @ {}", response.getResponse(), _clockedExecutor.currentTimeMillis());
+          _log.debug("Got response for {} @ {}", response.getResponse(), _clockedExecutor.millis());
           // Do nothing for now for the response
         };
 
@@ -473,7 +475,7 @@ public class LoadBalancerSimulator
           Map<String, String> wireAttrs,
           TransportCallback<RestResponse> callback)
       {
-        Long delay = _delayGen.getValue(request.getURI().getAuthority(), _clockedExecutor.currentTimeMillis(),
+        Long delay = _delayGen.getValue(request.getURI().getAuthority(), _clockedExecutor.millis(),
             TimeUnit.MILLISECONDS);
         _clockedExecutor.schedule(new Runnable() {
           @Override
@@ -481,7 +483,7 @@ public class LoadBalancerSimulator
           {
             RestResponseBuilder restResponseBuilder = new RestResponseBuilder().setEntity(request.getURI().getRawPath().getBytes());
             if (_errorGen != null) {
-              String retError = _errorGen.getValue(request.getURI().getAuthority(), _clockedExecutor.currentTimeMillis(),
+              String retError = _errorGen.getValue(request.getURI().getAuthority(), _clockedExecutor.millis(),
                   TimeUnit.MILLISECONDS);
               if (retError != null)
               {
@@ -513,7 +515,7 @@ public class LoadBalancerSimulator
   /**
    * A simulated service executor and clock
    */
-  public static class ClockedExecutor implements Clock, ScheduledExecutorService
+  public static class ClockedExecutor extends Clock implements ScheduledExecutorService
   {
     private volatile long _currentTimeMillis = 0l;
     private volatile Boolean _stopped = true;
@@ -704,17 +706,25 @@ public class LoadBalancerSimulator
     }
 
     @Override
-    public long currentTimeMillis()
-    {
-      return _currentTimeMillis;
-    }
-
-
-    @Override
     public String toString()
     {
       return "ClockedExecutor [_currentTimeMillis: " + _currentTimeMillis + "_taskList:"
           + _taskList.stream().map(e -> e.toString()).collect(Collectors.joining(","));
+    }
+
+    @Override
+    public ZoneId getZone() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Clock withZone(ZoneId zoneId) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Instant instant() {
+      return Instant.ofEpochMilli(_currentTimeMillis);
     }
 
     private class ClockedTask implements Runnable, ScheduledFuture<Void>

@@ -22,12 +22,12 @@ import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.ObjectCreationTimeoutException;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.transport.http.client.TimeoutCallback;
-import com.linkedin.util.clock.Clock;
 import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.codec.http2.Http2StreamChannel;
 import io.netty.handler.codec.http2.Http2StreamChannelBootstrap;
 import java.net.SocketAddress;
+import java.time.Clock;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,7 +89,7 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
     _childChannelCount = 0;
     _channelCreationTimeoutMs = DEFAULT_CHANNEL_CREATION_TIMEOUT_MS; // TODO: expose this through cfg2
 
-    _lastActiveTime = _clock.currentTimeMillis();
+    _lastActiveTime = _clock.millis();
     _scheduler.scheduleAtFixedRate(this::closeParentIfIdle, idleTimeout, idleTimeout, TimeUnit.MILLISECONDS);
   }
 
@@ -99,7 +99,7 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
     Channel parentChannel;
     synchronized (_lock)
     {
-      _lastActiveTime = _clock.currentTimeMillis();
+      _lastActiveTime = _clock.millis();
       parentChannel = _parentChannel;
     }
 
@@ -269,7 +269,7 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
       childChannelCount = _childChannelCount;
     }
 
-    if (_clock.currentTimeMillis() - lastActiveTime < _idleTimeout)
+    if (_clock.millis() - lastActiveTime < _idleTimeout)
     {
       return;
     }

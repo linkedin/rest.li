@@ -16,10 +16,8 @@
 
 package com.linkedin.r2.netty.common;
 
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
+import java.time.Clock;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -62,13 +60,13 @@ public class StreamingTimeout
     _channel = channel;
     _clock = clock;
 
-    _lastActiveTime = new AtomicLong(clock.currentTimeMillis());
+    _lastActiveTime = new AtomicLong(clock.millis());
     scheduleNextIdleTimeout();
   }
 
   public void refreshLastActiveTime()
   {
-    _lastActiveTime.getAndSet(_clock.currentTimeMillis());
+    _lastActiveTime.getAndSet(_clock.millis());
   }
 
   public void cancel()
@@ -84,7 +82,7 @@ public class StreamingTimeout
 
   private void raiseTimeoutIfIdle()
   {
-    if (_clock.currentTimeMillis() - _lastActiveTime.get() < _streamingTimeout)
+    if (_clock.millis() - _lastActiveTime.get() < _streamingTimeout)
     {
       scheduleNextIdleTimeout();
     }
@@ -105,7 +103,7 @@ public class StreamingTimeout
 
   private long getNextExecutionTime()
   {
-    long timeElapsed = _clock.currentTimeMillis() -_lastActiveTime.get();
+    long timeElapsed = _clock.millis() -_lastActiveTime.get();
     long timeRemaining = _streamingTimeout - timeElapsed;
     return timeRemaining;
   }

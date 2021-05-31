@@ -2,9 +2,9 @@ package com.linkedin.d2.balancer.util.healthcheck;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.jersey.api.uri.UriBuilder;
-import com.linkedin.util.clock.Clock;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Clock;
 
 import static com.linkedin.r2.message.rest.RestMethod.OPTIONS;
 
