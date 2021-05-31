@@ -16,13 +16,13 @@
 
 package com.linkedin.r2.netty.handler.common;
 
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelInboundHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelInboundHandlerAdapter;
+import com.linkedin.pegasus.io.netty.channel.ChannelPipeline;
 import com.linkedin.r2.netty.common.ChannelPipelineEvent;
 import com.linkedin.r2.netty.common.StreamingTimeout;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandler;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelPipeline;
 import java.util.concurrent.ScheduledFuture;
 
 /**

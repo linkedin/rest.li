@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Shade and relocate the Netty dependency to avoid classpath conflicts in large applications.
 
 ## [29.18.14] - 2021-05-27
 - Use class.getClassLoader() instead of thread.getContextClassLoader() to get the class loader.

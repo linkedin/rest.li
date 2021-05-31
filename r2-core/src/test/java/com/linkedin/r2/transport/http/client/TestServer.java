@@ -229,7 +229,17 @@ public class TestServer
       {
         final String headerName = "X-Long-Header:";
         int size = Integer.parseInt(q.replace("headerSize=", ""));
-        int valueSize = size - headerName.length();
+
+        // We need to subtract 1 from the length of the header content
+        // we should generate, because Netty counts the trailing "\r\n"
+        // as a single character toward the header size.
+        //
+        // This appears to have been a change in Netty 4.1.46.Final in
+        // this commit:
+        //
+        //   https://github.com/netty/netty/commit/9ae782d632ff18f7c9e645c58458b3180d257ff3
+        //
+        int valueSize = size - headerName.length() - 1;
 
         char[] headerValue = new char[valueSize];
         Arrays.fill(headerValue, 'a');

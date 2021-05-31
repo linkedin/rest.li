@@ -2,13 +2,13 @@ package com.linkedin.r2.transport.http.client.rest;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.embedded.EmbeddedChannel;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.PoolStats;
 import com.linkedin.r2.util.Cancellable;
-import io.netty.channel.Channel;
-import io.netty.channel.embedded.EmbeddedChannel;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

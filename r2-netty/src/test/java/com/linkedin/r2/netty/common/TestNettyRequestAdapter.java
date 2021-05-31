@@ -17,26 +17,24 @@
 package com.linkedin.r2.netty.common;
 
 import com.linkedin.data.ByteString;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpHeaderNames;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpMethod;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpRequest;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpVersion;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2Headers;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.HttpConversionUtil;
+import com.linkedin.pegasus.io.netty.util.AsciiString;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
 import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
-
 import com.linkedin.r2.netty.common.NettyRequestAdapter;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpVersion;
 
-import io.netty.handler.codec.http2.Http2Headers;
-import io.netty.handler.codec.http2.HttpConversionUtil;
-import io.netty.util.AsciiString;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Collections;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;

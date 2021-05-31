@@ -16,9 +16,9 @@
 
 package com.linkedin.r2.netty.handler.http2;
 
-import io.netty.channel.ChannelHandler.Sharable;
-import io.netty.channel.ChannelHandlerAdapter;
-import io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandler.Sharable;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerAdapter;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

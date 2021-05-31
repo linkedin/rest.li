@@ -17,6 +17,9 @@
 package com.linkedin.r2.transport.http.server;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.SimpleChannelInboundHandler;
 import com.linkedin.r2.message.Messages;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
@@ -27,9 +30,6 @@ import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

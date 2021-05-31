@@ -20,6 +20,7 @@ package test.r2.perf.client;
 
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
+import com.linkedin.pegasus.io.netty.channel.nio.NioEventLoopGroup;
 import com.linkedin.r2.filter.FilterChains;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.stream.StreamRequest;
@@ -28,13 +29,12 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.util.NamedThreadFactory;
 
 import java.net.URI;
 import java.util.Collections;
 import java.util.concurrent.Executors;
 
-import com.linkedin.r2.util.NamedThreadFactory;
-import io.netty.channel.nio.NioEventLoopGroup;
 import test.r2.perf.Generator;
 import test.r2.perf.PerfConfig;
 

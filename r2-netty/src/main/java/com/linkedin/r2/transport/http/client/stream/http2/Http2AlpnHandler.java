@@ -20,21 +20,21 @@
 
 package com.linkedin.r2.transport.http.client.stream.http2;
 
+import com.linkedin.pegasus.io.netty.channel.ChannelDuplexHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelException;
+import com.linkedin.pegasus.io.netty.channel.ChannelFuture;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelPromise;
+import com.linkedin.pegasus.io.netty.handler.ssl.ApplicationProtocolNames;
+import com.linkedin.pegasus.io.netty.handler.ssl.SslContext;
+import com.linkedin.pegasus.io.netty.handler.ssl.SslHandler;
+import com.linkedin.pegasus.io.netty.handler.ssl.SslHandshakeCompletionEvent;
+import com.linkedin.pegasus.io.netty.util.internal.ObjectUtil;
 import com.linkedin.r2.transport.common.bridge.common.RequestWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
 import com.linkedin.r2.netty.handler.common.SessionResumptionSslHandler;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelException;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.handler.ssl.ApplicationProtocolNames;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.SslHandshakeCompletionEvent;
-import io.netty.util.internal.ObjectUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

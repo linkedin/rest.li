@@ -18,6 +18,8 @@ package com.linkedin.r2.transport.http.client.stream.http2;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.pegasus.io.netty.channel.EventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.nio.NioEventLoopGroup;
 import com.linkedin.r2.testutils.server.HttpServerBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
@@ -25,8 +27,6 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImp
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
 import com.linkedin.test.util.AssertionMethods;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;

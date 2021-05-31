@@ -16,7 +16,7 @@
 
 package com.linkedin.r2.netty.common;
 
-import io.netty.handler.ssl.SslHandler;
+import com.linkedin.pegasus.io.netty.handler.ssl.SslHandler;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;

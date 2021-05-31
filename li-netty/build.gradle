@@ -1,0 +1,38 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+
+dependencies {
+  implementation externalDependency.nettyBuffer
+  implementation externalDependency.nettyCodec
+  implementation externalDependency.nettyCodecHttp
+  implementation externalDependency.nettyCodecHttp2
+  implementation externalDependency.nettyCommon
+  implementation externalDependency.nettyHandler
+  implementation externalDependency.nettyTransport
+  runtimeOnly externalDependency.nettyResolverDnsNativeMacos
+  shadow externalDependency.slf4jApi
+}
+
+tasks.named('shadowJar') {
+  classifier = null
+
+  dependencies {
+    //
+    // We skip shading slf4j-api. To ensure it is specified in the POM, it is
+    // also added to the "shadow" configuration.
+    //
+    exclude dependency(externalDependency.slf4jApi)
+  }
+
+  exclude 'META-INF/io.netty.versions.properties'
+  exclude 'META-INF/maven/'
+  exclude 'META-INF/native-image/'
+
+  relocate 'io.netty', 'com.linkedin.pegasus.io.netty'
+  relocate 'META-INF/native/libnetty', 'META-INF/native/libcom_linkedin_pegasus_netty'
+
+  mergeServiceFiles()
+}
+
+tasks.named('jar') {
+  enabled = false
+}

@@ -16,14 +16,14 @@
 
 package com.linkedin.r2.netty.handler.http2;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.http2.Http2FrameCodecBuilder;
-import io.netty.handler.codec.http2.Http2MultiplexHandler;
-import io.netty.handler.codec.http2.Http2Settings;
-import io.netty.handler.ssl.ApplicationProtocolNames;
-import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
-import io.netty.handler.ssl.SslHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelPromise;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2FrameCodecBuilder;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2MultiplexHandler;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2Settings;
+import com.linkedin.pegasus.io.netty.handler.ssl.ApplicationProtocolNames;
+import com.linkedin.pegasus.io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
+import com.linkedin.pegasus.io.netty.handler.ssl.SslHandler;
 import java.nio.channels.ClosedChannelException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

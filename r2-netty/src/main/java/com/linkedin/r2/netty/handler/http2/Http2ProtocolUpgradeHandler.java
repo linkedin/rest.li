@@ -16,15 +16,15 @@
 
 package com.linkedin.r2.netty.handler.http2;
 
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelException;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.HttpClientUpgradeHandler;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpVersion;
+import com.linkedin.pegasus.io.netty.channel.ChannelDuplexHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelException;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelPromise;
+import com.linkedin.pegasus.io.netty.handler.codec.http.DefaultFullHttpRequest;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpClientUpgradeHandler;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpHeaderNames;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpMethod;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpVersion;
 import java.net.InetSocketAddress;
 import java.nio.channels.ClosedChannelException;
 import org.slf4j.Logger;

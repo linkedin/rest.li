@@ -16,14 +16,14 @@
 
 package com.linkedin.r2.transport.http.client.stream.http2;
 
+import com.linkedin.pegasus.io.netty.channel.embedded.EmbeddedChannel;
+import com.linkedin.pegasus.io.netty.handler.codec.http.DefaultFullHttpRequest;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpHeaderNames;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpMethod;
 import com.linkedin.r2.transport.common.bridge.common.RequestWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.http.client.TimeoutAsyncPoolHandle;
 import com.linkedin.r2.transport.http.client.TimeoutTransportCallback;
-import io.netty.channel.embedded.EmbeddedChannel;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpMethod;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;

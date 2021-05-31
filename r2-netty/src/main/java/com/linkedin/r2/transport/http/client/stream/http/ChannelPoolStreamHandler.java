@@ -21,12 +21,12 @@
 package com.linkedin.r2.transport.http.client.stream.http;
 
 
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelInboundHandlerAdapter;
+import com.linkedin.pegasus.io.netty.util.AttributeKey;
 import com.linkedin.r2.transport.http.client.AsyncPool;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.util.AttributeKey;
 
 
 /**

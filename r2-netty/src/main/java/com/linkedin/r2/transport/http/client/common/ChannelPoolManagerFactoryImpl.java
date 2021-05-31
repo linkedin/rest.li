@@ -18,13 +18,13 @@ package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.pegasus.io.netty.channel.EventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.group.DefaultChannelGroup;
 import com.linkedin.r2.netty.client.http.HttpChannelPoolFactory;
 import com.linkedin.r2.netty.client.http2.Http2ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamChannelPoolFactory;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.group.DefaultChannelGroup;
 import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -17,6 +17,11 @@
 package com.linkedin.r2.transport.http.client.stream.http2;
 
 import com.linkedin.data.ByteString;
+import com.linkedin.pegasus.io.netty.channel.EventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.nio.NioEventLoopGroup;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpHeaderNames;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2Exception;
+import com.linkedin.pegasus.io.netty.util.AsciiString;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.stream.StreamException;
 import com.linkedin.r2.message.stream.StreamRequest;
@@ -35,11 +40,6 @@ import com.linkedin.r2.transport.http.client.HttpClientBuilder;
 import com.linkedin.r2.testutils.server.HttpServerBuilder;
 import com.linkedin.test.util.ExceptionTestUtil;
 import com.linkedin.test.util.retry.SingleRetry;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http2.Http2Exception;
-import io.netty.util.AsciiString;
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;

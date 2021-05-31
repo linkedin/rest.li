@@ -17,13 +17,13 @@
 package com.linkedin.r2.netty.entitystream;
 
 import com.linkedin.data.ByteString;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.netty.common.StreamingTimeout;
 import com.linkedin.util.clock.SystemClock;
-import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Entity stream {@link Reader} implementation that reads from the entity stream

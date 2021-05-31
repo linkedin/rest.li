@@ -16,8 +16,8 @@
 
 package com.linkedin.r2.netty.common;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelPipeline;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.ChannelPipeline;
 
 /**
  * Enumerates the user events potentially raised in the {@link ChannelPipeline}.

@@ -4,6 +4,9 @@ dependencies {
   compile externalDependency.javaxActivation
   compile externalDependency.commonsLang
   testCompile project(':r2-int-test')
+  testCompile project(':r2-netty')
+  testCompile project(':r2-sample')
+  testCompile project(':test-util')
   testCompile externalDependency.testng
   testCompile externalDependency.mail
   testCompile externalDependency.easymock
