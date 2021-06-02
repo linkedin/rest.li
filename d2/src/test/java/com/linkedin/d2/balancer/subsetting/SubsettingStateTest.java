@@ -23,6 +23,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -33,6 +34,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 
 public class SubsettingStateTest
@@ -147,7 +149,10 @@ public class SubsettingStateTest
       }).start();
     }
 
-    latch.await();
+    if (!latch.await(5, TimeUnit.SECONDS))
+    {
+      fail("subsetting update failed to finish within 5 seconds");
+    }
 
     if (_failure.get() != null)
       throw _failure.get();

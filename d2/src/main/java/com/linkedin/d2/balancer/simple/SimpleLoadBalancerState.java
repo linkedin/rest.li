@@ -142,8 +142,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final SSLParameters _sslParameters;
   private final boolean       _isSSLEnabled;
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
-
-  private final DeterministicSubsettingMetadataProvider _subsettingMetadataProvider;
   private final SubsettingState _subsettingState;
 
   /*
@@ -318,7 +316,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     {
       _subsettingState = null;
     }
-    _subsettingMetadataProvider = deterministicSubsettingMetadataProvider;
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)

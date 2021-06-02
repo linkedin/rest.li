@@ -208,6 +208,39 @@ public class StateUpdaterTest
     executorService.shutdown();
   }
 
+  @Test(retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
+  public void testForceUpdate() throws InterruptedException
+  {
+    PartitionState state = new PartitionStateTestDataBuilder()
+        .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
+        .build();
+
+    List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0));
+
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
+    ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    D2RelativeStrategyProperties relativeStrategyProperties = RelativeLoadBalancerStrategyFactory.putDefaultValues(new D2RelativeStrategyProperties());
+    _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, executorService,
+        partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME);
+
+    // update will be scheduled three times, once from interval update, once from cluster change, once from force update
+    CountDownLatch countDownLatch = new CountDownLatch(3);
+    Mockito.doAnswer(new ExecutionCountDown<>(countDownLatch)).when(_quarantineManager).updateQuarantineState(any(), any(), anyLong());
+
+    // Cluster generation id changed from 0 to 1
+    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1, false);
+    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1, true);
+    if (!countDownLatch.await(5, TimeUnit.SECONDS))
+    {
+      fail("cluster update failed to finish within 5 seconds");
+    }
+
+    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).size(), 2);
+    executorService.shutdown();
+  }
+
   @Test
   public void testUpdateOnePartition()
   {

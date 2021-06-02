@@ -77,12 +77,12 @@ public class SubsettingState
 
     synchronized (_lockMap.computeIfAbsent(serviceName, name -> new Object()))
     {
-      SubsetCache subsetCacahe = _subsetCache.get(serviceName);
-      if (isCacheValid(version, metadata.getPeerClusterVersion(), minClusterSubsetSize, subsetCacahe))
+      SubsetCache subsetCache = _subsetCache.get(serviceName);
+      if (isCacheValid(version, metadata.getPeerClusterVersion(), minClusterSubsetSize, subsetCache))
       {
-        if (subsetCacahe.getWeightedSubsets().containsKey(partitionId))
+        if (subsetCache.getWeightedSubsets().containsKey(partitionId))
         {
-          return new SubsetItem(false, subsetCacahe.getWeightedSubsets().get(partitionId));
+          return new SubsetItem(false, subsetCache.getWeightedSubsets().get(partitionId));
         }
       }
 
@@ -98,9 +98,9 @@ public class SubsettingState
       {
         Set<URI> oldPotentialClients = Collections.emptySet();
 
-        if (subsetCacahe != null)
+        if (subsetCache != null)
         {
-          oldPotentialClients = subsetCacahe.getPotentialClients().getOrDefault(partitionId, Collections.emptySet());
+          oldPotentialClients = subsetCache.getPotentialClients().getOrDefault(partitionId, Collections.emptySet());
         }
 
         Map<URI, TrackerClient> subsetClients = new HashMap<>();
@@ -116,13 +116,13 @@ public class SubsettingState
           subsetClients.put(uri, client);
         }
 
-        if (subsetCacahe != null)
+        if (subsetCache != null)
         {
-          subsetCacahe.setVersion(version);
-          subsetCacahe.setPeerClusterVersion(metadata.getPeerClusterVersion());
-          subsetCacahe.setMinClusterSubsetSize(minClusterSubsetSize);
-          subsetCacahe.getPotentialClients().put(partitionId, potentialClients.keySet());
-          subsetCacahe.getWeightedSubsets().put(partitionId, subsetClients);
+          subsetCache.setVersion(version);
+          subsetCache.setPeerClusterVersion(metadata.getPeerClusterVersion());
+          subsetCache.setMinClusterSubsetSize(minClusterSubsetSize);
+          subsetCache.getPotentialClients().put(partitionId, potentialClients.keySet());
+          subsetCache.getWeightedSubsets().put(partitionId, subsetClients);
         }
         else
         {
@@ -135,7 +135,7 @@ public class SubsettingState
               minClusterSubsetSize, servicePotentialClients, serviceWeightedSubset));
         }
 
-        LOG.debug("Subsetting cache updated for service " + serviceName + ": " + subsetCacahe);
+        LOG.debug("Subset cache updated for service " + serviceName + ": " + subsetCache);
 
         return new SubsetItem(true, subsetClients);
       }
