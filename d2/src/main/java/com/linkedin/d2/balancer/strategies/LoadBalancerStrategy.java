@@ -61,6 +61,17 @@ public interface LoadBalancerStrategy
                                  int partitionId,
                                  Map<URI, TrackerClient> trackerClients);
 
+  @Nullable
+  default TrackerClient getTrackerClient(Request request,
+                                 RequestContext requestContext,
+                                 long clusterGenerationId,
+                                 int partitionId,
+                                 Map<URI, TrackerClient> trackerClients,
+                                 boolean shouldForceUpdate)
+  {
+    return getTrackerClient(request, requestContext, clusterGenerationId, partitionId, trackerClients);
+  }
+
   /**
    * Returns a ring that can be used to choose a host. The ring will contain all the
    * tracker clients passed as the argument.
@@ -78,6 +89,15 @@ public interface LoadBalancerStrategy
   Ring<URI> getRing(long clusterGenerationId,
                     int partitionId,
                     Map<URI, TrackerClient> trackerClients);
+
+  @Nonnull
+  default Ring<URI> getRing(long clusterGenerationId,
+                    int partitionId,
+                    Map<URI, TrackerClient> trackerClients,
+                    boolean shouldForceUpdate)
+  {
+    return getRing(clusterGenerationId, partitionId, trackerClients);
+  }
 
   /**
    * Return the hashFunction which will be applied on {@code Request} to find the host for routing purpose

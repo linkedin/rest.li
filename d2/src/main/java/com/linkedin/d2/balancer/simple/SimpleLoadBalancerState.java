@@ -34,7 +34,6 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategy
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.subsetting.SubsettingState;
-import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactory;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactoryImpl;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
@@ -313,9 +312,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _clusterListeners = Collections.synchronizedList(new ArrayList<>());
     if (deterministicSubsettingMetadataProvider != null)
     {
-      SubsettingStrategyFactory subsettingStrategyFactory =
-          new SubsettingStrategyFactoryImpl(deterministicSubsettingMetadataProvider, this);
-      _subsettingState = new SubsettingState(subsettingStrategyFactory, deterministicSubsettingMetadataProvider);
+      _subsettingState = new SubsettingState(new SubsettingStrategyFactoryImpl(), deterministicSubsettingMetadataProvider);
     }
     else
     {
@@ -675,20 +672,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   @Override
-  public long getPeerClusterVersion(ServiceProperties serviceProperties)
-  {
-    if (_subsettingState == null || !serviceProperties.isEnableClusterSubsetting())
-    {
-      return -1;
-    }
-    else
-    {
-      return _subsettingState.getPeerClusterVersion();
-    }
-  }
-
-  @Override
-  public Map<URI, TrackerClient> getClientsSubset(String serviceName,
+  public SubsettingState.SubsetItem getClientsSubset(String serviceName,
                                                   int minClusterSubsetSize,
                                                   int partitionId,
                                                   Map<URI, TrackerClient> potentialClients,
@@ -696,22 +680,22 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   {
     if (_subsettingState == null)
     {
-      return potentialClients;
+      return new SubsettingState.SubsetItem(false, potentialClients);
     }
     else
     {
-      Map<URI, TrackerClient> subsetClients = _subsettingState
+      SubsettingState.SubsetItem subsetItem = _subsettingState
           .getClientsSubset(serviceName, minClusterSubsetSize, partitionId, potentialClients, version, this);
 
       debug(_log, "get cluster subset for service ", serviceName, ": [",
-          subsetClients.values().stream()
+          subsetItem.getWeightedSubset().values().stream()
               .limit(LOG_SUBSET_MAX_SIZE)
               .map(client -> client.getUri() + ":" + client.getSubsetWeight(partitionId))
               .collect(Collectors.joining(",")),
-          " (total ", subsetClients.size(), ")]"
+          " (total ", subsetItem.getWeightedSubset().size(), ")], shouldForceUpdate = ", subsetItem.shouldForceUpdate()
       );
 
-      return subsetClients;
+      return subsetItem;
     }
   }
 

@@ -144,6 +144,17 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                         int partitionId,
                                         Map<URI, TrackerClient> trackerClients)
   {
+    return getTrackerClient(request, requestContext, clusterGenerationId, partitionId, trackerClients, false);
+  }
+
+  @Override
+  public TrackerClient getTrackerClient(Request request,
+                                        RequestContext requestContext,
+                                        long clusterGenerationId,
+                                        int partitionId,
+                                        Map<URI, TrackerClient> trackerClients,
+                                        boolean shouldForceUpdate)
+  {
     debug(_log,
           "getTrackerClient with generation id ",
           clusterGenerationId,
@@ -164,7 +175,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
     // only one thread will be allowed to enter updatePartitionState for any partition
     TimingContextUtil.markTiming(requestContext, TIMING_KEY);
-    checkUpdatePartitionState(clusterGenerationId, partitionId, degraderTrackerClients);
+    checkUpdatePartitionState(clusterGenerationId, partitionId, degraderTrackerClients, shouldForceUpdate);
     TimingContextUtil.markTiming(requestContext, TIMING_KEY);
 
     Ring<URI> ring =  _state.getRing(partitionId);
@@ -304,8 +315,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
    * @param clusterGenerationId
    * @param partitionId
    * @param trackerClients
+   * @param shouldForceUpdate
    */
-  private void checkUpdatePartitionState(long clusterGenerationId, int partitionId, List<DegraderTrackerClient> trackerClients)
+  private void checkUpdatePartitionState(long clusterGenerationId, int partitionId,
+      List<DegraderTrackerClient> trackerClients, boolean shouldForceUpdate)
   {
     DegraderLoadBalancerStrategyConfig config = getConfig();
     final Partition partition = _state.getPartition(partitionId);
@@ -337,7 +350,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         lock.unlock();
       }
     }
-    else if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled))
+    else if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled, shouldForceUpdate))
     {
       // threads attempt to update the state would return immediately if some thread is already in the updating process
       // NOTE: possible racing condition -- if tryLock() fails and the current updating process does not pick up the
@@ -349,7 +362,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       {
         try
         {
-          if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled))
+          if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled, shouldForceUpdate))
           {
             debug(_log, "updating for cluster generation id: ", clusterGenerationId, ", partitionId: ", partitionId);
             debug(_log, "old state was: ", partition.getState());
@@ -1026,16 +1039,18 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
    *          Current DegraderLoadBalancerStrategyConfig
    * @param updateEnabled
    *          Whether updates to the strategy state is allowed.
-   *
+   * @param shouldForceUpdate
+   *          Whether to force update
    * @return True if we should update, and false otherwise.
    */
   protected static boolean shouldUpdatePartition(long clusterGenerationId, PartitionDegraderLoadBalancerState partitionState,
-                                                 DegraderLoadBalancerStrategyConfig config, boolean updateEnabled)
+      DegraderLoadBalancerStrategyConfig config, boolean updateEnabled, boolean shouldForceUpdate)
   {
     return  updateEnabled
-        && (
+        && (shouldForceUpdate
+        || (
             !config.isUpdateOnlyAtInterval() && partitionState.getClusterGenerationId() != clusterGenerationId ||
-            config.getClock().currentTimeMillis() - partitionState.getLastUpdated() >= config.getUpdateIntervalMs());
+            config.getClock().currentTimeMillis() - partitionState.getLastUpdated() >= config.getUpdateIntervalMs()));
   }
 
   /**
@@ -1079,6 +1094,13 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   @Override
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
   {
+    return getRing(clusterGenerationId, partitionId, trackerClients, false);
+  }
+
+  @Nonnull
+  @Override
+  public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients, boolean shouldForceUpdate)
+  {
     if (trackerClients.isEmpty())
     {
       // returning empty ring (any implementation) and preventing to update the state with no trackers
@@ -1086,7 +1108,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       return new DelegatingRingFactory<URI>(_config).createRing(Collections.emptyMap(), Collections.emptyMap());
     }
 
-    checkUpdatePartitionState(clusterGenerationId, partitionId, castToDegraderTrackerClients(trackerClients));
+    checkUpdatePartitionState(clusterGenerationId, partitionId, castToDegraderTrackerClients(trackerClients), shouldForceUpdate);
     return _state.getRing(partitionId);
   }
 

@@ -48,25 +48,19 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
 
   private final long _randomSeed;
   private final int _minSubsetSize;
-  private final LoadBalancerState _state;
 
   /**
    * Builds deterministic subsetting strategy
    *
-   * @param metadataProvider  Provides peer cluster metadata information
    * @param clusterName The name of the peer cluster
    * @param minSubsetSize The minimum subset size to satisfy
    */
-  public DeterministicSubsettingStrategy(DeterministicSubsettingMetadataProvider metadataProvider,
-                                         String clusterName,
-                                         int minSubsetSize,
-                                         LoadBalancerState state)
+  public DeterministicSubsettingStrategy(String clusterName, int minSubsetSize)
   {
     MD5Hash hashFunction = new MD5Hash();
     String[] keyTokens = {clusterName};
     _randomSeed = hashFunction.hashLong(keyTokens);
     _minSubsetSize = minSubsetSize;
-    _state = state;
   }
 
   @Override
@@ -78,7 +72,13 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
       Collections.sort(points);
       Collections.shuffle(points, new Random(_randomSeed));
       List<Double> weights = points.stream().map(weightMap::get).collect(Collectors.toList());
-      Ring ring = new Ring(weights);
+      double totalWeight = weights.stream().mapToDouble(Double::doubleValue).sum();
+      if (totalWeight == 0)
+      {
+        return null;
+      }
+
+      Ring ring = new Ring(weights, totalWeight);
 
       double offset = metadata.getInstanceId() / (double) metadata.getTotalInstanceCount();
       double subsetSliceWidth = getSubsetSliceWidth(metadata.getTotalInstanceCount(), points.size());
@@ -125,11 +125,11 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
     private final List<Double> _weights;
     private final double _totalWeight;
 
-    Ring(List<Double> weights)
+    Ring(List<Double> weights, double totalWeight)
     {
       _weights = weights;
       _totalPoints = weights.size();
-      _totalWeight = weights.stream().mapToDouble(Double::doubleValue).sum();
+      _totalWeight = totalWeight;
     }
 
     /**

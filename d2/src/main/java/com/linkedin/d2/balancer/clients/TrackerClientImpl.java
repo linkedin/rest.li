@@ -205,7 +205,7 @@ public class TrackerClientImpl implements TrackerClient
   }
 
   @Override
-  public void setDoNotSlowStart(int partitionId, boolean doNotSlowStart)
+  public void setDoNotSlowStart(boolean doNotSlowStart)
   {
     _doNotSlowStart = doNotSlowStart;
   }

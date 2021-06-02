@@ -46,10 +46,9 @@ public interface TrackerClient extends LoadBalancerClient
   TransportClient getTransportClient();
 
   /**
-   * @param partitionId Partition ID key
    * @param doNotSlowStart Should the host skip performing slow start
    */
-  default void setDoNotSlowStart(int partitionId, boolean doNotSlowStart)
+  default void setDoNotSlowStart(boolean doNotSlowStart)
   {
   }
 

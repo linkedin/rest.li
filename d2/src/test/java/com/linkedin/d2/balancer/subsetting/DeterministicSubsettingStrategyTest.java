@@ -16,29 +16,20 @@
 
 package com.linkedin.d2.balancer.subsetting;
 
-import com.linkedin.d2.balancer.LoadBalancerState;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 
 public class DeterministicSubsettingStrategyTest
 {
   public static final double DELTA_DIFF = 1e-5;
-
-  @Mock
-  private DeterministicSubsettingMetadataProvider _deterministicSubsettingMetadataProvider;
-
-  @Mock
-  private LoadBalancerState _state;
 
   private DeterministicSubsettingStrategy<String> _deterministicSubsettingStrategy;
 
@@ -55,12 +46,6 @@ public class DeterministicSubsettingStrategyTest
     return pointsMap;
   }
 
-  @BeforeMethod
-  public void setUp()
-  {
-    MockitoAnnotations.initMocks(this);
-  }
-
   @Test(dataProvider = "uniformWeightData")
   public void testDistributionWithUniformWeight(int clientNum, int hostNum, int minSubsetSize)
   {
@@ -72,8 +57,7 @@ public class DeterministicSubsettingStrategyTest
 
     for (int i = 0; i < clientNum; i++)
     {
-      _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider,
-          "test", minSubsetSize, _state);
+      _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>("test", minSubsetSize);
       Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap,
           new DeterministicSubsettingMetadata(i, clientNum, 0));
       assertTrue(weightedSubset.size() >= Math.min(minSubsetSize, hostNum));
@@ -101,8 +85,7 @@ public class DeterministicSubsettingStrategyTest
 
     for (int i = 0; i < clientNum; i++)
     {
-      _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>(_deterministicSubsettingMetadataProvider,
-          "test", minSubsetSize, _state);
+      _deterministicSubsettingStrategy = new DeterministicSubsettingStrategy<>("test", minSubsetSize);
       Map<String, Double> weightedSubset = _deterministicSubsettingStrategy.getWeightedSubset(pointsMap,
           new DeterministicSubsettingMetadata(i, clientNum, 0));
       double totalWeights = 0;
@@ -131,7 +114,6 @@ public class DeterministicSubsettingStrategyTest
   {
     return new Object[][]
         {
-            {5, 0, 10},
             {1, 1, 10},
             {1, 5, 10},
             {5, 1, 10},

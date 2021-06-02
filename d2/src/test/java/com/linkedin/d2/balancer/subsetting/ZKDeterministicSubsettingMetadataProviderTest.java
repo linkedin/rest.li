@@ -64,7 +64,8 @@ public class ZKDeterministicSubsettingMetadataProviderTest
   private ZKDeterministicSubsettingMetadataProvider _metadataProvider;
 
   private static final SslSessionValidatorFactory SSL_SESSION_VALIDATOR_FACTORY =
-      validationStrings -> sslSession -> {
+      validationStrings -> sslSession ->
+      {
         if (validationStrings == null || validationStrings.isEmpty())
         {
           throw new SslSessionNotTrustedException("no validation string");
