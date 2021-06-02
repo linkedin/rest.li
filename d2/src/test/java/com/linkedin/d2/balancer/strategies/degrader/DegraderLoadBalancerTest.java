@@ -1579,7 +1579,7 @@ public class DegraderLoadBalancerTest
 
     // state is default initialized, new cluster generation
     assertTrue(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(0,
-            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true));
+            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true, false));
 
 
     PartitionDegraderLoadBalancerState current =
@@ -1606,7 +1606,7 @@ public class DegraderLoadBalancerTest
     // haven't gone by
     testClock.addMs(1);
     assertFalse(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(0,
-            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true));
+            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true, false));
 
     // generation Id for the next state is changed
     current = new PartitionDegraderLoadBalancerState(1,
@@ -1630,7 +1630,7 @@ public class DegraderLoadBalancerTest
     // state is not null, and cluster generation has changed so we will update
     testClock.addMs(1);
     assertTrue(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(0,
-            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true));
+            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true, false));
 
     // state is not null, and force 5s to go by with the same cluster generation id
     current = new PartitionDegraderLoadBalancerState(1,
@@ -1653,7 +1653,7 @@ public class DegraderLoadBalancerTest
 
     testClock.addMs(5000);
     assertTrue(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(1,
-            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true));
+            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true, false));
 
 
     current = new PartitionDegraderLoadBalancerState(1,
@@ -1677,7 +1677,7 @@ public class DegraderLoadBalancerTest
     // now try a new cluster generation id so state will be updated again
     testClock.addMs(15);
     assertTrue(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(2,
-            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true));
+            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true, false));
   }
 
   @Test(groups = { "small", "back-end" })
@@ -1698,18 +1698,18 @@ public class DegraderLoadBalancerTest
 
     // state is default initialized, new cluster generation
     assertFalse(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(0,
-            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true));
+            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true, false));
 
 
     // state is not null, but we're on the same cluster generation id, and 5 seconds
     // haven't gone by
     testClock.addMs(1);
     assertFalse(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(0,
-            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true));
+            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true, false));
 
     testClock.addMs(5000);
     assertTrue(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(1,
-            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true));
+            strategy.getState().getPartitionState(DEFAULT_PARTITION_ID), strategy.getConfig(), true, false));
 
     PartitionDegraderLoadBalancerState current =
             strategy.getState().getPartitionState(DEFAULT_PARTITION_ID);

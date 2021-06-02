@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
-import javax.annotation.concurrent.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,77 +46,46 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
   public static final int WEIGHT_DECIMAL_PLACE = 5;
   private final Logger _log = LoggerFactory.getLogger(DeterministicSubsettingStrategy.class);
 
-  private final DeterministicSubsettingMetadataProvider _metadataProvider;
   private final long _randomSeed;
   private final int _minSubsetSize;
-  private final LoadBalancerState _state;
-
-  private final Object _lock = new Object();
-
-  @GuardedBy("_lock")
-  private DeterministicSubsettingMetadata _currentMetadata;
-  @GuardedBy("_lock")
-  private long _currentVersion = -1;
-  @GuardedBy("_lock")
-  private Map<T, Double> _currentWeightedSubset;
 
   /**
    * Builds deterministic subsetting strategy
    *
-   * @param metadataProvider  Provides peer cluster metadata information
    * @param clusterName The name of the peer cluster
    * @param minSubsetSize The minimum subset size to satisfy
    */
-  public DeterministicSubsettingStrategy(DeterministicSubsettingMetadataProvider metadataProvider,
-                                         String clusterName,
-                                         int minSubsetSize,
-                                         LoadBalancerState state)
+  public DeterministicSubsettingStrategy(String clusterName, int minSubsetSize)
   {
-    _metadataProvider = metadataProvider;
     MD5Hash hashFunction = new MD5Hash();
     String[] keyTokens = {clusterName};
     _randomSeed = hashFunction.hashLong(keyTokens);
     _minSubsetSize = minSubsetSize;
-    _state = state;
   }
 
   @Override
-  public boolean isSubsetChanged(long version)
+  public Map<T, Double> getWeightedSubset(Map<T, Double> weightMap, DeterministicSubsettingMetadata metadata)
   {
-    DeterministicSubsettingMetadata metadata = _metadataProvider.getSubsettingMetadata(_state);
-    return metadata == null || !metadata.equals(_currentMetadata) || version != _currentVersion;
-  }
-
-  @Override
-  public Map<T, Double> getWeightedSubset(Map<T, Double> weightMap, long version)
-  {
-    DeterministicSubsettingMetadata metadata = _metadataProvider.getSubsettingMetadata(_state);
     if (metadata != null)
     {
-      synchronized (_lock)
+      List<T> points = new ArrayList<>(weightMap.keySet());
+      Collections.sort(points);
+      Collections.shuffle(points, new Random(_randomSeed));
+      List<Double> weights = points.stream().map(weightMap::get).collect(Collectors.toList());
+      double totalWeight = weights.stream().mapToDouble(Double::doubleValue).sum();
+      if (totalWeight == 0)
       {
-        if (metadata.equals(_currentMetadata) && version == _currentVersion)
-        {
-          return _currentWeightedSubset;
-        }
-
-        _currentVersion = version;
-        _currentMetadata = metadata;
-
-        List<T> points = new ArrayList<>(weightMap.keySet());
-        Collections.sort(points);
-        Collections.shuffle(points, new Random(_randomSeed));
-        List<Double> weights = points.stream().map(weightMap::get).collect(Collectors.toList());
-        Ring ring = new Ring(weights);
-
-        double offset = metadata.getInstanceId() / (double) metadata.getTotalInstanceCount();
-        double subsetSliceWidth = getSubsetSliceWidth(metadata.getTotalInstanceCount(), points.size());
-        List<Integer> indices = ring.getIndices(offset, subsetSliceWidth);
-
-        _currentWeightedSubset = indices.stream().collect(
-            Collectors.toMap(points::get, i -> round(ring.getWeight(i, offset, subsetSliceWidth), WEIGHT_DECIMAL_PLACE)));
+        return null;
       }
-      return _currentWeightedSubset;
+
+      Ring ring = new Ring(weights, totalWeight);
+
+      double offset = metadata.getInstanceId() / (double) metadata.getTotalInstanceCount();
+      double subsetSliceWidth = getSubsetSliceWidth(metadata.getTotalInstanceCount(), points.size());
+      List<Integer> indices = ring.getIndices(offset, subsetSliceWidth);
+
+      return indices.stream().collect(
+          Collectors.toMap(points::get, i -> round(ring.getWeight(i, offset, subsetSliceWidth), WEIGHT_DECIMAL_PLACE)));
     }
     else
     {
@@ -157,11 +125,11 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
     private final List<Double> _weights;
     private final double _totalWeight;
 
-    Ring(List<Double> weights)
+    Ring(List<Double> weights, double totalWeight)
     {
       _weights = weights;
       _totalPoints = weights.size();
-      _totalWeight = weights.stream().mapToDouble(Double::doubleValue).sum();
+      _totalWeight = totalWeight;
     }
 
     /**

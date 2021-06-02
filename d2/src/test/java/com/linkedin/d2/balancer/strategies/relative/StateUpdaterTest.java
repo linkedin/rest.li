@@ -80,7 +80,7 @@ public class StateUpdaterTest
 
     assertTrue(_stateUpdater.getPointsMap(partitionId).isEmpty(), "There should be no state before initialization");
 
-    _stateUpdater.updateState(new HashSet<>(trackerClients), partitionId, DEFAULT_CLUSTER_GENERATION_ID);
+    _stateUpdater.updateState(new HashSet<>(trackerClients), partitionId, DEFAULT_CLUSTER_GENERATION_ID, false);
 
     assertEquals(_stateUpdater.getPointsMap(partitionId).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
     assertEquals(_stateUpdater.getPointsMap(partitionId).get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
@@ -110,7 +110,7 @@ public class StateUpdaterTest
 
     assertTrue(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty(), "There should be no state before initialization");
 
-    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID);
+    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID, false);
 
     if (!doNotSlowStart)
     {
@@ -151,7 +151,8 @@ public class StateUpdaterTest
     CountDownLatch countDownLatch = new CountDownLatch(numThreads);
     Runnable runnable = () -> {
       PartitionState lastState = _stateUpdater.getPartitionState(DEFAULT_PARTITION_ID);
-      _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID);
+      _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID,
+          false);
       PartitionState currentState = _stateUpdater.getPartitionState(DEFAULT_PARTITION_ID);
       if (lastState != null)
       {
@@ -197,7 +198,7 @@ public class StateUpdaterTest
     Mockito.doAnswer(new ExecutionCountDown<>(countDownLatch)).when(_quarantineManager).updateQuarantineState(any(), any(), anyLong());
 
     // Cluster generation id changed from 0 to 1
-    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1);
+    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1, false);
     if (!countDownLatch.await(5, TimeUnit.SECONDS))
     {
       fail("cluster update failed to finish within 5 seconds");
