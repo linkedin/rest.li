@@ -26,13 +26,13 @@ public final class DeterministicSubsettingMetadata
 {
   private final int _instanceId;
   private final int _totalInstanceCount;
-  private final long _clusterGenerationId;
+  private final long _peerClusterVersion;
 
-  public DeterministicSubsettingMetadata(int instanceId, int totalInstanceCount, long clusterGenerationId)
+  public DeterministicSubsettingMetadata(int instanceId, int totalInstanceCount, long peerClusterVersion)
   {
     _instanceId = instanceId;
     _totalInstanceCount = totalInstanceCount;
-    _clusterGenerationId = clusterGenerationId;
+    _peerClusterVersion = peerClusterVersion;
   }
 
   /**
@@ -52,10 +52,10 @@ public final class DeterministicSubsettingMetadata
   }
 
   /**
-   * Get cluster generation Id
+   * Get peer cluster version
    */
-  public long getClusterGenerationId() {
-    return _clusterGenerationId;
+  public long getPeerClusterVersion() {
+    return _peerClusterVersion;
   }
 
   @Override
@@ -70,19 +70,19 @@ public final class DeterministicSubsettingMetadata
     DeterministicSubsettingMetadata that = (DeterministicSubsettingMetadata) o;
     return _instanceId == that._instanceId
         && _totalInstanceCount == that._totalInstanceCount
-        && _clusterGenerationId == that._clusterGenerationId;
+        && _peerClusterVersion == that._peerClusterVersion;
   }
 
   @Override
   public int hashCode()
   {
-    return Objects.hash(_instanceId, _totalInstanceCount, _clusterGenerationId);
+    return Objects.hash(_instanceId, _totalInstanceCount, _peerClusterVersion);
   }
 
   @Override
   public String toString()
   {
     return "DeterministicSubsettingMetadata{" + "_instanceId=" + _instanceId + ", _totalInstanceCount="
-        + _totalInstanceCount + ", _clusterGenerationId=" + _clusterGenerationId + '}';
+        + _totalInstanceCount + ", _peerClusterVersion=" + _peerClusterVersion + '}';
   }
 }

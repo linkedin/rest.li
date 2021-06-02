@@ -54,19 +54,18 @@ public class SubsettingStrategyFactoryImpl implements SubsettingStrategyFactory
       {
         return strategyMap.get(partitionId);
       }
-
-      strategyMap.computeIfAbsent(partitionId, id -> new DeterministicSubsettingStrategy<>(
-          _deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize, _state));
+      else
+      {
+        strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(
+            _deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize, _state));
+      }
     }
     else
     {
-      _subsettingStrategyMap.computeIfAbsent(serviceName, name ->
-      {
-        ConcurrentMap<Integer, SubsettingStrategy<URI>> strategyMap = new ConcurrentHashMap<>();
-        strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(
-            _deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize, _state));
-        return strategyMap;
-      });
+      ConcurrentMap<Integer, SubsettingStrategy<URI>> strategyMap = new ConcurrentHashMap<>();
+      strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(
+          _deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize, _state));
+      _subsettingStrategyMap.put(serviceName, strategyMap);
     }
     _minClusterSubsetSizeMap.put(serviceName, minClusterSubsetSize);
 

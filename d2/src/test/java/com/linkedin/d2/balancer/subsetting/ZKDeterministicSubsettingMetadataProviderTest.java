@@ -131,6 +131,7 @@ public class ZKDeterministicSubsettingMetadataProviderTest
 
     assertEquals(metadata.getInstanceId(), 2);
     assertEquals(metadata.getTotalInstanceCount(), 10);
+    assertEquals(metadata.getPeerClusterVersion(), 5);
 
     uriData.remove(URI.create("http://test0.linkedin.com:8888/test"));
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
@@ -138,6 +139,7 @@ public class ZKDeterministicSubsettingMetadataProviderTest
     metadata = _metadataProvider.getSubsettingMetadata(_state);
     assertEquals(metadata.getInstanceId(), 1);
     assertEquals(metadata.getTotalInstanceCount(), 9);
+    assertEquals(metadata.getPeerClusterVersion(), 7);
 
     uriData.remove(URI.create("http://test2.linkedin.com:8888/test"));
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));

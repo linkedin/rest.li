@@ -144,6 +144,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final boolean       _isSSLEnabled;
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
 
+  private final DeterministicSubsettingMetadataProvider _subsettingMetadataProvider;
   private final SubsettingState _subsettingState;
 
   /*
@@ -314,12 +315,13 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     {
       SubsettingStrategyFactory subsettingStrategyFactory =
           new SubsettingStrategyFactoryImpl(deterministicSubsettingMetadataProvider, this);
-      _subsettingState = new SubsettingState(subsettingStrategyFactory);
+      _subsettingState = new SubsettingState(subsettingStrategyFactory, deterministicSubsettingMetadataProvider);
     }
     else
     {
       _subsettingState = null;
     }
+    _subsettingMetadataProvider = deterministicSubsettingMetadataProvider;
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -673,9 +675,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   @Override
-  public long getPeerClusterVersion(String serviceName,
-                                    ServiceProperties serviceProperties,
-                                    int partitionId)
+  public long getPeerClusterVersion(ServiceProperties serviceProperties)
   {
     if (_subsettingState == null || !serviceProperties.isEnableClusterSubsetting())
     {
@@ -683,7 +683,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     }
     else
     {
-      return _subsettingState.getPeerClusterVersion(serviceName, serviceProperties.getMinClusterSubsetSize(), partitionId);
+      return _subsettingState.getPeerClusterVersion();
     }
   }
 
@@ -691,7 +691,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   public Map<URI, TrackerClient> getClientsSubset(String serviceName,
                                                   int minClusterSubsetSize,
                                                   int partitionId,
-                                                  Map<URI, TrackerClient> potentialClients)
+                                                  Map<URI, TrackerClient> potentialClients,
+                                                  long version)
   {
     if (_subsettingState == null)
     {
@@ -700,7 +701,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     else
     {
       Map<URI, TrackerClient> subsetClients = _subsettingState
-          .getClientsSubset(serviceName, minClusterSubsetSize, partitionId, potentialClients, _version.get());
+          .getClientsSubset(serviceName, minClusterSubsetSize, partitionId, potentialClients, version, this);
 
       debug(_log, "get cluster subset for service ", serviceName, ": [",
           subsetClients.values().stream()

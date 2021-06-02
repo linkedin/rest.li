@@ -285,7 +285,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         Ring<URI> ring = null;
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          Map<URI, TrackerClient> clients = getPotentialClients(serviceName, service, cluster, uris, pair.getScheme(), partitionId);
+          Map<URI, TrackerClient> clients = getPotentialClients(serviceName, service,
+              cluster, uris, pair.getScheme(), partitionId, uriItem.getVersion());
           ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, clients);
 
           if (!ring.isEmpty())
@@ -337,7 +338,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
           Map<URI, TrackerClient> trackerClients = getPotentialClients(serviceName, service, cluster, uris,
-              pair.getScheme(), partitionId);
+              pair.getScheme(), partitionId, uriItem.getVersion());
           Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, trackerClients);
           // ring will never be null; it can be empty
           ringMap.put(partitionId, ring);
@@ -551,7 +552,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
           Map<URI, TrackerClient> trackerClients = getPotentialClients(serviceName, service, cluster, uris,
-              pair.getScheme(), partitionId);
+              pair.getScheme(), partitionId, uriItem.getVersion());
           int size = Math.min(trackerClients.size(), limitHostPerPartition);
           List<URI> rankedUri = new ArrayList<>(size);
 
@@ -714,14 +715,15 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
                                                   ClusterProperties clusterProperties,
                                                   UriProperties uris,
                                                   String scheme,
-                                                  int partitionId)
+                                                  int partitionId,
+                                                  long version)
   {
     Set<URI> possibleUris = uris.getUriBySchemeAndPartition(scheme, partitionId);
 
     Map<URI, TrackerClient> clientsToBalance = getPotentialClients(serviceName, serviceProperties, clusterProperties, possibleUris);
     Map<URI, TrackerClient> clientsSubset = serviceProperties.isEnableClusterSubsetting() ?
         _state.getClientsSubset(serviceName, serviceProperties.getMinClusterSubsetSize(),
-            partitionId, clientsToBalance) : clientsToBalance;
+            partitionId, clientsToBalance, version) : clientsToBalance;
 
     if (clientsSubset.isEmpty())
     {
@@ -840,10 +842,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       String scheme = pair.getScheme();
 
 
-      clientsToLoadBalance = getPotentialClients(serviceName, serviceProperties, cluster, uris, scheme, partitionId);
+      clientsToLoadBalance = getPotentialClients(serviceName, serviceProperties, cluster,
+          uris, scheme, partitionId, uriItem.getVersion());
 
-      long clusterGenerationId = Math.max(_state.getPeerClusterVersion(serviceName, serviceProperties, partitionId),
-          uriItem.getVersion());
+      long clusterGenerationId = Math.max(_state.getPeerClusterVersion(serviceProperties), uriItem.getVersion());
 
       trackerClient =
           strategy.getTrackerClient(request, requestContext, clusterGenerationId, partitionId, clientsToLoadBalance);

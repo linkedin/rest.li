@@ -46,7 +46,7 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
   private final Object _lock = new Object();
 
   @GuardedBy("_lock")
-  private long _clusterGenerationId = -1;
+  private long _peerCluserVersion = -1;
   @GuardedBy("_lock")
   private DeterministicSubsettingMetadata _subsettingMetadata;
 
@@ -72,9 +72,9 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
 
       synchronized (_lock)
       {
-        if (uriItem.getVersion() != _clusterGenerationId)
+        if (uriItem.getVersion() != _peerCluserVersion)
         {
-          _clusterGenerationId = uriItem.getVersion();
+          _peerCluserVersion = uriItem.getVersion();
           UriProperties uriProperties = uriItem.getProperty();
           if (uriProperties != null)
           {
@@ -89,7 +89,7 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
 
             if (instanceId >= 0)
             {
-              _subsettingMetadata = new DeterministicSubsettingMetadata(instanceId, sortedHosts.size(), uriItem.getVersion());
+              _subsettingMetadata = new DeterministicSubsettingMetadata(instanceId, sortedHosts.size(), _peerCluserVersion);
             }
             else
             {

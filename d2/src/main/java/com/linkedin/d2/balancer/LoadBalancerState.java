@@ -91,9 +91,7 @@ public interface LoadBalancerState
   List<SchemeStrategyPair> getStrategiesForService(String serviceName,
                                                     List<String> prioritizedSchemes);
 
-  default long getPeerClusterVersion(String serviceName,
-                                     ServiceProperties serviceProperties,
-                                     int partitionId)
+  default long getPeerClusterVersion(ServiceProperties serviceProperties)
   {
     return -1;
   }
@@ -101,7 +99,8 @@ public interface LoadBalancerState
   default Map<URI, TrackerClient> getClientsSubset(String serviceName,
                                                    int minClusterSubsetSize,
                                                    int partitionId,
-                                                   Map<URI, TrackerClient> potentialClients)
+                                                   Map<URI, TrackerClient> potentialClients,
+                                                   long version)
   {
     return potentialClients;
   }

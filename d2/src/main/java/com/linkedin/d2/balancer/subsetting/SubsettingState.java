@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.subsetting;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,7 +36,9 @@ public class SubsettingState
 {
   private static final Logger LOG = LoggerFactory.getLogger(SubsettingState.class);
   private final Object _lock = new Object();
+
   private final SubsettingStrategyFactory _subsettingStrategyFactory;
+  private final DeterministicSubsettingMetadataProvider _subsettingMetadataProvider;
 
   /**
    * Map from serviceName => Partition Id => subset map
@@ -53,40 +56,30 @@ public class SubsettingState
   private final Map<String, Integer> _minClusterSubsetSizeMap;
 
   @GuardedBy("_lock")
-  private long _version;
+  private final Map<String, Long> _versionMap;
 
   @GuardedBy("_lock")
   private long _peerClusterVersion;
 
-  public SubsettingState(SubsettingStrategyFactory subsettingStrategyFactory)
+  public SubsettingState(SubsettingStrategyFactory subsettingStrategyFactory,
+      DeterministicSubsettingMetadataProvider subsettingMetadataProvider)
   {
-    _version = -1;
     _peerClusterVersion = -1;
+    _subsettingMetadataProvider = subsettingMetadataProvider;
+
     _subsettingStrategyFactory = subsettingStrategyFactory;
     _weightedSubsetsCache = new HashMap<>();
     _potentialClientsMap = new HashMap<>();
     _minClusterSubsetSizeMap = new HashMap<>();
-  }
-
-  public long getPeerClusterVersion(String serviceName,
-      int minClusterSubsetSize,
-      int partitionId)
-  {
-    SubsettingStrategy<URI> subsettingStrategy = _subsettingStrategyFactory.get(serviceName, minClusterSubsetSize, partitionId);
-
-    if (subsettingStrategy == null)
-    {
-      return -1;
-    }
-
-    return subsettingStrategy.getPeerClusterVersion();
+    _versionMap = new HashMap<>();
   }
 
   public Map<URI, TrackerClient> getClientsSubset(String serviceName,
       int minClusterSubsetSize,
       int partitionId,
       Map<URI, TrackerClient> potentialClients,
-      long version)
+      long version,
+      SimpleLoadBalancerState state)
   {
     SubsettingStrategy<URI> subsettingStrategy = _subsettingStrategyFactory.get(serviceName, minClusterSubsetSize, partitionId);
 
@@ -95,11 +88,16 @@ public class SubsettingState
       return potentialClients;
     }
 
-    long peerClusterVersion = subsettingStrategy.getPeerClusterVersion();
+    DeterministicSubsettingMetadata metadata = _subsettingMetadataProvider.getSubsettingMetadata(state);
+
+    if (metadata == null)
+    {
+      return potentialClients;
+    }
 
     synchronized (_lock)
     {
-      if (isCacheValid(version, peerClusterVersion, minClusterSubsetSize, serviceName))
+      if (isCacheValid(version, metadata.getPeerClusterVersion(), minClusterSubsetSize, serviceName))
       {
         Map<Integer, Map<URI, TrackerClient>> serviceCache = _weightedSubsetsCache.get(serviceName);
         if (serviceCache != null && serviceCache.containsKey(partitionId))
@@ -108,11 +106,16 @@ public class SubsettingState
         }
       }
 
-      LOG.debug("Calculate subset for version: " + _version + ", peerClusterVersion: " + _peerClusterVersion);
+      if (metadata.getPeerClusterVersion() != _peerClusterVersion)
+      {
+        _weightedSubsetsCache.clear();
+      }
+
+      LOG.debug("Calculate subset for version: " + _versionMap.get(serviceName) + ", peerClusterVersion: " + _peerClusterVersion);
 
       Map<URI, Double> weightMap = potentialClients.entrySet().stream()
           .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPartitionWeight(partitionId)));
-      Map<URI, Double> subsetMap = subsettingStrategy.getWeightedSubset(weightMap);
+      Map<URI, Double> subsetMap = subsettingStrategy.getWeightedSubset(weightMap, metadata);
 
       if (subsetMap == null)
       {
@@ -147,8 +150,8 @@ public class SubsettingState
         Map<Integer, Set<URI>> servicePotentialClients = _potentialClientsMap.computeIfAbsent(serviceName, k -> new HashMap<>());
         servicePotentialClients.put(partitionId, potentialClients.keySet());
 
-        _version = version;
-        _peerClusterVersion = peerClusterVersion;
+        _versionMap.put(serviceName, version);
+        _peerClusterVersion = metadata.getPeerClusterVersion();
         _minClusterSubsetSizeMap.put(serviceName, minClusterSubsetSize);
         return subsetClients;
       }
@@ -157,8 +160,13 @@ public class SubsettingState
 
   private boolean isCacheValid(long version, long peerClusterVersion, int minClusterSubsetSize, String serviceName)
   {
-    return version == _version &&
+    return version == _versionMap.get(serviceName) &&
         peerClusterVersion == _peerClusterVersion &&
         minClusterSubsetSize == _minClusterSubsetSizeMap.getOrDefault(serviceName, -1);
+  }
+
+  public long getPeerClusterVersion()
+  {
+    return _peerClusterVersion;
   }
 }

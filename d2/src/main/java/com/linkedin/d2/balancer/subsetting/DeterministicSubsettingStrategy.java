@@ -46,7 +46,6 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
   public static final int WEIGHT_DECIMAL_PLACE = 5;
   private final Logger _log = LoggerFactory.getLogger(DeterministicSubsettingStrategy.class);
 
-  private final DeterministicSubsettingMetadataProvider _metadataProvider;
   private final long _randomSeed;
   private final int _minSubsetSize;
   private final LoadBalancerState _state;
@@ -63,7 +62,6 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
                                          int minSubsetSize,
                                          LoadBalancerState state)
   {
-    _metadataProvider = metadataProvider;
     MD5Hash hashFunction = new MD5Hash();
     String[] keyTokens = {clusterName};
     _randomSeed = hashFunction.hashLong(keyTokens);
@@ -72,17 +70,8 @@ public class DeterministicSubsettingStrategy<T extends Comparable<T>> implements
   }
 
   @Override
-  public long getPeerClusterVersion()
+  public Map<T, Double> getWeightedSubset(Map<T, Double> weightMap, DeterministicSubsettingMetadata metadata)
   {
-    DeterministicSubsettingMetadata metadata = _metadataProvider.getSubsettingMetadata(_state);
-
-    return metadata.getClusterGenerationId();
-  }
-
-  @Override
-  public Map<T, Double> getWeightedSubset(Map<T, Double> weightMap)
-  {
-    DeterministicSubsettingMetadata metadata = _metadataProvider.getSubsettingMetadata(_state);
     if (metadata != null)
     {
       List<T> points = new ArrayList<>(weightMap.keySet());
