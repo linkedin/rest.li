@@ -80,7 +80,7 @@ public class StateUpdaterTest
 
     assertTrue(_stateUpdater.getPointsMap(partitionId).isEmpty(), "There should be no state before initialization");
 
-    _stateUpdater.updateState(new HashSet<>(trackerClients), partitionId, DEFAULT_CLUSTER_GENERATION_ID);
+    _stateUpdater.updateState(new HashSet<>(trackerClients), partitionId, DEFAULT_CLUSTER_GENERATION_ID, false);
 
     assertEquals(_stateUpdater.getPointsMap(partitionId).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
     assertEquals(_stateUpdater.getPointsMap(partitionId).get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
@@ -110,7 +110,7 @@ public class StateUpdaterTest
 
     assertTrue(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty(), "There should be no state before initialization");
 
-    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID);
+    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID, false);
 
     if (!doNotSlowStart)
     {
@@ -151,7 +151,8 @@ public class StateUpdaterTest
     CountDownLatch countDownLatch = new CountDownLatch(numThreads);
     Runnable runnable = () -> {
       PartitionState lastState = _stateUpdater.getPartitionState(DEFAULT_PARTITION_ID);
-      _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID);
+      _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID,
+          false);
       PartitionState currentState = _stateUpdater.getPartitionState(DEFAULT_PARTITION_ID);
       if (lastState != null)
       {
@@ -197,7 +198,40 @@ public class StateUpdaterTest
     Mockito.doAnswer(new ExecutionCountDown<>(countDownLatch)).when(_quarantineManager).updateQuarantineState(any(), any(), anyLong());
 
     // Cluster generation id changed from 0 to 1
-    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1);
+    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1, false);
+    if (!countDownLatch.await(5, TimeUnit.SECONDS))
+    {
+      fail("cluster update failed to finish within 5 seconds");
+    }
+
+    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).size(), 2);
+    executorService.shutdown();
+  }
+
+  @Test(retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
+  public void testForceUpdate() throws InterruptedException
+  {
+    PartitionState state = new PartitionStateTestDataBuilder()
+        .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
+        .build();
+
+    List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0));
+
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
+    ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    D2RelativeStrategyProperties relativeStrategyProperties = RelativeLoadBalancerStrategyFactory.putDefaultValues(new D2RelativeStrategyProperties());
+    _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, executorService,
+        partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME);
+
+    // update will be scheduled three times, once from interval update, once from cluster change, once from force update
+    CountDownLatch countDownLatch = new CountDownLatch(3);
+    Mockito.doAnswer(new ExecutionCountDown<>(countDownLatch)).when(_quarantineManager).updateQuarantineState(any(), any(), anyLong());
+
+    // Cluster generation id changed from 0 to 1
+    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1, false);
+    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1, true);
     if (!countDownLatch.await(5, TimeUnit.SECONDS))
     {
       fail("cluster update failed to finish within 5 seconds");

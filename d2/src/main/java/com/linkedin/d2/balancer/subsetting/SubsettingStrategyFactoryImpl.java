@@ -26,15 +26,12 @@ import java.util.concurrent.ConcurrentMap;
 public class SubsettingStrategyFactoryImpl implements SubsettingStrategyFactory
 {
   private final ConcurrentMap<String, ConcurrentMap<Integer, SubsettingStrategy<URI>>> _subsettingStrategyMap;
-  private final DeterministicSubsettingMetadataProvider _deterministicSubsettingMetadataProvider;
-  private final LoadBalancerState _state;
+  private final ConcurrentMap<String, Integer> _minClusterSubsetSizeMap;
 
-  public SubsettingStrategyFactoryImpl(DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
-      LoadBalancerState state)
+  public SubsettingStrategyFactoryImpl()
   {
     _subsettingStrategyMap = new ConcurrentHashMap<>();
-    _deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
-    _state = state;
+    _minClusterSubsetSizeMap = new ConcurrentHashMap<>();
   }
 
   @Override
@@ -48,24 +45,22 @@ public class SubsettingStrategyFactoryImpl implements SubsettingStrategyFactory
     if (_subsettingStrategyMap.containsKey(serviceName))
     {
       Map<Integer, SubsettingStrategy<URI>> strategyMap = _subsettingStrategyMap.get(serviceName);
-      if (strategyMap.containsKey(partitionId))
+      if (minClusterSubsetSize == _minClusterSubsetSizeMap.get(serviceName) && strategyMap.containsKey(partitionId))
       {
         return strategyMap.get(partitionId);
       }
-
-      strategyMap.computeIfAbsent(partitionId, id -> new DeterministicSubsettingStrategy<>(
-          _deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize, _state));
+      else
+      {
+        strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(serviceName, minClusterSubsetSize));
+      }
     }
     else
     {
-      _subsettingStrategyMap.computeIfAbsent(serviceName, name ->
-      {
-        ConcurrentMap<Integer, SubsettingStrategy<URI>> strategyMap = new ConcurrentHashMap<>();
-        strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(
-            _deterministicSubsettingMetadataProvider, serviceName, minClusterSubsetSize, _state));
-        return strategyMap;
-      });
+      ConcurrentMap<Integer, SubsettingStrategy<URI>> strategyMap = new ConcurrentHashMap<>();
+      strategyMap.put(partitionId, new DeterministicSubsettingStrategy<>(serviceName, minClusterSubsetSize));
+      _subsettingStrategyMap.put(serviceName, strategyMap);
     }
+    _minClusterSubsetSizeMap.put(serviceName, minClusterSubsetSize);
 
     return _subsettingStrategyMap.get(serviceName).get(partitionId);
   }

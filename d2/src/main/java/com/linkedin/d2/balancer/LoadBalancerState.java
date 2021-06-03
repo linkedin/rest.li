@@ -23,6 +23,7 @@ import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.subsetting.SubsettingState;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
@@ -91,12 +92,13 @@ public interface LoadBalancerState
   List<SchemeStrategyPair> getStrategiesForService(String serviceName,
                                                     List<String> prioritizedSchemes);
 
-  default Map<URI, TrackerClient> getClientsSubset(String serviceName,
+  default SubsettingState.SubsetItem getClientsSubset(String serviceName,
                                                    int minClusterSubsetSize,
                                                    int partitionId,
-                                                   Map<URI, TrackerClient> potentialClients)
+                                                   Map<URI, TrackerClient> potentialClients,
+                                                   long version)
   {
-    return potentialClients;
+    return new SubsettingState.SubsetItem(false, potentialClients);
   }
 
   /**

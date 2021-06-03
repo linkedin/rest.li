@@ -29,16 +29,11 @@ public interface SubsettingStrategy<T>
   int DEFAULT_CLUSTER_SUBSET_SIZE = -1;
 
   /**
-   * Checks whether the subset is changed given the version number
-   */
-  boolean isSubsetChanged(long version);
-
-  /**
    * Picks a subset from a collection of items
    *
    * @param weightMap Maps each item to its weight on a scale of 0.0 to 1.0.
-   * @param version The version of the weightMap. Subsequent calls with the same version number will return the cached subset.
+   * @param metadata The metadata of peer cluster.
    * @return A subset that maps each item to its weight on a scale of 0.0 to 1.0.
    */
-  Map<T, Double> getWeightedSubset(Map<T, Double> weightMap, long version);
+  Map<T, Double> getWeightedSubset(Map<T, Double> weightMap, DeterministicSubsettingMetadata metadata);
 }
