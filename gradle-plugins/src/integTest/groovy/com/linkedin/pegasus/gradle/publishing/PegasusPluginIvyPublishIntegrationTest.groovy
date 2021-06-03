@@ -18,9 +18,11 @@ package com.linkedin.pegasus.gradle.publishing
 
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
+import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.util.zip.ZipFile
 
@@ -60,8 +62,11 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
    *
    * <p>Gradle Module Metadata is not published or consumed.
    */
-  def 'publishes and consumes dataTemplate configuration without Gradle Module Metadata'() {
+  @Unroll
+  def "publishes and consumes dataTemplate configuration without Gradle Module Metadata with Gradle #gradleVersion"() {
     given:
+    def isAtLeastGradle7 = GradleVersion.version(gradleVersion) >= GradleVersion.version("7.0")
+
     def gradlePropertiesFile = grandparentProject.newFile('gradle.properties')
     gradlePropertiesFile << '''
     |group=com.linkedin.pegasus-grandparent-demo
@@ -115,7 +120,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
     when:
     def grandparentRunner = GradleRunner.create()
         .withProjectDir(grandparentProject.root)
-        .withGradleVersion('6.1')
+        .withGradleVersion(gradleVersion)
         .withPluginClasspath()
         .withArguments('publish', '-is')
         //.forwardOutput()
@@ -130,7 +135,8 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
     def grandparentProjectIvyDescriptor = new File(localIvyRepo.path, 'com.linkedin.pegasus-grandparent-demo/grandparent/1.0.0/ivy-1.0.0.xml')
     grandparentProjectIvyDescriptor.exists()
     def grandparentProjectIvyDescriptorContents = grandparentProjectIvyDescriptor.text
-    def expectedGrandparentContents = new File(Thread.currentThread().contextClassLoader.getResource('ivy/modern/expectedGrandparentIvyDescriptorContents.txt').toURI()).text
+    def expectedGrandparentContents = new File(Thread.currentThread().contextClassLoader
+        .getResource("ivy/modern/${isAtLeastGradle7 ? 'gradle7/' : ''}expectedGrandparentIvyDescriptorContents.txt").toURI()).text
     grandparentProjectIvyDescriptorContents.contains expectedGrandparentContents
 
     def grandparentProjectPrimaryArtifact = new File(localIvyRepo.path, 'com.linkedin.pegasus-grandparent-demo/grandparent/1.0.0/grandparent-1.0.0.jar')
@@ -201,7 +207,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
 
     def parentRunner = GradleRunner.create()
         .withProjectDir(parentProject.root)
-        .withGradleVersion('6.1')
+        .withGradleVersion(gradleVersion)
         .withPluginClasspath()
         .withArguments('publish', '-is')
         //.forwardOutput()
@@ -216,7 +222,8 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
     def parentProjectIvyDescriptor = new File(localIvyRepo.path, 'com.linkedin.pegasus-parent-demo/parent/1.0.0/ivy-1.0.0.xml')
     parentProjectIvyDescriptor.exists()
     def parentProjectIvyDescriptorContents = parentProjectIvyDescriptor.text
-    def expectedParentContents = new File(Thread.currentThread().contextClassLoader.getResource('ivy/modern/expectedParentIvyDescriptorContents.txt').toURI()).text
+    def expectedParentContents = new File(Thread.currentThread().contextClassLoader
+        .getResource("ivy/modern/${isAtLeastGradle7 ? 'gradle7/' : ''}expectedParentIvyDescriptorContents.txt").toURI()).text
     parentProjectIvyDescriptorContents.contains expectedParentContents
 
     def parentProjectPrimaryArtifact = new File(localIvyRepo.path, 'com.linkedin.pegasus-parent-demo/parent/1.0.0/parent-1.0.0.jar')
@@ -298,7 +305,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
 
     def childRunner = GradleRunner.create()
         .withProjectDir(childProject.root)
-        .withGradleVersion('6.1')
+        .withGradleVersion(gradleVersion)
         .withPluginClasspath()
         .withArguments('publish', '-is')
         //.forwardOutput()
@@ -313,7 +320,8 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
     def childProjectIvyDescriptor = new File(localIvyRepo.path, 'com.linkedin.pegasus-child-demo/child/1.0.0/ivy-1.0.0.xml')
     childProjectIvyDescriptor.exists()
     def childProjectIvyDescriptorContents = childProjectIvyDescriptor.text
-    def expectedChildContents = new File(Thread.currentThread().contextClassLoader.getResource('ivy/modern/expectedChildIvyDescriptorContents.txt').toURI()).text
+    def expectedChildContents = new File(Thread.currentThread().contextClassLoader
+        .getResource("ivy/modern/${isAtLeastGradle7 ? 'gradle7/' : ''}expectedChildIvyDescriptorContents.txt").toURI()).text
     childProjectIvyDescriptorContents.contains expectedChildContents
 
     def childProjectPrimaryArtifact = new File(localIvyRepo.path, 'com.linkedin.pegasus-child-demo/child/1.0.0/child-1.0.0.jar')
@@ -324,6 +332,9 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
 
     assertZipContains(childProjectDataTemplateArtifact, 'com/linkedin/child/Photo.class')
     assertZipContains(childProjectDataTemplateArtifact, 'pegasus/com/linkedin/child/Photo.pdl')
+
+    where:
+    gradleVersion << [ '6.1', '6.9', '7.0.2' ]
   }
 
   def 'ivy-publish fails gracefully with Gradle 5.2.1'() {

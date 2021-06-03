@@ -5,6 +5,7 @@ import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static org.gradle.testkit.runner.TaskOutcome.*
 
@@ -12,9 +13,11 @@ class PegasusPluginCacheabilityTest extends Specification {
   @Rule
   TemporaryFolder tempDir = new TemporaryFolder()
 
-  def 'mainDataTemplateJar tasks are up-to-date'() {
+  @Unroll
+  def "mainDataTemplateJar tasks are up-to-date with Gradle #gradleVersion"() {
     setup:
     def runner = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
         .withProjectDir(tempDir.root)
         .withPluginClasspath()
         .withArguments('mainDataTemplateJar')
@@ -64,7 +67,7 @@ class PegasusPluginCacheabilityTest extends Specification {
     result.task(':mainDestroyStaleFiles').outcome == SKIPPED
     result.task(':mainCopyPdscSchemas').outcome == SKIPPED
     result.task(':mainCopySchemas').outcome == SUCCESS
-    result.task(':processMainGeneratedDataTemplateResources').outcome == NO_SOURCE
+    result.task(':processMainGeneratedDataTemplateResources').outcome == SUCCESS
     result.task(':mainGeneratedDataTemplateClasses').outcome ==  SUCCESS
     result.task(':mainTranslateSchemas').outcome == SUCCESS
     result.task(':mainDataTemplateJar').outcome == SUCCESS
@@ -83,7 +86,7 @@ class PegasusPluginCacheabilityTest extends Specification {
     result.task(':mainDestroyStaleFiles').outcome == SKIPPED
     result.task(':mainCopyPdscSchemas').outcome == SKIPPED
     result.task(':mainCopySchemas').outcome == UP_TO_DATE
-    result.task(':processMainGeneratedDataTemplateResources').outcome == NO_SOURCE
+    result.task(':processMainGeneratedDataTemplateResources').outcome == UP_TO_DATE
     result.task(':mainGeneratedDataTemplateClasses').outcome == UP_TO_DATE
     result.task(':mainTranslateSchemas').outcome == UP_TO_DATE
     result.task(':mainDataTemplateJar').outcome == UP_TO_DATE
@@ -91,5 +94,8 @@ class PegasusPluginCacheabilityTest extends Specification {
     // Validate compiled and prepared schemas exist
     compiledSchema.exists()
     preparedSchema.exists()
+
+    where:
+    gradleVersion << [ '4.0', '5.2.1', '5.6.4', '6.9', '7.0.2' ]
   }
 }
