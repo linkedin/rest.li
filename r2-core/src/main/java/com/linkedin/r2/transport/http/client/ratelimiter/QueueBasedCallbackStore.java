@@ -19,6 +19,7 @@ package com.linkedin.r2.transport.http.client.ratelimiter;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.util.ArgumentUtil;
+import java.util.NoSuchElementException;
 import java.util.Queue;
 
 
@@ -40,8 +41,8 @@ public class QueueBasedCallbackStore implements CallbackStore
     _queue.offer(callback);
   }
 
-  public Callback<None> get()
+  public Callback<None> get() throws NoSuchElementException
   {
-    return _queue.poll();
+    return _queue.remove();
   }
 }

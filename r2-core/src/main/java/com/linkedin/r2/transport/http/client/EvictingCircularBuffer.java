@@ -27,7 +27,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -45,7 +44,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * This class is thread-safe, achieving performance through granular locking of each element of the underlying circular buffer.
  */
-@SuppressWarnings("serial")
 public class EvictingCircularBuffer implements CallbackStore
 {
   private Duration _ttl;
@@ -56,13 +54,13 @@ public class EvictingCircularBuffer implements CallbackStore
   private final AtomicInteger _writerPosition = new AtomicInteger();
   private final Clock _clock;
 
-
-  public EvictingCircularBuffer(int capacity, int ttl, ChronoUnit ttlUnit)
-  {
-    this(capacity, ttl, ttlUnit, SystemClock.instance());
-  }
-
-  EvictingCircularBuffer(int capacity, int ttl, ChronoUnit ttlUnit, Clock clock)
+  /**
+   * @param capacity initial value for the maximum number of Callbacks storable by this buffer
+   * @param ttl Amount of time a callback is eligible for being returned after being stored
+   * @param ttlUnit Unit of time for ttl value
+   * @param clock Clock instance used for calculating ttl expiry
+   */
+  public EvictingCircularBuffer(int capacity, int ttl, ChronoUnit ttlUnit, Clock clock)
   {
     setCapacity(capacity);
     setTtl(ttl, ttlUnit);
@@ -85,7 +83,9 @@ public class EvictingCircularBuffer implements CallbackStore
     {
       _callbacks.set(writerPosition, toAdd);
       _ttlBuffer.set(writerPosition, Instant.ofEpochMilli(_clock.currentTimeMillis()));
-    } finally {
+    }
+    finally
+    {
       thisLock.writeLock().unlock();
     }
   }
@@ -101,54 +101,53 @@ public class EvictingCircularBuffer implements CallbackStore
    * @return Callback
    * @throws NoSuchElementException if internal circular buffer is empty
    */
-  public Callback<None> get()
+  public Callback<None> get() throws NoSuchElementException
   {
-    int thisReaderPosition = getAndBumpReaderPosition();
-    ReentrantReadWriteLock thisLock = _elementLocks.get(thisReaderPosition);
-
-    thisLock.readLock().lock();
-    Callback<None> callback;
-    Instant ttl;
-    try {
-      callback = _callbacks.get(thisReaderPosition);
-      ttl = _ttlBuffer.get(thisReaderPosition);
-    }
-    finally
+    int getAttemptIteration = 0;
+    while (getAttemptIteration++ <= getCapacity())
     {
-      thisLock.readLock().unlock();
-    }
-
-    if (callback == null)
-    {
-      if (thisReaderPosition == 0)
+      int thisReaderPosition = getAndBumpReaderPosition();
+      ReentrantReadWriteLock thisLock = _elementLocks.get(thisReaderPosition);
+      thisLock.readLock().lock();
+      Callback<None> callback;
+      Instant ttl;
+      try
       {
-        throw new NoSuchElementException("Buffer is empty");
+        callback = _callbacks.get(thisReaderPosition);
+        ttl = _ttlBuffer.get(thisReaderPosition);
       }
-      else
+      finally
       {
-        return get();
+        thisLock.readLock().unlock();
       }
-    }
-    else if (Duration.between(ttl, Instant.ofEpochMilli(_clock.currentTimeMillis())).compareTo(_ttl) > 0)
-    {
-      if (thisReaderPosition != 0 || this.size() == 1)
+
+      if (callback != null)
       {
-        thisLock.writeLock().lock();
-        try {
-          if (callback == _callbacks.get(thisReaderPosition))
+        // check for expired ttl
+        if (Duration.between(ttl, Instant.ofEpochMilli(_clock.currentTimeMillis())).compareTo(_ttl) > 0)
+        {
+          thisLock.writeLock().lock();
+          try
           {
-            _callbacks.set(thisReaderPosition, null);
-            _ttlBuffer.set(thisReaderPosition, null);
+            // after acquiring write lock at reader position, ensure the data at reader position is the same as when we read it
+            if (callback == _callbacks.get(thisReaderPosition))
+            {
+              _callbacks.set(thisReaderPosition, null);
+              _ttlBuffer.set(thisReaderPosition, null);
+            }
+          }
+          finally
+          {
+            thisLock.writeLock().unlock();
           }
         }
-        finally
+        else
         {
-          thisLock.writeLock().unlock();
+          return callback;
         }
       }
-      return get();
     }
-    return callback;
+    throw new NoSuchElementException("buffer is empty");
   }
 
   /**
@@ -236,10 +235,5 @@ public class EvictingCircularBuffer implements CallbackStore
   private int getAndBumpReaderPosition()
   {
     return (_readerPosition.getAndUpdate(x -> (x + 1) % _callbacks.size()));
-  }
-
-  private int size()
-  {
-    return (int) _callbacks.stream().filter(Objects::nonNull).count();
   }
 }

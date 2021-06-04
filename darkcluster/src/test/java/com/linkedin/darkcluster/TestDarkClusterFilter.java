@@ -18,6 +18,7 @@ package com.linkedin.darkcluster;
 
 import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
 import com.linkedin.r2.transport.http.client.EvictingCircularBuffer;
+import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
@@ -70,8 +71,9 @@ public class TestDarkClusterFilter
   private ExecutorService _executorService = Executors.newSingleThreadExecutor();
   private DarkClusterVerifier _darkClusterVerifier = new NoOpDarkClusterVerifier();
   private DarkClusterVerifierManager _verifierManager = new DarkClusterVerifierManagerImpl(_darkClusterVerifier, _executorService);
+  Clock clock = SystemClock.instance();
   private ConstantQpsRateLimiter _rateLimiter = new ConstantQpsRateLimiter(
-      _scheduledExecutorService, _executorService, SystemClock.instance(), new EvictingCircularBuffer(1, 1, ChronoUnit.SECONDS));
+      _scheduledExecutorService, _executorService, clock, new EvictingCircularBuffer(1, 1, ChronoUnit.SECONDS, clock));
   private Random _random = new Random();
   private DarkClusterFilter _darkClusterFilter;
   private DarkClusterStrategyFactory _darkClusterStrategyFactory;

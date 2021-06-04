@@ -21,6 +21,7 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SettableClock;
+import com.linkedin.util.clock.SystemClock;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
@@ -42,7 +43,7 @@ public class TestEvictingCircularBuffer
   @Test(timeOut = TEST_TIMEOUT)
   public void testGettersAfterInstantiateSimple()
   {
-    EvictingCircularBuffer buffer = new EvictingCircularBuffer(TEST_CAPACITY, TEST_TTL, TEST_TTL_UNIT);
+    EvictingCircularBuffer buffer = new EvictingCircularBuffer(TEST_CAPACITY, TEST_TTL, TEST_TTL_UNIT, SystemClock.instance());
     Assert.assertEquals(buffer.getCapacity(), TEST_CAPACITY);
     Assert.assertEquals(buffer.getTtl().getSeconds(), TEST_TTL);
   }

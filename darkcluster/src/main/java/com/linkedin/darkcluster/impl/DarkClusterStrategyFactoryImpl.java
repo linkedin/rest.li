@@ -137,7 +137,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
       DarkClusterStrategyNameArray strategyList = darkClusterConfig.getDarkClusterStrategyPrioritizedList();
       for (com.linkedin.d2.DarkClusterStrategyName darkClusterStrategyName : strategyList)
       {
-        switch(darkClusterStrategyName) {
+        switch(darkClusterStrategyName)
+        {
           case RELATIVE_TRAFFIC:
             if (RelativeTrafficMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig))
             {
@@ -159,7 +160,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
             }
             break;
           case CONSTANT_QPS:
-            if (_rateLimiter == null) {
+            if (_rateLimiter == null)
+            {
               LOG.error("Dark Cluster {} configured to use CONSTANT_QPS strategy, but no rate limiter provided during instantiation. "
                   + "No Dark Cluster strategy will be used!", darkClusterName);
               break;
@@ -199,7 +201,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
         _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName, new Callback<DarkClusterConfigMap>()
         {
           @Override
-          public void onError(Throwable e) {
+          public void onError(Throwable e)
+          {
             _notifier.notify(() -> new RuntimeException("PEGA_0019 unable to refresh DarkClusterConfigMap for source cluster: "
                     + _sourceClusterName, e));
           }

@@ -124,17 +124,21 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
    */
   private float getSendRate()
   {
-    try {
+    try
+    {
       // Only support https for now. http support can be added later if truly needed, but would be non-ideal
       // because potentially both dark and source would have to be configured.
       int numDarkClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_darkClusterName);
       int numSourceClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_originalClusterName);
-      if (numSourceClusterInstances != 0) {
+      if (numSourceClusterInstances != 0)
+      {
         return (float) (numDarkClusterInstances * _darkClusterPerHostQps) / numSourceClusterInstances;
       }
 
       return 0F;
-    } catch (ServiceUnavailableException e) {
+    }
+    catch (ServiceUnavailableException e)
+    {
       _notifier.notify(() -> new RuntimeException(
           "PEGA_0020 unable to compute strategy for source cluster: " + _originalClusterName + ", darkClusterName: " + _darkClusterName, e));
       // safe thing is to return 0 so dark traffic isn't sent.
@@ -154,7 +158,8 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
     _rateLimiter.submit(new Callback<None>()
     {
       @Override
-      public void onError(Throwable e) {
+      public void onError(Throwable e)
+      {
         //
       }
 
