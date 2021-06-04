@@ -20,7 +20,6 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.ratelimiter.CallbackStore;
 import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
