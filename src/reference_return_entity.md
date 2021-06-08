@@ -140,7 +140,7 @@ public CreateKVResponse<Long, Greeting> create(Greeting entity)
 {
     
     final ResourceContext resourceContext = getContext();
-    if (resourceContext.shouldReturnEntity())
+    if (resourceContext.isReturnEntityRequested())
     {
         // make upstream call..
         Long id = _upstream.getId(entity);
