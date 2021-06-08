@@ -26,7 +26,7 @@ The following diagram shows the layers involved in the R2 system. Each layer wil
 
 ## Requests and Responses
 
-In this section, we describe messages in the R2 system. The message hierarchy has ben designed to make it possible to add and work with broader message abstractions when appropriate. Originally, REST was the basic type of message in R2, but with the addition of R2 Streaming, STREAM became the most basic type of messages in R2, with REST built on top of STREAM. Because REST is the most common use case, we will stick to describing the REST model here, and leave STREAM as a separate doc.
+In this section, we describe messages in the R2 system. The message hierarchy has been designed to make it possible to add and work with broader message abstractions when appropriate. Originally, REST was the basic type of message in R2, but with the addition of R2 Streaming, STREAM became the most basic type of messages in R2, with REST built on top of STREAM. Because REST is the most common use case, we will stick to describing the REST model here, and leave STREAM as a separate doc.
 
 Messages have a few properties that are worth describing here:
 - They are immutable. It is not possible to change a message after it has been created. It is, however, possible to copy a message and make changes using builders, which will be described later.
