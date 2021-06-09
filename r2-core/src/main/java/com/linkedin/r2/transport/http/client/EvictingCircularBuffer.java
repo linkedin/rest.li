@@ -18,7 +18,7 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
-import com.linkedin.r2.transport.http.client.ratelimiter.CallbackStore;
+import com.linkedin.r2.transport.http.client.ratelimiter.CallbackBuffer;
 import com.linkedin.util.clock.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -31,7 +31,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 /**
- * A CallbackStore specifically designed to feed an asynchronous event loop with a constant supply of unique Callbacks.
+ * A CallbackBuffer specifically designed to feed an asynchronous event loop with a constant supply of unique Callbacks.
  *
  * EvictingCircularBuffer accomplishes a few key goals:
  * - Must always accept submission of new Callbacks, replacing oldest Callbacks when buffer is exhausted
@@ -43,7 +43,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * This class is thread-safe, achieving performance through granular locking of each element of the underlying circular buffer.
  */
-public class EvictingCircularBuffer implements CallbackStore
+public class EvictingCircularBuffer implements CallbackBuffer
 {
   private Duration _ttl;
   private final ArrayList<Callback<None>> _callbacks = new ArrayList<>();
@@ -102,8 +102,7 @@ public class EvictingCircularBuffer implements CallbackStore
    */
   public Callback<None> get() throws NoSuchElementException
   {
-    int getAttemptIteration = 0;
-    while (getAttemptIteration++ <= getCapacity())
+    for (int i = 0; i <= getCapacity(); i++)
     {
       int thisReaderPosition = getAndBumpReaderPosition();
       ReentrantReadWriteLock thisLock = _elementLocks.get(thisReaderPosition);

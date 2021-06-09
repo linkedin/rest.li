@@ -24,7 +24,7 @@ import java.util.NoSuchElementException;
 /**
  * A lightweight queue-like interface specifically for Callbacks
  */
-public interface CallbackStore
+public interface CallbackBuffer
 {
 
   /**
@@ -37,7 +37,7 @@ public interface CallbackStore
    * Provides a Callback previously stored through the put method.
    * This interface makes no recommendation of ordering between put and get calls.
    * @return Callback
-   * @throws NoSuchElementException if the CallbackStore is empty
+   * @throws NoSuchElementException if the CallbackBuffer is empty
    */
   Callback<None> get() throws NoSuchElementException;
 }

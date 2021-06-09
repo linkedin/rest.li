@@ -18,9 +18,9 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
-import com.linkedin.r2.transport.http.client.ratelimiter.CallbackStore;
+import com.linkedin.r2.transport.http.client.ratelimiter.CallbackBuffer;
 import com.linkedin.r2.transport.http.client.ratelimiter.RateLimiterExecutionTracker;
-import com.linkedin.r2.transport.http.client.ratelimiter.QueueBasedCallbackStore;
+import com.linkedin.r2.transport.http.client.ratelimiter.SimpleCallbackBuffer;
 import com.linkedin.r2.transport.http.client.ratelimiter.Rate;
 import com.linkedin.util.ArgumentUtil;
 import com.linkedin.util.RateLimitedLogger;
@@ -56,7 +56,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
   private final String _rateLimiterName;
   private volatile Rate _rate = Rate.ZERO_VALUE;
   private final EventLoop _eventLoop;
-  private final CallbackStore _pendingCallbacks;
+  private final CallbackBuffer _pendingCallbacks;
 
   private final RateLimiterExecutionTracker _executionTracker;
   private final AtomicReference<Throwable> _invocationError = new AtomicReference<>(null);
@@ -80,25 +80,27 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     NONE
   }
 
+  public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, Queue<Callback<None>> pendingCallbacks,
+                           int maxBuffered, BufferOverflowMode bufferOverflowMode, String rateLimiterName)
+  {
+    this(scheduler, executor, clock, new SimpleCallbackBuffer(pendingCallbacks), bufferOverflowMode, rateLimiterName, new BoundedRateLimiterExecutionTracker(maxBuffered));
+  }
+
   /**
    * Constructs a new instance of {@link SmoothRateLimiter}.
    * The default rate is 0, no requests will be processed until the rate is changed
    *
-   * @param scheduler        Scheduler used to execute the internal non-blocking event loop. MUST be single-threaded
-   * @param executor         Executes the tasks for invoking #onSuccess and #onError (only during #callAll)
-   * @param clock            Clock implementation that supports getting the current time accurate to milliseconds
-   * @param pendingCallbacks THREAD SAFE and NON-BLOCKING implementation of callback queue
-   * @param maxBuffered      Maximum number of tasks kept in the queue before execution
+   * @param scheduler          Scheduler used to execute the internal non-blocking event loop. MUST be single-threaded
+   * @param executor           Executes the tasks for invoking #onSuccess and #onError (only during #callAll)
+   * @param clock              Clock implementation that supports getting the current time accurate to milliseconds
+   * @param pendingCallbacks   THREAD SAFE and NON-BLOCKING implementation of callback queue
    * @param bufferOverflowMode just what to do if the max buffer is reached. In many applications blindly
-   *                          dropping the request might not be backward compatible
-   */
-  public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, Queue<Callback<None>> pendingCallbacks,
-                           int maxBuffered, BufferOverflowMode bufferOverflowMode, String rateLimiterName)
-  {
-    this(scheduler, executor, clock, new QueueBasedCallbackStore(pendingCallbacks), bufferOverflowMode, rateLimiterName, new LimitedExecutionTracker(maxBuffered));
-  }
+   *                           dropping the request might not be backward compatible
+   * @param rateLimiterName    Name assigned for logging purposes
+   * @param executionTracker   Adjusts the behavior of the rate limiter based on policies/state of RateLimiterExecutionTracker
 
-  SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, CallbackStore pendingCallbacks,
+   */
+  SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, CallbackBuffer pendingCallbacks,
                     BufferOverflowMode bufferOverflowMode, String rateLimiterName, RateLimiterExecutionTracker executionTracker)
   {
     ArgumentUtil.ensureNotNull(scheduler, "scheduler");
@@ -365,12 +367,12 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     }
   }
 
-  private static class LimitedExecutionTracker implements RateLimiterExecutionTracker
+  private static class BoundedRateLimiterExecutionTracker implements RateLimiterExecutionTracker
   {
     private final AtomicInteger _pendingCount = new AtomicInteger(0);
     private final int _maxBuffered;
 
-    public LimitedExecutionTracker(int maxBuffered)
+    public BoundedRateLimiterExecutionTracker(int maxBuffered)
     {
       ArgumentUtil.checkArgument(maxBuffered >= 0, "maxBuffered");
 

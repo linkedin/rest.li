@@ -24,13 +24,13 @@ import java.util.Queue;
 
 
 /**
- * A simple CallbackStore implementation that delegates to the provided Queue
+ * A simple CallbackBuffer implementation that delegates to the provided Queue
  */
-public class QueueBasedCallbackStore implements CallbackStore
+public class SimpleCallbackBuffer implements CallbackBuffer
 {
   private final Queue<Callback<None>> _queue;
 
-  public QueueBasedCallbackStore(Queue<Callback<None>> queue)
+  public SimpleCallbackBuffer(Queue<Callback<None>> queue)
   {
     ArgumentUtil.ensureNotNull(queue, "queue cannot be null");
     _queue = queue;
