@@ -16,27 +16,39 @@ Copyright (c) 2021 LinkedIn Corp.
 #if($is_interface)
   #foreach($method in $spec.actions)
     #foreach($withEG in [true, false])
-      #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
-      #set($actionOptionalParamClassName = "${util.nameCapsCase($method.name)}ActionOptionalParameters")
-      #doc($method.schema.doc)
+      #foreach($flattenAssocKey in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+        #set($showTemplate =(!$flattenAssocKey ||  ${spec.getResource().hasAssociation()}))
+        #if ($showTemplate) 
+          #define($keyStubNoOptional)
+            #actionMethodParamsWithEGroup($method, false, $withEG, $flattenAssocKey)
+          #end ## end define
+          #define($keyStubWithOptional)
+            #actionMethodParamsWithEGroup($method, true, $withEG, $flattenAssocKey)
+          #end ## end define
 
-      #if(${method.hasRequiredParams()}) ## action with no required Params will only have one API
-        #if($method.hasOptionalParams()) ## when have optional params, the optionalParamsProvider is optional
+        #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
+        #set($actionOptionalParamClassName = "${util.nameCapsCase($method.name)}ActionOptionalParameters")
+        #doc($method.schema.doc)
+        #if(${method.hasRequiredParams()}) ## action with no required Params will only have one API
+          #if($method.hasOptionalParams()) ## when have optional params, the optionalParamsProvider is optional
+            @SuppressWarnings("unchecked")
+            public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
+              $keyStubNoOptional
+            );
+          #end ## end hasOptionalParams
           @SuppressWarnings("unchecked")
           public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
-            #actionMethodParamsWithEGroup($method, false, $withEG)##
+              $keyStubWithOptional 
           );
-        #end ## end hasOptionalParams
+        #end ## end hasRequiredParams
+
         @SuppressWarnings("unchecked")
         public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
-            #actionMethodParamsWithEGroup($method, true, $withEG)##
+          #actionMethodProviderParamsWithEGroup($method, $withEG, $flattenAssocKey)##
         );
-      #end ## end hasRequiredParams
 
-      @SuppressWarnings("unchecked")
-      public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
-        #actionMethodProviderParamsWithEGroup($method, $withEG)##
-      );
+        #end ## end if showTemplate
+      #end ## foreach flattenAssocKey
     #end ## end withEG
     #if(${method.hasActionParams()})
       #actionAllParamClass($method)
@@ -48,94 +60,109 @@ Copyright (c) 2021 LinkedIn Corp.
 #else ## is_interface
   #foreach($withEG in [true, false])
     #foreach($method in $spec.actions)
-      #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
-      #set($actionOptionalParamClassName = "${util.nameCapsCase($method.name)}ActionOptionalParameters")
-      #doc($method.schema.doc)
+      #setIsEntityActionIdNeeded($method)
+      #foreach($flattenAssocKey in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+        #set($showTemplate =(!$flattenAssocKey ||  ${spec.getResource().hasAssociation()}))
+        #if ($showTemplate)
+          #define($keyStubNoOptional)
+            #actionMethodParamsWithEGroup($method, false, $withEG, $flattenAssocKey)
+          #end ## end define
+          #define($keyStubWithOptional)
+            #actionMethodParamsWithEGroup($method, true, $withEG, $flattenAssocKey)
+          #end ## end define
+        #set($actionParamClassName = "${util.nameCapsCase($method.name)}ActionParameters")
+        #set($actionOptionalParamClassName = "${util.nameCapsCase($method.name)}ActionOptionalParameters")
+        #doc($method.schema.doc)
 
-      #if(${method.hasRequiredParams()}) ## action with no required Params will only have one API
-        #if($method.hasOptionalParams()) ## when have optional params, the optionalParamsProvider is optional
+        #if(${method.hasRequiredParams()}) ## action with no required Params will only have one API
+          #if($method.hasOptionalParams()) ## when have optional params, the optionalParamsProvider is optional
+            @SuppressWarnings("unchecked")
+            public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
+              $keyStubNoOptional
+            )
+            {
+              #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
+              return ${util.nameCamelCase(${method.name})}(
+                #if($isEntityActionIdNeeded)
+                $spec.idName,
+                #end
+                #foreach($param in $method.getRequiredParameters())
+                  $param.paramName #if($foreach.hasNext),#end
+                #end,
+                Function.identity() #if($withEG), executionGroup #end
+              )
+              ;
+            }
+          #end ## end hasOptionalParams
           @SuppressWarnings("unchecked")
           public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
-            #actionMethodParamsWithEGroup($method, false, $withEG)##
+            $keyStubWithOptional
           )
           {
+            #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
+            #if(${method.hasOptionalParams()})
+            $actionOptionalParamClassName optionalParams = optionalParamsProvider.apply(new $actionOptionalParamClassName());
+            #end
             return ${util.nameCamelCase(${method.name})}(
-              #if(${method.isEntityAction()})
+              #if($isEntityActionIdNeeded)
               $spec.idName,
               #end
-              #foreach($param in $method.getRequiredParameters())
-                $param.paramName #if($foreach.hasNext),#end
-              #end,
-              Function.identity() #if($withEG), executionGroup #end
+              paramProvider -> paramProvider
+              #foreach($param in ${method.getRequiredParameters()})
+              .set${param.paramNameCaps}($param.paramName)
+              #end
+              #foreach($param in ${method.getOptionalParameters()})
+              .set${param.paramNameCaps}(optionalParams.get${param.paramNameCaps}())
+              #end #if($withEG), executionGroup #end
             )
             ;
           }
-        #end ## end hasOptionalParams
+        #end ## end hasRequiredParams
+
         @SuppressWarnings("unchecked")
         public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
-          #actionMethodParamsWithEGroup($method, true, $withEG)##
+          #actionMethodProviderParamsWithEGroup($method, $withEG, $flattenAssocKey)##
         )
         {
-          #if(${method.hasOptionalParams()})
-          $actionOptionalParamClassName optionalParams = optionalParamsProvider.apply(new $actionOptionalParamClassName());
-          #end
-          return ${util.nameCamelCase(${method.name})}(
-            #if(${method.isEntityAction()})
-            $spec.idName,
-            #end
-            paramProvider -> paramProvider
-            #foreach($param in ${method.getRequiredParameters()})
-            .set${param.paramNameCaps}($param.paramName)
-            #end
-            #foreach($param in ${method.getOptionalParameters()})
-            .set${param.paramNameCaps}(optionalParams.get${param.paramNameCaps}())
-            #end #if($withEG), executionGroup #end
-          )
-          ;
-        }
-      #end ## end hasRequiredParams
+          #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
+          RecordDataSchema requestDataSchema =  _resourceSpec.getRequestMetadata("${method.name}").getRecordDataSchema();
+          RecordDataSchema actionResponseDataSchema = _resourceSpec.getActionResponseMetadata("${method.name}").getRecordDataSchema();
+          FieldDef<${method.valueClassDisplayName}> responseFieldDef = (FieldDef<${method.valueClassDisplayName}>)_resourceSpec.getActionResponseMetadata("${method.name}").getFieldDef(ActionResponse.VALUE_NAME);
 
-      @SuppressWarnings("unchecked")
-      public CompletionStage<${method.valueClassDisplayName}> ${util.nameCamelCase(${method.name})}(
-        #actionMethodProviderParamsWithEGroup($method, $withEG)##
-      )
-      {
-        RecordDataSchema requestDataSchema =  _resourceSpec.getRequestMetadata("${method.name}").getRecordDataSchema();
-        RecordDataSchema actionResponseDataSchema = _resourceSpec.getActionResponseMetadata("${method.name}").getRecordDataSchema();
-        FieldDef<${method.valueClassDisplayName}> responseFieldDef = (FieldDef<${method.valueClassDisplayName}>)_resourceSpec.getActionResponseMetadata("${method.name}").getFieldDef(ActionResponse.VALUE_NAME);
-
-        ActionResponseDecoder<${method.valueClassDisplayName}> actionResponseDecoder =
-            new ActionResponseDecoder<${method.valueClassDisplayName}>(responseFieldDef, actionResponseDataSchema);
-        DynamicRecordTemplate inputParameters =
-            new DynamicRecordTemplate(requestDataSchema,
-            #if(${method.hasActionParams()})
-              paramsProvider.apply(new $actionParamClassName()).buildParametersMap(_resourceSpec));
-            #else
-              Collections.emptyMap());
-            #end
-        inputParameters.data().setReadOnly();
-        ActionRequest<${method.valueClassDisplayName}> request = new ActionRequest<${method.valueClassDisplayName}>(inputParameters,
-                                    Collections.emptyMap(),
-                                    Collections.emptyList(),
-                                    actionResponseDecoder,
-                                    _resourceSpec,
-                                    _${method.name}ActionQueryParams,
-                                    _actionQueryParamsClasses,
-                                    "${method.name}",
-                                    ORIGINAL_RESOURCE_PATH,
-                                    buildReadOnlyPathKeys(),
-                                    RestliRequestOptions.DEFAULT_OPTIONS,
-                                    #if(${method.isEntityAction()})$spec.idName#else null#end,
-                                    ## TODO: Not supporting streaming attachments now
-                                    null
-                                    );
-      #**##makeRequestAndReturn(
-      ${method.valueClassDisplayName},
-      ${method.valueClassDisplayName},
-      "resp.getEntity()",
-            $withEG
-          )##
-      }
-    #end ## foreach
+          ActionResponseDecoder<${method.valueClassDisplayName}> actionResponseDecoder =
+              new ActionResponseDecoder<${method.valueClassDisplayName}>(responseFieldDef, actionResponseDataSchema);
+          DynamicRecordTemplate inputParameters =
+              new DynamicRecordTemplate(requestDataSchema,
+              #if(${method.hasActionParams()})
+                paramsProvider.apply(new $actionParamClassName()).buildParametersMap(_resourceSpec));
+              #else
+                Collections.emptyMap());
+              #end
+          inputParameters.data().setReadOnly();
+          ActionRequest<${method.valueClassDisplayName}> request = new ActionRequest<${method.valueClassDisplayName}>(inputParameters,
+                                      Collections.emptyMap(),
+                                      Collections.emptyList(),
+                                      actionResponseDecoder,
+                                      _resourceSpec,
+                                      _${method.name}ActionQueryParams,
+                                      _actionQueryParamsClasses,
+                                      "${method.name}",
+                                      ORIGINAL_RESOURCE_PATH,
+                                      buildReadOnlyPathKeys(),
+                                      RestliRequestOptions.DEFAULT_OPTIONS,
+                                      #if(${method.isEntityAction()} && !${method.getResourceSpec().getResource().hasSimple()})$spec.idName#else null#end,
+                                      ## TODO: Not supporting streaming attachments now
+                                      null
+                                      );
+          #**##makeRequestAndReturn(
+          ${method.valueClassDisplayName},
+          ${method.valueClassDisplayName},
+          "resp.getEntity()",
+                $withEG
+              )##
+          }
+        #end ## end if show template
+      #end ## foreach flattenAssocKey
+    #end ## foreach method
   #end ## end withEG
 #end ## is_interface

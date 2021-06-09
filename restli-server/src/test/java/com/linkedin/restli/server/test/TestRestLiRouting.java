@@ -113,7 +113,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
 
     PathKeys keys = context.getPathKeys();
-    assertEquals(keys.getAsLong("statusID"), new Long(1));
+    assertEquals(keys.getAsLong("statusID"), Long.valueOf(1));
     assertNull(keys.getAsString("foo"));
   }
 
@@ -148,8 +148,8 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "follows");
 
     PathKeys keys = context.getPathKeys();
-    assertEquals(keys.getAsLong("followerID"), new Long(1L));
-    assertEquals(keys.getAsLong("followeeID"), new Long(2L));
+    assertEquals(keys.getAsLong("followerID"), Long.valueOf(1L));
+    assertEquals(keys.getAsLong("followeeID"), Long.valueOf(2L));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsCollectionEntity")
@@ -173,7 +173,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
 
     PathKeys keys = context.getPathKeys();
-    assertEquals(keys.getAsLong("statusID"), new Long(1));
+    assertEquals(keys.getAsLong("statusID"), Long.valueOf(1));
     assertNull(keys.getAsString("foo"));
   }
 
@@ -198,7 +198,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
 
     PathKeys keys = context.getPathKeys();
-    assertEquals(keys.getAsLong("statusID"), new Long(1));
+    assertEquals(keys.getAsLong("statusID"), Long.valueOf(1));
     assertNull(keys.getAsString("foo"));
   }
 

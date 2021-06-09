@@ -40,7 +40,6 @@ import com.linkedin.restli.common.UpdateStatus;
 import com.linkedin.restli.examples.custom.types.CustomLong;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingCriteria;
-import com.linkedin.restli.examples.greetings.api.GreetingCriteriaArray;
 import com.linkedin.restli.examples.greetings.api.Message;
 import com.linkedin.restli.examples.greetings.api.MessageCriteria;
 import com.linkedin.restli.examples.greetings.api.MessageCriteriaArray;
@@ -48,21 +47,24 @@ import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.api.TwoPartKey;
 import com.linkedin.restli.examples.greetings.client.Actions;
 import com.linkedin.restli.examples.greetings.client.ActionsFluentClient;
+import com.linkedin.restli.examples.greetings.client.AssociationAltKey;
+import com.linkedin.restli.examples.greetings.client.AssociationAltKeyFluentClient;
 import com.linkedin.restli.examples.greetings.client.Associations;
 import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsAssociationsSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsFluentClient;
 import com.linkedin.restli.examples.greetings.client.AssociationsSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.Batchfinders;
-import com.linkedin.restli.examples.greetings.client.ComplexKeys;
-import com.linkedin.restli.examples.greetings.client.BatchGreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.BatchfindersFluentClient;
+import com.linkedin.restli.examples.greetings.client.ComplexKeys;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysFluentClient;
 import com.linkedin.restli.examples.greetings.client.ComplexKeysSubFluentClient;
 import com.linkedin.restli.examples.greetings.client.CreateGreeting;
 import com.linkedin.restli.examples.greetings.client.CreateGreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.CustomTypes2;
 import com.linkedin.restli.examples.greetings.client.CustomTypes2FluentClient;
+import com.linkedin.restli.examples.greetings.client.CustomTypes3;
+import com.linkedin.restli.examples.greetings.client.CustomTypes3FluentClient;
 import com.linkedin.restli.examples.greetings.client.GreetingFluentClient;
 import com.linkedin.restli.examples.greetings.client.Greetings;
 import com.linkedin.restli.examples.greetings.client.GreetingsFluentClient;
@@ -74,6 +76,7 @@ import com.linkedin.restli.examples.groups.client.Groups;
 import com.linkedin.restli.examples.groups.client.GroupsFluentClient;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -760,6 +763,17 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   }
 
   @Test
+  public void testAssociationFinderUsingCustomAssocKey() throws Exception
+  {
+    CustomTypes3 customTypesResource3 =
+        new CustomTypes3FluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+
+    CollectionResponse<Greeting> greetings =
+        customTypesResource3.findByDateOnly(new Date()).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertTrue(greetings.getElements().size() > 0);
+  }
+
+  @Test
   public void testAssociationBatchFinderUsingAssocKey() throws Exception
   {
     AssociationsFluentClient associations =
@@ -782,6 +796,50 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     BatchFinderCriteriaResult<Message> insulting = messages.getResults().get(1);
     Assert.assertTrue(insulting.isError());
     Assert.assertEquals( (int) insulting.getError().getStatus(), 404);
+  }
+
+  @Test public void testAssociateResourceSpreadKeyAPI() throws Exception
+  {
+    // Use AssocationAltKeyResource and AltKeyDataProvider
+
+    // Get
+    AssociationAltKey client = new AssociationAltKeyFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
+    String msgKey = "c";
+    Long longKey = 3L;
+    Greeting res = client.get(longKey, msgKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(res.getTone(), Tone.FRIENDLY);
+    Assert.assertEquals(res.getMessage(), msgKey);
+
+    // Update
+    String newMsg = "aa";
+    res.setMessage(newMsg);
+    client.update(longKey, msgKey, res).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    res = client.get(longKey, msgKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(res.getMessage(), newMsg);
+    // PartialUpdate
+    Tone updatedTone = Tone.SINCERE;
+    res.setTone(updatedTone);
+    Greeting original = client.get(longKey, msgKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    PatchRequest<Greeting> patch = PatchGenerator.diff(original, res);
+    client.partialUpdate(longKey, msgKey, patch).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS); // Only tone differ
+    res = client.get(longKey, msgKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(res.getMessage(), newMsg);
+    Assert.assertEquals(res.getTone(), updatedTone);
+
+    // Delete
+    try
+    {
+      // that resource implementation does not allow deletion
+      client.delete(longKey, msgKey).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
+    }
+      catch (ExecutionException e)
+    {
+      Assert.assertEquals(((RestLiResponseException) e.getCause()).getStatus(), 404);
+    }
+
+    // Action
+    Assert.assertEquals(client.testAction(longKey, msgKey)
+        .toCompletableFuture().get(5000, TimeUnit.MILLISECONDS), "Hello!");
   }
 
   // ----- Test with Sub Resources ------

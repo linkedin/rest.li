@@ -989,6 +989,10 @@ public class ResourceCompatibilityChecker
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
 
+    checkEqualSingleValue(prevRec.schema().getField("readOnly"),
+                          prevRec.isReadOnly(GetMode.DEFAULT),
+                          currRec.isReadOnly(GetMode.DEFAULT));
+
     checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
 
     checkAnnotationsMap(prevRec.schema().getField("annotations"),

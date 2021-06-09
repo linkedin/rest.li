@@ -27,6 +27,7 @@ import com.linkedin.r2.filter.compression.streaming.StreamEncodingType;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.timing.TimingKey;
 import com.linkedin.r2.testutils.server.HttpServerBuilder;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
@@ -93,13 +94,17 @@ public class TestHttpClientFactory
     {
       server.start();
       List<Client> clients = new ArrayList<>();
+
+      int savedTimingKeyCount = TimingKey.getCount();
       for (int i = 0; i < 100; i++)
       {
         HashMap<String, String> properties = new HashMap<>();
         properties.put(HttpClientFactory.HTTP_PROTOCOL_VERSION, protocolVersion);
         clients.add(new TransportClientAdapter(factory.getClient(properties), restOverStream));
       }
-
+      int addedTimingKeyCount = TimingKey.getCount() - savedTimingKeyCount;
+      // In current implementation, one client can have around 30 TimingKeys by default.
+      Assert.assertTrue(addedTimingKeyCount >= 30 * clients.size());
       for (Client c : clients)
       {
         RestRequest r = new RestRequestBuilder(new URI(URI)).build();
@@ -107,6 +112,7 @@ public class TestHttpClientFactory
       }
       Assert.assertEquals(httpServerStatsProvider.requestCount(), expectedRequests);
 
+      savedTimingKeyCount = TimingKey.getCount();
       for (Client c : clients)
       {
         FutureCallback<None> callback = new FutureCallback<>();
@@ -117,6 +123,8 @@ public class TestHttpClientFactory
       FutureCallback<None> factoryShutdown = new FutureCallback<>();
       factory.shutdown(factoryShutdown);
       factoryShutdown.get(30, TimeUnit.SECONDS);
+      int removedTimingKeyCount = savedTimingKeyCount - TimingKey.getCount();
+      Assert.assertEquals(addedTimingKeyCount, removedTimingKeyCount);
     }
     finally
     {

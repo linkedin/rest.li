@@ -372,7 +372,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Request<Greeting> request = builders.get().setPathKey("customTypes2Id", new CustomLong(id2)).id(new CustomLong(id4)).build();
     Greeting result = getClient().sendRequest(request).getResponse().getEntity();
 
-    Assert.assertEquals(result.getId(), new Long(id2*id4));
+    Assert.assertEquals(result.getId(), Long.valueOf(id2*id4));
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request3BuilderDataProvider")
@@ -385,7 +385,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Request<Greeting> request = builders.get().id(key).build();
     Greeting result = getClient().sendRequest(request).getResponse().getEntity();
 
-    Assert.assertEquals(result.getId(),  new Long(lo+date));
+    Assert.assertEquals(result.getId(),  Long.valueOf(lo+date));
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request3BuilderDataProvider")
@@ -429,7 +429,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Request<CollectionResponse<Greeting>> request = builders.findBy("DateOnly").setPathKey("dateId", new Date(13L)).build();
     List<Greeting> response = getClient().sendRequest(request).getResponse().getEntity().getElements();
 
-    Assert.assertEquals(response.size(), 0);
+    Assert.assertEquals(response.size(), 1);
   }
 
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")

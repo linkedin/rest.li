@@ -145,8 +145,8 @@ public class HostToKeyMapperTest
     for (Map.Entry<URI, Collection<Integer>> entry: mapResult.entrySet())
     {
       Assert.assertEquals(entry.getKey(), foo2);
-      Assert.assertTrue(entry.getValue().contains(new Integer(10)));
-      Assert.assertTrue(entry.getValue().contains(new Integer(13)));
+      Assert.assertTrue(entry.getValue().contains(Integer.valueOf(10)));
+      Assert.assertTrue(entry.getValue().contains(Integer.valueOf(13)));
     }
   }
 }

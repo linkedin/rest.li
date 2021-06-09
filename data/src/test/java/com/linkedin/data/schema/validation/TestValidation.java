@@ -272,11 +272,11 @@ public class TestValidation
 
     Object badObjects[] =
     {
-        new Boolean(false),
-        new Integer(1),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Boolean.FALSE,
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
         new DataList()
@@ -298,16 +298,16 @@ public class TestValidation
 
     Object goodObjects[] =
     {
-        new Boolean(true),
-        new Boolean(false)
+        Boolean.TRUE,
+        Boolean.FALSE
     };
 
     Object badObjects[] =
     {
-        new Integer(1),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
@@ -333,10 +333,10 @@ public class TestValidation
 
     Object badObjects[] =
         {
-            new Integer(1),
-            new Long(1),
-            new Float(1),
-            new Double(1),
+            Integer.valueOf(1),
+            Long.valueOf(1),
+            Float.valueOf(1f),
+            Double.valueOf(1),
             new String("abc"),
             new DataMap(),
             new DataList()
@@ -354,18 +354,18 @@ public class TestValidation
 
     Object goodObjects[] =
     {
-        new Integer(1),
-        new Integer(-1),
+        Integer.valueOf(1),
+        Integer.valueOf(-1),
         Integer.MAX_VALUE,
         Integer.MAX_VALUE - 1
     };
 
     Object badObjects[] =
     {
-        new Boolean(true),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Boolean.TRUE,
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
@@ -385,18 +385,18 @@ public class TestValidation
 
     Object input[][] =
       {
-        { new Integer(1), new Integer(1) },
-        { new Integer(-1), new Integer(-1) },
+        { Integer.valueOf(1), Integer.valueOf(1) },
+        { Integer.valueOf(-1), Integer.valueOf(-1) },
         { Integer.MAX_VALUE, Integer.MAX_VALUE },
         { Integer.MAX_VALUE - 1, Integer.MAX_VALUE - 1 },
-        { new Long(1), new Integer(1) },
-        { new Float(1), new Integer(1) },
-        { new Double(1), new Integer(1) }
+        { Long.valueOf(1), Integer.valueOf(1) },
+        { Float.valueOf(1f), Integer.valueOf(1) },
+        { Double.valueOf(1), Integer.valueOf(1) }
       };
 
     Object badObjects[] =
       {
-        new Boolean(true),
+        Boolean.TRUE,
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
@@ -415,25 +415,25 @@ public class TestValidation
 
     Object input[][] =
         {
-            { new String("1"), new Integer(1) },
-            { new String("-1"), new Integer(-1) },
+            { new String("1"), Integer.valueOf(1) },
+            { new String("-1"), Integer.valueOf(-1) },
             { new String("" + Integer.MAX_VALUE), Integer.MAX_VALUE},
             { new String("" + (Integer.MAX_VALUE - 1)), Integer.MAX_VALUE - 1},
-            { new String("1.5"), new Integer(1) },
-            { new String("-1.5"), new Integer(-1) },
+            { new String("1.5"), Integer.valueOf(1) },
+            { new String("-1.5"), Integer.valueOf(-1) },
 
-            { new Integer(1), new Integer(1) },
-            { new Integer(-1), new Integer(-1) },
+            { Integer.valueOf(1), Integer.valueOf(1) },
+            { Integer.valueOf(-1), Integer.valueOf(-1) },
             { Integer.MAX_VALUE, Integer.MAX_VALUE },
             { Integer.MAX_VALUE - 1, Integer.MAX_VALUE - 1 },
-            { new Long(1), new Integer(1) },
-            { new Float(1), new Integer(1) },
-            { new Double(1), new Integer(1) }
+            { Long.valueOf(1), Integer.valueOf(1) },
+            { Float.valueOf(1f), Integer.valueOf(1) },
+            { Double.valueOf(1), Integer.valueOf(1) }
         };
 
     Object badObjects[] =
         {
-            new Boolean(true),
+            Boolean.TRUE,
             new String("abc"),
             ByteString.copyAvroString("bytes", false),
             new DataMap(),
@@ -452,16 +452,16 @@ public class TestValidation
 
     Object goodObjects[] =
     {
-        new Long(1),
-        new Long(-1)
+        Long.valueOf(1),
+        Long.valueOf(-1)
     };
 
     Object badObjects[] =
     {
-        new Boolean(true),
-        new Integer(1),
-        new Float(1),
-        new Double(1),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
@@ -480,16 +480,16 @@ public class TestValidation
 
     Object inputs[][] =
       {
-        { new Long(1), new Long(1) },
-        { new Long(-1), new Long(-1) },
-        { new Integer(1), new Long(1) },
-        { new Float(1), new Long(1) },
-        { new Double(1), new Long(1) }
+        { Long.valueOf(1), Long.valueOf(1) },
+        { Long.valueOf(-1), Long.valueOf(-1) },
+        { Integer.valueOf(1), Long.valueOf(1) },
+        { Float.valueOf(1f), Long.valueOf(1) },
+        { Double.valueOf(1), Long.valueOf(1) }
       };
 
     Object badObjects[] =
       {
-        new Boolean(true),
+        Boolean.TRUE,
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
@@ -508,21 +508,21 @@ public class TestValidation
 
     Object inputs[][] =
         {
-            { new String("1"), new Long(1) },
-            { new String("-1"), new Long(-1) },
+            { new String("1"), Long.valueOf(1) },
+            { new String("-1"), Long.valueOf(-1) },
             { new String("" + Long.MAX_VALUE), Long.MAX_VALUE },
 
-            { new Long(1), new Long(1) },
-            { new Long(-1), new Long(-1) },
-            { new Integer(1), new Long(1) },
-            { new Float(1), new Long(1) },
-            { new Double(1), new Long(1) }
+            { Long.valueOf(1), Long.valueOf(1) },
+            { Long.valueOf(-1), Long.valueOf(-1) },
+            { Integer.valueOf(1), Long.valueOf(1) },
+            { Float.valueOf(1f), Long.valueOf(1) },
+            { Double.valueOf(1), Long.valueOf(1) }
         };
 
 
     Object badObjects[] =
         {
-            new Boolean(true),
+            Boolean.TRUE,
             new String("abc"),
             ByteString.copyAvroString("bytes", false),
             new DataMap(),
@@ -541,16 +541,16 @@ public class TestValidation
 
     Object goodObjects[] =
     {
-        new Float(1),
-        new Float(-1)
+        Float.valueOf(1f),
+        Float.valueOf(-1f)
     };
 
     Object badObjects[] =
     {
-        new Boolean(true),
-        new Integer(1),
-        new Long(1),
-        new Double(1),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Double.valueOf(1),
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
@@ -569,16 +569,16 @@ public class TestValidation
 
     Object inputs[][] =
       {
-        { new Float(1), new Float(1) },
-        { new Float(-1), new Float(-1) },
-        { new Integer(1), new Float(1) },
-        { new Long(1), new Float(1) },
-        { new Double(1), new Float(1) }
+        { Float.valueOf(1f), Float.valueOf(1f) },
+        { Float.valueOf(-1f), Float.valueOf(-1f) },
+        { Integer.valueOf(1), Float.valueOf(1f) },
+        { Long.valueOf(1), Float.valueOf(1f) },
+        { Double.valueOf(1), Float.valueOf(1f) }
       };
 
     Object badObjects[] =
       {
-        new Boolean(true),
+        Boolean.TRUE,
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
@@ -597,23 +597,23 @@ public class TestValidation
 
     Object inputs[][] =
         {
-            { new String("1"), new Float(1) },
-            { new String("-1"), new Float(-1) },
-            { new String("1.01"), new Float(1.01) },
-            { new String("-1.01"), new Float(-1.01) },
+            { new String("1"), Float.valueOf(1f) },
+            { new String("-1"), Float.valueOf(-1f) },
+            { new String("1.01"), Float.valueOf(1.01f) },
+            { new String("-1.01"), Float.valueOf(-1.01f) },
             { new String("" + Float.MAX_VALUE), Float.MAX_VALUE },
 
-            { new Float(1), new Float(1) },
-            { new Float(1), new Float(1) },
-            { new Float(-1), new Float(-1) },
-            { new Integer(1), new Float(1) },
-            { new Long(1), new Float(1) },
-            { new Double(1), new Float(1) }
+            { Float.valueOf(1f), Float.valueOf(1f) },
+            { Float.valueOf(1f), Float.valueOf(1f) },
+            { Float.valueOf(-1f), Float.valueOf(-1f) },
+            { Integer.valueOf(1), Float.valueOf(1f) },
+            { Long.valueOf(1), Float.valueOf(1f) },
+            { Double.valueOf(1), Float.valueOf(1f) }
         };
 
     Object badObjects[] =
         {
-            new Boolean(true),
+            Boolean.TRUE,
             new String("abc"),
             ByteString.copyAvroString("bytes", false),
             new DataMap(),
@@ -632,16 +632,16 @@ public class TestValidation
 
     Object goodObjects[] =
     {
-        new Double(1),
-        new Double(-1)
+        Double.valueOf(1),
+        Double.valueOf(-1)
     };
 
     Object badObjects[] =
     {
-        new Boolean(true),
-        new Integer(1),
-        new Long(1),
-        new Float(1),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Float.valueOf(1f),
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
@@ -660,16 +660,16 @@ public class TestValidation
 
     Object inputs[][] =
       {
-        { new Double(1), new Double(1) },
-        { new Double(-1), new Double(-1) },
-        { new Integer(1), new Double(1) },
-        { new Long(1), new Double(1) },
-        { new Float(1), new Double(1) }
+        { Double.valueOf(1), Double.valueOf(1) },
+        { Double.valueOf(-1), Double.valueOf(-1) },
+        { Integer.valueOf(1), Double.valueOf(1) },
+        { Long.valueOf(1), Double.valueOf(1) },
+        { Float.valueOf(1f), Double.valueOf(1) }
       };
 
     Object badObjects[] =
       {
-        new Boolean(true),
+        Boolean.TRUE,
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
@@ -688,22 +688,22 @@ public class TestValidation
 
     Object inputs[][] =
         {
-            { new String("1"), new Double(1) },
-            { new String("-1"), new Double(-1) },
-            { new String("1.01"), new Double(1.01) },
-            { new String("-1.01"), new Double(-1.01) },
+            { new String("1"), Double.valueOf(1) },
+            { new String("-1"), Double.valueOf(-1) },
+            { new String("1.01"), Double.valueOf(1.01) },
+            { new String("-1.01"), Double.valueOf(-1.01) },
             { new String("" + Double.MAX_VALUE), Double.MAX_VALUE },
 
-            { new Double(1), new Double(1) },
-            { new Double(-1), new Double(-1) },
-            { new Integer(1), new Double(1) },
-            { new Long(1), new Double(1) },
-            { new Float(1), new Double(1) }
+            { Double.valueOf(1), Double.valueOf(1) },
+            { Double.valueOf(-1), Double.valueOf(-1) },
+            { Integer.valueOf(1), Double.valueOf(1) },
+            { Long.valueOf(1), Double.valueOf(1) },
+            { Float.valueOf(1f), Double.valueOf(1) }
         };
 
     Object badObjects[] =
         {
-            new Boolean(true),
+            Boolean.TRUE,
             new String("abc"),
             ByteString.copyAvroString("bytes", false),
             new DataMap(),
@@ -729,11 +729,11 @@ public class TestValidation
 
     Object badObjects[] =
     {
-        new Boolean(true),
-        new Integer(1),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new DataMap(),
         new DataList(),
         new String("\u0100"),
@@ -774,11 +774,11 @@ public class TestValidation
 
     Object badObjects[] =
     {
-        new Boolean(true),
-        new Integer(1),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new DataMap(),
         new DataList(),
         new String(),
@@ -826,11 +826,11 @@ public class TestValidation
 
     Object badObjects[] =
     {
-        new Boolean(true),
-        new Integer(1),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new String(),
         new String("foobar"),
         new String("Apple"),
@@ -857,28 +857,28 @@ public class TestValidation
     Object goodObjects[] =
     {
         new DataList(),
-        new DataList(asList(new Integer(1))),
-        new DataList(asList(new Integer(2), new Integer(3))),
+        new DataList(asList(Integer.valueOf(1))),
+        new DataList(asList(Integer.valueOf(2), Integer.valueOf(3))),
     };
 
     Object badObjects[] =
     {
-        new Boolean(true),
-        new Integer(1),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new String(),
         new DataMap(),
-        new DataList(asList(new Boolean(true))),
-        new DataList(asList(new Long(1))),
-        new DataList(asList(new Float(1))),
-        new DataList(asList(new Double(1))),
+        new DataList(asList(Boolean.TRUE)),
+        new DataList(asList(Long.valueOf(1))),
+        new DataList(asList(Float.valueOf(1f))),
+        new DataList(asList(Double.valueOf(1))),
         new DataList(asList(new String("1"))),
         new DataList(asList(new DataMap())),
         new DataList(asList(new DataList())),
-        new DataList(asList(new Boolean(true), new Integer(1))),
-        new DataList(asList(new Integer(1), new Boolean(true)))
+        new DataList(asList(Boolean.TRUE, Integer.valueOf(1))),
+        new DataList(asList(Integer.valueOf(1), Boolean.TRUE))
     };
 
     testCoercionValidation(schemaText, "bar", goodObjects, badObjects, noCoercionValidationOption());
@@ -903,19 +903,19 @@ public class TestValidation
 
     Object badObjects[] =
       {
-        new Boolean(true),
-        new Integer(1),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new String(),
         new DataMap(),
-        new DataList(asList(new Boolean(true))),
+        new DataList(asList(Boolean.TRUE)),
         new DataList(asList(new String("1"))),
         new DataList(asList(new DataMap())),
         new DataList(asList(new DataList())),
-        new DataList(asList(new Boolean(true), new Integer(1))),
-        new DataList(asList(new Integer(1), new Boolean(true)))
+        new DataList(asList(Boolean.TRUE, Integer.valueOf(1))),
+        new DataList(asList(Integer.valueOf(1), Boolean.TRUE))
       };
 
     testNormalCoercionValidation(schemaText, "bar", inputs, badObjects);
@@ -943,18 +943,18 @@ public class TestValidation
 
     Object badObjects[] =
         {
-            new Boolean(true),
-            new Integer(1),
-            new Long(1),
-            new Float(1),
-            new Double(1),
+            Boolean.TRUE,
+            Integer.valueOf(1),
+            Long.valueOf(1),
+            Float.valueOf(1f),
+            Double.valueOf(1),
             new String(),
             new DataMap(),
-            new DataList(asList(new Boolean(true))),
+            new DataList(asList(Boolean.TRUE)),
             new DataList(asList(new DataMap())),
             new DataList(asList(new DataList())),
-            new DataList(asList(new Boolean(true), new Integer(1))),
-            new DataList(asList(new Integer(1), new Boolean(true)))
+            new DataList(asList(Boolean.TRUE, Integer.valueOf(1))),
+            new DataList(asList(Integer.valueOf(1), Boolean.TRUE))
         };
 
     testStringToPrimitiveCoercionValidation(schemaText, "bar", inputs, badObjects);
@@ -976,22 +976,22 @@ public class TestValidation
 
     Object badObjects[] =
     {
-        new Boolean(true),
-        new Integer(1),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new String(),
         new DataList(),
-        new DataMap(asMap("key1", new Boolean(true))),
-        new DataMap(asMap("key1", new Long(1))),
-        new DataMap(asMap("key1", new Float(1))),
-        new DataMap(asMap("key1", new Double(1))),
+        new DataMap(asMap("key1", Boolean.TRUE)),
+        new DataMap(asMap("key1", Long.valueOf(1))),
+        new DataMap(asMap("key1", Float.valueOf(1f))),
+        new DataMap(asMap("key1", Double.valueOf(1))),
         new DataMap(asMap("key1", new String("1"))),
         new DataMap(asMap("key1", new DataMap())),
         new DataMap(asMap("key1", new DataList())),
-        new DataMap(asMap("key1", new Integer(1), "key2", new Long(1))),
-        new DataMap(asMap("key1", new Long(1), "key2", new Integer(1)))
+        new DataMap(asMap("key1", Integer.valueOf(1), "key2", Long.valueOf(1))),
+        new DataMap(asMap("key1", Long.valueOf(1), "key2", Integer.valueOf(1)))
     };
 
     testCoercionValidation(schemaText, "bar", goodObjects, badObjects, noCoercionValidationOption());
@@ -1018,14 +1018,14 @@ public class TestValidation
 
     Object badObjects[] =
       {
-        new Boolean(true),
-        new Integer(1),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new String(),
         new DataList(),
-        new DataMap(asMap("key1", new Boolean(true))),
+        new DataMap(asMap("key1", Boolean.TRUE)),
         new DataMap(asMap("key1", new String("1"))),
         new DataMap(asMap("key1", new DataMap())),
         new DataMap(asMap("key1", new DataList())),
@@ -1058,14 +1058,14 @@ public class TestValidation
 
     Object badObjects[] =
         {
-            new Boolean(true),
-            new Integer(1),
-            new Long(1),
-            new Float(1),
-            new Double(1),
+            Boolean.TRUE,
+            Integer.valueOf(1),
+            Long.valueOf(1),
+            Float.valueOf(1f),
+            Double.valueOf(1),
             new String(),
             new DataList(),
-            new DataMap(asMap("key1", new Boolean(true))),
+            new DataMap(asMap("key1", Boolean.TRUE)),
             new DataMap(asMap("key1", new DataMap())),
             new DataMap(asMap("key1", new DataList())),
         };
@@ -1096,7 +1096,7 @@ public class TestValidation
     Object goodObjects[] =
     {
         Data.NULL,
-        new DataMap(asMap("int", new Integer(1))),
+        new DataMap(asMap("int", Integer.valueOf(1))),
         new DataMap(asMap("string", "x")),
         new DataMap(asMap("Fruits", "APPLE")),
         new DataMap(asMap("Fruits", "ORANGE")),
@@ -1104,34 +1104,34 @@ public class TestValidation
 
     Object badObjects[] =
     {
-        new Boolean(true),
-        new Integer(1),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new String(),
         new DataList(),
         new DataMap(),
-        new DataMap(asMap("int", new Boolean(true))),
+        new DataMap(asMap("int", Boolean.TRUE)),
         new DataMap(asMap("int", new String("1"))),
-        new DataMap(asMap("int", new Long(1L))),
-        new DataMap(asMap("int", new Float(1.0f))),
-        new DataMap(asMap("int", new Double(1.0))),
+        new DataMap(asMap("int", Long.valueOf(1L))),
+        new DataMap(asMap("int", Float.valueOf(1.0f))),
+        new DataMap(asMap("int", Double.valueOf(1.0))),
         new DataMap(asMap("int", new DataMap())),
         new DataMap(asMap("int", new DataList())),
-        new DataMap(asMap("string", new Boolean(true))),
-        new DataMap(asMap("string", new Integer(1))),
-        new DataMap(asMap("string", new Long(1L))),
-        new DataMap(asMap("string", new Float(1.0f))),
-        new DataMap(asMap("string", new Double(1.0))),
+        new DataMap(asMap("string", Boolean.TRUE)),
+        new DataMap(asMap("string", Integer.valueOf(1))),
+        new DataMap(asMap("string", Long.valueOf(1L))),
+        new DataMap(asMap("string", Float.valueOf(1.0f))),
+        new DataMap(asMap("string", Double.valueOf(1.0))),
         new DataMap(asMap("string", new DataMap())),
         new DataMap(asMap("string", new DataList())),
         new DataMap(asMap("Fruits", "foobar")),
-        new DataMap(asMap("Fruits", new Integer(1))),
+        new DataMap(asMap("Fruits", Integer.valueOf(1))),
         new DataMap(asMap("Fruits", new DataMap())),
         new DataMap(asMap("Fruits", new DataList())),
-        new DataMap(asMap("int", new Integer(1), "string", "x")),
-        new DataMap(asMap("x", new Integer(1), "y", new Long(1))),
+        new DataMap(asMap("int", Integer.valueOf(1), "string", "x")),
+        new DataMap(asMap("x", Integer.valueOf(1), "y", Long.valueOf(1))),
     };
 
     testCoercionValidation(schemaText, "bar", goodObjects, badObjects, noCoercionValidationOption());
@@ -1172,30 +1172,30 @@ public class TestValidation
 
     Object badObjects[] =
       {
-        new Boolean(true),
-        new Integer(1),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new String(),
         new DataList(),
-        new DataMap(asMap("int", new Boolean(true))),
+        new DataMap(asMap("int", Boolean.TRUE)),
         new DataMap(asMap("int", new String("1"))),
         new DataMap(asMap("int", new DataMap())),
         new DataMap(asMap("int", new DataList())),
-        new DataMap(asMap("string", new Boolean(true))),
-        new DataMap(asMap("string", new Integer(1))),
-        new DataMap(asMap("string", new Long(1L))),
-        new DataMap(asMap("string", new Float(1.0f))),
-        new DataMap(asMap("string", new Double(1.0))),
+        new DataMap(asMap("string", Boolean.TRUE)),
+        new DataMap(asMap("string", Integer.valueOf(1))),
+        new DataMap(asMap("string", Long.valueOf(1L))),
+        new DataMap(asMap("string", Float.valueOf(1.0f))),
+        new DataMap(asMap("string", Double.valueOf(1.0))),
         new DataMap(asMap("string", new DataMap())),
         new DataMap(asMap("string", new DataList())),
         new DataMap(asMap("Fruits", "foobar")),
-        new DataMap(asMap("Fruits", new Integer(1))),
+        new DataMap(asMap("Fruits", Integer.valueOf(1))),
         new DataMap(asMap("Fruits", new DataMap())),
         new DataMap(asMap("Fruits", new DataList())),
-        new DataMap(asMap("int", new Integer(1), "string", "x")),
-        new DataMap(asMap("x", new Integer(1), "y", new Long(1))),
+        new DataMap(asMap("int", Integer.valueOf(1), "string", "x")),
+        new DataMap(asMap("x", Integer.valueOf(1), "y", Long.valueOf(1))),
       };
 
     testNormalCoercionValidation(schemaText, "bar", inputs, badObjects);
@@ -1214,16 +1214,16 @@ public class TestValidation
 
     Object goodObjects[] =
     {
-        new Integer(1),
-        new Integer(-1)
+        Integer.valueOf(1),
+        Integer.valueOf(-1)
     };
 
     Object badObjects[] =
     {
-        new Boolean(true),
-        new Long(1),
-        new Float(1),
-        new Double(1),
+        Boolean.TRUE,
+        Long.valueOf(1),
+        Float.valueOf(1f),
+        Double.valueOf(1),
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
@@ -1249,16 +1249,16 @@ public class TestValidation
 
     Object inputs[][] =
       {
-        { new Integer(1), new Integer(1) },
-        { new Integer(-1), new Integer(-1) },
-        { new Long(1), new Integer(1) },
-        { new Float(1), new Integer(1) },
-        { new Double(1), new Integer(1) }
+        { Integer.valueOf(1), Integer.valueOf(1) },
+        { Integer.valueOf(-1), Integer.valueOf(-1) },
+        { Long.valueOf(1), Integer.valueOf(1) },
+        { Float.valueOf(1f), Integer.valueOf(1) },
+        { Double.valueOf(1), Integer.valueOf(1) }
       };
 
     Object badObjects[] =
       {
-        new Boolean(true),
+        Boolean.TRUE,
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
@@ -1284,18 +1284,18 @@ public class TestValidation
 
     Object inputs[][] =
         {
-            { new String("1"), new Integer(1) },
+            { new String("1"), Integer.valueOf(1) },
 
-            { new Integer(1), new Integer(1) },
-            { new Integer(-1), new Integer(-1) },
-            { new Long(1), new Integer(1) },
-            { new Float(1), new Integer(1) },
-            { new Double(1), new Integer(1) }
+            { Integer.valueOf(1), Integer.valueOf(1) },
+            { Integer.valueOf(-1), Integer.valueOf(-1) },
+            { Long.valueOf(1), Integer.valueOf(1) },
+            { Float.valueOf(1f), Integer.valueOf(1) },
+            { Double.valueOf(1), Integer.valueOf(1) }
         };
 
     Object badObjects[] =
         {
-            new Boolean(true),
+            Boolean.TRUE,
             new String("abc"),
             ByteString.copyAvroString("bytes", false),
             new DataMap(),
@@ -1353,8 +1353,8 @@ public class TestValidation
           new DataMap(asMap("requiredInt", 78, "requiredString", "dog", "defaultString", "cog", "optionalBoolean", true, "optionalDouble", 999.5)),
           new DataMap(asMap("requiredInt", 78, "requiredString", "dog", "defaultString", "cog", "optionalBoolean", true, "optionalDouble", 999.5, "optionalWithDefaultString", "tag")),
           // unnecessary keys
-          new DataMap(asMap("requiredInt", 78, "requiredString", "dog", "defaultString", "cog", "extra1", new Boolean(true))),
-          new DataMap(asMap("requiredInt", 78, "requiredString", "dog", "defaultString", "cog", "optionalBoolean", true, "optionalDouble", 999.5, "extra1", new Boolean(true)))
+          new DataMap(asMap("requiredInt", 78, "requiredString", "dog", "defaultString", "cog", "extra1", Boolean.TRUE)),
+          new DataMap(asMap("requiredInt", 78, "requiredString", "dog", "defaultString", "cog", "optionalBoolean", true, "optionalDouble", 999.5, "extra1", Boolean.TRUE))
         }
       },
       {
@@ -1369,8 +1369,8 @@ public class TestValidation
           new DataMap(asMap("requiredInt", 78, "requiredString", "dog", "optionalBoolean", true, "optionalDouble", 999.5)),
           new DataMap(asMap("requiredInt", 78, "requiredString", "dog", "optionalBoolean", true, "optionalDouble", 999.5, "optionalWithDefaultString", "tag")),
           // unnecessary keys
-          new DataMap(asMap("requiredInt", 78, "requiredString", "dog", "extra1", new Boolean(true))),
-          new DataMap(asMap("requiredInt", 78, "requiredString", "dog", "optionalBoolean", true, "optionalDouble", 999.5, "extra1", new Boolean(true)))
+          new DataMap(asMap("requiredInt", 78, "requiredString", "dog", "extra1", Boolean.TRUE)),
+          new DataMap(asMap("requiredInt", 78, "requiredString", "dog", "optionalBoolean", true, "optionalDouble", 999.5, "extra1", Boolean.TRUE))
         }
       }
     };
@@ -1388,11 +1388,11 @@ public class TestValidation
           new ValidationOptions(RequiredMode.FIXUP_ABSENT_WITH_DEFAULT, CoercionMode.OFF)
         },
         {
-          new Boolean(true),
-          new Integer(1),
-          new Long(1),
-          new Float(1),
-          new Double(1),
+          Boolean.TRUE,
+          Integer.valueOf(1),
+          Long.valueOf(1),
+          Float.valueOf(1f),
+          Double.valueOf(1),
           new String(),
           new DataList(),
           // invalid field value types
@@ -2098,11 +2098,11 @@ public class TestValidation
     Object disallowedForUnrecognizedField[] =
         {
             "a string",
-            new Boolean(false),
-            new Integer(1),
-            new Long(1),
-            new Float(1),
-            new Double(1),
+            Boolean.FALSE,
+            Integer.valueOf(1),
+            Long.valueOf(1),
+            Float.valueOf(1f),
+            Double.valueOf(1),
             ByteString.copyAvroString("bytes", false),
             new DataMap(),
             new DataList()

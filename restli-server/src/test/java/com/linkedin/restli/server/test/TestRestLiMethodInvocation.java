@@ -3251,7 +3251,7 @@ public class TestRestLiMethodInvocation
   public Object[][] dataMapToCompoundKey()
   {
     CompoundKey compoundKey1 = new CompoundKey();
-    compoundKey1.append("foo", new Integer(1));
+    compoundKey1.append("foo", Integer.valueOf(1));
     compoundKey1.append("bar", "hello");
 
     DataMap dataMap1 = new DataMap();
@@ -3263,8 +3263,8 @@ public class TestRestLiMethodInvocation
     keys1.add(new Key("bar", String.class));
 
     CompoundKey compoundKey2 = new CompoundKey();
-    compoundKey2.append("a", new Long(6));
-    compoundKey2.append("b", new Double(3.14));
+    compoundKey2.append("a", Long.valueOf(6));
+    compoundKey2.append("b", Double.valueOf(3.14));
 
     DataMap dataMap2 = new DataMap();
     dataMap2.put("a", "6");

@@ -122,7 +122,7 @@ public class CodecDataProviders
       for (int i = 0; i < 100; ++i)
       {
         String key = "key_" + i;
-        map1.put(key, new Boolean(i % 2 == 1));
+        map1.put(key, Boolean.valueOf(i % 2 == 1));
       }
       inputs.put("Map of 100 booleans", map1);
     }
@@ -133,7 +133,7 @@ public class CodecDataProviders
       map1.put("list", list1);
       for (int i = 0; i < 100; ++i)
       {
-        list1.add(new Integer(i));
+        list1.add(Integer.valueOf(i));
       }
       inputs.put("List of 100 32-bit integers", map1);
     }
@@ -144,7 +144,7 @@ public class CodecDataProviders
       map1.put("list", list1);
       for (int i = 0; i < 100; ++i)
       {
-        list1.add(new Double(i + 0.5));
+        list1.add(Double.valueOf(i + 0.5));
       }
       inputs.put("List of 100 doubles", map1);
     }
@@ -164,7 +164,7 @@ public class CodecDataProviders
       for (int i = 0; i < 100; ++i)
       {
         String key = "key_" + i;
-        map1.put(key, new Integer(i));
+        map1.put(key, Integer.valueOf(i));
       }
       inputs.put("Map of 100 32-bit integers", map1);
     }
@@ -174,7 +174,7 @@ public class CodecDataProviders
       for (int i = 0; i < 100; ++i)
       {
         String key = "key_" + i;
-        map1.put(key, new Double(i + 0.5));
+        map1.put(key, Double.valueOf(i + 0.5));
       }
       inputs.put("Map of 100 doubles", map1);
     }

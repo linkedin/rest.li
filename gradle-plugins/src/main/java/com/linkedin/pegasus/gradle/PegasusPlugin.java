@@ -35,6 +35,7 @@ import com.linkedin.pegasus.gradle.tasks.ValidateSchemaAnnotationTask;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -52,6 +53,8 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -60,22 +63,28 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaBasePlugin;
-import org.gradle.api.plugins.JavaPlatformPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.publish.PublishingExtension;
+import org.gradle.api.publish.ivy.IvyPublication;
+import org.gradle.api.publish.ivy.plugins.IvyPublishPlugin;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.Sync;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
+import org.gradle.language.jvm.tasks.ProcessResources;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
+import org.gradle.util.GradleVersion;
 
 
 /**
@@ -520,6 +529,9 @@ public class PegasusPlugin implements Plugin<Project>
 {
   public static boolean debug = false;
 
+  private static final GradleVersion MIN_REQUIRED_VERSION = GradleVersion.version("1.0"); // Next: 5.2.1
+  private static final GradleVersion MIN_SUGGESTED_VERSION = GradleVersion.version("5.2.1"); // Next: 5.3
+
   //
   // Constants for generating sourceSet names and corresponding directory names
   // for generated code
@@ -633,6 +645,8 @@ public class PegasusPlugin implements Plugin<Project>
   @Override
   public void apply(Project project)
   {
+    checkGradleVersion(project);
+
     project.getPlugins().apply(JavaPlugin.class);
     project.getPlugins().apply(IdeaPlugin.class);
     project.getPlugins().apply(EclipsePlugin.class);
@@ -900,7 +914,7 @@ public class PegasusPlugin implements Plugin<Project>
                   task.setResolverPath(getDataModelConfig(project, sourceSet)); // same resolver path as generateDataTemplatesTask
                   task.setClassPath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION)
                                            .plus(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION))
-                                           .plus(project.getConfigurations().getByName(JavaPlatformPlugin.RUNTIME_CONFIGURATION_NAME)));
+                                           .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)));
                   task.setHandlerJarPath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION));
                   if (isPropertyTrue(project, ENABLE_ARG_FILE))
                   {
@@ -1241,7 +1255,7 @@ public class PegasusPlugin implements Plugin<Project>
 
       // generate the rest model
       FileCollection restModelCodegenClasspath = project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION)
-          .plus(project.getConfigurations().getByName("runtime"))
+          .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME))
           .plus(sourceSet.getRuntimeClasspath());
       String destinationDirPrefix = getGeneratedDirPath(project, sourceSet, REST_GEN_TYPE) + File.separatorChar;
       FileCollection restModelResolverPath = apiProject.files(getDataSchemaPath(project, sourceSet))
@@ -1451,7 +1465,7 @@ public class PegasusPlugin implements Plugin<Project>
           task.setPreviousSnapshotDirectory(pegasusSchemaSnapshotDir);
           task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION)
               .plus(project.getConfigurations().getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION))
-              .plus(project.getConfigurations().getByName(JavaPlatformPlugin.RUNTIME_CONFIGURATION_NAME)));
+              .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)));
           task.setCompatibilityLevel(isExtensionSchema ? COMPATIBILITY_LEVEL_BACKWARDS
               :PropertyUtil.findCompatLevel(project, FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT));
           task.setCompatibilityMode(isExtensionSchema ? COMPATIBILITY_OPTIONS_MODE_EXTENSION :
@@ -1820,6 +1834,77 @@ public class PegasusPlugin implements Plugin<Project>
     // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
     project.getDependencies().add(compileConfigName, project.files(dataTemplateJarTask.getArchivePath()));
 
+    // The below Action is only applied when the 'ivy-publish' is applied by the consumer.
+    // If the consumer does not use ivy-publish, this is a noop.
+    // this Action prepares the project applying the pegasus plugin to publish artifacts using these steps:
+    // 1. Registers "feature variants" for pegasus-specific artifacts;
+    //      see https://docs.gradle.org/6.1/userguide/feature_variants.html
+    // 2. Wires legacy configurations like `dataTemplateCompile` to auto-generated feature variant *Api and
+    //      *Implementation configurations for backwards compatibility.
+    // 3. Configures the Ivy Publication to include auto-generated feature variant *Api and *Implementation
+    //      configurations and their dependencies.
+    project.getPlugins().withType(IvyPublishPlugin.class, ivyPublish -> {
+      if (!isAtLeastGradle61())
+      {
+        throw new GradleException("Using the ivy-publish plugin with the pegasus plugin requires Gradle 6.1 or higher " +
+                "at build time.  Please upgrade.");
+      }
+
+      JavaPluginExtension java = project.getExtensions().getByType(JavaPluginExtension.class);
+      // create new capabilities per source set; automatically creates api and implementation configurations
+      String featureName = mapSourceSetToFeatureName(targetSourceSet);
+      try
+      {
+        /*
+         reflection is required to preserve compatibility with Gradle 5.2.1 and below
+         TODO once Gradle 5.3+ is required, remove reflection and replace with:
+           java.registerFeature(featureName, featureSpec -> {
+             featureSpec.usingSourceSet(targetSourceSet);
+            });
+        */
+        Method registerFeature = JavaPluginExtension.class.getDeclaredMethod("registerFeature", String.class, Action.class);
+        Action<?>/*<org.gradle.api.plugins.FeatureSpec>*/ featureSpecAction = createFeatureVariantFromSourceSet(targetSourceSet);
+        registerFeature.invoke(java, featureName, featureSpecAction);
+      }
+      catch (ReflectiveOperationException e)
+      {
+        throw new GradleException("Unable to register new feature variant", e);
+      }
+
+      // include pegasus files in the output of this SourceSet
+      TaskProvider<ProcessResources> processResources = project.getTasks().named(targetSourceSet.getProcessResourcesTaskName(), ProcessResources.class);
+      processResources.configure(it -> {
+        it.from(prepareSchemasForPublishTask, copy -> copy.into("pegasus"));
+        it.from(prepareLegacySchemasForPublishTask, copy -> copy.into(TRANSLATED_SCHEMAS_DIR));
+        Sync copyExtensionSchemasTask = project.getTasks().withType(Sync.class).findByName(targetSourceSet.getName() + "CopyExtensionSchemas");
+        if (copyExtensionSchemasTask != null) {
+          it.from(copyExtensionSchemasTask, copy -> copy.into("extensions"));
+        }
+      });
+
+      // expose transitive dependencies to consumers via variant configurations
+      Configuration featureConfiguration = project.getConfigurations().getByName(featureName);
+      Configuration mainGeneratedDataTemplateApi = project.getConfigurations().getByName(targetSourceSet.getApiConfigurationName());
+      featureConfiguration.extendsFrom(mainGeneratedDataTemplateApi);
+      mainGeneratedDataTemplateApi.extendsFrom(
+              getDataModelConfig(project, targetSourceSet),
+              project.getConfigurations().getByName("dataTemplateCompile"));
+
+      // Configure the existing IvyPublication
+      // For backwards-compatibility, make the legacy dataTemplate/testDataTemplate configurations extend
+      // their replacements, auto-created when we registered the new feature variant
+      project.afterEvaluate(p -> {
+        PublishingExtension publishing = p.getExtensions().getByType(PublishingExtension.class);
+        // When configuring a Gradle Publication, use this value to find the name of the publication to configure.  Defaults to "ivy".
+        String publicationName = p.getExtensions().getExtraProperties().getProperties().getOrDefault("PegasusPublicationName", "ivy").toString();
+        IvyPublication ivyPublication = publishing.getPublications().withType(IvyPublication.class).getByName(publicationName);
+        ivyPublication.configurations(configurations -> configurations.create(featureName, legacyConfiguration -> {
+          legacyConfiguration.extend(p.getConfigurations().getByName(targetSourceSet.getApiElementsConfigurationName()).getName());
+          legacyConfiguration.extend(p.getConfigurations().getByName(targetSourceSet.getRuntimeElementsConfigurationName()).getName());
+        }));
+      });
+    });
+
     if (debug)
     {
       System.out.println("configureDataTemplateGeneration sourceSet " + sourceSet.getName());
@@ -1833,6 +1918,34 @@ public class PegasusPlugin implements Plugin<Project>
 
     project.getTasks().getByName(sourceSet.getCompileJavaTaskName()).dependsOn(dataTemplateJarTask);
     return generateDataTemplatesTask;
+  }
+
+  private String mapSourceSetToFeatureName(SourceSet sourceSet) {
+    String featureName = "";
+    switch (sourceSet.getName()) {
+      case "mainGeneratedDataTemplate":
+        featureName = "dataTemplate";
+        break;
+      case "testGeneratedDataTemplate":
+        featureName = "testDataTemplate";
+        break;
+      case "mainGeneratedRest":
+        featureName = "restClient";
+        break;
+      case "testGeneratedRest":
+        featureName = "testRestClient";
+        break;
+      case "mainGeneratedAvroSchema":
+        featureName = "avroSchema";
+        break;
+      case "testGeneratedAvroSchema":
+        featureName = "testAvroSchema";
+        break;
+      default:
+        String msg = String.format("Unable to map %s to an appropriate feature name", sourceSet);
+        throw new GradleException(msg);
+    }
+    return featureName;
   }
 
   // Generate rest client from idl files generated from java source files in the specified source set.
@@ -2223,5 +2336,48 @@ public class PegasusPlugin implements Plugin<Project>
           task.into(outputDir);
           task.onlyIf(t -> !SharedFileUtils.getSuffixedFiles(project, inputDir, PDL_FILE_SUFFIX).isEmpty());
         });
+  }
+
+  private void checkGradleVersion(Project project)
+  {
+    if (MIN_REQUIRED_VERSION.compareTo(GradleVersion.current()) > 0)
+    {
+      throw new GradleException(String.format("This plugin does not support %s. Please use %s or later.",
+          GradleVersion.current(),
+          MIN_REQUIRED_VERSION));
+    }
+    if (MIN_SUGGESTED_VERSION.compareTo(GradleVersion.current()) > 0)
+    {
+      project.getLogger().warn(String.format("Pegasus supports %s, but it may not be supported in the next major release. Please use %s or later.",
+          GradleVersion.current(),
+          MIN_SUGGESTED_VERSION));
+    }
+  }
+
+  /**
+   * Reflection is necessary to obscure types introduced in Gradle 5.3
+   *
+   * @param sourceSet the target sourceset upon which to create a new feature variant
+   * @return an Action which modifies a org.gradle.api.plugins.FeatureSpec instance
+   */
+  private Action<?>/*<org.gradle.api.plugins.FeatureSpec>*/ createFeatureVariantFromSourceSet(SourceSet sourceSet)
+  {
+    return featureSpec -> {
+      try
+      {
+        Class<?> clazz = Class.forName("org.gradle.api.plugins.FeatureSpec");
+        Method usingSourceSet = clazz.getDeclaredMethod("usingSourceSet", SourceSet.class);
+        usingSourceSet.invoke(featureSpec, sourceSet);
+      }
+      catch (ReflectiveOperationException e)
+      {
+        throw new GradleException("Unable to invoke FeatureSpec#usingSourceSet(SourceSet)", e);
+      }
+    };
+  }
+
+  protected static boolean isAtLeastGradle61()
+  {
+    return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.1")) >= 0;
   }
 }

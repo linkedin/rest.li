@@ -415,7 +415,7 @@ public class LoadBalancerEchoServer
     }
     else
     {
-      partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new Double(1d));
+      partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, Double.valueOf(1d));
     }
 
     for (int partitionId : partitionDataMap.keySet())

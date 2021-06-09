@@ -695,6 +695,12 @@ public class ResourceModelEncoder
     ActionSchema action = new ActionSchema();
     action.setName(resourceMethodDescriptor.getActionName());
 
+    // Actions are read-write by default, so write info in the schema only for read-only actions.
+    if (resourceMethodDescriptor.isActionReadOnly())
+    {
+      action.setReadOnly(true);
+    }
+
     //We have to construct the method doc for the action which includes the action return type
     final String methodDoc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
     if (methodDoc != null)
@@ -732,7 +738,7 @@ public class ResourceModelEncoder
     final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
     String deprecatedDoc = _docsProvider.getMethodDeprecatedTag(resourceMethodDescriptor.getMethod());
 
-    if(deprecatedDoc != null)
+    if (deprecatedDoc != null)
     {
       customAnnotation.put(DEPRECATED_ANNOTATION_NAME, deprecateDocToAnnotationMap(deprecatedDoc));
     }
