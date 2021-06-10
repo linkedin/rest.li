@@ -18,10 +18,14 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.r2.transport.http.client.ratelimiter.CallbackBuffer;
+import com.linkedin.r2.transport.http.client.ratelimiter.RateLimiterExecutionTracker;
+import com.linkedin.r2.transport.http.client.ratelimiter.SimpleCallbackBuffer;
 import com.linkedin.r2.transport.http.client.ratelimiter.Rate;
 import com.linkedin.util.ArgumentUtil;
 import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.util.clock.Clock;
+import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
@@ -52,10 +56,9 @@ public class SmoothRateLimiter implements AsyncRateLimiter
   private final String _rateLimiterName;
   private volatile Rate _rate = Rate.ZERO_VALUE;
   private final EventLoop _eventLoop;
-  private final int _maxBuffered;
-  private final Queue<Callback<None>> _pendingCallbacks;
+  private final CallbackBuffer _pendingCallbacks;
 
-  private final AtomicInteger _pendingCount = new AtomicInteger(0);
+  private final RateLimiterExecutionTracker _executionTracker;
   private final AtomicReference<Throwable> _invocationError = new AtomicReference<>(null);
 
   private final static Long OVER_BUFFER_RATELIMITEDLOG_RATE_MS = 60000L;
@@ -70,35 +73,46 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     /**
      * Enqueue the request and run at least one to avoid the overflow
      */
-    SCHEDULE_WITH_WARNING
+    SCHEDULE_WITH_WARNING,
+    /**
+     * Used for buffers that cannot overflow
+     */
+    NONE
+  }
+
+  public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, Queue<Callback<None>> pendingCallbacks,
+                           int maxBuffered, BufferOverflowMode bufferOverflowMode, String rateLimiterName)
+  {
+    this(scheduler, executor, clock, new SimpleCallbackBuffer(pendingCallbacks), bufferOverflowMode, rateLimiterName, new BoundedRateLimiterExecutionTracker(maxBuffered));
   }
 
   /**
    * Constructs a new instance of {@link SmoothRateLimiter}.
    * The default rate is 0, no requests will be processed until the rate is changed
    *
-   * @param scheduler        Scheduler used to execute the internal non-blocking event loop. MUST be single-threaded
-   * @param executor         Executes the tasks for invoking #onSuccess and #onError (only during #callAll)
-   * @param clock            Clock implementation that supports getting the current time accurate to milliseconds
-   * @param pendingCallbacks THREAD SAFE and NON-BLOCKING implementation of callback queue
-   * @param maxBuffered      Maximum number of tasks kept in the queue before execution
+   * @param scheduler          Scheduler used to execute the internal non-blocking event loop. MUST be single-threaded
+   * @param executor           Executes the tasks for invoking #onSuccess and #onError (only during #callAll)
+   * @param clock              Clock implementation that supports getting the current time accurate to milliseconds
+   * @param pendingCallbacks   THREAD SAFE and NON-BLOCKING implementation of callback queue
    * @param bufferOverflowMode just what to do if the max buffer is reached. In many applications blindly
-   *                          dropping the request might not be backward compatible
+   *                           dropping the request might not be backward compatible
+   * @param rateLimiterName    Name assigned for logging purposes
+   * @param executionTracker   Adjusts the behavior of the rate limiter based on policies/state of RateLimiterExecutionTracker
+
    */
-  public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, Queue<Callback<None>> pendingCallbacks,
-                           int maxBuffered, BufferOverflowMode bufferOverflowMode, String rateLimiterName)
+  SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, CallbackBuffer pendingCallbacks,
+                    BufferOverflowMode bufferOverflowMode, String rateLimiterName, RateLimiterExecutionTracker executionTracker)
   {
     ArgumentUtil.ensureNotNull(scheduler, "scheduler");
     ArgumentUtil.ensureNotNull(executor, "executor");
     ArgumentUtil.ensureNotNull(clock, "clock");
-    ArgumentUtil.checkArgument(maxBuffered >= 0, "maxBuffered");
 
     _scheduler = scheduler;
     _executor = executor;
     _pendingCallbacks = pendingCallbacks;
-    _maxBuffered = maxBuffered;
     _bufferOverflowMode = bufferOverflowMode;
     _rateLimiterName = rateLimiterName;
+    _executionTracker = executionTracker;
 
     _eventLoop = new EventLoop(clock);
     _rateLimitedLoggerOverBuffer = new RateLimitedLogger(LOG, OVER_BUFFER_RATELIMITEDLOG_RATE_MS, clock);
@@ -131,25 +145,26 @@ public class SmoothRateLimiter implements AsyncRateLimiter
   {
     ArgumentUtil.ensureNotNull(callback, "callback");
 
-    if (_pendingCount.get() >= _maxBuffered)
+    if (_executionTracker.getPending() >= _executionTracker.getMaxBuffered())
     {
       if (_bufferOverflowMode == BufferOverflowMode.DROP)
       {
         throw new RejectedExecutionException(
-          String.format("PEGA_2000: Cannot submit callback because the buffer is full at %d tasks for ratelimiter: %s", _maxBuffered, _rateLimiterName));
+            String.format("PEGA_2000: Cannot submit callback because the buffer is full at %d tasks for ratelimiter: %s",
+                _executionTracker.getMaxBuffered(), _rateLimiterName));
       }
       else
       {
         _rateLimitedLoggerOverBuffer.error(String.format(
-          "PEGA_2001: the buffer is full at %d tasks for ratelimiter: %s. Executing a request immediately to avoid overflowing and dropping the task.", _maxBuffered,
-          _rateLimiterName));
+            "PEGA_2001: the buffer is full at %d tasks for ratelimiter: %s. Executing a request immediately to avoid overflowing and dropping the task.",
+            _executionTracker.getMaxBuffered(), _rateLimiterName));
       }
     }
 
-    _pendingCallbacks.offer(callback);
-    if (_pendingCount.getAndIncrement() == 0)
+    _pendingCallbacks.put(callback);
+    if (_executionTracker.getPausedAndIncrement())
     {
-    _scheduler.execute(_eventLoop::loop);
+      _scheduler.execute(_eventLoop::loop);
     }
   }
 
@@ -189,7 +204,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
 
   @Override
   public int getPendingTasksCount(){
-    return _pendingCount.get();
+    return _executionTracker.getPending();
   }
 
   /**
@@ -244,16 +259,14 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         _permitsInTimeFrame = rate.getEvents();
       }
 
-      // if all the tasks have been previously consumed, there is no need for continuing the loop
-      if (_pendingCount.get() == 0)
+      if (_executionTracker.isPaused())
       {
         return;
       }
 
-      // the size of the pending cannot be ever greater than the maxBuffered. We prefer
-      // running above the limit then risking a leak
-      if (_pendingCount.get() > _maxBuffered)
+      if (_executionTracker.getPending() > _executionTracker.getMaxBuffered())
       {
+        // We prefer running above the limit then risking a leak
         _permitAvailableCount++;
       }
 
@@ -263,8 +276,12 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         Callback<None> callback = null;
         try
         {
-          callback = _pendingCallbacks.poll();
+          callback = _pendingCallbacks.get();
           _executor.execute(new Task(callback, _invocationError.get()));
+        }
+        catch (NoSuchElementException ex)
+        {
+          _executionTracker.pauseExecution();
         }
         catch (Throwable e)
         {
@@ -282,7 +299,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         }
         finally
         {
-          if (_pendingCount.decrementAndGet() > 0)
+          if (!_executionTracker.decrementAndGetPaused())
           {
             _scheduler.execute(this::loop);
           }
@@ -299,14 +316,13 @@ public class SmoothRateLimiter implements AsyncRateLimiter
           {
             _nextScheduled = nextRunAbsolute;
 
-            _scheduler.schedule(this::loop, nextRunRelativeTime,
-              TimeUnit.MILLISECONDS);
+            _scheduler.schedule(this::loop, nextRunRelativeTime, TimeUnit.MILLISECONDS);
           }
         }
         catch (Throwable throwable)
         {
           LOG.error("An unrecoverable exception occurred while scheduling the event loop causing the rate limiter"
-            + "to stop processing submitted tasks.", throwable);
+              + "to stop processing submitted tasks.", throwable);
         }
       }
     }
@@ -348,6 +364,50 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       {
         _callback.onError(throwable);
       }
+    }
+  }
+
+  private static class BoundedRateLimiterExecutionTracker implements RateLimiterExecutionTracker
+  {
+    private final AtomicInteger _pendingCount = new AtomicInteger(0);
+    private final int _maxBuffered;
+
+    public BoundedRateLimiterExecutionTracker(int maxBuffered)
+    {
+      ArgumentUtil.checkArgument(maxBuffered >= 0, "maxBuffered");
+
+      _maxBuffered = maxBuffered;
+    }
+
+    public boolean getPausedAndIncrement()
+    {
+      return _pendingCount.getAndIncrement() == 0;
+    }
+
+    public boolean decrementAndGetPaused()
+    {
+      return _pendingCount.updateAndGet(i -> i > 0 ? i - 1 : i) == 0;
+    }
+
+    public boolean isPaused()
+    {
+      // if all the tasks have been previously consumed, there is no need for continuing execution
+      return _pendingCount.get() == 0;
+    }
+
+    public void pauseExecution()
+    {
+      _pendingCount.set(0);
+    }
+
+    public int getPending()
+    {
+      return _pendingCount.get();
+    }
+
+    public int getMaxBuffered()
+    {
+      return _maxBuffered;
     }
   }
 }

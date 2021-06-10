@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.1] - 2021-06-09
+- Add support for CONSTANT_QPS dark canary cluster strategy
+
 ## [29.18.15] - 2021-06-02
 - Fix race conditions in D2 cluster subsetting. Refactor subsetting cache to SubsettingState.
 
@@ -4969,7 +4972,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.18.15...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.1...master
+[29.19.1]: https://github.com/linkedin/rest.li/compare/v29.18.15...v29.19.1
 [29.18.15]: https://github.com/linkedin/rest.li/compare/v29.18.14...v29.18.15
 [29.18.14]: https://github.com/linkedin/rest.li/compare/v29.18.13...v29.18.14
 [29.18.13]: https://github.com/linkedin/rest.li/compare/v29.18.12...v29.18.13

@@ -13,6 +13,7 @@ import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import com.linkedin.util.clock.Clock;
@@ -31,6 +32,7 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
 
   private volatile long _currentTimeMillis = 0L;
   private volatile Boolean _stopped = true;
+  private volatile long _taskCount = 0L;
   private PriorityBlockingQueue<ClockedTask> _taskList = new PriorityBlockingQueue<>();
 
   public Future<Void> runFor(long duration)
@@ -72,6 +74,7 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
         LOG.debug("Processing task " + task.toString() + " total {}, time {}", _taskList.size(), _currentTimeMillis);
       }
       task.run();
+      _taskCount++;
       if (task.repeatCount() > 0 && !task.isCancelled() && !_stopped)
       {
         task.reschedule(_currentTimeMillis);
@@ -80,6 +83,11 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
     }
     _stopped = true;
     return null;
+  }
+
+  public long getExecutedTaskCount()
+  {
+    return _taskCount;
   }
 
   @Override
