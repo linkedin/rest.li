@@ -18,7 +18,7 @@ package com.linkedin.darkcluster;
 
 import com.linkedin.darkcluster.impl.ConstantQpsDarkClusterStrategy;
 import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
-import com.linkedin.r2.transport.http.client.TestEvictingCircularBuffer;
+import com.linkedin.r2.transport.http.client.EvictingCircularBuffer;
 import com.linkedin.test.util.ClockedExecutor;
 import java.net.URI;
 
@@ -29,6 +29,7 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 
+import java.time.temporal.ChronoUnit;
 import java.util.stream.IntStream;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -39,6 +40,10 @@ public class TestConstantQpsDarkClusterStrategy
   private static final String SOURCE_CLUSTER_NAME = "FooCluster";
   private static final String DARK_CLUSTER_NAME = "fooCluster-dark";
   private static final float ERR_PCT = 0.30f; // 5%
+
+  private static final int TEST_CAPACITY = 5;
+  private static final int TEST_TTL = 5;
+  private static final ChronoUnit TEST_TTL_UNIT = ChronoUnit.SECONDS;
 
   @DataProvider
   public Object[][] qpsKeys()
@@ -80,8 +85,9 @@ public class TestConstantQpsDarkClusterStrategy
       mockClusterInfoProvider.putHttpsClusterCount(SOURCE_CLUSTER_NAME, numSourceInstances);
       ClockedExecutor executor = new ClockedExecutor();
 
+      EvictingCircularBuffer buffer = new EvictingCircularBuffer(TEST_CAPACITY, TEST_TTL, TEST_TTL_UNIT, executor);
       ConstantQpsRateLimiter rateLimiter =
-        new ConstantQpsRateLimiter(executor, executor, executor, TestEvictingCircularBuffer.getBuffer(executor));
+        new ConstantQpsRateLimiter(executor, executor, executor, buffer);
       rateLimiter.setBufferCapacity(capacity);
       ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(SOURCE_CLUSTER_NAME,
           DARK_CLUSTER_NAME,
@@ -96,7 +102,7 @@ public class TestConstantQpsDarkClusterStrategy
         strategy.handleRequest(dummyRestRequest, dummyRestRequest, new RequestContext());
       }
       executor.runFor(1000);
-      int expectedCount = (int) ((numIterations == 0 ? 0 : 1) * qps * numDarkInstances)/(numSourceInstances);
+      int expectedCount = ((numIterations == 0 ? 0 : 1) * qps * numDarkInstances)/(numSourceInstances);
       int actualCount = baseDispatcher.getRequestCount();
       Assert.assertEquals(actualCount, expectedCount, expectedCount * ERR_PCT, "count not within expected range");
     });
