@@ -73,7 +73,7 @@ public class TestDarkClusterStrategyFactory
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, PREEXISTING_DARK_CLUSTER_NAME, darkClusterConfigOld);
     DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcher(new MockClient(false));
     ClockedExecutor executor = new ClockedExecutor();
-    _rateLimiter = new ConstantQpsRateLimiter(executor, executor, executor, TestEvictingCircularBuffer.getBuffer(executor));
+    _rateLimiter = new ConstantQpsRateLimiter(executor, executor, executor, TestConstantQpsDarkClusterStrategy.getBuffer(executor));
     _strategyFactory = new DarkClusterStrategyFactoryImpl(facilities,
                                                           SOURCE_CLUSTER_NAME,
                                                           darkClusterDispatcher,

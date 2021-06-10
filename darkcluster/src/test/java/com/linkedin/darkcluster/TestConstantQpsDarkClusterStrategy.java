@@ -20,6 +20,7 @@ import com.linkedin.darkcluster.impl.ConstantQpsDarkClusterStrategy;
 import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
 import com.linkedin.r2.transport.http.client.EvictingCircularBuffer;
 import com.linkedin.test.util.ClockedExecutor;
+import com.linkedin.util.clock.Clock;
 import java.net.URI;
 
 import com.linkedin.darkcluster.api.DarkClusterDispatcher;
@@ -85,7 +86,7 @@ public class TestConstantQpsDarkClusterStrategy
       mockClusterInfoProvider.putHttpsClusterCount(SOURCE_CLUSTER_NAME, numSourceInstances);
       ClockedExecutor executor = new ClockedExecutor();
 
-      EvictingCircularBuffer buffer = new EvictingCircularBuffer(TEST_CAPACITY, TEST_TTL, TEST_TTL_UNIT, executor);
+      EvictingCircularBuffer buffer = TestConstantQpsDarkClusterStrategy.getBuffer(executor);
       ConstantQpsRateLimiter rateLimiter =
         new ConstantQpsRateLimiter(executor, executor, executor, buffer);
       rateLimiter.setBufferCapacity(capacity);
@@ -106,5 +107,10 @@ public class TestConstantQpsDarkClusterStrategy
       int actualCount = baseDispatcher.getRequestCount();
       Assert.assertEquals(actualCount, expectedCount, expectedCount * ERR_PCT, "count not within expected range");
     });
+  }
+
+  static EvictingCircularBuffer getBuffer(Clock clock)
+  {
+    return new EvictingCircularBuffer(TEST_CAPACITY, TEST_TTL, TEST_TTL_UNIT, clock);
   }
 }
