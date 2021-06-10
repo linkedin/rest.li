@@ -17,7 +17,6 @@
 package com.linkedin.darkcluster;
 
 import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
-import com.linkedin.r2.transport.http.client.TestEvictingCircularBuffer;
 import com.linkedin.test.util.ClockedExecutor;
 import java.net.URI;
 import java.util.Arrays;
