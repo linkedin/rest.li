@@ -1,4 +1,5 @@
 dependencies {
   compile project(':pegasus-common')
+  compile project(':r2-core')
   testCompile externalDependency.testng
 }

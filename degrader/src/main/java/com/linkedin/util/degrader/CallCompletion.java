@@ -17,6 +17,8 @@
 /* $Id$ */
 package com.linkedin.util.degrader;
 
+import java.util.Map;
+
 
 /**
  * @author Chris Pettitt
@@ -36,13 +38,32 @@ public interface CallCompletion
   void endCall();
 
   /**
+   * Used to indicate that a call completed successfully.
+   * @param wireAttributes the wire attributes for this response.
+   */
+  void endCall(Map<String, String> wireAttributes);
+
+  /**
    * Used to indicate that a call completed with an error.
    */
   void endCallWithError();
 
   /**
    * Used to indicate that a call completed with an error.
+   * @param wireAttributes the wire attributes for this response.
+   */
+  void endCallWithError(Map<String, String> wireAttributes);
+
+  /**
+   * Used to indicate that a call completed with an error.
    * @param errorType auxillary data that indicates what kind of error it is and how it should be counted for tracking
    */
   void endCallWithError(ErrorType errorType);
+
+  /**
+   * Used to indicate that a call completed with an error.
+   * @param errorType auxiliary data that indicates what kind of error it is and how it should be counted for tracking.
+   * @param wireAttributes the wire attributes for this response.
+   */
+  void endCallWithError(ErrorType errorType, Map<String, String> wireAttributes);
 }

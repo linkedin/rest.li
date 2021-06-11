@@ -20,6 +20,7 @@ import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.strategies.framework.LatencyCorrelation;
 import com.linkedin.d2.balancer.strategies.framework.LoadBalancerStrategyTestRunner;
 import com.linkedin.d2.balancer.strategies.framework.LoadBalancerStrategyTestRunnerBuilder;
+import com.linkedin.d2.balancer.strategies.framework.ServerLoadScoreCorrelation;
 import com.linkedin.d2.loadBalancerStrategyType;
 import java.net.URI;
 import java.util.ArrayList;
@@ -334,6 +335,39 @@ public class TestLoadBalancerPerformanceSimulation {
         };
   }
 
+  @Test(dataProvider = "clusterSizeAndQps")
+  public void testLoadDifference(int clusterSize, int numRequestsPerInterval)
+  {
+    LoadBalancerStrategyTestRunner testRunner = buildRelativeRunnerWithDifferentLoad(clusterSize, numRequestsPerInterval);
+    testRunner.runWait();
+
+    List<Integer> loadHistory = testRunner.getLoadHistory().get(testRunner.getUri(0));
+    System.out.println(loadHistory);
+
+    /**
+     * Test result in terms of load:
+     * [19, 18, 15, 12, 8, 7, 0, 0, 1, 2, 0, 2, 1, 2, 3, 2, 6, 7, 3, 7, 8, 9, 7, 9, 7, 19, 21, 18, 17, 14, 17]
+     * [2, 1, 0, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+     * [1, 2, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+     * [21, 22, 15, 18, 7, 6, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 3, 3, 4, 3, 9, 9, 10, 9, 12, 12, 11, 10, 11, 9, 17]
+     *
+     * Conclusion: When QPS is big, the recovery time is faster.
+     * Reaction time is similar, it takes around 6 intervals to drop to 0
+     * */
+  }
+
+  @DataProvider(name = "clusterSizeAndQps")
+  public Object[][] clusterSizeAndQps()
+  {
+    return new Object[][]
+        {
+            {5, 100}, // Small cluster, high QPS per host
+            {5, 5}, // Small cluster, low QPS per host
+            {50, 100}, // Big cluster, small QPS per host
+            {50, 1000} // Big cluster, high QPS per host
+        };
+  }
+
   private LoadBalancerStrategyTestRunner buildDefaultRunnerWithConstantBadHost(int numHosts, long badHostLatency,
       double relativeLatencyHighThresholdFactor)
   {
@@ -472,6 +506,40 @@ public class TestLoadBalancerPerformanceSimulation {
         .setNumIntervals(200)
         .setDynamicLatency(latencyCorrelationList)
         .setRelativeLoadBalancerStrategies(relativeStrategyProperties)
+        .build();
+  }
+
+  private LoadBalancerStrategyTestRunner buildRelativeRunnerWithDifferentLoad(int numHosts, int numRequestsPerInterval)
+  {
+    int overloadedServerLoad = 200;
+
+    List<LatencyCorrelation> latencyCorrelationList = new ArrayList<>();
+    List<ServerLoadScoreCorrelation> serverLoadScoreCorrelationList = new ArrayList<>();
+
+    long leftLimit = 0L;
+    long rightLimit = 400L;
+    for (int i = 0; i < numHosts; i ++)
+    {
+      latencyCorrelationList.add((requestsPerInterval, intervalIndex) ->
+          400L + (long) (Math.random() * (rightLimit - leftLimit)));
+    }
+
+    // Return high load for the first 10 intervals
+    serverLoadScoreCorrelationList.add((requestsPerInterval, intervalIndex) ->
+        intervalIndex >= 0 && intervalIndex <= 10 ? overloadedServerLoad : requestsPerInterval
+    );
+    for (int i = 1; i < numHosts; i ++)
+    {
+      serverLoadScoreCorrelationList.add((requestsPerInterval, intervalIndex) ->
+          requestsPerInterval);
+    }
+
+    return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, numHosts)
+        .enableServerReportedLoad(true)
+        .setConstantRequestCount(numRequestsPerInterval)
+        .setNumIntervals(30)
+        .setDynamicLatency(latencyCorrelationList)
+        .setDynamicServerLoadScore(serverLoadScoreCorrelationList)
         .build();
   }
 }

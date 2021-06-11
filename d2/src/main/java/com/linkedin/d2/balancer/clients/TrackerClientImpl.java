@@ -193,11 +193,11 @@ public class TrackerClientImpl implements TrackerClient
       if (response.hasError())
       {
         Throwable throwable = response.getError();
-        handleError(_callCompletion, throwable);
+        handleError(_callCompletion, throwable, response.getWireAttributes());
       }
       else
       {
-        _callCompletion.endCall();
+        _callCompletion.endCall(response.getWireAttributes());
       }
 
       _wrappedCallback.onResponse(response);
@@ -234,7 +234,7 @@ public class TrackerClientImpl implements TrackerClient
       if (response.hasError())
       {
         Throwable throwable = response.getError();
-        handleError(_callCompletion, throwable);
+        handleError(_callCompletion, throwable, response.getWireAttributes());
       }
       else
       {
@@ -266,13 +266,13 @@ public class TrackerClientImpl implements TrackerClient
           @Override
           public void onDone()
           {
-            _callCompletion.endCall();
+            _callCompletion.endCall(response.getWireAttributes());
           }
 
           @Override
           public void onError(Throwable e)
           {
-            handleError(_callCompletion, e);
+            handleError(_callCompletion, e, response.getWireAttributes());
           }
         };
         entityStream.addObserver(observer);
@@ -282,35 +282,35 @@ public class TrackerClientImpl implements TrackerClient
     }
   }
 
-  private void handleError(CallCompletion callCompletion, Throwable throwable)
+  private void handleError(CallCompletion callCompletion, Throwable throwable, Map<String, String> wireAttributes)
   {
     if (isServerError(throwable))
     {
-      callCompletion.endCallWithError(ErrorType.SERVER_ERROR);
+      callCompletion.endCallWithError(ErrorType.SERVER_ERROR, wireAttributes);
     }
     else if (throwable instanceof RemoteInvocationException)
     {
       Throwable originalThrowable = LoadBalancerUtil.findOriginalThrowable(throwable);
       if (originalThrowable instanceof ConnectException)
       {
-        callCompletion.endCallWithError(ErrorType.CONNECT_EXCEPTION);
+        callCompletion.endCallWithError(ErrorType.CONNECT_EXCEPTION, wireAttributes);
       }
       else if (originalThrowable instanceof ClosedChannelException)
       {
-        callCompletion.endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION);
+        callCompletion.endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION, wireAttributes);
       }
       else if (originalThrowable instanceof TimeoutException)
       {
-        callCompletion.endCallWithError(ErrorType.TIMEOUT_EXCEPTION);
+        callCompletion.endCallWithError(ErrorType.TIMEOUT_EXCEPTION, wireAttributes);
       }
       else
       {
-        callCompletion.endCallWithError(ErrorType.REMOTE_INVOCATION_EXCEPTION);
+        callCompletion.endCallWithError(ErrorType.REMOTE_INVOCATION_EXCEPTION, wireAttributes);
       }
     }
     else
     {
-      callCompletion.endCallWithError();
+      callCompletion.endCallWithError(wireAttributes);
     }
   }
 

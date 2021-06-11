@@ -49,6 +49,18 @@ record D2RelativeStrategyProperties {
   lowErrorRate: optional double
 
   /**
+   * If the latest server reported load score is above this specified factor of the cluster average,
+   * we will decrease the health score by downStep.
+   */
+  relativeLoadHighThresholdFactor: optional double
+
+  /**
+   * If the latest server reported load score is under this specified factor of the cluster average,
+   * we will increase the health score by upStep.
+   */
+  relativeLoadLowThresholdFactor: optional double
+
+  /**
    * The health score for a server will not be calculated unless the number of calls to it in the interval
    * meets or exceeds the minimum call count.
    */

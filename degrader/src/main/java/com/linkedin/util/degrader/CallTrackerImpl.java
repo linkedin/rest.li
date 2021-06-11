@@ -22,6 +22,7 @@ package com.linkedin.util.degrader;
 import com.linkedin.common.stats.LongTracker;
 import com.linkedin.common.stats.LongTracking;
 import com.linkedin.common.stats.SimpleLongTracking;
+import com.linkedin.r2.filter.R2Constants;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,6 +56,8 @@ import com.linkedin.util.clock.SystemClock;
 public class CallTrackerImpl implements CallTracker
 {
   private static final Clock DEFAULT_CLOCK = SystemClock.instance();
+  // If server reported load feature is not implemented, the default is -1.
+  public static final int DEFAULT_SERVER_OVERLOAD_SCORE = -1;
 
   private final Object _lock = new Object();
 
@@ -72,6 +75,7 @@ public class CallTrackerImpl implements CallTracker
   private long _sumOfOutstandingStartTimes;
   //Total counts of specific types of error like RemoteInvocation error, 400 errors, 500 errors
   private Map<ErrorType, Integer> _errorTypeCountsTotal;
+  private int _serverLoadScore;
 
   private Pending _pending = null;
 
@@ -94,6 +98,7 @@ public class CallTrackerImpl implements CallTracker
     _lastStartTime = -1;
     _lastResetTime = _clock.currentTimeMillis();
     _errorTypeCountsTotal = new HashMap<ErrorType, Integer>();
+    _serverLoadScore = DEFAULT_SERVER_OVERLOAD_SCORE;
     /* create trackers for each resolution */
     _tracker = new Tracker(percentileTrackingEnabled);
   }
@@ -322,22 +327,38 @@ public class CallTrackerImpl implements CallTracker
     @Override
     public void endCall()
     {
-      endCall(false, null);
+      endCall(Collections.emptyMap());
+    }
+
+    @Override
+    public void endCall(Map<String, String> wireAttributes) {
+      endCall(false, null, getServerLoadScore(wireAttributes));
     }
 
     @Override
     public void endCallWithError()
     {
-      endCall(true, null);
+      endCallWithError(Collections.emptyMap());
+    }
+
+    @Override
+    public void endCallWithError(Map<String, String> wireAttributes) {
+      endCall(true, null, getServerLoadScore(wireAttributes));
     }
 
     @Override
     public void endCallWithError(ErrorType errorType)
     {
-      endCall(true, errorType);
+      endCallWithError(errorType, Collections.emptyMap());
     }
 
-    private void endCall(boolean hasError, ErrorType errorType)
+    @Override
+    public void endCallWithError(ErrorType errorType, Map<String, String> wireAttributes)
+    {
+      endCall(true, errorType, getServerLoadScore(wireAttributes));
+    }
+
+    private void endCall(boolean hasError, ErrorType errorType, int serverLoadScore)
     {
       if (_done.compareAndSet(false, true))
       {
@@ -364,6 +385,8 @@ public class CallTrackerImpl implements CallTracker
           {
             _sumOfOutstandingStartTimes = 0;
           }
+
+          _serverLoadScore = serverLoadScore;
           pending = checkForPending();
         }
         // Always deliver events without holding _lock to avoid deadlocks.
@@ -415,6 +438,16 @@ public class CallTrackerImpl implements CallTracker
     {
       pending.deliver();
     }
+  }
+
+  private int getServerLoadScore(Map<String, String> wireAttributes)
+  {
+    int serverLoadScore = DEFAULT_SERVER_OVERLOAD_SCORE;
+    if (wireAttributes != null && wireAttributes.containsKey(R2Constants.SERVER_LOAD))
+    {
+      serverLoadScore = Integer.parseInt(wireAttributes.get(R2Constants.SERVER_LOAD));
+    }
+    return serverLoadScore;
   }
 
   @Override
@@ -495,6 +528,7 @@ public class CallTrackerImpl implements CallTracker
         _concurrentMax,
         _concurrency == 0 ? 0 : (_sumOfOutstandingStartTimes / _concurrency),
         _concurrency,
+        _serverLoadScore,
         _callTimeTracking.getStats(), _errorTypeCounts, _errorTypeCountsTotal);
 
       resetStats(endTime);
@@ -629,6 +663,7 @@ public class CallTrackerImpl implements CallTracker
     private final int       _concurrentMax;
     private final long      _outstandingStartTimeAvg;
     private final int       _outstandingCount;
+    private final int       _serverLoadScore;
     private final LongStats _callTimeStats;
     private final Map<ErrorType, Integer> _errorTypeCounts;
     private final Map<ErrorType, Integer> _errorTypeCountsTotal;
@@ -653,6 +688,7 @@ public class CallTrackerImpl implements CallTracker
 
       _outstandingStartTimeAvg = 0;
       _outstandingCount = 0;
+      _serverLoadScore = DEFAULT_SERVER_OVERLOAD_SCORE;
 
       _callTimeStats = new LongStats();
       _errorTypeCounts = Collections.emptyMap();
@@ -671,6 +707,7 @@ public class CallTrackerImpl implements CallTracker
       int  concurrentMax,
       long outstandingStartTimeAvg,
       int  outstandingCount,
+      int  serverLoadScore,
       LongStats callTimeStats,
       Map<ErrorType, Integer> errorTypeCounts,
       Map<ErrorType, Integer> errorTypeCountsTotal
@@ -689,6 +726,7 @@ public class CallTrackerImpl implements CallTracker
 
       _outstandingStartTimeAvg = outstandingStartTimeAvg;
       _outstandingCount = outstandingCount;
+      _serverLoadScore = serverLoadScore;
 
       _callTimeStats = callTimeStats;
       _errorTypeCounts = Collections.unmodifiableMap(new HashMap<ErrorType, Integer>(errorTypeCounts));
@@ -797,6 +835,11 @@ public class CallTrackerImpl implements CallTracker
     }
 
     @Override
+    public int getServerLoadScore() {
+      return _serverLoadScore;
+    }
+
+    @Override
     public LongStats getCallTimeStats()
     {
       return _callTimeStats;
@@ -823,6 +866,7 @@ public class CallTrackerImpl implements CallTracker
           ", ErrorCountTotal=" + this.getErrorCountTotal() +
           ", ErrorRate=" + this.getErrorRate() +
           ", ConcurrentMax=" + this.getConcurrentMax() +
+          ", serverLoadScore=" + this.getServerLoadScore() +
           ", OutstandingStartTimeAvg=" + this.getOutstandingStartTimeAvg() +
               ", OutstandingCount=" + this.getOutstandingCount() +
           ", CallTimeAvg=" + callTimeStats.getAverage() +

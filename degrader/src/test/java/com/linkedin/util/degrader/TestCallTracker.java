@@ -18,7 +18,11 @@
  * $Id: TestCallTracker.java 142668 2010-10-07 21:03:16Z dmessink $ */
 package com.linkedin.util.degrader;
 
+import com.linkedin.r2.filter.R2Constants;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import java.util.Map;
@@ -48,19 +52,20 @@ public class TestCallTracker
   private SettableClock _clock;
 
   @BeforeMethod
-  protected void setUp() throws Exception
+  protected void setUp()
   {
     _clock = new SettableClock();
     _callTracker = new CallTrackerImpl(_interval, _clock);
   }
 
   @AfterMethod
-  protected void tearDown() throws Exception
+  protected void tearDown()
   {
     _callTracker = null;
   }
 
-  @org.testng.annotations.Test public void testEmptyTracker()
+  @Test
+  public void testEmptyTracker()
   {
     long lastResetTime = _callTracker.getLastResetTime();
 
@@ -124,7 +129,8 @@ public class TestCallTracker
                         "Empty total errors is incorrect");
   }
 
-  @org.testng.annotations.Test public void testCallTracker()
+  @Test
+  public void testCallTracker()
   {
     long jitter = 500;
     long now = _clock.currentTimeMillis();
@@ -363,7 +369,8 @@ public class TestCallTracker
         "Interval average call time is incorrect");
   }
 
-  @org.testng.annotations.Test public void testOutstanding()
+  @Test
+  public void testOutstanding()
   {
     long jitter = 500;
     long now = _clock.currentTimeMillis();
@@ -518,7 +525,8 @@ public class TestCallTracker
                         "Interval concurrent max is incorrect");
   }
 
-  @org.testng.annotations.Test public void testListenerNotifications()
+  @Test
+  public void testListenerNotifications()
   {
     long jitter = 500;
     long now = _clock.currentTimeMillis();
@@ -600,7 +608,8 @@ public class TestCallTracker
                         "Interval count after reset is incorrect");
   }
 
-  @org.testng.annotations.Test public void testStandardDeviationWithSomeVariance()
+  @Test
+  public void testStandardDeviationWithSomeVariance()
   {
     List<CallCompletion> dones = startCall(_callTracker, 4);
     _clock.addDuration(FIVE_MS);
@@ -613,7 +622,8 @@ public class TestCallTracker
                         "Interval standard deviation is incorrect");
   }
 
-  @org.testng.annotations.Test public void testStandardDeviationWithNonIntegerVariance()
+  @Test
+  public void testStandardDeviationWithNonIntegerVariance()
   {
     List<CallCompletion> dones = startCall(_callTracker, 3);
     _clock.addDuration(FIVE_MS);
@@ -629,7 +639,8 @@ public class TestCallTracker
                         0.001, "Interval standard deviation is incorrect");
   }
 
-  @org.testng.annotations.Test public void testStandardDeviationWithSmallVarianceAndLargeSample()
+  @Test
+  public void testStandardDeviationWithSmallVarianceAndLargeSample()
   {
     long interval = 7200000;
     _callTracker = new CallTrackerImpl(interval, _clock);
@@ -645,7 +656,8 @@ public class TestCallTracker
                         0.001, "Interval Standard deviation is incorrect");
   }
 
-  @org.testng.annotations.Test public void testCallStorage()
+  @Test
+  public void testCallStorage()
   {
     long startTime = _clock.currentTimeMillis();
     long startCallCountTotal = _callTracker.getCurrentCallCountTotal();
@@ -722,7 +734,8 @@ public class TestCallTracker
 
   }
 
-  @org.testng.annotations.Test public void testErrorTracking()
+  @Test
+  public void testErrorTracking()
   {
     long startTime = _clock.currentTimeMillis();
     long startCallCountTotal = _callTracker.getCurrentCallCountTotal();
@@ -861,7 +874,8 @@ public class TestCallTracker
 
   }
 
-  @org.testng.annotations.Test public void testReset()
+  @Test
+  public void testReset()
   {
     Assert.assertEquals(_callTracker.getLastResetTime(), _clock.currentTimeMillis(),
                         "Initial lastResetTime is incorrect");
@@ -1036,7 +1050,8 @@ public class TestCallTracker
                         "Interval 99 percentile call time is incorrect");
   }
 
-  @org.testng.annotations.Test public void testResetOnTheFly()
+  @Test
+  public void testResetOnTheFly()
   {
     Assert.assertEquals(_callTracker.getLastResetTime(), _clock.currentTimeMillis(),
                         "Initial lastResetTime is incorrect");
@@ -1231,7 +1246,8 @@ public class TestCallTracker
                         "Interval 99 percentile call time is incorrect");
   }
 
-  @org.testng.annotations.Test public void testEndMoreCallsThanStarted()
+  @Test
+  public void testEndMoreCallsThanStarted()
   {
     long startTime = _clock.currentTimeMillis();
     long startCallCountTotal = _callTracker.getCurrentCallCountTotal();
@@ -1275,6 +1291,23 @@ public class TestCallTracker
                         "Interval standard deviation is incorrect");
   }
 
+  @Test
+  public void testGetServerReportedLoad()
+  {
+    Map<String, String> wireAttributes1 = Collections.singletonMap(R2Constants.SERVER_LOAD, "1");
+    Map<String, String> wireAttributes2 = Collections.singletonMap(R2Constants.SERVER_LOAD, "5");
+    Map<String, String> wireAttributes3 = Collections.singletonMap(R2Constants.SERVER_LOAD, "7");
+    Map<String, String> wireAttributes4 = Collections.singletonMap(R2Constants.SERVER_LOAD, "9");
+    List<Map<String, String>> wireAttributesList = Arrays.asList(wireAttributes1, wireAttributes2, wireAttributes3, wireAttributes4);
+
+    long lastCallTime = _clock.currentTimeMillis();
+    List<CallCompletion> dones = startCall(_callTracker, 4);
+    endCall(dones, 4, wireAttributesList);
+    _clock.setCurrentTimeMillis(INTERVAL + lastCallTime);
+
+    Assert.assertEquals(_callTracker.getCallStats().getServerLoadScore(), 9);
+  }
+
    private List<CallCompletion> startCall(CallTracker callTracker, int count)
   {
     List<CallCompletion> dones = new ArrayList<CallCompletion>();
@@ -1291,6 +1324,15 @@ public class TestCallTracker
     {
       CallCompletion done = dones.remove(0);
       done.endCall();
+    }
+  }
+
+  private void endCall(List<CallCompletion> dones, int count, List<Map<String, String>> wireAttributesList)
+  {
+    for (int x = 0; x < count; x++)
+    {
+      CallCompletion done = dones.remove(0);
+      done.endCall(wireAttributesList.get(x));
     }
   }
 
