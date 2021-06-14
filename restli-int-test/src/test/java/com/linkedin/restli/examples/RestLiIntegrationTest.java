@@ -14,10 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.examples;
 
 import com.linkedin.common.callback.FutureCallback;

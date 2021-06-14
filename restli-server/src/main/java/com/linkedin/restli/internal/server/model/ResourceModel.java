@@ -313,7 +313,7 @@ public class ResourceModel implements ResourceDefinition
     return (R) _pathSubResourceMap.get(subresourceName);
   }
 
-  public Iterable<ResourceModel> getSubResources()
+  public Collection<ResourceModel> getSubResources()
   {
     return _pathSubResourceMap.values();
   }

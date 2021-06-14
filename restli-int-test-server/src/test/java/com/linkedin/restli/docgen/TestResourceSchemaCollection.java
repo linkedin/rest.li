@@ -172,6 +172,7 @@ public class TestResourceSchemaCollection
       final String schemaFullName = getResourceSchemaFullName(schema, entry.getKey());
       final ResourceType expectedType = expectedTypes.get(schemaFullName);
       Assert.assertNotNull(expectedType, "Resource type for " + schemaFullName);
+      Assert.assertNotNull(_schemas.getResourceModel(entry.getKey()), "Got null resource model for: " + entry.getKey());
       Assert.assertSame(actualType, expectedType, schemaFullName);
     }
   }

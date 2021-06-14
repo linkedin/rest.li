@@ -48,11 +48,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
+
 
 /**
  * A collection of ResourceSchema, supporting visitor-style iteration. Each ResourceSchema
@@ -81,7 +86,7 @@ public class ResourceSchemaCollection
       schemaMap.put(resource.getName(), encoder.loadOrBuildResourceSchema(resource));
     }
 
-    return new ResourceSchemaCollection(schemaMap);
+    return new ResourceSchemaCollection(schemaMap, rootResources);
   }
 
   /**
@@ -89,7 +94,10 @@ public class ResourceSchemaCollection
    *
    * @param restspecSearchPaths file system paths to search for idl files
    * @return constructed ResourceSchemaCollection
+   * @deprecated Since version 29.19.10. This API will be removed in the next major version.
+   * Use {@link #loadOrCreateResourceSchema(Map)} instead.
    */
+  @Deprecated
   public static ResourceSchemaCollection createFromIdls(String[] restspecSearchPaths)
   {
     final RestSpecCodec codec = new RestSpecCodec();
@@ -145,7 +153,16 @@ public class ResourceSchemaCollection
    */
   public ResourceSchemaCollection(Map<String, ResourceSchema> rootResources)
   {
+    this(rootResources, Collections.emptyMap());
+  }
+    /**
+      * Store the specified root resources plus the discover subresources
+      * @param rootResources root resources in {@link ResourceSchema} type
+      */
+  public ResourceSchemaCollection(Map<String, ResourceSchema> rootResources, Map<String, ResourceModel> rootModels)
+  {
     _allResources = new TreeMap<>(rootResources);
+    _resourceModels = collectAllResourceModels(rootModels);
     _subResources = new IdentityHashMap<>();
     _parentResources = new IdentityHashMap<>();
     final Map<String, ResourceSchema> flattenSubResources = new TreeMap<>();
@@ -183,6 +200,26 @@ public class ResourceSchemaCollection
     _allResources.putAll(flattenSubResources);
   }
 
+  private Map<String, ResourceModel> collectAllResourceModels(Map<String, ResourceModel> rootModels)
+  {
+    Map<String, ResourceModel> allResourceModelsByPath = new HashMap<>();
+    Deque<Pair<String, ResourceModel>> pending = rootModels.values().stream()
+        .map(model -> Pair.of("", model))
+        .collect(Collectors.toCollection(LinkedList::new));
+    while (!pending.isEmpty())
+    {
+      Pair<String, ResourceModel> pathPrefixAndModel = pending.pop();
+      ResourceModel resourceModel = pathPrefixAndModel.getRight();
+      String path = pathPrefixAndModel.getLeft().isEmpty() ? resourceModel.getName() :
+          String.join(".", pathPrefixAndModel.getLeft(), resourceModel.getName());
+      allResourceModelsByPath.put(path, resourceModel);
+      for (ResourceModel subResourceModel : resourceModel.getSubResources())
+      {
+        pending.add(Pair.of(path, subResourceModel));
+      }
+    }
+    return allResourceModelsByPath;
+  }
   /**
    * Retrieve the resource schema for the specified path.
    *
@@ -193,6 +230,18 @@ public class ResourceSchemaCollection
   public ResourceSchema getResource(String resourcePath)
   {
     return _allResources.get(resourcePath);
+  }
+
+  /**
+   * Retrieve the resource model for the specified path.
+   *
+   * @param resourcePath for root resources, the path is the name of the resource;
+   *                     for subresource, the path is the fully-qualitied resource name, delimited with "."
+   * @return schema of the resource
+   */
+  public ResourceModel getResourceModel(String resourcePath)
+  {
+    return _resourceModels.get(resourcePath);
   }
 
   /**
@@ -443,6 +492,7 @@ public class ResourceSchemaCollection
   }
 
   private final Map<String, ResourceSchema> _allResources;
+  private final Map<String, ResourceModel> _resourceModels;
   private final Map<ResourceSchema, List<ResourceSchema>> _subResources;
   private final Map<ResourceSchema, List<ResourceSchema>> _parentResources;
 }
