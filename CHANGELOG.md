@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.4] - 2021-06-23
+- Do not apply Idea and Eclipse plugins.
+
 ## [29.19.3] - 2021-06-18
 - More changes for Gradle 7 compatibility.
   - Add schemas as source set resources and rely on the Java plugin to copy them
@@ -4982,7 +4985,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.4...master
+[29.19.4]: https://github.com/linkedin/rest.li/compare/v29.19.3...v29.19.4
 [29.19.3]: https://github.com/linkedin/rest.li/compare/v29.19.2...v29.19.3
 [29.19.2]: https://github.com/linkedin/rest.li/compare/v29.19.1...v29.19.2
 [29.19.1]: https://github.com/linkedin/rest.li/compare/v29.18.15...v29.19.1

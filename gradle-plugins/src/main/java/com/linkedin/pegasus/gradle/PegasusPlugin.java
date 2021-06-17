@@ -524,7 +524,6 @@ import org.gradle.util.GradleVersion;
  * test source sets.
  * </p>
  */
-
 public class PegasusPlugin implements Plugin<Project>
 {
   public static boolean debug = false;
@@ -648,8 +647,6 @@ public class PegasusPlugin implements Plugin<Project>
     checkGradleVersion(project);
 
     project.getPlugins().apply(JavaPlugin.class);
-    project.getPlugins().apply(IdeaPlugin.class);
-    project.getPlugins().apply(EclipsePlugin.class);
 
     // this HashMap will have a PegasusOptions per sourceSet
     project.getExtensions().getExtraProperties().set("pegasus", new HashMap<String, PegasusOptions>());
