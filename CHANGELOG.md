@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.2] - 2021-06-17
+- Allow client-side RetriableRequestException to be retried after ClientRetryFilter
+
 ## [29.19.1] - 2021-06-09
 - Add support for CONSTANT_QPS dark canary cluster strategy
 
@@ -4972,7 +4975,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.2...master
+[29.19.2]: https://github.com/linkedin/rest.li/compare/v29.19.1...v29.19.2
 [29.19.1]: https://github.com/linkedin/rest.li/compare/v29.18.15...v29.19.1
 [29.18.15]: https://github.com/linkedin/rest.li/compare/v29.18.14...v29.18.15
 [29.18.14]: https://github.com/linkedin/rest.li/compare/v29.18.13...v29.18.14
