@@ -3,14 +3,12 @@
     <conf name="apiElements" visibility="private" extends="runtime"/>
     <conf name="archives" visibility="public"/>
     <conf name="avroSchema" visibility="public"/>
-    <conf name="avroSchemaGenerator" visibility="private"/>
     <conf name="compile" visibility="private" extends="dataModel,dataTemplateCompile"/>
     <conf name="compileClasspath" visibility="private" extends="compileOnly,implementation"/>
     <conf name="compileOnly" visibility="private"/>
     <conf name="dataModel" visibility="public"/>
     <conf name="dataTemplate" visibility="public" extends="dataModel,dataTemplateCompile"/>
     <conf name="dataTemplateCompile" visibility="private"/>
-    <conf name="dataTemplateGenerator" visibility="private"/>
     <conf name="default" visibility="public" extends="runtimeElements"/>
     <conf name="generatedJavadoc" visibility="public"/>
     <conf name="generatedSources" visibility="public"/>
@@ -27,7 +25,6 @@
     <conf name="restClient" visibility="public" extends="dataTemplate,restClientCompile"/>
     <conf name="restClientCompile" visibility="private"/>
     <conf name="restModel" visibility="public"/>
-    <conf name="restTools" visibility="private"/>
     <conf name="runtime" visibility="private" extends="compile"/>
     <conf name="runtimeClasspath" visibility="private" extends="implementation,runtime,runtimeOnly"/>
     <conf name="runtimeElements" visibility="private" extends="implementation,runtime,runtimeOnly"/>

@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Remove unused configurations "dataTemplateGenerator", "restTools", and "avroSchemaGenerator".
 
 ## [29.19.1] - 2021-06-09
 - Add support for CONSTANT_QPS dark canary cluster strategy
