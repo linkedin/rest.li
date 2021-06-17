@@ -29,7 +29,6 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.testutils.filter.FilterUtil;
-import com.linkedin.r2.transport.http.client.WaiterTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 import org.testng.Assert;
@@ -92,6 +91,6 @@ public class TestClientRetryFilter
       }
     };
     FilterChain filterChain = FilterChains.createRestChain(captureFilter, clientRetryFilter);
-    FilterUtil.fireRestError(filterChain, new WaiterTimeoutException("exception"), new HashMap<>());
+    FilterUtil.fireRestError(filterChain, new RetriableRequestException("exception"), new HashMap<>());
   }
 }
