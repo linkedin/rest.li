@@ -36,7 +36,7 @@ class BufferedReaderInputStream extends InputStream implements Reader
   private static final int CAPACITY = 3;
   private static final ByteString EOS = ByteString.copy(new byte[1]);
 
-  private final BlockingQueue<ByteString> _buffers = new ArrayBlockingQueue<ByteString>(CAPACITY+1);
+  private final BlockingQueue<ByteString> _buffers = new ArrayBlockingQueue<>(CAPACITY + 1);
 
   private boolean _closed = false;
   private volatile boolean _readFinished = false;

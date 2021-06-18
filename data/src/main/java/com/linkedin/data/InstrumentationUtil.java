@@ -35,7 +35,7 @@ public class InstrumentationUtil
                                              Integer timesAccessed,
                                              Map<String, Map<String, Object>> instrumentedData)
   {
-    Map<String, Object> attributeMap = new HashMap<String, Object>(2);
+    Map<String, Object> attributeMap = new HashMap<>(2);
     attributeMap.put(Instrumentable.VALUE, String.valueOf(object));
     attributeMap.put(Instrumentable.TIMES_ACCESSED, timesAccessed);
     instrumentedData.put(key.toString(), attributeMap);

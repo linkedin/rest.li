@@ -38,7 +38,7 @@ public class TestHttp11With204AndException extends RestLiIntegrationTest
   @Test
   public void test204ExceptionWithHttp11() throws Exception
   {
-    RootBuilderWrapper<Long, Greeting> builderWrapper = new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders());
+    RootBuilderWrapper<Long, Greeting> builderWrapper = new RootBuilderWrapper<>(new GreetingsBuilders());
     Request<Greeting> request = builderWrapper.get()
         .id(204L)
         .build();

@@ -258,7 +258,7 @@ public class RestLiConfig
    */
   public void setDebugRequestHandlers(final List<RestLiDebugRequestHandler> handlers)
   {
-    _debugRequestHandlers = new ArrayList<RestLiDebugRequestHandler>(handlers);
+    _debugRequestHandlers = new ArrayList<>(handlers);
   }
 
   /**

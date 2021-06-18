@@ -294,7 +294,7 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
 
   private List<String> _paths = _emptyPaths;
   private String _extension = DEFAULT_EXTENSION;
-  private final Map<String, JarFile> _pathToJarFile = new HashMap<String, JarFile>();
+  private final Map<String, JarFile> _pathToJarFile = new HashMap<>();
 
   private static final List<String> _emptyPaths = Collections.emptyList();
 

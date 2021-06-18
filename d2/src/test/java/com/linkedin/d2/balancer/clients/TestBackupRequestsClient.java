@@ -711,7 +711,7 @@ public class TestBackupRequestsClient
       int responseDelayNano, int backupDelayNano, boolean isD2Async)
       throws IOException
   {
-    Map<URI,Map<Integer, PartitionData>> partitionDescriptions = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI,Map<Integer, PartitionData>> partitionDescriptions = new HashMap<>();
     uris.forEach(uri -> partitionDescriptions.put(URI.create(uri), Collections.singletonMap(0, new PartitionData(1))));
 
     StaticLoadBalancerState LbState = new StaticLoadBalancerState()

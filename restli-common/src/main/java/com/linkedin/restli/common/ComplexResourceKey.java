@@ -263,7 +263,7 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
     RecordTemplate key = validateDataMap(keyDataMap, complexKeyType.getKeyType());
     RecordTemplate params = validateDataMap(paramsDataMap, complexKeyType.getParamsType());
 
-    return new ComplexResourceKey<RecordTemplate, RecordTemplate>(key, params);
+    return new ComplexResourceKey<>(key, params);
   }
 
   /**
@@ -407,6 +407,6 @@ public final class ComplexResourceKey<K extends RecordTemplate, P extends Record
       copyParams = (P) params.copy();
     }
 
-    return new ComplexResourceKey<K, P>(copyKey, copyParams);
+    return new ComplexResourceKey<>(copyKey, copyParams);
   }
 }

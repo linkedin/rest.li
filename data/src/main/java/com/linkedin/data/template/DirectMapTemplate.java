@@ -138,7 +138,7 @@ public abstract class DirectMapTemplate<V> extends AbstractMapTemplate<V>
       }
       if (valueClass.isEnum())
       {
-        return _map.entrySet().contains(new AbstractMap.SimpleImmutableEntry<String, String>((String) key, value.toString()));
+        return _map.entrySet().contains(new AbstractMap.SimpleImmutableEntry<>((String) key, value.toString()));
       }
       else
       {

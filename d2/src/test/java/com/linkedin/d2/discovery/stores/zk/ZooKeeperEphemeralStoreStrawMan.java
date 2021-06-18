@@ -37,19 +37,19 @@ public class ZooKeeperEphemeralStoreStrawMan
   {
     ZKConnection zkClient = new ZKConnection("localhost:2181", 30000);
     PropertyStringMerger merger = new PropertyStringMerger();
-    Set<String> listenTos = new HashSet<String>();
+    Set<String> listenTos = new HashSet<>();
     ZooKeeperEphemeralStore<String> zk =
-        new ZooKeeperEphemeralStore<String>(zkClient,
-                                            new PropertyStringSerializer(),
-                                            merger,
-                                            "/test/lb/test-property-ephemeral",
-                                            false,
-                                            true);
+        new ZooKeeperEphemeralStore<>(zkClient,
+                                      new PropertyStringSerializer(),
+                                      merger,
+                                      "/test/lb/test-property-ephemeral",
+                                      false,
+                                      true);
 
     listenTos.add("foo12");
 
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-    PropertyEventBus<String> bus = new PropertyEventBusImpl<String>(executorService, zk);
+    PropertyEventBus<String> bus = new PropertyEventBusImpl<>(executorService, zk);
 
     bus.register(listenTos, new PropertyEventSubscriber<String>()
     {

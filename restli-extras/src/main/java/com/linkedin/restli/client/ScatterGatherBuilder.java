@@ -70,14 +70,14 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     MapKeyResult<URI, Object> mapKeyResult = mapKeys(request, idObjects);
 
     Map<URI, Collection<Object>> batches = mapKeyResult.getMapResult();
-    Collection<RequestInfo<T>> scatterGatherRequests = new ArrayList<RequestInfo<T>>(batches.size());
+    Collection<RequestInfo<T>> scatterGatherRequests = new ArrayList<>(batches.size());
 
     for (Map.Entry<URI, Collection<Object>> batch : batches.entrySet())
     {
-      BatchGetRequestBuilder<Object, T> builder = new BatchGetRequestBuilder<Object, T>(request.getBaseUriTemplate(),
-                                                                                        request.getResponseDecoder(),
-                                                                                        request.getResourceSpec(),
-                                                                                        request.getRequestOptions());
+      BatchGetRequestBuilder<Object, T> builder = new BatchGetRequestBuilder<>(request.getBaseUriTemplate(),
+          request.getResponseDecoder(),
+          request.getResourceSpec(),
+          request.getRequestOptions());
       builder.ids(batch.getValue());
       for (Map.Entry<String, Object> param : request.getQueryParamsObjects().entrySet())
       {
@@ -95,10 +95,10 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       RequestContext context = requestContext.clone();
       KeyMapper.TargetHostHints.setRequestContextTargetHost(context, batch.getKey());
 
-      scatterGatherRequests.add(new RequestInfo<T>(builder.build(), context));
+      scatterGatherRequests.add(new RequestInfo<>(builder.build(), context));
     }
 
-    return new ScatterGatherResult<T>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
+    return new ScatterGatherResult<>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
   }
 
   @SuppressWarnings("deprecation")
@@ -111,14 +111,14 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     final MapKeyResult<URI, K> mapKeyResult = mapKeys(request, idObjects);
 
     final Map<URI, Collection<K>> batches = mapKeyResult.getMapResult();
-    final Collection<KVRequestInfo<K, EntityResponse<T>>> scatterGatherRequests = new ArrayList<KVRequestInfo<K, EntityResponse<T>>>(batches.size());
+    final Collection<KVRequestInfo<K, EntityResponse<T>>> scatterGatherRequests = new ArrayList<>(batches.size());
 
     for (Map.Entry<URI, Collection<K>> batch : batches.entrySet())
     {
-      final BatchGetEntityRequestBuilder<K, T> builder = new BatchGetEntityRequestBuilder<K, T>(request.getBaseUriTemplate(),
-                                                                                                request.getResponseDecoder(),
-                                                                                                request.getResourceSpec(),
-                                                                                                request.getRequestOptions());
+      final BatchGetEntityRequestBuilder<K, T> builder = new BatchGetEntityRequestBuilder<>(request.getBaseUriTemplate(),
+          request.getResponseDecoder(),
+          request.getResourceSpec(),
+          request.getRequestOptions());
       builder.ids(batch.getValue());
       for (Map.Entry<String, Object> param : request.getQueryParamsObjects().entrySet())
       {
@@ -136,10 +136,10 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       final RequestContext context = requestContext.clone();
       KeyMapper.TargetHostHints.setRequestContextTargetHost(context, batch.getKey());
 
-      scatterGatherRequests.add(new KVRequestInfo<K, EntityResponse<T>>(builder.build(), context));
+      scatterGatherRequests.add(new KVRequestInfo<>(builder.build(), context));
     }
 
-    return new KVScatterGatherResult<K, EntityResponse<T>>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
+    return new KVScatterGatherResult<>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
   }
 
   @SuppressWarnings({ "unchecked", "deprecation" })
@@ -151,15 +151,15 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     MapKeyResult<URI, K> mapKeyResult = mapKeys(request, idObjects);
 
     Map<URI, Collection<K>> batches = mapKeyResult.getMapResult();
-    Collection<KVRequestInfo<K, T>> scatterGatherRequests = new ArrayList<KVRequestInfo<K, T>>(batches.size());
+    Collection<KVRequestInfo<K, T>> scatterGatherRequests = new ArrayList<>(batches.size());
 
     for (Map.Entry<URI, Collection<K>> batch : batches.entrySet())
     {
       BatchGetRequestBuilder<K, T> builder =
-          new BatchGetRequestBuilder<K, T>(request.getBaseUriTemplate(),
-            (Class<T>)request.getResourceProperties().getValueType().getType(),
-            request.getResourceSpec(),
-            request.getRequestOptions());
+          new BatchGetRequestBuilder<>(request.getBaseUriTemplate(),
+              (Class<T>) request.getResourceProperties().getValueType().getType(),
+              request.getResourceSpec(),
+              request.getRequestOptions());
 
       builder.ids(batch.getValue());
       for (Map.Entry<String, Object> param : request.getQueryParamsObjects().entrySet())
@@ -178,10 +178,10 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       RequestContext context = requestContext.clone();
       KeyMapper.TargetHostHints.setRequestContextTargetHost(context, batch.getKey());
 
-      scatterGatherRequests.add(new KVRequestInfo<K, T>(builder.buildKV(), context));
+      scatterGatherRequests.add(new KVRequestInfo<>(builder.buildKV(), context));
     }
 
-    return new KVScatterGatherResult<K, T>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
+    return new KVScatterGatherResult<>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
   }
 
   @SuppressWarnings("deprecation")
@@ -189,7 +189,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     throws ServiceUnavailableException
   {
     Set<Object> idObjects = request.getObjectIds();
-    Collection<K> ids = new HashSet<K>(idObjects.size());
+    Collection<K> ids = new HashSet<>(idObjects.size());
     for (Object o : idObjects)
     {
       @SuppressWarnings("unchecked")
@@ -202,14 +202,14 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     @SuppressWarnings("unchecked")
     TypeSpec<T> valueType = (TypeSpec<T>) request.getResourceProperties().getValueType();
     Map<URI, Map<K, T>> batches = keyMapToInput(mapKeyResult, request);
-    Collection<KVRequestInfo<K, UpdateStatus>> scatterGatherRequests = new ArrayList<KVRequestInfo<K, UpdateStatus>>(batches.size());
+    Collection<KVRequestInfo<K, UpdateStatus>> scatterGatherRequests = new ArrayList<>(batches.size());
 
     for (Map.Entry<URI, Map<K, T>> batch : batches.entrySet())
     {
-      BatchUpdateRequestBuilder<K, T> builder = new BatchUpdateRequestBuilder<K, T>(request.getBaseUriTemplate(),
-                                                                                    valueType.getType(),
-                                                                                    request.getResourceSpec(),
-                                                                                    request.getRequestOptions());
+      BatchUpdateRequestBuilder<K, T> builder = new BatchUpdateRequestBuilder<>(request.getBaseUriTemplate(),
+          valueType.getType(),
+          request.getResourceSpec(),
+          request.getRequestOptions());
       builder.inputs(batch.getValue());
       for (Map.Entry<String, Object> param : request.getQueryParamsObjects().entrySet())
       {
@@ -226,10 +226,10 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       RequestContext context = requestContext.clone();
       KeyMapper.TargetHostHints.setRequestContextTargetHost(context, batch.getKey());
 
-      scatterGatherRequests.add(new KVRequestInfo<K, UpdateStatus>(builder.build(), context));
+      scatterGatherRequests.add(new KVRequestInfo<>(builder.build(), context));
     }
 
-    return new KVScatterGatherResult<K, UpdateStatus>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
+    return new KVScatterGatherResult<>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
   }
 
   private <K> MapKeyResult<URI, K> mapKeys(BatchRequest<?> request, Collection<K> ids)
@@ -273,11 +273,11 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     }
 
     Map<U, Collection<K>> map = mapKeyResult.getMapResult();
-    Map<U, Map<K, T>> result = new HashMap<U, Map<K, T>>(map.size());
+    Map<U, Map<K, T>> result = new HashMap<>(map.size());
     for(Map.Entry<U, Collection<K>> entry : map.entrySet())
     {
       Collection<K> keyList = entry.getValue();
-      Map<K, T> keyRecordMap = new HashMap<K, T>(keyList.size());
+      Map<K, T> keyRecordMap = new HashMap<>(keyList.size());
       for(K key : keyList)
       {
         T record = updateInput.get(key);
@@ -297,7 +297,7 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
     throws ServiceUnavailableException
   {
     Set<Object> idObjects = request.getObjectIds();
-    Collection<K> ids = new HashSet<K>(idObjects.size());
+    Collection<K> ids = new HashSet<>(idObjects.size());
     for (Object o : idObjects)
     {
       @SuppressWarnings("unchecked")
@@ -307,17 +307,17 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
 
     MapKeyResult<URI, K> mapKeyResult = mapKeys(request, ids);
     Map<URI, Collection<K>> batches = mapKeyResult.getMapResult();
-    Collection<KVRequestInfo<K, UpdateStatus>> scatterGatherRequests = new ArrayList<KVRequestInfo<K, UpdateStatus>>(batches.size());
+    Collection<KVRequestInfo<K, UpdateStatus>> scatterGatherRequests = new ArrayList<>(batches.size());
 
     for (Map.Entry<URI, Collection<K>> batch : batches.entrySet())
     {
       TypeSpec<? extends RecordTemplate> value = request.getResourceProperties().getValueType();
       @SuppressWarnings("unchecked")
       Class<T> valueClass = (Class<T>) ((value == null) ? null : value.getType());
-      BatchDeleteRequestBuilder<K, T> builder = new BatchDeleteRequestBuilder<K, T>(request.getBaseUriTemplate(),
-                                                                                    valueClass,
-                                                                                    request.getResourceSpec(),
-                                                                                    request.getRequestOptions());
+      BatchDeleteRequestBuilder<K, T> builder = new BatchDeleteRequestBuilder<>(request.getBaseUriTemplate(),
+          valueClass,
+          request.getResourceSpec(),
+          request.getRequestOptions());
       builder.ids(batch.getValue());
       for (Map.Entry<String, Object> param : request.getQueryParamsObjects().entrySet())
       {
@@ -335,10 +335,10 @@ public class ScatterGatherBuilder<T extends RecordTemplate>
       KeyMapper.TargetHostHints.setRequestContextTargetHost(context, batch.getKey());
 
       BatchRequest<BatchKVResponse<K, UpdateStatus>> build = builder.build();
-      scatterGatherRequests.add(new KVRequestInfo<K, UpdateStatus>(build, context));
+      scatterGatherRequests.add(new KVRequestInfo<>(build, context));
     }
 
-    return new KVScatterGatherResult<K, UpdateStatus>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
+    return new KVScatterGatherResult<>(scatterGatherRequests, mapKeyResult.getUnmappedKeys());
   }
 
   /**

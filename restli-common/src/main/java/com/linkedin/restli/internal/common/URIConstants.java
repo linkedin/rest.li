@@ -37,7 +37,7 @@ public class URIConstants
   public final static String EMPTY_STRING_REP = "''";
 
   public static final char[] RESERVED_CHARS = { OBJ_START, KEY_VALUE_SEP, OBJ_END, ITEM_SEP, EMPTY_STR_CHAR };
-  public static final Set<Character> GRAMMAR_CHARS = new HashSet<Character>(Arrays.asList(OBJ_START, KEY_VALUE_SEP, OBJ_END, ITEM_SEP));
+  public static final Set<Character> GRAMMAR_CHARS = new HashSet<>(Arrays.asList(OBJ_START, KEY_VALUE_SEP, OBJ_END, ITEM_SEP));
 
   /**
    * Determine if this character is a Rest.li 2.0.0 URI grammar character.

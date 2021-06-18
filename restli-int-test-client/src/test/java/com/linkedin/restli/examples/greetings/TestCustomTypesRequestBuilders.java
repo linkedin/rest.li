@@ -85,7 +85,7 @@ public class TestCustomTypesRequestBuilders
   public void testFinderCustomLongArray(RootBuilderWrapper<Long, Greeting> builders, ProtocolVersion version, String expectedUri)
     throws IOException, RestException
   {
-    List<CustomLong> ls = new ArrayList<CustomLong>(2);
+    List<CustomLong> ls = new ArrayList<>(2);
     ls.add(new CustomLong(2L));
     ls.add(new CustomLong(4L));
     Request<CollectionResponse<Greeting>> request = builders.findBy("CustomLongArray").setQueryParam("ls", ls).build();

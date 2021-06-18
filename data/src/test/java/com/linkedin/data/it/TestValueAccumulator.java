@@ -35,9 +35,9 @@ public class TestValueAccumulator
   public void testAccumulateByPath() throws Exception
   {
     SimpleTestData data = IteratorTestData.createSimpleTestData();
-    
-    List<Object> ids = new LinkedList<Object>();
-    
+
+    List<Object> ids = new LinkedList<>();
+
     Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
       .filterBy(Predicates.and(Predicates.pathMatchesPattern("foo", Wildcard.ANY_ONE, "id")))
       .accumulateValues(ids);
@@ -52,8 +52,8 @@ public class TestValueAccumulator
   public void testAccumulateByPathAndFilter() throws Exception
   {
     SimpleTestData data = IteratorTestData.createSimpleTestData();
-    
-    List<Object> ids = new ArrayList<Object>(
+
+    List<Object> ids = new ArrayList<>(
         Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
         .filterBy(Predicates.and(Predicates.pathMatchesPathSpec(IteratorTestData.PATH_TO_ID), IteratorTestData.LESS_THAN_3_CONDITION))
         .accumulateValues());

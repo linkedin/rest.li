@@ -113,7 +113,7 @@ public class LinkedDeque<T> extends AbstractDeque<T>
     {
       throw new IllegalStateException("node was already removed");
     }
-    Node<T> node = new Node<T>(item);
+    Node<T> node = new Node<>(item);
     if (before == null)
     {
       // Adding to tail

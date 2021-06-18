@@ -108,7 +108,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysOptionsDataProvider")
   public void testBatchGetWithSimpleKey(RestliRequestOptions requestOptions) throws Exception
   {
-    Set<String> keys = new HashSet<String>();
+    Set<String> keys = new HashSet<>();
     keys.add(key1());
     keys.add(key2());
     Request<BatchResponse<Message>> req = new StringKeysBuilders(requestOptions).batchGet().ids(keys).build();
@@ -121,7 +121,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysOptionsDataProvider")
   public void testBatchGetKVWithSimpleKey(RestliRequestOptions requestOptions) throws Exception
   {
-    Set<String> keys = new HashSet<String>();
+    Set<String> keys = new HashSet<>();
     keys.add(key1());
     keys.add(key2());
     Request<BatchKVResponse<String, Message>> req = new StringKeysBuilders(requestOptions).batchGet().ids(keys).buildKV();
@@ -134,7 +134,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestStringKeysOptionsDataProvider")
   public void testBatchGetEntityWithSimpleKey(RestliRequestOptions requestOptions) throws Exception
   {
-    Set<String> keys = new HashSet<String>();
+    Set<String> keys = new HashSet<>();
     keys.add(key1());
     keys.add(key2());
     Request<BatchKVResponse<String, EntityResponse<Message>>> req = new StringKeysRequestBuilders(requestOptions).batchGet().ids(keys).build();
@@ -168,7 +168,7 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
     params.setMajor(key1());
     params.setMinor(key3());
 
-    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, params);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<>(key, params);
     Request<Message> request = builders.get().id(complexKey).build();
     Message response = getClient().sendRequest(request).get().getEntity();
     Assert.assertNotNull(response);
@@ -263,10 +263,10 @@ public class TestEscapeCharsInStringKeys extends RestLiIntegrationTest
   private static Object[][] requestActionBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()) },
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()) },
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      {new RootBuilderWrapper<>(new ActionsBuilders()) },
+      {new RootBuilderWrapper<>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      {new RootBuilderWrapper<>(new ActionsRequestBuilders()) },
+      {new RootBuilderWrapper<>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

@@ -77,7 +77,7 @@ public class ReplayFilter implements RestFilter
 
       // We create an empty map instead of Collections.emptyMap, because upstream filters may
       // try to modify the map.
-      final Map<String, String> wireAttrs = new HashMap<String, String>();
+      final Map<String, String> wireAttrs = new HashMap<>();
 
       // For symmetry with CaptureFilter - if the REST response is "not OK" then we treat it as an
       // exception.

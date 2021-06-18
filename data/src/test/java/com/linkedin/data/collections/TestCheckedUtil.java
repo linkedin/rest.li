@@ -37,8 +37,8 @@ public class TestCheckedUtil
   @Test
   public void testUnsafeClone()
   {
-    final CheckedList<String> list = new CheckedList<String>();
-    final CheckedMap<String, String> map = new CheckedMap<String, String>();
+    final CheckedList<String> list = new CheckedList<>();
+    final CheckedMap<String, String> map = new CheckedMap<>();
 
     final CheckedList<String> listClone = CommonUtil.unsafeClone(list);
     final CheckedMap<String, String> mapClone = CommonUtil.unsafeClone(map);
@@ -56,8 +56,8 @@ public class TestCheckedUtil
   @Test
   public void testUnsafeCloneSetReadOnly()
   {
-    final CheckedList<String> list = new CheckedList<String>();
-    final CheckedMap<String, String> map = new CheckedMap<String, String>();
+    final CheckedList<String> list = new CheckedList<>();
+    final CheckedMap<String, String> map = new CheckedMap<>();
 
     final CheckedList<String> listClone = CommonUtil.unsafeCloneSetReadOnly(list);
     final CheckedMap<String, String> mapClone = CommonUtil.unsafeCloneSetReadOnly(map);
@@ -139,7 +139,7 @@ public class TestCheckedUtil
   public void testPutAllCycleWithAssertChecking()
   {
     final DataMap map = new DataMap();
-    final Map<String, Object> cycleMap = new HashMap<String, Object>();
+    final Map<String, Object> cycleMap = new HashMap<>();
     cycleMap.put("cycle", map);
 
     CheckedUtil.putAllWithoutChecking(map, cycleMap);

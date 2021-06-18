@@ -804,7 +804,7 @@ public class TestAltKeyResource extends RestLiIntegrationTest
     TwoPartKey key = new TwoPartKey();
     key.setMajor("testKey");
     key.setMinor("testKey");
-    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, new TwoPartKey());
+    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<>(key, new TwoPartKey());
     String altKey = coercer.coerceFromKey(complexKey);
 
     Message message = new Message().setMessage("message");

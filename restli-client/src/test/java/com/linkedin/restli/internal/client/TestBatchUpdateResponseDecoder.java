@@ -55,7 +55,7 @@ public class TestBatchUpdateResponseDecoder
     throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException
   {
     final BatchUpdateResponseDecoder<String> decoder =
-      new BatchUpdateResponseDecoder<String>(new TypeSpec<String>(String.class), Collections.<String, CompoundKey.TypeInfo>emptyMap(), null);
+        new BatchUpdateResponseDecoder<>(new TypeSpec<>(String.class), Collections.<String, CompoundKey.TypeInfo>emptyMap(), null);
 
     final BatchKVResponse<String, UpdateStatus> response = decoder.wrapResponse(null, Collections.<String, String>emptyMap(), protocolVersion);
     Assert.assertNull(response);

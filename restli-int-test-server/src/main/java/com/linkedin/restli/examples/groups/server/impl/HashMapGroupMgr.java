@@ -47,7 +47,7 @@ public class HashMapGroupMgr implements GroupMgr
 
   public HashMapGroupMgr(GroupMembershipMgr membershipMgr)
   {
-    _data = new HashMap<Integer, Group>();
+    _data = new HashMap<>();
     _sequence = new AtomicInteger();
     _membershipMgr = membershipMgr;
   }
@@ -55,7 +55,7 @@ public class HashMapGroupMgr implements GroupMgr
   @Override
   public Map<Integer, Group> batchGet(Set<Integer> ids)
   {
-    Map<Integer, Group> result = new HashMap<Integer, Group>();
+    Map<Integer, Group> result = new HashMap<>();
     for (Integer id : ids)
     {
       Group g = _data.get(id);
@@ -102,7 +102,7 @@ public class HashMapGroupMgr implements GroupMgr
   @Override
   public List<Group> findByEmailDomain(String emailDomain, int start, int count)
   {
-    List<Group> result = new ArrayList<Group>();
+    List<Group> result = new ArrayList<>();
 
     int idx = 0;
     for (Group g : _data.values())
@@ -129,7 +129,7 @@ public class HashMapGroupMgr implements GroupMgr
   public List<Group> search(String keywords, String nameKeywords, Integer groupID, int start,
                             int count)
   {
-    List<Group> result = new ArrayList<Group>();
+    List<Group> result = new ArrayList<>();
 
     int idx = 0;
     for (Group g : _data.values())

@@ -48,7 +48,7 @@ public class DynamicRecordMetadata
    */
   public DynamicRecordMetadata(String name, Collection<? extends FieldDef<?>> fieldDefs)
   {
-    _fieldDefMap = new HashMap<String, FieldDef<?>>();
+    _fieldDefMap = new HashMap<>();
     _recordDataSchema = buildSchema(name, fieldDefs);
 
     for (FieldDef<?> fieldDef : fieldDefs)
@@ -70,7 +70,7 @@ public class DynamicRecordMetadata
     StringBuilder errorMessageBuilder = new StringBuilder();
     RecordDataSchema schema = new RecordDataSchema(new Name(name, errorMessageBuilder), RecordDataSchema.RecordType.RECORD);
 
-    List<RecordDataSchema.Field> fields = new ArrayList<RecordDataSchema.Field>(fieldDefs.size());
+    List<RecordDataSchema.Field> fields = new ArrayList<>(fieldDefs.size());
     for (FieldDef<?> fieldDef: fieldDefs)
     {
       RecordDataSchema.Field paramField = fieldDef.getField();

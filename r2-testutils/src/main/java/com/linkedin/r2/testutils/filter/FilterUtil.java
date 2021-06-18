@@ -298,7 +298,7 @@ public class FilterUtil
 
   public static Map<String, String> emptyWireAttrs()
   {
-    return new HashMap<String, String>();
+    return new HashMap<>();
   }
 
   public static RequestContext emptyRequestContext()

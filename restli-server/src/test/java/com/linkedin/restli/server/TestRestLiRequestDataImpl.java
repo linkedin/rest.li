@@ -40,7 +40,7 @@ public class TestRestLiRequestDataImpl
   {
     List<Foo> batchEntities = Arrays.asList(Foo.createFoo("foo", "bar"));
     List<String> batchKeys = Arrays.asList("key1", "key2", "key3");
-    Map<String, Foo> batchKeyEntityMap = new HashMap<String, Foo>();
+    Map<String, Foo> batchKeyEntityMap = new HashMap<>();
     batchKeyEntityMap.put("key1", Foo.createFoo("foo1", "bar1"));
     batchKeyEntityMap.put("key2", Foo.createFoo("foo2", "bar2"));
     RestLiRequestData requestData1 = new RestLiRequestDataImpl.Builder().batchKeys(batchKeys).build();

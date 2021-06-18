@@ -48,7 +48,7 @@ import javax.activation.MimeTypeParseException;
  */
 public class MultiplexedCallback implements Callback<RestResponse>
 {
-  private final EntityResponseDecoder<MultiplexedResponseContent> _decoder = new EntityResponseDecoder<MultiplexedResponseContent>(MultiplexedResponseContent.class);
+  private final EntityResponseDecoder<MultiplexedResponseContent> _decoder = new EntityResponseDecoder<>(MultiplexedResponseContent.class);
   private final Map<Integer, Callback<RestResponse>> _callbacks;
   private final Callback<MultiplexedResponse> _aggregatedCallback;
 

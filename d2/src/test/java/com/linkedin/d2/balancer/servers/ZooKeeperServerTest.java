@@ -66,11 +66,11 @@ public class ZooKeeperServerTest
     zkClient.start();
 
     ZooKeeperEphemeralStore<UriProperties> store =
-        new ZooKeeperEphemeralStore<UriProperties>(zkClient,
-                                                   new UriPropertiesJsonSerializer(),
-                                                   new UriPropertiesMerger(),
-                                                   "/echo/lb/uris");
-    FutureCallback<None> callback = new FutureCallback<None>();
+        new ZooKeeperEphemeralStore<>(zkClient,
+                                      new UriPropertiesJsonSerializer(),
+                                      new UriPropertiesMerger(),
+                                      "/echo/lb/uris");
+    FutureCallback<None> callback = new FutureCallback<>();
     store.start(callback);
     callback.get();
 
@@ -136,7 +136,7 @@ public class ZooKeeperServerTest
 
     // bring up uri1
 
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
     partitionWeight.put(5, new PartitionData(0.3d));
     partitionWeight.put(15, new PartitionData(0.7d));
     markUp(server, cluster, uri1, partitionWeight, null);
@@ -145,7 +145,7 @@ public class ZooKeeperServerTest
 
     assertEquals(properties.getPartitionDataMap(uri1), partitionWeight);
 
-    Map<String, Object> uri2SpecificProperties = new HashMap<String, Object>();
+    Map<String, Object> uri2SpecificProperties = new HashMap<>();
     uri2SpecificProperties.put("foo", "fooValue");
     uri2SpecificProperties.put("bar", 1);
 
@@ -168,12 +168,12 @@ public class ZooKeeperServerTest
 
     markDown(server, cluster, uri1);
 
-    Map<String, Object> uri1SpecificProperties = new HashMap<String, Object>();
+    Map<String, Object> uri1SpecificProperties = new HashMap<>();
     uri1SpecificProperties.put("baz", "bazValue");
 
     // use new partition data so that we can test the mapping later on
 
-    Map<Integer, PartitionData> newUri1PartitionWeights = new HashMap<Integer, PartitionData>(partitionWeight);
+    Map<Integer, PartitionData> newUri1PartitionWeights = new HashMap<>(partitionWeight);
     newUri1PartitionWeights.remove(10);
     markUp(server, cluster, uri1, newUri1PartitionWeights, uri1SpecificProperties);
 
@@ -188,7 +188,7 @@ public class ZooKeeperServerTest
     assertEquals(properties.getUriSpecificProperties().get(uri1), uri1SpecificProperties);
     assertEquals(properties.getUriSpecificProperties().get(uri2), uri2SpecificProperties);
 
-    Set<URI> uriSet = new HashSet<URI>();
+    Set<URI> uriSet = new HashSet<>();
     uriSet.add(uri1);
     uriSet.add(uri2);
 
@@ -264,7 +264,7 @@ public class ZooKeeperServerTest
 
   private void markUp(ZooKeeperServer server, String cluster, URI uri, double weight)
   {
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
     partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
     markUp(server, cluster, uri,  partitionWeight, null);
   }
@@ -275,7 +275,7 @@ public class ZooKeeperServerTest
                       Map<Integer, PartitionData> partitionDataMap,
                       Map<String, Object> uriSpecificProperties)
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     if (uriSpecificProperties == null)
     {
       server.markUp(cluster, uri, partitionDataMap, callback);
@@ -296,7 +296,7 @@ public class ZooKeeperServerTest
 
   private void markDown(ZooKeeperServer server, String cluster, URI uri)
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     server.markDown(cluster, uri, callback);
     try
     {
@@ -314,7 +314,7 @@ public class ZooKeeperServerTest
                             boolean doNotSlowStart,
                             double weight)
   {
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
     partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
     changeWeight(server, cluster, uri, doNotSlowStart, partitionWeight);
   }

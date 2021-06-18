@@ -95,7 +95,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
 
     //These two fields are needed to support our iterative invocation of callbacks so that we don't end up with a recursive loop
     //which would lead to a stack overflow.
-    private final Queue<Callable<Void>> _callbackQueue = new LinkedDeque<Callable<Void>>();
+    private final Queue<Callable<Void>> _callbackQueue = new LinkedDeque<>();
     private volatile boolean _callbackInProgress = false;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -889,7 +889,7 @@ public class MultiPartMIMEReader implements MultiPartMIMEDataSourceIterator
       }
       else
       {
-        headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+        headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
         //We have headers, lets read them in - we search using a sliding window.
 

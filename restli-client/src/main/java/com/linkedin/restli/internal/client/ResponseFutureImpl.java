@@ -151,13 +151,13 @@ public class ResponseFutureImpl<T> implements ResponseFuture<T>
     // creation which will not have an entity.
     if (restLiResponseException.hasDecodedResponse())
     {
-      response = new ResponseImpl<T>(
-        (Response<T>) restLiResponseException.getDecodedResponse(),
-        restLiResponseException);
+      response = new ResponseImpl<>(
+          (Response<T>) restLiResponseException.getDecodedResponse(),
+          restLiResponseException);
     }
     else
     {
-      response = new ResponseImpl<T>(
+      response = new ResponseImpl<>(
           restLiResponseException.getStatus(),
           restLiResponseException.getResponse().getHeaders(),
           CookieUtil.decodeSetCookies(restLiResponseException.getResponse().getCookies()),

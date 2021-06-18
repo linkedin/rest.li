@@ -449,7 +449,7 @@ public class GreetingsResourceCodeGenerator
   private static final Map<Class<?>, String> PRIMITIVES_TO_CLASSES;
   static
   {
-    final Map<Class<?>, String> map = new HashMap<Class<?>, String>();
+    final Map<Class<?>, String> map = new HashMap<>();
     map.put(byte.class, "Byte");
     map.put(short.class, "Short");
     map.put(int.class, "Integer");
@@ -524,7 +524,7 @@ public class GreetingsResourceCodeGenerator
     sb.append(className(annoType));
     final Method[] methods = annoType.getDeclaredMethods();
 
-    final Map<String, String> values = new TreeMap<String, String>();
+    final Map<String, String> values = new TreeMap<>();
     for (final Method method : methods)
     {
       try
@@ -590,8 +590,8 @@ public class GreetingsResourceCodeGenerator
     return String.format("%s<%s>", className(genericClass), toStrGenericType(typeArg, true));
   }
 
-  private final Set<String> _importedShort = new TreeSet<String>();
-  private final Set<String> _importedFull  = new TreeSet<String>();
+  private final Set<String> _importedShort = new TreeSet<>();
+  private final Set<String> _importedFull  = new TreeSet<>();
 
   /**
    * Import the class and give the short name if possible

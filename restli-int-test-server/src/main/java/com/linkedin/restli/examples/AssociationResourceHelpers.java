@@ -43,7 +43,7 @@ public class AssociationResourceHelpers
                    .setMessage("src1-dest1")
                    .setTone(Tone.SINCERE);
 
-  public static Map<CompoundKey, Message> DB = new HashMap<CompoundKey, Message>();
+  public static Map<CompoundKey, Message> DB = new HashMap<>();
   static
   {
     DB.put(URL_COMPOUND_KEY, URL_MESSAGE);

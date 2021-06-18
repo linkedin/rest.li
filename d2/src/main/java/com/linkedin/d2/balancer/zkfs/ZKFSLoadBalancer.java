@@ -86,7 +86,7 @@ public class ZKFSLoadBalancer
   private final String _connectString;
   private final int _sessionTimeout;
   private final int _initialZKTimeout;
-  private final AtomicReference<Callback<None>> _startupCallback = new AtomicReference<Callback<None>>();
+  private final AtomicReference<Callback<None>> _startupCallback = new AtomicReference<>();
   private final TogglingLoadBalancerFactory _loadBalancerFactory;
   private final File _zkFlagFile;
   private final ZKFSDirectory _directory;

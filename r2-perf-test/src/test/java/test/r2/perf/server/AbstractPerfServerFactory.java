@@ -65,20 +65,16 @@ public abstract class AbstractPerfServerFactory
       @Override
       public void handleRequest(StreamRequest request, RequestContext requestContext, final Callback<StreamResponse> callback)
       {
-        request.getEntityStream().setReader(new PerfStreamReader<None>(new Callback<None>()
-        {
+        request.getEntityStream().setReader(new PerfStreamReader<>(new Callback<None>() {
           @Override
-          public void onError(Throwable e)
-          {
+          public void onError(Throwable e) {
             callback.onError(e);
           }
 
           @Override
-          public void onSuccess(None result)
-          {
+          public void onSuccess(None result) {
             StreamResponseBuilder builder = new StreamResponseBuilder();
-            for (int i = 0; i < numHeaders; i++)
-            {
+            for (int i = 0; i < numHeaders; i++) {
               builder.setHeader(STATIC_HEADER_PREFIX + i, headerContent);
             }
 

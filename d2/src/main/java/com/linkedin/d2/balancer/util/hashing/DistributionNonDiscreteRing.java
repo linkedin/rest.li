@@ -96,7 +96,7 @@ public class DistributionNonDiscreteRing<T> implements Ring<T>
   private TreeMap<Integer, T> calculateCDF(Map<T, Integer> pointsMap)
   {
     int cumulativeSum = 0;
-    TreeMap<Integer, T> cumulativePointsMap = new TreeMap<Integer, T>();
+    TreeMap<Integer, T> cumulativePointsMap = new TreeMap<>();
 
     for (Map.Entry<T, Integer> entry : pointsMap.entrySet())
     {

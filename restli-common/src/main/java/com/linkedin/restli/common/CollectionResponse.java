@@ -101,7 +101,7 @@ public class CollectionResponse<T extends RecordTemplate> extends RecordTemplate
   {
     DataList value = (DataList) data().get(ELEMENTS);
 
-    return new DynamicRecordArray<T>(value, _arraySchema, _elementClass);
+    return new DynamicRecordArray<>(value, _arraySchema, _elementClass);
   }
 
   public boolean hasPaging()

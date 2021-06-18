@@ -111,7 +111,7 @@ public class TestCustomPoint
   @Test
   public void testCustomPointRecordArray() throws CloneNotSupportedException
   {
-    final List<String> input = new ArrayList<String>(Arrays.asList("1,1", "2,2", "3,3"));
+    final List<String> input = new ArrayList<>(Arrays.asList("1,1", "2,2", "3,3"));
     final DataList inputDataList = new DataList(input);
 
     CustomPointRecord record = new CustomPointRecord();
@@ -145,7 +145,7 @@ public class TestCustomPoint
   @Test
   public void testCustomPointArray() throws IOException
   {
-    final List<String> input = new ArrayList<String>(Arrays.asList("1,1", "2,2", "3,3"));
+    final List<String> input = new ArrayList<>(Arrays.asList("1,1", "2,2", "3,3"));
     final DataList inputDataList = new DataList(input);
     final String customPointArraySchemaText = "{\"type\":\"array\",\"items\":{\"type\":\"typeref\",\"name\":\"CustomPoint\",\"namespace\":\"com.linkedin.pegasus.generator.test\",\"ref\":\"string\",\"java\":{\"class\":\"com.linkedin.data.template.TestCustom.CustomPoint\"}}}";
 

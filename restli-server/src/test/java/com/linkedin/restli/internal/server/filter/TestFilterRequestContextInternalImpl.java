@@ -94,7 +94,7 @@ public class TestFilterRequestContextInternalImpl
     final MaskTree metadataMaskTree = new MaskTree();
     final MaskTree pagingMaskTree = new MaskTree();
     final MutablePathKeys pathKeys = new PathKeysImpl();
-    final Map<String, String> requestHeaders = new HashMap<String, String>();
+    final Map<String, String> requestHeaders = new HashMap<>();
     requestHeaders.put("Key1", "Value1");
     final URI requestUri = new URI("foo.bar.com");
     final ProtocolVersion protoVersion = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;

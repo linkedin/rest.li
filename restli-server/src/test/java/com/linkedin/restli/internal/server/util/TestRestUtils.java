@@ -136,7 +136,7 @@ public class TestRestUtils
   @Test()
   public void testValidateRequestHeadersWithValidAcceptHeaderAndNoMatch() throws Exception
   {
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put("Accept", "text/html");
     ServerResourceContext resourceContext = new ResourceContextImpl();
     try
@@ -157,7 +157,7 @@ public class TestRestUtils
   @Test()
   public void testValidateRequestHeadersWithValidAcceptHeaderAndMatch() throws Exception
   {
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put("Accept", "application/json");
     ServerResourceContext resourceContext = new ResourceContextImpl();
     RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, Collections.emptySet(), resourceContext);

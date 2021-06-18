@@ -52,7 +52,7 @@ public class TestAnnotationResource extends CollectionResourceTemplate<Long, Moc
   public GetResult<MockRecord> getWithResult(Long id,
                                               @QueryParam("extra") @UnnamedAnnotation(123) String extraParam)
   {
-    return new GetResult<MockRecord>(null, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    return new GetResult<>(null, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
   }
 
   @Override

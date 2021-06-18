@@ -49,17 +49,17 @@ public class Jsr330Adapter
 
   private final BeanProvider _beanProvider;
 
-  private final Map<Class<?>, InjectableConstructor> _constructorParameterDependencies = new HashMap<Class<?>, InjectableConstructor>();
+  private final Map<Class<?>, InjectableConstructor> _constructorParameterDependencies = new HashMap<>();
 
-  private final Map<Class<?>, Object[]> _constructorParameterBindings = new HashMap<Class<?>, Object[]>();
+  private final Map<Class<?>, Object[]> _constructorParameterBindings = new HashMap<>();
 
   //map of field dependency declarations (unbound dependencies) for each bean class
   //bean class => InjectableFields, i.e., (Field => DependencyDecl)
-  private final Map<Class<?>, InjectableFields> _fieldDependencyDeclarations = new HashMap<Class<?>, InjectableFields>();
+  private final Map<Class<?>, InjectableFields> _fieldDependencyDeclarations = new HashMap<>();
 
   //map of bound field dependencies for each bean class
   //bean class => BeanDependencies, i.e., (Field => Object)
-  private final Map<Class<?>, BeanDependencies> _fieldDependencyBindings = new HashMap<Class<?>, BeanDependencies>();
+  private final Map<Class<?>, BeanDependencies> _fieldDependencyBindings = new HashMap<>();
 
   public Jsr330Adapter(final Collection<Class<?>> managedBeans,
                        final BeanProvider beanProvider)
@@ -135,7 +135,7 @@ public class Jsr330Adapter
         Class<?>[] parameters = constructor.getParameterTypes();
         Annotation[][] parameterAnnotations = constructor.getParameterAnnotations();
 
-        List<DependencyDecl> parameterDecls = new ArrayList<DependencyDecl>(parameters.length);
+        List<DependencyDecl> parameterDecls = new ArrayList<>(parameters.length);
 
         for (int i = 0; i < parameters.length; ++i)
         {
@@ -178,7 +178,7 @@ public class Jsr330Adapter
     InjectableFields fieldDecls = new InjectableFields();
 
     List<Field> fieldsToScan =
-        new ArrayList<Field>(Arrays.asList(beanClazz.getDeclaredFields()));
+        new ArrayList<>(Arrays.asList(beanClazz.getDeclaredFields()));
     Class<?> superclazz = beanClazz.getSuperclass();
     while (superclazz != Object.class)
     {
@@ -287,7 +287,7 @@ public class Jsr330Adapter
 
   protected static class BeanDependencies
   {
-    Map<Field, Object> _dependencyMap = new HashMap<Field, Object>();
+    Map<Field, Object> _dependencyMap = new HashMap<>();
 
     public void add(final Field field, final Object bean)
     {
@@ -329,7 +329,7 @@ public class Jsr330Adapter
 
   protected static class InjectableFields
   {
-    Map<Field, DependencyDecl> _fieldMap = new HashMap<Field, DependencyDecl>();
+    Map<Field, DependencyDecl> _fieldMap = new HashMap<>();
 
     public Iterable<Entry<Field, DependencyDecl>> iterator()
     {

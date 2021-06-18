@@ -64,7 +64,7 @@ public class DefaultNodeModeCalculator
 {
 
   // used for memoization of default node modes
-  private IdentityHashMap<DataMap, NodeMode> _defaultNodeModes = new IdentityHashMap<DataMap, NodeMode>();
+  private IdentityHashMap<DataMap, NodeMode> _defaultNodeModes = new IdentityHashMap<>();
   /**
    * Reruns default NodeMode for given filter node.
    * @param opNode DataMap containing filter, for which default mode needs to be determined

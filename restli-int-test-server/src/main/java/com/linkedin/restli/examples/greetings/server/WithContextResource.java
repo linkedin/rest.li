@@ -58,7 +58,7 @@ public class WithContextResource implements KeyValueResource<Long,Greeting>
   @Finder("finder")
   public List<Greeting> finder(@HeaderParam("Expected-Header") String header, @ProjectionParam MaskTree projection, @PathKeysParam PathKeys keys)
   {
-    List<Greeting> list = new ArrayList<Greeting>();
+    List<Greeting> list = new ArrayList<>();
 
     Greeting greeting1 = createGreeting(projection, keys);
     greeting1.setId(1L);

@@ -91,7 +91,7 @@ public class TestMultiplexerDelays extends RestLiIntegrationTest
 
   private long measureExecutionTime(MultiplexedRequest multiplexedRequest) throws ExecutionException, InterruptedException
   {
-    FutureCallback<MultiplexedResponse> aggregatedCallback = new FutureCallback<MultiplexedResponse>();
+    FutureCallback<MultiplexedResponse> aggregatedCallback = new FutureCallback<>();
     long startTime = System.currentTimeMillis();
     getClient().sendRequest(multiplexedRequest, aggregatedCallback);
     MultiplexedResponse multiplexedResponse = aggregatedCallback.get();

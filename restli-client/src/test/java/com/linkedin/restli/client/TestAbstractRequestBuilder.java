@@ -100,7 +100,7 @@ public class TestAbstractRequestBuilder
     Assert.assertEquals(builder.getHeader("a"), "b");
     Assert.assertEquals(builder.getHeader("c"), "d");
 
-    final Map<String, String> newHeaders = new HashMap<String, String>();
+    final Map<String, String> newHeaders = new HashMap<>();
     newHeaders.put("c", "e");
 
     builder.setHeaders(newHeaders);
@@ -115,7 +115,7 @@ public class TestAbstractRequestBuilder
   public void testSetHeadersWithNullValue()
   {
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
-    final Map<String, String> newHeaders = new HashMap<String, String>();
+    final Map<String, String> newHeaders = new HashMap<>();
     newHeaders.put("a", "b");
     newHeaders.put("c", null);
 
@@ -128,9 +128,9 @@ public class TestAbstractRequestBuilder
   public void testAddCookieWithNonNullValue()
   {
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
-    List<HttpCookie> cookies = new ArrayList<HttpCookie>(Arrays.asList(new HttpCookie("X", "1"),
-                                                                       new HttpCookie("Y", "2"),
-                                                                       new HttpCookie("Z", "3")));
+    List<HttpCookie> cookies = new ArrayList<>(Arrays.asList(new HttpCookie("X", "1"),
+        new HttpCookie("Y", "2"),
+        new HttpCookie("Z", "3")));
 
     Assert.assertSame(builder.addCookie(new HttpCookie("X", "1")), builder);
     Assert.assertSame(builder.addCookie(new HttpCookie("Y", "2")), builder);
@@ -147,8 +147,8 @@ public class TestAbstractRequestBuilder
     Assert.assertSame(builder.addCookie(null), builder);
     Assert.assertSame(builder.addCookie(new HttpCookie("Z", "3")), builder);
 
-    List<HttpCookie> cookies = new ArrayList<HttpCookie>(Arrays.asList(new HttpCookie("X", "1"),
-                                                                       new HttpCookie("Z", "3")));
+    List<HttpCookie> cookies = new ArrayList<>(Arrays.asList(new HttpCookie("X", "1"),
+        new HttpCookie("Z", "3")));
 
     Assert.assertEquals(builder.getCookies(), cookies);
   }
@@ -157,9 +157,9 @@ public class TestAbstractRequestBuilder
   public void testSetCookiesWithNonNullValue()
   {
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
-    List<HttpCookie> cookies = new ArrayList<HttpCookie>(Arrays.asList(new HttpCookie("X", "1"),
-                                                                       new HttpCookie("Y", "2"),
-                                                                       new HttpCookie("Z", "3")));
+    List<HttpCookie> cookies = new ArrayList<>(Arrays.asList(new HttpCookie("X", "1"),
+        new HttpCookie("Y", "2"),
+        new HttpCookie("Z", "3")));
 
     Assert.assertSame(builder.setCookies(cookies), builder);
     Assert.assertEquals(builder.getCookies(), cookies);
@@ -169,13 +169,13 @@ public class TestAbstractRequestBuilder
   public void testSetCookiesWithNullValue()
   {
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
-    List<HttpCookie> cookies = new ArrayList<HttpCookie>(Arrays.asList(new HttpCookie("X", "1"),
-                                                                       null,
-                                                                       new HttpCookie("Z", "3")));
+    List<HttpCookie> cookies = new ArrayList<>(Arrays.asList(new HttpCookie("X", "1"),
+        null,
+        new HttpCookie("Z", "3")));
    // Null element will not be passed
     Assert.assertSame(builder.setCookies(cookies), builder);
-    List<HttpCookie> resultCookies = new ArrayList<HttpCookie>(Arrays.asList(new HttpCookie("X", "1"),
-                                                                       new HttpCookie("Z", "3")));
+    List<HttpCookie> resultCookies = new ArrayList<>(Arrays.asList(new HttpCookie("X", "1"),
+        new HttpCookie("Z", "3")));
     Assert.assertEquals(builder.getCookies(), resultCookies);
   }
 
@@ -183,9 +183,9 @@ public class TestAbstractRequestBuilder
   public void testClearCookie()
   {
     final AbstractRequestBuilder<?, ?, ?> builder = new DummyAbstractRequestBuilder();
-    List<HttpCookie> cookies = new ArrayList<HttpCookie>(Arrays.asList(new HttpCookie("X", "1"),
-                                                                       new HttpCookie("Y", "2"),
-                                                                       new HttpCookie("Z", "3")));
+    List<HttpCookie> cookies = new ArrayList<>(Arrays.asList(new HttpCookie("X", "1"),
+        new HttpCookie("Y", "2"),
+        new HttpCookie("Z", "3")));
 
     Assert.assertSame(builder.setCookies(cookies), builder);
     Assert.assertSame(builder.clearCookies(), builder);
@@ -279,7 +279,7 @@ public class TestAbstractRequestBuilder
 
     // AbstractList returned by Arrays.asList() does not support add()
     // need to wrap it with ArrayList
-    final Collection<Object> testData = new ArrayList<Object>(Arrays.asList(value1, value2));
+    final Collection<Object> testData = new ArrayList<>(Arrays.asList(value1, value2));
     builder.setParam("a", testData);
     builder.addParam("a", value3);
 
@@ -350,14 +350,14 @@ public class TestAbstractRequestBuilder
   @DataProvider(name = "testQueryParam")
   public static Object[][] testQueryParamDataProvider()
   {
-    final Object value3 = new ArrayList<String>(Arrays.asList("x", "y"));
+    final Object value3 = new ArrayList<>(Arrays.asList("x", "y"));
     return new Object[][] {
       { "a", "b", "z" },
       { "a", "b", value3 },
       { new String[] { "a", "b" }, new String[] { "c", "d" }, "z" },
       { new String[] { "a", "b" }, new String[] { "c", "d" }, value3 },
-      { new ArrayList<String>(Arrays.asList("a", "b")), new ArrayList<String>(Arrays.asList("c", "d")), "z" },
-      { new ArrayList<String>(Arrays.asList("a", "b")), new ArrayList<String>(Arrays.asList("c", "d")), value3 }
+      {new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("c", "d")), "z" },
+      {new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("c", "d")), value3 }
     };
   }
 
@@ -488,7 +488,7 @@ public class TestAbstractRequestBuilder
     TestRecord testRecord = new TestRecord();
     TestRecord testRecord2 = new TestRecord();
     ComplexResourceKey<TestRecord, TestRecord> originalKey =
-        new ComplexResourceKey<TestRecord, TestRecord>(testRecord, testRecord2);
+        new ComplexResourceKey<>(testRecord, testRecord2);
 
     builder.addKey(originalKey);
     Map<String, Object> parameters = builder.buildReadOnlyQueryParameters();
@@ -521,7 +521,7 @@ public class TestAbstractRequestBuilder
     TestRecord testRecord = new TestRecord();
     TestRecord testRecord2 = new TestRecord();
     ComplexResourceKey<TestRecord, TestRecord> originalKey =
-        new ComplexResourceKey<TestRecord, TestRecord>(testRecord, testRecord2);
+        new ComplexResourceKey<>(testRecord, testRecord2);
 
     builder.pathKey("abc", originalKey);
     Map<String, Object> pathKeys = builder.buildReadOnlyPathKeys();

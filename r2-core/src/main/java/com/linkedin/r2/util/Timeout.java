@@ -44,7 +44,7 @@ public class Timeout<T> implements TimeoutExecutor
 
   private final AtomicReference<T> _item;
   private final ScheduledFuture<?> _future;
-  private final ClosableQueue<Runnable> _queue = new ClosableQueue<Runnable>();
+  private final ClosableQueue<Runnable> _queue = new ClosableQueue<>();
 
   /**
    * Construct a new instance with the specified parameters.

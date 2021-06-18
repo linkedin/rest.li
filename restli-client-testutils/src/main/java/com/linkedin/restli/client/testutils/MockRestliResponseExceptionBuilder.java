@@ -62,7 +62,7 @@ public class MockRestliResponseExceptionBuilder
     String errorHeaderName = _version.equals(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion())
         ? RestConstants.HEADER_LINKEDIN_ERROR_RESPONSE : RestConstants.HEADER_RESTLI_ERROR_RESPONSE;
 
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put(errorHeaderName, "true");
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, _version.toString());
     headers.putAll(_headers);

@@ -151,7 +151,7 @@ public class TestStreamingCompression
     EntityStream uncompressedStream = EntityStreams.newEntityStream(writer);
     EntityStream compressedStream = compressor.deflate(uncompressedStream);
 
-    FutureCallback<byte[]> callback = new FutureCallback<byte[]>();
+    FutureCallback<byte[]> callback = new FutureCallback<>();
     compressedStream.setReader(new ByteReader(callback));
 
     byte[] result = callback.get();
@@ -165,7 +165,7 @@ public class TestStreamingCompression
     EntityStream compressedStream = EntityStreams.newEntityStream(writer);
     EntityStream uncompressedStream = compressor.inflate(compressedStream);
 
-    FutureCallback<byte[]> callback = new FutureCallback<byte[]>();
+    FutureCallback<byte[]> callback = new FutureCallback<>();
     uncompressedStream.setReader(new ByteReader(callback));
 
     byte[] result = callback.get();
@@ -181,7 +181,7 @@ public class TestStreamingCompression
 
     EntityStream decompressedStream = compressor.inflate(compressedStream);
 
-    FutureCallback<byte[]> callback = new FutureCallback<byte[]>();
+    FutureCallback<byte[]> callback = new FutureCallback<>();
     decompressedStream.setReader(new ByteReader(callback));
 
     byte[] result = callback.get();

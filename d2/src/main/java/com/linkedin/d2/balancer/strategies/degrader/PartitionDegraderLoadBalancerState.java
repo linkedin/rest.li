@@ -109,7 +109,7 @@ public class PartitionDegraderLoadBalancerState
     _lastUpdated = lastUpdated;
     _serviceName = state._serviceName;
     _degraderProperties = state._degraderProperties;
-    _previousMaxDropRate = new HashMap<TrackerClient, Double>();
+    _previousMaxDropRate = new HashMap<>();
     _currentClusterCallCount = 0;
     _quarantineMap = state._quarantineMap;
     _quarantineHistory = state._quarantineHistory;

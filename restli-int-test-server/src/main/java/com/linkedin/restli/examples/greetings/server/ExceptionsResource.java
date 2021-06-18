@@ -96,7 +96,7 @@ public class ExceptionsResource extends CollectionResourceTemplate<Long, Greetin
   @Override
   public BatchCreateResult<Long, Greeting> batchCreate(BatchCreateRequest<Long, Greeting> entities)
   {
-    List<CreateResponse> responses = new ArrayList<CreateResponse>(entities.getInput().size());
+    List<CreateResponse> responses = new ArrayList<>(entities.getInput().size());
 
     for (Greeting g : entities.getInput())
     {
@@ -109,7 +109,7 @@ public class ExceptionsResource extends CollectionResourceTemplate<Long, Greetin
         responses.add(new CreateResponse(restliException));
       }
     }
-    return new BatchCreateResult<Long, Greeting>(responses);
+    return new BatchCreateResult<>(responses);
   }
 
   @Action(name = "errorResponseFormatMinimal")

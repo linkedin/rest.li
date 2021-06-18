@@ -90,8 +90,8 @@ public class BatchGreetingResource extends CollectionResourceTemplate<Long, Gree
   @MaxBatchSize(value = 2, validate = true)
   public Map<Long, Greeting> batchGet(Set<Long> ids)
   {
-    Map<Long, Greeting> batch = new HashMap<Long, Greeting>();
-    Map<Long, RestLiServiceException> errors = new HashMap<Long, RestLiServiceException>();
+    Map<Long, Greeting> batch = new HashMap<>();
+    Map<Long, RestLiServiceException> errors = new HashMap<>();
     for (Long id : ids)
     {
       Greeting greeting = DB.get(id);
@@ -112,7 +112,7 @@ public class BatchGreetingResource extends CollectionResourceTemplate<Long, Gree
   @MaxBatchSize(value = 2)
   public BatchUpdateResult<Long, Greeting> batchUpdate(BatchUpdateRequest<Long, Greeting> entities)
   {
-    Map<Long, UpdateResponse> responseMap = new HashMap<Long, UpdateResponse>();
+    Map<Long, UpdateResponse> responseMap = new HashMap<>();
     for (Map.Entry<Long, Greeting> entry : entities.getData().entrySet())
     {
       responseMap.put(entry.getKey(), update(entry.getKey(), entry.getValue()));
@@ -124,7 +124,7 @@ public class BatchGreetingResource extends CollectionResourceTemplate<Long, Gree
   @MaxBatchSize(value = 2, validate = true)
   public BatchUpdateResult<Long, Greeting> batchUpdate(BatchPatchRequest<Long, Greeting> entityUpdates)
   {
-    Map<Long, UpdateResponse> responseMap = new HashMap<Long, UpdateResponse>();
+    Map<Long, UpdateResponse> responseMap = new HashMap<>();
     for (Map.Entry<Long, PatchRequest<Greeting>> entry : entityUpdates.getData().entrySet())
     {
       responseMap.put(entry.getKey(), update(entry.getKey(), entry.getValue()));
@@ -149,7 +149,7 @@ public class BatchGreetingResource extends CollectionResourceTemplate<Long, Gree
   @MaxBatchSize(value = 2, validate = true)
   public BatchUpdateResult<Long, Greeting> batchDelete(BatchDeleteRequest<Long, Greeting> deleteRequest)
   {
-    Map<Long, UpdateResponse> responseMap = new HashMap<Long, UpdateResponse>();
+    Map<Long, UpdateResponse> responseMap = new HashMap<>();
     for (Long id : deleteRequest.getKeys())
     {
       responseMap.put(id, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));

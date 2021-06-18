@@ -171,8 +171,8 @@ public class DataTranslator implements DataTranslatorContext
 
   private static final GenericData _genericData = GenericData.get();
 
-  protected final Deque<Object> _path = new ArrayDeque<Object>();
-  protected final MessageList<Message> _messageList = new MessageList<Message>();
+  protected final Deque<Object> _path = new ArrayDeque<>();
+  protected final MessageList<Message> _messageList = new MessageList<>();
   protected final AvroOverrideFactory _avroOverrideFactory = new AvroOverrideFactory()
   {
     {
@@ -448,7 +448,7 @@ public class DataTranslator implements DataTranslatorContext
         appendMessage("cannot find %1$s in union %2$s for value %3$s", key, unionDataSchema, value);
         return null;
       }
-      return new AbstractMap.SimpleEntry<DataSchema, Schema>(memberDataSchema, memberAvroSchema);
+      return new AbstractMap.SimpleEntry<>(memberDataSchema, memberAvroSchema);
     }
 
     private Object translateAvroRecordToPegasusUnionWithAliases(Object value, UnionDataSchema unionDataSchema, Schema avroSchema)
@@ -564,7 +564,7 @@ public class DataTranslator implements DataTranslatorContext
           DataMap map = (DataMap) value;
           DataSchema valueDataSchema = ((MapDataSchema) dereferencedDataSchema).getValues();
           Schema valueAvroSchema = avroSchema.getValueType();
-          Map<String, Object> avroMap = new HashMap<String, Object>(map.size());
+          Map<String, Object> avroMap = new HashMap<>(map.size());
           for (Map.Entry<String, Object> entry : map.entrySet())
           {
             String key = entry.getKey();
@@ -579,7 +579,7 @@ public class DataTranslator implements DataTranslatorContext
           DataList list = (DataList) value;
           DataSchema elementDataSchema = ((ArrayDataSchema) dereferencedDataSchema).getItems();
           Schema elementAvroSchema = avroSchema.getElementType();
-          GenericData.Array<Object> avroList = new GenericData.Array<Object>(list.size(), avroSchema);
+          GenericData.Array<Object> avroList = new GenericData.Array<>(list.size(), avroSchema);
           for (int i = 0; i < list.size(); i++)
           {
             _path.addLast(i);
@@ -812,7 +812,7 @@ public class DataTranslator implements DataTranslatorContext
           name = member.getType().toString().toLowerCase();
       }
       if (name.equals(key))
-        return new AbstractMap.SimpleEntry<String, Schema>(name, member);
+        return new AbstractMap.SimpleEntry<>(name, member);
     }
     appendMessage("cannot find %1$s in union %2$s", key, avroSchema);
     return null;

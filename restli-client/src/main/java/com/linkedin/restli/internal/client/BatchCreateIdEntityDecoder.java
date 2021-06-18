@@ -60,8 +60,8 @@ public class BatchCreateIdEntityDecoder<K, V extends RecordTemplate> extends Res
       throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException
   {
 
-    CreateIdEntityStatusDecoder<K, V> decoder = new CreateIdEntityStatusDecoder<K, V>(_keyType, _valueType, _keyParts, _complexKeyType, version);
-    return dataMap == null ? null : new BatchCreateIdEntityResponse<K, V>(dataMap, decoder);
+    CreateIdEntityStatusDecoder<K, V> decoder = new CreateIdEntityStatusDecoder<>(_keyType, _valueType, _keyParts, _complexKeyType, version);
+    return dataMap == null ? null : new BatchCreateIdEntityResponse<>(dataMap, decoder);
   }
 
 

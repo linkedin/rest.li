@@ -245,7 +245,7 @@ public interface SchemaAnnotationHandler
 
     public AnnotationCompatibilityResult()
     {
-      _messages = new MessageList<CompatibilityMessage>();
+      _messages = new MessageList<>();
     }
 
     public void addMessage(CompatibilityMessage message)

@@ -56,7 +56,7 @@ public class TestServerRetryFilter
       }
     };
     FilterChain filterChain = FilterChains.createRestChain(captureFilter, retryFilter);
-    FilterUtil.fireRestError(filterChain, new RestException(null, new RetriableRequestException(retryMessage)), new HashMap<String, String>());
+    FilterUtil.fireRestError(filterChain, new RestException(null, new RetriableRequestException(retryMessage)), new HashMap<>());
   }
 
   @Test
@@ -79,7 +79,7 @@ public class TestServerRetryFilter
     {
       nestedException = new RuntimeException(nestedException);
     }
-    FilterUtil.fireRestError(filterChain, new RestException(null, nestedException), new HashMap<String, String>());
+    FilterUtil.fireRestError(filterChain, new RestException(null, nestedException), new HashMap<>());
   }
 
   @Test
@@ -99,7 +99,7 @@ public class TestServerRetryFilter
       }
     };
     FilterChain filterChain = FilterChains.createStreamChain(captureFilter, retryFilter);
-    FilterUtil.fireRestError(filterChain, new StreamException(null, new RetriableRequestException(retryMessage)), new HashMap<String, String>());
+    FilterUtil.fireRestError(filterChain, new StreamException(null, new RetriableRequestException(retryMessage)), new HashMap<>());
   }
 
   @Test
@@ -116,6 +116,6 @@ public class TestServerRetryFilter
       }
     };
     FilterChain filterChain = FilterChains.createRestChain(captureFilter, retryFilter);
-    FilterUtil.fireRestError(filterChain, new RuntimeException(new RuntimeException()), new HashMap<String, String>());
+    FilterUtil.fireRestError(filterChain, new RuntimeException(new RuntimeException()), new HashMap<>());
   }
 }

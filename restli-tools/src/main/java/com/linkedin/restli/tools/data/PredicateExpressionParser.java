@@ -50,8 +50,8 @@ public class PredicateExpressionParser
 
   public static Predicate parse(String expression)
   {
-    final Stack<Predicate> predicateStack = new Stack<Predicate>();
-    final Stack<Character> operatorStack = new Stack<Character>();
+    final Stack<Predicate> predicateStack = new Stack<>();
+    final Stack<Character> operatorStack = new Stack<>();
 
     final String trimmedExpression = TRIMMER_PATTERN.matcher(expression).replaceAll("");
     final StringTokenizer tokenizer = new StringTokenizer(trimmedExpression, OPERATORS, true);
@@ -168,7 +168,7 @@ public class PredicateExpressionParser
 
   private static Predicate evaluateMultiaryOperator(Stack<Predicate> predicateStack, Stack<Character> operatorStack, char operator)
   {
-    final Deque<Predicate> predicateOperands = new ArrayDeque<Predicate>();
+    final Deque<Predicate> predicateOperands = new ArrayDeque<>();
     predicateOperands.addFirst(predicateStack.pop());
     predicateOperands.addFirst(predicateStack.pop());
 
@@ -190,7 +190,7 @@ public class PredicateExpressionParser
   }
 
   private static final String OPERATORS = "()!&|";
-  private static final Map<Character, Integer> OPERATOR_PRECEDENCE = new HashMap<Character, Integer>();
+  private static final Map<Character, Integer> OPERATOR_PRECEDENCE = new HashMap<>();
   static
   {
     OPERATOR_PRECEDENCE.put('(', 0);

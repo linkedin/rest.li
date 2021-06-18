@@ -141,7 +141,7 @@ identifier returns [String value]: ID {
 // A full property name, made of property segments separated by dots.
 // Returns the list of property segments.
 propName returns [List<String> path]
-@init{$path = new ArrayList<String>();}
+@init{$path = new ArrayList<>();}
   : propSegment {$path.add($propSegment.value);} (DOT propSegment {$path.add($propSegment.value);})*
   ;
 

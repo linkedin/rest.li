@@ -40,12 +40,12 @@ class DataObjectToObjectCache<V> implements Cloneable
 
   DataObjectToObjectCache()
   {
-    _cache = new HashMap<DataObjectKey, V>();
+    _cache = new HashMap<>();
   }
 
   DataObjectToObjectCache(int initialCapacity)
   {
-    _cache = new HashMap<DataObjectKey, V>(initialCapacity);
+    _cache = new HashMap<>(initialCapacity);
   }
 
   @SuppressWarnings("unchecked")

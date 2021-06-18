@@ -51,7 +51,7 @@ public class TestResourceSchemaCollection
   @Test
   public void testRootWithResourceModel()
   {
-    final Map<String, ResourceType> expectedTypes = new HashMap<String, ResourceType>();
+    final Map<String, ResourceType> expectedTypes = new HashMap<>();
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.actions", ResourceType.ACTIONS);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.annotatedComplexKeys", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.autoValidationDemos", ResourceType.COLLECTION);
@@ -187,7 +187,7 @@ public class TestResourceSchemaCollection
     final List<ResourceSchema> actualNoNamespaceSubresources = _schemas.getSubResources(noNamespaceResource);
     Assert.assertEquals(actualNoNamespaceSubresources.size(), 2);
 
-    final Set<String> expectedNoNamespaceSubresources = new HashSet<String>();
+    final Set<String> expectedNoNamespaceSubresources = new HashSet<>();
     expectedNoNamespaceSubresources.add("noNamespaceSub");
     expectedNoNamespaceSubresources.add("com.linkedin.restli.examples.noNamespace");
 

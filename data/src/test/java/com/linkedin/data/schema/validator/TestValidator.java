@@ -254,7 +254,7 @@ public class TestValidator
 
     final boolean debug = false;
 
-    Map<String, Class<? extends Validator>> validatorClassMap = new HashMap<String, Class<? extends Validator>>();
+    Map<String, Class<? extends Validator>> validatorClassMap = new HashMap<>();
     validatorClassMap.put("bad", BadValidator.class);
 
     for (Object[] row : input)
@@ -274,7 +274,7 @@ public class TestValidator
     }
   }
 
-  static Map<String, Class<? extends Validator>> _validatorClassMap = new HashMap<String, Class<? extends Validator>>();
+  static Map<String, Class<? extends Validator>> _validatorClassMap = new HashMap<>();
   static
   {
     _validatorClassMap.put("fooValidator", FooValidator.class);
@@ -793,7 +793,7 @@ public class TestValidator
   public static class OrderValidator extends AbstractValidator
   {
     private final String _name;
-    private static final List<OrderEntry> _orderList = new ArrayList<OrderEntry>();
+    private static final List<OrderEntry> _orderList = new ArrayList<>();
 
     public OrderValidator(DataMap dataMap)
     {
@@ -813,7 +813,7 @@ public class TestValidator
   @Test
   public void testValidatorPriority() throws IOException
   {
-    Map<String, Class<? extends Validator>> validatorClassMap = new HashMap<String, Class<? extends Validator>>();
+    Map<String, Class<? extends Validator>> validatorClassMap = new HashMap<>();
     validatorClassMap.put("v1", OrderValidator.class);
     validatorClassMap.put("v2", OrderValidator.class);
     validatorClassMap.put("v3", OrderValidator.class);
@@ -1116,4 +1116,3 @@ public class TestValidator
     }
   }
 }
-

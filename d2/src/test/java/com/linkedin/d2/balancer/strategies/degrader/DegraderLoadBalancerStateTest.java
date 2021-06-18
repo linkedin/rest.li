@@ -183,7 +183,7 @@ public class DegraderLoadBalancerStateTest
 
   private static List<PartitionDegraderLoadBalancerState> newPartitionStates(int numberOfPartitions)
   {
-    List<PartitionDegraderLoadBalancerState> states = new ArrayList<PartitionDegraderLoadBalancerState>();
+    List<PartitionDegraderLoadBalancerState> states = new ArrayList<>();
     for (int p = 0; p < numberOfPartitions; ++p)
       states.add(newPartitionState(p, p));
     return states;
@@ -219,7 +219,7 @@ public class DegraderLoadBalancerStateTest
   {
     int getsPerPartition = 3;
     List<Callable<PartitionDegraderLoadBalancerState>> reads
-        = new ArrayList<Callable<PartitionDegraderLoadBalancerState>>();
+        = new ArrayList<>();
     for (int g = 0; g < getsPerPartition; ++g)
       for (int p = 0; p < numberOfPartitions; ++p)
         reads.add(new GetPartitionState(subject, p));
@@ -264,14 +264,14 @@ public class DegraderLoadBalancerStateTest
   {
     int numberOfPartitions = newStates.size();
     int getsPerPartition = 3;
-    List<Callable<PartitionDegraderLoadBalancerState>> calls = new ArrayList<Callable<PartitionDegraderLoadBalancerState>>();
+    List<Callable<PartitionDegraderLoadBalancerState>> calls = new ArrayList<>();
     for (int p = 0; p < numberOfPartitions; ++p)
       calls.add(new GetAndSetPartitionState(subject, p, newStates.get(p)));
     for (int g = 0; g < getsPerPartition; ++g)
       for (int p = 0; p < numberOfPartitions; ++p)
         calls.add(new GetPartitionState(subject, p));
     getAll(concurrently(calls));
-    List<PartitionDegraderLoadBalancerState> actual = new ArrayList<PartitionDegraderLoadBalancerState>();
+    List<PartitionDegraderLoadBalancerState> actual = new ArrayList<>();
     for (int p = 0; p < numberOfPartitions; ++p)
       actual.add(subject.getPartitionState(p));
     assertSameElements(actual, newStates);

@@ -384,12 +384,12 @@ public class TestCommonList
   @Test(dataProvider = "factories")
   public void testChecker(CommonListFactory factory) throws CloneNotSupportedException
   {
-    Checker<Integer> checker1 = new Checker<Integer>();
+    Checker<Integer> checker1 = new Checker<>();
 
     CommonList<Integer> list1 = factory.create(checker1);
     assertEquals(checker1.checkCount, 0);
 
-    Checker<Integer> checker2 = new Checker<Integer>();
+    Checker<Integer> checker2 = new Checker<>();
     CommonList<Integer> list2 = factory.create(referenceList1, checker2);
     int expected2 = referenceList1.size();
     assertEquals(checker2.checkCount, expected2);
@@ -515,23 +515,23 @@ public class TestCommonList
   {
     public <E> CommonList<E> create()
     {
-      return new CowList<E>();
+      return new CowList<>();
     }
     public <E> CommonList<E> create(int initialCapacity)
     {
-      return new CowList<E>(initialCapacity);
+      return new CowList<>(initialCapacity);
     }
     public <E> CommonList<E> create(List<E> list)
     {
-      return new CowList<E>(list);
+      return new CowList<>(list);
     }
     public <E> CommonList<E> create(ListChecker<E> checker)
     {
-      return new CowList<E>(checker);
+      return new CowList<>(checker);
     }
     public <E> CommonList<E> create(List<E> list, ListChecker<E> checker)
     {
-      return new CowList<E>(list, checker);
+      return new CowList<>(list, checker);
     }
     public <E> void addWithoutChecking(List<E> list, E value)
     {
@@ -543,23 +543,23 @@ public class TestCommonList
   {
     public <E> CommonList<E> create()
     {
-      return new CheckedList<E>();
+      return new CheckedList<>();
     }
     public <E> CommonList<E> create(int initialCapacity)
     {
-      return new CheckedList<E>(initialCapacity);
+      return new CheckedList<>(initialCapacity);
     }
     public <E> CommonList<E> create(List<E> list)
     {
-      return new CheckedList<E>(list);
+      return new CheckedList<>(list);
     }
     public <E> CommonList<E> create(ListChecker<E> checker)
     {
-      return new CheckedList<E>(checker);
+      return new CheckedList<>(checker);
     }
     public <E> CommonList<E> create(List<E> list, ListChecker<E> checker)
     {
-      return new CheckedList<E>(list, checker);
+      return new CheckedList<>(list, checker);
     }
     public <E> void addWithoutChecking(List<E> list, E value)
     {

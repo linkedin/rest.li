@@ -82,13 +82,12 @@ public class FieldFillInDefaultResources extends CollectionResourceTemplate<Long
       @QueryParam("criteria") RecordCriteria[] criteria)
   {
 
-    BatchFinderResult<RecordCriteria, HighLevelRecordWithDefault, Empty> result = new BatchFinderResult<RecordCriteria,
-        HighLevelRecordWithDefault, Empty>();
+    BatchFinderResult<RecordCriteria, HighLevelRecordWithDefault, Empty> result = new BatchFinderResult<>();
     for (int i = 0; i < criteria.length; i++)
     {
       List<HighLevelRecordWithDefault> currentCriteriaResult = Collections.singletonList(
           new HighLevelRecordWithDefault().setNoDefaultFieldA(criteria[i].getIntWithoutDefault()));
-      CollectionResult<HighLevelRecordWithDefault, Empty> cr = new CollectionResult<HighLevelRecordWithDefault, Empty>(
+      CollectionResult<HighLevelRecordWithDefault, Empty> cr = new CollectionResult<>(
           currentCriteriaResult, currentCriteriaResult.size());
       result.putResult(criteria[i], cr);
     }
@@ -98,7 +97,7 @@ public class FieldFillInDefaultResources extends CollectionResourceTemplate<Long
   @Action(name = "defaultFillAction")
   public ActionResult<HighLevelRecordWithDefault> takeAction(@ActionParam("actionParam") Long id)
   {
-    return new ActionResult<HighLevelRecordWithDefault>(new HighLevelRecordWithDefault().setNoDefaultFieldA(
+    return new ActionResult<>(new HighLevelRecordWithDefault().setNoDefaultFieldA(
         Math.toIntExact(id)),
         HttpStatus.S_200_OK);
   }

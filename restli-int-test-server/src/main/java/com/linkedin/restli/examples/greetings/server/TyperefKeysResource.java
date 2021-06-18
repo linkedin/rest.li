@@ -45,7 +45,7 @@ public class TyperefKeysResource extends CollectionResourceTemplate<Long, Greeti
   @Override
   public Map<Long, Greeting> batchGet(Set<Long> keys)
   {
-    Map<Long, Greeting> result = new HashMap<Long, Greeting>();
+    Map<Long, Greeting> result = new HashMap<>();
     for (Long key : keys)
     {
       result.put(key, new Greeting().setId(key));

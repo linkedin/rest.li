@@ -649,7 +649,7 @@ public class PegasusPlugin implements Plugin<Project>
     project.getPlugins().apply(JavaPlugin.class);
 
     // this HashMap will have a PegasusOptions per sourceSet
-    project.getExtensions().getExtraProperties().set("pegasus", new HashMap<String, PegasusOptions>());
+    project.getExtensions().getExtraProperties().set("pegasus", new HashMap<>());
     // this map will extract PegasusOptions.GenerationMode to project property
     project.getExtensions().getExtraProperties().set("PegasusGenerationMode",
         Arrays.stream(PegasusOptions.GenerationMode.values())

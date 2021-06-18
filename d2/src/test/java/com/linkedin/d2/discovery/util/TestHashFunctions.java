@@ -82,13 +82,13 @@ public class TestHashFunctions {
     }
 
     //Setting up partitionAccessors based on different hash functions.
-    final Map<String, List<String>> clustersData = new HashMap<String, List<String>>();
+    final Map<String, List<String>> clustersData = new HashMap<>();
     clustersData.put("partitioned-cluster",
         Arrays.asList(new String[]{"partitioned-service-1", "partitioned-service-2"}));
 
     @SuppressWarnings("serial")
-    final Map<String, Object> partitionPropertiesXXHASH = new HashMap<String, Object>();
-    Map<String, Object> XXhashBased = new HashMap<String, Object>();
+    final Map<String, Object> partitionPropertiesXXHASH = new HashMap<>();
+    Map<String, Object> XXhashBased = new HashMap<>();
     XXhashBased.put("partitionKeyRegex", "\\bid\\b=(\\d+)");
     XXhashBased.put("partitionCount", "10");
     XXhashBased.put("hashAlgorithm", "XXHash");
@@ -100,8 +100,8 @@ public class TestHashFunctions {
     _XXHashAccessor = PartitionAccessorFactory.getPartitionAccessor("partitioned-cluster", null,
         clusterprops.getPartitionProperties());
 
-    final Map<String, Object> partitionPropertiesMD5 = new HashMap<String, Object>();
-    Map<String, Object> MD5HashBased = new HashMap<String, Object>();
+    final Map<String, Object> partitionPropertiesMD5 = new HashMap<>();
+    Map<String, Object> MD5HashBased = new HashMap<>();
     MD5HashBased.put("partitionKeyRegex", "\\bid\\b=(\\d+)");
     MD5HashBased.put("partitionCount", "10");
     MD5HashBased.put("hashAlgorithm", "MD5");

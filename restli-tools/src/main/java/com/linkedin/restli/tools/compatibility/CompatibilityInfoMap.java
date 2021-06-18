@@ -35,20 +35,20 @@ import java.util.Stack;
 
 public class CompatibilityInfoMap
 {
-  private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _restSpecMap = new HashMap<CompatibilityInfo.Level, Collection<CompatibilityInfo>>();
-  private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _modelMap = new HashMap<CompatibilityInfo.Level, Collection<CompatibilityInfo>>();
+  private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _restSpecMap = new HashMap<>();
+  private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _modelMap = new HashMap<>();
   private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _annotationMap = new HashMap<>();
 
   public CompatibilityInfoMap()
   {
-    _restSpecMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
-    _restSpecMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
+    _restSpecMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<>());
+    _restSpecMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<>());
 
-    _modelMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
-    _modelMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
+    _modelMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<>());
+    _modelMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<>());
 
-    _annotationMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
-    _annotationMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
+    _annotationMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<>());
+    _annotationMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<>());
   }
 
   public void addRestSpecInfo(CompatibilityInfo.Type infoType, Stack<Object> path,
@@ -276,7 +276,7 @@ public class CompatibilityInfoMap
 
   public Collection<CompatibilityInfo> get(CompatibilityInfo.Level level)
   {
-    Collection<CompatibilityInfo> infos = new ArrayList<CompatibilityInfo>(getRestSpecInfo(level));
+    Collection<CompatibilityInfo> infos = new ArrayList<>(getRestSpecInfo(level));
     infos.addAll(getModelInfo(level));
     return infos;
   }

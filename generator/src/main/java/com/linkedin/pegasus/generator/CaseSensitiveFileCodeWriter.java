@@ -21,7 +21,7 @@ public class CaseSensitiveFileCodeWriter extends CodeWriter {
     private final boolean readOnly;
 
     /** Files that shall be marked as read only. */
-    private final Set<File> readonlyFiles = new HashSet<File>();
+    private final Set<File> readonlyFiles = new HashSet<>();
 
     /** True, generated directories to be created in lower case; False, otherwise. */
     private boolean generateLowercasePath;

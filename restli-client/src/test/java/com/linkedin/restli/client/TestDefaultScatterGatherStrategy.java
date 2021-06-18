@@ -613,7 +613,7 @@ public class TestDefaultScatterGatherStrategy
 
     for (Long id: resultKeys)
     {
-      resultMap.put(id.toString(), new UpdateEntityStatus<TestRecord>(HttpStatus.S_200_OK.getCode(), new TestRecord().setId(id)).data());
+      resultMap.put(id.toString(), new UpdateEntityStatus<>(HttpStatus.S_200_OK.getCode(), new TestRecord().setId(id)).data());
     }
     for (Long id: errorKeys)
     {
@@ -641,4 +641,3 @@ public class TestDefaultScatterGatherStrategy
     return context;
   }
 }
-

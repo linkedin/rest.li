@@ -79,20 +79,20 @@ public class TemplateSpecGenerator
   /**
    * Map of {@link ClassTemplateSpec} to {@link DataSchemaLocation}.
    */
-  private final Map<ClassTemplateSpec, DataSchemaLocation> _classToDataSchemaLocationMap = new HashMap<ClassTemplateSpec, DataSchemaLocation>();
+  private final Map<ClassTemplateSpec, DataSchemaLocation> _classToDataSchemaLocationMap = new HashMap<>();
   /**
    * Map of Java class name to a {@link DataSchema}.
    */
-  private final Map<String, DataSchema> _classNameToSchemaMap = new HashMap<String, DataSchema>(100);
+  private final Map<String, DataSchema> _classNameToSchemaMap = new HashMap<>(100);
   /**
    * Map of {@link DataSchema} to {@link ClassTemplateSpec}.
    */
-  private final IdentityHashMap<DataSchema, ClassTemplateSpec> _schemaToClassMap = new IdentityHashMap<DataSchema, ClassTemplateSpec>(100);
+  private final IdentityHashMap<DataSchema, ClassTemplateSpec> _schemaToClassMap = new IdentityHashMap<>(100);
   /**
    * Map of {@link DataSchema} to the information about the immediate dereferenced {@link DataSchema} with custom Java class binding.
    */
-  private final Deque<DataSchemaLocation> _locationStack = new ArrayDeque<DataSchemaLocation>();
-  private final Map<DataSchema, CustomInfoSpec> _immediateCustomMap = new IdentityHashMap<DataSchema, CustomInfoSpec>();
+  private final Deque<DataSchemaLocation> _locationStack = new ArrayDeque<>();
+  private final Map<DataSchema, CustomInfoSpec> _immediateCustomMap = new IdentityHashMap<>();
 
   private final DataSchemaResolver _schemaResolver;
   private final String _customTypeLanguage;
@@ -658,7 +658,7 @@ public class TemplateSpecGenerator
 
   private UnionTemplateSpec generateUnion(UnionDataSchema schema, UnionTemplateSpec unionClass)
   {
-    final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<CustomInfoSpec, Object>(schema.getMembers().size() * 2);
+    final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<>(schema.getMembers().size() * 2);
 
     for (UnionDataSchema.Member member: schema.getMembers())
     {
@@ -747,7 +747,7 @@ public class TemplateSpecGenerator
       processSchema(includedSchema, null, null);
     }
 
-    final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<CustomInfoSpec, Object>(schema.getFields().size() * 2);
+    final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<>(schema.getFields().size() * 2);
 
     for (RecordDataSchema.Field field : schema.getFields())
     {

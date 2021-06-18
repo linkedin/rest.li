@@ -49,7 +49,7 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
   @Override
   public void reset() throws PropertyStoreException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _announcer.reset(callback);
     try
     {
@@ -64,7 +64,7 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
   @Override
   public void markUp() throws PropertyStoreException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _announcer.markUp(callback);
     try
     {
@@ -79,7 +79,7 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
   @Override
   public void markDown() throws PropertyStoreException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _announcer.markDown(callback);
     try
     {
@@ -142,7 +142,7 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
   {
     Map<Integer, Double> rawObject =
         JacksonUtil.getObjectMapper().readValue(partitionDataJson, new TypeReference<HashMap<Integer, Double>>(){});
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<>();
     for (Map.Entry<Integer, Double> entry : rawObject.entrySet())
     {
       PartitionData data = new PartitionData(entry.getValue());

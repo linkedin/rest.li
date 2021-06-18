@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Use the Java 7 diamond operator everywhere.
 
 ## [29.19.4] - 2021-06-23
 - Do not apply Idea and Eclipse plugins.
