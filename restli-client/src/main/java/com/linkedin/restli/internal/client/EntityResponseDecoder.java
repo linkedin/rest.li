@@ -36,9 +36,9 @@ import com.linkedin.restli.common.RestConstants;
 
 public class EntityResponseDecoder<T extends RecordTemplate> extends RestResponseDecoder<T>
 {
-  private final Class<T> _entityClass;
+  private final Class<? extends T> _entityClass;
 
-  public EntityResponseDecoder(Class<T> templateClass)
+  public EntityResponseDecoder(Class<? extends T> templateClass)
   {
     _entityClass = templateClass;
   }

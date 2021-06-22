@@ -33,6 +33,7 @@ import com.linkedin.restli.server.mock.InjectMockResourceFactory;
 import com.linkedin.restli.server.mock.SimpleBeanProvider;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
+import com.linkedin.restli.server.validation.RestLiValidationFilter;
 import java.io.IOException;
 import java.net.URI;
 
@@ -68,6 +69,7 @@ public class RestLiExampleBasicServer
     // Create an instance of the Example Filter and add it to the config.
     RestLiExampleFilter filter = new RestLiExampleFilter();
     config.addFilter(filter);
+    config.addFilter(new RestLiValidationFilter());
 
     // demonstrate dynamic dependency injection
     final PhotoDatabase photoDb = new PhotoDatabaseImpl(10);

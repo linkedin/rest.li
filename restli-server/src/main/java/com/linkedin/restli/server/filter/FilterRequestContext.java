@@ -19,11 +19,13 @@ package com.linkedin.restli.server.filter;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.ImmutableList;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.server.CustomRequestContext;
 import com.linkedin.restli.server.PathKeys;
@@ -31,6 +33,7 @@ import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiRequestData;
 import com.linkedin.restli.server.errors.ServiceError;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Collections;
@@ -292,4 +295,19 @@ public interface FilterRequestContext extends CustomRequestContext
    * @return whether the request specifies that the resource should return an entity
    */
   boolean isReturnEntityRequested();
+
+  @SuppressWarnings("unchecked")
+  default Class<? extends RecordTemplate> getValueClass()
+  {
+    try {
+      String version = getRequestHeaders().get(RestConstants.HEADER_RESTLI_SCHEMA_VERSION);
+      if (version != null) {
+        int ver = Integer.parseInt(version);
+        return (Class<? extends RecordTemplate>) getFilterResourceModel().getValueClass().getDeclaredMethod("getVersionedClass", int.class).invoke(null, ver);
+      }
+    } catch (NumberFormatException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      // Ignore invalid version?
+    }
+    return getFilterResourceModel().getValueClass();
+  }
 }

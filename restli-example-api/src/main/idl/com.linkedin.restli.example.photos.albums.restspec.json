@@ -1,4 +1,9 @@
 {
+  "annotations" : {
+    "readOnly" : {
+      "value" : [ "id", "urn" ]
+    }
+  },
   "name" : "albums",
   "namespace" : "com.linkedin.restli.example.photos",
   "path" : "/albums",

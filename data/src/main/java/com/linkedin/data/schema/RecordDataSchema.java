@@ -16,6 +16,7 @@
 
 package com.linkedin.data.schema;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -694,6 +695,22 @@ public final class RecordDataSchema extends NamedDataSchema
   private List<Field> _fields = _emptyFields;
   private Map<String, Integer> _fieldNameToIndexMap = _emptyFieldNameToIndexMap;
   private final RecordType _recordType;
+  private final Map<Integer, RecordDataSchema> _versions = new HashMap<>();
+
+  public int getVersion() {
+    return _version;
+  }
+
+  public void setVersion(int version) {
+    _version = version;
+  }
+
+  public void addVersion(RecordDataSchema schema)
+  {
+    _versions.put(schema.getVersion(), schema);
+  }
+
+  private int _version;
   private Set<NamedDataSchema> _includesDeclaredInline = _emptyIncludesDeclaredInline;
   private boolean _fieldsBeforeIncludes = false;
 

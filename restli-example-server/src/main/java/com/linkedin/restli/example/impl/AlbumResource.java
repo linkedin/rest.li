@@ -16,6 +16,10 @@
 
 package com.linkedin.restli.example.impl;
 
+import com.linkedin.restli.common.validation.ReadOnly;
+import com.linkedin.restli.example.Album_$1;
+import com.linkedin.restli.example.Album_$2;
+import com.linkedin.restli.example.Album_$Versioned;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -34,8 +38,9 @@ import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 
 // This code is very similar to PhotoResource. To keep this example simple, we simply duplicate it
 // instead of using a generic subclass.
+@ReadOnly({"id", "urn"})
 @RestLiCollection(name = "albums", namespace = "com.linkedin.restli.example.photos")
-public class AlbumResource extends CollectionResourceTemplate<Long, Album>
+public class AlbumResource extends CollectionResourceTemplate<Long, Album_$Versioned>
 {
   Logger _log = LoggerFactory.getLogger(AlbumResource.class);
 
@@ -47,27 +52,38 @@ public class AlbumResource extends CollectionResourceTemplate<Long, Album>
   // basic overridable functions for resource template
   // corresponding builder class are generated to src/mainGeneratedRest/java/<namespace>
   @Override
-  public CreateResponse create(Album entity)
+  public CreateResponse create(Album_$Versioned entityVersioned)
   {
     final Long newId = _db.getCurrentId();
-
-    if (entity.hasId() || entity.hasUrn())
+    if (entityVersioned.data().containsKey("id") || entityVersioned.data().containsKey("urn"))
     {
       throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
-                                       "Album ID is not acceptable in request");
+          "Album ID is not acceptable in request");
+    }
+    if (entityVersioned instanceof Album) {
+      Album entity = (Album) entityVersioned;
+      // overwrite ID and URN in entity
+      entity.setId(newId);
+      entity.setUrn(String.valueOf(newId));
+    } else if (entityVersioned instanceof Album_$1) {
+      Album_$1 entity = (Album_$1) entityVersioned;
+      entity.setId(newId);
+      entity.setUrn(String.valueOf(newId));
+    } else {
+      Album_$2 entity = (Album_$2) entityVersioned;
+      entity.setId(newId);
+      entity.setUrn(String.valueOf(newId));
     }
 
-    // overwrite ID and URN in entity
-    entity.setId(newId);
-    entity.setUrn(String.valueOf(newId));
-    _db.getData().put(newId, entity);
+    _db.getData().put(newId, entityVersioned);
+
     return new CreateResponse(newId);
   }
 
   // return stored photo
   // if the key does not exist, return null, and rest.li will respond HTTP 404 to client
   @Override
-  public Album get(Long key)
+  public Album_$Versioned get(Long key)
   {
     _log.info("Getting album # " + key);
 
@@ -76,24 +92,31 @@ public class AlbumResource extends CollectionResourceTemplate<Long, Album>
 
   // update an existing photo with given entity
   @Override
-  public UpdateResponse update(Long key, Album entity)
+  public UpdateResponse update(Long key, Album_$Versioned entity)
   {
-    final Album currPhoto = _db.getData().get(key);
+    final Album_$Versioned currPhoto = _db.getData().get(key);
     if (currPhoto == null)
     {
       return new UpdateResponse(HttpStatus.S_404_NOT_FOUND);
     }
 
-    // disallow changing entity ID and URN
-    if (entity.hasId() || entity.hasUrn())
+    if (entity.data().containsKey("id") || entity.data().containsKey("urn"))
     {
       throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
-                                       "Album ID is not acceptable in request");
+          "Album ID is not acceptable in request");
     }
 
-    // make sure the ID in the entity is consistent with the key in the database
-    entity.setId(key);
-    entity.setUrn(String.valueOf(key));
+    if (entity instanceof Album) {
+      // overwrite ID and URN in entity
+      ((Album) entity).setId(key);
+      ((Album) entity).setUrn(String.valueOf(key));
+    } else if (entity instanceof Album_$1) {
+      ((Album_$1) entity).setId(key);
+      ((Album_$1) entity).setUrn(String.valueOf(key));
+    } else {
+      ((Album_$2) entity).setId(key);
+      ((Album_$2) entity).setUrn(String.valueOf(key));
+    }
     _db.getData().put(key, entity);
     return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
   }

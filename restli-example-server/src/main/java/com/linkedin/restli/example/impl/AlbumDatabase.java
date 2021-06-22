@@ -16,13 +16,13 @@
 
 package com.linkedin.restli.example.impl;
 
+import com.linkedin.restli.example.Album_$Versioned;
 import java.util.Map;
 
-import com.linkedin.restli.example.Album;
 
 public interface AlbumDatabase
 {
   public Long getCurrentId();
 
-  public Map<Long, Album> getData();
+  public Map<Long, Album_$Versioned> getData();
 }
