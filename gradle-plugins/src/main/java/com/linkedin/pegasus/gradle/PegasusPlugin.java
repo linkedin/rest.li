@@ -1783,28 +1783,24 @@ public class PegasusPlugin implements Plugin<Project>
       dataTemplateJarDepends.add(prepareExtensionSchemasForPublishTask);
     }
 
+    // include pegasus files in the output of this SourceSet
+    project.getTasks().withType(ProcessResources.class).getByName(targetSourceSet.getProcessResourcesTaskName(), it ->
+    {
+      it.from(prepareSchemasForPublishTask, copy -> copy.into("pegasus"));
+      // TODO: Remove this permanently once translated PDSCs are no longer needed.
+      it.from(prepareLegacySchemasForPublishTask, copy -> copy.into(TRANSLATED_SCHEMAS_DIR));
+      Sync copyExtensionSchemasTask = project.getTasks().withType(Sync.class).findByName(sourceSet.getName() + "CopyExtensionSchemas");
+      if (copyExtensionSchemasTask != null)
+      {
+        it.from(copyExtensionSchemasTask, copy -> copy.into("extensions"));
+      }
+    });
+
     // create data template jar file
     Jar dataTemplateJarTask = project.getTasks()
         .create(sourceSet.getName() + "DataTemplateJar", Jar.class, task ->
         {
           task.dependsOn(dataTemplateJarDepends);
-
-          // Copy all schemas as-is into the root schema directory in the JAR
-          task.from(publishableSchemasBuildDir, copySpec ->
-            copySpec.eachFile(fileCopyDetails ->
-              fileCopyDetails.setPath("pegasus" + File.separatorChar + fileCopyDetails.getPath())));
-
-          // Copy the translated PDSC schemas into a separate root directory in the JAR
-          // TODO: Remove this permanently once translated PDSCs are no longer needed.
-          task.from(publishableLegacySchemasBuildDir, copySpec ->
-              copySpec.eachFile(fileCopyDetails ->
-                  fileCopyDetails.setPath(TRANSLATED_SCHEMAS_DIR + File.separatorChar + fileCopyDetails.getPath())));
-
-          // Copy all extension schemas as-is into the root extensions directory in the JAR
-          task.from(publishableExtensionSchemasBuildDir, copySpec ->
-              copySpec.eachFile(fileCopyDetails ->
-                  fileCopyDetails.setPath("extensions" + File.separatorChar + fileCopyDetails.getPath())));
-
           task.from(targetSourceSet.getOutput());
 
           // FIXME change to #getArchiveAppendix().set(...); breaks backwards-compatibility before 5.1
@@ -1870,17 +1866,6 @@ public class PegasusPlugin implements Plugin<Project>
       {
         throw new GradleException("Unable to register new feature variant", e);
       }
-
-      // include pegasus files in the output of this SourceSet
-      TaskProvider<ProcessResources> processResources = project.getTasks().named(targetSourceSet.getProcessResourcesTaskName(), ProcessResources.class);
-      processResources.configure(it -> {
-        it.from(prepareSchemasForPublishTask, copy -> copy.into("pegasus"));
-        it.from(prepareLegacySchemasForPublishTask, copy -> copy.into(TRANSLATED_SCHEMAS_DIR));
-        Sync copyExtensionSchemasTask = project.getTasks().withType(Sync.class).findByName(targetSourceSet.getName() + "CopyExtensionSchemas");
-        if (copyExtensionSchemasTask != null) {
-          it.from(copyExtensionSchemasTask, copy -> copy.into("extensions"));
-        }
-      });
 
       // expose transitive dependencies to consumers via variant configurations
       Configuration featureConfiguration = project.getConfigurations().getByName(featureName);

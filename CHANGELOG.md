@@ -14,6 +14,13 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.3] - 2021-06-18
+- More changes for Gradle 7 compatibility.
+  - Add schemas as source set resources and rely on the Java plugin to copy them
+    into the artifact instead of doing so directly, to avoid copying duplicates.
+  - Change getter names in GenerateDataTemplateTask to conform to what Gradle 7
+    requires and deprecate the old ones.
+
 ## [29.19.2] - 2021-06-17
 - Allow client-side RetriableRequestException to be retried after ClientRetryFilter
 
@@ -4975,7 +4982,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.3...master
+[29.19.3]: https://github.com/linkedin/rest.li/compare/v29.19.2...v29.19.3
 [29.19.2]: https://github.com/linkedin/rest.li/compare/v29.19.1...v29.19.2
 [29.19.1]: https://github.com/linkedin/rest.li/compare/v29.18.15...v29.19.1
 [29.18.15]: https://github.com/linkedin/rest.li/compare/v29.18.14...v29.18.15
