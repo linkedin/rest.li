@@ -54,7 +54,7 @@ public class EchoServer
   {
     _port = port;
     _server = HttpServer.create(new InetSocketAddress(_port), 0);
-    _sensors = new ConcurrentHashMap<String, AtomicInteger>();
+    _sensors = new ConcurrentHashMap<>();
     _name = name;
     for (String contextPath : contextPaths)
     {

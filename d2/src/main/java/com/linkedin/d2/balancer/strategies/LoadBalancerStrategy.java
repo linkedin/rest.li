@@ -128,7 +128,7 @@ public interface LoadBalancerStrategy
       Set<URI> excludedHosts = getRequestContextExcludedHosts(context);
       if (excludedHosts == null)
       {
-        excludedHosts = new HashSet<URI>();
+        excludedHosts = new HashSet<>();
         context.putLocalAttr(EXCLUDED_HOST_KEY_NAME, excludedHosts);
       }
       excludedHosts.add(excludedHost);

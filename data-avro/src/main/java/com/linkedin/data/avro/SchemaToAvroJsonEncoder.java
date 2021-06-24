@@ -153,7 +153,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   }
 
   private static final Set<String> RESERVED_DATA_PROPERTIES =
-    new HashSet<String>(Arrays.asList(
+    new HashSet<>(Arrays.asList(
         SchemaTranslator.AVRO_PREFIX,
         SchemaTranslator.SCHEMA_PROPERTY,
         SchemaTranslator.OPTIONAL_DEFAULT_MODE_PROPERTY,
@@ -264,7 +264,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
         if (unionDataSchema == null)
         {
           addNullMemberType = true;
-          resultMemberTypes = new ArrayList<DataSchema>(1);
+          resultMemberTypes = new ArrayList<>(1);
           resultMemberTypes.add(fieldSchema);
           defaultValueSchema = (
             defaultValue != null

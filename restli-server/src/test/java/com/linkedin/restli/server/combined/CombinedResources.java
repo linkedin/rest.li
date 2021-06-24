@@ -142,7 +142,7 @@ public class CombinedResources
     @Finder("find")
     public List<Foo> find(@PagingContextParam PagingContext context, @AssocKeyParam("foo") int foo, @AssocKeyParam("bar") int bar)
     {
-      return new ArrayList<Foo>();
+      return new ArrayList<>();
     }
   }
 

@@ -59,7 +59,7 @@ public class TestInjectResourceFactory
     EasyMock.expect(ctx.getBean(EasyMock.eq("dep1"))).andReturn(new SomeDependency1()).anyTimes();
     EasyMock.expect(ctx.getBean(EasyMock.eq("dep3"))).andReturn(new SomeDependency1()).anyTimes();
 
-    Map<String, SomeDependency2> map = new HashMap<String, SomeDependency2>();
+    Map<String, SomeDependency2> map = new HashMap<>();
     map.put("someBeanName", new SomeDependency2());
 
     EasyMock.expect(ctx.getBeansOfType(EasyMock.eq(SomeDependency2.class)))
@@ -119,13 +119,13 @@ public class TestInjectResourceFactory
     BeanProvider ctx = EasyMock.createMock(BeanProvider.class);
     EasyMock.expect(ctx.getBean(EasyMock.eq("dep1"))).andReturn(new SomeDependency1()).anyTimes();
 
-    Map<String, SomeDependency2> map2 = new HashMap<String, SomeDependency2>();
+    Map<String, SomeDependency2> map2 = new HashMap<>();
     map2.put("someBeanName", new SomeDependency2());
     EasyMock.expect(ctx.getBeansOfType(EasyMock.eq(SomeDependency2.class)))
         .andReturn(map2).anyTimes();
 
 
-    Map<String, SomeDependency1> map1  = new HashMap<String, SomeDependency1>();
+    Map<String, SomeDependency1> map1  = new HashMap<>();
     map1.put("someDep1", new SomeDependency1());
     map1.put("anotherDep1", new SomeDependency1());
     EasyMock.expect(ctx.getBeansOfType(EasyMock.eq(SomeDependency1.class)))
@@ -162,7 +162,7 @@ public class TestInjectResourceFactory
     EasyMock.expect(ctx.getBean(EasyMock.eq("dep1"))).andReturn(null).anyTimes();
     EasyMock.expect(ctx.getBean(EasyMock.eq("dep3"))).andReturn(new SomeDependency1()).anyTimes();
 
-    Map<String, SomeDependency2> map = new HashMap<String, SomeDependency2>();
+    Map<String, SomeDependency2> map = new HashMap<>();
     map.put("someBeanName", new SomeDependency2());
 
     EasyMock.expect(ctx.getBeansOfType(EasyMock.eq(SomeDependency2.class)))
@@ -198,7 +198,7 @@ public class TestInjectResourceFactory
     EasyMock.expect(ctx.getBean(EasyMock.eq("dep1"))).andReturn(new SomeDependency1()).anyTimes();
     EasyMock.expect(ctx.getBean(EasyMock.eq("dep3"))).andReturn(new SomeDependency1()).anyTimes();
 
-    Map<String, SomeDependency2> map = new HashMap<String, SomeDependency2>();
+    Map<String, SomeDependency2> map = new HashMap<>();
     map.put("someBeanName", new SomeDependency2());
 
     EasyMock.expect(ctx.getBeansOfType(EasyMock.eq(SomeDependency2.class)))

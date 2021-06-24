@@ -81,7 +81,7 @@ public class TestUtil
 
   static public List<Object> asList(Object... objects)
   {
-    ArrayList<Object> list = new ArrayList<Object>();
+    ArrayList<Object> list = new ArrayList<>();
     for (Object object : objects)
     {
       list.add(object);
@@ -94,7 +94,7 @@ public class TestUtil
   {
     int index = 0;
     String key = null;
-    HashMap<String,V> map = new HashMap<String,V>();
+    HashMap<String, V> map = new HashMap<>();
     for (Object object : objects)
     {
       if (index % 2 == 0)
@@ -276,7 +276,7 @@ public class TestUtil
 
   public static Map<File, Map.Entry<String, String>> createSchemaFiles(File testDir, Map<String, String> fileToSchemaMap, boolean debug) throws IOException
   {
-    Map<File, Map.Entry<String,String>> result = new HashMap<File, Map.Entry<String, String>>();
+    Map<File, Map.Entry<String,String>> result = new HashMap<>();
 
     ensureEmptyOutputDir(testDir, debug);
 
@@ -317,7 +317,7 @@ public class TestUtil
 
   public static Collection<String> computePathFromRelativePaths(File testDir, Collection<String> relativePaths) throws IOException
   {
-    Collection<String> paths = new ArrayList<String>();
+    Collection<String> paths = new ArrayList<>();
 
     // directory in path
     for (String testPath : relativePaths)
@@ -334,14 +334,14 @@ public class TestUtil
                                                                boolean debug)
     throws IOException
   {
-    Collection<String> paths = new ArrayList<String>();
+    Collection<String> paths = new ArrayList<>();
 
     // jar files in path, create jar files
     paths.clear();
     for (String testPath : relativePaths)
     {
       String jarFileName = (testDir.getCanonicalPath() + testPath + ".jar").replace('/', File.separatorChar);
-      Map<String,String> jarFileContents = new HashMap<String, String>();
+      Map<String, String> jarFileContents = new HashMap<>();
       for (Map.Entry<String,String> entry : fileToSchemaMap.entrySet())
       {
         if (entry.getKey().startsWith(testPath))
@@ -547,7 +547,7 @@ public class TestUtil
    */
   private static Set<DataComplex> collectDataComplex(final Object object)
   {
-    IdentityHashMap<DataComplex, Boolean> identityHashMap = new IdentityHashMap<DataComplex, Boolean>();
+    IdentityHashMap<DataComplex, Boolean> identityHashMap = new IdentityHashMap<>();
     collectDataComplex(object, identityHashMap);
     return identityHashMap.keySet();
   }

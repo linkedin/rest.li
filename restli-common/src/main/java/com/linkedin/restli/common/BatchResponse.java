@@ -98,7 +98,7 @@ public class BatchResponse<T extends RecordTemplate> extends RecordTemplate
     _errorsSchema = new MapDataSchema(new RecordDataSchema(errorSchemaName, RecordDataSchema.RecordType.RECORD));
     _errorsField = new RecordDataSchema.Field(_errorsSchema);
     _errorsField.setName(ERRORS, errorMessageBuilder);
-    
+
     if (data().get(RESULTS) == null)
     {
       data().put(RESULTS, new DataMap(resultsCapacity));
@@ -127,7 +127,7 @@ public class BatchResponse<T extends RecordTemplate> extends RecordTemplate
   {
     final DataMap value = data().getDataMap(RESULTS);
 
-    return new DynamicRecordMap<T>(value, _resultsSchema, _valueClass);
+    return new DynamicRecordMap<>(value, _resultsSchema, _valueClass);
   }
 
   /**
@@ -147,7 +147,7 @@ public class BatchResponse<T extends RecordTemplate> extends RecordTemplate
   {
     final DataMap value = data().getDataMap(ERRORS);
 
-    return new DynamicRecordMap<ErrorResponse>(value, _errorsSchema, ErrorResponse.class);
+    return new DynamicRecordMap<>(value, _errorsSchema, ErrorResponse.class);
   }
 
   /**

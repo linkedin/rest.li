@@ -75,7 +75,7 @@ public class ResourceSchemaCollection
   public static ResourceSchemaCollection loadOrCreateResourceSchema(Map<String, ResourceModel> rootResources)
   {
     final ResourceModelEncoder encoder = new ResourceModelEncoder(new NullDocsProvider());
-    final Map<String, ResourceSchema> schemaMap = new TreeMap<String, ResourceSchema>();
+    final Map<String, ResourceSchema> schemaMap = new TreeMap<>();
     for (ResourceModel resource : rootResources.values())
     {
       schemaMap.put(resource.getName(), encoder.loadOrBuildResourceSchema(resource));
@@ -93,7 +93,7 @@ public class ResourceSchemaCollection
   public static ResourceSchemaCollection createFromIdls(String[] restspecSearchPaths)
   {
     final RestSpecCodec codec = new RestSpecCodec();
-    final Map<String, ResourceSchema> resourceSchemaMap = new HashMap<String, ResourceSchema>();
+    final Map<String, ResourceSchema> resourceSchemaMap = new HashMap<>();
 
     for (String path : restspecSearchPaths)
     {
@@ -135,7 +135,7 @@ public class ResourceSchemaCollection
   {
     for (ResourceSchema schema : resources)
     {
-      processResourceSchema(visitor, new ArrayList<ResourceSchema>(), schema);
+      processResourceSchema(visitor, new ArrayList<>(), schema);
     }
   }
 
@@ -145,10 +145,10 @@ public class ResourceSchemaCollection
    */
   public ResourceSchemaCollection(Map<String, ResourceSchema> rootResources)
   {
-    _allResources = new TreeMap<String, ResourceSchema>(rootResources);
-    _subResources = new IdentityHashMap<ResourceSchema, List<ResourceSchema>>();
-    _parentResources = new IdentityHashMap<ResourceSchema, List<ResourceSchema>>();
-    final Map<String, ResourceSchema> flattenSubResources = new TreeMap<String, ResourceSchema>();
+    _allResources = new TreeMap<>(rootResources);
+    _subResources = new IdentityHashMap<>();
+    _parentResources = new IdentityHashMap<>();
+    final Map<String, ResourceSchema> flattenSubResources = new TreeMap<>();
 
     final ResourceSchemaVisitior visitor = new BaseResourceSchemaVisitor()
     {
@@ -163,7 +163,7 @@ public class ResourceSchemaCollection
 
           final List<ResourceSchema> hierarchy = context.getResourceSchemaHierarchy();
 
-          ArrayList<ResourceSchema> parents = new ArrayList<ResourceSchema>(hierarchy);
+          ArrayList<ResourceSchema> parents = new ArrayList<>(hierarchy);
           parents.remove(parents.size()-1);
           _parentResources.put(resourceSchema, parents);
 
@@ -171,7 +171,7 @@ public class ResourceSchemaCollection
           List<ResourceSchema> subList = _subResources.get(directParent);
           if (subList == null)
           {
-            subList = new ArrayList<ResourceSchema>();
+            subList = new ArrayList<>();
             _subResources.put(directParent, subList);
           }
           subList.add(resourceSchema);
@@ -231,7 +231,7 @@ public class ResourceSchemaCollection
    */
   public List<ResourceSchema> getAllSubResources(ResourceSchema ancestorSchema)
   {
-    return getAllSubResourcesRecursive(ancestorSchema, new ArrayList<ResourceSchema>());
+    return getAllSubResourcesRecursive(ancestorSchema, new ArrayList<>());
   }
 
   private List<ResourceSchema> getAllSubResourcesRecursive(ResourceSchema parentSchema,

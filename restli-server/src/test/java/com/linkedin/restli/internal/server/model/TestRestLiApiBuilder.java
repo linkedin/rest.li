@@ -58,7 +58,7 @@ public class TestRestLiApiBuilder
   @Test(dataProvider = "resourcesWithClashingNamesDataProvider")
   public void testResourceNameClash(Class<?>[] classes)
   {
-    Set<Class<?>> resourceClasses = new HashSet<Class<?>>(Arrays.<Class<?>>asList(classes));
+    Set<Class<?>> resourceClasses = new HashSet<>(Arrays.<Class<?>>asList(classes));
     try
     {
       RestLiApiBuilder.buildResourceModels(resourceClasses);

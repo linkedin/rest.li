@@ -92,7 +92,7 @@ public class StringKeysResource extends CollectionResourceTemplate<String, Messa
   {
     return "message" + _idSeq.getAndIncrement();
   }
-  private final Map<String, Message> _db = Collections.synchronizedMap(new LinkedHashMap<String, Message>());
+  private final Map<String, Message> _db = Collections.synchronizedMap(new LinkedHashMap<>());
 
   public StringKeysResource()
   {
@@ -122,8 +122,8 @@ public class StringKeysResource extends CollectionResourceTemplate<String, Messa
   @RestMethod.BatchGet
   public Map<String, Message> batchGet(Set<String> ids)
   {
-    Map<String, Message> batch = new HashMap<String, Message>();
-    Map<String, RestLiServiceException> errors = new HashMap<String, RestLiServiceException>();
+    Map<String, Message> batch = new HashMap<>();
+    Map<String, RestLiServiceException> errors = new HashMap<>();
     for (String id : ids)
     {
       Message g = _db.get(id);
@@ -137,52 +137,52 @@ public class StringKeysResource extends CollectionResourceTemplate<String, Messa
       }
     }
 
-    return new BatchResult<String, Message>(batch, errors);
+    return new BatchResult<>(batch, errors);
   }
 
   @RestMethod.BatchUpdate
   public BatchUpdateResult<String, Message> batchUpdate(BatchUpdateRequest<String, Message> entities)
   {
-    Map<String, UpdateResponse> responseMap = new HashMap<String, UpdateResponse>();
+    Map<String, UpdateResponse> responseMap = new HashMap<>();
     for (Map.Entry<String, Message> entry : entities.getData().entrySet())
     {
       responseMap.put(entry.getKey(), update(entry.getKey(), entry.getValue()));
     }
-    return new BatchUpdateResult<String, Message>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 
   @RestMethod.BatchPartialUpdate
   public BatchUpdateResult<String, Message> batchUpdate(BatchPatchRequest<String, Message> entityUpdates)
   {
-    Map<String, UpdateResponse> responseMap = new HashMap<String, UpdateResponse>();
+    Map<String, UpdateResponse> responseMap = new HashMap<>();
     for (Map.Entry<String, PatchRequest<Message>> entry : entityUpdates.getData().entrySet())
     {
       responseMap.put(entry.getKey(), update(entry.getKey(), entry.getValue()));
     }
-    return new BatchUpdateResult<String, Message>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 
   @RestMethod.BatchCreate
   public BatchCreateResult<String, Message> batchCreate(BatchCreateRequest<String, Message> entities)
   {
-    List<CreateResponse> responses = new ArrayList<CreateResponse>(entities.getInput().size());
+    List<CreateResponse> responses = new ArrayList<>(entities.getInput().size());
 
     for (Message g : entities.getInput())
     {
       responses.add(create(g));
     }
-    return new BatchCreateResult<String, Message>(responses);
+    return new BatchCreateResult<>(responses);
   }
 
   @RestMethod.BatchDelete
   public BatchUpdateResult<String, Message> batchDelete(BatchDeleteRequest<String, Message> deleteRequest)
   {
-    Map<String, UpdateResponse> responseMap = new HashMap<String, UpdateResponse>();
+    Map<String, UpdateResponse> responseMap = new HashMap<>();
     for (String id : deleteRequest.getKeys())
     {
       responseMap.put(id, delete(id));
     }
-    return new BatchUpdateResult<String, Message>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 
   @RestMethod.Get
@@ -240,7 +240,7 @@ public class StringKeysResource extends CollectionResourceTemplate<String, Messa
   public List<Message> search(@PagingContextParam PagingContext ctx, @QueryParam("keyword") @Optional String keyword)
   {
     keyword = keyword.toLowerCase();
-    List<Message> messages = new ArrayList<Message>();
+    List<Message> messages = new ArrayList<>();
     int idx = 0;
     int start = ctx.getStart();
     int stop = start + ctx.getCount();

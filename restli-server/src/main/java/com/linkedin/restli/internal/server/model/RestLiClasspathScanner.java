@@ -65,7 +65,7 @@ class RestLiClasspathScanner
 
   private static Set<Class<? extends Annotation>> buildAnnotations()
   {
-    Set<Class<? extends Annotation>> annotations = new HashSet<Class<? extends Annotation>>();
+    Set<Class<? extends Annotation>> annotations = new HashSet<>();
     annotations.add(RestLiCollection.class);
     annotations.add(RestLiAssociation.class);
     annotations.add(RestLiActions.class);
@@ -82,14 +82,14 @@ class RestLiClasspathScanner
   public RestLiClasspathScanner(final Set<String> packageNames, final Set<String> classNames, final ClassLoader classLoader)
   {
     _classLoader = classLoader;
-    _packagePaths = new HashSet<String>();
+    _packagePaths = new HashSet<>();
     //convert package names to paths, to optimize matching against .class paths
     for (String packageName : packageNames)
     {
       _packagePaths.add(nameToPath(packageName));
     }
     _classNames = classNames;
-    _matchedClasses = new HashSet<Class<?>>();
+    _matchedClasses = new HashSet<>();
   }
 
   private String nameToPath(final String name)

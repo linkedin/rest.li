@@ -43,7 +43,7 @@ public class SimpleResourceUnderCollectionResource extends SimpleResourceTemplat
 {
   private static final Tone DEFAULT_TONE = Tone.FRIENDLY;
 
-  private static Map<Long, Tone> TONES = new HashMap<Long, Tone>();
+  private static Map<Long, Tone> TONES = new HashMap<>();
 
   static
   {

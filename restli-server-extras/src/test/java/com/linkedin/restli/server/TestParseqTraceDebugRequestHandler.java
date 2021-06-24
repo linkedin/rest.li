@@ -140,7 +140,7 @@ public class TestParseqTraceDebugRequestHandler
     //Collect all files under tracevis folder in the jar containing the parseq trace debug request handler.
     Enumeration<URL> resources = classLoader.getResources(
         ParseqTraceDebugRequestHandler.class.getName().replace('.', '/') + ".class");
-    List<String> files = new ArrayList<String>();
+    List<String> files = new ArrayList<>();
 
     while (resources.hasMoreElements())
     {

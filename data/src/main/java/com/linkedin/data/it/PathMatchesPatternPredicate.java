@@ -97,12 +97,12 @@ public class PathMatchesPatternPredicate implements Predicate
     _patterns = patterns;
     generateComponentMatches();
   }
-  
+
   public PathMatchesPatternPredicate(PathSpec pathSpec) throws IllegalArgumentException
   {
     this(pathSpecToPathMatchPattern(pathSpec));
   }
-  
+
   private static Object[] pathSpecToPathMatchPattern(PathSpec pathSpec)
   {
     List<String> pathComponents = pathSpec.getPathComponents();
@@ -314,7 +314,7 @@ public class PathMatchesPatternPredicate implements Predicate
   */
 
   private final Object[] _patterns;
-  private final List<Match> _matches = new ArrayList<Match>();
+  private final List<Match> _matches = new ArrayList<>();
 
   /**
    * A {@link Match} holds either a name that represents an exact match of a path component or

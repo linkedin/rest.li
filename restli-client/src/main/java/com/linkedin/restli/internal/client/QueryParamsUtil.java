@@ -202,7 +202,7 @@ public class QueryParamsUtil
   {
     assert array != null && array.getClass().isArray();
     int len = Array.getLength(array);
-    List<String> strings = new ArrayList<String>(len);
+    List<String> strings = new ArrayList<>(len);
     for (int i = 0; i < len; ++i)
     {
       Object value = Array.get(array, i);

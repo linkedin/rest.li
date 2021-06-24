@@ -54,7 +54,7 @@ public class Patch implements Interpreter
   // that we know that each node is distinct object, they never repeat in a tree and we
   // want to avoid expensive hash calculations on maps and lists
   private IdentityHashMap<DataMap, Boolean> _hasDeletesOnly       =
-                                                                      new IdentityHashMap<DataMap, Boolean>();
+                                                                      new IdentityHashMap<>();
 
   // On $set and $delete operations, log the path as an info message in the interpreter context
   private final boolean _logOperations;
@@ -87,7 +87,7 @@ public class Patch implements Interpreter
     //at this nodes. The reason for it is that if field should not be used in more than
     //one operation e.g. $set and $delete, because such patch becomes ambiguous.
     //Each operation, upon being executed updates this variable.
-    final Map<String, String> usedFields = new HashMap<String, String>();
+    final Map<String, String> usedFields = new HashMap<>();
 
     DataMap opNode = (DataMap) instruction.getOperation();
     DataComplex dataComplex = instruction.getData();

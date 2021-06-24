@@ -1441,7 +1441,7 @@ public class TestRestLiServer
     config.setResourcePackageNames("foo, bar , baz");
     assertEquals(ImmutableSet.of("foo", "bar", "baz"), config.getResourcePackageNamesSet());
 
-    Set<String> packageSet = new HashSet<String>();
+    Set<String> packageSet = new HashSet<>();
     packageSet.add("a");
     packageSet.add("b");
     config.setResourcePackageNamesSet(packageSet);

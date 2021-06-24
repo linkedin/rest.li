@@ -32,9 +32,9 @@ public class TestRootBuilderWrapper
   public void testBuilderVersion()
   {
     RootBuilderWrapper<Long, Greeting> rootBuilderWrapper1 =
-        new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders());
+        new RootBuilderWrapper<>(new GreetingsBuilders());
     RootBuilderWrapper<Long, Greeting> rootBuilderWrapper2 =
-        new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders());
+        new RootBuilderWrapper<>(new GreetingsRequestBuilders());
 
     Assert.assertFalse(rootBuilderWrapper1.areRestLi2Builders());
     Assert.assertTrue(rootBuilderWrapper2.areRestLi2Builders());
@@ -43,7 +43,7 @@ public class TestRootBuilderWrapper
     Assert.assertTrue(rootBuilderWrapper2.get().isRestLi2Builder());
 
     RootBuilderWrapper<Long, Greeting> dummyBuilder =
-        new RootBuilderWrapper<Long, Greeting>(new MyRequestBuilders());
+        new RootBuilderWrapper<>(new MyRequestBuilders());
     Assert.assertFalse(dummyBuilder.areRestLi2Builders());
   }
 
@@ -51,9 +51,9 @@ public class TestRootBuilderWrapper
   public void testWrapperMethodNameGeneration()
   {
     RootBuilderWrapper<Long, Greeting> rootBuilderWrapper1 =
-        new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders());
+        new RootBuilderWrapper<>(new GreetingsBuilders());
     RootBuilderWrapper<Long, Greeting> rootBuilderWrapper2 =
-        new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders());
+        new RootBuilderWrapper<>(new GreetingsRequestBuilders());
 
     rootBuilderWrapper1.findBy("searchWithTones").addQueryParam("tones", Tone.FRIENDLY);
     rootBuilderWrapper1.findBy("searchWithTones").setParam("Tones", new Tone[3]);

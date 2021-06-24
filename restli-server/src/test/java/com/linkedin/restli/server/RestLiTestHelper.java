@@ -37,7 +37,7 @@ public class RestLiTestHelper
 
   public static Map<String, ResourceModel> buildResourceModels(Class<?>... rootResourceClasses)
   {
-    Map<String, ResourceModel> map = new HashMap<String, ResourceModel>();
+    Map<String, ResourceModel> map = new HashMap<>();
     for (Class<?> rootResourceClass : rootResourceClasses)
     {
       ResourceModel model = RestLiAnnotationReader.processResource(rootResourceClass);

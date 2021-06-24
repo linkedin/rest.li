@@ -234,7 +234,7 @@ public class ProjectionMaskApplier
       Collection<String> nonSchemaFieldsToAllowInProjectionMask)
   {
     RecordDataSchema newRecordSchema = new RecordDataSchema(new Name(originalSchema.getFullName()), RecordDataSchema.RecordType.RECORD);
-    List<RecordDataSchema.Field> newFields = new ArrayList<RecordDataSchema.Field>();
+    List<RecordDataSchema.Field> newFields = new ArrayList<>();
     for (Map.Entry<String, Object> maskEntry : maskMap.entrySet())
     {
       String maskFieldName = Escaper.unescapePathSegment(maskEntry.getKey());

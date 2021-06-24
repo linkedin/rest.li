@@ -45,8 +45,8 @@ import java.util.Map;
 
   /* package private */ TransportDispatcherImpl(Map<URI, RestRequestHandler> restHandlers, Map<URI, StreamRequestHandler> streamHandlers)
   {
-    _streamHandlers = streamHandlers == null ? Collections.<URI, StreamRequestHandler>emptyMap() : new HashMap<URI, StreamRequestHandler>(streamHandlers);
-    _restHandlers = restHandlers == null ? Collections.<URI, RestRequestHandler>emptyMap() : new HashMap<URI, RestRequestHandler>(restHandlers);
+    _streamHandlers = streamHandlers == null ? Collections.<URI, StreamRequestHandler>emptyMap() : new HashMap<>(streamHandlers);
+    _restHandlers = restHandlers == null ? Collections.<URI, RestRequestHandler>emptyMap() : new HashMap<>(restHandlers);
   }
 
   @Override
@@ -63,7 +63,7 @@ import java.util.Map;
 
     try
     {
-      handler.handleRequest(req, requestContext, new TransportCallbackAdapter<RestResponse>(callback));
+      handler.handleRequest(req, requestContext, new TransportCallbackAdapter<>(callback));
     }
     catch (Exception e)
     {
@@ -90,7 +90,7 @@ import java.util.Map;
 
     try
     {
-      handler.handleRequest(req, requestContext, new TransportCallbackAdapter<StreamResponse>(callback));
+      handler.handleRequest(req, requestContext, new TransportCallbackAdapter<>(callback));
     }
     catch (Exception e)
     {

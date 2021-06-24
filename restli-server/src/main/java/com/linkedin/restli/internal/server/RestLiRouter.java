@@ -280,7 +280,7 @@ public class RestLiRouter
   // when it's not necessary, as long as it doesn't conflict with the rest of the parameters.
   private static Map<ResourceMethodMatchKey, ResourceMethod> setupResourceMethodLookup()
   {
-    HashMap<ResourceMethodMatchKey, ResourceMethod> result = new HashMap<ResourceMethodMatchKey, ResourceMethod>();
+    HashMap<ResourceMethodMatchKey, ResourceMethod> result = new HashMap<>();
     //                                 METHOD    RMETHOD                    ACTION   QUERY BATCHFINDER  BATCH   ENTITY
     Object[] config =
     {
@@ -664,7 +664,7 @@ public class RestLiRouter
   {
     String altKeyName = context.getParameter(RestConstants.ALT_KEY_PARAM);
     List<String> ids = context.getParameterValues(RestConstants.QUERY_BATCH_IDS_PARAM);
-    Set<Object> batchKeys = new HashSet<Object>();
+    Set<Object> batchKeys = new HashSet<>();
     if (ids == null)
     {
       batchKeys = null;

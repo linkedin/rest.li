@@ -670,7 +670,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
 
   private Map<CompoundKey, Message> getAssociateResourceMockDB(Associations client)
   {
-    HashMap<CompoundKey, Message> mapDB = new HashMap<CompoundKey, Message>();
+    HashMap<CompoundKey, Message> mapDB = new HashMap<>();
     CompoundKey urlKey = getAssociateResourceUrlKey(client);
     CompoundKey simpleKey = getAssociateResourceSimpleKey(client);
     mapDB.put(urlKey, new Message().setId(urlKey.getPartAsString("src") + " " + urlKey.getPartAsString("dest"))
@@ -734,9 +734,9 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     Associations associations =
         new AssociationsFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
 
-    Map<CompoundKey, PatchRequest<Message>> patches = new HashMap<CompoundKey, PatchRequest<Message>>();
-    patches.put(getAssociateResourceUrlKey(associations), new PatchRequest<Message>());
-    patches.put(getAssociateResourceSimpleKey(associations), new PatchRequest<Message>());
+    Map<CompoundKey, PatchRequest<Message>> patches = new HashMap<>();
+    patches.put(getAssociateResourceUrlKey(associations), new PatchRequest<>());
+    patches.put(getAssociateResourceSimpleKey(associations), new PatchRequest<>());
 
     Map<CompoundKey, UpdateStatus> ids =
         associations.batchPartialUpdate(patches).toCompletableFuture().get(5000, TimeUnit.MILLISECONDS);
@@ -1063,7 +1063,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     TwoPartKey param = new TwoPartKey();
     param.setMajor("c");
     param.setMinor("d");
-    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, param);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<>(key, param);
     ComplexKeysSubFluentClient
         subFluentClient = new ComplexKeysSubFluentClient(_parSeqRestliClient, _parSeqUnitTestHelper.getEngine());
     subFluentClient.withKeys(complexKey);
@@ -1184,7 +1184,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   // ----- Testing ComplexKeysResource ------
   private static ComplexResourceKey<TwoPartKey, TwoPartKey> getComplexKey(String major, String minor)
   {
-    return new ComplexResourceKey<TwoPartKey, TwoPartKey>(
+    return new ComplexResourceKey<>(
         new TwoPartKey().setMajor(major).setMinor(minor),
         new TwoPartKey());
   }
@@ -1192,7 +1192,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
   private static List<ComplexResourceKey<TwoPartKey, TwoPartKey>> getBatchComplexKeys()
   {
     List<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids =
-      new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>();
+        new ArrayList<>();
     ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(StringTestKeys.URL, StringTestKeys.URL2);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key3 = getComplexKey(StringTestKeys.ERROR, StringTestKeys.ERROR);
@@ -1258,7 +1258,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     message2.setMessage(messageText2);
     message2.setTone(Tone.INSULTING);
 
-    final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> inputs = new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>();
+    final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> inputs = new HashMap<>();
     ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(StringTestKeys.URL, StringTestKeys.URL2);
     inputs.put(key1, message);
@@ -1285,7 +1285,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     PatchRequest<Message> patch = PatchGenerator.diffEmpty(message);
 
     final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, PatchRequest<Message>> inputs =
-        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, PatchRequest<Message>>();
+        new HashMap<>();
     ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(StringTestKeys.URL, StringTestKeys.URL2);
     inputs.put(key1, patch);
@@ -1325,7 +1325,7 @@ public class TestParseqBasedFluentClientApi extends RestLiIntegrationTest
     ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(messageText, messageText);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(messageText2, messageText2);
 
-    ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>();
+    ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = new ArrayList<>();
     ids.add(key1);
     ids.add(key2);
     Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus> deleteResponse =

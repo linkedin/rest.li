@@ -156,7 +156,7 @@ public class ReflectionUtils
 
     if (typeArguments != null)
     {
-      rawTypeArguments = new ArrayList<Class<?>>();
+      rawTypeArguments = new ArrayList<>();
 
       for (Type type : typeArguments)
       {
@@ -177,7 +177,7 @@ public class ReflectionUtils
   public static <T> List<Type> getTypeArgumentsParametrized(final Class<T> baseClass,
                                                     final Class<? extends T> childClass)
   {
-    Map<Type, Type> resolvedTypes = new HashMap<Type, Type>();
+    Map<Type, Type> resolvedTypes = new HashMap<>();
     Type type = walkTypeChain(baseClass, childClass, resolvedTypes);
     if (type == null)
     {
@@ -196,7 +196,7 @@ public class ReflectionUtils
     {
       typeArguments = ((ParameterizedType) type).getActualTypeArguments();
     }
-    List<Type> typeArgumentsAsClasses = new ArrayList<Type>();
+    List<Type> typeArgumentsAsClasses = new ArrayList<>();
     // resolve types by chasing down type variables.
     for (Type baseType : typeArguments)
     {

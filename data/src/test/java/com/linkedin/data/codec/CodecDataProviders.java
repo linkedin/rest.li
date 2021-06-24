@@ -237,7 +237,7 @@ public class CodecDataProviders
     {
       DataMap mapOfStrings = new DataMap();
 
-      ArrayList<Integer> lengths = new ArrayList<Integer>();
+      ArrayList<Integer> lengths = new ArrayList<>();
 
       for (int stringLength = 0; stringLength < 1024; stringLength += 113)
       {

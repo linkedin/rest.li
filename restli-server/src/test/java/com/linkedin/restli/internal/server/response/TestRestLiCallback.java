@@ -1177,7 +1177,7 @@ public class TestRestLiCallback
         }
         else
         {
-          Map<Object, BatchResponseEnvelope.BatchResponseEntry> responseMap =  new HashMap<Object, BatchResponseEnvelope.BatchResponseEntry>();
+          Map<Object, BatchResponseEnvelope.BatchResponseEntry> responseMap = new HashMap<>();
           for (Map.Entry<?, RecordTemplate> entry : ((Map<?, RecordTemplate>) entityFromFilter2).entrySet())
           {
             responseMap.put(entry.getKey(), new BatchResponseEnvelope.BatchResponseEntry(HttpStatus.S_200_OK, entry.getValue()));
@@ -1345,7 +1345,7 @@ public class TestRestLiCallback
    */
   private static CompletableFuture<Void> completedFutureWithError(Throwable t)
   {
-    CompletableFuture<Void> future = new CompletableFuture<Void>();
+    CompletableFuture<Void> future = new CompletableFuture<>();
     future.completeExceptionally(t);
     return future;
   }

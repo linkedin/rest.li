@@ -1092,7 +1092,7 @@ public class TestEntityStream
 
     private AtomicInteger _isDone = new AtomicInteger(0);
     private AtomicInteger _error = new AtomicInteger(0);
-    private AtomicReference<String> _lastEvent = new AtomicReference<String>();
+    private AtomicReference<String> _lastEvent = new AtomicReference<>();
 
     @Override
     public void onDataAvailable(ByteString data)

@@ -156,7 +156,7 @@ public class SynchronousExecutorService extends AbstractExecutorService implemen
     {
       _isShutDown = true;
     }
-    return new ArrayList<Runnable>();
+    return new ArrayList<>();
   }
 
   @Override

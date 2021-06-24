@@ -166,7 +166,7 @@ public class ResourcePropertiesImpl implements ResourceProperties
 
   private static HashMap<String, CompoundKey.TypeInfo> toTypeInfoKeyParts(Map<String, ?> keyParts)
   {
-    final HashMap<String, CompoundKey.TypeInfo> keyPartTypeInfos = new HashMap<String, CompoundKey.TypeInfo>();
+    final HashMap<String, CompoundKey.TypeInfo> keyPartTypeInfos = new HashMap<>();
     for(Map.Entry<String, ?> entry : keyParts.entrySet()) {
       if(entry.getValue() instanceof Class<?>)
       {

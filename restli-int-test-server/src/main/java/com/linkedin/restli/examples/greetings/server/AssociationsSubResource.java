@@ -64,7 +64,7 @@ public class AssociationsSubResource extends CollectionResourceTemplate<String, 
   @Finder("tone")
   public List<Message> findByTone(@QueryParam("tone") Tone tone)
   {
-    List<Message> messages = new ArrayList<Message>(2);
+    List<Message> messages = new ArrayList<>(2);
 
     Message message1 = new Message();
     message1.setId("one");

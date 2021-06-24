@@ -528,7 +528,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
 
     private static List<Map.Entry<String,Object>> orderMapEntries(RecordDataSchema schema, DataMap map)
     {
-      List<Map.Entry<String,Object>> output = new ArrayList<Map.Entry<String,Object>>(map.size());
+      List<Map.Entry<String,Object>> output = new ArrayList<>(map.size());
       List<RecordDataSchema.Field> fields = schema.getFields();
       // collect fields in the record schema in the order the fields are declared
       for (RecordDataSchema.Field field : fields)
@@ -537,11 +537,11 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
         Object found = map.get(fieldName);
         if (found != null)
         {
-          output.add(new AbstractMap.SimpleImmutableEntry<String,Object>(fieldName, found));
+          output.add(new AbstractMap.SimpleImmutableEntry<>(fieldName, found));
         }
       }
       // collect fields that are in the DataMap that is not in the record schema.
-      List<Map.Entry<String,Object>> uncollected = new ArrayList<Map.Entry<String,Object>>(map.size() - output.size());
+      List<Map.Entry<String,Object>> uncollected = new ArrayList<>(map.size() - output.size());
       for (Map.Entry<String,Object> e : map.entrySet())
       {
         if (schema.contains(e.getKey()) == false)
@@ -581,6 +581,6 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
 
     private DataSchema _currentSchema;
     private DataSchema _pendingSchema;
-    private final List<DataSchema> _schemaStack = new ArrayList<DataSchema>();  // use ArrayList because elements may be null
+    private final List<DataSchema> _schemaStack = new ArrayList<>();  // use ArrayList because elements may be null
   }
 }

@@ -77,7 +77,7 @@ public class TestCommonMap
     assertFalse(map.isEmpty());
     assert(map.entrySet().equals(referenceMap1.entrySet()));
     assertEquals(map.keySet(), referenceMap1.keySet());
-    assertEquals(new HashSet<String>(map.values()), new HashSet<String>(referenceMap1.values()));
+    assertEquals(new HashSet<>(map.values()), new HashSet<>(referenceMap1.values()));
   }
 
   public static void containsReferenceMap2(Map<String,String> map)
@@ -237,12 +237,12 @@ public class TestCommonMap
   @Test(dataProvider = "factories")
   public void testCheckKeyValue(CommonMapFactory factory) throws CloneNotSupportedException
   {
-    Checker<String,String> checker1 = new Checker<String,String>();
+    Checker<String, String> checker1 = new Checker<>();
 
     CommonMap<String,String> map1 = factory.create(checker1);
     assertEquals(checker1.checkCount, 0);
 
-    Checker<String,String> checker2 = new Checker<String,String>();
+    Checker<String, String> checker2 = new Checker<>();
     CommonMap<String,String> map2 = factory.create(referenceMap1, checker2);
     assertEquals(checker2.checkCount, referenceMap1.size());
 
@@ -286,7 +286,7 @@ public class TestCommonMap
     }
 
     // keySet
-    Set<String> expectedKeys = new HashSet<String>();
+    Set<String> expectedKeys = new HashSet<>();
     for (Integer i = 0; i < count; i++)
     {
       String v = i.toString();
@@ -295,7 +295,7 @@ public class TestCommonMap
     assertEquals(map.keySet(), expectedKeys);
 
     // values
-    Collection<String> expectedValues = new ArrayList<String>();
+    Collection<String> expectedValues = new ArrayList<>();
     for (Integer i = 0; i < count; i++)
     {
       expectedValues.add("X" + i + "X");
@@ -327,27 +327,27 @@ public class TestCommonMap
   {
     public <K,V> CommonMap<K,V> create()
     {
-      return new CowMap<K, V>();
+      return new CowMap<>();
     }
     public <K,V> CommonMap<K,V> create(int initialCapacity)
     {
-      return new CowMap<K, V>(initialCapacity);
+      return new CowMap<>(initialCapacity);
     }
     public <K,V> CommonMap<K,V> create(int initialCapacity, float factor)
     {
-      return new CowMap<K, V>(initialCapacity, factor);
+      return new CowMap<>(initialCapacity, factor);
     }
     public <K,V> CommonMap<K,V> create(Map<K,V> map)
     {
-      return new CowMap<K, V>(map);
+      return new CowMap<>(map);
     }
     public <K,V> CommonMap<K,V> create(MapChecker<K,V> checker)
     {
-      return new CowMap<K, V>(checker);
+      return new CowMap<>(checker);
     }
     public <K,V> CommonMap<K,V> create(Map<K,V> map, MapChecker<K,V> checker)
     {
-      return new CowMap<K, V>(map, checker);
+      return new CowMap<>(map, checker);
     }
   }
 
@@ -355,27 +355,27 @@ public class TestCommonMap
   {
     public <K,V> CommonMap<K,V> create()
     {
-      return new CheckedMap<K, V>();
+      return new CheckedMap<>();
     }
     public <K,V> CommonMap<K,V> create(int initialCapacity)
     {
-      return new CheckedMap<K, V>(initialCapacity);
+      return new CheckedMap<>(initialCapacity);
     }
     public <K,V> CommonMap<K,V> create(int initialCapacity, float factor)
     {
-      return new CheckedMap<K, V>(initialCapacity, factor);
+      return new CheckedMap<>(initialCapacity, factor);
     }
     public <K,V> CommonMap<K,V> create(Map<K,V> map)
     {
-      return new CheckedMap<K, V>(map);
+      return new CheckedMap<>(map);
     }
     public <K,V> CommonMap<K,V> create(MapChecker<K,V> checker)
     {
-      return new CheckedMap<K, V>(checker);
+      return new CheckedMap<>(checker);
     }
     public <K,V> CommonMap<K,V> create(Map<K,V> map, MapChecker<K,V> checker)
     {
-      return new CheckedMap<K, V>(map, checker);
+      return new CheckedMap<>(map, checker);
     }
   }
 }

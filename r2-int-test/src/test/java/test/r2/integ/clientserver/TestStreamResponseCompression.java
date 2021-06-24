@@ -193,13 +193,13 @@ public class TestStreamResponseCompression extends AbstractServiceTest
     builder.addHeaderValue(HttpConstants.ACCEPT_ENCODING, acceptEncoding);
     StreamRequest request = builder.build(EntityStreams.emptyStream());
 
-    final FutureCallback<StreamResponse> callback = new FutureCallback<StreamResponse>();
+    final FutureCallback<StreamResponse> callback = new FutureCallback<>();
     _client.streamRequest(request, callback);
 
     final StreamResponse response = callback.get(60, TimeUnit.SECONDS);
     Assert.assertEquals(response.getStatus(), RestStatus.OK);
 
-    final FutureCallback<None> readerCallback = new FutureCallback<None>();
+    final FutureCallback<None> readerCallback = new FutureCallback<>();
     final BytesReader reader = new BytesReader(BYTE, readerCallback);
     final EntityStream decompressedStream = response.getEntityStream();
     decompressedStream.setReader(reader);
@@ -219,7 +219,7 @@ public class TestStreamResponseCompression extends AbstractServiceTest
     }
     StreamRequest request = builder.build(EntityStreams.emptyStream());
 
-    final FutureCallback<StreamResponse> callback = new FutureCallback<StreamResponse>();
+    final FutureCallback<StreamResponse> callback = new FutureCallback<>();
     _client.streamRequest(request, callback);
     try
     {

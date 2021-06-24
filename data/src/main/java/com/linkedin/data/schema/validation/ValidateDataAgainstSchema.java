@@ -124,7 +124,7 @@ public final class ValidateDataAgainstSchema
     private Object _fixed = null;
     private boolean _valid = true;
     private final Context _context;
-    private List<FieldToTrim> _toTrim = new ArrayList<FieldToTrim>(0);
+    private List<FieldToTrim> _toTrim = new ArrayList<>(0);
 
     private State(ValidationOptions options, Validator validator)
     {
@@ -806,7 +806,7 @@ public final class ValidateDataAgainstSchema
       _valid = false;
     }
 
-    private MessageList<Message> _messages = new MessageList<Message>();
+    private MessageList<Message> _messages = new MessageList<>();
 
     @Override
     public boolean hasFix()

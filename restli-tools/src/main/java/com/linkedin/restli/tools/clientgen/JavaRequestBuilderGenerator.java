@@ -154,11 +154,11 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
   private static final Map<RestliVersion, String> METHOD_BUILDER_SUFFIX;
   static
   {
-    ROOT_BUILDERS_SUFFIX = new HashMap<RestliVersion, String>();
+    ROOT_BUILDERS_SUFFIX = new HashMap<>();
     ROOT_BUILDERS_SUFFIX.put(RestliVersion.RESTLI_1_0_0, "Builders");
     ROOT_BUILDERS_SUFFIX.put(RestliVersion.RESTLI_2_0_0, "RequestBuilders");
 
-    METHOD_BUILDER_SUFFIX = new HashMap<RestliVersion, String>();
+    METHOD_BUILDER_SUFFIX = new HashMap<>();
     METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_1_0_0, "Builder");
     METHOD_BUILDER_SUFFIX.put(RestliVersion.RESTLI_2_0_0, "RequestBuilder");
   }
@@ -182,7 +182,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
   private final JClass _resourceMethodClass = getCodeModel().ref(ResourceMethod.class);
   private final JClass _classClass = getCodeModel().ref(Class.class);
   private final JClass _objectClass = getCodeModel().ref(Object.class);
-  private final HashSet<JClass> _generatedArrayClasses = new HashSet<JClass>();
+  private final HashSet<JClass> _generatedArrayClasses = new HashSet<>();
   private final DataSchemaResolver _schemaResolver;
   private final TemplateSpecGenerator _specGenerator;
   private final JavaDataTemplateGenerator _javaDataTemplateGenerator;
@@ -289,7 +289,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     if (resourcePath.contains("="))
     {
       // this is an old-style IDL.
-      final List<String> newPathKeys = new ArrayList<String>(pathKeys.size());
+      final List<String> newPathKeys = new ArrayList<>(pathKeys.size());
       final Map<String, String> assocToPathKeys = reverseMap(pathToAssocKeys);
       final Set<String> prevRealPathKeys = new TreeSet<>();
       for (String currKey : pathKeys)
@@ -319,7 +319,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
   private static Map<String, String> reverseMap(Map<String, List<String>> toReverse)
   {
-    final Map<String, String> reversed = new HashMap<String, String>();
+    final Map<String, String> reversed = new HashMap<>();
     for (Map.Entry<String, List<String>> entry : toReverse.entrySet())
     {
       for (String element : entry.getValue())
@@ -712,7 +712,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       final String keyName = getAssociationKey(resource, association);
       pathKeyTypes.put(keyName, keyClass);
 
-      final List<String> assocKeys = new ArrayList<String>(4);
+      final List<String> assocKeys = new ArrayList<>(4);
       for (Map.Entry<String, AssocKeyTypeInfo> entry : assocKeyTypeInfos.entrySet())
       {
         assocKeys.add(entry.getKey());

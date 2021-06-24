@@ -87,9 +87,9 @@ public class ResponseImpl<T> implements Response<T>
   ResponseImpl(int status, Map<String, String> headers, List<HttpCookie> cookies)
   {
     _status = status;
-    _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    _headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     _headers.putAll(headers);
-    _cookies = new ArrayList<HttpCookie>(cookies);
+    _cookies = new ArrayList<>(cookies);
   }
 
   /**

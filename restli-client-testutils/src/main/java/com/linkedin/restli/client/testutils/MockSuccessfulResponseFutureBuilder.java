@@ -120,7 +120,7 @@ public class MockSuccessfulResponseFutureBuilder<K, V extends RecordTemplate> ex
   @Override
   public ResponseFuture<V> build()
   {
-    MockResponseBuilder<K, V> responseBuilder = new MockResponseBuilder<K, V>();
+    MockResponseBuilder<K, V> responseBuilder = new MockResponseBuilder<>();
     Response<V> response = responseBuilder
         .setEntity(getEntity())
         .setStatus(getStatus())
@@ -129,6 +129,6 @@ public class MockSuccessfulResponseFutureBuilder<K, V extends RecordTemplate> ex
         .setProtocolVersion(getProtocolVersion())
         .build();
 
-    return new ResponseFutureImpl<V>(buildFuture(response, null));
+    return new ResponseFutureImpl<>(buildFuture(response, null));
   }
 }

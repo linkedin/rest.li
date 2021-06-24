@@ -44,7 +44,7 @@ public class TestHelper
    */
   public static <T> List<List<T>> split(List<T> from, int subListSize)
   {
-    List<List<T>> into = new ArrayList<List<T>>();
+    List<List<T>> into = new ArrayList<>();
     for (int first = 0; first < from.size(); first += subListSize)
     {
       into.add(from.subList(first, Math.min(first + subListSize, from.size())));
@@ -59,7 +59,7 @@ public class TestHelper
 
   public static <T> List<T> getAll(Iterable<Future<T>> futures, long timeout, TimeUnit unit)
   {
-    List<T> all = new ArrayList<T>();
+    List<T> all = new ArrayList<>();
     final long deadline = System.nanoTime() + unit.toNanos(timeout);
     int f = 0;
     for (Future<T> future : futures)
@@ -82,11 +82,11 @@ public class TestHelper
     final int numberOfCalls = calls.size();
     CountDownLatch ready = new CountDownLatch(numberOfCalls);
     CountDownLatch start = new CountDownLatch(1);
-    List<Future<T>> futures = new ArrayList<Future<T>>(numberOfCalls);
+    List<Future<T>> futures = new ArrayList<>(numberOfCalls);
     {
       ExecutorService pool = newFixedDaemonPool(numberOfCalls);
       for (Callable<T> call : calls)
-        futures.add(pool.submit(new PauseCallable<T>(1, ready, start, call)));
+        futures.add(pool.submit(new PauseCallable<>(1, ready, start, call)));
       assertEquals(futures.size(), numberOfCalls);
     }
     try

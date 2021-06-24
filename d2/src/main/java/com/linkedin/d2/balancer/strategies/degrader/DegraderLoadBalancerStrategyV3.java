@@ -401,7 +401,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   {
     PartitionDegraderLoadBalancerState partitionState = partition.getState();
 
-    List<DegraderTrackerClientUpdater> clientUpdaters = new ArrayList<DegraderTrackerClientUpdater>();
+    List<DegraderTrackerClientUpdater> clientUpdaters = new ArrayList<>();
     for (DegraderTrackerClient client: trackerClients)
     {
       clientUpdaters.add(new DegraderTrackerClientUpdater(client, partition.getId()));
@@ -723,7 +723,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     debug(_log, "average cluster latency: ", newCurrentAvgClusterLatency);
 
     // This points map stores how many hash map points to allocate for each tracker client.
-    Map<URI, Integer> points = new HashMap<URI, Integer>();
+    Map<URI, Integer> points = new HashMap<>();
     Map<URI, Integer> oldPointsMap = oldState.getPointsMap();
 
     for (DegraderTrackerClientUpdater clientUpdater : degraderTrackerClientUpdaters)
@@ -1444,4 +1444,3 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         + ", _state=" + _state + "]";
   }
 }
-

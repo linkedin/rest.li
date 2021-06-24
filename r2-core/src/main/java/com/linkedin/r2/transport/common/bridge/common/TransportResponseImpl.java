@@ -40,7 +40,7 @@ public class TransportResponseImpl<T> implements TransportResponse<T>
    */
   public static <T> TransportResponse<T> success(T response)
   {
-    return new TransportResponseImpl<T>(response, null, new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
+    return new TransportResponseImpl<>(response, null, new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
   }
 
   /**
@@ -55,7 +55,7 @@ public class TransportResponseImpl<T> implements TransportResponse<T>
   {
     Map<String, String> caseInsensitiveWireAttrs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     caseInsensitiveWireAttrs.putAll(wireAttrs);
-    return new TransportResponseImpl<T>(response, null, caseInsensitiveWireAttrs);
+    return new TransportResponseImpl<>(response, null, caseInsensitiveWireAttrs);
   }
 
   /**
@@ -70,7 +70,7 @@ public class TransportResponseImpl<T> implements TransportResponse<T>
   {
     Map<String, String> caseInsensitiveWireAttrs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     caseInsensitiveWireAttrs.putAll(wireAttrs);
-    return new TransportResponseImpl<T>(null, error, caseInsensitiveWireAttrs);
+    return new TransportResponseImpl<>(null, error, caseInsensitiveWireAttrs);
   }
 
   /**
@@ -82,7 +82,7 @@ public class TransportResponseImpl<T> implements TransportResponse<T>
    */
   public static <T> TransportResponse<T> error(Throwable error)
   {
-    return new TransportResponseImpl<T>(null, error, new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
+    return new TransportResponseImpl<>(null, error, new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
   }
 
   private TransportResponseImpl(T response, Throwable error, Map<String, String> wireAttrs)

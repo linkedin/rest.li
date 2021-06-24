@@ -35,7 +35,7 @@ public class RecordTemplateSpec extends ClassTemplateSpec
   public RecordTemplateSpec(RecordDataSchema schema)
   {
     setSchema(schema);
-    _fields = new ArrayList<Field>();
+    _fields = new ArrayList<>();
   }
 
   @Override

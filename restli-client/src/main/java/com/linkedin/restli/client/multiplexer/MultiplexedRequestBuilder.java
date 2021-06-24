@@ -53,7 +53,7 @@ import java.util.Map;
  */
 public class MultiplexedRequestBuilder
 {
-  private final List<RequestWithCallback<?>> _requestsWithCallbacks = new ArrayList<RequestWithCallback<?>>();
+  private final List<RequestWithCallback<?>> _requestsWithCallbacks = new ArrayList<>();
   private final boolean _isParallel;
   private RestliRequestOptions _requestOptions = RestliRequestOptions.DEFAULT_MULTIPLEXER_OPTIONS;
   /**
@@ -95,7 +95,7 @@ public class MultiplexedRequestBuilder
    */
   public <T> MultiplexedRequestBuilder addRequest(Request<T> request, Callback<Response<T>> callback)
   {
-    _requestsWithCallbacks.add(new RequestWithCallback<T>(request, callback));
+    _requestsWithCallbacks.add(new RequestWithCallback<>(request, callback));
     return this;
   }
 
@@ -135,7 +135,7 @@ public class MultiplexedRequestBuilder
 
   private MultiplexedRequest buildParallel() throws RestLiEncodingException
   {
-    Map<Integer, Callback<RestResponse>> callbacks = new HashMap<Integer, Callback<RestResponse>>(_requestsWithCallbacks.size());
+    Map<Integer, Callback<RestResponse>> callbacks = new HashMap<>(_requestsWithCallbacks.size());
     IndividualRequestMap individualRequests = new IndividualRequestMap(_requestsWithCallbacks.size());
     // Dependent requests map is always empty
     IndividualRequestMap dependentRequests = new IndividualRequestMap();
@@ -151,7 +151,7 @@ public class MultiplexedRequestBuilder
 
   private MultiplexedRequest buildSequential() throws RestLiEncodingException
   {
-    Map<Integer, Callback<RestResponse>> callbacks = new HashMap<Integer, Callback<RestResponse>>(_requestsWithCallbacks.size());
+    Map<Integer, Callback<RestResponse>> callbacks = new HashMap<>(_requestsWithCallbacks.size());
     // Dependent requests - requests which are dependent on the current request (executed after the current request)
     IndividualRequestMap dependentRequests = new IndividualRequestMap();
     // We start with the last request in the list and proceed backwards because sequential ordering is built using reverse dependencies

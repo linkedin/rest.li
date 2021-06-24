@@ -51,7 +51,7 @@ public class RestClientRunnableFactory implements ClientRunnableFactory
   @Override
   public void shutdown()
   {
-    final FutureCallback<None> callback = new FutureCallback<None>();
+    final FutureCallback<None> callback = new FutureCallback<>();
     _client.shutdown(callback);
 
     try

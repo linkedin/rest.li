@@ -256,7 +256,7 @@ public class TestRestLiValidationFromClient
     }
     try
     {
-      ValidationDemosPartialUpdateRequestBuilder.validateInput(new PatchRequest<ValidationDemo>(new DataMap()));
+      ValidationDemosPartialUpdateRequestBuilder.validateInput(new PatchRequest<>(new DataMap()));
       Assert.fail("Expected IllegalArgumentException.");
     }
     catch (IllegalArgumentException e)

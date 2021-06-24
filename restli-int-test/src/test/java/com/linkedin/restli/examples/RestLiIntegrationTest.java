@@ -164,7 +164,7 @@ public class RestLiIntegrationTest
   private void initClient(String uriPrefix, Map<String, String> transportProperties)
   {
     _clientFactory = new HttpClientFactory.Builder().setUsePipelineV2(false).build();
-    _transportClients = new ArrayList<Client>();
+    _transportClients = new ArrayList<>();
     Client client = newTransportClient(transportProperties);
     RestLiClientConfig restLiClientConfig = new RestLiClientConfig();
     restLiClientConfig.setUseStreaming(Boolean.parseBoolean(System.getProperty("test.useStreamCodecClient", "false")));
@@ -197,14 +197,14 @@ public class RestLiIntegrationTest
     {
       for (Client client : _transportClients)
       {
-        FutureCallback<None> callback = new FutureCallback<None>();
+        FutureCallback<None> callback = new FutureCallback<>();
         client.shutdown(callback);
         callback.get();
       }
     }
     if (_clientFactory != null)
     {
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
       _clientFactory.shutdown(callback);
       callback.get();
     }

@@ -44,7 +44,7 @@ public class StaticRingProvider implements HashRingProvider
 
   public StaticRingProvider(Ring<URI> ring)
   {
-    List<Ring<URI>> rings = new ArrayList<Ring<URI>>();
+    List<Ring<URI>> rings = new ArrayList<>();
     rings.add(ring);
     _rings = Collections.unmodifiableList(rings);
     _hashFunction = null;
@@ -52,7 +52,7 @@ public class StaticRingProvider implements HashRingProvider
 
   public StaticRingProvider(List<Ring<URI>> rings)
   {
-    _rings = Collections.unmodifiableList(new ArrayList<Ring<URI>>(rings));
+    _rings = Collections.unmodifiableList(new ArrayList<>(rings));
     _hashFunction = null;
   }
 
@@ -65,8 +65,8 @@ public class StaticRingProvider implements HashRingProvider
       throw new ServiceUnavailableException("PEGA_1030. Ring not configured:", serviceUri.toString());
     }
 
-    Map<Ring<URI>, Collection<K>> result = new HashMap<Ring<URI>, Collection<K>>();
-    List<MapKeyResult.UnmappedKey<K>> unmappedKeys = new ArrayList<MapKeyResult.UnmappedKey<K>>();
+    Map<Ring<URI>, Collection<K>> result = new HashMap<>();
+    List<MapKeyResult.UnmappedKey<K>> unmappedKeys = new ArrayList<>();
     for (K key : keys)
     {
       // assume key could be parsed to int, just for simplicity, as this is only used in tests
@@ -78,25 +78,25 @@ public class StaticRingProvider implements HashRingProvider
         Collection<K> set = result.get(ring);
         if (set == null)
         {
-          set = new HashSet<K>();
+          set = new HashSet<>();
           result.put(ring, set);
         }
         set.add(key);
       }
       catch(NumberFormatException e)
       {
-        unmappedKeys.add(new MapKeyResult.UnmappedKey<K>(key, MapKeyResult.ErrorType.FAIL_TO_FIND_PARTITION));
+        unmappedKeys.add(new MapKeyResult.UnmappedKey<>(key, MapKeyResult.ErrorType.FAIL_TO_FIND_PARTITION));
       }
     }
 
-    return new MapKeyResult<Ring<URI>, K>(result, unmappedKeys);
+    return new MapKeyResult<>(result, unmappedKeys);
   }
 
   @Override
   public Map<Integer, Ring<URI>> getRings(URI serviceUri)
   {
     int partitionCount = _rings.size();
-    Map<Integer, Ring<URI>> ringMap = new HashMap<Integer, Ring<URI>>(partitionCount * 2);
+    Map<Integer, Ring<URI>> ringMap = new HashMap<>(partitionCount * 2);
     for (int partitionId = 0; partitionId < partitionCount; partitionId++)
     {
       ringMap.put(partitionId, _rings.get(partitionId));

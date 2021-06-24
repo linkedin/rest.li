@@ -103,14 +103,14 @@ public class TestProjectionUtil
     final MaskTree filter = new MaskTree();
     filter.addOperation(new PathSpec("foo", "bar", "baz"), MaskOperation.POSITIVE_MASK_OP);
 
-    final Collection<PathSpec> positivePaths = new HashSet<PathSpec>(Arrays.asList(
+    final Collection<PathSpec> positivePaths = new HashSet<>(Arrays.asList(
       new PathSpec("foo"),
       new PathSpec("foo", "bar"),
       new PathSpec("foo", "bar", "baz"),
       new PathSpec("foo", "bar", "baz", "xyz"),
       new PathSpec("foo", "bar", "baz", "abc", "xyz")
     ));
-    final Collection<PathSpec> negativePaths = new HashSet<PathSpec>(Arrays.asList(
+    final Collection<PathSpec> negativePaths = new HashSet<>(Arrays.asList(
       new PathSpec("xyz"),
       new PathSpec("foo", "baz"),
       new PathSpec("foo", "xyz"),
@@ -118,19 +118,19 @@ public class TestProjectionUtil
     ));
 
     // test false positive
-    final Set<PathSpec> positiveResult = ProjectionUtil.getPresentPaths(filter, new HashSet<PathSpec>(positivePaths));
+    final Set<PathSpec> positiveResult = ProjectionUtil.getPresentPaths(filter, new HashSet<>(positivePaths));
     Assert.assertEquals(positiveResult, positivePaths);
 
     // test false negative
-    final Set<PathSpec> negativeResult = ProjectionUtil.getPresentPaths(filter, new HashSet<PathSpec>(negativePaths));
+    final Set<PathSpec> negativeResult = ProjectionUtil.getPresentPaths(filter, new HashSet<>(negativePaths));
     Assert.assertTrue(negativeResult.isEmpty());
 
-    final Set<PathSpec> combinedPaths = new HashSet<PathSpec>(positivePaths);
+    final Set<PathSpec> combinedPaths = new HashSet<>(positivePaths);
     combinedPaths.addAll(negativePaths);
 
     // combine both to test internal ordering, overwrites, etc.
     final Set<PathSpec> combinedResult = ProjectionUtil.getPresentPaths(filter, combinedPaths);
-    Assert.assertEquals(combinedResult, new HashSet<PathSpec>(positivePaths));
+    Assert.assertEquals(combinedResult, new HashSet<>(positivePaths));
 
     for (PathSpec p : negativePaths)
     {
@@ -144,28 +144,28 @@ public class TestProjectionUtil
     final MaskTree filter = new MaskTree();
     filter.addOperation(new PathSpec("foo", PathSpec.WILDCARD, "baz"), MaskOperation.POSITIVE_MASK_OP);
 
-    final Collection<PathSpec> positivePaths = new HashSet<PathSpec>(Arrays.asList(
+    final Collection<PathSpec> positivePaths = new HashSet<>(Arrays.asList(
       new PathSpec("foo"),
       new PathSpec("foo", "bar"),
       new PathSpec("foo", "bar", "baz"),
       new PathSpec("foo", "bar", "baz", "xyz"),
       new PathSpec("foo", "bar", "baz", "abc", "xyz")
     ));
-    final Collection<PathSpec> negativePaths = new HashSet<PathSpec>(Arrays.asList(
+    final Collection<PathSpec> negativePaths = new HashSet<>(Arrays.asList(
       new PathSpec("foo", "bar", "xyz")
     ));
 
-    final Set<PathSpec> positiveResult = ProjectionUtil.getPresentPaths(filter, new HashSet<PathSpec>(positivePaths));
+    final Set<PathSpec> positiveResult = ProjectionUtil.getPresentPaths(filter, new HashSet<>(positivePaths));
     Assert.assertEquals(positiveResult, positivePaths);
 
-    final Set<PathSpec> negativeResult = ProjectionUtil.getPresentPaths(filter, new HashSet<PathSpec>(negativePaths));
+    final Set<PathSpec> negativeResult = ProjectionUtil.getPresentPaths(filter, new HashSet<>(negativePaths));
     Assert.assertTrue(negativeResult.isEmpty());
 
-    final Set<PathSpec> combinedPaths = new HashSet<PathSpec>(positivePaths);
+    final Set<PathSpec> combinedPaths = new HashSet<>(positivePaths);
     combinedPaths.addAll(negativePaths);
 
     final Set<PathSpec> combinedResult = ProjectionUtil.getPresentPaths(filter, combinedPaths);
-    Assert.assertEquals(combinedResult, new HashSet<PathSpec>(positivePaths));
+    Assert.assertEquals(combinedResult, new HashSet<>(positivePaths));
 
     for (PathSpec p : negativePaths)
     {

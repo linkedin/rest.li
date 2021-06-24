@@ -33,7 +33,7 @@ import java.util.List;
 public class ActionBuilderSpec extends RequestBuilderSpec
 {
   private String _actionName;
-  private List<ActionParamBindingMethodSpec> _actionParamMethods = new ArrayList<ActionParamBindingMethodSpec>();
+  private List<ActionParamBindingMethodSpec> _actionParamMethods = new ArrayList<>();
 
   public ActionBuilderSpec(String actionName)
   {

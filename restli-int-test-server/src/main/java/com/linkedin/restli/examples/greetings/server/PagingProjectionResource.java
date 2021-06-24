@@ -71,7 +71,7 @@ public class PagingProjectionResource extends CollectionResourceTemplate<Long, G
     GREETING_TWO.setId(15l);
     GREETING_TWO.setMessage("I really like you!");
 
-    LIST = new ArrayList<Greeting>();
+    LIST = new ArrayList<>();
     LIST.add(GREETING_ONE);
     LIST.add(GREETING_TWO);
 
@@ -92,7 +92,7 @@ public class PagingProjectionResource extends CollectionResourceTemplate<Long, G
       final @MetadataProjectionParam MaskTree metadataProjection,
       final @PagingProjectionParam MaskTree pagingProjection)
   {
-    return new CollectionResult<Greeting, Greeting>(LIST, 2, CUSTOM_METADATA_GREETING);
+    return new CollectionResult<>(LIST, 2, CUSTOM_METADATA_GREETING);
   }
 
   /**
@@ -106,7 +106,7 @@ public class PagingProjectionResource extends CollectionResourceTemplate<Long, G
       final @MetadataProjectionParam MaskTree metadataProjection,
       final @PagingProjectionParam MaskTree pagingProjection)
   {
-    return new CollectionResult<Greeting, Greeting>(LIST, calculateTotal(pagingProjection), CUSTOM_METADATA_GREETING);
+    return new CollectionResult<>(LIST, calculateTotal(pagingProjection), CUSTOM_METADATA_GREETING);
   }
 
   /**
@@ -135,7 +135,7 @@ public class PagingProjectionResource extends CollectionResourceTemplate<Long, G
     }
     //Restli should correctly strip away the total (because its not in the MaskTree) even though the resource
     //method returned it here
-    return new CollectionResult<Greeting, Greeting>(LIST, total, CUSTOM_METADATA_GREETING);
+    return new CollectionResult<>(LIST, total, CUSTOM_METADATA_GREETING);
   }
 
   /**
@@ -150,7 +150,7 @@ public class PagingProjectionResource extends CollectionResourceTemplate<Long, G
       final @PagingProjectionParam MaskTree pagingProjection) throws CloneNotSupportedException
   {
     super.getContext().setMetadataProjectionMode(ProjectionMode.MANUAL);
-    return new CollectionResult<Greeting, Greeting>(LIST, 2, applyMetadataProjection(metadataProjection));
+    return new CollectionResult<>(LIST, 2, applyMetadataProjection(metadataProjection));
   }
 
   /**
@@ -166,7 +166,7 @@ public class PagingProjectionResource extends CollectionResourceTemplate<Long, G
       final @PagingProjectionParam MaskTree pagingProjection) throws CloneNotSupportedException
   {
     super.getContext().setMetadataProjectionMode(ProjectionMode.MANUAL);
-    return new CollectionResult<Greeting, Greeting>(LIST,
+    return new CollectionResult<>(LIST,
         calculateTotal(pagingProjection), applyMetadataProjection(metadataProjection));
   }
 
@@ -183,7 +183,7 @@ public class PagingProjectionResource extends CollectionResourceTemplate<Long, G
       final @PagingProjectionParam MaskTree pagingProjection) throws CloneNotSupportedException
   {
     super.getContext().setMetadataProjectionMode(ProjectionMode.MANUAL);
-    return new CollectionResult<Greeting, Greeting>(LIST, calculateTotal(pagingProjection),
+    return new CollectionResult<>(LIST, calculateTotal(pagingProjection),
         applyMetadataProjection(metadataProjection));
   }
 
@@ -224,13 +224,13 @@ public class PagingProjectionResource extends CollectionResourceTemplate<Long, G
   @Finder("searchWithLinksResult")
   public CollectionResult<Greeting, Empty> searchWithLinksResult(@PagingContextParam PagingContext ctx)
   {
-    List<Greeting> greetings = new ArrayList<Greeting>();
+    List<Greeting> greetings = new ArrayList<>();
     for (int i = 0; i<5; i++)
     {
       greetings.add(GREETING_ONE);
       greetings.add(GREETING_TWO);
     }
 
-    return new CollectionResult<Greeting, Empty>(greetings, 50);
+    return new CollectionResult<>(greetings, 50);
   }
 }

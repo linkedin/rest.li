@@ -49,7 +49,7 @@ public final class MultiPartMIMEWriter
    */
   public static class Builder
   {
-    private List<Writer> _allDataSources = new ArrayList<Writer>();
+    private List<Writer> _allDataSources = new ArrayList<>();
     private final String _preamble;
     private final String _epilogue;
     private int _dataSourceCount = 0;

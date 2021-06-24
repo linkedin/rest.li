@@ -77,8 +77,8 @@ public class BatchFinderResource extends CollectionResourceTemplate<Long, Greeti
   @Finder("searchWithMetadata")
   public CollectionResult<Greeting, SearchMetadata> searchWithMetadata()
   {
-    return new CollectionResult<Greeting, SearchMetadata>(Collections.<Greeting>emptyList(),
-                                                    0,
-                                                          new SearchMetadata());
+    return new CollectionResult<>(Collections.<Greeting>emptyList(),
+        0,
+        new SearchMetadata());
   }
 }

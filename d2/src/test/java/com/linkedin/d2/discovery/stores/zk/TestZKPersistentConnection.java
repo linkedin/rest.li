@@ -228,7 +228,7 @@ public class TestZKPersistentConnection
       c.incrementShareCount();
     }
 
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     Callback<None> multiCallback = Callbacks.countDown(callback, numUsers);
     for (int i = 0; i < numUsers; i++) {
       final int userIndex = i;

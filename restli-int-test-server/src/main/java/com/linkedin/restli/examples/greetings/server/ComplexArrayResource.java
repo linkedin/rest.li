@@ -60,7 +60,7 @@ public class ComplexArrayResource extends ComplexKeyResourceTemplate<ComplexArra
   @Override
   public Map<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> batchGet(Set<ComplexResourceKey<ComplexArray, ComplexArray>> keys)
   {
-    Map<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> map = new HashMap<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting>();
+    Map<ComplexResourceKey<ComplexArray, ComplexArray>, Greeting> map = new HashMap<>();
     for(ComplexResourceKey<ComplexArray, ComplexArray> key: keys)
     {
       map.put(key, get(key));
@@ -74,7 +74,7 @@ public class ComplexArrayResource extends ComplexKeyResourceTemplate<ComplexArra
     array.getArray();
     array.getNext().getArray();
 
-    List<Greeting> list = new ArrayList<Greeting>();
+    List<Greeting> list = new ArrayList<>();
     list.add(DEFAULT_GREETING);
     return list;
   }

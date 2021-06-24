@@ -320,7 +320,7 @@ public class PsonDataCodec implements DataCodec
   protected class PsonSerializer implements Data.TraverseCallback
   {
     private final BufferChain _buffer;
-    private final HashMap<String, Integer> _keyMap = new HashMap<String, Integer>(200);
+    private final HashMap<String, Integer> _keyMap = new HashMap<>(200);
     private int _keyIndex = 1;
     private final boolean _encodeStringLength = _options.getEncodeStringLength();
     private final boolean _encodeCollectionCount = _options.getEncodeCollectionCount();
@@ -736,4 +736,3 @@ public class PsonDataCodec implements DataCodec
     private int _expectedKeyIndex = 1;
   }
 }
-

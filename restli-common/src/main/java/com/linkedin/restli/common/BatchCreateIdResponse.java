@@ -88,7 +88,7 @@ public class BatchCreateIdResponse<K> extends RecordTemplate
       throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
     DataList elements = this.data().getDataList(CollectionResponse.ELEMENTS);
-    List<CreateIdStatus<K>> collection = new ArrayList<CreateIdStatus<K>>(elements.size());
+    List<CreateIdStatus<K>> collection = new ArrayList<>(elements.size());
     for (Object obj : elements)
     {
       DataMap dataMap = (DataMap) obj;

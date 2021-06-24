@@ -80,7 +80,7 @@ public class ServerStreamCompressionFilter implements StreamFilter
    */
   public ServerStreamCompressionFilter(StreamEncodingType[] supportedEncoding, Executor executor, int compressThreshold)
   {
-    _supportedEncoding = new HashSet<StreamEncodingType>(Arrays.asList(supportedEncoding));
+    _supportedEncoding = new HashSet<>(Arrays.asList(supportedEncoding));
     _supportedEncoding.add(StreamEncodingType.IDENTITY);
     _supportedEncoding.add(StreamEncodingType.ANY);
     _executor = executor;
@@ -225,7 +225,7 @@ public class ServerStreamCompressionFilter implements StreamFilter
 
   private Map<String, String> stripHeaders(Map<String, String> headerMap, String...headers)
   {
-    Map<String, String> newMap = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    Map<String, String> newMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     newMap.putAll(headerMap);
     for (String header : headers)
     {

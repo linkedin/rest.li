@@ -33,8 +33,8 @@ public class TestMapUtil
   @BeforeTest
   private void prepareMap()
   {
-    _subjectMap = new HashMap<String, Object>();
-    _probeMap = new HashMap<String, Object>();
+    _subjectMap = new HashMap<>();
+    _probeMap = new HashMap<>();
 
     _subjectMap.put("boolean", true);
     _subjectMap.put("integer", 1);

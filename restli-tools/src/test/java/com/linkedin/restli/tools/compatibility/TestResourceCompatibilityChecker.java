@@ -89,15 +89,15 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testPassCollectionFile() throws IOException
   {
-    final Collection<CompatibilityInfo> resourceTestDiffs = new HashSet<CompatibilityInfo>();
-    final Collection<CompatibilityInfo> modelTestDiffs = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> resourceTestDiffs = new HashSet<>();
+    final Collection<CompatibilityInfo> modelTestDiffs = new HashSet<>();
 
     resourceTestDiffs.add(new CompatibilityInfo(Collections.singletonList(""),
                                                 CompatibilityInfo.Type.OPTIONAL_VALUE, "namespace"));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "supports"),
-                                                CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
+                                                CompatibilityInfo.Type.SUPERSET, new HashSet<>(Arrays.asList("update"))));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods"),
-                                                CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
+                                                CompatibilityInfo.Type.SUPERSET, new HashSet<>(Arrays.asList("update"))));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods", "batch_get"),
                                                 CompatibilityInfo.Type.MAX_BATCH_SIZE_REMOVED));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "methods", "batch_create"),
@@ -123,7 +123,7 @@ public class TestResourceCompatibilityChecker
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "actions", "oneAction", "parameters", "someString"),
                                                 CompatibilityInfo.Type.OPTIONAL_PARAMETER));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "actions", "exceptionTest", "throws"),
-                                                CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("java.lang.NullPointerException"))));
+                                                CompatibilityInfo.Type.SUPERSET, new HashSet<>(Arrays.asList("java.lang.NullPointerException"))));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "entity", "actions", "someAction", "parameters", "b", "default"),
                                                 CompatibilityInfo.Type.VALUE_DIFFERENT, "default", "changed"));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "oneFinder", "annotations", "deprecated"),
@@ -143,7 +143,7 @@ public class TestResourceCompatibilityChecker
     Assert.assertTrue(check);
 
     final Collection<CompatibilityInfo> resourceIncompatibles = checker.getInfoMap().getRestSpecIncompatibles();
-    final Collection<CompatibilityInfo> resourceCompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getRestSpecCompatibles());
+    final Collection<CompatibilityInfo> resourceCompatibles = new HashSet<>(checker.getInfoMap().getRestSpecCompatibles());
 
     for (CompatibilityInfo di : resourceTestDiffs)
     {
@@ -155,7 +155,7 @@ public class TestResourceCompatibilityChecker
     Assert.assertTrue(resourceCompatibles.isEmpty(), "Unexpected resource compatibilities: " + resourceCompatibles.toString());
 
     final Collection<CompatibilityInfo> modelIncompatibles = checker.getInfoMap().getModelIncompatibles();
-    final Collection<CompatibilityInfo> modelCompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getModelCompatibles());
+    final Collection<CompatibilityInfo> modelCompatibles = new HashSet<>(checker.getInfoMap().getModelCompatibles());
 
     for (CompatibilityInfo di : modelTestDiffs)
     {
@@ -170,7 +170,7 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testPassAssociationFile() throws IOException
   {
-    final Collection<CompatibilityInfo> testDiffs = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testDiffs = new HashSet<>();
     testDiffs.add(new CompatibilityInfo(Arrays.asList("", "association", "methods", "create", "parameters"),
                                         CompatibilityInfo.Type.PARAMETER_NEW_OPTIONAL, "type"));
 
@@ -183,7 +183,7 @@ public class TestResourceCompatibilityChecker
     Assert.assertTrue(checker.check(CompatibilityLevel.BACKWARDS));
 
     final Collection<CompatibilityInfo> incompatibles = checker.getInfoMap().getIncompatibles();
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
+    final Collection<CompatibilityInfo> compatibles = new HashSet<>(checker.getInfoMap().getCompatibles());
 
     for (CompatibilityInfo di : testDiffs)
     {
@@ -198,15 +198,15 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testPassSimpleFile() throws IOException
   {
-    final Collection<CompatibilityInfo> resourceTestDiffs = new HashSet<CompatibilityInfo>();
-    final Collection<CompatibilityInfo> modelTestDiffs = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> resourceTestDiffs = new HashSet<>();
+    final Collection<CompatibilityInfo> modelTestDiffs = new HashSet<>();
 
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList(""),
                                                 CompatibilityInfo.Type.OPTIONAL_VALUE, "namespace"));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "simple", "supports"),
-                                                CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
+                                                CompatibilityInfo.Type.SUPERSET, new HashSet<>(Arrays.asList("update"))));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "simple", "methods"),
-                                                CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("update"))));
+                                                CompatibilityInfo.Type.SUPERSET, new HashSet<>(Arrays.asList("update"))));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "simple", "methods", "get", "parameters", "param1", "default"),
                                                 CompatibilityInfo.Type.VALUE_DIFFERENT, "abcd", "abc"));
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "simple", "actions", "oneAction", "parameters", "bitfield"),
@@ -236,7 +236,7 @@ public class TestResourceCompatibilityChecker
     Assert.assertTrue(check);
 
     final Collection<CompatibilityInfo> resourceIncompatibles = checker.getInfoMap().getRestSpecIncompatibles();
-    final Collection<CompatibilityInfo> resourceCompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getRestSpecCompatibles());
+    final Collection<CompatibilityInfo> resourceCompatibles = new HashSet<>(checker.getInfoMap().getRestSpecCompatibles());
 
     for (CompatibilityInfo di : resourceTestDiffs)
     {
@@ -248,7 +248,7 @@ public class TestResourceCompatibilityChecker
     Assert.assertTrue(resourceCompatibles.isEmpty(), "Unexpected resource compatibilities: " + resourceCompatibles.toString());
 
     final Collection<CompatibilityInfo> modelIncompatibles = checker.getInfoMap().getModelIncompatibles();
-    final Collection<CompatibilityInfo> modelCompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getModelCompatibles());
+    final Collection<CompatibilityInfo> modelCompatibles = new HashSet<>(checker.getInfoMap().getModelCompatibles());
 
     for (CompatibilityInfo di : modelTestDiffs)
     {
@@ -263,7 +263,7 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testPassActionsSetFile() throws IOException
   {
-    final Collection<CompatibilityInfo> testDiffs = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testDiffs = new HashSet<>();
     testDiffs.add(new CompatibilityInfo(Arrays.asList("", "doc"),
         CompatibilityInfo.Type.DOC_NOT_EQUAL));
     testDiffs.add(new CompatibilityInfo(Arrays.asList("", "actionsSet", "actions", "handshake", "parameters"),
@@ -282,7 +282,7 @@ public class TestResourceCompatibilityChecker
     final Collection<CompatibilityInfo> incompatibles = checker.getInfoMap().getIncompatibles();
     Assert.assertTrue(incompatibles.isEmpty(), "Unexpected incompatibilities: " + incompatibles.toString());
 
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
+    final Collection<CompatibilityInfo> compatibles = new HashSet<>(checker.getInfoMap().getCompatibles());
 
     for (CompatibilityInfo td : testDiffs)
     {
@@ -296,8 +296,8 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testPassServiceErrorsFile() throws IOException
   {
-    final Collection<CompatibilityInfo> resourceTestDiffs = new HashSet<CompatibilityInfo>();
-    final Collection<CompatibilityInfo> modelTestDiffs = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> resourceTestDiffs = new HashSet<>();
+    final Collection<CompatibilityInfo> modelTestDiffs = new HashSet<>();
 
     // Compatible changes
     resourceTestDiffs.add(new CompatibilityInfo(Arrays.asList("", "simple", "methods", "update", "serviceErrors"),
@@ -335,7 +335,7 @@ public class TestResourceCompatibilityChecker
     Assert.assertTrue(resourceCompatibles.isEmpty(), "Unexpected resource compatibilities: " + resourceCompatibles.toString());
 
     final Collection<CompatibilityInfo> modelIncompatibles = checker.getInfoMap().getModelIncompatibles();
-    final Collection<CompatibilityInfo> modelCompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getModelCompatibles());
+    final Collection<CompatibilityInfo> modelCompatibles = new HashSet<>(checker.getInfoMap().getModelCompatibles());
 
     for (CompatibilityInfo di : modelTestDiffs)
     {
@@ -353,8 +353,8 @@ public class TestResourceCompatibilityChecker
     final SchemaParser sp = new SchemaParser();
     sp.parse("\"StringRef\"");
 
-    final Collection<CompatibilityInfo> resourceTestErrors = new HashSet<CompatibilityInfo>();
-    final Collection<CompatibilityInfo> modelTestErrors = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> resourceTestErrors = new HashSet<>();
+    final Collection<CompatibilityInfo> modelTestErrors = new HashSet<>();
     resourceTestErrors.add(
       new CompatibilityInfo(Arrays.asList("", "collection", "identifier", "params"),
                             CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from string to long"));
@@ -433,7 +433,7 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> resourceIncompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getRestSpecIncompatibles());
+    final Collection<CompatibilityInfo> resourceIncompatibles = new HashSet<>(checker.getInfoMap().getRestSpecIncompatibles());
     for (CompatibilityInfo te : resourceTestErrors)
     {
       Assert.assertTrue(resourceIncompatibles.contains(te), "Reported resource incompatibles should contain: " + te.toString());
@@ -442,7 +442,7 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertTrue(resourceIncompatibles.isEmpty(), "Unexpected resource incompatibilities: " + resourceIncompatibles.toString());
 
-    final Collection<CompatibilityInfo> modelIncompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getModelIncompatibles());
+    final Collection<CompatibilityInfo> modelIncompatibles = new HashSet<>(checker.getInfoMap().getModelIncompatibles());
     for (CompatibilityInfo te : modelTestErrors)
     {
       Assert.assertTrue(modelIncompatibles.contains(te), "Reported model incompatibles should contain: " + te.toString());
@@ -460,7 +460,7 @@ public class TestResourceCompatibilityChecker
     prevAssocKey.setName("key1");
     prevAssocKey.setType("string");
 
-    final Collection<CompatibilityInfo> testErrors = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testErrors = new HashSet<>();
     testErrors.add(new CompatibilityInfo(Arrays.asList("", "association", "assocKeys"),
                                          CompatibilityInfo.Type.ARRAY_NOT_EQUAL,
                                          new AssocKeySchemaArray(prevAssocKey)));
@@ -484,7 +484,7 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getIncompatibles());
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<>(checker.getInfoMap().getIncompatibles());
 
     for (CompatibilityInfo te : testErrors)
     {
@@ -498,8 +498,8 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testFailSimpleFile() throws IOException
   {
-    final Collection<CompatibilityInfo> resourceTestErrors = new HashSet<CompatibilityInfo>();
-    final Collection<CompatibilityInfo> modelTestErrors = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> resourceTestErrors = new HashSet<>();
+    final Collection<CompatibilityInfo> modelTestErrors = new HashSet<>();
 
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "simple", "supports"),
                                                  CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
@@ -531,7 +531,7 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> resourceIncompatible = new HashSet<CompatibilityInfo>(checker.getInfoMap().getRestSpecIncompatibles());
+    final Collection<CompatibilityInfo> resourceIncompatible = new HashSet<>(checker.getInfoMap().getRestSpecIncompatibles());
 
     for (CompatibilityInfo te : resourceTestErrors)
     {
@@ -541,7 +541,7 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertTrue(resourceIncompatible.isEmpty(), "Unexpected resource incompatibilities: " + resourceIncompatible.toString());
 
-    final Collection<CompatibilityInfo> modelIncompatible = new HashSet<CompatibilityInfo>(checker.getInfoMap().getModelIncompatibles());
+    final Collection<CompatibilityInfo> modelIncompatible = new HashSet<>(checker.getInfoMap().getModelIncompatibles());
 
     for (CompatibilityInfo te : modelTestErrors)
     {
@@ -557,7 +557,7 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testFailActionsSetFile() throws IOException
   {
-    final Collection<CompatibilityInfo> testErrors = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testErrors = new HashSet<>();
     testErrors.add(new CompatibilityInfo(Arrays.asList(""),
                                          CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, "actionsSet"));
 
@@ -569,8 +569,8 @@ public class TestResourceCompatibilityChecker
 
     Assert.assertFalse(checker.check(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getIncompatibles());
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<>(checker.getInfoMap().getIncompatibles());
+    final Collection<CompatibilityInfo> compatibles = new HashSet<>(checker.getInfoMap().getCompatibles());
 
     for (CompatibilityInfo te : testErrors)
     {
@@ -585,7 +585,7 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testFailUnstructuredDataFile() throws IOException
   {
-    final Collection<CompatibilityInfo> errors = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> errors = new HashSet<>();
     errors.add(new CompatibilityInfo(Arrays.asList("", "entityType"),
                                         CompatibilityInfo.Type.VALUE_NOT_EQUAL, ResourceEntityType.UNSTRUCTURED_DATA, ResourceEntityType.STRUCTURED_DATA));
 
@@ -612,8 +612,8 @@ public class TestResourceCompatibilityChecker
   @Test
   public void testFailServiceErrorsFile() throws IOException
   {
-    final Collection<CompatibilityInfo> resourceTestErrors = new HashSet<CompatibilityInfo>();
-    final Collection<CompatibilityInfo> modelTestErrors = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> resourceTestErrors = new HashSet<>();
+    final Collection<CompatibilityInfo> modelTestErrors = new HashSet<>();
 
     // Incompatible changes, ignore compatible changes
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "simple", "methods", "get", "serviceErrors", "METHOD_LEVEL_ERROR", "status"),
@@ -670,8 +670,8 @@ public class TestResourceCompatibilityChecker
     Assert.assertTrue(resourceIncompatible.isEmpty(), "Unexpected resource incompatibilities: " + resourceIncompatible.toString());
     Assert.assertFalse(resourceCompatible.isEmpty(), "Expected there to be some resource compatibilities, but there were none.");
 
-    final Collection<CompatibilityInfo> modelIncompatible = new HashSet<CompatibilityInfo>(checker.getInfoMap().getModelIncompatibles());
-    final Collection<CompatibilityInfo> modelCompatible = new HashSet<CompatibilityInfo>(checker.getInfoMap().getModelCompatibles());
+    final Collection<CompatibilityInfo> modelIncompatible = new HashSet<>(checker.getInfoMap().getModelIncompatibles());
+    final Collection<CompatibilityInfo> modelCompatible = new HashSet<>(checker.getInfoMap().getModelCompatibles());
 
     for (CompatibilityInfo te : modelTestErrors)
     {
@@ -700,7 +700,7 @@ public class TestResourceCompatibilityChecker
 
     Name toneName = new Name("com.linkedin.greetings.api.Tone");
     EnumDataSchema tone = new EnumDataSchema(toneName);
-    List<String> symbols = new ArrayList<String>();
+    List<String> symbols = new ArrayList<>();
     symbols.add("FRIENDLY");
     symbols.add("SINCERE");
     symbols.add("INSULTING");
@@ -708,7 +708,7 @@ public class TestResourceCompatibilityChecker
 
     Name greetingName = new Name("com.linkedin.greetings.api.Greeting");
     RecordDataSchema prevGreeting = new RecordDataSchema(greetingName, RecordDataSchema.RecordType.RECORD);
-    List<RecordDataSchema.Field> oldFields = new ArrayList<RecordDataSchema.Field>();
+    List<RecordDataSchema.Field> oldFields = new ArrayList<>();
     RecordDataSchema.Field id = new RecordDataSchema.Field(new LongDataSchema());
     id.setName("id", errors);
     oldFields.add(id);
@@ -737,7 +737,7 @@ public class TestResourceCompatibilityChecker
 
     // compat greeting added a new optional field "newField"
     RecordDataSchema compatGreeting = new RecordDataSchema(greetingName, RecordDataSchema.RecordType.RECORD);
-    List<RecordDataSchema.Field> compatFields = new ArrayList<RecordDataSchema.Field>();
+    List<RecordDataSchema.Field> compatFields = new ArrayList<>();
     compatFields.add(id);
     compatFields.add(message);
     compatFields.add(toneField);
@@ -759,7 +759,7 @@ public class TestResourceCompatibilityChecker
     // has changed the type of "id" to string,
     // and added a new non-optional field "newField"
     RecordDataSchema incompatGreeting = new RecordDataSchema(greetingName, RecordDataSchema.RecordType.RECORD);
-    List<RecordDataSchema.Field> incompatFields = new ArrayList<RecordDataSchema.Field>();
+    List<RecordDataSchema.Field> incompatFields = new ArrayList<>();
     RecordDataSchema.Field incompatId = new RecordDataSchema.Field(new StringDataSchema());
     incompatId.setName("id", errors);
     oldFields.add(incompatId);

@@ -39,11 +39,11 @@ public class Graph
     Node<T> node = (Node<T>) _nodes.get(o);
     if (node == null)
     {
-      node = new Node<T>(o);
+      node = new Node<>(o);
       _nodes.put(o, node);
     }
     return node;
   }
 
-  private final Map<Object, Node<?>> _nodes = new HashMap<Object, Node<?>>();
+  private final Map<Object, Node<?>> _nodes = new HashMap<>();
 }

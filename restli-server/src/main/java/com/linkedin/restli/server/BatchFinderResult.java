@@ -52,7 +52,7 @@ public class BatchFinderResult<QK extends RecordTemplate, V extends RecordTempla
   public BatchFinderResult(Map<QK, CollectionResult<V, MD>> resultList, Map<QK, RestLiServiceException> errors)
   {
     _results = resultList == null ? new HashMap<>() : resultList;
-    _errors = errors == null ? new HashMap<QK, RestLiServiceException>() : errors;
+    _errors = errors == null ? new HashMap<>() : errors;
   }
 
   /**

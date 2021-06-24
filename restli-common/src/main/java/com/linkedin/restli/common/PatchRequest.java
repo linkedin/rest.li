@@ -69,7 +69,7 @@ public class PatchRequest<T> extends RecordTemplate
    */
   public static <T> PatchRequest<T> createFromPatchDocument(DataMap patchDocument)
   {
-    PatchRequest<T> result = new PatchRequest<T>();
+    PatchRequest<T> result = new PatchRequest<>();
     result.data().put(PATCH, patchDocument);
     return result;
   }

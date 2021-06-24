@@ -38,7 +38,7 @@ public class ExceptionsResource2 extends CollectionResourceTemplate<Long, Greeti
   public GetResult<Greeting> getWithResult(Long key)
   {
     final Greeting value = new Greeting().setMessage("Hello, sorry for the mess");
-    return new GetResult<Greeting>(value, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    return new GetResult<>(value, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
   }
 
   /**
@@ -47,7 +47,7 @@ public class ExceptionsResource2 extends CollectionResourceTemplate<Long, Greeti
   @Action(name = "exceptionWithValue")
   public ActionResult<Integer> exceptionWithValue()
   {
-    return new ActionResult<Integer>(42, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    return new ActionResult<>(42, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
   }
 
   /**
@@ -56,6 +56,6 @@ public class ExceptionsResource2 extends CollectionResourceTemplate<Long, Greeti
   @Action(name = "exceptionWithoutValue")
   public ActionResult<Void> exceptionWithoutValue()
   {
-    return new ActionResult<Void>(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    return new ActionResult<>(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
   }
 }

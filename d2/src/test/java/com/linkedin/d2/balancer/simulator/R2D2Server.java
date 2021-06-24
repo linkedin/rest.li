@@ -59,12 +59,12 @@ public class R2D2Server
   public R2D2Server() throws Exception
   {
     int port = 9876;
-    _clusters = new HashMap<String, List<LoadBalancerEchoServer>>();
+    _clusters = new HashMap<>();
 
     // create two clusters. ten servers each. three services per cluster.
     for (String clusterName : new String[] { "cluster-1", "cluster-2" })
     {
-      List<LoadBalancerEchoServer> servers = new ArrayList<LoadBalancerEchoServer>();
+      List<LoadBalancerEchoServer> servers = new ArrayList<>();
 
       for (int i = 0; i < 10; ++i)
       {
@@ -84,7 +84,7 @@ public class R2D2Server
     // start everything
     for (Map.Entry<String, List<LoadBalancerEchoServer>> servers : _clusters.entrySet())
     {
-      List<String> schemes = new ArrayList<String>();
+      List<String> schemes = new ArrayList<>();
 
       schemes.add("http");
 
@@ -114,9 +114,9 @@ public class R2D2Server
     ZKConnection client = new ZKConnection(_zookeeperHost+":"+_zookeeperPort, 30000);
 
     PropertyStore<ServiceProperties> store =
-        new ZooKeeperPermanentStore<ServiceProperties>(client,
-                                                       new ServicePropertiesJsonSerializer(),
-                                                       _basePath+"/services");
+        new ZooKeeperPermanentStore<>(client,
+                                      new ServicePropertiesJsonSerializer(),
+                                      _basePath+"/services");
 
     store.put(serviceProperties.getServiceName(), serviceProperties);
     client.getZooKeeper().close();
@@ -128,9 +128,9 @@ public class R2D2Server
 
     ZKConnection client = new ZKConnection(_zookeeperHost+":"+_zookeeperPort, 30000);
     PropertyStore<ClusterProperties> store =
-        new ZooKeeperPermanentStore<ClusterProperties>(client,
-                                                       new ClusterPropertiesJsonSerializer(),
-                                                       _basePath+"/clusters");
+        new ZooKeeperPermanentStore<>(client,
+                                      new ClusterPropertiesJsonSerializer(),
+                                      _basePath + "/clusters");
 
     store.put(clusterProperties.getClusterName(), clusterProperties);
     client.getZooKeeper().close();

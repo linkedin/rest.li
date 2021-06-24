@@ -242,16 +242,16 @@ public class RestClient implements Client {
   {
     FutureCallback<Response<T>> callback = new FutureCallback<>();
     sendRequest(request, requestContext, callback);
-    return new ResponseFutureImpl<T>(callback);
+    return new ResponseFutureImpl<>(callback);
   }
 
   @Override
   public <T> ResponseFuture<T> sendRequest(Request<T> request, RequestContext requestContext,
       ErrorHandlingBehavior errorHandlingBehavior)
   {
-    FutureCallback<Response<T>> callback = new FutureCallback<Response<T>>();
+    FutureCallback<Response<T>> callback = new FutureCallback<>();
     sendRequest(request, requestContext, callback);
-    return new ResponseFutureImpl<T>(callback, errorHandlingBehavior);
+    return new ResponseFutureImpl<>(callback, errorHandlingBehavior);
   }
 
   @Override

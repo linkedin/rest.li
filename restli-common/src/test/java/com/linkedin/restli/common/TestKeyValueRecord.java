@@ -37,11 +37,11 @@ public class TestKeyValueRecord
   public void testPrimitive()
   {
     KeyValueRecordFactory<Long, RecordTemplateWithPrimitiveKey> factory =
-        new KeyValueRecordFactory<Long, RecordTemplateWithPrimitiveKey>(Long.class,
-                                                            null,
-                                                            null,
-                                                            null,
-                                                            RecordTemplateWithPrimitiveKey.class);
+        new KeyValueRecordFactory<>(Long.class,
+            null,
+            null,
+            null,
+            RecordTemplateWithPrimitiveKey.class);
 
     Long id = 1L;
     RecordTemplateWithPrimitiveKey mockRecordTemplate = new RecordTemplateWithPrimitiveKey();
@@ -57,11 +57,11 @@ public class TestKeyValueRecord
   public void testEnum()
   {
     KeyValueRecordFactory<SimpleEnum, RecordTemplateWithPrimitiveKey> factory =
-        new KeyValueRecordFactory<SimpleEnum, RecordTemplateWithPrimitiveKey>(SimpleEnum.class,
-                                                                         null,
-                                                                         null,
-                                                                         null,
-                                                                         RecordTemplateWithPrimitiveKey.class);
+        new KeyValueRecordFactory<>(SimpleEnum.class,
+            null,
+            null,
+            null,
+            RecordTemplateWithPrimitiveKey.class);
     SimpleEnum id = SimpleEnum.A;
     RecordTemplateWithPrimitiveKey mockRecordTemplate = new RecordTemplateWithPrimitiveKey();
     mockRecordTemplate.setId(1L).setBody("foo");
@@ -83,7 +83,7 @@ public class TestKeyValueRecord
     SimpleEnum simpleEnum = SimpleEnum.A;
     compoundKey.append("enumKey", simpleEnum);
 
-    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<String, CompoundKey.TypeInfo>();
+    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<>();
     fieldTypes.put("longKey", new CompoundKey.TypeInfo(Long.class, Long.class));
     fieldTypes.put("enumKey", new CompoundKey.TypeInfo(SimpleEnum.class, String.class));
 
@@ -95,16 +95,16 @@ public class TestKeyValueRecord
   public void testComplex()
   {
     KeyValueRecordFactory<ComplexResourceKey, RecordTemplateWithPrimitiveKey> factory =
-        new KeyValueRecordFactory<ComplexResourceKey, RecordTemplateWithPrimitiveKey>(ComplexResourceKey.class,
-                                                                          MyComplexKey.class,
-                                                                          MyComplexKey.class,
-                                                                          null,
-                                                                          RecordTemplateWithPrimitiveKey.class);
+        new KeyValueRecordFactory<>(ComplexResourceKey.class,
+            MyComplexKey.class,
+            MyComplexKey.class,
+            null,
+            RecordTemplateWithPrimitiveKey.class);
 
     MyComplexKey key = new MyComplexKey().setA("key").setB(1L);
     MyComplexKey params = new MyComplexKey().setA("params").setB(2L);
     ComplexResourceKey<MyComplexKey, MyComplexKey> complexKey =
-        new ComplexResourceKey<MyComplexKey, MyComplexKey>(key, params);
+        new ComplexResourceKey<>(key, params);
 
     RecordTemplateWithPrimitiveKey mockRecord = new RecordTemplateWithPrimitiveKey().setId(1L).setBody("foo");
 
@@ -126,7 +126,7 @@ public class TestKeyValueRecord
     String stringKey = "1";
     compoundKey.append("stringKey", stringKey);
 
-    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<String, CompoundKey.TypeInfo>();
+    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<>();
     fieldTypes.put("longKey", new CompoundKey.TypeInfo(Long.class, Long.class));
     fieldTypes.put("stringKey", new CompoundKey.TypeInfo(String.class, String.class));
 
@@ -144,7 +144,7 @@ public class TestKeyValueRecord
     Long longKey = 1L;
     compoundKey.append("longKey", longKey);
 
-    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<String, CompoundKey.TypeInfo>();
+    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<>();
     fieldTypes.put("stringKey", new CompoundKey.TypeInfo(String.class, String.class));
     fieldTypes.put("longKey", new CompoundKey.TypeInfo(Long.class, MyLongRef.class));
 
@@ -159,7 +159,7 @@ public class TestKeyValueRecord
     MyCustomString myCustomString = new MyCustomString("myCustomString");
     compoundKey.append("myCustomString", myCustomString);
 
-    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<String, CompoundKey.TypeInfo>();
+    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<>();
     fieldTypes.put("myCustomString", new CompoundKey.TypeInfo(MyCustomString.class, MyCustomStringRef.class));
 
     testCompoundKey(compoundKey, fieldTypes);
@@ -170,11 +170,11 @@ public class TestKeyValueRecord
     RecordTemplateWithPrimitiveKey mockRecord = new RecordTemplateWithPrimitiveKey().setId(7L).setBody("foo");
 
     KeyValueRecordFactory<CompoundKey, RecordTemplateWithPrimitiveKey> factory =
-        new KeyValueRecordFactory<CompoundKey, RecordTemplateWithPrimitiveKey>(CompoundKey.class,
-                                                                   null,
-                                                                   null,
-                                                                   fieldTypes,
-                                                                   RecordTemplateWithPrimitiveKey.class);
+        new KeyValueRecordFactory<>(CompoundKey.class,
+            null,
+            null,
+            fieldTypes,
+            RecordTemplateWithPrimitiveKey.class);
 
     KeyValueRecord<CompoundKey, RecordTemplateWithPrimitiveKey> keyValueRecord = factory.create(compoundKey, mockRecord);
 

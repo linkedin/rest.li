@@ -78,7 +78,7 @@ public class TestJetty404
   public void testJetty404() throws Exception
   {
     BytesWriter writer = new BytesWriter(200 * 1024, (byte)100);
-    final AtomicReference<Throwable> exRef = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> exRef = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(1);
     _client.streamRequest(new StreamRequestBuilder(Bootstrap.createHttpURI(PORT, URI.create("/wrong-path")))
         .build(EntityStreams.newEntityStream(writer)), new Callback<StreamResponse>()
@@ -110,11 +110,11 @@ public class TestJetty404
   public void tearDown() throws Exception
   {
 
-    final FutureCallback<None> clientShutdownCallback = new FutureCallback<None>();
+    final FutureCallback<None> clientShutdownCallback = new FutureCallback<>();
     _client.shutdown(clientShutdownCallback);
     clientShutdownCallback.get();
 
-    final FutureCallback<None> factoryShutdownCallback = new FutureCallback<None>();
+    final FutureCallback<None> factoryShutdownCallback = new FutureCallback<>();
     _clientFactory.shutdown(factoryShutdownCallback);
     factoryShutdownCallback.get();
 

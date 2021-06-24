@@ -36,7 +36,7 @@ public class MultiplexedResponse
   {
     _status = status;
     // see com.linkedin.restli.internal.client.ResponseImpl.ResponseImpl()
-    TreeMap<String, String> headersTreeMap = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    TreeMap<String, String> headersTreeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     headersTreeMap.putAll(headers);
     _headers = Collections.unmodifiableSortedMap(headersTreeMap);
   }

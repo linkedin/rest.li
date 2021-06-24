@@ -101,7 +101,7 @@ public class AcceptEncoding implements Comparable<AcceptEncoding>
   {
     headerValue = headerValue.toLowerCase();
     String[] entries = headerValue.split(CompressionConstants.ENCODING_DELIMITER);
-    List<AcceptEncoding> parsedEncodings = new ArrayList<AcceptEncoding>();
+    List<AcceptEncoding> parsedEncodings = new ArrayList<>();
 
     for(String entry : entries)
     {
@@ -155,7 +155,7 @@ public class AcceptEncoding implements Comparable<AcceptEncoding>
   public static StreamEncodingType chooseBest(List<AcceptEncoding> entries)
   {
     Collections.sort(entries);
-    HashSet<StreamEncodingType> bannedEncoding = new HashSet<StreamEncodingType>();
+    HashSet<StreamEncodingType> bannedEncoding = new HashSet<>();
 
     //Add the banned entries to the disallow list
     int lastEntry = entries.size()-1;

@@ -60,7 +60,7 @@ public class BatchFindRequest<V extends RecordTemplate>
         null,
         headers,
         cookies,
-        new BatchCollectionResponseDecoder<V>(templateClass),
+        new BatchCollectionResponseDecoder<>(templateClass),
         resourceSpec,
         queryParams,
         queryParamClasses,

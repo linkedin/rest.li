@@ -53,13 +53,13 @@ public class TestMap
     Class<StringArrayMap> templateClass = (Class<StringArrayMap>) fieldInfo.getFieldClass();
     MapDataSchema schema = (MapDataSchema) fieldInfo.getField().getType();
 
-    Map<String, StringArray> input = new HashMap<String, StringArray>();
+    Map<String, StringArray> input = new HashMap<>();
     for (int i = 0; i < 5; ++i)
     {
       String key = "input" + i;
       input.put(key, new StringArray("subinput" + i));
     }
-    Map<String, StringArray> adds = new HashMap<String, StringArray>();
+    Map<String, StringArray> adds = new HashMap<>();
     for (int i = 0; i < 5; ++i)
     {
       String key = "add" + i;
@@ -77,14 +77,14 @@ public class TestMap
     Class<StringMapMap> templateClass = (Class<StringMapMap>) fieldInfo.getFieldClass();
     MapDataSchema schema = (MapDataSchema) fieldInfo.getField().getType();
 
-    Map<String, StringMap> input = new HashMap<String, StringMap>();
+    Map<String, StringMap> input = new HashMap<>();
     for (int i = 0; i < 5; ++i)
     {
       String key = "input" + i;
       input.put(key, new StringMap());
       input.get(key).put("subinput" + i, "subinputvalue" + i);
     }
-    Map<String, StringMap> adds = new HashMap<String, StringMap>();
+    Map<String, StringMap> adds = new HashMap<>();
     for (int i = 0; i < 5; ++i)
     {
       String key = "add" + i;
@@ -103,14 +103,14 @@ public class TestMap
     Class<RecordBarMap> templateClass = (Class<RecordBarMap>) fieldInfo.getFieldClass();
     MapDataSchema schema = (MapDataSchema) fieldInfo.getField().getType();
 
-    Map<String, RecordBar> input = new HashMap<String, RecordBar>();
+    Map<String, RecordBar> input = new HashMap<>();
     for (int i = 0; i < 5; ++i)
     {
       String key = "input" + i;
       input.put(key, new RecordBar());
       input.get(key).setLocation("subinputvalue" + i);
     }
-    Map<String, RecordBar> adds = new HashMap<String, RecordBar>();
+    Map<String, RecordBar> adds = new HashMap<>();
     for (int i = 0; i < 5; ++i)
     {
       String key = "add" + i;
@@ -121,4 +121,3 @@ public class TestMap
     TestMapTemplate.testMap(templateClass, schema, input, adds);
   }
 }
-

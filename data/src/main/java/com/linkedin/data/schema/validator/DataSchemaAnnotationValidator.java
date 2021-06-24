@@ -204,7 +204,7 @@ public class DataSchemaAnnotationValidator implements Validator
   private DataSchema _schema = DataSchemaConstants.NULL_DATA_SCHEMA;
   private Map<String, Class<? extends Validator>> _customValidatorClassMap = Collections.emptyMap();
   private Map<Object, List<Validator>> _schemaValidators = Collections.emptyMap();
-  private MessageList<Message> _initMessages = new MessageList<Message>();
+  private MessageList<Message> _initMessages = new MessageList<>();
 
   private static final List<Validator> NO_VALIDATORS = Collections.emptyList();
 
@@ -334,7 +334,7 @@ public class DataSchemaAnnotationValidator implements Validator
    */
   private IdentityHashMap<Object, List<Validator>> buildSchemaValidators(DataSchema schema)
   {
-    final IdentityHashMap<Object, List<Validator>> map = new IdentityHashMap<Object, List<Validator>>();
+    final IdentityHashMap<Object, List<Validator>> map = new IdentityHashMap<>();
 
     DataSchemaTraverse traverse = new DataSchemaTraverse();
     traverse.traverse(schema, new DataSchemaTraverse.Callback()
@@ -404,7 +404,7 @@ public class DataSchemaAnnotationValidator implements Validator
     else
     {
       DataMap validateMap = (DataMap) validateObject;
-      List<ValidatorInfo> validatorInfoList = new ArrayList<ValidatorInfo>(validateMap.size());
+      List<ValidatorInfo> validatorInfoList = new ArrayList<>(validateMap.size());
       for (Map.Entry<String, Object> entry : validateMap.entrySet())
       {
         Object config = entry.getValue();
@@ -442,7 +442,7 @@ public class DataSchemaAnnotationValidator implements Validator
         }
       }
       Collections.sort(validatorInfoList, PRIORITY_COMPARATOR);
-      validatorList = new ArrayList<Validator>(validatorInfoList.size());
+      validatorList = new ArrayList<>(validatorInfoList.size());
       for (ValidatorInfo validatorInfo : validatorInfoList)
       {
         validatorList.add(validatorInfo._validator);

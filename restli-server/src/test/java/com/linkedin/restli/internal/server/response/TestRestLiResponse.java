@@ -32,7 +32,7 @@ public class TestRestLiResponse
   @Test
   public void testHeaders()
   {
-    Map<String, String> inputHeaderMap = new HashMap<String, String>();
+    Map<String, String> inputHeaderMap = new HashMap<>();
     inputHeaderMap.put("foo", "bar");
     inputHeaderMap.put("bar", "baz");
     RestLiResponse response = new RestLiResponse.Builder().headers(inputHeaderMap).build();

@@ -26,7 +26,7 @@ import java.util.ArrayList;
 
 /**
  * Transforms Data objects returned by a {@link DataIterator}.
- * 
+ *
  * @author "Joe Betz<jbetz@linkedin.com>"
  */
 public class Transformer
@@ -54,7 +54,7 @@ public class Transformer
     private void transform(Transform<Object, Object> transform)
     {
       Object replacementValue = transform.apply(_value);
-      
+
       Class<?> nameClass = _name.getClass();
       Class<?> parentClass = _parent.getClass();
       if (nameClass == String.class)
@@ -85,7 +85,7 @@ public class Transformer
   /**
    * Transforms the Data objects returned by the {@link DataIterator}.
    * This method mutates the Data object and it's descendants.
-   * 
+   *
    * @param root provides the root of the Data objects that will be transformed.
    * @param it provides the iterator of Data objects to be transformed.
    * @param transform used to provide a replacement value.
@@ -94,9 +94,9 @@ public class Transformer
   public static Object transform(Object root, DataIterator it, Transform<Object,Object> transform)
   {
     DataElement element;
-    
+
     // don't transform in place because iterator behavior with replacements (which behave like a remove and an add) while iterating is undefined
-    ArrayList<ToTransform> transformList = new ArrayList<ToTransform>();
+    ArrayList<ToTransform> transformList = new ArrayList<>();
     while ((element = it.next()) != null)
     {
       transformList.add(new ToTransform(element));
@@ -115,11 +115,11 @@ public class Transformer
     }
     return root;
   }
-  
+
   /**
    * Replaces the Data objects returned by the {@link DataIterator}.
    * This method mutates the Data object and it's descendants.
-   * 
+   *
    * @param root provides the root containing the Data objects that will be transformed.
    * @param it provides the iterator of Data objects to be transformed.
    * @param value provides the replacement value.

@@ -60,7 +60,7 @@ public class DynamicClientTest
     DynamicClient client = new DynamicClient(balancer, facilities, restOverStream);
     URI uri = URI.create("d2://test");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
-    TestCallback<RestResponse> restCallback = new TestCallback<RestResponse>();
+    TestCallback<RestResponse> restCallback = new TestCallback<>();
 
     client.restRequest(restRequest, restCallback);
 
@@ -78,7 +78,7 @@ public class DynamicClientTest
     DynamicClient client = new DynamicClient(balancer, null, restOverStream);
     URI uri = URI.create("d2://test");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
-    TestCallback<RestResponse> restCallback = new TestCallback<RestResponse>();
+    TestCallback<RestResponse> restCallback = new TestCallback<>();
 
     client.restRequest(restRequest, restCallback);
 

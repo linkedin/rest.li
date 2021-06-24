@@ -100,9 +100,9 @@ public class PhotoResource extends CollectionResourceTemplate<Long, Photo>
   @Override
   public BatchResult<Long, Photo> batchGet(Set<Long> ids)
   {
-    Map<Long, Photo> result = new HashMap<Long, Photo>();
+    Map<Long, Photo> result = new HashMap<>();
     Map<Long, RestLiServiceException> errors =
-        new HashMap<Long, RestLiServiceException>();
+        new HashMap<>();
 
     for (Long key : ids)
     {
@@ -117,7 +117,7 @@ public class PhotoResource extends CollectionResourceTemplate<Long, Photo>
                                                        + " has been found."));
       }
     }
-    return new BatchResult<Long, Photo>(result, errors);
+    return new BatchResult<>(result, errors);
   }
 
   // update an existing photo with given entity
@@ -190,7 +190,7 @@ public class PhotoResource extends CollectionResourceTemplate<Long, Photo>
                           @QueryParam("title") @Optional String title,
                           @QueryParam("format") @Optional PhotoFormats format)
   {
-    final List<Photo> photos = new ArrayList<Photo>();
+    final List<Photo> photos = new ArrayList<>();
     int index = 0;
     final int begin = pagingContext.getStart();
     final int end = begin + pagingContext.getCount();
@@ -226,7 +226,7 @@ public class PhotoResource extends CollectionResourceTemplate<Long, Photo>
     for (PhotoCriteria currentCriteria: criteria) {
       if (currentCriteria.getTitle() != null) {
         // on success
-        final List<Photo> photos = new ArrayList<Photo>();
+        final List<Photo> photos = new ArrayList<>();
         int index = 0;
         final int begin = pagingContext.getStart();
         final int end = begin + pagingContext.getCount();

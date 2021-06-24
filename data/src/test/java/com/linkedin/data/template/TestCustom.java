@@ -193,7 +193,7 @@ public class TestCustom
   @Test
   public void testCustomPointArray()
   {
-    final List<String> input = new ArrayList<String>(Arrays.asList("1,1", "2,2", "3,3"));
+    final List<String> input = new ArrayList<>(Arrays.asList("1,1", "2,2", "3,3"));
     final DataList inputDataList = new DataList(input);
 
     CustomPointArray a1 = new CustomPointArray();

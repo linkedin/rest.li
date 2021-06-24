@@ -38,7 +38,7 @@ public class SimpleBeanProvider implements BeanProvider
 
   public SimpleBeanProvider()
   {
-    _beans = new HashMap<String, Object>();
+    _beans = new HashMap<>();
   }
 
   public SimpleBeanProvider add(final String name, final Object bean)
@@ -62,7 +62,7 @@ public class SimpleBeanProvider implements BeanProvider
   @Override
   public <T> Map<String, T> getBeansOfType(final Class<T> clazz)
   {
-    Map<String, T> result = new HashMap<String, T>();
+    Map<String, T> result = new HashMap<>();
     synchronized (_beans)
     {
       for (Map.Entry<String, Object> entry : _beans.entrySet())

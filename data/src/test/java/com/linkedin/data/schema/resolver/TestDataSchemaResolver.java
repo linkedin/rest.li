@@ -765,7 +765,7 @@ public class TestDataSchemaResolver
     File testDir = TestUtil.testDir("testFileDataSchemaResolver", debug);
     Map<File, Map.Entry<String,String>> files = TestUtil.createSchemaFiles(testDir, _testSchemas, debug);
 
-    List<String> testPaths = new ArrayList<String>();
+    List<String> testPaths = new ArrayList<>();
     for (String testPath : _testPaths)
     {
       String dirname = (testDir.getCanonicalPath() + "/" + testPath).replace('/', File.separatorChar);
@@ -783,7 +783,7 @@ public class TestDataSchemaResolver
     for (String testPath : _testPaths)
     {
       String jarFileName = (testDir.getCanonicalPath() + testPath + ".jar").replace('/', File.separatorChar);
-      Map<String,String> jarFileContents = new HashMap<String, String>();
+      Map<String,String> jarFileContents = new HashMap<>();
       for (Map.Entry<String,String> entry : _testSchemas.entrySet())
       {
         if (entry.getKey().startsWith(testPath))

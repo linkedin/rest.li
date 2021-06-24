@@ -83,7 +83,7 @@ public class TestMIMEIntegrationReader extends AbstractMIMEIntegrationStreamTest
   @Override
   protected Map<String, String> getClientProperties()
   {
-    Map<String, String> clientProperties = new HashMap<String, String>();
+    Map<String, String> clientProperties = new HashMap<>();
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "9000000");
     return clientProperties;
   }
@@ -145,7 +145,7 @@ public class TestMIMEIntegrationReader extends AbstractMIMEIntegrationStreamTest
   @DataProvider(name = "multipleNormalBodiesDataSource")
   public Object[][] multipleNormalBodiesDataSource() throws Exception
   {
-    final List<MimeBodyPart> bodyPartList = new ArrayList<MimeBodyPart>();
+    final List<MimeBodyPart> bodyPartList = new ArrayList<>();
     bodyPartList.add(LARGE_DATA_SOURCE);
     bodyPartList.add(SMALL_DATA_SOURCE);
     bodyPartList.add(BODY_LESS_BODY);
@@ -201,7 +201,7 @@ public class TestMIMEIntegrationReader extends AbstractMIMEIntegrationStreamTest
   @DataProvider(name = "multipleAbnormalBodies")
   public Object[][] multipleAbnormalBodies() throws Exception
   {
-    final List<MimeBodyPart> bodyPartList = new ArrayList<MimeBodyPart>();
+    final List<MimeBodyPart> bodyPartList = new ArrayList<>();
     bodyPartList.add(HEADER_LESS_BODY);
     bodyPartList.add(BODY_LESS_BODY);
     bodyPartList.add(PURELY_EMPTY_BODY);
@@ -234,7 +234,7 @@ public class TestMIMEIntegrationReader extends AbstractMIMEIntegrationStreamTest
   @DataProvider(name = "allTypesOfBodiesDataSource")
   public Object[][] allTypesOfBodiesDataSource() throws Exception
   {
-    final List<MimeBodyPart> bodyPartList = new ArrayList<MimeBodyPart>();
+    final List<MimeBodyPart> bodyPartList = new ArrayList<>();
     bodyPartList.add(SMALL_DATA_SOURCE);
     bodyPartList.add(LARGE_DATA_SOURCE);
     bodyPartList.add(HEADER_LESS_BODY);
@@ -271,7 +271,7 @@ public class TestMIMEIntegrationReader extends AbstractMIMEIntegrationStreamTest
   @DataProvider(name = "preambleEpilogueDataSource")
   public Object[][] preambleEpilogueDataSource() throws Exception
   {
-    final List<MimeBodyPart> bodyPartList = new ArrayList<MimeBodyPart>();
+    final List<MimeBodyPart> bodyPartList = new ArrayList<>();
     bodyPartList.add(SMALL_DATA_SOURCE);
     bodyPartList.add(LARGE_DATA_SOURCE);
     bodyPartList.add(HEADER_LESS_BODY);
@@ -350,7 +350,7 @@ public class TestMIMEIntegrationReader extends AbstractMIMEIntegrationStreamTest
 
     final AtomicInteger status = new AtomicInteger(-1);
     final CountDownLatch latch = new CountDownLatch(1);
-    Callback<StreamResponse> callback = expectSuccessCallback(latch, status, new HashMap<String, String>());
+    Callback<StreamResponse> callback = expectSuccessCallback(latch, status, new HashMap<>());
     _client.streamRequest(request, callback);
     latch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS);
     Assert.assertEquals(status.get(), RestStatus.OK);
@@ -366,7 +366,7 @@ public class TestMIMEIntegrationReader extends AbstractMIMEIntegrationStreamTest
       final BodyPart currentExpectedPart = mimeMultipart.getBodyPart(i);
 
       //Construct expected headers and verify they match
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
       while (allHeaders.hasMoreElements())
@@ -445,7 +445,7 @@ public class TestMIMEIntegrationReader extends AbstractMIMEIntegrationStreamTest
   private static class MultiPartMIMEReaderCallbackImpl implements MultiPartMIMEReaderCallback
   {
     final Callback<StreamResponse> _r2callback;
-    final List<SinglePartMIMEReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEReaderCallbackImpl>();
+    final List<SinglePartMIMEReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<>();
 
     MultiPartMIMEReaderCallbackImpl(final Callback<StreamResponse> r2callback)
     {

@@ -226,7 +226,7 @@ public class ResourceModelAnnotation
       trait.masterTrait = new MetaTrait(classAnnotation, clazz.getCanonicalName());
     }
 
-    trait.memberTraits = new HashMap<Method, MetaTrait>();
+    trait.memberTraits = new HashMap<>();
     for (Method m: clazz.getDeclaredMethods())
     {
       final RestSpecAnnotation methodAnnotation = m.getAnnotation(RestSpecAnnotation.class);
@@ -289,5 +289,5 @@ public class ResourceModelAnnotation
     public final boolean skipDefault;
   }
 
-  private static final Map<Class<? extends Annotation>, AnnotationTrait> _traits = new HashMap<Class<? extends Annotation>, AnnotationTrait>();
+  private static final Map<Class<? extends Annotation>, AnnotationTrait> _traits = new HashMap<>();
 }

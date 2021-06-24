@@ -58,7 +58,7 @@ public class Callbacks
    */
   public static <T> Callback<T> adaptSimple(final SimpleCallback simpleCallback)
   {
-    return new SimpleCallbackAdapter<T>(simpleCallback);
+    return new SimpleCallbackAdapter<>(simpleCallback);
   }
 
   /**

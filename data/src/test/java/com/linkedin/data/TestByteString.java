@@ -723,11 +723,11 @@ public class TestByteString
   public Object[][] variousCompoundByteStrings()
   {
     //hello
-    final List<ByteString> byteStringAList = new ArrayList<ByteString>();
+    final List<ByteString> byteStringAList = new ArrayList<>();
     byteStringAList.add(ByteString.copy("hello".getBytes()));
     final ByteString byteStringA = listToByteString(byteStringAList);
 
-    final List<ByteString> byteStringBList = new ArrayList<ByteString>();
+    final List<ByteString> byteStringBList = new ArrayList<>();
     byteStringBList.add(ByteString.copy("h".getBytes()));
     byteStringBList.add(ByteString.copy("e".getBytes()));
     byteStringBList.add(ByteString.copy("l".getBytes()));
@@ -735,13 +735,13 @@ public class TestByteString
     byteStringBList.add(ByteString.copy("o".getBytes()));
     final ByteString byteStringB= listToByteString(byteStringBList);
 
-    final List<ByteString> byteStringCList = new ArrayList<ByteString>();
+    final List<ByteString> byteStringCList = new ArrayList<>();
     byteStringCList.add(ByteString.copy("he".getBytes()));
     byteStringCList.add(ByteString.copy("ll".getBytes()));
     byteStringCList.add(ByteString.copy("o".getBytes()));
     final ByteString byteStringC = listToByteString(byteStringCList);
 
-    final List<ByteString> byteStringDList = new ArrayList<ByteString>();
+    final List<ByteString> byteStringDList = new ArrayList<>();
     byteStringDList.add(ByteString.copy("hel".getBytes()));
     byteStringDList.add(ByteString.copy("l".getBytes()));
     byteStringDList.add(ByteString.copy("o".getBytes()));

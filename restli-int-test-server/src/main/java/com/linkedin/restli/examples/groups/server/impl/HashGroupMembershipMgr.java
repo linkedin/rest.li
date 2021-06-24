@@ -49,7 +49,7 @@ public class HashGroupMembershipMgr implements GroupMembershipMgr
 
   public HashGroupMembershipMgr()
   {
-    _data = new HashMap<CompoundKey, GroupMembership>();
+    _data = new HashMap<>();
   }
 
   @Override
@@ -61,7 +61,7 @@ public class HashGroupMembershipMgr implements GroupMembershipMgr
   @Override
   public Map<Integer, GroupMembership> batchGetByGroup(int groupID, Set<Integer> memberIDs)
   {
-    Map<Integer, GroupMembership> result = new HashMap<Integer, GroupMembership>();
+    Map<Integer, GroupMembership> result = new HashMap<>();
     for (Map.Entry<CompoundKey, GroupMembership> entry : _data.entrySet())
     {
       CompoundKey key = entry.getKey();
@@ -77,7 +77,7 @@ public class HashGroupMembershipMgr implements GroupMembershipMgr
   @Override
   public Map<Integer, GroupMembership> batchGetByMember(int memberID, Set<Integer> groupIDs)
   {
-    Map<Integer, GroupMembership> result = new HashMap<Integer, GroupMembership>();
+    Map<Integer, GroupMembership> result = new HashMap<>();
     for (Map.Entry<CompoundKey, GroupMembership> entry : _data.entrySet())
     {
       CompoundKey key = entry.getKey();
@@ -117,7 +117,7 @@ public class HashGroupMembershipMgr implements GroupMembershipMgr
   @Override
   public List<GroupMembership> search(GroupMembershipSearchQuery query)
   {
-    List<GroupMembership> result = new ArrayList<GroupMembership>();
+    List<GroupMembership> result = new ArrayList<>();
 
     int counter = 0;
     for (Map.Entry<CompoundKey, GroupMembership> entry : _data.entrySet())
@@ -162,7 +162,7 @@ public class HashGroupMembershipMgr implements GroupMembershipMgr
   public List<GroupMembership> getByMember(int memberID, MembershipLevel level, int start,
                                            int count)
   {
-    List<GroupMembership> result = new ArrayList<GroupMembership>();
+    List<GroupMembership> result = new ArrayList<>();
     int idx = 0;
     for (GroupMembership value : _data.values())
     {

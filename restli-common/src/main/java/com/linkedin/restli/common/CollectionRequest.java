@@ -105,7 +105,7 @@ public class CollectionRequest<T extends RecordTemplate> extends RecordTemplate
     if (_templatedCollection == null)
     {
       DataList value = (DataList) data().get(ELEMENTS);
-      _templatedCollection = new DynamicRecordArray<T>(value, _arraySchema, _elementClass);
+      _templatedCollection = new DynamicRecordArray<>(value, _arraySchema, _elementClass);
     }
 
     return _templatedCollection;
