@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.5] - 2021-06-24
+- Fix request builder generator to skip unstructured data sub resources correctly.
+
 ## [29.19.4] - 2021-06-23
 - Do not apply Idea and Eclipse plugins.
 
@@ -4985,7 +4988,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.5...master
+[29.19.5]: https://github.com/linkedin/rest.li/compare/v29.19.4...v29.19.5
 [29.19.4]: https://github.com/linkedin/rest.li/compare/v29.19.3...v29.19.4
 [29.19.3]: https://github.com/linkedin/rest.li/compare/v29.19.2...v29.19.3
 [29.19.2]: https://github.com/linkedin/rest.li/compare/v29.19.1...v29.19.2

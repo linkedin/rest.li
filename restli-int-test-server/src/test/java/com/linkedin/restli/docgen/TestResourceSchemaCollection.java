@@ -20,6 +20,7 @@ package com.linkedin.restli.docgen;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.ResourceType;
 import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
+import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.server.RestLiConfig;
 
@@ -27,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.testng.Assert;
@@ -98,6 +100,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.batchfinders", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting", ResourceType.SIMPLE);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subGreetingSimpleUnstructuredData", ResourceType.SIMPLE);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings.greetingsOfgreetingsOfgreeting", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.greeting.subgreetings.greetingsOfgreetingsOfgreeting.greetingsOfgreetingsOfgreetingsOfgreeting",
         ResourceType.COLLECTION);
@@ -199,12 +202,19 @@ public class TestResourceSchemaCollection
 
     final ResourceSchema greetingResource = _schemas.getResource("greeting");
     final List<ResourceSchema> greetingSubResources = _schemas.getSubResources(greetingResource);
-    Assert.assertEquals(greetingSubResources.size(), 1);
-    final ResourceSchema subgreetingsResource = greetingSubResources.get(0);
-    Assert.assertEquals(subgreetingsResource.getName(), "subgreetings");
-    Assert.assertEquals(subgreetingsResource.getNamespace(), greetingResource.getNamespace());
+    Assert.assertEquals(greetingSubResources.size(), 2);
+    final Optional<ResourceSchema> subgreetingsResource =
+        greetingSubResources.stream().filter(schema -> "subgreetings".equals(schema.getName())).findAny();
+    Assert.assertTrue(subgreetingsResource.isPresent());
+    Assert.assertEquals(subgreetingsResource.get().getNamespace(), greetingResource.getNamespace());
 
-    final List<ResourceSchema> subgreetingsSubResources = _schemas.getSubResources(subgreetingsResource);
+    final Optional<ResourceSchema> subgreetingsUnstructuredDataResource =
+        greetingSubResources.stream().filter(schema -> "subGreetingSimpleUnstructuredData".equals(schema.getName())).findAny();
+    Assert.assertTrue(subgreetingsUnstructuredDataResource.isPresent());
+    Assert.assertEquals(subgreetingsUnstructuredDataResource.get().getNamespace(), greetingResource.getNamespace());
+    Assert.assertEquals(subgreetingsUnstructuredDataResource.get().getEntityType(), ResourceEntityType.UNSTRUCTURED_DATA);
+
+    final List<ResourceSchema> subgreetingsSubResources = _schemas.getSubResources(subgreetingsResource.get());
     Assert.assertEquals(subgreetingsSubResources.size(), 2);
     final ResourceSchema subsubgreetingResource = subgreetingsSubResources.get(0);
     Assert.assertEquals(subsubgreetingResource.getName(), "greetingsOfgreetingsOfgreeting");
