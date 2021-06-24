@@ -16,17 +16,18 @@
 
 package com.linkedin.data.schema.resolver;
 
-
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
-
-import com.linkedin.internal.common.InternalConstants;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -44,12 +45,6 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
   public static final String DEFAULT_EXTENSION = SchemaParser.FILE_EXTENSION;
 
   private final ClassLoader _classLoader;
-  /**
-   * The file directory name for different types of schemas. Default is {@link SchemaDirectoryName#PEGASUS}
-   * Ex "pegasus" for data or "extensions" for relationship extension schema files
-   */
-  private SchemaDirectoryName _schemasDirectoryName = SchemaDirectoryName.PEGASUS;
-
 
   /**
    * Construct a new instance that uses the {@link Thread#getContextClassLoader()} for the current thread.
@@ -100,33 +95,58 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
    * @param classLoader provides the {@link ClassLoader}.
    * @param schemaDirectoryName The file directory name for different types of schemas.
    *                            Default is {@link SchemaDirectoryName#PEGASUS}
+   * @deprecated Use {@link ClasspathResourceDataSchemaResolver#ClasspathResourceDataSchemaResolver(ClassLoader, List)}
+   * instead.
    */
+  @Deprecated
   public ClasspathResourceDataSchemaResolver(ClassLoader classLoader, SchemaDirectoryName schemaDirectoryName)
   {
-    _schemasDirectoryName = schemaDirectoryName;
+    List<SchemaDirectoryName> schemaDirectories = new ArrayList<>();
+    schemaDirectories.add(schemaDirectoryName);
+    // The below logic is kept for backwards compatibility. Ideally the constructor that accepts list of schema
+    // directories should be used to configure all the resolver directores.
+    if (schemaDirectoryName == SchemaDirectoryName.EXTENSIONS)
+    {
+      schemaDirectories.add(SchemaDirectoryName.PEGASUS);
+    }
     for (DataSchemaParserFactory parserForFormat: BUILTIN_FORMAT_PARSER_FACTORIES)
     {
-      addResolver(new SingleFormatClasspathSchemaResolver(parserForFormat, _schemasDirectoryName));
-      if (schemaDirectoryName == SchemaDirectoryName.EXTENSIONS)
-      {
-        addResolver(new SingleFormatClasspathSchemaResolver(parserForFormat, SchemaDirectoryName.PEGASUS));
-      }
+      SingleFormatClasspathSchemaResolver resolver = new SingleFormatClasspathSchemaResolver(parserForFormat);
+      resolver.setSchemaDirectories(schemaDirectories);
+      addResolver(resolver);
     }
     _classLoader = classLoader;
+    setSchemaDirectories(schemaDirectories);
   }
 
   /**
-   * Return the current schema file directory name for schemas location
-   * If not set Defaults to {@link SchemaDirectoryName#PEGASUS}
+   * Construct a new instance that uses the specified {@link ClassLoader} and uses the provided schema directories
+   * to for resolving schema references.
+   *
+   * @param classLoader provides the {@link ClassLoader}.
+   * @param schemaDirectories The list of schema directories to use for resolving referenced schemas.
    */
-  @Override
-  public SchemaDirectoryName getSchemasDirectoryName()
+  public ClasspathResourceDataSchemaResolver(ClassLoader classLoader, List<SchemaDirectoryName> schemaDirectories)
   {
-    return _schemasDirectoryName;
+    for (DataSchemaParserFactory parserForFormat: BUILTIN_FORMAT_PARSER_FACTORIES)
+    {
+      SingleFormatClasspathSchemaResolver resolver = new SingleFormatClasspathSchemaResolver(parserForFormat);
+      resolver.setSchemaDirectories(schemaDirectories);
+      addResolver(resolver);
+    }
+    _classLoader = classLoader;
+    setSchemaDirectories(schemaDirectories);
   }
 
+  @Override
+  @SuppressWarnings("deprecation")
+  public SchemaDirectoryName getSchemasDirectoryName()
+  {
+    assert getSchemaDirectories().size() > 0;
+    return getSchemaDirectories().get(0);
+  }
 
-   /**
+  /**
    * Construct a new instance that uses the specified {@link ClassLoader}.
    *
    * @deprecated The parserFactory is not needed as this class now uses builtin parsers. Use
@@ -142,11 +162,6 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
   private class SingleFormatClasspathSchemaResolver extends DefaultDataSchemaResolver
   {
     private final String _extension;
-    /**
-     * The file directory name for different types of schemas. Default is {@link SchemaDirectoryName#PEGASUS}
-     * Ex "pegasus" for data or "extensions" for relationship extension schema files
-     */
-    private SchemaDirectoryName _schemasDirectoryName = SchemaDirectoryName.PEGASUS;
 
     /**
      * Construct a new instance that uses the {@link Thread#getContextClassLoader()} for the current thread.
@@ -159,38 +174,45 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
 
     /**
      * Construct a new instance that uses the {@link Thread#getContextClassLoader()} for the current thread.
+     * @deprecated use {@link #SingleFormatClasspathSchemaResolver(DataSchemaParserFactory)} and
+     * {@link #setSchemaDirectories(List)} instead to configure the resolver directories.
      */
+    @Deprecated
     public SingleFormatClasspathSchemaResolver(DataSchemaParserFactory parserFactory,
         SchemaDirectoryName schemaDirectoryName)
     {
       super(parserFactory, ClasspathResourceDataSchemaResolver.this);
       this._extension = "." + parserFactory.getLanguageExtension();
-      this._schemasDirectoryName = schemaDirectoryName;
+      setSchemaDirectories(Collections.singletonList(schemaDirectoryName));
     }
 
-    private String getDataSchemaResourcePath(String schemaName)
+    private Collection<String> getDataSchemaResourcePaths(String schemaName)
     {
-      return _schemasDirectoryName.getName() + "/" + schemaName.replace('.', '/') + _extension;
+      List<String> resourcePaths = new ArrayList<>(getSchemaDirectories().size());
+      getSchemaDirectories().forEach(directory -> resourcePaths.add(
+          directory.getName() + "/" + schemaName.replace('.', '/') + _extension));
+      return resourcePaths;
     }
 
     @Override
     protected NamedDataSchema locateDataSchema(String schemaName, StringBuilder errorMessageBuilder)
     {
-      NamedDataSchema schema = null;
-      final String schemaResourcePath = getDataSchemaResourcePath(schemaName);
-      try (InputStream stream = _classLoader.getResourceAsStream(schemaResourcePath))
+      for (String schemaResourcePath : getDataSchemaResourcePaths(schemaName))
       {
-        if (stream != null)
+        try (InputStream stream = _classLoader.getResourceAsStream(schemaResourcePath))
         {
-          DataSchemaLocation location = new FileDataSchemaLocation(new File(schemaResourcePath));
-          schema = parse(stream, location, schemaName, errorMessageBuilder);
+          if (stream != null)
+          {
+            DataSchemaLocation location = new FileDataSchemaLocation(new File(schemaResourcePath));
+            return parse(stream, location, schemaName, errorMessageBuilder);
+          }
+        }
+        catch (IOException e)
+        {
+          errorMessageBuilder.append(String.format("Failed to read/close data schema file \"%s\" in classpath: \"%s\"", schemaResourcePath, e.getMessage()));
         }
       }
-      catch (IOException e)
-      {
-        errorMessageBuilder.append(String.format("Failed to read/close data schema file \"%s\" in classpath: \"%s\"", schemaResourcePath, e.getMessage()));
-      }
-      return schema;
+      return null;
     }
   }
 }

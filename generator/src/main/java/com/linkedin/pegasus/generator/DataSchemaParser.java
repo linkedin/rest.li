@@ -31,6 +31,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -54,38 +55,57 @@ public class DataSchemaParser
 
   /**
    * @param resolverPath provides the search paths separated by the system file separator, or null for no search paths.
+   * @deprecated Use {@link Builder} to construct the parser.
    */
+  @Deprecated
   public DataSchemaParser(String resolverPath)
   {
-    this(resolverPath, AbstractMultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES);
+    this(resolverPath, AbstractMultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES,
+        Collections.singletonList(SchemaDirectoryName.PEGASUS),
+        Collections.singletonList(SchemaDirectoryName.PEGASUS));
   }
 
   /**
    * @param resolverPath provides the search paths separated by the system file separator, or null for no search paths.
    * @param parserFactoriesForFormats list of different formats that we want to parse
+   * @deprecated Use {@link Builder} to construct the parser.
    */
+  @Deprecated
   public DataSchemaParser(
       String resolverPath,
       List<DataSchemaParserFactory> parserFactoriesForFormats)
   {
-    _parserByFileExtension = new HashMap<>();
-    _resolverPath = resolverPath;
-    MultiFormatDataSchemaResolver resolver =
-      new MultiFormatDataSchemaResolver(resolverPath, parserFactoriesForFormats);
-    this._resolver = resolver;
-    init(resolver, resolverPath, parserFactoriesForFormats);
+    this(resolverPath, parserFactoriesForFormats, Collections.singletonList(SchemaDirectoryName.PEGASUS),
+        Collections.singletonList(SchemaDirectoryName.PEGASUS));
   }
 
   /**
    * @param resolverPath provides the search paths separated by the system file separator, or null for no search paths.
    * @param resolver A resolver that address its own specific requirement, for example, resolving extension schemas in a Jar file
+   * @deprecated Use {@link Builder} to construct the parser.
    */
+  @Deprecated
   public DataSchemaParser(String resolverPath, AbstractMultiFormatDataSchemaResolver resolver)
   {
     _parserByFileExtension = new HashMap<>();
     _resolverPath = resolverPath;
     this._resolver = resolver;
-    init(resolver, resolverPath, MultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES);
+    init(resolver, MultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES,
+        resolver.getSchemaDirectories());
+  }
+
+  private DataSchemaParser(String resolverPath,
+      List<DataSchemaParserFactory> parserFactoriesForFormats,
+      List<SchemaDirectoryName> sourceDirectories,
+      List<SchemaDirectoryName> resolverDirectories)
+  {
+    _parserByFileExtension = new HashMap<>();
+    _resolverPath = resolverPath;
+    MultiFormatDataSchemaResolver resolver =
+        new MultiFormatDataSchemaResolver(resolverPath, parserFactoriesForFormats, resolverDirectories);
+    this._resolver = resolver;
+    init(resolver, MultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES,
+        sourceDirectories);
   }
 
   public String getResolverPath()
@@ -186,13 +206,13 @@ public class DataSchemaParser
   }
 
   private void init(AbstractMultiFormatDataSchemaResolver resolver,
-      String resolverPath,
-      List<DataSchemaParserFactory> parserFactoriesForFormats)
+      List<DataSchemaParserFactory> parserFactoriesForFormats,
+      List<SchemaDirectoryName> sourceDirectories)
   {
     for (DataSchemaParserFactory parserForFormat : parserFactoriesForFormats)
     {
       FileFormatDataSchemaParser fileFormatParser =
-          new FileFormatDataSchemaParser(resolverPath, resolver, parserForFormat);
+          new FileFormatDataSchemaParser(resolver, parserForFormat, sourceDirectories);
       _parserByFileExtension.put(parserForFormat.getLanguageExtension(), fileFormatParser);
     }
   }
@@ -275,6 +295,52 @@ public class DataSchemaParser
     {
       _messageBuilder.append(message);
       return this;
+    }
+  }
+
+  public static class Builder
+  {
+    private final String _resolverPath;
+    private List<DataSchemaParserFactory> _parserFactoriesForFormats = AbstractMultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES;
+    private List<SchemaDirectoryName> _sourceDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
+    private List<SchemaDirectoryName> _resolverDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
+
+    public Builder(String resolverPath)
+    {
+      _resolverPath = resolverPath;
+    }
+
+    /**
+     * Set the parser factories to use for different schema file formats. Defaults to
+     * {@link AbstractMultiFormatDataSchemaResolver#BUILTIN_FORMAT_PARSER_FACTORIES}
+     */
+    public Builder setParserFactoriesForFormats(List<DataSchemaParserFactory> parserFactoriesForFormats)
+    {
+      _parserFactoriesForFormats = parserFactoriesForFormats;
+      return this;
+    }
+
+    /**
+     * Set the schema directories to use for parsing source schema files.
+     */
+    public Builder setSourceDirectories(List<SchemaDirectoryName> sourceDirectories)
+    {
+      _sourceDirectories = sourceDirectories;
+      return this;
+    }
+
+    /**
+     * Set the schema directories to use for resolving referenced schemas.
+     */
+    public Builder setResolverDirectories(List<SchemaDirectoryName> resolverDirectories)
+    {
+      _resolverDirectories = resolverDirectories;
+      return this;
+    }
+
+    public DataSchemaParser build()
+    {
+      return new DataSchemaParser(_resolverPath, _parserFactoriesForFormats, _sourceDirectories, _resolverDirectories);
     }
   }
 }

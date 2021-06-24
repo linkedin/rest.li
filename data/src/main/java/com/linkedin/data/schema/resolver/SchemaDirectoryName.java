@@ -21,27 +21,49 @@ package com.linkedin.data.schema.resolver;
  *
  * @author Aman Gupta
  */
-public enum SchemaDirectoryName
+public interface SchemaDirectoryName
 {
-  /**
-   * Directory holds the pegasus schemas. Pegasus parsers and resolvers look for pegasus
-   * files(*.pdl, *.pdsc) only within this directory.
-   */
-  PEGASUS("pegasus"),
-  /**
-   * Directory holds the Entity Relationship pegasus schemas.
-   * Pegasus Extensions schema parsers and resolvers look for pegasus files(*.pdl) only within this directory.
-   */
-  EXTENSIONS("extensions");
+  SchemaDirectoryName PEGASUS = BuiltInSchemaDirectory.PEGASUS;
+  SchemaDirectoryName EXTENSIONS = BuiltInSchemaDirectory.EXTENSIONS;
 
-  private String _name;
+  /**
+   * Return the schema directory name.
+   */
+  String getName();
 
-  SchemaDirectoryName(String name)
+  enum BuiltInSchemaDirectory implements SchemaDirectoryName
   {
-    _name = name;
+    /**
+     * Directory holds the pegasus schemas. Pegasus parsers and resolvers look for pegasus
+     * files(*.pdl, *.pdsc) only within this directory.
+     */
+    PEGASUS("pegasus"),
+    /**
+     * Directory holds the Entity Relationship pegasus schemas.
+     * Pegasus Extensions schema parsers and resolvers look for pegasus files(*.pdl) only within this directory.
+     */
+    EXTENSIONS("extensions");
+
+    private final String _name;
+
+    BuiltInSchemaDirectory(String name)
+    {
+      _name = name;
+    }
+
+
+    @Override
+    public String getName()
+    {
+      return _name;
+    }
   }
 
-  public String getName() {
-    return _name;
+  /**
+   * Checks if the given jar file path starts with this schema directory name.
+   */
+  default boolean matchesJarFilePath(String path)
+  {
+    return path.startsWith(getName() + "/");
   }
 }

@@ -26,6 +26,7 @@ import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,6 +53,7 @@ public abstract class AbstractMultiFormatDataSchemaResolver implements DataSchem
   };
 
   private final List<DataSchemaResolver> _resolvers = new ArrayList<>();
+  private List<SchemaDirectoryName> _schemaDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
 
   public static List<DataSchemaParserFactory> BUILTIN_FORMAT_PARSER_FACTORIES;
   static {
@@ -192,5 +194,16 @@ public abstract class AbstractMultiFormatDataSchemaResolver implements DataSchem
       results.putAll(resolver.getPendingSchemas());
     }
     return results;
+  }
+
+  @Override
+  public List<SchemaDirectoryName> getSchemaDirectories()
+  {
+    return _schemaDirectories;
+  }
+
+  public void setSchemaDirectories(List<SchemaDirectoryName> schemaDirectories)
+  {
+    _schemaDirectories = schemaDirectories;
   }
 }

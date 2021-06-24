@@ -13,6 +13,11 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add support for resolving from multiple schema source directories.
+  - This change also introduces the concept of "source" and "resolver" directories when 
+    creating a `DataSchemaParser`. "Source" directories are used to parse/load the input
+    schemas, while the "resolver" directories will only be used for resolving referenced
+    schemas.
 
 ## [29.19.15] - 2021-08-09
 - Provide the ability to set cookies and projection params in request context's local attributes to avoid
