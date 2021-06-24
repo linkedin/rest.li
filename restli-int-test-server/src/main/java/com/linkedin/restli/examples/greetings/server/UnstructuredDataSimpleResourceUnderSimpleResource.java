@@ -21,8 +21,6 @@ import com.linkedin.restli.server.annotations.RestLiSimpleResource;
 import com.linkedin.restli.server.annotations.UnstructuredDataWriterParam;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourceTemplate;
 
-import static com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataUtils.*;
-
 
 /**
  * This resource models an simple sub resource that produces unstructured data entities as results.
@@ -34,6 +32,6 @@ public class UnstructuredDataSimpleResourceUnderSimpleResource extends Unstructu
   @Override
   public void get(@UnstructuredDataWriterParam UnstructuredDataWriter writer)
   {
-    respondGoodUnstructuredData(writer);
+    GreetingUnstructuredDataUtils.respondGoodUnstructuredData(writer);
   }
 }
