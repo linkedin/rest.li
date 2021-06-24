@@ -103,7 +103,7 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
   {
     @SuppressWarnings("unchecked")
     WrappingArrayTemplate<E> copy = (WrappingArrayTemplate<E>) super.copy();
-    copy._cache = new DataObjectToObjectCache<E>(copy.data().size());
+    copy._cache = new DataObjectToObjectCache<>(copy.data().size());
     return copy;
   }
 
@@ -170,4 +170,3 @@ public class WrappingArrayTemplate<E extends DataTemplate<?>> extends AbstractAr
   private Constructor<E> _constructor;
   protected DataObjectToObjectCache<E> _cache;
 }
-

@@ -30,7 +30,7 @@ public abstract class AbstractSnapshot
 
   protected Map<String, NamedDataSchema> parseModels(DataList models) throws IOException
   {
-    final Map<String, NamedDataSchema> parsedModels = new HashMap<String, NamedDataSchema>();
+    final Map<String, NamedDataSchema> parsedModels = new HashMap<>();
 
     for (Object modelObj : models)
     {

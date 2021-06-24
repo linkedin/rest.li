@@ -97,7 +97,7 @@ public class ExampleD2Server
                                                                 echoServerConfigs)
       throws IOException
   {
-    List<EchoServer> echoServers = new ArrayList<EchoServer>();
+    List<EchoServer> echoServers = new ArrayList<>();
     for (Map<String, Object> echoServerConfig : echoServerConfigs)
     {
       int port = ((Long)echoServerConfig.get("port")).intValue();

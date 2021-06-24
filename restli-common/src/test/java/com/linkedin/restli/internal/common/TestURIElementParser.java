@@ -197,7 +197,7 @@ public class TestURIElementParser
   @Test
   public void testParseURIParams() throws PathSegment.PathSegmentSyntaxException
   {
-    Map<String, List<String>> queryParams = new HashMap<String, List<String>>();
+    Map<String, List<String>> queryParams = new HashMap<>();
     queryParams.put("aParam", Collections.singletonList("(someField:someValue,foo:bar,empty:())"));
     queryParams.put("bParam", Collections.singletonList("List(x,y,z)"));
 

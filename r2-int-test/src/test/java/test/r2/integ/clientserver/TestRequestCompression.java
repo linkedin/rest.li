@@ -69,7 +69,7 @@ public class TestRequestCompression extends AbstractServiceTest
   private static final int NUM_BYTES = 1024 * 1024 * 16;
 
   private ExecutorService _executor = Executors.newCachedThreadPool();
-  private List<Client> _clients = new ArrayList<Client>();
+  private List<Client> _clients = new ArrayList<>();
 
   @Factory(dataProvider = "allStreamCombinations", dataProviderClass = ClientServerConfiguration.class)
   public TestRequestCompression(ClientProvider clientProvider, ServerProvider serverProvider, int port)
@@ -82,7 +82,7 @@ public class TestRequestCompression extends AbstractServiceTest
   {
     for (Client compressionClient : _clients)
     {
-      final FutureCallback<None> clientShutdownCallback = new FutureCallback<None>();
+      final FutureCallback<None> clientShutdownCallback = new FutureCallback<>();
       compressionClient.shutdown(clientShutdownCallback);
       clientShutdownCallback.get();
     }
@@ -172,7 +172,7 @@ public class TestRequestCompression extends AbstractServiceTest
     BytesWriter writer = new BytesWriter(THRESHOLD-1, BYTE);
     StreamRequest request = builder.build(EntityStreams.newEntityStream(writer));
 
-    final FutureCallback<StreamResponse> callback = new FutureCallback<StreamResponse>();
+    final FutureCallback<StreamResponse> callback = new FutureCallback<>();
     client.streamRequest(request, callback);
 
     final StreamResponse response = callback.get(60, TimeUnit.SECONDS);
@@ -187,7 +187,7 @@ public class TestRequestCompression extends AbstractServiceTest
     BytesWriter writer = new BytesWriter(NUM_BYTES, BYTE);
     StreamRequest request = builder.build(EntityStreams.newEntityStream(writer));
 
-    final FutureCallback<StreamResponse> callback = new FutureCallback<StreamResponse>();
+    final FutureCallback<StreamResponse> callback = new FutureCallback<>();
     client.streamRequest(request, callback);
 
     final StreamResponse response = callback.get(60, TimeUnit.SECONDS);

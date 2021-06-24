@@ -60,7 +60,7 @@ public class TimeoutTransportCallback<T> implements TransportCallback<T>, Timeou
                                   final TransportCallback<T> callback,
                                   final String timeoutMessage)
   {
-    _timeout = new Timeout<TransportCallback<T>>(scheduler, timeout, timeoutUnit, callback);
+    _timeout = new Timeout<>(scheduler, timeout, timeoutUnit, callback);
     _timeout.addTimeoutTask(new Runnable()
     {
       @Override

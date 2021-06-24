@@ -74,7 +74,7 @@ public class RestSpecParser
           try
           {
             final ResourceSchema resource = _codec.readResourceSchema(new FileInputStream(sourceFile));
-            result._schemaAndFiles.add(new CodeUtil.Pair<ResourceSchema, File>(resource, sourceFile));
+            result._schemaAndFiles.add(new CodeUtil.Pair<>(resource, sourceFile));
             result._sourceFiles.add(sourceFile);
           }
           catch (IOException e)
@@ -91,8 +91,8 @@ public class RestSpecParser
   public static class ParseResult
   {
     // use collections to maintain order
-    private final Collection<CodeUtil.Pair<ResourceSchema, File>> _schemaAndFiles = new ArrayList<CodeUtil.Pair<ResourceSchema, File>>();
-    private final Collection<File> _sourceFiles = new ArrayList<File>();
+    private final Collection<CodeUtil.Pair<ResourceSchema, File>> _schemaAndFiles = new ArrayList<>();
+    private final Collection<File> _sourceFiles = new ArrayList<>();
     private final StringBuilder _message = new StringBuilder();
 
     /**

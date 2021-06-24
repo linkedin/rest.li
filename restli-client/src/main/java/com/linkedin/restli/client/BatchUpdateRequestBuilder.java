@@ -61,7 +61,7 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
                                     _resourceSpec.getComplexKeyType(),
                                     _resourceSpec.getKeyParts(),
                                     _resourceSpec.getValueType());
-    _updateInputMap = new HashMap<K, V>();
+    _updateInputMap = new HashMap<>();
   }
 
   public BatchUpdateRequestBuilder<K, V> input(K id, V entity)
@@ -165,21 +165,21 @@ public class BatchUpdateRequestBuilder<K, V extends RecordTemplate> extends
   public BatchUpdateRequest<K, V> build()
   {
     ensureBatchKeys();
-    Map<K, V> readOnlyUpdateInputMap = new HashMap<K, V>(
+    Map<K, V> readOnlyUpdateInputMap = new HashMap<>(
         CollectionUtils.getMapInitialCapacity(_updateInputMap.size(), 0.75f), 0.75f);
     CollectionRequest<KeyValueRecord<K, V>> readOnlyInput = buildReadOnlyBatchUpdateInput(readOnlyUpdateInputMap);
 
-    return new BatchUpdateRequest<K, V>(buildReadOnlyHeaders(),
-                                        buildReadOnlyCookies(),
-                                        readOnlyInput,
-                                        buildReadOnlyQueryParameters(),
-                                        getQueryParamClasses(),
-                                        _resourceSpec,
-                                        getBaseUriTemplate(),
-                                        buildReadOnlyPathKeys(),
-                                        getRequestOptions(),
-                                        Collections.unmodifiableMap(readOnlyUpdateInputMap),
-                                        _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
+    return new BatchUpdateRequest<>(buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        readOnlyInput,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        _resourceSpec,
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions(),
+        Collections.unmodifiableMap(readOnlyUpdateInputMap),
+        _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 
   private CollectionRequest<KeyValueRecord<K, V>> buildReadOnlyBatchUpdateInput(Map<K, V> readOnlyInputEntities)

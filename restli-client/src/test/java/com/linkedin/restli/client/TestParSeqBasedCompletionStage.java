@@ -98,7 +98,7 @@ public class TestParSeqBasedCompletionStage
     _parSeqUnitTestHelper = new ParSeqUnitTestHelper();
     _parSeqUnitTestHelper.setUp();
     _engine = _parSeqUnitTestHelper.getEngine();
-    _parSeqBasedCompletionStageFactory = new ParSeqBasedCompletionStageFactory<String>(_engine);
+    _parSeqBasedCompletionStageFactory = new ParSeqBasedCompletionStageFactory<>(_engine);
   }
 
   @BeforeMethod

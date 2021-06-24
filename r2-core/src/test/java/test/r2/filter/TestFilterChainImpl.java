@@ -235,7 +235,7 @@ public class TestFilterChainImpl
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void testNullFilterInList()
   {
-    List<RestFilter> restFilters = new ArrayList<RestFilter>();
+    List<RestFilter> restFilters = new ArrayList<>();
     restFilters.add(new RestCountFilter());
     restFilters.add(null);
 
@@ -290,11 +290,11 @@ public class TestFilterChainImpl
     AtomicInteger count = new AtomicInteger(0);
     CheckOrderFilter filter1 = new CheckOrderFilter(count);
     CheckOrderFilter filter2 = new CheckOrderFilter(count);
-    List<RestFilter> restFilters = new ArrayList<RestFilter>();
+    List<RestFilter> restFilters = new ArrayList<>();
     restFilters.add(filter1);
     restFilters.add(filter2);
 
-    List<StreamFilter> streamFilters = new ArrayList<StreamFilter>();
+    List<StreamFilter> streamFilters = new ArrayList<>();
     streamFilters.add(filter1);
     streamFilters.add(filter2);
 
@@ -371,7 +371,7 @@ public class TestFilterChainImpl
 
   private Map<String, String> createWireAttributes()
   {
-    return new HashMap<String, String>();
+    return new HashMap<>();
   }
 
   private RequestContext createRequestContext()

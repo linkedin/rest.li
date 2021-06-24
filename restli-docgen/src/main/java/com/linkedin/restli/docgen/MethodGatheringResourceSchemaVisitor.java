@@ -107,11 +107,11 @@ public class MethodGatheringResourceSchemaVisitor extends BaseResourceSchemaVisi
   @SuppressWarnings("unchecked")
   public Iterator<RecordTemplate> getAllMethodsIterator()
   {
-    return new ChainedIterator<RecordTemplate>(_restMethods.iterator(),
-                                               _finders.iterator(),
-                                               _batchFinders.iterator(),
-                                               _collectionActions.iterator(),
-                                               _entityActions.iterator());
+    return new ChainedIterator<>(_restMethods.iterator(),
+        _finders.iterator(),
+        _batchFinders.iterator(),
+        _collectionActions.iterator(),
+        _entityActions.iterator());
   }
 
   @Override
@@ -173,10 +173,10 @@ public class MethodGatheringResourceSchemaVisitor extends BaseResourceSchemaVisi
     return _resourceNames.contains(visitContext.getResourcePath());
   }
 
-  private final Set<String> _resourceNames = new HashSet<String>();
-  private final Set<RestMethodSchema> _restMethods = new HashSet<RestMethodSchema>();
-  private final Set<FinderSchema> _finders = new HashSet<FinderSchema>();
-  private final Set<BatchFinderSchema> _batchFinders = new HashSet<BatchFinderSchema>();
-  private final Set<ActionSchema> _collectionActions = new HashSet<ActionSchema>();
-  private final Set<ActionSchema> _entityActions = new HashSet<ActionSchema>();
+  private final Set<String> _resourceNames = new HashSet<>();
+  private final Set<RestMethodSchema> _restMethods = new HashSet<>();
+  private final Set<FinderSchema> _finders = new HashSet<>();
+  private final Set<BatchFinderSchema> _batchFinders = new HashSet<>();
+  private final Set<ActionSchema> _collectionActions = new HashSet<>();
+  private final Set<ActionSchema> _entityActions = new HashSet<>();
 }

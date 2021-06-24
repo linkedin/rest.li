@@ -73,7 +73,7 @@ public class BatchCreateHelper
     BatchCreateRequest<V> request = builder.inputs(entities).build();
     Response<CollectionResponse<CreateStatus>> response = restClient.sendRequest(request).getResponse();
     List<CreateStatus> elements = response.getEntity().getElements();
-    List<CreateIdStatus<K>> result = new ArrayList<CreateIdStatus<K>>(elements.size());
+    List<CreateIdStatus<K>> result = new ArrayList<>(elements.size());
     for (CreateStatus status : elements)
     {
       @SuppressWarnings("unchecked")

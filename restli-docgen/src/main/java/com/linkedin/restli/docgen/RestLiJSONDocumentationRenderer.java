@@ -66,7 +66,7 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
     try
     {
       for (ResourceSchema resourceSchema:
-           new HashSet<ResourceSchema>(_relationships.getResourceSchemaCollection().getResources().values()))
+          new HashSet<>(_relationships.getResourceSchemaCollection().getResources().values()))
       {
         renderResource(resourceSchema, outputMap);
       }
@@ -108,7 +108,7 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
 
     try
     {
-      for (NamedDataSchema schema: new HashSet<NamedDataSchema>(_relationships.getDataModels().values()))
+      for (NamedDataSchema schema: new HashSet<>(_relationships.getDataModels().values()))
       {
         renderDataModel(schema, outputMap);
       }
@@ -172,7 +172,7 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
       relatedSchemas = _relatedSchemaCache.get(resourceSchema);
       if (relatedSchemas == null)
       {
-        relatedSchemas = new HashMap<String, DataMap>();
+        relatedSchemas = new HashMap<>();
         final Node<?> node = _relationships.getRelationships(resourceSchema);
         final Iterator<Node<NamedDataSchema>> schemaItr = node.getAdjacency(NamedDataSchema.class).iterator();
         while (schemaItr.hasNext())
@@ -217,5 +217,5 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
   private final RestLiResourceRelationship _relationships;
   private final JacksonDataCodec _codec = new JacksonDataCodec();
   private final Map<ResourceSchema, Map<String, DataMap>> _relatedSchemaCache =
-      new HashMap<ResourceSchema, Map<String, DataMap>>();
+      new HashMap<>();
 }

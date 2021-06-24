@@ -295,7 +295,7 @@ public class HttpServerBuilder
 
   public static class HttpServerStatsProvider
   {
-    private Set<String> clientConnections = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    private Set<String> clientConnections = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private AtomicInteger requestCount = new AtomicInteger(0);
     private Function<HttpServletRequest, Boolean> _checkValidRequest;
 

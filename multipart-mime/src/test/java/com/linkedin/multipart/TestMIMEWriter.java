@@ -84,14 +84,14 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
   public void setup()
   {
     _normalBodyData = "abc".getBytes();
-    _normalBodyHeaders = new HashMap<String, String>();
+    _normalBodyHeaders = new HashMap<>();
     _normalBodyHeaders.put("simpleheader", "simplevalue");
 
     //Second body has no headers
     _headerLessBodyData = "def".getBytes();
 
     //Third body has only headers
-    _bodyLessHeaders = new HashMap<String, String>();
+    _bodyLessHeaders = new HashMap<>();
     _normalBodyHeaders.put("header1", "value1");
     _normalBodyHeaders.put("header2", "value2");
     _normalBodyHeaders.put("header3", "value3");
@@ -129,7 +129,7 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
     final MultiPartMIMEWriter multiPartMIMEWriter =
         new MultiPartMIMEWriter.Builder("preamble", "epilogue").appendDataSource(singleDataSource).build();
 
-    final FutureCallback<ByteString> futureCallback = new FutureCallback<ByteString>();
+    final FutureCallback<ByteString> futureCallback = new FutureCallback<>();
     final FullEntityReader fullEntityReader = new FullEntityReader(futureCallback);
     multiPartMIMEWriter.getEntityStream().setReader(fullEntityReader);
     futureCallback.get(_testTimeout, TimeUnit.MILLISECONDS);
@@ -155,7 +155,7 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
   @Test
   public void testMultipleDataSources() throws Exception
   {
-    final List<MIMEDataPart> expectedParts = new ArrayList<MIMEDataPart>();
+    final List<MIMEDataPart> expectedParts = new ArrayList<>();
     expectedParts.add(_normalBody);
     expectedParts.add(_normalBody);
     expectedParts.add(_headerLessBody);
@@ -169,7 +169,7 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
     expectedParts.add(_normalBody);
     expectedParts.add(_bodyLessBody);
 
-    final List<MultiPartMIMEDataSourceWriter> inputStreamDataSources = new ArrayList<MultiPartMIMEDataSourceWriter>();
+    final List<MultiPartMIMEDataSourceWriter> inputStreamDataSources = new ArrayList<>();
     inputStreamDataSources.add(new MultiPartMIMEInputStream.Builder(new ByteArrayInputStream(_normalBodyData),
                                                                     _scheduledExecutorService,
                                                                     _normalBodyHeaders).build());
@@ -214,7 +214,7 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
 
     final MultiPartMIMEWriter multiPartMIMEWriter = multiPartMIMEWriterBuilder.build();
 
-    final FutureCallback<ByteString> futureCallback = new FutureCallback<ByteString>();
+    final FutureCallback<ByteString> futureCallback = new FutureCallback<>();
     final FullEntityReader fullEntityReader = new FullEntityReader(futureCallback);
     multiPartMIMEWriter.getEntityStream().setReader(fullEntityReader);
     futureCallback.get(_testTimeout, TimeUnit.MILLISECONDS);
@@ -244,7 +244,7 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
   @DataProvider(name = "prependDataSources")
   public Object[][] prependDataSources() throws Exception
   {
-    final List<MIMEDataPart> expectedParts = new ArrayList<MIMEDataPart>();
+    final List<MIMEDataPart> expectedParts = new ArrayList<>();
     expectedParts.add(_normalBody);
     expectedParts.add(_headerLessBody);
     expectedParts.add(_purelyEmptyBody);
@@ -312,7 +312,7 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
     Assert.assertEquals(builder.getCurrentSize(), expectedSize);
 
     final MultiPartMIMEWriter writer = builder.build();
-    final FutureCallback<ByteString> futureCallback = new FutureCallback<ByteString>();
+    final FutureCallback<ByteString> futureCallback = new FutureCallback<>();
     final FullEntityReader fullEntityReader = new FullEntityReader(futureCallback);
     writer.getEntityStream().setReader(fullEntityReader);
     futureCallback.get(_testTimeout, TimeUnit.MILLISECONDS);
@@ -345,7 +345,7 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
     final String _contentTypeHeaderValue;
     final ByteString _payload;
     String _preamble; //javax mail only supports reading the preamble
-    final List<MIMEDataPart> _dataSourceList = new ArrayList<MIMEDataPart>();
+    final List<MIMEDataPart> _dataSourceList = new ArrayList<>();
 
     private JavaxMailMultiPartMIMEReader(final String contentTypeHeaderValue, final ByteString payload)
     {
@@ -394,7 +394,7 @@ public class TestMIMEWriter extends AbstractMIMEUnitTest
             //For our purposes, javax mail converts the body part's content (based on headers) into a string
             final ByteString partData = ByteString.copyString((String) bodyPart.getContent(), Charset.defaultCharset());
 
-            final Map<String, String> partHeaders = new HashMap<String, String>();
+            final Map<String, String> partHeaders = new HashMap<>();
             final Enumeration allHeaders = bodyPart.getAllHeaders();
             while (allHeaders.hasMoreElements())
             {

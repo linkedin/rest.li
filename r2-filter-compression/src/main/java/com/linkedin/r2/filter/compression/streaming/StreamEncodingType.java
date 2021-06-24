@@ -38,7 +38,7 @@ public enum StreamEncodingType
 
   static
   {
-    Map<String, StreamEncodingType> reverseMap = new HashMap<String, StreamEncodingType>();
+    Map<String, StreamEncodingType> reverseMap = new HashMap<>();
     for(StreamEncodingType t : StreamEncodingType.values())
     {
       reverseMap.put(t.getHttpName(), t);

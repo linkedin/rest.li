@@ -52,7 +52,7 @@ public final class EnumDataSchema extends NamedDataSchema
     boolean ok = true;
     if (symbols != null)
     {
-      Map<String, Integer> map = new HashMap<String, Integer>();
+      Map<String, Integer> map = new HashMap<>();
       int index = 0;
       for (String symbol : symbols)
       {
@@ -88,7 +88,7 @@ public final class EnumDataSchema extends NamedDataSchema
     boolean ok = true;
     if (symbolDocs != null)
     {
-      Map<String, String> symbolDocsMap = new LinkedHashMap<String, String>();
+      Map<String, String> symbolDocsMap = new LinkedHashMap<>();
       for (String symbol : _symbols)
       {
         if (symbolDocs.containsKey(symbol))

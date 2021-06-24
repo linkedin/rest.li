@@ -403,7 +403,7 @@ public class ResourceMethodDescriptor
    */
   public List<Parameter<?>> getParametersWithType(final Parameter.ParamType type)
   {
-    List<Parameter<?>> params = new ArrayList<Parameter<?>>();
+    List<Parameter<?>> params = new ArrayList<>();
     for (Parameter<?> p : _parameters)
     {
       if (p.getParamType() == type)

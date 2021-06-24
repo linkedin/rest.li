@@ -43,13 +43,13 @@ public class ConsistentHashRingTest
   @Test(groups = { "small", "back-end" })
   public void testZeroItems()
   {
-    Map<String, Integer> zero = new HashMap<String, Integer>();
-    ConsistentHashRing<String> test = new ConsistentHashRing<String>(zero);
+    Map<String, Integer> zero = new HashMap<>();
+    ConsistentHashRing<String> test = new ConsistentHashRing<>(zero);
 
     assertNull(test.get(0));
 
     zero.put("test", 0);
-    test = new ConsistentHashRing<String>(zero);
+    test = new ConsistentHashRing<>(zero);
 
     assertNull(test.get(100));
   }
@@ -57,11 +57,11 @@ public class ConsistentHashRingTest
   @Test(groups = { "small", "back-end" })
   public void testOneItem()
   {
-    Map<String, Integer> one = new HashMap<String, Integer>();
+    Map<String, Integer> one = new HashMap<>();
 
     one.put("test", 100);
 
-    ConsistentHashRing<String> test = new ConsistentHashRing<String>(one);
+    ConsistentHashRing<String> test = new ConsistentHashRing<>(one);
 
     // will generate ring:
     // [-2138377917, .., 2112547902]
@@ -90,8 +90,8 @@ public class ConsistentHashRingTest
   @Test(groups = { "small", "back-end" })
   public void testManyItemsEqualWeight()
   {
-    Map<String, Integer> many = new HashMap<String, Integer>();
-    Map<String, AtomicInteger> counts = new HashMap<String, AtomicInteger>();
+    Map<String, Integer> many = new HashMap<>();
+    Map<String, AtomicInteger> counts = new HashMap<>();
 
     for (int i = 0; i < 100; ++i)
     {
@@ -124,8 +124,8 @@ public class ConsistentHashRingTest
   @Test(groups = { "small", "back-end" })
   public void testManyItemsUnequalWeight()
   {
-    Map<Integer, Integer> many = new HashMap<Integer, Integer>();
-    Map<Integer, AtomicInteger> counts = new HashMap<Integer, AtomicInteger>();
+    Map<Integer, Integer> many = new HashMap<>();
+    Map<Integer, AtomicInteger> counts = new HashMap<>();
 
     for (int i = 0; i < 100; ++i)
     {
@@ -133,7 +133,7 @@ public class ConsistentHashRingTest
       counts.put(i, new AtomicInteger());
     }
 
-    ConsistentHashRing<Integer> test = new ConsistentHashRing<Integer>(many);
+    ConsistentHashRing<Integer> test = new ConsistentHashRing<>(many);
 
     assertNotNull(test.get(0));
 
@@ -155,12 +155,12 @@ public class ConsistentHashRingTest
   public void test2ItemsWithOnePoint()
       throws URISyntaxException
   {
-    Map<URI, Integer> pointsMap = new HashMap<URI, Integer>();
+    Map<URI, Integer> pointsMap = new HashMap<>();
     URI uri1 = new URI("http://ext23.corp.linkedin.com:231/ajdi");
     URI uri2 = new URI("http://ext66.corp.linkedin.com:231/ajdi");
     pointsMap.put(uri1, 1);
     pointsMap.put(uri2, 1);
-    ConsistentHashRing<URI> test = new ConsistentHashRing<URI>(pointsMap);
+    ConsistentHashRing<URI> test = new ConsistentHashRing<>(pointsMap);
     //we will produce 2 points with value -590810423 for uri1 and 742698789 for uri2
     //test edge case
     URI lowEdgeUri = test.get(-600000000);

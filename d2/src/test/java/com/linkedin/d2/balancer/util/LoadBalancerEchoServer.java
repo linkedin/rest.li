@@ -183,7 +183,7 @@ public class LoadBalancerEchoServer
 
     _log.info("Server Uri:"+_uri);
 
-    Set<String> validPaths = new HashSet<String>();
+    Set<String> validPaths = new HashSet<>();
 
     for (String service : services)
     {
@@ -198,10 +198,10 @@ public class LoadBalancerEchoServer
     final ZKConnection zkClient = ZKTestUtil.getConnection(zookeeperHost+":"+zookeeperPort, _timeout);
 
     ZooKeeperEphemeralStore<UriProperties> zk =
-        new ZooKeeperEphemeralStore<UriProperties>(zkClient,
-                                                   new UriPropertiesJsonSerializer(),
-                                                   new UriPropertiesMerger(),
-                                                   _basePath+"/uris");
+        new ZooKeeperEphemeralStore<>(zkClient,
+                                      new UriPropertiesJsonSerializer(),
+                                      new UriPropertiesMerger(),
+                                      _basePath + "/uris");
 
     final CountDownLatch wait = new CountDownLatch(1);
 
@@ -305,8 +305,8 @@ public class LoadBalancerEchoServer
 
   public void markUp(Map<Integer, Double> partitionWeight) throws PropertyStoreException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>();
+    FutureCallback<None> callback = new FutureCallback<>();
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<>();
     if (partitionWeight != null)
     {
       for (int partitionId : partitionWeight.keySet())
@@ -332,7 +332,7 @@ public class LoadBalancerEchoServer
 
   public void markDown() throws PropertyStoreException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _announcer.markDown(_cluster, _uri, callback);
     try
     {
@@ -408,7 +408,7 @@ public class LoadBalancerEchoServer
   private String printWeights()
   {
     StringBuilder sb = new StringBuilder();
-    Map<Integer, Double> partitionDataMap = new HashMap<Integer, Double>();
+    Map<Integer, Double> partitionDataMap = new HashMap<>();
     if (_partitionWeight != null)
     {
       partitionDataMap = _partitionWeight;

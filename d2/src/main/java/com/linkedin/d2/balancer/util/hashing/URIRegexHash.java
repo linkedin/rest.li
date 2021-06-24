@@ -86,7 +86,7 @@ public class URIRegexHash implements HashFunction<Request>
 
   public URIRegexHash(List<String> patterns, boolean failOnNoMatch, boolean warnOnNoMatch)
   {
-    List<Pattern> compiledPatterns = new ArrayList<Pattern>(patterns.size());
+    List<Pattern> compiledPatterns = new ArrayList<>(patterns.size());
     for (String p : patterns)
     {
       compiledPatterns.add(Pattern.compile(p));

@@ -55,7 +55,7 @@ public class ZooKeeperConnectionManager
   private final String _zkBasePath;
   private final ZKStoreFactory<UriProperties,ZooKeeperEphemeralStore<UriProperties>> _factory;
   private final ZooKeeperAnnouncer[] _servers;
-  private final AtomicReference<Callback<None>> _startupCallback = new AtomicReference<Callback<None>>();
+  private final AtomicReference<Callback<None>> _startupCallback = new AtomicReference<>();
 
   private final ZKPersistentConnection _zkConnection;
 
@@ -159,7 +159,7 @@ public class ZooKeeperConnectionManager
     {
       server.shutdown();
     }
-    Callback<None> zkCloseCallback = new CallbackAdapter<None,None>(callback)
+    Callback<None> zkCloseCallback = new CallbackAdapter<None, None>(callback)
     {
       @Override
       protected None convertResponse(None none) throws Exception

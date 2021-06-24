@@ -627,7 +627,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = followsAssociationResourceModel.findMethod(ResourceMethod.BATCH_GET);
     followsResource = getMockResource(AsyncFollowsAssociativeResource.class);
 
-    Set<CompoundKey> expectedKeys = new HashSet<CompoundKey>();
+    Set<CompoundKey> expectedKeys = new HashSet<>();
     CompoundKey key1 = new CompoundKey();
     key1.append("followeeID", 1L);
     key1.append("followerID", 1L);
@@ -1567,7 +1567,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = followsAssociationResourceModel.findMethod(ResourceMethod.BATCH_GET);
     followsResource = getMockResource(PromiseFollowsAssociativeResource.class);
 
-    Set<CompoundKey> expectedKeys = new HashSet<CompoundKey>();
+    Set<CompoundKey> expectedKeys = new HashSet<>();
     CompoundKey key1 = new CompoundKey();
     key1.append("followeeID", 1L);
     key1.append("followerID", 1L);
@@ -2182,7 +2182,7 @@ public class TestRestLiMethodInvocation
 
     ResourceMethodDescriptor  batchGetMethodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_GET);
     statusResource = getMockResource(StatusCollectionResource.class);
-    Set<Long> batchKeys = new HashSet<Long>(3);
+    Set<Long> batchKeys = new HashSet<>(3);
     batchKeys.add(1L);
     batchKeys.add(2L);
     batchKeys.add(3L);
@@ -2409,7 +2409,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = followsAssociationResourceModel.findMethod(ResourceMethod.BATCH_GET);
     followsResource = getMockResource(FollowsAssociativeResource.class);
 
-    Set<CompoundKey> expectedKeys = new HashSet<CompoundKey>();
+    Set<CompoundKey> expectedKeys = new HashSet<>();
     CompoundKey key1 = new CompoundKey();
     key1.append("followeeID", 1L);
     key1.append("followerID", 1L);
@@ -3228,14 +3228,14 @@ public class TestRestLiMethodInvocation
   @Test
   public void testHeuristicKeySyntaxDetection() throws PathSegment.PathSegmentSyntaxException
   {
-    Set<Key> keys = new HashSet<Key>(2);
+    Set<Key> keys = new HashSet<>(2);
     keys.add(new Key("foo", Integer.class));
     keys.add(new Key("bar", String.class));
 
     // heuristic key syntax detection only occurs in Protocol Version 1.0.0
     ProtocolVersion v1 = AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
 
-    Set<String> expectedKeys = new HashSet<String>(Arrays.asList("foo", "bar"));
+    Set<String> expectedKeys = new HashSet<>(Arrays.asList("foo", "bar"));
     Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:abcd", keys, v1).getPartKeys());
     Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:abcd=1&efg=2", keys, v1).getPartKeys());
     Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo=42&bar=abcd", keys, v1).getPartKeys());
@@ -3258,7 +3258,7 @@ public class TestRestLiMethodInvocation
     dataMap1.put("foo", "1");
     dataMap1.put("bar", "hello");
 
-    Set<Key> keys1 = new HashSet<Key>(2);
+    Set<Key> keys1 = new HashSet<>(2);
     keys1.add(new Key("foo", Integer.class));
     keys1.add(new Key("bar", String.class));
 
@@ -3270,7 +3270,7 @@ public class TestRestLiMethodInvocation
     dataMap2.put("a", "6");
     dataMap2.put("b", "3.14");
 
-    Set<Key> keys2 = new HashSet<Key>(2);
+    Set<Key> keys2 = new HashSet<>(2);
     keys2.add(new Key("a", Long.class));
     keys2.add(new Key("b", Double.class));
 
@@ -5106,7 +5106,7 @@ public class TestRestLiMethodInvocation
   public MutablePathKeys buildBatchPathKeys(Object... batchKeys) throws RestLiSyntaxException
   {
     MutablePathKeys result = new PathKeysImpl();
-    Set<Object> keys = new HashSet<Object>();
+    Set<Object> keys = new HashSet<>();
 
     for (Object batchKey : batchKeys)
     {

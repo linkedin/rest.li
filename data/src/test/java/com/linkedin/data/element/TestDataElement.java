@@ -336,7 +336,7 @@ public class TestDataElement
         }
       };
 
-    ArrayList<Object> pathAsList = new ArrayList<Object>();
+    ArrayList<Object> pathAsList = new ArrayList<>();
     for (Object[] row : testPathInput)
     {
       DataElement element = (DataElement) row[0];

@@ -71,8 +71,8 @@ public class TestUnstructuredDataClient extends RestLiIntegrationTest
   private void cleanup()
     throws Exception
   {
-    final FutureCallback<None> factoryCallback = new FutureCallback<None>();
-    final FutureCallback<None> clientCallback = new FutureCallback<None>();
+    final FutureCallback<None> factoryCallback = new FutureCallback<>();
+    final FutureCallback<None> clientCallback = new FutureCallback<>();
     _client.shutdown(clientCallback);
     _clientFactory.shutdown(factoryCallback);
     clientCallback.get();

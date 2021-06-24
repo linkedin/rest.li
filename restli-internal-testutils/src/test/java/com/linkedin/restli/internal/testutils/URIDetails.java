@@ -201,7 +201,7 @@ public class URIDetails
           //Just a single object, (i.e String, DataMap, etc...)
           idList = Arrays.asList(actualURIDataMap.get("ids"));
         }
-        idSet = new HashSet<Object>(idList);
+        idSet = new HashSet<>(idList);
         Assert.assertEquals("The set of IDs must match", expectedURIDetails._ids, idSet);
       }
 
@@ -209,7 +209,7 @@ public class URIDetails
       if(expectedURIDetails._fields != null)
       {
         final String[] fieldsArray = ((String) actualURIDataMap.get("fields")).split(",");
-        final Set<String> actualFieldSet = new HashSet<String>(Arrays.asList(fieldsArray));
+        final Set<String> actualFieldSet = new HashSet<>(Arrays.asList(fieldsArray));
         Assert.assertEquals("The set of projection fields should be correct", expectedURIDetails._fields, actualFieldSet);
       }
 

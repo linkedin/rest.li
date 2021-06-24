@@ -119,7 +119,7 @@ public class TestGetArgumentBuilder
             {
                 complexResourceKeyParam,
                 "complexKeyTestId",
-                new ComplexResourceKey<MyComplexKey, EmptyRecord>(
+                new ComplexResourceKey<>(
                     new MyComplexKey().setA("keyString").setB(1234L), new EmptyRecord()),
                 null
             }
@@ -270,7 +270,7 @@ public class TestGetArgumentBuilder
     Object keyValue = Integer.valueOf(123);
     DataSchema keySchema = new IntegerDataSchema();
     Key key = new Key(keyName, keyValue.getClass(), keySchema);
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     String headerString = "An extra string.";
     headers.put("extra", headerString);
     List<Parameter<?>> headerParams = new ArrayList<>();

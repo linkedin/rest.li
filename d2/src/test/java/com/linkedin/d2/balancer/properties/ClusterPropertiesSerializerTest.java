@@ -49,8 +49,8 @@ public class ClusterPropertiesSerializerTest
   public void testClusterPropertiesSerializer() throws PropertySerializationException
   {
     ClusterPropertiesJsonSerializer jsonSerializer = new ClusterPropertiesJsonSerializer();
-    List<String> schemes = new ArrayList<String>();
-    Map<String, String> supProperties = new HashMap<String, String>();
+    List<String> schemes = new ArrayList<>();
+    Map<String, String> supProperties = new HashMap<>();
     Set<URI> bannedSet = new HashSet<>();
     bannedSet.add(URI.create("https://test1.linkedin.com:12345/test"));
     bannedSet.add(URI.create("https://test2.linkedin.com:56789/test"));
@@ -78,7 +78,7 @@ public class ClusterPropertiesSerializerTest
     property = new ClusterProperties("test", schemes, supProperties, bannedSet, hbp);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
 
-    property = new ClusterProperties("test", schemes, supProperties, new HashSet<URI>(), NullPartitionProperties.getInstance(),
+    property = new ClusterProperties("test", schemes, supProperties, new HashSet<>(), NullPartitionProperties.getInstance(),
         Arrays.asList("principal1", "principal2"), (Map<String, Object>)null, false);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
 
@@ -102,7 +102,7 @@ public class ClusterPropertiesSerializerTest
         .setDispatcherOutboundTargetRate(50);
     DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
     darkClusterConfigMap.put(DARK_CLUSTER1_KEY, darkCluster1);
-    ClusterProperties property = new ClusterProperties("test", new ArrayList<String>(), Collections.emptyMap(), new HashSet<URI>(), NullPartitionProperties.getInstance(),
+    ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), Collections.emptyMap(), new HashSet<>(), NullPartitionProperties.getInstance(),
         Arrays.asList("principal1", "principal2"), DarkClustersConverter.toProperties(darkClusterConfigMap), false);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
   }
@@ -150,7 +150,7 @@ public class ClusterPropertiesSerializerTest
   public void testNullDarkClusterJsonSerializer() throws PropertySerializationException
   {
     ClusterPropertiesJsonSerializer jsonSerializer = new ClusterPropertiesJsonSerializer();
-    ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), new HashMap<>(), new HashSet<URI>(), NullPartitionProperties.getInstance(),
+    ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), new HashMap<>(), new HashSet<>(), NullPartitionProperties.getInstance(),
                                                        Arrays.asList("principal1", "principal2"),
                                                        (Map<String, Object>) null, false);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);

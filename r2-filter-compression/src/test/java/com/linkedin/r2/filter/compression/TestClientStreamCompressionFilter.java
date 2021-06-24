@@ -243,7 +243,7 @@ public class TestClientStreamCompressionFilter
     context.putLocalAttr(R2Constants.REQUEST_COMPRESSION_OVERRIDE, requestCompressionOverride);
     int entityLength = headerShouldBePresent ? compressed : original;
 
-    FutureCallback<ByteString> callback = new FutureCallback<ByteString>();
+    FutureCallback<ByteString> callback = new FutureCallback<>();
     FullEntityReader reader = new FullEntityReader(callback);
 
     HeaderCaptureFilter captureFilter =

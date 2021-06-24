@@ -85,7 +85,7 @@ public class RestliRequestUriSignature
   }
 
   public static final Set<SignatureField> ALL_FIELDS =
-    Collections.unmodifiableSet(new HashSet<SignatureField>(Arrays.asList(SignatureField.values())));
+    Collections.unmodifiableSet(new HashSet<>(Arrays.asList(SignatureField.values())));
 
   private final Set<SignatureField> _maskFields;
   private final String _baseUriTemplate;
@@ -170,7 +170,7 @@ public class RestliRequestUriSignature
       }
       else
       {
-        _queryParams = new HashMap<String, Object>();
+        _queryParams = new HashMap<>();
         for (Map.Entry<String, Object> entry : rawQueryParams.entrySet())
         {
           if (entry.getValue() instanceof Collection)

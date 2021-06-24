@@ -38,7 +38,7 @@ public class PartialReader implements Reader
   private final int _numBytes;
   private final Callback<EntityStream[]> _callback;
 
-  private final Queue<ByteString> _buffer = new LinkedList<ByteString>();
+  private final Queue<ByteString> _buffer = new LinkedList<>();
   private ReadHandle _rh;
   private WriteHandle _remainingWh;
   private int _readLen;

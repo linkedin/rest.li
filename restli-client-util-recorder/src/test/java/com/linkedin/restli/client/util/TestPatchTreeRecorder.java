@@ -86,7 +86,7 @@ public class TestPatchTreeRecorder
   @Test
   public void testSetCoerceTypeRef()
   {
-    PatchTreeRecorder<CustomPointRecord> pc = new PatchTreeRecorder<CustomPointRecord>(CustomPointRecord.class);
+    PatchTreeRecorder<CustomPointRecord> pc = new PatchTreeRecorder<>(CustomPointRecord.class);
     pc.getRecordingProxy().setCustomPoint(new TestCustom.CustomPoint(1, 2));
 
     Assert.assertEquals(pc.generatePatchTree().getDataMap(),
@@ -290,7 +290,7 @@ public class TestPatchTreeRecorder
 
   private PatchTreeRecorder<PatchTreeTestModel> makeOne()
   {
-    return new PatchTreeRecorder<PatchTreeTestModel>(PatchTreeTestModel.class);
+    return new PatchTreeRecorder<>(PatchTreeTestModel.class);
   }
 
   private <T extends RecordTemplate> DataMap diffEmpty(T recordTemplate)

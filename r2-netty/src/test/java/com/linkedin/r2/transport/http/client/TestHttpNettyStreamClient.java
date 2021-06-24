@@ -138,10 +138,10 @@ public class TestHttpNettyStreamClient
 
     RestRequest r = new RestRequestBuilder(URI.create("http://localhost/")).build();
 
-    FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
-    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
+    FutureCallback<StreamResponse> cb = new FutureCallback<>();
+    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<>(cb);
 
-    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
+    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<>(), callback);
 
     try
     {
@@ -284,9 +284,9 @@ public class TestHttpNettyStreamClient
       server.start();
 
       RestRequest r = new RestRequestBuilder(new URI(URL)).build();
-      FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
-      TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
-      client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
+      FutureCallback<StreamResponse> cb = new FutureCallback<>();
+      TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<>(cb);
+      client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<>(), callback);
 
       // This timeout needs to be significantly larger than the getTimeout of the netty client;
       // we're testing that the client will generate its own timeout
@@ -328,9 +328,9 @@ public class TestHttpNettyStreamClient
   public void testBadAddress(AbstractNettyStreamClient client) throws InterruptedException, IOException, TimeoutException
   {
     RestRequest r = new RestRequestBuilder(URI.create("http://this.host.does.not.exist.linkedin.com")).build();
-    FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
-    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
-    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
+    FutureCallback<StreamResponse> cb = new FutureCallback<>();
+    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<>(cb);
+    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<>(), callback);
     try
     {
       cb.get(30, TimeUnit.SECONDS);
@@ -418,13 +418,13 @@ public class TestHttpNettyStreamClient
     {
       server.start();
       RestRequest r = new RestRequestBuilder(new URI(URL)).build();
-      FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
-      TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
-      client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
+      FutureCallback<StreamResponse> cb = new FutureCallback<>();
+      TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<>(cb);
+      client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<>(), callback);
 
       StreamResponse response = cb.get(30, TimeUnit.SECONDS);
       final CountDownLatch latch = new CountDownLatch(1);
-      final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+      final AtomicReference<Throwable> error = new AtomicReference<>();
       response.getEntityStream().setReader(new Reader()
       {
         @Override
@@ -509,9 +509,9 @@ public class TestHttpNettyStreamClient
     {
       server.start();
       RestRequest r = new RestRequestBuilder(new URI(URL)).build();
-      FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
-      TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
-      client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
+      FutureCallback<StreamResponse> cb = new FutureCallback<>();
+      TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<>(cb);
+      client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<>(), callback);
 
       cb.get(300, TimeUnit.SECONDS);
       if (expectedResult == TOO_LARGE)
@@ -561,15 +561,15 @@ public class TestHttpNettyStreamClient
   @Test(dataProvider = "shutdownClients")
   public void testShutdown(AbstractNettyStreamClient client) throws Exception
   {
-    FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+    FutureCallback<None> shutdownCallback = new FutureCallback<>();
     client.shutdown(shutdownCallback);
     shutdownCallback.get(30, TimeUnit.SECONDS);
 
     // Now verify a new request will also fail
     RestRequest r = new RestRequestBuilder(URI.create("http://no.such.host.linkedin.com")).build();
-    FutureCallback<StreamResponse> callback = new FutureCallback<StreamResponse>();
-    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(),
-        new TransportCallbackAdapter<StreamResponse>(callback));
+    FutureCallback<StreamResponse> callback = new FutureCallback<>();
+    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<>(),
+        new TransportCallbackAdapter<>(callback));
     try
     {
       callback.get(30, TimeUnit.SECONDS);
@@ -589,10 +589,10 @@ public class TestHttpNettyStreamClient
     HttpNettyStreamClient client = new HttpNettyStreamClient(new NoCreations(_scheduler), _scheduler, 60000, 1);
 
     RestRequest r = new RestRequestBuilder(URI.create("http://some.host/")).build();
-    FutureCallback<StreamResponse> futureCallback = new FutureCallback<StreamResponse>();
-    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), new TransportCallbackAdapter<StreamResponse>(futureCallback));
+    FutureCallback<StreamResponse> futureCallback = new FutureCallback<>();
+    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<>(), new TransportCallbackAdapter<>(futureCallback));
 
-    FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+    FutureCallback<None> shutdownCallback = new FutureCallback<>();
     client.shutdown(shutdownCallback);
 
     shutdownCallback.get(30, TimeUnit.SECONDS);
@@ -644,11 +644,11 @@ public class TestHttpNettyStreamClient
     {
       server.start();
       RestRequest r = new RestRequestBuilder(new URI(URL)).build();
-      FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
-      TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
-      client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String,String>(), callback);
+      FutureCallback<StreamResponse> cb = new FutureCallback<>();
+      TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<>(cb);
+      client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<>(), callback);
 
-      FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+      FutureCallback<None> shutdownCallback = new FutureCallback<>();
       client.shutdown(shutdownCallback);
       shutdownCallback.get(30, TimeUnit.SECONDS);
 
@@ -925,7 +925,7 @@ public class TestHttpNettyStreamClient
       Assert.fail("PoolStatsAware setPoolStatsProvider didn't get called when creating channel pool.");
     }
     // test removePoolStatsProvider
-    FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+    FutureCallback<None> shutdownCallback = new FutureCallback<>();
     client.shutdown(shutdownCallback);
     try
     {
@@ -951,9 +951,9 @@ public class TestHttpNettyStreamClient
           .buildStreamClient();
 
     RestRequest r = new RestRequestBuilder(URI.create("https://www.howsmyssl.com/a/check")).build();
-    FutureCallback<StreamResponse> cb = new FutureCallback<StreamResponse>();
-    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(cb);
-    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<String, String>(), callback);
+    FutureCallback<StreamResponse> cb = new FutureCallback<>();
+    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<>(cb);
+    client.streamRequest(Messages.toStreamRequest(r), new RequestContext(), new HashMap<>(), callback);
     cb.get(30, TimeUnit.SECONDS);
   }
 
@@ -969,35 +969,29 @@ public class TestHttpNettyStreamClient
     @Override
     public AsyncPool<Channel> getPool(SocketAddress address)
     {
-      return new AsyncPoolImpl<Channel>("fake pool", new AsyncPool.Lifecycle<Channel>()
-      {
+      return new AsyncPoolImpl<>("fake pool", new AsyncPool.Lifecycle<Channel>() {
         @Override
-        public void create(Callback<Channel> channelCallback)
-        {
+        public void create(Callback<Channel> channelCallback) {
 
         }
 
         @Override
-        public boolean validateGet(Channel obj)
-        {
+        public boolean validateGet(Channel obj) {
           return false;
         }
 
         @Override
-        public boolean validatePut(Channel obj)
-        {
+        public boolean validatePut(Channel obj) {
           return false;
         }
 
         @Override
-        public void destroy(Channel obj, boolean error, Callback<Channel> channelCallback)
-        {
+        public void destroy(Channel obj, boolean error, Callback<Channel> channelCallback) {
 
         }
 
         @Override
-        public PoolStats.LifecycleStats getStats()
-        {
+        public PoolStats.LifecycleStats getStats() {
           return null;
         }
       }, 0, 0, _scheduler);

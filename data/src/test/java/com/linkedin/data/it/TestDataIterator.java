@@ -62,7 +62,7 @@ public class TestDataIterator
 
   public List<String> traverse(DataElement element, IterationOrder order, boolean usePath)
   {
-    List<String> traversalList = new ArrayList<String>();
+    List<String> traversalList = new ArrayList<>();
     DataIterator it = Builder.create(element, order).dataIterator();
     DataElement current;
     while ((current = it.next()) != null)
@@ -122,7 +122,7 @@ public class TestDataIterator
     //using a Set. We want to make sure they are all visited. The only caveat is the position of root, as it should
     //appear first for preOrder and last for postOrder.
 
-    final Set<String> commonValues = new HashSet<String>();
+    final Set<String> commonValues = new HashSet<>();
     commonValues.add("name=bytes, class=com.linkedin.data.ByteString, value=abc");
     commonValues.add("name=int, class=java.lang.Integer, value=1");
     commonValues.add("name=string, class=java.lang.String, value=foo");
@@ -132,12 +132,12 @@ public class TestDataIterator
     commonValues.add("name=float, class=java.lang.Float, value=3.0");
 
     List<String> preOrderTraversal = traverse(root, IterationOrder.PRE_ORDER);
-    Set<String> preOrderTraversalWithoutRoot = new HashSet<String>(preOrderTraversal.subList(1, preOrderTraversal.size()));
+    Set<String> preOrderTraversalWithoutRoot = new HashSet<>(preOrderTraversal.subList(1, preOrderTraversal.size()));
     Assert.assertEquals(preOrderTraversal.get(0), "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap",
         "The first node in the pre order traversal should be com.linkedin.data.DataMap");
 
     List<String> postOrderTraversal = traverse(root, IterationOrder.POST_ORDER);
-    Set<String> postOrderTraversalWithoutRoot = new HashSet<String>(postOrderTraversal.subList(0, postOrderTraversal.size() - 1));
+    Set<String> postOrderTraversalWithoutRoot = new HashSet<>(postOrderTraversal.subList(0, postOrderTraversal.size() - 1));
     Assert.assertEquals(postOrderTraversal.get(postOrderTraversal.size() - 1), "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap",
         "The last node in the post order traversal should be com.linkedin.data.DataMap");
 
@@ -157,7 +157,7 @@ public class TestDataIterator
     root.add("foo");
     root.add(ByteString.copyAvroString("abc", false));
 
-    final List<String> commonElements = new ArrayList<String>();
+    final List<String> commonElements = new ArrayList<>();
     commonElements.add("name=0, class=java.lang.Boolean, value=false");
     commonElements.add("name=1, class=java.lang.Integer, value=1");
     commonElements.add("name=2, class=java.lang.Long, value=2");
@@ -166,11 +166,11 @@ public class TestDataIterator
     commonElements.add("name=5, class=java.lang.String, value=foo");
     commonElements.add("name=6, class=com.linkedin.data.ByteString, value=abc");
 
-    final List<String> preOrderOutput = new ArrayList<String>();
+    final List<String> preOrderOutput = new ArrayList<>();
     preOrderOutput.add("name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList");
     preOrderOutput.addAll(commonElements);
 
-    final List<String> postOrderOutput = new ArrayList<String>();
+    final List<String> postOrderOutput = new ArrayList<>();
     postOrderOutput.addAll(commonElements);
     postOrderOutput.add("name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList");
 
@@ -211,11 +211,11 @@ public class TestDataIterator
     Assert.assertEquals(preOrderTraversal.size(), 7, "We should have 7 elements in our pre order traversal");
     Assert.assertEquals(preOrderTraversal.get(0), "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap");
     //The bKey and aKey traversal could be in any order
-    final List<String> aKeyPreOrderList = new ArrayList<String>();
+    final List<String> aKeyPreOrderList = new ArrayList<>();
     aKeyPreOrderList.add("name=aKey, class=com.linkedin.data.DataList");
     aKeyPreOrderList.add("name=0, class=java.lang.Integer, value=1");
     aKeyPreOrderList.add("name=1, class=java.lang.Integer, value=2");
-    final List<String> bKeyPreOrderList = new ArrayList<String>();
+    final List<String> bKeyPreOrderList = new ArrayList<>();
     bKeyPreOrderList.add("name=bKey, class=com.linkedin.data.DataList");
     bKeyPreOrderList.add("name=0, class=java.lang.Double, value=1.0");
     bKeyPreOrderList.add("name=1, class=java.lang.Double, value=2.0");
@@ -231,11 +231,11 @@ public class TestDataIterator
     Assert.assertEquals(postOrderTraversal.get(postOrderTraversal.size() - 1),
         "name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataMap");
     //The bKey and aKey traversal could be in any order
-    final List<String> aKeyPostOrderList = new ArrayList<String>();
+    final List<String> aKeyPostOrderList = new ArrayList<>();
     aKeyPostOrderList.add("name=0, class=java.lang.Integer, value=1");
     aKeyPostOrderList.add("name=1, class=java.lang.Integer, value=2");
     aKeyPostOrderList.add("name=aKey, class=com.linkedin.data.DataList");
-    final List<String> bKeyPostOrderList = new ArrayList<String>();
+    final List<String> bKeyPostOrderList = new ArrayList<>();
     bKeyPostOrderList.add("name=0, class=java.lang.Double, value=1.0");
     bKeyPostOrderList.add("name=1, class=java.lang.Double, value=2.0");
     bKeyPostOrderList.add("name=bKey, class=com.linkedin.data.DataList");
@@ -270,7 +270,7 @@ public class TestDataIterator
     final Object arrayOfMapsObject = jsonToObject(arrayOfMapsString);
 
     final List<String> preOrderTraversal = traverse(arrayOfMapsObject, IterationOrder.PRE_ORDER);
-    final List<String> expectedPreOrder = new ArrayList<String>();
+    final List<String> expectedPreOrder = new ArrayList<>();
     expectedPreOrder.add("name=" + DataElement.ROOT_NAME + ", class=com.linkedin.data.DataList");
     expectedPreOrder.add("name=0, class=com.linkedin.data.DataMap");
     expectedPreOrder.add("name=aKey, class=java.lang.Integer, value=1");
@@ -279,7 +279,7 @@ public class TestDataIterator
     Assert.assertEquals(preOrderTraversal, expectedPreOrder, "We should get the expected pre order traversal");
 
     final List<String> postOrderTraversal = traverse(arrayOfMapsObject, IterationOrder.POST_ORDER);
-    final List<String> expectedPostOrder = new ArrayList<String>();
+    final List<String> expectedPostOrder = new ArrayList<>();
     expectedPostOrder.add("name=aKey, class=java.lang.Integer, value=1");
     expectedPostOrder.add("name=0, class=com.linkedin.data.DataMap");
     expectedPostOrder.add("name=bKey, class=java.lang.Double, value=2.0");
@@ -333,7 +333,7 @@ public class TestDataIterator
       "  path=/child/child, class=com.linkedin.data.DataMap\n";
       */
 
-    final Set<String> commonValues = new HashSet<String>();
+    final Set<String> commonValues = new HashSet<>();
     commonValues.add("path=/child/child/bytes, class=com.linkedin.data.ByteString, value=abc");
     commonValues.add("path=/child/child/int, class=java.lang.Integer, value=1");
     commonValues.add("path=/child/child/string, class=java.lang.String, value=foo");
@@ -343,12 +343,12 @@ public class TestDataIterator
     commonValues.add("path=/child/child/float, class=java.lang.Float, value=3.0");
 
     List<String> preOrderTraversal = traverseWithDataElement(element, IterationOrder.PRE_ORDER, true);
-    Set<String> preOrderTraversalWithoutRoot = new HashSet<String>(preOrderTraversal.subList(1, preOrderTraversal.size()));
+    Set<String> preOrderTraversalWithoutRoot = new HashSet<>(preOrderTraversal.subList(1, preOrderTraversal.size()));
     Assert.assertEquals(preOrderTraversal.get(0), "path=/child/child, class=com.linkedin.data.DataMap",
         "The first node in the pre order traversal should be: com.linkedin.data.DataMap");
 
     List<String> postOrderTraversal = traverseWithDataElement(element, IterationOrder.POST_ORDER, true);
-    Set<String> postOrderTraversalWithoutRoot = new HashSet<String>(postOrderTraversal.subList(0, postOrderTraversal.size() - 1));
+    Set<String> postOrderTraversalWithoutRoot = new HashSet<>(postOrderTraversal.subList(0, postOrderTraversal.size() - 1));
     Assert.assertEquals(postOrderTraversal.get(postOrderTraversal.size() - 1), "path=/child/child, class=com.linkedin.data.DataMap",
         "The last node in the post order traversal should be: com.linkedin.data.DataMap");
 
@@ -358,7 +358,7 @@ public class TestDataIterator
 
   public void assertEqualsByName(Builder builder, List<Object> expectedNames)
   {
-    final List<Object> names = new ArrayList<Object>();
+    final List<Object> names = new ArrayList<>();
     builder.iterate(new Builder.Callback()
     {
       @Override
@@ -374,7 +374,7 @@ public class TestDataIterator
 
   public void assertEqualsByValue(Builder builder, List<Object> expectedValues)
   {
-    final List<Object> values = new ArrayList<Object>();
+    final List<Object> values = new ArrayList<>();
     builder.iterate(new Builder.Callback()
     {
       @Override
@@ -390,8 +390,8 @@ public class TestDataIterator
 
   public void assertEqualsByPath(Builder builder, List<String> expectedPaths)
   {
-    final List<String> paths = new ArrayList<String>();
-    final ArrayList<Object> pathAsList = new ArrayList<Object>();
+    final List<String> paths = new ArrayList<>();
+    final ArrayList<Object> pathAsList = new ArrayList<>();
     builder.iterate(new Builder.Callback()
     {
       @Override
@@ -1299,7 +1299,7 @@ public class TestDataIterator
       Object o = jsonToObject(input);
       DataElement e;
       DataIterator it = Builder.create(o, null, IterationOrder.POST_ORDER).dataIterator();
-      List<String> pathsWithSkip = new ArrayList<String>();
+      List<String> pathsWithSkip = new ArrayList<>();
       while ((e = it.next()) != null)
       {
         pathsWithSkip.add(e.pathAsString());
@@ -1307,7 +1307,7 @@ public class TestDataIterator
       }
 
       it = Builder.create(o, null, IterationOrder.POST_ORDER).dataIterator();
-      List<String> pathsWithoutSkip = new ArrayList<String>();
+      List<String> pathsWithoutSkip = new ArrayList<>();
       while ((e = it.next()) != null)
       {
         pathsWithoutSkip.add(e.pathAsString());
@@ -1336,7 +1336,7 @@ public class TestDataIterator
     assertFalse(and(alwaysTrue(), alwaysTrue(), alwaysFalse()).evaluate(null));
     assertFalse(and(alwaysFalse(), alwaysFalse(), alwaysFalse()).evaluate(null));
 
-    assertTrue(and(new ArrayList<Predicate>()).evaluate(null));
+    assertTrue(and(new ArrayList<>()).evaluate(null));
     assertTrue(and(Arrays.asList(alwaysTrue())).evaluate(null));
     assertFalse(and(Arrays.asList(alwaysFalse())).evaluate(null));
     assertTrue(and(Arrays.asList(alwaysTrue(), alwaysTrue())).evaluate(null));
@@ -1362,7 +1362,7 @@ public class TestDataIterator
     assertTrue(or(alwaysFalse(), alwaysFalse(), alwaysTrue()).evaluate(null));
     assertFalse(or(alwaysFalse(), alwaysFalse(), alwaysFalse()).evaluate(null));
 
-    assertFalse(or(new ArrayList<Predicate>()).evaluate(null));
+    assertFalse(or(new ArrayList<>()).evaluate(null));
     assertFalse(or(Arrays.asList(alwaysFalse())).evaluate(null));
     assertTrue(or(Arrays.asList(alwaysTrue(), alwaysTrue())).evaluate(null));
     assertTrue(or(Arrays.asList(alwaysFalse(), alwaysTrue())).evaluate(null));

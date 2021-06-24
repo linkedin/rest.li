@@ -82,7 +82,7 @@ public class ConsistentHashRing<T> implements Ring<T>
   // which are obsoleted already. When those strategies are removed, this three functions should be removed too.
   public ConsistentHashRing(Map<T, Integer> pointMap)
   {
-    _points = new ArrayList<Point<T>>();
+    _points = new ArrayList<>();
 
     try
     {
@@ -101,7 +101,7 @@ public class ConsistentHashRing<T> implements Ring<T>
   @Deprecated
   public ConsistentHashRing(Map<T, Integer> pointMap, MessageDigest md)
   {
-    _points = new ArrayList<Point<T>>();
+    _points = new ArrayList<>();
     _md = md;
 
     add(pointMap);
@@ -150,7 +150,7 @@ public class ConsistentHashRing<T> implements Ring<T>
             hash[iMod4TimesFour] + (hash[iMod4TimesFour + 1] << 8)
                 + (hash[iMod4TimesFour + 2] << 16) + (hash[iMod4TimesFour + 3] << 24);
 
-        _points.add(new Point<T>(t, hashInt));
+        _points.add(new Point<>(t, hashInt));
       }
     }
     Collections.sort(_points);
@@ -162,7 +162,7 @@ public class ConsistentHashRing<T> implements Ring<T>
   {
     debug(_log, "searching for hash in ring of size ", _points.size(), " using hash: ", key);
 
-    int index = Collections.binarySearch(_points, new Point<T>(null, key));
+    int index = Collections.binarySearch(_points, new Point<>(null, key));
 
     // if the index is negative, then no exact match was found, and the search function is
     // returning (-(insertionPoint) - 1).
@@ -208,12 +208,12 @@ public class ConsistentHashRing<T> implements Ring<T>
     {
       debug(_log, "get called on a hash ring with nothing in it");
 
-      return new ConsistentHashRingIterator<T>(_points, 0);
+      return new ConsistentHashRingIterator<>(_points, 0);
     }
 
     int from = getIndex(key);
 
-    return new ConsistentHashRingIterator<T>(_points, from);
+    return new ConsistentHashRingIterator<>(_points, from);
   }
 
   public List<Point<T>> getPoints()
@@ -256,7 +256,7 @@ public class ConsistentHashRing<T> implements Ring<T>
       return null;
     }
 
-    Map<T, Double> coverageMap = new HashMap<T, Double>();
+    Map<T, Double> coverageMap = new HashMap<>();
     Double curr = Double.valueOf(Integer.MIN_VALUE);
     T firstElement = null;
     //we know points are sortedSet and the iterator is iterating from low to high

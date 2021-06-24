@@ -16,8 +16,6 @@
 
 package com.linkedin.d2.quorum;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -51,10 +49,10 @@ public class ZKQuorum
    * @param n - number of peers in the ensemble ( for test stability, set peer number in a quorum to 7+ (7, 9 or 11) )
    */
 
-  public ZKQuorum(int ttlPeersCount) throws IOException, Exception
+  public ZKQuorum(int ttlPeersCount) throws Exception
   {
-    _peers = new HashMap<Integer, ZKPeer>();
-    _peersView = new HashMap<Long, QuorumServer>();
+    _peers = new HashMap<>();
+    _peersView = new HashMap<>();
     _peerCount = ttlPeersCount;
     _hosts = "";
 
@@ -225,7 +223,7 @@ public class ZKQuorum
     return false;
   }
 
-  public void restart(int id) throws IOException, Exception
+  public void restart(int id) throws Exception
   {
     _log.info("Restarting peer #" + getQuorumPeerPortsInfo(id));
     _peers.get(id).shutdown(false);
@@ -248,7 +246,7 @@ public class ZKQuorum
     waitForAllPeersUp();
   }
 
-  public void startAll() throws IOException, Exception
+  public void startAll() throws Exception
   {
     for (int id=1; id <= _peerCount; id++)
     {

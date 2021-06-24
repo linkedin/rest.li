@@ -86,7 +86,7 @@ public class ServerCompressionFilter implements RestFilter
     {
       throw new IllegalArgumentException(CompressionConstants.NULL_CONFIG_ERROR);
     }
-    _supportedEncoding = new HashSet<EncodingType>(Arrays.asList(supportedEncoding));
+    _supportedEncoding = new HashSet<>(Arrays.asList(supportedEncoding));
     _supportedEncoding.add(EncodingType.IDENTITY);
     _supportedEncoding.add(EncodingType.ANY);
     _serverCompressionHelper = new ServerCompressionHelper(defaultResponseCompressionConfig);
@@ -128,7 +128,7 @@ public class ServerCompressionFilter implements RestFilter
         if (encoding.hasCompressor())
         {
           ByteString decompressedContent = encoding.getCompressor().inflate(req.getEntity());
-          Map<String, String> headers = new HashMap<String, String>(req.getHeaders());
+          Map<String, String> headers = new HashMap<>(req.getHeaders());
           headers.remove(HttpConstants.CONTENT_ENCODING);
           headers.put(HttpConstants.CONTENT_LENGTH, Integer.toString(decompressedContent.length()));
           req = req.builder().setEntity(decompressedContent).setHeaders(headers).build();

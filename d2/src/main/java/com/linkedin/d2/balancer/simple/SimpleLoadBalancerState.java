@@ -181,9 +181,9 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                  boolean isSSLEnabled)
   {
     this(executorService,
-         new PropertyEventBusImpl<UriProperties>(executorService, uriPublisher),
-         new PropertyEventBusImpl<ClusterProperties>(executorService, clusterPublisher),
-         new PropertyEventBusImpl<ServiceProperties>(executorService, servicePublisher),
+         new PropertyEventBusImpl<>(executorService, uriPublisher),
+         new PropertyEventBusImpl<>(executorService, clusterPublisher),
+         new PropertyEventBusImpl<>(executorService, servicePublisher),
          clientFactories,
          loadBalancerStrategyFactories,
          sslContext,
@@ -779,7 +779,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     else
     {
 
-      List<SchemeStrategyPair> orderedStrategies = new ArrayList<SchemeStrategyPair>(prioritizedSchemes.size());
+      List<SchemeStrategyPair> orderedStrategies = new ArrayList<>(prioritizedSchemes.size());
       for (String scheme : prioritizedSchemes)
       {
         // if this scheme is not supported (ie https not enabled) don't add it to the list

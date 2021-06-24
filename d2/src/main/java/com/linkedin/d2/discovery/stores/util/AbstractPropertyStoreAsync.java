@@ -35,7 +35,7 @@ public abstract class AbstractPropertyStoreAsync<T> implements PropertyStoreAsyn
   @Override
   public final void put(String name, T value) throws PropertyStoreException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     put(name, value, callback);
     getUninterruptibly(callback);
   }
@@ -43,7 +43,7 @@ public abstract class AbstractPropertyStoreAsync<T> implements PropertyStoreAsyn
   @Override
   public final void remove(String name) throws PropertyStoreException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     remove(name, callback);
     getUninterruptibly(callback);
   }
@@ -51,7 +51,7 @@ public abstract class AbstractPropertyStoreAsync<T> implements PropertyStoreAsyn
   @Override
   public final T get(String name) throws PropertyStoreException
   {
-    FutureCallback<T> callback = new FutureCallback<T>();
+    FutureCallback<T> callback = new FutureCallback<>();
     get(name, callback);
     return getUninterruptibly(callback);
   }

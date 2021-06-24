@@ -190,7 +190,7 @@ public class RestliServlet extends HttpServlet
   private Set<String> getResourcePackageSet(ServletConfig servletConfig)
   {
     String resourcePackages = servletConfig.getInitParameter(RESOURCE_PACKAGES_PARAM);
-    Set<String> resourcePackageSet = new HashSet<String>();
+    Set<String> resourcePackageSet = new HashSet<>();
     for(String resourcePackage : resourcePackages.split(PACKAGE_PARAM_SEPARATOR))
     {
       resourcePackageSet.add(resourcePackage.trim());

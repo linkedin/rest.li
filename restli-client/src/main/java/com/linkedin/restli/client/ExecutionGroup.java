@@ -146,7 +146,7 @@ public class ExecutionGroup
   public void batchOn(Runnable runnable, ParSeqBasedFluentClient... fluentClients) throws Exception
   {
     List<ParSeqBasedFluentClient> batchedClients =
-        fluentClients.length > 0 ? new ArrayList<ParSeqBasedFluentClient>(Arrays.asList(fluentClients))
+        fluentClients.length > 0 ? new ArrayList<>(Arrays.asList(fluentClients))
             : _fluentClientAll;
 
     for (ParSeqBasedFluentClient fluentClient : batchedClients)

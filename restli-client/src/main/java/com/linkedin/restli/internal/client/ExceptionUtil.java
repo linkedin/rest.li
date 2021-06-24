@@ -38,7 +38,7 @@ import com.linkedin.restli.internal.common.HeaderUtil;
 public class ExceptionUtil
 {
   private static final EntityResponseDecoder<ErrorResponse> ERROR_DECODER =
-      new EntityResponseDecoder<ErrorResponse>(ErrorResponse.class);
+      new EntityResponseDecoder<>(ErrorResponse.class);
 
   private ExceptionUtil()
   {

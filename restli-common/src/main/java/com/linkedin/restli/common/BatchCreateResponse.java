@@ -54,7 +54,7 @@ public class BatchCreateResponse<K> extends CollectionResponse<CreateStatus>
   public BatchCreateResponse(List<CreateIdStatus<K>> elements)
   {
     super(generateDataMap(elements), CreateStatus.class);
-    _collection = new ArrayList<CreateStatus>(elements.size());
+    _collection = new ArrayList<>(elements.size());
     for (CreateIdStatus<K> element : elements)
     {
       _collection.add(element);
@@ -83,7 +83,7 @@ public class BatchCreateResponse<K> extends CollectionResponse<CreateStatus>
       throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
     DataList elements = this.data().getDataList(CollectionResponse.ELEMENTS);
-    List<CreateStatus> collection = new ArrayList<CreateStatus>(elements.size());
+    List<CreateStatus> collection = new ArrayList<>(elements.size());
     for (Object obj : elements)
     {
       DataMap dataMap = (DataMap) obj;

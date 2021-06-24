@@ -118,7 +118,7 @@ public class URIParamUtils
 
   public static Map<String, String> encodePathKeysForUri(Map<String, Object> pathKeys, ProtocolVersion version)
   {
-    final Map<String, String> escapedKeys = new HashMap<String, String>();
+    final Map<String, String> escapedKeys = new HashMap<>();
 
     for (Map.Entry<String, Object> entry : pathKeys.entrySet())
     {
@@ -240,7 +240,7 @@ public class URIParamUtils
 
   private static String compoundKeyToStringV1(CompoundKey key)
   {
-    List<String> keyList = new ArrayList<String>(key.getPartKeys());
+    List<String> keyList = new ArrayList<>(key.getPartKeys());
     Collections.sort(keyList);
 
     StringBuilder b = new StringBuilder();
@@ -323,7 +323,7 @@ public class URIParamUtils
         stringBuilder.append(URIConstants.OBJ_START);
         if (!dataMap.isEmpty())
         {
-          List<String> keys = new ArrayList<String>(dataMap.keySet());
+          List<String> keys = new ArrayList<>(dataMap.keySet());
           Collections.sort(keys);
           ListIterator<String> iterator = keys.listIterator();
 
@@ -500,7 +500,7 @@ public class URIParamUtils
   // params must already be escaped.
   private static void addSortedParams(UriBuilder uriBuilder, Map<String, String> params)
   {
-    List<String> keysList = new ArrayList<String>(params.keySet());
+    List<String> keysList = new ArrayList<>(params.keySet());
     Collections.sort(keysList);
 
     for (String key: keysList)

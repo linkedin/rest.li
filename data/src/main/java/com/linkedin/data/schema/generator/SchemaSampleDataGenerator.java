@@ -144,7 +144,7 @@ public class SchemaSampleDataGenerator implements DataGenerator
 
   private static class ParentSchemas
   {
-    private final Map<DataSchema, Integer> counts = new HashMap<DataSchema, Integer>();
+    private final Map<DataSchema, Integer> counts = new HashMap<>();
     public void incrementReferences(DataSchema schema)
     {
       Integer count = counts.get(schema);

@@ -88,7 +88,7 @@ public class HttpDispatcher
   {
     markOnRequestTimings(context);
 
-    final Map<String, String> headers = new HashMap<String, String>(req.getHeaders());
+    final Map<String, String> headers = new HashMap<>(req.getHeaders());
     final Map<String, String> wireAttrs = WireAttributeHelper.removeWireAttributes(headers);
 
     try
@@ -137,7 +137,7 @@ public class HttpDispatcher
   {
     markOnRequestTimings(context);
 
-    final Map<String, String> headers = new HashMap<String, String>(req.getHeaders());
+    final Map<String, String> headers = new HashMap<>(req.getHeaders());
     final Map<String, String> wireAttrs = WireAttributeHelper.removeWireAttributes(headers);
 
     final BaseConnector connector = new BaseConnector();

@@ -213,7 +213,7 @@ public class ServicePropertiesJsonSerializer implements
     Set<URI> banned = new HashSet<>(bannedList);
     List<String> prioritizedSchemes = mapGetOrDefault(map, PropertyKeys.PRIORITIZED_SCHEMES, Collections.emptyList());
 
-    Map<String, Object> metadataProperties = new HashMap<String,Object>();
+    Map<String, Object> metadataProperties = new HashMap<>();
     String isDefaultService = mapGetOrDefault(map, PropertyKeys.IS_DEFAULT_SERVICE, null);
     if ("true".equalsIgnoreCase(isDefaultService))
     {

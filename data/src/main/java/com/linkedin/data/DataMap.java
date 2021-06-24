@@ -345,7 +345,7 @@ public final class DataMap extends CheckedMap<String,Object> implements DataComp
     _instrumented = true;
     if (_accessMap == null)
     {
-      _accessMap = new HashMap<String, Integer>();
+      _accessMap = new HashMap<>();
     }
   }
 

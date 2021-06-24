@@ -81,8 +81,8 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
   @Override
   public BatchResult<CompoundKey, GroupMembership> batchGet(Set<CompoundKey> ids)
   {
-    Map<CompoundKey, GroupMembership> result = new HashMap<CompoundKey, GroupMembership>(ids.size());
-    Map<CompoundKey, RestLiServiceException> errors = new HashMap<CompoundKey, RestLiServiceException>();
+    Map<CompoundKey, GroupMembership> result = new HashMap<>(ids.size());
+    Map<CompoundKey, RestLiServiceException> errors = new HashMap<>();
     Iterator<CompoundKey> iterator = ids.iterator();
     while (iterator.hasNext()) {
       CompoundKey key = iterator.next();
@@ -96,7 +96,7 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
         errors.put(key, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND));
       }
     }
-    return new BatchResult<CompoundKey, GroupMembership>(result, errors);
+    return new BatchResult<>(result, errors);
   }
 
   // TODO Better search interface (needs parameter binding to Query object, results object w/total)
@@ -155,7 +155,7 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
   @Override
   public BatchUpdateResult<CompoundKey, GroupMembership> batchUpdate(BatchUpdateRequest<CompoundKey, GroupMembership> entities)
   {
-    Map<CompoundKey, UpdateResponse> results = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> results = new HashMap<>();
     for (Map.Entry<CompoundKey, GroupMembership> entry : entities.getData().entrySet())
     {
       CompoundKey id = entry.getKey();
@@ -167,13 +167,13 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
       _app.getMembershipMgr().save(membership);
       results.put(id, new UpdateResponse(S_204_NO_CONTENT));
     }
-    return new BatchUpdateResult<CompoundKey, GroupMembership>(results);
+    return new BatchUpdateResult<>(results);
   }
 
   @Override
   public BatchUpdateResult<CompoundKey, GroupMembership> batchUpdate(BatchPatchRequest<CompoundKey, GroupMembership> patches)
   {
-    Map<CompoundKey, UpdateResponse> results = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> results = new HashMap<>();
     for (Map.Entry<CompoundKey, PatchRequest<GroupMembership>> entry: patches.getData().entrySet())
     {
       CompoundKey key = entry.getKey();
@@ -199,19 +199,19 @@ public class GroupMembershipsResource2 extends AssociationResourceTemplate<Group
         }
       }
     }
-    return new BatchUpdateResult<CompoundKey, GroupMembership>(results);
+    return new BatchUpdateResult<>(results);
   }
 
   /** @see com.linkedin.restli.server.resources.AssociationResourceTemplate#batchDelete(com.linkedin.restli.server.BatchDeleteRequest) */
   @Override
   public BatchUpdateResult<CompoundKey, GroupMembership> batchDelete(BatchDeleteRequest<CompoundKey, GroupMembership> ids)
   {
-    Map<CompoundKey, UpdateResponse> results = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> results = new HashMap<>();
     for (CompoundKey key: ids.getKeys())
     {
       results.put(key, delete(key));
     }
-    return new BatchUpdateResult<CompoundKey, GroupMembership>(results);
+    return new BatchUpdateResult<>(results);
   }
 
   /**

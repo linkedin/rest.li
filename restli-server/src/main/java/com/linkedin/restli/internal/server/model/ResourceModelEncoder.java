@@ -642,7 +642,7 @@ public class ResourceModelEncoder
                           final ResourceModel collectionModel)
   {
     AssocKeySchemaArray assocKeySchemaArray = new AssocKeySchemaArray();
-    List<Key> sortedKeys = new ArrayList<Key>(collectionModel.getKeys());
+    List<Key> sortedKeys = new ArrayList<>(collectionModel.getKeys());
     Collections.sort(sortedKeys, new Comparator<Key>()
     {
       @Override
@@ -1167,7 +1167,7 @@ public class ResourceModelEncoder
 
   private void buildSupportsArray(final ResourceModel resourceModel, final StringArray supportsArray)
   {
-    List<String> supportsStrings = new ArrayList<String>();
+    List<String> supportsStrings = new ArrayList<>();
     for (ResourceMethodDescriptor resourceMethodDescriptor : resourceModel.getResourceMethodDescriptors())
     {
       ResourceMethod type = resourceMethodDescriptor.getType();

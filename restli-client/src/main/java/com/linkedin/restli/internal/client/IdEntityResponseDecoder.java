@@ -68,13 +68,13 @@ public class IdEntityResponseDecoder<K, V extends RecordTemplate> extends RestRe
   {
     final Response<IdEntityResponse<K, V>> rawResponse = super.decodeResponse(restResponse);
 
-    final Map<String, String> modifiableHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    final Map<String, String> modifiableHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     modifiableHeaders.putAll(rawResponse.getHeaders());
 
     modifiableHeaders.remove(RestConstants.HEADER_ID);
     modifiableHeaders.remove(RestConstants.HEADER_RESTLI_ID);
 
-    return new ResponseImpl<IdEntityResponse<K, V>>(rawResponse.getStatus(), modifiableHeaders, rawResponse.getCookies(), rawResponse.getEntity(), rawResponse.getError());
+    return new ResponseImpl<>(rawResponse.getStatus(), modifiableHeaders, rawResponse.getCookies(), rawResponse.getEntity(), rawResponse.getError());
   }
 
   @Override
@@ -85,6 +85,6 @@ public class IdEntityResponseDecoder<K, V extends RecordTemplate> extends RestRe
     String id = HeaderUtil.getIdHeaderValue(headers);
     K key = id == null ? null : (K) ResponseUtils.convertKey(id, _keyType, _keyParts, _complexKeyType, version);
     V entity = dataMap == null ? null : _entityClass.getConstructor(DataMap.class).newInstance(dataMap);
-    return new IdEntityResponse<K, V>(key, entity);
+    return new IdEntityResponse<>(key, entity);
   }
 }

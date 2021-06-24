@@ -66,10 +66,10 @@ public class TestD2ConfigWithSingleZKFailover extends D2BaseTest
     _zkPort = _zkServer.getPort();
     _zkHosts = ZK_HOST+":" + _zkPort;
     _zkUriString = "zk://"+_zkHosts;
-    
+
     // Register clusters/services  (two services per cluster)
     LoadBalancerClientCli.runDiscovery(_zkHosts, "/d2", D2_CONFIG_DATA);
-    
+
     // Get LoadBalancer Client
     _cli = new LoadBalancerClientCli(_zkHosts, "/d2");
 
@@ -235,7 +235,7 @@ public class TestD2ConfigWithSingleZKFailover extends D2BaseTest
      // Echo Server mark up
      _echoServers.get(1).markUp();
      _echoServers.get(2).markUp();
-     
+
      msg = generateMessage(_zkUriString);
      expectedResponses =  getExpectedResponses(0, msg);
 
@@ -297,7 +297,7 @@ public class TestD2ConfigWithSingleZKFailover extends D2BaseTest
 
    private void startAllEchoServers() throws Exception
    {
-     _echoServers = new ArrayList<LoadBalancerEchoServer>();
+     _echoServers = new ArrayList<>();
      _echoServers.add(startEchoServer(ZK_HOST, _zkPort, ECHO_SERVER_HOST, ECHO_SERVER_PORT1, "cluster-1", "service-1_1", "service-1_2", "service-1_3" ));
      _echoServers.add(startEchoServer(ZK_HOST, _zkPort, ECHO_SERVER_HOST, ECHO_SERVER_PORT2, "cluster-1", "service-1_1", "service-1_2", "service-1_3" ));
      _echoServers.add(startEchoServer(ZK_HOST, _zkPort, ECHO_SERVER_HOST, ECHO_SERVER_PORT3, "cluster-2", "service-2_1", "service-2_2", "service-2_3" ));

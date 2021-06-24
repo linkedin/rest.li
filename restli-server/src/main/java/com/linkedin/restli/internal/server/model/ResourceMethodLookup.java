@@ -36,7 +36,7 @@ public final class ResourceMethodLookup
   }
 
   private static final Map<String, ResourceMethod> _methodNameToResourceMethodMap =
-                       new HashMap<String, ResourceMethod>(ResourceMethod.values().length);
+      new HashMap<>(ResourceMethod.values().length);
   static
   {
     _methodNameToResourceMethodMap.put(includePartial("create", false),

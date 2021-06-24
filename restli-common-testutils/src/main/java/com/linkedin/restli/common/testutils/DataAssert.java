@@ -142,10 +142,10 @@ public final class DataAssert
       return;
     }
 
-    Set<String> failKeys = new HashSet<String>();
+    Set<String> failKeys = new HashSet<>();
 
     // Assert key by key so it's easy to debug on assertion failure
-    Set<String> allKeys = new HashSet<String>(actualMap.keySet());
+    Set<String> allKeys = new HashSet<>(actualMap.keySet());
     allKeys.addAll(expectedMap.keySet());
     for(String key : allKeys)
     {
@@ -179,7 +179,7 @@ public final class DataAssert
 
     if(!failKeys.isEmpty())
     {
-      List<String> errorMessages = new ArrayList<String>();
+      List<String> errorMessages = new ArrayList<>();
       errorMessages.add(failKeys.size() + " properties don't match:");
       for(String k : failKeys)
       {
@@ -219,4 +219,3 @@ public final class DataAssert
     return (DataMap) ValidateDataAgainstSchema.validate(recordTemplate, validationOptions).getFixed();
   }
 }
-

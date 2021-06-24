@@ -53,7 +53,7 @@ public class ClosableQueue<T>
 
   // Could consider changing this to a ConcurrentLinkedQueue, and using a spin loop
   // in close instead of blocking via take().
-  private final BlockingQueue<T> _queue = new LinkedBlockingQueue<T>();
+  private final BlockingQueue<T> _queue = new LinkedBlockingQueue<>();
   private final AtomicBoolean _closing = new AtomicBoolean(false);
 
   /**
@@ -103,7 +103,7 @@ public class ClosableQueue<T>
     }
     boolean interrupted = false;
     int count = _count.get();
-    List<T> members = new ArrayList<T>(count);
+    List<T> members = new ArrayList<>(count);
     while (count >= 0)
     {
       if (_count.compareAndSet(count, count - 1))

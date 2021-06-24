@@ -247,9 +247,9 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   public void testBatchPartialUpdate(RootBuilderWrapper<CompoundKey, PatchRequest<Message>> builders)
       throws RemoteInvocationException
   {
-    Map<CompoundKey, PatchRequest<Message>> patches = new HashMap<CompoundKey, PatchRequest<Message>>();
-    patches.put(URL_COMPOUND_KEY, new PatchRequest<Message>());
-    patches.put(SIMPLE_COMPOUND_KEY, new PatchRequest<Message>());
+    Map<CompoundKey, PatchRequest<Message>> patches = new HashMap<>();
+    patches.put(URL_COMPOUND_KEY, new PatchRequest<>());
+    patches.put(SIMPLE_COMPOUND_KEY, new PatchRequest<>());
 
     Request<BatchKVResponse<CompoundKey, UpdateStatus>> request = builders.batchPartialUpdate().inputs(patches).build();
 

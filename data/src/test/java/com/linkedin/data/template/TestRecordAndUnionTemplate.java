@@ -2585,7 +2585,7 @@ public class TestRecordAndUnionTemplate
     }
 
     // test memberType
-    List<Object> badOutputMap = new ArrayList<Object>();
+    List<Object> badOutputMap = new ArrayList<>();
     badOutputMap.add(Data.NULL);
     badOutputMap.add(new DataMap());
     badOutputMap.add(new DataMap(TestUtil.asMap("int", 1, "invalid", 2)));
@@ -2979,7 +2979,7 @@ public class TestRecordAndUnionTemplate
     }
 
     // Test with invalid data maps for the union field
-    List<Object> invalidData = new ArrayList<Object>();
+    List<Object> invalidData = new ArrayList<>();
     invalidData.add(Data.NULL);
     invalidData.add(new DataMap());
     invalidData.add(new DataMap(TestUtil.asMap("int", 1, "invalid", 2)));

@@ -41,7 +41,7 @@ public class ZooKeeperServerJmx implements ZooKeeperServerJmxMXBean
   @Override
   public void setMarkDown(String clusterName, String uri) throws PropertyStoreException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _server.markDown(clusterName, URI.create(uri), callback);
     try
     {
@@ -56,9 +56,9 @@ public class ZooKeeperServerJmx implements ZooKeeperServerJmxMXBean
   @Override
   public void setMarkUp(String clusterName, String uri, double weight) throws PropertyStoreException
   {
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(1);
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<>(1);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
-    setMarkup(clusterName, uri, partitionDataMap, Collections.<String, Object>emptyMap());
+    setMarkup(clusterName, uri, partitionDataMap, Collections.emptyMap());
   }
 
   @Override
@@ -74,7 +74,7 @@ public class ZooKeeperServerJmx implements ZooKeeperServerJmxMXBean
                         Map<String, Object> uriSpecificProperties)
       throws PropertyStoreException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _server.markUp(clusterName, URI.create(uri), partitionDataMap, uriSpecificProperties, callback);
     try
     {

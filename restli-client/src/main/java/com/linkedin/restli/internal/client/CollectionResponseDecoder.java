@@ -55,6 +55,6 @@ public class CollectionResponseDecoder<T extends RecordTemplate> extends RestRes
   public CollectionResponse<T> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
       throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
-    return dataMap == null ? null : new CollectionResponse<T>(dataMap, _elementClass);
+    return dataMap == null ? null : new CollectionResponse<>(dataMap, _elementClass);
   }
 }

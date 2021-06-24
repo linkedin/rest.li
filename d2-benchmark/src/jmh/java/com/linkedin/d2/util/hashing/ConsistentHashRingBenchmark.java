@@ -208,7 +208,7 @@ public class ConsistentHashRingBenchmark {
 
   @State(Scope.Benchmark)
   public static class ConsistentHashRing_10Hosts_100PointsPerHost_State {
-    Ring<URI> _ring = new ConsistentHashRing<URI>(buildPointsMap(10, 100));
+    Ring<URI> _ring = new ConsistentHashRing<>(buildPointsMap(10, 100));
     Random _random = new Random();
   }
 
@@ -247,7 +247,7 @@ public class ConsistentHashRingBenchmark {
 
   @State(Scope.Benchmark)
   public static class ConsistentHashRing_100Hosts_100PointsPerHost_State {
-    Ring<URI> _ring = new ConsistentHashRing<URI>(buildPointsMap(100, 100));
+    Ring<URI> _ring = new ConsistentHashRing<>(buildPointsMap(100, 100));
     Random _random = new Random();
   }
 

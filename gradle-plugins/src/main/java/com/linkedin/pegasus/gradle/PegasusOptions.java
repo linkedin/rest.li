@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 public class PegasusOptions
 {
-  public Set<GenerationMode> generationModes = new HashSet<GenerationMode>(Arrays.asList(GenerationMode.PEGASUS));
+  public Set<GenerationMode> generationModes = new HashSet<>(Arrays.asList(GenerationMode.PEGASUS));
   public IdlOptions idlOptions = new IdlOptions();
   public ClientOptions clientOptions = new ClientOptions();
   public RestModelOptions restModelOptions = new RestModelOptions();
@@ -82,7 +82,7 @@ public class PegasusOptions
 
   public static class IdlOptions
   {
-    private List<IdlItem> _idlOptionsList = new ArrayList<IdlItem>();
+    private List<IdlItem> _idlOptionsList = new ArrayList<>();
 
     public void addIdlItem(String inApiName, List<String> inPackageNames)
     {
@@ -121,7 +121,7 @@ public class PegasusOptions
 
   public static class ClientOptions
   {
-    private List<ClientItem> clientOptionsList = new ArrayList<ClientItem>();
+    private List<ClientItem> clientOptionsList = new ArrayList<>();
 
     public void addClientItem(String inRestModelFileName, String inDefaultPackage, boolean inKeepDataTemplates)
     {

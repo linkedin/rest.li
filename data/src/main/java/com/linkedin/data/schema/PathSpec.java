@@ -59,7 +59,7 @@ public class PathSpec
    */
   public PathSpec(List<String> parentPath, String segment)
   {
-    _path = new ArrayList<String>(parentPath.size()+1);
+    _path = new ArrayList<>(parentPath.size()+1);
     _path.addAll(parentPath);
     _path.add(segment);
   }
@@ -71,7 +71,7 @@ public class PathSpec
    */
   public PathSpec(String segment)
   {
-    _path = new ArrayList<String>(1);
+    _path = new ArrayList<>(1);
     _path.add(segment);
   }
 
@@ -82,7 +82,7 @@ public class PathSpec
    */
   public PathSpec(String... segments)
   {
-    _path = new ArrayList<String>(Arrays.asList(segments));
+    _path = new ArrayList<>(Arrays.asList(segments));
   }
 
   /**

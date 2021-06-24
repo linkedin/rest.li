@@ -134,7 +134,7 @@ public class Builder
   {
     return create(template.data(), template.schema(), order);
   }
-  
+
 
   protected Builder(DataElement element, IterationOrder order)
   {
@@ -147,11 +147,11 @@ public class Builder
     _predicates.add(predicate);
     return this;
   }
-  
+
   /**
    * Obtains a {@link DataIterator} from the {@link Builder} and accumulates Data objects returned by the iterator into the provided collection.
    * This method mutates the provided collection.
-   * 
+   *
    * @param accumulator provides the collection that the accumulated data objects are added to.
    * @return the passed in collection, with the Data objects returned by the iterator added into it.
    * @see ValueAccumulator
@@ -160,10 +160,10 @@ public class Builder
   {
     return ValueAccumulator.accumulateValues(dataIterator(), accumulator);
   }
-  
+
   /**
    * Obtains a {@link DataIterator} from the {@link Builder} and accumulates Data objects returned by the iterator as a collection.
-   * 
+   *
    * @return the Data objects accumulated from the {@link DataIterator}.
    * @see ValueAccumulator
    */
@@ -174,7 +174,7 @@ public class Builder
 
   /**
    * Obtains a {@link DataIterator} from the {@link Builder} and counts the number of {Link DataElement}s returned by the iterator.
-   * 
+   *
    * @return the count of Data objects.
    * @see Counter
    */
@@ -200,7 +200,7 @@ public class Builder
    * Obtains a {@link DataIterator} from the {@link Builder} and transforms the Data objects returned by the iterator.
    * This method mutates the Data object and it's descendants.
    * This method does not change the start Data object referenced by the Builder.
-   * 
+   *
    * @param transform provides the transformation that will be used to replace Data objects.
    * @return the replacement if the root object was replaced by a transformation, else the root object with the transformations applied.
    * @see Transformer
@@ -209,12 +209,12 @@ public class Builder
   {
     return Transformer.transform(_element.getValue(), dataIterator(), transform);
   }
-  
+
   /**
    * Obtains a {@link DataIterator} from the {@link Builder} and replaces the Data objects returned by the iterator.
    * This method mutates the Data object and it's descendants.
    * This method does not change the start Data object referenced by the Builder.
-   * 
+   *
    * @param value provides the object that Data objects are replaced with.
    * @return the replacement if the root object was replaced, else the root object with the replacements applied.
    * @see Transformer
@@ -240,7 +240,7 @@ public class Builder
     }
   }
 
-  private List<Predicate> _predicates = new ArrayList<Predicate>();
+  private List<Predicate> _predicates = new ArrayList<>();
   private DataElement _element;
   private IterationOrder _order;
 }

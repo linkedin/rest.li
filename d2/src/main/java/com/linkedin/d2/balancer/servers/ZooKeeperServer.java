@@ -200,7 +200,7 @@ public class
         else
         {
           warn(_log, _store, " marked down for cluster ", clusterName, "with uri: ", uri);
-          Map<URI, Map<Integer, PartitionData>> partitionData = new HashMap<URI, Map<Integer, PartitionData>>(2);
+          Map<URI, Map<Integer, PartitionData>> partitionData = new HashMap<>(2);
           partitionData.put(uri, Collections.emptyMap());
           _store.removePartial(clusterName, new UriProperties(clusterName, partitionData), callback);
         }

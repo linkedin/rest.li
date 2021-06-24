@@ -154,16 +154,16 @@ public class BatchFindRequestBuilder<K, V extends RecordTemplate>
   @Override
   public BatchFindRequest<V> build()
   {
-    return new BatchFindRequest<V>(buildReadOnlyHeaders(),
-                                  buildReadOnlyCookies(),
-                                  _elementClass,
-                                  _resourceSpec,
-                                  buildReadOnlyQueryParameters(),
-                                  getQueryParamClasses(),
-                                  _name,
-                                  getBaseUriTemplate(),
-                                  buildReadOnlyPathKeys(),
-                                  getRequestOptions(),
-                                  buildReadOnlyAssocKey());
+    return new BatchFindRequest<>(buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        _elementClass,
+        _resourceSpec,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        _name,
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions(),
+        buildReadOnlyAssocKey());
   }
 }

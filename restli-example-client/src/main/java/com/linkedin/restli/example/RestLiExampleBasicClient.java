@@ -75,7 +75,7 @@ public class RestLiExampleBasicClient
     String pathInfo = args.length == 0 ? "" : args[0];
     photoClient.sendRequest(pathInfo, new PrintWriter(System.out));
     photoClient.shutdown();
-    http.shutdown(new FutureCallback<None>());
+    http.shutdown(new FutureCallback<>());
   }
 
   public RestLiExampleBasicClient(RestClient restClient)
@@ -230,7 +230,7 @@ public class RestLiExampleBasicClient
     final FindRequest<AlbumEntry> searchReq = _albumEntryBuilders.findBySearch().albumIdParam(albumId).build();
     final ResponseFuture<CollectionResponse<AlbumEntry>> responseFuture = _restClient.sendRequest(searchReq);
     final Response<CollectionResponse<AlbumEntry>> response = responseFuture.getResponse();
-    final List<AlbumEntry> entries = new ArrayList<AlbumEntry>(response.getEntity().getElements());
+    final List<AlbumEntry> entries = new ArrayList<>(response.getEntity().getElements());
 
     entries.add(new AlbumEntry().setAlbumId(-1).setPhotoId(9999));
 
@@ -400,4 +400,3 @@ public class RestLiExampleBasicClient
 
   private final RestClient _restClient;
 }
-

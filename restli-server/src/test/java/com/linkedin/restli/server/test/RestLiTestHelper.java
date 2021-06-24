@@ -38,7 +38,7 @@ public class RestLiTestHelper
 
   public static Map<String, ResourceModel> buildResourceModels(Class<?>... resourceClasses)
   {
-    Set<Class<?>> classes = new HashSet<Class<?>>(Arrays.asList(resourceClasses));
+    Set<Class<?>> classes = new HashSet<>(Arrays.asList(resourceClasses));
     return RestLiApiBuilder.buildResourceModels(classes);
   }
 
