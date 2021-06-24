@@ -88,6 +88,7 @@ import com.linkedin.restli.restspec.FinderSchema;
 import com.linkedin.restli.restspec.FinderSchemaArray;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.ParameterSchemaArray;
+import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.ResourceSchemaArray;
 import com.linkedin.restli.restspec.RestMethodSchema;
@@ -1028,6 +1029,11 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
 
     for (ResourceSchema resource : subresources)
     {
+      // Skip unstructured data resources as client binding for them is not supported yet.
+      if (ResourceEntityType.UNSTRUCTURED_DATA == resource.getEntityType())
+      {
+        continue;
+      }
       generateResourceFacade(resource, sourceFile, pathKeyTypes, assocKeyTypes, pathToAssocKeys, rootPath);
     }
   }
