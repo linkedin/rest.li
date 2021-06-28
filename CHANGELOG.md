@@ -14,6 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.6] - 2021-06-28
+- Fix validation logic for non-numeric float values (i.e. `NaN`, `Infinity`, `-Infinity`).
+  - This affects the underlying implementation for the coercion modes defined by `CoercionMode`
+    (the Javadoc for each mode has been updated accordingly).
+
 ## [29.19.5] - 2021-06-24
 - Fix request builder generator to skip unstructured data sub resources correctly.
 - Use the Java 7 diamond operator everywhere.
@@ -25,32 +30,32 @@ and what APIs have changed, if applicable.
 - More changes for Gradle 7 compatibility.
   - Add schemas as source set resources and rely on the Java plugin to copy them
     into the artifact instead of doing so directly, to avoid copying duplicates.
-  - Change getter names in GenerateDataTemplateTask to conform to what Gradle 7
+  - Change getter names in `GenerateDataTemplateTask` to conform to what Gradle 7
     requires and deprecate the old ones.
 
 ## [29.19.2] - 2021-06-17
-- Allow client-side RetriableRequestException to be retried after ClientRetryFilter
+- Allow client-side `RetriableRequestException` to be retried after `ClientRetryFilter`.
 
 ## [29.19.1] - 2021-06-09
-- Add support for CONSTANT_QPS dark canary cluster strategy
+- Add support for `CONSTANT_QPS` dark canary cluster strategy.
 
 ## [29.18.15] - 2021-06-02
-- Fix race conditions in D2 cluster subsetting. Refactor subsetting cache to SubsettingState.
+- Fix race conditions in D2 cluster subsetting. Refactor subsetting cache to `SubsettingState`.
 
 ## [29.18.14] - 2021-05-27
-- Use class.getClassLoader() instead of thread.getContextClassLoader() to get the class loader.
+- Use `class.getClassLoader()` instead of `thread.getContextClassLoader()` to get the class loader.
 
 ## [29.18.13] - 2021-05-27
-- Remove one more "runtime" configuration reference.
+- Remove one more `"runtime"` configuration reference.
 
 ## [29.18.12] - 2021-05-26
-- Use daemon threads to unregister TimingKeys.
+- Use daemon threads to unregister `TimingKey` instances.
 
 ## [29.18.11] - 2021-05-24
 - Add support for returning location of schema elements from the PDL schema parser.
 
 ## [29.18.10] - 2021-05-24
-- Introduce a readonly attribute on the action annotation
+- Introduce a readonly attribute on the `@Action` annotation.
 
 ## [29.18.9] - 2021-05-24
 - Initial support for the modern `ivy-publish` plugin when producing data-template artifacts
@@ -61,19 +66,19 @@ and what APIs have changed, if applicable.
   - See [Ivy Publish Plugin](https://docs.gradle.org/5.2.1/userguide/publishing_ivy.html) for more information about the modern publishing mechanism.
 
 ## [29.18.8] - 2021-05-21
-- Fix a bug in ZKDeterministicSubsettingMetadataProvider to make host set distinct
+- Fix a bug in `ZKDeterministicSubsettingMetadataProvider` to make host set distinct.
 
 ## [29.18.7] - 2021-05-16
-- Copy the input pegasus data schema when translating to avro
+- Copy the input pegasus data schema when translating to avro.
 
 ## [29.18.6] - 2021-05-13
-- Expose getResourceClass from ResourceDefinition interface.
+- Expose `getResourceClass` from `ResourceDefinition` interface.
 
 ## [29.18.5] - 2021-05-13
-- Add "http.streamingTimeout" to AllowedClientPropertyKeys
+- Add `"http.streamingTimeout"` to `AllowedClientPropertyKeys`.
 
 ## [29.18.4] - 2021-05-06
-- Replace runtime configuration with runtimeClasspath configuration in plugin for compatibility with Gradle 7.
+- Replace `runtime` configuration with `runtimeClasspath` configuration in plugin for compatibility with Gradle 7.
 
 ## [29.18.3] - 2021-05-03
 - Strictly enforce Gradle version compatibility in the `pegasus` Gradle plugin.
@@ -4989,7 +4994,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.6...master
+[29.19.6]: https://github.com/linkedin/rest.li/compare/v29.19.5...v29.19.6
 [29.19.5]: https://github.com/linkedin/rest.li/compare/v29.19.4...v29.19.5
 [29.19.4]: https://github.com/linkedin/rest.li/compare/v29.19.3...v29.19.4
 [29.19.3]: https://github.com/linkedin/rest.li/compare/v29.19.2...v29.19.3

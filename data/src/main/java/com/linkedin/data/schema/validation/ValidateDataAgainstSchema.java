@@ -43,6 +43,8 @@ import com.linkedin.data.schema.validator.Validator;
 import com.linkedin.data.schema.validator.ValidatorContext;
 import com.linkedin.data.template.DataTemplate;
 
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.TemplateOutputCastException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -741,34 +743,23 @@ public final class ValidateDataAgainstSchema
         switch (schemaType)
         {
           case INT:
-            return
-              (object instanceof Number) ?
-                (((Number) object).intValue()) :
-                (object.getClass() == String.class && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
-                  (new BigDecimal((String) object)).intValue() :
-                  object;
+          return (object instanceof String && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
+              (new BigDecimal((String) object)).intValue() :
+              DataTemplateUtil.coerceIntOutput(object);
           case LONG:
-            return
-              (object instanceof Number) ?
-                (((Number) object).longValue()) :
-                (object.getClass() == String.class && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
-                  (new BigDecimal((String) object)).longValue() :
-                  object;
+          return (object instanceof String && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
+              (new BigDecimal((String) object)).longValue() :
+              DataTemplateUtil.coerceLongOutput(object);
           case FLOAT:
-            return
-              (object instanceof Number) ?
-                (((Number) object).floatValue()) :
-                (object.getClass() == String.class && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
-                  (new BigDecimal((String) object)).floatValue() :
-                  object;
+            return (object instanceof String && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
+                Float.valueOf((String) object) :
+                DataTemplateUtil.coerceFloatOutput(object);
           case DOUBLE:
-            return
-              (object instanceof Number) ?
-                (((Number) object).doubleValue()) :
-                (object.getClass() == String.class && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
-                  (new BigDecimal((String) object)).doubleValue() :
-                  object;
+            return (object instanceof String && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
+                Double.valueOf((String) object) :
+                DataTemplateUtil.coerceDoubleOutput(object);
           case BOOLEAN:
+            // Note that Boolean#parseBoolean cannot be used because it coerces invalid strings into "false"
             if (object.getClass() == String.class && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE)
             {
               String string = (String) object;
@@ -788,7 +779,7 @@ public final class ValidateDataAgainstSchema
             return object;
         }
       }
-      catch (NumberFormatException exc)
+      catch (NumberFormatException | TemplateOutputCastException exc)
       {
         return object;
       }
