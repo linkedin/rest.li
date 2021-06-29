@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Remove unused configurations "dataTemplateGenerator", "restTools", and "avroSchemaGenerator".
 
 ## [29.19.6] - 2021-06-28
 - Fix validation logic for non-numeric float values (i.e. `NaN`, `Infinity`, `-Infinity`).
