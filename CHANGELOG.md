@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.7] - 2021-06-30
+- Fix equals() and hashCode() in ServiceProperties to support cluster subsetting
+
 ## [29.19.6] - 2021-06-28
 - Fix validation logic for non-numeric float values (i.e. `NaN`, `Infinity`, `-Infinity`).
   - This affects the underlying implementation for the coercion modes defined by `CoercionMode`
@@ -4994,7 +4997,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.7...master
+[29.19.7]: https://github.com/linkedin/rest.li/compare/v29.19.6...v29.19.7
 [29.19.6]: https://github.com/linkedin/rest.li/compare/v29.19.5...v29.19.6
 [29.19.5]: https://github.com/linkedin/rest.li/compare/v29.19.4...v29.19.5
 [29.19.4]: https://github.com/linkedin/rest.li/compare/v29.19.3...v29.19.4

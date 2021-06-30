@@ -313,6 +313,8 @@ public class ServiceProperties
     result = prime * result + _banned.hashCode();
     result = prime * result + _serviceMetadataProperties.hashCode();
     result = prime * result + _relativeStrategyProperties.hashCode();
+    result = prime * result + Boolean.hashCode(_enableClusterSubsetting);
+    result = prime * result + Integer.hashCode(_minClusterSubsetSize);
     return result;
   }
 
@@ -349,6 +351,10 @@ public class ServiceProperties
     if (!_serviceMetadataProperties.equals(other._serviceMetadataProperties))
       return false;
     if (!_relativeStrategyProperties.equals(other._relativeStrategyProperties))
+      return false;
+    if (_enableClusterSubsetting != other._enableClusterSubsetting)
+      return false;
+    if (_minClusterSubsetSize != other._minClusterSubsetSize)
       return false;
     return true;
   }
