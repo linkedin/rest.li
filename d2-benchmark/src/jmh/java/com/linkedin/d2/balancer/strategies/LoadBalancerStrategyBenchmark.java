@@ -283,7 +283,8 @@ public class LoadBalancerStrategyBenchmark
     ServiceProperties serviceProperties = new ServiceProperties(DUMMY_SERVICE_NAME, DEFAULT_CLUSTER_NAME, DEFAULT_PATH, DEFAULT_STRATEGY_LIST,
         null, null, null, null, null,
         null, null, RelativeStrategyPropertiesConverter.toMap(relativeStrategyProperties));
-    return new RelativeLoadBalancerStrategyFactory(EXECUTOR_SERVICE, null, new ArrayList<>(), null, SystemClock.instance())
+    return new RelativeLoadBalancerStrategyFactory(EXECUTOR_SERVICE, null, new ArrayList<>(), null, SystemClock.instance(),
+        false)
         .newLoadBalancer(serviceProperties);
   }
 

@@ -22,16 +22,15 @@ import java.net.URI;
 /**
  * Defines the latency for a particular host in an interval based on user definition
  */
-interface ServerLoadScoreManager
+interface ServerReportedLoadManager
 {
-
   /**
    * Given an interval, calculate the server-reported load score for a host
    *
    * @param uri The uri of the server host
    * @param hostRequestCount The request count the host received in the last interval
    * @param intervalIndex The index of the current interval
-   * @return The expected server reported overload score
+   * @return The expected server reported load
    */
-  int getServerLoadScore(URI uri, int hostRequestCount, int intervalIndex);
+  int getServerReportedLoad(URI uri, int hostRequestCount, int intervalIndex);
 }

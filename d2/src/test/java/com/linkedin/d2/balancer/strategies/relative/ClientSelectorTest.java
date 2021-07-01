@@ -20,10 +20,13 @@ import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.util.hashing.DistributionNonDiscreteRing;
+import com.linkedin.d2.balancer.util.hashing.HashFunction;
+import com.linkedin.d2.balancer.util.hashing.MPConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.util.degrader.CallTrackerImpl;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.anyInt;
@@ -67,6 +71,9 @@ public class ClientSelectorTest
     DEFAULT_POINTS_MAP.put(URI_1, 60);
     DEFAULT_POINTS_MAP.put(URI_2, 80);
     DEFAULT_POINTS_MAP.put(URI_3, 100);
+    Mockito.when(TRACKER_CLIENT_1.getLatestCallStats()).thenReturn(new CallTrackerImpl.CallTrackerStats());
+    Mockito.when(TRACKER_CLIENT_2.getLatestCallStats()).thenReturn(new CallTrackerImpl.CallTrackerStats());
+    Mockito.when(TRACKER_CLIENT_3.getLatestCallStats()).thenReturn(new CallTrackerImpl.CallTrackerStats());
     DEFAULT_RING = new DistributionNonDiscreteRing<>(DEFAULT_POINTS_MAP);
     DEFAULT_TRACKER_CLIENT_MAP.put(URI_1, TRACKER_CLIENT_1);
     DEFAULT_TRACKER_CLIENT_MAP.put(URI_2, TRACKER_CLIENT_2);
@@ -76,7 +83,7 @@ public class ClientSelectorTest
   @BeforeMethod
   private void setup()
   {
-    _clientSelector = new ClientSelector(new RandomHash());
+    _clientSelector = new ClientSelector(new RandomHash(), false);
     _request = Mockito.mock(Request.class);
     _requestContext = new RequestContext();
   }
@@ -155,4 +162,38 @@ public class ClientSelectorTest
     TrackerClient trackerClient = _clientSelector.getTrackerClient(_request, _requestContext, ring, DEFAULT_TRACKER_CLIENT_MAP);
     assertTrue(DEFAULT_TRACKER_CLIENT_MAP.containsKey(trackerClient.getUri()));
   }
+
+  @Test(dataProvider = "isStickyRouting")
+  public void testStickyRoutingWithPowerOfTwo(boolean isStickyRouting)
+  {
+    HashFunction<Request> hashFunction = Mockito.mock(RandomHash.class);
+    URI newUri = URI.create("new_uri");
+    _clientSelector = new ClientSelector(hashFunction, true);
+    @SuppressWarnings("unchecked")
+    Ring<URI> ring = Mockito.mock(Ring.class);
+    Mockito.when(ring.isStickyRoutingCapable()).thenReturn(isStickyRouting);
+    Mockito.when(ring.get(anyInt())).thenReturn(URI_1);
+    List<URI> ringIteratierList = Arrays.asList(newUri, URI_1, URI_2, URI_3);
+    Mockito.when(ring.getIterator(anyInt())).thenReturn(ringIteratierList.iterator());
+
+    _clientSelector.getTrackerClient(_request, _requestContext, ring, DEFAULT_TRACKER_CLIENT_MAP);
+    if(isStickyRouting)
+    {
+      Mockito.verify(hashFunction, Mockito.times(1)).hash(_request);
+    } else
+    {
+      Mockito.verify(hashFunction, Mockito.times(2)).hash(_request);
+    }
+  }
+
+  @DataProvider(name = "isStickyRouting")
+  public Object[][] isStickyRouting()
+  {
+    return new Object[][]
+        {
+            {true},
+            {false}
+        };
+  }
+
 }

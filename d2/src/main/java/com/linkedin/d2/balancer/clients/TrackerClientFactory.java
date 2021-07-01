@@ -55,7 +55,7 @@ public class TrackerClientFactory
   private static final int LOG_RATE_MS = 20000;
 
   /**
-   * @see #createTrackerClient(URI, UriProperties, ServiceProperties, String, TransportClient, Clock)
+   * @see #createTrackerClient(URI, UriProperties, ServiceProperties, String, TransportClient, Clock, boolean)
    */
   public static TrackerClient createTrackerClient(URI uri,
                                            UriProperties uriProperties,
@@ -63,7 +63,20 @@ public class TrackerClientFactory
                                            String loadBalancerStrategyName,
                                            TransportClient transportClient)
   {
-    return createTrackerClient(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, SystemClock.instance());
+    return createTrackerClient(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, SystemClock.instance(), false);
+  }
+
+  /**
+   * @see #createTrackerClient(URI, UriProperties, ServiceProperties, String, TransportClient, Clock, boolean)
+   */
+  public static TrackerClient createTrackerClient(URI uri,
+      UriProperties uriProperties,
+      ServiceProperties serviceProperties,
+      String loadBalancerStrategyName,
+      TransportClient transportClient,
+      boolean enableServerReportedLoad)
+  {
+    return createTrackerClient(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, SystemClock.instance(), enableServerReportedLoad);
   }
 
   /**
@@ -75,6 +88,7 @@ public class TrackerClientFactory
    * @param uriProperties URI properties.
    * @param transportClient Inner TransportClient.
    * @param clock Clock used for internal call tracking.
+   * @param enableServerReportedLoad Enable load balancing based on server reported load from the response.
    * @return TrackerClient
    */
   public static TrackerClient createTrackerClient(URI uri,
@@ -82,7 +96,8 @@ public class TrackerClientFactory
                                                   ServiceProperties serviceProperties,
                                                   String loadBalancerStrategyName,
                                                   TransportClient transportClient,
-                                                  Clock clock)
+                                                  Clock clock,
+                                                  boolean enableServerReportedLoad)
   {
     TrackerClient trackerClient;
 
@@ -97,15 +112,16 @@ public class TrackerClientFactory
     switch (loadBalancerStrategyName)
     {
       case (DegraderLoadBalancerStrategyV3.DEGRADER_STRATEGY_NAME):
-        trackerClient = createDegraderTrackerClient(uri, uriProperties, serviceProperties,  loadBalancerStrategyName, transportClient, clock, doNotSlowStart);
+        trackerClient = createDegraderTrackerClient(uri, uriProperties, serviceProperties,  loadBalancerStrategyName,
+            transportClient, clock, doNotSlowStart, enableServerReportedLoad);
         break;
       case (RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME):
         trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName,
-            transportClient, clock, false, doNotSlowStart);
+            transportClient, clock, false, doNotSlowStart, enableServerReportedLoad);
         break;
       default:
         trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName,
-            transportClient, clock, true, doNotSlowStart);
+            transportClient, clock, true, doNotSlowStart, enableServerReportedLoad);
     }
 
     return trackerClient;
@@ -117,7 +133,8 @@ public class TrackerClientFactory
                                                                    String loadBalancerStrategyName,
                                                                    TransportClient transportClient,
                                                                    Clock clock,
-                                                                   boolean doNotSlowStart)
+                                                                   boolean doNotSlowStart,
+                                                                   boolean enableServerReportedLoad)
   {
     DegraderImpl.Config config = null;
 
@@ -144,7 +161,8 @@ public class TrackerClientFactory
                                      config,
                                      trackerClientInterval,
                                      errorStatusPattern,
-                                     doNotSlowStart);
+                                     doNotSlowStart,
+                                     enableServerReportedLoad);
   }
 
   private static long getInterval(String loadBalancerStrategyName, ServiceProperties serviceProperties)
@@ -222,7 +240,8 @@ public class TrackerClientFactory
                                                            TransportClient transportClient,
                                                            Clock clock,
                                                            boolean percentileTrackingEnabled,
-                                                           boolean doNotSlowStart)
+                                                           boolean doNotSlowStart,
+                                                           boolean enableServerReportedLoad)
   {
     List<HttpStatusCodeRange> errorStatusCodeRanges = getErrorStatusRanges(serviceProperties);
     Predicate<Integer> isErrorStatus = (status) -> {
@@ -243,6 +262,7 @@ public class TrackerClientFactory
                                  getInterval(loadBalancerStrategyName, serviceProperties),
                                  isErrorStatus,
                                  percentileTrackingEnabled,
-                                 doNotSlowStart);
+                                 doNotSlowStart,
+                                 enableServerReportedLoad);
   }
 }

@@ -49,21 +49,21 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
                                Clock clock, DegraderImpl.Config config)
   {
     this(uri, partitionDataMap, wrappedClient, clock, config, TrackerClientImpl.DEFAULT_CALL_TRACKER_INTERVAL,
-         TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, false);
+         TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, false, false);
   }
 
   public DegraderTrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
                                Clock clock, DegraderImpl.Config config, long interval, Pattern errorStatusPattern)
   {
-    this(uri, partitionDataMap, wrappedClient, clock, config, interval, errorStatusPattern, false);
+    this(uri, partitionDataMap, wrappedClient, clock, config, interval, errorStatusPattern, false, false);
   }
 
   public DegraderTrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
                                Clock clock, DegraderImpl.Config config, long interval, Pattern errorStatusPattern,
-                               boolean doNotSlowStart)
+                               boolean doNotSlowStart, boolean enableServerReportedLoad)
   {
     super(uri, partitionDataMap, wrappedClient, clock, interval,
-        (status) -> errorStatusPattern.matcher(Integer.toString(status)).matches(), true, doNotSlowStart);
+        (status) -> errorStatusPattern.matcher(Integer.toString(status)).matches(), true, doNotSlowStart, enableServerReportedLoad);
 
     if (config == null)
     {

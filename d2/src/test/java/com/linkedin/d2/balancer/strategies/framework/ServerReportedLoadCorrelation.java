@@ -17,16 +17,15 @@
 package com.linkedin.d2.balancer.strategies.framework;
 
 /**
- * Define the correlation between latency, call count and time
+ * Define the correlation between server reported load, call count and time
  */
-public interface ServerLoadScoreCorrelation
+public interface ServerReportedLoadCorrelation
 {
-
   /**
    * Given the requests per interval, calculate the server-reported load
    * @param requestsPerInterval the number of requests received in the interval
    * @param intervalIndex the index of the current interval since the test initialization
-   * @return Expected latency
+   * @return Expected server reported load
    */
-  int getServerLoadScore(int requestsPerInterval, int intervalIndex);
+  int getServerReportedLoad(int requestsPerInterval, int intervalIndex);
 }

@@ -60,10 +60,10 @@ public class TrackerClientMockHelper
 
   public static List<TrackerClient> mockTrackerClients(int numTrackerClients, List<Integer> callCountList,
       List<Integer> outstandingCallCountList, List<Long> latencyList, List<Long> outstandingLatencyList,
-      List<Integer> serverOverloadScoreList, List<Integer> errorCountList)
+      List<Integer> serverReportedLoadList, List<Integer> errorCountList)
   {
     return mockTrackerClients(numTrackerClients, callCountList, outstandingCallCountList, latencyList,
-        outstandingLatencyList, serverOverloadScoreList, errorCountList, false);
+        outstandingLatencyList, serverReportedLoadList, errorCountList, false);
   }
 
   /**
@@ -74,13 +74,13 @@ public class TrackerClientMockHelper
    * @param outstandingCallCountList The outstanding call count that each host receives
    * @param latencyList The latency of each host
    * @param outstandingLatencyList The outstanding latency of each host
-   * @param serverLoadScoreList The server reported load score of each host
+   * @param serverReportedLoadList The server reported load score of each host
    * @param errorCountList The error count of each host
    * @return A list of mocked {@link TrackerClient}
    */
   public static List<TrackerClient> mockTrackerClients(int numTrackerClients, List<Integer> callCountList,
       List<Integer> outstandingCallCountList, List<Long> latencyList, List<Long> outstandingLatencyList,
-      List<Integer> serverLoadScoreList, List<Integer> errorCountList, boolean doNotSlowStart)
+      List<Integer> serverReportedLoadList, List<Integer> errorCountList, boolean doNotSlowStart)
   {
     List<TrackerClient> trackerClients = new ArrayList<>();
     for (int index = 0; index < numTrackerClients; index ++)
@@ -104,7 +104,7 @@ public class TrackerClientMockHelper
           1,
           RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS - outstandingLatencyList.get(index),
       outstandingCallCountList.get(index),
-      serverLoadScoreList.get(index),
+      serverReportedLoadList.get(index),
       longStats,
       errorTypeCounts,
       errorTypeCounts);

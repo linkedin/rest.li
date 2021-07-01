@@ -19,7 +19,6 @@ package com.linkedin.d2.balancer.clients;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
-import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.data.ByteString;
@@ -51,6 +50,7 @@ import com.linkedin.util.degrader.DegraderControl;
 import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -59,6 +59,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 public class TrackerClientTest
@@ -117,12 +118,13 @@ public class TrackerClientTest
     Assert.assertEquals(wrappedClient.restWireAttrs, restWireAttrs);
   }
 
-  @Test
-  public void testCallTrackingRestRequest() throws Exception
+  @Test(dataProvider = "enableServerReportedLoad")
+  public void testCallTrackingRestRequest(boolean enableServerReportedLoad)
   {
     URI uri = URI.create("http://test.qa.com:1234/foo");
     SettableClock clock = new SettableClock();
     AtomicInteger action = new AtomicInteger(0);
+    Map<String, String> wireAttributes = Collections.singletonMap(R2Constants.SERVER_REPORTED_LOAD, "9");
     TransportClient tc = new TransportClient() {
       @Override
       public void restRequest(RestRequest request, RequestContext requestContext, Map<String, String> wireAttrs, TransportCallback<RestResponse> callback) {
@@ -130,16 +132,16 @@ public class TrackerClientTest
           switch (action.get())
           {
             // success
-            case 0: callback.onResponse(TransportResponseImpl.success(RestResponseFactory.noResponse()));
+            case 0: callback.onResponse(TransportResponseImpl.success(RestResponseFactory.noResponse(), wireAttrs));
                     break;
             // fail with rest exception
-            case 1: callback.onResponse(TransportResponseImpl.error(RestException.forError(500, "rest exception")));
+            case 1: callback.onResponse(TransportResponseImpl.error(RestException.forError(500, "rest exception"), wireAttrs));
                     break;
             // fail with timeout exception
-            case 2: callback.onResponse(TransportResponseImpl.error(new RemoteInvocationException(new TimeoutException())));
+            case 2: callback.onResponse(TransportResponseImpl.error(new RemoteInvocationException(new TimeoutException()), wireAttrs));
                     break;
             // fail with other exception
-            default: callback.onResponse(TransportResponseImpl.error(new RuntimeException()));
+            default: callback.onResponse(TransportResponseImpl.error(new RuntimeException(), wireAttrs));
                     break;
           }
       }
@@ -148,11 +150,11 @@ public class TrackerClientTest
       public void shutdown(Callback<None> callback) {}
     };
 
-    DegraderTrackerClientImpl client = (DegraderTrackerClientImpl) createTrackerClient(tc, clock, uri);
+    DegraderTrackerClientImpl client = (DegraderTrackerClientImpl) createTrackerClient(tc, clock, uri, enableServerReportedLoad);
     CallTracker callTracker = client.getCallTracker();
     CallTracker.CallStats stats;
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
-    client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), wireAttributes, new TestTransportCallback<>());
     clock.addDuration(5000);
     stats = callTracker.getCallStats();
     Assert.assertEquals(stats.getCallCount(), 1);
@@ -160,8 +162,10 @@ public class TrackerClientTest
     Assert.assertEquals(stats.getCallCountTotal(), 1);
     Assert.assertEquals(stats.getErrorCountTotal(), 0);
     Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.0, 0.001);
+    Assert.assertEquals(stats.getServerReportedLoad(),  enableServerReportedLoad ? 9 : -1);
+
     action.set(1);
-    client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), wireAttributes, new TestTransportCallback<>());
     clock.addDuration(5000);
     stats = callTracker.getCallStats();
     Assert.assertEquals(stats.getCallCount(), 1);
@@ -169,8 +173,10 @@ public class TrackerClientTest
     Assert.assertEquals(stats.getCallCountTotal(), 2);
     Assert.assertEquals(stats.getErrorCountTotal(), 1);
     Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.2, 0.001);
+    Assert.assertEquals(stats.getServerReportedLoad(),  enableServerReportedLoad ? 9 : -1);
+
     action.set(2);
-    client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), wireAttributes, new TestTransportCallback<>());
     clock.addDuration(5000);
     stats = callTracker.getCallStats();
     Assert.assertEquals(stats.getCallCount(), 1);
@@ -178,8 +184,10 @@ public class TrackerClientTest
     Assert.assertEquals(stats.getCallCountTotal(), 3);
     Assert.assertEquals(stats.getErrorCountTotal(), 2);
     Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.4, 0.001);
+    Assert.assertEquals(stats.getServerReportedLoad(),  enableServerReportedLoad ? 9 : -1);
+
     action.set(3);
-    client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    client.restRequest(new RestRequestBuilder(uri).build(), new RequestContext(), wireAttributes, new TestTransportCallback<>());
     clock.addDuration(5000);
     stats = callTracker.getCallStats();
     Assert.assertEquals(stats.getCallCount(), 1);
@@ -187,14 +195,16 @@ public class TrackerClientTest
     Assert.assertEquals(stats.getCallCountTotal(), 4);
     Assert.assertEquals(stats.getErrorCountTotal(), 3);
     Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.2, 0.001);
+    Assert.assertEquals(stats.getServerReportedLoad(),  enableServerReportedLoad ? 9 : -1);
   }
 
-  @Test
-  public void testCallTrackingStreamRequest() throws Exception
+  @Test(dataProvider = "enableServerReportedLoad")
+  public void testCallTrackingStreamRequest(boolean enableServerReportedLoad)
   {
     URI uri = URI.create("http://test.qa.com:1234/foo");
     SettableClock clock = new SettableClock();
     AtomicInteger action = new AtomicInteger(0);
+    Map<String, String> wireAttributes = Collections.singletonMap(R2Constants.SERVER_REPORTED_LOAD, "9");
     TransportClient tc = new TransportClient() {
       @Override
       public void restRequest(RestRequest request, RequestContext requestContext, Map<String, String> wireAttrs, TransportCallback<RestResponse> callback) {
@@ -209,17 +219,17 @@ public class TrackerClientTest
         switch (action.get())
         {
           // success
-          case 0: callback.onResponse(TransportResponseImpl.success(new StreamResponseBuilder().build(EntityStreams.emptyStream())));
+          case 0: callback.onResponse(TransportResponseImpl.success(new StreamResponseBuilder().build(EntityStreams.emptyStream()), wireAttrs));
             break;
           // fail with stream exception
           case 1: callback.onResponse(TransportResponseImpl.error(
-              new StreamException(new StreamResponseBuilder().setStatus(500).build(EntityStreams.emptyStream()))));
+              new StreamException(new StreamResponseBuilder().setStatus(500).build(EntityStreams.emptyStream())), wireAttrs));
             break;
           // fail with timeout exception
-          case 2: callback.onResponse(TransportResponseImpl.error(new RemoteInvocationException(new TimeoutException())));
+          case 2: callback.onResponse(TransportResponseImpl.error(new RemoteInvocationException(new TimeoutException()), wireAttrs));
             break;
           // fail with other exception
-          default: callback.onResponse(TransportResponseImpl.error(new RuntimeException()));
+          default: callback.onResponse(TransportResponseImpl.error(new RuntimeException(), wireAttrs));
             break;
         }
       }
@@ -228,12 +238,12 @@ public class TrackerClientTest
       public void shutdown(Callback<None> callback) {}
     };
 
-    DegraderTrackerClientImpl client = (DegraderTrackerClientImpl) createTrackerClient(tc, clock, uri);
+    DegraderTrackerClientImpl client = (DegraderTrackerClientImpl) createTrackerClient(tc, clock, uri, enableServerReportedLoad);
     CallTracker callTracker = client.getCallTracker();
     CallTracker.CallStats stats;
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     DelayConsumeCallback delayConsumeCallback = new DelayConsumeCallback();
-    client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), new HashMap<>(), delayConsumeCallback);
+    client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), wireAttributes, delayConsumeCallback);
     clock.addDuration(5);
     // we only recorded the time when stream response arrives, but callcompletion.endcall hasn't been called yet.
     Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 0);
@@ -250,9 +260,10 @@ public class TrackerClientTest
     Assert.assertEquals(stats.getCallCountTotal(), 1);
     Assert.assertEquals(stats.getErrorCountTotal(), 0);
     Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.0, 0.001);
+    Assert.assertEquals(stats.getServerReportedLoad(),  enableServerReportedLoad ? 9 : -1);
 
     action.set(1);
-    client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), new HashMap<>(), delayConsumeCallback);
+    client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), wireAttributes, delayConsumeCallback);
     clock.addDuration(5);
     // we endcall with error immediately for stream exception, even before the entity is consumed
     Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 2);
@@ -266,9 +277,10 @@ public class TrackerClientTest
     Assert.assertEquals(stats.getCallCountTotal(), 2);
     Assert.assertEquals(stats.getErrorCountTotal(), 1);
     Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.2, 0.001);
+    Assert.assertEquals(stats.getServerReportedLoad(),  enableServerReportedLoad ? 9 : -1);
 
     action.set(2);
-    client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
+    client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), wireAttributes, new TestTransportCallback<>());
     clock.addDuration(5);
     Assert.assertEquals(callTracker.getCurrentCallCountTotal(), 3);
     Assert.assertEquals(callTracker.getCurrentErrorCountTotal(), 2);
@@ -279,6 +291,7 @@ public class TrackerClientTest
     Assert.assertEquals(stats.getCallCountTotal(), 3);
     Assert.assertEquals(stats.getErrorCountTotal(), 2);
     Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.4, 0.001);
+    Assert.assertEquals(stats.getServerReportedLoad(), enableServerReportedLoad ? 9 : -1);
 
     action.set(3);
     client.streamRequest(new StreamRequestBuilder(uri).build(EntityStreams.emptyStream()), new RequestContext(), new HashMap<>(), new TestTransportCallback<>());
@@ -292,6 +305,13 @@ public class TrackerClientTest
     Assert.assertEquals(stats.getCallCountTotal(), 4);
     Assert.assertEquals(stats.getErrorCountTotal(), 3);
     Assert.assertEquals(degraderControl.getCurrentComputedDropRate(), 0.2, 0.001);
+    Assert.assertEquals(stats.getServerReportedLoad(), -1);
+  }
+
+  @DataProvider(name="enableServerReportedLoad")
+  public static Object[][] enableServerReportedLoad()
+  {
+    return new Object[][] {{true}, {false}};
   }
 
   @Test
@@ -305,7 +325,7 @@ public class TrackerClientTest
 
     DegraderTrackerClient client = new DegraderTrackerClientImpl(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
                                                              new TestClient(), new SettableClock(), config, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
-                                                             TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, true);
+                                                             TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, true, false);
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Assert.assertEquals(degraderControl.getInitialDropRate(), DegraderImpl.DEFAULT_DO_NOT_SLOW_START_INITIAL_DROP_RATE,
         "Initial drop rate in config should have been overridden by doNotSlowStart uri property.");
@@ -322,7 +342,7 @@ public class TrackerClientTest
 
     DegraderTrackerClient client = new DegraderTrackerClientImpl(URI.create("http://test.qa.com:1234/foo"), partitionDataMap,
                                                              new TestClient(), new SettableClock(), config, DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS,
-                                                             TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, false);
+                                                             TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, false, false);
     DegraderControl degraderControl = client.getDegraderControl(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Assert.assertEquals(degraderControl.getInitialDropRate(), initialDropRate,
         "Initial drop rate in config should not have been overridden by doNotSlowStart uri property.");
@@ -335,7 +355,7 @@ public class TrackerClientTest
     return partitionDataMap;
   }
 
-  private DegraderTrackerClient createTrackerClient(TransportClient tc, Clock clock, URI uri)
+  private DegraderTrackerClient createTrackerClient(TransportClient tc, Clock clock, URI uri, boolean enableServerReportedLoad)
   {
     Map<Integer, PartitionData> partitionDataMap = createDefaultPartitionData(3d);
     DegraderImpl.Config config = new DegraderImpl.Config();
@@ -343,7 +363,8 @@ public class TrackerClientTest
     config.setLowErrorRate(0.0);
     config.setMinCallCount(1);
     config.setDownStep(0.20);
-    return new DegraderTrackerClientImpl(uri, partitionDataMap, tc, clock, config);
+    return new DegraderTrackerClientImpl(uri, partitionDataMap, tc, clock, config,
+        TrackerClientImpl.DEFAULT_CALL_TRACKER_INTERVAL, TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, false, enableServerReportedLoad);
   }
 
   public static class TestClient implements TransportClient

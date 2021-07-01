@@ -232,10 +232,10 @@ public interface CallTracker
     int getOutstandingCount();
 
     /**
-     * Returns the latest load score reported by the server at the end of the interval.
-     * @return the latest load score reported by the server at the end of the interval.
+     * Returns the latest load reported by the server at the end of the interval.
+     * @return the latest load reported by the server at the end of the interval.
      */
-    int getServerLoadScore();
+    int getServerReportedLoad();
 
     /**
      * Returns the call time statistics of the sample.

@@ -1294,10 +1294,10 @@ public class TestCallTracker
   @Test
   public void testGetServerReportedLoad()
   {
-    Map<String, String> wireAttributes1 = Collections.singletonMap(R2Constants.SERVER_LOAD, "1");
-    Map<String, String> wireAttributes2 = Collections.singletonMap(R2Constants.SERVER_LOAD, "5");
-    Map<String, String> wireAttributes3 = Collections.singletonMap(R2Constants.SERVER_LOAD, "7");
-    Map<String, String> wireAttributes4 = Collections.singletonMap(R2Constants.SERVER_LOAD, "9");
+    Map<String, String> wireAttributes1 = Collections.singletonMap(R2Constants.SERVER_REPORTED_LOAD, "1");
+    Map<String, String> wireAttributes2 = Collections.singletonMap(R2Constants.SERVER_REPORTED_LOAD, "5");
+    Map<String, String> wireAttributes3 = Collections.singletonMap(R2Constants.SERVER_REPORTED_LOAD, "7");
+    Map<String, String> wireAttributes4 = Collections.singletonMap(R2Constants.SERVER_REPORTED_LOAD, "9");
     List<Map<String, String>> wireAttributesList = Arrays.asList(wireAttributes1, wireAttributes2, wireAttributes3, wireAttributes4);
 
     long lastCallTime = _clock.currentTimeMillis();
@@ -1305,7 +1305,35 @@ public class TestCallTracker
     endCall(dones, 4, wireAttributesList);
     _clock.setCurrentTimeMillis(INTERVAL + lastCallTime);
 
-    Assert.assertEquals(_callTracker.getCallStats().getServerLoadScore(), 9);
+    Assert.assertEquals(_callTracker.getCallStats().getServerReportedLoad(), 9);
+  }
+
+  @Test
+  public void testGetServerReportedLoadNone()
+  {
+    Map<String, String> wireAttributes1 = Collections.emptyMap();
+    Map<String, String> wireAttributes2 = Collections.emptyMap();
+    Map<String, String> wireAttributes3 = Collections.emptyMap();
+    Map<String, String> wireAttributes4 = Collections.emptyMap();
+    List<Map<String, String>> wireAttributesList = Arrays.asList(wireAttributes1, wireAttributes2, wireAttributes3, wireAttributes4);
+
+    long lastCallTime = _clock.currentTimeMillis();
+    List<CallCompletion> dones = startCall(_callTracker, 4);
+    endCall(dones, 4, wireAttributesList);
+    _clock.setCurrentTimeMillis(INTERVAL + lastCallTime);
+
+    Assert.assertEquals(_callTracker.getCallStats().getServerReportedLoad(), -1);
+  }
+
+  @Test
+  public void testGetServerReportedLoadNotEnabled()
+  {
+    long lastCallTime = _clock.currentTimeMillis();
+    List<CallCompletion> dones = startCall(_callTracker, 4);
+    endCall(dones, 4);
+    _clock.setCurrentTimeMillis(INTERVAL + lastCallTime);
+
+    Assert.assertEquals(_callTracker.getCallStats().getServerReportedLoad(), -1);
   }
 
    private List<CallCompletion> startCall(CallTracker callTracker, int count)

@@ -19,7 +19,10 @@ package com.linkedin.d2.balancer.strategies.relative;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.util.hashing.BoundedLoadConsistentHashRing;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
+import com.linkedin.d2.balancer.util.hashing.PowerOfTwoHashRingUtil;
+import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
@@ -41,10 +44,12 @@ public class ClientSelector
   private static final Logger LOG = LoggerFactory.getLogger(ClientSelector.class.getName());
 
   private final HashFunction<Request> _requestHashFunction;
+  private final boolean _enableServerReportedLoad;
 
-  public ClientSelector(HashFunction<Request> requestHashFunction)
+  public ClientSelector(HashFunction<Request> requestHashFunction, boolean enableServerReportedLoad)
   {
     _requestHashFunction = requestHashFunction;
+    _enableServerReportedLoad = enableServerReportedLoad;
   }
 
   /**
@@ -72,7 +77,12 @@ public class ClientSelector
     }
     else
     {
-      trackerClient = getTrackerClientFromRing(request, requestContext, ring, trackerClients);
+      boolean shouldApplyPowerOfTwo = _enableServerReportedLoad
+          && _requestHashFunction instanceof RandomHash
+          && !ring.isStickyRoutingCapable(); // If sticky routing enabled, we should not pick from 2 hosts
+      trackerClient = shouldApplyPowerOfTwo
+          ? getTrackerClientPowerOfTwo(request, requestContext, ring, trackerClients)
+          : getTrackerClientFromRing(request, requestContext, ring, trackerClients);
     }
     addToExcludedHosts(trackerClient, requestContext);
 
@@ -131,6 +141,32 @@ public class ClientSelector
         }
       }
     }
+
+    if (trackerClient == null)
+    {
+      // Pick one from the tracker clients passed from the request if the ring is completely out of date
+      trackerClient = trackerClients.values().stream()
+          .filter(latestTrackerClient -> !excludedUris.contains(latestTrackerClient.getUri()))
+          .findAny().orElse(null);
+      if (trackerClient != null)
+      {
+        LOG.warn("Did not find a valid client from the ring, picked {} instead", trackerClient.getUri());
+      }
+    }
+
+    return trackerClient;
+  }
+
+  private TrackerClient getTrackerClientPowerOfTwo(Request request,
+      RequestContext requestContext,
+      Ring<URI> ring,
+      Map<URI, TrackerClient> trackerClients)
+  {
+    Set<URI> excludedUris =
+        LoadBalancerStrategy.ExcludedHostHints.getRequestContextExcludedHosts(requestContext) == null ? new HashSet<>()
+            : LoadBalancerStrategy.ExcludedHostHints.getRequestContextExcludedHosts(requestContext);
+    TrackerClient trackerClient = PowerOfTwoHashRingUtil.
+        getTrackerClientPowerOfTwo(request, ring, trackerClients, _requestHashFunction, excludedUris);
 
     if (trackerClient == null)
     {

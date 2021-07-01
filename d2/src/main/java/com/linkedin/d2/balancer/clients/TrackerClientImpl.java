@@ -62,8 +62,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.debug;
 /**
  * Default {@link TrackerClient} implementation.
  */
-public class TrackerClientImpl implements TrackerClient
-{
+public class TrackerClientImpl implements TrackerClient {
   public static final String DEFAULT_ERROR_STATUS_REGEX = "(5..)";
   public static final Pattern DEFAULT_ERROR_STATUS_PATTERN = Pattern.compile(DEFAULT_ERROR_STATUS_REGEX);
   public static final long DEFAULT_CALL_TRACKER_INTERVAL = DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS;
@@ -76,18 +75,19 @@ public class TrackerClientImpl implements TrackerClient
   private final Predicate<Integer> _isErrorStatus;
   private final boolean _doNotSlowStart;
   private final ConcurrentMap<Integer, Double> _subsetWeightMap;
+  private final boolean _enableServerReportedLoad;
   final CallTracker _callTracker;
 
   private volatile CallTracker.CallStats _latestCallStats;
 
   public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
-      Clock clock, long interval, Predicate<Integer> isErrorStatus)
-  {
-    this(uri, partitionDataMap, transportClient, clock, interval, isErrorStatus, true, false);
+      Clock clock, long interval, Predicate<Integer> isErrorStatus) {
+    this(uri, partitionDataMap, transportClient, clock, interval, isErrorStatus, true, false, false);
   }
 
   public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
-      Clock clock, long interval, Predicate<Integer> isErrorStatus, boolean percentileTrackingEnabled, boolean doNotSlowStart)
+      Clock clock, long interval, Predicate<Integer> isErrorStatus, boolean percentileTrackingEnabled, boolean doNotSlowStart,
+      boolean enableServerReportedLoad)
   {
     _uri = uri;
     _transportClient = transportClient;
@@ -97,6 +97,7 @@ public class TrackerClientImpl implements TrackerClient
     _latestCallStats = _callTracker.getCallStats();
     _doNotSlowStart = doNotSlowStart;
     _subsetWeightMap = new ConcurrentHashMap<>();
+    _enableServerReportedLoad = enableServerReportedLoad;
 
     _callTracker.addStatsRolloverEventListener(event -> _latestCallStats = event.getCallStats());
 
@@ -192,11 +193,25 @@ public class TrackerClientImpl implements TrackerClient
       if (response.hasError())
       {
         Throwable throwable = response.getError();
-        handleError(_callCompletion, throwable, response.getWireAttributes());
+        if (_enableServerReportedLoad)
+        {
+          handleError(_callCompletion, throwable, response.getWireAttributes());
+        } else
+        {
+          handleError(_callCompletion, throwable);
+        }
+
       }
       else
       {
-        _callCompletion.endCall(response.getWireAttributes());
+        if (_enableServerReportedLoad)
+        {
+          _callCompletion.endCall(response.getWireAttributes());
+        } else
+        {
+          _callCompletion.endCall();
+        }
+
       }
 
       _wrappedCallback.onResponse(response);
@@ -227,7 +242,13 @@ public class TrackerClientImpl implements TrackerClient
       if (response.hasError())
       {
         Throwable throwable = response.getError();
-        handleError(_callCompletion, throwable, response.getWireAttributes());
+        if (_enableServerReportedLoad)
+        {
+          handleError(_callCompletion, throwable, response.getWireAttributes());
+        } else
+        {
+          handleError(_callCompletion, throwable);
+        }
       }
       else
       {
@@ -259,19 +280,63 @@ public class TrackerClientImpl implements TrackerClient
           @Override
           public void onDone()
           {
-            _callCompletion.endCall(response.getWireAttributes());
+            if (_enableServerReportedLoad)
+            {
+              _callCompletion.endCall(response.getWireAttributes());
+            } else
+            {
+              _callCompletion.endCall();
+            }
           }
 
           @Override
           public void onError(Throwable e)
           {
-            handleError(_callCompletion, e, response.getWireAttributes());
+            if (_enableServerReportedLoad)
+            {
+              handleError(_callCompletion, e, response.getWireAttributes());
+            } else
+            {
+              handleError(_callCompletion, e);
+            }
           }
         };
         entityStream.addObserver(observer);
       }
 
       _wrappedCallback.onResponse(response);
+    }
+  }
+
+  private void handleError(CallCompletion callCompletion, Throwable throwable)
+  {
+    if (isServerError(throwable))
+    {
+      callCompletion.endCallWithError(ErrorType.SERVER_ERROR);
+    }
+    else if (throwable instanceof RemoteInvocationException)
+    {
+      Throwable originalThrowable = LoadBalancerUtil.findOriginalThrowable(throwable);
+      if (originalThrowable instanceof ConnectException)
+      {
+        callCompletion.endCallWithError(ErrorType.CONNECT_EXCEPTION);
+      }
+      else if (originalThrowable instanceof ClosedChannelException)
+      {
+        callCompletion.endCallWithError(ErrorType.CLOSED_CHANNEL_EXCEPTION);
+      }
+      else if (originalThrowable instanceof TimeoutException)
+      {
+        callCompletion.endCallWithError(ErrorType.TIMEOUT_EXCEPTION);
+      }
+      else
+      {
+        callCompletion.endCallWithError(ErrorType.REMOTE_INVOCATION_EXCEPTION);
+      }
+    }
+    else
+    {
+      callCompletion.endCallWithError();
     }
   }
 

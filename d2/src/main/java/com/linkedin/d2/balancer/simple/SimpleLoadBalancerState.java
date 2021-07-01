@@ -143,6 +143,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final SSLContext    _sslContext;
   private final SSLParameters _sslParameters;
   private final boolean       _isSSLEnabled;
+  private final boolean       _enableServerReportedLoad;
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
 
   private final SubsettingStrategyFactory _subsettingStrategyFactory;
@@ -287,6 +288,35 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       SslSessionValidatorFactory sessionValidatorFactory,
       DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
   {
+    this(executorService,
+        uriBus,
+        clusterBus,
+        serviceBus,
+        clientFactories,
+        loadBalancerStrategyFactories,
+        sslContext,
+        sslParameters,
+        isSSLEnabled,
+        partitionAccessorRegistry,
+        sessionValidatorFactory,
+        deterministicSubsettingMetadataProvider,
+        false);
+  }
+
+  public SimpleLoadBalancerState(ScheduledExecutorService executorService,
+      PropertyEventBus<UriProperties> uriBus,
+      PropertyEventBus<ClusterProperties> clusterBus,
+      PropertyEventBus<ServiceProperties> serviceBus,
+      Map<String, TransportClientFactory> clientFactories,
+      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      boolean isSSLEnabled,
+      PartitionAccessorRegistry partitionAccessorRegistry,
+      SslSessionValidatorFactory sessionValidatorFactory,
+      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+      boolean enableServerReportedLoad)
+  {
     _executor = executorService;
     _uriProperties = new ConcurrentHashMap<>();
     _clusterInfo = new ConcurrentHashMap<>();
@@ -321,6 +351,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       _subsettingStrategyFactory = SubsettingStrategyFactory.NO_OP_SUBSETTING_STRATEGY_FACTORY;
     }
     _weightedSubsetsCache = new ConcurrentHashMap<>();
+    _enableServerReportedLoad = enableServerReportedLoad;
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -901,7 +932,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                                                                        uriProperties,
                                                                                        serviceProperties,
                                                                                        loadBalancerStrategy.getName(),
-                                                                                       transportClient);
+                                                                                       transportClient,
+                                                                                       _enableServerReportedLoad);
   }
 
   /**

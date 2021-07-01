@@ -16,25 +16,30 @@
 
 package com.linkedin.d2.balancer.strategies.framework;
 
+import com.linkedin.util.degrader.CallTrackerImpl;
 import java.net.URI;
 import java.util.Map;
 
 
 /**
- * Create dynamic server overload score using the QPS and current interval correlation
+ * Create dynamic server reported load using the QPS and current interval correlation
  */
-class DynamicServerLoadScoreManager implements ServerLoadScoreManager
+class DynamicServerReportedLoadManager implements ServerReportedLoadManager
 {
-  private final Map<URI, ServerLoadScoreCorrelation> _serverLoadScoreCalculationMap;
+  private final Map<URI, ServerReportedLoadCorrelation> _serverLoadScoreCalculationMap;
 
-  DynamicServerLoadScoreManager(Map<URI, ServerLoadScoreCorrelation> serverLoadScoreCalculationMap)
+  DynamicServerReportedLoadManager(Map<URI, ServerReportedLoadCorrelation> serverLoadScoreCalculationMap)
   {
     _serverLoadScoreCalculationMap = serverLoadScoreCalculationMap;
   }
 
   @Override
-  public int getServerLoadScore(URI uri, int hostRequestCount, int intervalIndex)
+  public int getServerReportedLoad(URI uri, int hostRequestCount, int intervalIndex)
   {
-    return _serverLoadScoreCalculationMap.get(uri).getServerLoadScore(hostRequestCount, intervalIndex);
+    if (_serverLoadScoreCalculationMap.containsKey(uri))
+    {
+      return _serverLoadScoreCalculationMap.get(uri).getServerReportedLoad(hostRequestCount, intervalIndex);
+    }
+    return CallTrackerImpl.DEFAULT_SERVER_REPORTED_LOAD;
   }
 }
