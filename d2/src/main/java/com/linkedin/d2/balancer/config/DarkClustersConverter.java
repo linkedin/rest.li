@@ -61,6 +61,24 @@ public class DarkClustersConverter
           prop.put(PropertyKeys.DARK_CLUSTER_MULTIPLIER, darkClusterConfig.getMultiplier().toString());
         }
 
+        if (darkClusterConfig.hasDispatcherOutboundTargetRate())
+        {
+          prop.put(PropertyKeys.DARK_CLUSTER_OUTBOUND_TARGET_RATE,
+                   darkClusterConfig.getDispatcherOutboundTargetRate().toString());
+        }
+
+        if (darkClusterConfig.hasDispatcherMaxRequestsToBuffer())
+        {
+          prop.put(PropertyKeys.DARK_CLUSTER_MAX_REQUESTS_TO_BUFFER,
+                   darkClusterConfig.getDispatcherMaxRequestsToBuffer());
+        }
+
+        if (darkClusterConfig.hasDispatcherBufferedRequestExpiryInSeconds())
+        {
+          prop.put(PropertyKeys.DARK_CLUSTER_BUFFERED_REQUEST_EXPIRY_IN_SECONDS,
+                   darkClusterConfig.getDispatcherBufferedRequestExpiryInSeconds());
+        }
+
         if (darkClusterConfig.hasDarkClusterStrategyPrioritizedList())
         {
           DarkClusterStrategyNameArray strategyNameArray = darkClusterConfig.getDarkClusterStrategyPrioritizedList();
