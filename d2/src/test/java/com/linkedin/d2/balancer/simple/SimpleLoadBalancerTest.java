@@ -264,7 +264,11 @@ public class SimpleLoadBalancerTest
     MockStore<UriProperties> uriRegistry = new MockStore<>();
     SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
 
-    DarkClusterConfig darkClusterConfig = new DarkClusterConfig().setMultiplier(1.0f);
+    DarkClusterConfig darkClusterConfig = new DarkClusterConfig()
+        .setMultiplier(1.0f)
+        .setDispatcherOutboundTargetRate(1)
+        .setDispatcherMaxRequestsToBuffer(1)
+        .setDispatcherBufferedRequestExpiryInSeconds(1);
     DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
     darkClusterConfigMap.put(DARK_CLUSTER1_NAME, darkClusterConfig);
 
@@ -301,7 +305,11 @@ public class SimpleLoadBalancerTest
     MockStore<UriProperties> uriRegistry = new MockStore<>();
     SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
 
-    DarkClusterConfig darkClusterConfig = new DarkClusterConfig().setMultiplier(1.0f);
+    DarkClusterConfig darkClusterConfig = new DarkClusterConfig()
+        .setMultiplier(1.0f)
+        .setDispatcherOutboundTargetRate(1)
+        .setDispatcherMaxRequestsToBuffer(1)
+        .setDispatcherBufferedRequestExpiryInSeconds(1);
     DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
     darkClusterConfigMap.put(DARK_CLUSTER1_NAME, darkClusterConfig);
 
