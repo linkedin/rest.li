@@ -33,9 +33,10 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static com.linkedin.d2.balancer.properties.ClusterProperties.DARK_CLUSTER_DEFAULT_MAX_RATE;
 import static com.linkedin.d2.balancer.properties.ClusterProperties.DARK_CLUSTER_DEFAULT_MULTIPLIER;
 import static com.linkedin.d2.balancer.properties.ClusterProperties.DARK_CLUSTER_DEFAULT_TARGET_RATE;
+import static com.linkedin.d2.balancer.properties.ClusterProperties.DARK_CLUSTER_DEFAULT_MAX_REQUESTS_TO_BUFFER;
+import static com.linkedin.d2.balancer.properties.ClusterProperties.DARK_CLUSTER_DEFAULT_BUFFERED_REQUEST_EXPIRY_IN_SECONDS;
 
 
 public class DarkClustersConverterTest
@@ -46,13 +47,25 @@ public class DarkClustersConverterTest
   public Object[][] provideKeys()
   {
     return new Object[][] {
-        new Object[] {true, new DarkClusterConfig().setMultiplier(0.5f)},
+        new Object[] {true, new DarkClusterConfig()
+            .setMultiplier(0.5f)
+            .setDispatcherOutboundTargetRate(0)
+            .setDispatcherMaxRequestsToBuffer(50)
+            .setDispatcherBufferedRequestExpiryInSeconds(10)},
         // multiplier is default, the default will be filled in
         new Object[] {false, new DarkClusterConfig()},
         // test zeros
-        new Object[] {true, new DarkClusterConfig().setMultiplier(0.0f)},
+        new Object[] {true, new DarkClusterConfig()
+            .setMultiplier(0.0f)
+            .setDispatcherOutboundTargetRate(0)
+            .setDispatcherMaxRequestsToBuffer(50)
+            .setDispatcherBufferedRequestExpiryInSeconds(10)},
         // negative multiplier not allowed
-        new Object[] {false, new DarkClusterConfig().setMultiplier(-1.0f)}
+        new Object[] {false, new DarkClusterConfig()
+            .setMultiplier(-1.0f)
+            .setDispatcherOutboundTargetRate(0)
+            .setDispatcherMaxRequestsToBuffer(50)
+            .setDispatcherBufferedRequestExpiryInSeconds(10)}
     };
   }
 
@@ -92,6 +105,8 @@ public class DarkClustersConverterTest
     DarkClusterConfig resultConfig = DarkClustersConverter.toConfig(DarkClustersConverter.toProperties(configMap)).get(DARK_CLUSTER_KEY);
     Assert.assertEquals(resultConfig.getMultiplier(), DARK_CLUSTER_DEFAULT_MULTIPLIER);
     Assert.assertEquals((int)resultConfig.getDispatcherOutboundTargetRate(), DARK_CLUSTER_DEFAULT_TARGET_RATE);
+    Assert.assertEquals((int)resultConfig.getDispatcherMaxRequestsToBuffer(), DARK_CLUSTER_DEFAULT_MAX_REQUESTS_TO_BUFFER);
+    Assert.assertEquals((int)resultConfig.getDispatcherBufferedRequestExpiryInSeconds(), DARK_CLUSTER_DEFAULT_BUFFERED_REQUEST_EXPIRY_IN_SECONDS);
     Assert.assertEquals(resultConfig.getDarkClusterStrategyPrioritizedList().size(), 1, "default strategy list should be size 1");
     Assert.assertFalse(resultConfig.hasTransportClientProperties(), "default shouldn't have transportProperties");
   }
@@ -113,6 +128,9 @@ public class DarkClustersConverterTest
     DarkClusterConfigMap expectedConfigMap = new DarkClusterConfigMap();
     DarkClusterConfig expectedConfig = new DarkClusterConfig(config.data());
     expectedConfig.setMultiplier(0);
+    expectedConfig.setDispatcherOutboundTargetRate(0);
+    expectedConfig.setDispatcherMaxRequestsToBuffer(1);
+    expectedConfig.setDispatcherBufferedRequestExpiryInSeconds(1);
     expectedConfigMap.put(DARK_CLUSTER_KEY, expectedConfig);
     DarkClusterConfigMap resultConfigMap = DarkClustersConverter.toConfig(DarkClustersConverter.toProperties(configMap));
     Assert.assertEquals(resultConfigMap, expectedConfigMap);
@@ -148,6 +166,9 @@ public class DarkClustersConverterTest
     DarkClusterConfigMap expectedConfigMap = new DarkClusterConfigMap();
     DarkClusterConfig expectedConfig = new DarkClusterConfig(config.data());
     expectedConfig.setMultiplier(0);
+    expectedConfig.setDispatcherOutboundTargetRate(0);
+    expectedConfig.setDispatcherMaxRequestsToBuffer(1);
+    expectedConfig.setDispatcherBufferedRequestExpiryInSeconds(1);
     expectedConfigMap.put(DARK_CLUSTER_KEY, expectedConfig);
     DarkClusterConfigMap resultConfigMap = DarkClustersConverter.toConfig(DarkClustersConverter.toProperties(configMap));
     Assert.assertEquals(resultConfigMap, expectedConfigMap);
