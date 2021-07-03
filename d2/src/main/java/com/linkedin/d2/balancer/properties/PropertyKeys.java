@@ -217,7 +217,8 @@ public class PropertyKeys
   // used by dark clusters
   public static final String DARK_CLUSTER_MULTIPLIER = "multiplier";
   public static final String DARK_CLUSTER_OUTBOUND_TARGET_RATE = "dispatcherOutboundTargetRate";
-  public static final String DARK_CLUSTER_OUTBOUND_MAX_RATE = "dispatcherOutboundMaxRate";
+  public static final String DARK_CLUSTER_MAX_REQUESTS_TO_BUFFER = "dispatcherMaxRequestsToBuffer";
+  public static final String DARK_CLUSTER_BUFFERED_REQUEST_EXPIRY_IN_SECONDS = "dispatcherBufferedRequestExpiryInSeconds";
   public static final String DARK_CLUSTER_STRATEGY_LIST = "darkClusterStrategyList";
   public static final String DARK_CLUSTER_TRANSPORT_CLIENT_PROPERTIES = "transportClientProperties";
 

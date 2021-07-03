@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.8] - 2021-07-02
+- Define new Dark Cluster configs in d2 PropertyKeys
+
 ## [29.19.7] - 2021-06-30
 - Fix equals() and hashCode() in ServiceProperties to support cluster subsetting
 
@@ -4997,7 +5000,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.8...master
+[29.19.8]: https://github.com/linkedin/rest.li/compare/v29.19.7...v29.19.8
 [29.19.7]: https://github.com/linkedin/rest.li/compare/v29.19.6...v29.19.7
 [29.19.6]: https://github.com/linkedin/rest.li/compare/v29.19.5...v29.19.6
 [29.19.5]: https://github.com/linkedin/rest.li/compare/v29.19.4...v29.19.5
