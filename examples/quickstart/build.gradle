@@ -9,9 +9,9 @@ buildscript {
   }
 }
 
-task wrapper(type: Wrapper) {
-  gradleVersion = '4.6'
-}
+// task wrapper(type: Wrapper) {
+//  gradleVersion = '4.6'
+// }
 
 final pegasusVersion = '27.7.18'
 ext.spec = [
