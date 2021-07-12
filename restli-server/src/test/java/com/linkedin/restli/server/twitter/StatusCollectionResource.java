@@ -89,6 +89,17 @@ public class StatusCollectionResource extends CollectionResourceTemplate<Long,St
   }
 
   /**
+   * find status by a parameter named "action"
+   *
+   */
+  @Finder("findByAction")
+  public List<Status> findByAction(@QueryParam("action") String  actionName
+  )
+  {
+    return null;
+  }
+
+  /**
    * Creates a new Status
    */
   @Override
