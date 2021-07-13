@@ -343,19 +343,19 @@ public class RestLiRouter
     boolean contextHasBatchFinderName = context.getRequestBatchFinderName() != null;
 
     // Explicitly setting other flags to false if condition meets:
-    if (context.getRequestMethod().equalsIgnoreCase("GET") && contextHasBatchFinderName )
+    if (context.getRequestMethod().equalsIgnoreCase("GET") && contextHasFinderName )
     {
-      // If "bq" in query params for "GET" methods, then this param considered as BatchFinder name
-      // and "q" and "action" can be used as query param name
-      contextHasActionName = false;
-      contextHasFinderName = false;
-    }
-    else if (context.getRequestMethod().equalsIgnoreCase("GET") && contextHasFinderName)
-    {
-      // If "bq" not in query params for "GET" methods but "q" seen, then this param considered as finder name
-      // and "action" can be used as query param name
+      // If "q" in query params for "GET" methods, then this param considered as Finder name
+      // and "bq" and "action" can be used as query param name
       contextHasActionName = false;
       contextHasBatchFinderName = false;
+    }
+    else if (context.getRequestMethod().equalsIgnoreCase("GET") && contextHasBatchFinderName)
+    {
+      // If "q" not in query params for "GET" methods but "bq" seen, then this param considered as batchFinder name
+      // and "action" can be used as query param name
+      contextHasActionName = false;
+      contextHasFinderName = false;
     }
     else if (context.getRequestMethod().equalsIgnoreCase("POST") && contextHasActionName)
     {

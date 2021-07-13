@@ -1271,12 +1271,20 @@ public class TestRestLiRouting
           "search",
           new String[0]
         },
-        { "/statuses?q=findByAction&action=anyAction",
+        { "/statuses?q=findByAction&action=anyAction&bq=anyBqValue",
             AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
             "GET",
             "FINDER",
             ResourceMethod.FINDER,
             "findByAction",
+            new String[0]
+        },
+        { "/statuses?bq=batchFinderByAction&action=anyAction",
+            AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+            "GET",
+            "BATCH_FINDER",
+            ResourceMethod.BATCH_FINDER,
+            "batchFinderByAction",
             new String[0]
         },
         { "/statuses?q=search&keywords=linkedin",
@@ -2686,7 +2694,9 @@ public class TestRestLiRouting
       {
         { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/accounts?action=register", "register" },
         { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/accounts?action=register", "register"},
-          { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/accounts?action=noOps&q=wrong", "noOps" }
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+            "/accounts?action=noOps&q=some_q_argument&bq=some_bq_argument",
+            "noOps" }
       };
   }
 
@@ -2815,8 +2825,8 @@ public class TestRestLiRouting
         { "/statuses/1/badpath/2", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
         { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
         { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
-        { "/statuses?q=noOps&bq=wrongbatchfindername", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
-        { "/statuses?q=noOps&bq=wrongbatchfindername", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?q=wrong&bq=batchFindByAction", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?q=wrong&bq=batchFindByAction", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
         { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
         { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
         { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },

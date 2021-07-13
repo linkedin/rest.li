@@ -67,7 +67,9 @@ public class TwitterAccountsResource
   }
 
   @Action(name="noOps")
-  public void noOps(@ActionParam("q") String paramNamedQ)
+  public void noOps(@ActionParam("q") String paramNamedQ,
+      @ActionParam("bq") String paramNamedBq
+      )
   {
   }
 }
