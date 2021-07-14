@@ -338,12 +338,39 @@ public class RestLiRouter
   private ResourceMethod mapResourceMethod(final ServerResourceContext context,
                                            final ResourceLevel resourceLevel)
   {
+    boolean contextHasActionName = context.getRequestActionName() != null;
+    boolean contextHasFinderName = context.getRequestFinderName() != null;
+    boolean contextHasBatchFinderName = context.getRequestBatchFinderName() != null;
+
+    // Explicitly setting other flags to false if condition meets:
+    if (context.getRequestMethod().equalsIgnoreCase("GET") && contextHasFinderName )
+    {
+      // If "q" in query params for "GET" methods, then this param considered as Finder name
+      // and "bq" and "action" can be used as query param name
+      contextHasActionName = false;
+      contextHasBatchFinderName = false;
+    }
+    else if (context.getRequestMethod().equalsIgnoreCase("GET") && contextHasBatchFinderName)
+    {
+      // If "q" not in query params for "GET" methods but "bq" seen, then this param considered as batchFinder name
+      // and "action" can be used as query param name
+      contextHasActionName = false;
+      contextHasFinderName = false;
+    }
+    else if (context.getRequestMethod().equalsIgnoreCase("POST") && contextHasActionName)
+    {
+      // If "q" in query params for "POST" method, then this param considered as action name
+      // and "b" and "bq" can be used as action param name
+      contextHasBatchFinderName = false;
+      contextHasFinderName= false;
+    }
+
     ResourceMethodMatchKey key =
         new ResourceMethodMatchKey(context.getRequestMethod(),
                                    context.getRestLiRequestMethod(),
-                                   context.getRequestActionName() != null,
-                                   context.getRequestFinderName() != null,
-                                   context.getRequestBatchFinderName() != null,
+                                   contextHasActionName,
+                                   contextHasFinderName,
+                                   contextHasBatchFinderName,
                                    context.getPathKeys().getBatchIds() != null,
                                    resourceLevel.equals(ResourceLevel.ENTITY));
 

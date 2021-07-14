@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Update RestliRouter to allow "bq", "action" as query parameter name for finder, "q" as action parameter name for action
 
 ## [29.19.8] - 2021-07-02
 - Define new Dark Cluster configs in d2 PropertyKeys
