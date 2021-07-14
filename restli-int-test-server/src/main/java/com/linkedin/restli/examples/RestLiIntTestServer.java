@@ -150,7 +150,7 @@ public class RestLiIntTestServer
   {
     config.addResourcePackageNames(RESOURCE_PACKAGE_NAMES);
     config.setServerNodeUri(URI.create("http://localhost:" + port));
-    if (useDocumentHandler)
+    if (useDocumentHandler && config.getDocumentationRequestHandler() == null)
     {
       config.setDocumentationRequestHandler(new DefaultDocumentationRequestHandler());
     }

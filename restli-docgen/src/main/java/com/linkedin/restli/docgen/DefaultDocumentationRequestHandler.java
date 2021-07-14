@@ -19,7 +19,6 @@ package com.linkedin.restli.docgen;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.resolver.ClasspathResourceDataSchemaResolver;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.jersey.api.uri.UriComponent;
@@ -99,11 +98,23 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
     final ResourceSchemaCollection resourceSchemas = ResourceSchemaCollection.loadOrCreateResourceSchema(_rootResources);
     final RestLiResourceRelationship relationships = new RestLiResourceRelationship(resourceSchemas, schemaResolver);
 
-    _htmlRenderer = new RestLiHTMLDocumentationRenderer(_config.getServerNodeUri(),
+    _htmlRenderer = getHtmlDocumentationRenderer(schemaResolver, relationships);
+    _jsonRenderer = getJsonDocumentationRenderer(schemaResolver, relationships);
+  }
+
+  protected RestLiDocumentationRenderer getHtmlDocumentationRenderer(DataSchemaResolver schemaResolver,
+      RestLiResourceRelationship relationships)
+  {
+    return new RestLiHTMLDocumentationRenderer(_config.getServerNodeUri(),
         relationships,
         new VelocityTemplatingEngine(),
         schemaResolver);
-    _jsonRenderer = new RestLiJSONDocumentationRenderer(relationships);
+  }
+
+  protected RestLiDocumentationRenderer getJsonDocumentationRenderer(DataSchemaResolver schemaResolver,
+      RestLiResourceRelationship relationships)
+  {
+    return new RestLiJSONDocumentationRenderer(relationships);
   }
 
   @SuppressWarnings("fallthrough")
@@ -129,15 +140,16 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
         prefixSegment = pathSegments.get(1).getPath();
     }
 
-    assert(prefixSegment.equals(DOC_PREFIX) || (HttpMethod.valueOf(request.getMethod()) == HttpMethod.OPTIONS));
+    assert(DOC_PREFIX.equals(prefixSegment) || (HttpMethod.valueOf(request.getMethod()) == HttpMethod.OPTIONS));
 
     final ByteArrayOutputStream out = new ByteArrayOutputStream(BAOS_BUFFER_SIZE);
+    final RenderContext renderContext = new RenderContext(out, request.getHeaders());
     final RestLiDocumentationRenderer renderer;
 
     if (HttpMethod.valueOf(request.getMethod()) == HttpMethod.OPTIONS)
     {
       renderer = _jsonRenderer;
-      renderer.renderResource(prefixSegment, out);
+      renderer.renderResource(prefixSegment, renderContext);
     }
     else if (HttpMethod.valueOf(request.getMethod()) == HttpMethod.GET)
     {
@@ -166,16 +178,22 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
 
       if (renderer == _htmlRenderer)
       {
-        _htmlRenderer.setJsonFormatUri(UriBuilder.fromUri(request.getURI())
-                                                 .queryParam("format", DOC_JSON_FORMAT)
-                                                 .build());
+        _htmlRenderer.setFormatUriProvider(docFormat -> {
+          if (RestLiDocumentationRenderer.DocumentationFormat.JSON.equals(docFormat))
+          {
+            return UriBuilder.fromUri(_config.getServerNodeUri())
+                .path(request.getURI().getPath())
+                .queryParam("format", DOC_JSON_FORMAT).build();
+          }
+          return null;
+        });
       }
 
       try
       {
         if (typeSegment == null || typeSegment.isEmpty())
         {
-          renderer.renderHome(out);
+          renderer.renderHome(renderContext);
         }
         else
         {
@@ -183,22 +201,22 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
           {
             if (objectSegment == null || objectSegment.isEmpty())
             {
-              renderer.renderResourceHome(out);
+              renderer.renderResourceHome(renderContext);
             }
             else
             {
-              renderer.renderResource(objectSegment, out);
+              renderer.renderResource(objectSegment, renderContext);
             }
           }
           else if (DOC_DATA_TYPE.equals(typeSegment))
           {
             if (objectSegment == null || objectSegment.isEmpty())
             {
-              renderer.renderDataModelHome(out);
+              renderer.renderDataModelHome(renderContext);
             }
             else
             {
-              renderer.renderDataModel(objectSegment, out);
+              renderer.renderDataModel(objectSegment, renderContext);
             }
           }
           else
@@ -209,7 +227,7 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
       }
       catch (RuntimeException e)
       {
-        if (!renderer.handleException(e, out))
+        if (!renderer.handleException(e, renderContext))
         {
           throw e;
         }
@@ -236,11 +254,11 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   private static final String DOC_VIEW_DOCS_ACTION = "docs";
   private static final String DOC_RESOURCE_TYPE = "rest";
   private static final String DOC_DATA_TYPE = "data";
-  private static final String DOC_JSON_FORMAT = "json";
+  private static final String DOC_JSON_FORMAT = RestLiDocumentationRenderer.DocumentationFormat.JSON.toString().toLowerCase();
   private static final int BAOS_BUFFER_SIZE = 8192;
 
-  private RestLiHTMLDocumentationRenderer _htmlRenderer;
-  private RestLiJSONDocumentationRenderer _jsonRenderer;
+  private RestLiDocumentationRenderer _htmlRenderer;
+  private RestLiDocumentationRenderer _jsonRenderer;
   private RestLiConfig _config;
   private Map<String, ResourceModel> _rootResources;
   private boolean _initialized = false;
