@@ -104,9 +104,12 @@ buildscript {
   repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+      url "https://linkedin.jfrog.io/artifactory/open-source"
+    }
   }
   dependencies {
-    classpath 'com.linkedin.pegasus:gradle-plugins:27.7.18'
+    classpath 'com.linkedin.pegasus:gradle-plugins:29.19.2'
   }
 }
 
@@ -114,7 +117,7 @@ task wrapper(type: Wrapper) {
   gradleVersion = '4.6'
 }
 
-final pegasusVersion = '27.7.18'
+final pegasusVersion = '29.19.2'
 ext.spec = [
   'product' : [
     'pegasus' : [
@@ -155,6 +158,9 @@ subprojects {
   repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+      url "https://linkedin.jfrog.io/artifactory/open-source"
+    }
   }
 }
 ```

@@ -526,6 +526,8 @@ The URI templates below assume variables with types as follows:
 | Resource                                   | URI Template               | Example                   | Method | Semantics                    |
 | ------------------------------------------ | -------------------------- | ------------------------- | ------ | ---------------------------- |
 | Collection, Simple, Association, ActionSet | {resource}?action={action} | /accounts?action=register | POST   | invokes the specified action |
+| ------------------------------------------ | -------------------------- | ------------------------- | ------ | ---------------------------- |
+| Collection, Association | {resource}/{resourceId}?action={action} | /accounts/10086?action=revoke | POST   | invokes the specified action under specified entity |
 
 ## URI Modifiers
 
