@@ -472,6 +472,7 @@ At least, 2 query parameters will have to be set for a batch finder:
 - A second query parameter will be used to pass a set of different search criteria. The name of this query parameter is set in the [BatchFinder method annotation](/rest.li/batch_finder_resource_method#method-annotation-and-parameters).
 For example, with @BatchFinder(value="findUsers", batchParam="batchCriteria"), the batch query parameter name is "batchCriteria". 
 The type of this query parameter is a List.
+- "q" cannot be used as a name for query parameters. It is reserved for passing Finder's method name. For URL constructed which uses both "bq" and "q", e.g. " {resource}?bq={bq_argument}&q={q_argument}", it will be interpreted as using "q_argument" as a finder method name and "bq_argument" as argument for a query parameter named "bq".
 
 Different data type has different representation in Rest.li protocol 1.0 and 2.0. See more details in [Rest.li Protocol](/rest.li/spec/protocol).
 

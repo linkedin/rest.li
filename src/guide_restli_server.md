@@ -981,6 +981,9 @@ public Task<BatchFinderResult<GreetingCriteria, Greeting, EmptyRecord>> searchGr
                                                                                   @QueryParam("criteria") GreetingCriteria[] criteria,
                                                                                   @QueryParam("message") String message)
 ```
+
+Please note that "q" cannot be used as QueryParam name for batch finder, because that will produce ambiguation when construcitng URL.
+
 See more details about BATCH_FINDER resource method api here: [BatchFinder Resource API](/rest.li/batch_finder_resource_method#resource-api)
 
 

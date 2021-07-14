@@ -278,6 +278,8 @@ Valid type for batch criteria parameter:
 
 - Can only be Arrays of Record template type, if have to use some other data types like Pegasus Enum, etc as the array item,
 need to wrap it into a Record Template (`.pdl` schema)
+
+Please note that "q" cannot be used as QueryParam name for batch finder. It is reserved for passing Finder's method name.
   
 ### BatchFinderResult
 
