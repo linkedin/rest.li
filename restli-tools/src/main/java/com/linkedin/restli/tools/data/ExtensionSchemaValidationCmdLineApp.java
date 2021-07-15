@@ -190,36 +190,49 @@ public class ExtensionSchemaValidationCmdLineApp
     {
       // check extension schema field annotation
       Map<String, Object> properties = field.getProperties();
-      if (properties.isEmpty() || properties.keySet().size() != 1 || !properties.containsKey(
-          EXTENSION_ANNOTATION_NAMESPACE))
-      {
-        throw new InvalidExtensionSchemaException("The field : " + field.getName() + " of extension schema must and only be annotated with 'extension'");
-      }
-      Object dataElement = properties.get(EXTENSION_ANNOTATION_NAMESPACE);
 
-      ValidationOptions validationOptions =
-          new ValidationOptions(RequiredMode.MUST_BE_PRESENT, CoercionMode.STRING_TO_PRIMITIVE, UnrecognizedFieldMode.DISALLOW);
-      try
+      if (!properties.isEmpty())
       {
-        if (!(dataElement instanceof DataMap))
+        if (properties.keySet().size() != 1 || !properties.containsKey(
+                EXTENSION_ANNOTATION_NAMESPACE))
         {
-          throw new InvalidExtensionSchemaException("Extension schema annotation is not a datamap!");
+          throw new InvalidExtensionSchemaException("The field : " + field.getName() + " of extension schema should be annotated with 'extension'");
         }
-        DataSchema extensionSchemaAnnotationSchema = new ExtensionSchemaAnnotation().schema();
-        ValidationResult result = ValidateDataAgainstSchema.validate(dataElement, extensionSchemaAnnotationSchema, validationOptions);
-        if (!result.isValid())
+        Object dataElement = properties.get(EXTENSION_ANNOTATION_NAMESPACE);
+
+        ValidationOptions validationOptions =
+                new ValidationOptions(RequiredMode.MUST_BE_PRESENT, CoercionMode.STRING_TO_PRIMITIVE, UnrecognizedFieldMode.DISALLOW);
+        try
         {
-          throw new InvalidExtensionSchemaException("Extension schema annotation is not valid: " + result.getMessages());
+          if (!(dataElement instanceof DataMap))
+          {
+            throw new InvalidExtensionSchemaException("Extension schema annotation is not a datamap!");
+          }
+          DataSchema extensionSchemaAnnotationSchema = new ExtensionSchemaAnnotation().schema();
+          ValidationResult result = ValidateDataAgainstSchema.validate(dataElement, extensionSchemaAnnotationSchema, validationOptions);
+          if (!result.isValid())
+          {
+            throw new InvalidExtensionSchemaException("Extension schema annotation is not valid: " + result.getMessages());
+          }
+        }
+        catch (InvalidExtensionSchemaException e)
+        {
+          throw e;
+        }
+        catch (Exception e)
+        {
+          _logger.error("Error while checking extension schema field annotation: " + e.getMessage());
+          System.exit(1);
         }
       }
-      catch (InvalidExtensionSchemaException e)
+      else
       {
-        throw e;
-      }
-      catch (Exception e)
-      {
-        _logger.error("Error while checking extension schema field annotation: " + e.getMessage());
-        System.exit(1);
+        // For 1-1 injection, @extension annotation is not required. The field type of 1-1 injection should always be TypeRef.
+        if (field.getType().getType() != DataSchema.Type.TYPEREF)
+        {
+          throw new InvalidExtensionSchemaException("Field: '" + field.getName() + "' is not annotated with @extension. "
+                  + "The @extension annotation is required for 1-to-many relations, but not for 1-to-1 relations.");
+        }
       }
       checkExtensionSchemaFieldSchema(field.getType(), properties);
     }
