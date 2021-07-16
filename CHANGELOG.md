@@ -13,6 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.19.9] - 2021-07-15
+- Relax extension schema check to make '@extension' annotation is optional for 1-to-1 injections.
 - Update RestliRouter to allow "bq", "action" as query parameter name for finder, "q" as action parameter name for action
 
 ## [29.19.8] - 2021-07-02
@@ -5001,7 +5004,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.8...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.9...master
+[29.19.9]: https://github.com/linkedin/rest.li/compare/v29.19.8...v29.19.9
 [29.19.8]: https://github.com/linkedin/rest.li/compare/v29.19.7...v29.19.8
 [29.19.7]: https://github.com/linkedin/rest.li/compare/v29.19.6...v29.19.7
 [29.19.6]: https://github.com/linkedin/rest.li/compare/v29.19.5...v29.19.6
