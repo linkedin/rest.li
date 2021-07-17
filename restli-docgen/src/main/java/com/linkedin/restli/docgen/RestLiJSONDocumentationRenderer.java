@@ -17,7 +17,6 @@
 package com.linkedin.restli.docgen;
 
 
-import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.NamedDataSchema;
@@ -30,7 +29,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -59,7 +57,19 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
   }
 
   @Override
+  public void renderHome(RenderContext renderContext)
+  {
+    renderResourceHome(renderContext);
+  }
+
+  @Override
   public void renderResourceHome(OutputStream out)
+  {
+    renderResourceHome(new RenderContext(out));
+  }
+
+  @Override
+  public void renderResourceHome(RenderContext renderContext)
   {
     final DataMap outputMap = createEmptyOutput();
 
@@ -68,10 +78,10 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
       for (ResourceSchema resourceSchema:
           new HashSet<>(_relationships.getResourceSchemaCollection().getResources().values()))
       {
-        renderResource(resourceSchema, outputMap);
+        renderResource(resourceSchema, outputMap, renderContext.getHeaders());
       }
 
-      _codec.writeMap(outputMap, out);
+      _codec.writeMap(outputMap, renderContext.getOutputStream());
     }
     catch (IOException e)
     {
@@ -81,6 +91,12 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
 
   @Override
   public void renderResource(String resourceName, OutputStream out)
+  {
+    renderResource(resourceName, new RenderContext(out));
+  }
+
+  @Override
+  public void renderResource(String resourceName, RenderContext renderContext)
   {
     final ResourceSchema resourceSchema = _relationships.getResourceSchemaCollection().getResource(resourceName);
     if (resourceSchema == null)
@@ -92,8 +108,8 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
 
     try
     {
-      renderResource(resourceSchema, outputMap);
-      _codec.writeMap(outputMap, out);
+      renderResource(resourceSchema, outputMap, renderContext.getHeaders());
+      _codec.writeMap(outputMap, renderContext.getOutputStream());
     }
     catch (IOException e)
     {
@@ -104,16 +120,23 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
   @Override
   public void renderDataModelHome(OutputStream out)
   {
+    renderDataModelHome(new RenderContext(out));
+  }
+
+  @Override
+  public void renderDataModelHome(RenderContext renderContext)
+  {
     final DataMap outputMap = createEmptyOutput();
+    final DataMap models = outputMap.getDataMap("models");
 
     try
     {
       for (NamedDataSchema schema: new HashSet<>(_relationships.getDataModels().values()))
       {
-        renderDataModel(schema, outputMap);
+        renderDataModel(schema, models, renderContext.getHeaders());
       }
 
-      _codec.writeMap(outputMap, out);
+      _codec.writeMap(outputMap, renderContext.getOutputStream());
     }
     catch (IOException e)
     {
@@ -124,6 +147,12 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
   @Override
   public void renderDataModel(String dataModelName, OutputStream out)
   {
+    renderDataModel(dataModelName, new RenderContext(out));
+  }
+
+  @Override
+  public void renderDataModel(String dataModelName, RenderContext renderContext)
+  {
     final NamedDataSchema schema = _relationships.getDataModels().get(dataModelName);
     if (schema == null)
     {
@@ -131,11 +160,11 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
     }
 
     final DataMap outputMap = createEmptyOutput();
-
+    final DataMap models = outputMap.getDataMap("models");
     try
     {
-      renderDataModel(schema, outputMap);
-      _codec.writeMap(outputMap, out);
+      renderDataModel(schema, models, renderContext.getHeaders());
+      _codec.writeMap(outputMap, renderContext.getOutputStream());
     }
     catch (IOException e)
     {
@@ -164,21 +193,21 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
     return emptyOutputMap;
   }
 
-  private void addRelatedModels(ResourceSchema resourceSchema, DataMap models) throws IOException
+  private void addRelatedModels(ResourceSchema resourceSchema, DataMap models,
+      Map<String, String> requestHeaders) throws IOException
   {
-    Map<String, DataMap> relatedSchemas;
+   DataMap relatedSchemas;
     synchronized (this)
     {
       relatedSchemas = _relatedSchemaCache.get(resourceSchema);
       if (relatedSchemas == null)
       {
-        relatedSchemas = new HashMap<>();
+        relatedSchemas = new DataMap();
         final Node<?> node = _relationships.getRelationships(resourceSchema);
-        final Iterator<Node<NamedDataSchema>> schemaItr = node.getAdjacency(NamedDataSchema.class).iterator();
-        while (schemaItr.hasNext())
+        for (Node<NamedDataSchema> namedDataSchemaNode : node.getAdjacency(NamedDataSchema.class))
         {
-          final NamedDataSchema currResource = (NamedDataSchema) schemaItr.next().getObject();
-          relatedSchemas.put(currResource.getFullName(), _codec.stringToMap(currResource.toString()));
+          final NamedDataSchema currResource = (NamedDataSchema) namedDataSchemaNode.getObject();
+          renderDataModel(currResource, relatedSchemas, requestHeaders);
         }
         _relatedSchemaCache.put(resourceSchema, relatedSchemas);
       }
@@ -187,35 +216,40 @@ public class RestLiJSONDocumentationRenderer implements RestLiDocumentationRende
     models.putAll(relatedSchemas);
   }
 
-  private void renderResource(ResourceSchema resourceSchema, DataMap outputMap) throws IOException
+  protected void renderResource(ResourceSchema resourceSchema, DataMap outputMap,
+      Map<String, String> requestHeaders) throws IOException
   {
     final DataMap resources = outputMap.getDataMap("resources");
     final DataMap models = outputMap.getDataMap("models");
 
     resources.put(ResourceSchemaUtil.getFullName(resourceSchema), resourceSchema.data());
-    addRelatedModels(resourceSchema, models);
+    addRelatedModels(resourceSchema, models, requestHeaders);
 
-    final List<ResourceSchema> subresources = _relationships.getResourceSchemaCollection().getAllSubResources(
+    final List<ResourceSchema> subResources = _relationships.getResourceSchemaCollection().getAllSubResources(
         resourceSchema);
-    if (subresources != null)
+    if (subResources != null)
     {
-      for (ResourceSchema subresource: subresources)
+      for (ResourceSchema subresource: subResources)
       {
         resources.put(ResourceSchemaUtil.getFullName(subresource), subresource.data());
-        addRelatedModels(subresource, models);
+        addRelatedModels(subresource, models, requestHeaders);
       }
     }
   }
 
-  private void renderDataModel(NamedDataSchema schema, DataMap outputMap) throws IOException
+  /**
+   * Render a data schema to be included in the documentation response.
+   * @param schema Schema to render
+   * @param outputMap Output map to render into. The full name of the schema should be used as the key.
+   */
+  protected void renderDataModel(NamedDataSchema schema, DataMap outputMap,
+      Map<String, String> requestHeaders) throws IOException
   {
-    final DataMap models = outputMap.getDataMap("models");
     final DataMap schemaData = _codec.stringToMap(schema.toString());
-    models.put(schema.getFullName(), schemaData);
+    outputMap.put(schema.getFullName(), schemaData);
   }
 
-  private final RestLiResourceRelationship _relationships;
-  private final JacksonDataCodec _codec = new JacksonDataCodec();
-  private final Map<ResourceSchema, Map<String, DataMap>> _relatedSchemaCache =
-      new HashMap<>();
+  protected final RestLiResourceRelationship _relationships;
+  protected final JacksonDataCodec _codec = new JacksonDataCodec();
+  private final Map<ResourceSchema, DataMap> _relatedSchemaCache = new HashMap<>();
 }
