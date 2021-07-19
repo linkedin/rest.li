@@ -77,11 +77,6 @@ public class TestExtensionSchemaValidationCmdLineApp
                     + "{ \"assocKey\" : { \"authorId\" : \"fabricName\", \"objectId\" : \"sessionId\" } } } }, \"resourcePath\" : \"/profiles/{profilesId}\" }, "
                     + "{ \"entity\" : \"ProfileV2\", \"keyConfig\" : { \"keys\" : { \"profilesId\" : { \"assocKey\" : { \"authorId\" : \"fabricName\", \"objectId\" : "
                     + "\"sessionId\" } } } }, \"resourcePath\" : \"/profilesV2/{profilesId}\", \"versionSuffix\" : \"V2\" } ] } } defined in \"BazExtensions\".\n"
-            },
-            {
-                "invalidNoExtensionAnnotation",
-                false,
-                "Field: 'testField' is not annotated with @extension. The @extension annotation is required for 1-to-many relations, but not for 1-to-1 relations."
             }
         };
   }
