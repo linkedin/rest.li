@@ -1,6 +1,0 @@
-record BazExtensions includes Baz {
-  /**
-   * This is invalid because extension annotations are required for 1-to-many relations.
-   */
-  testField: array[DummyKey]
-}

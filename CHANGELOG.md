@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Revert "Relax extension schema check to make '@extension' annotation is optional for 1-to-1 injections."
 
 ## [29.19.10] - 2021-07-16
 - Add hooks for customizing documentation (OPTIONS) response.

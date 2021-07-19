@@ -1,6 +1,0 @@
-record BazExtensions includes Baz {
-  /**
-   * This is valid because extension annotations are optional for 1-to-1 relations.
-   */
-  testField: DummyKey
-}
