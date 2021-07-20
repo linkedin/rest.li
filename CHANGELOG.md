@@ -13,6 +13,19 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.19.11] - 2021-07-20
+- Add compatibility level config for extension schema compatibility check.
+   - "pegasusPlugin.extensionSchema.compatibility" is the compatibility level config for extension schema compatibility check. 
+      It supports following 4 levels:
+     - "off": the extension schema compatibility check will not be run.
+     - "ignore": the extension schema compatibility check will run, but it allows backward incompatible changes.
+     - "backwards": Changes that are considered backwards compatible will pass the check, otherwise changes will fail the check.
+     - "equivalent": No changes to extension schemas will pass.
+   - If this config is not provided by users, by default the extension schema compatibility check is using "backwards".
+   - How to use it: users could add 'pegasusPlugin.extensionSchema.compatibility=<compatibility level>' in the gradle.properties file 
+     or directly add this property '-PpegasusPlugin.extensionSchema.compatibility=<compatibility level>' to the gradle build.
+   
 - Revert "Relax extension schema check to make '@extension' annotation is optional for 1-to-1 injections."
 
 ## [29.19.10] - 2021-07-16
@@ -5009,7 +5022,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.10...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.11...master
+[29.19.11]: https://github.com/linkedin/rest.li/compare/v29.19.10...v29.19.11
 [29.19.10]: https://github.com/linkedin/rest.li/compare/v29.19.9...v29.19.10
 [29.19.9]: https://github.com/linkedin/rest.li/compare/v29.19.8...v29.19.9
 [29.19.8]: https://github.com/linkedin/rest.li/compare/v29.19.7...v29.19.8

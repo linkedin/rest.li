@@ -18,5 +18,6 @@ package com.linkedin.pegasus.gradle;
 public enum FileCompatibilityType {
   SNAPSHOT,
   IDL,
-  PEGASUS_SCHEMA_SNAPSHOT
+  PEGASUS_SCHEMA_SNAPSHOT,
+  PEGASUS_EXTENSION_SCHEMA_SNAPSHOT
 }

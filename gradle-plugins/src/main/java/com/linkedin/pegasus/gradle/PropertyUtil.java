@@ -17,9 +17,10 @@ package com.linkedin.pegasus.gradle;
 
 import org.gradle.api.Project;
 
-import static com.linkedin.pegasus.gradle.PegasusPlugin.SNAPSHOT_COMPAT_REQUIREMENT;
-import static com.linkedin.pegasus.gradle.PegasusPlugin.IDL_COMPAT_REQUIREMENT;
+import static com.linkedin.pegasus.gradle.PegasusPlugin.PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_REQUIREMENT;
 import static com.linkedin.pegasus.gradle.PegasusPlugin.PEGASUS_SCHEMA_SNAPSHOT_REQUIREMENT;
+import static com.linkedin.pegasus.gradle.PegasusPlugin.IDL_COMPAT_REQUIREMENT;
+import static com.linkedin.pegasus.gradle.PegasusPlugin.SNAPSHOT_COMPAT_REQUIREMENT;
 
 
 public class PropertyUtil
@@ -52,6 +53,8 @@ public class PropertyUtil
         return IDL_COMPAT_REQUIREMENT;
       case PEGASUS_SCHEMA_SNAPSHOT:
         return PEGASUS_SCHEMA_SNAPSHOT_REQUIREMENT;
+      case PEGASUS_EXTENSION_SCHEMA_SNAPSHOT:
+        return PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_REQUIREMENT;
       default:
         return null;
     }
@@ -74,7 +77,8 @@ public class PropertyUtil
     }
     else
     {
-      if (propertyName.equals(SNAPSHOT_COMPAT_REQUIREMENT) || propertyName.equals(PEGASUS_SCHEMA_SNAPSHOT_REQUIREMENT))
+      if (propertyName.equals(SNAPSHOT_COMPAT_REQUIREMENT) || propertyName.equals(PEGASUS_SCHEMA_SNAPSHOT_REQUIREMENT) ||
+              propertyName.equals(PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_REQUIREMENT))
       {
         // backwards compatible by default.
         return "BACKWARDS";

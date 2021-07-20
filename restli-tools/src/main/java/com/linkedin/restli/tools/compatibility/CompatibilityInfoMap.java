@@ -330,9 +330,25 @@ public class CompatibilityInfoMap
     _annotationMap.get(infoType.getLevel()).add(info);
   }
 
+  /**
+   * This method indicates whether the schema annotation changes are compatible or not,
+   * by default it uses "backwards" as compatibility level.
+   * @return boolean
+   */
   public boolean isAnnotationCompatible()
   {
-    return _annotationMap.get(CompatibilityInfo.Level.INCOMPATIBLE).size() == 0;
+    return isAnnotationCompatible(CompatibilityLevel.BACKWARDS);
+  }
+
+  /**
+   * This method indicates whether the schema annotation changes are compatible or not based on the given compatibility level.
+   * @param level, the given {@link CompatibilityLevel}.
+   * @return boolean
+   */
+  public boolean isAnnotationCompatible(CompatibilityLevel level)
+  {
+    return isCompatible(_annotationMap.get(CompatibilityInfo.Level.INCOMPATIBLE),
+            _annotationMap.get(CompatibilityInfo.Level.COMPATIBLE), level);
   }
 
   public Collection<CompatibilityInfo> getAnnotationInfo(CompatibilityInfo.Level level)

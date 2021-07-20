@@ -554,6 +554,8 @@ public class PegasusPlugin implements Plugin<Project>
   public static final String IDL_COMPAT_REQUIREMENT = "rest.idl.compatibility";
   // Pegasus schema compatibility level configuration, which is used to define the {@link CompatibilityLevel}.
   public static final String PEGASUS_SCHEMA_SNAPSHOT_REQUIREMENT = "pegasusPlugin.pegasusSchema.compatibility";
+  // Pegasus extension schema compatibility level configuration, which is used to define the {@link CompatibilityLevel}
+  public static final String PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_REQUIREMENT = "pegasusPlugin.extensionSchema.compatibility";
   // CompatibilityOptions Mode configuration, which is used to define the {@link CompatibilityOptions#Mode} in the compatibility checker.
   private static final String PEGASUS_COMPATIBILITY_MODE = "pegasusPlugin.pegasusSchemaCompatibilityCheckMode";
 
@@ -616,7 +618,6 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static final String COMPATIBILITY_OPTIONS_MODE_EXTENSION = "EXTENSION";
 
-  private static final String COMPATIBILITY_LEVEL_BACKWARDS = "BACKWARDS";
 
   @SuppressWarnings("unchecked")
   private Class<? extends Plugin<Project>> _thisPluginType = (Class<? extends Plugin<Project>>)
@@ -1463,7 +1464,8 @@ public class PegasusPlugin implements Plugin<Project>
           task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION)
               .plus(project.getConfigurations().getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION))
               .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)));
-          task.setCompatibilityLevel(isExtensionSchema ? COMPATIBILITY_LEVEL_BACKWARDS
+          task.setCompatibilityLevel(isExtensionSchema ?
+                  PropertyUtil.findCompatLevel(project, FileCompatibilityType.PEGASUS_EXTENSION_SCHEMA_SNAPSHOT)
               :PropertyUtil.findCompatLevel(project, FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT));
           task.setCompatibilityMode(isExtensionSchema ? COMPATIBILITY_OPTIONS_MODE_EXTENSION :
               PropertyUtil.findCompatMode(project, PEGASUS_COMPATIBILITY_MODE));
@@ -1472,8 +1474,10 @@ public class PegasusPlugin implements Plugin<Project>
 
           task.onlyIf(t ->
           {
-            String pegasusSnapshotCompatPropertyName = findProperty(FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT);
-            return isExtensionSchema || !project.hasProperty(pegasusSnapshotCompatPropertyName) ||
+            String pegasusSnapshotCompatPropertyName = isExtensionSchema ?
+              findProperty(FileCompatibilityType.PEGASUS_EXTENSION_SCHEMA_SNAPSHOT)
+              : findProperty(FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT);
+            return !project.hasProperty(pegasusSnapshotCompatPropertyName) ||
                 !"off".equalsIgnoreCase((String) project.property(pegasusSnapshotCompatPropertyName));
           });
         });
@@ -2231,6 +2235,9 @@ public class PegasusPlugin implements Plugin<Project>
         break;
       case PEGASUS_SCHEMA_SNAPSHOT:
         property = PEGASUS_SCHEMA_SNAPSHOT_REQUIREMENT;
+        break;
+      case PEGASUS_EXTENSION_SCHEMA_SNAPSHOT:
+        property =  PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_REQUIREMENT;
         break;
       default:
         throw new GradleException("No property defined for compatibility type " + type);

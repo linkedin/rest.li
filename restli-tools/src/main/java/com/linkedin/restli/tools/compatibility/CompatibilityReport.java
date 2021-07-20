@@ -68,7 +68,7 @@ public class CompatibilityReport
           .stream()
           .map(it -> "[SCHEMA-ANNOTATION-I]:" + it)
           .collect(Collectors.joining("\n"));
-      annotationIsCompat = String.format("[SCHEMA-ANNOTATION-COMPAT]: %b", _infoMap.isAnnotationCompatible());
+      annotationIsCompat = String.format("[SCHEMA-ANNOTATION-COMPAT]: %b", _infoMap.isAnnotationCompatible(_compatibilityLevel));
     }
 
     String restSpecIsCompat = String.format("[RS-COMPAT]: %b", _infoMap.isRestSpecCompatible(_compatibilityLevel));
