@@ -18,6 +18,7 @@ package com.linkedin.data.collections;
 
 import com.linkedin.data.DataMap;
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -79,5 +80,28 @@ public class TestCheckedMap
       // Do nothing.
     });
     Assert.assertNull(map._changeListenerHead);
+  }
+
+  @Test
+  public void testRemoveIf()
+  {
+    final DataMap map = new DataMap();
+    map.put("key1", 100);
+    map.put("key2", 200);
+    map.put("key3", 500);
+
+    Assert.assertFalse(map.removeIf(entry -> entry.getKey().equals("Unknown")));
+    Assert.assertTrue(map.removeIf(entry -> entry.getKey().equals("key2") || ((Integer) entry.getValue() == 100)));
+    Assert.assertEquals(map, Collections.singletonMap("key3", 500));
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testRemoveIfOnReadOnlyMap()
+  {
+    final DataMap map = new DataMap();
+    map.put("key1", 100);
+    map.setReadOnly();
+
+    map.removeIf(entry -> entry.getKey().equals("Unknown"));
   }
 }

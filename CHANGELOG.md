@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.12] - 2021-07-22
+- Add a predicate based bulk remove method for checkedMap.
+
 ## [29.19.11] - 2021-07-20
 - Add compatibility level config for extension schema compatibility check.
    - "pegasusPlugin.extensionSchema.compatibility" is the compatibility level config for extension schema compatibility check. 
@@ -5022,7 +5025,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.11...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.12...master
+[29.19.12]: https://github.com/linkedin/rest.li/compare/v29.19.11...v29.19.12
 [29.19.11]: https://github.com/linkedin/rest.li/compare/v29.19.10...v29.19.11
 [29.19.10]: https://github.com/linkedin/rest.li/compare/v29.19.9...v29.19.10
 [29.19.9]: https://github.com/linkedin/rest.li/compare/v29.19.8...v29.19.9
