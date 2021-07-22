@@ -23,10 +23,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 
 /**
@@ -289,6 +291,19 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public void forEach(BiConsumer<? super K, ? super V> action)
   {
     _map.forEach(action);
+  }
+
+  /**
+   * Removes all of the entries of this map that satisfy the given predicate.
+   *
+   * @param filter a predicate which returns {@code true} for elements to be
+   *        removed
+   * @return {@code true} if any elements were removed
+   */
+  public boolean removeIf(Predicate<? super Entry<K, V>> filter)
+  {
+    checkMutability();
+    return _map.entrySet().removeIf(filter);
   }
 
   @Override
