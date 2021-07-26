@@ -395,6 +395,18 @@ public final class UnionDataSchema extends ComplexDataSchema
   }
 
   /**
+   * Returns the member identified by its member key.
+   *
+   * @param memberKey Union member key of the member.
+   * @return the {@link Member} if key matches a member of the union, else return null.
+   */
+  public Member getMemberByKey(String memberKey)
+  {
+    Integer index = _memberKeyToIndexMap.get(memberKey);
+    return (index != null ? _members.get(index) : null);
+  }
+
+  /**
    * Checks if the union members have aliases specified. Since either all or none of the members can be aliased
    * in a union, a return value of true from this method means all the members (excluding null member, if present)
    * have been aliased and none otherwise.

@@ -26,6 +26,7 @@ import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
+import com.linkedin.data.schema.UnionDataSchema;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -374,6 +375,30 @@ public class DataSchemaAnnotationValidator implements Validator
               map.put(field, validatorList);
             }
           }
+          else if (schema.getType() == DataSchema.Type.UNION)
+          {
+            UnionDataSchema unionDataSchema = (UnionDataSchema) schema;
+            // Only aliased unions can have custom properties (and thus validators).
+            if (unionDataSchema.areMembersAliased())
+            {
+              for (UnionDataSchema.Member member : unionDataSchema.getMembers())
+              {
+                validateObject = member.getProperties().get(VALIDATE);
+                if (validateObject == null)
+                {
+                  validatorList = NO_VALIDATORS;
+                }
+                else
+                {
+                  path.add(member.getAlias());
+                  validatorList = buildValidatorList(validateObject, path, member);
+                  path.remove(path.size() - 1);
+                }
+                map.put(member, validatorList);
+              }
+
+            }
+          }
         }
       }
     });
@@ -655,6 +680,21 @@ public class DataSchemaAnnotationValidator implements Validator
           if (field != null)
           {
             getAndInvokeValidatorList(context, field);
+          }
+        }
+      }
+      // check if the value belongs to a member in an union and if the member has
+      // validators.
+      if (parentSchema != null && parentSchema.getType() == DataSchema.Type.UNION)
+      {
+        UnionDataSchema unionDataSchema = (UnionDataSchema) parentSchema;
+        Object name = element.getName();
+        if (unionDataSchema.areMembersAliased() && unionDataSchema.contains((String) name))
+        {
+          UnionDataSchema.Member member = unionDataSchema.getMemberByKey((String) name);
+          if (member != null)
+          {
+            getAndInvokeValidatorList(context, member);
           }
         }
       }
