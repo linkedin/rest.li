@@ -42,6 +42,7 @@ import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.asMap;
 import static com.linkedin.data.TestUtil.dataMapFromString;
+import static com.linkedin.data.TestUtil.dataSchemaFromPdlString;
 import static com.linkedin.data.TestUtil.dataSchemaFromString;
 import static com.linkedin.data.TestUtil.out;
 import static org.testng.Assert.assertFalse;
@@ -291,7 +292,7 @@ public class TestValidator
                             int tests)
     throws IOException, InstantiationException
   {
-    DataSchema schema = dataSchemaFromString(schemaText);
+    DataSchema schema = dataSchemaFromPdlString(schemaText);
     DataSchemaAnnotationValidator annotationValidator = new DataSchemaAnnotationValidator();
     annotationValidator.init(schema, validatorClassMap);
     if (debug) annotationValidator.setDebugMode(true);
@@ -351,81 +352,37 @@ public class TestValidator
   }
 
   private static final String fooSchemaText =
-      "{ " +
-      "  \"type\" : \"record\", " +
-      "  \"name\" : \"Foo\", " +
-      "  \"fields\" : [ " +
-      "    { " +
-      "      \"name\" : \"strlen10\", " +
-      "      \"type\" : " +
-      "      { " +
-      "        \"name\" : \"StrLen10\", " +
-      "        \"type\" : \"typeref\", " +
-      "        \"ref\"  : \"string\", " +
-      "        \"validate\" : " +
-      "        { " +
-      "          \"strlen\" : { \"max\" : 10 } "+
-      "        } " +
-      "      }, " +
-      "      \"optional\" : true " +
-      "    }, " +
-      "    { " +
-      "      \"name\" : \"digits\", " +
-      "      \"type\" : " +
-      "      { " +
-      "        \"name\" : \"Digits\", " +
-      "        \"type\" : \"typeref\", " +
-      "        \"ref\"  : \"string\", " +
-      "        \"validate\" : " +
-      "        { " +
-      "          \"regex\" : { \"regex\" : \"[0-9]+\" } "+
-      "        } " +
-      "      }, " +
-      "      \"optional\" : true " +
-      "    }, " +
-      "    { " +
-      "      \"name\" : \"digitsMin5\", " +
-      "      \"type\" : " +
-      "      { " +
-      "        \"name\" : \"DigitsMin5\", " +
-      "        \"type\" : \"typeref\", " +
-      "        \"ref\"  : \"Digits\", " +
-      "        \"validate\" : " +
-      "        { " +
-      "          \"strlen\" : { \"min\" : 5 } "+
-      "        } " +
-      "      }," +
-      "      \"optional\" : true " +
-      "    }, " +
-      // validate property at field level
-      "    { " +
-      "      \"name\" : \"lettersMin3\", " +
-      "      \"type\" : \"string\", " +
-      "      \"validate\" : " +
-      "      { " +
-      "        \"strlen\" : { \"min\" : 3 }, "+
-      "        \"regex\" : { \"regex\" : \"[A-Za-z]+\" } "+
-      "      }, " +
-      "      \"optional\" : true " +
-      "    }, " +
-      // validate at within multi-level nested types
-      "    { " +
-      "      \"name\" : \"nested\", " +
-      "      \"type\" : { " +
-      "        \"type\" : \"array\", " +
-      "        \"items\" : { " +
-      "          \"type\" : \"map\", " +
-      "          \"values\" : \"Foo\" " +
-      "        } " +
-      "      }, " +
-      "      \"optional\" : true " +
-      "    } " +
-      "  ], " +
-      "  \"validate\" : " +
-      "  { " +
-      "    \"fooValidator\" : { } " +
-      "  } " +
-      "}";
+      "@validate.fooValidator = {}" +
+          "record Foo {" +
+          "  strlen10: optional" +
+          "    @validate.strlen.max = 10" +
+          "    typeref StrLen10 = string" +
+
+          "  digits: optional" +
+          "    @validate.regex.regex = \"[0-9]+\"" +
+          "    typeref Digits = string" +
+
+          "  digitsMin5: optional" +
+          "    @validate.strlen.min = 5" +
+          "    typeref DigitsMin5 = Digits" +
+
+          // validate property at field level
+          "  @validate.strlen.min = 3" +
+          "  @validate.regex.regex = \"[A-Za-z]+\"" +
+          "  lettersMin3: optional string" +
+
+          // validate property at union member level
+          "  stringAndInt: optional union[" +
+          "    @validate.strlen.min = 3" +
+          "    @validate.regex.regex = \"[A-Za-z]+\"" +
+          "    lettersMin3: string" +
+          "    @validate.regex.regex = \"[0-9]+\"" +
+          "    digits: string" +
+          "  ]" +
+
+          // validate at within multi-level nested types
+          "  nested: optional array[map[string, Foo]]\n" +
+          "}";
 
   String[] _fooSchemaValidatorCheckStrings =
   {
@@ -615,28 +572,51 @@ public class TestValidator
   }
 
   @Test
+  public void testValidateUnionMember() throws IOException, InstantiationException
+  {
+    Object[][] input =
+        {
+            {
+                new DataMap(asMap("stringAndInt", new DataMap(asMap("lettersMin3", "ABC")))),
+                "{\"stringAndInt\":{\"lettersMin3\":\"ABC\"}}"
+            },
+            {
+                new DataMap(asMap("stringAndInt", new DataMap(asMap("digits", "124"))))
+            },
+            {
+                new DataMap(asMap("stringAndInt", new DataMap(asMap("lettersMin3", "012")))),
+                "ERROR", "does not match [A-Za-z]+",
+            },
+            {
+                new DataMap(asMap("stringAndInt", new DataMap(asMap("lettersMin3", "ab")))),
+                "ERROR", "is out of range 3...",
+            },
+            {
+                new DataMap(asMap("stringAndInt", new DataMap(asMap("digits", "abc")))),
+                "ERROR", "\"abc\" does not match [0-9]+",
+            },
+            {
+                new DataMap(asMap("stringAndInt", new DataMap(asMap("lettersMin3", "0")))),
+                "ERROR", "does not match [A-Za-z]+", "is out of range 3..."
+            },
+            {
+                new DataMap(asMap("stringAndInt", new DataMap(asMap("lettersMin3", "0", "digits", "ABC")))),
+                "ERROR", "does not match [A-Za-z]+", "is out of range 3...", "\"ABC\" does not match [0-9]+"
+            }
+        };
+
+    testFooSchemaValidator(input);
+  }
+
+  @Test
   public void testPathNameInValidationMessages() throws IOException, InstantiationException
   {
     String schemaText =
-          "{ \n" +
-          "  \"type\" : \"record\",\n" +
-          "  \"name\" : \"Foo\",\n" +
-          "  \"fields\" : [\n" +
-          "    {\n" +
-          "      \"name\" : \"bar\",\n" +
-          "      \"type\" : {\n" +
-          "        \"name\" : \"Bar\",\n" +
-          "        \"type\" : \"record\",\n" +
-          "        \"fields\" : [\n" +
-          "          {\n" +
-          "            \"name\" : \"baz\",\n" +
-          "            \"type\" : \"int\"\n" +
-          "          }\n" +
-          "        ]\n" +
-          "      }\n" +
-          "    }\n" +
-          "  ]\n" +
-          "}\n";
+          "record Foo {" +
+          "  bar: record Bar {" +
+          "    baz: int" +
+          "  }" +
+          "}";
 
     Object[][] input =
     {
@@ -678,23 +658,11 @@ public class TestValidator
   public void testValidatorHasFixedValue() throws IOException, InstantiationException
   {
     String schemaText =
-          "{ \n" +
-          "  \"type\" : \"record\",\n" +
-          "  \"name\" : \"Foo\",\n" +
-          "  \"fields\" : [\n" +
-          "    {\n" +
-          "      \"name\" : \"baz\",\n" +
-          "      \"type\" : {\n" +
-          "        \"type\" : \"typeref\",\n" +
-          "        \"name\" : \"IntRef\",\n" +
-          "        \"ref\" : \"int\",\n" +
-          "        \"validate\" : {\n" +
-          "          \"instanceOf\" : { \"class\" : \"java.lang.Integer\" }\n" +
-          "        }\n" +
-          "      }\n" +
-          "    }\n" +
-          "  ]\n" +
-          "}\n";
+          "record Foo {\n" +
+              "  baz: \n" +
+              "    @validate.instanceOf.class = \"java.lang.Integer\"\n" +
+              "    typeref IntRef = int\n" +
+              "}";
 
     Object[][] input =
     {

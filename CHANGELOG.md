@@ -14,6 +14,13 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.13] - 2021-07-26
+- Add support for validating aliased union members.
+  - Union members originally didn't support custom properties and thus custom validation
+    was not supported for union members. With aliased unions, members now support custom
+    properties and thus can specify custom validation. Validation logic is updated to
+    include custom validations on union members.
+
 ## [29.19.12] - 2021-07-22
 - Add a predicate based bulk remove method for checkedMap.
 
@@ -5025,7 +5032,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.12...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.13...master
+[29.19.13]: https://github.com/linkedin/rest.li/compare/v29.19.12...v29.19.13
 [29.19.12]: https://github.com/linkedin/rest.li/compare/v29.19.11...v29.19.12
 [29.19.11]: https://github.com/linkedin/rest.li/compare/v29.19.10...v29.19.11
 [29.19.10]: https://github.com/linkedin/rest.li/compare/v29.19.9...v29.19.10
