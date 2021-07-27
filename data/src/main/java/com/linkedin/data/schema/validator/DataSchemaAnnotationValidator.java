@@ -683,7 +683,7 @@ public class DataSchemaAnnotationValidator implements Validator
           }
         }
       }
-      // check if the value belongs to a member in an union and if the member has
+      // check if the value belongs to a member in an aliased union and if the member has
       // validators.
       if (parentSchema != null && parentSchema.getType() == DataSchema.Type.UNION)
       {
@@ -691,11 +691,8 @@ public class DataSchemaAnnotationValidator implements Validator
         Object name = element.getName();
         if (unionDataSchema.areMembersAliased() && unionDataSchema.contains((String) name))
         {
-          UnionDataSchema.Member member = unionDataSchema.getMemberByKey((String) name);
-          if (member != null)
-          {
-            getAndInvokeValidatorList(context, member);
-          }
+          UnionDataSchema.Member member = unionDataSchema.getMemberByMemberKey((String) name);
+          getAndInvokeValidatorList(context, member);
         }
       }
     }

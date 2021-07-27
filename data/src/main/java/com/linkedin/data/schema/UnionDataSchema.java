@@ -400,7 +400,7 @@ public final class UnionDataSchema extends ComplexDataSchema
    * @param memberKey Union member key of the member.
    * @return the {@link Member} if key matches a member of the union, else return null.
    */
-  public Member getMemberByKey(String memberKey)
+  public Member getMemberByMemberKey(String memberKey)
   {
     Integer index = _memberKeyToIndexMap.get(memberKey);
     return (index != null ? _members.get(index) : null);
