@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.20.0] - 2021-07-27
+- Fixed race condition when switching d2 load balancer strategies.
+
 ## [29.19.12] - 2021-07-22
 - Add a predicate based bulk remove method for checkedMap.
 
@@ -5025,7 +5028,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.12...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.20.0...master
+[29.20.0]: https://github.com/linkedin/rest.li/compare/v29.19.12...v29.20.0
 [29.19.12]: https://github.com/linkedin/rest.li/compare/v29.19.11...v29.19.12
 [29.19.11]: https://github.com/linkedin/rest.li/compare/v29.19.10...v29.19.11
 [29.19.10]: https://github.com/linkedin/rest.li/compare/v29.19.9...v29.19.10
