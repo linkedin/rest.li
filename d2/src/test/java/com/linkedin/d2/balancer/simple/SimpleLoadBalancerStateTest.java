@@ -1469,7 +1469,7 @@ public class SimpleLoadBalancerStateTest
     assertNull(client, "shouldn't pick an https uri");
 
     _state.refreshClients(serviceProperties);
-
+    assertEquals(_state.getUriProperties("cluster-1").getVersion(), _state.getVersion());
   }
 
   @Test(groups = { "small", "back-end" })

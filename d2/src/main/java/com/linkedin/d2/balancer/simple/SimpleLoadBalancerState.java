@@ -912,7 +912,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     Map<URI,TrackerClient> newTrackerClients;
 
     // update all tracker clients to use new configs
-    LoadBalancerStateItem<UriProperties> uriItem = _uriProperties.get(serviceProperties.getClusterName());
+    String clusterName = serviceProperties.getClusterName();
+    LoadBalancerStateItem<UriProperties> uriItem = _uriProperties.get(clusterName);
     UriProperties uriProperties = uriItem == null ? null : uriItem.getProperty();
     if (uriProperties != null)
     {
@@ -936,6 +937,13 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _trackerClients.put(serviceName, newTrackerClients);
 
     shutdownTransportClients(oldTransportClients, serviceName);
+
+    // Update the state with latest version since tracker clients are updated
+    if (uriProperties != null)
+    {
+      LoadBalancerStateItem<UriProperties> updatedUriItem = new LoadBalancerStateItem<>(uriItem.getProperty(), _version.get(), System.currentTimeMillis());
+      _uriProperties.put(clusterName, updatedUriItem);
+    }
   }
 
   private Map<String, TransportClient> createTransportClients(ServiceProperties serviceProperties)
