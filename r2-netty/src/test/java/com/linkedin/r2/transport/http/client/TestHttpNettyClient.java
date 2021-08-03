@@ -261,7 +261,7 @@ public class TestHttpNettyClient
   {
     testHeaderSize(TEST_MAX_HEADER_SIZE - 1, RESPONSE_OK);
 
-    testHeaderSize(TEST_MAX_HEADER_SIZE, TOO_LARGE);
+    testHeaderSize(TEST_MAX_HEADER_SIZE, RESPONSE_OK);
 
     testHeaderSize(TEST_MAX_HEADER_SIZE + 1, TOO_LARGE);
   }
