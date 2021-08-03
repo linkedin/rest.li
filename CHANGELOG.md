@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.14] - 2021-07-29
+- Bump netty version to use ALPN support needed for JDK8u282.
+
 ## [29.19.13] - 2021-07-26
 - Add support for validating aliased union members.
   - Union members originally didn't support custom properties and thus custom validation
@@ -5032,7 +5035,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.13...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.14...master
+[29.19.14]: https://github.com/linkedin/rest.li/compare/v29.19.13...v29.19.14
 [29.19.13]: https://github.com/linkedin/rest.li/compare/v29.19.12...v29.19.13
 [29.19.12]: https://github.com/linkedin/rest.li/compare/v29.19.11...v29.19.12
 [29.19.11]: https://github.com/linkedin/rest.li/compare/v29.19.10...v29.19.11
